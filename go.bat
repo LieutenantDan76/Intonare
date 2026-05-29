@@ -17,14 +17,18 @@ git commit -m "Update Intonare.html"
 git push
 
 echo [3/6] Building JS bundle...
-npm run build || echo  ^>^> Build step done.
+call npm run build
+if errorlevel 1 (
+  echo  ^>^> npm build failed. Aborting.
+  goto :end
+)
 
 echo [4/6] Copying Intonare.html to www...
 del /F www\index.html
 copy /Y Intonare.html www\index.html
 
 echo [5/6] Syncing Capacitor...
-npx cap sync
+call npx cap sync
 
 echo [6/6] Copying to Android assets + verifying...
 copy /Y www\index.html android\app\src\main\assets\public\index.html
