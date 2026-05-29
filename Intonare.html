@@ -6518,6 +6518,8 @@
     border-radius: 14px;
     padding: 16px 18px;
     width: 300px; max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
     box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(94,226,255,0.2);
     z-index: 501;
     transition: all 0.3s ease;
@@ -15434,34 +15436,44 @@ function showStep(idx) {
 }
 
 function positionTour(target) {
-  const rect = target.getBoundingClientRect();
-  const spotlight = document.getElementById('tourSpotlight');
-  const pad = 8;
-  spotlight.style.top = (rect.top - pad) + 'px';
-  spotlight.style.left = (rect.left - pad) + 'px';
-  spotlight.style.width = (rect.width + pad * 2) + 'px';
-  spotlight.style.height = (rect.height + pad * 2) + 'px';
+  const rect   = target.getBoundingClientRect();
+  const card   = document.getElementById('tourCard');
+  const spot   = document.getElementById('tourSpotlight');
+  const pad    = 8;
+  const margin = 12;
+  const winH   = window.innerHeight;
+  const winW   = window.innerWidth;
 
-  // Position card: prefer below target, fallback to above
-  const card = document.getElementById('tourCard');
-  const cardEstHeight = 220;
-  const margin = 16;
-  const winH = window.innerHeight, winW = window.innerWidth;
+  // Spotlight
+  spot.style.top    = (rect.top  - pad) + 'px';
+  spot.style.left   = (rect.left - pad) + 'px';
+  spot.style.width  = (rect.width  + pad*2) + 'px';
+  spot.style.height = (rect.height + pad*2) + 'px';
 
+  // Set card width first so offsetHeight reflects real wrap
+  const cardW = Math.min(300, winW - margin*2);
+  card.style.width = cardW + 'px';
+
+  // Read actual rendered height (card content already set before this call)
+  const cardH = card.offsetHeight || 240;
+
+  // Prefer below spotlight; fallback above; last resort centre-screen
   let top;
-  if (rect.bottom + cardEstHeight + margin < winH) {
+  if (rect.bottom + cardH + margin <= winH) {
     top = rect.bottom + margin;
-  } else if (rect.top - cardEstHeight - margin > 0) {
-    top = rect.top - cardEstHeight - margin;
+  } else if (rect.top - cardH - margin >= 0) {
+    top = rect.top - cardH - margin;
   } else {
-    top = Math.max(20, (winH - cardEstHeight) / 2);
+    top = Math.max(margin, (winH - cardH) / 2);
   }
+  // Hard clamp: never let bottom edge go off-screen
+  top = Math.min(top, winH - cardH - margin);
+  top = Math.max(top, margin);
   card.style.top = top + 'px';
 
-  // Horizontal: center on target, clamp to screen
-  const cardWidth = 300;
-  let left = rect.left + rect.width / 2 - cardWidth / 2;
-  left = Math.max(margin, Math.min(winW - cardWidth - margin, left));
+  // Horizontal: centre on target, clamp to screen
+  let left = rect.left + rect.width/2 - cardW/2;
+  left = Math.max(margin, Math.min(winW - cardW - margin, left));
   card.style.left = left + 'px';
 }
 
