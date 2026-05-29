@@ -258,6 +258,205 @@
     font-family: 'JetBrains Mono', monospace; font-size: 9px;
     letter-spacing: 0.14em; color: var(--text-dim);
   }
+#toolSurvivalGuide {
+  --bg:#0a0a12;--bg1:#10101c;--surf:#181826;--surf2:#1f1f30;
+  --panel:#232338;--bdr:#2e2e48;--bdrs:#25253b;
+  --tx:#eef0f7;--txd:#a3a5b8;--mu:#6a6c85;
+  --ac:#5ee2ff;--warm:#ffa07a;--rose:#ff8aae;
+  --soft:#b8a3ff;--grn:#b6f25b;--org:#ff8a65;
+  --flat:#7aafff;--met:#ffd166;
+  --nav-h:130px;
+}
+
+
+#toolSurvivalGuide *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+#toolSurvivalGuide{background:var(--bg);color:var(--tx);font-family:"JetBrains Mono",monospace;height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+#toolSurvivalGuide #app{display:flex;flex-direction:column;height:100%;height:100%}
+#toolSurvivalGuide #pageArea{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;position:relative}
+#toolSurvivalGuide #pageArea::-webkit-scrollbar{display:none}
+
+/* PAGE CARD */
+#toolSurvivalGuide .page-card{min-height:100%;display:flex;flex-direction:column;animation:pgIn .18s ease both}
+@keyframes pgIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes pgBack{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+#toolSurvivalGuide .page-card.back{animation:pgBack .18s ease both}
+#toolSurvivalGuide .pg-eyebrow{font-size:8px;letter-spacing:.22em;color:var(--mu);margin-bottom:5px}
+#toolSurvivalGuide .pg-heading{font-family:"Bebas Neue",sans-serif;font-size:26px;letter-spacing:.14em;color:var(--tx);line-height:1;margin-bottom:3px}
+#toolSurvivalGuide .pg-subhead{font-size:10px;letter-spacing:.1em;color:var(--ac);margin-bottom:12px}
+#toolSurvivalGuide .pg-body{font-size:12px;line-height:1.75;color:var(--txd)}
+#toolSurvivalGuide .pg-body strong{color:var(--tx);font-weight:500}
+#toolSurvivalGuide .pg-body em{color:var(--soft);font-style:normal}
+
+/* PHOTO DIAGRAM */
+#toolSurvivalGuide .photo-wrap{position:relative;width:100%;margin:8px 0;background:var(--bg1);border:1px solid var(--bdrs);border-radius:10px;overflow:hidden;user-select:none}
+#toolSurvivalGuide .photo-wrap img{width:100%;height:auto;display:block;opacity:.92}
+#toolSurvivalGuide .photo-loading{padding:60px 20px;text-align:center;font-size:9px;letter-spacing:.12em;color:var(--mu)}
+#toolSurvivalGuide .photo-zones{position:absolute;inset:0;pointer-events:none}
+#toolSurvivalGuide .tap-zone{position:absolute;cursor:pointer;pointer-events:all;border-radius:4px;background:transparent;transition:background .15s,outline .1s}
+#toolSurvivalGuide .tap-zone.lit{background:color-mix(in srgb,var(--zone-color,var(--ac)) 22%,transparent);outline:2px solid var(--zone-color,var(--ac));outline-offset:-2px;border-radius:5px}
+#toolSurvivalGuide .tap-zone.lit{background:color-mix(in srgb,var(--zone-color,var(--ac)) 28%,transparent);outline:1.5px solid var(--zone-color,var(--ac))}
+#toolSurvivalGuide .glow-ring{position:absolute;border-radius:50%;pointer-events:none;animation:glowPop .4s ease forwards;z-index:10}
+@keyframes glowPop{0%{transform:translate(-50%,-50%) scale(.4);opacity:.9}60%{transform:translate(-50%,-50%) scale(1.1);opacity:.7}100%{transform:translate(-50%,-50%) scale(.95);opacity:0}}
+#toolSurvivalGuide .photo-tip{background:color-mix(in srgb,var(--panel) 96%,transparent);border:1px solid var(--bdrs);border-radius:10px;padding:9px 12px;display:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 24px rgba(0,0,0,.55)}
+#toolSurvivalGuide .photo-tip.show{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#toolSurvivalGuide .tip-name{font-family:"Bebas Neue",sans-serif;font-size:13px;letter-spacing:.12em;margin-bottom:3px}
+#toolSurvivalGuide .tip-desc{font-size:10.5px;color:var(--txd);line-height:1.55}
+
+/* DIAGRAM (SVG) */
+#toolSurvivalGuide .pg-diagram{background:var(--bg1);border:1px solid var(--bdrs);border-radius:10px;padding:12px 8px 8px;margin:8px 0;text-align:center;overflow-x:auto}
+#toolSurvivalGuide .pg-diagram svg{max-width:100%}
+
+/* CONTROLS */
+#toolSurvivalGuide .sel-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+#toolSurvivalGuide .sel-lbl{font-size:8px;letter-spacing:.18em;color:var(--mu);flex-shrink:0}
+#toolSurvivalGuide .sg-sel{flex:1;background:var(--surf2);border:1px solid var(--bdr);color:var(--tx);font-family:"JetBrains Mono",monospace;font-size:10px;padding:7px 28px 7px 10px;border-radius:8px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236a6c85' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:10px}
+#toolSurvivalGuide .sg-sel:focus{outline:none;border-color:var(--ac)}
+#toolSurvivalGuide option{background:var(--panel)}
+
+/* INTERACTIVE CONTENT */
+#toolSurvivalGuide .ladder{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+#toolSurvivalGuide .dyn-row{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--surf);border-radius:7px;border-left:3px solid transparent}
+#toolSurvivalGuide .dyn-sym{font-family:"Bebas Neue",sans-serif;font-size:15px;min-width:28px;line-height:1}
+#toolSurvivalGuide .dyn-nm{font-size:9.5px;color:var(--txd);flex:1}
+#toolSurvivalGuide .dyn-db{font-size:8.5px;color:var(--mu)}
+#toolSurvivalGuide .tempo-table,.iv-grid{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+#toolSurvivalGuide .t-row,.iv-row{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surf);border-radius:7px;cursor:pointer;transition:background .12s}
+#toolSurvivalGuide .t-row:hover,.t-row.playing,.iv-row:hover{background:color-mix(in srgb,var(--met) 8%,var(--surf2))}
+#toolSurvivalGuide .t-mark{font-family:"Bebas Neue",sans-serif;font-size:13px;min-width:98px;color:var(--warm)}
+#toolSurvivalGuide .t-mean{font-size:9px;color:var(--txd);flex:1}
+#toolSurvivalGuide .t-bpm{font-size:8.5px;color:var(--mu);min-width:44px;text-align:right}
+#toolSurvivalGuide .t-play,.iv-pl{font-size:9px;color:var(--ac)}
+#toolSurvivalGuide .t-row.playing .t-play{color:var(--met)}
+#toolSurvivalGuide .iv-row{display:grid;grid-template-columns:95px 1fr auto}
+#toolSurvivalGuide .iv-nm{font-family:"Bebas Neue",sans-serif;font-size:12px;letter-spacing:.08em;color:var(--soft)}
+#toolSurvivalGuide .iv-st{font-size:9px;color:var(--txd)}
+#toolSurvivalGuide .try-btn{display:inline-flex;align-items:center;gap:5px;margin-top:12px;background:none;border:1px solid color-mix(in srgb,var(--ac) 38%,transparent);color:var(--ac);font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.16em;padding:6px 12px;border-radius:20px;cursor:pointer;transition:all .15s}
+#toolSurvivalGuide .try-btn:hover{background:color-mix(in srgb,var(--ac) 10%,transparent);border-color:var(--ac)}
+
+/* PEDAL SHEET */
+#toolSurvivalGuide .sg-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;backdrop-filter:blur(3px)}
+#toolSurvivalGuide .sg-overlay.open{display:flex;align-items:flex-end;justify-content:center}
+#toolSurvivalGuide .sg-sheet{background:var(--bg1);border:1px solid var(--bdr);border-bottom:none;border-radius:22px 22px 0 0;width:100%;max-width:500px;padding:18px 18px 36px;animation:sheetUp .2s cubic-bezier(.25,.8,.25,1) both;max-height:88vh;overflow-y:auto}
+@keyframes sheetUp{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+#toolSurvivalGuide .sheet-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+#toolSurvivalGuide .sheet-title{font-family:"Bebas Neue",sans-serif;font-size:17px;letter-spacing:.18em;color:var(--ac)}
+#toolSurvivalGuide .sheet-close{background:none;border:1px solid var(--bdr);color:var(--txd);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+#toolSurvivalGuide .sheet-close:hover{border-color:var(--rose);color:var(--rose)}
+#toolSurvivalGuide .sheet-hint{font-size:9.5px;color:var(--mu);text-align:center;margin-bottom:14px;line-height:1.5}
+#toolSurvivalGuide .pedal-toggles{display:flex;gap:7px;margin-top:14px}
+#toolSurvivalGuide .pedal-btn{flex:1;background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:10px 6px 9px;cursor:pointer;text-align:center;transition:all .18s;user-select:none;-webkit-user-select:none}
+#toolSurvivalGuide .pedal-btn:hover{border-color:var(--txd)}
+#toolSurvivalGuide .pedal-btn.on{background:color-mix(in srgb,var(--ac) 10%,var(--surf));border-color:var(--ac)}
+#toolSurvivalGuide .pedal-btn.on.sp{background:color-mix(in srgb,var(--soft) 10%,var(--surf));border-color:var(--soft)}
+#toolSurvivalGuide .pedal-btn.on.pp{background:color-mix(in srgb,var(--flat) 10%,var(--surf));border-color:var(--flat)}
+#toolSurvivalGuide .pedal-nm{font-family:"Bebas Neue",sans-serif;font-size:11px;letter-spacing:.1em;color:var(--txd);display:block}
+#toolSurvivalGuide .pedal-btn.on .pedal-nm{color:var(--ac)}
+#toolSurvivalGuide .pedal-btn.on.sp .pedal-nm{color:var(--soft)}
+#toolSurvivalGuide .pedal-btn.on.pp .pedal-nm{color:var(--flat)}
+#toolSurvivalGuide .pedal-sub{font-size:7.5px;color:var(--mu);display:block;margin-top:2px}
+#toolSurvivalGuide .pedal-status{font-size:9px;color:var(--mu);text-align:center;margin-top:10px;min-height:14px}
+
+/* BOTTOM NAV */
+#toolSurvivalGuide #nav{background:var(--bg1);border-top:1px solid var(--bdrs);flex-shrink:0}
+#toolSurvivalGuide .ch-pills{display:flex;gap:5px;padding:4px 14px 7px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--bdrs);max-height:60px;transition:max-height .22s cubic-bezier(.25,.8,.25,1),padding .15s,opacity .15s;opacity:1}
+#toolSurvivalGuide .ch-pills.collapsed{max-height:0;padding-top:0;padding-bottom:0;opacity:0;pointer-events:none;border-top-color:transparent}
+#toolSurvivalGuide .ch-pills::-webkit-scrollbar{display:none}
+#toolSurvivalGuide .ch-pill{flex-shrink:0;background:var(--surf);border:1px solid var(--bdrs);border-radius:8px;padding:5px 9px 4px;cursor:pointer;transition:all .18s;min-width:58px;text-align:center}
+#toolSurvivalGuide .ch-pill.active{background:color-mix(in srgb,var(--tab-ac,var(--ac)) 10%,var(--surf));border-color:color-mix(in srgb,var(--tab-ac,var(--ac)) 45%,transparent)}
+#toolSurvivalGuide .ch-pill-name{font-family:"Bebas Neue",sans-serif;font-size:10.5px;letter-spacing:.1em;color:var(--mu);display:block;white-space:nowrap}
+#toolSurvivalGuide .ch-pill.active .ch-pill-name{color:var(--tab-ac,var(--ac))}
+#toolSurvivalGuide .ch-pill-dots{display:flex;gap:2px;margin-top:2px;justify-content:center}
+#toolSurvivalGuide .ch-dot{width:4px;height:4px;border-radius:50%;background:var(--bdrs);flex-shrink:0;transition:all .15s}
+#toolSurvivalGuide .ch-dot.done{background:var(--mu)}
+#toolSurvivalGuide .ch-dot.cur{background:var(--tab-ac,var(--ac));width:10px;border-radius:2px}
+#toolSurvivalGuide .nav-row1{display:flex;align-items:center;padding:4px 16px 0}
+#toolSurvivalGuide .nav-section{font-family:"Bebas Neue",sans-serif;font-size:13px;letter-spacing:.14em;color:var(--tx);flex:1}
+#toolSurvivalGuide .nav-next{font-size:8px;letter-spacing:.1em;color:var(--mu)}
+#toolSurvivalGuide .nav-next span{color:var(--ac)}
+#toolSurvivalGuide .nav-progress{padding:4px 16px;height:10px}
+#toolSurvivalGuide .nav-track{width:100%;height:5px;background:var(--surf2);border-radius:3px;overflow:hidden}
+#toolSurvivalGuide .nav-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--ac),var(--soft));transition:width .3s ease}
+#toolSurvivalGuide .pg-dots{display:flex;align-items:center;justify-content:center;gap:5px;padding:2px 0}
+#toolSurvivalGuide .pg-dot{width:6px;height:6px;border-radius:50%;background:var(--surf2);border:1px solid var(--bdrs);transition:all .2s;cursor:pointer;flex-shrink:0}
+#toolSurvivalGuide .pg-dot.cur{background:var(--tab-ac,var(--ac));border-color:var(--tab-ac,var(--ac));width:18px;border-radius:3px}
+#toolSurvivalGuide .pg-dot.done{background:var(--surf2);border-color:var(--mu)}
+#toolSurvivalGuide .nav-tabs{display:flex;align-items:center;padding:0 10px 8px;gap:4px}
+#toolSurvivalGuide .tab-btn{flex:1;background:none;border:1px solid var(--bdrs);border-radius:8px;color:var(--mu);font-family:"Bebas Neue",sans-serif;font-size:13px;letter-spacing:.12em;padding:7px 4px;cursor:pointer;transition:all .18s}
+#toolSurvivalGuide .tab-btn.active{background:color-mix(in srgb,var(--tab-ac,var(--ac)) 12%,var(--surf));border-color:color-mix(in srgb,var(--tab-ac,var(--ac)) 45%,transparent);color:var(--tab-ac,var(--ac))}
+#toolSurvivalGuide .nav-arrow{width:36px;height:34px;background:var(--surf);border:1px solid var(--bdrs);border-radius:8px;color:var(--txd);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+#toolSurvivalGuide .nav-arrow:hover{border-color:var(--ac);color:var(--ac)}
+#toolSurvivalGuide .nav-arrow:disabled{opacity:.3;cursor:default}
+#toolSurvivalGuide .nav-arrow:disabled:hover{border-color:var(--bdrs);color:var(--txd)}
+#toolSurvivalGuide .key-hint{font-size:9px;color:var(--mu);text-align:center;margin-top:6px;letter-spacing:.06em}
+
+
+#toolSurvivalGuide .chap-toggle{background:none;border:1px solid var(--bdrs);border-radius:6px;color:var(--mu);font-size:12px;line-height:1;padding:2px 7px 1px;cursor:pointer;flex-shrink:0;transition:all .15s;margin-left:6px}
+#toolSurvivalGuide .chap-toggle:hover{border-color:var(--txd);color:var(--txd)}
+#toolSurvivalGuide .chap-toggle.open{border-color:color-mix(in srgb,var(--tab-ac,var(--ac)) 50%,transparent);color:var(--tab-ac,var(--ac))}
+#toolSurvivalGuide .iv-mode-row{display:flex;gap:6px;margin-bottom:8px}
+#toolSurvivalGuide .iv-mode-btn{flex:1;background:var(--surf);border:1px solid var(--bdrs);border-radius:8px;color:var(--mu);font-family:"Bebas Neue",sans-serif;font-size:10px;letter-spacing:.1em;padding:6px 4px 5px;cursor:pointer;transition:all .15s;text-align:center}
+#toolSurvivalGuide .iv-mode-btn.active{background:color-mix(in srgb,var(--soft) 12%,var(--surf));border-color:var(--soft);color:var(--soft)}
+
+#toolSurvivalGuide .toc-tab{margin-top:4px;margin-bottom:2px}
+#toolSurvivalGuide .toc-tab-label{font-family:"Bebas Neue",sans-serif;font-size:12px;letter-spacing:.18em;color:var(--mu);padding:6px 4px 4px;display:flex;align-items:center;gap:6px}
+#toolSurvivalGuide .toc-tab-label .toc-tab-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+#toolSurvivalGuide .toc-sec-list{display:flex;flex-direction:column;gap:1px;padding-bottom:6px}
+#toolSurvivalGuide .toc-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .12s}
+#toolSurvivalGuide .toc-item:hover{background:var(--surf)}
+#toolSurvivalGuide .toc-item.cur{background:color-mix(in srgb,var(--toc-ac,var(--ac)) 8%,var(--surf2));border:1px solid color-mix(in srgb,var(--toc-ac,var(--ac)) 28%,transparent)}
+#toolSurvivalGuide .toc-item-name{font-family:"Bebas Neue",sans-serif;font-size:13px;letter-spacing:.1em;color:var(--txd);flex:1}
+#toolSurvivalGuide .toc-item.cur .toc-item-name{color:var(--toc-ac,var(--ac))}
+#toolSurvivalGuide .toc-item-pgdots{display:flex;gap:3px}
+#toolSurvivalGuide .toc-item-pgdot{width:5px;height:5px;border-radius:50%;background:var(--surf2);transition:background .15s}
+#toolSurvivalGuide .toc-item-pgdot.done{background:var(--mu)}
+#toolSurvivalGuide .toc-item-pgdot.cur{background:var(--toc-ac,var(--ac))}
+#toolSurvivalGuide .toc-divider{height:1px;background:var(--bdrs);margin:6px 0}
+
+#toolSurvivalGuide .sg-dd{position:relative;flex:1}
+#toolSurvivalGuide .sg-dd-btn{display:flex;align-items:center;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:7px 10px;cursor:pointer;gap:6px;transition:border-color .15s}
+#toolSurvivalGuide .sg-dd-btn:hover{border-color:var(--txd)}
+#toolSurvivalGuide .sg-dd-val{flex:1;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#toolSurvivalGuide .sg-dd-arrow{color:var(--mu);font-size:9px;flex-shrink:0;transition:transform .15s}
+#toolSurvivalGuide .sg-dd-btn.open .sg-dd-arrow{transform:rotate(180deg)}
+#toolSurvivalGuide .sg-dd-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--panel);border:1px solid var(--bdr);border-radius:9px;z-index:30;display:none;max-height:220px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.55)}
+#toolSurvivalGuide .sg-dd-list::-webkit-scrollbar{display:none}
+#toolSurvivalGuide .sg-dd-list.open{display:block;animation:fadeUp .12s ease}
+#toolSurvivalGuide .sg-dd-item{padding:9px 12px;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--txd);cursor:pointer;transition:background .1s}
+#toolSurvivalGuide .sg-dd-item:hover{background:var(--surf)}
+#toolSurvivalGuide .sg-dd-item.active{color:var(--ac);background:color-mix(in srgb,var(--ac) 6%,var(--panel))}
+#toolSurvivalGuide .view-toggle{display:flex;gap:6px;margin:6px 0 2px}
+#toolSurvivalGuide .view-btn{flex:1;background:var(--surf);border:1px solid var(--bdrs);border-radius:8px;color:var(--mu);font-family:"Bebas Neue",sans-serif;font-size:11px;letter-spacing:.12em;padding:6px 4px 5px;cursor:pointer;transition:all .15s}
+#toolSurvivalGuide .view-btn.active{background:color-mix(in srgb,var(--soft) 12%,var(--surf));border-color:var(--soft);color:var(--soft)}
+
+/* Zone calibration */
+#toolSurvivalGuide .photo-wrap{touch-action:pan-y}
+#toolSurvivalGuide .tap-zone{border:1.5px dashed transparent;transition:border-color .15s,background .15s}
+#toolSurvivalGuide .tap-zone.vis{border-color:var(--zone-color,var(--ac))}
+#toolSurvivalGuide .tap-zone.lit{background:color-mix(in srgb,var(--zone-color,var(--ac)) 28%,transparent);border-color:var(--zone-color,var(--ac));border-style:solid}
+#toolSurvivalGuide .calib-btn{position:absolute;top:6px;right:6px;z-index:12;background:var(--bg1);border:1px solid var(--bdrs);border-radius:6px;color:var(--mu);font-family:"JetBrains Mono",monospace;font-size:8px;letter-spacing:.1em;padding:4px 7px 3px;cursor:pointer;transition:all .15s}
+#toolSurvivalGuide .calib-btn:hover,.calib-btn.active{border-color:var(--met);color:var(--met)}
+#toolSurvivalGuide .calib-panel{background:var(--panel);border:1px solid var(--bdrs);border-radius:10px;margin-top:6px;overflow:hidden;display:none}
+#toolSurvivalGuide .calib-panel.open{display:block;animation:fadeUp .15s ease}
+#toolSurvivalGuide .calib-header{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--bdrs)}
+#toolSurvivalGuide .calib-step{font-size:8px;color:var(--mu);flex:1}
+#toolSurvivalGuide .calib-name{font-family:"Bebas Neue",sans-serif;font-size:13px;letter-spacing:.1em;color:var(--met)}
+#toolSurvivalGuide .calib-hint{font-size:9px;color:var(--mu);padding:6px 10px;background:color-mix(in srgb,var(--met) 5%,var(--bg1))}
+#toolSurvivalGuide .calib-list{max-height:140px;overflow-y:auto;padding:4px 0}
+#toolSurvivalGuide .calib-row{display:flex;align-items:center;gap:8px;padding:5px 10px;font-family:"JetBrains Mono",monospace;font-size:9px;cursor:pointer;transition:background .12s}
+#toolSurvivalGuide .calib-row:hover{background:var(--surf)}
+#toolSurvivalGuide .calib-row.done{color:var(--grn)}
+#toolSurvivalGuide .calib-row.cur{background:color-mix(in srgb,var(--met) 8%,var(--surf));color:var(--met)}
+#toolSurvivalGuide .calib-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+#toolSurvivalGuide .calib-actions{display:flex;gap:6px;padding:7px 10px;border-top:1px solid var(--bdrs)}
+#toolSurvivalGuide .calib-act{flex:1;background:var(--surf);border:1px solid var(--bdrs);border-radius:8px;color:var(--txd);font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.08em;padding:7px 4px 6px;cursor:pointer;transition:all .15s;text-align:center}
+#toolSurvivalGuide .calib-act.primary{background:color-mix(in srgb,var(--met) 10%,var(--surf));border-color:var(--met);color:var(--met)}
+#toolSurvivalGuide .calib-act:hover{border-color:var(--txd);color:var(--tx)}
+#toolSurvivalGuide .zone-placed{fill:none;stroke:var(--met);stroke-width:1.5;stroke-dasharray:4 2;opacity:.7;pointer-events:none}
+
+#toolSurvivalGuide #app { height:100% !important; }
+
 </style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -9160,6 +9359,11 @@
           <div class="practice-card-title" data-i18n="tool_vocal_title">VOCAL RANGE</div>
           <div class="practice-card-sub" data-i18n="tool_vocal_sub">Guided assessment · tessitura map · voice type · track progress</div>
         </button>
+        <button class="practice-card-btn" onclick="enterTool('survivalguide')" data-fav-id="tool:survivalguide">
+          <div class="practice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+          <div class="practice-card-title" data-i18n="tool_sg_title">SURVIVAL GUIDE</div>
+          <div class="practice-card-sub" data-i18n="tool_sg_sub">theory · guitar · piano</div>
+        </button>
       </div>
     </div>
 
@@ -9512,6 +9716,7 @@
       <!-- Current chord picker -->
       <div class="card warm">
         <div class="card-glow"></div>
+
         <div class="card-label" style="display:flex;align-items:center;justify-content:space-between">
           <span data-i18n="prog_chord_tab">CHORD</span>
           <button class="prog-preset-btn" style="width:auto;padding:5px 10px;margin:0;font-size:8px" onclick="progOpenPresetModal()">
@@ -10583,6 +10788,52 @@
     <div class="flash-beat-num" id="flashBeatNum">1</div>
     <button class="flash-close" onclick="closeFlash()" data-i18n="flash_close">✕ CLOSE</button>
     <div class="flash-hint" data-i18n="flash_hint">TAP ANYWHERE TO CLOSE</div>
+  </div>
+
+
+
+  <!-- ═══ SURVIVAL GUIDE TOOL ═══ -->
+  <div id="toolSurvivalGuide" class="hidden" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+<div id="app">
+  <div id="pageArea"></div>
+  <div id="nav">
+    <div class="nav-row1">
+      <div class="nav-section" id="navSection">DYNAMICS</div>
+      <div class="nav-next" id="navNext"></div>
+      <button class="chap-toggle open" id="chapToggle" title="Chapters">&#9776;</button>
+    </div>
+    <div class="nav-progress"><div class="nav-track"><div class="nav-fill" id="navFill" style="width:0%"></div></div></div>
+    <div class="pg-dots" id="pgDots"></div>
+    <div class="ch-pills" id="chPills"></div>
+    <div class="nav-tabs">
+      <button class="nav-arrow" id="btnPrev">&#8592;</button>
+      <button class="tab-btn" data-tab="theory">THEORY</button>
+      <button class="tab-btn" data-tab="guitar">GUITAR</button>
+      <button class="tab-btn" data-tab="piano">PIANO</button>
+      <button class="nav-arrow" id="btnNext">&#8594;</button>
+    </div>
+  </div>
+  </div>
+  <!-- Pedal plugin sheet -->
+  <div id="overlay" class="sg-overlay">
+    <div class="sg-sheet">
+      <div class="sheet-hdr">
+        <div class="sheet-title">PEDALS</div>
+        <button class="sheet-close" id="sheetClose">&#10005;</button>
+      </div>
+      <div id="sheetBody"></div>
+    </div>
+  </div>
+  <!-- Table of Contents overlay -->
+  <div id="tocOverlay" class="sg-overlay">
+    <div class="sg-sheet">
+      <div class="sheet-hdr">
+        <div class="sheet-title">CONTENTS</div>
+        <button class="sheet-close" id="tocClose">&#10005;</button>
+      </div>
+      <div id="tocBody"></div>
+    </div>
+  </div>
   </div>
 
   <!-- ═══════════════ PRACTICE / TRAIN ═══════════════ -->
@@ -14452,7 +14703,7 @@ const TOOL_FOLDER_MAP = {
   piano: 'pitch', tonal: 'pitch',
   chords: 'harmony', guitarchords: 'harmony', progression: 'harmony',
   drumkit: 'rhythm',
-  volume: 'analysis', transpose: 'analysis', vocalrange: 'analysis', cof: 'analysis'
+  volume: 'analysis', transpose: 'analysis', vocalrange: 'analysis', cof: 'analysis', survivalguide: 'analysis'
 };
 const TOOL_FOLDER_NAMES = {
   pitch:    'PITCH & SOUND',
@@ -14499,6 +14750,7 @@ function enterTool(name) {
   document.getElementById('toolDrumkit')?.classList.toggle('hidden', name !== 'drumkit');
   document.getElementById('toolGuitarChords')?.classList.toggle('hidden', name !== 'guitarchords');
   document.getElementById('toolProgression')?.classList.toggle('hidden', name !== 'progression');
+  document.getElementById('toolSurvivalGuide')?.classList.toggle('hidden', name !== 'survivalguide');
 
   // Module header — same pattern as enterExercise
   _headerBackFn = exitTool;
@@ -14513,6 +14765,7 @@ function enterTool(name) {
   });
 
   if (name === 'piano') { buildRefPitchGrid(); buildPiano(); _initPianoMultiTouch(); }
+  if (name === 'survivalguide') { try { sgInit(); } catch(e) { console.error('sgInit',e); } }
   if (name === 'tonal') tcInit();
   if (name === 'volume') dbStart();
   if (name === 'transpose') tpInit();
@@ -14537,7 +14790,7 @@ function exitTool(resetToHub) {
     if (sesBr) sesBr.style.removeProperty('margin-bottom');
     var toolsEl = document.querySelector('.tools-only.stack');
     if (toolsEl) { toolsEl.style.removeProperty('padding-top'); toolsEl.style.removeProperty('margin-top'); }
-    ['toolPiano','toolTonal','toolVolume','toolTranspose','toolChords','toolCof','toolVocalRange','toolDrumkit','toolGuitarChords','toolProgression'].forEach(function(id) {
+    ['toolPiano','toolTonal','toolVolume','toolTranspose','toolChords','toolCof','toolVocalRange','toolDrumkit','toolGuitarChords','toolProgression','toolSurvivalGuide'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) { el.style.removeProperty('margin-top'); el.style.removeProperty('position'); }
     });
@@ -14550,10 +14803,11 @@ function exitTool(resetToHub) {
   if (currentTool === 'drumkit' && dk_playing) togglePlay();
   if (currentTool === 'drumkit') dkClosePresetPanel();
   if (currentTool === 'progression') { progStop(); progCloseSyncTray(); }
+  if (currentTool === 'survivalguide') { try { sgExit(); } catch(e) {} }
 
   const folder = TOOL_FOLDER_MAP[currentTool];
   currentTool = null;
-  ['toolPiano','toolTonal','toolVolume','toolTranspose','toolChords','toolCof','toolVocalRange','toolDrumkit','toolGuitarChords','toolProgression'].forEach(id =>
+  ['toolPiano','toolTonal','toolVolume','toolTranspose','toolChords','toolCof','toolVocalRange','toolDrumkit','toolGuitarChords','toolProgression','toolSurvivalGuide'].forEach(id =>
     document.getElementById(id)?.classList.add('hidden'));
 
   if (resetToHub) {
@@ -15588,7 +15842,8 @@ var TOOL_NAMES = {
   cof:          'CIRCLE OF FIFTHS',
   volume:       'VOLUME METER',
   transpose:    'TRANSPOSER',
-  vocalrange:   'VOCAL RANGE'
+  vocalrange:   'VOCAL RANGE',
+  survivalguide: 'SURVIVAL GUIDE'
 };
 var TOOL_SUBS = {
   piano:        'play & explore notes',
@@ -15600,7 +15855,8 @@ var TOOL_SUBS = {
   cof:          'key relationships at a glance',
   volume:       'decibel meter',
   transpose:    'shift any note or key',
-  vocalrange:   'find your range'
+  vocalrange:   'find your range',
+  survivalguide: 'theory · guitar · piano'
 };
 
 function setHeaderModule(name, subtitle, exerciseId) {
@@ -25290,7 +25546,7 @@ const SOLFEGE_MAP = { C: 'Do', D: 'Re', E: 'Mi', F: 'Fa', G: 'Sol', A: 'La', B: 
 // ═══════════════════════════════════════════════
 const STRINGS = {
   en: {
-    mode_settings:'SETTINGS', mode_tuner:'TUNER', mode_metro:'METRO', mode_tools:'TOOLS', mode_train:'TRAIN',
+    tool_sg_title:'SURVIVAL GUIDE', tool_sg_sub:'theory · guitar · piano', mode_settings:'SETTINGS', mode_tuner:'TUNER', mode_metro:'METRO', mode_tools:'TOOLS', mode_train:'TRAIN',
     status_idle:'IDLE', status_listening:'LISTENING', status_analyzing:'ANALYZING',
     tooltip_play:'PLAY A NOTE TO BEGIN',
     tooltip_ref:'REF: {name} · SING OR PLAY',
@@ -25840,7 +26096,7 @@ const STRINGS = {
     }
   },
   it: {
-    mode_settings:'IMPOSTAZIONI', mode_tuner:'ACCORDATORE', mode_metro:'METRO', mode_tools:'STRUMENTI', mode_train:'ESERCIZI',
+    tool_sg_title:'GUIDA RAPIDA', tool_sg_sub:'teoria · chitarra · pianoforte', mode_settings:'IMPOSTAZIONI', mode_tuner:'ACCORDATORE', mode_metro:'METRO', mode_tools:'STRUMENTI', mode_train:'ESERCIZI',
     status_idle:'INATTIVO', status_listening:'IN ASCOLTO', status_analyzing:'ANALISI',
     tooltip_play:'SUONA UNA NOTA PER INIZIARE',
     tooltip_ref:'RIF: {name} · CANTA O SUONA',
@@ -38512,6 +38768,1405 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   // Don't show timer fill on load — only when inside a module
 });
+
+
+// ─── SURVIVAL GUIDE MODULE ───────────────────────────────────────────────────
+(function(){
+
+
+// ── Custom Dropdown ────────────────────────────────────────────────────
+function buildCustomDropdown(items, value, onchange) {
+  var wrap=document.createElement('div');wrap.className='sg-dd';
+  var btn=document.createElement('div');btn.className='sg-dd-btn';
+  var cur=items.find(function(i){return i[0]===value;})||items[0];
+  var valEl=document.createElement('span');valEl.className='sg-dd-val';valEl.textContent=cur[1];
+  var arr=document.createElement('span');arr.className='sg-dd-arrow';arr.textContent='▾';
+  btn.appendChild(valEl);btn.appendChild(arr);
+  var list=document.createElement('div');list.className='sg-dd-list';
+  items.forEach(function(item){
+    var opt=document.createElement('div');opt.className='sg-dd-item'+(item[0]===value?' active':'');
+    opt.textContent=item[1];
+    opt.addEventListener('pointerdown',function(e){
+      e.stopPropagation();
+      list.querySelectorAll('.sg-dd-item').forEach(function(o){o.classList.remove('active');});
+      opt.classList.add('active');
+      valEl.textContent=item[1];
+      list.classList.remove('open');btn.classList.remove('open');
+      onchange(item[0]);
+    });
+    list.appendChild(opt);
+  });
+  btn.addEventListener('pointerdown',function(e){
+    e.stopPropagation();
+    list.classList.toggle('open');btn.classList.toggle('open');
+  });
+  document.addEventListener('pointerdown',function(){
+    list.classList.remove('open');btn.classList.remove('open');
+  },{capture:true,passive:true});
+  wrap.appendChild(btn);wrap.appendChild(list);
+  return wrap;
+}
+
+// ── SVG HELPERS ──────────────────────────────────────────────────────
+var SVG='http://www.w3.org/2000/svg';
+function ns(t){return document.createElementNS(SVG,t);}
+function sa(e,a){Object.keys(a).forEach(function(k){e.setAttribute(k,a[k]);});return e;}
+function mksvg(w,h){var s=sa(ns('svg'),{viewBox:'0 0 '+w+' '+h,width:w,height:h});s.style.maxWidth='100%';return s;}
+function el(t,a,p){var e=sa(ns(t),a);if(p)p.appendChild(e);return e;}
+
+// ── AMP PANEL SVG ────────────────────────────────────────────────────
+function buildAmpSVG(title,sub,controls,accent){
+  var W=300,H=110,s=mksvg(W,H);
+  el('rect',{x:2,y:2,width:W-4,height:H-4,rx:6,fill:'#1a1a2e',stroke:accent,'stroke-width':1.5},s);
+  el('rect',{x:2,y:2,width:56,height:H-4,rx:6,fill:accent,opacity:0.1},s);
+  var br=el('text',{x:31,y:H/2+5,'text-anchor':'middle','font-family':'Bebas Neue,sans-serif','font-size':13,fill:accent,'letter-spacing':'0.1',transform:'rotate(-90,31,'+H/2+')'},s);
+  br.textContent=title;
+  var st=el('text',{x:31,y:H/2+18,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':5.5,fill:'#4a4a6a',transform:'rotate(-90,31,'+(H/2+14)+')'},s);
+  st.textContent=sub;
+  var sx=68,sp=(W-sx-14)/Math.max(controls.length,1);
+  controls.forEach(function(c,i){
+    var cx=sx+i*sp+sp/2,cy=H/2-4;
+    if(c.t==='k'){
+      el('circle',{cx:cx,cy:cy,r:11,fill:'#2a2a40',stroke:c.c||'#6a6c85','stroke-width':1.2},s);
+      el('circle',{cx:cx,cy:cy,r:7,fill:'#1a1a2e',stroke:c.c||'#4a4a6a','stroke-width':0.8},s);
+      el('circle',{cx:cx,cy:cy-8,r:1.8,fill:c.c||'#a3a5b8'},s);
+    } else if(c.t==='s'){
+      el('rect',{x:cx-5,y:cy-11,width:10,height:22,rx:4,fill:'#2a2a40',stroke:c.c||'#6a6c85','stroke-width':1},s);
+      el('rect',{x:cx-3,y:cy-1,width:6,height:8,rx:2,fill:c.c||'#5ee2ff'},s);
+    } else {
+      el('circle',{cx:cx,cy:cy,r:6,fill:'#0a0a12',stroke:'#4a4a6a','stroke-width':1.5},s);
+      el('circle',{cx:cx,cy:cy,r:2.5,fill:'#2a2a3e'},s);
+    }
+    var t2=el('text',{x:cx,y:H-8,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':5.5,fill:'#6a6c85'},s);
+    t2.textContent=c.l;
+  });
+  return s;
+}
+
+
+var AMP_DATA_FULL = {
+  marshall:{t:"Marshall DSL",accent:"#ff8a65",bg:"#1a1a1a",sub:"All-Valve 2-Channel Head",w:420,h:100,
+    controls:[
+      {x:18,label:"INPUT",type:"j",c:"#a3a5b8"},
+      {x:52,label:"CH SEL",type:"s",c:"#ffd166",name:"Channel Selector",desc:"Switches between Clean/Crunch and Lead channels. Both channels share the EQ. Footswitchable."},
+      {x:88,label:"GAIN 1",type:"k",c:"#ff8a65",name:"Gain (Channel 1)",desc:"Preamp drive for the clean/crunch channel. Low = clean, high = crunch. The classic Marshall crunch is this channel at medium-high gain."},
+      {x:122,label:"VOL 1",type:"k",c:"#ffa07a",name:"Volume (Channel 1)",desc:"Output level of channel 1 before the master. The relationship between Gain and Volume controls the character of the drive."},
+      {x:158,label:"GAIN 2",type:"k",c:"#ff4444",name:"Gain (Channel 2)",desc:"Drive for the lead channel. This is the high-gain channel - saturated lead tone with lots of sustain."},
+      {x:192,label:"VOL 2",type:"k",c:"#ff8a65",name:"Volume (Channel 2)",desc:"Output level of the lead channel. Balance with channel 1 volume for consistent level when switching."},
+      {x:230,label:"BASS",type:"k",c:"#7aafff",name:"Bass",desc:"Low frequency control. On Marshalls, too much bass can cause muddiness - especially through a 4x12 cabinet."},
+      {x:264,label:"MID",type:"k",c:"#7aafff",name:"Middle",desc:"The most important Marshall EQ knob. Cutting mid gives the scooped heavy metal sound. Boosting mid cuts through a live mix."},
+      {x:298,label:"TREBLE",type:"k",c:"#7aafff",name:"Treble",desc:"High frequency brightness. The Marshall treble is voiced to add presence without harshness when used with moderate mid settings."},
+      {x:334,label:"PRESENCE",type:"k",c:"#b8a3ff",name:"Presence",desc:"High-frequency boost in the power amp stage - different from treble. Adds air and definition. Often set between 5 and 7."},
+      {x:370,label:"MASTER",type:"k",c:"#ffa07a",name:"Master Volume",desc:"Controls overall output. High gain + low master = cranked amp tone at lower volumes. This is the key to Marshall tone without ear damage."},
+      {x:396,label:"PWR",type:"s",c:"#ff4444",name:"Power Switch",desc:"Main power. On tube amps, always use Standby first - wait 30 seconds for tubes to warm up before playing."}
+    ]
+  },
+  vox:{t:"Vox AC30",accent:"#b6f25b",bg:"#1a1a14",sub:"EL84 All-Valve 2x12",w:380,h:100,
+    controls:[
+      {x:18,label:"INPUT",type:"j",c:"#a3a5b8"},
+      {x:52,label:"VOLUME",type:"k",c:"#b6f25b",name:"Volume",desc:"Channel volume. The AC30 has NO master volume - it needs to be turned up to get the natural power-amp compression that defines its tone. Cannot be used quietly."},
+      {x:92,label:"TREBLE",type:"k",c:"#7aafff",name:"Treble",desc:"High frequency content. The AC30 treble is voiced for the characteristic chime - bright but musical, not harsh."},
+      {x:132,label:"BASS",type:"k",c:"#7aafff",name:"Bass",desc:"Low frequency warmth. The AC30 bass control shapes the bottom end without muddying the characteristic open airy sound."},
+      {x:172,label:"CUT",type:"k",c:"#b6f25b",name:"Treble Cut",desc:"Works in REVERSE - turning up cuts high frequencies. Counterintuitive but essential for the classic Vox chime. Usually set around 5 to 7."},
+      {x:214,label:"REVERB",type:"k",c:"#b8a3ff",name:"Reverb",desc:"Spring reverb with the classic drip and splash of 60s recordings. The Vox reverb has a distinctive character - warmer than Fender spring reverb."},
+      {x:256,label:"MIDDLE",type:"k",c:"#7aafff",name:"Middle",desc:"Mid frequency control. The EL84 power tubes give the AC30 a natural mid-heavy character - the mid knob fine-tunes this."},
+      {x:298,label:"STANDBY",type:"s",c:"#ffd166",name:"Standby",desc:"Mutes output while keeping tubes warm. Always use Standby before powering off, and warm up in Standby before playing."},
+      {x:336,label:"POWER",type:"s",c:"#b6f25b",name:"Power",desc:"Main power switch. Tube amps need warm-up time. Use the Standby switch correctly to extend tube life."}
+    ]
+  },
+  fender:{t:"Fender Twin Reverb",accent:"#ffd166",bg:"#111118",sub:"6L6 85W Blackface 2x12",w:420,h:100,
+    controls:[
+      {x:18,label:"INPUT",type:"j",c:"#a3a5b8"},
+      {x:52,label:"VOLUME",type:"k",c:"#ffd166",name:"Volume",desc:"The Twin rarely breaks up even at full volume - it stays remarkably clean. The gold standard headroom amp used throughout jazz, country, and funk."},
+      {x:90,label:"TREBLE",type:"k",c:"#7aafff",name:"Treble",desc:"Fender treble is very interactive with bass. Small adjustments go a long way. The Fender treble character is bright and glassy."},
+      {x:128,label:"BASS",type:"k",c:"#7aafff",name:"Bass",desc:"Low frequency control. Cutting bass can make the amp feel tighter and more responsive - great for rhythm guitar with a band."},
+      {x:166,label:"MIDDLE",type:"k",c:"#7aafff",name:"Middle",desc:"Fender amps have a pronounced mid notch in the tone stack. The mid knob fills it back in. Often set low for the classic scooped Fender sound."},
+      {x:204,label:"REVERB",type:"k",c:"#b8a3ff",name:"Reverb",desc:"The Twin spring reverb is legendary - warm, lush, and musical. The standard that all other guitar reverb is measured against."},
+      {x:242,label:"VIBRATO",type:"k",c:"#b8a3ff",name:"Tremolo Depth",desc:"The Twin actually has tremolo (volume modulation), not true vibrato. Depth controls the intensity of the wavering effect."},
+      {x:280,label:"SPEED",type:"k",c:"#b8a3ff",name:"Tremolo Speed",desc:"Rate of the tremolo effect. Slow = lush and psychedelic. Fast = choppy and percussive."},
+      {x:318,label:"PRESENCE",type:"k",c:"#ffd166",name:"Presence",desc:"Power amp high-frequency response. Adds sparkle and definition without affecting the preamp tone stack."},
+      {x:356,label:"STANDBY",type:"s",c:"#ffd166",name:"Standby",desc:"Blocks signal while keeping tubes warm. Essential for tube amp longevity - warm up for 30 seconds before playing."},
+      {x:390,label:"POWER",type:"s",c:"#ff4444",name:"Power",desc:"Main power. The Twin runs hot - 85 watts through two 12-inch speakers is genuinely very loud."}
+    ]
+  },
+  katana:{t:"Boss Katana",accent:"#5ee2ff",bg:"#0f1318",sub:"Solid State Modelling",w:400,h:100,
+    controls:[
+      {x:18,label:"INPUT",type:"j",c:"#a3a5b8"},
+      {x:56,label:"CHARACTER",type:"s",c:"#5ee2ff",name:"Amp Character",desc:"Selects one of five amp voices: Clean, Crunch, Lead, Brown, Acoustic. Each models a different amp circuit response and feel."},
+      {x:96,label:"GAIN",type:"k",c:"#ff8a65",name:"Gain",desc:"Preamp drive within the selected character. Combined with the Character selector, covers clean sparkle to saturated lead."},
+      {x:134,label:"VOLUME",type:"k",c:"#ffd166",name:"Volume",desc:"Channel level. The Katana has a power attenuator so you can set volume higher and use the Watt switch for bedroom levels."},
+      {x:172,label:"BASS",type:"k",c:"#7aafff",name:"Bass",desc:"Low frequency. The Katana EQ is voiced for modern playing - responds more predictably than vintage tube amp tone stacks."},
+      {x:210,label:"MID",type:"k",c:"#7aafff",name:"Middle",desc:"Mid frequency. More important than most guitarists realize - mid content is what cuts through a band mix."},
+      {x:248,label:"TREBLE",type:"k",c:"#7aafff",name:"Treble",desc:"High frequency brightness. Roll back for warm jazz tones, boost for cutting lead sounds."},
+      {x:286,label:"FX",type:"s",c:"#b8a3ff",name:"Built-in Effects",desc:"Engages the built-in effects chain including delay, reverb, chorus, etc. The full FX chain is programmable via the Boss Tone Studio app."},
+      {x:324,label:"MASTER",type:"k",c:"#ffa07a",name:"Master Volume",desc:"Overall output level. High Master + low Volume = clean power amp character. Low Master + high Volume = preamp-driven tone."},
+      {x:358,label:"WATT",type:"s",c:"#b6f25b",name:"Power Attenuator",desc:"Switches between full power, 25W, 0.5W, and 1W. Lower wattage gives pushed-amp tones at very low volumes - a huge practical advantage."}
+    ]
+  },
+  rumble:{t:"Fender Rumble",accent:"#ffa07a",bg:"#0f1016",sub:"Class-D Bass Combo",w:520,h:110,
+    photo:'',
+    photoZones:[
+      [1,12,5,36,"#a3a5b8","Input Jack","Where the bass cable plugs in. The Rumble accepts a standard 1/4 inch cable. Signal enters the preamp immediately after this point."],
+      [8,12,8,36,"#ff8a65","Gain","Controls preamp input level. Higher gain adds warmth and harmonic content. The LED above lights red when signal is clipping. For clean tone keep it under halfway."],
+      [16,12,8,36,"#ffd166","Voice Switches","Three mini toggles: Bright adds presence and high-frequency sparkle. Contour scoops the mids for a modern punchy sound. Vintage rolls off the high end for a warm round tone."],
+      [25,12,8,36,"#ff4444","Drive","Overdrive section drive knob. Controls the amount of grit. Works within the OVERDRIVE circuit that is engaged via the toggle between Drive and Level."],
+      [34,12,8,36,"#ff6666","Level","Overdrive section output level. Sets the volume of the overdriven signal relative to your clean level. The red LED indicates the overdrive circuit is active."],
+      [44,12,8,36,"#7aafff","Bass","Low frequency EQ. Shapes the fundamental weight of the bass. Too much can cause muddiness in a band mix - especially below 100Hz."],
+      [54,12,8,36,"#7aafff","Low Mid","Low midrange shaping. The most critical knob for bass in a band context. Cut for clarity, boost for growl and presence in the mix."],
+      [64,12,8,36,"#7aafff","High Mid","Upper midrange. Boosting helps bass cut through without increasing overall volume. Where the fundamental of most guitar chords lives too."],
+      [74,12,8,36,"#7aafff","Treble","High frequency brightness. Controls string attack and click definition. Slap bass players often boost this significantly."],
+      [84,12,9,36,"#ffa07a","Master Volume","Overall output volume. Entirely independent from the EQ and gain settings. Class-D power means the Rumble is remarkably light for its output wattage."]
+    ]
+  },
+  orange:{t:"Orange Rockerverb",accent:"#ff8a65",bg:"#1a0c04",sub:"All-Valve 2-Channel",w:420,h:100,
+    controls:[
+      {x:18,label:"INPUT",type:"j",c:"#a3a5b8"},
+      {x:52,label:"VOL CLN",type:"k",c:"#b6f25b",name:"Clean Volume",desc:"Volume of the clean channel. The Rockerverb clean channel is warm and full-bodied - not as bright as a Fender but very musical."},
+      {x:90,label:"BASS",type:"k",c:"#7aafff",name:"Bass",desc:"Low frequency control. Orange tone stacks interact differently from Marshall or Fender - the bass control has a wider frequency range."},
+      {x:128,label:"MIDDLE",type:"k",c:"#7aafff",name:"Middle",desc:"Orange amps are naturally mid-focused. This is part of the character - thick harmonically rich mids that do not disappear in a mix."},
+      {x:166,label:"TREBLE",type:"k",c:"#7aafff",name:"Treble",desc:"High frequency content. Orange treble is voiced to be musical and present without being harsh - complements the warm character."},
+      {x:204,label:"CH SEL",type:"s",c:"#ffd166",name:"Channel Switch",desc:"Switches between clean and dirty channels. The dirty channel is what Orange is famous for - harmonically complex and dynamic."},
+      {x:244,label:"GAIN",type:"k",c:"#ff4444",name:"Gain (Dirty)",desc:"The dirty channel preamp drive. From mild crunch to fully saturated lead. Responds beautifully to the guitar volume knob."},
+      {x:282,label:"VOL DRT",type:"k",c:"#ff8a65",name:"Dirty Volume",desc:"Output of the dirty channel. Match with clean volume for consistent level when switching channels in a set."},
+      {x:320,label:"REVERB",type:"k",c:"#b8a3ff",name:"Reverb",desc:"Valve-driven spring reverb - warmer and more organic than solid-state reverb. Adds depth without the harsh drip of some springs."},
+      {x:358,label:"STANDBY",type:"s",c:"#ffd166",name:"Standby",desc:"Mutes output while tubes stay warm. Orange amps run hot - proper standby use extends tube life significantly."},
+      {x:390,label:"POWER",type:"s",c:"#ff4444",name:"Power",desc:"Main power switch. Always use Standby first. The Rockerverb uses KT88 or EL34 power tubes depending on version."}
+    ]
+  }
+};
+
+function buildInteractiveAmpPanel(model, tipEl) {
+  var d = AMP_DATA_FULL[model] || AMP_DATA_FULL.marshall;
+  // Photo-based amps: use buildPhotoZone instead of SVG
+  if (d.photo && d.photoZones) {
+    return buildPhotoZoneWithCalib(d.photo, d.photoZones, tipEl, 'a_'+model);
+  }
+  var W = d.w + 60, H = d.h + 30;
+  var s = mksvg(W, H + 28);
+  el('rect',{x:2,y:2,width:W-4,height:H-4,rx:6,fill:d.bg,stroke:d.accent,'stroke-width':1.5},s);
+  el('rect',{x:2,y:2,width:52,height:H-4,rx:6,fill:d.accent,opacity:0.12},s);
+  var brt = el('text',{x:27,y:H/2+5,'text-anchor':'middle','font-family':'Bebas Neue,sans-serif','font-size':12,fill:d.accent,'letter-spacing':'0.1',transform:'rotate(-90,27,'+(H/2)+')'},s);
+  brt.textContent = d.t.split(' ')[0];
+  var subt = el('text',{x:27,y:H/2+18,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':5,fill:'#4a4a6a',transform:'rotate(-90,27,'+(H/2+14)+')'},s);
+  subt.textContent = d.sub;
+  var activeZone = null;
+  d.controls.forEach(function(c) {
+    var cx = c.x + 54, cy = H/2 - 4;
+    if (c.type === 'k') {
+      el('circle',{cx:cx,cy:cy,r:11,fill:'#2a2a40',stroke:c.c,'stroke-width':1.2},s);
+      el('circle',{cx:cx,cy:cy,r:7,fill:'#1a1a2e',stroke:c.c,'stroke-width':0.8},s);
+      el('circle',{cx:cx,cy:cy-8,r:2,fill:c.c},s);
+    } else if (c.type === 's') {
+      el('rect',{x:cx-5,y:cy-11,width:10,height:22,rx:4,fill:'#2a2a40',stroke:c.c,'stroke-width':1},s);
+      el('rect',{x:cx-3,y:cy-1,width:6,height:8,rx:2,fill:c.c},s);
+    } else {
+      el('circle',{cx:cx,cy:cy,r:7,fill:'#0a0a12',stroke:'#4a4a6a','stroke-width':1.5},s);
+      el('circle',{cx:cx,cy:cy,r:3,fill:'#2a2a3e'},s);
+    }
+    el('text',{x:cx,y:H-8,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':6.5,fill:'#7a7c95'},s).textContent = c.label;
+    if (c.name) {
+      var zone = el('rect',{x:cx-13,y:cy-16,width:26,height:32,rx:3,fill:'white',opacity:0,cursor:'pointer'},s);
+      (function(ctrl, zEl) {
+        zEl.addEventListener('pointerdown', function(e) {
+          e.stopPropagation();
+          if (activeZone) { activeZone.setAttribute('opacity',0); }
+          if (activeZone === zEl) { activeZone = null; if(tipEl)tipEl.classList.remove('show'); return; }
+          activeZone = zEl;
+          zEl.setAttribute('opacity','0.22'); zEl.setAttribute('fill',ctrl.c);
+          if (tipEl) {
+            tipEl.querySelector('.tip-name').textContent = ctrl.name;
+            tipEl.querySelector('.tip-name').style.color = ctrl.c;
+            tipEl.querySelector('.tip-desc').textContent = ctrl.desc;
+            tipEl.classList.add('show');
+          }
+        });
+      })(c, zone);
+    }
+  });
+
+  return s;
+}
+
+// ── PIANO SVGs ───────────────────────────────────────────────────────
+function buildPianoKeyboard(){
+  var s=mksvg(360,118);
+  var whites=[[8,'C3'],[30,'D3'],[52,'E3'],[74,'F3'],[96,'G3'],[118,'A3'],[140,'B3'],
+              [162,'C4',true],[184,'D4'],[206,'E4'],[228,'F4'],[250,'G4'],[272,'A4',false,true],[294,'B4'],[316,'C5']];
+  whites.forEach(function(w){
+    var fill=w[2]?'#fff3e0':w[3]?'#edfce6':'#e8eaf0';
+    var stroke=w[2]?'#ffa07a':w[3]?'#b6f25b':'#9095b0';
+    el('rect',{x:w[0],y:8,width:21,height:70,rx:2,fill:fill,stroke:stroke,'stroke-width':w[2]||w[3]?1.2:0.8},s);
+    if(w[2]||w[3]||w[1]==='C3'||w[1]==='C5'){
+      var t=el('text',{x:w[0]+10.5,y:83,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':6,fill:w[2]?'#ffa07a':w[3]?'#b6f25b':'#6a6c85'},s);
+      t.textContent=w[1];
+    }
+  });
+  [[24],[46],[86],[108],[130],[178],[200],[240],[262],[284]].forEach(function(b){
+    el('rect',{x:b[0],y:8,width:13,height:44,rx:2,fill:'#1a1a2e',stroke:'#0a0a12','stroke-width':0.5},s);
+  });
+  el('line',{x1:172,y1:79,x2:172,y2:94,stroke:'#ffa07a','stroke-width':0.8},s);
+  var mc=el('text',{x:172,y:103,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':6.5,fill:'#ffa07a'},s); mc.textContent='MIDDLE C';
+  el('line',{x1:282,y1:79,x2:282,y2:94,stroke:'#b6f25b','stroke-width':0.8},s);
+  var a4=el('text',{x:282,y:103,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':6.5,fill:'#b6f25b'},s); a4.textContent='A 440 Hz';
+  el('line',{x1:8,y1:110,x2:160,y2:110,stroke:'#2e2e48','stroke-width':0.8},s);
+  el('text',{x:84,y:116,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':5.5,fill:'#4a4a6a'},s).textContent='OCTAVE';
+  el('line',{x1:162,y1:110,x2:314,y2:110,stroke:'#2e2e48','stroke-width':0.8},s);
+  el('text',{x:238,y:116,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':5.5,fill:'#4a4a6a'},s).textContent='OCTAVE';
+  return s;
+}
+function buildPedalDiagram(){
+  var s=mksvg(260,82);
+  el('rect',{x:8,y:8,width:244,height:46,rx:5,fill:'#1a1a2e',stroke:'#2e2e48','stroke-width':1.2},s);
+  el('rect',{x:20,y:14,width:64,height:30,rx:4,fill:'#2a2a42',stroke:'#b8a3ff','stroke-width':1},s);
+  el('rect',{x:98,y:14,width:64,height:30,rx:4,fill:'#2a2a42',stroke:'#5ee2ff','stroke-width':1},s);
+  el('rect',{x:176,y:14,width:64,height:30,rx:4,fill:'#2a2a42',stroke:'#b6f25b','stroke-width':1},s);
+  [['SOFT',52,'#b8a3ff'],['SOSTENUTO',130,'#5ee2ff'],['DAMPER',208,'#b6f25b']].forEach(function(p){
+    el('text',{x:p[1],y:33,'text-anchor':'middle','font-family':'Bebas Neue,sans-serif','font-size':p[0]==='SOSTENUTO'?9:11,fill:p[2],'letter-spacing':'0.06em'},s).textContent=p[0];
+  });
+  [['LEFT',52],['MIDDLE',130],['RIGHT',208]].forEach(function(p){
+    el('text',{x:p[1],y:66,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':6,fill:'#4a4a6a'},s).textContent=p[0];
+  });
+  return s;
+}
+
+// ── PHOTO DIAGRAM (Wikipedia API) ────────────────────────────────────
+// Zones: [x%, y%, w%, h%, color, name, description]
+// Percentages of the rendered image dimensions
+var GUITAR_ZONES = {
+  strat:[
+    [30,2,40,11,'#b8a3ff','Headstock & Tuning Pegs','Holds 6 machine heads. Tightening raises pitch, loosening lowers it. The Strat headstock shape is one of the most copied designs in history.'],
+    [37,13,26,4,'#d8c0a0','Nut','Bone or synthetic nut slots space the strings and set open-string height. A well-cut nut is as important as a proper fret job.'],
+    [35,14,30,18,'#5ee2ff','Neck & Fretboard','22 frets on rosewood or maple. Each fret = one semitone. Dot inlays at 3, 5, 7, 9, double dots at 12.'],
+    [26,34,48,8,'#ffa07a','Neck Pickup','Single-coil nearest the neck. Full and warm, less high-frequency bite. Classic for blues, jazz, and clean tones.'],
+    [26,46,48,8,'#ffa07a','Middle Pickup','Center single-coil. Positions 2 and 4 on the selector combine it with adjacent pickups for the famous hum-cancelling quack.'],
+    [26,58,48,8,'#ffa07a','Bridge Pickup','Brightest and most aggressive single-coil. Biting attack, cuts through a mix. Takes distortion better than the other positions.'],
+    [26,68,48,10,'#5ee2ff','Tremolo Bridge','Spring-loaded bridge with 6 individual saddles. The whammy arm shifts all pitches together. Spring tension affects tuning stability.'],
+    [60,36,14,7,'#ffd166','Pickup Selector','5-way blade: bridge, bridge+mid, mid, mid+neck, neck. Positions 2 and 4 combine coils out of phase for the classic quack.'],
+    [62,45,11,8,'#ffa07a','Master Volume','Controls overall output. Rolling back slightly cleans up distortion on many amps. Good for natural swells during playing.'],
+    [73,54,11,8,'#ff8aae','Tone 1 — Neck & Mid','Passive low-pass filter for neck and middle pickups. Rolling back cuts treble and warms the tone. At zero: thick and dark.'],
+    [62,63,11,8,'#ff8aae','Tone 2 — Bridge','Passive filter for the bridge pickup. Often left fully open for maximum bite, but rolling back tames harshness at high gain.']
+  ],
+  tele:[
+    [30,1,40,12,'#b8a3ff','Headstock & Tuning Pegs','Compact Tele headstock with 6-in-line or 3+3 machine heads. The original production electric guitar headstock design.'],
+    [36,12,27,5,'#d8c8a0','Nut','Bone or brass nut. Brass nuts are common on Teles and contribute to the characteristic bright "snap" in the tone.'],
+    [34,12,32,26,'#5ee2ff','Neck','Often maple with a maple fingerboard — the maple-on-maple neck contributes significantly to the Tele\'s bright, punchy sound.'],
+    [15,37,70,14,'#ffa07a','Neck Pickup','Single-coil with metal cover. Warmer and fuller than the bridge — often used for jazz, country leads, and clean tones.'],
+    [15,60,70,20,'#ffa07a','Bridge Pickup & Plate','The iconic Tele bridge: large metal plate with the pickup recessed into it. The plate itself resonates and adds metallic brightness to the tone.'],
+    [15,55,70,26,'#5ee2ff','Bridge & Saddles','Usually 3 compensated barrel saddles (some models have 6). The large bridge plate is a defining element of the Tele sound and sustain.'],
+    [58,42,32,38,'#a3a5b8','Volume, Tone & Selector','Volume knob, tone knob, and a 3-way blade switch: neck, both, bridge. Minimal controls for maximum efficiency.']
+  ],
+  lp:[
+    [28,1,44,12,'#b8a3ff','Headstock & Tuning Pegs','Angled headstock — strings break over the nut at a steeper angle than Fenders. This adds string tension and sustain. 3+3 Grover or Kluson tuners.'],
+    [34,12,32,26,'#5ee2ff','Neck','Mahogany neck, typically with a rosewood or ebony fingerboard. The thicker neck profile contributes to sustain and warmth.'],
+    [14,38,72,16,'#ffa07a','Neck Humbucker','Two single-coils wired out of phase to cancel hum. Warm, full, rich — the classic jazz and blues pickup. Less bright than a Strat neck.'],
+    [14,60,72,16,'#ffa07a','Bridge Humbucker','Brighter and more aggressive than the neck. The classic Les Paul crunch. Jimmy Page, Slash, and Angus Young all lived here.'],
+    [14,76,72,12,'#5ee2ff','Tune-o-matic & Stopbar','Two-piece bridge: the tune-o-matic intonates each string individually; the stopbar tailpiece anchors them. Different wrap angles change tone slightly.'],
+    [58,38,11,10,'#ffa07a','Neck Volume','Output level of the neck pickup. Blend with bridge volume to mix both pickups independently.'],
+    [70,38,11,10,'#ff8aae','Neck Tone','Passive treble cut for the neck pickup. Warms the sound significantly. Very effective for jazz and blues.'],
+    [58,54,11,10,'#ffa07a','Bridge Volume','Output level of the bridge pickup. Setting slightly lower than neck volume gives consistent level when toggling.'],
+    [70,54,11,10,'#ff8aae','Bridge Tone','Passive treble cut for the bridge pickup. Less commonly rolled back, but tames high-gain harshness effectively.'],
+    [14,42,22,16,'#ffd166','Toggle Switch','3-way: neck, both, bridge. On the upper bass bout — easy to knock accidentally on stage.']
+  ],
+  sg:[
+    [28,1,44,12,'#b8a3ff','Headstock & Tuning Pegs','Three-per-side on a straight headstock. SG headstocks are notorious for cracking if the guitar is dropped — the thin mahogany near the nut is a weak point.'],
+    [34,12,32,28,'#5ee2ff','Neck','Joins the body at the 22nd fret — much higher than most designs. This gives the SG the best upper fret access of any Gibson.'],
+    [14,40,72,15,'#ffa07a','Neck Humbucker','Warm humbucker, but positioned closer to the middle of the string than on a Les Paul — slightly brighter and thinner sounding.'],
+    [14,62,72,15,'#ffa07a','Bridge Humbucker','Aggressive, snarling tone. Angus Young uses the bridge pickup almost exclusively. High output, pronounced upper mids.'],
+    [20,78,60,12,'#5ee2ff','Tune-o-matic','Same two-piece bridge as the Les Paul. The SG body is thinner, which changes the resonance character slightly.'],
+    [58,42,32,48,'#a3a5b8','Controls','Same 2V/2T layout as the Les Paul. Toggle switch on the upper bass horn.']
+  ],
+  es335:[
+    [28,1,44,12,'#b8a3ff','Headstock & Tuning Pegs','Three-per-side similar to Les Paul. The 335 headstock is virtually identical to the LP design.'],
+    [34,12,32,26,'#5ee2ff','Neck','Mahogany or maple neck, typically with a comfortable medium-slim profile suited to jazz chord work.'],
+    [8,36,24,38,'#a3a5b8','F-hole','The characteristic opening into the hollow wing chamber. Allows the hollow sections to resonate acoustically and contribute warmth to the amplified tone.'],
+    [14,38,72,15,'#ffa07a','Neck Humbucker','Warm humbucker with added acoustic resonance from the semi-hollow body. Rounder and more complex than a solid-body pickup.'],
+    [14,60,72,15,'#ffa07a','Bridge Humbucker','Brighter but still warm. BB King famously used only the bridge pickup for decades — this is the sound.'],
+    [14,76,72,12,'#5ee2ff','Tune-o-matic','Standard tune-o-matic and stopbar. Some 335s use a Bigsby vibrato tailpiece instead.'],
+    [58,42,32,48,'#a3a5b8','Controls','Two volume, two tone, toggle switch. Same layout as the Les Paul.']
+  ],
+  jazzmaster:[
+    [30,1,40,12,'#b8a3ff','6-in-line Tuners','All six tuners on one side — a characteristic Fender design that gives the Jazzmaster its distinctive profile.'],
+    [36,12,28,26,'#5ee2ff','Neck','25.5" scale length — the longest standard electric scale. Rosewood on maple. The longer scale contributes to a brighter, tighter feel.'],
+    [8,36,22,16,'#ffd166','Rhythm Circuit','The floating disc control on the upper bass bout — a separate volume and tone for the neck pickup. Designed for quick level switching between rhythm and lead.'],
+    [14,38,72,14,'#ffa07a','Neck Pickup','Wide, flat single-coil unique to the Jazzmaster. Higher output and more warmth than a Strat single-coil.'],
+    [14,58,72,14,'#ffa07a','Bridge Pickup','Same wide-format single-coil. Fuller-sounding than a typical bridge pickup — no thin, wiry bridge tone here.'],
+    [18,72,64,14,'#5ee2ff','Floating Tremolo','The rocking bridge and tremolo tailpiece. Subtle vibrato effect — more refined than a Strat trem. Tuning stability depends on proper setup.'],
+    [62,40,28,42,'#a3a5b8','Lead Controls','Volume, tone, and a slide switch for circuit selection on the lower treble bout.']
+  ],
+  acoustic:[
+    [30,1,40,12,'#b8a3ff','Tuning Pegs','Open-back or enclosed machine heads. Acoustic tuning is more sensitive to temperature and humidity — strings stretch more on acoustics.'],
+    [36,12,28,5,'#d8c8a0','Nut','Bone or TUSQ nut. Even small changes here noticeably affect tone and playability on an acoustic.'],
+    [34,12,32,26,'#5ee2ff','Neck','Usually mahogany with a rosewood fretboard. Acoustic necks join the body at the 14th fret on a dreadnought.'],
+    [20,38,60,30,'#a3a5b8','Soundhole & Rosette','The opening that projects sound from the resonating top. The decorative rosette is traditional. Soundhole size and placement affect projection and tone.'],
+    [10,36,80,58,'#6a6c85','Dreadnought Body','The largest standard acoustic shape. Spruce top with mahogany or rosewood back and sides. The wood choice is the primary driver of tonal character.'],
+    [20,72,60,10,'#5ee2ff','Bridge','Transmits string vibration into the top — the most critical acoustic coupling point. Usually rosewood or ebony.'],
+    [22,76,56,8,'#ffa07a','Bridge Pins & Saddle','Six pins anchor the strings in the bridge plate. The bone saddle sets string height and transfers vibration. A bone saddle upgrade is one of the best cheap improvements for acoustic tone.']
+  ]
+};
+
+var AMP_ZONES = {
+  marshall:[
+    [5,20,12,60,'#ffa07a','Input Jack','Where the guitar cable plugs in. Some Marshalls have high and low input jacks — the low input attenuates the signal by 6dB for a cleaner tone.'],
+    [18,20,18,60,'#ffd166','Channel Switch','Toggles between the clean/crunch channel and the lead channel. Usually also controllable by a footswitch.'],
+    [35,20,12,60,'#ff8a65','Gain','Drives the preamp stage. More gain = more distortion and harmonic content. On the Marshall, high gain produces the iconic British crunch.'],
+    [48,20,12,60,'#ff8a65','Volume','Channel volume — how loud that channel is before the master. Setting gain and volume relationship determines the character of the drive.'],
+    [58,20,32,60,'#7aafff','EQ: Bass/Mid/Treble','Three-band tone stack. On a Marshall, cutting mids actually boosts the apparent bass and treble simultaneously — the "scooped" sound. The mid knob is critical.'],
+    [88,20,12,60,'#ffa07a','Master Volume','Controls overall output level. High gain + low master = bedroom volume with amp tone. This is how you get cranked amp sound quietly.']
+  ],
+  vox:[
+    [5,20,12,60,'#a3a5b8','Input','Where the signal enters. The Vox AC30 has separate channels for Normal and Brilliant (brighter).'],
+    [18,20,18,60,'#b6f25b','Volume','Channel volume. The AC30 famously has no master volume — the whole amp needs to be turned up to get the natural compression.'],
+    [35,20,12,60,'#b6f25b','Tone Cut','A high-frequency roll-off working in reverse — turning it up cuts treble. Counterintuitive but effective for dialing in the famous Vox "chime."'],
+    [48,20,44,60,'#7aafff','EQ','Bass, Middle, Treble controls. The AC30 tone stack has a distinctive interaction — the mid control is particularly important for the characteristic sound.'],
+    [88,20,12,60,'#b8a3ff','Reverb','Spring reverb unit — produces the classic 60s surf and British Invasion reverb sound. Distinctive drip and splash.']
+  ],
+  fender:[
+    [5,20,12,60,'#a3a5b8','Input','The Fender Twin has two channels sharing controls. It is known for the cleanest amplifier sound available — used throughout country, jazz, and R&B.'],
+    [18,20,12,60,'#ffd166','Volume','Bright and Normal channels share one set of controls. Volume sets the clean headroom — the Twin rarely breaks up.'],
+    [30,20,38,60,'#7aafff','EQ: Treble/Mid/Bass','Fender tone stack. The bass and treble controls are interactive — cutting one effectively boosts the other relative to the mid.'],
+    [68,20,18,60,'#b8a3ff','Reverb & Vibrato','The Twin\'s spring reverb is legendary — warm, natural, and lush. The vibrato (actually tremolo) circuit adds rhythmic volume modulation.'],
+    [88,20,12,60,'#ffa07a','Master','Not present on vintage Twins — this was added in later versions. Vintage Twins are known for needing loud volume to sound their best.']
+  ],
+  katana:[
+    [5,20,12,60,'#a3a5b8','Input','Standard 1/4" input. The Katana also features a built-in effects chain accessible via the Tone Studio app.'],
+    [18,20,18,60,'#5ee2ff','Character','Selects one of five amp voices: Clean, Crunch, Lead, Brown, Acoustic. Each models a different amplifier character and response.'],
+    [35,20,12,60,'#ff8a65','Gain','Preamp drive within the selected character. Combined with Character selection, covers clean to heavy metal in one amp.'],
+    [48,20,38,60,'#7aafff','EQ: Bass/Mid/Treble','Standard 3-band tone stack. Well-voiced for modern playing — the EQ responds more predictably than vintage tube amps.'],
+    [84,20,12,60,'#b6f25b','Power Attenuator','Switches output between full power, 0.5W, and 1W. This lets you get pushed amp tones at bedroom volumes — a major practical advantage.']
+  ],
+  rumble:[
+    [5,20,12,60,'#a3a5b8','Bass Input','Standard 1/4" input. The Rumble is purpose-built for bass frequencies and the extended low-frequency range of bass guitars.'],
+    [18,20,12,60,'#ff8a65','Gain','Preamp gain. Keep it clean for most bass playing — drive adds warmth but can muddy low frequencies.'],
+    [30,20,46,60,'#7aafff','4-Band EQ','Bass, Lo-Mid, Hi-Mid, and Treble — more detailed than a guitar amp EQ because bass frequencies need more precise shaping. The lo-mid is crucial for punch vs. muddiness.'],
+    [74,20,12,60,'#ff8a65','Overdrive','Built-in overdrive circuit — useful for rock and metal bass. Adds harmonic content while retaining fundamental bass.'],
+    [85,20,12,60,'#ffa07a','Master Volume','Overall output level. The Rumble is a Class-D amp — extremely efficient, which is why it punches above its weight for the size.']
+  ],
+  orange:[
+    [5,20,12,60,'#a3a5b8','Input','Orange amps have high and low sensitivity inputs. The high input is hotter — more gain, less headroom.'],
+    [18,20,12,60,'#ff8a65','Volume','Channel volume. The Rockerverb has two channels: clean and dirty. This controls the overall channel level.'],
+    [30,20,36,60,'#7aafff','EQ: Bass/Mid/Treble','Orange calls their controls Voice and Shape — this is a simplified representation. The Orange tone stack has a distinctive mid-heavy character.'],
+    [65,20,12,60,'#ffd166','Channel Switch','Switches between the clean and dirty channels. The dirty channel is the Rockerverb\'s claim to fame — thick, harmonically complex high gain.'],
+    [76,20,12,60,'#ff8a65','Gain','Drive of the dirty channel. The Rockerverb can go from mild crunch to saturated lead. Responds very dynamically to pick attack.'],
+    [88,20,12,60,'#b8a3ff','Reverb','Valve-driven reverb — warmer and more organic than solid-state reverb. Adds depth without the spring "drip" of Fender-style reverb.']
+  ]
+};
+
+
+
+var MODEL_INFO = {
+  strat:{t:'Fender Stratocaster', b:'Double cutaway, 3 single-coil pickups, tremolo bridge. Hendrix, Clapton, SRV.'},
+  tele:{t:'Fender Telecaster', b:'Single cutaway slab body, 2 single-coil pickups, fixed bridge. Country, rock, indie.'},
+  lp:{t:'Gibson Les Paul', b:'Single cutaway, maple top, 2 humbuckers, tune-o-matic. Jimmy Page, Slash, Gary Moore.'},
+  sg:{t:'Gibson SG', b:'Deep double cutaway, lightweight mahogany, 2 humbuckers. Best upper-fret access of any Gibson.'},
+  es335:{t:'Gibson ES-335', b:'Semi-hollow, center block, 2 humbuckers, f-holes. BB King, Chuck Berry, Dave Grohl.'},
+  jazzmaster:{t:'Fender Jazzmaster', b:'Offset waist, dual circuit, floating tremolo. Indie, shoegaze, surf.'},
+  acoustic:{t:'Acoustic Dreadnought', b:'Spruce top, mahogany sides, bridge pins. The most common acoustic body shape.'},
+  marshall:{t:'Marshall DSL', b:'All-tube British amp. 2 channels, mid-heavy tone. Defining rock sound.'},
+  vox:{t:'Vox AC30', b:'EL84 all-tube, 2x12". Chiming top-end. Beatles, The Edge, Brian May.'},
+  fender:{t:'Fender Twin Reverb', b:'6L6 tubes, 85W, 2x12". Blackface clean tone. Country, jazz, funk.'},
+  katana:{t:'Boss Katana', b:'Solid state modelling, 5 amp voices, built-in FX. Best-value practice amp.'},
+  rumble:{t:'Fender Rumble Bass', b:'Class-D solid state bass combo. Lightweight, powerful, built-in drive.'},
+  orange:{t:'Orange Rockerverb', b:'All-tube, 2 channels, valve reverb. Thick, harmonically rich distortion.'}
+};
+
+// Wikipedia article names for guitar photo lookup (REST API)
+var GUITAR_EMBEDDED={strat:{
+  body:{photo:'',
+    zones:[[15,33,51,7,'#ffa07a','Neck Pickup','Single-coil nearest the neck. Full and warm, less bite. Classic for blues, jazz, and clean tones.'],[15,45,51,7,'#ffa07a','Middle Pickup','Center single-coil. Positions 2 and 4 combine pickups for the hum-cancelling quack that defines the Strat sound.'],[15,56,50,6,'#ffa07a','Bridge Pickup','Brightest single-coil. Biting attack, cuts through a mix. Takes distortion better than other positions.'],[65,49,10,6,'#ffd166','Pickup Selector','5-way blade: bridge, bridge+mid, mid, mid+neck, neck. Positions 2 and 4 combine coils out of phase for the quack.'],[57,59,14,9,'#ffa07a','Master Volume','Controls overall output. Rolling back slightly cleans up distortion on many amps.'],[60,67,13,8,'#ff8aae','Tone 1 — Neck & Mid','Passive low-pass filter for neck and middle pickups. Rolling back cuts treble and warms the tone.'],[65,72,13,8,'#ff8aae','Tone 2 — Bridge','Passive filter for the bridge pickup. Often left fully open for bite, but rolling back tames harshness at high gain.'],[20,64,43,10,'#5ee2ff','Tremolo Bridge','Spring-loaded bridge with 6 saddles. The whammy arm shifts all pitches together. Spring tension affects feel and stability.'],[62,74,13,8,'#5ee2ff','Whammy Arm Socket','The tremolo arm screws in here. Push toward the body to lower pitch, pull away to raise it.']]},
+  headstock:{photo:'',
+    zones:[[65,4,10,16,'#b8a3ff','String 6 — Low E','Lowest-pitched string (82.4 Hz). Tighten to raise pitch, loosen to lower it. Nearest the headstock tip.'],[55,11,10,16,'#a3c4ff','String 5 — A','Tuned to 110 Hz. Along with Low E forms the bass foundation of most chords and riffs.'],[44,18,10,16,'#8ab8ff','String 4 — D','Tuned to 146.8 Hz. Wound string. Drop-D tunes this one whole step lower.'],[33,26,10,16,'#7aaeff','String 3 — G','Tuned to 196 Hz. Thinnest wound string on most sets. Bends more easily than lower strings.'],[22,33,10,16,'#9bb8e0','String 2 — B','Tuned to 246.9 Hz. Plain unwound string.'],[13,40,10,16,'#b8a3ff','String 1 — High e','Highest-pitched string (329.6 Hz). Thinnest and most prone to breaking. The lead melody string.'],[18,56,64,28,'#d8c0a0','Fender Stratocaster Headstock','Designed by Freddie Tavares in 1954. The 6-in-line layout keeps all machine heads on one side. The Fender script was drawn by Francis Hall in the early 1950s.']]}
+}};
+var GUITAR_ARTICLES = {
+  strat:'Fender_Stratocaster', tele:'Fender_Telecaster', lp:'Gibson_Les_Paul',
+  sg:'Gibson_SG', es335:'Gibson_ES-335', jazzmaster:'Fender_Jazzmaster',
+  acoustic:'Acoustic_guitar'
+};
+var _imgCache = {};
+
+function buildPhotoZone(imgSrc, zones, tipEl) {
+  var wrap = document.createElement('div');
+  wrap.className = 'photo-wrap';
+  wrap.style.minHeight = '180px';
+
+  if (!imgSrc) {
+    var ld = document.createElement('div');
+    ld.className = 'photo-loading';
+    ld.textContent = 'PHOTO UNAVAILABLE';
+    wrap.appendChild(ld);
+    return wrap;
+  }
+
+  // Loading placeholder
+  var loader = document.createElement('div');
+  loader.className = 'photo-loading';
+  loader.textContent = 'LOADING PHOTO…';
+  wrap.appendChild(loader);
+
+  var img = document.createElement('img');
+  img.alt = 'Instrument diagram';
+  img.style.cssText = 'width:100%;height:auto;display:none;opacity:.93';
+  img.onload = function() {
+    loader.style.display = 'none';
+    img.style.display = 'block';
+    wrap.style.minHeight = '';
+  };
+  img.onerror = function() {
+    loader.textContent = 'PHOTO UNAVAILABLE — NEEDS INTERNET';
+    loader.style.padding = '30px 20px';
+  };
+  img.src = imgSrc;
+  wrap.appendChild(img);
+
+  var zoneLayer = document.createElement('div');
+  zoneLayer.className = 'photo-zones';
+  wrap.appendChild(zoneLayer);
+
+  var activeZone = null;
+
+  function clearActive() {
+    if(activeZone){activeZone.classList.remove('lit');activeZone=null;}
+    if(tipEl){tipEl.classList.remove('show');tipEl.style.cssText='';}
+  }
+
+  zones.forEach(function(z) {
+    var div = document.createElement('div');
+    div.className = 'tap-zone';
+    div.style.cssText = 'left:'+z[0]+'%;top:'+z[1]+'%;width:'+z[2]+'%;height:'+z[3]+'%';
+    div.style.setProperty('--zone-color', z[4]);
+
+    div.addEventListener('pointerdown', function(e) {
+      e.stopPropagation();e.preventDefault();
+      if(activeZone===div){clearActive();return;}
+      clearActive();activeZone=div;
+      div.classList.add('lit');
+      div.style.setProperty('--zone-color',z[4]);
+      var wRect=wrap.getBoundingClientRect();
+      var ring=document.createElement('div');ring.className='glow-ring';
+      var cx=((e.clientX-wRect.left)/wRect.width*100).toFixed(1)+'%';
+      var cy=((e.clientY-wRect.top)/wRect.height*100).toFixed(1)+'%';
+      ring.style.cssText='left:'+cx+';top:'+cy+';width:44px;height:44px;border:2.5px solid '+z[4]+';box-shadow:0 0 14px '+z[4]+',0 0 4px '+z[4];
+      wrap.appendChild(ring);
+      setTimeout(function(){if(ring.parentNode)ring.parentNode.removeChild(ring);},500);
+      if(tipEl){
+        tipEl.querySelector('.tip-name').textContent=z[5];tipEl.querySelector('.tip-name').style.color=z[4];
+        tipEl.querySelector('.tip-desc').textContent=z[6];
+        var navH=document.getElementById('nav').offsetHeight||130;
+        var avail=window.innerHeight-navH-16;
+        var tipTop=e.clientY<avail*0.55?Math.min(e.clientY+26,avail-90):Math.max(e.clientY-130,48);
+        tipEl.style.cssText='display:block;position:fixed;left:10px;right:10px;top:'+tipTop+'px;z-index:50;animation:fadeUp .15s ease';
+        tipEl.classList.add('show');
+      }
+    });
+
+    zoneLayer.appendChild(div);
+  });
+
+
+  return wrap;
+}
+// ── CONTENT ─────────────────────────────────────────────────────────
+var C = {
+theory: { color:'#5ee2ff', sections:[
+  { title:'DYNAMICS', pages:[
+    { eye:'THEORY · DYNAMICS', head:'How Loud,\nHow Soft', sub:'The language of volume', type:'text',
+      body:'Dynamics control how loud or soft a piece is played. Composers write instructions using Italian words — a system that has crossed 300 years and every language barrier. Every musician needs this vocabulary.' },
+    { eye:'DYNAMICS', head:'The Scale', sub:'ppp to fff', type:'ladder' },
+    { eye:'DYNAMICS', head:'Gradual\nChanges', sub:'Crescendo & Diminuendo', type:'text',
+      body:'<strong>Crescendo (cresc. / &#x003C;)</strong> — gradually get louder. The hairpin opens toward the louder end.<br><br><strong>Diminuendo / Decrescendo (dim. / &#x003E;)</strong> — gradually get softer. Both words mean exactly the same thing.' },
+    { eye:'DYNAMICS', head:'Sudden\nChanges', sub:'sfz, fp, and friends', type:'text',
+      body:'<strong>sforzando (sfz)</strong> — a sudden, sharp accent on a single note, then immediately return to the prevailing dynamic. A punch, not a push.<br><br><strong>fp (forte-piano)</strong> — loud attack that collapses immediately to soft. A spike that vanishes. Common in Classical and Baroque.' }
+  ]},
+  { title:'TEMPO', pages:[
+    { eye:'THEORY · TEMPO', head:'Speed of\nthe Music', sub:'Italian tempo markings', type:'text',
+      body:'Tempo tells you how fast or slow to play. Like dynamics, composers use Italian terms — and like dynamics, they have been the standard since the Baroque period. The terms describe a feel, not just a number.' },
+    { eye:'TEMPO', head:'Slow to Fast', sub:'Tap any row to hear it', type:'tempo-table' },
+    { eye:'TEMPO', head:'Tempo\nChanges', sub:'In the middle of a piece', type:'text',
+      body:'<strong>Ritardando (rit.)</strong> — gradually slow down.<br><strong>Rallentando (rall.)</strong> — broadening, slowing with weight.<br><strong>Accelerando (accel.)</strong> — gradually speed up.<br><strong>A tempo</strong> — return to original tempo after a change.<br><strong>Rubato</strong> — free time. Push and pull the pulse expressively.' }
+  ]},
+  { title:'ARTICULATION', pages:[
+    { eye:'THEORY · ARTICULATION', head:'Shaping\nEach Note', sub:'How to attack and release', type:'text',
+      body:'Articulation describes how individual notes begin and end. Two musicians playing the same notes with different articulation will sound completely different. It is one of the most expressive tools available.' },
+    { eye:'ARTICULATION', head:'Legato\n& Slur', sub:'Connected playing', type:'text',
+      body:'<strong>Legato</strong> — smooth, connected playing with no gap between notes. Indicated by a curved <em>slur line</em> over a group of notes.<br><br>On piano, hold each key until the next begins. On strings, all slurred notes share one bow direction.' },
+    { eye:'ARTICULATION', head:'Staccato\n& Accent', sub:'Short and emphatic', type:'text',
+      body:'<strong>Staccato (&#x2022;)</strong> — detached, clipped. Roughly half the written note value. <strong>Staccatissimo (&#x25BE;)</strong> is even shorter.<br><br><strong>Accent (>)</strong> — emphasize this note with a harder attack, then return to context.<br><strong>Marcato (^)</strong> — stronger than an accent. Marked and forceful.' },
+    { eye:'ARTICULATION', head:'Tenuto\n& Fermata', sub:'Hold and pause', type:'text',
+      body:'<strong>Tenuto (&#x2014;)</strong> — hold the note for its full value with slight emphasis. Weighted rather than detached.<br><br><strong>Fermata (&#x1D110;)</strong> — hold longer than written, at the performer\'s or conductor\'s discretion. Can be dramatically long — seconds, not just a fraction.' }
+  ]},
+  { title:'INTERVALS', pages:[
+    { eye:'THEORY · INTERVALS', head:'Distance\nBetween Notes', sub:'The building blocks of harmony', type:'text',
+      body:'An interval is the distance in pitch between two notes. All of music theory — chords, scales, melodies — is built from intervals. Learning to hear them by sound is called ear training and is one of the most valuable skills a musician can develop.' },
+    { eye:'INTERVALS', head:'Half Step\n& Whole Step', sub:'The smallest units', type:'text',
+      body:'A <strong>half step (semitone)</strong> is the smallest interval in Western music — any two adjacent piano keys, or one guitar fret.<br><br>A <strong>whole step (tone)</strong> = two half steps. The major scale uses this exact pattern of steps: <em>W W H W W W H</em>.' },
+    { eye:'INTERVALS', head:'Unison\nto Octave', sub:'Tap any row to hear it', type:'interval-grid' }
+  ]},
+  { title:'NOTATION', pages:[
+    { eye:'THEORY · NOTATION', head:'Reading\nthe Page', sub:'Staff, clefs, and symbols', type:'text',
+      body:'Standard music notation is a visual map of pitch and time. Learning to read it takes time, but understanding its basic components is useful for every musician — even those who mostly play by ear.' },
+    { eye:'NOTATION', head:'Staff\n& Clefs', sub:'The foundation', type:'text',
+      body:'<strong>The staff</strong> — five horizontal lines. Notes sit on lines or in spaces between them.<br><br><strong>Treble clef (&#x1D11E;)</strong> — upper range: right hand piano, guitar, voice, violin.<br><strong>Bass clef (&#x1D122;)</strong> — lower range: left hand piano, bass guitar, cello, tuba.' },
+    { eye:'NOTATION', head:'Note Values\n& Time Sigs', sub:'Duration and meter', type:'text',
+      body:'<strong>Whole</strong> = 4 beats &nbsp;&#x2022;&nbsp; <strong>Half</strong> = 2 &nbsp;&#x2022;&nbsp; <strong>Quarter</strong> = 1 &nbsp;&#x2022;&nbsp; <strong>Eighth</strong> = &#xBD;<br>A <em>dot</em> adds half: dotted quarter = 1.5 beats.<br><br><strong>Time signature</strong> — top number = beats per bar. Bottom = which note value gets one beat. 4/4 is four quarter beats. 3/4 is the waltz. 5/4 feels slightly lopsided.' }
+  ]}
+]},
+
+guitar: { color:'#ffa07a', sections:[
+  { title:'ANATOMY', pages:[
+    { eye:'GUITAR · ANATOMY', head:'Parts of\nthe Guitar', sub:'Choose a model below', type:'guitar-diagram' },
+    { eye:'ANATOMY', head:'Headstock\n& Tuners', sub:'Top of the neck', type:'text',
+      body:'The <strong>headstock</strong> holds the <strong>tuning pegs (machine heads)</strong> which tighten or loosen the strings to change their pitch. Most guitars have 3 per side (3+3) or all 6 on one side (6-in-line).<br><br>The <strong>nut</strong> sits at the base of the headstock where neck meets headstock — it spaces the strings and sets the open-string height (action).' },
+    { eye:'ANATOMY', head:'Neck\n& Fretboard', sub:'Where you play', type:'text',
+      body:'The <strong>neck</strong> connects headstock to body. The flat playing surface is the <strong>fretboard (fingerboard)</strong>. Metal <strong>frets</strong> are embedded across it — each raises pitch by one semitone.<br><br><strong>Fret markers</strong> (dots) appear at frets 3, 5, 7, 9, 12, 15, 17, 19. Fret 12 gets double dots — it\'s the octave.' },
+    { eye:'ANATOMY', head:'Pickups\n& Controls', sub:'The electric voice', type:'text',
+      body:'<strong>Pickups</strong> are magnetic sensors under the strings that convert string vibration into an electrical signal. <strong>Single-coil</strong> pickups are bright and clear. <strong>Humbuckers</strong> use two coils to cancel hum — warmer and thicker.<br><br><strong>Volume</strong> and <strong>tone</strong> knobs shape the signal. A <strong>pickup selector</strong> switch chooses which pickup (or combination) is active.' },
+    { eye:'ANATOMY', head:'Bridge\n& Hardware', sub:'Where strings anchor', type:'text',
+      body:'The <strong>bridge</strong> anchors the strings at the body end and is the other end of the speaking length (the <strong>saddles</strong> set intonation).<br><br>A <strong>fixed bridge</strong> is stable and sustains well. A <strong>tremolo bridge</strong> (Strat, Jazzmaster) lets you shift pitch with a bar. A <strong>tune-o-matic</strong> (Les Paul, SG) is a two-piece fixed system — bridge plus stop tailpiece.' }
+  ]},
+  { title:'AMP ANATOMY', pages:[
+    { eye:'GUITAR · AMP', head:'The\nAmplifier', sub:'Choose a model below', type:'amp-diagram' },
+    { eye:'AMP', head:'Input\n& Gain', sub:'The signal chain start', type:'text',
+      body:'The <strong>input jack</strong> receives the guitar signal. <strong>Gain</strong> (or preamp volume) controls how hard the preamp is driven — more gain means more distortion and harmonic richness.<br><br>Many amps have separate <strong>channels</strong> — a clean channel for uncolored tone and a drive/crunch channel with more gain built in. A footswitch typically toggles between them.' },
+    { eye:'AMP', head:'EQ\n& Tone Stack', sub:'Shaping the sound', type:'text',
+      body:'Most amps have a 3-band EQ: <strong>Bass</strong>, <strong>Middle</strong>, and <strong>Treble</strong>. These interact — cutting mids often feels like boosting bass and treble simultaneously.<br><br><strong>Presence</strong> (on many amps) affects high-frequency bite in the power amp stage — different from treble. <strong>Reverb</strong> adds acoustic space.' },
+    { eye:'AMP', head:'Power\n& Output', sub:'Volume and speaker interaction', type:'text',
+      body:'<strong>Master Volume</strong> controls the power amp level — you can have high gain with low master for bedroom levels.<br><br><strong>Standby</strong> switch warms tube amps up before full power. Always flip standby before the main power switch when turning off.<br><br><strong>Combo</strong> = amp + speaker in one box. <strong>Head + Cab</strong> = separate units — more flexible for larger setups.' },
+    { eye:'AMP', head:'Tubes vs\nSolid State', sub:'Two fundamental technologies', type:'text',
+      body:'<strong>Tube (valve) amps</strong> use vacuum tubes. They naturally compress and add harmonic warmth when pushed — the sound guitarists spend a lot of money chasing. Require periodic maintenance.<br><br><strong>Solid state</strong> uses transistors. More reliable, lighter, cleaner at high volumes. Modelling amps (Boss Katana etc.) are solid state but simulate tube behaviour digitally — remarkably good for practice and recording.' }
+  ]},
+  { title:'THE FRETBOARD', pages:[
+    { eye:'GUITAR · FRETBOARD', head:'One Fret,\nOne Semitone', sub:'The logic of the neck', type:'text',
+      body:'Every fret raises pitch by exactly <strong>one semitone</strong>. Press just behind — not on — the fret wire. Twelve frets up from any open string is the same note one octave higher.<br><br>Standard tuning low to high: <strong>E &middot; A &middot; D &middot; G &middot; B &middot; E</strong>. Memory aid: <em>Eat All Day, Get Big Easy</em>.' },
+    { eye:'FRETBOARD', head:'Fret Markers\n& Navigation', sub:'The dots are your map', type:'text',
+      body:'Dot markers appear at frets <strong>3, 5, 7, 9</strong> and the octave at fret <strong>12</strong> (double dot). Frets 15, 17, 19 repeat the pattern an octave higher.<br><br>To find any note: know the open string note, then count up by semitones. Over time this becomes instant recognition — a process that takes months of regular playing.' },
+    { eye:'FRETBOARD', head:'Capo', sub:'A movable nut', type:'text',
+      body:'A <strong>capo</strong> is a clamp placed across all strings at a given fret, raising the key while preserving open-chord shapes. Capo at fret 2 playing a G shape sounds an A chord.<br><br>Useful for matching a singer\'s key without learning new chord shapes. The Sonoro tuner\'s capo control adjusts the string reference pitches to match.' }
+  ]},
+  { title:'READING TAB', pages:[
+    { eye:'GUITAR · TAB', head:'What Is\nTablature?', sub:'No theory required', type:'text',
+      body:'Tab shows <strong>which fret on which string</strong> to play. Six horizontal lines represent the six strings — <em>lowest string at the bottom</em>, just like the instrument in your hands. Numbers on the lines are fret numbers.' },
+    { eye:'READING TAB', head:'Numbers\n& Symbols', sub:'The vocabulary of tab', type:'text',
+      body:'<strong>0</strong> = open string &nbsp;&#x2022;&nbsp; any number = that fret<br>Numbers stacked vertically = play together (chord)<br><br><strong>h</strong> = hammer-on &nbsp;&#x2022;&nbsp; <strong>p</strong> = pull-off<br><strong>b</strong> = bend (7b9 = bend fret 7 to fret 9 pitch)<br><strong>/ or &#92;</strong> = slide up or down<br><strong>~</strong> = vibrato &nbsp;&#x2022;&nbsp; <strong>x</strong> = muted note' },
+    { eye:'READING TAB', head:'Tab vs\nStandard Notation', sub:'What tab can and cannot do', type:'text',
+      body:'Tab tells you <em>where</em> to play but not always <em>how long</em>. Rhythm information is either implied (by knowing the song) or shown with stems above the tab.<br><br>Standard notation is more complete but requires more learning. Many guitarists use both — tab for quick reference, notation for precise rhythm and articulation.' }
+  ]},
+  { title:'TECHNIQUES', pages:[
+    { eye:'GUITAR · TECHNIQUES', head:'Hammer-On\n& Pull-Off', sub:'Legato without the pick', type:'text',
+      body:'<strong>Hammer-on:</strong> pick the first note, then press a higher fret firmly without picking. The impact creates the sound.<br><br><strong>Pull-off:</strong> the reverse — pluck the string by pulling the finger sideways as you lift. Both create smooth, legato phrasing and are the basis of fast fluid runs.' },
+    { eye:'TECHNIQUES', head:'Bending\n& Vibrato', sub:'Expressive pitch control', type:'text',
+      body:'<strong>String bending:</strong> push or pull a string sideways to raise pitch. A full-step bend raises by two semitones. Stack multiple fretting fingers behind the bending finger for control. Your ear is the tuner — the target should be in key.<br><br><strong>Vibrato:</strong> rapid repeated pitch oscillation around a target note. Rate and depth define your personal voice — wide and slow sounds soulful; narrow and fast sounds nervous.' },
+    { eye:'TECHNIQUES', head:'Palm Mute\n& Tapping', sub:'Muffled rhythm and fast runs', type:'text',
+      body:'<strong>Palm muting:</strong> rest the picking-hand edge lightly on the strings near the bridge for a chunky, percussive tone. More pressure = more muted. Essential in punk, metal, and funk rhythm guitar.<br><br><strong>Tapping:</strong> use a picking-hand finger to hammer-on frets on the neck, combined with fretting-hand legato to create fast runs spanning large intervals. Eddie Van Halen made it mainstream.' }
+  ]},
+  { title:'CHORDS & TERMS', pages:[
+    { eye:'GUITAR · CHORDS', head:'Open\nChords', sub:'The starting point', type:'text',
+      body:'Open chords use at least one open (unfretted) string. The core set — G, C, D, Em, Am, E, A — covers an enormous repertoire. Open strings add natural ring and resonance you do not get from barre chords.' },
+    { eye:'CHORDS', head:'Barre\n& Power', sub:'Moveable shapes', type:'text',
+      body:'<strong>Barre chords</strong> have one finger barring all strings at a fret, acting as a moveable nut. The E-shape and A-shape barres cover most situations. Physically demanding at first — weeks, not days.<br><br><strong>Power chords</strong> are root + perfect 5th only. No 3rd, so neither major nor minor. Two-finger shape, moveable anywhere. Sound massive with distortion. The foundation of rock and punk rhythm.' },
+    { eye:'CHORDS', head:'CAGED\n& Tunings', sub:'System and alternatives', type:'text',
+      body:'The <strong>CAGED system</strong> maps five open-chord shapes (C, A, G, E, D) across the entire neck. Each shape connects to the next — mastering this unlocks the fretboard.<br><br><strong>Alternate tunings</strong> (DADGAD, Open D, Drop D, etc.) lower or raise specific strings to enable different voicings, open chord sounds, or to simplify certain keys.' }
+  ]}
+]},
+
+piano: { color:'#b8a3ff', sections:[
+  { title:'ANATOMY', pages:[
+    { eye:'PIANO · ANATOMY', head:'The\nKeyboard', sub:'88 keys, 7+ octaves', type:'piano-keyboard' },
+    { eye:'ANATOMY', head:'The 88 Keys', sub:'Range and landmarks', type:'text',
+      body:'A full piano has <strong>88 keys</strong> — 52 white and 36 black — spanning over 7 octaves. Lowest: A0 (27.5 Hz). Highest: C8 (4,186 Hz). Most written music lives between C2 and C7.<br><br>Black keys come in groups of <strong>2 and 3</strong>. C is always the white key immediately left of a group of 2 black keys. Use this as your constant anchor.' },
+    { eye:'ANATOMY', head:'Middle C\n& A440', sub:'The universal reference points', type:'text',
+      body:'<strong>Middle C (C4)</strong> is roughly the center of the keyboard and the anchor point for treble and bass clef. It sits on its own ledger line between the two staves in grand staff notation.<br><br><strong>A4 (A above middle C)</strong> is the universal tuning reference — 440 Hz in standard tuning. Every orchestra tunes to this note. When Sonoro\'s tuner targets A, this is it.' }
+  ]},
+  { title:'PEDALS', pages:[
+    { eye:'PIANO · PEDALS', head:'Three\nPedals', sub:'Not just one', type:'pedal-diagram' },
+    { eye:'PEDALS', head:'Damper\nPedal', sub:'Right pedal — the most used', type:'text',
+      body:'Lifts all the <strong>dampers</strong> off the strings — every note rings freely even after you release the keys. Creates sustain and harmonic richness. The most expressive tool on the piano besides your fingers.<br><br>Overuse smears everything together. Change it at phrase boundaries and chord changes. Half-pedaling (partial lift and press) is an advanced technique for controlled sustain.' },
+    { eye:'PEDALS', head:'Soft\nPedal', sub:'Left pedal (Una Corda)', type:'text',
+      body:'On a grand piano, shifts the entire action slightly so hammers strike fewer strings — producing a <strong>softer and timbrally thinner tone</strong>. <em>Una corda</em> literally means "one string."<br><br>On an upright, it moves hammers closer to the strings for less impact. Use it for tonal colour change, not just volume reduction — the sound genuinely changes character.' },
+    { eye:'PEDALS', head:'Sostenuto\nPedal', sub:'Middle pedal — the unexplained one', type:'text',
+      body:'Sustains <strong>only the notes that are already held when you press it</strong>. Other notes played afterward are unaffected. This lets you hold a bass note while playing articulate passages in the upper register.<br><br>Rare in everyday music, but essential in certain Debussy, Ravel, and 20th-century works. Most players go years without using it.',
+      try_pedals: true }
+  ]},
+  { title:'TECHNIQUE', pages:[
+    { eye:'PIANO · TECHNIQUE', head:'Hand\nPosition', sub:'The foundation of everything', type:'text',
+      body:'Curved fingers — like holding a tennis ball loosely. Wrist roughly level with the keys, not drooping or raised. Weight flows from the shoulder through a relaxed arm and forearm into the fingertips.<br><br><strong>Tension is the enemy.</strong> It causes injury, limits speed, and kills tone. Every technical problem, from sloppy runs to pain, usually traces back to unnecessary tension somewhere.' },
+    { eye:'TECHNIQUE', head:'Legato\nTouch', sub:'The hardest basic thing', type:'text',
+      body:'Hold each key until the exact moment the next key is pressed — no gap, no overlap. Easier said than done. An even, connected legato across all five fingers at all dynamic levels is a lifetime pursuit.<br><br><strong>Fingering numbers</strong> (1 = thumb, 5 = pinky) guide hand position. Follow the editor\'s fingering while learning — it is there for a reason — then adapt if your hand size demands it.' },
+    { eye:'TECHNIQUE', head:'Voicing\n& Touch', sub:'Melody above the texture', type:'text',
+      body:'When playing chords, projecting the <strong>melody note</strong> means making the top note (or sometimes bass) slightly louder than inner voices. This is the difference between pianists who sound musical and those who sound mechanical.<br><br><strong>Touch</strong> refers to the velocity and angle of key attack. The same fingering played with different touch can produce wildly different tone colours, even on a digital piano.' }
+  ]},
+  { title:'CHORDS & TERMS', pages:[
+    { eye:'PIANO · CHORDS', head:'Root Position\n& Inversions', sub:'How chords are arranged', type:'text',
+      body:'<strong>Root position</strong> — lowest note is the root of the chord.<br><strong>First inversion</strong> — the 3rd is on the bottom.<br><strong>Second inversion</strong> — the 5th is on the bottom.<br><br>Inversions smooth voice leading. Moving from C to F in root position creates a jump. Moving C to F/C (second inversion) barely moves the bass. Smooth bass movement is one hallmark of good piano writing.' },
+    { eye:'CHORDS', head:'Left Hand\nPatterns', sub:'Accompaniment building blocks', type:'text',
+      body:'<strong>Block chords</strong> — all notes together, rhythmically driven.<br><strong>Alberti bass</strong> — root &middot; 5th &middot; 3rd &middot; 5th (C–G–E–G). The Classical default — think Mozart and Haydn.<br><strong>Stride</strong> — root/5th on beats 1/3, chord on 2/4. Jazz and ragtime.<br><strong>Octave bass</strong> — doubles the root an octave lower for depth. Ubiquitous in pop and film.' },
+    { eye:'CHORDS', head:'Arpeggiation\n& Scales', sub:'Moving through harmony', type:'text',
+      body:'<strong>Arpeggiation</strong> — playing chord notes one at a time in sequence. Broken chord patterns free the left hand to fill harmonic space while the right carries melody. Also used as embellishment before a chord (a slight roll).<br><br><strong>Scales</strong> are the source material for melody and improvisation. Each key has its own scale (and several modes). Scales under each hand, two octaves, hands together — the classic daily exercise.' }
+  ]}
+]}
+};
+// ── AUDIO ────────────────────────────────────────────────────────────
+var actx=null;
+function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}
+function tone(f,d,v,t){v=v||0.3;t=t||'triangle';var c=ac(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(v,c.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.start(c.currentTime);o.stop(c.currentTime+d);}
+function mf(m){return 440*Math.pow(2,(m-69)/12);}
+var tmr=null,trow=null;
+var _pendingTones=[];
+function stopAllSounds(){
+  if(tmr){clearInterval(tmr);tmr=null;}
+  if(trow){trow.classList.remove('playing');trow=null;}
+  _pendingTones.forEach(function(t){clearTimeout(t);});
+  _pendingTones=[];
+}
+function playTempo(bpm,row){
+  if(tmr){clearInterval(tmr);tmr=null;}
+  if(trow)trow.classList.remove('playing');
+  if(trow===row){trow=null;return;}
+  trow=row;row.classList.add('playing');
+  var n=0,ms=60000/bpm;
+  function clk(){n++;if(n>12){clearInterval(tmr);tmr=null;row.classList.remove('playing');trow=null;return;}
+    var c=ac(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);
+    o.frequency.value=n===1?1100:880;g.gain.setValueAtTime(0.45,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.06);o.start(c.currentTime);o.stop(c.currentTime+0.07);}
+  clk();tmr=setInterval(clk,ms);
+}
+
+
+
+// ── PIANO-STYLE TONE ─────────────────────────────────────────────────
+function toneSoft(freq) {
+  var ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain(),dur=3.0;
+  o.type='triangle'; o.frequency.value=freq;
+  o.connect(g); g.connect(ctx.destination);
+  var t=ctx.currentTime;
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(0.42,t+0.015);   // fast attack
+  g.gain.exponentialRampToValueAtTime(0.22,t+0.3);  // decay to sustain
+  g.gain.exponentialRampToValueAtTime(0.14,t+1.0);  // slow decay
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur); // long release
+  o.start(t); o.stop(t+dur+0.05);
+}
+
+
+// ── ZONE CALIBRATION ENGINE ───────────────────────────────────────────
+function loadSavedZones(key, defaults) {
+  try {
+    var s = localStorage.getItem('sg_zones_' + key);
+    if (s) {
+      var saved = JSON.parse(s);
+      // Merge: keep saved x,y; use defaults for name/desc/color/size
+      return defaults.map(function(d, i) {
+        return saved[i] ? [saved[i][0],saved[i][1],d[2],d[3],d[4],d[5],d[6]] : d;
+      });
+    }
+  } catch(e) {}
+  return defaults;
+}
+
+function saveZones(key, zones) {
+  try {
+    localStorage.setItem('sg_zones_' + key, JSON.stringify(zones.map(function(z){return [z[0],z[1]];})));
+  } catch(e) {}
+}
+
+function buildPhotoZoneWithCalib(imgSrc, zonesDefault, tipEl, calibKey) {
+  var zones = loadSavedZones(calibKey, zonesDefault);
+  var wrap = document.createElement('div');
+  wrap.className = 'photo-wrap';
+  wrap.style.minHeight = '180px';
+
+  if (!imgSrc) {
+    var ld=document.createElement('div');ld.className='photo-loading';ld.style.padding='40px 20px';ld.textContent='PHOTO UNAVAILABLE — NEEDS INTERNET';wrap.appendChild(ld);return wrap;
+  }
+  var loader=document.createElement('div');loader.className='photo-loading';loader.style.padding='40px 20px';loader.textContent='LOADING…';wrap.appendChild(loader);
+  var img=document.createElement('img');img.alt='';img.style.cssText='width:100%;height:auto;display:none;opacity:.93';
+  img.onload=function(){loader.style.display='none';img.style.display='block';wrap.style.minHeight='';};
+  img.onerror=function(){loader.textContent='PHOTO UNAVAILABLE — NEEDS INTERNET';};
+  img.src=imgSrc;wrap.appendChild(img);
+
+  var zoneLayer=document.createElement('div');zoneLayer.className='photo-zones';zoneLayer.style.cssText='position:absolute;inset:0;pointer-events:none';wrap.appendChild(zoneLayer);
+
+  var activeZone=null;
+  function clearActive(){
+    if(activeZone){activeZone.classList.remove('lit');activeZone=null;}
+    if(tipEl){tipEl.classList.remove('show');tipEl.style.cssText='';}
+  }
+
+  var zoneDivs=[];
+  zones.forEach(function(z,zi){
+    var div=document.createElement('div');
+    div.className='tap-zone';
+    div.style.cssText='position:absolute;left:'+z[0]+'%;top:'+z[1]+'%;width:'+z[2]+'%;height:'+z[3]+'%;cursor:pointer;pointer-events:all;border-radius:4px;background:transparent';
+    div.style.setProperty('--zone-color',z[4]);
+        var _ztx=0,_zty=0;
+    div.addEventListener('pointerdown',function(e){
+      e.stopPropagation();
+      if(calibMode){e.preventDefault();doCalibTap(e.clientX,e.clientY);return;}
+      _ztx=e.clientX;_zty=e.clientY;
+    });
+    div.addEventListener('pointerup',function(e){
+      e.stopPropagation();
+      if(calibMode)return;
+      if(Math.abs(e.clientX-_ztx)>12||Math.abs(e.clientY-_zty)>12)return;
+      if(activeZone===div){clearActive();return;}
+      clearActive();activeZone=div;
+      div.classList.add('lit');
+      var wRect=wrap.getBoundingClientRect();
+      var ring=document.createElement('div');ring.className='glow-ring';
+      var cx=((_ztx-wRect.left)/wRect.width*100).toFixed(1)+'%';
+      var cy=((_zty-wRect.top)/wRect.height*100).toFixed(1)+'%';
+      ring.style.cssText='left:'+cx+';top:'+cy+';width:44px;height:44px;border:2.5px solid '+z[4]+';box-shadow:0 0 14px '+z[4];
+      wrap.appendChild(ring);
+      setTimeout(function(){if(ring.parentNode)ring.parentNode.removeChild(ring);},500);
+      if(tipEl){
+        tipEl.querySelector('.tip-name').textContent=z[5];tipEl.querySelector('.tip-name').style.color=z[4];
+        tipEl.querySelector('.tip-desc').textContent=z[6];
+        var navH=document.getElementById('nav').offsetHeight||130;
+        var avail=window.innerHeight-navH-16;
+        var tipTop=_zty<avail*0.55?Math.min(_zty+26,avail-90):Math.max(_zty-130,48);
+        tipEl.style.cssText='display:block;position:fixed;left:10px;right:10px;top:'+tipTop+'px;z-index:50;animation:fadeUp .15s ease';
+        tipEl.classList.add('show');
+      }
+    });;
+    zoneLayer.appendChild(div);
+    zoneDivs.push(div);
+  });
+
+  // ── Calibration button ──────────────────────────────────────────────
+  var calibBtn=document.createElement('button');calibBtn.className='calib-btn';calibBtn.textContent='CALIBRATE';wrap.appendChild(calibBtn);
+
+  // Calibration state
+  var calibMode=false,calibStep=0,calibWorking=JSON.parse(JSON.stringify(zones)),calibPanel=null;
+
+  // Shared calibration tap handler (used by both wrap and zone pointerdown)
+  function doCalibTap(clientX,clientY){
+    var wRect=wrap.getBoundingClientRect();
+    var xPct=(clientX-wRect.left)/wRect.width*100;
+    var yPct=(clientY-wRect.top)/wRect.height*100;
+    var hw=calibWorking[calibStep][2]/2,hh=calibWorking[calibStep][3]/2;
+    calibWorking[calibStep][0]=parseFloat(Math.max(0,Math.min(100-calibWorking[calibStep][2],xPct-hw)).toFixed(1));
+    calibWorking[calibStep][1]=parseFloat(Math.max(0,Math.min(100-calibWorking[calibStep][3],yPct-hh)).toFixed(1));
+    var ring=document.createElement('div');ring.className='glow-ring';
+    ring.style.cssText='left:'+xPct.toFixed(1)+'%;top:'+yPct.toFixed(1)+'%;width:44px;height:44px;border:2.5px solid var(--met);box-shadow:0 0 14px var(--met)';
+    wrap.appendChild(ring);
+    setTimeout(function(){if(ring.parentNode)ring.parentNode.removeChild(ring);},500);
+    if(calibStep<zones.length-1)calibStep++;
+    if(calibPanel&&calibPanel._updateUI)calibPanel._updateUI();
+  }
+
+  function exitCalib(){
+    calibMode=false;calibBtn.classList.remove('active');
+    if(calibPanel){calibPanel.classList.remove('open');calibPanel.style.display='none';}
+    zoneDivs.forEach(function(d){d.classList.remove('vis');});
+    wrap.style.cursor='';
+  }
+
+  function buildCalibPanel(container){
+    if(calibPanel){calibPanel.remove();}
+    calibPanel=document.createElement('div');calibPanel.className='calib-panel open';
+    var hdr=document.createElement('div');hdr.className='calib-header';
+    var stepEl=document.createElement('span');stepEl.className='calib-step';
+    var nameEl=document.createElement('span');nameEl.className='calib-name';
+    hdr.appendChild(stepEl);hdr.appendChild(nameEl);
+    var hint=document.createElement('div');hint.className='calib-hint';
+    hint.textContent='Tap the element in the photo above to place the highlight zone.';
+    var list=document.createElement('div');list.className='calib-list';
+    zones.forEach(function(z,i){
+      var row=document.createElement('div');row.className='calib-row';
+      var dot=document.createElement('span');dot.className='calib-dot';dot.style.background=z[4];
+      var nm=document.createElement('span');nm.textContent=z[5];
+      row.appendChild(dot);row.appendChild(nm);
+      (function(idx){row.addEventListener('click',function(){calibStep=idx;updateCalibUI();});})(i);
+      list.appendChild(row);
+    });
+    var actions=document.createElement('div');actions.className='calib-actions';
+    var saveBtn=document.createElement('div');saveBtn.className='calib-act primary';saveBtn.textContent='SAVE & CLOSE';
+    var resetBtn=document.createElement('div');resetBtn.className='calib-act';resetBtn.textContent='RESET TO DEFAULT';
+    var cancelBtn=document.createElement('div');cancelBtn.className='calib-act';cancelBtn.textContent='CANCEL';
+    saveBtn.addEventListener('click',function(){
+      zones=calibWorking;
+      zoneDivs.forEach(function(d,i){d.style.left=zones[i][0]+'%';d.style.top=zones[i][1]+'%';d.style.width=zones[i][2]+'%';d.style.height=zones[i][3]+'%';});
+      saveZones(calibKey,zones);
+      exitCalib();
+    });
+    resetBtn.addEventListener('click',function(){
+      calibWorking=JSON.parse(JSON.stringify(zonesDefault));
+      calibStep=0;updateCalibUI();
+      try{localStorage.removeItem('sg_zones_'+calibKey);}catch(e){}
+    });
+    cancelBtn.addEventListener('click',exitCalib);
+    copyBtn.addEventListener('click',function(){
+      var lines=calibWorking.map(function(z){
+        var n=z[5].replace(/'/g,"\\'"),d=z[6].replace(/'/g,"\\'");
+        return '['+z[0]+','+z[1]+','+z[2]+','+z[3]+",'"+z[4]+"','"+n+"','"+d+"']";
+      });
+      var txt='// '+calibKey+'\n[\n  '+lines.join(',\n  ')+'\n]';
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(txt).then(function(){
+          copyBtn.textContent='COPIED ✓';copyBtn.style.color='var(--grn)';copyBtn.style.borderColor='var(--grn)';
+          setTimeout(function(){copyBtn.textContent='COPY DATA';copyBtn.style.color='';copyBtn.style.borderColor='';},2200);
+        });
+      } else {
+        var ta=document.createElement('textarea');ta.value=txt;
+        ta.style.cssText='position:fixed;top:15%;left:4%;right:4%;height:180px;z-index:999;background:var(--panel);color:var(--tx);border:1px solid var(--ac);border-radius:8px;padding:8px;font-size:10px;font-family:JetBrains Mono,monospace';
+        document.body.appendChild(ta);ta.select();
+        setTimeout(function(){if(ta.parentNode)ta.parentNode.removeChild(ta);},12000);
+      }
+    });
+    actions.appendChild(saveBtn);actions.appendChild(copyBtn);actions.appendChild(resetBtn);actions.appendChild(cancelBtn);
+    calibPanel.appendChild(hdr);calibPanel.appendChild(hint);calibPanel.appendChild(list);calibPanel.appendChild(actions);
+    container.appendChild(calibPanel);
+
+    function updateCalibUI(){
+      var z=calibWorking[calibStep]||calibWorking[0];
+      stepEl.textContent=(calibStep+1)+' / '+zones.length+' · ';
+      nameEl.textContent=z[5];
+      list.querySelectorAll('.calib-row').forEach(function(r,i){
+        r.classList.remove('cur','done');
+        if(i===calibStep)r.classList.add('cur');
+        else if(i<calibStep)r.classList.add('done');
+      });
+      // Show all placed zones faintly
+      zoneDivs.forEach(function(d,i){
+        d.style.left=calibWorking[i][0]+'%';d.style.top=calibWorking[i][1]+'%';
+        d.style.width=calibWorking[i][2]+'%';d.style.height=calibWorking[i][3]+'%';
+        d.classList.toggle('vis',i<calibStep);
+        d.classList.toggle('lit',i===calibStep);
+        d.style.setProperty('--zone-color',calibWorking[i][4]);
+      });
+    }
+    // Expose update fn
+    calibPanel._updateUI=updateCalibUI;
+    updateCalibUI();
+  }
+
+  calibBtn.addEventListener('pointerdown',function(e){
+    e.stopPropagation();e.preventDefault();
+    calibMode=!calibMode;
+    calibBtn.classList.toggle('active',calibMode);
+    if(calibMode){
+      clearActive(); // dismiss any open tooltip before entering calibration
+      calibStep=0;calibWorking=JSON.parse(JSON.stringify(zones));
+      zoneDivs.forEach(function(d){d.classList.add('vis');});
+      wrap.style.cursor='crosshair';
+      // Panel goes in parent container
+      var container=wrap.parentNode||document.body;
+      buildCalibPanel(container);
+    } else {
+      exitCalib();
+    }
+  });
+
+  // Capture taps on the photo background during calibration
+  wrap.addEventListener('pointerdown',function(e){
+    if(!calibMode)return;
+    if(e.target===calibBtn||calibBtn.contains(e.target))return;
+    e.stopPropagation();e.preventDefault();
+    doCalibTap(e.clientX,e.clientY);
+  });
+
+  return wrap;
+}
+
+// ── STATE ────────────────────────────────────────────────────────────
+var state={tab:'theory',sec:0,pg:0};
+var ivMode='asc';
+var chapsOpen=true;
+var maxPg={};
+var guitarModel='strat', ampModel='marshall';
+
+function recordVisit(){var k=state.tab+':'+state.sec;if(!(k in maxPg)||maxPg[k]<state.pg)maxPg[k]=state.pg;}
+function getTab(){return C[state.tab];}
+function getSec(){return getTab().sections[state.sec];}
+function getPage(){return getSec().pages[state.pg];}
+function totalPages(tab){var n=0;C[tab].sections.forEach(function(s){n+=s.pages.length;});return n;}
+function globalPage(){var n=0;for(var i=0;i<state.sec;i++)n+=C[state.tab].sections[i].pages.length;return n+state.pg;}
+
+// ── CHAPTER DRAWER ───────────────────────────────────────────────────
+function updateChapterDrawer(){
+  var pills=document.getElementById('chPills');
+  pills.innerHTML='';
+  var tab=C[state.tab];
+  var accent=tab.color;
+  tab.sections.forEach(function(sec,i){
+    var pill=document.createElement('div');
+    pill.className='ch-pill'+(i===state.sec?' active':'');
+    pill.style.setProperty('--tab-ac',accent);
+    var nm=document.createElement('span');nm.className='ch-pill-name';nm.textContent=sec.title;pill.appendChild(nm);
+    var dots=document.createElement('div');dots.className='ch-pill-dots';
+    var mp=maxPg[state.tab+':'+i]||0;
+    sec.pages.forEach(function(p,pi){
+      var d=document.createElement('div');
+      var cls='ch-dot';
+      if(i===state.sec&&pi===state.pg) cls+=' cur';
+      else if(i<state.sec||(i===state.sec&&pi<=mp)) cls+=' done';
+      d.className=cls;d.style.setProperty('--tab-ac',accent);
+      dots.appendChild(d);
+    });
+    pill.appendChild(dots);
+    (function(idx){pill.addEventListener('click',function(){
+      state.sec=idx;state.pg=0;render('fwd');
+    });})(i);
+    pills.appendChild(pill);
+  });
+  // Auto-scroll active into view
+  var active=pills.querySelector('.ch-pill.active');
+  if(active)active.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+
+  // Update tab button colors
+  var accent=C[state.tab].color;
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.style.removeProperty('--tab-ac');
+    if(b.getAttribute('data-tab')===state.tab) b.style.setProperty('--tab-ac',accent);
+  });
+}
+
+
+// ── RENDER ────────────────────────────────────────────────────────────
+function render(dir){
+  stopAllSounds();
+  recordVisit();
+  var page=getPage();
+  var area=document.getElementById('pageArea');
+  var old=area.querySelector('.page-card');
+  if(old)area.removeChild(old);
+  var card=document.createElement('div');
+  card.className='page-card'+(dir==='back'?' back':'');
+  area.appendChild(card);
+
+  if(page.eye){var ey=document.createElement('div');ey.className='pg-eyebrow';ey.textContent=page.eye;card.appendChild(ey);}
+  var hd=document.createElement('div');hd.className='pg-heading';hd.innerHTML=page.head.replace(/\n/g,'<br>');card.appendChild(hd);
+  if(page.sub){var sh=document.createElement('div');sh.className='pg-subhead';sh.textContent=page.sub;card.appendChild(sh);}
+
+  switch(page.type){
+    case 'text':
+      var bd=document.createElement('div');bd.className='pg-body';bd.innerHTML=page.body;card.appendChild(bd);
+      if(page.try_pedals){var tb=document.createElement('button');tb.className='try-btn';tb.textContent='Try the Pedals';tb.addEventListener('click',openPedalPlugin);card.appendChild(tb);}
+      break;
+    case 'ladder':
+      var ladder=[{sym:'fff',name:'fortississimo — as loud as possible',db:'~95',c:'#ff4444'},{sym:'ff',name:'fortissimo — very loud',db:'~85',c:'#ff8a65'},{sym:'f',name:'forte — loud',db:'~75',c:'#ffd166'},{sym:'mf',name:'mezzo-forte — moderately loud',db:'~65',c:'#b6f25b'},{sym:'mp',name:'mezzo-piano — moderately soft',db:'~55',c:'#5ee2ff'},{sym:'p',name:'piano — soft',db:'~45',c:'#7aafff'},{sym:'pp',name:'pianissimo — very soft',db:'~35',c:'#b8a3ff'},{sym:'ppp',name:'pianississimo — barely audible',db:'~25',c:'#4a4a6a'}];
+      var lad=document.createElement('div');lad.className='ladder';
+      ladder.forEach(function(r){var row=document.createElement('div');row.className='dyn-row';row.style.borderColor=r.c;row.innerHTML='<span class="dyn-sym" style="color:'+r.c+'">'+r.sym+'</span><span class="dyn-nm">'+r.name+'</span><span class="dyn-db">'+r.db+' dB</span>';lad.appendChild(row);});
+      card.appendChild(lad);
+      break;
+    case 'tempo-table':
+      var tempos=[['Larghissimo','extremely slow','&lt;20',18],['Largo','broad and slow','40–60',50],['Larghetto','slightly faster than largo','60–66',63],['Adagio','slow and expressive','66–76',72],['Andante','walking pace','76–108',88],['Andantino','slightly faster','80–108',96],['Moderato','moderate speed','108–120',114],['Allegretto','moderately fast','112–120',116],['Allegro','fast and lively','120–168',144],['Vivace','lively and brisk','168–176',172],['Presto','very fast','168–200',184],['Prestissimo','as fast as possible','&gt;200',220]];
+      var tt=document.createElement('div');tt.className='tempo-table';
+      tempos.forEach(function(t){var row=document.createElement('div');row.className='t-row';row.innerHTML='<span class="t-mark">'+t[0]+'</span><span class="t-mean">'+t[1]+'</span><span class="t-bpm">'+t[2]+'</span><span class="t-play">&#9654;</span>';(function(bpm,el2){el2.addEventListener('click',function(){playTempo(bpm,el2);});})(t[3],row);tt.appendChild(row);});
+      card.appendChild(tt);
+      break;
+    case 'interval-grid':
+      // Mode selector
+      var ivModeRow=document.createElement('div');ivModeRow.className='iv-mode-row';
+      [{id:'asc',label:'\u2191 Rising'},{id:'desc',label:'\u2193 Falling'},{id:'sim',label:'\u2267 Together'}].forEach(function(md){
+        var mb=document.createElement('button');mb.className='iv-mode-btn'+(ivMode===md.id?' active':'');
+        mb.textContent=md.label;
+        (function(mode,btn){btn.addEventListener('click',function(){
+          ivMode=mode;
+          ivModeRow.querySelectorAll('.iv-mode-btn').forEach(function(b){b.classList.remove('active');});
+          btn.classList.add('active');
+        });})(md.id,mb);
+        ivModeRow.appendChild(mb);
+      });
+      card.appendChild(ivModeRow);
+      var ivs=[['Unison',0,'same note'],['Minor 2nd',1,'1 st \u00b7 dissonant'],['Major 2nd',2,'2 st \u00b7 stepwise'],['Minor 3rd',3,'3 st \u00b7 dark'],['Major 3rd',4,'4 st \u00b7 bright'],['Perfect 4th',5,'5 st \u00b7 open'],['Tritone',6,'6 st \u00b7 tense'],['Perfect 5th',7,'7 st \u00b7 stable'],['Minor 6th',8,'8 st \u00b7 bittersweet'],['Major 6th',9,'9 st \u00b7 lyrical'],['Minor 7th',10,'10 st \u00b7 bluesy'],['Major 7th',11,'11 st \u00b7 jazzy'],['Octave',12,'12 st \u00b7 octave']];
+      var ig=document.createElement('div');ig.className='iv-grid';
+      ivs.forEach(function(iv){
+        var row=document.createElement('div');row.className='iv-row';
+        row.innerHTML='<span class="iv-nm">'+iv[0]+'</span><span class="iv-st">'+iv[2]+'</span><span class="iv-pl">&#9654;</span>';
+        (function(semis,el2){el2.addEventListener('click',function(){
+          var root=261.63,top=root*Math.pow(2,semis/12);
+          if(semis===0||ivMode==='sim'){
+            toneSoft(root);if(semis>0)toneSoft(top);
+          } else if(ivMode==='asc'){
+            toneSoft(root);_pendingTones.push(setTimeout(function(){toneSoft(top);},700));
+          } else {
+            toneSoft(top);_pendingTones.push(setTimeout(function(){toneSoft(root);},700));
+          }
+        });})(iv[1],row);
+        ig.appendChild(row);
+      });
+      card.appendChild(ig);
+      break;
+    case 'guitar-diagram':
+      var guitarView='body';
+      var selrow=document.createElement('div');selrow.className='sel-row';
+      var lbl=document.createElement('span');lbl.className='sel-lbl';lbl.textContent='MODEL';
+      var guitarItems=[['strat','Fender Stratocaster'],['tele','Fender Telecaster'],['lp','Gibson Les Paul'],['sg','Gibson SG'],['es335','Gibson ES-335'],['jazzmaster','Fender Jazzmaster'],['acoustic','Acoustic Dreadnought']];
+      var tipEl=document.createElement('div');tipEl.className='photo-tip';tipEl.innerHTML='<div class="tip-name"></div><div class="tip-desc"></div>';
+      var photoContainer=document.createElement('div');
+      var hint=document.createElement('div');hint.style.cssText='font-size:9px;color:var(--mu);margin:2px 0 4px';hint.textContent='Tap any element to identify it.';
+      var infoEl=document.createElement('div');infoEl.className='pg-body';infoEl.style.marginTop='4px';
+      var viewRow=document.createElement('div');viewRow.className='view-toggle';
+      var bodyBtn=document.createElement('button');bodyBtn.className='view-btn active';bodyBtn.textContent='BODY';
+      var headBtn=document.createElement('button');headBtn.className='view-btn';headBtn.textContent='HEADSTOCK';
+      viewRow.appendChild(bodyBtn);viewRow.appendChild(headBtn);
+      function setViewBtns(){bodyBtn.classList.toggle('active',guitarView==='body');headBtn.classList.toggle('active',guitarView==='headstock');}
+      bodyBtn.addEventListener('click',function(){guitarView='body';setViewBtns();loadGuitarPhoto(guitarModel);});
+      headBtn.addEventListener('click',function(){guitarView='headstock';setViewBtns();loadGuitarPhoto(guitarModel);});
+      function loadGuitarPhoto(model){
+        photoContainer.innerHTML='';
+        tipEl.classList.remove('show');tipEl.style.cssText='';
+        var emb=GUITAR_EMBEDDED[model];
+        viewRow.style.display=emb?'':'none';
+        if(emb&&emb[guitarView]){
+          var vd=emb[guitarView];
+          photoContainer.appendChild(buildPhotoZoneWithCalib(vd.photo,vd.zones,tipEl,'g_'+model+'_'+guitarView));
+          infoEl.textContent='';
+        } else {
+          if(guitarView==='headstock')guitarView='body';
+          infoEl.textContent=MODEL_INFO[model].b;
+          var ldiv=document.createElement('div');ldiv.className='photo-loading';ldiv.style.padding='40px 20px';ldiv.textContent='LOADING…';
+          photoContainer.appendChild(ldiv);
+          var art=GUITAR_ARTICLES[model]||'Electric_guitar';
+          if(_imgCache[art]!==undefined){photoContainer.innerHTML='';photoContainer.appendChild(buildPhotoZoneWithCalib(_imgCache[art],GUITAR_ZONES[model]||GUITAR_ZONES.strat,tipEl,'g_'+model));return;}
+          fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(art))
+            .then(function(r){return r.json();}).then(function(d){
+              var url=(d.originalimage&&d.originalimage.source)||(d.thumbnail&&d.thumbnail.source)||null;
+              _imgCache[art]=url;photoContainer.innerHTML='';photoContainer.appendChild(buildPhotoZoneWithCalib(url,GUITAR_ZONES[model]||GUITAR_ZONES.strat,tipEl,'g_'+model));
+            }).catch(function(){_imgCache[art]=null;photoContainer.innerHTML='';photoContainer.appendChild(buildPhotoZoneWithCalib(null,[],tipEl,'g_'+model));});
+        }
+      }
+      var ddGuitar=buildCustomDropdown(guitarItems,guitarModel,function(val){guitarModel=val;guitarView='body';setViewBtns();loadGuitarPhoto(val);});
+      selrow.appendChild(lbl);selrow.appendChild(ddGuitar);
+      card.appendChild(selrow);card.appendChild(viewRow);
+      card.appendChild(photoContainer);card.appendChild(hint);card.appendChild(tipEl);card.appendChild(infoEl);
+      loadGuitarPhoto(guitarModel);
+      break;reak;
+    case 'amp-diagram':
+      var aselrow=document.createElement('div');aselrow.className='sel-row';
+      var albl=document.createElement('span');albl.className='sel-lbl';albl.textContent='AMP';
+      var ampItems=[['marshall','Marshall DSL'],['vox','Vox AC30'],['fender','Fender Twin Reverb'],['katana','Boss Katana'],['rumble','Fender Rumble'],['orange','Orange Rockerverb']];
+      var atipEl=document.createElement('div');atipEl.className='photo-tip';atipEl.innerHTML='<div class="tip-name"></div><div class="tip-desc"></div>';
+      var aphotoContainer=document.createElement('div');
+      var ainfoEl=document.createElement('div');ainfoEl.className='pg-body';ainfoEl.style.marginTop='6px';ainfoEl.textContent=MODEL_INFO[ampModel].b;
+
+      function loadAmpPanel(model){
+        aphotoContainer.innerHTML='';
+        atipEl.classList.remove('show');
+        aphotoContainer.appendChild(buildInteractiveAmpPanel(model,atipEl));
+        ainfoEl.textContent=MODEL_INFO[model].b;
+      }
+
+      var ddAmp=buildCustomDropdown(ampItems,ampModel,function(val){ampModel=val;loadAmpPanel(val);});
+      aselrow.appendChild(albl);aselrow.appendChild(ddAmp);card.appendChild(aselrow);
+      card.appendChild(aphotoContainer);
+      var ahint=document.createElement('div');ahint.style.cssText='font-size:9px;color:var(--mu);margin-top:4px';ahint.textContent='Tap any control to identify it.';
+      card.appendChild(ahint);card.appendChild(atipEl);card.appendChild(ainfoEl);
+      loadAmpPanel(ampModel);
+      break;
+    case 'piano-keyboard':
+      var kdiag=document.createElement('div');kdiag.className='pg-diagram';kdiag.appendChild(buildPianoKeyboard());card.appendChild(kdiag);
+      var kh=document.createElement('div');kh.className='key-hint';kh.textContent='Middle C (orange) · A440 (green) · groups of 2 and 3 black keys are landmarks';card.appendChild(kh);
+      break;
+    case 'pedal-diagram':
+      var pdiag=document.createElement('div');pdiag.className='pg-diagram';pdiag.appendChild(buildPedalDiagram());card.appendChild(pdiag);
+      var ph=document.createElement('div');ph.className='pg-body';ph.style.marginTop='10px';
+      ph.innerHTML='Three pedals, left to right: <strong>Soft</strong> (una corda) &middot; <strong>Sostenuto</strong> &middot; <strong>Damper</strong>. Most piano playing uses only the damper pedal — but the others transform the instrument when used.';card.appendChild(ph);
+      break;
+  }
+
+  area.scrollTop=0;
+  updateNav();
+  updateChapterDrawer();
+  // sync tab active states
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-tab')===state.tab);
+  });
+}
+
+function updateNav(){
+  var tab=getTab(),sec=getSec(),secs=tab.sections;
+  var totPg=totalPages(state.tab);
+  var pct=totPg>1?globalPage()/(totPg-1)*100:100;
+
+  document.getElementById('navSection').textContent=sec.title+' \u00B7 '+(state.pg+1)+'/'+sec.pages.length;
+  document.getElementById('navFill').style.width=pct.toFixed(1)+'%';
+
+  var nextLabel='';
+  if(state.pg<sec.pages.length-1)nextLabel='pg '+(state.pg+2);
+  else if(state.sec<secs.length-1)nextLabel=secs[state.sec+1].title;
+  var nx=document.getElementById('navNext');
+  if(nextLabel){nx.innerHTML='Next: <span>'+nextLabel+'</span>';nx.style.display='';}
+  else nx.style.display='none';
+
+  var dots=document.getElementById('pgDots');dots.innerHTML='';
+  sec.pages.forEach(function(p,i){
+    var d=document.createElement('div');
+    d.className='pg-dot'+(i===state.pg?' cur':i<state.pg?' done':'');
+    d.style.setProperty('--tab-ac',tab.color);
+    (function(idx){d.addEventListener('click',function(){state.pg=idx;render(idx>state.pg?'fwd':'back');});})(i);
+    dots.appendChild(d);
+  });
+
+  var atStart=state.tab==='theory'&&state.sec===0&&state.pg===0;
+  var atEnd=state.tab==='piano'&&state.sec===secs.length-1&&state.pg===sec.pages.length-1;
+  document.getElementById('btnPrev').disabled=atStart;
+  document.getElementById('btnNext').disabled=atEnd;
+}
+
+var TAB_ORDER=['theory','guitar','piano'];
+function navigate(dir){
+  var sec=getSec(),secs=getTab().sections;
+  if(dir===1){
+    if(state.pg<sec.pages.length-1){state.pg++;render('fwd');return;}
+    if(state.sec<secs.length-1){state.sec++;state.pg=0;render('fwd');return;}
+    var ti=TAB_ORDER.indexOf(state.tab);
+    if(ti<TAB_ORDER.length-1){state.tab=TAB_ORDER[ti+1];state.sec=0;state.pg=0;render('fwd');}
+  } else {
+    if(state.pg>0){state.pg--;render('back');return;}
+    if(state.sec>0){state.sec--;state.pg=C[state.tab].sections[state.sec].pages.length-1;render('back');return;}
+    var ti=TAB_ORDER.indexOf(state.tab);
+    if(ti>0){state.tab=TAB_ORDER[ti-1];var ns=C[state.tab].sections;state.sec=ns.length-1;state.pg=ns[state.sec].pages.length-1;render('back');}
+  }
+}
+
+// ── PEDALS PLUGIN (multitouch fixed) ─────────────────────────────────
+var pState={damper:false,soft:false,sostenuto:false};
+var aNotes=new Map(),sost=new Map();
+var BLK=new Set([61,63,66,68,70]);
+var WK=[{n:'C4',m:60},{n:'D4',m:62},{n:'E4',m:64},{n:'F4',m:65},{n:'G4',m:67},{n:'A4',m:69},{n:'B4',m:71},{n:'C5',m:72}];
+var BK=[{m:61,p:1},{m:63,p:2},{m:66,p:4},{m:68,p:5},{m:70,p:6}];
+
+function openPedalPlugin(){
+  pState={damper:false,soft:false,sostenuto:false};
+  aNotes.clear();sost.clear();
+  var body=document.getElementById('sheetBody');body.innerHTML='';
+  var hint=document.createElement('p');hint.className='sheet-hint';
+  hint.innerHTML='Hold keys &mdash; toggle pedals with another finger<br><span style="font-size:9px;color:var(--mu)">Multi-touch: each finger tracks independently</span>';
+  body.appendChild(hint);
+  var kb=document.createElement('div');kb.style.cssText='overflow-x:auto;padding:4px 0 8px;text-align:center;touch-action:none;';body.appendChild(kb);
+  buildPedalsKB(kb);
+  var pt=document.createElement('div');pt.className='pedal-toggles';
+  [{id:'ptS',key:'soft',cls:'sp',label:'SOFT',sub:'left'},{id:'ptSo',key:'sostenuto',cls:'pp',label:'SOSTENUTO',sub:'middle'},{id:'ptD',key:'damper',cls:'',label:'DAMPER',sub:'right'}].forEach(function(d){
+    var btn=document.createElement('div');btn.className='pedal-btn'+(d.cls?' '+d.cls:'');btn.id=d.id;
+    btn.innerHTML='<span class="pedal-nm">'+d.label+'</span><span class="pedal-sub">'+d.sub+' pedal</span>';
+    // USE pointerdown (not click) so it fires immediately even while holding piano keys
+    btn.style.touchAction='manipulation';
+    (function(key,id){
+      btn.addEventListener('pointerdown',function(e){
+        e.preventDefault();
+        pState[key]=!pState[key];
+        document.getElementById(id).classList.toggle('on',pState[key]);
+        if(key==='sostenuto'){
+          if(pState.sostenuto){
+            // Capture notes currently held down: keep their audio nodes alive
+            sost=new Map();
+            aNotes.forEach(function(node,midi){sost.set(midi,node);});
+          } else {
+            // Pedal lifted: stop any captured note the user is no longer physically holding
+            var nowT=ac().currentTime;
+            sost.forEach(function(node,midi){
+              if(!aNotes.has(midi)){
+                try{node.g.gain.cancelScheduledValues(nowT);node.g.gain.setValueAtTime(node.g.gain.value||0.3,nowT);node.g.gain.exponentialRampToValueAtTime(0.001,nowT+0.25);node.o.stop(nowT+0.26);}catch(e){}
+              }
+            });
+            sost.clear();
+          }
+        }
+        var on=Object.keys(pState).filter(function(k){return pState[k];}).map(function(k){return k.toUpperCase();});
+        var ps=document.getElementById('pst');if(ps)ps.textContent=on.length?'Active: '+on.join(' + '):'no pedals active';
+      });
+    })(d.key,d.id);
+    pt.appendChild(btn);
+  });
+  body.appendChild(pt);
+  var ps=document.createElement('div');ps.className='pedal-status';ps.id='pst';ps.textContent='tap a key to start';body.appendChild(ps);
+  document.getElementById('overlay').classList.add('open');
+}
+
+function buildPedalsKB(container){
+  var WW=38,WH=86,BW=24,BH=52,TW=WK.length*WW+4;
+  var svg=sa(ns('svg'),{viewBox:'0 0 '+TW+' '+(WH+18),width:TW,height:WH+18});
+  svg.style.maxWidth='100%';svg.style.touchAction='none';
+  WK.forEach(function(n,i){
+    var r=el('rect',{x:i*WW+2,y:0,width:WW-2,height:WH,rx:3,fill:'#e8eaf0',stroke:'#9095b0','stroke-width':'0.8',id:'pk'+n.m},svg);
+    r.style.cursor='pointer';
+    (function(midi,rect){
+      rect.addEventListener('pointerdown',function(e){
+        e.preventDefault();
+        try{rect.setPointerCapture(e.pointerId);}catch(ex){}
+        kdn(midi);
+      });
+      rect.addEventListener('pointerup',function(e){e.preventDefault();kup(midi);});
+      rect.addEventListener('pointercancel',function(){kup(midi);});
+    })(n.m,r);
+    el('text',{x:i*WW+WW/2,y:WH+12,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':7,fill:'#6a6c85'},svg).textContent=n.n;
+  });
+  BK.forEach(function(n){
+    var x=(n.p-0.35)*WW+2;
+    var r=el('rect',{x:x,y:0,width:BW,height:BH,rx:3,fill:'#1a1a2e',stroke:'#0a0a12','stroke-width':'0.8',id:'pk'+n.m},svg);
+    r.style.cursor='pointer';r.style.zIndex='2';
+    (function(midi,rect){
+      rect.addEventListener('pointerdown',function(e){
+        e.preventDefault();
+        try{rect.setPointerCapture(e.pointerId);}catch(ex){}
+        kdn(midi);
+      });
+      rect.addEventListener('pointerup',function(e){e.preventDefault();kup(midi);});
+      rect.addEventListener('pointercancel',function(){kup(midi);});
+    })(n.m,r);
+  });
+  container.appendChild(svg);
+}
+
+function kdn(m){
+  var c=ac(),f=mf(m);
+  // If this note is currently held by sostenuto, the fresh press supersedes it: stop the captured copy.
+  if(sost.has(m)){try{var sc=sost.get(m);sc.g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.05);sc.o.stop(c.currentTime+0.06);}catch(e){}sost.delete(m);}
+  if(aNotes.has(m)){try{var old=aNotes.get(m);old.g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.05);old.o.stop(c.currentTime+0.06);}catch(e){}aNotes.delete(m);}
+  var o=c.createOscillator(),g=c.createGain();
+  o.connect(g);g.connect(c.destination);o.type='triangle';o.frequency.value=f;
+  g.gain.setValueAtTime(0,c.currentTime);
+  g.gain.linearRampToValueAtTime(pState.soft?0.15:0.38,c.currentTime+0.01);
+  o.start(c.currentTime);
+  aNotes.set(m,{o:o,g:g});
+  var k=document.getElementById('pk'+m);if(k)k.setAttribute('fill',BLK.has(m)?'#1a4a6e':'#b3e5fc');
+  var names=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  var ps=document.getElementById('pst');
+  if(ps)ps.textContent=names[m%12]+Math.floor(m/12-1)+(pState.soft?' (soft)':'')+(pState.damper?' (sustained)':'')+(pState.sostenuto&&sost.has(m)?' (held)':'');
+}
+function kup(m){
+  if(!aNotes.has(m))return;
+  var n=aNotes.get(m),c=ac();
+  var isB=BLK.has(m),mid=m;
+  // If sostenuto has captured this note, lifting the key leaves it ringing.
+  // The captured node stays in sost and is released when the pedal lifts.
+  if(sost.has(m)){
+    aNotes.delete(m);
+    setTimeout(function(){var k=document.getElementById('pk'+mid);if(k)k.setAttribute('fill',isB?'#1a1a2e':'#e8eaf0');},80);
+    return;
+  }
+  var sus=pState.damper,rel=sus?2.5:0.25;
+  n.g.gain.cancelScheduledValues(c.currentTime);
+  n.g.gain.setValueAtTime(n.g.gain.value||0.3,c.currentTime);
+  n.g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+rel);
+  n.o.stop(c.currentTime+rel);
+  aNotes.delete(m);
+  setTimeout(function(){var k=document.getElementById('pk'+mid);if(k)k.setAttribute('fill',isB?'#1a1a2e':'#e8eaf0');},sus?rel*500:80);
+}
+function closePedalPlugin(){
+  document.getElementById('overlay').classList.remove('open');
+  var stopAll=function(n){try{if(actx){n.g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.1);n.o.stop(actx.currentTime+0.12);}}catch(e){}};
+  aNotes.forEach(stopAll);sost.forEach(stopAll);
+  aNotes.clear();sost.clear();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────
+
+var _sgEventsAttached = false;
+
+window.sgInit = function() {
+  if (!_sgEventsAttached) {
+    _sgEventsAttached = true;
+
+  document.getElementById('btnNext').addEventListener('click',function(){navigate(1);});
+  document.getElementById('btnPrev').addEventListener('click',function(){navigate(-1);});
+
+  document.querySelectorAll('.tab-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var tab=btn.getAttribute('data-tab');
+      if(tab===state.tab) return;
+      state.tab=tab;state.sec=0;state.pg=0;
+      render('fwd');
+    });
+  });
+
+  document.getElementById('sheetClose').addEventListener('click',closePedalPlugin);
+  document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)closePedalPlugin();});
+
+  // ── Swipe to navigate (touch events, direction-locked) ────────────
+  var _tx=null,_ty=null,_tdir=null;
+  document.getElementById('app').addEventListener('touchstart',function(e){
+    if(e.target.closest('select,button,.nav-arrow,.chap-toggle,.tab-btn,.pedal-btn'))return;
+    _tx=e.touches[0].clientX; _ty=e.touches[0].clientY; _tdir=null;
+  },{passive:true});
+  document.getElementById('app').addEventListener('touchmove',function(e){
+    if(_tx===null)return;
+    var dx=e.touches[0].clientX-_tx,dy=e.touches[0].clientY-_ty;
+    if(!_tdir){
+      if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)*1.2) _tdir='h';
+      else if(Math.abs(dy)>8) _tdir='v';
+    }
+    if(_tdir==='h') e.preventDefault();
+  },{passive:false});
+  document.getElementById('app').addEventListener('touchend',function(e){
+    if(_tx===null||_tdir!=='h'){_tx=null;return;}
+    var dx=e.changedTouches[0].clientX-_tx;
+    _tx=null;
+    if(Math.abs(dx)>55){if(dx<0)navigate(1);else navigate(-1);}
+  },{passive:true});
+
+  // ── TOC hamburger ─────────────────────────────────────────────────
+  function buildTOC(){
+    var body=document.getElementById('tocBody');
+    body.innerHTML='';
+    ['theory','guitar','piano'].forEach(function(tabKey){
+      var tabData=C[tabKey];
+      var tabDiv=document.createElement('div');tabDiv.className='toc-tab';
+      var tabLabel=document.createElement('div');tabLabel.className='toc-tab-label';
+      var dot=document.createElement('span');dot.className='toc-tab-dot';
+      dot.style.background=tabData.color;
+      var tabName=document.createElement('span');tabName.textContent=tabKey.toUpperCase();
+      tabName.style.color=tabData.color;
+      tabLabel.appendChild(dot);tabLabel.appendChild(tabName);
+      tabDiv.appendChild(tabLabel);
+      var secList=document.createElement('div');secList.className='toc-sec-list';
+      tabData.sections.forEach(function(sec,si){
+        var item=document.createElement('div');item.className='toc-item';
+        item.style.setProperty('--toc-ac',tabData.color);
+        var isCur=tabKey===state.tab&&si===state.sec;
+        if(isCur)item.classList.add('cur');
+        var nameEl=document.createElement('span');nameEl.className='toc-item-name';
+        nameEl.textContent=sec.title;
+        var dotsEl=document.createElement('div');dotsEl.className='toc-item-pgdots';
+        var maxP=maxPg[tabKey+':'+si]||0;
+        sec.pages.forEach(function(p,pi){
+          var d=document.createElement('div');d.className='toc-item-pgdot';
+          if(tabKey===state.tab&&si===state.sec&&pi===state.pg)d.classList.add('cur');
+          else if(tabKey<state.tab||(tabKey===state.tab&&si<state.sec)||(isCur&&pi<=maxP))d.classList.add('done');
+          dotsEl.appendChild(d);
+        });
+        item.appendChild(nameEl);item.appendChild(dotsEl);
+        (function(tk,s){item.addEventListener('click',function(){
+          state.tab=tk;state.sec=s;state.pg=0;
+          document.getElementById('tocOverlay').classList.remove('open');
+          render('fwd');
+        });})(tabKey,si);
+        secList.appendChild(item);
+      });
+      tabDiv.appendChild(secList);
+      if(tabKey!=='piano'){var div=document.createElement('div');div.className='toc-divider';tabDiv.appendChild(div);}
+      body.appendChild(tabDiv);
+    });
+  }
+  var _ct=document.getElementById('chapToggle');
+  _ct.addEventListener('click',function(){
+    buildTOC();
+    document.getElementById('tocOverlay').classList.add('open');
+  });
+  document.getElementById('tocClose').addEventListener('click',function(){
+    document.getElementById('tocOverlay').classList.remove('open');
+  });
+  document.getElementById('tocOverlay').addEventListener('click',function(e){
+    if(e.target===this)this.classList.remove('open');
+  });
+
+  render('fwd');
+
+  } else {
+    render('fwd');
+  }
+};
+
+window.sgExit = function() {
+  try {
+    aNotes.forEach(function(n){
+      try{if(actx){n.g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.1);
+          n.o.stop(actx.currentTime+0.12);}}catch(e){}
+    });
+    aNotes.clear(); sost.clear();
+  } catch(e) {}
+};
+
+})();
 
 </script>
 <script src="./main.iife.js"></script>
