@@ -272,16 +272,13 @@
 #toolSurvivalGuide *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 #toolSurvivalGuide{color:var(--tx);font-family:"JetBrains Mono",monospace;-webkit-font-smoothing:antialiased}
 
-/* When active: fixed overlay filling viewport above Intonare nav */
-#toolSurvivalGuide:not(.hidden){
-  position:fixed;top:0;left:0;right:0;
-  bottom:calc(62px + env(safe-area-inset-bottom));
-  z-index:100;
+/* Sits in normal flow below Intonare header; JS sets --sg-h to fill down to the nav */
+#toolSurvivalGuide{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+#toolSurvivalGuide #app{
   display:flex;flex-direction:column;
-  background:var(--bg);
+  height:var(--sg-h,60vh);
   overflow:hidden;
 }
-#toolSurvivalGuide #app{display:flex;flex-direction:column;flex:1;min-height:0;height:100%}
 #toolSurvivalGuide #pageArea{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;position:relative}
 #toolSurvivalGuide #pageArea::-webkit-scrollbar{display:none}
 #toolSurvivalGuide #nav{flex-shrink:0}
@@ -40158,12 +40155,28 @@ window.sgInit = function() {
     if(e.target===this)this.classList.remove('open');
   });
 
-  render('fwd');
+  // Measurement + initial render deferred until scroll settles
+  _sgMeasureAndRender();
 
   } else {
-    render('fwd');
+    _sgMeasureAndRender();
   }
 };
+
+function _sgMeasureAndRender() {
+  // Double RAF: first fires after enterTool's scrollTo RAF; second after layout update
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      var panel = document.getElementById('toolSurvivalGuide');
+      if (panel) {
+        var top = Math.max(0, panel.getBoundingClientRect().top);
+        var h   = Math.max(200, window.innerHeight - top - 62);
+        panel.style.setProperty('--sg-h', h + 'px');
+      }
+      render('fwd');
+    });
+  });
+}
 
 window.sgExit = function() {
   try {
