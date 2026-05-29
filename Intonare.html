@@ -270,13 +270,21 @@
 
 
 #toolSurvivalGuide *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-#toolSurvivalGuide{background:var(--bg);color:var(--tx);font-family:"JetBrains Mono",monospace;-webkit-font-smoothing:antialiased;overflow:visible}
+#toolSurvivalGuide{color:var(--tx);font-family:"JetBrains Mono",monospace;-webkit-font-smoothing:antialiased}
 
-/* Let body scroll; nav sticks above Intonare's fixed tab bar */
-#toolSurvivalGuide #app{display:block;height:auto}
-#toolSurvivalGuide #pageArea{overflow-y:visible;overflow-x:hidden;padding:14px 16px calc(var(--nav-h) + 24px);position:relative}
+/* When active: fixed overlay filling viewport above Intonare nav */
+#toolSurvivalGuide:not(.hidden){
+  position:fixed;top:0;left:0;right:0;
+  bottom:calc(62px + env(safe-area-inset-bottom));
+  z-index:100;
+  display:flex;flex-direction:column;
+  background:var(--bg);
+  overflow:hidden;
+}
+#toolSurvivalGuide #app{display:flex;flex-direction:column;flex:1;min-height:0;height:100%}
+#toolSurvivalGuide #pageArea{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;position:relative}
 #toolSurvivalGuide #pageArea::-webkit-scrollbar{display:none}
-#toolSurvivalGuide #nav{position:sticky;bottom:calc(62px + env(safe-area-inset-bottom));z-index:50}
+#toolSurvivalGuide #nav{flex-shrink:0}
 
 /* PAGE CARD */
 #toolSurvivalGuide .page-card{min-height:100%;display:flex;flex-direction:column;animation:pgIn .18s ease both}
@@ -10794,7 +10802,7 @@
 
 
   <!-- ═══ SURVIVAL GUIDE TOOL ═══ -->
-  <div id="toolSurvivalGuide" class="hidden" style="overflow:visible;">
+  <div id="toolSurvivalGuide" class="hidden">
 <div id="app">
   <div id="pageArea"></div>
   <div id="nav">
