@@ -36433,6 +36433,14 @@ function gccVoicingMidi(voicing) {
 function gccInit(keepState) {
   const isTrumpet = isWindInst();
 
+  // Ensure sub-row and family label are always in sync on init —
+  // switchChordScaleInstrument handles this on instrument change, but on
+  // first open (enterTool direct) the switcher is never called.
+  const _meta = CS_INSTRUMENTS[chordScaleInstrument] || {};
+  const _lbl = document.getElementById('csFamilyLabel');
+  if (_lbl) _lbl.textContent = _meta.label || chordScaleInstrument.toUpperCase();
+  _buildSubRow(chordScaleInstrument, _meta.subs);
+
   // Show/hide chord diagram vs trumpet note card
   document.getElementById('trpNoteCard')?.classList.toggle('hidden', !isTrumpet);
   const chordCard = document.getElementById('gccDiagramContainer')?.closest('.card');
@@ -37059,6 +37067,12 @@ function switchGuitarChordMode(mode) {
 // ── Init ──────────────────────────────────────
 function gssInit() {
   const isTrumpet = isWindInst();
+
+  // Ensure sub-row and family label are always in sync on init.
+  const _meta = CS_INSTRUMENTS[chordScaleInstrument] || {};
+  const _lbl = document.getElementById('csFamilyLabel');
+  if (_lbl) _lbl.textContent = _meta.label || chordScaleInstrument.toUpperCase();
+  _buildSubRow(chordScaleInstrument, _meta.subs);
 
   // Show/hide trumpet vs fretboard scale display
   document.getElementById('trpScaleCard')?.classList.toggle('hidden', !isTrumpet);
