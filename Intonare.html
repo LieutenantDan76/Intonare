@@ -6617,6 +6617,213 @@
     color: var(--accent); opacity: 0.8;
   }
 
+  /* ─── SAVED CHART VIEWS ─── */
+
+  /* Corner tool cluster: save star + ZOOM/EXPAND, pinned top-right, never overlap */
+  .gcc-corner-tools {
+    position: absolute; top: 0; right: 0; z-index: 2;
+    display: flex; align-items: center; gap: 6px;
+  }
+  /* Inside the cluster, ZOOM/EXPAND go back to normal flow (cluster handles position) */
+  .gcc-corner-tools .gcc-zoom-btn,
+  .gcc-corner-tools .gss-fb-expand-btn {
+    position: static; top: auto; right: auto;
+  }
+  .svc-save-star {
+    width: 26px; height: 26px; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,160,122,0.08);
+    border: 1px solid rgba(255,160,122,0.35);
+    border-radius: 6px;
+    color: var(--accent-warm); font-size: 13px; line-height: 1;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s, border-color 0.15s, background 0.15s, transform 0.12s;
+  }
+  .svc-save-star:hover {
+    color: var(--text);
+    border-color: var(--accent-warm);
+    background: rgba(255,160,122,0.16);
+  }
+  .svc-save-star:active { transform: scale(0.9); }
+
+  /* Section sub-headers inside the Quick Access sheet */
+  .fav-section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); opacity: 0.7;
+    margin: 0 0 9px 2px;
+  }
+  .fav-section-label.second { margin-top: 16px; }
+
+  /* Saved-view tile — amber-tinted variant of fav-mini-card */
+  .svc-tile {
+    background: linear-gradient(160deg,
+                  color-mix(in srgb, var(--accent-warm, #f59e0b) 9%, var(--panel)) 0%,
+                  var(--surface) 100%);
+    border: 1px solid color-mix(in srgb, var(--accent-warm, #f59e0b) 28%, transparent);
+    border-radius: var(--r-md);
+    padding: 13px 6px 11px;
+    cursor: pointer; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    transition: all 0.18s ease;
+    position: relative; overflow: hidden;
+    min-height: 82px; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .svc-tile::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-warm, #f59e0b), transparent);
+    opacity: 0.5;
+  }
+  .svc-tile:hover {
+    border-color: var(--accent-warm, #f59e0b);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  }
+  .svc-tile:active { transform: scale(0.95); opacity: 0.85; }
+
+  .svc-tile-chip {
+    position: absolute; top: 5px; left: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.3px;
+    color: var(--accent-warm, #f59e0b);
+    background: color-mix(in srgb, var(--accent-warm, #f59e0b) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-warm, #f59e0b) 32%, transparent);
+    border-radius: 5px; padding: 1px 4px; line-height: 1.2;
+  }
+  .svc-tile-star {
+    position: absolute; top: 6px; right: 7px;
+    font-size: 8px; line-height: 1;
+    color: var(--accent-warm, #f59e0b); opacity: 0.7;
+  }
+  .svc-tile-icon {
+    font-size: 19px; line-height: 1; margin-top: 4px;
+    color: var(--accent-warm, #f59e0b);
+  }
+  .svc-tile-icon svg { width: 20px; height: 20px; display: block; }
+  .svc-tile-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px; letter-spacing: 1px; color: var(--text); line-height: 1.05;
+  }
+  .svc-tile-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px; letter-spacing: 1px; text-transform: uppercase;
+    color: color-mix(in srgb, var(--accent-warm, #f59e0b) 60%, var(--muted));
+  }
+  .svc-tile.lp-hold {
+    border-color: var(--sharp) !important;
+    transform: scale(0.93) !important;
+    transition: transform 0.1s, border-color 0.1s, opacity 0.1s !important;
+  }
+  .svc-tile.lp-removing {
+    opacity: 0; transform: scale(0.8) !important;
+    transition: all 0.18s ease !important;
+  }
+
+  /* Save bar (light slide-up) — must sit ABOVE the fixed tab bar (z-index:1000) */
+  .svc-scrim {
+    position: fixed; inset: 0; z-index: 1998;
+    background: rgba(0,0,0,0.45);
+    -webkit-backdrop-filter: blur(1px); backdrop-filter: blur(1px);
+  }
+  .svc-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 1999;
+    background: linear-gradient(180deg, var(--panel) 0%, var(--surface) 100%);
+    border-top: 1px solid var(--border);
+    border-radius: 18px 18px 0 0;
+    padding: 10px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.4);
+    transform: translateY(110%);
+    transition: transform 0.24s cubic-bezier(.34,1.2,.64,1);
+    max-width: 520px; margin: 0 auto;
+  }
+  .svc-bar.svc-bar--open { transform: translateY(0); }
+  .svc-bar-handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: var(--border); margin: 2px auto 12px;
+  }
+  .svc-bar-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px; letter-spacing: 2px; color: var(--text);
+    text-align: center; margin-bottom: 12px;
+  }
+  .svc-bar-preview {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .svc-prev-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600;
+    color: var(--accent-warm, #f59e0b);
+    background: color-mix(in srgb, var(--accent-warm, #f59e0b) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-warm, #f59e0b) 32%, transparent);
+    border-radius: 5px; padding: 2px 6px;
+  }
+  .svc-prev-icon { font-size: 20px; line-height: 1; }
+  .svc-prev-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .svc-name-input {
+    width: 100%; box-sizing: border-box;
+    background: var(--bg-0, var(--surface));
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+    padding: 11px 14px; margin-bottom: 12px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 1.5px; text-align: center;
+    color: var(--text);
+    transition: border-color 0.15s;
+  }
+  .svc-name-input::placeholder { color: var(--muted); opacity: 0.7; }
+  .svc-name-input:focus { outline: none; border-color: var(--accent-warm, #f59e0b); }
+  .svc-bar-actions { display: flex; gap: 10px; }
+  .svc-btn {
+    flex: 1; padding: 12px 0; border-radius: var(--r-md);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px; letter-spacing: 1.5px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s; border: 1px solid var(--border-soft);
+  }
+  .svc-btn-cancel { background: transparent; color: var(--muted); }
+  .svc-btn-cancel:hover { color: var(--text); border-color: var(--border); }
+  .svc-btn-save {
+    background: color-mix(in srgb, var(--accent-warm, #f59e0b) 16%, transparent);
+    border-color: var(--accent-warm, #f59e0b);
+    color: var(--accent-warm, #f59e0b);
+  }
+  .svc-btn-save:hover { background: color-mix(in srgb, var(--accent-warm, #f59e0b) 26%, transparent); }
+  .svc-btn-save:active { transform: scale(0.97); }
+
+  /* Save toast (bottom-center) — above tab bar */
+  .svc-toast {
+    position: fixed; left: 50%; bottom: 88px; z-index: 2001;
+    transform: translateX(-50%) translateY(14px) scale(0.9);
+    opacity: 0; pointer-events: none;
+    display: flex; align-items: center; gap: 7px;
+    background: linear-gradient(135deg,
+                  color-mix(in srgb, var(--accent-warm, #f59e0b) 18%, var(--panel)), var(--panel));
+    border: 1px solid color-mix(in srgb, var(--accent-warm, #f59e0b) 50%, transparent);
+    border-radius: 22px; padding: 9px 16px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+    transition: opacity 0.22s ease, transform 0.22s cubic-bezier(.34,1.4,.64,1);
+  }
+  .svc-toast--show {
+    opacity: 1; transform: translateX(-50%) translateY(0) scale(1);
+  }
+  .svc-toast--dupe {
+    background: linear-gradient(135deg, rgba(100,105,130,0.22), var(--panel));
+    border-color: rgba(100,105,130,0.45);
+  }
+  .svc-toast-star { color: var(--accent-warm, #f59e0b); font-size: 12px; }
+  .svc-toast--dupe .svc-toast-star { color: var(--muted); }
+  .svc-toast-msg {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text);
+  }
+
     @keyframes mic-hdr-pulse {
     0%,100% { box-shadow: 0 0 6px rgba(182,242,91,0.3); }
     50%      { box-shadow: 0 0 14px rgba(182,242,91,0.55); }
@@ -10427,8 +10634,6 @@
         <button class="cs-picker-inst" data-inst="uke" onclick="pickInst('uke')">UKE</button>
         <button class="cs-picker-inst" data-inst="mandolin" onclick="pickInst('mandolin')">MANDOLIN</button>
         <button class="cs-picker-inst" data-inst="banjo" onclick="pickInst('banjo')">BANJO</button>
-        <button class="cs-picker-inst" data-inst="mandocello" onclick="pickInst('mandocello')">MANDOCELLO</button>
-        <button class="cs-picker-inst" data-inst="ukebass" onclick="pickInst('ukebass')">UKE BASS</button>
       </div>
     </div>
     <div class="cs-picker-family">
@@ -10493,6 +10698,8 @@
             <span class="capo-fret zero" id="csCapoFret">0</span>
             <button class="capo-btn" id="csCapoPlus" onclick="setCapo(1)">+</button>
           </div>
+          <div class="gcc-corner-tools">
+          <button class="svc-save-star" onclick="svcOpenSaveBar()" title="Save this view" aria-label="Save this view">★</button>
           <button class="gcc-zoom-btn" onclick="gccZoomOpen()">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
               <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.5"/>
@@ -10502,6 +10709,7 @@
             </svg>
             ZOOM
           </button>
+          </div>
           <div class="gcc-chord-name idle" id="gccChordName" data-i18n="pcc_pick" style="width:100%;text-align:center" data-i18n="pcc_pick">PICK ROOT + QUALITY</div>
           <div class="gcc-chord-sub" id="gccChordSub" style="text-align:center"></div>
           <div class="gcc-diagram-wrap">
@@ -10615,7 +10823,10 @@
       <div class="card warm" style="padding:16px 14px 14px">
         <div class="card-glow"></div>
         <div class="gss-display" style="padding:0;gap:8px;position:relative">
+          <div class="gcc-corner-tools">
+          <button class="svc-save-star" onclick="svcOpenSaveBar()" title="Save this view" aria-label="Save this view">★</button>
           <button class="gss-fb-expand-btn" id="gssFbBtn" onclick="gssToggleFretboard()" data-i18n="gtool_expand">EXPAND</button>
+          </div>
           <div class="gss-scale-name idle" id="gssScaleName" style="width:100%;text-align:center" data-i18n="gss_pick">PICK ROOT + SCALE</div>
           <div class="gss-pos-label" id="gssPosLabel" style="text-align:center"></div>
           <div class="gcc-diagram-wrap">
@@ -15047,9 +15258,11 @@ function exitToolFolder() {
   setHeaderSection('TOOLS');
 }
 
-function enterTool(name) {
+function enterTool(name, restoreState) {
   sesEnter();
   sesTrackModule('t:' + name);
+  // Stash any saved-view snapshot so the tool's init can apply it.
+  _pendingChartRestore = (name === 'guitarchords' && restoreState) ? restoreState : null;
   const MIC_TOOLS = ['piano', 'tonal', 'volume', 'vocalrange'];
   if (MIC_TOOLS.includes(name)) showMic(); else hideMic();
   currentTool = name;
@@ -15088,7 +15301,7 @@ function enterTool(name) {
   if (name === 'cof') cofDraw();
   if (name === 'vocalrange') vrInit();
   if (name === 'drumkit') dkInit();
-  if (name === 'guitarchords') gccInit();
+  if (name === 'guitarchords') { if (!svcApplyRestore()) gccInit(); }
   if (name === 'progression') progInit();
 }
 
@@ -25914,6 +26127,7 @@ let progState = {
   metroPresets: [],  // [{ id, name, bpm, sound, mode }]
   rampPresets:  [],  // [{ id, name, fromBpm, toBpm, stepBpm, measuresPerStep, sound }]
   favorites: [],  // array of 'kind:id' strings e.g. 'tool:piano', 'exercise:interval'
+  savedCharts: [],  // saved CHARTS-tool views: [{ id, name, inst, section, capo, sub, root }]
   stats: {
     tempo:      {},
     interval:   {},
@@ -26030,6 +26244,7 @@ const STRINGS = {
     fav_empty_title:'Nothing saved yet',
     fav_empty_hint:'Long-press any tool or exercise card to pin it here for quick access',
     fav_type_tool:'TOOL', fav_type_exercise:'EXERCISE',
+    fav_section_tools:'TOOLS & EXERCISES', fav_section_saved:'SAVED CHART VIEWS',
     fav_ach_unlock:'Complete practice sessions to unlock achievements.',
     label_scale_root:'Root',
     ach_cat_consistency:'Consistency', ach_cat_accuracy:'Accuracy',
@@ -26592,6 +26807,7 @@ const STRINGS = {
     fav_empty_title:'Nessun preferito',
     fav_empty_hint:'Tieni premuto su uno strumento o esercizio per aggiungerlo qui',
     fav_type_tool:'STRUMENTO', fav_type_exercise:'ESERCIZIO',
+    fav_section_tools:'STRUMENTI ED ESERCIZI', fav_section_saved:'VISTE SALVATE',
     fav_ach_unlock:'Completa sessioni di pratica per sbloccare i traguardi.',
     label_scale_root:'Tonalità',
     ach_cat_consistency:'Costanza', ach_cat_accuracy:'Precisione',
@@ -35370,12 +35586,13 @@ function gccVoicings() {
     const idx = ((GCC_ROOTS.indexOf(gccRoot) - gccCapo) % 12 + 12) % 12;
     root = GCC_ROOTS[idx];
   }
+  if (isTenorGuitar())                     return tenorGuitarVoicings(root, quality);
+  if (isBaritoneGuitar())                  return bariGuitarVoicings(root, quality);
+  if (isUkeBass())                         return ukeBassVoicings(root, quality);
   if (chordScaleInstrument === 'uke')      return ukeVoicings(root, quality);
   if (chordScaleInstrument === 'bass')     return bassVoicings(root, quality);
   if (chordScaleInstrument === 'mandolin') return mandoVoicings(root, quality);
   if (chordScaleInstrument === 'banjo')       return banjoVoicings(root, quality);
-  if (chordScaleInstrument === 'mandocello') return mandocelloVoicings(root, quality);
-  if (chordScaleInstrument === 'ukebass')    return ukeBassVoicings(root, quality);
   return GCC_VOICINGS[root + '-' + quality] || [];
 }
 
@@ -35383,7 +35600,20 @@ function gccVoicings() {
 // Algorithmically generates 4/5-string bass chord shapes (root/5th/octave etc.)
 // Uses same approach as ukeVoicings but 5-fret span and bass register.
 const _bassVoicingCache = {};
-function mandoVoicings(ro, qo) { return ukeVoicings(ro, qo, MANDO_OPEN_MIDI); }
+function mandoVoicings(ro, qo)      { return ukeVoicings(ro, qo, getMandoOpenMidi(), 'mando-' + mandoSubType); }
+function mandolaVoicings(ro, qo)    { return ukeVoicings(ro, qo, MANDO_VIOLA_OPEN_MIDI, 'mandola'); }
+function mandocelloVoicings(ro, qo) { return ukeVoicings(ro, qo, MANDO_CELLO_OPEN_MIDI, 'mandocello'); }
+// Tenor guitar: 4-string CGDA — algorithmic voicings like mandola
+function tenorGuitarVoicings(ro, qo) { return ukeVoicings(ro, qo, GUITAR_TENOR_MIDI, 'tenor-guitar'); }
+// Baritone guitar: same intervals as standard, tuned down a P4.
+// Reuse GCC_VOICINGS with a capo-style root shift so the full chord library applies.
+function bariGuitarVoicings(root, quality) {
+  // A baritone C shape (open) sounds as G on standard — so to find shapes for 'root'
+  // on baritone, look up (root + 5) on the standard GCC_VOICINGS table (down a P4 = up a P5).
+  const shiftedIdx = (GCC_ROOTS.indexOf(root) + 5) % 12;
+  const shiftedRoot = GCC_ROOTS[shiftedIdx];
+  return GCC_VOICINGS[shiftedRoot + '-' + quality] || [];
+}
 function bassVoicings(rootOverride, qualityOverride) {
   const root    = rootOverride    ?? gccRoot;
   const quality = qualityOverride ?? gccQuality;
@@ -35485,6 +35715,68 @@ function bassVoicings(rootOverride, qualityOverride) {
   return (_bassVoicingCache[cacheKey] = shaped);
 }
 
+// U-Bass voicings — same algorithm as bass, using U-Bass open MIDI (E1 A1 D2 G2).
+// Reuses bassVoicings by temporarily swapping bassSubType to a sentinel.
+const _ukeBassVoicingCache = {};
+function ukeBassVoicings(rootOverride, qualityOverride) {
+  const root    = rootOverride    ?? gccRoot;
+  const quality = qualityOverride ?? gccQuality;
+  const cacheKey = root + '-' + quality;
+  if (_ukeBassVoicingCache[cacheKey]) return _ukeBassVoicingCache[cacheKey];
+
+  const qualDef = GCC_QUALITIES.find(q => q.symbol === quality);
+  if (!qualDef) return (_ukeBassVoicingCache[cacheKey] = []);
+
+  // Run bass voicing algorithm directly with UKE_BASS_OPEN_MIDI
+  const open   = UKE_BASS_OPEN_MIDI;
+  const nStr   = open.length;
+  const rootPc = GCC_ROOTS.indexOf(root) % 12;
+  const hasFifth = qualDef.intervals.includes(7);
+  const fifthPc  = (rootPc + 7) % 12;
+  const results  = [];
+
+  for (let rootStr = 0; rootStr < nStr; rootStr++) {
+    for (let rootFret = 0; rootFret <= 14; rootFret++) {
+      if ((open[rootStr] + rootFret) % 12 !== rootPc) continue;
+      // Single root
+      const s = Array(nStr).fill(-1); s[rootStr] = rootFret;
+      results.push({ frets: s, score: 1 + (rootFret===0?2:0) - rootFret*0.12 });
+      // Root + fifth
+      if (hasFifth && rootStr < nStr-1) {
+        for (let f2 = Math.max(0,rootFret-1); f2 <= rootFret+4; f2++) {
+          if ((open[rootStr+1]+f2)%12 === fifthPc) {
+            const p = Array(nStr).fill(-1); p[rootStr]=rootFret; p[rootStr+1]=f2;
+            results.push({ frets: p, score: 3+(rootFret===0?1:0)-rootFret*0.12 });
+            break;
+          }
+        }
+      }
+      // Root + octave
+      for (let s2=rootStr; s2<nStr; s2++) {
+        for (let f2=(s2===rootStr?rootFret+1:0); f2<=rootFret+9; f2++) {
+          if ((open[s2]+f2)%12===rootPc && Math.abs(open[s2]+f2-(open[rootStr]+rootFret))===12) {
+            const span = Math.max(rootFret,f2)-Math.min(rootFret===0?999:rootFret,f2===0?999:f2);
+            if (span>4) continue;
+            const o=Array(nStr).fill(-1); o[rootStr]=rootFret; o[s2]=f2;
+            results.push({ frets:o, score:2.5 }); break;
+          }
+        }
+      }
+    }
+  }
+
+  const seen = new Set();
+  const unique = results.filter(r => { const k=r.frets.join(','); if(seen.has(k))return false; seen.add(k);return true; });
+  unique.sort((a,b)=>b.score-a.score);
+  const shaped = unique.slice(0,5).map(c => {
+    const frets=c.frets, played=frets.filter(f=>f>0);
+    const baseFret=played.length?Math.min(...played):1;
+    const hasOpen=frets.some(f=>f===0);
+    const fingers=frets.map(f=>f>0?Math.min(4,f-baseFret+1):0);
+    return { frets, baseFret:hasOpen?1:baseFret, fingers, barre:null };
+  });
+  return (_ukeBassVoicingCache[cacheKey] = shaped);
+}
 
 
 function gccQualLabel(sym) {
@@ -35501,6 +35793,9 @@ const UKE_TENOR_MIDI   = [55, 60, 64, 69]; // G3 C4 E4 A4 — tenor low-G, ascen
 const UKE_BARI_MIDI    = [50, 55, 59, 64]; // D3 G3 B3 E4 — baritone, DGBE
 const UKE_STRING_NAMES = ['G','C','E','A']; // soprano/tenor string names
 const UKE_BARI_NAMES   = ['D','G','B','E']; // baritone string names
+// U-Bass: same pitch as 4-string bass guitar, short-scale fretted body
+const UKE_BASS_OPEN_MIDI  = [28, 33, 38, 43]; // E1 A1 D2 G2
+const UKE_BASS_STR_NAMES  = ['E','A','D','G'];
 const UKE_OPEN_MIDI    = UKE_SOPRANO_MIDI;  // alias kept for any legacy references
 
 // ── Bass tunings ──────────────────────────────────────────────────────────────
@@ -35831,19 +36126,65 @@ const TRUMPET_FINGERINGS = {
 const TRUMPET_RANGE_LOW=54; const TRUMPET_RANGE_HIGH=84; // F#3–C6 concert
 
 // ── Active sub-types ──────────────────────────────────────────────────────────
-let ukeSubType  = 'soprano'; // 'soprano' | 'tenor' | 'baritone'
+let ukeSubType  = 'soprano'; // 'soprano' | 'tenor' | 'baritone' | 'ukebass'
 let bassSubType = '4string'; // '4string' | '5string'
+let guitarSubType = 'standard'; // 'standard' | 'baritone' | 'tenor'
+
+// ── Guitar family tunings ─────────────────────────────────────────────────────
+const GUITAR_STD_MIDI      = [40, 45, 50, 55, 59, 64]; // E2 A2 D3 G3 B3 E4 — standard
+const GUITAR_BARITONE_MIDI = [35, 40, 45, 50, 54, 59]; // B1 E2 A2 D3 F#3 B3 — standard-interval, down a P4
+const GUITAR_TENOR_MIDI    = [48, 55, 62, 69];          // C3 G3 D4 A4 — fifths tuning (like mandola)
+const GUITAR_TENOR_STR_NAMES = ['C','G','D','A'];
+
+function isBaritoneGuitar() { return chordScaleInstrument === 'guitar' && guitarSubType === 'baritone'; }
+function isTenorGuitar()    { return chordScaleInstrument === 'guitar' && guitarSubType === 'tenor'; }
+function getGuitarOpenMidi() {
+  if (guitarSubType === 'baritone') return GUITAR_BARITONE_MIDI;
+  if (guitarSubType === 'tenor')    return GUITAR_TENOR_MIDI;
+  return GUITAR_STD_MIDI;
+}
+const GUITAR_BARITONE_STR_NAMES = ['B','E','A','D','F#','B'];
+
+function getGuitarStringNames() {
+  if (guitarSubType === 'baritone') return GUITAR_BARITONE_STR_NAMES;
+  if (guitarSubType === 'tenor')    return GUITAR_TENOR_STR_NAMES;
+  return ['E','A','D','G','B','e'];
+}
 
 
-// ── Mandolin ─────────────────────────────────────────────────────────────────
-const MANDO_OPEN_MIDI   = [55, 62, 69, 76]; // G3 D4 A4 E5 (same as violin/fiddle)
+// ── Mandolin family ───────────────────────────────────────────────────────────
+const MANDO_OPEN_MIDI    = [55, 62, 69, 76]; // G3 D4 A4 E5 — mandolin (same as violin)
 const MANDO_STRING_NAMES = ['G','D','A','E'];
+const MANDO_VIOLA_OPEN_MIDI   = [43, 50, 57, 64]; // G2 D3 A3 E4 — mandola (a fifth below mandolin)
+const MANDO_VIOLA_STR_NAMES   = ['G','D','A','E'];
+const MANDO_CELLO_OPEN_MIDI   = [36, 43, 50, 57]; // C2 G2 D3 A3 — mandocello (a fifth below mandola)
+const MANDO_CELLO_STR_NAMES   = ['C','G','D','A'];
+
+let mandoSubType = 'mandolin'; // 'mandolin' | 'mandola' | 'mandocello'
+
+function isMandoFamily(sub) { return chordScaleInstrument === 'mandolin' && (sub ? mandoSubType === sub : true); }
+function getMandoOpenMidi() {
+  if (mandoSubType === 'mandola')    return MANDO_VIOLA_OPEN_MIDI;
+  if (mandoSubType === 'mandocello') return MANDO_CELLO_OPEN_MIDI;
+  return MANDO_OPEN_MIDI;
+}
+function getMandoStringNames() {
+  if (mandoSubType === 'mandola')    return MANDO_VIOLA_STR_NAMES;
+  if (mandoSubType === 'mandocello') return MANDO_CELLO_STR_NAMES;
+  return MANDO_STRING_NAMES;
+}
+
+// Uke bass is now a uke sub-type rather than a standalone instrument.
+function isUkeBass() { return chordScaleInstrument === 'uke' && ukeSubType === 'ukebass'; }
+
 function getUkeOpenMidi() {
+  if (ukeSubType === 'ukebass')  return UKE_BASS_OPEN_MIDI;
   if (ukeSubType === 'tenor')    return UKE_TENOR_MIDI;
   if (ukeSubType === 'baritone') return UKE_BARI_MIDI;
   return UKE_SOPRANO_MIDI;
 }
 function getUkeStringNames() {
+  if (ukeSubType === 'ukebass')  return UKE_BASS_STR_NAMES;
   return ukeSubType === 'baritone' ? UKE_BARI_NAMES : UKE_STRING_NAMES;
 }
 function getBassOpenMidi()    { return bassSubType === '5string' ? BASS_5_MIDI : BASS_4_MIDI; }
@@ -35856,7 +36197,8 @@ let gccCapo = 0; // 0 = no capo; 1–9 = capo fret
 
 function capoApplies() {
   // Explicit list — avoids CS_INSTRUMENTS TDZ during early init
-  return ['guitar','uke','mandolin','banjo','mandocello','ukebass'].includes(chordScaleInstrument);
+  if (isUkeBass()) return false; // uke bass behaves like a bass — no capo
+  return ['guitar','uke','mandolin','banjo'].includes(chordScaleInstrument);
 }
 
 function setCapo(delta) {
@@ -35876,32 +36218,29 @@ function setCapo(delta) {
 
 function gccGetOpenMidi() {
   // Standard open MIDI — no capo shift here; capo offset added explicitly in audio/note calc
-  if (chordScaleInstrument === 'uke')           return getUkeOpenMidi();
-  if (chordScaleInstrument === 'bass')          return getBassOpenMidi();
-  if (chordScaleInstrument === 'mandolin') return MANDO_OPEN_MIDI;
-  if (chordScaleInstrument === 'banjo')       return BANJO_OPEN_MIDI;
-  if (chordScaleInstrument === 'mandocello') return MANDO_CELLO_OPEN_MIDI;
-  if (chordScaleInstrument === 'ukebass')    return UKE_BASS_OPEN_MIDI;
+  if (chordScaleInstrument === 'uke')      return getUkeOpenMidi();
+  if (chordScaleInstrument === 'bass')     return getBassOpenMidi();
+  if (chordScaleInstrument === 'mandolin') return getMandoOpenMidi();
+  if (chordScaleInstrument === 'banjo')    return BANJO_OPEN_MIDI;
+  if (chordScaleInstrument === 'guitar')   return getGuitarOpenMidi();
   return GCC_OPEN_MIDI;
 }
 function gccGetStringNames() {
-  if (chordScaleInstrument === 'uke')       return getUkeStringNames();
-  if (chordScaleInstrument === 'bass')      return getBassStringNames();
-  if (chordScaleInstrument === 'mandolin') return MANDO_STRING_NAMES;
-  if (chordScaleInstrument === 'banjo')       return BANJO_STRING_NAMES;
-  if (chordScaleInstrument === 'mandocello') return MANDO_CELLO_STR_NAMES;
-  if (chordScaleInstrument === 'ukebass')    return UKE_BASS_STR_NAMES;
+  if (chordScaleInstrument === 'uke')      return getUkeStringNames();
+  if (chordScaleInstrument === 'bass')     return getBassStringNames();
+  if (chordScaleInstrument === 'mandolin') return getMandoStringNames();
+  if (chordScaleInstrument === 'banjo')    return BANJO_STRING_NAMES;
+  if (chordScaleInstrument === 'guitar')   return getGuitarStringNames();
   return ['E','A','D','G','B','e'];
 }
 function gccGetStringCount() { return gccGetOpenMidi().length; }
 function gssGetStringMidi() {
   let base;
-  if (chordScaleInstrument === 'uke')       base = getUkeOpenMidi();
-  else if (chordScaleInstrument === 'bass') base = getBassOpenMidi();
-  else if (chordScaleInstrument === 'mandolin') base = MANDO_OPEN_MIDI;
-  else if (chordScaleInstrument === 'banjo')       base = BANJO_OPEN_MIDI;
-  else if (chordScaleInstrument === 'mandocello') base = MANDO_CELLO_OPEN_MIDI;
-  else if (chordScaleInstrument === 'ukebass')    base = UKE_BASS_OPEN_MIDI;
+  if (chordScaleInstrument === 'uke')         base = getUkeOpenMidi();
+  else if (chordScaleInstrument === 'bass')   base = getBassOpenMidi();
+  else if (chordScaleInstrument === 'mandolin') base = getMandoOpenMidi();
+  else if (chordScaleInstrument === 'banjo')  base = BANJO_OPEN_MIDI;
+  else if (chordScaleInstrument === 'guitar') base = getGuitarOpenMidi();
   else base = GSS_STRING_MIDI;
   return (gccCapo && capoApplies()) ? base.map(m => m + gccCapo) : base;
 }
@@ -35915,11 +36254,11 @@ const _ukeVoicingCache = {};
 // ukeVoicings(root?, quality?) — optional overrides for availability pre-checking.
 // Enumerates valid 4-string voicings, corrects baseFret for open-string chords,
 // scores by open strings + position + interval variety.
-function ukeVoicings(rootOverride, qualityOverride, openOverride) {
+function ukeVoicings(rootOverride, qualityOverride, openOverride, cachePrefix) {
   const root    = rootOverride    ?? gccRoot;
   const quality = qualityOverride ?? gccQuality;
   const open    = openOverride ?? getUkeOpenMidi();
-  const cacheKey = (openOverride ? 'mando' : ukeSubType) + ':' + root + '-' + quality;
+  const cacheKey = (cachePrefix ?? (openOverride ? 'mando' : ukeSubType)) + ':' + root + '-' + quality;
   if (_ukeVoicingCache[cacheKey]) return _ukeVoicingCache[cacheKey];
 
   const qualDef = GCC_QUALITIES.find(q => q.symbol === quality);
@@ -36091,7 +36430,7 @@ function gccVoicingMidi(voicing) {
 }
 
 // ── Init ─────────────────────────────────────
-function gccInit() {
+function gccInit(keepState) {
   const isTrumpet = isWindInst();
 
   // Show/hide chord diagram vs trumpet note card
@@ -36105,11 +36444,13 @@ function gccInit() {
   if (qualDivider) qualDivider.style.display = isTrumpet ? 'none' : '';
 
   if (isTrumpet) { trpStop();
-    trpCurrentOctave = WIND_RANGES[chordScaleInstrument]?.defaultOct ?? 4;
+    if (!keepState) trpCurrentOctave = WIND_RANGES[chordScaleInstrument]?.defaultOct ?? 4;
     trpInitNoteMode(); return; }
 
-  gccRoot = 'C';
-  gccQuality = 'maj';
+  if (!keepState) {
+    gccRoot = 'C';
+    gccQuality = 'maj';
+  }
   gccVoicingIdx = 0;
   gccShowNoteNames = false;
   const fingBtn = document.getElementById('gccFingBtn');
@@ -36137,7 +36478,7 @@ function gccBuildRootGrid() {
       if (isActive && GCC_ENHARMONIC_SEMIS.has(i)) {
         if (gRootFlatOverride.has(i)) gRootFlatOverride.delete(i); else gRootFlatOverride.add(i);
         gccBuildRootGrid(); gccRender();
-  if (['uke','bass','mandolin','banjo','mandocello','ukebass'].includes(chordScaleInstrument)) gccMarkUnavailableQualities();
+  if (['uke','bass','mandolin','banjo'].includes(chordScaleInstrument) || isTenorGuitar() || isBaritoneGuitar()) gccMarkUnavailableQualities();
       } else {
 
         gccRoot = r; gccVoicingIdx = 0; gccBuildRootGrid(); gccRender();
@@ -36172,9 +36513,10 @@ function gccMarkUnavailableQualities() {
     if (!sym) return;
     const has = chordScaleInstrument === 'bass' ? bassVoicings(gccRoot,sym).length>0
                 : chordScaleInstrument === 'mandolin' ? mandoVoicings(gccRoot,sym).length>0
-                : chordScaleInstrument === 'banjo'       ? banjoVoicings(gccRoot,sym).length>0
-                : chordScaleInstrument === 'mandocello' ? mandocelloVoicings(gccRoot,sym).length>0
-                : chordScaleInstrument === 'ukebass'    ? ukeBassVoicings(gccRoot,sym).length>0
+                : chordScaleInstrument === 'banjo'    ? banjoVoicings(gccRoot,sym).length>0
+                : isTenorGuitar()   ? tenorGuitarVoicings(gccRoot,sym).length>0
+                : isBaritoneGuitar() ? bariGuitarVoicings(gccRoot,sym).length>0
+                : isUkeBass()       ? ukeBassVoicings(gccRoot,sym).length>0
                 : ukeVoicings(gccRoot,sym).length>0;
     btn.classList.toggle('unavailable', !has);
     btn.disabled = !has;
@@ -36869,15 +37211,17 @@ function gssGetPositions(root, intervals, openMidi) {
     // Only extend if hiRoot isn't already reachable in the original window
     const fretMax = (minHiRootFret > origFretMax) ? minHiRootFret : origFretMax;
 
-    // Collect all scale notes within the (possibly extended) window
+    // Collect all scale notes within the (possibly extended) window,
+    // clamped to hiRoot so wide-span instruments (mandocello, mandola) don't
+    // bleed notes from high open strings into a second octave on the 1-oct view.
     const strings = openMidi.map(baseMidi => {
       const notes = [];
       for (let f = fretMin; f <= fretMax; f++) {
-        const note = (baseMidi + f) % 12;
-        if (scaleSet.has(note)) {
+        const midi = baseMidi + f;
+        const note = midi % 12;
+        if (scaleSet.has(note) && midi <= hiRoot) {
           const finger = f === 0 ? 0 : Math.min(4, Math.max(1, fretMin === 0 ? f : f - fretMin + 1));
-          notes.push({ fret: f, isRoot: (note === root % 12), finger,
-                       midi: baseMidi + f });
+          notes.push({ fret: f, isRoot: (note === root % 12), finger, midi });
         }
       }
       return notes;
@@ -37212,7 +37556,7 @@ function gssDrawPosition(pos) {
 
   // ── Fret position inlay markers — inside fretboard, centred between strings ──
   // Guitar: 3,5,7,9 (single) + 12 (double). Uke: 5,7,10 (single) + 12 (double).
-  const posMarkerFrets = ['uke','mandolin','banjo','mandocello','ukebass'].includes(chordScaleInstrument) ? [5,7,10] : [3,5,7,9];
+  const posMarkerFrets = ['uke','mandolin','banjo'].includes(chordScaleInstrument) ? [5,7,10] : [3,5,7,9];
   const markerX = left + (right - left) / 2; // horizontal centre of fretboard
   posMarkerFrets.forEach(f => {
     const relF = f - baseFret;
@@ -37414,7 +37758,7 @@ function gssDrawFretboard() {
 
   // ── Fret position inlay markers — guitar: 3,5,7,9 + 12×2; uke: 5,7,10 + 12×2 ──
   const midStr = (numStrings - 1) / 2;
-  const singleMarkerFrets = ['uke','mandolin','banjo','mandocello','ukebass'].includes(chordScaleInstrument) ? [5,7,10] : [3,5,7,9];
+  const singleMarkerFrets = ['uke','mandolin','banjo'].includes(chordScaleInstrument) ? [5,7,10] : [3,5,7,9];
   singleMarkerFrets.forEach(f => {
     if (f > NUM_FRETS) return;
     const x = marginL + midStr * strW;
@@ -37939,13 +38283,11 @@ let chordScaleInstrument = 'guitar'; // 'guitar' | 'piano'
 
 // Family metadata — drives the picker sheet and sub-row
 const CS_INSTRUMENTS = {
-  guitar:  { label:'🎸 Guitar',   family:'fretted', subs:null },
+  guitar:  { label:'🎸 Guitar',   family:'fretted', subs:[{key:'standard',label:'STANDARD'},{key:'baritone',label:'BARITONE'},{key:'tenor',label:'TENOR'}] },
   bass:    { label:'🎸 Bass',     family:'fretted', subs:[{key:'4string',label:'4-STRING'},{key:'5string',label:'5-STRING'}] },
-  uke:      { label:'🪕 Uke',       family:'fretted', subs:[{key:'soprano',label:'SOPRANO'},{key:'tenor',label:'TENOR'},{key:'baritone',label:'BARITONE'}] },
-  mandolin: { label:'🪕 Mandolin', family:'fretted', subs:null },
+  uke:      { label:'🪕 Uke',       family:'fretted', subs:[{key:'soprano',label:'SOPRANO'},{key:'tenor',label:'TENOR'},{key:'baritone',label:'BARITONE'},{key:'ukebass',label:'BASS'}] },
+  mandolin: { label:'🪕 Mandolin', family:'fretted', subs:[{key:'mandolin',label:'MANDOLIN'},{key:'mandola',label:'MANDOLA'},{key:'mandocello',label:'CELLO'}] },
   banjo:       { label:'🪕 Banjo',       family:'fretted', subs:null },
-  mandocello:  { label:'🎻 Mandocello', family:'fretted', subs:null },
-  ukebass:     { label:'🎸 Uke Bass',   family:'fretted', subs:null },
   piano:   { label:'🎹 Piano',    family:'keys',    subs:null },
   trumpet:    { label:'🎺 Trumpet',     family:'wind', subs:null },
   frenchhorn: { label:'🎺 French Horn', family:'wind', subs:null },
@@ -37970,12 +38312,13 @@ function pickInst(inst) {
 
 
 function getFrettedTone() {
-  if (chordScaleInstrument === 'mandolin') return REF_TONES['mandolin'] || REF_TONES['guitar'];
-  if (chordScaleInstrument === 'banjo')       return REF_TONES['banjo']       || REF_TONES['guitar'];
-  if (chordScaleInstrument === 'mandocello') return REF_TONES['mandocello'] || REF_TONES['mandolin'] || REF_TONES['guitar'];
-  if (chordScaleInstrument === 'ukebass')    return REF_TONES['ukebass']    || REF_TONES['guitar'];
-  if (chordScaleInstrument === 'bass')        return REF_TONES['bass']        || REF_TONES['guitar'];
+  if (isUkeBass())                             return REF_TONES['ukebass']    || REF_TONES['guitar'];
+  if (isMandoFamily('mandocello'))             return REF_TONES['mandocello'] || REF_TONES['mandolin'] || REF_TONES['guitar'];
+  if (chordScaleInstrument === 'mandolin')     return REF_TONES['mandolin']   || REF_TONES['guitar'];
+  if (chordScaleInstrument === 'banjo')        return REF_TONES['banjo']      || REF_TONES['guitar'];
+  if (chordScaleInstrument === 'bass')         return REF_TONES['bass']       || REF_TONES['guitar'];
   return REF_TONES['guitar'];
+  // baritone and tenor guitar fall through to guitar tone — same body, different tuning
 }
 function isWindInst(i) { return CS_INSTRUMENTS[i ?? chordScaleInstrument]?.family === 'wind'; }
 
@@ -38036,7 +38379,7 @@ function _buildSubRow(inst, subs) {
   row.innerHTML = '';
   if (!subs || !subs.length) { row.classList.add('hidden'); return; }
   row.classList.remove('hidden');
-  const currentSub = inst === 'uke' ? ukeSubType : inst === 'bass' ? bassSubType : null;
+  const currentSub = inst === 'uke' ? ukeSubType : inst === 'bass' ? bassSubType : inst === 'mandolin' ? mandoSubType : inst === 'guitar' ? guitarSubType : null;
   subs.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'cs-sub-pill' + (s.key === currentSub ? ' active' : '');
@@ -38049,8 +38392,10 @@ function _buildSubRow(inst, subs) {
 
 function switchSubType(inst, key) {
   gccStop(); gssStop();
-  if (inst === 'uke')  ukeSubType  = key;
-  if (inst === 'bass') bassSubType = key;
+  if (inst === 'uke')      ukeSubType    = key;
+  if (inst === 'bass')     bassSubType   = key;
+  if (inst === 'mandolin') mandoSubType  = key;
+  if (inst === 'guitar')   guitarSubType = key;
   document.querySelectorAll('#csSubRow .cs-sub-pill').forEach(b =>
     b.classList.toggle('active', b.dataset.subKey === key));
   gccVoicingIdx = 0; gssPosIdx = 0;
@@ -39653,6 +39998,261 @@ function micTurnOnPulse(btn) {
 
 
 // ═══════════════════════════════════════════════
+// SAVED CHART VIEWS
+// Loose-restore snapshots of the CHARTS tool (instrument + section + capo
+// + sub-variant). Root/note is captured for the corner chip but NOT frozen.
+// Stored separately from progState.favorites because these carry a payload.
+// ═══════════════════════════════════════════════
+
+function svcList() { return progState.savedCharts || []; }
+
+// Build a snapshot of the current CHARTS tool state.
+function svcSnapshot() {
+  const inst = chordScaleInstrument;
+  const wind = isWindInst(inst);
+  const snap = {
+    inst:    inst,
+    section: gccToolMode,                 // 'chords' | 'scales'
+    capo:    (typeof gccCapo === 'number') ? gccCapo : 0,
+    sub:     inst === 'uke' ? ukeSubType : inst === 'bass' ? bassSubType : inst === 'mandolin' ? mandoSubType : inst === 'guitar' ? guitarSubType : null,
+  };
+  if (wind) {
+    snap.root = trpCurrentNote;           // current note for the chip
+  } else if (gccToolMode === 'scales') {
+    snap.root    = gssRoot;               // scale root
+    snap.quality = gssScaleType;          // scale type (e.g. 'major','dorian')
+  } else {
+    snap.root    = gccRoot;               // chord root
+    snap.quality = gccQuality;            // chord quality
+  }
+  return snap;
+}
+
+// Two snapshots represent the same view? (name is intentionally NOT part of this)
+function svcSameState(a, b) {
+  return a.inst === b.inst
+      && a.section === b.section
+      && (a.capo || 0) === (b.capo || 0)
+      && (a.sub || null) === (b.sub || null)
+      && a.root === b.root
+      && (a.quality || null) === (b.quality || null);
+}
+
+// Smart auto-name = instrument display name.
+function svcAutoName(snap) {
+  const meta = CS_INSTRUMENTS[snap.inst];
+  if (!meta) return (snap.inst || 'CHART').toUpperCase();
+  // strip the leading emoji + space from the picker label ("🎺 Trumpet" → "Trumpet")
+  return meta.label.replace(/^[^\s]+\s+/, '');
+}
+
+// Subtitle = section (+ capo). Wind uses NOTES instead of CHORDS.
+function svcSubtitle(snap) {
+  const wind = isWindInst(snap.inst);
+  let s = snap.section === 'scales'
+            ? 'Scales'
+            : (wind ? 'Notes' : 'Chords');
+  if (snap.capo > 0) s += ' + ' + snap.capo;
+  if (snap.sub) {
+    const SUB_LABELS = { ukebass:'BASS', '4string':'4-STR', '5string':'5-STR', mandolin:'MANDOLIN', mandola:'MANDOLA', mandocello:'CELLO', standard:'STANDARD', baritone:'BARITONE', tenor:'TENOR' };
+    s += ' · ' + (SUB_LABELS[snap.sub] || snap.sub.toUpperCase());
+  }
+  return s;
+}
+
+// Leading-emoji icon for the tile (matches picker label glyph).
+function svcIcon(snap) {
+  const meta = CS_INSTRUMENTS[snap.inst];
+  const m = meta && meta.label.match(/^([^\s]+)/);
+  return m ? m[1] : '▦';
+}
+
+// Root chip text (respects enharmonic spelling that was active when saved).
+function svcChip(snap) {
+  if (!snap.root) return '';
+  const semi = GCC_ROOTS.indexOf(snap.root);
+  if (semi === -1) return snap.root;
+  return gccRootDisplayName(semi);
+}
+
+// Save the current view. Dedupes on STATE only — name is free.
+function svcSaveCurrentView(name) {
+  if (!progState.savedCharts) progState.savedCharts = [];
+  const snap = svcSnapshot();
+  const dupe = progState.savedCharts.some(v => svcSameState(v, snap));
+  if (dupe) {
+    hapticLight && hapticLight();
+    svcToast('This view is already saved', true);
+    return false;
+  }
+  const clean = (name || '').trim();
+  snap.name = clean || svcAutoName(snap);
+  snap.id   = 's' + Date.now().toString(36);
+  progState.savedCharts.push(snap);
+  progSave();
+  hapticSuccess && hapticSuccess();
+  svcToast('View saved');
+  return true;
+}
+
+function svcRemove(id) {
+  if (!progState.savedCharts) return;
+  progState.savedCharts = progState.savedCharts.filter(v => v.id !== id);
+  progSave();
+  renderFavSheet();
+}
+
+// Launch a saved view: open CHARTS, apply the loose snapshot.
+function svcLaunch(snap) {
+  setMode('tools');
+  enterTool('guitarchords', snap);
+}
+
+// ── Lightweight toast (self-contained, bottom-center, ~1.9s) ──
+let _svcToastTimer = null;
+function svcToast(msg, isDupe) {
+  let el = document.getElementById('svcToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'svcToast';
+    el.className = 'svc-toast';
+    el.innerHTML = '<span class="svc-toast-star">★</span><span class="svc-toast-msg"></span>';
+    document.body.appendChild(el);
+  }
+  el.querySelector('.svc-toast-msg').textContent = msg;
+  el.classList.toggle('svc-toast--dupe', !!isDupe);
+  el.classList.remove('svc-toast--show');
+  void el.offsetWidth;
+  el.classList.add('svc-toast--show');
+  clearTimeout(_svcToastTimer);
+  _svcToastTimer = setTimeout(() => el.classList.remove('svc-toast--show'), 1900);
+}
+
+// ── Save bar (light slide-up confirm) ──
+function svcOpenSaveBar() {
+  // wind with nothing meaningful selected still works — root chip just shows the note
+  const snap = svcSnapshot();
+  const bar    = document.getElementById('svcSaveBar');
+  const scrim  = document.getElementById('svcSaveScrim');
+  const input  = document.getElementById('svcNameInput');
+  const sub     = document.getElementById('svcPreviewSub');
+  const chip    = document.getElementById('svcPreviewChip');
+  const icon    = document.getElementById('svcPreviewIcon');
+  if (!bar || !input) return;
+  input.value = '';
+  input.placeholder = svcAutoName(snap);
+  if (sub)  sub.textContent  = svcSubtitle(snap);
+  if (icon) icon.textContent = svcIcon(snap);
+  if (chip) {
+    const c = svcChip(snap);
+    chip.textContent = c;
+    chip.style.display = c ? '' : 'none';
+  }
+  scrim?.classList.remove('hidden');
+  bar.classList.remove('hidden');
+  void bar.offsetWidth;
+  bar.classList.add('svc-bar--open');
+  hapticLight && hapticLight();
+}
+function svcCloseSaveBar() {
+  const bar   = document.getElementById('svcSaveBar');
+  const scrim = document.getElementById('svcSaveScrim');
+  if (bar) bar.classList.remove('svc-bar--open');
+  scrim?.classList.add('hidden');
+  setTimeout(() => bar?.classList.add('hidden'), 220);
+}
+function svcConfirmSave() {
+  const input = document.getElementById('svcNameInput');
+  const name = input ? input.value : '';
+  svcCloseSaveBar();
+  // small delay so the bar slide-out doesn't fight the toast slide-in
+  setTimeout(() => svcSaveCurrentView(name), 180);
+}
+
+// Pending snapshot to apply when CHARTS opens (set by enterTool, consumed here).
+let _pendingChartRestore = null;
+
+// Apply a saved snapshot by setting the raw state vars directly. enterTool calls
+// gccInit() right after this, which renders whatever section is active — so we
+// avoid the switch* helpers (they each fire their own init and would double-render).
+function svcApplyRestore() {
+  const snap = _pendingChartRestore;
+  _pendingChartRestore = null;
+  if (!snap) return false;
+
+  // Instrument + family label
+  chordScaleInstrument = snap.inst;
+  const meta = CS_INSTRUMENTS[snap.inst] || {};
+  const lbl = document.getElementById('csFamilyLabel');
+  if (lbl) lbl.textContent = meta.label || snap.inst.toUpperCase();
+
+  // Sub-variant (uke/bass)
+  if (snap.inst === 'uke'      && snap.sub) ukeSubType    = snap.sub;
+  if (snap.inst === 'bass'     && snap.sub) bassSubType   = snap.sub;
+  if (snap.inst === 'mandolin' && snap.sub) mandoSubType  = snap.sub;
+  if (snap.inst === 'guitar'   && snap.sub) guitarSubType = snap.sub;
+  _buildSubRow(snap.inst, meta.subs);
+
+  // Section (chords vs scales) — set var + tab highlight + section visibility
+  gccToolMode = snap.section;
+  document.querySelectorAll('.gtool-mode-tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === snap.section));
+  const isTrumpet = isWindInst(snap.inst);
+  const isPiano   = snap.inst === 'piano';
+  document.getElementById('csGuitarWrap')?.classList.toggle('hidden', isPiano);
+  document.getElementById('csPianoWrap')?.classList.toggle('hidden', !isPiano);
+  document.getElementById('gccChordsSection')?.classList.toggle('hidden', snap.section !== 'chords');
+  document.getElementById('gssScalesSection')?.classList.toggle('hidden', snap.section !== 'scales');
+  document.getElementById('pccChordsSection')?.classList.toggle('hidden', snap.section !== 'chords');
+  document.getElementById('pssScalesSection')?.classList.toggle('hidden', snap.section !== 'scales');
+  // Trumpet tab relabel (mirrors switchChordScaleInstrument)
+  const chordsTab = document.querySelector('[data-mode="chords"]');
+  const scalesTab = document.querySelector('[data-mode="scales"]');
+  if (chordsTab) chordsTab.textContent = isTrumpet ? 'NOTES' : t('gtool_chords');
+  if (scalesTab) scalesTab.textContent = isTrumpet ? 'SCALES' : t('gtool_scales');
+
+  // Capo
+  gccCapo = snap.capo || 0;
+
+  // Root + quality (loose — sets the starting point, not a freeze).
+  // Variables differ by family AND section, so route carefully.
+  if (isTrumpet) {
+    if (snap.root) trpCurrentNote = snap.root;
+    // wind always renders via gccInit/gssInit note/scale path below
+    if (snap.section === 'scales') { gssInit(true); return true; }
+    gccInit(true);
+    return true;
+  }
+
+  if (isPiano) {
+    if (snap.section === 'scales') {
+      if (snap.root)    pssRoot      = snap.root;
+      if (snap.quality) pssScaleType = snap.quality;
+      pssInit();
+    } else {
+      if (snap.root)    pccRoot    = snap.root;
+      if (snap.quality) pccQuality = snap.quality;
+      pccInit();
+    }
+    return true;
+  }
+
+  // Fretted
+  if (snap.section === 'scales') {
+    if (snap.root)    gssRoot      = snap.root;
+    if (snap.quality) gssScaleType = snap.quality;
+    gssInit();   // gssInit preserves gssRoot/gssScaleType (no reset)
+    return true;
+  }
+  // Fretted chords
+  if (snap.root)    gccRoot    = snap.root;
+  if (snap.quality) gccQuality = snap.quality;
+  gccInit(true); // keepState — preserves the root/quality we just set
+  return true;
+}
+
+
+// ═══════════════════════════════════════════════
 // SESSION TIMER
 // ═══════════════════════════════════════════════
 
@@ -40408,13 +41008,15 @@ function closeFavSheet() {
 
 function renderFavSheet() {
   const favs = favGetList();
+  const saved = svcList();
   const container = document.getElementById('favSheetContent');
   const countEl = document.getElementById('favSheetCount');
   if (!container) return;
 
-  if (countEl) countEl.textContent = favs.length > 0 ? favs.length + ' saved' : '';
+  const total = favs.length + saved.length;
+  if (countEl) countEl.textContent = total > 0 ? total + ' saved' : '';
 
-  if (favs.length === 0) {
+  if (total === 0) {
     container.innerHTML = `
       <div class="fav-empty">
         <div class="fav-empty-icon">★</div>
@@ -40424,60 +41026,96 @@ function renderFavSheet() {
     return;
   }
 
-  const grid = document.createElement('div');
-  grid.className = 'fav-grid';
-
-  favs.forEach(key => {
-    const meta = FAV_META[key];
-    if (!meta) return;
-    const card = document.createElement('div');
-    card.className = 'fav-mini-card';
-    card.innerHTML = `
-      <div class="fav-mini-icon">${meta.icon}</div>
-      <div class="fav-mini-label">${meta.label}</div>
-      <div class="fav-mini-type">${meta.type === 'TOOL' ? t('fav_type_tool') : t('fav_type_exercise')}</div>`;
-    // Long-press = remove, tap = launch
-    let _lp = null, _moved = false;
-    const startLP = () => {
-      _moved = false;
-      card.classList.remove('lp-hold');
-      _lp = setTimeout(() => {
-        if (_moved) return;
-        card.classList.add('lp-hold');
-        setTimeout(() => {
-          card.classList.remove('lp-hold');
-          card.classList.add('lp-removing');
-          hapticWrong && hapticWrong();
-          setTimeout(() => favRemove(key), 200);
-        }, 120);
-      }, 450);
-    };
-    const endLP = () => {
-      if (_lp !== null) {
-        // timer still running = it was a tap, not a long-press → launch
-        clearTimeout(_lp); _lp = null;
-        if (!_moved) {
-          closeFavSheet();
-          setTimeout(() => { try { meta.launch(); } catch(e) {} }, 80);
-        }
-      } else {
-        card.classList.remove('lp-hold');
-      }
-    };
-    const cancelLP = () => { clearTimeout(_lp); _lp = null; card.classList.remove('lp-hold'); };
-    const moved = () => { _moved = true; cancelLP(); };
-    card.addEventListener('touchstart',  startLP,   { passive: true });
-    card.addEventListener('touchend',    endLP,     { passive: true });
-    card.addEventListener('touchcancel', cancelLP,  { passive: true });
-    card.addEventListener('touchmove',   moved,     { passive: true });
-    card.addEventListener('mousedown',   startLP);
-    card.addEventListener('mouseup',     endLP);
-    card.addEventListener('mousemove',   (e) => { if (e.buttons) moved(); });
-    grid.appendChild(card);
-  });
-
   container.innerHTML = '';
-  container.appendChild(grid);
+
+  // ── Section 1: pinned tools & exercises ──
+  if (favs.length) {
+    if (saved.length) {
+      const lbl = document.createElement('div');
+      lbl.className = 'fav-section-label';
+      lbl.textContent = t('fav_section_tools') || 'TOOLS & EXERCISES';
+      container.appendChild(lbl);
+    }
+    const grid = document.createElement('div');
+    grid.className = 'fav-grid';
+    favs.forEach(key => {
+      const meta = FAV_META[key];
+      if (!meta) return;
+      const card = document.createElement('div');
+      card.className = 'fav-mini-card';
+      card.innerHTML = `
+        <div class="fav-mini-icon">${meta.icon}</div>
+        <div class="fav-mini-label">${meta.label}</div>
+        <div class="fav-mini-type">${meta.type === 'TOOL' ? t('fav_type_tool') : t('fav_type_exercise')}</div>`;
+      _favBindCardGestures(card, () => meta.launch(), () => favRemove(key));
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+  }
+
+  // ── Section 2: saved chart views ──
+  if (saved.length) {
+    const lbl = document.createElement('div');
+    lbl.className = 'fav-section-label' + (favs.length ? ' second' : '');
+    lbl.textContent = t('fav_section_saved') || 'SAVED CHART VIEWS';
+    container.appendChild(lbl);
+
+    const grid = document.createElement('div');
+    grid.className = 'fav-grid';
+    saved.forEach(snap => {
+      const chip = svcChip(snap);
+      const tile = document.createElement('div');
+      tile.className = 'svc-tile';
+      tile.innerHTML = `
+        ${chip ? `<span class="svc-tile-chip">${chip}</span>` : ''}
+        <span class="svc-tile-star">★</span>
+        <div class="svc-tile-icon">${svcIcon(snap)}</div>
+        <div class="svc-tile-label">${snap.name}</div>
+        <div class="svc-tile-sub">${svcSubtitle(snap)}</div>`;
+      _favBindCardGestures(tile, () => svcLaunch(snap), () => svcRemove(snap.id));
+      grid.appendChild(tile);
+    });
+    container.appendChild(grid);
+  }
+}
+
+// Shared tap-to-launch / long-press-to-remove gesture binding for sheet tiles.
+function _favBindCardGestures(card, onLaunch, onRemove) {
+  let _lp = null, _moved = false;
+  const startLP = () => {
+    _moved = false;
+    card.classList.remove('lp-hold');
+    _lp = setTimeout(() => {
+      if (_moved) return;
+      card.classList.add('lp-hold');
+      setTimeout(() => {
+        card.classList.remove('lp-hold');
+        card.classList.add('lp-removing');
+        hapticWrong && hapticWrong();
+        setTimeout(onRemove, 200);
+      }, 120);
+    }, 450);
+  };
+  const endLP = () => {
+    if (_lp !== null) {
+      clearTimeout(_lp); _lp = null;
+      if (!_moved) {
+        closeFavSheet();
+        setTimeout(() => { try { onLaunch(); } catch(e) {} }, 80);
+      }
+    } else {
+      card.classList.remove('lp-hold');
+    }
+  };
+  const cancelLP = () => { clearTimeout(_lp); _lp = null; card.classList.remove('lp-hold'); };
+  const moved = () => { _moved = true; cancelLP(); };
+  card.addEventListener('touchstart',  startLP,   { passive: true });
+  card.addEventListener('touchend',    endLP,     { passive: true });
+  card.addEventListener('touchcancel', cancelLP,  { passive: true });
+  card.addEventListener('touchmove',   moved,     { passive: true });
+  card.addEventListener('mousedown',   startLP);
+  card.addEventListener('mouseup',     endLP);
+  card.addEventListener('mousemove',   (e) => { if (e.buttons) moved(); });
 }
 
 // ── Long-press detection on hub cards ──
@@ -42023,6 +42661,25 @@ window.sgExit = function() {
     </div>
   </div>
   <div class="mini-notif" id="miniNotif"></div>
+
+  <!-- ═══════════════ SAVE CHART VIEW BAR ═══════════════ -->
+  <div class="svc-scrim hidden" id="svcSaveScrim" onclick="svcCloseSaveBar()"></div>
+  <div class="svc-bar hidden" id="svcSaveBar">
+    <div class="svc-bar-handle"></div>
+    <div class="svc-bar-title">SAVE THIS VIEW</div>
+    <div class="svc-bar-preview">
+      <span class="svc-prev-chip" id="svcPreviewChip"></span>
+      <span class="svc-prev-icon" id="svcPreviewIcon">▦</span>
+      <span class="svc-prev-sub" id="svcPreviewSub"></span>
+    </div>
+    <input type="text" class="svc-name-input" id="svcNameInput" maxlength="22"
+           placeholder="Name" autocomplete="off" autocorrect="off" spellcheck="false"
+           onkeydown="if(event.key==='Enter'){event.preventDefault();svcConfirmSave();}">
+    <div class="svc-bar-actions">
+      <button class="svc-btn svc-btn-cancel" onclick="svcCloseSaveBar()">Cancel</button>
+      <button class="svc-btn svc-btn-save" onclick="svcConfirmSave()">Save View</button>
+    </div>
+  </div>
 
   <!-- RAMP PRESETS SHEET -->
   <div class="setlist-sheet" id="rampPresetSheet" onclick="if(event.target===this)closeRampPresets()">
