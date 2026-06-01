@@ -10586,20 +10586,28 @@
     // ── Wave canvas ────────────────────────────────────────
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
-    // Read dimensions after layout has settled — use screen as fallback
-    const W   = canvas.parentElement.clientWidth  || window.innerWidth;
-    const H   = 120;
-    canvas.width  = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    ctx.scale(dpr, dpr);
+    // Dimensions declared as let — will be set after layout read in rAF
+    let W = 0, H = 120;
 
     // ── Background canvas ──────────────────────────────────
-    let bgCtx, BW, BH;
+    let bgCtx, BW = 0, BH = 0;
     if (bgCanvas) {
       bgCtx = bgCanvas.getContext('2d');
-      BW = window.innerWidth; BH = window.innerHeight;
-      bgCanvas.width  = BW * dpr; bgCanvas.height = BH * dpr;
-      bgCtx.scale(dpr, dpr);
+    }
+
+    function initCanvasSizes() {
+      // Read inside rAF so layout is guaranteed to have run
+      W  = canvas.parentElement.clientWidth || window.innerWidth;
+      BW = window.innerWidth;
+      BH = window.innerHeight;
+      canvas.width  = W  * dpr; canvas.height = H  * dpr;
+      canvas.style.width  = W  + 'px';
+      canvas.style.height = H  + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (bgCtx) {
+        bgCanvas.width  = BW * dpr; bgCanvas.height = BH * dpr;
+        bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
     }
 
     // ── State ──────────────────────────────────────────────
@@ -10857,10 +10865,12 @@
       }
       requestAnimationFrame(loop);
     }
-    // Pre-draw one silent frame so canvas is correctly painted before
-    // any elements become visible — eliminates first-frame snap
-    drawWave();
-    requestAnimationFrame(loop);
+    // Wait for layout, size canvases, draw one silent frame, then start loop
+    requestAnimationFrame(() => {
+      initCanvasSizes();
+      drawWave(); // paints at correct size before anything is visible
+      requestAnimationFrame(loop);
+    });
 
     // ── Sequence ──────────────────────────────────────────
     await af(300);
