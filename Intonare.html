@@ -10603,7 +10603,7 @@
 
     // ── State ──────────────────────────────────────────────
     let phase        = 0;
-    let phaseSpeed   = 0.20;      // starts fast, decelerates to 0.045
+    let phaseSpeed   = 0.045;     // start at cruise speed — no jump on first frame
     let targetSpeed  = 0.045;
     let amplitude    = 0;
     let targetAmp    = 28;
@@ -10856,7 +10856,8 @@
       }
       requestAnimationFrame(loop);
     }
-    loop();
+    // Delay first frame so canvas layout has settled — prevents position jitter
+    requestAnimationFrame(() => requestAnimationFrame(loop));
 
     // ── Sequence ──────────────────────────────────────────
     await af(300);
