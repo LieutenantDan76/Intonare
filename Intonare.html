@@ -17406,18 +17406,22 @@ function _applyNoteSilentState() {
 // ═══════════════════════════════════════════════
 async function toggleMic() {
   hapticSelect();
+  alert('toggleMic called, isListening=' + isListening);
   if (isListening) {
     stopMic();
   } else {
     const _mb = document.getElementById('micBtn');
     if (_mb) {
-      _mb.classList.add('listening'); // immediate — no gap before animation lands
+      _mb.classList.add('listening');
       micTurnOnPulse(_mb);
     }
+    alert('calling startMic...');
     await startMic();
+    alert('startMic returned, isListening=' + isListening);
   }
 }
 async function startMic() {
+  alert('startMic started, mediaDevices=' + (navigator.mediaDevices ? 'yes' : 'NO') + ' getUserMedia=' + (navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 'yes' : 'NO'));
   try {
     // On Capacitor/Android, request RECORD_AUDIO permission natively before getUserMedia
     // The WebView won't auto-prompt — we need to trigger it through the Permissions API
@@ -17464,6 +17468,8 @@ async function startMic() {
     const micLbl = document.getElementById('micLabel');
     if (micLbl) micLbl.textContent = t('mic_denied');
     document.getElementById('statusText').textContent = t('mic_no_mic');
+    // DEBUG — remove after mic is working
+    alert('Mic error: ' + e.name + ': ' + e.message + '\nmediaDevices: ' + (navigator.mediaDevices ? 'exists' : 'MISSING') + '\nCapacitor: ' + (window.Capacitor ? 'yes' : 'no'));
   }
 }
 function stopMic() {
