@@ -10586,7 +10586,8 @@
     // ── Wave canvas ────────────────────────────────────────
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
-    const W   = canvas.parentElement.clientWidth;
+    // Read dimensions after layout has settled — use screen as fallback
+    const W   = canvas.parentElement.clientWidth  || window.innerWidth;
     const H   = 120;
     canvas.width  = W * dpr; canvas.height = H * dpr;
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
@@ -10603,7 +10604,7 @@
 
     // ── State ──────────────────────────────────────────────
     let phase        = 0;
-    let phaseSpeed   = 0.045;     // start at cruise speed — no jump on first frame
+    let phaseSpeed   = 0.20;      // starts fast, decelerates to cruise speed
     let targetSpeed  = 0.045;
     let amplitude    = 0;
     let targetAmp    = 28;
@@ -10856,8 +10857,10 @@
       }
       requestAnimationFrame(loop);
     }
-    // Delay first frame so canvas layout has settled — prevents position jitter
-    requestAnimationFrame(() => requestAnimationFrame(loop));
+    // Pre-draw one silent frame so canvas is correctly painted before
+    // any elements become visible — eliminates first-frame snap
+    drawWave();
+    requestAnimationFrame(loop);
 
     // ── Sequence ──────────────────────────────────────────
     await af(300);
