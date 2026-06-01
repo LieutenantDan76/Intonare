@@ -30,6 +30,10 @@ copy /Y Intonare.html www\index.html
 echo [5/6] Syncing Capacitor...
 call npx cap sync
 
+REM Restore AndroidManifest.xml — cap sync overwrites it and strips our permissions
+echo [5b] Restoring AndroidManifest.xml with microphone permissions...
+copy /Y AndroidManifest.xml android\app\src\main\AndroidManifest.xml
+
 echo [6/6] Copying to Android assets + verifying...
 copy /Y www\index.html android\app\src\main\assets\public\index.html
 findstr "cueSelect_correct" android\app\src\main\assets\public\index.html
