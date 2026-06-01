@@ -10415,16 +10415,6 @@
   function removeSplash() {
     const el = document.getElementById('intonare-splash');
     if (el) el.remove();
-    // On Capacitor/Android, request mic permission on first touch
-    // so the OS prompt fires naturally within a user gesture context
-    if (window.Capacitor) {
-      document.addEventListener('touchend', function _reqMicPerm() {
-        document.removeEventListener('touchend', _reqMicPerm);
-        navigator.mediaDevices && navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(s => s.getTracks().forEach(t => t.stop()))
-          .catch(() => {});
-      }, { once: true });
-    }
   }
 
   async function runSplash() {
@@ -17429,27 +17419,19 @@ async function toggleMic() {
 }
 async function startMic() {
   try {
-    // On Android WebView, AudioContext must be created and resumed within
-    // a user gesture. Pre-create it here before getUserMedia so the WebView
-    // audio stack is ready to accept the mic stream.
-    const preCtx = getAudio();
-    if (preCtx.state === 'suspended') {
-      await preCtx.resume();
-    }
-
-    if (window.Capacitor) {
+    // On Capacitor/Android use the built-in Permissions plugin to trigger
+    // the native OS permission dialog — this works without any extra packages
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Permissions) {
       try {
-        if (navigator.permissions && navigator.permissions.query) {
-          const status = await navigator.permissions.query({ name: 'microphone' });
-          if (status.state === 'denied') {
-            throw new Error('Microphone permission denied');
-          }
-        }
-        if (window.Capacitor.Plugins && window.Capacitor.Plugins.Microphone) {
-          await window.Capacitor.Plugins.Microphone.requestPermissions();
+        const result = await window.Capacitor.Plugins.Permissions.request({
+          permissions: ['microphone']
+        });
+        if (result && result.microphone === 'denied') {
+          throw new Error('Microphone permission denied by user');
         }
       } catch(permErr) {
-        if (permErr.message === 'Microphone permission denied') throw permErr;
+        if (permErr.message && permErr.message.includes('denied')) throw permErr;
+        // Plugin call failed — fall through to getUserMedia which may still prompt
       }
     }
 
