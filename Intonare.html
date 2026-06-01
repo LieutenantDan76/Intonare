@@ -1113,7 +1113,7 @@
     border-radius: 4px;
     border: none;
     background: transparent;
-    transition: color 0.12s ease, text-shadow 0.12s ease;
+    transition: color 0.18s ease, text-shadow 0.18s ease, font-size 0.12s ease;
     letter-spacing: 0.5px;
     position: relative; z-index: 3;
     line-height: 1;
@@ -3202,12 +3202,16 @@
     filter: drop-shadow(0 0 18px color-mix(in srgb, var(--theme) 30%, transparent));
     font-variant-numeric: tabular-nums;
     position: relative; z-index: 3;
-    transition: filter 0.2s;
+    transition: filter 0.2s, opacity 0.35s ease;
+  }
+  .tuner-screen-note.fading {
+    opacity: 0;
   }
   .tuner-screen-note.silent {
     background: none;
     color: color-mix(in srgb, var(--muted) 60%, transparent);
     filter: none;
+    opacity: 1; /* restored after fade */
   }
   .tuner-screen-note.in-tune {
     background: linear-gradient(135deg, var(--in-tune) 0%, #5ee2ff 100%);
@@ -3651,12 +3655,14 @@
     filter: drop-shadow(0 0 18px color-mix(in srgb, var(--theme) 30%, transparent));
     font-variant-numeric: tabular-nums;
     position: relative; z-index: 3;
-    transition: filter 0.2s;
+    transition: filter 0.2s, opacity 0.35s ease;
   }
+  .tuner-screen-note.fading { opacity: 0; }
   .tuner-screen-note.silent {
     background: none;
     color: color-mix(in srgb, var(--muted) 40%, transparent);
     filter: none;
+    opacity: 1;
   }
   .tuner-screen-note.in-tune {
     background: linear-gradient(135deg, var(--in-tune) 0%, #5ee2ff 100%);
@@ -16382,8 +16388,8 @@ function updateTooltip(cents, hasPitch) {
         if (bar) { bar.className = 'tuner-screen-verdict'; bar.classList.remove('holding'); }
         if (arrow) arrow.textContent = '';
         if (text) text.textContent = mode === 'tools' && activeRefFreq ? t('tooltip_ref').replace('{name}', activeRefName) : '';
-      }, 400);
-    }, 200);
+      }, 800);
+    }, 600);
     return;
   }
   clearTimeout(_tooltipHideTimer); _tooltipHideTimer = null;
@@ -16970,7 +16976,20 @@ function updateNoteDisplay(note, freq) {
 
 function setNoteSilent() {
   const nameEl = document.getElementById('noteName');
-  if (nameEl) { nameEl.className = 'tuner-screen-note silent'; nameEl.textContent = '—'; }
+  if (nameEl && !nameEl.classList.contains('silent')) {
+    // Fade out first, then apply silent state
+    nameEl.classList.add('fading');
+    setTimeout(() => {
+      if (nameEl) {
+        nameEl.classList.remove('fading');
+        nameEl.className = 'tuner-screen-note silent';
+        nameEl.textContent = '—';
+      }
+    }, 360);
+  } else if (nameEl) {
+    nameEl.className = 'tuner-screen-note silent';
+    nameEl.textContent = '—';
+  }
   document.getElementById('octaveBadge').textContent = '·';
   document.getElementById('freqDisplay').textContent = '—';
   const centsBadge = document.getElementById('tunerCentsBadge');
