@@ -10471,9 +10471,7 @@
 <div id="intonare-splash" style="
   position:fixed;inset:0;z-index:99999;
   background:#04040c;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:4px;overflow:hidden;
+  overflow:hidden;
   font-family:'JetBrains Mono',monospace;
 ">
   <!-- Background radial glow — colour-matched to wave, animated via JS -->
@@ -10486,7 +10484,7 @@
   <div style="position:absolute;inset:0;pointer-events:none;
     background:radial-gradient(ellipse at center, transparent 40%, rgba(2,2,10,0.82) 100%)">
   </div>
-  <div style="position:relative;width:100%;align-self:stretch">
+  <div style="position:absolute;left:0;right:0;top:calc(50% - 130px);">
     <canvas id="splash-canvas" style="width:100%;height:120px"></canvas>
     <script>
       (function(){
@@ -10500,7 +10498,10 @@
     </script>
   </div>
   <div id="splash-logo" style="
-    position:relative;
+    position:absolute;
+    left:0;right:0;
+    top:calc(50% - 10px);
+    text-align:center;
     font-family:'Fraunces',serif;
     font-style:italic; font-weight:300;
     font-size:clamp(44px,12vw,66px);
@@ -10510,14 +10511,22 @@
     opacity:0;transform:translateY(10px);
   ">Intonare</div>
   <div id="splash-sub" style="
+    position:absolute;
+    left:0;right:0;
+    top:calc(50% + 52px);
+    text-align:center;
     font-size:10px;letter-spacing:0.35em;text-indent:0.35em;
     color:#6a6c85;text-transform:uppercase;
-    opacity:0;margin-top:2px;
+    opacity:0;
   ">play in tune</div>
   <div id="splash-tag" style="
+    position:absolute;
+    left:0;right:0;
+    top:calc(50% + 78px);
+    text-align:center;
     font-size:9px;letter-spacing:0.2em;
     color:rgba(94,226,255,.5);text-transform:uppercase;
-    opacity:0;margin-top:18px;
+    opacity:0;
   ">tuner · metro · practice</div>
   <!-- Scanline wipe element — bright leading edge -->
   <div id="splash-wipe" style="
