@@ -17423,32 +17423,31 @@ async function toggleMic() {
 async function startMic() {
   alert('startMic started, mediaDevices=' + (navigator.mediaDevices ? 'yes' : 'NO') + ' getUserMedia=' + (navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 'yes' : 'NO'));
   try {
-    // On Capacitor/Android, request RECORD_AUDIO permission natively before getUserMedia
-    // The WebView won't auto-prompt — we need to trigger it through the Permissions API
-    // or Capacitor plugin first, otherwise getUserMedia silently fails or is denied.
+    // On Android WebView, AudioContext must be created and resumed within
+    // a user gesture. Pre-create it here before getUserMedia so the WebView
+    // audio stack is ready to accept the mic stream.
+    const preCtx = getAudio();
+    if (preCtx.state === 'suspended') {
+      await preCtx.resume();
+    }
+    alert('AudioContext state after resume: ' + preCtx.state);
+
     if (window.Capacitor) {
       try {
-        // Try Permissions API first (works on Android 12+ WebView)
         if (navigator.permissions && navigator.permissions.query) {
           const status = await navigator.permissions.query({ name: 'microphone' });
           if (status.state === 'denied') {
             throw new Error('Microphone permission denied');
           }
         }
-        // If Capacitor microphone plugin is available, use it to trigger native prompt
         if (window.Capacitor.Plugins && window.Capacitor.Plugins.Microphone) {
           await window.Capacitor.Plugins.Microphone.requestPermissions();
         }
       } catch(permErr) {
-        // Permission plugin not installed — fall through to getUserMedia which will
-        // trigger the native prompt on first call on most Android versions
         if (permErr.message === 'Microphone permission denied') throw permErr;
       }
     }
 
-    // On Android WebView, strict constraints (disabling echoCancellation etc)
-    // can cause NotReadableError. Try ideal:false instead of exact false,
-    // falling back to plain {audio:true} if that also fails.
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -17459,7 +17458,7 @@ async function startMic() {
         }
       });
     } catch(constraintErr) {
-      // Fall back to bare minimum — let the OS decide
+      alert('constraint attempt failed: ' + constraintErr.name + ' trying audio:true...');
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     }
     micStream = stream;
