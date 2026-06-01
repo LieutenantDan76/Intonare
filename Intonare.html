@@ -1018,6 +1018,13 @@
       0 0 20px color-mix(in srgb, var(--theme) 14%, transparent),
       0  1px 0 rgba(255,255,255,0.12) inset,
       0 -2px 4px rgba(0,0,0,0.7) inset;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .tuner-chroma-screen.active {
+    opacity: 1;
+    pointer-events: auto;
   }
   .tuner-chroma-screen::before {
     content: ''; position: absolute;
@@ -3261,7 +3268,8 @@
     opacity: 0;
   }
   .tuner-screen-verdict.visible { opacity: 1; }
-  .tuner-screen-verdict.holding { opacity: 0.3; transition: opacity 0.6s ease; }
+  .tuner-screen-verdict.holding { opacity: 0.35; transition: opacity 0.5s ease; }
+  .tuner-screen-verdict.fading-out { opacity: 0; transition: opacity 0.6s ease; }
   .tuner-screen-verdict.perfect { color: var(--in-tune); text-shadow: 0 0 10px rgba(182,242,91,0.5); }
   .tuner-screen-verdict.perfect { color: var(--in-tune); text-shadow: 0 0 10px rgba(182,242,91,0.5); }
   .tuner-screen-verdict.close   { color: var(--accent);  text-shadow: 0 0 10px rgba(94,226,255,0.4); }
@@ -15349,7 +15357,9 @@ function buildChromaStrip() {
   });
 }
 function updateChromaStrip(noteIndex, oct, cents) {
-  // pitchPos is a continuous float: noteIndex ± cents/100
+  // Show/hide the whole strip based on whether a note is active
+  const screen = document.querySelector('.tuner-chroma-screen');
+  if (screen) screen.classList.toggle('active', noteIndex >= 0);
   // e.g. 9.3 = A, 30 cents sharp (leaning toward A#)
   const pitchPos = (noteIndex >= 0 && cents != null) ? noteIndex + cents / 100 : -99;
 
@@ -16376,24 +16386,26 @@ function updateTooltip(cents, hasPitch) {
   const text = document.getElementById('tooltipText');
   const arrow = document.getElementById('tooltipArrow');
   if (!hasPitch) {
-    // Hold briefly, then dim and clear
+    // Phase 1: hold visible (500ms) → Phase 2: dim (800ms) → Phase 3: slow fade to empty (600ms)
     if (_tooltipHideTimer) return;
     _tooltipHideTimer = setTimeout(() => {
-      // Dim it — add a holding class
       if (bar) bar.classList.add('holding');
       _tooltipHideTimer = setTimeout(() => {
-        clearTimeout(_tooltipTimer); _tooltipTimer = null;
-        _tooltipKey = null; _tooltipPending = null; _tooltipHideTimer = null;
-        _tooltipCurCls = null;
-        if (bar) { bar.className = 'tuner-screen-verdict'; bar.classList.remove('holding'); }
-        if (arrow) arrow.textContent = '';
-        if (text) text.textContent = mode === 'tools' && activeRefFreq ? t('tooltip_ref').replace('{name}', activeRefName) : '';
+        if (bar) bar.classList.add('fading-out');
+        _tooltipHideTimer = setTimeout(() => {
+          clearTimeout(_tooltipTimer); _tooltipTimer = null;
+          _tooltipKey = null; _tooltipPending = null; _tooltipHideTimer = null;
+          _tooltipCurCls = null;
+          if (bar) { bar.className = 'tuner-screen-verdict'; }
+          if (arrow) arrow.textContent = '';
+          if (text) text.textContent = mode === 'tools' && activeRefFreq ? t('tooltip_ref').replace('{name}', activeRefName) : '';
+        }, 600);
       }, 800);
-    }, 600);
+    }, 500);
     return;
   }
   clearTimeout(_tooltipHideTimer); _tooltipHideTimer = null;
-  if (bar) bar.classList.remove('holding');
+  if (bar) { bar.classList.remove('holding'); bar.classList.remove('fading-out'); }
   const tip = getCentsTooltip(cents);
   const key = tip.cls + '|' + tip.text;
   if (key === _tooltipKey || key === _tooltipPending) return;
@@ -16930,6 +16942,11 @@ function getTransposedNote(noteName, oct) {
 function updateNoteDisplay(note, freq) {
   const c = note.cents, abs = Math.abs(c), inTune = abs < 5;
 
+  // Cancel any in-progress silent fade
+  if (_silentFadeTimer) { clearTimeout(_silentFadeTimer); _silentFadeTimer = null; }
+  const nameElEarly = document.getElementById('noteName');
+  if (nameElEarly) nameElEarly.style.opacity = '';
+
   // Persistent green glow while in tune, fades out when leaving
   const screenInner = document.querySelector('.tuner-screen-inner');
   if (screenInner) screenInner.classList.toggle('in-tune-glow', inTune);
@@ -16974,19 +16991,22 @@ function updateNoteDisplay(note, freq) {
   needle.className = 'meter-needle ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
 }
 
+let _silentFadeTimer = null;
 function setNoteSilent() {
   const nameEl = document.getElementById('noteName');
-  if (nameEl && !nameEl.classList.contains('silent')) {
-    // Fade out first, then apply silent state
-    nameEl.classList.add('fading');
-    setTimeout(() => {
-      if (nameEl) {
-        nameEl.classList.remove('fading');
-        nameEl.className = 'tuner-screen-note silent';
-        nameEl.textContent = '—';
-      }
-    }, 360);
-  } else if (nameEl) {
+  if (!nameEl) return;
+  // Cancel any in-progress fade
+  if (_silentFadeTimer) { clearTimeout(_silentFadeTimer); _silentFadeTimer = null; }
+  if (!nameEl.classList.contains('silent')) {
+    // Fade to opacity 0, then snap to silent dash
+    nameEl.style.opacity = '0';
+    _silentFadeTimer = setTimeout(() => {
+      _silentFadeTimer = null;
+      nameEl.style.opacity = '';
+      nameEl.className = 'tuner-screen-note silent';
+      nameEl.textContent = '—';
+    }, 350);
+  } else {
     nameEl.className = 'tuner-screen-note silent';
     nameEl.textContent = '—';
   }
