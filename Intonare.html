@@ -10887,12 +10887,13 @@
       }
       requestAnimationFrame(loop);
     }
-    // Wait for layout, size canvases, draw one silent frame, then start loop
-    requestAnimationFrame(() => {
+    // Delay loop start with setTimeout rather than rAF — on Capacitor WebView,
+    // rAF fires before native layout is complete. Even 80ms is enough.
+    setTimeout(() => {
       initCanvasSizes();
-      drawWave(); // paints at correct size before anything is visible
+      drawWave(); // one silent frame at correct size
       requestAnimationFrame(loop);
-    });
+    }, 80);
 
     // ── Sequence ──────────────────────────────────────────
     await af(300);
