@@ -7343,7 +7343,7 @@
   }
 
     /* ─── SESSION TIMER ─── */
-  .session-bar { position: relative; flex-shrink: 0; height: 4px; overflow: hidden; display: none; }
+  .session-bar { position: relative; flex-shrink: 0; height: 4px; overflow: hidden; }
   .session-stamp {
     position: absolute; bottom: 4px; right: 14px;
     font-family: 'JetBrains Mono', monospace;
@@ -48030,9 +48030,6 @@ function sesTrackModule(key) {
 }
 
 function sesRefreshGoalChips() {
-  // Show/hide session bar based on whether a goal is active
-  const sessionBar = document.querySelector('.session-bar');
-  if (sessionBar) sessionBar.style.display = progState.sessionGoalMin ? '' : 'none';
   document.querySelectorAll('.sm-goal-chip').forEach(btn => {
     btn.classList.toggle('active', parseInt(btn.dataset.val) === progState.sessionGoalMin);
   });
