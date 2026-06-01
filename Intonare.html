@@ -10473,6 +10473,19 @@
   function removeSplash() {
     const el = document.getElementById('intonare-splash');
     if (el) el.remove();
+    if (window.Capacitor) {
+      // Notification permission — doesn't need user gesture, fire immediately
+      const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+      if (notifPlugin) notifPlugin.requestPermissions().catch(() => {});
+
+      // Mic permission — requires user gesture, fire on first touch
+      document.addEventListener('touchend', function _reqMicPerm() {
+        document.removeEventListener('touchend', _reqMicPerm);
+        navigator.mediaDevices && navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(s => s.getTracks().forEach(t => t.stop()))
+          .catch(() => {});
+      }, { once: true });
+    }
   }
 
   async function runSplash() {
@@ -29693,6 +29706,7 @@ let progState = {
   audioCues: { correct:'chime', wrong:'buzz', milestone:'fanfare', levelup:'chiptune', achievement:'chime',
                vols: { correct:100, wrong:100, milestone:100, levelup:100, achievement:100 } },
   streak: { count: 0, lastDate: null, longest: 0 },
+  notifications: { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00' },
   history: {},  // { 'YYYY-MM-DD': { interval: sec, chords: sec, ... } }
   secret_chime_unlocked: false,   // unlocked at 100-day streak
   mythic_unlocked: false,  // unlocked at exercise streak ×40
@@ -32152,6 +32166,8 @@ function progLoad() {
       if (!progState.metroPresets) progState.metroPresets = [];
       if (!progState.rampPresets) progState.rampPresets = [];
       if (!progState.favorites) progState.favorites = [];
+      // Migrate: default notifications on for existing users
+      if (!progState.notifications) progState.notifications = { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00' };
     }
   } catch(e) {}
   // Silently check achievements against existing data on load (no toasts on startup)
@@ -33075,6 +33091,8 @@ buildScaleRootDropdown();
 document.body.classList.toggle('lang-it', progState.lang === 'it');
 applyLang();
 initSliderToggles();
+// Schedule notifications based on saved prefs (runs after progLoad)
+if (window.Capacitor) setTimeout(() => scheduleNotifications(), 2000);
 
 // Migrate legacy teaching mode key → progState (runs after progLoad)
 try {
