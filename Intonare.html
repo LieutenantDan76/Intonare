@@ -16798,15 +16798,16 @@ function processAudio() {
         _holdTimer = setTimeout(() => {
           _clearHold();
           setNoteSilent();
-          updateTooltip(0, false);
           updateChromaStrip(-1);
         }, HOLD_CLEAR_MS);
       } else if (!_heldNote) {
         setNoteSilent();
       }
 
+      // Verdict clears on its own short timer — independent of note-hold
+      updateTooltip(0, false);
+
       if (!document.body.classList.contains('note-held')) {
-        updateTooltip(0, false);
         updateChromaStrip(-1);
       }
       if (mode === 'tools') updateIntervalDisplay(null);
