@@ -3172,11 +3172,11 @@
     margin-bottom: 4px;
     position: relative; z-index: 3;
   }
-  /* Readout group — fades as a unit on silence */
-  #tunerReadout {
-    transition: opacity 0.4s ease;
+  /* Live values fade to idle state on silence — labels/chrome stay put */
+  #freqDisplay, #tunerCentsBadge, #octaveBadge {
+    transition: opacity 0.4s ease !important;
   }
-  #tunerReadout.fading { opacity: 0; }
+  #freqDisplay.idle, #tunerCentsBadge.idle, #octaveBadge.idle { opacity: 0.35; }
 
   .tuner-screen-freq {
     font-family: 'JetBrains Mono', monospace;
@@ -16998,6 +16998,9 @@ function updateNoteDisplay(note, freq) {
   if (readoutEl) readoutEl.classList.remove('fading');
   const nameElEarly = document.getElementById('noteName');
   if (nameElEarly) nameElEarly.style.opacity = '';
+  document.getElementById('freqDisplay')?.classList.remove('idle');
+  document.getElementById('tunerCentsBadge')?.classList.remove('idle');
+  document.getElementById('octaveBadge')?.classList.remove('idle');
 
   // Persistent green glow while in tune, fades out when leaving
   const screenInner = document.querySelector('.tuner-screen-inner');
@@ -17046,32 +17049,34 @@ function updateNoteDisplay(note, freq) {
 let _silentFadeTimer = null;
 function setNoteSilent() {
   if (_silentFadeTimer) { clearTimeout(_silentFadeTimer); _silentFadeTimer = null; }
-
-  const readout = document.getElementById('tunerReadout');
-  const nameEl  = document.getElementById('noteName');
-
-  // Cancel any fade if already silent
+  const nameEl = document.getElementById('noteName');
   if (nameEl && nameEl.classList.contains('silent')) {
     _applyNoteSilentState();
     return;
   }
-
-  // Fade the whole readout group out
-  if (readout) readout.classList.add('fading');
+  // Fade note name out, dim value elements to idle
+  if (nameEl) nameEl.style.opacity = '0';
+  const freq = document.getElementById('freqDisplay');
+  const cents = document.getElementById('tunerCentsBadge');
+  const oct = document.getElementById('octaveBadge');
+  if (freq)  freq.classList.add('idle');
+  if (cents) cents.classList.add('idle');
+  if (oct)   oct.classList.add('idle');
   _silentFadeTimer = setTimeout(() => {
     _silentFadeTimer = null;
     _applyNoteSilentState();
-    if (readout) readout.classList.remove('fading');
   }, 420);
 }
 
 function _applyNoteSilentState() {
   const nameEl = document.getElementById('noteName');
   if (nameEl) { nameEl.className = 'tuner-screen-note silent'; nameEl.textContent = '—'; nameEl.style.opacity = ''; }
-  document.getElementById('octaveBadge').textContent = '·';
-  document.getElementById('freqDisplay').textContent = '—';
-  const centsBadge = document.getElementById('tunerCentsBadge');
-  if (centsBadge) { centsBadge.textContent = '0¢'; centsBadge.className = 'tuner-screen-cents-badge'; }
+  const freq = document.getElementById('freqDisplay');
+  const cents = document.getElementById('tunerCentsBadge');
+  const oct = document.getElementById('octaveBadge');
+  if (freq)  { freq.classList.remove('idle');  freq.textContent = '—'; }
+  if (oct)   { oct.classList.remove('idle');   oct.textContent = '·'; }
+  if (cents) { cents.classList.remove('idle'); cents.textContent = '0¢'; cents.className = 'tuner-screen-cents-badge'; }
   const centsEl = document.getElementById('centsDisplay');
   if (centsEl) centsEl.textContent = '0¢';
   // Reset needle and state
