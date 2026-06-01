@@ -3049,15 +3049,36 @@
 
   /* strobe canvas inside screen */
   /* strobe is a background layer — no layout changes needed */
-  /* strobe active: center note name in the screen */
+
+  /* Lock screen to a fixed height so strobe never resizes anything */
+  .tuner-screen-inner { min-height: 210px; }
+
+  /* strobe active: fade out meter+verdict, dim bottom section — nothing resizes */
+  body.strobe-active .tuner-screen-unit-row,
+  body.strobe-active .tuner-screen-verdict,
+  body.strobe-active .tuner-screen-meter    { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+  body.strobe-active .tuner-bottom-section  { transition: opacity 0.3s ease; }
+  /* non-strobe restore */
+  .tuner-screen-unit-row, .tuner-screen-verdict, .tuner-screen-meter { transition: opacity 0.3s ease; }
+  .tuner-bottom-section { opacity: 1; transition: opacity 0.3s ease; }
+
+  /* strobe active: note+freq left-pinned, rings fill from center */
   body.strobe-active .tuner-screen-inner {
     display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    min-height: 140px;
+    align-items: flex-start; justify-content: center;
+    padding-left: 18px;
   }
   body.strobe-active .tuner-screen-top {
     position: absolute; top: 14px; left: 18px; right: 18px;
+    align-items: center;
   }
+  body.strobe-active .tuner-screen-note {
+    font-size: 52px;
+    text-align: left;
+    position: relative; z-index: 3;
+  }
+  /* strobe canvas: rings centered — cx/cy will land center-right naturally
+     since note is left-aligned and takes ~60px, rings bloom from true center */
 
   /* ── housing below screen: ref tone + strobe/vibrato toggles ── */
   .tuner-housing-row {
@@ -3246,14 +3267,6 @@
     box-shadow: 0 0 8px rgba(94,226,255,0.2);
   }
 
-  /* STROBE active — hide everything except note name, freq row, strobe button */
-  body.strobe-active .tuner-screen-unit-row,
-  body.strobe-active .tuner-screen-meter    { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-  body.strobe-active .tuner-screen-verdict  { opacity: 0; pointer-events: none; }
-  body.strobe-active .tuner-bottom-section  { opacity: 0; max-height: 0; overflow: hidden; pointer-events: none; transition: opacity 0.3s ease, max-height 0.35s ease; }
-  /* non-strobe: restore */
-  .tuner-screen-unit-row, .tuner-screen-meter { transition: opacity 0.3s ease; }
-  .tuner-bottom-section { opacity: 1; max-height: 600px; transition: opacity 0.3s ease, max-height 0.35s ease; overflow: hidden; }
   .tuner-screen-cents-badge {
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px; letter-spacing: 1.5px;
@@ -20893,7 +20906,10 @@ function drawStrobe(cents, inTune, hasSignal) {
   }
 
   const ctx = canvas.getContext('2d');
-  const cx = W / 2, cy = H / 2;
+  // Shift ring center right when strobe active so note (left-aligned) doesn't sit inside rings
+  const strobeActive = document.body.classList.contains('strobe-active');
+  const cx = strobeActive ? W * 0.65 : W / 2;
+  const cy = H / 2;
   // Use shorter half-dimension as ring radius base so rings always fit
   const R = Math.min(cx, cy) * 0.92;
 
