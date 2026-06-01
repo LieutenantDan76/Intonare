@@ -7558,7 +7558,7 @@
 
   #logoArea  { transition: opacity 0.15s ease-out !important; }
   #headerSub { transition: opacity 0.15s ease-out !important; }
-  #appLogo { min-height: 38px; display: flex; align-items: center; } /* locked height — never shrinks the header */
+  #appLogo { min-height: 38px; display: flex; align-items: center; justify-content: flex-start; } /* locked min height; wrapped titles stay vertically centered */
   /* When section header is active, hide the redundant in-content section titles */
   body.in-section #toolsHub .train-header,
   body.in-section [id^="toolFolder"] .train-header,
@@ -7612,13 +7612,12 @@
     font-size: clamp(24px, 6.8vw, 34px); letter-spacing: 1.5px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  /* Long: keep a readable size and let it wrap to two lines */
+  /* Long: readable size, wraps to two lines, stays vertically centered */
   .header--module #appLogo[data-len="long"],
   .header--section #appLogo[data-len="long"]   {
     font-size: clamp(21px, 6vw, 30px); letter-spacing: 1px;
-    white-space: normal; line-height: 1.0; text-align: left;
-    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-    align-self: center;
+    white-space: normal; line-height: 1.05; text-align: left;
+    overflow: hidden;
   }
 
   /* Bottom tab bar */
