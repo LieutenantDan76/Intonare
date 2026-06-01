@@ -16370,7 +16370,7 @@ function updateTooltip(cents, hasPitch) {
   const text = document.getElementById('tooltipText');
   const arrow = document.getElementById('tooltipArrow');
   if (!hasPitch) {
-    // Hold the last verdict visibly for ~2s, then dim and fade
+    // Hold briefly, then dim and clear
     if (_tooltipHideTimer) return;
     _tooltipHideTimer = setTimeout(() => {
       // Dim it — add a holding class
@@ -16382,8 +16382,8 @@ function updateTooltip(cents, hasPitch) {
         if (bar) { bar.className = 'tuner-screen-verdict'; bar.classList.remove('holding'); }
         if (arrow) arrow.textContent = '';
         if (text) text.textContent = mode === 'tools' && activeRefFreq ? t('tooltip_ref').replace('{name}', activeRefName) : '';
-      }, 1500);
-    }, 600);
+      }, 400);
+    }, 200);
     return;
   }
   clearTimeout(_tooltipHideTimer); _tooltipHideTimer = null;
