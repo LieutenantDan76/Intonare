@@ -7343,7 +7343,7 @@
   }
 
     /* ─── SESSION TIMER ─── */
-  .session-bar { position: relative; flex-shrink: 0; height: 4px; }
+  .session-bar { position: relative; flex-shrink: 0; height: 4px; overflow: hidden; }
   .session-stamp {
     position: absolute; bottom: 4px; right: 14px;
     font-family: 'JetBrains Mono', monospace;
@@ -7433,14 +7433,14 @@
   }
   /* Glow tip — separate element tracking bar right edge */
   .mode-progress-glow {
-    position: absolute; bottom: -2px; left: 0%;
-    width: 4px; height: 6px;
+    position: absolute; top: 50%; left: 0%;
+    width: 4px; height: 8px;
     border-radius: 50%;
     background: var(--theme-b);
     filter: blur(3px);
     opacity: 0;
     pointer-events: none;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     transition: none !important;
   }
   .mode-progress-glow.pg-entering {
@@ -47883,6 +47883,8 @@ function sesAnimLeave() {
     if (deco) { deco.style.transition = 'opacity 0.3s ease'; deco.style.opacity = '0.6'; }
     setTimeout(() => {
       bar.className = 'mode-progress-bar';
+      bar.style.opacity = '0';
+      bar.style.width = '0%';
       if (deco) deco.style.transition = '';
     }, 320);
   }, 570);
@@ -47942,7 +47944,14 @@ function sesUpdateLine(pct, over) {
     return;
   }
   const p = Math.min(100, Math.round(pct * 100));
-  const allowGreen = document.body.classList.contains('in-module');
+  const inModule = document.body.classList.contains('in-module');
+  // Never show progress bar outside a module
+  if (!inModule) {
+    bar.style.opacity = '0';
+    if (deco) deco.style.opacity = '0.6';
+    return;
+  }
+  const allowGreen = inModule;
   if (p >= 100) {
     const isGreen = over && allowGreen;
     bar.style.width      = '100%';
@@ -48031,6 +48040,9 @@ function sesTrackModule(key) {
 }
 
 function sesRefreshGoalChips() {
+  // Show/hide session bar based on whether a goal is active
+  const sessionBar = document.querySelector('.session-bar');
+  if (sessionBar) sessionBar.style.display = progState.sessionGoalMin ? '' : 'none';
   document.querySelectorAll('.sm-goal-chip').forEach(btn => {
     btn.classList.toggle('active', parseInt(btn.dataset.val) === progState.sessionGoalMin);
   });
