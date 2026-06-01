@@ -3049,6 +3049,15 @@
 
   /* strobe canvas inside screen */
   /* strobe is a background layer — no layout changes needed */
+  /* strobe active: center note name in the screen */
+  body.strobe-active .tuner-screen-inner {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 140px;
+  }
+  body.strobe-active .tuner-screen-top {
+    position: absolute; top: 14px; left: 18px; right: 18px;
+  }
 
   /* ── housing below screen: ref tone + strobe/vibrato toggles ── */
   .tuner-housing-row {
@@ -3213,17 +3222,38 @@
     color: color-mix(in srgb, var(--accent) 70%, transparent);
     font-variant-numeric: tabular-nums;
   }
-  /* STROBE ghost button — lives in screen top row */
+  /* STROBE button — visible pill in screen top row */
   .tuner-strobe-btn {
-    background: none; border: none; cursor: pointer; padding: 0;
+    background: rgba(94,226,255,0.08);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 4px;
+    cursor: pointer; padding: 2px 7px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
-    color: color-mix(in srgb, var(--accent) 18%, transparent);
-    transition: color 0.2s;
+    color: color-mix(in srgb, var(--accent) 55%, transparent);
+    transition: all 0.2s;
     position: relative; z-index: 3;
   }
-  .tuner-strobe-btn:hover { color: color-mix(in srgb, var(--accent) 45%, transparent); }
-  .tuner-strobe-btn.active { color: color-mix(in srgb, var(--accent) 75%, transparent); }
+  .tuner-strobe-btn:hover {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    background: rgba(94,226,255,0.14);
+  }
+  .tuner-strobe-btn.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(94,226,255,0.15);
+    box-shadow: 0 0 8px rgba(94,226,255,0.2);
+  }
+
+  /* STROBE active — hide everything except note name, freq row, strobe button */
+  body.strobe-active .tuner-screen-unit-row,
+  body.strobe-active .tuner-screen-meter    { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+  body.strobe-active .tuner-screen-verdict  { opacity: 0; pointer-events: none; }
+  body.strobe-active .tuner-bottom-section  { opacity: 0; max-height: 0; overflow: hidden; pointer-events: none; transition: opacity 0.3s ease, max-height 0.35s ease; }
+  /* non-strobe: restore */
+  .tuner-screen-unit-row, .tuner-screen-meter { transition: opacity 0.3s ease; }
+  .tuner-bottom-section { opacity: 1; max-height: 600px; transition: opacity 0.3s ease, max-height 0.35s ease; overflow: hidden; }
   .tuner-screen-cents-badge {
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px; letter-spacing: 1.5px;
