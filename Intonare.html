@@ -3050,35 +3050,29 @@
   /* strobe canvas inside screen */
   /* strobe is a background layer — no layout changes needed */
 
-  /* Lock screen to a fixed height so strobe never resizes anything */
-  .tuner-screen-inner { min-height: 210px; }
+  /* Lock screen to a fixed height — must be tall enough for normal content */
+  .tuner-screen-inner { min-height: 216px; }
 
-  /* strobe active: fade out meter+verdict, dim bottom section — nothing resizes */
+  /* strobe active: fade out meter+verdict+octave — they stay in flow (height preserved) */
   body.strobe-active .tuner-screen-unit-row,
   body.strobe-active .tuner-screen-verdict,
-  body.strobe-active .tuner-screen-meter    { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-  body.strobe-active .tuner-bottom-section  { transition: opacity 0.3s ease; }
-  /* non-strobe restore */
+  body.strobe-active .tuner-screen-meter    { opacity: 0; pointer-events: none; }
   .tuner-screen-unit-row, .tuner-screen-verdict, .tuner-screen-meter { transition: opacity 0.3s ease; }
-  .tuner-bottom-section { opacity: 1; transition: opacity 0.3s ease; }
 
-  /* strobe active: note+freq left-pinned, rings fill from center */
-  body.strobe-active .tuner-screen-inner {
-    display: flex; flex-direction: column;
-    align-items: flex-start; justify-content: center;
-    padding-left: 18px;
-  }
-  body.strobe-active .tuner-screen-top {
-    position: absolute; top: 14px; left: 18px; right: 18px;
-    align-items: center;
-  }
+  /* strobe active: note absolutely centered in the screen, left-aligned */
   body.strobe-active .tuner-screen-note {
+    position: absolute;
+    left: 18px;
+    top: 50%; transform: translateY(-50%);
     font-size: 52px;
     text-align: left;
-    position: relative; z-index: 3;
+    z-index: 3;
+    margin: 0;
   }
-  /* strobe canvas: rings centered — cx/cy will land center-right naturally
-     since note is left-aligned and takes ~60px, rings bloom from true center */
+  /* STROBE button: fixed left in top row, not pushed by cents — handled inline */
+  .tuner-screen-top {
+    position: relative; /* anchor for absolute strobe btn */
+  }
 
   /* ── housing below screen: ref tone + strobe/vibrato toggles ── */
   .tuner-housing-row {
@@ -10449,8 +10443,9 @@
             <div class="tools-only hidden" style="position:absolute;left:50%;transform:translateX(-50%);z-index:3;">
               <span style="font-size:9px;letter-spacing:1.5px;color:color-mix(in srgb,var(--accent) 30%,transparent);font-family:'JetBrains Mono',monospace;">→ REF <span class="freq-target" id="refDisplay" style="color:color-mix(in srgb,var(--accent-warm) 70%,transparent)">—</span> Hz</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <button class="tuner-strobe-btn" id="strobeToggle" onclick="toggleStrobe()" title="Toggle strobe meter" data-i18n="tuner_strobe">STROBE</button>
+            <!-- cents fixed right, STROBE button absolute-left of it so cents width never moves it -->
+            <div style="position:relative;display:flex;align-items:center;">
+              <button class="tuner-strobe-btn" id="strobeToggle" onclick="toggleStrobe()" title="Toggle strobe meter" data-i18n="tuner_strobe" style="position:absolute;right:calc(100% + 8px);white-space:nowrap;">STROBE</button>
               <div class="tuner-screen-cents-badge" id="tunerCentsBadge">0¢</div>
             </div>
           </div>
@@ -20906,12 +20901,13 @@ function drawStrobe(cents, inTune, hasSignal) {
   }
 
   const ctx = canvas.getContext('2d');
-  // Shift ring center right when strobe active so note (left-aligned) doesn't sit inside rings
+  // Shift ring center right when strobe active so note (left-aligned) sits cleanly left
   const strobeActive = document.body.classList.contains('strobe-active');
   const cx = strobeActive ? W * 0.65 : W / 2;
   const cy = H / 2;
-  // Use shorter half-dimension as ring radius base so rings always fit
-  const R = Math.min(cx, cy) * 0.92;
+  // Rings: shrink when strobe active so outermost clears the ~30px top row
+  const maxR = strobeActive ? Math.min(cx, cy - 32) : Math.min(cx, cy);
+  const R = maxR * 0.82;
 
   // Phase — proportional to cents; slow idle drift when silent
   if (hasSignal) strobePhase += cents * 0.003;
