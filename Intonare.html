@@ -273,14 +273,17 @@
 #toolSurvivalGuide{color:var(--tx);font-family:"JetBrains Mono",monospace;-webkit-font-smoothing:antialiased}
 
 /* Sits in normal flow below Intonare header; JS sets --sg-h to fill down to the nav */
-#toolSurvivalGuide{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);height:calc(100dvh - var(--header-h,56px) - var(--nav-bar-h,62px) - env(safe-area-inset-bottom))}
+#toolSurvivalGuide{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);height:calc(100dvh - var(--header-h,56px) - var(--nav-bar-h,62px) - env(safe-area-inset-bottom));margin-left:-16px;margin-right:-16px;}
 #toolSurvivalGuide #app{
   display:flex;flex-direction:column;
   flex:1;
   min-height:0;
   overflow:hidden;
+  height:100%;
 }
 #toolSurvivalGuide #pageArea{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;position:relative;overscroll-behavior:contain}
+#toolSurvivalGuide #pageArea::after{content:none;}
+#toolSurvivalGuide .sg-top-line{height:2px;flex-shrink:0;background:linear-gradient(90deg,transparent 0%,var(--ac) 30%,var(--soft,var(--ac)) 70%,transparent 100%);opacity:0.5;}
 #toolSurvivalGuide #pageArea::-webkit-scrollbar{display:none}
 #toolSurvivalGuide #nav{flex-shrink:0}
 
@@ -391,11 +394,12 @@
 #toolSurvivalGuide .pg-dot{width:6px;height:6px;border-radius:50%;background:var(--surf2);border:1px solid var(--bdrs);transition:all .2s;cursor:pointer;flex-shrink:0}
 #toolSurvivalGuide .pg-dot.cur{background:var(--tab-ac,var(--ac));border-color:var(--tab-ac,var(--ac));width:18px;border-radius:3px}
 #toolSurvivalGuide .pg-dot.done{background:var(--surf2);border-color:var(--mu)}
-#toolSurvivalGuide .nav-tabs{display:flex;align-items:center;padding:0 10px 8px;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-#toolSurvivalGuide .nav-tabs::-webkit-scrollbar{display:none}
+#toolSurvivalGuide .nav-tabs{display:flex;align-items:center;padding:0 4px 14px;gap:4px;}
+#toolSurvivalGuide .nav-tabs-scroll{display:flex;align-items:center;gap:4px;flex:1;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+#toolSurvivalGuide .nav-tabs-scroll::-webkit-scrollbar{display:none}
 #toolSurvivalGuide .tab-btn{flex:0 0 auto;min-width:52px;background:none;border:1px solid var(--bdrs);border-radius:8px;color:var(--mu);font-family:"Bebas Neue",sans-serif;font-size:12px;letter-spacing:.1em;padding:7px 5px;cursor:pointer;transition:all .18s}
 #toolSurvivalGuide .tab-btn.active{background:color-mix(in srgb,var(--tab-ac,var(--ac)) 12%,var(--surf));border-color:color-mix(in srgb,var(--tab-ac,var(--ac)) 45%,transparent);color:var(--tab-ac,var(--ac))}
-#toolSurvivalGuide .nav-arrow{width:36px;height:34px;background:var(--surf);border:1px solid var(--bdrs);border-radius:8px;color:var(--txd);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+#toolSurvivalGuide .nav-arrow{width:36px;height:26px;background:var(--surf);border:1px solid var(--bdrs);border-radius:8px;color:var(--txd);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 #toolSurvivalGuide .nav-arrow:hover{border-color:var(--ac);color:var(--ac)}
 #toolSurvivalGuide .nav-arrow:disabled{opacity:.3;cursor:default}
 #toolSurvivalGuide .nav-arrow:disabled:hover{border-color:var(--bdrs);color:var(--txd)}
@@ -673,6 +677,7 @@
     font-family: 'JetBrains Mono', monospace;
     min-height: 100dvh; overflow-x: hidden;
   }
+  body.sg-open { overflow: hidden; position: fixed; width: 100%; overscroll-behavior: none; }
   body {
     display: flex; flex-direction: column; align-items: center; position: relative;
     /* Safe area padding for notched phones.
@@ -6927,6 +6932,10 @@
     padding-bottom: 4px;
     border-bottom: 1px solid var(--border-soft);
   }
+  .sm-section-title.sm-section-sub {
+    font-size: 8.5px; letter-spacing: 1.5px; color: var(--text-dim);
+    border-bottom: none; padding-bottom: 0; margin: 10px 0 6px;
+  }
   .sm-toggle-row { display: flex; gap: 8px; }
   .sm-toggle-row.sm-toggle-compact { gap: 6px; }
   .sm-toggle-row.sm-toggle-compact .sm-toggle-chip {
@@ -7556,6 +7565,7 @@
     padding: 0 0 env(safe-area-inset-bottom);
     gap: 0;
     box-shadow: 0 -4px 24px rgba(0,0,0,0.55);
+    overflow: hidden;
   }
   .mode-btn {
     flex: 1; padding: 8px 2px 10px;
@@ -7596,9 +7606,9 @@
   body { padding-bottom: calc(var(--nav-bar-h, 62px) + env(safe-area-inset-bottom)) !important; }
 
   /* Ref pitch: full width, stacked below tuner */
-  .t-or-r { display: flex; flex-direction: column; gap: 10px; }
+  .t-or-r { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
   .t-or-r > .card, .t-or-r > .ref-controls { width: 100% !important; max-width: none !important; }
-  .tuner-only.stack, .tools-only.stack, .metro-only.stack, .train-only.stack { padding-top: 0; }
+  .tuner-only.stack, .tools-only.stack, .metro-only.stack, .train-only.stack { padding-top: 10px; }
   .tuner-only.stack > *, .tools-only.stack > *, .metro-only.stack > *, .train-only.stack > * { margin-top: 0 !important; }
 
   /* Hub tour button */
@@ -12744,6 +12754,7 @@
 
   <!-- ═══ SURVIVAL GUIDE TOOL ═══ -->
   <div id="toolSurvivalGuide" class="hidden">
+  <div class="sg-top-line"></div>
 <div id="app">
   <div id="pageArea"></div>
   <div id="nav">
@@ -12757,17 +12768,19 @@
     <div class="ch-pills" id="chPills"></div>
     <div class="nav-tabs">
       <button class="nav-arrow" id="btnPrev">&#8592;</button>
-      <button class="tab-btn" data-tab="theory" data-i18n="sg_tab_theory">THEORY</button>
-      <button class="tab-btn" data-tab="guitar" data-i18n="sg_tab_guitar">GUITAR</button>
-      <button class="tab-btn" data-tab="bass" data-i18n="sg_tab_bass">BASS</button>
-      <button class="tab-btn" data-tab="ukulele" data-i18n="sg_tab_ukulele">UKE</button>
-      <button class="tab-btn" data-tab="plucked" data-i18n="sg_tab_plucked">PLUCKED</button>
-      <button class="tab-btn" data-tab="strings" data-i18n="sg_tab_strings">STRINGS</button>
-      <button class="tab-btn" data-tab="winds" data-i18n="sg_tab_winds">WINDS</button>
-      <button class="tab-btn" data-tab="brass" data-i18n="sg_tab_brass">BRASS</button>
-      <button class="tab-btn" data-tab="freereed" data-i18n="sg_tab_freereed">FREE REED</button>
-      <button class="tab-btn" data-tab="piano" data-i18n="sg_tab_piano">PIANO</button>
-      <button class="tab-btn" data-tab="voice" data-i18n="sg_tab_voice">VOICE</button>
+      <div class="nav-tabs-scroll">
+        <button class="tab-btn" data-tab="theory" data-i18n="sg_tab_theory">THEORY</button>
+        <button class="tab-btn" data-tab="guitar" data-i18n="sg_tab_guitar">GUITAR</button>
+        <button class="tab-btn" data-tab="bass" data-i18n="sg_tab_bass">BASS</button>
+        <button class="tab-btn" data-tab="ukulele" data-i18n="sg_tab_ukulele">UKE</button>
+        <button class="tab-btn" data-tab="plucked" data-i18n="sg_tab_plucked">PLUCKED</button>
+        <button class="tab-btn" data-tab="strings" data-i18n="sg_tab_strings">STRINGS</button>
+        <button class="tab-btn" data-tab="winds" data-i18n="sg_tab_winds">WINDS</button>
+        <button class="tab-btn" data-tab="brass" data-i18n="sg_tab_brass">BRASS</button>
+        <button class="tab-btn" data-tab="freereed" data-i18n="sg_tab_freereed">FREE REED</button>
+        <button class="tab-btn" data-tab="piano" data-i18n="sg_tab_piano">PIANO</button>
+        <button class="tab-btn" data-tab="voice" data-i18n="sg_tab_voice">VOICE</button>
+      </div>
       <button class="nav-arrow" id="btnNext">&#8594;</button>
     </div>
   </div>
@@ -13140,8 +13153,6 @@
       <div class="practice-hub">
 
         <!-- ── Folder row at top ── -->
-        <div class="hub-section-label" data-i18n="hub_section_exercises">Exercises</div>
-
         <button class="practice-card-btn practice-folder-btn" onclick="enterEarTraining()">
           <div class="practice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
   <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -14326,6 +14337,7 @@
     <div class="sm-title" data-i18n="settings_title">SETTINGS</div>
     <div class="sm-sub" data-i18n="settings_sub">app preferences</div>
 
+    <!-- ── DISPLAY ── -->
     <div class="sm-section-title" data-i18n="settings_lang">Language</div>
     <div class="lang-chip-row" id="smLangRow">
       <button class="lang-chip active" id="langChip_en" data-value="en" onclick="setLang('en')">
@@ -14336,7 +14348,7 @@
       </button>
     </div>
 
-    <div class="sm-section-title" data-i18n="settings_note_naming">Note Naming</div>
+    <div class="sm-section-title sm-section-sub" data-i18n="settings_note_naming">Note Naming</div>
     <div class="sm-toggle-row" id="smNoteNamingRow">
       <button class="sm-toggle-chip active" data-value="english" onclick="setNoteNaming('english')">
         <span class="sm-toggle-main" data-i18n="note_naming_english">ENGLISH</span>
@@ -14348,7 +14360,27 @@
       </button>
     </div>
 
-    <div class="sm-section-title" data-i18n="settings_session_goal">Session Goal</div>
+    <!-- ── FEEDBACK ── -->
+    <div class="sm-section-title" style="margin-top:18px" data-i18n="settings_feedback">Feedback</div>
+
+    <div class="sm-section-title sm-section-sub" data-i18n="settings_haptics">Haptic Feedback</div>
+    <div class="sm-toggle-row sm-toggle-compact" id="smHapticsRow">
+      <button class="sm-toggle-chip" data-value="off" onclick="setHaptics(false)">
+        <span class="sm-toggle-main" data-i18n="teach_off">OFF</span>
+      </button>
+      <button class="sm-toggle-chip active" data-value="on" onclick="setHaptics(true)">
+        <span class="sm-toggle-main" data-i18n="teach_on">ON</span>
+      </button>
+    </div>
+
+    <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_audio_cues">Audio Cues</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:10px" data-i18n="settings_audio_cues_hint">Tap cell to cycle · ▶ to replay</div>
+    <div id="cuePickerWrap"></div>
+
+    <!-- ── PRACTICE ── -->
+    <div class="sm-section-title" style="margin-top:18px" data-i18n="settings_practice_section">Practice</div>
+
+    <div class="sm-section-title sm-section-sub" data-i18n="settings_session_goal">Session Goal</div>
     <div class="sm-goal-row" id="goalChipRow">
       <button class="sm-goal-chip off-chip" data-val="0" onclick="setSessionGoal(0)" data-i18n="settings_goal_off">OFF</button>
       <button class="sm-goal-chip" data-val="10" onclick="setSessionGoal(10)">10</button>
@@ -14360,69 +14392,8 @@
     </div>
     <button id="sesResetBtn" onclick="sesResetTimer()" style="margin-top:8px;width:100%;background:transparent;border:1px solid var(--border-soft);color:var(--text-dim);border-radius:var(--r-sm);padding:8px 0;font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;font-family:inherit;transition:all .15s" onmouseenter="this.style.borderColor='var(--theme)';this.style.color='var(--theme)'" onmouseleave="this.style.borderColor='var(--border-soft)';this.style.color='var(--text-dim)'" data-i18n="dt_reset_today">↺ Reset Today</button>
 
-    <div class="sm-section-title" data-i18n="settings_teaching">Teaching Mode</div>
-    <div class="sm-toggle-row sm-toggle-compact" id="smTeachingRow">
-      <button class="sm-toggle-chip active" data-value="off" onclick="setTeachingMode(false)">
-        <span class="sm-toggle-main" data-i18n="teach_off">OFF</span>
-        <span class="sm-toggle-sub" data-i18n="teach_off_sub">Compact UI</span>
-      </button>
-      <button class="sm-toggle-chip" data-value="on" onclick="setTeachingMode(true)">
-        <span class="sm-toggle-main" data-i18n="teach_on">ON</span>
-        <span class="sm-toggle-sub" data-i18n="teach_on_sub">Inline hints</span>
-      </button>
-    </div>
-
-    <div class="sm-section-title" data-i18n="settings_help_tips">Help Tips</div>
-    <div class="sm-toggle-row sm-toggle-compact" id="smHelpTipsRow">
-      <button class="sm-toggle-chip" data-value="off" onclick="setHelpTips(false)">
-        <span class="sm-toggle-main" data-i18n="teach_off">OFF</span>
-      </button>
-      <button class="sm-toggle-chip active" data-value="on" onclick="setHelpTips(true)">
-        <span class="sm-toggle-main" data-i18n="teach_on">ON</span>
-      </button>
-    </div>
-
-    <div class="sm-section-title" data-i18n="settings_haptics">Haptic Feedback</div>
-    <div class="sm-toggle-row sm-toggle-compact" id="smHapticsRow">
-      <button class="sm-toggle-chip active" data-value="off" onclick="setHaptics(false)">
-        <span class="sm-toggle-main" data-i18n="teach_off">OFF</span>
-      </button>
-      <button class="sm-toggle-chip" data-value="on" onclick="setHaptics(true)">
-        <span class="sm-toggle-main" data-i18n="teach_on">ON</span>
-      </button>
-    </div>
-
-    <div class="sm-section-title" style="margin-top:14px" data-i18n="settings_audio_cues">Audio Cues</div>
-    <div style="font-size:10px;color:var(--muted);margin-bottom:10px" data-i18n="settings_audio_cues_hint">Tap cell to cycle · ▶ to replay</div>
-    <div id="cuePickerWrap"></div>
-
-    <div class="sm-section-title" data-i18n="settings_latency">Latency Measurement</div>
-    <div class="sm-calib-hint" id="latHintText" style="margin-bottom:10px" data-i18n-html="lat_hint">Tap the button each time you <em>hear</em> the click. The ball hits the line exactly when audio is scheduled — the gap between visual and what you hear is your device's audio delay.</div>
-    <canvas id="latCanvas" height="80"></canvas>
-    <div class="lat-tap-row">
-      <button class="lat-tap-btn" id="latTapBtn" ontouchstart="latTap(event);event.preventDefault()" onclick="latTap(event)" data-i18n="lat_tap_btn">TAP</button>
-      <div class="lat-readout" id="latReadout">—</div>
-    </div>
-    <div class="lat-progress" id="latProgress"></div>
-    <div class="lat-btn-row">
-      <button class="lat-ctrl-btn" id="latStartBtn" onclick="latToggle()" data-i18n="lat_start">START</button>
-      <button class="lat-ctrl-btn lat-apply-btn hidden" id="latApplyBtn" onclick="latApply()" data-i18n="lat_apply">APPLY</button>
-    </div>
-
-    <div class="sm-section-title" data-i18n="settings_calib">Tap Calibration</div>
-    <div class="sm-calib-block">
-      <div class="sm-calib-readout">
-        <span class="sm-calib-value" id="smCalibValue">38</span>
-        <span class="sm-calib-unit" data-i18n="calib_unit">ms offset</span>
-      </div>
-      <input type="range" class="sm-calib-slider" id="smCalibSlider" min="0" max="500" step="2" value="38" oninput="setTapCalibration(this.value)">
-      <div class="sm-calib-hint" id="calibHintText">If taps in tempo exercises score "late," drag this up. Bluetooth audio usually needs 150-300ms; built-in speakers 30-80ms.</div>
-    </div>
-
-    <div class="sm-section-title" data-i18n="settings_notifications">Notifications</div>
+    <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_notifications">Notifications</div>
     <div class="sm-notif-block" id="smNotifBlock">
-
-      <!-- Practice reminder -->
       <div class="sm-notif-row">
         <div class="sm-notif-label">
           <span class="sm-notif-icon">🎵</span>
@@ -14436,8 +14407,6 @@
           <button class="sm-notif-toggle" id="smPracticeToggle" onclick="toggleNotif('practice')" data-active="false">OFF</button>
         </div>
       </div>
-
-      <!-- Streak reminder -->
       <div class="sm-notif-row">
         <div class="sm-notif-label">
           <span class="sm-notif-icon">🔥</span>
@@ -14451,11 +14420,61 @@
           <button class="sm-notif-toggle" id="smStreakToggle" onclick="toggleNotif('streak')" data-active="false">OFF</button>
         </div>
       </div>
-
     </div>
 
-    <div class="sm-section-title" data-i18n="settings_more">More</div>
+    <!-- ── HINTS & DISPLAY ── -->
+    <div class="sm-section-title" style="margin-top:18px" data-i18n="settings_hints">Hints & Display</div>
+
+    <div class="sm-section-title sm-section-sub" data-i18n="settings_lesson_hints">Lesson Hints</div>
+    <div class="sm-toggle-row sm-toggle-compact" id="smTeachingRow">
+      <button class="sm-toggle-chip active" data-value="off" onclick="setTeachingMode(false)">
+        <span class="sm-toggle-main" data-i18n="teach_off">OFF</span>
+        <span class="sm-toggle-sub" data-i18n="teach_off_sub">Compact UI</span>
+      </button>
+      <button class="sm-toggle-chip" data-value="on" onclick="setTeachingMode(true)">
+        <span class="sm-toggle-main" data-i18n="teach_on">ON</span>
+        <span class="sm-toggle-sub" data-i18n="teach_on_sub">Inline hints</span>
+      </button>
+    </div>
+
+    <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_help_tips">Help Tips</div>
+    <div class="sm-toggle-row sm-toggle-compact" id="smHelpTipsRow">
+      <button class="sm-toggle-chip" data-value="off" onclick="setHelpTips(false)">
+        <span class="sm-toggle-main" data-i18n="teach_off">OFF</span>
+      </button>
+      <button class="sm-toggle-chip active" data-value="on" onclick="setHelpTips(true)">
+        <span class="sm-toggle-main" data-i18n="teach_on">ON</span>
+      </button>
+    </div>
+
+    <!-- ── ADVANCED ── -->
+    <div class="sm-section-title" style="margin-top:18px" data-i18n="settings_advanced">Advanced</div>
     <button class="sm-action-btn" onclick="closeSettings(); setTimeout(() => startTour('overview'), 200);" data-i18n="settings_tour">↻ Re-run Welcome Tour</button>
+    <button class="sm-action-btn" style="margin-top:8px;display:flex;align-items:center;justify-content:center;position:relative;" onclick="(function(){var s=document.getElementById('smCalibSheet');s.classList.toggle('hidden');if(!s.classList.contains('hidden')){var c=document.getElementById('latCanvas');if(c){c.width=c.clientWidth||s.clientWidth||300;latDrawIdle();}}})()"><span data-i18n="settings_calib_btn">⚙ Calibration</span><span style="position:absolute;right:14px;font-size:10px;opacity:0.6;letter-spacing:1px;"><span id="smCalibBtnVal">38</span> ms</span></button>
+
+    <div id="smCalibSheet" class="hidden" style="margin-top:12px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);padding:14px 14px 10px;">
+      <div class="sm-section-title" style="margin-top:0" data-i18n="settings_latency">Latency Measurement</div>
+      <div class="sm-calib-hint" id="latHintText" style="margin-bottom:10px" data-i18n-html="lat_hint">Tap the button each time you <em>hear</em> the click. The ball hits the line exactly when audio is scheduled — the gap between visual and what you hear is your device's audio delay.</div>
+      <canvas id="latCanvas" height="80"></canvas>
+      <div class="lat-tap-row">
+        <button class="lat-tap-btn" id="latTapBtn" ontouchstart="latTap(event);event.preventDefault()" onclick="if(event.pointerType!=='touch')latTap(event)" data-i18n="lat_tap_btn">TAP</button>
+        <div class="lat-readout" id="latReadout">—</div>
+      </div>
+      <div class="lat-progress" id="latProgress"></div>
+      <div class="lat-btn-row">
+        <button class="lat-ctrl-btn" id="latStartBtn" onclick="latToggle()" data-i18n="lat_start">START</button>
+        <button class="lat-ctrl-btn lat-apply-btn hidden" id="latApplyBtn" onclick="latApply()" data-i18n="lat_apply">APPLY</button>
+      </div>
+      <div class="sm-section-title" data-i18n="settings_calib">Tap Calibration</div>
+      <div class="sm-calib-block">
+        <div class="sm-calib-readout">
+          <span class="sm-calib-value" id="smCalibValue">38</span>
+          <span class="sm-calib-unit" data-i18n="calib_unit">ms offset</span>
+        </div>
+        <input type="range" class="sm-calib-slider" id="smCalibSlider" min="0" max="500" step="2" value="38" oninput="setTapCalibration(this.value)">
+        <div class="sm-calib-hint" id="calibHintText">If taps in tempo exercises score "late," drag this up. Bluetooth audio usually needs 150-300ms; built-in speakers 30-80ms.</div>
+      </div>
+    </div>
 
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
@@ -18118,7 +18137,7 @@ function enterTool(name, restoreState) {
   });
 
   if (name === 'piano') { buildRefPitchGrid(); buildPiano(); _initPianoMultiTouch(); }
-  if (name === 'survivalguide') { try { sgInit(); } catch(e) { console.error('sgInit',e); } }
+  if (name === 'survivalguide') { document.body.classList.add('sg-open'); try { sgInit(); } catch(e) { console.error('sgInit',e); } }
   if (name === 'tonal') tcInit();
   if (name === 'volume') dbStart();
   if (name === 'transpose') tpInit();
@@ -18156,7 +18175,7 @@ function exitTool(resetToHub) {
   if (currentTool === 'drumkit' && dk_playing) togglePlay();
   if (currentTool === 'drumkit') dkClosePresetPanel();
   if (currentTool === 'progression') { progStop(); progCloseSyncTray(); }
-  if (currentTool === 'survivalguide') { try { sgExit(); } catch(e) {} }
+  if (currentTool === 'survivalguide') { document.body.classList.remove('sg-open'); try { sgExit(); } catch(e) {} }
 
   const folder = TOOL_FOLDER_MAP[currentTool];
   currentTool = null;
@@ -23961,7 +23980,7 @@ function buildRefToneBank() {
   const ungrouped = Object.keys(REF_TONES).filter(k => !grouped.includes(k));
   if (ungrouped.length) {
     const lbl = document.createElement('div'); lbl.className = 'tone-group-label';
-    lbl.textContent = 'OTHER'; row.appendChild(lbl);
+    lbl.textContent = t('tone_group_other') || 'OTHER'; row.appendChild(lbl);
     ungrouped.forEach(addTile);
   }
 }
@@ -29826,6 +29845,15 @@ const STRINGS = {
     settings_lang:'Language', settings_note_naming:'Note Naming',
     settings_teaching:'Teaching Mode', settings_latency:'Latency Measurement',
     settings_calib:'Tap Calibration', settings_more:'More',
+    settings_calib_btn:'⚙ Calibration',
+    settings_feedback:'Feedback', settings_practice_section:'Practice',
+    settings_hints:'Hints & Display', settings_advanced:'Advanced',
+    settings_lesson_hints:'Lesson Hints', settings_lesson_hints_off:'Off · compact UI', settings_lesson_hints_on:'On · inline hints',
+    settings_notifications:'Notifications',
+    notif_practice_title:'Practice Reminder', notif_practice_sub:'Daily nudge to pick up your instrument',
+    notif_streak_title:'Streak Reminder', notif_streak_sub:"Don't break your streak today",
+    notif_practice_toast_title:'🎵 Time to Practice', notif_practice_toast_body:'A few minutes a day keeps the rust away.',
+    notif_streak_toast_title:'🔥 {n}-day streak at risk!', notif_streak_toast_body:"Don't break that streak, you were on a roll!",
     settings_tour:'↻ Re-run Welcome Tour',
     note_naming_english:'ENGLISH', note_naming_english_sub:'C · D · E · F · G · A · B',
     note_naming_solfege:'SOLFÈGE', note_naming_solfege_sub:'Do · Re · Mi · Fa · Sol · La · Si',
@@ -29954,8 +29982,9 @@ const STRINGS = {
     piano_tap_ref:'tap a note below to play a reference pitch',
     piano_ref_prompt:'reference: {name} — sing or play a note',
     // Hub section labels
-    hub_section_exercises:'Exercises', hub_section_explore:'Explore',
+    hub_section_explore:'Explore',
     hub_section_soon:'Coming Soon', wip_badge:'In development',
+    tone_group_other:'OTHER',
     // Tools hub folder cards
     folder_pitch_title:'PITCH & SOUND', folder_pitch_sub:'Piano · Tonal Center',
     folder_pitch_subtitle:'piano · tonal center',
@@ -30362,6 +30391,15 @@ const STRINGS = {
     settings_lang:'Lingua', settings_note_naming:'Notazione Note',
     settings_teaching:'Modalità Didattica', settings_latency:'Misura Latenza',
     settings_calib:'Calibrazione Tocco', settings_more:'Altro',
+    settings_calib_btn:'⚙ Calibrazione',
+    settings_feedback:'Feedback', settings_practice_section:'Pratica',
+    settings_hints:'Suggerimenti e Display', settings_advanced:'Avanzate',
+    settings_lesson_hints:'Suggerimenti Lezione', settings_lesson_hints_off:'Off · UI compatta', settings_lesson_hints_on:'On · suggerimenti inline',
+    settings_notifications:'Notifiche',
+    notif_practice_title:'Promemoria Pratica', notif_practice_sub:'Promemoria giornaliero per suonare',
+    notif_streak_title:'Promemoria Streak', notif_streak_sub:'Non interrompere la tua serie oggi',
+    notif_practice_toast_title:'🎵 È ora di suonare', notif_practice_toast_body:'Pochi minuti al giorno tengono la ruggine lontana.',
+    notif_streak_toast_title:'🔥 Serie di {n} giorni a rischio!', notif_streak_toast_body:'Non interrompere quella serie, stavi andando alla grande!',
     settings_tour:'↻ Ripeti Presentazione',
     note_naming_english:'INGLESE', note_naming_english_sub:'C · D · E · F · G · A · B',
     note_naming_solfege:'SOLFEGGIO', note_naming_solfege_sub:'Do · Re · Mi · Fa · Sol · La · Si',
@@ -30490,8 +30528,9 @@ const STRINGS = {
     piano_tap_ref:'tocca un tasto in basso per una nota di riferimento',
     piano_ref_prompt:'riferimento: {name} — canta o suona una nota',
     // Hub section labels
-    hub_section_exercises:'Esercizi', hub_section_explore:'Esplora',
+    hub_section_explore:'Esplora',
     hub_section_soon:'Prossimamente', wip_badge:'In sviluppo',
+    tone_group_other:'ALTRO',
     // Tools hub folder cards
     folder_pitch_title:'INTONAZIONE', folder_pitch_sub:'Pianoforte · Centro Tonale',
     folder_pitch_subtitle:'pianoforte · centro tonale',
@@ -31105,8 +31144,8 @@ function latTap(e) {
   if (!nearest) return;
 
   const offsetMs = (tapTime - nearest.scheduledTime) * 1000;
-  // Only accept plausible taps (0–600ms after beat — reaction time range)
-  if (offsetMs < 0 || offsetMs > 600) return;
+  // Accept taps within ±500ms of any beat
+  if (Math.abs(offsetMs) > 500) return;
 
   latTaps.push(offsetMs);
   // Flash tap button
@@ -31147,7 +31186,7 @@ function latAnimate() {
   if (!latRunning) return;
   const canvas = document.getElementById('latCanvas');
   if (!canvas) return;
-  const W = canvas.clientWidth || 280;
+  const W = canvas.offsetWidth || 300;
   if (canvas.width !== W) canvas.width = W;
   latDraw(canvas, latCtx.currentTime);
   latAnimFrame = requestAnimationFrame(latAnimate);
@@ -31209,7 +31248,7 @@ function latDraw(canvas, now) {
 function latDrawIdle() {
   const canvas = document.getElementById('latCanvas');
   if (!canvas) return;
-  const W = canvas.clientWidth || 280;
+  const W = canvas.offsetWidth || 300;
   if (canvas.width !== W) canvas.width = W;
   const c = canvas.getContext('2d');
   if (!c) return;
@@ -31282,8 +31321,8 @@ async function scheduleNotifications() {
     const at = _notifTimeToDate(ns.practiceTime || '19:00');
     toSchedule.push({
       id: NOTIF_ID_PRACTICE,
-      title: '🎵 Time to Practice',
-      body: 'A few minutes a day keeps the rust away.',
+      title: t('notif_practice_toast_title'),
+      body: t('notif_practice_toast_body'),
       schedule: { at, repeats: true, every: 'day' },
       sound: null,
       smallIcon: 'ic_stat_icon_config_sample',
@@ -31298,8 +31337,8 @@ async function scheduleNotifications() {
     const count = progState.streak.count;
     toSchedule.push({
       id: NOTIF_ID_STREAK,
-      title: `🔥 ${count}-day streak at risk!`,
-      body: `Don't break your streak — open Intonare and practice for a few minutes.`,
+      title: t('notif_streak_toast_title').replace('{n}', count),
+      body: t('notif_streak_toast_body'),
       schedule: { at, repeats: true, every: 'day' },
       sound: null,
       smallIcon: 'ic_stat_icon_config_sample',
@@ -31367,8 +31406,10 @@ function setTapCalibration(ms) {
   TAP_LATENCY_OFFSET = v / 1000;
   const slider = document.getElementById('smCalibSlider');
   const val = document.getElementById('smCalibValue');
+  const btnVal = document.getElementById('smCalibBtnVal');
   if (slider && slider.value != v) slider.value = v;
   if (val) val.textContent = v;
+  if (btnVal) btnVal.textContent = v;
   progSave();
 }
 
@@ -31408,8 +31449,10 @@ function syncSettingsUI() {
   // Calibration slider
   const calSlider = document.getElementById('smCalibSlider');
   const calValue  = document.getElementById('smCalibValue');
+  const calBtnVal = document.getElementById('smCalibBtnVal');
   if (calSlider) calSlider.value = progState.tapOffsetMs || 38;
   if (calValue)  calValue.textContent = progState.tapOffsetMs || 38;
+  if (calBtnVal) calBtnVal.textContent = progState.tapOffsetMs || 38;
 }
 function setNoteNaming(mode) {
   if (mode !== 'english' && mode !== 'solfege') mode = 'english';
@@ -32168,6 +32211,7 @@ function progLoad() {
       if (!progState.favorites) progState.favorites = [];
       // Migrate: default notifications on for existing users
       if (!progState.notifications) progState.notifications = { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00' };
+      if (progState.hapticsOn === undefined) progState.hapticsOn = true;
     }
   } catch(e) {}
   // Silently check achievements against existing data on load (no toasts on startup)
@@ -32728,7 +32772,7 @@ function resetProgress() {
     lang: progState.lang || 'en',
     teachingMode: progState.teachingMode || false,
     helpTips: progState.helpTips !== false,
-    hapticsOn: progState.hapticsOn || false,
+    hapticsOn: progState.hapticsOn !== false,
     audioCues: progState.audioCues || { correct:'chime', wrong:'buzz', milestone:'fanfare', levelup:'chiptune', achievement:'chime', vols:{correct:100,wrong:100,milestone:100,levelup:100,achievement:100} },
     streak: { count: 0, lastDate: null, longest: 0 },
     history: {}, secret_chime_unlocked: false, beethoven_unlocked: false, mythic_unlocked: false,
@@ -50802,6 +50846,12 @@ window.sgInit = function() {
   if (!_sgEventsAttached) {
     _sgEventsAttached = true;
 
+  // Block body scroll via touch while SG is open; allow scroll inside #pageArea
+  window._sgTouchBlock = function(e) {
+    if (!e.target.closest('#pageArea') && !e.target.closest('.nav-tabs-scroll') && !e.target.closest('.ch-pills')) e.preventDefault();
+  };
+  document.addEventListener('touchmove', window._sgTouchBlock, { passive: false });
+
   document.getElementById('btnNext').addEventListener('click',function(){navigate(1);});
   document.getElementById('btnPrev').addEventListener('click',function(){navigate(-1);});
 
@@ -50820,11 +50870,12 @@ window.sgInit = function() {
   // ── Swipe to navigate (touch events, direction-locked) ────────────
   var _tx=null,_ty=null,_tdir=null;
   document.getElementById('app').addEventListener('touchstart',function(e){
-    if(e.target.closest('select,button,.nav-arrow,.chap-toggle,.tab-btn,.pedal-btn'))return;
+    if(e.target.closest('select,button,.nav-arrow,.chap-toggle,.tab-btn,.pedal-btn,.ch-pills,.nav-tabs-scroll'))return;
     _tx=e.touches[0].clientX; _ty=e.touches[0].clientY; _tdir=null;
   },{passive:true});
   document.getElementById('app').addEventListener('touchmove',function(e){
     if(_tx===null)return;
+    if(e.target.closest('.ch-pills,.nav-tabs-scroll')){_tx=null;return;}
     var dx=e.touches[0].clientX-_tx,dy=e.touches[0].clientY-_ty;
     if(!_tdir){
       if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)*1.2) _tdir='h';
@@ -50992,6 +51043,10 @@ function _sgMeasureAndRender() {
 }
 
 window.sgExit = function() {
+  if (window._sgTouchBlock) {
+    document.removeEventListener('touchmove', window._sgTouchBlock);
+    window._sgTouchBlock = null;
+  }
   try {
     aNotes.forEach(function(n){
       try{if(actx){n.g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.1);
