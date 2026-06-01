@@ -7084,6 +7084,64 @@
     cursor: pointer; transition: all 0.2s;
   }
   .sm-action-btn:hover { color: var(--accent-soft); border-color: var(--accent-soft); }
+  /* ── Notification settings ── */
+  .sm-notif-block {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-bottom: 4px;
+  }
+  .sm-notif-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-sm);
+  }
+  .sm-notif-label {
+    display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+  }
+  .sm-notif-icon { font-size: 18px; flex-shrink: 0; }
+  .sm-notif-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    color: var(--text); margin-bottom: 2px;
+  }
+  .sm-notif-sub {
+    font-size: 9px; color: var(--muted); letter-spacing: 0.3px;
+  }
+  .sm-notif-controls {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .sm-notif-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px; padding: 4px 6px;
+    width: 80px; text-align: center;
+    -webkit-appearance: none; appearance: none;
+    color-scheme: dark;
+    opacity: 0.4; pointer-events: none;
+    transition: all 0.2s;
+  }
+  .sm-notif-time.enabled {
+    opacity: 1; pointer-events: auto;
+    border-color: color-mix(in srgb, var(--theme) 40%, transparent);
+    color: var(--text);
+  }
+  .sm-notif-toggle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1px; font-weight: 700;
+    padding: 5px 10px; border-radius: 20px; cursor: pointer;
+    border: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.04);
+    color: var(--muted); transition: all 0.2s;
+    min-width: 40px; text-align: center;
+  }
+  .sm-notif-toggle[data-active="true"] {
+    background: color-mix(in srgb, var(--theme) 15%, transparent);
+    border-color: color-mix(in srgb, var(--theme) 50%, transparent);
+    color: var(--theme);
+  }
+
   .sm-footer {
     margin-top: 18px;
     padding-top: 14px;
@@ -14346,6 +14404,41 @@
       </div>
       <input type="range" class="sm-calib-slider" id="smCalibSlider" min="0" max="500" step="2" value="38" oninput="setTapCalibration(this.value)">
       <div class="sm-calib-hint" id="calibHintText">If taps in tempo exercises score "late," drag this up. Bluetooth audio usually needs 150-300ms; built-in speakers 30-80ms.</div>
+    </div>
+
+    <div class="sm-section-title" data-i18n="settings_notifications">Notifications</div>
+    <div class="sm-notif-block" id="smNotifBlock">
+
+      <!-- Practice reminder -->
+      <div class="sm-notif-row">
+        <div class="sm-notif-label">
+          <span class="sm-notif-icon">🎵</span>
+          <div>
+            <div class="sm-notif-title" data-i18n="notif_practice_title">Practice Reminder</div>
+            <div class="sm-notif-sub" data-i18n="notif_practice_sub">Daily nudge to pick up your instrument</div>
+          </div>
+        </div>
+        <div class="sm-notif-controls">
+          <input type="time" class="sm-notif-time" id="smPracticeTime" value="19:00" onchange="saveNotifSettings()">
+          <button class="sm-notif-toggle" id="smPracticeToggle" onclick="toggleNotif('practice')" data-active="false">OFF</button>
+        </div>
+      </div>
+
+      <!-- Streak reminder -->
+      <div class="sm-notif-row">
+        <div class="sm-notif-label">
+          <span class="sm-notif-icon">🔥</span>
+          <div>
+            <div class="sm-notif-title" data-i18n="notif_streak_title">Streak Reminder</div>
+            <div class="sm-notif-sub" data-i18n="notif_streak_sub">Don't break your streak today</div>
+          </div>
+        </div>
+        <div class="sm-notif-controls">
+          <input type="time" class="sm-notif-time" id="smStreakTime" value="20:00" onchange="saveNotifSettings()">
+          <button class="sm-notif-toggle" id="smStreakToggle" onclick="toggleNotif('streak')" data-active="false">OFF</button>
+        </div>
+      </div>
+
     </div>
 
     <div class="sm-section-title" data-i18n="settings_more">More</div>
@@ -29191,6 +29284,8 @@ function checkDailyStreak() {
 
   progSave();
   progRefreshChip();
+  // Reschedule streak notification with updated count
+  if (typeof scheduleNotifications === 'function') scheduleNotifications();
 
   // Show celebration / reset toast after splash clears
   if (showToastMsg) {
@@ -31121,6 +31216,137 @@ function closeSettings() {
   document.getElementById('settingsModal').classList.remove('active');
 }
 
+// ═══════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════
+const NOTIF_ID_PRACTICE = 1001;
+const NOTIF_ID_STREAK   = 1002;
+
+function _getNotifPlugin() {
+  return window.Capacitor &&
+    window.Capacitor.Plugins &&
+    window.Capacitor.Plugins.LocalNotifications
+      ? window.Capacitor.Plugins.LocalNotifications
+      : null;
+}
+
+async function notifRequestPermission() {
+  const plugin = _getNotifPlugin();
+  if (!plugin) return false;
+  try {
+    const result = await plugin.requestPermissions();
+    return result && result.display === 'granted';
+  } catch(e) { return false; }
+}
+
+function _notifTimeToDate(timeStr) {
+  // timeStr = "HH:MM", returns next occurrence of that time
+  const [h, m] = timeStr.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  if (d <= new Date()) d.setDate(d.getDate() + 1); // if past, schedule tomorrow
+  return d;
+}
+
+async function scheduleNotifications() {
+  const plugin = _getNotifPlugin();
+  if (!plugin) return;
+  const ns = progState.notifications || {};
+
+  // Cancel existing
+  try {
+    await plugin.cancel({ notifications: [
+      { id: NOTIF_ID_PRACTICE },
+      { id: NOTIF_ID_STREAK }
+    ]});
+  } catch(e) {}
+
+  const toSchedule = [];
+
+  // Practice reminder
+  if (ns.practiceOn) {
+    const at = _notifTimeToDate(ns.practiceTime || '19:00');
+    toSchedule.push({
+      id: NOTIF_ID_PRACTICE,
+      title: '🎵 Time to Practice',
+      body: 'A few minutes a day keeps the rust away.',
+      schedule: { at, repeats: true, every: 'day' },
+      sound: null,
+      smallIcon: 'ic_stat_icon_config_sample',
+      actionTypeId: '',
+      extra: null
+    });
+  }
+
+  // Streak reminder — only if user has an active streak
+  if (ns.streakOn && progState.streak && progState.streak.count > 0) {
+    const at = _notifTimeToDate(ns.streakTime || '20:00');
+    const count = progState.streak.count;
+    toSchedule.push({
+      id: NOTIF_ID_STREAK,
+      title: `🔥 ${count}-day streak at risk!`,
+      body: `Don't break your streak — open Intonare and practice for a few minutes.`,
+      schedule: { at, repeats: true, every: 'day' },
+      sound: null,
+      smallIcon: 'ic_stat_icon_config_sample',
+      actionTypeId: '',
+      extra: null
+    });
+  }
+
+  if (toSchedule.length > 0) {
+    try { await plugin.schedule({ notifications: toSchedule }); } catch(e) {}
+  }
+}
+
+async function toggleNotif(type) {
+  if (!progState.notifications) progState.notifications = {};
+  const ns = progState.notifications;
+
+  // Request permission first if enabling
+  const key = type === 'practice' ? 'practiceOn' : 'streakOn';
+  if (!ns[key]) {
+    const granted = await notifRequestPermission();
+    if (!granted) return; // user denied — don't toggle on
+  }
+
+  ns[key] = !ns[key];
+  progSave();
+  _applyNotifUI();
+  scheduleNotifications();
+}
+
+function saveNotifSettings() {
+  if (!progState.notifications) progState.notifications = {};
+  const pt = document.getElementById('smPracticeTime');
+  const st = document.getElementById('smStreakTime');
+  if (pt) progState.notifications.practiceTime = pt.value;
+  if (st) progState.notifications.streakTime = st.value;
+  progSave();
+  scheduleNotifications();
+}
+
+function _applyNotifUI() {
+  const ns = progState.notifications || {};
+  const pt = document.getElementById('smPracticeToggle');
+  const st = document.getElementById('smStreakToggle');
+  const ptTime = document.getElementById('smPracticeTime');
+  const stTime = document.getElementById('smStreakTime');
+
+  if (pt) { pt.dataset.active = ns.practiceOn ? 'true' : 'false'; pt.textContent = ns.practiceOn ? 'ON' : 'OFF'; }
+  if (st) { st.dataset.active = ns.streakOn ? 'true' : 'false'; st.textContent = ns.streakOn ? 'ON' : 'OFF'; }
+  if (ptTime) {
+    ptTime.value = ns.practiceTime || '19:00';
+    ptTime.classList.toggle('enabled', !!ns.practiceOn);
+  }
+  if (stTime) {
+    stTime.value = ns.streakTime || '20:00';
+    stTime.classList.toggle('enabled', !!ns.streakOn);
+  }
+}
+
+
+
 function setTapCalibration(ms) {
   const v = Math.max(0, Math.min(500, parseInt(ms) || 0));
   progState.tapOffsetMs = v;
@@ -31146,6 +31372,7 @@ function openSettings() {
     latDrawIdle();
     syncSettingsUI();
     renderCueDropdowns();
+    _applyNotifUI();
   } catch(e) {
     // Non-critical UI sync failed — modal still opens
   }
