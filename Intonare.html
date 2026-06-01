@@ -781,7 +781,7 @@
 
   .app {
     width: 100%; max-width: 600px;
-    padding: 4px 16px 16px;
+    padding: 0px 16px 16px;
     display: flex; flex-direction: column; gap: 6px;
     position: relative;
     /* z-index:1 removed — it created a stacking context that scoped .mode-toggle's
@@ -17419,6 +17419,29 @@ async function toggleMic() {
 }
 async function startMic() {
   try {
+    // On Capacitor/Android, request RECORD_AUDIO permission natively before getUserMedia
+    // The WebView won't auto-prompt — we need to trigger it through the Permissions API
+    // or Capacitor plugin first, otherwise getUserMedia silently fails or is denied.
+    if (window.Capacitor) {
+      try {
+        // Try Permissions API first (works on Android 12+ WebView)
+        if (navigator.permissions && navigator.permissions.query) {
+          const status = await navigator.permissions.query({ name: 'microphone' });
+          if (status.state === 'denied') {
+            throw new Error('Microphone permission denied');
+          }
+        }
+        // If Capacitor microphone plugin is available, use it to trigger native prompt
+        if (window.Capacitor.Plugins && window.Capacitor.Plugins.Microphone) {
+          await window.Capacitor.Plugins.Microphone.requestPermissions();
+        }
+      } catch(permErr) {
+        // Permission plugin not installed — fall through to getUserMedia which will
+        // trigger the native prompt on first call on most Android versions
+        if (permErr.message === 'Microphone permission denied') throw permErr;
+      }
+    }
+
     micStream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
     });
