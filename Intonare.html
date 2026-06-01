@@ -1011,50 +1011,84 @@
   /* ─── CHROMA STRIP ─── */
   /* ─── CHROMA SCREEN ─── */
   .tuner-chroma-screen {
-    background: #030609;
-    border-radius: 8px;
-    border: 1px solid #000;
-    padding: 2px;
+    background: #0d1018;
     box-shadow:
+      0 3px 0 #050710,
+      0 5px 14px rgba(0,0,0,0.7),
       0 0 20px color-mix(in srgb, var(--theme) 14%, transparent),
-      0 0 40px color-mix(in srgb, var(--theme) 6%, transparent),
-      0 -1px 0 rgba(255,255,255,0.05),
-      0 4px 14px rgba(0,0,0,0.6);
-    position: relative;
+      0  1px 0 rgba(255,255,255,0.12) inset,
+      0 -2px 4px rgba(0,0,0,0.7) inset;
   }
+  .tuner-chroma-screen::before {
+    content: ''; position: absolute;
+    top: 0; left: 6%; right: 6%; height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      color-mix(in srgb, var(--theme-a) 28%, transparent) 30%,
+      color-mix(in srgb, var(--theme-a) 38%, transparent) 50%,
+      color-mix(in srgb, var(--theme-a) 28%, transparent) 70%,
+      transparent);
+    border-radius: 1px; z-index: 10;
+  }
+  .tuner-chroma-screen::after {
+    content: ''; position: absolute;
+    bottom: 1px; left: 8%; right: 8%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.04) 60%, transparent);
+    z-index: 10;
+  }
+
+  /* Bezel lip */
+  .tuner-chroma-bezel {
+    background: #08070c;
+    border-radius: 6px;
+    padding: 3px;
+    box-shadow:
+      0  1px 0 rgba(255,255,255,0.07) inset,
+      0 -1px 0 rgba(0,0,0,0.6) inset,
+      1px 0 0 rgba(0,0,0,0.4) inset,
+     -1px 0 0 rgba(0,0,0,0.4) inset;
+  }
+
+  /* Glass */
   .tuner-chroma-screen-inner {
     background: #010408;
-    border-radius: 7px;
+    border-radius: 4px;
     padding: 6px 10px;
     position: relative; overflow: hidden;
-    box-shadow: inset 0 0 20px color-mix(in srgb, var(--theme) 4%, transparent);
+    box-shadow:
+      inset 0  1px 6px rgba(0,0,0,0.9),
+      inset 0 -1px 3px rgba(0,0,0,0.4),
+      inset  2px 0 5px rgba(0,0,0,0.3),
+      inset -2px 0 5px rgba(0,0,0,0.3),
+      inset 0 0 16px color-mix(in srgb, var(--theme) 4%, transparent);
   }
-  /* glass shine */
   .tuner-chroma-screen-inner::before {
-    content: '';
-    position: absolute; top: 0; left: -20%; right: -20%; bottom: 0;
-    background: linear-gradient(
-      115deg,
-      transparent 35%,
-      rgba(255,255,255,0.000) 43%,
-      rgba(255,255,255,0.035) 48%,
-      rgba(255,255,255,0.055) 50%,
-      rgba(255,255,255,0.035) 52%,
-      rgba(255,255,255,0.000) 57%,
-      transparent 65%
-    );
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 90% 70% at 50% 15%,
+        rgba(255,255,255,0.035) 0%,
+        transparent 100%),
+      radial-gradient(ellipse 130% 130% at 50% 50%,
+        transparent 48%,
+        rgba(0,0,0,0.32) 100%),
+      linear-gradient(115deg,
+        transparent 38%,
+        rgba(255,255,255,0.000) 44%,
+        rgba(255,255,255,0.035) 49%,
+        rgba(255,255,255,0.052) 50%,
+        rgba(255,255,255,0.035) 51%,
+        rgba(255,255,255,0.000) 56%,
+        transparent 62%);
     pointer-events: none; z-index: 1;
   }
-  /* scanlines */
   .tuner-chroma-screen-inner::after {
-    content: '';
-    position: absolute; inset: 0;
+    content: ''; position: absolute; inset: 0;
     background: repeating-linear-gradient(
       0deg,
       transparent, transparent 2px,
       rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 3px
     );
-    pointer-events: none; border-radius: 9px; z-index: 4;
+    pointer-events: none; border-radius: 4px; z-index: 4;
   }
   /* CHROMATIC label — top-left like groove/metro screen labels */
   .tuner-chroma-label {
@@ -1074,33 +1108,63 @@
   .chroma-note {
     flex: 1; text-align: center;
     font-family: 'Bebas Neue', sans-serif; font-size: 13px;
-    color: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.10);
     padding: 5px 0;
     border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.04);
-    background: rgba(255,255,255,0.02);
-    transition: all 0.12s ease;
+    border: none;
+    background: transparent;
+    transition: color 0.12s ease, text-shadow 0.12s ease;
     letter-spacing: 0.5px;
     position: relative; z-index: 3;
+    line-height: 1;
   }
-  /* near note — dim glow, slightly brighter */
+  /* Octave superscript on active chroma cell */
+  .chroma-note .cn-oct {
+    display: block;
+    font-size: 7px; letter-spacing: 0; line-height: 1;
+    opacity: 0.7; margin-top: 1px;
+  }
+  /* near note — starts to glow as you approach */
   .chroma-note.near {
-    color: color-mix(in srgb, var(--accent) 55%, transparent);
-    border-color: color-mix(in srgb, var(--accent) 18%, transparent);
-    background: color-mix(in srgb, var(--accent) 5%, transparent);
-    text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent);
+    color: color-mix(in srgb, var(--accent) 45%, transparent);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent);
   }
-  /* active note — lit LED segment */
+  /* active note — fully lit, glow bleeds around it */
   .chroma-note.active {
-    color: #010408;
-    background: var(--grad-tune);
-    border-color: transparent;
-    box-shadow:
-      0 0 14px color-mix(in srgb, var(--accent) 55%, transparent),
-      0 0 4px  color-mix(in srgb, var(--accent) 40%, transparent) inset;
-    text-shadow: none;
+    color: var(--accent);
+    text-shadow:
+      0 0 6px var(--accent),
+      0 0 14px color-mix(in srgb, var(--accent) 60%, transparent),
+      0 0 28px color-mix(in srgb, var(--accent) 30%, transparent);
+    background: transparent;
+    border: none;
+    box-shadow: none;
     font-size: 14px;
   }
+  .chroma-note.active .cn-oct {
+    opacity: 0.6;
+    text-shadow: 0 0 4px var(--accent);
+  }
+
+  /* ── Note change pulse ── */
+  @keyframes noteChangePop {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  .tuner-screen-note.note-change { animation: noteChangePop 0.18s ease-out; }
+
+  /* ── In-tune flash — radial burst on the screen inner ── */
+  @keyframes inTuneFlash {
+    0%   { box-shadow: inset 0 2px 10px rgba(0,0,0,0.9), inset 0 -1px 5px rgba(0,0,0,0.5), inset 2px 0 8px rgba(0,0,0,0.4), inset -2px 0 8px rgba(0,0,0,0.4), inset 0 0 40px color-mix(in srgb, var(--theme) 4%, transparent); }
+    35%  { box-shadow: inset 0 2px 10px rgba(0,0,0,0.9), inset 0 -1px 5px rgba(0,0,0,0.5), inset 2px 0 8px rgba(0,0,0,0.4), inset -2px 0 8px rgba(0,0,0,0.4), inset 0 0 60px rgba(182,242,91,0.22); }
+    100% { box-shadow: inset 0 2px 10px rgba(0,0,0,0.9), inset 0 -1px 5px rgba(0,0,0,0.5), inset 2px 0 8px rgba(0,0,0,0.4), inset -2px 0 8px rgba(0,0,0,0.4), inset 0 0 40px color-mix(in srgb, var(--theme) 4%, transparent); }
+  }
+  .tuner-screen-inner.in-tune-flash { animation: inTuneFlash 0.6s ease-out; }
+
+  /* ── Spring needle — CSS transition handles the physics feel ──
+     The spring effect comes from JS, CSS just smooths jitter */
+  .meter-needle { transition: left 0.0s linear; } /* JS drives position directly */
 
   /* ─── PANEL HEAD ─── */
   .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -1166,6 +1230,19 @@
 
   /* ─── STRINGS ─── */
   .strings-grid { display: flex; flex-direction: column; gap: 5px; }
+  /* detect-disabled: grid collapses to zero height, badge dims */
+  .strings-grid.detect-disabled {
+    overflow: hidden;
+    max-height: 0;
+    margin: 0;
+    gap: 0;
+    transition: max-height 0.3s ease, margin 0.3s ease;
+  }
+  /* badge dims when detect is off */
+  #instrumentBadge.detect-off {
+    opacity: 0.45;
+    font-style: italic;
+  }
   .string-row {
     display: flex; align-items: center; gap: 10px;
     padding: 9px 11px;
@@ -1221,6 +1298,7 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 4px;
+    margin-top: 10px;
   }
   .family-tab {
     flex-shrink: 0; padding: 9px 4px;
@@ -1243,12 +1321,8 @@
   }
   .inst-list {
     display: flex; flex-wrap: wrap; gap: 5px;
-    padding: 13px;
-    background: var(--surface);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--r-md);
-    min-height: 54px;
-    box-shadow: var(--shadow-soft);
+    padding: 10px 0 2px;
+    min-height: 44px;
   }
   .inst-pill {
     padding: 8px 13px;
@@ -1272,11 +1346,11 @@
   .inst-pill.active .inst-pill-sub { color: rgba(94,226,255,0.6); }
 
   .auto-banner {
-    padding: 16px;
+    padding: 14px 16px;
     background: linear-gradient(135deg, rgba(182,242,91,0.06), rgba(94,226,255,0.04));
     border: 1px solid rgba(182,242,91,0.2);
     border-radius: var(--r-md);
-    text-align: center; flex: 1;
+    text-align: center; width: 100%;
     cursor: pointer; transition: background 0.25s, border-color 0.25s;
   }
   .auto-banner:hover {
@@ -2184,54 +2258,108 @@
   .screen-number-col { text-align: center; flex: 1; }
 
   /* ─── METRO PHYSICAL SCREEN ─── */
+  /* ── SHARED SCREEN 3D TREATMENT ────────────────────────────
+     Three-layer depth: housing → bezel lip → recessed glass
+     Applied to: .metro-screen, .tuner-screen, .tuner-chroma-screen
+  ─────────────────────────────────────────────────────────── */
+
+  /* Housing — visible card-material gap around the screen,
+     thick bottom drop-shadow creates physical height off the card */
+  .metro-screen,
+  .tuner-screen,
+  .tuner-chroma-screen {
+    border-radius: 12px;
+    padding: 5px;
+    position: relative;
+    border: none;
+  }
   .metro-screen {
-    background: #0a0905;
-    border-radius: 10px;
-    border: 1px solid #000;
-    padding: 2px;
+    background: #1a150a;   /* warm housing for metro */
     margin-bottom: 12px;
     box-shadow:
-      0 0 28px rgba(255,180,80,0.22),
-      0 0 60px rgba(255,160,80,0.10),
-      0 -1px 0 rgba(255,255,255,0.06),
-      0 8px 32px rgba(0,0,0,0.7);
-    position: relative;
+      0 4px 0 #07050a,
+      0 6px 20px rgba(0,0,0,0.8),
+      0 0 30px rgba(255,180,80,0.20),
+      0 0 60px rgba(255,160,80,0.08),
+      0  1px 0 rgba(255,255,255,0.12) inset,
+      0 -2px 5px rgba(0,0,0,0.7) inset;
   }
+  /* Top rim catch-light on housing */
+  .metro-screen::before {
+    content: ''; position: absolute;
+    top: 0; left: 6%; right: 6%; height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(255,209,102,0.22) 30%,
+      rgba(255,209,102,0.30) 50%,
+      rgba(255,209,102,0.22) 70%,
+      transparent);
+    border-radius: 1px; z-index: 10;
+  }
+  /* Bottom edge — in shadow */
+  .metro-screen::after {
+    content: ''; position: absolute;
+    bottom: 1px; left: 8%; right: 8%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.04) 60%, transparent);
+    z-index: 10;
+  }
+
+  /* Bezel lip — step between housing and glass */
+  .metro-screen-bezel {
+    background: #08070c;
+    border-radius: 8px;
+    padding: 3px;
+    box-shadow:
+      0  1px 0 rgba(255,255,255,0.07) inset,
+      0 -1px 0 rgba(0,0,0,0.6) inset,
+      1px 0 0 rgba(0,0,0,0.4) inset,
+     -1px 0 0 rgba(0,0,0,0.4) inset;
+  }
+
+  /* Glass — recessed surface with convex highlight + vignette */
   .metro-screen-inner {
     background: #010106;
-    border-radius: 9px;
+    border-radius: 6px;
     padding: 22px 18px 22px;
     position: relative; overflow: hidden;
     text-align: center;
-    box-shadow: inset 0 0 40px rgba(255,140,60,0.06);
+    box-shadow:
+      inset 0  2px 10px rgba(0,0,0,0.9),
+      inset 0 -1px  5px rgba(0,0,0,0.5),
+      inset  2px 0  8px rgba(0,0,0,0.4),
+      inset -2px 0  8px rgba(0,0,0,0.4),
+      inset 0 0 40px rgba(255,140,60,0.04);
   }
-  /* diagonal glass shine */
+  /* Convex glass surface: radial highlight + vignette + diagonal shine */
   .metro-screen-inner::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -20%; right: -20%; bottom: 0;
-    background: linear-gradient(
-      115deg,
-      transparent 35%,
-      rgba(255,255,255,0.000) 42%,
-      rgba(255,255,255,0.045) 47%,
-      rgba(255,255,255,0.07)  50%,
-      rgba(255,255,255,0.045) 53%,
-      rgba(255,255,255,0.000) 58%,
-      transparent 65%
-    );
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 55% at 50% 18%,
+        rgba(255,255,255,0.042) 0%,
+        rgba(255,255,255,0.008) 55%,
+        transparent 100%),
+      radial-gradient(ellipse 130% 130% at 50% 50%,
+        transparent 48%,
+        rgba(0,0,0,0.38) 100%),
+      linear-gradient(115deg,
+        transparent 35%,
+        rgba(255,255,255,0.000) 42%,
+        rgba(255,255,255,0.042) 47%,
+        rgba(255,255,255,0.065) 50%,
+        rgba(255,255,255,0.042) 53%,
+        rgba(255,255,255,0.000) 58%,
+        transparent 65%);
     pointer-events: none; z-index: 1;
   }
-  /* scanlines */
+  /* Scanlines */
   .metro-screen-inner::after {
-    content: '';
-    position: absolute; inset: 0;
+    content: ''; position: absolute; inset: 0;
     background: repeating-linear-gradient(
       0deg,
       transparent, transparent 2px,
       rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px
     );
-    pointer-events: none; border-radius: 10px; z-index: 2;
+    pointer-events: none; border-radius: 6px; z-index: 2;
   }
 
   /* ── GROOVE SCREEN (replaces BPM display in groove mode) ── */
@@ -2964,53 +3092,89 @@
 
   /* Physical screen — same dark shell as metro */
   .tuner-screen {
-    background: #030609;
-    border-radius: 10px;
-    border: 1px solid #000;
-    padding: 2px;
+    background: #0d1018;   /* cool blue-dark housing for tuner */
     margin-bottom: 12px;
     box-shadow:
-      0 0 28px color-mix(in srgb, var(--theme) 18%, transparent),
-      0 0 60px color-mix(in srgb, var(--theme) 8%, transparent),
-      0 -1px 0 rgba(255,255,255,0.06),
-      0 8px 32px rgba(0,0,0,0.7);
-    position: relative;
+      0 4px 0 #050710,
+      0 6px 20px rgba(0,0,0,0.8),
+      0 0 30px color-mix(in srgb, var(--theme) 18%, transparent),
+      0 0 60px color-mix(in srgb, var(--theme) 7%, transparent),
+      0  1px 0 rgba(255,255,255,0.12) inset,
+      0 -2px 5px rgba(0,0,0,0.7) inset;
   }
+  .tuner-screen::before {
+    content: ''; position: absolute;
+    top: 0; left: 6%; right: 6%; height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      color-mix(in srgb, var(--theme-a) 28%, transparent) 30%,
+      color-mix(in srgb, var(--theme-a) 38%, transparent) 50%,
+      color-mix(in srgb, var(--theme-a) 28%, transparent) 70%,
+      transparent);
+    border-radius: 1px; z-index: 10;
+  }
+  .tuner-screen::after {
+    content: ''; position: absolute;
+    bottom: 1px; left: 8%; right: 8%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.04) 60%, transparent);
+    z-index: 10;
+  }
+
+  /* Bezel lip */
+  .tuner-screen-bezel {
+    background: #08070c;
+    border-radius: 8px;
+    padding: 3px;
+    box-shadow:
+      0  1px 0 rgba(255,255,255,0.07) inset,
+      0 -1px 0 rgba(0,0,0,0.6) inset,
+      1px 0 0 rgba(0,0,0,0.4) inset,
+     -1px 0 0 rgba(0,0,0,0.4) inset;
+  }
+
+  /* Glass */
   .tuner-screen-inner {
     background: #010408;
-    border-radius: 9px;
+    border-radius: 6px;
     padding: 14px 18px 16px;
     position: relative; overflow: hidden;
     text-align: center;
-    box-shadow: inset 0 0 40px color-mix(in srgb, var(--theme) 5%, transparent);
+    min-height: 216px;
+    box-shadow:
+      inset 0  2px 10px rgba(0,0,0,0.9),
+      inset 0 -1px  5px rgba(0,0,0,0.5),
+      inset  2px 0  8px rgba(0,0,0,0.4),
+      inset -2px 0  8px rgba(0,0,0,0.4),
+      inset 0 0 40px color-mix(in srgb, var(--theme) 4%, transparent);
   }
-  /* diagonal glass shine */
   .tuner-screen-inner::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -20%; right: -20%; bottom: 0;
-    background: linear-gradient(
-      115deg,
-      transparent 35%,
-      rgba(255,255,255,0.000) 42%,
-      rgba(255,255,255,0.045) 47%,
-      rgba(255,255,255,0.07)  50%,
-      rgba(255,255,255,0.045) 53%,
-      rgba(255,255,255,0.000) 58%,
-      transparent 65%
-    );
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 55% at 50% 18%,
+        rgba(255,255,255,0.042) 0%,
+        rgba(255,255,255,0.008) 55%,
+        transparent 100%),
+      radial-gradient(ellipse 130% 130% at 50% 50%,
+        transparent 48%,
+        rgba(0,0,0,0.38) 100%),
+      linear-gradient(115deg,
+        transparent 35%,
+        rgba(255,255,255,0.000) 42%,
+        rgba(255,255,255,0.042) 47%,
+        rgba(255,255,255,0.065) 50%,
+        rgba(255,255,255,0.042) 53%,
+        rgba(255,255,255,0.000) 58%,
+        transparent 65%);
     pointer-events: none; z-index: 1;
   }
-  /* scanlines */
   .tuner-screen-inner::after {
-    content: '';
-    position: absolute; inset: 0;
+    content: ''; position: absolute; inset: 0;
     background: repeating-linear-gradient(
       0deg,
       transparent, transparent 2px,
       rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px
     );
-    pointer-events: none; border-radius: 10px; z-index: 2;
+    pointer-events: none; border-radius: 6px; z-index: 2;
   }
 
   /* top row inside screen: ref-tone indicator left, cents value right */
@@ -3193,6 +3357,125 @@
   .tuner-toggle-row {
     display: flex; gap: 6px; align-items: center;
   }
+
+  /* ── A reference pitch row ── */
+  /* ── Tuner housing top row: mute + transpose ── */
+  .tuner-ref-row {
+    display: flex; align-items: stretch; gap: 8px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  /* Fork button — plays current ref A */
+  .tuner-fork-btn {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(94,226,255,0.06);
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    border-radius: 6px; padding: 5px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: color-mix(in srgb, var(--accent) 55%, transparent);
+    cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+  }
+  .tuner-fork-btn:hover {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    background: rgba(94,226,255,0.10);
+  }
+  .tuner-fork-btn.playing {
+    color: var(--accent); border-color: var(--accent);
+    background: rgba(94,226,255,0.12);
+    box-shadow: 0 0 10px rgba(94,226,255,0.2);
+    animation: forkPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes forkPulse {
+    0%,100% { box-shadow: 0 0 8px rgba(94,226,255,0.15); }
+    50%      { box-shadow: 0 0 16px rgba(94,226,255,0.35); }
+  }
+  .tuner-fork-icon { font-size: 13px; line-height: 1; }
+  /* Standalone pills — A440 and Transpose */
+  .tuner-refpitch-pill {
+    width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px; padding: 5px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+  }
+  .tuner-refpitch-pill:hover { border-color: var(--border); color: var(--text); }
+  .tuner-refpitch-pill.open  { border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: rgba(94,226,255,0.04); }
+  .tuner-refpitch-label { color: var(--muted); font-size: 8px; letter-spacing: 2px; flex-shrink: 0; }
+  .tuner-refpitch-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px; letter-spacing: 1px; line-height: 1;
+    color: var(--accent); font-variant-numeric: tabular-nums;
+    margin: 0 4px;
+  }
+  .tuner-refpitch-unit { color: var(--muted); font-size: 8px; flex-shrink: 0; }
+  .tuner-refpitch-arrow { color: var(--muted); font-size: 9px; transition: transform 0.2s; margin-left: 2px; }
+  .tuner-refpitch-pill.open .tuner-refpitch-arrow { transform: rotate(180deg); }
+
+  /* Popover */
+  .tuner-refpitch-popover {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 10px;
+    z-index: 50;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    display: none;
+  }
+  .tuner-refpitch-popover.open { display: block; }
+  .tuner-refpitch-presets {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;
+  }
+  .tuner-refpitch-preset {
+    padding: 6px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1px;
+    color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+  }
+  .tuner-refpitch-preset:hover { color: var(--accent); border-color: var(--accent); }
+  .tuner-refpitch-preset.active {
+    color: var(--accent); border-color: var(--accent);
+    background: rgba(94,226,255,0.08);
+  }
+  /* Manual input row */
+  .tuner-refpitch-custom {
+    display: flex; align-items: center; gap: 6px;
+    border-top: 1px solid var(--border-soft); padding-top: 8px;
+    margin-top: 2px;
+  }
+  .tuner-refpitch-custom-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .tuner-refpitch-input {
+    flex: 1; background: var(--surface);
+    border: 1px solid var(--border-soft); border-radius: 5px;
+    padding: 5px 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text); outline: none; text-align: center;
+    -moz-appearance: textfield;
+  }
+  .tuner-refpitch-input::-webkit-inner-spin-button,
+  .tuner-refpitch-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .tuner-refpitch-input:focus { border-color: var(--accent); }
+  .tuner-refpitch-set {
+    padding: 5px 10px;
+    background: rgba(94,226,255,0.08);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    color: var(--accent); cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+  }
+  .tuner-refpitch-set:hover { background: rgba(94,226,255,0.15); }
 
   /* ── secondary cards below main screen ── */
   .tuner-chroma-card {
@@ -10481,6 +10764,7 @@
 
       <!-- Physical display screen -->
       <div class="tuner-screen">
+        <div class="tuner-screen-bezel">
         <div class="tuner-screen-inner">
 
           <!-- strobe rings — absolute background layer, never affects layout -->
@@ -10539,15 +10823,59 @@
 
         </div>
       </div>
+      </div><!-- /tuner-screen-bezel -->
+
+      <!-- ── Housing row: fork · A440 · Transpose ── -->
+      <div class="tuner-ref-row">
+
+        <!-- Fork -->
+        <button class="tuner-fork-btn" id="tunerForkBtn" onclick="playTunerFork()">
+          <span class="tuner-fork-icon">𝄞</span>
+          <span>FORK</span>
+        </button>
+
+        <!-- A reference pitch -->
+        <div style="position:relative;flex:1;">
+          <button class="tuner-refpitch-pill" id="tunerRefPitchPill" onclick="toggleRefPitchPopover()">
+            <span class="tuner-refpitch-label">A</span>
+            <span class="tuner-refpitch-value" id="tunerRefPitchValue">440</span>
+            <span class="tuner-refpitch-unit">Hz</span>
+            <span class="tuner-refpitch-arrow">▾</span>
+          </button>
+          <div class="tuner-refpitch-popover" id="tunerRefPitchPopover">
+            <div class="tuner-refpitch-presets" id="tunerRefPitchPresets"></div>
+            <div class="tuner-refpitch-custom">
+              <span class="tuner-refpitch-custom-label">Custom</span>
+              <input class="tuner-refpitch-input" id="tunerRefPitchInput" type="number" min="400" max="480" value="440" placeholder="440">
+              <button class="tuner-refpitch-set" onclick="setRefPitchCustom()">SET</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transpose -->
+        <div style="position:relative;flex:1;">
+          <button class="tuner-refpitch-pill" id="tunerTransposePill" onclick="toggleTransposePopover()">
+            <span class="tuner-refpitch-label">IN</span>
+            <span class="tuner-refpitch-value" id="tunerTransposeValue" style="font-size:13px;">NONE</span>
+            <span class="tuner-refpitch-arrow">▾</span>
+          </button>
+          <div class="tuner-refpitch-popover" id="tunerTransposePopover">
+            <div class="tuner-refpitch-presets" id="tunerTransposePresets"></div>
+          </div>
+        </div>
+
+      </div>
 
       <!-- ── Bottom section: chroma strip + pitch history + vibrato ── -->
       <div class="tuner-bottom-section">
 
         <!-- chroma screen -->
         <div class="tuner-chroma-screen">
+          <div class="tuner-chroma-bezel">
           <div class="tuner-chroma-screen-inner">
             <div class="chroma-strip" id="chromaStrip"></div>
           </div>
+          </div><!-- /tuner-chroma-bezel -->
         </div>
 
         <!-- divider -->
@@ -10580,8 +10908,6 @@
 
     </div>
 
-  </div>
-
   <!-- ═══════════════ TUNER ONLY ═══════════════ -->
   <div class="tuner-only stack">
     <div class="teach-hint" style="margin-bottom:8px" data-i18n-html="hint_tuner_main"><strong>TUNER</strong> — chromatic pitch detection via microphone. Play any note to see its name, octave, and how sharp or flat it is. Tap the mic button to start.</div>
@@ -10604,11 +10930,15 @@
       </div>
       <div class="strings-grid" id="stringsGrid"></div>
       <div class="teach-hint" data-i18n-html="hint_strings_guide">Strings are shown <strong>low to high from the bottom up</strong> — same as tab notation. While the mic is on, the closest string highlights in cyan with your cents deviation and turns green when in tune. <strong>Tap any string row</strong> to hear it played back.</div>
-    </div>
 
-    <div class="family-tabs" id="familyTabsTuner"></div>
-    <div class="inst-list" id="instListTuner"></div>
-  </div>
+      <!-- instrument selector — family tabs + pill list, unified inside card -->
+      <div class="tuner-card-divider" style="margin-top:14px"></div>
+      <div class="family-tabs" id="familyTabsTuner"></div>
+      <div class="inst-list" id="instListTuner"></div>
+    </div>
+  </div><!-- /tuner-only -->
+
+  </div><!-- /t-or-r -->
 
   <!-- ═══════════════ TOOLS ═══════════════ -->
   <div class="tools-only hidden stack">
@@ -12320,6 +12650,7 @@
 
       <!-- Physical display screen -->
       <div class="metro-screen">
+        <div class="metro-screen-bezel">
         <div class="metro-screen-inner">
 
           <!-- top row: mute | beat counter | bookmark — symmetric -->
@@ -12400,6 +12731,7 @@
 
         </div>
       </div>
+      </div><!-- /metro-screen-bezel -->
 
       <!-- Housing: slider + play controls -->
       <div class="bpm-slider-row">
@@ -14951,7 +15283,10 @@ function selectFamily(famKey) {
   buildInstList('ref');
   if (famKey === 'auto') {
     selectedInstrument = 'auto';
-    buildStringGrid(detectedInstrument);
+    // Reset detected instrument — go back to listening state, not holding last result
+    detectedInstrument = null;
+    _detectCandidate = null; _detectCandidateFrames = 0;
+    buildStringGrid(null);
     if (mode === 'tools') buildRefPitchGrid();
   }
 }
@@ -15016,11 +15351,20 @@ function buildChromaStrip() {
     d.textContent = getDisplayNote(n).replace('#', '♯'); strip.appendChild(d);
   });
 }
-function updateChromaStrip(noteIndex) {
+function updateChromaStrip(noteIndex, oct) {
   NOTE_NAMES.forEach((_, i) => {
     const el = document.getElementById(`cn-${i}`); if (!el) return;
-    el.className = 'chroma-note' + (i === noteIndex ? ' active' :
-      noteIndex >= 0 && (i === (noteIndex+1)%12 || i === (noteIndex+11)%12) ? ' near' : '');
+    const isActive = i === noteIndex;
+    const isNear   = noteIndex >= 0 && (i === (noteIndex+1)%12 || i === (noteIndex+11)%12);
+    el.className = 'chroma-note' + (isActive ? ' active' : isNear ? ' near' : '');
+    // Show octave on the active cell, clear on others
+    let octEl = el.querySelector('.cn-oct');
+    if (isActive && oct != null) {
+      if (!octEl) { octEl = document.createElement('span'); octEl.className = 'cn-oct'; el.appendChild(octEl); }
+      octEl.textContent = oct;
+    } else if (octEl) {
+      octEl.remove();
+    }
   });
 }
 // ═══════════════════════════════════════════════
@@ -15166,10 +15510,25 @@ function buildStringGrid(instrument) {
   const badge = document.getElementById('instrumentBadge');
   if (!badge) return;
   if (!instrument) {
-    badge.textContent = t('detect_listen');
-    grid.innerHTML = '<div class="hint" style="padding:14px">' + t('detect_play') + '</div>';
+    // Always hide capo when no instrument selected
+    const capoEl = document.getElementById('capoControl');
+    if (capoEl) capoEl.classList.add('hidden');
+    if (!autoDetectEnabled && selectedInstrument === 'auto') {
+      // Auto-detect explicitly disabled — collapsed disabled view
+      badge.dataset.i18n = '';
+      badge.textContent = t('detect_off') || 'AUTO DETECT OFF';
+      grid.innerHTML = '';
+      grid.classList.add('detect-disabled');
+    } else {
+      // Auto mode, listening for first note
+      badge.textContent = t('detect_listen');
+      badge.dataset.i18n = 'detect_listen';
+      grid.innerHTML = '<div class="hint" style="padding:14px">' + t('detect_play') + '</div>';
+      grid.classList.remove('detect-disabled');
+    }
     return;
   }
+  grid.classList.remove('detect-disabled');
   const inst = INSTRUMENTS[instrument];
 
   // ── Capo control: show only for applicable families ──
@@ -15200,7 +15559,7 @@ function buildStringGrid(instrument) {
 
     // Apply capo shift to note name and frequency for display and comparison
     const shiftedN    = shiftNoteStr(s.n, capoFret);
-    const shiftedF    = s.f * Math.pow(2, capoFret / 12);
+    const shiftedF    = s.f * Math.pow(2, capoFret / 12) * (refPitch / 440);
     const noteOnly    = shiftedN.replace(/[0-9]/g, '');
     const noteDisplay = getDisplayNote(noteOnly).replace('#','♯').replace('b','♭');
     const fullDisplay = getDisplayNote(shiftedN).replace('#','♯').replace('b','♭');
@@ -15222,7 +15581,7 @@ function updateStringPanel(freq, instrument) {
   if (!instrument || !freq) return;
   const inst = INSTRUMENTS[instrument];
   // Use capo-shifted target frequencies for comparison
-  const targets = inst.strings.map(s => s.f * Math.pow(2, capoFret / 12));
+  const targets = inst.strings.map(s => s.f * Math.pow(2, capoFret / 12) * (refPitch / 440));
   let idx = 0, min = Infinity;
   targets.forEach((tf, i) => {
     const abs = Math.abs(1200 * Math.log2(freq / tf));
@@ -15282,7 +15641,7 @@ function buildRefPitchGrid() {
     const accidental = s.n.includes('b') ? '♭' : s.n.includes('#') ? '♯' : '';
     const displayLetter = getDisplayNote(noteOnly);            // C → Do (or stays C)
     btn.innerHTML = `<div class="ref-pitch-name">${displayLetter}${accidental}</div><div class="ref-pitch-oct">${s.n.match(/[0-9]/)?.[0] || ''}</div>`;
-    btn.onclick = () => togglePlayRef(refKey, s.f, s.n);
+    btn.onclick = () => togglePlayRef(refKey, s.f * (refPitch / 440), s.n);
     grid.appendChild(btn);
   });
 
@@ -15817,7 +16176,7 @@ function playA440() {
   const key = 'a440';
   if (refOscs[key]) { stopRef(key); document.getElementById('a440Btn').classList.remove('playing'); return; }
   if (!droneMode) stopAllRef();
-  playRef(key, 440.00, 'A4');
+  playRef(key, refPitch, 'A4');
   document.getElementById('a440Btn').classList.add('playing');
   if (!droneMode) setTimeout(() => document.getElementById('a440Btn').classList.remove('playing'), 2900);
 }
@@ -15832,7 +16191,7 @@ function playVoiceFork(target) {
     return;
   }
   if (!droneMode) stopAllRef();
-  playRef(key, 440.00, 'A4');
+  playRef(key, refPitch, 'A4');
   document.querySelectorAll('.voice-fork-btn').forEach(b => b.classList.add('playing'));
   if (!droneMode) setTimeout(() => document.querySelectorAll('.voice-fork-btn').forEach(b => b.classList.remove('playing')), 2900);
 }
@@ -15996,9 +16355,128 @@ function updateTooltip(cents, hasPitch) {
 // ═══════════════════════════════════════════════
 // PITCH MATH
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// A REFERENCE PITCH (tunable A4, default 440 Hz)
+// ═══════════════════════════════════════════════
+let refPitch = 440;
+const REF_PITCH_PRESETS = [432, 435, 440, 441, 442, 443, 444];
+try {
+  const stored = parseFloat(localStorage.getItem('intonare_refpitch'));
+  if (stored >= 400 && stored <= 480) refPitch = stored;
+} catch(e) {}
+
+function setRefPitch(hz) {
+  hz = Math.round(hz * 10) / 10; // 0.1 Hz precision
+  if (hz < 400 || hz > 480) return;
+  refPitch = hz;
+  try { localStorage.setItem('intonare_refpitch', hz); } catch(e) {}
+  // Update pill display
+  const val = document.getElementById('tunerRefPitchValue');
+  if (val) val.textContent = hz % 1 === 0 ? hz : hz.toFixed(1);
+  // Update input
+  const inp = document.getElementById('tunerRefPitchInput');
+  if (inp) inp.value = hz;
+  // Refresh preset highlights
+  _buildRefPitchPresets();
+  // Rebuild string grid so displayed Hz values update
+  const activeInst = selectedInstrument === 'auto' ? detectedInstrument : selectedInstrument;
+  if (activeInst) buildStringGrid(activeInst);
+  // Rebuild ref pitch grid in tools mode
+  if (mode === 'tools' && selectedInstrument !== 'auto') buildRefPitchGrid();
+  // Stop any playing ref tones (freq is now stale)
+  stopAllRef();
+  // Update voice fork buttons that show the A freq
+  document.querySelectorAll('.voice-fork-btn').forEach(b => {
+    b.innerHTML = `<span class="fork-icon">♪</span> A ${hz % 1 === 0 ? hz : hz.toFixed(1)} <span class="fork-sub">TUNING FORK</span>`;
+  });
+  closeRefPitchPopover();
+}
+
+function setRefPitchCustom() {
+  const inp = document.getElementById('tunerRefPitchInput');
+  if (!inp) return;
+  const v = parseFloat(inp.value);
+  if (!isNaN(v)) setRefPitch(v);
+}
+
+function _buildRefPitchPresets() {
+  const wrap = document.getElementById('tunerRefPitchPresets');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  REF_PITCH_PRESETS.forEach(hz => {
+    const btn = document.createElement('button');
+    btn.className = 'tuner-refpitch-preset' + (refPitch === hz ? ' active' : '');
+    btn.textContent = hz;
+    btn.onclick = () => setRefPitch(hz);
+    wrap.appendChild(btn);
+  });
+}
+
+function toggleRefPitchPopover() {
+  const pop  = document.getElementById('tunerRefPitchPopover');
+  const pill = document.getElementById('tunerRefPitchPill');
+  if (!pop) return;
+  const isOpen = pop.classList.contains('open');
+  if (!isOpen) {
+    _buildRefPitchPresets();
+    const inp = document.getElementById('tunerRefPitchInput');
+    if (inp) inp.value = refPitch;
+  }
+  pop.classList.toggle('open', !isOpen);
+  pill.classList.toggle('open', !isOpen);
+}
+function closeRefPitchPopover() {
+  document.getElementById('tunerRefPitchPopover')?.classList.remove('open');
+  document.getElementById('tunerRefPitchPill')?.classList.remove('open');
+}
+
+// Close popovers on outside tap
+document.addEventListener('click', e => {
+  const group = document.querySelector('.tuner-pill-group');
+  // A440 popover
+  const refPill = document.getElementById('tunerRefPitchPill');
+  const refPop  = document.getElementById('tunerRefPitchPopover');
+  if (refPop && refPop.classList.contains('open') && !refPop.contains(e.target) && e.target !== refPill && !refPill?.contains(e.target)) {
+    closeRefPitchPopover();
+  }
+  // Transpose popover
+  const trPill = document.getElementById('tunerTransposePill');
+  const trPop  = document.getElementById('tunerTransposePopover');
+  if (trPop && trPop.classList.contains('open') && !trPop.contains(e.target) && e.target !== trPill && !trPill?.contains(e.target)) {
+    closeTransposePopover();
+  }
+}, true);
+
+// Tuner fork — plays current ref pitch A through the proper ref audio chain (no pops)
+function playTunerFork() {
+  const btn = document.getElementById('tunerForkBtn');
+  const key = 'tunerfork';
+  if (refOscs[key]) {
+    stopRef(key);
+    if (btn) btn.classList.remove('playing');
+    return;
+  }
+  if (!droneMode) stopAllRef();
+  hapticSelect();
+  playRef(key, refPitch, 'A4');
+  if (btn) btn.classList.add('playing');
+  // Clear playing state when tone ends
+  if (!droneMode) {
+    setTimeout(() => {
+      if (btn) btn.classList.remove('playing');
+    }, 2900);
+  }
+}
+
+// Init pill on load — runs after refPitch is restored from localStorage
+(function() {
+  const val = document.getElementById('tunerRefPitchValue');
+  if (val) val.textContent = refPitch % 1 === 0 ? refPitch : refPitch.toFixed(1);
+})();
+
 function freqToNote(freq) {
   if (freq <= 0) return null;
-  const semis = 12 * Math.log2(freq / 440);
+  const semis = 12 * Math.log2(freq / refPitch);
   const rounded = Math.round(semis);
   const cents = (semis - rounded) * 100;
   const idx = ((rounded % 12) + 12 + 9) % 12;
@@ -16113,12 +16591,32 @@ try { autoDetectEnabled = localStorage.getItem('intonare_autodetect') !== '0'; }
 function toggleAutoDetect() {
   autoDetectEnabled = !autoDetectEnabled;
   try { localStorage.setItem('intonare_autodetect', autoDetectEnabled ? '1' : '0'); } catch(e) {}
-  // Rebuild the banner so it reflects new state
+  if (!autoDetectEnabled) {
+    // Disabled — clear detection state, show collapsed disabled grid
+    _detectCandidate = null; _detectCandidateFrames = 0;
+    detectedInstrument = null;
+    if (selectedInstrument === 'auto') {
+      buildStringGrid(null);
+      const grid = document.getElementById('stringsGrid');
+      if (grid) grid.classList.add('detect-disabled');
+      const badge = document.getElementById('instrumentBadge');
+      if (badge) {
+        badge.dataset.i18n = '';
+        badge.textContent = t('detect_off') || 'AUTO DETECT OFF';
+        badge.classList.add('detect-off');
+      }
+    }
+  } else {
+    // Re-enabled — remove disabled class, go back to listening
+    const grid = document.getElementById('stringsGrid');
+    if (grid) grid.classList.remove('detect-disabled');
+    const badge = document.getElementById('instrumentBadge');
+    if (badge) { badge.classList.remove('detect-off'); badge.dataset.i18n = 'detect_listen'; }
+    if (selectedInstrument === 'auto') buildStringGrid(null);
+  }
+  // Rebuild banner
   buildInstList('tuner');
   buildInstList('ref');
-  if (!autoDetectEnabled) {
-    _detectCandidate = null; _detectCandidateFrames = 0;
-  }
 }
 
 // ─── NOTE HOLD (auto-hold on silence) ───
@@ -16214,7 +16712,7 @@ function processAudio() {
         }
         // Cents meter + tooltip update every frame (stays live)
         updateTooltip(smoothedCents, true);
-        updateChromaStrip(noteInfo.idx);
+        updateChromaStrip(noteInfo.idx, noteInfo.oct);
         // Feed high-rate vibrato buffer (runs at animation frame rate, ~60fps)
         if (vibratoOn) vibratoFeed(smoothedCents);
         // Strobe — driven every animation frame for smooth rotation
@@ -16269,16 +16767,146 @@ function processAudio() {
 }
 
 let _wasInTune = false;
+let _lastNoteKey = null;  // tracks note changes for pulse
+// Spring needle state
+let _needlePos  = 50;     // current position (%)
+let _needleVel  = 0;      // current velocity (%/frame)
+const SPRING_K  = 0.28;   // spring stiffness
+const SPRING_D  = 0.72;   // damping (< 1 = underdamped = overshoot)
+let _needleRAF  = null;
+let _needleTarget = 50;
+
+function _springNeedle(target) {
+  _needleTarget = target;
+  if (_needleRAF) return; // already running
+  function step() {
+    const force = (_needleTarget - _needlePos) * SPRING_K;
+    _needleVel = _needleVel * SPRING_D + force;
+    _needlePos += _needleVel;
+    const needle = document.getElementById('meterNeedle');
+    if (needle) needle.style.left = _needlePos.toFixed(2) + '%';
+    // Stop when settled (velocity and error both tiny)
+    if (Math.abs(_needleVel) < 0.05 && Math.abs(_needleTarget - _needlePos) < 0.05) {
+      _needlePos = _needleTarget;
+      if (needle) needle.style.left = _needlePos + '%';
+      _needleRAF = null;
+    } else {
+      _needleRAF = requestAnimationFrame(step);
+    }
+  }
+  _needleRAF = requestAnimationFrame(step);
+}
+// ═══════════════════════════════════════════════
+// TUNER TRANSPOSE MODE
+// Offsets the displayed note for transposing instruments.
+// Detection, cents, and pitch math are unaffected.
+// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// TUNER TRANSPOSE MODE
+// ═══════════════════════════════════════════════
+const TRANSPOSE_OPTIONS = [
+  { key: 'none', label: 'NONE', semitones: 0   },
+  { key: 'Bb',   label: 'B♭',  semitones: 2   },  // Bb instrument
+  { key: 'Eb',   label: 'E♭',  semitones: -3  },  // Eb instrument
+  { key: 'F',    label: 'F',   semitones: -5  },  // F instrument
+];
+let tunerTranspose = 'none';
+try {
+  const s = localStorage.getItem('intonare_transpose');
+  if (TRANSPOSE_OPTIONS.find(o => o.key === s)) tunerTranspose = s;
+} catch(e) {}
+
+function _updateTransposePill() {
+  const opt = TRANSPOSE_OPTIONS.find(o => o.key === tunerTranspose);
+  const val = document.getElementById('tunerTransposeValue');
+  const pill = document.getElementById('tunerTransposePill');
+  if (!val || !opt) return;
+  val.textContent = opt.label;
+  // Dim the pill value when none is selected
+  val.style.opacity = tunerTranspose === 'none' ? '0.4' : '1';
+  val.style.color = tunerTranspose === 'none' ? '' : 'var(--accent)';
+}
+
+function _buildTransposePresets() {
+  const wrap = document.getElementById('tunerTransposePresets');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  TRANSPOSE_OPTIONS.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'tuner-refpitch-preset' + (tunerTranspose === opt.key ? ' active' : '');
+    btn.textContent = opt.label;
+    btn.onclick = () => setTunerTranspose(opt.key);
+    wrap.appendChild(btn);
+  });
+}
+
+function toggleTransposePopover() {
+  const pop  = document.getElementById('tunerTransposePopover');
+  const pill = document.getElementById('tunerTransposePill');
+  if (!pop) return;
+  const isOpen = pop.classList.contains('open');
+  if (!isOpen) _buildTransposePresets();
+  pop.classList.toggle('open', !isOpen);
+  if (pill) pill.classList.toggle('open', !isOpen);
+}
+
+function closeTransposePopover() {
+  document.getElementById('tunerTransposePopover')?.classList.remove('open');
+  document.getElementById('tunerTransposePill')?.classList.remove('open');
+}
+
+function setTunerTranspose(key) {
+  tunerTranspose = key;
+  try { localStorage.setItem('intonare_transpose', key); } catch(e) {}
+  _updateTransposePill();
+  closeTransposePopover();
+  if (_heldNote) updateNoteDisplay(_heldNote, _heldFreq);
+}
+
+function getTransposedNote(noteName, oct) {
+  const opt = TRANSPOSE_OPTIONS.find(o => o.key === tunerTranspose);
+  if (!opt || opt.semitones === 0) return { name: noteName, oct };
+  const shifted = shiftNoteStr(noteName + oct, opt.semitones);
+  const m = shifted.match(/^([A-G][#b]?)(\d+)$/);
+  if (!m) return { name: noteName, oct };
+  return { name: m[1], oct: parseInt(m[2]) };
+}
+
 function updateNoteDisplay(note, freq) {
   const c = note.cents, abs = Math.abs(c), inTune = abs < 5;
-  // Fire haptic once when entering in-tune, not every frame
-  if (inTune && !_wasInTune) hapticSuccess();
+
+  // Fire haptic + in-tune screen flash once when entering in-tune
+  if (inTune && !_wasInTune) {
+    hapticSuccess();
+    const screenInner = document.querySelector('.tuner-screen-inner');
+    if (screenInner) {
+      screenInner.classList.remove('in-tune-flash');
+      void screenInner.offsetWidth;
+      screenInner.classList.add('in-tune-flash');
+      setTimeout(() => screenInner.classList.remove('in-tune-flash'), 650);
+    }
+  }
   _wasInTune = inTune;
+
   const nameEl = document.getElementById('noteName');
   if (!nameEl) return;
-  nameEl.dataset.rawNote = note.name;   // cache for re-render when naming mode changes
-  nameEl.textContent = getDisplayNote(note.name).replace('#','♯');
-  document.getElementById('octaveBadge').textContent = note.oct;
+  nameEl.dataset.rawNote = note.name;
+
+  // Apply transposition offset to displayed note (not to pitch detection)
+  const transposed = getTransposedNote(note.name, note.oct);
+  const newNoteKey = transposed.name + transposed.oct;
+
+  // Note change pulse — brief scale pop when note changes
+  if (newNoteKey !== _lastNoteKey) {
+    _lastNoteKey = newNoteKey;
+    nameEl.classList.remove('note-change');
+    void nameEl.offsetWidth;
+    nameEl.classList.add('note-change');
+    setTimeout(() => nameEl.classList.remove('note-change'), 200);
+  }
+
+  nameEl.textContent = getDisplayNote(transposed.name).replace('#','♯');
+  document.getElementById('octaveBadge').textContent = transposed.oct;
   document.getElementById('freqDisplay').textContent = freq.toFixed(1);
   // cents badge (new screen layout)
   const centsBadge = document.getElementById('tunerCentsBadge');
@@ -16293,7 +16921,8 @@ function updateNoteDisplay(note, freq) {
   const needle = document.getElementById('meterNeedle');
   if (!needle) return;
   const fill   = document.getElementById('meterFill');
-  needle.style.left = pct + '%';
+  // Spring needle — feels like a physical meter
+  _springNeedle(pct);
   if (c > 0) {
     fill.style.left = '50%';
     fill.style.width = Math.min(48, (c/50)*48) + '%';
@@ -16319,6 +16948,10 @@ function setNoteSilent() {
   if (centsBadge) { centsBadge.textContent = '0¢'; centsBadge.className = 'tuner-screen-cents-badge'; }
   const centsEl = document.getElementById('centsDisplay');
   if (centsEl) centsEl.textContent = '0¢';
+  // Reset spring needle to center
+  if (_needleRAF) { cancelAnimationFrame(_needleRAF); _needleRAF = null; }
+  _needlePos = 50; _needleVel = 0; _needleTarget = 50;
+  _lastNoteKey = null;
   document.getElementById('meterNeedle').style.left = '50%';
   document.getElementById('meterNeedle').className = 'meter-needle';
   document.getElementById('meterFill').style.width = '0';
@@ -28530,6 +29163,7 @@ const STRINGS = {
     ach_unlocked_label:'unlocked',
     detect_listen:'LISTENING…', detect_play:'PLAY A NOTE TO DETECT INSTRUMENT',
     detect_detected:'DETECTED · ', detect_ready:'READY',
+    detect_off:'AUTO DETECT OFF',
     in_tune_str:'IN TUNE',
     iv_names:['UNISON','MINOR 2ND','MAJOR 2ND','MINOR 3RD','MAJOR 3RD','PERFECT 4TH','TRITONE','PERFECT 5TH','MINOR 6TH','MAJOR 6TH','MINOR 7TH','MAJOR 7TH','OCTAVE','MINOR 9TH','MAJOR 9TH'],
     scale_grp_major:'Major Family · Bright', scale_grp_minor:'Minor Family · Dark',
@@ -29064,6 +29698,7 @@ const STRINGS = {
     ach_unlocked_label:'sbloccato',
     detect_listen:'IN ASCOLTO…', detect_play:'SUONA UNA NOTA PER RILEVARE LO STRUMENTO',
     detect_detected:'RILEVATO · ', detect_ready:'PRONTO',
+    detect_off:'RILEVAMENTO SPENTO',
     in_tune_str:'IN SINTONIA',
     iv_names:['UNISONO','2ª MINORE','2ª MAGGIORE','3ª MINORE','3ª MAGGIORE','4ª GIUSTA','TRITONO','5ª GIUSTA','6ª MINORE','6ª MAGGIORE','7ª MINORE','7ª MAGGIORE','OTTAVA','9ª MINORE','9ª MAGGIORE'],
     scale_grp_major:'Famiglia Maggiore · Brillanti', scale_grp_minor:'Famiglia Minore · Scure',
@@ -30765,7 +31400,15 @@ function progLoad() {
     if (strobeMode) document.body.classList.add('strobe-active');
   } catch(e) {}
   // Restore auto-detect toggle (banner rebuilds naturally on next buildInstList call)
-  try { autoDetectEnabled = localStorage.getItem('intonare_autodetect') !== '0'; } catch(e) {}
+  try {
+    autoDetectEnabled = localStorage.getItem('intonare_autodetect') !== '0';
+    if (!autoDetectEnabled && selectedInstrument === 'auto') {
+      const grid = document.getElementById('stringsGrid');
+      const badge = document.getElementById('instrumentBadge');
+      if (grid) grid.classList.add('detect-disabled');
+      if (badge) { badge.classList.add('detect-off'); badge.textContent = t('detect_off') || 'AUTO DETECT OFF'; }
+    }
+  } catch(e) {}
   // Check daily streak after load
   try { checkDailyStreak(); } catch(e) {}
 }
@@ -31554,6 +32197,7 @@ buildChromaStrip();
 buildFamilyTabs('tuner'); buildFamilyTabs('ref');
 buildInstList('tuner'); buildInstList('ref');
 buildStringGrid(null);
+_updateTransposePill();
 buildTSPresets();
 buildBeatDots();
 setBPM(120);
