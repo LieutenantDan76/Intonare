@@ -1009,26 +1009,98 @@
   .tick-label { font-size: 9px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
   /* ─── CHROMA STRIP ─── */
-  .chroma-strip {
-    background: var(--surface);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--r-md);
-    padding: 10px 10px;
-    display: flex; gap: 2px;
-    box-shadow: var(--shadow-soft);
+  /* ─── CHROMA SCREEN ─── */
+  .tuner-chroma-screen {
+    background: #030609;
+    border-radius: 8px;
+    border: 1px solid #000;
+    padding: 2px;
+    box-shadow:
+      0 0 20px color-mix(in srgb, var(--theme) 14%, transparent),
+      0 0 40px color-mix(in srgb, var(--theme) 6%, transparent),
+      0 -1px 0 rgba(255,255,255,0.05),
+      0 4px 14px rgba(0,0,0,0.6);
+    position: relative;
   }
+  .tuner-chroma-screen-inner {
+    background: #010408;
+    border-radius: 7px;
+    padding: 6px 10px;
+    position: relative; overflow: hidden;
+    box-shadow: inset 0 0 20px color-mix(in srgb, var(--theme) 4%, transparent);
+  }
+  /* glass shine */
+  .tuner-chroma-screen-inner::before {
+    content: '';
+    position: absolute; top: 0; left: -20%; right: -20%; bottom: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 35%,
+      rgba(255,255,255,0.000) 43%,
+      rgba(255,255,255,0.035) 48%,
+      rgba(255,255,255,0.055) 50%,
+      rgba(255,255,255,0.035) 52%,
+      rgba(255,255,255,0.000) 57%,
+      transparent 65%
+    );
+    pointer-events: none; z-index: 1;
+  }
+  /* scanlines */
+  .tuner-chroma-screen-inner::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent, transparent 2px,
+      rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 3px
+    );
+    pointer-events: none; border-radius: 9px; z-index: 4;
+  }
+  /* CHROMATIC label — top-left like groove/metro screen labels */
+  .tuner-chroma-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px; letter-spacing: 3px;
+    color: color-mix(in srgb, var(--accent) 22%, transparent);
+    text-transform: uppercase;
+    margin-bottom: 7px;
+    position: relative; z-index: 3;
+  }
+  /* chroma strip — reset background, lives inside screen now */
+  .chroma-strip {
+    display: flex; gap: 3px;
+    position: relative; z-index: 3;
+  }
+  /* note pills — HUD segment style */
   .chroma-note {
     flex: 1; text-align: center;
-    font-family: 'Bebas Neue', sans-serif; font-size: 14px;
-    color: var(--muted); padding: 6px 0;
-    border-radius: 6px; transition: all 0.15s ease;
+    font-family: 'Bebas Neue', sans-serif; font-size: 13px;
+    color: rgba(255,255,255,0.12);
+    padding: 5px 0;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.04);
+    background: rgba(255,255,255,0.02);
+    transition: all 0.12s ease;
     letter-spacing: 0.5px;
+    position: relative; z-index: 3;
   }
+  /* near note — dim glow, slightly brighter */
+  .chroma-note.near {
+    color: color-mix(in srgb, var(--accent) 55%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 18%, transparent);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
+    text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  /* active note — lit LED segment */
   .chroma-note.active {
-    color: var(--bg-0); background: var(--grad-cyan);
-    box-shadow: 0 0 12px rgba(94,226,255,0.4);
+    color: #010408;
+    background: var(--grad-tune);
+    border-color: transparent;
+    box-shadow:
+      0 0 14px color-mix(in srgb, var(--accent) 55%, transparent),
+      0 0 4px  color-mix(in srgb, var(--accent) 40%, transparent) inset;
+    text-shadow: none;
+    font-size: 14px;
   }
-  .chroma-note.near { color: var(--accent); }
 
   /* ─── PANEL HEAD ─── */
   .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -3000,8 +3072,9 @@
     filter: drop-shadow(0 0 18px rgba(122,175,255,0.35));
   }
   /* unit row: octave + label */
+  /* octave number — like bpm-unit: dim, tabular */
   .tuner-screen-unit-row {
-    display: flex; align-items: baseline; justify-content: center; gap: 8px;
+    display: flex; align-items: baseline; justify-content: center; gap: 6px;
     margin-top: 0; margin-bottom: 0;
     position: relative; z-index: 3;
   }
@@ -3010,44 +3083,77 @@
     font-size: 22px; line-height: 1;
     color: color-mix(in srgb, var(--accent) 30%, transparent);
     font-variant-numeric: tabular-nums;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    position: relative; z-index: 3;
   }
+  /* "OCT" label — like bpm-name: Fraunces italic, very dim */
   .tuner-screen-label {
-    font-size: 11px; letter-spacing: 3px;
-    color: color-mix(in srgb, var(--accent) 25%, transparent);
-    font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: 12px; letter-spacing: 1px;
+    color: color-mix(in srgb, var(--accent-warm) 30%, transparent);
+    position: relative; z-index: 3;
   }
-  /* tooltip verdict inside screen */
+  /* verdict — screen text, glows when active */
   .tuner-screen-verdict {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px; letter-spacing: 1px;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
     min-height: 14px;
     margin-top: 4px; margin-bottom: 6px;
     position: relative; z-index: 3;
-    transition: color 0.25s, opacity 0.25s;
+    transition: color 0.25s, opacity 0.25s, text-shadow 0.25s;
     opacity: 0;
   }
   .tuner-screen-verdict.visible { opacity: 1; }
-  .tuner-screen-verdict.perfect { color: var(--in-tune); }
-  .tuner-screen-verdict.close   { color: var(--accent); }
-  .tuner-screen-verdict.off     { color: var(--sharp); }
+  .tuner-screen-verdict.perfect { color: var(--in-tune); text-shadow: 0 0 10px rgba(182,242,91,0.5); }
+  .tuner-screen-verdict.close   { color: var(--accent);  text-shadow: 0 0 10px rgba(94,226,255,0.4); }
+  .tuner-screen-verdict.off     { color: var(--sharp);   text-shadow: 0 0 8px rgba(255,138,101,0.35); }
 
-  /* cents meter inside screen */
-  .tuner-screen-meter {
-    position: relative; z-index: 3;
-  }
+  /* meter — screen-appropriate dark track, glowing needle */
+  .tuner-screen-meter { position: relative; z-index: 3; }
   .tuner-screen-meter-head {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   .tuner-screen-side {
     font-size: 8px; letter-spacing: 2px;
-    color: color-mix(in srgb, var(--muted) 60%, transparent);
+    color: color-mix(in srgb, var(--muted) 45%, transparent);
     text-transform: uppercase;
+    position: relative; z-index: 3;
   }
-
-  /* strobe canvas inside screen */
+  /* override global meter-track/needle for screen context */
+  .tuner-screen-meter .meter-track {
+    background: rgba(255,255,255,0.04);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset;
+  }
+  .tuner-screen-meter .meter-center {
+    background: rgba(255,255,255,0.12);
+  }
+  .tuner-screen-meter .meter-ticks { position: relative; z-index: 3; }
+  .tuner-screen-meter .tick-label {
+    font-size: 8px; color: rgba(255,255,255,0.18); letter-spacing: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  /* meter fill glow on screen */
+  .tuner-screen-meter .meter-fill {
+    box-shadow: 0 0 10px currentColor, 0 0 4px currentColor;
+  }
+  /* needle on screen — brighter, more glowy */
+  .tuner-screen-meter .meter-needle {
+    background: rgba(255,255,255,0.7);
+    box-shadow: 0 0 8px rgba(255,255,255,0.4);
+  }
+  .tuner-screen-meter .meter-needle.in-tune {
+    background: var(--in-tune);
+    box-shadow: 0 0 14px var(--in-tune), 0 0 4px var(--in-tune);
+  }
+  .tuner-screen-meter .meter-needle.sharp {
+    background: var(--sharp);
+    box-shadow: 0 0 10px var(--sharp);
+  }
+  .tuner-screen-meter .meter-needle.flat {
+    background: var(--flat);
+    box-shadow: 0 0 10px var(--flat);
+  }
   /* strobe is a background layer — no layout changes needed */
 
   /* Lock screen to a fixed height — must be tall enough for normal content */
@@ -3064,7 +3170,7 @@
     position: absolute;
     left: 18px;
     top: 50%; transform: translateY(-50%);
-    font-size: 52px;
+    font-size: 72px;
     text-align: left;
     z-index: 3;
     margin: 0;
@@ -3227,16 +3333,6 @@
     margin-bottom: 4px;
     position: relative; z-index: 3;
   }
-  .tuner-screen-freq {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px; letter-spacing: 1.5px;
-    color: color-mix(in srgb, var(--accent) 40%, transparent);
-    text-transform: uppercase;
-  }
-  .tuner-screen-freq span {
-    color: color-mix(in srgb, var(--accent) 70%, transparent);
-    font-variant-numeric: tabular-nums;
-  }
   /* STROBE button — visible pill in screen top row */
   .tuner-strobe-btn {
     background: rgba(94,226,255,0.08);
@@ -3304,51 +3400,6 @@
     filter: drop-shadow(0 0 18px rgba(122,175,255,0.35));
   }
   /* unit row: octave + label */
-  .tuner-screen-unit-row {
-    display: flex; align-items: baseline; justify-content: center; gap: 8px;
-    margin-top: 0; margin-bottom: 0;
-    position: relative; z-index: 3;
-  }
-  .tuner-screen-octave {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px; line-height: 1;
-    color: color-mix(in srgb, var(--accent) 30%, transparent);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 1px;
-  }
-  .tuner-screen-label {
-    font-size: 11px; letter-spacing: 3px;
-    color: color-mix(in srgb, var(--accent) 25%, transparent);
-    font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
-  }
-  /* verdict tooltip inside screen */
-  .tuner-screen-verdict {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px; letter-spacing: 1px;
-    min-height: 14px;
-    margin-top: 4px; margin-bottom: 6px;
-    position: relative; z-index: 3;
-    transition: color 0.25s, opacity 0.25s;
-    opacity: 0;
-  }
-  .tuner-screen-verdict.visible { opacity: 1; }
-  .tuner-screen-verdict.perfect { color: var(--in-tune); }
-  .tuner-screen-verdict.close   { color: var(--accent); }
-  .tuner-screen-verdict.off     { color: var(--sharp); }
-
-  /* cents meter inside screen */
-  .tuner-screen-meter { position: relative; z-index: 3; }
-  .tuner-screen-meter-head {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 8px;
-  }
-  .tuner-screen-side {
-    font-size: 8px; letter-spacing: 2px;
-    color: color-mix(in srgb, var(--muted) 60%, transparent);
-    text-transform: uppercase;
-  }
-
   /* ── Divider inside card separating screen from bottom section ── */
   .tuner-card-divider {
     height: 1px; background: var(--border-soft);
@@ -10492,8 +10543,12 @@
       <!-- ── Bottom section: chroma strip + pitch history + vibrato ── -->
       <div class="tuner-bottom-section">
 
-        <!-- chroma strip -->
-        <div class="chroma-strip" id="chromaStrip"></div>
+        <!-- chroma screen -->
+        <div class="tuner-chroma-screen">
+          <div class="tuner-chroma-screen-inner">
+            <div class="chroma-strip" id="chromaStrip"></div>
+          </div>
+        </div>
 
         <!-- divider -->
         <div class="tuner-card-divider"></div>
@@ -20901,68 +20956,119 @@ function drawStrobe(cents, inTune, hasSignal) {
   }
 
   const ctx = canvas.getContext('2d');
-  // Shift ring center right when strobe active so note (left-aligned) sits cleanly left
   const strobeActive = document.body.classList.contains('strobe-active');
-  const cx = strobeActive ? W * 0.65 : W / 2;
+  // Ring centre: shift right in strobe mode so left-aligned note has clean space
+  const cx = strobeActive ? W * 0.62 : W / 2;
   const cy = H / 2;
-  // Rings: shrink when strobe active so outermost clears the ~30px top row
-  const maxR = strobeActive ? Math.min(cx, cy - 32) : Math.min(cx, cy);
-  const R = maxR * 0.82;
+  // Cap radius so outermost ring clears the 28px top row + 8px margin
+  const maxR = strobeActive ? Math.min(cx, cy - 36) : Math.min(cx, cy);
+  const R = maxR * 0.94;
 
-  // Phase — proportional to cents; slow idle drift when silent
+  // Phase drift — speed proportional to cents deviation
   if (hasSignal) strobePhase += cents * 0.003;
   else           strobePhase += 0.0015;
 
-  // Color from tuning state
-  let rgb;
-  if (!hasSignal)     rgb = [80, 82, 100];
-  else if (inTune)    rgb = [182, 242, 91];
-  else if (cents > 0) rgb = [255, 138, 101];
-  else                rgb = [122, 175, 255];
-
-  const alpha = hasSignal ? (inTune ? 0.55 : 0.42) : 0.12;
+  // ── Colour palette ──────────────────────────────────────────
+  let r, g, b;
+  if (!hasSignal)     { r=80;  g=82;  b=100; }
+  else if (inTune)    { r=182; g=242; b=91;  }
+  else if (cents > 0) { r=255; g=138; b=101; }
+  else                { r=122; g=175; b=255; }
 
   ctx.clearRect(0, 0, W, H);
 
-  // Radial glow behind rings when locked
-  if (inTune && hasSignal) {
-    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.1);
-    grd.addColorStop(0, `rgba(${rgb.join(',')},0.10)`);
-    grd.addColorStop(1, `rgba(${rgb.join(',')},0)`);
+  // ── Ambient background glow ─────────────────────────────────
+  if (hasSignal) {
+    const gAlpha = inTune ? 0.12 : 0.06;
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.15);
+    grd.addColorStop(0, `rgba(${r},${g},${b},${gAlpha})`);
+    grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Three concentric rings — radii relative to R
+  // ── Three rings: inner(×1), mid(×2), outer(×4) ──────────────
+  // Segment brightness: full when signal present, very dim when silent
+  // Filled portion: 0.58 of arc (more solid = more authentic strobe look)
+  const segBright = hasSignal ? (inTune ? 1.0 : 0.82) : 0.14;
+  const fillRatio = 0.58;   // fraction of arc that's lit
+
   const rings = [
-    { outerR: R * 0.38, innerR: R * 0.20, segs: 12, phaseM:  1.00 },
-    { outerR: R * 0.64, innerR: R * 0.46, segs: 18, phaseM: -0.62 },
-    { outerR: R * 0.90, innerR: R * 0.72, segs: 26, phaseM:  0.38 },
+    { outerR: R * 0.34, innerR: R * 0.16, segs: 12, phaseM:  1.00, label: '×1' },
+    { outerR: R * 0.62, innerR: R * 0.42, segs: 18, phaseM: -0.62, label: '×2' },
+    { outerR: R * 0.92, innerR: R * 0.70, segs: 26, phaseM:  0.38, label: '×4' },
   ];
 
-  rings.forEach(({ outerR, innerR, segs, phaseM }) => {
+  rings.forEach(({ outerR, innerR, segs, phaseM, label }) => {
     const segAngle = (Math.PI * 2) / segs;
-    const gap = 0.10;
+    const litAngle = segAngle * fillRatio;
+    const gapAngle = segAngle * (1 - fillRatio);
     const phase = strobePhase * phaseM;
-    ctx.fillStyle = `rgba(${rgb.join(',')},${alpha})`;
+
     for (let i = 0; i < segs; i++) {
-      if (i % 2 !== 0) continue;
-      const a0 = phase + i * segAngle + gap / 2;
-      const a1 = a0 + segAngle - gap;
+      const baseAngle = phase + i * segAngle;
+      const a0 = baseAngle + gapAngle / 2;
+      const a1 = a0 + litAngle;
+
+      // Segment fill — solid colour, brightness controlled by alpha
+      ctx.fillStyle = `rgba(${r},${g},${b},${segBright})`;
       ctx.beginPath();
       ctx.arc(cx, cy, outerR, a0, a1);
       ctx.arc(cx, cy, innerR, a1, a0, true);
       ctx.closePath();
       ctx.fill();
+
+      // Phosphor edge glow — thin stroke slightly brighter on leading edge
+      if (hasSignal) {
+        ctx.save();
+        ctx.shadowColor = `rgba(${r},${g},${b},0.6)`;
+        ctx.shadowBlur = inTune ? 6 : 3;
+        ctx.strokeStyle = `rgba(${r},${g},${b},${segBright * 0.5})`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, (outerR + innerR) / 2, a0, a1);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Harmonic label — small, to the right of each ring
+    if (strobeActive && hasSignal) {
+      const labelR = outerR + 7;
+      const labelX = cx + labelR;
+      const labelY = cy;
+      ctx.save();
+      ctx.font = `bold 8px 'JetBrains Mono', monospace`;
+      ctx.fillStyle = `rgba(${r},${g},${b},0.3)`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, labelX, labelY);
+      ctx.restore();
     }
   });
 
-  // Centre dot — glows on lock
+  // ── Centre lock indicator ────────────────────────────────────
   if (inTune && hasSignal) {
+    // Pulsing dot at centre
+    ctx.save();
+    ctx.shadowColor = `rgba(${r},${g},${b},0.9)`;
+    ctx.shadowBlur = 12;
     ctx.beginPath();
-    ctx.arc(cx, cy, R * 0.045, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${rgb.join(',')},0.9)`;
+    ctx.arc(cx, cy, R * 0.04, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${r},${g},${b},0.95)`;
     ctx.fill();
+    ctx.restore();
+  } else if (hasSignal) {
+    // Dim centre crosshair when not locked
+    ctx.save();
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.15)`;
+    ctx.lineWidth = 1;
+    const cs = R * 0.06;
+    ctx.beginPath();
+    ctx.moveTo(cx - cs, cy); ctx.lineTo(cx + cs, cy);
+    ctx.moveTo(cx, cy - cs); ctx.lineTo(cx, cy + cs);
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
