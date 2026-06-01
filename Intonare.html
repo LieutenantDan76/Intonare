@@ -10415,12 +10415,15 @@
   function removeSplash() {
     const el = document.getElementById('intonare-splash');
     if (el) el.remove();
-    // On Capacitor/Android, trigger the OS mic permission prompt early
-    // so the user isn't surprised when they first tap the mic button.
-    if (window.Capacitor && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(s => { s.getTracks().forEach(t => t.stop()); }) // immediately release
-        .catch(() => {}); // user denied or already granted — either way fine
+    // On Capacitor/Android, request mic permission on first touch
+    // so the OS prompt fires naturally within a user gesture context
+    if (window.Capacitor) {
+      document.addEventListener('touchend', function _reqMicPerm() {
+        document.removeEventListener('touchend', _reqMicPerm);
+        navigator.mediaDevices && navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(s => s.getTracks().forEach(t => t.stop()))
+          .catch(() => {});
+      }, { once: true });
     }
   }
 
