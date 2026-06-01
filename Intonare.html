@@ -4055,11 +4055,12 @@
   .prog-chord-sheet-drawer.open { pointer-events: all; }
   .prog-chord-sheet-drawer.open .prog-metro-backdrop { background: rgba(0,0,0,0.55); }
   .prog-chord-sheet-drawer .prog-metro-sheet {
-    transform: translateY(100%);
+    transform: translateY(calc(100% + var(--nav-bar-h, 62px) + 40px));
+    visibility: hidden;
     padding: 0 16px 20px;
     max-height: calc(88dvh - var(--nav-bar-h, 62px));
   }
-  .prog-chord-sheet-drawer.open .prog-metro-sheet { transform: translateY(0); }
+  .prog-chord-sheet-drawer.open .prog-metro-sheet { transform: translateY(0); visibility: visible; }
   .prog-chord-sheet-header {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 12px;
@@ -4135,11 +4136,12 @@
     background: var(--bg-1); border-top: 1px solid var(--border-soft);
     border-radius: 16px 16px 0 0; padding: 0 16px calc(16px + env(safe-area-inset-bottom));
     max-height: calc(72dvh - var(--nav-bar-h, 62px)); overflow-y: auto;
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    transform: translateY(calc(100% + var(--nav-bar-h, 62px) + 40px));
+    visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1), visibility 0.3s;
     -webkit-overflow-scrolling: touch;
   }
-  .prog-preset-modal.open .prog-preset-modal-sheet { transform: translateY(0); }
+  .prog-preset-modal.open .prog-preset-modal-sheet { transform: translateY(0); visibility: visible; }
   .prog-preset-modal-handle {
     width: 36px; height: 4px; border-radius: 2px;
     background: var(--border); margin: 10px auto 14px;
@@ -4508,11 +4510,12 @@
     background: var(--bg-1); border-top: 1px solid var(--border-soft);
     border-radius: 16px 16px 0 0; padding: 0 16px 20px;
     max-height: calc(80dvh - var(--nav-bar-h, 62px)); overflow-y: auto;
-    transform: translateY(100%);
-    transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+    transform: translateY(calc(100% + var(--nav-bar-h, 62px) + 40px));
+    visibility: hidden;
+    transition: transform 0.32s cubic-bezier(0.32,0.72,0,1), visibility 0.32s;
     -webkit-overflow-scrolling: touch;
   }
-  .prog-metro-drawer.open .prog-metro-sheet { transform: translateY(0); }
+  .prog-metro-drawer.open .prog-metro-sheet { transform: translateY(0); visibility: visible; }
   .prog-metro-sheet-handle {
     width: 36px; height: 4px; border-radius: 2px;
     background: var(--border); margin: 10px auto 16px;
