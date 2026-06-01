@@ -23,9 +23,12 @@ copy /Y Intonare.html www\index.html
 echo [4/5] Syncing Capacitor...
 call npx cap sync
 
-REM Restore AndroidManifest.xml after cap sync overwrites it
+REM Restore files that cap sync overwrites
 echo [4b] Restoring AndroidManifest.xml with microphone permissions...
 copy /Y AndroidManifest.xml android\app\src\main\AndroidManifest.xml
+
+echo [4c] Restoring MainActivity.java with WebView mic fix...
+copy /Y MainActivity.java android\app\src\main\java\com\lieutenantdan\intonare\MainActivity.java
 
 echo [5/5] Copying to Android assets + verifying...
 copy /Y www\index.html android\app\src\main\assets\public\index.html
