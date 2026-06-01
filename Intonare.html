@@ -7343,7 +7343,7 @@
   }
 
     /* ─── SESSION TIMER ─── */
-  .session-bar { position: relative; flex-shrink: 0; height: 4px; overflow: hidden; }
+  .session-bar { position: relative; flex-shrink: 0; height: 4px; overflow: hidden; display: none; }
   .session-stamp {
     position: absolute; bottom: 4px; right: 14px;
     font-family: 'JetBrains Mono', monospace;
@@ -10486,16 +10486,6 @@
   </div>
   <div style="position:absolute;left:0;right:0;top:calc(50% - 130px);">
     <canvas id="splash-canvas" style="width:100%;height:120px"></canvas>
-    <script>
-      (function(){
-        var c = document.getElementById('splash-canvas');
-        var dpr = window.devicePixelRatio || 1;
-        var w = c.parentElement.clientWidth || window.innerWidth;
-        c.width = w * dpr; c.height = 120 * dpr;
-        var bg = document.getElementById('splash-bg');
-        if (bg) { bg.width = window.innerWidth * dpr; bg.height = window.innerHeight * dpr; }
-      })();
-    </script>
   </div>
   <div id="splash-logo" style="
     position:absolute;
@@ -48653,7 +48643,7 @@ document.addEventListener('DOMContentLoaded', () => {
   favUpdateBtn();
   favUpdatePins();
   sesCheckDay();
-  sesRefreshGoalChips();
+  sesRefreshGoalChips(); // also shows/hides session-bar
   rampBuildChips();
   // Restore _sesCompleted: if today\'s accumulated time already meets goal, don\'t fire again
   const _today = new Date().toISOString().slice(0,10);
