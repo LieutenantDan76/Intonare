@@ -37,6 +37,9 @@ copy /Y styles.xml android\app\src\main\res\values\styles.xml
 echo [4e] Restoring colors.xml...
 copy /Y colors.xml android\app\src\main\res\values\colors.xml
 
+echo [4f] Restoring app icons...
+xcopy /E /Y /I icon_res android\app\src\main\res
+
 echo [5/6] Copying to Android assets + verifying...
 copy /Y www\index.html android\app\src\main\assets\public\index.html
 findstr "cueSelect_correct" android\app\src\main\assets\public\index.html
