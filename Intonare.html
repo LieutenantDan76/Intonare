@@ -1018,13 +1018,6 @@
       0 0 20px color-mix(in srgb, var(--theme) 14%, transparent),
       0  1px 0 rgba(255,255,255,0.12) inset,
       0 -2px 4px rgba(0,0,0,0.7) inset;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    pointer-events: none;
-  }
-  .tuner-chroma-screen.active {
-    opacity: 1;
-    pointer-events: auto;
   }
   .tuner-chroma-screen::before {
     content: ''; position: absolute;
@@ -1120,7 +1113,7 @@
     border-radius: 4px;
     border: none;
     background: transparent;
-    transition: color 0.18s ease, text-shadow 0.18s ease, font-size 0.12s ease;
+    transition: color 0.4s ease !important, text-shadow 0.4s ease !important, font-size 0.12s ease;
     letter-spacing: 0.5px;
     position: relative; z-index: 3;
     line-height: 1;
@@ -15356,12 +15349,52 @@ function buildChromaStrip() {
     d.textContent = getDisplayNote(n).replace('#', '♯'); strip.appendChild(d);
   });
 }
+const _chromaGlow = new Array(12).fill(0); // smoothed glow per note
+const CHROMA_ATTACK = 0.35;  // fast warm-up
+const CHROMA_DECAY  = 0.08;  // slow cool-down — bulb lingers
+let _chromaDecayRAF = null;
+
+function _runChromaDecay() {
+  // Keep decaying all notes toward 0 until they're all dark
+  let anyActive = false;
+  NOTE_NAMES.forEach((_, i) => {
+    if (_chromaGlow[i] < 0.005) { _chromaGlow[i] = 0; return; }
+    _chromaGlow[i] *= (1 - CHROMA_DECAY);
+    anyActive = true;
+    const el = document.getElementById(`cn-${i}`);
+    if (!el) return;
+    const glow = _chromaGlow[i];
+    if (glow > 0.01) {
+      el.style.color      = `rgba(94,226,255,${(0.10 + glow * 0.90).toFixed(2)})`;
+      el.style.textShadow = `0 0 ${(glow*18).toFixed(1)}px rgba(94,226,255,${(glow*0.9).toFixed(2)}), 0 0 ${(glow*32).toFixed(1)}px rgba(94,226,255,${(glow*0.35).toFixed(2)})`;
+    } else {
+      el.style.color = ''; el.style.textShadow = '';
+    }
+  });
+  if (anyActive) {
+    _chromaDecayRAF = requestAnimationFrame(_runChromaDecay);
+  } else {
+    _chromaDecayRAF = null;
+  }
+}
+
 function updateChromaStrip(noteIndex, oct, cents) {
-  // Show/hide the whole strip based on whether a note is active
-  const screen = document.querySelector('.tuner-chroma-screen');
-  if (screen) screen.classList.toggle('active', noteIndex >= 0);
-  // e.g. 9.3 = A, 30 cents sharp (leaning toward A#)
-  const pitchPos = (noteIndex >= 0 && cents != null) ? noteIndex + cents / 100 : -99;
+  // If going silent, kick off the decay animation and return
+  if (noteIndex < 0) {
+    if (!_chromaDecayRAF) _chromaDecayRAF = requestAnimationFrame(_runChromaDecay);
+    // Clear octave spans
+    NOTE_NAMES.forEach((_, i) => {
+      const el = document.getElementById(`cn-${i}`); if (!el) return;
+      el.className = 'chroma-note';
+      const octEl = el.querySelector('.cn-oct');
+      if (octEl) octEl.remove();
+    });
+    return;
+  }
+  // Cancel any running decay — we have live pitch
+  if (_chromaDecayRAF) { cancelAnimationFrame(_chromaDecayRAF); _chromaDecayRAF = null; }
+
+  const pitchPos = cents != null ? noteIndex + cents / 100 : noteIndex;
 
   NOTE_NAMES.forEach((_, i) => {
     const el = document.getElementById(`cn-${i}`); if (!el) return;
@@ -15369,26 +15402,28 @@ function updateChromaStrip(noteIndex, oct, cents) {
     const isNear   = noteIndex >= 0 && (i === (noteIndex+1)%12 || i === (noteIndex+11)%12);
     el.className = 'chroma-note' + (isActive ? ' active' : isNear ? ' near' : '');
 
-    // Sliding glow — distance from continuous pitch position (wraps at 0/11)
+    // Target glow from pitch position
+    let target = 0;
     if (noteIndex >= 0) {
       let dist = Math.abs(i - pitchPos);
-      // Handle wrap (e.g. B→C boundary)
       if (dist > 6) dist = 12 - dist;
-      dist = Math.min(dist, 2); // glow fades beyond 2 semitones
-      const glow = Math.max(0, 1 - dist / 1.6);
+      dist = Math.min(dist, 2);
+      target = Math.max(0, 1 - dist / 1.6);
+    }
 
-      if (glow > 0.01) {
-        const alpha = (0.10 + glow * 0.90).toFixed(2);
-        const blur  = (glow * 18).toFixed(1);
-        const wide  = (glow * 32).toFixed(1);
-        el.style.color      = `rgba(94,226,255,${alpha})`;
-        el.style.textShadow = glow > 0.4
-          ? `0 0 ${blur}px rgba(94,226,255,${(glow*0.9).toFixed(2)}), 0 0 ${wide}px rgba(94,226,255,${(glow*0.35).toFixed(2)})`
-          : `0 0 ${blur}px rgba(94,226,255,${(glow*0.6).toFixed(2)})`;
-      } else {
-        el.style.color      = '';
-        el.style.textShadow = '';
-      }
+    // Smooth toward target — fast attack, slow decay (bulb feel)
+    const alpha = target > _chromaGlow[i] ? CHROMA_ATTACK : CHROMA_DECAY;
+    _chromaGlow[i] = _chromaGlow[i] * (1 - alpha) + target * alpha;
+    const glow = _chromaGlow[i];
+
+    if (glow > 0.01) {
+      const alpha2 = (0.10 + glow * 0.90).toFixed(2);
+      const blur   = (glow * 18).toFixed(1);
+      const wide   = (glow * 32).toFixed(1);
+      el.style.color      = `rgba(94,226,255,${alpha2})`;
+      el.style.textShadow = glow > 0.4
+        ? `0 0 ${blur}px rgba(94,226,255,${(glow*0.9).toFixed(2)}), 0 0 ${wide}px rgba(94,226,255,${(glow*0.35).toFixed(2)})`
+        : `0 0 ${blur}px rgba(94,226,255,${(glow*0.6).toFixed(2)})`;
     } else {
       el.style.color      = '';
       el.style.textShadow = '';
@@ -16808,26 +16843,24 @@ function processAudio() {
       // Strobe: keep animating slowly when silent
       if (strobeMode) drawStrobe(0, false, false);
 
-      // ── Auto-hold: if we have a last good note, freeze it instead of blanking ──
+      // ── Auto-hold: freeze last note display briefly, then fade independently ──
       if (_heldNote && !document.body.classList.contains('note-held')) {
         _activateHold();
-        // Schedule auto-clear after HOLD_CLEAR_MS
+        // Note display clears after short hold (1.2s), independent of stability graph
         if (_holdTimer) clearTimeout(_holdTimer);
         _holdTimer = setTimeout(() => {
           _clearHold();
           setNoteSilent();
-          updateChromaStrip(-1);
-        }, HOLD_CLEAR_MS);
+        }, 1200);
       } else if (!_heldNote) {
         setNoteSilent();
       }
 
+      // Chroma light clears immediately on silence — its own timer
+      updateChromaStrip(-1);
+
       // Verdict clears on its own short timer — independent of note-hold
       updateTooltip(0, false);
-
-      if (!document.body.classList.contains('note-held')) {
-        updateChromaStrip(-1);
-      }
       if (mode === 'tools') updateIntervalDisplay(null);
     }
   }
