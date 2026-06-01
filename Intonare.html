@@ -7865,7 +7865,6 @@
 
   /* ─── TEACHING MODE HINTS ─── */
   .teach-hint {
-    display: none;
     font-family: 'Fraunces', serif;
     font-style: italic;
     font-size: 11px;
@@ -7877,8 +7876,18 @@
     border-left: 2px solid rgba(182,242,91,0.4);
     border-radius: 0 6px 6px 0;
     letter-spacing: 0.2px;
+    opacity: 0;
+    visibility: hidden;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, max-height 0.25s ease, visibility 0s linear 0.3s;
   }
-  body.teaching-mode .teach-hint { display: block; }
+  body.teaching-mode .teach-hint {
+    opacity: 1;
+    visibility: visible;
+    max-height: 120px;
+    transition: opacity 0.3s ease 0.1s, max-height 0.25s ease, visibility 0s linear 0s;
+  }
 
   /* Hide ? help buttons when user opts out */
   body.hide-help-tips .help-btn { display: none !important; }
@@ -10768,19 +10777,16 @@
           <!-- strobe rings — absolute background layer, never affects layout -->
           <canvas id="strobeCanvas" class="strobe-canvas hidden"></canvas>
 
-          <!-- top row: freq left, strobe ghost btn centre, cents badge right -->
-          <div class="tuner-screen-top">
-            <div class="tuner-screen-freq">
+          <!-- top row: 3 fixed columns — freq | strobe | cents -->
+          <div class="tuner-screen-top" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;position:relative;">
+            <div class="tuner-screen-freq" style="justify-self:start;">
               <span data-i18n="tuner_freq_label">FREQ</span>&nbsp;<span id="freqDisplay">—</span>&nbsp;Hz
             </div>
             <div class="tools-only hidden" style="position:absolute;left:50%;transform:translateX(-50%);z-index:3;">
               <span style="font-size:9px;letter-spacing:1.5px;color:color-mix(in srgb,var(--accent) 30%,transparent);font-family:'JetBrains Mono',monospace;">→ REF <span class="freq-target" id="refDisplay" style="color:color-mix(in srgb,var(--accent-warm) 70%,transparent)">—</span> Hz</span>
             </div>
-            <!-- cents fixed right, STROBE button absolute-left of it so cents width never moves it -->
-            <div style="position:relative;display:flex;align-items:center;">
-              <button class="tuner-strobe-btn" id="strobeToggle" onclick="toggleStrobe()" title="Toggle strobe meter" data-i18n="tuner_strobe" style="position:absolute;right:calc(100% + 8px);white-space:nowrap;">STROBE</button>
-              <div class="tuner-screen-cents-badge" id="tunerCentsBadge">0¢</div>
-            </div>
+            <button class="tuner-strobe-btn" id="strobeToggle" onclick="toggleStrobe()" title="Toggle strobe meter" data-i18n="tuner_strobe" style="justify-self:center;">STROBE</button>
+            <div class="tuner-screen-cents-badge" id="tunerCentsBadge" style="justify-self:end;">0¢</div>
           </div>
 
           <!-- big note name -->
@@ -16851,7 +16857,7 @@ function processAudio() {
         _holdTimer = setTimeout(() => {
           _clearHold();
           setNoteSilent();
-        }, 1200);
+        }, 2200);
       } else if (!_heldNote) {
         setNoteSilent();
       }
