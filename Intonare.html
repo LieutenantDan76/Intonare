@@ -2,9 +2,9 @@
      Source available for personal testing only.
      See LICENSE for full terms. -->
 <!DOCTYPE html>
-<html lang="en" style="background:#04040c">
+<html lang="en" style="background:#04040c;color-scheme:dark">
 <head>
-<style>html,body{background:#04040c!important}
+<style>html,body{background:#04040c!important;transition:none!important}*{-webkit-tap-highlight-color:transparent}
   /* ─── PM STREAK BLOCK ─── */
   .pm-streak-block {
     display: flex; align-items: baseline; justify-content: center;
@@ -185,6 +185,7 @@
   #dailyStreakToast.dt-reset .dt-flame-emoji { filter:grayscale(1); opacity:.45 }
   /* flame speed + size per tier */
   #dailyStreakToast.dt-t1 { --dt-flame:14px; --dt-spd:999s }
+  #dailyStreakToast.dt-t1 .daily-toast-pill { box-shadow:0 8px 28px rgba(0,0,0,.6),0 0 12px rgba(136,146,168,.25) }
   #dailyStreakToast.dt-t2 { --dt-flame:16px; --dt-spd:3.5s }
   #dailyStreakToast.dt-t3 { --dt-flame:18px; --dt-spd:2.8s }
   #dailyStreakToast.dt-t4 { --dt-flame:20px; --dt-spd:2.2s }
@@ -4122,6 +4123,7 @@
     position: fixed; inset: 0; z-index: 200;
     display: flex; flex-direction: column; justify-content: flex-end;
     pointer-events: none;
+    padding-bottom: calc(var(--nav-bar-h, 62px) + env(safe-area-inset-bottom));
   }
   .prog-preset-modal.open { pointer-events: all; }
   .prog-preset-modal-backdrop {
@@ -4132,7 +4134,7 @@
   .prog-preset-modal-sheet {
     position: relative; z-index: 1;
     background: var(--bg-1); border-top: 1px solid var(--border-soft);
-    border-radius: 16px 16px 0 0; padding: 0 16px calc(var(--nav-bar-h, 62px) + env(safe-area-inset-bottom));
+    border-radius: 16px 16px 0 0; padding: 0 16px calc(16px + env(safe-area-inset-bottom));
     max-height: calc(72dvh - var(--nav-bar-h, 62px)); overflow-y: auto;
     transform: translateY(100%);
     transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
@@ -7341,7 +7343,7 @@
   }
 
     /* ─── SESSION TIMER ─── */
-  .session-bar { position: relative; flex-shrink: 0; }
+  .session-bar { position: relative; flex-shrink: 0; height: 4px; }
   .session-stamp {
     position: absolute; bottom: 4px; right: 14px;
     font-family: 'JetBrains Mono', monospace;
@@ -7382,14 +7384,79 @@
   }
 
     /* ─── MODE ACCENT LINE ─── */
+  /* Decorative bar — always present, dimmed */
   .mode-accent-line {
-    height: 2px; flex-shrink: 0;
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
     background: linear-gradient(90deg,
       transparent 0%,
       var(--theme-a) 30%,
       var(--theme-b) 70%,
       transparent 100%);
     opacity: 0.6;
+    transition: opacity 0.35s ease, height 0.2s ease, box-shadow 0.2s ease;
+  }
+  .mode-accent-line.deco-pulse {
+    animation: deco-pulse 0.65s ease-in-out forwards !important;
+  }
+  @keyframes deco-pulse {
+    0%   { opacity: 0.6; height: 2px; box-shadow: none; }
+    35%  { opacity: 1;   height: 3px; box-shadow: 0 0 8px color-mix(in srgb, var(--theme) 60%, transparent); }
+    100% { opacity: 0;   height: 2px; box-shadow: none; }
+  }
+  /* Progress bar — overlaid, driven by JS width animation */
+  .mode-progress-bar {
+    position: absolute; bottom: 0; left: 0;
+    height: 2px; width: 0%;
+    background: linear-gradient(90deg, var(--theme-a), var(--theme-b));
+    border-radius: 0 1px 1px 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: none !important;
+  }
+  .mode-progress-bar.pb-entering {
+    transition:
+      width 0.65s cubic-bezier(0.25,0.46,0.45,0.94),
+      opacity 0.15s ease,
+      box-shadow 0.65s cubic-bezier(0.25,0.46,0.45,0.94) !important;
+  }
+  .mode-progress-bar.pb-leaving {
+    transition:
+      width 0.55s cubic-bezier(0.55,0,0.45,1),
+      box-shadow 0.55s ease !important;
+  }
+  .mode-progress-bar.pb-glow-off {
+    transition: box-shadow 0.3s ease !important;
+  }
+  .mode-progress-bar.pb-active {
+    box-shadow: none !important;
+  }
+  /* Glow tip — separate element tracking bar right edge */
+  .mode-progress-glow {
+    position: absolute; bottom: -2px; left: 0%;
+    width: 4px; height: 6px;
+    border-radius: 50%;
+    background: var(--theme-b);
+    filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%);
+    transition: none !important;
+  }
+  .mode-progress-glow.pg-entering {
+    transition: left 0.65s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.15s ease !important;
+  }
+  .mode-progress-glow.pg-leaving {
+    transition: left 0.55s cubic-bezier(0.55,0,0.45,1) !important;
+  }
+  .mode-progress-glow.pg-active {
+    opacity: 1 !important;
+  }
+  .mode-progress-glow.pg-fade {
+    transition: opacity 0.3s ease !important;
+  }
+  .mode-progress-bar.pb-fade {
+    transition: opacity 0.3s ease !important;
   }
 
   /* ─── HEADER LOGO BLOCK ─── */
@@ -10396,6 +10463,11 @@
      Self-contained overlay. Runs on load, removes itself when done.
      Palette follows app tab order: Tuner (cyan) → Metro (yellow) → Tools (emerald) → Train (purple)
 ──────────────────────────────────────────────────────────────────────────── -->
+<style>
+  #splash-logo, #splash-sub, #splash-tag, #splash-canvas, #splash-bg {
+    transition: opacity 0.4s ease !important;
+  }
+</style>
 <div id="intonare-splash" style="
   position:fixed;inset:0;z-index:99999;
   background:#04040c;
@@ -10482,7 +10554,9 @@
 
   function removeSplash() {
     const el = document.getElementById('intonare-splash');
-    if (el) el.remove();
+    if (!el) return;
+    // Wipe already covers everything — just remove the element
+    if (el.parentNode) el.remove();
     if (window.Capacitor) {
       // Notification permission — doesn't need user gesture, fire immediately
       const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
@@ -10822,14 +10896,15 @@
 
     await af(1200);
 
-    // ── Scanline wipe ──────────────────────────────────────
-    if (wipeLine) { wipeLine.style.transition = 'opacity .1s ease'; wipeLine.style.opacity = '1'; }
-    if (wipe) {
-      wipe.style.transition = 'transform .55s cubic-bezier(.7,0,.3,1)';
-      wipe.style.transform  = 'scaleY(1)';
-    }
-    await af(560);
-    running = false;
+    // ── Exit: stop loop, fade everything together ──────────────────
+    running = false; // stop rAF loop before fading so canvas doesn't repaint during transition
+    const fadeOut = 'opacity 0.4s ease';
+    if (logo)     { logo.style.transition     = fadeOut; logo.style.opacity     = '0'; }
+    if (sub)      { sub.style.transition      = fadeOut; sub.style.opacity      = '0'; }
+    if (tag)      { tag.style.transition      = fadeOut; tag.style.opacity      = '0'; }
+    if (canvas)   { canvas.style.transition   = fadeOut; canvas.style.opacity   = '0'; }
+    if (bgCanvas) { bgCanvas.style.transition = fadeOut; bgCanvas.style.opacity = '0'; }
+    await af(420);
     removeSplash();
   }
 
@@ -10880,6 +10955,8 @@
   <div class="session-bar">
     <div class="session-stamp" id="sessionStamp"><span class="stamp-time" id="stampTime">0:00</span><span class="stamp-goal" id="stampGoal"></span></div>
     <div class="mode-accent-line" id="modeAccentLine"></div>
+    <div class="mode-progress-bar" id="modeProgressBar"></div>
+    <div class="mode-progress-glow" id="modeProgressGlow"></div>
   </div>
 
 
@@ -11019,7 +11096,7 @@
         <!-- Transpose -->
         <div style="position:relative;flex:1;">
           <button class="tuner-refpitch-pill" id="tunerTransposePill" onclick="toggleTransposePopover()">
-            <span class="tuner-refpitch-label">IN</span>
+            <span class="tuner-refpitch-label">KEY</span>
             <span class="tuner-refpitch-value" id="tunerTransposeValue" style="font-size:13px;">NONE</span>
             <span class="tuner-refpitch-arrow">▾</span>
           </button>
@@ -15632,8 +15709,7 @@ function setMode(m) {
   // Exit any active exercise first (covers switching to any tab, not just practice)
   if (currentExercise) exitExercise();
   // setHeaderSection (called below) clears in-module synchronously — no separate call needed
-  // If leaving tools/practice while timer is active, pause session
-  if (m !== 'tools' && m !== 'practice') sesLeave();
+  // sesLeave() is handled by exitExercise/exitTool below (after in-module is cleared)
   mode = m;
   ['tuner','tools','metro','train'].forEach(k => {
     const target = k === 'tuner' ? 'tuner' : k === 'tools' ? 'tools' : k === 'metro' ? 'metronome' : 'practice';
@@ -15832,12 +15908,9 @@ function updateChromaStrip(noteIndex, oct, cents) {
   // If going silent, kick off the decay animation and return
   if (noteIndex < 0) {
     if (!_chromaDecayRAF) _chromaDecayRAF = requestAnimationFrame(_runChromaDecay);
-    // Clear octave spans
     NOTE_NAMES.forEach((_, i) => {
       const el = document.getElementById(`cn-${i}`); if (!el) return;
       el.className = 'chroma-note';
-      const octEl = el.querySelector('.cn-oct');
-      if (octEl) octEl.remove();
     });
     return;
   }
@@ -15879,18 +15952,7 @@ function updateChromaStrip(noteIndex, oct, cents) {
       el.style.textShadow = '';
     }
 
-    // Octave on active cell — only touch DOM when value changes
-    let octEl = el.querySelector('.cn-oct');
-    if (isActive && oct != null) {
-      if (!octEl) {
-        octEl = document.createElement('span');
-        octEl.className = 'cn-oct';
-        el.appendChild(octEl);
-      }
-      if (octEl.textContent !== String(oct)) octEl.textContent = oct;
-    } else if (octEl) {
-      octEl.remove();
-    }
+    // (octave displayed on main tuner readout, not here)
   });
 }
 // ═══════════════════════════════════════════════
@@ -17376,6 +17438,9 @@ function _updateTransposePill() {
   // Dim the pill value when none is selected
   val.style.opacity = tunerTranspose === 'none' ? '0.4' : '1';
   val.style.color = tunerTranspose === 'none' ? '' : 'var(--accent)';
+  // Update the label (KEY / TONO)
+  const lbl = pill && pill.querySelector('.tuner-refpitch-label');
+  if (lbl) lbl.textContent = t('tuner_key_label') || 'KEY';
 }
 
 function _buildTransposePresets() {
@@ -21028,6 +21093,16 @@ function progBuildPresetGrid() {
     { label: '9/8', filter: p => p.timeSig?.[1] === 8 && p.timeSig?.[0] === 9 },
   ];
 
+  // + New always at the top
+  const empty = PROG_PRESETS.find(p => p.id === 'empty');
+  if (empty) {
+    const card = document.createElement('button');
+    card.className = 'prog-preset-card prog-preset-card-new' + (empty.id === progActivePreset ? ' active' : '');
+    card.textContent = t('label_prog_new');
+    card.onclick = () => { progLoadPreset(empty.id); progClosePresetModal(); };
+    grid.appendChild(card);
+  }
+
   const allPresets = PROG_PRESETS.filter(p => p.id !== 'empty');
   let first = true;
 
@@ -21049,16 +21124,6 @@ function progBuildPresetGrid() {
       grid.appendChild(card);
     });
   });
-
-  // + New always at the bottom
-  const empty = PROG_PRESETS.find(p => p.id === 'empty');
-  if (empty) {
-    const card = document.createElement('button');
-    card.className = 'prog-preset-card prog-preset-card-new' + (empty.id === progActivePreset ? ' active' : '');
-    card.textContent = t('label_prog_new');
-    card.onclick = () => { progLoadPreset(empty.id); progClosePresetModal(); };
-    grid.appendChild(card);
-  }
 }
 function progUpdatePresetLabel() {
   const el = document.getElementById('progPresetBtnLabel');
@@ -30132,6 +30197,7 @@ const STRINGS = {
     hint_ref_pitches:"Quick-access buttons for your instrument's strings or notes.",
     hint_tonal_drone:'Start the drone, turn on the mic, then sing or play. Shows your note, the interval above/below the root, and how in-tune you are.',
     hint_db_meter:'Turn on the mic and make noise — watch how quickly loud sounds hit the danger zone.',
+    tuner_key_label:'KEY',
     hint_transpose_keys:'Tap any concert key above to see what key you play in. Blue = concert pitch, amber = your written key.',
     hint_chord_paste:'Paste any chord names separated by spaces or lines. Transposes roots only — qualities (maj7, m7, dim…) stay as written.',
     hint_chord_player_s:'Select a root and quality to hear the chord. ARP plays notes one at a time ascending.',
@@ -30678,6 +30744,7 @@ const STRINGS = {
     hint_ref_pitches:'Pulsanti rapidi per le corde o note dello strumento selezionato.',
     hint_tonal_drone:'Avvia il bordone, attiva il microfono e canta o suona. Mostra nota, intervallo dalla tonica e intonazione.',
     hint_db_meter:'Attiva il microfono e fai rumore — osserva quanto velocemente i suoni forti raggiungono la zona di pericolo.',
+    tuner_key_label:'TONO',
     hint_transpose_keys:'Tocca una tonalità di concerto per vedere la tua tonalità di lettura. Blu = concerto, ambra = scritta.',
     hint_chord_paste:'Incolla i nomi degli accordi separati da spazi o righe. Traspone solo le toniche — le qualità (maj7, m7, dim…) rimangono invariate.',
     hint_chord_player_s:"Seleziona tonica e qualità per ascoltare l'accordo. ARPEGGIO suona le note una per una in senso ascendente.",
@@ -31026,9 +31093,10 @@ function setLang(lang) {
   try { tcInit && tcInit(); } catch(e) {}
   try { chordInit && chordInit(); } catch(e) {}
   try { scalesInit && scalesInit(); } catch(e) {}
-  try { dkInit && dkInit(); } catch(e) {}
+  try { dkInit && dkInit(true); } catch(e) {}
   try { buildPianoFullToneBank && buildPianoFullToneBank(); } catch(e) {}
   try { buildExerciseToneBank && buildExerciseToneBank('scaleToneBank'); } catch(e) {}
+  try { _updateTransposePill && _updateTransposePill(); } catch(e) {}
   // Re-render VR artist modal if currently open
   try {
     const vrModal = document.getElementById('vrArtistModal');
@@ -37243,13 +37311,13 @@ function loadPreset(p) {
   }
 }
 
-function dkInit() {
+function dkInit(fromLangSwitch) {
   buildBeatNums();
   _buildBarDots();
   buildSequencer();
   buildPresets();
-  // Track for Rhythm Curious achievement
-  if (!progState.drumkitVisited) {
+  // Track for Rhythm Curious achievement — only on actual visit, not language refresh
+  if (!fromLangSwitch && !progState.drumkitVisited) {
     progState.drumkitVisited = true;
     progSave();
     try { checkAchievements(); } catch(e) {}
@@ -47606,10 +47674,14 @@ function sesResetTimer() {
     progState.sessionCompleted = false;
     progState.sesModulesVisited = [];
     _sesCompleted = false;
+    // If currently timing, restart the clock so elapsed time doesn't immediately restore
+    if (_sesActive) _sesStart = Date.now();
     progSave();
     try { sesUpdate(); } catch(e) {}
-    var line = document.getElementById('modeAccentLine');
-    if (line) { line.style.background = ''; line.style.height = ''; line.style.boxShadow = ''; }
+    var bar  = document.getElementById('modeProgressBar');
+    var deco = document.getElementById('modeAccentLine');
+    if (bar)  { bar.style.transition = ''; bar.style.width = '0%'; bar.style.opacity = '0'; bar.style.boxShadow = ''; }
+    if (deco) { deco.style.opacity = '0.6'; }
     var stamp = document.getElementById('sessionStamp');
     if (stamp) stamp.classList.remove('visible');
     hapticLight();
@@ -47623,9 +47695,9 @@ function sesResetTimer() {
     btn.style.color = 'var(--theme)';
     setTimeout(function(){
       btn.textContent = t('dt_reset_today') || '↺ Reset Today';
-      btn.style.background = '';
-      btn.style.borderColor = '';
-      btn.style.color = '';
+      btn.style.background = 'transparent';
+      btn.style.borderColor = 'var(--border-soft)';
+      btn.style.color = 'var(--text-dim)';
     }, 2000);
   }
 }
@@ -47668,103 +47740,116 @@ function sesLeave() {
 }
 
 function sesAnimEnter() {
-  const line = document.getElementById('modeAccentLine');
-  if (!line) return;
+  const deco = document.getElementById('modeAccentLine');
+  const bar  = document.getElementById('modeProgressBar');
+  const glow = document.getElementById('modeProgressGlow');
+  if (!bar) return;
 
-  // If session already completed (overtime), wait one tick for setHeaderModule to set in-module
   if (_sesCompleted) {
-    line.style.transition = '';
-    line.style.height = '2px';
     setTimeout(() => { sesUpdateLine(1, true); sesShowStamp(); }, 0);
     return;
   }
 
-  const goalMs  = progState.sessionGoalMin * 60000;
-  const totalMs = progState.sessionTodayMs;
-  const targetPct = Math.min(100, Math.round(totalMs / goalMs * 100));
+  const goalMs    = progState.sessionGoalMin * 60000;
+  const totalMs   = progState.sessionTodayMs + (Date.now() - _sesStart);
+  const targetPct = Math.max(1, Math.min(100, Math.round(totalMs / goalMs * 100)));
 
-  // Phase 1: pulse — full bright beam
-  line.style.transition = 'none';
-  line.style.height = '4px';
-  line.style.background = `linear-gradient(90deg, transparent 0%, var(--theme-a) 8%, var(--theme-b) 92%, transparent 100%)`;
-  line.style.boxShadow = `0 0 10px color-mix(in srgb, var(--theme) 70%, transparent)`;
+  // Pulse deco bar then fade, then start progress wipe
+  const PULSE_DUR = 650;
+  if (deco) {
+    deco.classList.add('deco-pulse');
+    setTimeout(() => { deco.classList.remove('deco-pulse'); deco.style.opacity = '0'; }, PULSE_DUR);
+  }
 
-  // Phase 2: descend to current fill
+  // Reset bar and glow — no transition
+  bar.className     = 'mode-progress-bar';
+  bar.style.width   = '0%';
+  bar.style.opacity = '0';
+  bar.style.boxShadow = '';
+  if (glow) {
+    glow.className    = 'mode-progress-glow';
+    glow.style.left   = '0%';
+    glow.style.opacity = '0';
+  }
+  void bar.offsetWidth;
+
+  // Start wipe after pulse
   _sesEnterT1 = setTimeout(() => {
     _sesEnterT1 = null;
-    line.style.transition = 'height 0.6s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.7s ease-out';
-    line.style.height = '2px';
-    line.style.boxShadow = '';
-    const dur = 800, t0 = performance.now(), fromP = 100;
-    let _wiping = true;
-    function wipe(now) {
-      if (!_wiping) return;
-      const p = Math.min(1, (now - t0) / dur);
-      const ease = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
-      const cur = fromP + (targetPct - fromP) * ease;
-      sesUpdateLine(cur / 100);
-      if (p < 1) requestAnimationFrame(wipe);
-      else sesUpdateLine(targetPct / 100);
+    void bar.offsetWidth;
+
+    // Bar wipes in
+    bar.classList.add('pb-entering');
+    bar.style.opacity = '0.78';
+    bar.style.width   = targetPct + '%';
+
+    // Glow tip tracks the bar's right edge in perfect sync
+    if (glow) {
+      glow.classList.add('pg-entering');
+      glow.style.opacity = '1';
+      glow.style.left    = targetPct + '%';
     }
-    requestAnimationFrame(wipe);
-    _sesEnterT2 = setTimeout(() => { _sesEnterT2 = null; sesShowStamp(); }, 650);
-  }, 360);
+
+    // After landing: remove entering transitions, keep glow active
+    _sesEnterT2 = setTimeout(() => {
+      _sesEnterT2 = null;
+      bar.classList.remove('pb-entering');
+      if (glow) { glow.classList.remove('pg-entering'); glow.classList.add('pg-active'); }
+      sesShowStamp();
+    }, 680);
+  }, PULSE_DUR + 50);
 }
 
 function sesAnimLeave() {
   sesHideStamp();
-  const line = document.getElementById('modeAccentLine');
-  if (!line) return;
+  const deco = document.getElementById('modeAccentLine');
+  const bar  = document.getElementById('modeProgressBar');
+  const glow = document.getElementById('modeProgressGlow');
+  if (!bar) return;
 
-  // If session goal already met, fade in the green bar — no wipe animation
   if (_sesCompleted) {
-    line.style.opacity = '1';
-    line.style.height = '2px';
-    line.style.transition = 'background 0.1s ease, box-shadow 0.1s ease';
+    bar.classList.add('pb-fade');
     sesUpdateLine(1, true);
-    setTimeout(() => { line.style.transition = ''; }, 800);
+    setTimeout(() => { bar.classList.remove('pb-fade'); }, 400);
     return;
   }
 
   const goalMs  = progState.sessionGoalMin * 60000;
   const fromPct = Math.min(100, Math.round(progState.sessionTodayMs / Math.max(1, goalMs) * 100));
 
-  // Mirror of entry — Phase 1: brief pulse
-  line.style.transition = 'none';
-  line.style.height = '3px';
-  line.style.boxShadow = `0 0 8px color-mix(in srgb, var(--theme) 50%, transparent)`;
+  // Snap bar and glow to current position, no transition
+  bar.className     = 'mode-progress-bar';
+  bar.style.width   = fromPct + '%';
+  bar.style.opacity = '0.78';
+  if (glow) {
+    glow.className    = 'mode-progress-glow';
+    glow.style.left   = fromPct + '%';
+    glow.style.opacity = '1';
+  }
+  void bar.offsetWidth;
 
-  // Phase 2: wipe from fromPct → 100 (fills back up) then restore
+  // Reverse wipe — bar and glow retreat in sync, glow stays opaque until tip reaches 0
+  bar.classList.add('pb-leaving');
+  bar.style.width = '0%';
+  if (glow) {
+    glow.classList.add('pg-leaving');
+    glow.style.left = '0%';
+    // keep opacity:1 — glow fades with the bar after wipe completes
+  }
+
+  // After wipe: snap glow hidden, fade bar out, deco back in
   setTimeout(() => {
-    line.style.transition = 'height 0.6s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.7s ease-out';
-    line.style.height = '2px';
-    line.style.boxShadow = '';
-    const dur = 700, t0 = performance.now();
-    function wipe(now) {
-      const p = Math.min(1, (now - t0) / dur);
-      const ease = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
-      const cur = fromPct + (100 - fromPct) * ease;
-      // Pass skip=true so sesUpdateLine doesn\'t re-fire notifications
-      sesUpdateLineRaw(cur / 100);
-      if (p < 1) requestAnimationFrame(wipe);
-      else {
-        // Hold at full for a beat then restore decorative
-        setTimeout(() => {
-          line.style.transition = 'opacity 0.4s ease';
-          line.style.opacity = '0.5';
-          setTimeout(() => {
-            line.style.background = '';
-            line.style.transition = 'opacity 0.3s ease';
-            line.style.opacity = '1';
-            setTimeout(() => { line.style.transition = ''; }, 300);
-          }, 200);
-        }, 150);
-      }
-    }
-    requestAnimationFrame(wipe);
-  }, 220);
+    bar.classList.remove('pb-leaving');
+    bar.classList.add('pb-fade');
+    bar.style.opacity = '0';
+    if (glow) { glow.className = 'mode-progress-glow'; glow.style.opacity = '0'; }
+    if (deco) { deco.style.transition = 'opacity 0.3s ease'; deco.style.opacity = '0.6'; }
+    setTimeout(() => {
+      bar.className = 'mode-progress-bar';
+      if (deco) deco.style.transition = '';
+    }, 320);
+  }, 570);
 }
-
 function sesShowStamp() {
   const stamp = document.getElementById('sessionStamp');
   if (stamp) stamp.classList.add('visible');
@@ -47779,8 +47864,11 @@ function sesUpdate() {
   const pct     = Math.min(1, rawPct);
   const over    = rawPct > 1;
 
-  // Update line
+  // Update bar: use full sesUpdateLine for completion detection, raw for normal ticks
   sesUpdateLine(pct, over);
+  // Ensure bar is visible (enter animation may have set opacity; tick keeps it)
+  const bar = document.getElementById('modeProgressBar');
+  if (bar && bar.style.opacity !== '1') bar.style.opacity = '0.78';
 
   // Update stamp
   const elapsed = Math.floor(totalMs / 1000);
@@ -47798,53 +47886,52 @@ function sesUpdate() {
 }
 
 function sesUpdateLineRaw(pct) {
-  // Like sesUpdateLine but never fires notifications — used during animations
-  const line = document.getElementById('modeAccentLine');
-  if (!line) return;
-  if (!progState.sessionGoalMin || pct === undefined) { line.style.background = ''; return; }
-  const p = Math.round(pct * 100);
-  if (p >= 100) {
-    line.style.background = `linear-gradient(90deg, transparent 0%, var(--theme-a) 8%, var(--theme-b) 92%, transparent 100%)`;
-  } else {
-    const fade = Math.min(8, p * 0.4);
-    line.style.background = `linear-gradient(90deg, transparent 0%, var(--theme-a) ${fade}%, var(--theme-b) ${p}%, rgba(255,255,255,0.14) ${p}%, rgba(255,255,255,0.06) ${Math.min(100, p + 3)}%, transparent 100%)`;
-  }
+  // Like sesUpdateLine but never fires notifications — used during tick updates
+  const bar = document.getElementById('modeProgressBar');
+  if (!bar) return;
+  if (!progState.sessionGoalMin || pct === undefined) { bar.style.width = '0%'; return; }
+  const p = Math.min(100, Math.round(pct * 100));
+  bar.style.width = p + '%';
 }
 
 function sesUpdateLine(pct, over) {
-  const line = document.getElementById('modeAccentLine');
-  if (!line) return;
+  const bar  = document.getElementById('modeProgressBar');
+  const deco = document.getElementById('modeAccentLine');
+  if (!bar) return;
   if (!progState.sessionGoalMin || pct === undefined) {
-    line.style.background = '';
+    bar.style.width   = '0%';
+    bar.style.opacity = '0';
+    if (deco) deco.style.opacity = '0.6';
     return;
   }
-  const p = Math.round(pct * 100);
-  // Green only when actively inside a module (tool or exercise), not on any hub/tab
+  const p = Math.min(100, Math.round(pct * 100));
   const allowGreen = document.body.classList.contains('in-module');
   if (p >= 100) {
     const isGreen = over && allowGreen;
-    line.style.background = isGreen
-      ? 'linear-gradient(90deg, transparent 0%, #b6f25b 25%, #c8f571 75%, transparent 100%)'
-      : `linear-gradient(90deg, transparent 0%, var(--theme-a) 8%, var(--theme-b) 92%, transparent 100%)`;
-    line.style.boxShadow = isGreen
+    bar.style.width      = '100%';
+    bar.style.opacity    = isGreen ? '1' : '0.78';
+    bar.style.background = isGreen
+      ? 'linear-gradient(90deg, #b6f25b, #c8f571)'
+      : 'linear-gradient(90deg, var(--theme-a), var(--theme-b))';
+    bar.style.boxShadow  = isGreen
       ? '0 0 10px rgba(182,242,91,0.45)'
-      : `0 0 6px color-mix(in srgb, var(--theme) 60%, transparent)`;
-    line.style.opacity = isGreen ? '1' : '';
+      : '';
     if (!_sesCompleted) {
       _sesCompleted = true;
       progState.sessionCompleted = true; progSave();
       setTimeout(() => showMiniNotif('✓ SESSION COMPLETE', 'ses-complete'), 800);
-      if (progState.sessionGoalMin === 60 && !progState.hardDaysNight) {
+      if (!progState.hardDaysNight && progState.sessionTodayMs >= 3600000) {
         progState.hardDaysNight = true; progSave();
         checkAchievements();
       }
     }
   } else {
-    // Progress bar: fills left-to-right with transparent fade-out on both sides
-    const fade = Math.min(8, p * 0.4); // gentle fade-in at the left for small values
-    line.style.background =
-      `linear-gradient(90deg, transparent 0%, var(--theme-a) ${fade}%, var(--theme-b) ${p}%, rgba(255,255,255,0.14) ${p}%, rgba(255,255,255,0.06) ${Math.min(100, p + 3)}%, transparent 100%)`;
-    line.style.boxShadow = '';
+    bar.style.width      = p + '%';
+    bar.style.opacity    = '0.78';
+    bar.style.background = 'linear-gradient(90deg, var(--theme-a), var(--theme-b))';
+    bar.style.boxShadow  = '';
+    const glow = document.getElementById('modeProgressGlow');
+    if (glow && glow.classList.contains('pg-active')) glow.style.left = p + '%';
   }
 }
 
