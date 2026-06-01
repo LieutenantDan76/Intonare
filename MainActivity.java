@@ -2,10 +2,8 @@ package com.lieutenantdan.intonare;
 
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
 
 public class MainActivity extends BridgeActivity {
 
@@ -13,19 +11,14 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        WebView webView = getBridge().getWebView();
-        WebSettings settings = webView.getSettings();
-
-        // Allow mic/camera access from the WebView
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setJavaScriptEnabled(true);
-
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onPermissionRequest(PermissionRequest request) {
-                // Grant ALL requested resources including microphone
-                runOnUiThread(() -> request.grant(request.getResources()));
+        // Extend Capacitor's own WebChromeClient rather than replacing it
+        getBridge().getWebView().setWebChromeClient(
+            new BridgeWebChromeClient(getBridge()) {
+                @Override
+                public void onPermissionRequest(PermissionRequest request) {
+                    runOnUiThread(() -> request.grant(request.getResources()));
+                }
             }
-        });
+        );
     }
 }
