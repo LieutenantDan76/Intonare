@@ -1137,12 +1137,19 @@
   .tuner-screen-note.note-change { animation: noteChangePop 0.18s ease-out; }
 
   /* ── In-tune flash — radial burst on the screen inner ── */
-  @keyframes inTuneFlash {
-    0%   { box-shadow: inset 0 2px 10px rgba(0,0,0,0.9), inset 0 -1px 5px rgba(0,0,0,0.5), inset 2px 0 8px rgba(0,0,0,0.4), inset -2px 0 8px rgba(0,0,0,0.4), inset 0 0 40px color-mix(in srgb, var(--theme) 4%, transparent); }
-    35%  { box-shadow: inset 0 2px 10px rgba(0,0,0,0.9), inset 0 -1px 5px rgba(0,0,0,0.5), inset 2px 0 8px rgba(0,0,0,0.4), inset -2px 0 8px rgba(0,0,0,0.4), inset 0 0 60px rgba(182,242,91,0.22); }
-    100% { box-shadow: inset 0 2px 10px rgba(0,0,0,0.9), inset 0 -1px 5px rgba(0,0,0,0.5), inset 2px 0 8px rgba(0,0,0,0.4), inset -2px 0 8px rgba(0,0,0,0.4), inset 0 0 40px color-mix(in srgb, var(--theme) 4%, transparent); }
+  /* In-tune: persistent green inner glow while held */
+  .tuner-screen-inner.in-tune-glow {
+    box-shadow:
+      inset 0  2px 10px rgba(0,0,0,0.9),
+      inset 0 -1px  5px rgba(0,0,0,0.5),
+      inset  2px 0  8px rgba(0,0,0,0.4),
+      inset -2px 0  8px rgba(0,0,0,0.4),
+      inset 0 0 50px rgba(182,242,91,0.14);
+    transition: box-shadow 0.4s ease;
   }
-  .tuner-screen-inner.in-tune-flash { animation: inTuneFlash 0.6s ease-out; }
+  .tuner-screen-inner {
+    transition: box-shadow 0.5s ease;
+  }
 
   /* ── Spring needle — CSS transition handles the physics feel ──
      The spring effect comes from JS, CSS just smooths jitter */
@@ -3250,6 +3257,8 @@
     opacity: 0;
   }
   .tuner-screen-verdict.visible { opacity: 1; }
+  .tuner-screen-verdict.holding { opacity: 0.3; transition: opacity 0.6s ease; }
+  .tuner-screen-verdict.perfect { color: var(--in-tune); text-shadow: 0 0 10px rgba(182,242,91,0.5); }
   .tuner-screen-verdict.perfect { color: var(--in-tune); text-shadow: 0 0 10px rgba(182,242,91,0.5); }
   .tuner-screen-verdict.close   { color: var(--accent);  text-shadow: 0 0 10px rgba(94,226,255,0.4); }
   .tuner-screen-verdict.off     { color: var(--sharp);   text-shadow: 0 0 8px rgba(255,138,101,0.35); }
@@ -15369,11 +15378,15 @@ function updateChromaStrip(noteIndex, oct, cents) {
       el.style.textShadow = '';
     }
 
-    // Octave on active cell
+    // Octave on active cell — only touch DOM when value changes
     let octEl = el.querySelector('.cn-oct');
     if (isActive && oct != null) {
-      if (!octEl) { octEl = document.createElement('span'); octEl.className = 'cn-oct'; el.appendChild(octEl); }
-      octEl.textContent = oct;
+      if (!octEl) {
+        octEl = document.createElement('span');
+        octEl.className = 'cn-oct';
+        el.appendChild(octEl);
+      }
+      if (octEl.textContent !== String(oct)) octEl.textContent = oct;
     } else if (octEl) {
       octEl.remove();
     }
@@ -16325,8 +16338,26 @@ function updateIntervalDisplay(detectedFreq) {
 // ═══════════════════════════════════════════════
 // TOOLTIP
 // ═══════════════════════════════════════════════
+// Hysteresis thresholds — wider exit bands prevent flickering at boundaries
+// Enter band / Exit band per state
+const _TOOLTIP_BANDS = {
+  //        enter   exit
+  perfect: [  8,    12  ],   // ±3 in-tune, ±8 nearly — leave if >12
+  close:   [ 18,    22  ],   // leave if >22
+  off:     [ Infinity, Infinity ],
+};
+let _tooltipCurCls = null;  // currently displayed state, for hysteresis
+
 function getCentsTooltip(cents) {
   const abs = Math.abs(cents); const sharp = cents > 0;
+  // Hysteresis: if already in a state, require exit threshold to leave it
+  if (_tooltipCurCls === 'perfect' && abs <= _TOOLTIP_BANDS.perfect[1])
+    return abs <= 3
+      ? { cls:'perfect', arrow:'', text:t('tooltip_in_tune') }
+      : { cls:'perfect', arrow:'', text:t('tooltip_nearly') };
+  if (_tooltipCurCls === 'close' && abs <= _TOOLTIP_BANDS.close[1])
+    return sharp ? { cls:'close', arrow:'', text:t('tooltip_little_lower') } : { cls:'close', arrow:'', text:t('tooltip_little_higher') };
+  // Fresh entry thresholds
   if (abs <= 3)  return { cls:'perfect', arrow:'', text:t('tooltip_in_tune') };
   if (abs <= 8)  return { cls:'perfect', arrow:'', text:t('tooltip_nearly') };
   if (abs <= 18) return sharp ? { cls:'close', arrow:'', text:t('tooltip_little_lower') } : { cls:'close', arrow:'', text:t('tooltip_little_higher') };
@@ -16339,18 +16370,24 @@ function updateTooltip(cents, hasPitch) {
   const text = document.getElementById('tooltipText');
   const arrow = document.getElementById('tooltipArrow');
   if (!hasPitch) {
-    // Grace period before hiding — don't wipe state on a single silent frame
+    // Hold the last verdict visibly for ~2s, then dim and fade
     if (_tooltipHideTimer) return;
     _tooltipHideTimer = setTimeout(() => {
-      clearTimeout(_tooltipTimer); _tooltipTimer = null;
-      _tooltipKey = null; _tooltipPending = null; _tooltipHideTimer = null;
-      bar.className = 'tuner-screen-verdict';
-      arrow.textContent = '';
-      text.textContent = mode === 'tools' && activeRefFreq ? t('tooltip_ref').replace('{name}', activeRefName) : '';
-    }, 300);
+      // Dim it — add a holding class
+      if (bar) bar.classList.add('holding');
+      _tooltipHideTimer = setTimeout(() => {
+        clearTimeout(_tooltipTimer); _tooltipTimer = null;
+        _tooltipKey = null; _tooltipPending = null; _tooltipHideTimer = null;
+        _tooltipCurCls = null;
+        if (bar) { bar.className = 'tuner-screen-verdict'; bar.classList.remove('holding'); }
+        if (arrow) arrow.textContent = '';
+        if (text) text.textContent = mode === 'tools' && activeRefFreq ? t('tooltip_ref').replace('{name}', activeRefName) : '';
+      }, 1500);
+    }, 600);
     return;
   }
   clearTimeout(_tooltipHideTimer); _tooltipHideTimer = null;
+  if (bar) bar.classList.remove('holding');
   const tip = getCentsTooltip(cents);
   const key = tip.cls + '|' + tip.text;
   if (key === _tooltipKey || key === _tooltipPending) return;
@@ -16358,9 +16395,10 @@ function updateTooltip(cents, hasPitch) {
   _tooltipPending = key;
   _tooltipTimer = setTimeout(() => {
     _tooltipKey = key; _tooltipPending = null;
-    bar.className = 'tuner-screen-verdict visible ' + tip.cls;
-    arrow.textContent = tip.arrow;
-    text.textContent = tip.text;
+    _tooltipCurCls = tip.cls;
+    if (bar) bar.className = 'tuner-screen-verdict visible ' + tip.cls;
+    if (arrow) arrow.textContent = tip.arrow;
+    if (text) text.textContent = tip.text;
   }, 250);
 }
 
@@ -16885,17 +16923,11 @@ function getTransposedNote(noteName, oct) {
 function updateNoteDisplay(note, freq) {
   const c = note.cents, abs = Math.abs(c), inTune = abs < 5;
 
-  // Fire haptic + in-tune screen flash once when entering in-tune
-  if (inTune && !_wasInTune) {
-    hapticSuccess();
-    const screenInner = document.querySelector('.tuner-screen-inner');
-    if (screenInner) {
-      screenInner.classList.remove('in-tune-flash');
-      void screenInner.offsetWidth;
-      screenInner.classList.add('in-tune-flash');
-      setTimeout(() => screenInner.classList.remove('in-tune-flash'), 650);
-    }
-  }
+  // Persistent green glow while in tune, fades out when leaving
+  const screenInner = document.querySelector('.tuner-screen-inner');
+  if (screenInner) screenInner.classList.toggle('in-tune-glow', inTune);
+
+  if (inTune && !_wasInTune) hapticSuccess();
   _wasInTune = inTune;
 
   const nameEl = document.getElementById('noteName');
@@ -16947,6 +16979,10 @@ function setNoteSilent() {
   // Reset needle to center
   _needleSmoothed = 50;
   _lastNoteKey = null;
+  _wasInTune = false;
+  _tooltipCurCls = null;
+  const si = document.querySelector('.tuner-screen-inner');
+  if (si) si.classList.remove('in-tune-glow');
   document.getElementById('meterNeedle').style.left = '50%';
   document.getElementById('meterNeedle').className = 'meter-needle';
   document.getElementById('meterFill').style.width = '0';
