@@ -717,7 +717,7 @@
     content: ''; position: fixed; inset: 0;
     background:
       radial-gradient(ellipse 90% 60% at 50% -5%,  color-mix(in srgb, var(--theme) 32%, transparent) 0%, transparent 58%),
-      radial-gradient(ellipse 55% 45% at 95% 125%, color-mix(in srgb, var(--theme) 18%, transparent) 0%, transparent 45%),
+      radial-gradient(ellipse 55% 45% at 95% 108%, color-mix(in srgb, var(--theme) 18%, transparent) 0%, transparent 55%),
       radial-gradient(ellipse 50% 40% at  5% 72%,  color-mix(in srgb, var(--theme) 12%, transparent) 0%, transparent 55%);
     pointer-events: none; z-index: 0;
   }
@@ -814,7 +814,7 @@
     display: flex; align-items: center; justify-content: flex-end; gap: 6px;
   }
   .logo {
-    font-family: 'Fraunces', serif; font-style: italic; font-weight: 300; font-size: 36px; letter-spacing: 0;
+    font-family: 'Fraunces', serif; font-style: italic; font-weight: 300; font-size: clamp(36px, 10vw, 52px); letter-spacing: 0;
     background: linear-gradient(135deg, var(--theme-a) 0%, var(--theme-b) 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     line-height: 1;
@@ -824,7 +824,7 @@
   .header-top .status-pill { flex: 1 1 0; min-width: 0; justify-content: center; }
   .logo-sub {
     font-family: 'Fraunces', serif; font-style: italic;
-    font-size: 10.5px; color: var(--text-dim); letter-spacing: 1.5px;
+    font-size: clamp(10.5px, 2.8vw, 14px); color: var(--text-dim); letter-spacing: 1.5px;
     margin-top: 3px;
   }
   /* .status-pill rule moved to live-state block above */
@@ -5085,13 +5085,13 @@
   .train-title-block { flex: 1; }
   .train-title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px; letter-spacing: 2px; line-height: 1;
+    font-size: clamp(22px, 6.5vw, 34px); letter-spacing: 2px; line-height: 1;
     background: linear-gradient(135deg, var(--theme-a) 0%, var(--theme-b) 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   .train-subtitle {
     font-family: 'Fraunces', serif; font-style: italic;
-    font-size: 11px; letter-spacing: 1px; margin-top: 2px;
+    font-size: clamp(11px, 3vw, 15px); letter-spacing: 1px; margin-top: 2px;
     color: color-mix(in srgb, var(--theme) 45%, var(--text-dim));
   }
 
@@ -7466,7 +7466,7 @@
   }
   .header-tagline {
     font-family: 'Fraunces', serif; font-style: italic;
-    font-size: 9px; letter-spacing: 0.5px; color: var(--text-dim);
+    font-size: clamp(9px, 2.4vw, 12px); letter-spacing: 0.5px; color: var(--text-dim);
     line-height: 1;
   }
 
@@ -7567,9 +7567,9 @@
   body.in-section #rhythmHub .train-header { display: none !important; }
 
   /* module mode: slightly smaller than INTONARE logo so back chevron fits on narrow phones */
-  .header--module #appLogo { font-family: 'Bebas Neue', sans-serif; font-style: normal; font-weight: 400; font-size: 32px; letter-spacing: 3px; flex: 1 1 0; min-width: 0; }
+  .header--module #appLogo { font-family: 'Bebas Neue', sans-serif; font-style: normal; font-weight: 400; font-size: clamp(32px, 9vw, 46px); letter-spacing: 3px; flex: 1 1 0; min-width: 0; }
   /* Section-level header (tab hub + folder browsing) */
-  .header--section #appLogo { font-family: 'Bebas Neue', sans-serif; font-style: normal; font-weight: 400; font-size: 32px; letter-spacing: 3px; flex: 1 1 0; min-width: 0; white-space: nowrap; }
+  .header--section #appLogo { font-family: 'Bebas Neue', sans-serif; font-style: normal; font-weight: 400; font-size: clamp(32px, 9vw, 46px); letter-spacing: 3px; flex: 1 1 0; min-width: 0; white-space: nowrap; }
   .header--module #headerSub,
   body.in-section-back #headerSub {
     padding-left: 24px;  /* subtitle aligns under title, past the back button */
@@ -7604,24 +7604,14 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
   }
   /* Module names */
-  .header--module #appLogo[data-title="TRANSPOSER"]     { font-size: 23px; letter-spacing: 1.5px; }
-  .header--module #appLogo[data-title="POLYRHYTHM"]     { font-size: 23px; letter-spacing: 1.5px; }
-  .header--module #appLogo[data-title="PROGRESSION"]    { font-size: 21px; letter-spacing: 1.5px; }
-  .header--module #appLogo[data-title="TONAL CENTER"]   { font-size: 20px; letter-spacing: 1.5px; }
-  .header--module #appLogo[data-title="SIGHT SINGING"]  { font-size: 18px; letter-spacing: 1px;   }
-  .header--module #appLogo[data-title="TEMPO LOCK"]     { font-size: 24px; letter-spacing: 1.5px; }
-  .header--module #appLogo[data-title="TEMPO GUESS"]    { font-size: 22px; letter-spacing: 1.5px; }
-  .header--module #appLogo[data-title="VOCAL RANGE"]    { font-size: 22px; letter-spacing: 1.5px; }
-  .header--module #appLogo[data-title="SURVIVAL GUIDE"] { font-size: 17px; letter-spacing: 1px;   }
-  .header--module #appLogo[data-title="RHYTHM READING"] { font-size: 17px; letter-spacing: 1px;   }
-  .header--module #appLogo[data-title="CIRCLE OF FIFTHS"] { font-size: 15px; letter-spacing: 0.5px; }
-  .header--module #appLogo[data-title="VOLUME METER"]   { font-size: 20px; letter-spacing: 1.5px; }
-  .header--module #appLogo[data-title="INTERVAL"]       { font-size: 29px; letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-  /* Section / folder names */
-  .header--section #appLogo[data-title="EAR TRAINING"]  { font-size: 20px; letter-spacing: 1.5px; }
-  .header--section #appLogo[data-title="PITCH & SOUND"] { font-size: 19px; letter-spacing: 1px;   }
-  .header--section #appLogo[data-title="ANALYSIS"]      { font-size: 29px; letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-  .header--section #appLogo[data-title="HARMONY"]       { font-size: 30px; letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+  /* Length-based sizing — works for any language (data-len set from text length).
+     short (<9 chars): big.  medium (9-13): mid.  long (14+): compact + ellipsis. */
+  .header--module #appLogo[data-len="short"],
+  .header--section #appLogo[data-len="short"]  { font-size: clamp(30px, 8.5vw, 44px); letter-spacing: 2px; }
+  .header--module #appLogo[data-len="medium"],
+  .header--section #appLogo[data-len="medium"] { font-size: clamp(22px, 6.2vw, 32px); letter-spacing: 1.5px; }
+  .header--module #appLogo[data-len="long"],
+  .header--section #appLogo[data-len="long"]   { font-size: clamp(15px, 4.6vw, 23px); letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
 
   /* Bottom tab bar */
   .mode-toggle {
@@ -15793,8 +15783,8 @@ function setMode(m) {
     exitToolFolder();
   }
   // Section-level header: swap logo to tab name, or restore INTONARE for non-section tabs
-  if (m === 'tools')    setHeaderSection('TOOLS');
-  else if (m === 'practice') setHeaderSection('TRAIN');
+  if (m === 'tools')    setHeaderSection(t('mode_tools') || 'TOOLS', null, 'tools_sub');
+  else if (m === 'practice') setHeaderSection(t('mode_train') || 'TRAIN', null, 'train_sub');
   else {
     // Tuner/metro: only animate if we're actually leaving a named section/module
     var _logo = document.getElementById('appLogo');
@@ -18162,12 +18152,13 @@ const TOOL_FOLDER_MAP = {
   drumkit: 'rhythm',
   volume: 'analysis', transpose: 'analysis', vocalrange: 'analysis', cof: 'analysis', survivalguide: 'analysis'
 };
-const TOOL_FOLDER_NAMES = {
-  pitch:    'PITCH & SOUND',
-  harmony:  'HARMONY',
-  rhythm:   'RHYTHM',
-  analysis: 'ANALYSIS'
+const TOOL_FOLDER_NAME_KEYS = {
+  pitch:    'folder_pitch_title',
+  harmony:  'folder_harmony_title',
+  rhythm:   'folder_rhythm_title',
+  analysis: 'folder_analysis_hdr'
 };
+function TOOL_FOLDER_NAME(k){ return t(TOOL_FOLDER_NAME_KEYS[k]) || k.toUpperCase(); }
 const TOOL_FOLDER_IDS = ['toolFolderPitch','toolFolderHarmony','toolFolderRhythm','toolFolderAnalysis'];
 let currentToolFolder = null;
 
@@ -18178,7 +18169,7 @@ function enterToolFolder(folder) {
   const idMap = { pitch:'toolFolderPitch', harmony:'toolFolderHarmony', rhythm:'toolFolderRhythm', analysis:'toolFolderAnalysis' };
   document.getElementById(idMap[folder]).classList.remove('hidden');
   try { favUpdatePins(); } catch(e) {}
-  setHeaderSection(TOOL_FOLDER_NAMES[folder] || folder.toUpperCase(), exitToolFolder);
+  setHeaderSection(TOOL_FOLDER_NAME(folder), exitToolFolder);
 }
 
 function exitToolFolder() {
@@ -18186,7 +18177,7 @@ function exitToolFolder() {
   TOOL_FOLDER_IDS.forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById('toolsHub').classList.remove('hidden');
   try { favUpdatePins(); } catch(e) {}
-  setHeaderSection('TOOLS');
+  setHeaderSection(t('mode_tools') || 'TOOLS', null, 'tools_sub');
 }
 
 function enterTool(name, restoreState) {
@@ -18213,7 +18204,7 @@ function enterTool(name, restoreState) {
 
   // Module header — same pattern as enterExercise
   _headerBackFn = exitTool;
-  setHeaderModule(TOOL_NAMES[name] || name.toUpperCase(), TOOL_SUBS[name] || '');
+  setHeaderModule(TOOL_NAME(name), TOOL_SUB(name));
   // Force layout tight (inline beats CSS for first-paint timing)
 
   // Scroll to top
@@ -18276,7 +18267,7 @@ function exitTool(resetToHub) {
     // setMode handles the header for tab switches
   } else {
     if (folder) enterToolFolder(folder); // enterToolFolder calls setHeaderSection
-    else { document.getElementById('toolsHub')?.classList.remove('hidden'); setHeaderSection('TOOLS'); }
+    else { document.getElementById('toolsHub')?.classList.remove('hidden'); setHeaderSection(t('mode_tools') || 'TOOLS', null, 'tools_sub'); }
   }
 }
 
@@ -19259,79 +19250,83 @@ const RHYTHM_EXERCISES       = ['tempo', 'tempoguess', 'poly', 'rhythmread'];
 function enterEarTraining() {
   document.getElementById('practiceHub').classList.add('hidden');
   document.getElementById('earTrainingHub').classList.remove('hidden');
-  setHeaderSection('EAR TRAINING', exitEarTraining);
+  setHeaderSection(t('folder_ear_title') || 'EAR TRAINING', exitEarTraining, 'folder_ear_sub');
 }
 function exitEarTraining() {
   document.getElementById('earTrainingHub').classList.add('hidden');
   document.getElementById('practiceHub').classList.remove('hidden');
-  setHeaderSection('TRAIN');
+  setHeaderSection(t('mode_train') || 'TRAIN', null, 'train_sub');
 }
 function enterRhythm() {
   document.getElementById('practiceHub').classList.add('hidden');
   document.getElementById('rhythmHub').classList.remove('hidden');
-  setHeaderSection('RHYTHM', exitRhythm);
+  setHeaderSection(t('folder_rhythm_title') || 'RHYTHM', exitRhythm, 'folder_rhythm_sub');
 }
 function exitRhythm() {
   document.getElementById('rhythmHub').classList.add('hidden');
   document.getElementById('practiceHub').classList.remove('hidden');
-  setHeaderSection('TRAIN');
+  setHeaderSection(t('mode_train') || 'TRAIN', null, 'train_sub');
 }
 
 // ─── App header: module mode ───────────────────────────────────────────────
 var _headerBackFn = null;
 var _pendingHeaderTimeout = null; // shared across setHeaderModule/setHeaderSection so they cancel each other
 
-var EXERCISE_NAMES = {
-  interval:   'INTERVAL',
-  chords:     'CHORDS',
-  singsing:   'SIGHT SINGING',
-  scales:     'SCALES',
-  tempo:      'TEMPO LOCK',
-  tempoguess: 'TEMPO GUESS',
-  poly:       'POLYRHYTHM',
-  chordle:    'CHORDLE',
-  rhythmread: 'RHYTHM READING'
+var EXERCISE_NAME_KEYS = {
+  interval:   'card_interval_title',
+  chords:     'card_chord_title',
+  singsing:   'card_singsing_title',
+  scales:     'card_scales_title',
+  tempo:      'card_tempo_title',
+  tempoguess: 'card_tguess_title',
+  poly:       'card_poly_title',
+  chordle:    'card_chordle_title',
+  rhythmread: 'card_rhythmread_title'
 };
-var EXERCISE_SUBS = {
-  interval:   'identify the interval by ear',
-  chords:     'identify chord quality by ear',
-  singsing:   'hear it · sing it · mic grades you',
-  scales:     'hear · play · improvise',
-  tempo:      'hold the beat when the click drops',
-  tempoguess: 'name the bpm',
-  poly:       'feel two pulses at once',
-  chordle:    'pick a difficulty',
-  rhythmread: 'see it · feel it · tap it'
+function EXERCISE_NAME(k){ return t(EXERCISE_NAME_KEYS[k]) || k.toUpperCase(); }
+var EXERCISE_SUB_KEYS = {
+  interval:   'hsub_interval',
+  chords:     'hsub_ex_chords',
+  singsing:   'hsub_singsing',
+  scales:     'hsub_scales',
+  tempo:      'hsub_tempo',
+  tempoguess: 'hsub_tempoguess',
+  poly:       'hsub_poly',
+  chordle:    'hsub_chordle',
+  rhythmread: 'hsub_rhythmread'
 };
+function EXERCISE_SUB(k){ return t(EXERCISE_SUB_KEYS[k]) || ''; }
 // Controls to show per exercise (button IDs)
 var EXERCISE_CONTROLS = {}; /* per-module header controls — none currently */
 
-var TOOL_NAMES = {
-  piano:        'PIANO',
-  tonal:        'TONAL CENTER',
-  chords:       'CHORDS',
-  guitarchords: 'CHARTS',
-  progression:  'PROGRESSION',
-  drumkit:      'DRUMKIT',
-  cof:          'CIRCLE OF FIFTHS',
-  volume:       'VOLUME METER',
-  transpose:    'TRANSPOSER',
-  vocalrange:   'VOCAL RANGE',
-  survivalguide: 'SURVIVAL GUIDE'
+var TOOL_NAME_KEYS = {
+  piano:        'tool_piano_title',
+  tonal:        'tool_tonal_title',
+  chords:       'tool_chords_title',
+  guitarchords: 'tool_charts_title',
+  progression:  'tool_prog_title',
+  drumkit:      'dk_title',
+  cof:          'tool_cof_title',
+  volume:       'tool_volume_title',
+  transpose:    'tool_transpose_title',
+  vocalrange:   'tool_vocal_title',
+  survivalguide: 'tool_sg_title'
 };
-var TOOL_SUBS = {
-  piano:        'play & explore notes',
-  tonal:        'drone · scale · reference',
-  chords:       'build & hear chord voicings',
-  guitarchords: 'chords & scales · guitar · uke · piano',
-  progression:  'build chord progressions',
-  drumkit:      'step sequencer',
-  cof:          'key relationships at a glance',
-  volume:       'decibel meter',
-  transpose:    'shift any note or key',
-  vocalrange:   'find your range',
-  survivalguide: 'theory · guitar · piano'
+function TOOL_NAME(k){ return t(TOOL_NAME_KEYS[k]) || k.toUpperCase(); }
+var TOOL_SUB_KEYS = {
+  piano:        'hsub_piano',
+  tonal:        'hsub_tonal',
+  chords:       'hsub_chords',
+  guitarchords: 'hsub_charts',
+  progression:  'hsub_prog',
+  drumkit:      'hsub_drumkit',
+  cof:          'hsub_cof',
+  volume:       'hsub_volume',
+  transpose:    'hsub_transpose',
+  vocalrange:   'hsub_vocal',
+  survivalguide: 'hsub_sg'
 };
+function TOOL_SUB(k){ return t(TOOL_SUB_KEYS[k]) || ''; }
 
 function setHeaderModule(name, subtitle, exerciseId) {
   var header    = document.getElementById('appHeader');
@@ -19374,7 +19369,7 @@ function setHeaderModule(name, subtitle, exerciseId) {
 }
 
 // ─── Section-level header (tab hub or folder) ───
-function setHeaderSection(name, onBack) {
+function setHeaderSection(name, onBack, subKey) {
   var header    = document.getElementById('appHeader');
   var logo      = document.getElementById('appLogo');
   var logoArea  = document.getElementById('logoArea');
@@ -19399,16 +19394,9 @@ function setHeaderSection(name, onBack) {
       var len = name.length;
       logo.dataset.len = len >= 14 ? 'long' : len >= 9 ? 'medium' : 'short';
       logo.dataset.title = name;
-      var _subs = {
-        'TOOLS': 'pitch · harmony · rhythm · analysis',
-        'TRAIN': 'ear training · rhythm · exercises',
-        'EAR TRAINING': 'intervals · chords · sight singing',
-        'RHYTHM': 'tempo training · polyrhythm',
-        'PITCH & SOUND': 'piano · tonal center',
-        'HARMONY': 'chords · progressions · guitar charts',
-        'ANALYSIS': 'circle of fifths · volume · transposer · vocal range'
-      };
-      if (tagline) tagline.textContent = _subs[name] || '\u200b';
+      // Subtitle resolved from the explicit subKey passed in (translatable),
+      // falling back to a blank line if none provided.
+      if (tagline) tagline.textContent = (subKey ? (t(subKey) || '') : '') || '\u200b';
       if (header) header.classList.add('header--section');
       document.body.classList.add('in-section');
       if (onBack) document.body.classList.add('in-section-back');
@@ -19436,7 +19424,7 @@ function enterExercise(name) {
   sesEnter();
   sesTrackModule('e:' + name);
   // Swap app header to show module name
-  setHeaderModule(EXERCISE_NAMES[name] || name.toUpperCase(), EXERCISE_SUBS[name] || '', name);
+  setHeaderModule(EXERCISE_NAME(name), EXERCISE_SUB(name), name);
   // Hide the section-level hint so exercises start at the top of the viewport
   var th = document.querySelector('.train-only > .teach-hint');
   if (th) th.style.display = 'none';
@@ -19527,19 +19515,20 @@ function exitExercise() {
   document.getElementById('exChordle')?.classList.add('hidden');
   document.getElementById('exRhythmRead')?.classList.add('hidden');
   var showHub = function() {
-    var sectionName = 'TRAIN';
+    var sectionName = t('mode_train') || 'TRAIN';
+    var subKey = 'train_sub';
     var onBack = null;
     if (EAR_TRAINING_EXERCISES.includes(name)) {
       document.getElementById('earTrainingHub').classList.remove('hidden');
-      sectionName = 'EAR TRAINING'; onBack = exitEarTraining;
+      sectionName = t('folder_ear_title') || 'EAR TRAINING'; subKey = 'folder_ear_sub'; onBack = exitEarTraining;
     } else if (RHYTHM_EXERCISES.includes(name)) {
       document.getElementById('rhythmHub').classList.remove('hidden');
-      sectionName = 'RHYTHM'; onBack = exitRhythm;
+      sectionName = t('folder_rhythm_title') || 'RHYTHM'; subKey = 'folder_rhythm_sub'; onBack = exitRhythm;
     } else {
       document.getElementById('practiceHub')?.classList.remove('hidden');
     }
     // Only restore section header if still on practice tab (avoids overriding setMode on tab switch)
-    if (mode === 'practice') setHeaderSection(sectionName, onBack);
+    if (mode === 'practice') setHeaderSection(sectionName, onBack, subKey);
   };
   if (['chords','interval','singsing','chordle'].includes(name)) {
     showSessionSummary(name, showHub);
@@ -29865,6 +29854,17 @@ const STRINGS = {
     gtool_root_quality_help:'Root · Quality', tl_rnd:'● RANDOM',
     pr_hemiola:'hemiola', pr_use_3_2:'USE 3:2',
     tool_sg_title:'SURVIVAL GUIDE', tool_sg_sub:'theory · guitar · piano',
+    hsub_piano:'play & explore notes', hsub_tonal:'drone · scale · reference',
+    hsub_chords:'build & hear chord voicings', hsub_charts:'chords & scales · multi-instrument',
+    hsub_prog:'build chord progressions', hsub_drumkit:'step sequencer',
+    hsub_cof:'key relationships at a glance', hsub_volume:'decibel meter',
+    hsub_transpose:'shift any note or key', hsub_vocal:'find your range',
+    hsub_sg:'theory · guitar · piano',
+    hsub_interval:'identify the interval by ear', hsub_ex_chords:'identify chord quality by ear',
+    hsub_singsing:'hear it · sing it · mic grades you', hsub_scales:'hear · play · improvise',
+    hsub_tempo:'hold the beat when the click drops', hsub_tempoguess:'name the bpm',
+    hsub_poly:'feel two pulses at once', hsub_chordle:'pick a difficulty',
+    hsub_rhythmread:'see it · feel it · tap it',
     sg_tab_theory:'THEORY', sg_tab_guitar:'GUITAR', sg_tab_bass:'BASS', sg_tab_ukulele:'UKE', sg_tab_plucked:'PLUCKED', sg_tab_strings:'STRINGS', sg_tab_winds:'WINDS', sg_tab_brass:'BRASS', sg_tab_freereed:'FREE REED', sg_tab_piano:'PIANO', sg_tab_voice:'VOICE',
     sg_contents:'CONTENTS', sg_headstock:'HEADSTOCK', sg_try_pedals:'Try the Pedals',
     sg_model:'MODEL', sg_body:'BODY', sg_amp:'AMP', sg_tap_identify:'Tap any element to identify it.',
@@ -29991,6 +29991,7 @@ const STRINGS = {
     // Auto-detect / ref panel badges, ref_select_inst:'SELECT INSTRUMENT',
     // Tools hub
     tools_title:'TOOLS', tools_sub:'pitch · harmony · analysis — six utilities in three groups',
+    train_sub:'ear training · rhythm · exercises',
     // Tempo Guess
     ex_tguess_title:'TEMPO GUESS', ex_tguess_sub:'name the BPM by ear',
     tg_play_tempo:'▶ PLAY TEMPO', tg_lock_in:'✓ LOCK IN', tg_next_round:'▶ NEXT ROUND',
@@ -30080,6 +30081,7 @@ const STRINGS = {
     folder_harmony_subtitle:'chords · progressions · guitar',
     folder_rhythm_tools_title:'RHYTHM', folder_rhythm_tools_sub:'Drumkit sequencer',
     folder_analysis_title:'ANALYSIS & REFERENCE',
+    folder_analysis_hdr:'ANALYSIS',
     folder_analysis_sub:'Circle of Fifths · Volume · Transposer · Vocal Range',
     folder_analysis_subtitle:'circle of fifths · volume · transposer · vocal range',
     // Folder badges
@@ -30412,6 +30414,17 @@ const STRINGS = {
     gtool_root_quality_help:'Radice · Qualità', tl_rnd:'● CASUALE',
     pr_hemiola:'emiola', pr_use_3_2:'USA 3:2',
     tool_sg_title:'GUIDA RAPIDA', tool_sg_sub:'teoria · chitarra · pianoforte',
+    hsub_piano:'suona ed esplora le note', hsub_tonal:'bordone · scala · riferimento',
+    hsub_chords:'costruisci e ascolta accordi', hsub_charts:'accordi e scale · multi-strumento',
+    hsub_prog:'costruisci progressioni', hsub_drumkit:'sequencer a step',
+    hsub_cof:'relazioni tra tonalità', hsub_volume:'misuratore di decibel',
+    hsub_transpose:'trasponi note o tonalità', hsub_vocal:'trova la tua estensione',
+    hsub_sg:'teoria · chitarra · pianoforte',
+    hsub_interval:'riconosci l\'intervallo a orecchio', hsub_ex_chords:'riconosci la qualità dell\'accordo',
+    hsub_singsing:'ascolta · canta · il mic ti valuta', hsub_scales:'ascolta · suona · improvvisa',
+    hsub_tempo:'tieni il tempo quando il click sparisce', hsub_tempoguess:'indovina il bpm',
+    hsub_poly:'senti due pulsazioni insieme', hsub_chordle:'scegli una difficoltà',
+    hsub_rhythmread:'leggi · senti · tocca',
     sg_tab_theory:'TEORIA', sg_tab_guitar:'CHITARRA', sg_tab_bass:'BASSO', sg_tab_ukulele:'UKE', sg_tab_plucked:'PIZZICATO', sg_tab_strings:'ARCHI', sg_tab_winds:'LEGNI', sg_tab_brass:'OTTONI', sg_tab_freereed:'ANCIA LIB.', sg_tab_piano:'PIANOFORTE', sg_tab_voice:'VOCE',
     sg_contents:'CONTENUTI', sg_headstock:'PALETTA', sg_try_pedals:'Prova i Pedali',
     sg_model:'MODELLO', sg_body:'CORPO', sg_amp:'AMP', sg_tap_identify:'Tocca un elemento per identificarlo.',
@@ -30538,6 +30551,7 @@ const STRINGS = {
     // Auto-detect / ref panel badges, ref_select_inst:'SELEZIONA STRUMENTO',
     // Tools hub
     tools_title:'STRUMENTI', tools_sub:'intonazione · armonia · analisi — sei strumenti in tre gruppi',
+    train_sub:'allenamento orecchio · ritmo · esercizi',
     // Tempo Guess
     ex_tguess_title:'INDOVINA IL TEMPO', ex_tguess_sub:'indovina il BPM',
     tg_play_tempo:'▶ ASCOLTA IL TEMPO', tg_lock_in:'✓ INSERISCI', tg_next_round:'▶ PROSSIMO GIRO',
@@ -30627,6 +30641,7 @@ const STRINGS = {
     folder_harmony_subtitle:'accordi · progressioni · chitarra',
     folder_rhythm_tools_title:'RITMO', folder_rhythm_tools_sub:'Sequencer batteria',
     folder_analysis_title:'ANALISI & RIFERIMENTO',
+    folder_analysis_hdr:'ANALISI',
     folder_analysis_sub:'Cerchio delle Quinte · Volume · Trasposizione · Estensione Vocale',
     folder_analysis_subtitle:'cerchio delle quinte · volume · trasposizione · estensione vocale',
     // Folder badges
