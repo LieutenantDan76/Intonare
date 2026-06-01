@@ -1124,27 +1124,9 @@
     font-size: 7px; letter-spacing: 0; line-height: 1;
     opacity: 0.7; margin-top: 1px;
   }
-  /* near note — starts to glow as you approach */
-  .chroma-note.near {
-    color: color-mix(in srgb, var(--accent) 45%, transparent);
-    text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent);
-  }
-  /* active note — fully lit, glow bleeds around it */
-  .chroma-note.active {
-    color: var(--accent);
-    text-shadow:
-      0 0 6px var(--accent),
-      0 0 14px color-mix(in srgb, var(--accent) 60%, transparent),
-      0 0 28px color-mix(in srgb, var(--accent) 30%, transparent);
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    font-size: 14px;
-  }
-  .chroma-note.active .cn-oct {
-    opacity: 0.6;
-    text-shadow: 0 0 4px var(--accent);
-  }
+  /* near/active colors driven by JS inline styles for smooth sliding glow */
+  .chroma-note.active { font-size: 14px; }
+  .chroma-note.active .cn-oct { opacity: 0.6; }
 
   /* ── Note change pulse ── */
   @keyframes noteChangePop {
@@ -15351,13 +15333,43 @@ function buildChromaStrip() {
     d.textContent = getDisplayNote(n).replace('#', '♯'); strip.appendChild(d);
   });
 }
-function updateChromaStrip(noteIndex, oct) {
+function updateChromaStrip(noteIndex, oct, cents) {
+  // pitchPos is a continuous float: noteIndex ± cents/100
+  // e.g. 9.3 = A, 30 cents sharp (leaning toward A#)
+  const pitchPos = (noteIndex >= 0 && cents != null) ? noteIndex + cents / 100 : -99;
+
   NOTE_NAMES.forEach((_, i) => {
     const el = document.getElementById(`cn-${i}`); if (!el) return;
     const isActive = i === noteIndex;
     const isNear   = noteIndex >= 0 && (i === (noteIndex+1)%12 || i === (noteIndex+11)%12);
     el.className = 'chroma-note' + (isActive ? ' active' : isNear ? ' near' : '');
-    // Show octave on the active cell, clear on others
+
+    // Sliding glow — distance from continuous pitch position (wraps at 0/11)
+    if (noteIndex >= 0) {
+      let dist = Math.abs(i - pitchPos);
+      // Handle wrap (e.g. B→C boundary)
+      if (dist > 6) dist = 12 - dist;
+      dist = Math.min(dist, 2); // glow fades beyond 2 semitones
+      const glow = Math.max(0, 1 - dist / 1.6);
+
+      if (glow > 0.01) {
+        const alpha = (0.10 + glow * 0.90).toFixed(2);
+        const blur  = (glow * 18).toFixed(1);
+        const wide  = (glow * 32).toFixed(1);
+        el.style.color      = `rgba(94,226,255,${alpha})`;
+        el.style.textShadow = glow > 0.4
+          ? `0 0 ${blur}px rgba(94,226,255,${(glow*0.9).toFixed(2)}), 0 0 ${wide}px rgba(94,226,255,${(glow*0.35).toFixed(2)})`
+          : `0 0 ${blur}px rgba(94,226,255,${(glow*0.6).toFixed(2)})`;
+      } else {
+        el.style.color      = '';
+        el.style.textShadow = '';
+      }
+    } else {
+      el.style.color      = '';
+      el.style.textShadow = '';
+    }
+
+    // Octave on active cell
     let octEl = el.querySelector('.cn-oct');
     if (isActive && oct != null) {
       if (!octEl) { octEl = document.createElement('span'); octEl.className = 'cn-oct'; el.appendChild(octEl); }
@@ -16712,7 +16724,7 @@ function processAudio() {
         }
         // Cents meter + tooltip update every frame (stays live)
         updateTooltip(smoothedCents, true);
-        updateChromaStrip(noteInfo.idx, noteInfo.oct);
+        updateChromaStrip(noteInfo.idx, noteInfo.oct, smoothedCents);
         // Feed high-rate vibrato buffer (runs at animation frame rate, ~60fps)
         if (vibratoOn) vibratoFeed(smoothedCents);
         // Strobe — driven every animation frame for smooth rotation
@@ -16769,15 +16781,20 @@ function processAudio() {
 let _wasInTune = false;
 let _lastNoteKey = null;  // tracks note changes for pulse
 // Spring needle state
-let _needlePos  = 50;     // current position (%)
-let _needleVel  = 0;      // current velocity (%/frame)
-const SPRING_K  = 0.28;   // spring stiffness
-const SPRING_D  = 0.72;   // damping (< 1 = underdamped = overshoot)
-let _needleRAF  = null;
+let _needlePos  = 50;
+let _needleVel  = 0;
 let _needleTarget = 50;
+let _needleInTune = false;
+let _needleCents  = 0;
+let _needleRAF  = null;
+const SPRING_K  = 0.35;   // stiffness — snappier
+const SPRING_D  = 0.88;   // damping — light overshoot, settles fast
 
-function _springNeedle(target) {
+function _springNeedle(target, inTune, cents) {
   _needleTarget = target;
+  // Store color state for fill rendering
+  _needleInTune = inTune;
+  _needleCents  = cents;
   if (_needleRAF) return; // already running
   function step() {
     const force = (_needleTarget - _needlePos) * SPRING_K;
@@ -16785,7 +16802,24 @@ function _springNeedle(target) {
     _needlePos += _needleVel;
     const needle = document.getElementById('meterNeedle');
     if (needle) needle.style.left = _needlePos.toFixed(2) + '%';
-    // Stop when settled (velocity and error both tiny)
+    // Fill tracks needle position, not raw cents
+    const fill = document.getElementById('meterFill');
+    if (fill) {
+      const pos = _needlePos;
+      const it  = _needleInTune;
+      const col = it ? 'var(--in-tune)' : (_needleCents > 0 ? 'var(--sharp)' : 'var(--flat)');
+      if (pos >= 50) {
+        fill.style.left  = '50%';
+        fill.style.width = Math.min(48, (pos - 50)) + '%';
+      } else {
+        const w = Math.min(48, 50 - pos);
+        fill.style.left  = (50 - w) + '%';
+        fill.style.width = w + '%';
+      }
+      fill.style.background = col;
+      fill.style.color      = col;
+    }
+    // Stop when settled
     if (Math.abs(_needleVel) < 0.05 && Math.abs(_needleTarget - _needlePos) < 0.05) {
       _needlePos = _needleTarget;
       if (needle) needle.style.left = _needlePos + '%';
@@ -16920,21 +16954,8 @@ function updateNoteDisplay(note, freq) {
   const pct = Math.max(2, Math.min(98, 50 + (c/50)*50));
   const needle = document.getElementById('meterNeedle');
   if (!needle) return;
-  const fill   = document.getElementById('meterFill');
-  // Spring needle — feels like a physical meter
-  _springNeedle(pct);
-  if (c > 0) {
-    fill.style.left = '50%';
-    fill.style.width = Math.min(48, (c/50)*48) + '%';
-    fill.style.background = inTune ? 'var(--in-tune)' : 'var(--sharp)';
-    fill.style.color = inTune ? 'var(--in-tune)' : 'var(--sharp)';
-  } else {
-    const w = Math.min(48, (Math.abs(c)/50)*48);
-    fill.style.left = (50 - w) + '%';
-    fill.style.width = w + '%';
-    fill.style.background = inTune ? 'var(--in-tune)' : 'var(--flat)';
-    fill.style.color = inTune ? 'var(--in-tune)' : 'var(--flat)';
-  }
+  // Spring needle with fill tracking built in
+  _springNeedle(pct, inTune, c);
   nameEl.className = 'tuner-screen-note ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
   needle.className = 'meter-needle ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
 }
