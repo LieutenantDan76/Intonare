@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html lang="en" style="background:#04040c;color-scheme:dark">
 <head>
-<style>html,body{background:#04040c!important;transition:none!important}*{-webkit-tap-highlight-color:transparent}
+<style>html,body{background:#04040c!important;transition:none!important}
   /* ─── PM STREAK BLOCK ─── */
   .pm-streak-block {
     display: flex; align-items: baseline; justify-content: center;
@@ -185,7 +185,6 @@
   #dailyStreakToast.dt-reset .dt-flame-emoji { filter:grayscale(1); opacity:.45 }
   /* flame speed + size per tier */
   #dailyStreakToast.dt-t1 { --dt-flame:14px; --dt-spd:999s }
-  #dailyStreakToast.dt-t1 .daily-toast-pill { box-shadow:0 8px 28px rgba(0,0,0,.6),0 0 12px rgba(136,146,168,.25) }
   #dailyStreakToast.dt-t2 { --dt-flame:16px; --dt-spd:3.5s }
   #dailyStreakToast.dt-t3 { --dt-flame:18px; --dt-spd:2.8s }
   #dailyStreakToast.dt-t4 { --dt-flame:20px; --dt-spd:2.2s }
@@ -7384,7 +7383,6 @@
   }
 
     /* ─── MODE ACCENT LINE ─── */
-  /* Decorative bar — always present, dimmed */
   .mode-accent-line {
     position: absolute; bottom: 0; left: 0; right: 0;
     height: 2px;
@@ -10563,9 +10561,7 @@
 
   function removeSplash() {
     const el = document.getElementById('intonare-splash');
-    if (!el) return;
-    // Wipe already covers everything — just remove the element
-    if (el.parentNode) el.remove();
+    if (el) el.remove();
     if (window.Capacitor) {
       // Notification permission — doesn't need user gesture, fire immediately
       const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
@@ -10595,7 +10591,6 @@
     // ── Wave canvas ────────────────────────────────────────
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
-    // Dimensions declared as let — will be set after layout read in rAF
     let W = 0, H = 120;
 
     // ── Background canvas ──────────────────────────────────
@@ -10605,11 +10600,9 @@
     }
 
     function initCanvasSizes() {
-      // Re-read settled layout dimensions — don't touch CSS (keep width:100%/height:120px)
       W  = canvas.parentElement.clientWidth || window.innerWidth;
       BW = window.innerWidth;
       BH = window.innerHeight;
-      // Only update bitmap if dimensions changed
       if (canvas.width !== W * dpr || canvas.height !== H * dpr) {
         canvas.width  = W * dpr; canvas.height = H * dpr;
       }
@@ -10624,7 +10617,7 @@
 
     // ── State ──────────────────────────────────────────────
     let phase        = 0;
-    let phaseSpeed   = 0.20;      // starts fast, decelerates to cruise speed
+    let phaseSpeed   = 0.20;      // starts fast, decelerates to 0.045
     let targetSpeed  = 0.045;
     let amplitude    = 0;
     let targetAmp    = 28;
@@ -10877,11 +10870,10 @@
       }
       requestAnimationFrame(loop);
     }
-    // Delay loop start with setTimeout rather than rAF — on Capacitor WebView,
-    // rAF fires before native layout is complete. Even 80ms is enough.
+    // Delay loop start — setTimeout gives Capacitor WebView time to settle layout
     setTimeout(() => {
       initCanvasSizes();
-      drawWave(); // one silent frame at correct size
+      drawWave();
       requestAnimationFrame(loop);
     }, 80);
 
@@ -10924,7 +10916,7 @@
     await af(1200);
 
     // ── Exit: stop loop, fade everything together ──────────────────
-    running = false; // stop rAF loop before fading so canvas doesn't repaint during transition
+    running = false;
     const fadeOut = 'opacity 0.4s ease';
     if (logo)     { logo.style.transition     = fadeOut; logo.style.opacity     = '0'; }
     if (sub)      { sub.style.transition      = fadeOut; sub.style.opacity      = '0'; }
@@ -21151,6 +21143,7 @@ function progBuildPresetGrid() {
       grid.appendChild(card);
     });
   });
+
 }
 function progUpdatePresetLabel() {
   const el = document.getElementById('progPresetBtnLabel');
@@ -47707,7 +47700,7 @@ function sesResetTimer() {
     try { sesUpdate(); } catch(e) {}
     var bar  = document.getElementById('modeProgressBar');
     var deco = document.getElementById('modeAccentLine');
-    if (bar)  { bar.style.transition = ''; bar.style.width = '0%'; bar.style.opacity = '0'; bar.style.boxShadow = ''; }
+    if (bar)  { bar.className = 'mode-progress-bar'; bar.style.opacity = '0'; bar.style.width = '0%'; }
     if (deco) { deco.style.opacity = '0.6'; }
     var stamp = document.getElementById('sessionStamp');
     if (stamp) stamp.classList.remove('visible');
@@ -47736,6 +47729,8 @@ function sesCheckDay() {
     progState.sessionCompleted = false;
     progState.sesModulesVisited = [];
     _sesCompleted = false;
+    // If currently timing, restart the clock so elapsed time doesn't immediately restore
+    if (_sesActive) _sesStart = Date.now();
     progSave();
   }
 }
@@ -47804,20 +47799,14 @@ function sesAnimEnter() {
   _sesEnterT1 = setTimeout(() => {
     _sesEnterT1 = null;
     void bar.offsetWidth;
-
-    // Bar wipes in
     bar.classList.add('pb-entering');
     bar.style.opacity = '0.78';
     bar.style.width   = targetPct + '%';
-
-    // Glow tip tracks the bar's right edge in perfect sync
     if (glow) {
       glow.classList.add('pg-entering');
       glow.style.opacity = '1';
       glow.style.left    = targetPct + '%';
     }
-
-    // After landing: remove entering transitions, keep glow active
     _sesEnterT2 = setTimeout(() => {
       _sesEnterT2 = null;
       bar.classList.remove('pb-entering');
@@ -47844,7 +47833,6 @@ function sesAnimLeave() {
   const goalMs  = progState.sessionGoalMin * 60000;
   const fromPct = Math.min(100, Math.round(progState.sessionTodayMs / Math.max(1, goalMs) * 100));
 
-  // Snap bar and glow to current position, no transition
   bar.className     = 'mode-progress-bar';
   bar.style.width   = fromPct + '%';
   bar.style.opacity = '0.78';
@@ -47855,16 +47843,13 @@ function sesAnimLeave() {
   }
   void bar.offsetWidth;
 
-  // Reverse wipe — bar and glow retreat in sync, glow stays opaque until tip reaches 0
   bar.classList.add('pb-leaving');
   bar.style.width = '0%';
   if (glow) {
     glow.classList.add('pg-leaving');
     glow.style.left = '0%';
-    // keep opacity:1 — glow fades with the bar after wipe completes
   }
 
-  // After wipe: snap glow hidden, fade bar out, deco back in
   setTimeout(() => {
     bar.classList.remove('pb-leaving');
     bar.classList.add('pb-fade');
@@ -47873,8 +47858,6 @@ function sesAnimLeave() {
     if (deco) { deco.style.transition = 'opacity 0.3s ease'; deco.style.opacity = '0.6'; }
     setTimeout(() => {
       bar.className = 'mode-progress-bar';
-      bar.style.opacity = '0';
-      bar.style.width = '0%';
       if (deco) deco.style.transition = '';
     }, 320);
   }, 570);
@@ -47893,11 +47876,8 @@ function sesUpdate() {
   const pct     = Math.min(1, rawPct);
   const over    = rawPct > 1;
 
-  // Update bar: use full sesUpdateLine for completion detection, raw for normal ticks
+  // Update line
   sesUpdateLine(pct, over);
-  // Ensure bar is visible (enter animation may have set opacity; tick keeps it)
-  const bar = document.getElementById('modeProgressBar');
-  if (bar && bar.style.opacity !== '1') bar.style.opacity = '0.78';
 
   // Update stamp
   const elapsed = Math.floor(totalMs / 1000);
@@ -47934,14 +47914,7 @@ function sesUpdateLine(pct, over) {
     return;
   }
   const p = Math.min(100, Math.round(pct * 100));
-  const inModule = document.body.classList.contains('in-module');
-  // Never show progress bar outside a module
-  if (!inModule) {
-    bar.style.opacity = '0';
-    if (deco) deco.style.opacity = '0.6';
-    return;
-  }
-  const allowGreen = inModule;
+  const allowGreen = document.body.classList.contains('in-module');
   if (p >= 100) {
     const isGreen = over && allowGreen;
     bar.style.width      = '100%';
@@ -47949,9 +47922,9 @@ function sesUpdateLine(pct, over) {
     bar.style.background = isGreen
       ? 'linear-gradient(90deg, #b6f25b, #c8f571)'
       : 'linear-gradient(90deg, var(--theme-a), var(--theme-b))';
-    bar.style.boxShadow  = isGreen
-      ? '0 0 10px rgba(182,242,91,0.45)'
-      : '';
+    bar.style.boxShadow  = isGreen ? '0 0 10px rgba(182,242,91,0.45)' : '';
+    const glow = document.getElementById('modeProgressGlow');
+    if (glow && glow.classList.contains('pg-active')) glow.style.left = '100%';
     if (!_sesCompleted) {
       _sesCompleted = true;
       progState.sessionCompleted = true; progSave();
@@ -47970,7 +47943,6 @@ function sesUpdateLine(pct, over) {
     if (glow && glow.classList.contains('pg-active')) glow.style.left = p + '%';
   }
 }
-
 function sesHideStamp() {
   const stamp = document.getElementById('sessionStamp');
   if (stamp) stamp.classList.remove('visible');
@@ -48640,7 +48612,7 @@ document.addEventListener('DOMContentLoaded', () => {
   favUpdateBtn();
   favUpdatePins();
   sesCheckDay();
-  sesRefreshGoalChips(); // also shows/hides session-bar
+  sesRefreshGoalChips();
   rampBuildChips();
   // Restore _sesCompleted: if today\'s accumulated time already meets goal, don\'t fire again
   const _today = new Date().toISOString().slice(0,10);
