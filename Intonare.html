@@ -3172,6 +3172,12 @@
     margin-bottom: 4px;
     position: relative; z-index: 3;
   }
+  /* Readout group — fades as a unit on silence */
+  #tunerReadout {
+    transition: opacity 0.4s ease;
+  }
+  #tunerReadout.fading { opacity: 0; }
+
   .tuner-screen-freq {
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px; letter-spacing: 1.5px;
@@ -10777,6 +10783,9 @@
           <!-- strobe rings — absolute background layer, never affects layout -->
           <canvas id="strobeCanvas" class="strobe-canvas hidden"></canvas>
 
+          <!-- fadeable readout group: freq/cents row + note + octave -->
+          <div id="tunerReadout">
+
           <!-- top row: 3 fixed columns — freq | strobe | cents -->
           <div class="tuner-screen-top" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;position:relative;">
             <div class="tuner-screen-freq" style="justify-self:start;">
@@ -10797,6 +10806,8 @@
             <div class="tuner-screen-octave" id="octaveBadge">·</div>
             <div class="tuner-screen-label">OCT</div>
           </div>
+
+          </div><!-- /tunerReadout -->
 
           <!-- verdict tooltip -->
           <div class="tuner-screen-verdict" id="tooltipBar">
@@ -16981,8 +16992,10 @@ function getTransposedNote(noteName, oct) {
 function updateNoteDisplay(note, freq) {
   const c = note.cents, abs = Math.abs(c), inTune = abs < 5;
 
-  // Cancel any in-progress silent fade
+  // Cancel any in-progress silent fade and restore readout
   if (_silentFadeTimer) { clearTimeout(_silentFadeTimer); _silentFadeTimer = null; }
+  const readoutEl = document.getElementById('tunerReadout');
+  if (readoutEl) readoutEl.classList.remove('fading');
   const nameElEarly = document.getElementById('noteName');
   if (nameElEarly) nameElEarly.style.opacity = '';
 
@@ -17032,39 +17045,46 @@ function updateNoteDisplay(note, freq) {
 
 let _silentFadeTimer = null;
 function setNoteSilent() {
-  const nameEl = document.getElementById('noteName');
-  if (!nameEl) return;
-  // Cancel any in-progress fade
   if (_silentFadeTimer) { clearTimeout(_silentFadeTimer); _silentFadeTimer = null; }
-  if (!nameEl.classList.contains('silent')) {
-    // Fade to opacity 0, then snap to silent dash
-    nameEl.style.opacity = '0';
-    _silentFadeTimer = setTimeout(() => {
-      _silentFadeTimer = null;
-      nameEl.style.opacity = '';
-      nameEl.className = 'tuner-screen-note silent';
-      nameEl.textContent = '—';
-    }, 350);
-  } else {
-    nameEl.className = 'tuner-screen-note silent';
-    nameEl.textContent = '—';
+
+  const readout = document.getElementById('tunerReadout');
+  const nameEl  = document.getElementById('noteName');
+
+  // Cancel any fade if already silent
+  if (nameEl && nameEl.classList.contains('silent')) {
+    _applyNoteSilentState();
+    return;
   }
+
+  // Fade the whole readout group out
+  if (readout) readout.classList.add('fading');
+  _silentFadeTimer = setTimeout(() => {
+    _silentFadeTimer = null;
+    _applyNoteSilentState();
+    if (readout) readout.classList.remove('fading');
+  }, 420);
+}
+
+function _applyNoteSilentState() {
+  const nameEl = document.getElementById('noteName');
+  if (nameEl) { nameEl.className = 'tuner-screen-note silent'; nameEl.textContent = '—'; nameEl.style.opacity = ''; }
   document.getElementById('octaveBadge').textContent = '·';
   document.getElementById('freqDisplay').textContent = '—';
   const centsBadge = document.getElementById('tunerCentsBadge');
   if (centsBadge) { centsBadge.textContent = '0¢'; centsBadge.className = 'tuner-screen-cents-badge'; }
   const centsEl = document.getElementById('centsDisplay');
   if (centsEl) centsEl.textContent = '0¢';
-  // Reset needle to center
+  // Reset needle and state
   _needleSmoothed = 50;
   _lastNoteKey = null;
   _wasInTune = false;
   _tooltipCurCls = null;
   const si = document.querySelector('.tuner-screen-inner');
   if (si) si.classList.remove('in-tune-glow');
-  document.getElementById('meterNeedle').style.left = '50%';
-  document.getElementById('meterNeedle').className = 'meter-needle';
-  document.getElementById('meterFill').style.width = '0';
+  const needle = document.getElementById('meterNeedle');
+  if (needle) { needle.style.left = '50%'; needle.className = 'meter-needle'; }
+  const fill = document.getElementById('meterFill');
+  if (fill) fill.style.width = '0';
 }
 
 // ═══════════════════════════════════════════════
