@@ -17463,7 +17463,9 @@ async function startMic() {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     }
     micStream = stream;
-    audioCtx = getAudio();   // shared context; no longer per-mic
+    alert('getUserMedia succeeded, stream active=' + stream.active + ' tracks=' + stream.getTracks().length);
+    audioCtx = getAudio();
+    alert('audioCtx state=' + audioCtx.state);
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = 4096; analyser.smoothingTimeConstant = 0;
     micSource = audioCtx.createMediaStreamSource(micStream);
