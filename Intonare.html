@@ -10415,6 +10415,13 @@
   function removeSplash() {
     const el = document.getElementById('intonare-splash');
     if (el) el.remove();
+    // On Capacitor/Android, trigger the OS mic permission prompt early
+    // so the user isn't surprised when they first tap the mic button.
+    if (window.Capacitor && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(s => { s.getTracks().forEach(t => t.stop()); }) // immediately release
+        .catch(() => {}); // user denied or already granted — either way fine
+    }
   }
 
   async function runSplash() {
@@ -17406,7 +17413,6 @@ function _applyNoteSilentState() {
 // ═══════════════════════════════════════════════
 async function toggleMic() {
   hapticSelect();
-  alert('toggleMic called, isListening=' + isListening);
   if (isListening) {
     stopMic();
   } else {
@@ -17415,13 +17421,10 @@ async function toggleMic() {
       _mb.classList.add('listening');
       micTurnOnPulse(_mb);
     }
-    alert('calling startMic...');
     await startMic();
-    alert('startMic returned, isListening=' + isListening);
   }
 }
 async function startMic() {
-  alert('startMic started, mediaDevices=' + (navigator.mediaDevices ? 'yes' : 'NO') + ' getUserMedia=' + (navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 'yes' : 'NO'));
   try {
     // On Android WebView, AudioContext must be created and resumed within
     // a user gesture. Pre-create it here before getUserMedia so the WebView
@@ -17430,7 +17433,6 @@ async function startMic() {
     if (preCtx.state === 'suspended') {
       await preCtx.resume();
     }
-    alert('AudioContext state after resume: ' + preCtx.state);
 
     if (window.Capacitor) {
       try {
@@ -17458,13 +17460,10 @@ async function startMic() {
         }
       });
     } catch(constraintErr) {
-      alert('constraint attempt failed: ' + constraintErr.name + ' trying audio:true...');
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     }
     micStream = stream;
-    alert('getUserMedia succeeded, stream active=' + stream.active + ' tracks=' + stream.getTracks().length);
     audioCtx = getAudio();
-    alert('audioCtx state=' + audioCtx.state);
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = 4096; analyser.smoothingTimeConstant = 0;
     micSource = audioCtx.createMediaStreamSource(micStream);
@@ -17483,8 +17482,6 @@ async function startMic() {
     const micLbl = document.getElementById('micLabel');
     if (micLbl) micLbl.textContent = t('mic_denied');
     document.getElementById('statusText').textContent = t('mic_no_mic');
-    // DEBUG — remove after mic is working
-    alert('Mic error: ' + e.name + ': ' + e.message + '\nmediaDevices: ' + (navigator.mediaDevices ? 'exists' : 'MISSING') + '\nCapacitor: ' + (window.Capacitor ? 'yes' : 'no'));
   }
 }
 function stopMic() {
