@@ -7595,23 +7595,31 @@
   /* Drumkit has its own title block — redundant when app header takes over */
   body.in-module .dk-title-block { display: none !important; }
 
-  /* ── Per-name font sizes: each title uses the largest size that fits on a 360px screen ── */
-  /* All: white-space:nowrap, overflow:hidden, text-overflow:ellipsis as safety net */
-  .header--module #appLogo[data-len="medium"],
-  .header--module #appLogo[data-len="long"],
-  .header--section #appLogo[data-len="medium"],
-  .header--section #appLogo[data-len="long"] {
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
+  /* ── Length-based sizing — language-agnostic (data-len from text length) ──
+     short (<9): big single line.  medium (9-13): mid single line.
+     long (14+): readable size, wraps to 2 lines instead of shrinking tiny. */
+  .header--module #appLogo,
+  .header--section #appLogo {
+    line-height: 1.05;
   }
-  /* Module names */
-  /* Length-based sizing — works for any language (data-len set from text length).
-     short (<9 chars): big.  medium (9-13): mid.  long (14+): compact + ellipsis. */
   .header--module #appLogo[data-len="short"],
-  .header--section #appLogo[data-len="short"]  { font-size: clamp(30px, 8.5vw, 44px); letter-spacing: 2px; }
+  .header--section #appLogo[data-len="short"]  {
+    font-size: clamp(30px, 8.5vw, 44px); letter-spacing: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .header--module #appLogo[data-len="medium"],
-  .header--section #appLogo[data-len="medium"] { font-size: clamp(22px, 6.2vw, 32px); letter-spacing: 1.5px; }
+  .header--section #appLogo[data-len="medium"] {
+    font-size: clamp(24px, 6.8vw, 34px); letter-spacing: 1.5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* Long: keep a readable size and let it wrap to two lines */
   .header--module #appLogo[data-len="long"],
-  .header--section #appLogo[data-len="long"]   { font-size: clamp(15px, 4.6vw, 23px); letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+  .header--section #appLogo[data-len="long"]   {
+    font-size: clamp(21px, 6vw, 30px); letter-spacing: 1px;
+    white-space: normal; line-height: 1.0; text-align: left;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+    align-self: center;
+  }
 
   /* Bottom tab bar */
   .mode-toggle {
