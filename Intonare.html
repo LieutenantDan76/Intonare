@@ -17446,9 +17446,23 @@ async function startMic() {
       }
     }
 
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-    });
+    // On Android WebView, strict constraints (disabling echoCancellation etc)
+    // can cause NotReadableError. Try ideal:false instead of exact false,
+    // falling back to plain {audio:true} if that also fails.
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: { ideal: false },
+          noiseSuppression: { ideal: false },
+          autoGainControl: { ideal: false }
+        }
+      });
+    } catch(constraintErr) {
+      // Fall back to bare minimum — let the OS decide
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+    micStream = stream;
     audioCtx = getAudio();   // shared context; no longer per-mic
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = 4096; analyser.smoothingTimeConstant = 0;
