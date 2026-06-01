@@ -14386,7 +14386,7 @@ let smoothedFreq = 0;
 let smoothedCents = 0;          // EMA-smoothed cents for needle — kills bounce
 let _noteCandidate = null, _noteCandidateFrames = 0;
 let _detectCandidate = null, _detectCandidateFrames = 0;
-const NOTE_LOCK_FRAMES = 5; // frames a note must hold before display switches
+const NOTE_LOCK_FRAMES = 8; // frames a note must hold before display switches
 const DETECT_LOCK_FRAMES = 20; // frames auto-detect must agree before switching instrument
 
 // ── CUE VOLUME SCALING ───────────────────────────────────────────────────────
@@ -15606,7 +15606,7 @@ function updateStringPanel(freq, instrument) {
     const raw = 1200 * Math.log2(freq / tf);
     if (i === idx) {
       _stringCentsSmooth[i] = (_stringCentsSmooth[i] == null)
-        ? raw : _stringCentsSmooth[i] * 0.72 + raw * 0.28;
+        ? raw : _stringCentsSmooth[i] * 0.82 + raw * 0.18;
       const sc = _stringCentsSmooth[i];
       const inTune = Math.abs(sc) < 5;
       const playingCls = sr.classList.contains('playing') ? ' playing' : '';
@@ -16703,9 +16703,9 @@ function processAudio() {
 
       const noteInfo = freqToNote(smoothedFreq);
       if (noteInfo) {
-        // Smooth the cents value for the needle — kills the bounce from frame-to-frame jitter
+        // Smooth the cents value — matches needle alpha so they track together
         smoothedCents = smoothedCents === null ? noteInfo.cents
-          : smoothedCents * 0.72 + noteInfo.cents * 0.28;
+          : smoothedCents * 0.82 + noteInfo.cents * 0.18;
         const displayNote = { ...noteInfo, cents: smoothedCents };
 
         // Candidate lock: only switch displayed note after NOTE_LOCK_FRAMES consecutive agreement
@@ -16781,54 +16781,30 @@ function processAudio() {
 let _wasInTune = false;
 let _lastNoteKey = null;  // tracks note changes for pulse
 // Spring needle state
-let _needlePos  = 50;
-let _needleVel  = 0;
-let _needleTarget = 50;
-let _needleInTune = false;
-let _needleCents  = 0;
-let _needleRAF  = null;
-const SPRING_K  = 0.35;   // stiffness — snappier
-const SPRING_D  = 0.88;   // damping — light overshoot, settles fast
+let _needleSmoothed = 50;  // heavily smoothed needle position
+const NEEDLE_ALPHA  = 0.18; // EMA weight — low = heavy smoothing, glides to pitch
 
-function _springNeedle(target, inTune, cents) {
-  _needleTarget = target;
-  // Store color state for fill rendering
-  _needleInTune = inTune;
-  _needleCents  = cents;
-  if (_needleRAF) return; // already running
-  function step() {
-    const force = (_needleTarget - _needlePos) * SPRING_K;
-    _needleVel = _needleVel * SPRING_D + force;
-    _needlePos += _needleVel;
-    const needle = document.getElementById('meterNeedle');
-    if (needle) needle.style.left = _needlePos.toFixed(2) + '%';
-    // Fill tracks needle position, not raw cents
-    const fill = document.getElementById('meterFill');
-    if (fill) {
-      const pos = _needlePos;
-      const it  = _needleInTune;
-      const col = it ? 'var(--in-tune)' : (_needleCents > 0 ? 'var(--sharp)' : 'var(--flat)');
-      if (pos >= 50) {
-        fill.style.left  = '50%';
-        fill.style.width = Math.min(48, (pos - 50)) + '%';
-      } else {
-        const w = Math.min(48, 50 - pos);
-        fill.style.left  = (50 - w) + '%';
-        fill.style.width = w + '%';
-      }
-      fill.style.background = col;
-      fill.style.color      = col;
-    }
-    // Stop when settled
-    if (Math.abs(_needleVel) < 0.05 && Math.abs(_needleTarget - _needlePos) < 0.05) {
-      _needlePos = _needleTarget;
-      if (needle) needle.style.left = _needlePos + '%';
-      _needleRAF = null;
+function _updateNeedle(targetPct, inTune, cents) {
+  _needleSmoothed = _needleSmoothed * (1 - NEEDLE_ALPHA) + targetPct * NEEDLE_ALPHA;
+  const pos = _needleSmoothed;
+
+  const needle = document.getElementById('meterNeedle');
+  if (needle) needle.style.left = pos.toFixed(2) + '%';
+
+  const fill = document.getElementById('meterFill');
+  if (fill) {
+    const col = inTune ? 'var(--in-tune)' : (cents > 0 ? 'var(--sharp)' : 'var(--flat)');
+    if (pos >= 50) {
+      fill.style.left  = '50%';
+      fill.style.width = Math.min(48, pos - 50) + '%';
     } else {
-      _needleRAF = requestAnimationFrame(step);
+      const w = Math.min(48, 50 - pos);
+      fill.style.left  = (50 - w) + '%';
+      fill.style.width = w + '%';
     }
+    fill.style.background = col;
+    fill.style.color      = col;
   }
-  _needleRAF = requestAnimationFrame(step);
 }
 // ═══════════════════════════════════════════════
 // TUNER TRANSPOSE MODE
@@ -16954,8 +16930,7 @@ function updateNoteDisplay(note, freq) {
   const pct = Math.max(2, Math.min(98, 50 + (c/50)*50));
   const needle = document.getElementById('meterNeedle');
   if (!needle) return;
-  // Spring needle with fill tracking built in
-  _springNeedle(pct, inTune, c);
+  _updateNeedle(pct, inTune, c);
   nameEl.className = 'tuner-screen-note ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
   needle.className = 'meter-needle ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
 }
@@ -16969,9 +16944,8 @@ function setNoteSilent() {
   if (centsBadge) { centsBadge.textContent = '0¢'; centsBadge.className = 'tuner-screen-cents-badge'; }
   const centsEl = document.getElementById('centsDisplay');
   if (centsEl) centsEl.textContent = '0¢';
-  // Reset spring needle to center
-  if (_needleRAF) { cancelAnimationFrame(_needleRAF); _needleRAF = null; }
-  _needlePos = 50; _needleVel = 0; _needleTarget = 50;
+  // Reset needle to center
+  _needleSmoothed = 50;
   _lastNoteKey = null;
   document.getElementById('meterNeedle').style.left = '50%';
   document.getElementById('meterNeedle').className = 'meter-needle';
