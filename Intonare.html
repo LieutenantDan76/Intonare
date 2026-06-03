@@ -11041,7 +11041,7 @@
      Palette follows app tab order: Tuner (cyan) → Metro (yellow) → Tools (emerald) → Train (purple)
 ──────────────────────────────────────────────────────────────────────────── -->
 <style>
-  #splash-logo, #splash-sub, #splash-tag, #splash-canvas, #splash-bg {
+  #splash-logo, #splash-sub, #splash-tag {
     transition: opacity 0.4s ease !important;
   }
 </style>
@@ -11481,58 +11481,41 @@
       // to prevent a stray full-amplitude frame before amplitude=0 is set
     });
 
-    // ── Sequence ────────────────────────────────────────────────────────
+    // ── Sequence ──────────────────────────────────────────────────
 
-    // ── Phase 1: ambient glow seeps in (C gravitas) ─────
-    // No wave yet. Run a minimal bg-only loop so the radial
-    // breathes without any wave canvas content appearing.
+    // Pure black while layout settles — OLED contrast is the look
+    amplitude    = 0;
     targetAmp    = 0;
-    amplitude    = 0;
-    targetSpeed  = 0.03;
-    targetColorT = 0.06;
-
-    await af(200); // give startWhenStable time to fire and set up canvas sizes
-
-    let glowRunning = true;
-    ;(function glowLoop() {
-      if (!glowRunning) return;
-      colorT  += (targetColorT - colorT) * 0.010;
-      bgPulse += 0.010;
-      if (bgCtx) {
-        bgCtx.clearRect(0, 0, BW, BH);
-        const rgb = paletteRGB(colorT);
-        const cx = BW / 2, cy = BH * 0.42;
-        const pulse = 0.5 + 0.5 * Math.sin(bgPulse);
-        const g1 = bgCtx.createRadialGradient(cx, cy, 0, cx, cy, BW * 0.65);
-        g1.addColorStop(0,   `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${0.05 * pulse})`);
-        g1.addColorStop(0.5, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${0.015 * pulse})`);
-        g1.addColorStop(1,   'rgba(0,0,0,0)');
-        bgCtx.fillStyle = g1; bgCtx.fillRect(0, 0, BW, BH);
-      }
-      ctx.clearRect(0, 0, W, H); // wave canvas stays blank
-      requestAnimationFrame(glowLoop);
-    })();
-    await af(500); // glow breathes for ~500ms before wave enters
-    glowRunning = false;
-    await af(16);
-
-    // ── Phase 2: wave rises from flat (original approach + gravitas) ──
-    // Amplitude eases up from zero — the full wave is always present but
-    // starts imperceptibly small and swells into view. No seam, no join.
-    // Fire two shockwaves when the wave crests to mark the moment.
-    amplitude    = 0;
-    targetAmp    = 26;
-    targetColorT = 0.18;
+    targetColorT = 0;
     caberration  = 1.0;
     targetCA     = 0.0;
     phaseSpeed   = 0.08;
     targetSpeed  = 0.045;
+
+    await af(200); // give startWhenStable time to fire
+
+    // ── Wave fades in on opacity while amplitude rises ───────────
+    // Both canvas elements start at 0 opacity so the CA aberration
+    // lines don’t pop — everything materialises together.
+    if (canvas)   canvas.style.opacity   = '0';
+    if (bgCanvas) bgCanvas.style.opacity = '0';
+    const wFade = 'opacity 0.55s ease';
+    if (canvas)   canvas.style.transition   = wFade;
+    if (bgCanvas) bgCanvas.style.transition = wFade;
+
+    amplitude    = 0;
+    targetAmp    = 26;
+    targetColorT = 0.18;
     running      = true;
     requestAnimationFrame(loop);
 
-    // Wait for amplitude to visibly crest, then fire shockwaves
-    await af(420);
-    targetColorT = 0.33;
+    await af(40); // one tick so loop has drawn a frame before we show it
+    if (canvas)   canvas.style.opacity   = '1';
+    if (bgCanvas) bgCanvas.style.opacity = '1';
+
+    // Wait for wave to crest then fire shockwaves
+    await af(460);
+    targetColorT   = 0.33;
     targetLogoGlow = 1.0;
     {
       const rgb = paletteRGB(colorT);
@@ -11543,22 +11526,27 @@
       }, 160);
     }
 
-    // ── Phase 4: logo fades in (C's gravitas timing) ──────
-    await af(80);
+    // ── All text arrives as one overlapping group ───────────────
+    // Logo leads, sub and tag follow within the same breath via
+    // CSS transition-delay so it reads as one motion, not three loads.
+    await af(120);
     if (logo) {
-      logo.style.transition = 'opacity .85s ease, transform .9s cubic-bezier(.16,1,.3,1)';
+      logo.style.transition = 'opacity .9s ease, transform 1.0s cubic-bezier(.16,1,.3,1)';
       logo.style.opacity    = '1';
       logo.style.transform  = 'translateY(0)';
     }
-
-    await af(450);
-    if (sub) { sub.style.transition = 'opacity .6s ease'; sub.style.opacity = '1'; }
+    if (sub) {
+      sub.style.transition  = 'opacity .7s ease 0.18s';
+      sub.style.opacity     = '1';
+    }
+    if (tag) {
+      tag.style.transition  = 'opacity .6s ease 0.32s';
+      tag.style.opacity     = '.75';
+    }
     targetColorT = 0.66;
 
-    await af(400);
-    if (tag) { tag.style.transition = 'opacity .5s ease'; tag.style.opacity = '.75'; }
+    await af(600);
     targetColorT = 1.0;
-
     await af(700);
     targetAmp   = 0;
     targetSpeed = 0.028;
