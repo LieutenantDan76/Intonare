@@ -40,6 +40,9 @@ copy /Y colors.xml android\app\src\main\res\values\colors.xml
 echo [4f] Restoring app icons...
 xcopy /E /Y /I icon_res android\app\src\main\res
 
+echo [4g] Patching build.gradle proguard reference...
+powershell -Command "(Get-Content android\app\build.gradle) -replace 'proguard-android\.txt', 'proguard-android-optimize.txt' | Set-Content android\app\build.gradle"
+
 echo [5/6] Copying to Android assets + verifying...
 copy /Y www\index.html android\app\src\main\assets\public\index.html
 findstr "cueSelect_correct" android\app\src\main\assets\public\index.html

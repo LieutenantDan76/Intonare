@@ -54044,6 +54044,8 @@ function mqCheckPackCleared(packId) {
   return MQ.seenQ[packId].size >= total;
 }
 function mqCheckAllCleared() {
+  // Online categories (bands, musicals, videogames) are not in PACKS — skip the check
+  if ([...MQ.selectedPacks].some(function(p) { return !PACKS[p]; })) return false;
   // Check all selected packs are fully cleared
   return [...MQ.selectedPacks].every(function(p) { return mqCheckPackCleared(p); });
 }

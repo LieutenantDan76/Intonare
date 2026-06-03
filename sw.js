@@ -1,13 +1,13 @@
-// Sonoro Service Worker
+// Intonare Service Worker
 // Strategy: cache-first, update in background
 // Bump CACHE_NAME version any time you deploy a major update
 
-const CACHE_NAME = 'sonoro-v1';
+const CACHE_NAME = 'intonare-v1';
 
 // Files to precache on install
 const PRECACHE = [
   './',
-  './Sonoro.html',
+  './Intonare.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
