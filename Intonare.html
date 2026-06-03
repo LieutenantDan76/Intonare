@@ -890,27 +890,85 @@
   .mq-ans-btn.correct .mq-ans-letter { background: var(--in-tune); border-color: var(--in-tune); color: var(--bg-0); }
   .mq-ans-btn.wrong   .mq-ans-letter { background: var(--sharp);   border-color: var(--sharp);   color: #fff; }
   .mq-ans-btn.reveal  .mq-ans-letter { border-color: color-mix(in srgb,var(--in-tune) 30%,var(--border)); }
-  .mq-feedback {
-    background: var(--panel); border: 1px solid var(--border-soft);
-    border-radius: var(--r-md); padding: 11px 13px;
-    display: flex; align-items: flex-start; gap: 10px;
-    opacity: 0; transform: translateY(5px); transition: all .2s ease; pointer-events: none;
+  /* ── Feedback sheet (replaces inline strip) ── */
+  .mq-fb-sheet-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    z-index: 2070; opacity: 0; pointer-events: none; transition: opacity .2s;
   }
-  .mq-feedback.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
-  .mq-feedback.correct-fb { border-color: color-mix(in srgb,var(--in-tune) 38%,transparent); }
-  .mq-feedback.wrong-fb   { border-color: color-mix(in srgb,var(--sharp) 38%,transparent); }
-  .mq-fb-icon  { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
-  .mq-fb-body  { flex: 1; }
-  .mq-fb-title { font-family:'JetBrains Mono',monospace; font-size: 10px; font-weight: 700; letter-spacing: .5px; }
-  .correct-fb .mq-fb-title { color: var(--in-tune); }
-  .wrong-fb   .mq-fb-title { color: var(--sharp); }
-  .mq-fb-fact  { font-family:'JetBrains Mono',monospace; font-size: 9px; color: var(--muted); margin-top: 3px; letter-spacing: .3px; line-height: 1.6; }
+  .mq-fb-sheet-overlay.active { opacity: 1; pointer-events: auto; }
+  .mq-fb-sheet {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg-1); border-radius: 22px 22px 0 0;
+    padding: 20px 16px calc(28px + env(safe-area-inset-bottom));
+    z-index: 2071; transform: translateY(100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+  }
+  .mq-fb-sheet-overlay.active .mq-fb-sheet { transform: translateY(0); }
+  .mq-fb-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+  .mq-fb-verdict {
+    display: flex; align-items: center; gap: 11px; margin-bottom: 16px;
+  }
+  .mq-fb-verdict-icon {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 20px; font-weight: 700;
+  }
+  .mq-fb-sheet.correct-fb .mq-fb-verdict-icon {
+    background: color-mix(in srgb,var(--in-tune) 14%,var(--surface));
+    color: var(--in-tune);
+  }
+  .mq-fb-sheet.wrong-fb .mq-fb-verdict-icon {
+    background: color-mix(in srgb,var(--sharp) 14%,var(--surface));
+    color: var(--sharp);
+  }
+  .mq-fb-verdict-text {}
+  .mq-fb-verdict-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; line-height: 1;
+  }
+  .mq-fb-sheet.correct-fb .mq-fb-verdict-title { color: var(--in-tune); }
+  .mq-fb-sheet.wrong-fb   .mq-fb-verdict-title { color: var(--sharp); }
+  .mq-fb-verdict-sub {
+    font-family: 'JetBrains Mono', monospace; font-size: 8.5px;
+    letter-spacing: .5px; color: var(--muted); margin-top: 3px;
+  }
+  .mq-fb-answer-block {
+    background: var(--surface); border-radius: var(--r-md);
+    padding: 11px 13px; margin-bottom: 12px;
+    border: 1px solid var(--border-soft);
+  }
+  .mq-fb-answer-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 7.5px;
+    letter-spacing: 2px; color: var(--muted); margin-bottom: 5px;
+  }
+  .mq-fb-answer-text {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text); line-height: 1.4; letter-spacing: .2px;
+  }
+  .mq-fb-answer-block.correct-ans {
+    border-color: color-mix(in srgb,var(--in-tune) 35%,transparent);
+    background: color-mix(in srgb,var(--in-tune) 6%,var(--surface));
+  }
+  .mq-fb-answer-block.correct-ans .mq-fb-answer-text { color: var(--in-tune); }
+  .mq-fb-fact-block {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--text-dim); line-height: 1.65; letter-spacing: .2px;
+    padding: 10px 13px; background: var(--surface);
+    border-radius: var(--r-md); border: 1px solid var(--border-soft);
+    margin-bottom: 16px;
+  }
+  .mq-fb-fact-label {
+    font-size: 7.5px; letter-spacing: 2px; color: var(--muted); margin-bottom: 5px;
+  }
   .mq-fb-next {
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm);
-    color: var(--text-dim); font-family:'JetBrains Mono',monospace; font-size: 8px; letter-spacing: 1.5px;
-    padding: 7px 10px; cursor: pointer; flex-shrink: 0; transition: all .12s;
+    width: 100%; padding: 15px;
+    background: linear-gradient(135deg, color-mix(in srgb,var(--accent-soft) 13%,var(--surface)), color-mix(in srgb,var(--accent) 7%,var(--surface)));
+    border: 1px solid color-mix(in srgb,var(--accent-soft) 42%,transparent);
+    border-radius: var(--r-md); color: var(--text);
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px;
+    cursor: pointer; transition: all .15s;
   }
-  .mq-fb-next:hover { color: var(--text); border-color: var(--text-dim); }
+  .mq-fb-next:hover { border-color: color-mix(in srgb,var(--accent-soft) 70%,transparent); }
+  .mq-fb-next:active { transform: scale(.985); }
 
   /* ── Results screen ── */
   .mq-results-ring { width: 105px; height: 105px; margin: 0 auto; position: relative; }
@@ -51942,14 +52000,31 @@ window.sgExit = function() {
             <div class="mq-qtext" id="mqQText"></div>
           </div>
           <div class="mq-answers" id="mqAnswersWrap"></div>
-          <div class="mq-feedback" id="mqFeedback" style="display:none">
-            <div class="mq-fb-icon" id="mqFbIcon">✓</div>
-            <div class="mq-fb-body">
-              <div class="mq-fb-title" id="mqFbTitle"></div>
-              <div class="mq-fb-fact" id="mqFbFact"></div>
+          <div class="mq-feedback" id="mqFeedback" style="display:none"></div>
+        </div>
+
+        <!-- Feedback bottom sheet -->
+        <div class="mq-fb-sheet-overlay" id="mqFbSheetOverlay">
+          <div class="mq-fb-sheet" id="mqFbSheet">
+            <div class="mq-fb-handle"></div>
+            <div class="mq-fb-verdict">
+              <div class="mq-fb-verdict-icon" id="mqFbIcon">✓</div>
+              <div class="mq-fb-verdict-text">
+                <div class="mq-fb-verdict-title" id="mqFbTitle"></div>
+                <div class="mq-fb-verdict-sub" id="mqFbSub"></div>
+              </div>
+            </div>
+            <div class="mq-fb-answer-block correct-ans" id="mqFbCorrectBlock">
+              <div class="mq-fb-answer-label">CORRECT ANSWER</div>
+              <div class="mq-fb-answer-text" id="mqFbCorrectText"></div>
+            </div>
+            <div class="mq-fb-fact-block" id="mqFbFactBlock" style="display:none">
+              <div class="mq-fb-fact-label">DID YOU KNOW</div>
+              <div id="mqFbFact"></div>
             </div>
             <button class="mq-fb-next" id="mqFbNextBtn">NEXT →</button>
           </div>
+        </div>
         </div>
 
         <!-- WIN STATE -->
@@ -53583,7 +53658,8 @@ async function mqRunOnlineFetch(catId, mode) {
   var count = mode === 'survival' ? 50 : 20;
   var qs = [];
   try {
-    var url = 'https://opentdb.com/api.php?amount=' + count + '&category=' + catCfg.catId + '&type=multiple&encode=url3986';
+    var diff = MQ.diff || 'medium';
+    var url = 'https://opentdb.com/api.php?amount=' + count + '&category=' + catCfg.catId + '&type=multiple&encode=url3986&difficulty=' + diff;
     var resp = await fetch(url);
     var data = await resp.json();
     if (data.response_code === 0 && data.results) {
@@ -54107,7 +54183,8 @@ function mqRenderQ() {
     wrap.appendChild(btn);
   });
   var fb = document.getElementById('mqFeedback');
-  fb.className='mq-feedback'; fb.style.display='none';
+  if (fb) { fb.style.display='none'; }
+  mqHideFeedbackSheet();
   var chip = document.getElementById('mqStreakChip');
   chip.className = MQ.streak>=2 ? 'mq-streak-chip' : 'mq-streak-chip hidden';
   document.getElementById('mqStreakNum').textContent = MQ.streak;
@@ -54115,8 +54192,6 @@ function mqRenderQ() {
   var barWrap = document.getElementById('mqTimerBarWrap');
   if (MQ.timed) { timerEl.style.display='block'; barWrap.style.display='block'; mqStartTimer(); }
   else          { timerEl.style.display='none';  barWrap.style.display='none'; }
-  document.getElementById('mqFbNextBtn').textContent='NEXT \u2192';
-  document.getElementById('mqFbNextBtn').onclick=mqNextQ;
 }
 function mqUpdateHearts() {
   for (var i=1;i<=3;i++) {
@@ -54163,10 +54238,8 @@ function mqAnswer(idx) {
       MQ.lives--;
       mqUpdateHearts();
       if (MQ.lives<=0) {
-        mqShowFeedback(false,q);
-        document.getElementById('mqFbNextBtn').textContent='RESULTS \u2192';
-        document.getElementById('mqFbNextBtn').onclick=mqShowResults;
         document.getElementById('mqScoreDisp').textContent=MQ.score+' pts';
+        mqShowFeedback(false, q, true);
         return;
       }
     }
@@ -54177,31 +54250,65 @@ function mqAnswer(idx) {
   document.getElementById('mqStreakNum').textContent=MQ.streak;
   mqShowFeedback(correct,q);
 }
-function mqShowFeedback(correct,q) {
-  var fb=document.getElementById('mqFeedback');
-  fb.style.display='flex';
-  fb.className='mq-feedback '+(correct?'correct-fb':'wrong-fb');
-  document.getElementById('mqFbIcon').textContent=correct?'\u2713':'\u2717';
-  document.getElementById('mqFbTitle').textContent=correct
-    ?['Correct!','Nice one!','Got it!','Right!'][Math.floor(Math.random()*4)]
-    :['Nope.','Not quite.','Wrong answer.','Not this time.'][Math.floor(Math.random()*4)];
-  // Show the FULL correct answer text in the fact area (so trimming doesn't lose info)
-  var fullCorrect = q.opts[q.ans] || '';
+function mqShowFeedback(correct, q, isLastLife) {
+  var overlay      = document.getElementById('mqFbSheetOverlay');
+  var sheet        = document.getElementById('mqFbSheet');
+  var icon         = document.getElementById('mqFbIcon');
+  var title        = document.getElementById('mqFbTitle');
+  var sub          = document.getElementById('mqFbSub');
+  var correctBlock = document.getElementById('mqFbCorrectBlock');
+  var correctText  = document.getElementById('mqFbCorrectText');
+  var factBlock    = document.getElementById('mqFbFactBlock');
+  var factEl       = document.getElementById('mqFbFact');
+  var nextBtn      = document.getElementById('mqFbNextBtn');
+
+  sheet.className = 'mq-fb-sheet ' + (correct ? 'correct-fb' : 'wrong-fb');
+  icon.textContent  = correct ? '\u2713' : '\u2717';
+  title.textContent = correct
+    ? ['Correct!','Nice one!','Got it!','Right!'][Math.floor(Math.random()*4)]
+    : ['Nope.','Not quite.','Wrong answer.','Not this time.'][Math.floor(Math.random()*4)];
+
+  // Correct answer block — only show on wrong answers
+  var correctAnswerText = q.opts[q.ans] || '';
+  correctText.textContent = correctAnswerText;
+  if (correct) {
+    correctBlock.style.display = 'none';
+    sub.textContent = '';
+  } else {
+    correctBlock.style.display = 'block';
+    sub.textContent = 'The correct answer was:';
+  }
+
+  // Fact block
   var factText = q.fact || '';
-  document.getElementById('mqFbFact').textContent = factText;
-  setTimeout(function(){fb.classList.add('visible');},10);
+  if (factText) {
+    factEl.textContent = factText;
+    factBlock.style.display = 'block';
+  } else {
+    factBlock.style.display = 'none';
+  }
+
+  // Next button
+  if (isLastLife) {
+    nextBtn.textContent = 'RESULTS \u2192';
+    nextBtn.onclick = function() { mqHideFeedbackSheet(); mqShowResults(); };
+  } else {
+    nextBtn.textContent = 'NEXT \u2192';
+    nextBtn.onclick = mqNextQ;
+  }
+
+  overlay.classList.add('active');
+}
+function mqHideFeedbackSheet() {
+  document.getElementById('mqFbSheetOverlay').classList.remove('active');
 }
 function mqNextQ() {
+  mqHideFeedbackSheet();
   MQ.current++;
   // Check win state (cleared all questions in selected packs)
   if (MQ.mode !== 'survival' && mqCheckAllCleared()) { mqShowWin(); return; }
-  if (MQ.current>=MQ.qCount) { mqShowResults(); return; }
-  if (MQ.current>=MQ.questions.length) { mqShuffle(MQ.questions); MQ.current=0; }
-  var fb=document.getElementById('mqFeedback');
-  fb.className='mq-feedback';
-  setTimeout(function(){ fb.style.display='none'; },180);
-  document.getElementById('mqFbNextBtn').textContent='NEXT \u2192';
-  document.getElementById('mqFbNextBtn').onclick=mqNextQ;
+  if (MQ.current >= MQ.qCount) { mqShowResults(); return; }
+  if (MQ.current >= MQ.questions.length) { mqShuffle(MQ.questions); MQ.current = 0; }
   mqRenderQ();
 }
 function mqQuitQuiz() {
