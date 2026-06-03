@@ -11460,14 +11460,37 @@
       }
       requestAnimationFrame(loop);
     }
-    // Delay loop start — setTimeout gives Capacitor WebView time to settle layout
-    // (safe area insets, status/nav bar). Pin positions here so innerHeight is stable.
-    setTimeout(() => {
+    // Wait for viewport to stabilise before pinning positions and starting the loop.
+    // A fixed timeout is a guess — instead we watch visualViewport for resize events
+    // and wait until it hasn't changed for 2 frames. Falls back to 200ms if
+    // visualViewport isn't available (older WebViews). All elements are opacity:0
+    // so nothing is visible while we wait.
+    function startWhenStable(cb) {
+      if (!window.visualViewport) { setTimeout(cb, 200); return; }
+      let lastH = window.visualViewport.height;
+      let stableFrames = 0;
+      const needed = 3; // 3 consecutive stable frames (~50ms at 60fps)
+      const maxWait = setTimeout(cb, 500); // hard cap — never wait more than 500ms
+      function check() {
+        const h = window.visualViewport.height;
+        if (h === lastH) {
+          stableFrames++;
+          if (stableFrames >= needed) { clearTimeout(maxWait); cb(); return; }
+        } else {
+          stableFrames = 0;
+          lastH = h;
+        }
+        requestAnimationFrame(check);
+      }
+      requestAnimationFrame(check);
+    }
+
+    startWhenStable(() => {
       pinSplashPositions();
       initCanvasSizes();
       drawWave();
       requestAnimationFrame(loop);
-    }, 150);
+    });
 
     // ── Sequence ──────────────────────────────────────────
     await af(300);
