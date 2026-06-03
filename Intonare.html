@@ -11165,13 +11165,18 @@
     if (!canvas) return;
 
     // Lock all splash elements to fixed pixel positions captured NOW —
-    // before any permission popup or viewport resize can shift live calc() values
-    const half = window.innerHeight / 2;
-    const canvasWrap = document.getElementById('splash-canvas-wrap');
-    if (canvasWrap) canvasWrap.style.top = (half - 130) + 'px';
-    if (logo)        logo.style.top      = (half - 10)  + 'px';
-    if (sub)         sub.style.top       = (half + 52)  + 'px';
-    if (tag)         tag.style.top       = (half + 78)  + 'px';
+    // before any permission popup or viewport resize can shift live calc() values.
+    // Called inside the settle timeout so Capacitor WebView has finished its
+    // own layout pass (safe area insets, status bar, nav bar) before we snapshot.
+    // All elements are opacity:0 at this point so there's nothing visible to snap.
+    function pinSplashPositions() {
+      const half = window.innerHeight / 2;
+      const canvasWrap = document.getElementById('splash-canvas-wrap');
+      if (canvasWrap) canvasWrap.style.top = (half - 130) + 'px';
+      if (logo)        logo.style.top      = (half - 10)  + 'px';
+      if (sub)         sub.style.top       = (half + 52)  + 'px';
+      if (tag)         tag.style.top       = (half + 78)  + 'px';
+    }
 
     // ── Wave canvas ────────────────────────────────────────
     const ctx = canvas.getContext('2d');
@@ -11456,11 +11461,13 @@
       requestAnimationFrame(loop);
     }
     // Delay loop start — setTimeout gives Capacitor WebView time to settle layout
+    // (safe area insets, status/nav bar). Pin positions here so innerHeight is stable.
     setTimeout(() => {
+      pinSplashPositions();
       initCanvasSizes();
       drawWave();
       requestAnimationFrame(loop);
-    }, 80);
+    }, 150);
 
     // ── Sequence ──────────────────────────────────────────
     await af(300);
