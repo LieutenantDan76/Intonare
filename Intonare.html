@@ -11050,6 +11050,7 @@
   background:#04040c;
   overflow:hidden;
   font-family:'JetBrains Mono',monospace;
+  opacity:1;
 ">
   <!-- Background radial glow — colour-matched to wave, animated via JS -->
   <canvas id="splash-bg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
@@ -11093,19 +11094,7 @@
     opacity:0;
   ">tuner · metro · practice</div>
   <!-- Scanline wipe element — bright leading edge -->
-  <div id="splash-wipe" style="
-    position:absolute;inset:0;
-    background:#04040c;
-    transform:scaleY(0);transform-origin:top;
-    pointer-events:none;
-  ">
-    <div id="splash-wipe-line" style="
-      position:absolute;bottom:0;left:0;right:0;
-      height:2px;
-      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);
-      opacity:0;
-    "></div>
-  </div>
+  <!-- splash-wipe removed: exit is now a full overlay dissolve -->
 </div>
 
 <script>
@@ -11160,8 +11149,8 @@
     const logo    = document.getElementById('splash-logo');
     const sub     = document.getElementById('splash-sub');
     const tag     = document.getElementById('splash-tag');
-    const wipe    = document.getElementById('splash-wipe');
-    const wipeLine= document.getElementById('splash-wipe-line');
+    const wipe    = null;  // removed — exit is now a full overlay dissolve
+    const wipeLine= null;
     if (!canvas) return;
 
     // Lock all splash elements to fixed pixel positions captured NOW —
@@ -11488,57 +11477,102 @@
     startWhenStable(() => {
       pinSplashPositions();
       initCanvasSizes();
-      drawWave();
-      requestAnimationFrame(loop);
+      // Don't call drawWave or start loop here — sequence drives startup
+      // to prevent a stray full-amplitude frame before amplitude=0 is set
     });
 
-    // ── Sequence ──────────────────────────────────────────
-    await af(300);
-    targetColorT = 0.08;
+    // ── Sequence ────────────────────────────────────────────────────────
 
-    await af(350);
+    // ── Phase 1: ambient glow seeps in (C gravitas) ─────
+    // No wave yet. Run a minimal bg-only loop so the radial
+    // breathes without any wave canvas content appearing.
+    targetAmp    = 0;
+    amplitude    = 0;
+    targetSpeed  = 0.03;
+    targetColorT = 0.06;
+
+    await af(200); // give startWhenStable time to fire and set up canvas sizes
+
+    let glowRunning = true;
+    ;(function glowLoop() {
+      if (!glowRunning) return;
+      colorT  += (targetColorT - colorT) * 0.010;
+      bgPulse += 0.010;
+      if (bgCtx) {
+        bgCtx.clearRect(0, 0, BW, BH);
+        const rgb = paletteRGB(colorT);
+        const cx = BW / 2, cy = BH * 0.42;
+        const pulse = 0.5 + 0.5 * Math.sin(bgPulse);
+        const g1 = bgCtx.createRadialGradient(cx, cy, 0, cx, cy, BW * 0.65);
+        g1.addColorStop(0,   `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${0.05 * pulse})`);
+        g1.addColorStop(0.5, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${0.015 * pulse})`);
+        g1.addColorStop(1,   'rgba(0,0,0,0)');
+        bgCtx.fillStyle = g1; bgCtx.fillRect(0, 0, BW, BH);
+      }
+      ctx.clearRect(0, 0, W, H); // wave canvas stays blank
+      requestAnimationFrame(glowLoop);
+    })();
+    await af(500); // glow breathes for ~500ms before wave enters
+    glowRunning = false;
+    await af(16);
+
+    // ── Phase 2: wave rises from flat (original approach + gravitas) ──
+    // Amplitude eases up from zero — the full wave is always present but
+    // starts imperceptibly small and swells into view. No seam, no join.
+    // Fire two shockwaves when the wave crests to mark the moment.
+    amplitude    = 0;
+    targetAmp    = 26;
+    targetColorT = 0.18;
+    caberration  = 1.0;
+    targetCA     = 0.0;
+    phaseSpeed   = 0.08;
+    targetSpeed  = 0.045;
+    running      = true;
+    requestAnimationFrame(loop);
+
+    // Wait for amplitude to visibly crest, then fire shockwaves
+    await af(420);
+    targetColorT = 0.33;
+    targetLogoGlow = 1.0;
+    {
+      const rgb = paletteRGB(colorT);
+      shockwaves.push({ radius: 8, speed: 14, alpha: 1.0, r: rgb[0], g: rgb[1], b: rgb[2] });
+      setTimeout(() => {
+        const rgb2 = paletteRGB(colorT);
+        shockwaves.push({ radius: 8, speed: 9, alpha: 0.55, r: rgb2[0], g: rgb2[1], b: rgb2[2] });
+      }, 160);
+    }
+
+    // ── Phase 4: logo fades in (C's gravitas timing) ──────
+    await af(80);
     if (logo) {
-      logo.style.transition = 'opacity .7s ease, transform .7s cubic-bezier(.2,0,0,1)';
+      logo.style.transition = 'opacity .85s ease, transform .9s cubic-bezier(.16,1,.3,1)';
       logo.style.opacity    = '1';
       logo.style.transform  = 'translateY(0)';
     }
-    targetColorT   = 0.33;
-    targetCA       = 0.0;   // begin the long CA fade — visibly clears by tagline
-    targetLogoGlow = 1.0;   // logo backlight fades in with the wordmark
 
-    // Fire two shockwaves: one immediate, one slightly delayed for a double-pulse
-    {
-      const rgb = paletteRGB(colorT);
-      shockwaves.push({ radius: 10, speed: 14, alpha: 1.0, r: rgb[0], g: rgb[1], b: rgb[2] });
-      setTimeout(() => {
-        const rgb2 = paletteRGB(colorT);
-        shockwaves.push({ radius: 10, speed: 9, alpha: 0.6, r: rgb2[0], g: rgb2[1], b: rgb2[2] });
-      }, 180);
-    }
-
-    await af(400);
-    if (sub) { sub.style.transition = 'opacity .5s ease'; sub.style.opacity = '1'; }
+    await af(450);
+    if (sub) { sub.style.transition = 'opacity .6s ease'; sub.style.opacity = '1'; }
     targetColorT = 0.66;
 
-    await af(500);
-    if (tag) { tag.style.transition = 'opacity .4s ease'; tag.style.opacity = '.75'; }
+    await af(400);
+    if (tag) { tag.style.transition = 'opacity .5s ease'; tag.style.opacity = '.75'; }
     targetColorT = 1.0;
 
     await af(700);
     targetAmp   = 0;
-    targetSpeed = 0.028;  // settle to near-still as wave damps out
+    targetSpeed = 0.028;
 
-    await af(1200);
+    await af(1500);
 
-    // ── Exit: stop loop, fade everything together ──────────────────
+    // ── Exit: full splash dissolve into the app ────────────
+    // Fade the entire splash overlay — app is already rendered behind it.
     running = false;
-    const fadeOut = 'opacity 0.4s ease';
-    if (logo)     { logo.style.transition     = fadeOut; logo.style.opacity     = '0'; }
-    if (sub)      { sub.style.transition      = fadeOut; sub.style.opacity      = '0'; }
-    if (tag)      { tag.style.transition      = fadeOut; tag.style.opacity      = '0'; }
-    if (canvas)   { canvas.style.transition   = fadeOut; canvas.style.opacity   = '0'; }
-    if (bgCanvas) { bgCanvas.style.transition = fadeOut; bgCanvas.style.opacity = '0'; }
-    await af(420);
+    if (splash) {
+      splash.style.transition = 'opacity 1.0s cubic-bezier(.4,0,.2,1)';
+      splash.style.opacity = '0';
+    }
+    await af(1050);
     removeSplash();
   }
 
