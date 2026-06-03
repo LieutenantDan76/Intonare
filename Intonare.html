@@ -548,7 +548,7 @@
   #mqPanel {
     flex: 1; display: flex; flex-direction: column;
     background: var(--bg-0);
-    overflow: hidden;
+    min-height: 0;
     padding-bottom: calc(env(safe-area-inset-bottom));
   }
 
@@ -11061,13 +11061,12 @@
   <div style="position:absolute;inset:0;pointer-events:none;
     background:radial-gradient(ellipse at center, transparent 40%, rgba(2,2,10,0.82) 100%)">
   </div>
-  <div style="position:absolute;left:0;right:0;top:calc(50% - 130px);">
+  <div id="splash-canvas-wrap" style="position:absolute;left:0;right:0;">
     <canvas id="splash-canvas" style="width:100%;height:120px"></canvas>
   </div>
   <div id="splash-logo" style="
     position:absolute;
     left:0;right:0;
-    top:calc(50% - 10px);
     text-align:center;
     font-family:'Fraunces',serif;
     font-style:italic; font-weight:300;
@@ -11080,7 +11079,6 @@
   <div id="splash-sub" style="
     position:absolute;
     left:0;right:0;
-    top:calc(50% + 52px);
     text-align:center;
     font-size:10px;letter-spacing:0.35em;text-indent:0.35em;
     color:#6a6c85;text-transform:uppercase;
@@ -11089,7 +11087,6 @@
   <div id="splash-tag" style="
     position:absolute;
     left:0;right:0;
-    top:calc(50% + 78px);
     text-align:center;
     font-size:9px;letter-spacing:0.2em;
     color:rgba(94,226,255,.5);text-transform:uppercase;
@@ -11166,6 +11163,15 @@
     const wipe    = document.getElementById('splash-wipe');
     const wipeLine= document.getElementById('splash-wipe-line');
     if (!canvas) return;
+
+    // Lock all splash elements to fixed pixel positions captured NOW —
+    // before any permission popup or viewport resize can shift live calc() values
+    const half = window.innerHeight / 2;
+    const canvasWrap = document.getElementById('splash-canvas-wrap');
+    if (canvasWrap) canvasWrap.style.top = (half - 130) + 'px';
+    if (logo)        logo.style.top      = (half - 10)  + 'px';
+    if (sub)         sub.style.top       = (half + 52)  + 'px';
+    if (tag)         tag.style.top       = (half + 78)  + 'px';
 
     // ── Wave canvas ────────────────────────────────────────
     const ctx = canvas.getContext('2d');
@@ -54279,9 +54285,10 @@ function mqShowFeedback(correct, q, isLastLife) {
     sub.textContent = 'The correct answer was:';
   }
 
-  // Fact block
+  // Fact block — suppress for TDB questions (fact is just a source URL, not real content)
   var factText = q.fact || '';
-  if (factText) {
+  var isTdbFact = factText.indexOf('opentdb.com') !== -1;
+  if (factText && !isTdbFact) {
     factEl.textContent = factText;
     factBlock.style.display = 'block';
   } else {
