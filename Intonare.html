@@ -3782,6 +3782,8 @@
     border-radius: 6px;
     padding: 22px 18px 22px;
     position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    height: 226px;
     box-shadow:
       inset 0  2px 10px rgba(0,0,0,0.9),
       inset 0 -1px  5px rgba(0,0,0,0.5),
@@ -3821,7 +3823,7 @@
 
   /* top row inside screen: ref-tone indicator left, cents value right */
   .tuner-screen-top {
-    display: flex; align-items: center; justify-content: space-between;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
     margin-bottom: 4px;
     position: relative; z-index: 3;
   }
@@ -3974,26 +3976,19 @@
   }
   /* strobe is a background layer — no layout changes needed */
 
-  /* strobe active: hide meter/verdict/octave but preserve screen height */
+  /* strobe active: fade out meter/verdict/octave, keep them in flow so height never changes */
   body.strobe-active .tuner-screen-unit-row,
   body.strobe-active .tuner-screen-verdict,
   body.strobe-active .tuner-screen-meter    { opacity: 0; pointer-events: none; visibility: hidden; }
   .tuner-screen-unit-row, .tuner-screen-verdict, .tuner-screen-meter { transition: opacity 0.3s ease; }
 
-  /* strobe active: lock inner height so removing those elements doesn't shrink the screen */
-  body.strobe-active .tuner-screen-inner { min-height: 230px; }
-
-  /* strobe active: note stays in flow (no absolute), just resized and left-aligned */
+  /* strobe active: note resized and left-aligned, stays in flow */
   body.strobe-active .tuner-screen-note {
     font-size: 72px;
     text-align: left;
     margin: 0;
   }
   /* STROBE button: fixed left in top row, not pushed by cents — handled inline */
-  .tuner-screen-top {
-    position: relative; /* anchor for absolute strobe btn */
-  }
-
   /* ── housing below screen: ref tone + strobe/vibrato toggles ── */
   .tuner-housing-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -4268,8 +4263,7 @@
 
   /* top row inside screen: freq left, strobe ghost btn centre-ish, cents badge right */
   .tuner-screen-top {
-    display: flex; align-items: center; justify-content: space-between;
-    height: 16px; overflow: visible;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
     margin-bottom: 4px;
     position: relative; z-index: 3;
   }
@@ -11764,7 +11758,7 @@
           <div id="tunerReadout">
 
           <!-- top row: 3 fixed columns — freq | strobe | cents -->
-          <div class="tuner-screen-top" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;position:relative;">
+          <div class="tuner-screen-top" style="position:relative;">
             <div class="tuner-screen-freq" style="justify-self:start;">
               <span data-i18n="tuner_freq_label">FREQ</span>&nbsp;<span id="freqDisplay">—</span>&nbsp;Hz
             </div>
