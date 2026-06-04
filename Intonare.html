@@ -3780,10 +3780,10 @@
   .tuner-screen-inner {
     background: #010408;
     border-radius: 6px;
-    padding: 22px 18px 22px;
+    padding: 18px 18px 28px;
     position: relative; overflow: hidden;
     display: flex; flex-direction: column;
-    height: 232px;
+    height: 238px;
     box-shadow:
       inset 0  2px 10px rgba(0,0,0,0.9),
       inset 0 -1px  5px rgba(0,0,0,0.5),
@@ -3987,7 +3987,7 @@
     font-size: 72px;
     text-align: left;
     margin: 0;
-    transform: translateY(28px);
+    transform: translateY(38px);
   }
   .tuner-screen-note { transition: filter 0.2s, opacity 0.35s ease, transform 0.3s ease, font-size 0.3s ease; }
   /* STROBE button: fixed left in top row, not pushed by cents — handled inline */
@@ -4275,15 +4275,30 @@
     border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
     border-radius: 4px;
     cursor: pointer;
-    padding: 5px 10px;
+    padding: 3px 8px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
     color: color-mix(in srgb, var(--accent) 55%, transparent);
     transition: all 0.2s;
-    position: relative; z-index: 3;
+    position: relative; z-index: 6;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     user-select: none; -webkit-user-select: none;
+  }
+  /* invisible tap extender — favours upward/sideways, stays clear of the note below */
+  .tuner-strobe-btn::before {
+    content: '';
+    position: absolute;
+    inset: -14px -22px -6px;
+  }
+  /* Display-only screen elements never capture touches — only the strobe button does.
+     The note's full-width box was overlapping the button and stealing taps. */
+  .tuner-screen-note,
+  .tuner-screen-freq,
+  .tuner-screen-cents-badge,
+  .tuner-screen-unit-row,
+  .tuner-screen-verdict {
+    pointer-events: none;
   }
   .tuner-strobe-btn:hover {
     color: var(--accent);
@@ -23259,11 +23274,12 @@ function drawStrobe(cents, inTune, hasSignal) {
   const ctx = canvas.getContext('2d');
   const strobeActive = document.body.classList.contains('strobe-active');
   // Ring centre: shift right in strobe mode so left-aligned note has clean space
+  // Also shift down slightly so wheel fills the lower portion of the screen
   const cx = strobeActive ? W * 0.62 : W / 2;
-  const cy = H / 2;
-  // Cap radius so outermost ring clears the 28px top row + 8px margin
-  const maxR = strobeActive ? Math.min(cx, cy - 36) : Math.min(cx, cy);
-  const R = maxR * 0.94;
+  const cy = strobeActive ? H * 0.56 : H / 2;
+  // Cap radius so outermost ring has breathing room
+  const maxR = strobeActive ? Math.min(W * 0.62 - 8, H * 0.56 - 36) : Math.min(cx, cy);
+  const R = maxR * 0.97;
 
   // Phase drift — speed proportional to cents deviation
   if (hasSignal) strobePhase += cents * 0.003;
