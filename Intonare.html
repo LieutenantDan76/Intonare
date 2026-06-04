@@ -3974,22 +3974,19 @@
   }
   /* strobe is a background layer — no layout changes needed */
 
-  /* Lock screen height — content determines size, padding provides breathing room */
-
-  /* strobe active: fade out meter+verdict+octave — they stay in flow (height preserved) */
+  /* strobe active: hide meter/verdict/octave but preserve screen height */
   body.strobe-active .tuner-screen-unit-row,
   body.strobe-active .tuner-screen-verdict,
-  body.strobe-active .tuner-screen-meter    { opacity: 0; pointer-events: none; }
+  body.strobe-active .tuner-screen-meter    { opacity: 0; pointer-events: none; visibility: hidden; }
   .tuner-screen-unit-row, .tuner-screen-verdict, .tuner-screen-meter { transition: opacity 0.3s ease; }
 
-  /* strobe active: note absolutely centered in the screen, left-aligned */
+  /* strobe active: lock inner height so removing those elements doesn't shrink the screen */
+  body.strobe-active .tuner-screen-inner { min-height: 230px; }
+
+  /* strobe active: note stays in flow (no absolute), just resized and left-aligned */
   body.strobe-active .tuner-screen-note {
-    position: absolute;
-    left: 18px;
-    top: 50%; transform: translateY(-50%);
     font-size: 72px;
     text-align: left;
-    z-index: 3;
     margin: 0;
   }
   /* STROBE button: fixed left in top row, not pushed by cents — handled inline */
@@ -4287,6 +4284,7 @@
     color: color-mix(in srgb, var(--accent) 55%, transparent);
     transition: all 0.2s;
     position: relative; z-index: 3;
+    touch-action: manipulation;
   }
   .tuner-strobe-btn:hover {
     color: var(--accent);
@@ -9726,13 +9724,46 @@
   width: 36px; height: 4px; border-radius: 2px;
   background: var(--border); margin: 4px auto 14px; opacity: 0.6;
 }
-.cs-picker-family { margin-bottom: 14px; }
-.cs-picker-fam-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px; letter-spacing: 2px; color: var(--text-dim);
-  text-transform: uppercase; margin-bottom: 7px;
+/* Split-pane instrument picker */
+.cs-picker-body {
+  display: flex; height: 220px;
+  border-top: 1px solid var(--border-soft);
+  margin: 6px -16px -20px; overflow: hidden;
 }
-.cs-picker-inst-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.cs-picker-families {
+  width: 36%; min-width: 88px; max-width: 110px;
+  border-right: 1px solid var(--border-soft);
+  display: flex; flex-direction: column;
+  background: var(--surface); overflow-y: auto; scrollbar-width: none;
+  padding: 4px 0;
+}
+.cs-picker-families::-webkit-scrollbar { display: none; }
+.cs-picker-fam-tab {
+  width: 100%; text-align: left; background: transparent; border: none;
+  border-left: 2px solid transparent;
+  padding: 8px 6px 8px 10px;
+  display: flex; align-items: center; gap: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px; letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--muted); cursor: pointer; transition: all 0.12s; line-height: 1.3;
+}
+.cs-picker-fam-tab:hover { color: var(--text-dim); background: rgba(255,255,255,0.02); }
+.cs-picker-fam-tab.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: linear-gradient(90deg, rgba(94,226,255,0.06), transparent);
+}
+.cs-fam-emoji { font-size: 13px; line-height: 1; display:inline-flex; align-items:center; flex-shrink:0; }
+.cs-picker-panels { flex: 1; overflow-y: auto; scrollbar-width: none; padding: 8px 10px; }
+.cs-picker-panels::-webkit-scrollbar { display: none; }
+.cs-picker-panel { display: none; }
+.cs-picker-panel.active { display: block; }
+.cs-picker-panel .cs-picker-inst-row { display: none; } /* legacy rows unused in grid mode */
+.cs-picker-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-content: start; }
+.cs-picker-panel .cs-picker-inst {
+  width: 100%; margin: 0; box-sizing: border-box;
+  text-align: center; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
 .cs-picker-subfam {
   font-family: 'JetBrains Mono', monospace;
   font-size: 7px; letter-spacing: 1.5px; color: var(--muted);
@@ -9834,17 +9865,20 @@
 /* ── TRUMPET full-overview fingering chart ── */
 .trp-full-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-  gap: 5px; padding: 2px 0 4px;
+  grid-template-columns: repeat(auto-fill, minmax(54px, 1fr));
+  gap: 6px; padding: 2px 0 4px;
+}
+.trp-full-grid.ww-wide {
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
 }
 .trp-full-grid.harp-mode {
   display: block; /* harmonica gets full width, not a grid */
 }
 .trp-full-note {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
-  flex-shrink: 0; cursor: pointer;
+  flex-shrink: 0; cursor: pointer; overflow: hidden;
   background: var(--panel); border: 1px solid var(--border-soft);
-  border-radius: 8px; padding: 7px 7px 5px; min-width: 42px;
+  border-radius: 8px; padding: 6px 4px 4px; min-width: 42px;
   transition: all 0.15s;
 }
 .trp-full-note:hover { border-color: var(--border); background: var(--surface); }
@@ -11617,6 +11651,7 @@
     // ── Exit: full splash dissolve into the app ────────────
     running = false;
     if (splash) {
+      splash.style.pointerEvents = 'none'; // release touches the moment dissolve begins
       splash.style.transition = 'opacity 1.3s cubic-bezier(.4,0,.2,1)';
       splash.style.opacity = '0';
     }
@@ -11736,7 +11771,10 @@
             <div class="tools-only hidden" style="position:absolute;left:50%;transform:translateX(-50%);z-index:3;">
               <span style="font-size:9px;letter-spacing:1.5px;color:color-mix(in srgb,var(--accent) 30%,transparent);font-family:'JetBrains Mono',monospace;">→ REF <span class="freq-target" id="refDisplay" style="color:color-mix(in srgb,var(--accent-warm) 70%,transparent)">—</span> Hz</span>
             </div>
-            <button class="tuner-strobe-btn" id="strobeToggle" onclick="toggleStrobe()" title="Toggle strobe meter" data-i18n="tuner_strobe" style="justify-self:center;">STROBE</button>
+            <!-- tap-wrapper: negative margin expands hit area without shifting the grid column -->
+            <div onclick="toggleStrobe()" style="justify-self:center;padding:10px 18px;margin:-10px -18px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;z-index:3;">
+              <button class="tuner-strobe-btn" id="strobeToggle" title="Toggle strobe meter" data-i18n="tuner_strobe" style="pointer-events:none;">STROBE</button>
+            </div>
             <div class="tuner-screen-cents-badge" id="tunerCentsBadge" style="justify-self:end;">0¢</div>
           </div>
 
@@ -13006,56 +13044,52 @@
   <div class="cs-picker-scrim hidden" id="csPickerScrim" onclick="closeInstPicker()"></div>
   <div class="cs-picker-sheet hidden" id="csPickerSheet">
     <div class="cs-picker-handle"></div>
-    <div class="cs-picker-family">
-      <div class="cs-picker-fam-label" data-i18n="cs_fam_fretted">🎸 FRETTED</div>
-      <div class="cs-picker-inst-row">
-        <button class="cs-picker-inst active" data-inst="guitar" onclick="pickInst('guitar')" data-i18n="cs_inst_guitar">GUITAR</button>
-        <button class="cs-picker-inst" data-inst="bass" onclick="pickInst('bass')" data-i18n="cs_inst_bass">BASS</button>
-        <button class="cs-picker-inst" data-inst="uke" onclick="pickInst('uke')" data-i18n="cs_inst_uke">UKE</button>
-        <button class="cs-picker-inst" data-inst="mandolin" onclick="pickInst('mandolin')" data-i18n="cs_inst_mandolin">MANDOLIN</button>
-        <button class="cs-picker-inst" data-inst="banjo" onclick="pickInst('banjo')" data-i18n="cs_inst_banjo">BANJO</button>
+    <div class="cs-picker-body">
+      <div class="cs-picker-families" id="csPickerFamTabs">
+        <button class="cs-picker-fam-tab active" data-fam="fretted"   onclick="csPickerSelectFamily('fretted')">Fretted</button>
+        <button class="cs-picker-fam-tab"         data-fam="chromperc" onclick="csPickerSelectFamily('chromperc')">Chrom.</button>
+        <button class="cs-picker-fam-tab"         data-fam="brass"     onclick="csPickerSelectFamily('brass')">Brass</button>
+        <button class="cs-picker-fam-tab"         data-fam="woodwind"  onclick="csPickerSelectFamily('woodwind')">Woodwind</button>
+        <button class="cs-picker-fam-tab"         data-fam="freereed"  onclick="csPickerSelectFamily('freereed')">Free Reed</button>
       </div>
-    </div>
-    <div class="cs-picker-family">
-      <div class="cs-picker-fam-label" data-i18n="cs_fam_keys">🎹 KEYS</div>
-      <div class="cs-picker-inst-row">
-        <button class="cs-picker-inst" data-inst="piano" onclick="pickInst('piano')" data-i18n="cs_inst_piano">PIANO</button>
-      </div>
-    </div>
-    <div class="cs-picker-family">
-      <div class="cs-picker-fam-label" data-i18n="cs_fam_brass">🎺 BRASS</div>
-      <div class="cs-picker-inst-row">
-        <button class="cs-picker-inst" data-inst="trumpet" onclick="pickInst('trumpet')" data-i18n="cs_inst_trumpet">TRUMPET</button>
-            <button class="cs-picker-inst" data-inst="flugelhorn" onclick="pickInst('flugelhorn')" data-i18n="cs_inst_flugelhorn">FLUGELHORN</button>
-            <button class="cs-picker-inst" data-inst="euphonium"  onclick="pickInst('euphonium')" data-i18n="cs_inst_euphonium">EUPHONIUM</button>
-        <button class="cs-picker-inst" data-inst="frenchhorn" onclick="pickInst('frenchhorn')" data-i18n="cs_inst_frenchhorn">FRENCH HORN</button>
-        <button class="cs-picker-inst" data-inst="tuba" onclick="pickInst('tuba')" data-i18n="cs_inst_tuba">TUBA</button>
-        <button class="cs-picker-inst" data-inst="trombone" onclick="pickInst('trombone')" data-i18n="cs_inst_trombone">TROMBONE</button>
-      </div>
-    </div>
-    <div class="cs-picker-family">
-      <div class="cs-picker-fam-label" data-i18n="cs_fam_woodwind">🪈 WOODWIND</div>
-      <div class="cs-picker-inst-row">
-        <button class="cs-picker-inst" data-inst="ww_flute" onclick="pickInst('ww_flute')" data-i18n="cs_inst_flute">FLUTE</button>
-            <button class="cs-picker-inst" data-inst="ww_altoflute" onclick="pickInst('ww_altoflute')" data-i18n="cs_inst_altoflute">ALTO FLUTE</button>
-        <button class="cs-picker-inst" data-inst="ww_oboe" onclick="pickInst('ww_oboe')" data-i18n="cs_inst_oboe">OBOE</button>
-            <button class="cs-picker-inst" data-inst="ww_coranglais" onclick="pickInst('ww_coranglais')" data-i18n="cs_inst_coranglais">COR ANGLAIS</button>
-        <button class="cs-picker-inst" data-inst="ww_clarinet" onclick="pickInst('ww_clarinet')" data-i18n="cs_inst_clarinet">CLARINET</button>
-            <button class="cs-picker-inst" data-inst="ww_bassclarinet" onclick="pickInst('ww_bassclarinet')" data-i18n="cs_inst_bassclarinet">BASS CLARINET</button>
-        <button class="cs-picker-inst" data-inst="ww_sax" onclick="pickInst('ww_sax')" data-i18n="cs_inst_sax">SAX</button>
-        <button class="cs-picker-inst" data-inst="ww_recorder" onclick="pickInst('ww_recorder')" data-i18n="cs_inst_recorder">RECORDER</button>
-        <button class="cs-picker-inst" data-inst="ww_whistle" onclick="pickInst('ww_whistle')" data-i18n="cs_inst_whistle">TIN WHISTLE</button>
-        <button class="cs-picker-inst" data-inst="ww_bassoon" onclick="pickInst('ww_bassoon')" data-i18n="cs_inst_bassoon">BASSOON</button>
-        <button class="cs-picker-inst" data-inst="ww_piccolo" onclick="pickInst('ww_piccolo')" data-i18n="cs_inst_piccolo">PICCOLO</button>
-        <button class="cs-picker-inst" data-inst="ww_bassoon" onclick="pickInst('ww_bassoon')" data-i18n="cs_inst_bassoon">BASSOON</button>
-        <button class="cs-picker-inst" data-inst="ww_piccolo" onclick="pickInst('ww_piccolo')" data-i18n="cs_inst_piccolo">PICCOLO</button>
-      </div>
-    </div>
-    <div class="cs-picker-family">
-      <div class="cs-picker-fam-label" data-i18n="cs_fam_freereed">🎵 FREE REED</div>
-      <div class="cs-picker-inst-row">
-        <button class="cs-picker-inst" data-inst="harmonica" onclick="pickInst('harmonica')" data-i18n="cs_inst_harmonica">HARMONICA</button>
-            <button class="cs-picker-inst" data-inst="didgeridoo" onclick="pickInst('didgeridoo')" data-i18n="cs_inst_didgeridoo">DIDGERIDOO</button>
+      <div class="cs-picker-panels" id="csPickerPanels">
+        <div class="cs-picker-panel active" id="csPanelFretted" data-fam="fretted">
+          <button class="cs-picker-inst active" data-inst="guitar"   onclick="pickInst('guitar')">GUITAR</button>
+          <button class="cs-picker-inst" data-inst="bass"     onclick="pickInst('bass')">BASS</button>
+          <button class="cs-picker-inst" data-inst="uke"      onclick="pickInst('uke')">UKE</button>
+          <button class="cs-picker-inst" data-inst="mandolin" onclick="pickInst('mandolin')">MANDOLIN</button>
+          <button class="cs-picker-inst" data-inst="banjo"    onclick="pickInst('banjo')">BANJO</button>
+        </div>
+        <div class="cs-picker-panel" id="csPanelChromperc" data-fam="chromperc">
+          <button class="cs-picker-inst" data-inst="piano" onclick="pickInst('piano')">PIANO</button>
+          <button class="cs-picker-inst" data-inst="harp"  onclick="pickInst('harp')">HARP</button>
+        </div>
+        <div class="cs-picker-panel" id="csPanelBrass" data-fam="brass">
+          <button class="cs-picker-inst" data-inst="trumpet"    onclick="pickInst('trumpet')">TRUMPET</button>
+          <button class="cs-picker-inst" data-inst="flugelhorn" onclick="pickInst('flugelhorn')">FLUGELHORN</button>
+          <button class="cs-picker-inst" data-inst="frenchhorn" onclick="pickInst('frenchhorn')">FRENCH HORN</button>
+          <button class="cs-picker-inst" data-inst="euphonium"  onclick="pickInst('euphonium')">EUPHONIUM</button>
+          <button class="cs-picker-inst" data-inst="tuba"       onclick="pickInst('tuba')">TUBA</button>
+          <button class="cs-picker-inst" data-inst="trombone"   onclick="pickInst('trombone')">TROMBONE</button>
+        </div>
+        <div class="cs-picker-panel" id="csPanelWoodwind" data-fam="woodwind">
+          <button class="cs-picker-inst" data-inst="ww_flute"       onclick="pickInst('ww_flute')">FLUTE</button>
+          <button class="cs-picker-inst" data-inst="ww_piccolo"     onclick="pickInst('ww_piccolo')">PICCOLO</button>
+          <button class="cs-picker-inst" data-inst="ww_altoflute"   onclick="pickInst('ww_altoflute')">ALTO FLUTE</button>
+          <button class="cs-picker-inst" data-inst="ww_clarinet"    onclick="pickInst('ww_clarinet')">CLARINET</button>
+          <button class="cs-picker-inst" data-inst="ww_bassclarinet" onclick="pickInst('ww_bassclarinet')">BASS CL.</button>
+          <button class="cs-picker-inst" data-inst="ww_oboe"       onclick="pickInst('ww_oboe')">OBOE</button>
+          <button class="cs-picker-inst" data-inst="ww_coranglais" onclick="pickInst('ww_coranglais')">COR ANG.</button>
+          <button class="cs-picker-inst" data-inst="ww_bassoon"    onclick="pickInst('ww_bassoon')">BASSOON</button>
+          <button class="cs-picker-inst" data-inst="ww_sax"        onclick="pickInst('ww_sax')">SAX</button>
+          <button class="cs-picker-inst" data-inst="ww_recorder"   onclick="pickInst('ww_recorder')">RECORDER</button>
+          <button class="cs-picker-inst" data-inst="ww_whistle"    onclick="pickInst('ww_whistle')">TIN WHISTLE</button>
+          <button class="cs-picker-inst" data-inst="ww_ocarina"    onclick="pickInst('ww_ocarina')">OCARINA</button>
+        </div>
+        <div class="cs-picker-panel" id="csPanelFreereed" data-fam="freereed">
+          <button class="cs-picker-inst" data-inst="harmonica"  onclick="pickInst('harmonica')">HARMONICA</button>
+          <button class="cs-picker-inst" data-inst="didgeridoo" onclick="pickInst('didgeridoo')">DIDGERIDOO</button>
+        </div>
       </div>
     </div>
   </div>
@@ -16718,7 +16752,7 @@ const INST_TONE_MAP = {
   flute: 'flute', clarinet: 'flute', oboe: 'flute', bassoon: 'flute',
   altosax: 'flute', tenorsax: 'flute',
   // New woodwind instruments
-  ww_flute: 'flute', ww_piccolo: 'flute', ww_altoflute: 'flute',
+  ww_flute: 'flute', ww_piccolo: 'flute', ww_altoflute: 'flute', ww_ocarina: 'flute',
   ww_recorder: 'flute', ww_whistle: 'flute',
   ww_oboe: 'reed', ww_clarinet: 'reed', ww_bassclarinet: 'reed', ww_coranglais: 'reed', ww_bassoon: 'reed',
   ww_sax: 'reed_conical',
@@ -16732,7 +16766,7 @@ const INST_TONE_MAP = {
   v_alto: 'pad', v_mezzo: 'pad', v_soprano: 'pad',
   // CS instrument key aliases (used by SG note-player and range chart)
   bass: 'bass', uke: 'guitar', banjo: 'banjo',
-  ww_piccolo: 'flute', ww_altoflute: 'flute', ww_bassclarinet: 'flute',
+  ww_piccolo: 'flute', ww_altoflute: 'flute', ww_bassclarinet: 'flute', ww_ocarina: 'flute',
   ww_coranglais: 'flute',
   flugelhorn: 'brass', euphonium: 'brass', frenchhorn: 'frenchhorn',
   didgeridoo: 'pad', harmonica: 'harmonica',
@@ -18080,6 +18114,7 @@ function processAudio() {
         if (mode === 'practice' && currentExercise === 'interval') ivCheckPitch(smoothedFreq);
         if (mode === 'practice' && currentExercise === 'singsing') ssCheckPitch(smoothedFreq);
         window.lastCents = smoothedCents;
+        window.lastFreq  = smoothedFreq;
       }
       document.getElementById('statusDot').className = 'status-dot active';
       document.getElementById('statusText').textContent = t('mic_live');
@@ -18124,6 +18159,131 @@ function processAudio() {
 }
 
 let _wasInTune = false;
+
+// ── In-tune haptic beating engine ─────────────────────────────────────────
+// Simulates acoustic beating: rapid pulses when far out of tune, slowing as
+// you approach unison, stopping with a confirmation thud when you lock in.
+// Goal: someone deaf/HoH can feel the dissonance clear and the waves align.
+//
+// Pulse interval mapped from cents error:
+//   ±50¢ → ~120ms  (fast, restless buzz)
+//   ±20¢ → ~220ms  (clearly slowing)
+//   ±10¢ → ~380ms  (sparse, almost there)
+//   ±5¢  → dwell gate → confirmation, pulses stop
+//   >50¢ → engine off (too far out to be useful)
+//
+// Style escalates as you close in: Light until ±10¢, then Medium.
+
+const HAPTIC_RANGE = 50;   // cents — engine is silent beyond this
+const HAPTIC_DWELL = 200;  // ms to hold ±5¢ before confirmation fires
+
+let _hapticPulseTimer  = null;
+let _hapticDwellTimer  = null;
+let _hapticConfirmed   = false;  // true after lock-in fires; resets when >±10¢
+let _hapticLastAbs     = 999;
+
+function _hapticSwellStop() {
+  if (_hapticPulseTimer) { clearTimeout(_hapticPulseTimer); _hapticPulseTimer = null; }
+  if (_hapticDwellTimer) { clearTimeout(_hapticDwellTimer); _hapticDwellTimer = null; }
+}
+
+function _hapticSwellReset() {
+  _hapticSwellStop();
+  _hapticConfirmed = false;
+  _hapticLastAbs   = 999;
+}
+
+function _hapticIntervalFor(abs, refFreq) {
+  // Physics: beat frequency = f_ref * (2^(cents/1200) - 1)
+  // This is the actual rate at which amplitude modulation occurs between
+  // two tones separated by `abs` cents at reference frequency `refFreq`.
+  const freq = refFreq > 0 ? refFreq : 440;
+  const beatHz = freq * (Math.pow(2, abs / 1200) - 1);
+  if (beatHz <= 0) return 9999;
+  const ms = 1000 / beatHz;
+  // Clamp: below 80ms the motor can't resolve distinct pulses anyway;
+  // above 1800ms it's too sparse to feel like beating.
+  return Math.round(Math.min(1800, Math.max(80, ms)));
+}
+
+async function _hapticFire(abs) {
+  if (!progState.hapticsOn) return;
+  try {
+    const style = abs < 10
+      ? window.ImpactStyle?.Medium
+      : window.ImpactStyle?.Light;
+    await window.Haptics?.impact({ style });
+  } catch(e) {}
+}
+
+async function _hapticConfirmFire() {
+  if (!progState.hapticsOn) return;
+  try {
+    await window.Haptics?.impact({ style: window.ImpactStyle?.Medium });
+    await new Promise(r => setTimeout(r, 40));
+    await window.Haptics?.impact({ style: window.ImpactStyle?.Heavy });
+  } catch(e) {}
+}
+
+function _hapticScheduleNext(abs) {
+  const refFreq = window.lastFreq > 0 ? window.lastFreq : 440;
+  _hapticPulseTimer = setTimeout(async () => {
+    _hapticPulseTimer = null;
+    // Re-read latest abs and freq so interval always reflects current pitch
+    const currentAbs  = Math.abs(window.lastCents ?? abs);
+    if (currentAbs > HAPTIC_RANGE || _hapticConfirmed) return;
+    if (currentAbs >= 5) {
+      await _hapticFire(currentAbs);
+      _hapticScheduleNext(currentAbs);
+    }
+    // if currentAbs < 5, dwell timer is already running — don't pulse
+  }, _hapticIntervalFor(abs, refFreq));
+}
+
+function _hapticSwell(abs) {
+  if (!progState.hapticsOn) return;
+
+  if (abs > HAPTIC_RANGE) {
+    // Too far out — kill everything and reset
+    _hapticSwellReset();
+    return;
+  }
+
+  if (_hapticConfirmed) {
+    // Already locked in — only reset if they drift back out past ±10¢
+    if (abs > 10) {
+      _hapticConfirmed = false;
+      _hapticSwellStop();
+      _hapticScheduleNext(abs);
+    }
+    return;
+  }
+
+  if (abs < 5) {
+    // In the lock zone — start dwell timer if not already running, stop pulse loop
+    if (!_hapticDwellTimer) {
+      _hapticSwellStop();  // stop pulse loop while dwelling
+      _hapticDwellTimer = setTimeout(async () => {
+        _hapticDwellTimer = null;
+        _hapticConfirmed  = true;
+        await _hapticConfirmFire();
+      }, HAPTIC_DWELL);
+    }
+    return;
+  }
+
+  // In the approach zone (5–50¢) — run pulse loop
+  // Cancel any stale dwell (drifted back out of ±5¢)
+  if (_hapticDwellTimer) { clearTimeout(_hapticDwellTimer); _hapticDwellTimer = null; }
+
+  // Start pulse loop if not running, or if abs changed enough to reschedule
+  if (!_hapticPulseTimer) {
+    _hapticScheduleNext(abs);
+  }
+
+  _hapticLastAbs = abs;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 let _lastNoteKey = null;  // tracks note changes for pulse
 // Spring needle state
 let _needleSmoothed = 50;  // heavily smoothed needle position
@@ -18247,7 +18407,7 @@ function updateNoteDisplay(note, freq) {
   const screenInner = document.querySelector('.tuner-screen-inner');
   if (screenInner) screenInner.classList.toggle('in-tune-glow', inTune);
 
-  if (inTune && !_wasInTune) hapticSuccess();
+  _hapticSwell(abs);
   _wasInTune = inTune;
 
   const nameEl = document.getElementById('noteName');
@@ -18324,6 +18484,7 @@ function _applyNoteSilentState() {
   _needleSmoothed = 50;
   _lastNoteKey = null;
   _wasInTune = false;
+  _hapticSwellReset();
   _tooltipCurCls = null;
   const si = document.querySelector('.tuner-screen-inner');
   if (si) si.classList.remove('in-tune-glow');
@@ -32633,7 +32794,7 @@ const STRINGS = {
     cs_inst_coranglais:'COR ANGLAIS', cs_inst_clarinet:'CLARINET',
     cs_inst_bassclarinet:'BASS CLARINET', cs_inst_sax:'SAX',
     cs_inst_recorder:'RECORDER', cs_inst_whistle:'TIN WHISTLE',
-    cs_inst_bassoon:'BASSOON', cs_inst_piccolo:'PICCOLO',
+    cs_inst_bassoon:'BASSOON', cs_inst_piccolo:'PICCOLO', cs_inst_ocarina:'OCARINA',
     cs_inst_harmonica:'HARMONICA', cs_inst_didgeridoo:'DIDGERIDOO',
     // Chord/scale tool UI
     cs_note_sel:'Note Selection', cs_capo_label:'CAPO',
@@ -33197,7 +33358,7 @@ const STRINGS = {
     cs_inst_coranglais:'CORNO INGLESE', cs_inst_clarinet:'CLARINETTO',
     cs_inst_bassclarinet:'CLARINETTO BASSO', cs_inst_sax:'SAX',
     cs_inst_recorder:'FLAUTO DOLCE', cs_inst_whistle:'FISCHIETTO',
-    cs_inst_bassoon:'FAGOTTO', cs_inst_piccolo:'OTTAVINO',
+    cs_inst_bassoon:'FAGOTTO', cs_inst_piccolo:'OTTAVINO', cs_inst_ocarina:'OCARINA',
     cs_inst_harmonica:'ARMONICA', cs_inst_didgeridoo:'DIDGERIDOO',
     // Chord/scale tool UI
     cs_note_sel:'Selezione Nota', cs_capo_label:'CAPO',
@@ -42303,6 +42464,12 @@ const WIND_RANGES = {
   // Bass clarinet: written Eb3–Bb6 (sounds Bb2–G5 concert, M9 lower).
   // Concert MIDI 34(Bb1)–70(Bb4) practical range.
   ww_piccolo:  { low: 74, high: 108, octaves:[5,6,7], defaultOct:6 },
+  ww_ocarina:  { low: 69, high: 89, octaves:[4,5], defaultOct:5,
+    subRanges: {
+      '12hole': { low:69, high:89, octaves:[4,5], defaultOct:5 },
+      '7hole':  { low:69, high:89, octaves:[4,5], defaultOct:5 },
+    },
+  },
   harmonica:   { low: 60, high: 96, octaves:[4,5,6], defaultOct:5 },
 };
 
@@ -42379,6 +42546,11 @@ function windEmbouchure(inst, midi) {
     if (midi < 65) return 'Middle register (B3–E4): whisper key released, flick keys on D/E/A, centred tone, moderate air support';
     if (midi < 72) return 'Upper register (F4–B4): upper crook resonance, firmer embouchure, slightly faster air, voicing opens';
     return 'High register (C5+): maximum embouchure control, fast focused air, advanced technique — upper bassoon';
+  }
+  if (inst === 'ww_ocarina') {
+    if (midi < 77)  return 'Lower register (A4–E5): gentle relaxed breath, even pressure into the mouthpiece — the ocarina is sensitive, avoid overblowing';
+    if (midi < 81)  return 'Mid register (F5–A5): slightly increased breath support, keep pressure steady';
+    return 'Upper register (Bb5+): increase breath pressure and speed — the upper octave needs a faster focused airstream';
   }
   if (inst === 'ww_piccolo') {
     if (midi < 84) return 'Low register (D5–B5): full warm embouchure despite small head joint, steady air, avoid overblowing';
@@ -42496,8 +42668,12 @@ const WW_SUBS = {
     { key:'d',     label:'D',     transposition:0 }, // high D, concert pitch
     { key:'low_d', label:'LOW D', transposition:0 }, // low D, concert pitch — same fingerings, lower range
   ],
-  ww_bassoon:  null, // concert pitch, no transposition
-  ww_piccolo:  null, // concert pitch (sounds written, no toggle needed)
+  ww_bassoon:  null,
+  ww_piccolo:  null,
+  ww_ocarina: [
+    { key:'12hole', label:'12-HOLE', transposition:0 },
+    { key:'7hole',  label:'7-HOLE',  transposition:0 },
+  ], // concert pitch (sounds written, no toggle needed)
 };
 
 // Transposition offset for current woodwind: semitones concert→written (positive = written is higher)
@@ -42524,6 +42700,7 @@ function windTogglePitch(written) {
 function windInstTransposes() {
   if (['trumpet','flugelhorn','frenchhorn','euphonium'].includes(chordScaleInstrument)) return true;
   if (['ww_clarinet','ww_sax','ww_altoflute','ww_bassclarinet','ww_coranglais'].includes(chordScaleInstrument)) return true;
+  // ww_ocarina: concert pitch for both sub-types
   return false;
 }
 
@@ -43293,6 +43470,10 @@ function wwGetFingering(concertPc, altIdx, midi) {
     table = BASSOON_FINGERINGS; layout = BASSOON_LAYOUT; writtenPc = concertPc;
   } else if (chordScaleInstrument === 'ww_piccolo') {
     table = PICCOLO_FINGERINGS; layout = PICCOLO_LAYOUT; writtenPc = concertPc;
+  } else if (chordScaleInstrument === 'ww_ocarina') {
+    writtenPc = concertPc;
+    table = (wwSubType === '7hole') ? OCARINA_7_FINGERINGS : OCARINA_12_FINGERINGS;
+    layout = null;
   } else if (chordScaleInstrument === 'ww_altoflute') {
     writtenPc = ((concertPc - wwTransposition()) % 12 + 12) % 12;
     table = ALTO_FLUTE_FINGERINGS; layout = ALTO_FLUTE_LAYOUT;
@@ -43311,6 +43492,14 @@ function wwGetFingering(concertPc, altIdx, midi) {
   // ── Register overrides ─────────────────────────────────────────────────────
   // Apply MIDI-specific modifications where the fingering differs from the base pc pattern.
   if (midi !== undefined) {
+    // Ocarina: handle oct2 table, skip layout-based register overrides
+    if (chordScaleInstrument === 'ww_ocarina') {
+      if (midi >= 81) {
+        const oct2 = (wwSubType === '7hole') ? OCARINA_7_OCT2 : OCARINA_12_OCT2;
+        const oct2f = oct2[writtenPc];
+        if (oct2f) data = [...oct2f];
+      }
+    } else if (layout) {
     const lhMainLen  = layout.lhMain.length;
     const lhPinkyLen = layout.lhPinky.length;
 
@@ -43432,6 +43621,7 @@ function wwGetFingering(concertPc, altIdx, midi) {
         if (writtenMidi >= 84 && writtenPc === 0)  data = [0,1,1, 1,0,0,  0,0,0,0,0,  1,0,0,0,  0,0,0]; // C6
       }
     }
+    } // end else if (layout)
   }
 
   return { data, layout, alts, totalAlts: alts.length, primary: entry.p };
@@ -43446,12 +43636,184 @@ function wwResetAlts() { wwAltIdxMap = {}; }
 // Renders LH main, LH pinky cluster, RH main, RH pinky cluster.
 // For mini (full-grid overview cards): compact single-column per hand, no labels.
 // For full-size (note card, nav detail): split layout with hand labels + pinky cluster.
+// ── OCARINA fingerings ──────────────────────────────────────────────────────
+// 12-hole: [LT, L1, L2, L3, L4/SH_L, SH_R, SH_3, R1, R2, R3, R4, RT]
+// Transcribed from standard 12-hole transverse chart. Range: A4–F6 concert.
+const OCARINA_12_FINGERINGS = {
+  9:  { p:[1,1,1,1, 1,1,1, 1,1,1,1, 1] }, // A4
+  11: { p:[1,1,1,1, 1,1,1, 1,1,1,0, 0] }, // B4
+  0:  { p:[1,1,1,1, 1,1,1, 1,1,0,0, 0] }, // C5
+  2:  { p:[1,1,1,1, 1,1,1, 1,0,0,0, 0] }, // D5
+  4:  { p:[1,1,1,1, 1,1,1, 0,0,0,0, 0] }, // E5
+  5:  { p:[1,1,1,1, 0,1,1, 0,0,0,0, 0] }, // F5
+  7:  { p:[1,1,1,0, 0,1,1, 0,0,0,0, 0] }, // G5
+  10: { p:[1,1,1,1, 1,1,1, 1,1,1,1, 0] }, // Bb4
+  1:  { p:[1,1,1,1, 1,1,0, 1,1,0,0, 0] }, // Db5
+  3:  { p:[1,1,1,1, 1,0,1, 1,0,0,0, 0] }, // Eb5
+  6:  { p:[1,1,1,1, 1,0,0, 0,0,0,0, 0] }, // Gb5
+  8:  { p:[1,1,1,0, 1,0,1, 0,0,0,0, 0] }, // Ab5
+};
+// Upper octave (A5–F6): different fingerings for same pitch classes
+const OCARINA_12_OCT2 = {
+  9:  [1,1,0,0, 1,1,1, 0,0,0,0, 0], // A5
+  11: [1,0,0,0, 1,1,1, 0,0,0,0, 0], // B5
+  0:  [0,0,0,0, 1,1,1, 0,0,0,0, 0], // C6
+  2:  [0,0,0,0, 1,1,0, 0,0,0,0, 0], // D6
+  4:  [0,0,0,0, 0,0,0, 0,0,0,0, 0], // E6
+  5:  [0,0,0,0, 0,0,0, 0,0,0,0, 1], // F6
+  10: [1,1,0,0, 1,0,1, 0,0,0,0, 0], // Bb5
+  1:  [0,0,0,0, 1,1,0, 0,0,0,0, 0], // Db6
+  3:  [0,0,0,0, 0,1,0, 0,0,0,0, 0], // Eb6
+};
+
+// 7-hole: [TL, TR, ML, MR, SUB, BL, BR]
+// Same A4–F6 range, different fingering system.
+const OCARINA_7_FINGERINGS = {
+  9:  { p:[1,1, 1,1, 1, 1,1] }, // A4
+  11: { p:[1,1, 1,1, 1, 1,0] }, // B4
+  0:  { p:[1,1, 1,1, 1, 0,0] }, // C5
+  2:  { p:[1,1, 1,1, 0, 0,0] }, // D5
+  4:  { p:[1,1, 1,0, 0, 0,0] }, // E5
+  5:  { p:[1,1, 0,0, 0, 0,0] }, // F5
+  7:  { p:[1,0, 0,0, 0, 0,0] }, // G5
+  10: { p:[1,1, 1,1, 1, 1,0] }, // Bb4
+  1:  { p:[1,1, 1,1, 0, 1,0] }, // Db5
+  3:  { p:[1,1, 1,0, 1, 0,0] }, // Eb5
+  6:  { p:[1,1, 0,0, 1, 0,0] }, // Gb5
+  8:  { p:[1,0, 0,0, 1, 0,0] }, // Ab5
+};
+const OCARINA_7_OCT2 = {
+  9:  [0,0, 0,0, 0, 0,0], // A5
+  11: [0,0, 0,0, 0, 0,1], // B5
+  0:  [0,0, 0,0, 0, 1,1], // C6
+  2:  [0,0, 0,0, 1, 1,1], // D6
+  4:  [0,0, 0,1, 1, 1,1], // E6
+  5:  [0,0, 1,1, 1, 1,1], // F6
+  10: [0,0, 0,0, 1, 0,0], // Bb5
+  1:  [0,0, 0,0, 0, 1,0], // Db6
+  3:  [0,0, 0,1, 0, 1,1], // Eb6
+};
+
+// ── OCARINA SVG renderers ────────────────────────────────────────────────────
+function ocarinaDraw(containerEl, data, mini) {
+  containerEl.innerHTML = '';
+  (wwSubType === '7hole')
+    ? ocarinaDraw7(containerEl, data, mini)
+    : ocarinaDraw12(containerEl, data, mini);
+}
+
+function ocarinaDraw12(containerEl, data, mini) {
+  // Layout matches the 12-hole chart exactly:
+  // Top-left 2x2 cluster (LT/L1/L2/L3), subholes (SH_L/SH_R/SH_3) just right,
+  // then right-side 2x2 cluster (R1/R2/R3/R4), RT thumb below-right.
+  // No body outline — just dots like the chart.
+  const sc = mini ? 0.46 : 1.0;
+  const W = Math.round(128*sc), H = Math.round(106*sc);
+  const svg = _ocSvg(W, H);
+
+  // Hole definitions: [data_index, cx, cy, r]
+  // Coordinates on a 170x120 grid, traced from chart
+  const hr = 8*sc, sr = 5.5*sc; // main hole r, subhole r
+  const holes = [
+    // Positions unchanged. Labels: thumbs at bottom, each row 1-2-3-4 bottom→top.
+    { i:0,  cx:(10+18*1.05)*sc, cy:(6+45*0.92)*sc, r:hr, lbl:'2' }, // L2
+    { i:1,  cx:(10+31*1.05)*sc, cy:(6+27*0.92)*sc, r:hr, lbl:'3' }, // L3
+    { i:2,  cx:(10+36*1.05)*sc, cy:(6+0*0.92)*sc,  r:hr, lbl:'4' }, // L4
+    { i:3,  cx:(10+0*1.05)*sc,  cy:(6+57*0.92)*sc, r:hr, lbl:'1' }, // L1
+    { i:4,  cx:(10+28*1.05)*sc, cy:(6+61*0.92)*sc, r:sr, lbl:'2' }, // subhole near L2
+    { i:5,  cx:(10+60*1.05)*sc, cy:(6+19*0.92)*sc, r:sr, lbl:'2' }, // subhole near R2
+    { i:6,  cx:(10+84*1.05)*sc, cy:(6+19*0.92)*sc, r:hr, lbl:'3' }, // R3 (arrow — now full size)
+    { i:7,  cx:(10+70*1.05)*sc, cy:(6+32*0.92)*sc, r:hr, lbl:'2' }, // R2
+    { i:8,  cx:(10+100*1.05)*sc,cy:(6+13*0.92)*sc, r:hr, lbl:'4' }, // R4
+    { i:9,  cx:(10+60*1.05)*sc, cy:(6+52*0.92)*sc, r:hr, lbl:'1' }, // R1
+    { i:10, cx:(10+74*1.05)*sc, cy:(6+90*0.92)*sc, r:hr, lbl:'T' }, // thumb
+    { i:11, cx:(10+25*1.05)*sc, cy:(6+100*0.92)*sc,r:hr, lbl:'T' }, // thumb
+  ];
+
+  holes.forEach(({ i, cx, cy, r, lbl }) => _ocHole(svg, cx, cy, r, data[i], lbl, !mini));
+  containerEl.appendChild(svg);
+}
+
+function ocarinaDraw7(containerEl, data, mini) {
+  // 7-hole: horizontal oval, mouthpiece nub points down-center.
+  // Layout from chart: left hand = T(bottom) + holes 1,2 (top);
+  // right hand = T(bottom) + holes 1,2,3 (top).
+  // data = [TL, TR, ML, MR, SUB, BL, BR] mapped to these positions.
+  const sc = mini ? 0.46 : 1.0;
+  const W = Math.round(160*sc), H = Math.round(80*sc);
+  const svg = _ocSvg(W, H);
+
+  const bx = W/160, by = H/80;
+
+  const hr = 9*sc;
+  // Dots only — no body. Spaced to match the chart:
+  // left hand = holes 1,2 (top) + T (bottom);  right hand = 1,2,3 (top) + T (bottom).
+  const holes = [
+    // data idx, cx, cy, r, label
+    { i:0, cx:30*bx,  cy:22*by, r:hr, lbl:'1' }, // left top 1
+    { i:1, cx:52*bx,  cy:18*by, r:hr, lbl:'2' }, // left top 2
+    { i:5, cx:24*bx,  cy:52*by, r:hr, lbl:'T' }, // left thumb (bottom)
+    { i:2, cx:90*bx,  cy:20*by, r:hr, lbl:'1' }, // right top 1
+    { i:3, cx:112*bx, cy:18*by, r:hr, lbl:'2' }, // right top 2
+    { i:4, cx:134*bx, cy:24*by, r:hr, lbl:'3' }, // right top 3
+    { i:6, cx:108*bx, cy:54*by, r:hr, lbl:'T' }, // right thumb (bottom)
+  ];
+
+  holes.forEach(({ i, cx, cy, r, lbl }) => _ocHole(svg, cx, cy, r, data[i], lbl, !mini));
+  containerEl.appendChild(svg);
+}
+
+// Shared SVG helpers
+function _ocSvg(W, H) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.style.overflow = 'visible';
+  return svg;
+}
+function _ocEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+function _ocHole(svg, cx, cy, r, val, label, showLabel) {
+  const closed = val === 1, half = val === 0.5;
+  const c = _ocEl('circle');
+  c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+  c.setAttribute('fill', closed ? 'var(--text)' : 'var(--bg-1)');
+  c.setAttribute('stroke', closed ? 'rgba(0,0,0,0.3)' : 'rgba(160,110,50,0.55)');
+  c.setAttribute('stroke-width', '1.5');
+  svg.appendChild(c);
+  if (half) {
+    const h2 = _ocEl('circle');
+    h2.setAttribute('cx', cx); h2.setAttribute('cy', cy); h2.setAttribute('r', r*0.55);
+    h2.setAttribute('fill', 'var(--text)'); h2.setAttribute('stroke', 'none');
+    svg.appendChild(h2);
+  }
+  // Finger label inside/beside the hole (full-size only)
+  if (showLabel && label) {
+    const txt = _ocEl('text');
+    txt.setAttribute('x', cx); txt.setAttribute('y', cy);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('dominant-baseline', 'central');
+    txt.setAttribute('font-family', "'JetBrains Mono', monospace");
+    txt.setAttribute('font-size', r * 0.9);
+    txt.setAttribute('font-weight', '600');
+    txt.setAttribute('fill', closed ? 'var(--bg-1)' : 'var(--text-dim)');
+    txt.textContent = label;
+    svg.appendChild(txt);
+  }
+}
+
+
 function woodwindHoleDraw(containerEl, concertPc, mini, altIdx, midi) {
   containerEl.innerHTML = '';
   const altI = altIdx ?? wwGetAltIdx(concertPc);
   const ww = wwGetFingering(concertPc, altI, midi);
   if (!ww) return;
   const { data, layout } = ww;
+
+  // Ocarina: custom renderer
+  if (chordScaleInstrument === 'ww_ocarina') {
+    ocarinaDraw(containerEl, data, mini);
+    return;
+  }
 
   const lhMainLen   = layout.lhMain.length;
   const lhPinkyLen  = layout.lhPinky.length;
@@ -45544,6 +45906,7 @@ function windSynth(inst, ctx, freq, when, dur, master, vol, tonguing) {
     return fluteSynth(ctx, freq, when, dur, master, vol, tonguing);
   if (inst === 'ww_bassoon') return reedSynth(ctx, freq, when, dur, master, vol, tonguing);
   if (inst === 'ww_piccolo') return fluteSynth(ctx, freq, when, dur, master, vol, tonguing);
+  if (inst === 'ww_ocarina') return fluteSynth(ctx, freq, when, dur, master, vol, tonguing);
   if (inst === 'ww_bassclarinet') return reedSynth(ctx, freq, when, dur, master, vol, tonguing);
   if (inst === 'ww_coranglais')   return reedSynth(ctx, freq, when, dur, master, vol, tonguing);
   return trpSynth(ctx, freq, when, dur, master, vol, tonguing); // trumpet default
@@ -46199,6 +46562,10 @@ const CS_INSTRUMENTS = {
     subs:[{key:'d',label:'D (high)'},{key:'low_d',label:'D (low)'}] },
   ww_bassoon:  { label:'🪈 Bassoon',      family:'wind', subFamily:'woodwind', subs:null },
   ww_piccolo:  { label:'🪈 Piccolo',      family:'wind', subFamily:'woodwind', subs:null },
+  ww_ocarina:  { label:'🎵 Ocarina',      family:'wind', subFamily:'woodwind', subs:[
+    {key:'12hole', label:'12-HOLE'},
+    {key:'7hole',  label:'7-HOLE'},
+  ]},
   trombone:    { label:'🎺 Trombone',     family:'wind', subFamily:'brass',
     subs:[{key:'tenor',label:'TENOR'},{key:'soprano',label:'SOPRANO'},{key:'bass',label:'BASS'}] },
   didgeridoo:  { label:'🎵 Didgeridoo', family:'wind', subFamily:'freereed', subs:null },
@@ -46211,7 +46578,7 @@ const CS_INST_FAMILY_MAP = {
   guitar:'fretted', bass:'fretted', uke:'fretted', mandolin:'fretted', banjo:'fretted',
   piano:'chromperc', harp:'chromperc',
   trumpet:'brass', flugelhorn:'brass', frenchhorn:'brass', euphonium:'brass', tuba:'brass', trombone:'brass',
-  ww_flute:'woodwind', ww_piccolo:'woodwind', ww_altoflute:'woodwind',
+  ww_flute:'woodwind', ww_piccolo:'woodwind', ww_altoflute:'woodwind', ww_ocarina:'woodwind',
   ww_clarinet:'woodwind', ww_bassclarinet:'woodwind',
   ww_oboe:'woodwind', ww_coranglais:'woodwind', ww_bassoon:'woodwind',
   ww_sax:'woodwind', ww_recorder:'woodwind', ww_whistle:'woodwind',
@@ -46289,6 +46656,7 @@ function switchChordScaleInstrument(inst) {
   if (inst === 'ww_clarinet')    wwSubType = 'bb';
   if (inst === 'ww_sax')         wwSubType = 'alto';
   if (inst === 'ww_recorder')    wwSubType = 'soprano';
+  if (inst === 'ww_ocarina')     wwSubType = '12hole';
   if (inst === 'ww_altoflute')   wwSubType = 'g';
   if (inst === 'ww_bassclarinet') wwSubType = 'bb';
   if (inst === 'ww_coranglais')  wwSubType = 'f';
@@ -46367,7 +46735,7 @@ function _buildSubRow(inst, subs) {
   row.innerHTML = '';
   if (!subs || !subs.length) { row.classList.add('hidden'); return; }
   row.classList.remove('hidden');
-  const currentSub = inst === 'uke' ? ukeSubType : inst === 'bass' ? bassSubType : inst === 'mandolin' ? mandoSubType : inst === 'guitar' ? guitarSubType : inst === 'ww_clarinet' || inst === 'ww_sax' || inst === 'ww_recorder' || inst === 'ww_altoflute' || inst === 'ww_coranglais' || inst === 'ww_whistle' ? wwSubType : inst === 'trumpet' || inst === 'tuba' || inst === 'trombone' ? brassSubType : inst === 'harmonica' ? harmonicaKey : null;
+  const currentSub = inst === 'uke' ? ukeSubType : inst === 'bass' ? bassSubType : inst === 'mandolin' ? mandoSubType : inst === 'guitar' ? guitarSubType : inst === 'ww_clarinet' || inst === 'ww_sax' || inst === 'ww_recorder' || inst === 'ww_altoflute' || inst === 'ww_coranglais' || inst === 'ww_whistle' || inst === 'ww_ocarina' ? wwSubType : inst === 'trumpet' || inst === 'tuba' || inst === 'trombone' ? brassSubType : inst === 'harmonica' ? harmonicaKey : null;
   subs.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'cs-sub-pill' + (s.key === currentSub ? ' active' : '');
@@ -46388,6 +46756,7 @@ function switchSubType(inst, key) {
   if (inst === 'ww_sax')          wwSubType     = key;
   if (inst === 'ww_sax')          trpCurrentOctave = windActiveRange()?.defaultOct ?? 4;
   if (inst === 'ww_recorder')     wwSubType     = key;
+  if (inst === 'ww_ocarina')      wwSubType     = key;
   if (inst === 'ww_recorder')     trpCurrentOctave = windActiveRange()?.defaultOct ?? 4;
   if (inst === 'ww_altoflute')    wwSubType     = key;
   if (inst === 'ww_coranglais')   wwSubType     = key;
@@ -46865,6 +47234,7 @@ const WW_SCALE_PREFERRED_ALT = {
     // the forked fingering keeps RH1 down from the preceding E, minimising hand movement.
     6:  1,
   },
+  ww_ocarina: { 6:0, 10:0 },
   ww_piccolo: {
     // Forked F# (alt 1): same reasoning as concert flute
     6: 1,
@@ -46984,6 +47354,7 @@ function trpDrawFull() {
   if (!grid) return;
   grid.innerHTML = '';
   grid.classList.remove('harp-mode');
+  grid.classList.toggle('ww-wide', isWoodwindInst());
   document.getElementById('trpFullDetail')?.classList.add('hidden');
 
   // Tap on grid background (outside a card) closes detail pane
@@ -49683,7 +50054,7 @@ function svcSnapshot() {
            : inst === 'bass'      ? bassSubType
            : inst === 'mandolin'  ? mandoSubType
            : inst === 'guitar'    ? guitarSubType
-           : (inst === 'ww_clarinet' || inst === 'ww_sax' || inst === 'ww_recorder' || inst === 'ww_altoflute' || inst === 'ww_coranglais' || inst === 'ww_whistle') ? wwSubType
+           : (inst === 'ww_clarinet' || inst === 'ww_sax' || inst === 'ww_recorder' || inst === 'ww_altoflute' || inst === 'ww_coranglais' || inst === 'ww_whistle' || inst === 'ww_ocarina') ? wwSubType
            : (inst === 'trumpet' || inst === 'tuba' || inst === 'trombone') ? brassSubType
            : inst === 'harmonica' ? harmonicaKey
            : null,
@@ -49882,7 +50253,7 @@ function svcApplyRestore() {
   if (snap.inst === 'bass'                                         && snap.sub) bassSubType   = snap.sub;
   if (snap.inst === 'mandolin'                                     && snap.sub) mandoSubType  = snap.sub;
   if (snap.inst === 'guitar'                                       && snap.sub) guitarSubType = snap.sub;
-  if (['ww_clarinet','ww_sax','ww_recorder','ww_altoflute','ww_coranglais','ww_whistle'].includes(snap.inst)  && snap.sub) wwSubType     = snap.sub;
+  if (['ww_clarinet','ww_sax','ww_recorder','ww_altoflute','ww_coranglais','ww_whistle','ww_ocarina'].includes(snap.inst)  && snap.sub) wwSubType     = snap.sub;
   if (['trumpet','tuba','trombone'].includes(snap.inst) && snap.sub) brassSubType = snap.sub;
   if (snap.inst === 'harmonica'                                    && snap.sub) harmonicaKey  = snap.sub;
   _buildSubRow(snap.inst, meta.subs);
