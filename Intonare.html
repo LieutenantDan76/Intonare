@@ -11708,7 +11708,8 @@
       <div class="header-top-right">
         <button class="head-btn mic-head-btn" id="micBtn" onclick="toggleMic()" title="Mic on/off">🎤</button>
         <button class="head-btn fav-btn" onclick="openFavSheet()" title="Quick Access"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
-        <button class="level-chip" id="levelChip" onclick="openProgress()" title="Progress">
+        <button class="level-chip" id="levelChip" onclick="openProgress()" title="Progress"
+          ontouchstart="_dbgHoldStart(event)" ontouchend="_dbgHoldEnd()" ontouchcancel="_dbgHoldEnd()">
           <span class="level-chip-lv">LV</span><span class="level-chip-num" id="levelChipNum">1</span>
         </button>
       </div>
@@ -23230,6 +23231,24 @@ let strobeMode = false;
 let strobePhase = 0;
 try { strobeMode = localStorage.getItem('intonare_strobe') === '1'; } catch(e) {}
 
+// ── DEBUG: long-press LV badge to cycle through toast tiers ──────────────
+let _dbgHoldTimer = null;
+let _dbgTier = 0;
+const _dbgCounts = [0, 1, 5, 7, 10, 14, 21, 30, 50, 75]; // index = tier
+function _dbgHoldStart(e) {
+  _dbgHoldTimer = setTimeout(() => {
+    e.preventDefault();
+    if (_dbgTier === 0) { dtFireDailyReset(); _dbgTier = 1; }
+    else {
+      const count = _dbgCounts[_dbgTier] || _dbgTier;
+      dtFireDailyToast(count, 'debug toast tier ' + _dbgTier);
+      _dbgTier = _dbgTier >= 9 ? 0 : _dbgTier + 1;
+    }
+  }, 800);
+}
+function _dbgHoldEnd() { clearTimeout(_dbgHoldTimer); _dbgHoldTimer = null; }
+// ─────────────────────────────────────────────────────────────────────────
+
 function toggleStrobe() {
   strobeMode = !strobeMode;
   try { localStorage.setItem('intonare_strobe', strobeMode ? '1' : '0'); } catch(e) {}
@@ -31926,7 +31945,7 @@ function dtBuildInner(count, msg, tier) {
   var badge  = dtMakeBadge(tier);
   var framed = tier >= 4 ? ' dt-framed' : '';
   var cHtml  = count + ' <span class="dt-pill-days">' + (t('dt_days')||'days') + '</span>';
-  var mEsc   = msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var mEsc   = (msg||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   var flame  = tier <= 1 ? '✨' : '🔥';
   var well   = '<div class="dt-badge-well"><div class="dt-badge-container">'+badge+'<div class="dt-flame-wrap"><span class="dt-flame-emoji">'+flame+'</span></div></div></div>';
   if (tier >= 8) {
