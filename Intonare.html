@@ -2951,14 +2951,15 @@
     text-shadow: 0 0 18px rgba(255,180,60,0.6);
     transition: none;
   }
-  /* Scrub wheel — horizontal mod-wheel strip */
+  /* Scrub wheel */
   .bpm-wheel-wrap {
-    margin: 6px -4px 0;
-    opacity: 0.35;
+    display: flex; justify-content: center;
+    margin: 8px 0 2px;
+    opacity: 0.4;
     transition: opacity 0.2s;
   }
   .metro-screen-inner.bpm-scrubbing .bpm-wheel-wrap { opacity: 1; }
-  .bpm-wheel-canvas { display: block; width: 100%; }
+  .bpm-wheel-canvas { display: block; border-radius: 4px; }
   /* Convex glass surface: radial highlight + vignette + diagonal shine */
   .metro-screen-inner::before {
     content: ''; position: absolute; inset: 0;
@@ -13726,9 +13727,9 @@
             <button class="screen-adj" onclick="adjBPM(1)">+</button>
           </div>
 
-          <!-- Scrub wheel — thin horizontal strip, hints at swipe-to-adjust -->
+          <!-- Scrub wheel — cylindrical rubber wheel, fades off at edges -->
           <div class="bpm-wheel-wrap" id="bpmWheelWrap">
-            <canvas id="bpmWheelCanvas" class="bpm-wheel-canvas" height="18"></canvas>
+            <canvas id="bpmWheelCanvas" class="bpm-wheel-canvas" height="32"></canvas>
           </div>
 
           <!-- ── GROOVE screen (shown when groove mode active) ── -->
@@ -18532,59 +18533,130 @@ function ensureMetroCtx() {
 
 function adjBPM(delta) { setBPM(bpm + delta); }
 
-// ── Metro screen swipe to adjust BPM ─────────────────────────────────────
+// ── Metro screen swipe to adjust BPM — cylindrical wheel with inertia ────
 (function() {
-  let _swipeStartX = null;
-  let _swipeBpmStart = null;
-  let _swiping = false;
-  let _wheelOffset = 0; // pixel scroll offset — accumulates as BPM changes
+  const PX_PER_BPM   = 6;    // pixels of wheel travel per 1 BPM
+  const TICK_SPACING = 6;    // px between minor ticks on wheel surface
+  const INERTIA_DECAY = 0.88; // velocity multiplier per frame (~16ms)
+  const MAX_VEL      = 14;   // max BPM/frame during inertia
+  const WHEEL_W      = 160;  // canvas width — constrained, not full screen
 
-  // Draw a horizontal piano-mod-wheel style tick strip.
-  // Ticks scroll left/right as BPM changes, giving a tangible sense of movement.
+  let _wheelOffset  = 0;   // total pixel scroll (accumulates)
+  let _swipeStartX  = null;
+  let _swipeBpmStart = null;
+  let _swiping      = false;
+  let _lastX        = 0;
+  let _lastT        = 0;
+  let _velPx        = 0;   // pixels/ms at release
+  let _inertiaRaf   = null;
+  let _bpmFrac      = 0;   // sub-BPM accumulator for smooth inertia
+
   function _wheelDraw() {
     const canvas = document.getElementById('bpmWheelCanvas');
     if (!canvas) return;
-    const wrap = document.getElementById('bpmWheelWrap');
-    const W = wrap ? wrap.offsetWidth : canvas.offsetWidth;
-    if (!W) return;
+    const W = WHEEL_W, H = canvas.height; // 32
     if (canvas.width !== W) canvas.width = W;
-    const H = canvas.height; // 18px
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, W, H);
 
-    // Track — thin rounded pill
-    const trackH = 6, trackY = (H - trackH) / 2;
-    ctx.fillStyle = 'rgba(255,209,102,0.08)';
+    // ── Cylindrical body ─────────────────────────────────────────────
+    // Top-lit gradient: bright centre-top, dark edges = rubber-roller feel
+    const bodyGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bodyGrad.addColorStop(0,   'rgba(255,209,102,0.06)');
+    bodyGrad.addColorStop(0.3, 'rgba(255,209,102,0.13)');
+    bodyGrad.addColorStop(0.7, 'rgba(255,209,102,0.13)');
+    bodyGrad.addColorStop(1,   'rgba(255,209,102,0.04)');
+    ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.roundRect(0, trackY, W, trackH, 3);
+    ctx.roundRect(0, 0, W, H, 5);
     ctx.fill();
 
-    // Ticks scrolling with _wheelOffset
-    // Major tick every 20px, minor every 5px
-    const spacing = 5;
-    const offset = ((_wheelOffset % spacing) + spacing) % spacing;
-    for (let x = -offset; x < W + spacing; x += spacing) {
-      const isMajor = Math.round((x + _wheelOffset) / spacing) % 4 === 0;
-      const tH = isMajor ? trackH + 4 : trackH;
-      const tY = (H - tH) / 2;
-      ctx.fillStyle = isMajor ? 'rgba(255,209,102,0.55)' : 'rgba(255,209,102,0.2)';
-      ctx.fillRect(Math.round(x) - 0.5, tY, 1, tH);
-    }
+    // Top highlight — the lit ridge of the cylinder
+    const hlGrad = ctx.createLinearGradient(0, 0, W, 0);
+    hlGrad.addColorStop(0,   'rgba(255,209,102,0)');
+    hlGrad.addColorStop(0.2, 'rgba(255,209,102,0.18)');
+    hlGrad.addColorStop(0.5, 'rgba(255,209,102,0.28)');
+    hlGrad.addColorStop(0.8, 'rgba(255,209,102,0.18)');
+    hlGrad.addColorStop(1,   'rgba(255,209,102,0)');
+    ctx.fillStyle = hlGrad;
+    ctx.fillRect(0, 1, W, 2);
 
-    // Centre marker — shows the "resting" position
-    ctx.fillStyle = 'rgba(255,209,102,0.7)';
-    ctx.fillRect(W / 2 - 0.5, 0, 1.5, H);
+    // Bottom shadow — underside of cylinder
+    const shGrad = ctx.createLinearGradient(0, 0, W, 0);
+    shGrad.addColorStop(0,   'rgba(0,0,0,0)');
+    shGrad.addColorStop(0.2, 'rgba(0,0,0,0.25)');
+    shGrad.addColorStop(0.5, 'rgba(0,0,0,0.35)');
+    shGrad.addColorStop(0.8, 'rgba(0,0,0,0.25)');
+    shGrad.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = shGrad;
+    ctx.fillRect(0, H - 3, W, 3);
+
+    // ── Ticks — embossed ridges on the rubber surface ─────────────────
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(0, 0, W, H, 5);
+    ctx.clip();
+
+    const offset = ((_wheelOffset % TICK_SPACING) + TICK_SPACING) % TICK_SPACING;
+    for (let x = -offset; x < W + TICK_SPACING; x += TICK_SPACING) {
+      const xi = Math.round(x);
+      const isMajor = Math.round((x + _wheelOffset) / TICK_SPACING) % 4 === 0;
+      // Shadow line (just below tick)
+      ctx.fillStyle = isMajor ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.3)';
+      ctx.fillRect(xi, isMajor ? 3 : 5, 1, isMajor ? H - 5 : H - 9);
+      // Highlight line (the tick itself — slightly left of shadow)
+      ctx.fillStyle = isMajor ? 'rgba(255,209,102,0.7)' : 'rgba(255,209,102,0.35)';
+      ctx.fillRect(xi - 1, isMajor ? 2 : 4, 1, isMajor ? H - 5 : H - 9);
+    }
+    ctx.restore();
+
+    // ── Edge fade — wheel disappears into darkness at sides ───────────
+    const fadeW = W * 0.22;
+    const fadeL = ctx.createLinearGradient(0, 0, fadeW, 0);
+    fadeL.addColorStop(0, 'rgba(1,1,6,1)');
+    fadeL.addColorStop(1, 'rgba(1,1,6,0)');
+    ctx.fillStyle = fadeL;
+    ctx.beginPath(); ctx.roundRect(0, 0, fadeW, H, [5,0,0,5]); ctx.fill();
+
+    const fadeR = ctx.createLinearGradient(W - fadeW, 0, W, 0);
+    fadeR.addColorStop(0, 'rgba(1,1,6,0)');
+    fadeR.addColorStop(1, 'rgba(1,1,6,1)');
+    ctx.fillStyle = fadeR;
+    ctx.beginPath(); ctx.roundRect(W - fadeW, 0, fadeW, H, [0,5,5,0]); ctx.fill();
+  }
+
+  // ── Inertia loop ───────────────────────────────────────────────────
+  function _inertiaStep() {
+    if (Math.abs(_velPx) < 0.5) { _inertiaRaf = null; return; }
+    _velPx *= INERTIA_DECAY;
+    _bpmFrac += _velPx / PX_PER_BPM;
+    const deltaBpm = Math.trunc(_bpmFrac);
+    if (deltaBpm !== 0) {
+      const prev = bpm;
+      setBPM(bpm + deltaBpm);
+      _wheelOffset += (bpm - prev) * PX_PER_BPM;
+      _bpmFrac -= deltaBpm;
+    }
+    _wheelDraw();
+    _inertiaRaf = requestAnimationFrame(_inertiaStep);
+  }
+
+  function _stopInertia() {
+    if (_inertiaRaf) { cancelAnimationFrame(_inertiaRaf); _inertiaRaf = null; }
+    _velPx = 0; _bpmFrac = 0;
   }
 
   function _swipeStart(e) {
     const inner = document.getElementById('metroScreenInner');
-    if (!inner) return;
-    if (inner.classList.contains('groove-active')) return;
+    if (!inner || inner.classList.contains('groove-active')) return;
     const target = e.target;
     if (target.closest('.screen-top-row') || target.closest('.screen-adj')) return;
+    _stopInertia();
     const touch = e.touches ? e.touches[0] : e;
-    _swipeStartX   = touch.clientX;
-    _swipeBpmStart = bpm;
+    _swipeStartX    = touch.clientX;
+    _swipeBpmStart  = bpm;
+    _lastX = touch.clientX;
+    _lastT = performance.now();
     _swiping = false;
   }
 
@@ -18592,43 +18664,55 @@ function adjBPM(delta) { setBPM(bpm + delta); }
     if (_swipeStartX === null) return;
     const touch = e.touches ? e.touches[0] : e;
     const dx = touch.clientX - _swipeStartX;
-    if (!_swiping && Math.abs(dx) > 6) {
+    if (!_swiping && Math.abs(dx) > 5) {
       _swiping = true;
-      const inner = document.getElementById('metroScreenInner');
-      if (inner) inner.classList.add('bpm-scrubbing');
+      document.getElementById('metroScreenInner')?.classList.add('bpm-scrubbing');
     }
     if (!_swiping) return;
     e.preventDefault();
-    const newBpm = _swipeBpmStart + Math.round(dx / 4);
-    const prevBpm = bpm;
+
+    // Velocity tracking — exponential moving average over recent moves
+    const now = performance.now();
+    const dt = now - _lastT;
+    if (dt > 0) {
+      const instVelPx = (touch.clientX - _lastX) / dt; // px/ms
+      _velPx = _velPx * 0.5 + instVelPx * 0.5;
+    }
+    _lastX = touch.clientX;
+    _lastT = now;
+
+    const newBpm = _swipeBpmStart + Math.round(dx / PX_PER_BPM);
+    const prev = bpm;
     setBPM(newBpm);
-    _wheelOffset += (bpm - prevBpm) * 8; // 8px per BPM
+    _wheelOffset += (bpm - prev) * PX_PER_BPM;
     _wheelDraw();
   }
 
   function _swipeEnd() {
-    if (_swiping) {
-      const inner = document.getElementById('metroScreenInner');
-      if (inner) inner.classList.remove('bpm-scrubbing');
-    }
-    _swipeStartX = _swipeBpmStart = null;
-    _swiping = false;
+    if (!_swiping) { _swipeStartX = null; return; }
+    document.getElementById('metroScreenInner')?.classList.remove('bpm-scrubbing');
+    _swipeStartX = null; _swiping = false;
+
+    // Convert px/ms velocity to BPM/frame (~16ms), cap it, kick off inertia
+    const velBpmFrame = (_velPx * 16) / PX_PER_BPM;
+    _velPx = Math.max(-MAX_VEL, Math.min(MAX_VEL, velBpmFrame)) * PX_PER_BPM / 16;
+    _bpmFrac = 0;
+    if (Math.abs(_velPx) > 0.5) _inertiaRaf = requestAnimationFrame(_inertiaStep);
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     const inner = document.getElementById('metroScreenInner');
     if (!inner) return;
-    // Initial draw after layout settles
     requestAnimationFrame(() => requestAnimationFrame(_wheelDraw));
     inner.addEventListener('touchstart',  _swipeStart,  { passive: true });
     inner.addEventListener('touchmove',   _swipeMove,   { passive: false });
     inner.addEventListener('touchend',    _swipeEnd);
     inner.addEventListener('touchcancel', _swipeEnd);
-    inner.addEventListener('mousedown',  _swipeStart);
-    inner.addEventListener('mousemove',  (e) => { if (e.buttons) _swipeMove(e); });
-    inner.addEventListener('mouseup',    _swipeEnd);
-    inner.addEventListener('mouseleave', _swipeEnd);
-    window.addEventListener('resize',    _wheelDraw);
+    inner.addEventListener('mousedown',   _swipeStart);
+    inner.addEventListener('mousemove',   (e) => { if (e.buttons) _swipeMove(e); });
+    inner.addEventListener('mouseup',     _swipeEnd);
+    inner.addEventListener('mouseleave',  _swipeEnd);
+    window.addEventListener('resize',     _wheelDraw);
   });
 })();
 // ─────────────────────────────────────────────────────────────────────────
