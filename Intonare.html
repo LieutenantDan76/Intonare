@@ -3008,12 +3008,9 @@
   .metro-screen-inner.groove-active .groove-screen { display: flex; flex-direction: column; }
 
   .groove-screen-top {
-    display: grid; grid-template-columns: 1fr auto 1fr;
-    align-items: start;
-    margin-bottom: 6px; gap: 8px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-bottom: 4px;
   }
-  /* Wheel + BPM align with the NAME line, offset down past the label */
-  .groove-wheel-col, .groove-screen-right-col { padding-top: 15px; }
   .groove-screen-label {
     font-size: 11px; letter-spacing: 2.5px; color: rgba(255,209,102,0.3);
     text-transform: uppercase; margin-bottom: 2px; display: block;
@@ -3026,14 +3023,15 @@
     filter: drop-shadow(0 0 10px rgba(255,209,102,0.3));
     display: block;
   }
-  .groove-screen-name-col { min-width: 0; }
+  .groove-screen-name-col { min-width: 0; flex: 1; }
   .groove-screen-origin {
     font-family: 'Fraunces', serif; font-style: italic;
     font-size: 11px; color: rgba(255,160,100,0.45); letter-spacing: 0.5px;
     margin-top: 1px;
   }
-  .groove-screen-right-col { text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
-  .groove-wheel-col { display: flex; justify-content: center; align-items: center; gap: 6px; opacity: 0.4; transition: opacity 0.2s; }
+  .groove-screen-right-col { text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0; padding-top: 4px; }
+  /* Wheel on its own full-width row, centered, with flanking adjust buttons */
+  .groove-wheel-col { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 2px 0 8px; opacity: 0.45; transition: opacity 0.2s; }
   .metro-screen-inner.bpm-scrubbing .groove-wheel-col { opacity: 1; }
   .groove-bpm-adj {
     background: none; border: none; cursor: pointer;
@@ -13756,17 +13754,12 @@
 
           <!-- ── GROOVE screen (shown when groove mode active) ── -->
           <div class="groove-screen" id="grooveScreen">
-            <!-- Top row: info left | wheel centre | bpm+mute right -->
+            <!-- Row 1: info left | bpm+mute right -->
             <div class="groove-screen-top">
               <div class="groove-screen-name-col">
                 <div class="groove-screen-label" data-i18n="metro_groove">GROOVE</div>
                 <div class="groove-screen-name" id="gsName">SON CLAVE 3-2</div>
                 <div class="groove-screen-origin" id="gsOrigin">Cuban son / salsa</div>
-              </div>
-              <div class="groove-wheel-col">
-                <button class="groove-bpm-adj" onclick="adjBPM(-1)" aria-label="Tempo down">−</button>
-                <canvas id="bpmWheelCanvasGroove" class="bpm-wheel-canvas" height="26"></canvas>
-                <button class="groove-bpm-adj" onclick="adjBPM(1)" aria-label="Tempo up">+</button>
               </div>
               <div class="groove-screen-right-col">
                 <div class="groove-screen-bpm" id="gsBpm">120 <span>BPM</span></div>
@@ -13778,6 +13771,12 @@
                   </svg>
                 </button>
               </div>
+            </div>
+            <!-- Row 2: wheel + adjust buttons, own full-width row -->
+            <div class="groove-wheel-col">
+              <button class="groove-bpm-adj" onclick="adjBPM(-1)" aria-label="Tempo down">−</button>
+              <canvas id="bpmWheelCanvasGroove" class="bpm-wheel-canvas" height="26"></canvas>
+              <button class="groove-bpm-adj" onclick="adjBPM(1)" aria-label="Tempo up">+</button>
             </div>
             <!-- Groove step grid -->
             <div class="groove-screen-grid" id="gsGrid"></div>
