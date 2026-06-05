@@ -3017,7 +3017,7 @@
   }
   .groove-screen-name {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px; letter-spacing: 1.5px; line-height: 1;
+    font-size: 36px; letter-spacing: 1.5px; line-height: 1;
     background: var(--grad-metro);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     filter: drop-shadow(0 0 10px rgba(255,209,102,0.3));
@@ -3032,7 +3032,7 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   /* Fixed width so 2- vs 3-digit BPM and long names never shift the layout */
-  .groove-screen-right-col { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; width: 108px; }
+  .groove-screen-right-col { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; width: 100px; }
   .groove-screen-bpm-row { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
   /* Tiny wheel below BPM — purely a visual accent + swipe affordance */
   .groove-wheel-col { display: flex; justify-content: flex-end; align-items: center; opacity: 0.4; transition: opacity 0.2s; }
@@ -15917,7 +15917,7 @@ const GROOVE_PRESETS = [
 
   // ── 9/8 GROOVES (9 steps, one per 8th note) ──
   {
-    id: 'eskista',     cat: 'world', beats: 9, pulseBeats: 3, suggestedBpm: 176,
+    id: 'eskista',     cat: 'african', beats: 9, pulseBeats: 3, suggestedBpm: 176,
     name: 'ESKISTA',         origin: '9/8 — Ethiopian / East African', originIt: '9/8 — etiope / Africa orientale',
     // 2+2+2+3 grouping — the backbone of Ethiopian music
     steps: [2,0, 2,0, 2,0, 2,0,1],
@@ -16231,7 +16231,7 @@ function grooveLoadPreset(id) {
 // Shrink the groove name font until it fits its column width (max 28px, min 15px)
 function _fitGrooveName(elName) {
   if (!elName) return;
-  const MAX = 28, MIN = 15;
+  const MAX = 36, MIN = 15;
   elName.style.fontSize = MAX + 'px';
   // Measure after layout settles
   requestAnimationFrame(() => {
