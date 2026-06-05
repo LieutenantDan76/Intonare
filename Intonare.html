@@ -558,37 +558,19 @@
   }
 
   /* ── Quiz header (matches app header pattern) ── */
-  .mq-header {
+  /* Floating top controls — no title bar, just BACK (left) + stats (right) */
+  .mq-topbar {
     display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; padding: 12px 16px 10px; position: relative;
-    border-bottom: 1px solid var(--border-soft);
-    background: var(--bg-1); flex-shrink: 0;
+    gap: 10px; padding: 12px 16px 4px; flex-shrink: 0;
   }
+  .mq-topbar.hidden { display: none; }
   .mq-close {
     background: none; border: none; color: var(--text-dim); cursor: pointer;
     padding: 4px; display: flex; align-items: center; gap: 5px;
     font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
-    transition: color .15s; z-index: 1;
+    transition: color .15s;
   }
   .mq-close:hover { color: var(--text); }
-  /* Absolutely centered to the whole header so side buttons of different widths
-     don't push the title off-center */
-  .mq-header-center {
-    position: absolute; left: 50%; top: 50%;
-    transform: translate(-50%, -50%); text-align: center;
-    pointer-events: none; width: 60%;
-  }
-  .mq-header-title {
-    font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 2.5px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-soft));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    line-height: 1;
-  }
-  .mq-header-sub {
-    font-family: 'JetBrains Mono', monospace; font-size: 7px; letter-spacing: 1.5px;
-    color: var(--muted); margin-top: 1px;
-  }
-  .mq-header-spacer { width: 48px; }
 
   /* ── Global difficulty strip ── */
   .mq-global-diff {
@@ -723,6 +705,8 @@
 
   /* ── Landing hero ── */
   .mq-hero { text-align: center; padding: 8px 0 12px; }
+  .mq-hero-compact { padding: 6px 0 10px; }
+  .mq-hero-compact .mq-hero-pill { margin-bottom: 0; }
   .mq-hero-pill {
     display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
     background: color-mix(in srgb, var(--accent-soft) 10%, var(--surface));
@@ -54352,16 +54336,12 @@ window.sgExit = function() {
   <div id="mqModal" role="dialog" aria-modal="true" aria-label="Music Quiz">
     <div id="mqPanel">
 
-      <!-- Header -->
-      <div class="mq-header">
+      <!-- Floating top controls (no title bar — title lives in the hero) -->
+      <div class="mq-topbar">
         <button class="mq-close" id="mqCloseBtn" onclick="mqClose()">
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           BACK
         </button>
-        <div class="mq-header-center">
-          <div class="mq-header-title" id="mqHdrTitle">MUSIC QUIZ</div>
-          <div class="mq-header-sub" id="mqHdrSub">test your knowledge</div>
-        </div>
         <button class="mq-stats-btn" id="mqStatsBtn" onclick="mqShowStats()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         </button>
@@ -56922,10 +56902,17 @@ function mqClose() {
 function mqShowScreen(id) {
   document.querySelectorAll('.mq-screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // Topbar (BACK + stats) only on the landing screen; other screens have their own back buttons
+  var topbar = document.querySelector('.mq-topbar');
+  if (topbar) topbar.classList.toggle('hidden', id !== 'mqScreenLanding');
 }
 function mqSetHeader(title, sub) {
-  document.getElementById('mqHdrTitle').textContent = title;
-  document.getElementById('mqHdrSub').textContent = sub;
+  // Header bar was removed in favour of the hero title screen; kept as a safe no-op
+  // so existing call sites don't error.
+  var tEl = document.getElementById('mqHdrTitle');
+  var sEl = document.getElementById('mqHdrSub');
+  if (tEl) tEl.textContent = title;
+  if (sEl) sEl.textContent = sub;
 }
 function mqGoLanding() {
   if (MQ.timerInterval) clearInterval(MQ.timerInterval);
