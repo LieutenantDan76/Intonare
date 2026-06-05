@@ -17904,7 +17904,7 @@ function detectPitch(buf, sr) {
   let rms = 0;
   for (let i = 0; i < N; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / N);
-  if (rms < 0.015) return -1;
+  if (rms < 0.006) return -1;
   const yin = new Float32Array(H);
   for (let tau = 0; tau < H; tau++) {
     let sum = 0;
@@ -36037,7 +36037,7 @@ function vrAutoCorrelate(buf, sampleRate) {
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.015) return -1;
+  if (rms < 0.006) return -1;
 
   let r1 = 0, r2 = SIZE - 1;
   for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < 0.2) { r1 = i; break; } }
