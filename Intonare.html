@@ -3022,7 +3022,7 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
     filter: drop-shadow(0 0 10px rgba(255,209,102,0.3));
     display: block;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; overflow: hidden;
   }
   .groove-screen-name-col { min-width: 0; flex: 1; }
   .groove-screen-origin {
@@ -16228,6 +16228,22 @@ function grooveLoadPreset(id) {
 }
 
 // ── Main screen groove display ──
+// Shrink the groove name font until it fits its column width (max 28px, min 15px)
+function _fitGrooveName(elName) {
+  if (!elName) return;
+  const MAX = 28, MIN = 15;
+  elName.style.fontSize = MAX + 'px';
+  // Measure after layout settles
+  requestAnimationFrame(() => {
+    let size = MAX;
+    // scrollWidth > clientWidth means it's overflowing
+    while (size > MIN && elName.scrollWidth > elName.clientWidth) {
+      size -= 1;
+      elName.style.fontSize = size + 'px';
+    }
+  });
+}
+
 function grooveUpdateScreen() {
   const inner = document.querySelector('.metro-screen-inner');
   if (!inner) return;
@@ -16239,7 +16255,10 @@ function grooveUpdateScreen() {
   }
   const preset = GROOVE_PRESETS.find(p => p.id === groovePresetId);
   const el = (id) => document.getElementById(id);
-  if (el('gsName'))   el('gsName').textContent   = preset ? (((progState.lang === 'it')&&preset.nameIt)?preset.nameIt:preset.name) : t('pr_custom');
+  if (el('gsName')) {
+    el('gsName').textContent = preset ? (((progState.lang === 'it')&&preset.nameIt)?preset.nameIt:preset.name) : t('pr_custom');
+    _fitGrooveName(el('gsName'));
+  }
   if (el('gsOrigin')) el('gsOrigin').textContent = preset ? (((progState.lang === 'it')&&preset.originIt)?preset.originIt:preset.origin) : '';
   if (el('gsBpm'))    el('gsBpm').innerHTML = `${bpm} <span>BPM</span>`;
   // build step grid on screen
@@ -34855,11 +34874,11 @@ function setMetroAudio(on) {
   if (typeof metroMasterGain !== 'undefined' && metroMasterGain) {
     metroMasterGain.gain.setTargetAtTime(on ? 1 : 0, metroMasterGain.context.currentTime, 0.02);
   }
-  // Sync inline metro button
+  // Sync inline metro button (both standard and groove screens)
   const btn = document.getElementById('metroMuteBtn');
-  if (btn) {
-    btn.classList.toggle('muted', !on);
-  }
+  if (btn) btn.classList.toggle('muted', !on);
+  const btnG = document.getElementById('metroMuteBtnGroove');
+  if (btnG) btnG.classList.toggle('muted', !on);
   // Sync settings toggle
   document.querySelectorAll('#smMetroAudioRow .sm-toggle-chip').forEach(b =>
     b.classList.toggle('active', (b.dataset.value === 'on') === !!on));
