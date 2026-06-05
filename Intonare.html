@@ -991,7 +991,7 @@
   .mq-bk-bar-wrap { flex: 2; height: 3px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
   .mq-bk-bar      { height: 100%; border-radius: 2px; transition: width .8s ease; }
   .mq-bk-score    { font-family:'JetBrains Mono',monospace; font-size: 9px; font-weight: 700; color: var(--text-dim); min-width: 28px; text-align: right; }
-  .mq-survival-end { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0 4px; text-align: center; }
+  .mq-survival-end { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0 4px; text-align: center; width: 100%; }
   .mq-skull        { font-size: 48px; animation: mqSkullIn .4s cubic-bezier(.34,1.56,.64,1); }
   @keyframes mqSkullIn { from{transform:scale(0) rotate(-15deg);opacity:0;} to{transform:scale(1) rotate(0);opacity:1;} }
   .mq-survival-title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 3px; color: var(--sharp); }
@@ -32369,14 +32369,14 @@ let pmGraphWeekOffset = 0;  // 0 = current 7 days, -1 = previous 7, etc.
 let pmGraphExpandedKey = null;
 
 const GRAPH_EXERCISES = [
-  { key: 'interval',   label: 'INTERVALS',  icon: '🎯' },
-  { key: 'chords',     label: 'CHORDS',     icon: '🎼' },
-  { key: 'chordle',    label: 'CHORDLE',    icon: '🎹' },
-  { key: 'singsing',   label: 'SIGHT SING', icon: '🎤' },
-  { key: 'scales',     label: 'SCALES',     icon: '🎵' },
-  { key: 'tempo',      label: 'TEMPO LOCK', icon: '⏱' },
-  { key: 'tempoguess', label: 'TEMPO GUESS',icon: '🎲' },
-  { key: 'poly',       label: 'POLYRHYTHM', icon: '🌀' },
+  { key: 'interval',   label: 'INTERVALS',  labelIt: 'INTERVALLI',   icon: '🎯' },
+  { key: 'chords',     label: 'CHORDS',     labelIt: 'ACCORDI',      icon: '🎼' },
+  { key: 'chordle',    label: 'CHORDLE',    labelIt: 'CHORDLE',      icon: '🎹' },
+  { key: 'singsing',   label: 'SIGHT SING', labelIt: 'LETTURA',      icon: '🎤' },
+  { key: 'scales',     label: 'SCALES',     labelIt: 'SCALE',        icon: '🎵' },
+  { key: 'tempo',      label: 'TEMPO LOCK', labelIt: 'TEMPO LOCK',   icon: '⏱' },
+  { key: 'tempoguess', label: 'TEMPO GUESS',labelIt: 'INDOVINA BPM', icon: '🎲' },
+  { key: 'poly',       label: 'POLYRHYTHM', labelIt: 'POLIRITMIA',   icon: '🌀' },
 ];
 
 function pmGetWeekData(weekOffset) {
@@ -32490,7 +32490,7 @@ function progRenderGraph() {
     row.className = 'pm-bar-row';
     row.innerHTML =
       '<div class="pm-bar-header">' +
-        '<div class="pm-bar-label">' + ex.label + '</div>' +
+        '<div class="pm-bar-label">' + ((progState.lang === 'it' && ex.labelIt) ? ex.labelIt : ex.label) + '</div>' +
         '<div class="pm-bar-track"><div class="pm-bar-fill" style="width:' + pct + '%"></div></div>' +
         '<div class="pm-bar-time">' + pmFmtTime(sec) + '</div>' +
       '</div>' + detailHtml;
@@ -35125,40 +35125,51 @@ const ACHIEVEMENTS = [
   // CONSISTENCY
   { id:'first_light', cond_it:'completa la tua prima sessione', cond:'complete your first session', rarity:'common',       cat:'consistency', name:'First Light',
     desc:"Take one more step, and it will be the farthest from home you've ever been",
+    desc_it:"Fai ancora un passo: sarà il più lontano da casa che tu abbia mai fatto",
     check: s => (s.xp||0) > 0 },
   { id:'three_days', cond_it:'serie di pratica di 3 giorni', cond:'3-day practice streak', rarity:'common',        cat:'consistency', name:'Three Days',
     desc:"Every habit starts with three days",
+    desc_it:"Ogni abitudine inizia con tre giorni",
     check: s => (s.streak?.count||0) >= 3 },
   { id:'week_strong', cond_it:'serie di pratica di 7 giorni', cond:'7-day practice streak', rarity:'rare',       cat:'consistency', name:'Week Strong',
     desc:"A day may come when your strength would fail, but it is not this day",
+    desc_it:"Potrebbe venire il giorno in cui le forze ti manchino, ma non è oggi",
     check: s => (s.streak?.count||0) >= 7 },
   { id:'creature_of_habit', cond_it:'serie di pratica di 21 giorni', cond:'21-day practice streak', rarity:'rare', cat:'consistency', name:'Creature of Habit',
     desc:"Science says it's official now!",
+    desc_it:"La scienza lo conferma: è ufficiale!",
     check: s => (s.streak?.count||0) >= 21 },
   { id:'committed', cond_it:'serie di pratica di 50 giorni', cond:'50-day practice streak', rarity:'legendary',         cat:'consistency', name:'Committed',
     desc:"After all this time? Always",
+    desc_it:"Dopo tutto questo tempo? Sempre",
     check: s => (s.streak?.count||0) >= 50 },
 
   // ACCURACY
   { id:'great_ears', cond_it:'100% di precisione nel training degli intervalli', cond:'100% accuracy in an interval session', rarity:'rare',    cat:'accuracy', name:"Great Ears Kid, Don't Get Cocky!",
     desc:"Never tell me the odds",
+    desc_it:"Non dirmi le probabilità",
     check: s => !!(s.stats?.interval?.perfectSession) },
   { id:'i_have_you', cond_it:'colpisci esattamente 0ms nel training del tempo', cond:'hit exactly 0ms in tempo training', rarity:'legendary',    cat:'accuracy', name:'I Have You Now',
     desc:"Impressive. Most impressive.",
+    desc_it:"Impressionante. Davvero impressionante.",
     check: s => s.stats?.tempo?.bestMs !== undefined && s.stats.tempo.bestMs === 0 },
   { id:'chord_scholar', cond_it:'serie di 30 nell\u2019ear training degli accordi', cond:'chord ear training streak of 30', rarity:'rare', cat:'accuracy', name:'Chord Scholar',
     desc:"Harmony is starting to make sense",
+    desc_it:"L'armonia sta cominciando ad avere senso",
     check: s => Math.max(s.stats?.chords?.bestStreak||0, s.stats?.chords?.streak||0) >= 30 },
   { id:'perfect_pitch', cond_it:'serie di 30 nella lettura a prima vista', cond:'sight singing streak of 30', rarity:'rare', cat:'accuracy', name:'Perfect Pitch',
     desc:"You must believe in the heart of the pitch",
+    desc_it:"Devi credere nel cuore dell'intonazione",
     check: s => Math.max(s.stats?.singsing?.bestStreak||0, s.stats?.singsing?.streak||0) >= 30 },
   { id:'flawless', cond_it:'punteggio perfetto in qualsiasi esercizio', cond:'perfect score in any exercise', rarity:'legendary',      cat:'accuracy', name:'Flawless Victory',
     desc:"Inconceivable!",
+    desc_it:"Inconcepibile!",
     check: s => !!(s.stats?.anyPerfect) },
 
   // EXPLORATION
   { id:'curious', cond_it:'usa 3 tipi diversi di esercizi', cond:'use 3 different exercise types', rarity:'common',        cat:'exploration', name:'Curious',
     desc:"Not all those who wander are lost",
+    desc_it:"Non tutti coloro che vagano sono perduti",
     check: s => {
       const used = new Set();
       Object.values(s.history||{}).forEach(day => Object.keys(day).forEach(k => used.add(k)));
@@ -35169,6 +35180,7 @@ const ACHIEVEMENTS = [
     }},
   { id:'explorer', cond_it:'completa una sessione in tutti e 6 gli esercizi', cond:'complete a session in all 6 exercises', rarity:'rare',       cat:'exploration', name:'Explorer',
     desc:"Where we're going, we don't need roads",
+    desc_it:"Dove stiamo andando, non abbiamo bisogno di strade",
     check: s => {
       const used = new Set();
       Object.values(s.history||{}).forEach(day => Object.keys(day).forEach(k => used.add(k)));
@@ -35179,75 +35191,94 @@ const ACHIEVEMENTS = [
     }},
   { id:'rhythm_curious', cond_it:'apri la drum machine', cond:'open the drum machine', rarity:'common', cat:'exploration', name:'Rhythm Curious',
     desc:"Feel, don't think. Use your instincts.",
+    desc_it:"Senti, non pensare. Usa l'istinto.",
     check: s => !!(s.drumkitVisited) },
 
   // MILESTONES (sorted by level)
   { id:'apprentice', cond_it:'raggiungi il livello 5', cond:'reach level 5', rarity:'common',  cat:'milestones', name:'Apprentice',
     desc:"You have taken your first step into a larger world",
+    desc_it:"Hai fatto il tuo primo passo verso un mondo più grande",
     check: s => (s.level||0) >= 5 },
   { id:'practitioner', cond_it:'raggiungi il livello 10', cond:'reach level 10', rarity:'common',cat:'milestones', name:'Practitioner',
     desc:"You know what you're doing now",
+    desc_it:"Ora sai quello che fai",
     check: s => (s.level||0) >= 10 },
   { id:'musician', cond_it:'raggiungi il livello 20', cond:'reach level 20', rarity:'rare',    cat:'milestones', name:'Musician',
     desc:"That word means something now",
+    desc_it:"Quella parola adesso ha un significato",
     check: s => (s.level||0) >= 20 },
   { id:'master', cond_it:'raggiungi il livello 30', cond:'reach level 30', rarity:'legendary',      cat:'milestones', name:'Master',
     desc:"The student has now become the teacher",
+    desc_it:"Lo studente è diventato il maestro",
     check: s => (s.level||0) >= 30 },
   { id:'maestro', cond_it:'raggiungi il livello 50', cond:'reach level 50', rarity:'legendary',     cat:'milestones', name:'Maestro',
     desc:"When 900 years old you reach, look as good you will not!",
+    desc_it:"Quando 900 anni avrai, bello così non sembrerai!",
     check: s => (s.level||0) >= 50 },
 
   // SECRETS
   { id:'zelda', cond_it:'serie di pratica di 100 giorni', cond:'100-day practice streak', rarity:'secret',       cat:'secrets', name:"It's Dangerous to Go Alone",
     desc:"Take this!",
+    desc_it:"Prendi questo!",
     check: s => (s.streak?.count||0) >= 100 },
   { id:'night_owl', cond_it:'pratica tra mezzanotte e le 4 di mattina', cond:'practice between midnight and 4am', rarity:'secret',   cat:'secrets', name:'Night Owl',
     desc:"Moonlight drowns out all but the brightest stars",
+    desc_it:"La luce della luna oscura tutto tranne le stelle più brillanti",
     check: s => !!(s.nightOwl) },
   { id:'full_house', cond_it:'carica ogni preset della batteria almeno una volta', cond:'load every drum preset at least once', rarity:'secret',  cat:'secrets', name:'Full House',
     desc:"Everywhere you looked",
+    desc_it:"Ovunque tu guardassi",
     check: s => !!(s.allPresetsLoaded) },
   { id:'dedicated', cond_it:'10 ore totali di pratica', cond:'10 hours total practice time', rarity:'secret',   cat:'secrets', name:'Dedicated',
     desc:"Get busy living, or get busy dying",
+    desc_it:"Datti da fare per vivere, o datti da fare per morire",
     check: s => _achTotalTime(s) >= 36000 },
   // SPECIAL TRIGGERS
   { id:'more_cowbell',   cond_it:'modalità groove con groove E pulse impostati su cowbell',
     cond:'use groove mode with both groove and pulse set to cowbell', rarity:'secret', cat:'secrets',
     name:'I Got a Fever',
     desc:"And the only prescription... is more cowbell",
+    desc_it:"E l'unica cura... è più cowbell",
     check: s => !!(s.cowbellUsed) },
   { id:'hard_days_night', cond_it:'completa una sessione da 60 minuti',
     cond:'complete a 60-minute session', rarity:'secret', cat:'secrets',
     name:"Hard Day's Night",
     desc:"It's been a hard day's night, and I've been working like a dog",
+    desc_it:"È stata una dura notte di lavoro, e ho faticato come un cane",
     check: s => !!(s.hardDaysNight) },
   { id:'everything_right_place', cond_it:'usa ogni strumento ed esercizio in una sola sessione',
     cond:'use every tool and exercise in a single session', rarity:'legendary', cat:'exploration',
     name:'Everything, Everywhere',
     desc:"All at once",
+    desc_it:"Tutto in una volta",
     check: s => !!(s.everythingRightPlace) },
 
   // CHORDLE
   { id:'first_chord',  cond_it:'risolvi il tuo primo Chordle', cond:'solve your first Chordle', rarity:'common', cat:'accuracy',
     name:'First Blood',  desc:"It's pronounced Chord-le, alright?",
+    desc_it:"Si pronuncia Chord-le, chiaro?",
     check: s => (s.stats?.chordle?.correct||0) >= 1 },
   { id:'harmonic_ear', cond_it:'risolvi un Chordle al primo tentativo', cond:'solve a Chordle on the first try', rarity:'rare', cat:'accuracy',
     name:'Boom',  desc:"Headshot",
+    desc_it:"Colpo alla testa",
     check: s => (s.stats?.chordle?.firstTry||0) >= 1 },
   { id:'giant_steps',  cond_it:'risolvi 5 Chordle in V.Hard', cond:'solve 5 V.Hard Chordles', rarity:'legendary', cat:'accuracy',
     name:'Giant Steps',  desc:"If you're not living on the edge, you're taking up space",
+    desc_it:"Se non vivi sul filo del rasoio, stai solo occupando spazio",
     check: s => (s.stats?.chordle?.vhardSolved||0) >= 5 },
   { id:'deaf_composer', cond_it:'risolvi un Chordle senza mai premere play', cond:'solve a Chordle without pressing play', rarity:'secret', cat:'secrets',
     name:'Dead Composer', desc:"Music is like a dream... one that I cannot hear",
+    desc_it:"La musica è come un sogno... che non riesco a sentire",
     check: s => !!(s.stats?.chordle?.solvedNoPlay) },
 
   { id:'crikey', cond_it:"apri il didgeridoo", cond:'open the didgeridoo', rarity:'secret', cat:'secrets',
     name:"Crikey!",
     desc:"Let's Didgeridon't and Say We Didgeridid",
+    desc_it:"Facciamo finta di averlo fatto e diciamo che l'abbiamo fatto",
     check: s => !!(s.didgeridooUsed) },
   { id:'addicted', cond_it:'6 ore di pratica in un singolo giorno', cond:'6 hours of practice in a single day', rarity:'secret',    cat:'secrets', name:'Addicted',
     desc:"It's not the days, it's the mileage",
+    desc_it:"Non contano i giorni, contano i chilometri",
     check: s => _achMaxDayTime(s) >= 21600 },
 ];
 
@@ -35427,7 +35458,7 @@ function renderAchievements() {
           <div class="pm-ach-icon" style="color:${iconColor}">${iconSvg}</div>
           <div class="pm-ach-name">${a.name}</div>
           <div class="pm-ach-cond">${(progState.lang === 'it' && a.cond_it) ? a.cond_it : (a.cond || '')}</div>
-          <div class="pm-ach-desc">${a.desc}</div>
+          <div class="pm-ach-desc">${(progState.lang === 'it' && a.desc_it) ? a.desc_it : a.desc}</div>
           <div class="pm-ach-date">${t('ach_unlocked_label')} · <b>${dateStr}</b></div>
           <div class="pm-ach-rarity">${a.rarity ? t('ach_rarity_' + a.rarity) : ''}</div>`;
       } else {
@@ -54575,26 +54606,26 @@ beatles: {
   questions:[
     {q:"What was The Beatles' first UK number one single?",opts:["Love Me Do","Please Please Me","From Me to You","She Loves You"],ans:1,fact:"'Please Please Me' topped NME, Melody Maker, and the BBC chart in January 1963. It only reached No.2 on Record Retailer (which later became the official chart) — 'From Me to You' was technically their first on that chart."},
     {q:"Which Beatle played bass?",opts:["John Lennon","George Harrison","Ringo Starr","Paul McCartney"],ans:3,fact:"McCartney switched to bass when Stuart Sutcliffe left the band in Hamburg. He became one of rock's most melodic and inventive bass players."},
-    {q:"Where did The Beatles perform their famous last public concert?",opts:["Dick James, their music publisher who handled royalties and releases", "George Martin, who arranged, produced, and contributed musical ideas throughout their career", "Brian Epstein, their manager who negotiated the initial EMI contract", "Norman Smith, the engineer at Abbey Road for their first recordings"],ans:1,fact:"The rooftop concert at 3 Savile Row on January 30, 1969 was their last public performance. Police eventually stopped it. It was filmed for Let It Be."},
-    {q:"What was the working placeholder title of 'Yesterday'?",opts:["Strawberry Field was a Salvation Army children's home near Lennon's childhood home in Liverpool", "A strawberry farm in Liverpool where the band rehearsed early on", "A village in Scotland where Lennon wrote the song on holiday", "A street in Hamburg near the Kaiserkeller where they played residencies"],ans:0,fact:"McCartney used 'Scrambled eggs, oh my baby how I love your legs' as a placeholder. He was convinced the melody must already exist since it came to him so fully formed."},
-    {q:"Which Beatle wrote 'Something' on Abbey Road?",opts:["The roof of Abbey Road Studios after finishing the White Album sessions", "A temporary stage on the roof of the Cavern Club in Liverpool", "The rooftop of the Apple Corps building at 3 Savile Row, London, in January 1969", "The roof of EMI House in Manchester Square after signing their contract"],ans:2,fact:"Harrison wrote 'Something' — his first A-side. Frank Sinatra called it 'the greatest love song of the past 50 years' and incorrectly attributed it to Lennon-McCartney for years."},
+    {q:"Where did The Beatles perform their famous last public concert?",opts:["The roof of Abbey Road Studios after finishing the White Album sessions", "A temporary stage on the roof of the Cavern Club in Liverpool", "The rooftop of the Apple Corps building at 3 Savile Row, London, in January 1969", "The roof of EMI House in Manchester Square after signing their contract"],ans:2,fact:"The rooftop concert at 3 Savile Row on January 30, 1969 was their last public performance. Police eventually stopped it. It was filmed for Let It Be."},
+    {q:"What was the working placeholder title of 'Yesterday'?",opts:["Scrambled Eggs", "Daisy", "Something in the Way She Moves", "Eleanor"],ans:0,fact:"McCartney used 'Scrambled eggs, oh my baby how I love your legs' as a placeholder. He was convinced the melody must already exist since it came to him so fully formed."},
+    {q:"Which Beatle wrote 'Something' on Abbey Road?",opts:["John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"],ans:2,fact:"Harrison wrote 'Something' — his first A-side. Frank Sinatra called it 'the greatest love song of the past 50 years' and incorrectly attributed it to Lennon-McCartney for years."},
     {q:"In which city did The Beatles hone their craft playing marathon sets?",opts:["London","New York","Hamburg","Liverpool"],ans:2,fact:"Playing 8-hour sets at Hamburg clubs 1960–62 forged them into a tight live band. They played over 1,200 shows in Hamburg before Beatlemania hit."},
-    {q:"Who played the lead guitar solo on 'While My Guitar Gently Weeps'?",opts:["He was the primary songwriter and played rhythm guitar on most tracks", "He played bass and sang lead vocals on the majority of their singles", "He played lead guitar and contributed songwriting from A Hard Day's Night onwards", "He was the drummer who replaced Pete Best before their EMI debut"],ans:2,fact:"Harrison invited Clapton because he knew the other Beatles would behave better with an outsider present. Clapton was reluctant, feeling he shouldn't play on a Beatles record."},
+    {q:"Who played the lead guitar solo on 'While My Guitar Gently Weeps'?",opts:["George Harrison", "Paul McCartney", "Eric Clapton", "Pete Townshend"],ans:2,fact:"Harrison invited Clapton because he knew the other Beatles would behave better with an outsider present. Clapton was reluctant, feeling he shouldn't play on a Beatles record."},
     {q:"What was 'Blackbird' reportedly written about?",opts:["An actual blackbird in McCartney's garden","The Civil Rights movement in America","Linda Eastman","His mother Mary"],ans:1,fact:"McCartney said the song was inspired by the Civil Rights struggle in America. The 'broken wings' and 'sunken eyes' imagery represents Black Americans finding freedom."},
     {q:"Which record label did The Beatles found?",opts:["Parlophone","Decca","Apple Records","Capitol"],ans:2,fact:"Apple Corps was founded in 1968 — meant as a creative utopia but became a financial disaster requiring Allen Klein and later the courts to sort out."},
-    {q:"Sgt. Pepper's was one of the first albums to do what with its sleeve?",opts:["McCartney wrote it overnight after a bet that he couldn't finish a full song by morning", "Recorded in one marathon session; Lennon's vocal was double-tracked to hide exhaustion", "Recorded in Hamburg in 1962 before their EMI deal, later re-released", "The chord progression was borrowed directly from a Chuck Berry song at George Martin's suggestion"],ans:1,fact:"Sgt. Pepper (1967) was one of the first major pop albums to print all its lyrics on the sleeve. It also pioneered the gatefold and included a cardboard insert — unprecedented at the time."},
+    {q:"Sgt. Pepper's was one of the first albums to do what with its sleeve?",opts:["Print all the lyrics on the sleeve", "Use a gatefold with a pop-up insert", "Include a hidden message in the run-out groove", "Feature a die-cut window revealing an inner sleeve"],ans:0,fact:"Sgt. Pepper (1967) was one of the first major pop albums to print all its lyrics on the sleeve. It also pioneered the gatefold and included a cardboard insert — unprecedented at the time."},
     {q:"What is the last note heard on Abbey Road?",opts:["A held chord from 'The End'","The final piano chord of 'Her Majesty'","A guitar note from 'Carry That Weight'","Silence"],ans:1,fact:"'Her Majesty' was accidentally left on at the end of the mastering tape. McCartney liked it as a secret track. It begins with a truncated D chord edited from 'Mean Mr. Mustard'."},
     {q:"What drug did Bob Dylan introduce The Beatles to in New York in 1964?",opts:["LSD","Heroin","Marijuana","Amphetamines"],ans:2,fact:"Dylan introduced them to marijuana in a New York hotel in August 1964. LSD came in 1965 via a dentist who spiked John and George's coffee without their knowledge."},
-    {q:"How many takes were used to create 'Strawberry Fields Forever'?",opts:["Outtakes from the Get Back sessions recorded live to tape at Apple Corps", "A collection of unfinished demos and rehearsals recorded at Lennon's home in Berkshire", "A radio session recorded for the BBC in 1963, officially released in 1994", "Studio improvisation recorded during breaks in the Abbey Road sessions"],ans:1,fact:"Two separate versions — one slower and acoustic, one faster and orchestrated — were recorded weeks apart in different keys and tempos. George Martin sped one up and slowed the other to merge them."},
+    {q:"How many takes were used to create 'Strawberry Fields Forever'?",opts:["One continuous live take in the studio", "Two completely separate versions recorded weeks apart, then spliced together", "Forty-five takes across three sessions", "A single take with overdubs added later"],ans:1,fact:"Two separate versions — one slower and acoustic, one faster and orchestrated — were recorded weeks apart in different keys and tempos. George Martin sped one up and slowed the other to merge them."},
     {q:"Which Beatle was asked to leave before the band became famous?",opts:["Ringo Starr","Pete Best","Stuart Sutcliffe","Jimmy Nicol"],ans:1,fact:"Pete Best was the drummer before Ringo — a founding member who played in Hamburg. He was replaced in August 1962, just before Beatlemania. He never fully recovered professionally."},
-    {q:"'In My Life' features a solo that sounds like a harpsichord. What is it?",opts:["A feedback-heavy guitar instrumental recorded live at the end of a session", "The avant-garde musique concrète piece at the end of side two, over 8 minutes long", "The orchestral climax of A Day in the Life, recorded with a 40-piece orchestra", "An unlisted acoustic track that follows the final song with a 20-second silence"],ans:1,fact:"George Martin played the piano solo at half speed; at double speed it has a harpsichord-like timbre and is physically faster than humanly playable. One of many clever studio tricks on the album."},
+    {q:"'In My Life' features a solo that sounds like a harpsichord. What is it?",opts:["A real harpsichord hired for the session", "A piano solo played by George Martin at half speed, then sped up in playback", "A Mellotron set to harpsichord preset", "A guitar processed through a ring modulator"],ans:1,fact:"George Martin played the piano solo at half speed; at double speed it has a harpsichord-like timbre and is physically faster than humanly playable. One of many clever studio tricks on the album."},
     {q:"Which album was recorded AFTER Let It Be but released BEFORE it?",opts:["Abbey Road","Magical Mystery Tour","Yellow Submarine","Past Masters"],ans:0,fact:"Abbey Road (released September 1969) was recorded after the miserable Get Back sessions (January 1969). Let It Be was shelved and only released in May 1970 — after the band broke up."},
-    {q:"What is the famous chord that opens 'A Hard Day's Night'?",opts:["A specific frequency boost applied to vocals in the Abbey Road console", "A tone generated by pressing Record on a tape machine without audio — used as texture", "A delay effect created by running two identical tape machines slightly out of sync", "The natural resonance of the echo chamber beneath Studio Two's floor"],ans:1,fact:"The opening chord has been analyzed for decades. George Martin said it includes notes from both guitar and piano. A 2004 mathematical analysis suggested it contains F, G, C, D, G, C, E, G, E."},
+    {q:"What is the famous chord that opens 'A Hard Day's Night'?",opts:["A simple G major chord on one guitar", "A complex chord struck simultaneously on guitar and piano containing pitches still debated by theorists", "A Fadd9 played by Harrison on a 12-string Rickenbacker", "A D suspended chord with Lennon and Harrison playing in unison"],ans:1,fact:"The opening chord has been analyzed for decades. George Martin said it includes notes from both guitar and piano. A 2004 mathematical analysis suggested it contains F, G, C, D, G, C, E, G, E."},
     {q:"Which studio innovation did 'Tomorrow Never Knows' pioneer?",opts:["First synthesizer in pop","Automatic double tracking (ADT) and tape loops played live","First use of backward guitar","First 8-track recording"],ans:1,fact:"ADT was invented by engineer Ken Townsend because Lennon hated double-tracking manually. The tape loops were Lennon's home recordings played through Leslie cabinets live during the mix."},
     {q:"Why does the 'Love Me Do' single version feature Ringo on tambourine?",opts:["He preferred tambourine","EMI also booked session drummer Andy White — Ringo played tambourine on that version","Ringo had an injured hand","John Lennon played drums"],ans:1,fact:"George Martin wasn't confident in Ringo yet and booked Andy White. The Ringo-drumming version was released as the single; the Andy White version (Ringo on tambourine) appeared on the debut album."},
     {q:"Which Beatles song holds the record for most cover versions?",opts:["Hey Jude","Let It Be","Yesterday","Come Together"],ans:2,fact:"'Yesterday' holds the Guinness World Record for most covers of any song — over 2,200 recorded versions. It's also one of the most played songs in broadcast history."},
-    {q:"What is the 'sonic cauldron' at the end of 'I Am the Walrus'?",opts:["A song McCartney wrote to comfort Lennon's son Julian after John and Cynthia's divorce", "A song written for Brian Epstein's memorial concert after his death in 1967", "A song McCartney wrote about his own childhood in Liverpool's Allerton district", "A song written for a friend's daughter who was seriously ill in hospital"],ans:0,fact:"The end of 'I Am the Walrus' incorporates a live BBC radio broadcast of King Lear — John turned a radio on during recording. The result is completely random and unrepeatable."},
-    {q:"What is the final chord of 'A Day in the Life' and how long does it sustain?",opts:["He studied jazz drumming formally before joining the Beatles in Hamburg", "He had no formal training and developed an unconventional style that became highly influential", "He learned from session drummers at Abbey Road and adapted their techniques", "He trained under a Ringo Starr-era drummer before taking over in 1962"],ans:1,fact:"John, Paul, Ringo, and Mal Evans all struck an E major chord simultaneously on three pianos and harmonium. Abbey Road's mics were turned up as the chord decayed over 42 seconds. "},
+    {q:"What is the 'sonic cauldron' at the end of 'I Am the Walrus'?",opts:["A live BBC radio broadcast of King Lear that Lennon tuned into during the recording session", "A 40-piece orchestra playing random notes at George Martin's instruction", "Backward tape of a Mellotron choir loop", "Multiple overdubbed vocal takes played simultaneously at different speeds"],ans:0,fact:"The end of 'I Am the Walrus' incorporates a live BBC radio broadcast of King Lear — John turned a radio on during recording. The result is completely random and unrepeatable."},
+    {q:"What is the final chord of 'A Day in the Life' and how long does it sustain?",opts:["A C major chord that fades over about 10 seconds", "An E major chord struck by four people on three pianos simultaneously, sustaining for 42 seconds", "A G major chord played on a single grand piano, sustaining naturally for 30 seconds", "A cluster chord produced by all four Beatles pressing random keys simultaneously"],ans:1,fact:"John, Paul, Ringo, and Mal Evans all struck an E major chord simultaneously on three pianos and harmonium. Abbey Road's mics were turned up as the chord decayed over 42 seconds."},
     {q:"Stuart Sutcliffe — the Beatles' original bass player — left to do what?",opts:["A solo music career","Study art in Hamburg with Astrid Kirchherr","Acting","Work at his family's urging"],ans:1,fact:"Sutcliffe fell in love with photographer Astrid Kirchherr and stayed in Hamburg. He died of a brain hemorrhage in April 1962, aged 21, before the Beatles became famous."},
     {q:"What does the backward running loop at the end of 'Revolution 9' supposedly say?",opts:["Turn me on dead man","Number nine number nine","I am the walrus","Paul is dead"],ans:0,fact:"The backward loop 'Number nine, number nine' was heard as 'turn me on dead man' — fueling the 'Paul is dead' conspiracy theory of 1969."},
     {q:"What time signature does 'Here Comes the Sun' unexpectedly use in its bridge?",opts:["4/4 throughout","Contains a bar of 11/8","Alternates 3/4 and 4/4","Uses 7/8 throughout the bridge"],ans:1,fact:"The song is mostly 4/4 but the 'Sun, sun, sun, here it comes' section contains an 11/8 bar. Harrison had a fondness for unusual metric touches."},
@@ -54624,7 +54655,7 @@ beatles: {
 {q:"What was Beatlemania's defining American moment?",opts:["Their first album at No.1","The Ed Sullivan Show appearance (Feb 9, 1964) watched by 73 million Americans — 40% of the population","Their first US tour","A number 1 single"],ans:1,fact:"73 million viewers watched Ed Sullivan on February 9, 1964. Within two months, The Beatles held the top five positions on the Billboard Hot 100 simultaneously."},
 {q:"What is the opening chord of 'A Hard Day's Night'?",opts:["A simple G chord","A complex chord — piano and guitar simultaneously — containing multiple pitches still debated by theorists","A simple D chord","An Am7 chord"],ans:1,fact:"The opening chord has been analyzed for decades. A 2004 mathematical Fourier analysis suggested it contains F, G, C, D, G, C, E, G, E across piano and guitars simultaneously."},
 {q:"What instrument creates the orchestral chaos in 'A Day in the Life'?",opts:["Pre-recorded tape noise layered over the piano chords during the mixing session", "A 40-piece orchestra instructed to improvise from lowest to highest note over 24 bars", "A Moog synthesizer played by George Martin through the studio's reverb chamber", "Electronic tape effects created by reversing and speed-varying orchestral recordings"],ans:1,fact:"George Martin gave the orchestra a simple instruction: start on your lowest note and end on your highest over 24 bars — any path in between. The result shocked even the players."},
-{q:"What does the 'Revolution 9' number nine loop supposedly say backward?",opts:["The Mellotron, a keyboard that plays back pre-recorded tape loops of real instruments", "A Fender Rhodes electric piano with its lid removed, recorded close to the hammers", "A modified Hammond organ with a broken Leslie cabinet giving it a fixed, flat tone", "A prototype ARP synthesizer supplied by the manufacturer for the Abbey Road sessions"],ans:0,fact:"The backward loop 'Number nine, number nine' was heard as 'turn me on dead man' — fueling the 'Paul is dead' conspiracy theory of 1969."},
+{q:"What does the 'Revolution 9' number nine loop supposedly say backward?",opts:["Turn me on dead man","Number nine number nine","I am the walrus","Paul is dead"],ans:0,fact:"The backward loop 'Number nine, number nine' was heard as 'turn me on dead man' — fueling the 'Paul is dead' conspiracy theory of 1969."},
 {q:"What is the 'Paul is dead' conspiracy theory?",opts:["A genuine documented fact acknowledged by McCartney in a 1993 interview with Life magazine", "A 1969 fan theory claiming McCartney died in 1966 and was secretly replaced by a lookalike", "A marketing campaign created by Capitol Records to boost flagging album sales in the US", "A joke started by John Lennon in a 1968 Rolling Stone interview that got out of hand"],ans:1,fact:"The theory: Paul died in a car crash in 1966. Clues included the barefoot Paul on Abbey Road, 'Number nine' heard backward as 'turn me on dead man', and the walrus being a death symbol."},
 {q:"What was George Harrison's philosophy expressed in 'Within You Without You'?",opts:["Love and romance","Vedic philosophy — the illusion of the self, the interconnectedness of all things, the need to transcend ego","Christian values","Environmental concerns"],ans:1,fact:"Harrison wrote 'Within You Without You' after deep engagement with Indian philosophy. It's an unusual five-minute meditation on the Vedantic concept that the individual ego is Maya (illusion)."},
 {q:"What was the chord innovation of 'I Want to Hold Your Hand'?",opts:["It used only two chords","Dramatic key changes unusually sophisticated for pop in 1963","It was in an unusual time signature","It had no chorus"],ans:1,fact:"The song's key shifts — from G to C to B minor and beyond — were unusually adventurous for a commercial pop single in 1963. It demonstrated The Beatles weren't just writing simple 3-chord songs."},
@@ -54644,12 +54675,12 @@ jazz_legends: {
     {q:"Which Miles Davis album is the best-selling instrumental jazz album of all time?",opts:["Bitches Brew","Kind of Blue","Sketches of Spain","Birth of the Cool"],ans:1,fact:"Kind of Blue (1959) pioneered modal jazz and is certified 4x Platinum in the US with over 5 million copies sold there alone. It is the best-selling instrumental jazz album of all time."},
     {q:"What does 'bebop' refer to?",opts:["A slow, lyrical ballad style that emerged as a reaction against the speed of swing", "A fast, complex style developed in 1940s New York, emphasising virtuosity and fast tempos", "A relaxed, sparse dance style that preceded swing, popular in Harlem in the 1930s", "An electronic jazz style developed in the 1970s by Miles Davis and Herbie Hancock"],ans:1,fact:"Charlie Parker, Dizzy Gillespie, and Thelonious Monk developed bebop in Harlem after-hours sessions — deliberately making it too complex to be commercialized or easily copied."},
     {q:"John Coltrane's 'A Love Supreme' is described as what?",opts:["Hard bop, an aggressive extension of bebop with gospel and blues influences", "Modal jazz, built on scales rather than rapid chord changes, allowing more melodic space", "Free jazz, abandoning all harmonic structure in favour of pure improvisation", "Cool jazz, a West Coast style emphasising restraint and written arrangements"],ans:1,fact:"A Love Supreme (1964) is a four-part suite — Acknowledgement, Resolution, Pursuance, Psalm. Coltrane considered it a gift to God. Consistently ranked among the greatest albums ever made."},
-    {q:"What is 'scat' singing?",opts:["Miles Davis and John Coltrane, who codified bebop on a series of Blue Note sessions", "Charlie Parker and Dizzy Gillespie, who developed its vocabulary in early 1940s New York", "Thelonious Monk and Bud Powell, who wrote the first published bebop compositions", "Coleman Hawkins and Lester Young, whose 1930s rivalry established bebop's harmonic base"],ans:1,fact:"Louis Armstrong popularized scat — legend says he dropped his lyric sheet during a recording and improvised. Ella Fitzgerald and Mel Tormé became the form's greatest practitioners."},
+    {q:"What is 'scat' singing?",opts:["Wordless vocal improvisation using nonsense syllables to imitate an instrument", "Singing a transcription of a famous trumpet or saxophone solo using the original pitches", "Singing a tune's melody in a deliberately exaggerated vibrato style", "Doubling the written melody an octave higher to project over a big band"],ans:0,fact:"Louis Armstrong popularized scat — legend says he dropped his lyric sheet during a recording and improvised. Ella Fitzgerald and Mel Tormé became the form's greatest practitioners."},
     {q:"Miles Davis's 1949–50 nonet recordings that influenced cool jazz were collected on which album?",opts:["Birth of the Cool","Kind of Blue","Porgy and Bess","Milestones"],ans:0,fact:"Birth of the Cool introduced a lighter, more composed approach to jazz. Gil Evans, Gerry Mulligan, and Lee Konitz were key contributors."},
     {q:"What is 'comping' in jazz?",opts:["Composing a jazz standard on the bandstand during the performance of another tune", "Accompanying a soloist with rhythmically flexible chord voicings behind the melody", "Playing in a small combo rather than a big band or orchestra format", "A piano technique where both hands play staggered versions of the same chord"],ans:1,fact:"Comping (from 'accompanying' or 'complementing') is supporting a soloist without cluttering the space. Great compers like Ahmad Jamal and Bill Evans are as important as the soloist."},
     {q:"Charlie Parker's nickname was 'Bird'. Why?",opts:["Because of his bird-like improvisations","Because he loved chicken — his band hit a chicken on the road and he insisted on picking it up for dinner","Because he could whistle like a bird","After the Bird Street club in Kansas City"],ans:1,fact:"Multiple accounts agree — young Charlie Parker was obsessed with chicken ('yardbird') and the nickname stuck. His musical style was then retroactively linked to bird-like flight and freedom."},
     {q:"Duke Ellington led his orchestra for how many years?",opts:["10 years","20 years","30 years","Over 50 years"],ans:3,fact:"Ellington led his orchestra from 1923 until his death in 1974 — over 50 years. He composed over 3,000 pieces and is one of the greatest American composers of any genre."},
-    {q:"What is the 'Giant Steps' chord progression associated with?",opts:["Jelly Roll Morton, who claimed to have invented jazz and documented its earliest forms", "Louis Armstrong, whose technical brilliance, showmanship, and recordings shaped the idiom", "Buddy Bolden, the New Orleans cornetist credited as the first jazz bandleader", "King Oliver, whose Creole Jazz Band in Chicago documented the music's earliest recordings"],ans:1,fact:"Coltrane substitutions move through three key centers a major third apart, cycling through the chromatic scale in just two bars. Deeply influential on post-bop harmony."},
+    {q:"What is the 'Giant Steps' chord progression associated with?",opts:["A minor blues progression in F that Coltrane adapted from a Thelonious Monk tune", "A cycle of major thirds moving through three key centres that resists standard bebop approaches", "A pentatonic scale pattern derived from Indian classical music Coltrane studied in the 1960s", "A ii-V-I sequence expanded to cover all twelve keys in a single chorus"],ans:1,fact:"Coltrane substitutions move through three key centers a major third apart, cycling through the chromatic scale in just two bars. Deeply influential on post-bop harmony."},
     {q:"What is a 'head' in jazz?",opts:["The bandleader","The main melody of a tune, played at the start and end of a performance","A type of drum","The first chorus of an improvisation"],ans:1,fact:"Jazz performances typically follow head–solos–head structure. The 'head out' signals the return to melody and the end of the performance."},
     {q:"Thelonious Monk was known for his unusual piano technique of playing with what?",opts:["The back of his fingers","Flat extended fingers rather than curved","His elbows","Only his right hand"],ans:1,fact:"Monk played with fingers flat and extended — highly unorthodox. The percussive attack and unusual note choices made his style immediately recognizable and largely unimitated."},
     {q:"What is 'free jazz'?",opts:["Jazz played at community events for free","Improvised jazz that abandons fixed chord changes, bar lines, and tempo","A style from New Orleans","Jazz composed for film"],ans:1,fact:"Ornette Coleman's The Shape of Jazz to Come (1959) launched free jazz. Cecil Taylor and Albert Ayler pushed further. Charles Mingus famously punched Ornette's horn player at one session."},
@@ -54658,17 +54689,17 @@ jazz_legends: {
     {q:"What is the 'ii-V-I' progression and why is it fundamental to jazz?",opts:["A rhythm pattern","The most common chord progression in jazz — strong harmonic motion toward the tonic","A scale pattern","A type of modulation"],ans:1,fact:"In C: Dm7–G7–Cmaj7. The ii provides pre-dominant function, V creates dominant tension, I resolves. Almost every jazz standard contains ii-V-I progressions."},
     {q:"Ella Fitzgerald's technique was exceptional because of what?",opts:["Her powerful volume alone","Extraordinary pitch accuracy, three-octave range, and supreme scat improvisation","Her songwriting","Her classical training"],ans:1,fact:"Fitzgerald's intonation was so accurate she was used to tune instruments. Her range, diction, and ability to swing at any tempo made her the definitive jazz vocalist for many musicians."},
     {q:"What is 'playing outside' in jazz improvisation?",opts:["Deliberately improvising in a different key to create controlled harmonic tension", "Playing at a volume significantly louder than the rest of the group without warning", "Playing phrases that lag noticeably behind the beat to create a relaxed feel", "Playing in a standing position rather than seated, a common practice in soul jazz"],ans:0,fact:"Playing 'outside' the harmony creates powerful tension. The art is in the resolution — getting back 'inside' cleanly. Coltrane, Woody Shaw, and Kenny Garrett are masters of this technique."},
-    {q:"Which bassist transformed jazz bass playing in Duke Ellington's band 1939–41?",opts:["The ability to play a melody correctly after hearing it once without transcribing it", "The ability to improvise fluently in any key without losing harmonic accuracy", "The ability to read a lead sheet and add substitutions without preparation", "The ability to solo at any tempo without rushing or dragging the beat"],ans:1,fact:"Jimmy Blanton transformed bass playing. Before him, bass was largely relegated to simple two-beat patterns. He introduced melodic walking lines and was the first to record bass solos."},
+    {q:"Which bassist transformed jazz bass playing in Duke Ellington's band 1939–41?",opts:["Jimmy Blanton, who introduced melodic walking lines and was the first to record bass solos", "Oscar Pettiford, who developed Blanton's style and brought bebop vocabulary to the bass", "Charles Mingus, who played with Ellington briefly and later led his own revolutionary groups", "Ray Brown, who became the definitive post-war jazz bassist after his work with Dizzy Gillespie"],ans:0,fact:"Jimmy Blanton transformed bass playing. Before him, bass was largely relegated to simple two-beat patterns. He introduced melodic walking lines and was the first to record bass solos."},
     {q:"What does 'trading fours' mean in jazz?",opts:["Trading instruments","Soloists alternating 4-bar improvised phrases","Playing four choruses each","Playing four songs in a set"],ans:1,fact:"Two musicians alternate improvising for 4 bars each — a musical conversation. Trading twos (more intense) and trading eights (more relaxed) also occur."},
-    {q:"What is 'third stream' music?",opts:["John Coltrane, on A Love Supreme in 1964 — a four-part suite with spiritual dedication", "Miles Davis, on Sketches of Spain in 1960 — a collaboration with arranger Gil Evans", "Thelonious Monk, on Monk's Dream in 1963 — considered his definitive studio statement", "Charles Mingus, on The Black Saint and the Sinner Lady in 1963 — a six-part ballet"],ans:0,fact:"Gunther Schuller coined the term in 1957 for music combining jazz improvisation and classical formal structures. The Modern Jazz Quartet embodied it — baroque counterpoint with jazz swing."},
+    {q:"What is 'third stream' music?",opts:["A fusion of jazz improvisation and classical formal structures, coined by Gunther Schuller in 1957", "A style of Latin jazz fusing Cuban rhythms with New York bebop harmonics in the 1950s", "A post-bop movement rejecting swing rhythm in favour of free collective improvisation", "A 1970s style combining jazz and rock with heavy use of electric instruments"],ans:0,fact:"Gunther Schuller coined the term in 1957 for music combining jazz improvisation and classical formal structures. The Modern Jazz Quartet embodied it — baroque counterpoint with jazz swing."},
     {q:"What key innovation did Ornette Coleman introduce?",opts:["Abandoning keys altogether","Harmolodics — treating melody, harmony, and rhythm as equal rather than hierarchical","Playing multiple instruments simultaneously","Using electronic effects"],ans:1,fact:"Coleman's harmolodic theory meant each musician could independently interpret the harmony — radical freedom compared to fixed chord changes."},
-    {q:"Which drummer developed the concept of shifting pulse to the ride cymbal and 'dropping bombs'?",opts:["Hank Jones, whose stride-rooted style was the dominant piano approach in 1950s New York", "Red Garland, whose block chords behind Miles Davis defined hard bop piano comping", "Bill Evans, whose chord voicings and rubato phrasing redefined jazz piano accompaniment", "Wynton Kelly, whose bluesy, swinging style made him the most-recorded pianist of the era"],ans:2,fact:"Kenny Clarke's innovations defined bebop drumming. Keeping time on the ride cymbal freed the other limbs for accents. His 'dropping bombs' on the bass drum created rhythmic surprises."},
+    {q:"Which drummer developed the concept of shifting pulse to the ride cymbal and 'dropping bombs'?",opts:["Jo Jones, who first moved timekeeping to the hi-hat in Count Basie's band", "Big Sid Catlett, who bridged swing and bebop drumming in the early 1940s", "Kenny Clarke, who defined bebop drumming by keeping time on the ride cymbal", "Max Roach, who systematized Clarke's innovations into a fully developed bebop vocabulary"],ans:2,fact:"Kenny Clarke's innovations defined bebop drumming. Keeping time on the ride cymbal freed the other limbs for accents. His 'dropping bombs' on the bass drum created rhythmic surprises."},
     {q:"What is the standard 32-bar AABA song form?",opts:["A 8-bar verse repeated four times","Two 8-bar A sections, an 8-bar bridge (B), and a final 8-bar A","Four 8-bar sections of different material","A 12-bar blues pattern"],ans:1,fact:"'I Got Rhythm', 'All the Things You Are', and hundreds of other standards use AABA. The bridge provides harmonic departure before the final A section returns home."},
-    {q:"Why are Wayne Shorter's compositions for the Miles Davis Quintet notable?",opts:["Herbie Hancock, known for dense chromatic voicings absorbed from classical impressionism", "Thelonious Monk, known for dissonant voicings, angular melodies, and deliberate hesitations", "Bud Powell, known for right-hand single-note lines derived directly from Charlie Parker", "Ahmad Jamal, known for space and silence used as a structural device in his trio work"],ans:1,fact:"Shorter's tunes like 'Footprints' and 'E.S.P.' have deliberately vague harmonic implications. This openness inspired Miles Davis's second great quintet to develop their 'time, no changes' approach."},
+    {q:"Why are Wayne Shorter's compositions for the Miles Davis Quintet notable?",opts:["They use deliberately vague harmonic implications, giving the band freedom to interpret rather than follow fixed changes", "They are all written in odd time signatures, forcing the rhythm section into polyrhythmic improvisation", "They exclusively use AABA form but with radically extended bridge sections", "They abandon chord symbols entirely, written only as single-note melodic sketches"],ans:0,fact:"Shorter's tunes like 'Footprints' and 'E.S.P.' have deliberately vague harmonic implications. This openness inspired Miles Davis's second great quintet to develop their 'time, no changes' approach."},
     {q:"What is the Village Vanguard in jazz history?",opts:["The Harlem club where bebop was first performed publicly, in 1944 on 52nd Street", "A New York basement club open since 1935 that documented jazz history on live recordings", "The first New York venue to admit racially mixed audiences throughout the 1930s", "The Village club where Miles Davis recorded Kind of Blue during a residency in 1959"],ans:1,fact:"The Vanguard has hosted virtually every major jazz figure. Bill Evans, Coltrane, and Monk all recorded definitive live albums there. Monday night jazz policy has run since 1957."},
     {q:"What is 'stride' piano and who defined it?",opts:["A slow, meditative piano style developed in New Orleans before the swing era", "A left-hand technique alternating bass notes with midrange chords on beats 1-2-3-4", "A technique derived from classical piano where the left hand plays continuous octaves", "A modern jazz approach where the left hand comps sparsely rather than maintaining pulse"],ans:1,fact:"Fats Waller and James P. Johnson defined stride in the 1920s. Art Tatum took it to its absolute technical extreme. The left hand provides both bass and rhythm while the right hand improvises."},
     {q:"What is 'modal jazz' and which album launched it?",opts:["Jazz in minor keys","Improvisation based on scales (modes) rather than chord changes — launched by Kind of Blue (1959)","Jazz with electronic instruments","Jazz using Indian ragas"],ans:1,fact:"Instead of navigating complex chord changes, modal jazz improvises over static scales — giving more space and less harmonic obligation. Miles Davis and John Coltrane were its chief architects."},
-    {q:"What is a 'standard' in jazz?",opts:["A method of displacing the melody by a half-bar to create rhythmic ambiguity", "A technique where the soloist implies a different key centre within the existing chord", "A system of numbering chord tones to communicate substitutions verbally between players", "A bebop practice of starting phrases on the offbeat and resolving on the downbeat"],ans:1,fact:"Standards (Autumn Leaves, All the Things You Are, Summertime) are the shared vocabulary of jazz — melodies every jazz musician knows, providing a common framework for improvisation and communication."},
+    {q:"What is a 'standard' in jazz?",opts:["A well-known song from the Great American Songbook that jazz musicians use as a shared framework for improvisation", "A composition written specifically for jazz performance, as opposed to an adaptation of a pop song", "A tune composed in AABA form with a tempo of 120–160 BPM", "Any tune approved for inclusion in the Real Book lead sheets"],ans:0,fact:"Standards (Autumn Leaves, All the Things You Are, Summertime) are the shared vocabulary of jazz — melodies every jazz musician knows, providing a common framework for improvisation and communication."},
     {q:"Chet Baker was famous for which instrument besides his melancholy trumpet playing?",opts:["John Coltrane — Giant Steps (1960), A Love Supreme (1964), Interstellar Space (1967)", "Miles Davis — Birth of the Cool (1949), Kind of Blue (1959), Bitches Brew (1970)", "Charles Mingus — Pithecanthropus Erectus (1956), Mingus Ah Um (1959), The Black Saint (1963)", "Ornette Coleman — Something Else (1958), The Shape of Jazz (1959), Free Jazz (1960)"],ans:1,fact:"Baker's singing voice was as iconic as his trumpet playing — breathy, vulnerable, and conversational. 'My Funny Valentine' and 'Almost Blue' are quintessential examples of both his vocals and trumpet."},
     {q:"What made Charles Mingus exceptional beyond his bass playing?",opts:["The Lydian mode, which raises the fourth degree and gives jazz its characteristic brightness", "The blues scale, a minor pentatonic with an added flattened fifth (the blue note)", "The Dorian mode, used over minor chords as the most common jazz minor scale", "The diminished scale, an alternating whole-half step pattern used over dominant chords"],ans:1,fact:"Mingus composed ambitious multi-part works that addressed race, politics, and spirituality. He was notoriously demanding of his musicians and famously combative — but his compositions rank with Ellington's."},,
 {q:"What is 'hard bop' and how did it differ from bebop?",opts:["Keith Jarrett and McCoy Tyner, who both recorded for ECM in the early 1970s", "Chick Corea and Herbie Hancock, both alumni of Miles Davis's electric bands", "Oscar Peterson and Bill Evans, whose contrasting styles defined two poles of jazz piano", "Joe Zawinul and Horace Silver, both known for writing blues-drenched jazz standards"],ans:1,fact:"Art Blakey, Clifford Brown, and Horace Silver created hard bop. It reconnected jazz with its blues and gospel roots — deliberately more accessible and emotionally direct than pure bebop."},
@@ -54680,8 +54711,7 @@ jazz_legends: {
 {q:"What is 'swing feel'?",opts:["A technique where the drummer plays a consistent snare backbeat on beats two and four", "A rhythm section pattern where the bassist plays a steady quarter-note pulse on each beat", "A comping pattern where the pianist places chords strictly on beats one and three", "A style where the bassist alternates between root and fifth on each beat of the bar"],ans:1,fact:"Swing feel is the fundamental rhythmic language of jazz. The ratio of long to short eighth notes varies by tempo and era. At fast tempos it approaches straight eighths; at medium tempos the lilt is most pronounced."},
 {q:"What is Herbie Hancock's 'Watermelon Man' significant for?",opts:["His first composition","His first hit (1962) that crossed over to R&B — Mongo Santamaria's cover was an even bigger pop hit the following year","His only funk composition","A free jazz piece"],ans:1,fact:"Hancock wrote 'Watermelon Man' for his debut album. Santamaria's 1963 R&B version was a top-10 pop hit. Hancock later recorded a radically different African-influenced version for Head Hunters (1973)."},
 {q:"What is 'soul jazz'?",opts:["Jazz defined by emotionally expressive playing regardless of harmonic or rhythmic style", "A 1950s-60s style fusing jazz harmony and technique with gospel and blues feeling", "A smooth jazz subgenre marketed by Motown Records in the late 1960s", "A term for slow, melancholy jazz ballads performed at a low dynamic level"],ans:1,fact:"Soul jazz prioritized groove, accessibility, and blues feeling. Jimmy Smith's Hammond organ, Horace Silver's funky piano, and Lou Donaldson's bluesy alto brought jazz closer to R&B."},
-{q:"What is 'Blue Note Records' known for?",opts:["Impressions — a modal piece built on two Dorian scales that changes key mid-tune", "Giant Steps — the fast-moving cycle of major thirds that resists standard bebop approaches", "Naima — a slow ballad with static bass notes beneath shifting upper-structure chords", "Equinox — a minor blues that uses a repeated motif instead of standard chord changes"],ans:1,fact:"Blue Note's LPs — with Francis Wolff's photography and Reid Miles' graphic design — are as iconic as the music. The label's 1955–1967 period is jazz's golden age of documentation."},
-{q:"What is Wes Montgomery's distinctive right-hand technique?",opts:["Joe Pass, the American guitarist known for unaccompanied chord-melody solo recordings", "Django Reinhardt, the Belgian-born Romani guitarist who co-founded the Quintette du Hot Club", "Wes Montgomery, the Indianapolis guitarist who played melody lines with his thumb", "Charlie Christian, who pioneered amplified guitar as a bebop solo instrument in the 1940s"],ans:1,fact:"Montgomery used his thumb, producing his warm, round tone. He also pioneered playing melodies in octaves and block chords as a jazz solo technique."},
+{q:"What is Wes Montgomery's distinctive right-hand technique?",opts:["Using a flat pick for extra attack and brightness", "Playing with his thumb rather than a pick, producing a warm, round tone", "A two-finger hybrid picking style combining pick and middle finger", "Playing exclusively with the flesh of the index finger without a pick"],ans:1,fact:"Montgomery used his thumb, producing his warm, round tone. He also pioneered playing melodies in octaves and block chords as a jazz solo technique."},
 {q:"What is 'bebop melody writing' characterized by?",opts:["Simple singable tunes","Fast, angular, chromatic melodies that emphasize off-beats — deliberately non-singable and anti-commercial","Slow ballad melodies","Modal melodies with no chromaticism"],ans:1,fact:"Bebop tunes like 'Donna Lee' and 'Ornithology' are written over standard progressions but with deliberately complex melodies. The improvisation was the point, not the head."},
 {q:"What is special about Coltrane's 'My Favorite Things'?",opts:["He performs it as a straight reading with lush orchestral backing arranged by Gil Evans", "He transforms the Sound of Music waltz into an extended modal improvisation on soprano sax", "He plays it on bass clarinet at half the original tempo as a solo improvisation", "He performs it on piano rather than saxophone, stripping out the original melody"],ans:1,fact:"Coltrane's Eastern-influenced modal approach and cyclic improvisation turned a Broadway show tune into a jazz landmark. He performed it at almost every concert until his death in 1967."},
 {q:"What is the significance of 'Impulse! Records'?",opts:["A formally published lead sheet approved by a recognised jazz institution or publisher", "A jazz standard is a well-known composition regularly called at jam sessions and on recordings", "A composition that has been recorded by at least ten major jazz artists across three decades", "A melody with no original composer credit, passed down through the oral tradition"],ans:1,fact:"Impulse's distinctive orange and black label is synonymous with Coltrane. The label's policy of artistic freedom resulted in some of the most important recordings in jazz history."},
