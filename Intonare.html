@@ -540,7 +540,7 @@
   ═══════════════════════════════════════════════════ */
   #mqModal {
     display: none; position: fixed; inset: 0; z-index: 2000;
-    background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    background: var(--bg-1);
     flex-direction: column;
   }
   #mqModal.active { display: flex; }
@@ -550,13 +550,17 @@
     flex: 1; display: flex; flex-direction: column;
     background: var(--bg-0);
     min-height: 0;
-    padding-bottom: calc(env(safe-area-inset-bottom));
+    /* Respect the device safe areas so the header clears the status bar / notch */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   /* ── Quiz header (matches app header pattern) ── */
   .mq-header {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 16px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 16px 10px; position: relative;
     border-bottom: 1px solid var(--border-soft);
     background: var(--bg-1); flex-shrink: 0;
   }
@@ -564,10 +568,16 @@
     background: none; border: none; color: var(--text-dim); cursor: pointer;
     padding: 4px; display: flex; align-items: center; gap: 5px;
     font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
-    transition: color .15s;
+    transition: color .15s; z-index: 1;
   }
   .mq-close:hover { color: var(--text); }
-  .mq-header-center { flex: 1; text-align: center; }
+  /* Absolutely centered to the whole header so side buttons of different widths
+     don't push the title off-center */
+  .mq-header-center {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%); text-align: center;
+    pointer-events: none; width: 60%;
+  }
   .mq-header-title {
     font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 2.5px;
     background: linear-gradient(135deg, var(--accent), var(--accent-soft));
@@ -600,7 +610,7 @@
     background: none; border: 1px solid var(--border-soft); border-radius: 8px;
     color: var(--text-dim); cursor: pointer; padding: 6px 8px;
     display: flex; align-items: center; justify-content: center;
-    transition: all .14s; width: 34px; height: 34px;
+    transition: all .14s; width: 34px; height: 34px; z-index: 1;
   }
   .mq-stats-btn:hover { color: var(--text); border-color: var(--text-dim); }
   /* ── Now Playing widget ── */
