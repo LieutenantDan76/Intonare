@@ -1345,6 +1345,11 @@
     .chroma-strip { margin-top: 0; }
     .t-or-r > .card { margin-top: 0 !important; }
 
+    /* Tuner card: full width — chroma is inside the card, not a sibling */
+    .tuner-bpm-card {
+      grid-column: 1 / -1;
+    }
+
     /* Practice hub: 3 cols × 2 rows */
     .practice-hub {
       grid-template-columns: repeat(3, 1fr);
@@ -2938,6 +2943,13 @@
       inset  2px 0  8px rgba(0,0,0,0.4),
       inset -2px 0  8px rgba(0,0,0,0.4),
       inset 0 0 40px rgba(255,140,60,0.04);
+  }
+  /* BPM scrub: subtle warm tint while dragging */
+  .metro-screen-inner.bpm-scrubbing { cursor: ew-resize; }
+  .metro-screen-inner.bpm-scrubbing .bpm-number {
+    color: rgba(255,209,102,1);
+    text-shadow: 0 0 18px rgba(255,180,60,0.6);
+    transition: none;
   }
   /* Convex glass surface: radial highlight + vignette + diagonal shine */
   .metro-screen-inner::before {
@@ -13659,7 +13671,7 @@
       <!-- Physical display screen -->
       <div class="metro-screen">
         <div class="metro-screen-bezel">
-        <div class="metro-screen-inner">
+        <div class="metro-screen-inner" id="metroScreenInner">
 
           <!-- top row: mute | beat counter | bookmark — symmetric -->
           <div class="screen-top-row" id="screenTopRow">
@@ -16311,6 +16323,8 @@ function setMetroClickMode(mode) {
     grooveBuildStepGrid();
     grooveBuildCountIn();
     buildMetroSoundBank();
+    // Ensure the active preset is actually loaded, not just visually selected
+    grooveLoadPreset(groovePresetId);
   }
   grooveBuildVisualGrid();
   grooveUpdateScreen();
@@ -18495,6 +18509,69 @@ function ensureMetroCtx() {
 }
 
 function adjBPM(delta) { setBPM(bpm + delta); }
+
+// ── Metro screen swipe to adjust BPM ─────────────────────────────────────
+// Horizontal drag on the screen face adjusts tempo in real time.
+// ~4px per BPM — fast enough to be useful, slow enough to be precise.
+// Screen dims slightly during drag as a "scrubbing" affordance.
+(function() {
+  let _swipeStartX = null;
+  let _swipeBpmStart = null;
+  let _swiping = false;
+
+  function _swipeStart(e) {
+    // Don't hijack taps on the top-row buttons or groove screen
+    const inner = document.getElementById('metroScreenInner');
+    if (!inner) return;
+    if (inner.classList.contains('groove-active')) return;
+    const target = e.target;
+    if (target.closest('.screen-top-row') || target.closest('.screen-adj')) return;
+    const touch = e.touches ? e.touches[0] : e;
+    _swipeStartX   = touch.clientX;
+    _swipeBpmStart = bpm;
+    _swiping = false;
+  }
+
+  function _swipeMove(e) {
+    if (_swipeStartX === null) return;
+    const touch = e.touches ? e.touches[0] : e;
+    const dx = touch.clientX - _swipeStartX;
+    if (!_swiping && Math.abs(dx) > 6) {
+      _swiping = true;
+      const inner = document.getElementById('metroScreenInner');
+      if (inner) inner.classList.add('bpm-scrubbing');
+    }
+    if (!_swiping) return;
+    e.preventDefault();
+    const newBpm = _swipeBpmStart + Math.round(dx / 4);
+    setBPM(newBpm);
+  }
+
+  function _swipeEnd() {
+    if (_swiping) {
+      const inner = document.getElementById('metroScreenInner');
+      if (inner) inner.classList.remove('bpm-scrubbing');
+    }
+    _swipeStartX = _swipeBpmStart = null;
+    _swiping = false;
+  }
+
+  // Wire up after DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    const inner = document.getElementById('metroScreenInner');
+    if (!inner) return;
+    inner.addEventListener('touchstart',  _swipeStart,  { passive: true });
+    inner.addEventListener('touchmove',   _swipeMove,   { passive: false });
+    inner.addEventListener('touchend',    _swipeEnd);
+    inner.addEventListener('touchcancel', _swipeEnd);
+    // Mouse support for desktop testing
+    inner.addEventListener('mousedown',  _swipeStart);
+    inner.addEventListener('mousemove',  (e) => { if (e.buttons) _swipeMove(e); });
+    inner.addEventListener('mouseup',    _swipeEnd);
+    inner.addEventListener('mouseleave', _swipeEnd);
+  });
+})();
+// ─────────────────────────────────────────────────────────────────────────
 function setBPM(v) {
   bpm = Math.max(30, Math.min(300, Math.round(v)));
   document.getElementById('bpmNumber').textContent = bpm;
