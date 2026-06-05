@@ -603,6 +603,41 @@
     transition: all .14s; width: 34px; height: 34px;
   }
   .mq-stats-btn:hover { color: var(--text); border-color: var(--text-dim); }
+  /* ── Now Playing widget ── */
+  .mq-np {
+    display: flex; align-items: center; gap: 11px;
+    background: color-mix(in srgb, var(--theme) 5%, var(--surface));
+    border: 1px solid var(--border-soft); border-radius: 12px;
+    padding: 10px 12px; margin: 0 auto 16px; max-width: 340px;
+    transition: opacity .25s;
+  }
+  .mq-np.mq-np-paused { opacity: .6; }
+  .mq-np-icon {
+    flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--theme) 14%, var(--panel));
+    color: var(--theme);
+  }
+  .mq-np.mq-np-paused .mq-np-icon { color: var(--text-dim); background: var(--panel); }
+  .mq-np-info { flex: 1; min-width: 0; }
+  .mq-np-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 7px;
+    letter-spacing: 1.5px; color: var(--muted); margin-bottom: 2px;
+  }
+  .mq-np-title {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text); font-weight: 700; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .mq-np-controls { display: flex; gap: 6px; flex-shrink: 0; }
+  .mq-np-btn {
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border-soft); background: rgba(255,255,255,0.04);
+    color: var(--text-dim); display: flex; align-items: center; justify-content: center;
+    transition: all .14s;
+  }
+  .mq-np-btn:hover { color: var(--theme); border-color: color-mix(in srgb, var(--theme) 45%, transparent); }
+  .mq-np-btn:active { transform: scale(.92); }
 
   /* ── Bands (online) card ── */
   .mqc-bands { background: color-mix(in srgb, var(--metro) 4%, var(--surface)); }
@@ -7758,6 +7793,49 @@
   }
   .sm-notif-controls {
     display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .sm-notif-fmt-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .sm-notif-fmt-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: .5px; color: var(--text-dim);
+  }
+  .sm-notif-fmt-toggle { display: flex; gap: 4px; }
+  .sm-notif-fmt-btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 1px; font-weight: 700; padding: 5px 11px;
+    border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--border-soft); background: rgba(255,255,255,0.04);
+    color: var(--muted); transition: all 0.18s;
+  }
+  .sm-notif-fmt-btn.active {
+    background: color-mix(in srgb, var(--theme) 15%, transparent);
+    border-color: color-mix(in srgb, var(--theme) 50%, transparent);
+    color: var(--theme);
+  }
+  .sm-notif-time-wrap {
+    position: relative; width: 80px; height: 26px;
+    opacity: 0.4; pointer-events: none; transition: opacity 0.2s;
+  }
+  .sm-notif-time-wrap.enabled { opacity: 1; pointer-events: auto; }
+  .sm-notif-time-disp {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text); background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-soft); border-radius: 6px;
+    pointer-events: none; white-space: nowrap;
+  }
+  .sm-notif-time-wrap.enabled .sm-notif-time-disp {
+    border-color: color-mix(in srgb, var(--theme) 40%, transparent);
+  }
+  .sm-notif-time-input {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none;
+    color-scheme: dark; border: none; background: transparent;
   }
   .sm-notif-time {
     font-family: 'JetBrains Mono', monospace;
@@ -15322,6 +15400,14 @@
 
     <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_notifications">Notifications</div>
     <div class="sm-notif-block" id="smNotifBlock">
+      <!-- 12h / 24h format toggle -->
+      <div class="sm-notif-fmt-row">
+        <span class="sm-notif-fmt-label" data-i18n="notif_time_format">Time format</span>
+        <div class="sm-notif-fmt-toggle">
+          <button class="sm-notif-fmt-btn" id="smTimeFmt12" onclick="setNotifTimeFormat('12')">12H</button>
+          <button class="sm-notif-fmt-btn" id="smTimeFmt24" onclick="setNotifTimeFormat('24')">24H</button>
+        </div>
+      </div>
       <div class="sm-notif-row">
         <div class="sm-notif-label">
           <span class="sm-notif-icon">🎵</span>
@@ -15331,7 +15417,10 @@
           </div>
         </div>
         <div class="sm-notif-controls">
-          <input type="time" class="sm-notif-time" id="smPracticeTime" value="19:00" onchange="saveNotifSettings()">
+          <div class="sm-notif-time-wrap" id="smPracticeTimeWrap">
+            <span class="sm-notif-time-disp" id="smPracticeTimeDisp">7:00 PM</span>
+            <input type="time" class="sm-notif-time-input" id="smPracticeTime" value="19:00" onchange="saveNotifSettings()">
+          </div>
           <button class="sm-notif-toggle" id="smPracticeToggle" onclick="toggleNotif('practice')" data-active="false">OFF</button>
         </div>
       </div>
@@ -15344,7 +15433,10 @@
           </div>
         </div>
         <div class="sm-notif-controls">
-          <input type="time" class="sm-notif-time" id="smStreakTime" value="20:00" onchange="saveNotifSettings()">
+          <div class="sm-notif-time-wrap" id="smStreakTimeWrap">
+            <span class="sm-notif-time-disp" id="smStreakTimeDisp">8:00 PM</span>
+            <input type="time" class="sm-notif-time-input" id="smStreakTime" value="20:00" onchange="saveNotifSettings()">
+          </div>
           <button class="sm-notif-toggle" id="smStreakToggle" onclick="toggleNotif('streak')" data-active="false">OFF</button>
         </div>
       </div>
@@ -32514,10 +32606,11 @@ let progState = {
   teachingMode: false,
   helpTips: true,          // show/hide ? help buttons
   hapticsOn: false,
+  mqMusicOn: true,         // music quiz ambient background music
   audioCues: { correct:'chime', wrong:'buzz', milestone:'fanfare', levelup:'chiptune', achievement:'chime',
                vols: { correct:100, wrong:100, milestone:100, levelup:100, achievement:100 } },
   streak: { count: 0, lastDate: null, longest: 0 },
-  notifications: { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00' },
+  notifications: { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00', timeFormat: '24' },
   history: {},  // { 'YYYY-MM-DD': { interval: sec, chords: sec, ... } }
   secret_chime_unlocked: false,   // unlocked at 100-day streak
   mythic_unlocked: false,  // unlocked at exercise streak ×40
@@ -32659,6 +32752,7 @@ const STRINGS = {
     settings_notifications:'Notifications',
     notif_practice_title:'Practice Reminder', notif_practice_sub:'Daily nudge to pick up your instrument',
     notif_streak_title:'Streak Reminder', notif_streak_sub:"Don't break your streak today",
+    notif_time_format:'Time format',
     notif_practice_toast_title:'🎵 Time to Practice', notif_practice_toast_body:'A few minutes a day keeps the rust away.',
     notif_streak_toast_title:'🔥 {n}-day streak at risk!', notif_streak_toast_body:"Don't break that streak, you were on a roll!",
     settings_tour:'↻ Re-run Welcome Tour',
@@ -33223,6 +33317,7 @@ const STRINGS = {
     settings_notifications:'Notifiche',
     notif_practice_title:'Promemoria Pratica', notif_practice_sub:'Promemoria giornaliero per suonare',
     notif_streak_title:'Promemoria Streak', notif_streak_sub:'Non interrompere la tua serie oggi',
+    notif_time_format:'Formato ora',
     notif_practice_toast_title:'🎵 È ora di suonare', notif_practice_toast_body:'Pochi minuti al giorno tengono la ruggine lontana.',
     notif_streak_toast_title:'🔥 Serie di {n} giorni a rischio!', notif_streak_toast_body:'Non interrompere quella serie, stavi andando alla grande!',
     settings_tour:'↻ Ripeti Presentazione',
@@ -34205,7 +34300,29 @@ function saveNotifSettings() {
   if (pt) progState.notifications.practiceTime = pt.value;
   if (st) progState.notifications.streakTime = st.value;
   progSave();
+  _applyNotifUI();   // refresh the displayed (formatted) time
   scheduleNotifications();
+}
+
+// Format an HH:MM (24h) string for display per the user's chosen format
+function _formatNotifTime(hhmm) {
+  const fmt = (progState.notifications && progState.notifications.timeFormat) || '24';
+  const parts = (hhmm || '00:00').split(':');
+  let h = parseInt(parts[0], 10) || 0;
+  const m = parts[1] || '00';
+  if (fmt === '12') {
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    let h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + ':' + m + ' ' + ampm;
+  }
+  return (h < 10 ? '0' + h : '' + h) + ':' + m;
+}
+
+function setNotifTimeFormat(fmt) {
+  if (!progState.notifications) progState.notifications = {};
+  progState.notifications.timeFormat = fmt;
+  progSave();
+  _applyNotifUI();
 }
 
 function _applyNotifUI() {
@@ -34214,17 +34331,29 @@ function _applyNotifUI() {
   const st = document.getElementById('smStreakToggle');
   const ptTime = document.getElementById('smPracticeTime');
   const stTime = document.getElementById('smStreakTime');
+  const ptWrap = document.getElementById('smPracticeTimeWrap');
+  const stWrap = document.getElementById('smStreakTimeWrap');
+  const ptDisp = document.getElementById('smPracticeTimeDisp');
+  const stDisp = document.getElementById('smStreakTimeDisp');
 
   if (pt) { pt.dataset.active = ns.practiceOn ? 'true' : 'false'; pt.textContent = ns.practiceOn ? 'ON' : 'OFF'; }
   if (st) { st.dataset.active = ns.streakOn ? 'true' : 'false'; st.textContent = ns.streakOn ? 'ON' : 'OFF'; }
-  if (ptTime) {
-    ptTime.value = ns.practiceTime || '19:00';
-    ptTime.classList.toggle('enabled', !!ns.practiceOn);
-  }
-  if (stTime) {
-    stTime.value = ns.streakTime || '20:00';
-    stTime.classList.toggle('enabled', !!ns.streakOn);
-  }
+
+  const pTime = ns.practiceTime || '19:00';
+  const sTime = ns.streakTime || '20:00';
+  if (ptTime) ptTime.value = pTime;
+  if (stTime) stTime.value = sTime;
+  if (ptDisp) ptDisp.textContent = _formatNotifTime(pTime);
+  if (stDisp) stDisp.textContent = _formatNotifTime(sTime);
+  if (ptWrap) ptWrap.classList.toggle('enabled', !!ns.practiceOn);
+  if (stWrap) stWrap.classList.toggle('enabled', !!ns.streakOn);
+
+  // Format toggle button states
+  const fmt = ns.timeFormat || '24';
+  const f12 = document.getElementById('smTimeFmt12');
+  const f24 = document.getElementById('smTimeFmt24');
+  if (f12) f12.classList.toggle('active', fmt === '12');
+  if (f24) f24.classList.toggle('active', fmt === '24');
 }
 
 
@@ -54223,7 +54352,6 @@ window.sgExit = function() {
           <div class="mq-header-title" id="mqHdrTitle">MUSIC QUIZ</div>
           <div class="mq-header-sub" id="mqHdrSub">test your knowledge</div>
         </div>
-        <!-- Stats button replaces spacer -->
         <button class="mq-stats-btn" id="mqStatsBtn" onclick="mqShowStats()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         </button>
@@ -54247,6 +54375,25 @@ window.sgExit = function() {
             <div class="mq-hero-pill"><div class="mq-hero-dot"></div>INTONARE</div>
             <div class="mq-hero-title">MUSIC<br>QUIZ</div>
             <div class="mq-hero-sub">Test your music knowledge</div>
+          </div>
+          <!-- Now Playing widget -->
+          <div class="mq-np" id="mqNowPlaying">
+            <div class="mq-np-icon" id="mqNpIcon">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+            </div>
+            <div class="mq-np-info">
+              <div class="mq-np-label">NOW PLAYING</div>
+              <div class="mq-np-title" id="mqNpTitle">—</div>
+            </div>
+            <div class="mq-np-controls">
+              <button class="mq-np-btn" id="mqNpPlayPause" onclick="mqNpTogglePlay()" title="Play / Pause">
+                <svg class="mq-np-play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <svg class="mq-np-pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+              </button>
+              <button class="mq-np-btn" id="mqNpSkip" onclick="mqNpSkip()" title="Next track">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+              </button>
+            </div>
           </div>
           <div class="mq-mode-cards">
             <div class="mq-mode-card mqc-quick" onclick="mqShowQuickSheet()">
@@ -55877,6 +56024,614 @@ function mqTrimOpt(text) {
   return text.trim();
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MUSIC QUIZ — AMBIENT BACKGROUND MUSIC ("Back in Bossa")
+// A major, 100bpm, Jobim changes. Marimba lead + quiet pad + light groove.
+// Uses the shared audio context. Volume is set low for ambient background.
+// ══════════════════════════════════════════════════════════════════════════════
+var _mqAmb = {
+  on: false,
+  nodes: [],
+  timers: [],
+  master: null,
+  duckGain: null,   // separate gain for ducking under cue sounds
+  track: null,      // currently-playing track (picked at random per session)
+  trackIdx: null,   // index of current track in MQ_TRACKS
+};
+
+// ── Track definitions ────────────────────────────────────────────────────────
+// Each track: {name, bpm, barCounts, chords[], melody[]}. The melody is hand-written
+// per chord with the same rules: first note on a defining chord tone, stepwise
+// voice-leading, sparse with rest, marimba timbre. mqAmbStart picks one at random.
+
+// Chord data — close-voiced inversions, common-tone voice leading
+var MQ_BOSSA_CHORDS = [
+  { name:'Amaj7',  bass:55.00, pad:[220.00,277.18,329.63,415.30] },
+  { name:'F#m7',   bass:92.50, pad:[220.00,277.18,329.63,370.00] },
+  { name:'Bm7',    bass:61.74, pad:[220.00,246.94,293.66,370.00] },
+  { name:'E7',     bass:82.41, pad:[246.94,277.18,329.63,415.30] },
+  { name:'Amaj7',  bass:55.00, pad:[220.00,277.18,329.63,415.30] },
+  { name:'D9',     bass:73.42, pad:[220.00,277.18,329.63,370.00] },
+  { name:'Dm7',    bass:73.42, pad:[220.00,261.63,293.66,349.23] },
+  { name:'E7sus4', bass:82.41, pad:[220.00,246.94,329.63,370.00] },
+  { name:'E7',     bass:82.41, pad:[164.81,246.94,329.63,415.30] },
+];
+var MQ_BOSSA_MELODY = [
+  [ {o:0,f:554.37,d:2.0},{o:2.5,f:659.25,d:1.5},{o:5,f:554.37,d:2.5} ],
+  [ {o:0,f:440.00,d:2.0},{o:3,f:659.25,d:2.0},{o:6,f:554.37,d:2.0} ],
+  [ {o:0,f:587.33,d:2.5},{o:3,f:739.99,d:1.5},{o:5.5,f:587.33,d:2.5} ],
+  [ {o:0,f:493.88,d:1.5},{o:2,f:830.61,d:2.5},{o:6,f:587.33,d:2.0} ],
+  [ {o:0,f:440.00,d:3.0},{o:4,f:554.37,d:3.5} ],
+  [ {o:0,f:739.99,d:2.5},{o:3,f:659.25,d:2.0},{o:5.5,f:440.00,d:2.5} ],
+  [ {o:0,f:698.46,d:2.5},{o:3,f:587.33,d:1.5},{o:5,f:415.30,d:3.0} ],
+  [ {o:0,f:493.88,d:2.0},{o:2,f:659.25,d:2.0} ],
+  [ {o:0,f:659.25,d:1.5},{o:1.5,f:554.37,d:1.0},{o:2.5,f:493.88,d:1.0},{o:3,f:415.30,d:1.5} ],
+];
+
+var MQ_NIGHTSHIFT_CHORDS = [
+  { name:'Am', bass:110.0, pad:[220.0,261.63,329.63,440.0] },
+  { name:'Dm7', bass:146.83, pad:[293.66,349.23,440.0,523.25] },
+  { name:'G7', bass:98.0, pad:[196.0,246.94,293.66,349.23] },
+  { name:'Cmaj7', bass:130.81, pad:[261.63,329.63,392.0,493.88] },
+  { name:'Fmaj7', bass:87.31, pad:[174.61,220.0,261.63,329.63] },
+  { name:'Bm7b5', bass:123.47, pad:[246.94,293.66,349.23,440.0] },
+  { name:'E7', bass:82.41, pad:[164.81,415.3,493.88,587.33] },
+  { name:'Am', bass:110.0, pad:[220.0,261.63,329.63,440.0] },
+];
+
+var MQ_NIGHTSHIFT_MELODY = [
+  [ {o:0,f:261.63,d:2.0}, {o:2.5,f:329.63,d:1.5}, {o:5,f:440.0,d:2.5} ],
+  [ {o:0,f:349.23,d:2.0}, {o:3,f:440.0,d:2.0}, {o:6,f:329.63,d:2.0} ],
+  [ {o:0,f:246.94,d:1.5}, {o:2,f:293.66,d:1.5}, {o:4.5,f:349.23,d:2.0}, {o:7,f:329.63,d:1.0} ],
+  [ {o:0,f:329.63,d:2.5}, {o:3,f:392.0,d:1.5}, {o:5.5,f:493.88,d:2.5} ],
+  [ {o:0,f:220.0,d:2.0}, {o:2.5,f:261.63,d:1.5}, {o:5,f:329.63,d:2.5} ],
+  [ {o:0,f:293.66,d:2.0}, {o:3,f:349.23,d:2.0}, {o:6,f:440.0,d:2.0} ],
+  [ {o:0,f:415.3,d:1.5}, {o:2,f:493.88,d:2.5}, {o:6,f:587.33,d:2.0} ],
+  [ {o:0,f:440.0,d:3.0}, {o:4,f:261.63,d:2.0}, {o:6.5,f:329.63,d:1.5} ],
+];
+
+var MQ_SUNDAY_CHORDS = [
+  { name:'Cmaj7', bass:130.81, pad:[261.63,329.63,392.0,493.88] },
+  { name:'Am7', bass:110.0, pad:[220.0,261.63,329.63,392.0] },
+  { name:'Dm7', bass:146.83, pad:[293.66,349.23,440.0,523.25] },
+  { name:'G7', bass:98.0, pad:[196.0,246.94,293.66,349.23] },
+  { name:'Em7', bass:82.41, pad:[164.81,196.0,246.94,293.66] },
+  { name:'A7', bass:110.0, pad:[220.0,277.18,329.63,392.0] },
+  { name:'Dm7', bass:146.83, pad:[293.66,349.23,440.0,523.25] },
+  { name:'G7', bass:98.0, pad:[196.0,246.94,293.66,349.23] },
+];
+
+var MQ_SUNDAY_MELODY = [
+  [ {o:0,f:329.63,d:2.5}, {o:3,f:392.0,d:2.0}, {o:5.5,f:523.25,d:2.5} ],
+  [ {o:0,f:261.63,d:2.0}, {o:2.5,f:329.63,d:2.0}, {o:5,f:440.0,d:2.5} ],
+  [ {o:0,f:349.23,d:2.0}, {o:3,f:440.0,d:1.5}, {o:5.5,f:523.25,d:2.5} ],
+  [ {o:0,f:246.94,d:1.5}, {o:2,f:293.66,d:2.0}, {o:4.5,f:349.23,d:1.5}, {o:7,f:246.94,d:1.0} ],
+  [ {o:0,f:196.0,d:2.5}, {o:3,f:246.94,d:2.0}, {o:5.5,f:293.66,d:2.5} ],
+  [ {o:0,f:277.18,d:2.0}, {o:2.5,f:329.63,d:2.0}, {o:5,f:392.0,d:2.5} ],
+  [ {o:0,f:349.23,d:2.0}, {o:3,f:440.0,d:2.0}, {o:6,f:293.66,d:2.0} ],
+  [ {o:0,f:293.66,d:1.5}, {o:2,f:349.23,d:2.0}, {o:4.5,f:246.94,d:2.5} ],
+];
+
+var MQ_LONGWAY_CHORDS = [
+  { name:'Dmaj7', bass:146.83, pad:[293.66,369.99,440.0,554.37] },
+  { name:'Bm7', bass:123.47, pad:[246.94,293.66,369.99,440.0] },
+  { name:'Gmaj7', bass:98.0, pad:[196.0,246.94,293.66,369.99] },
+  { name:'Gm7', bass:98.0, pad:[196.0,466.16,293.66,349.23] },
+  { name:'Dmaj7', bass:110.0, pad:[293.66,369.99,440.0,554.37] },
+  { name:'Em7', bass:82.41, pad:[164.81,196.0,246.94,293.66] },
+  { name:'A7', bass:110.0, pad:[220.0,277.18,329.63,392.0] },
+  { name:'Dmaj7', bass:146.83, pad:[293.66,369.99,440.0,554.37] },
+];
+
+var MQ_LONGWAY_MELODY = [
+  [ {o:0,f:369.99,d:2.0}, {o:2.5,f:440.0,d:1.5}, {o:5,f:587.33,d:2.5} ],
+  [ {o:0,f:293.66,d:2.5}, {o:3,f:369.99,d:2.0}, {o:5.5,f:440.0,d:2.5} ],
+  [ {o:0,f:246.94,d:2.0}, {o:2.5,f:293.66,d:2.0}, {o:5,f:369.99,d:2.5} ],
+  [ {o:0,f:466.16,d:2.5}, {o:3,f:392.0,d:1.5}, {o:5.5,f:349.23,d:2.5} ],
+  [ {o:0,f:369.99,d:2.0}, {o:3,f:440.0,d:2.0}, {o:6,f:554.37,d:2.0} ],
+  [ {o:0,f:196.0,d:2.0}, {o:2.5,f:246.94,d:2.0}, {o:5,f:293.66,d:2.5} ],
+  [ {o:0,f:277.18,d:1.5}, {o:2,f:329.63,d:2.5}, {o:6,f:392.0,d:2.0} ],
+  [ {o:0,f:369.99,d:3.0}, {o:4,f:440.0,d:2.0}, {o:6.5,f:293.66,d:1.5} ],
+];
+
+var MQ_LASTCALL_CHORDS = [
+  { name:'Fmaj7', bass:87.31, pad:[174.61,220.0,261.63,329.63] },
+  { name:'Dm7', bass:146.83, pad:[293.66,349.23,440.0,523.25] },
+  { name:'Gm7', bass:98.0, pad:[196.0,233.08,293.66,349.23] },
+  { name:'C7', bass:130.81, pad:[261.63,329.63,392.0,466.16] },
+  { name:'Am7', bass:110.0, pad:[220.0,261.63,329.63,392.0] },
+  { name:'Dm7', bass:146.83, pad:[293.66,349.23,440.0,523.25] },
+  { name:'Gm7', bass:98.0, pad:[196.0,233.08,293.66,349.23] },
+  { name:'C7', bass:130.81, pad:[261.63,329.63,392.0,466.16] },
+];
+
+var MQ_LASTCALL_MELODY = [
+  [ {o:0,f:220.0,d:3.0}, {o:4,f:261.63,d:2.0}, {o:6.5,f:349.23,d:1.5} ],
+  [ {o:0,f:349.23,d:2.5}, {o:3,f:440.0,d:2.0}, {o:6,f:293.66,d:2.0} ],
+  [ {o:0,f:233.08,d:3.0}, {o:4,f:293.66,d:2.0}, {o:6.5,f:349.23,d:1.5} ],
+  [ {o:0,f:329.63,d:2.5}, {o:3,f:392.0,d:2.0}, {o:5.5,f:466.16,d:2.5} ],
+  [ {o:0,f:261.63,d:3.0}, {o:4,f:329.63,d:2.0}, {o:6.5,f:440.0,d:1.5} ],
+  [ {o:0,f:349.23,d:2.5}, {o:3,f:440.0,d:2.0}, {o:6,f:523.25,d:2.0} ],
+  [ {o:0,f:233.08,d:3.0}, {o:4,f:293.66,d:2.0}, {o:6.5,f:349.23,d:1.5} ],
+  [ {o:0,f:329.63,d:2.5}, {o:3,f:466.16,d:2.5}, {o:6,f:392.0,d:2.0} ],
+];
+
+var MQ_TRADEWINDS_CHORDS = [
+  { name:'Gm7', bass:98.0, pad:[196.0,233.08,293.66,349.23] },
+  { name:'C7', bass:130.81, pad:[261.63,329.63,392.0,466.16] },
+  { name:'Gm7', bass:98.0, pad:[196.0,233.08,293.66,349.23] },
+  { name:'Fmaj7', bass:87.31, pad:[174.61,220.0,261.63,329.63] },
+  { name:'Gm7', bass:98.0, pad:[196.0,233.08,293.66,349.23] },
+  { name:'C7', bass:130.81, pad:[261.63,329.63,392.0,466.16] },
+  { name:'Bbmaj7', bass:116.54, pad:[233.08,293.66,349.23,440.0] },
+  { name:'Fmaj7', bass:87.31, pad:[174.61,220.0,261.63,329.63] },
+];
+
+var MQ_TRADEWINDS_MELODY = [
+  [ {o:0,f:233.08,d:2.5}, {o:3,f:293.66,d:1.5}, {o:5.5,f:392.0,d:2.5} ],
+  [ {o:0,f:329.63,d:2.0}, {o:3,f:392.0,d:2.0}, {o:6,f:466.16,d:2.0} ],
+  [ {o:0,f:233.08,d:2.5}, {o:3,f:349.23,d:2.0}, {o:5.5,f:293.66,d:2.5} ],
+  [ {o:0,f:220.0,d:2.0}, {o:2.5,f:261.63,d:2.0}, {o:5,f:329.63,d:2.5} ],
+  [ {o:0,f:293.66,d:2.5}, {o:3,f:392.0,d:1.5}, {o:5.5,f:466.16,d:2.5} ],
+  [ {o:0,f:329.63,d:2.0}, {o:3,f:466.16,d:2.0}, {o:6,f:392.0,d:2.0} ],
+  [ {o:0,f:293.66,d:2.5}, {o:3,f:349.23,d:2.0}, {o:5.5,f:440.0,d:2.5} ],
+  [ {o:0,f:220.0,d:3.0}, {o:4,f:261.63,d:2.0}, {o:6.5,f:329.63,d:1.5} ],
+];
+
+var MQ_UPTOWN_CHORDS = [
+  { name:'Bbmaj7', bass:116.54, pad:[233.08,293.66,349.23,440.0] },
+  { name:'Em7b5', bass:82.41, pad:[164.81,196.0,233.08,293.66] },
+  { name:'A7', bass:110.0, pad:[220.0,554.37,329.63,392.0] },
+  { name:'Dm7', bass:146.83, pad:[293.66,349.23,440.0,523.25] },
+  { name:'G7', bass:98.0, pad:[196.0,246.94,293.66,349.23] },
+  { name:'Cm7', bass:130.81, pad:[261.63,311.13,392.0,466.16] },
+  { name:'F7', bass:87.31, pad:[174.61,220.0,261.63,311.13] },
+  { name:'Bbmaj7', bass:116.54, pad:[233.08,293.66,349.23,440.0] },
+];
+
+var MQ_UPTOWN_MELODY = [
+  [ {o:0,f:293.66,d:2.0}, {o:2.5,f:349.23,d:1.5}, {o:5,f:466.16,d:2.5} ],
+  [ {o:0,f:196.0,d:2.0}, {o:2.5,f:233.08,d:2.0}, {o:5,f:293.66,d:2.5} ],
+  [ {o:0,f:554.37,d:1.5}, {o:2,f:329.63,d:2.5}, {o:6,f:392.0,d:2.0} ],
+  [ {o:0,f:349.23,d:2.0}, {o:2.5,f:440.0,d:1.5}, {o:5,f:523.25,d:2.5} ],
+  [ {o:0,f:246.94,d:1.5}, {o:2,f:293.66,d:2.5}, {o:6,f:349.23,d:2.0} ],
+  [ {o:0,f:311.13,d:2.0}, {o:2.5,f:392.0,d:1.5}, {o:5,f:466.16,d:2.5} ],
+  [ {o:0,f:220.0,d:2.0}, {o:2.5,f:261.63,d:2.0}, {o:5,f:311.13,d:2.5} ],
+  [ {o:0,f:293.66,d:3.0}, {o:4,f:349.23,d:2.0}, {o:6.5,f:466.16,d:1.5} ],
+];
+
+var MQ_BLUEHOUR_CHORDS = [
+  { name:'Em7', bass:82.41, pad:[164.81,196.0,246.94,293.66] },
+  { name:'A7', bass:110.0, pad:[220.0,554.37,329.63,392.0] },
+  { name:'Dmaj7', bass:146.83, pad:[293.66,369.99,440.0,554.37] },
+  { name:'G7', bass:98.0, pad:[196.0,246.94,293.66,349.23] },
+  { name:'Cmaj7', bass:130.81, pad:[261.63,329.63,392.0,493.88] },
+  { name:'F#7', bass:369.99, pad:[369.99,466.16,554.37,329.63] },
+  { name:'B7', bass:123.47, pad:[246.94,622.25,369.99,440.0] },
+  { name:'Em7', bass:82.41, pad:[164.81,196.0,246.94,293.66] },
+];
+
+var MQ_BLUEHOUR_MELODY = [
+  [ {o:0,f:196.0,d:2.5}, {o:3,f:246.94,d:2.0}, {o:5.5,f:329.63,d:2.5} ],
+  [ {o:0,f:554.37,d:1.5}, {o:2,f:329.63,d:2.5}, {o:6,f:392.0,d:2.0} ],
+  [ {o:0,f:369.99,d:2.0}, {o:2.5,f:440.0,d:2.0}, {o:5,f:554.37,d:2.5} ],
+  [ {o:0,f:246.94,d:2.0}, {o:2.5,f:293.66,d:2.0}, {o:5,f:349.23,d:2.5} ],
+  [ {o:0,f:329.63,d:2.5}, {o:3,f:392.0,d:2.0}, {o:5.5,f:493.88,d:2.5} ],
+  [ {o:0,f:466.16,d:2.0}, {o:2.5,f:554.37,d:2.0}, {o:5,f:329.63,d:2.5} ],
+  [ {o:0,f:622.25,d:1.5}, {o:2,f:369.99,d:2.5}, {o:6,f:440.0,d:2.0} ],
+  [ {o:0,f:196.0,d:3.0}, {o:4,f:246.94,d:2.0}, {o:6.5,f:329.63,d:1.5} ],
+];
+
+var MQ_PAPER_CHORDS = [
+  { name:'C7', bass:130.81, pad:[261.63,329.63,392.0,466.16] },
+  { name:'Bbmaj7', bass:116.54, pad:[233.08,293.66,349.23,440.0] },
+  { name:'Fmaj7', bass:87.31, pad:[174.61,220.0,261.63,329.63] },
+  { name:'C7', bass:130.81, pad:[261.63,329.63,392.0,466.16] },
+  { name:'Gm7', bass:98.0, pad:[196.0,233.08,293.66,349.23] },
+  { name:'Bbmaj7', bass:116.54, pad:[233.08,293.66,349.23,440.0] },
+  { name:'Fmaj7', bass:87.31, pad:[174.61,220.0,261.63,329.63] },
+  { name:'C7', bass:130.81, pad:[261.63,329.63,392.0,466.16] },
+];
+
+var MQ_PAPER_MELODY = [
+  [ {o:0,f:329.63,d:2.5}, {o:3,f:392.0,d:2.0}, {o:5.5,f:523.25,d:2.5} ],
+  [ {o:0,f:293.66,d:2.0}, {o:2.5,f:349.23,d:2.0}, {o:5,f:466.16,d:2.5} ],
+  [ {o:0,f:220.0,d:2.5}, {o:3,f:261.63,d:2.0}, {o:5.5,f:329.63,d:2.5} ],
+  [ {o:0,f:329.63,d:2.0}, {o:2.5,f:466.16,d:2.0}, {o:5,f:392.0,d:2.5} ],
+  [ {o:0,f:233.08,d:2.5}, {o:3,f:293.66,d:2.0}, {o:5.5,f:349.23,d:2.5} ],
+  [ {o:0,f:293.66,d:2.0}, {o:2.5,f:349.23,d:2.0}, {o:5,f:440.0,d:2.5} ],
+  [ {o:0,f:220.0,d:2.5}, {o:3,f:261.63,d:2.0}, {o:5.5,f:329.63,d:2.5} ],
+  [ {o:0,f:392.0,d:2.0}, {o:2.5,f:466.16,d:2.5}, {o:6,f:329.63,d:2.0} ],
+];
+
+// All tracks. barCounts: bars per chord (most 2; Bossa's last two are 1-bar tags).
+var MQ_TRACKS = [
+  { name:'Back in Bossa', bpm:100, chords:MQ_BOSSA_CHORDS,     melody:MQ_BOSSA_MELODY,     barCounts:[2,2,2,2,2,2,2,1,1], tonic:220.00, tonicBass:55.00, quality:'major', clave:true },
+  { name:'Night Shift',   bpm:92,  chords:MQ_NIGHTSHIFT_CHORDS, melody:MQ_NIGHTSHIFT_MELODY, barCounts:[2,2,2,2,2,2,2,2], tonic:220.00, tonicBass:55.00, quality:'minor' },
+  { name:'Sunday Drive',  bpm:96,  chords:MQ_SUNDAY_CHORDS,     melody:MQ_SUNDAY_MELODY,     barCounts:[2,2,2,2,2,2,2,2], tonic:261.63, tonicBass:65.41, quality:'major' },
+  { name:'The Long Way',  bpm:104, chords:MQ_LONGWAY_CHORDS,    melody:MQ_LONGWAY_MELODY,    barCounts:[2,2,2,2,2,2,2,2], tonic:293.66, tonicBass:73.42, quality:'major' },
+  { name:'Last Call',     bpm:76,  chords:MQ_LASTCALL_CHORDS,   melody:MQ_LASTCALL_MELODY,   barCounts:[2,2,2,2,2,2,2,2], tonic:349.23, tonicBass:87.31, quality:'major' },
+  { name:'Tradewinds',    bpm:100, chords:MQ_TRADEWINDS_CHORDS, melody:MQ_TRADEWINDS_MELODY, barCounts:[2,2,2,2,2,2,2,2], tonic:392.00, tonicBass:98.00, quality:'minor' },
+  { name:'Uptown',        bpm:112, chords:MQ_UPTOWN_CHORDS,     melody:MQ_UPTOWN_MELODY,     barCounts:[2,2,2,2,2,2,2,2], tonic:233.08, tonicBass:116.54, quality:'major' },
+  { name:'Blue Hour',     bpm:88,  chords:MQ_BLUEHOUR_CHORDS,   melody:MQ_BLUEHOUR_MELODY,   barCounts:[2,2,2,2,2,2,2,2], tonic:329.63, tonicBass:82.41, quality:'minor' },
+  { name:'Paper Planes',  bpm:104, chords:MQ_PAPER_CHORDS,      melody:MQ_PAPER_MELODY,      barCounts:[2,2,2,2,2,2,2,2], tonic:261.63, tonicBass:130.81, quality:'major' },
+];
+
+// Build bar-start lookup + total bars for a track's barCounts
+function mqTrackBarMeta(barCounts) {
+  var starts = [0];
+  for (var i=0;i<barCounts.length-1;i++) starts.push(starts[i]+barCounts[i]);
+  var total = starts[starts.length-1] + barCounts[barCounts.length-1];
+  return { starts:starts, total:total };
+}
+function mqBarToChord(bar, meta) {
+  var b = bar % meta.total;
+  for (var i=meta.starts.length-1;i>=0;i--){ if(b>=meta.starts[i]) return i; }
+  return 0;
+}
+
+function mqAmbStart(trackIdx) {
+  if (_mqAmb.on) return;
+  if (progState.mqMusicOn === false) return;
+  var c = getAudio();
+  if (!c) return;
+  // Pick the requested track, or a random one (avoiding an immediate repeat)
+  var idx;
+  if (typeof trackIdx === 'number') {
+    idx = trackIdx;
+  } else if (MQ_TRACKS.length > 1 && typeof _mqAmb.trackIdx === 'number') {
+    // Reshuffle but don't replay the same track we just heard
+    do { idx = Math.floor(Math.random()*MQ_TRACKS.length); } while (idx === _mqAmb.trackIdx);
+  } else {
+    idx = Math.floor(Math.random()*MQ_TRACKS.length);
+  }
+  idx = ((idx % MQ_TRACKS.length) + MQ_TRACKS.length) % MQ_TRACKS.length;
+  var track = MQ_TRACKS[idx];
+  _mqAmb.track = track;
+  _mqAmb.trackIdx = idx;
+  // AudioContext may be suspended on mobile — wait for resume before scheduling,
+  // otherwise the fade-in ramp completes instantly
+  var begin = function() {
+    if (!_mqAmb.on) return; // guard against rapid open/close
+    mqAmbBuild(c, track);
+  };
+  _mqAmb.on = true;
+  if (c.state === 'suspended') {
+    c.resume().then(begin).catch(begin);
+  } else {
+    begin();
+  }
+  mqNpUpdate();
+}
+
+function mqAmbBuild(c, track) {
+  var BPM = track.bpm, BEAT = 60/BPM, BAR = BEAT*4;
+  var CHORDS = track.chords, MELODY = track.melody;
+  var meta = mqTrackBarMeta(track.barCounts);
+
+  // Master — low ambient level. duckGain sits under it for cue ducking.
+  var master = c.createGain();
+  master.gain.value = 0.21;            // ambient background level (sampler was 0.48)
+  master.connect(c.destination);
+  _mqAmb.master = master;
+  _mqAmb.nodes.push(master);
+
+  var duck = c.createGain();
+  duck.gain.value = 1.0;
+  duck.connect(master);
+  _mqAmb.duckGain = duck;
+  _mqAmb.nodes.push(duck);
+
+  // Fade in over 1.5s
+  master.gain.setValueAtTime(0, c.currentTime);
+  master.gain.linearRampToValueAtTime(0.21, c.currentTime + 1.5);
+
+  // Reverb
+  var revLen = Math.floor(c.sampleRate * 1.2);
+  var revBuf = c.createBuffer(2, revLen, c.sampleRate);
+  for (var ch=0; ch<2; ch++) { var d=revBuf.getChannelData(ch); for(var i=0;i<revLen;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/revLen,2.2); }
+  var rev = c.createConvolver(); rev.buffer = revBuf;
+  var revGain = c.createGain(); revGain.gain.value = 0.28;
+  rev.connect(revGain); revGain.connect(duck);
+  _mqAmb.nodes.push(rev, revGain);
+
+  // Sub LPF
+  var subLPF = c.createBiquadFilter(); subLPF.type='lowpass'; subLPF.frequency.value=160; subLPF.connect(duck);
+  _mqAmb.nodes.push(subLPF);
+
+  // Pad LPF + pad gains
+  var padLPF = c.createBiquadFilter(); padLPF.type='lowpass'; padLPF.frequency.value=900; padLPF.connect(duck);
+  _mqAmb.nodes.push(padLPF);
+  var padGains = CHORDS.map(function(){ var g=c.createGain(); g.gain.value=0; g.connect(padLPF); _mqAmb.nodes.push(g); return g; });
+  CHORDS.forEach(function(chord, ci){
+    chord.pad.forEach(function(f, i){
+      var o=c.createOscillator(), g=c.createGain();
+      o.type='sine'; o.frequency.value=f; o.detune.value=i*4-5;
+      g.gain.value=0.06-i*0.01;
+      o.connect(g); g.connect(padGains[ci]); o.start();
+      _mqAmb.nodes.push(o,g);
+    });
+  });
+  padGains[0].gain.value = 0.5;
+
+  var subOsc=null, subGain=null, currentChord=-1;
+
+  function setChord(ci, when) {
+    if (ci === currentChord) return;
+    currentChord = ci;
+    padGains.forEach(function(pg, i){
+      pg.gain.cancelScheduledValues(when);
+      pg.gain.setValueAtTime(pg.gain.value, when);
+      pg.gain.linearRampToValueAtTime(i===ci?0.5:0, when+BEAT*0.5);
+    });
+    if (subOsc) { try { subGain.gain.linearRampToValueAtTime(0, when+BEAT*0.25); subOsc.stop(when+BEAT*0.3); } catch(e){} }
+    var so=c.createOscillator(), sg=c.createGain();
+    so.type='sine'; so.frequency.value=CHORDS[ci].bass;
+    sg.gain.setValueAtTime(0, when); sg.gain.linearRampToValueAtTime(0.2, when+BEAT*0.18);
+    so.connect(sg); sg.connect(subLPF); so.start(when);
+    _mqAmb.nodes.push(so, sg);
+    subOsc=so; subGain=sg;
+  }
+
+  // Marimba note — sine + clean octave overtone (Back in the Game timbre)
+  function schedNote(freq, when, dur, vol) {
+    var ring = Math.min(dur*BEAT, BEAT*2.2);
+    var o=c.createOscillator(), g=c.createGain();
+    o.type='sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when+ring);
+    o.connect(g); g.connect(rev); o.start(when); o.stop(when+ring+0.05);
+    _mqAmb.nodes.push(o, g);
+    var o2=c.createOscillator(), g2=c.createGain();
+    o2.type='sine'; o2.frequency.value=freq*2.004;
+    g2.gain.setValueAtTime(vol*0.22, when);
+    g2.gain.exponentialRampToValueAtTime(0.001, when+ring*0.55);
+    o2.connect(g2); g2.connect(master); o2.start(when); o2.stop(when+ring*0.6);
+    _mqAmb.nodes.push(o2, g2);
+  }
+
+  function schedKick(when, vol) {
+    var o=c.createOscillator(), g=c.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(90, when); o.frequency.exponentialRampToValueAtTime(36, when+0.07);
+    g.gain.setValueAtTime(vol, when); g.gain.exponentialRampToValueAtTime(0.001, when+0.14);
+    o.connect(g); g.connect(subLPF); o.start(when); o.stop(when+0.18);
+    _mqAmb.nodes.push(o, g);
+  }
+
+  function schedHat(when, vol) {
+    var buf=c.createBuffer(1, Math.floor(c.sampleRate*0.022), c.sampleRate);
+    var d=buf.getChannelData(0); for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.2);
+    var src=c.createBufferSource(); src.buffer=buf;
+    var g=c.createGain(); g.gain.value=vol;
+    var hpf=c.createBiquadFilter(); hpf.type='highpass'; hpf.frequency.value=7200;
+    src.connect(hpf); hpf.connect(g); g.connect(duck); src.start(when);
+    _mqAmb.nodes.push(src, g, hpf);
+  }
+
+  // Cross-stick clave — the real synthClave sound (2500->1800Hz glide + body + click), scaled for ambient
+  function schedClave(when, vol) {
+    // Primary pitched glide
+    var o=c.createOscillator(), og=c.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(2500, when); o.frequency.exponentialRampToValueAtTime(1800, when+0.008);
+    og.gain.setValueAtTime(vol*1.1, when); og.gain.exponentialRampToValueAtTime(0.001, when+0.045);
+    o.connect(og); og.connect(duck); o.start(when); o.stop(when+0.05);
+    _mqAmb.nodes.push(o, og);
+    // Woody body
+    var o2=c.createOscillator(), og2=c.createGain();
+    o2.type='triangle'; o2.frequency.value=1200;
+    og2.gain.setValueAtTime(vol*0.35, when); og2.gain.exponentialRampToValueAtTime(0.001, when+0.025);
+    o2.connect(og2); og2.connect(duck); o2.start(when); o2.stop(when+0.03);
+    _mqAmb.nodes.push(o2, og2);
+    // Click transient
+    var nb=c.createBuffer(1, Math.ceil(c.sampleRate*0.005), c.sampleRate);
+    var nd=nb.getChannelData(0); for(var i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
+    var ns=c.createBufferSource(); ns.buffer=nb;
+    var bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=3500; bp.Q.value=3;
+    var ng=c.createGain(); ns.connect(bp); bp.connect(ng); ng.connect(duck);
+    ng.gain.setValueAtTime(vol*1.2, when); ng.gain.exponentialRampToValueAtTime(0.001, when+0.005);
+    ns.start(when); ns.stop(when+0.006);
+    _mqAmb.nodes.push(ns, bp, ng);
+  }
+
+  // Bossa clave rhythm per bar (8 eighth-note slots): hits on 0, 3, 5
+  var BOSSA_CLAVE = [1,0,0,1,0,1,0,0];
+
+  function schedBar(barWhen, ci) {
+    var phrase = MELODY[ci];
+    phrase.forEach(function(ev){
+      var t = barWhen + ev.o*BEAT;
+      var isStrong = (ev.o % 2 === 0);
+      schedNote(ev.f, t, ev.d, isStrong ? 0.17 : 0.13);
+    });
+    for (var b=0; b<4; b++) schedKick(barWhen+b*BEAT, b===0?0.16:0.12);
+    for (var h=0; h<8; h++) schedHat(barWhen+h*BEAT*0.5, h%2===0?0.016:0.010);
+    // Clave (bossa only) — on the clave accents, quiet so it colours rather than dominates
+    if (track.clave) {
+      for (var k=0; k<8; k++) if (BOSSA_CLAVE[k]) schedClave(barWhen+k*BEAT*0.5, 0.022);
+    }
+  }
+
+  var scheduledBars = 0;
+  var startTime = c.currentTime + 0.1;
+  function schedule() {
+    if (!_mqAmb.on) return;
+    while (startTime + scheduledBars*BAR < c.currentTime + 1.5) {
+      var barWhen = startTime + scheduledBars*BAR;
+      var ci = mqBarToChord(scheduledBars, meta);
+      setChord(ci, barWhen);
+      schedBar(barWhen, ci);
+      scheduledBars++;
+    }
+    _mqAmb.timers.push(setTimeout(schedule, 200));
+  }
+  setChord(0, startTime);
+  schedule();
+}
+
+function mqAmbStop() {
+  _mqAmb.on = false;
+  _mqAmb.timers.forEach(function(t){ clearTimeout(t); });
+  _mqAmb.timers = [];
+  var c = getAudio();
+  // Fade out gracefully if we have a master, then disconnect
+  if (_mqAmb.master && c) {
+    try {
+      _mqAmb.master.gain.cancelScheduledValues(c.currentTime);
+      _mqAmb.master.gain.setValueAtTime(_mqAmb.master.gain.value, c.currentTime);
+      _mqAmb.master.gain.linearRampToValueAtTime(0, c.currentTime + 0.4);
+    } catch(e){}
+  }
+  var toKill = _mqAmb.nodes.slice();
+  setTimeout(function(){
+    toKill.forEach(function(n){ try { n.stop ? n.stop() : n.disconnect(); } catch(e){} });
+  }, 500);
+  _mqAmb.nodes = [];
+  _mqAmb.master = null;
+  _mqAmb.duckGain = null;
+  mqNpUpdate();
+}
+
+// Duck the music briefly under a cue sound (correct/wrong/etc)
+function mqAmbDuck() {
+  if (!_mqAmb.on || !_mqAmb.duckGain) return;
+  var c = getAudio();
+  if (!c) return;
+  try {
+    var g = _mqAmb.duckGain.gain;
+    g.cancelScheduledValues(c.currentTime);
+    g.setValueAtTime(g.value, c.currentTime);
+    g.linearRampToValueAtTime(0.35, c.currentTime + 0.05);   // duck down
+    g.linearRampToValueAtTime(1.0, c.currentTime + 0.9);     // recover
+  } catch(e){}
+}
+
+// Toggle music on/off (called from the music button in the quiz hero)
+// Win stinger — marimba cascade up Amaj7, then a warm resolved chord
+// Key info for the stingers — uses the track that was playing (falls back to A major)
+function mqStingKey() {
+  var t = _mqAmb.track || MQ_TRACKS[0];
+  return { tonic: t.tonic || 220.00, bass: t.tonicBass || 55.00, quality: t.quality || 'major' };
+}
+
+// Marimba note helper for stingers (sine + octave overtone)
+function mqStingNote(c, dest, freq, when, ring, vol) {
+  var o=c.createOscillator(), og=c.createGain();
+  o.type='sine'; o.frequency.value=freq;
+  og.gain.setValueAtTime(vol, when); og.gain.exponentialRampToValueAtTime(0.001, when+ring);
+  o.connect(og); og.connect(dest); o.start(when); o.stop(when+ring+0.05);
+  var o2=c.createOscillator(), og2=c.createGain();
+  o2.type='sine'; o2.frequency.value=freq*2.004;
+  og2.gain.setValueAtTime(vol*0.22, when); og2.gain.exponentialRampToValueAtTime(0.001, when+ring*0.55);
+  o2.connect(og2); og2.connect(dest); o2.start(when); o2.stop(when+ring*0.6);
+}
+
+// Win stinger — cascade up the home triad, land a resolved chord (key-aware)
+function mqStingWin() {
+  var c = getAudio(); if (!c) return;
+  var key = mqStingKey();
+  var g = c.createGain(); g.gain.value = 0.4; g.connect(c.destination);
+  var L = Math.floor(c.sampleRate*1.6), buf=c.createBuffer(2,L,c.sampleRate);
+  for (var ch=0;ch<2;ch++){ var d=buf.getChannelData(ch); for(var i=0;i<L;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/L,2.2); }
+  var rev=c.createConvolver(); rev.buffer=buf;
+  var rg=c.createGain(); rg.gain.value=0.5; rev.connect(rg); rg.connect(c.destination);
+  var ct=c.currentTime, BEAT=0.6;
+  var root = key.tonic;
+  // Intervals for a major or minor triad + extensions (ratios from the root)
+  var third = key.quality==='minor' ? root*Math.pow(2,3/12) : root*Math.pow(2,4/12);
+  var fifth = root*Math.pow(2,7/12);
+  var sev   = key.quality==='minor' ? root*Math.pow(2,10/12) : root*Math.pow(2,11/12);
+  var oct   = root*2;
+  var ninth = root*Math.pow(2,14/12);
+  // Cascade up: root, third, fifth, seventh, octave, ninth
+  var cascade=[root, third, fifth, sev, oct, ninth];
+  cascade.forEach(function(f,i){ mqStingNote(c, rev, f, ct+i*BEAT*0.28, 0.9, 0.16); });
+  // Resolved chord lands
+  [root, third, fifth, sev, oct].forEach(function(f,i){ mqStingNote(c, rev, f, ct+BEAT*1.8+i*0.04, 2.2, 0.13-0.02*i); });
+  // Bass
+  mqStingNote(c, g, key.bass, ct+BEAT*1.75, 2.5, 0.2);
+}
+
+// Lose stinger — descending fall, settles minor (key-aware: always minor third for the sag)
+function mqStingLose() {
+  var c = getAudio(); if (!c) return;
+  var key = mqStingKey();
+  var g = c.createGain(); g.gain.value = 0.36; g.connect(c.destination);
+  var ct=c.currentTime, BEAT=0.6;
+  var root = key.tonic;
+  var minThird = root*Math.pow(2,3/12);
+  var fifth = root*Math.pow(2,7/12);
+  var oct = root*2;
+  // Descending fall from the octave down to the root
+  var fall=[oct, root*Math.pow(2,10/12), fifth, root*Math.pow(2,3/12), root];
+  fall.forEach(function(f,i){ mqStingNote(c, g, f, ct+i*BEAT*0.32, 0.7, 0.16); });
+  // Minor settle (root, minor third, fifth, octave) — the sag, regardless of original quality
+  [root, minThird, fifth, oct].forEach(function(f,i){ mqStingNote(c, g, f, ct+BEAT*1.9+i*0.05, 2.4, 0.09); });
+  // Bass sigh — root down a whole step
+  var bo=c.createOscillator(), bg=c.createGain();
+  bo.type='sine';
+  bo.frequency.setValueAtTime(key.bass*Math.pow(2,5/12), ct+BEAT*1.85);
+  bo.frequency.linearRampToValueAtTime(key.bass, ct+BEAT*1.85+1.8);
+  bg.gain.setValueAtTime(0, ct+BEAT*1.85); bg.gain.linearRampToValueAtTime(0.18, ct+BEAT*1.9);
+  bg.gain.linearRampToValueAtTime(0.001, ct+BEAT*1.85+2.4);
+  bo.connect(bg); bg.connect(g); bo.start(ct+BEAT*1.85); bo.stop(ct+BEAT*1.85+2.5);
+}
+
+// ── Now Playing widget controls ──────────────────────────────────────────────
+// Update the widget's title + play/pause icon to match current music state
+function mqNpUpdate() {
+  var titleEl = document.getElementById('mqNpTitle');
+  var npEl = document.getElementById('mqNowPlaying');
+  var playIcon = document.querySelector('.mq-np-play-icon');
+  var pauseIcon = document.querySelector('.mq-np-pause-icon');
+  var playing = _mqAmb.on && progState.mqMusicOn !== false;
+  if (titleEl) {
+    titleEl.textContent = (_mqAmb.track && _mqAmb.track.name) ? _mqAmb.track.name : '\u2014';
+  }
+  if (npEl) npEl.classList.toggle('mq-np-paused', !playing);
+  if (playIcon && pauseIcon) {
+    playIcon.style.display  = playing ? 'none' : 'block';
+    pauseIcon.style.display = playing ? 'block' : 'none';
+  }
+}
+
+// Play/pause button — toggles music on/off (also sets the saved preference)
+function mqNpTogglePlay() {
+  if (_mqAmb.on) {
+    progState.mqMusicOn = false;
+    progSave();
+    mqAmbStop();
+  } else {
+    progState.mqMusicOn = true;
+    progSave();
+    // Resume the same track if we have one, else random
+    var idx = (typeof _mqAmb.trackIdx === 'number') ? _mqAmb.trackIdx : undefined;
+    mqAmbStart(idx);
+  }
+  mqNpUpdate();
+}
+
+// Skip — advance to the next track in the list
+function mqNpSkip() {
+  var nextIdx = (typeof _mqAmb.trackIdx === 'number')
+    ? (_mqAmb.trackIdx + 1) % MQ_TRACKS.length
+    : Math.floor(Math.random()*MQ_TRACKS.length);
+  progState.mqMusicOn = true;
+  progSave();
+  mqAmbStop();  // this calls mqNpUpdate (shows paused briefly)
+  // Show the upcoming track title + keep the "playing" icon through the gap
+  var titleEl = document.getElementById('mqNpTitle');
+  var npEl = document.getElementById('mqNowPlaying');
+  var playIcon = document.querySelector('.mq-np-play-icon');
+  var pauseIcon = document.querySelector('.mq-np-pause-icon');
+  if (titleEl) titleEl.textContent = MQ_TRACKS[nextIdx].name;
+  if (npEl) npEl.classList.remove('mq-np-paused');
+  if (playIcon) playIcon.style.display = 'none';
+  if (pauseIcon) pauseIcon.style.display = 'block';
+  // Small delay so the fade-out clears before the new track starts
+  setTimeout(function() { mqAmbStart(nextIdx); }, 450);
+}
+
 function mqOpen() {
   document.getElementById('mqModal').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -55889,6 +56644,8 @@ function mqOpen() {
   mqSyncGlobalDiffChips();
   mqCheckOnline();
   mqSyncOnlineChipsVisibility();
+  mqAmbStart();
+  mqNpUpdate();
 }
 
 // ── Global difficulty ─────────────────────────────────────
@@ -56011,6 +56768,8 @@ async function mqQuickPlayOnlineCat(catId) {
 
 // ── Shared fetch + launch ─────────────────────────────────
 async function mqRunOnlineFetch(catId, mode) {
+  // Online quizzes bypass mqBuildAndStart — ensure music plays here too
+  if (progState.mqMusicOn !== false) mqAmbStart();
   var catCfg = MQ_ONLINE_CATS.find(function(c){ return c.id === catId; }) || MQ_ONLINE_CATS[0];
   mqShowScreen('mqScreenLoading');
   mqSetHeader('MUSIC QUIZ', '');
@@ -56146,6 +56905,7 @@ function mqResetStats() {
 }
 function mqClose() {
   if (MQ.timerInterval) clearInterval(MQ.timerInterval);
+  mqAmbStop();
   document.getElementById('mqModal').classList.remove('active');
   document.body.style.overflow = '';
 }
@@ -56161,6 +56921,8 @@ function mqGoLanding() {
   if (MQ.timerInterval) clearInterval(MQ.timerInterval);
   mqSetHeader('MUSIC QUIZ','test your knowledge');
   mqShowScreen('mqScreenLanding');
+  // Restart the ambient track from the top on the menu (music was stopped at results)
+  if (progState.mqMusicOn !== false) mqAmbStart();
 }
 function mqShowQuickSheet() { document.getElementById('mqQuickSheet').classList.add('active'); }
 function mqHideQuickSheet() { document.getElementById('mqQuickSheet').classList.remove('active'); }
@@ -56438,6 +57200,9 @@ async function mqStartCustom() {
   mqBuildAndStart();
 }
 function mqBuildAndStart() {
+  // Ensure ambient music is playing for the quiz, regardless of entry path
+  // (Play Again bypasses the menu). mqAmbStart no-ops if already running.
+  if (progState.mqMusicOn !== false) mqAmbStart();
   mqShowScreen('mqScreenLoading');
   mqSetHeader('MUSIC QUIZ','');
   MQ.questions=[]; MQ.current=0; MQ.score=0; MQ.correct=0;
@@ -56594,11 +57359,13 @@ function mqAnswer(idx) {
     else if (MQ.streak >= 5)  xpMsg = '+15 XP \uD83D\uDD25 5 STREAK!';
     else if (MQ.streak >= 3)  xpMsg = '+15 XP \uD83D\uDD25';
     mqShowXP(xpMsg);
-    if (MQ.streak === 5 || MQ.streak === 10 || MQ.streak === 20) hapticMilestone();
-    else hapticCorrect();
+    if (MQ.streak === 5 || MQ.streak === 10 || MQ.streak === 20) { hapticMilestone(); playCueMilestone(); }
+    else { hapticCorrect(); playCueCorrect(); }
+    mqAmbDuck();
   } else {
     MQ.streak=0;
-    hapticWrong();
+    hapticWrong(); playCueWrong();
+    mqAmbDuck();
     if (MQ.mode==='survival') {
       MQ.lives--;
       mqUpdateHearts();
@@ -56713,6 +57480,16 @@ function mqShowResults() {
   mqCommitSessionStats();
   mqShowScreen('mqScreenResults');
   var isSurv=MQ.mode==='survival';
+  // Stop background music and fire the appropriate ending stinger
+  mqAmbStop();
+  mqNpUpdate();
+  (function(){
+    var won;
+    if (isSurv) { won = MQ.lives > 0; }
+    else { won = MQ.qCount > 0 && (MQ.correct / MQ.qCount) >= 0.5; }
+    // Small delay so the music fade-out clears before the stinger
+    setTimeout(function(){ if (won) mqStingWin(); else mqStingLose(); }, 450);
+  })();
   document.getElementById('mqSurvivalEnd').style.display=isSurv?'flex':'none';
   document.getElementById('mqNormalResults').style.display=isSurv?'none':'block';
   if (isSurv) {
