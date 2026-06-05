@@ -3029,9 +3029,10 @@
     font-size: 11px; color: rgba(255,160,100,0.45); letter-spacing: 0.5px;
     margin-top: 1px;
   }
-  .groove-screen-right-col { text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0; padding-top: 4px; }
-  /* Wheel on its own full-width row, centered, with flanking adjust buttons */
-  .groove-wheel-col { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 2px 0 8px; opacity: 0.45; transition: opacity 0.2s; }
+  .groove-screen-right-col { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+  .groove-screen-bpm-row { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+  /* Tiny wheel below BPM — purely a visual accent + swipe affordance */
+  .groove-wheel-col { display: flex; justify-content: flex-end; align-items: center; opacity: 0.4; transition: opacity 0.2s; }
   .metro-screen-inner.bpm-scrubbing .groove-wheel-col { opacity: 1; }
   .groove-bpm-adj {
     background: none; border: none; cursor: pointer;
@@ -13754,7 +13755,7 @@
 
           <!-- ── GROOVE screen (shown when groove mode active) ── -->
           <div class="groove-screen" id="grooveScreen">
-            <!-- Row 1: info left | bpm+mute right -->
+            <!-- Row 1: info left | bpm + tiny wheel + mute right -->
             <div class="groove-screen-top">
               <div class="groove-screen-name-col">
                 <div class="groove-screen-label" data-i18n="metro_groove">GROOVE</div>
@@ -13762,21 +13763,21 @@
                 <div class="groove-screen-origin" id="gsOrigin">Cuban son / salsa</div>
               </div>
               <div class="groove-screen-right-col">
-                <div class="groove-screen-bpm" id="gsBpm">120 <span>BPM</span></div>
-                <button class="screen-mute-btn" id="metroMuteBtnGroove" onclick="setMetroAudio(!metroAudioOn)" style="position:static;transform:none;">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                    <path class="speaker-body" d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/>
-                    <g class="sound-waves" stroke-width="1.8"><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6.5a8 8 0 0 1 0 11"/></g>
-                    <line class="mute-slash" x1="3" y1="3" x2="21" y2="21" stroke-width="2"/>
-                  </svg>
-                </button>
+                <div class="groove-screen-bpm-row">
+                  <div class="groove-screen-bpm" id="gsBpm">120 <span>BPM</span></div>
+                  <button class="screen-mute-btn" id="metroMuteBtnGroove" onclick="setMetroAudio(!metroAudioOn)" style="position:static;transform:none;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                      <path class="speaker-body" d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none"/>
+                      <g class="sound-waves" stroke-width="1.8"><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6.5a8 8 0 0 1 0 11"/></g>
+                      <line class="mute-slash" x1="3" y1="3" x2="21" y2="21" stroke-width="2"/>
+                    </svg>
+                  </button>
+                </div>
+                <!-- Tiny wheel below BPM — whole right col is swipe target -->
+                <div class="groove-wheel-col">
+                  <canvas id="bpmWheelCanvasGroove" class="bpm-wheel-canvas" height="20" data-w="90"></canvas>
+                </div>
               </div>
-            </div>
-            <!-- Row 2: wheel + adjust buttons, own full-width row -->
-            <div class="groove-wheel-col">
-              <button class="groove-bpm-adj" onclick="adjBPM(-1)" aria-label="Tempo down">−</button>
-              <canvas id="bpmWheelCanvasGroove" class="bpm-wheel-canvas" height="26"></canvas>
-              <button class="groove-bpm-adj" onclick="adjBPM(1)" aria-label="Tempo up">+</button>
             </div>
             <!-- Groove step grid -->
             <div class="groove-screen-grid" id="gsGrid"></div>
@@ -18628,7 +18629,8 @@ function adjBPM(delta) {
 
   function _drawWheelToCanvas(canvas) {
     if (!canvas) return;
-    const W = WHEEL_W, H = canvas.height;
+    const W = canvas.dataset.w ? parseInt(canvas.dataset.w) : WHEEL_W;
+    const H = canvas.height;
     if (canvas.width !== W) canvas.width = W;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, W, H);
