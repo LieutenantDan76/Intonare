@@ -17904,7 +17904,7 @@ function detectPitch(buf, sr) {
   let rms = 0;
   for (let i = 0; i < N; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / N);
-  if (rms < 0.006) return -1;
+  if (rms < 0.002) return -1;
   const yin = new Float32Array(H);
   for (let tau = 0; tau < H; tau++) {
     let sum = 0;
@@ -18128,7 +18128,6 @@ function processAudio() {
         if (mode === 'practice' && currentExercise === 'interval') ivCheckPitch(smoothedFreq);
         if (mode === 'practice' && currentExercise === 'singsing') ssCheckPitch(smoothedFreq);
         window.lastCents = smoothedCents;
-        window.lastFreq  = smoothedFreq;
       }
       document.getElementById('statusDot').className = 'status-dot active';
       document.getElementById('statusText').textContent = t('mic_live');
@@ -18173,131 +18172,6 @@ function processAudio() {
 }
 
 let _wasInTune = false;
-
-// ── In-tune haptic beating engine ─────────────────────────────────────────
-// Simulates acoustic beating: rapid pulses when far out of tune, slowing as
-// you approach unison, stopping with a confirmation thud when you lock in.
-// Goal: someone deaf/HoH can feel the dissonance clear and the waves align.
-//
-// Pulse interval mapped from cents error:
-//   ±50¢ → ~120ms  (fast, restless buzz)
-//   ±20¢ → ~220ms  (clearly slowing)
-//   ±10¢ → ~380ms  (sparse, almost there)
-//   ±5¢  → dwell gate → confirmation, pulses stop
-//   >50¢ → engine off (too far out to be useful)
-//
-// Style escalates as you close in: Light until ±10¢, then Medium.
-
-const HAPTIC_RANGE = 50;   // cents — engine is silent beyond this
-const HAPTIC_DWELL = 200;  // ms to hold ±5¢ before confirmation fires
-
-let _hapticPulseTimer  = null;
-let _hapticDwellTimer  = null;
-let _hapticConfirmed   = false;  // true after lock-in fires; resets when >±10¢
-let _hapticLastAbs     = 999;
-
-function _hapticSwellStop() {
-  if (_hapticPulseTimer) { clearTimeout(_hapticPulseTimer); _hapticPulseTimer = null; }
-  if (_hapticDwellTimer) { clearTimeout(_hapticDwellTimer); _hapticDwellTimer = null; }
-}
-
-function _hapticSwellReset() {
-  _hapticSwellStop();
-  _hapticConfirmed = false;
-  _hapticLastAbs   = 999;
-}
-
-function _hapticIntervalFor(abs, refFreq) {
-  // Physics: beat frequency = f_ref * (2^(cents/1200) - 1)
-  // This is the actual rate at which amplitude modulation occurs between
-  // two tones separated by `abs` cents at reference frequency `refFreq`.
-  const freq = refFreq > 0 ? refFreq : 440;
-  const beatHz = freq * (Math.pow(2, abs / 1200) - 1);
-  if (beatHz <= 0) return 9999;
-  const ms = 1000 / beatHz;
-  // Clamp: below 80ms the motor can't resolve distinct pulses anyway;
-  // above 1800ms it's too sparse to feel like beating.
-  return Math.round(Math.min(1800, Math.max(80, ms)));
-}
-
-async function _hapticFire(abs) {
-  if (!progState.hapticsOn) return;
-  try {
-    const style = abs < 10
-      ? window.ImpactStyle?.Medium
-      : window.ImpactStyle?.Light;
-    await window.Haptics?.impact({ style });
-  } catch(e) {}
-}
-
-async function _hapticConfirmFire() {
-  if (!progState.hapticsOn) return;
-  try {
-    await window.Haptics?.impact({ style: window.ImpactStyle?.Medium });
-    await new Promise(r => setTimeout(r, 40));
-    await window.Haptics?.impact({ style: window.ImpactStyle?.Heavy });
-  } catch(e) {}
-}
-
-function _hapticScheduleNext(abs) {
-  const refFreq = window.lastFreq > 0 ? window.lastFreq : 440;
-  _hapticPulseTimer = setTimeout(async () => {
-    _hapticPulseTimer = null;
-    // Re-read latest abs and freq so interval always reflects current pitch
-    const currentAbs  = Math.abs(window.lastCents ?? abs);
-    if (currentAbs > HAPTIC_RANGE || _hapticConfirmed) return;
-    if (currentAbs >= 5) {
-      await _hapticFire(currentAbs);
-      _hapticScheduleNext(currentAbs);
-    }
-    // if currentAbs < 5, dwell timer is already running — don't pulse
-  }, _hapticIntervalFor(abs, refFreq));
-}
-
-function _hapticSwell(abs) {
-  if (!progState.hapticsOn) return;
-
-  if (abs > HAPTIC_RANGE) {
-    // Too far out — kill everything and reset
-    _hapticSwellReset();
-    return;
-  }
-
-  if (_hapticConfirmed) {
-    // Already locked in — only reset if they drift back out past ±10¢
-    if (abs > 10) {
-      _hapticConfirmed = false;
-      _hapticSwellStop();
-      _hapticScheduleNext(abs);
-    }
-    return;
-  }
-
-  if (abs < 5) {
-    // In the lock zone — start dwell timer if not already running, stop pulse loop
-    if (!_hapticDwellTimer) {
-      _hapticSwellStop();  // stop pulse loop while dwelling
-      _hapticDwellTimer = setTimeout(async () => {
-        _hapticDwellTimer = null;
-        _hapticConfirmed  = true;
-        await _hapticConfirmFire();
-      }, HAPTIC_DWELL);
-    }
-    return;
-  }
-
-  // In the approach zone (5–50¢) — run pulse loop
-  // Cancel any stale dwell (drifted back out of ±5¢)
-  if (_hapticDwellTimer) { clearTimeout(_hapticDwellTimer); _hapticDwellTimer = null; }
-
-  // Start pulse loop if not running, or if abs changed enough to reschedule
-  if (!_hapticPulseTimer) {
-    _hapticScheduleNext(abs);
-  }
-
-  _hapticLastAbs = abs;
-}
-// ─────────────────────────────────────────────────────────────────────────────
 let _lastNoteKey = null;  // tracks note changes for pulse
 // Spring needle state
 let _needleSmoothed = 50;  // heavily smoothed needle position
@@ -18421,7 +18295,6 @@ function updateNoteDisplay(note, freq) {
   const screenInner = document.querySelector('.tuner-screen-inner');
   if (screenInner) screenInner.classList.toggle('in-tune-glow', inTune);
 
-  _hapticSwell(abs);
   _wasInTune = inTune;
 
   const nameEl = document.getElementById('noteName');
@@ -18498,7 +18371,6 @@ function _applyNoteSilentState() {
   _needleSmoothed = 50;
   _lastNoteKey = null;
   _wasInTune = false;
-  _hapticSwellReset();
   _tooltipCurCls = null;
   const si = document.querySelector('.tuner-screen-inner');
   if (si) si.classList.remove('in-tune-glow');
@@ -36037,7 +35909,7 @@ function vrAutoCorrelate(buf, sampleRate) {
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.006) return -1;
+  if (rms < 0.002) return -1;
 
   let r1 = 0, r2 = SIZE - 1;
   for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < 0.2) { r1 = i; break; } }
