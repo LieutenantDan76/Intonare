@@ -56302,7 +56302,7 @@ function mqAmbBuild(c, track) {
 
   // Master — low ambient level. duckGain sits under it for cue ducking.
   var master = c.createGain();
-  master.gain.value = 0.21;            // ambient background level (sampler was 0.48)
+  master.gain.value = 0.26;            // ambient background level (sampler was 0.48)
   master.connect(c.destination);
   _mqAmb.master = master;
   _mqAmb.nodes.push(master);
@@ -56315,7 +56315,7 @@ function mqAmbBuild(c, track) {
 
   // Fade in over 1.5s
   master.gain.setValueAtTime(0, c.currentTime);
-  master.gain.linearRampToValueAtTime(0.21, c.currentTime + 1.5);
+  master.gain.linearRampToValueAtTime(0.26, c.currentTime + 1.5);
 
   // Reverb
   var revLen = Math.floor(c.sampleRate * 1.2);
