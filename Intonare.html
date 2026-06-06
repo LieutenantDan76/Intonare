@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.20.32 -->
+<!-- INTONARE_VERSION: 0.20.35 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -15376,18 +15376,19 @@
     <!-- Slider + replay — grows to fill available height on taller screens -->
     <div style="display:flex;gap:14px;align-items:stretch;flex:1 1 auto;min-height:300px;margin-bottom:14px">
       <!-- Vertical scrubber -->
-      <div id="tonaleSlider" style="position:relative;flex:1;border-radius:18px;border:1px solid var(--border);background:linear-gradient(180deg,var(--surface-2,var(--surface)),var(--surface));overflow:hidden;touch-action:none;cursor:ns-resize;user-select:none">
+      <div id="tonaleSlider" style="position:relative;flex:1;border-radius:16px;border:1px solid var(--border);background:linear-gradient(180deg,#0e0e15,#0a0a0f);overflow:hidden;touch-action:none;cursor:ns-resize;user-select:none">
+        <!-- always-on frequency ladder down both edges (decorative reference) -->
+        <div id="tonaleLadder" style="position:absolute;inset:0;pointer-events:none"></div>
         <!-- semitone lock-point ticks (easy mode) -->
         <div id="tonaleTicks" style="position:absolute;inset:0;pointer-events:none"></div>
         <!-- fill below the handle -->
-        <div id="tonaleFill" style="position:absolute;left:0;right:0;bottom:0;height:50%;background:linear-gradient(180deg,var(--accent-soft),var(--accent));opacity:.18;pointer-events:none"></div>
-        <!-- handle -->
-        <div id="tonaleHandle" style="position:absolute;left:0;right:0;height:36px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;pointer-events:none">
-          <div style="height:3px;width:60%;background:var(--accent);border-radius:3px;box-shadow:0 0 12px var(--accent)"></div>
+        <div id="tonaleFill" style="position:absolute;left:0;right:0;bottom:0;height:50%;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 30%,transparent),color-mix(in srgb,var(--accent) 8%,transparent));pointer-events:none"></div>
+        <!-- handle: full-width glowing bar with the live read-out riding on its right end -->
+        <div id="tonaleHandle" style="position:absolute;left:0;right:0;height:0;top:50%;pointer-events:none">
+          <div style="position:absolute;left:0;right:0;top:-2px;height:4px;background:var(--accent);box-shadow:0 0 14px var(--accent),0 0 4px var(--accent)"></div>
+          <div id="tonaleFreqRead" style="position:absolute;right:10px;top:-13px;background:var(--accent);color:#15131f;font-size:11px;font-weight:700;letter-spacing:.5px;font-family:'JetBrains Mono',monospace;padding:2px 9px;border-radius:7px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4)">— Hz</div>
         </div>
-        <!-- live freq read-out -->
-        <div id="tonaleFreqRead" style="position:absolute;top:8px;left:0;right:0;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-soft);pointer-events:none">— Hz</div>
-        <div style="position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:8px;letter-spacing:1.5px;color:var(--text-faint);pointer-events:none" data-i18n="tonale_drag_hint">DRAG TO MATCH</div>
+        <div style="position:absolute;bottom:7px;left:0;right:0;text-align:center;font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,.32);pointer-events:none" data-i18n="tonale_drag_hint">DRAG TO MATCH</div>
       </div>
 
       <!-- Right rail: replay + submit -->
@@ -15796,7 +15797,7 @@
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.20.32';
+const INTONARE_VERSION = '0.20.35';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -31751,13 +31752,13 @@ function chordleDailyHideShareBtn() {
 // `skew` biases target pick toward higher pitches for non-snap modes (1=uniform, <1=higher).
 var TONALE_MODES = {
   easy:   { key:'easy',   nameKey:'tonale_m_easy_n',   subKey:'tonale_m_easy_s',   color:'#54d18a',
-            fLo:130.81, fHi:523.25, snap:true,  replays:Infinity, listenMs:2200, decoy:false, sigma:80, perfect:8, skew:1.0 },
+            fLo:130.81, fHi:659.25, snap:true,  replays:Infinity, listenMs:2200, decoy:false, sigma:92, perfect:6, skew:1.0 },
   medium: { key:'medium', nameKey:'tonale_m_med_n',    subKey:'tonale_m_med_s',    color:'#f2c14e',
-            fLo:98.00,  fHi:783.99, snap:false, replays:1,        listenMs:1600, decoy:false, sigma:70, perfect:5, skew:0.62 },
+            fLo:98.00,  fHi:1046.5, snap:false, replays:1,        listenMs:1600, decoy:false, sigma:80, perfect:4, skew:0.62 },
   hard:   { key:'hard',   nameKey:'tonale_m_hard_n',   subKey:'tonale_m_hard_s',   color:'#e8743b',
-            fLo:98.00,  fHi:2637.0, snap:false, replays:0,        listenMs:1200, decoy:false, sigma:55, perfect:3, skew:0.55 },
+            fLo:98.00,  fHi:3520.0, snap:false, replays:0,        listenMs:1200, decoy:false, sigma:64, perfect:3, skew:0.55 },
   insane: { key:'insane', nameKey:'tonale_m_insane_n', subKey:'tonale_m_insane_s', color:'#d6455d',
-            fLo:130.81, fHi:4186.0, snap:false, replays:0,        listenMs:1000, decoy:true,  sigma:42, perfect:2, skew:0.5 },
+            fLo:130.81, fHi:6271.9, snap:false, replays:0,        listenMs:1000, decoy:true,  sigma:50, perfect:2, skew:0.5 },
 };
 var TONALE_ROUNDS = 5;
 var TONALE_NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
@@ -32035,10 +32036,20 @@ function tonaleStartWave() {
     var ampTarget = soundLive ? h*0.34 : 0;
     tonaleWaveAmp += (ampTarget - tonaleWaveAmp) * 0.12;
 
+    // cycles across the canvas scale with pitch (log position)
+    var cycles = 1.2 + tonaleFreqToPos(tonaleWaveFreq) * 7;
+    var cy = h/2;
+
     // ── Traveling wave: phase advances so crests propagate right→left. ──
-    tonaleWavePhase += soundLive ? 0.16 : 0.10;
-    // a slower secondary phase for the organic rolling layer
-    tonaleWavePhase2 += soundLive ? 0.067 : 0.045;
+    // Crest travel speed = phaseStep / cycles. With a fixed phaseStep, low pitches
+    // (few wide cycles) looked fast and high pitches (many tight cycles) looked slow.
+    // Scaling the step WITH cycles keeps crest speed constant, and a small extra
+    // pitch term makes high notes travel a touch faster — as a real wave would.
+    var pitchPos = tonaleFreqToPos(tonaleWaveFreq);
+    var phaseStep = (soundLive ? 0.05 : 0.032) * cycles * (1 + pitchPos * 0.5);
+    tonaleWavePhase += phaseStep;
+    // secondary rolling layer tracks at half the carrier's cycle count
+    tonaleWavePhase2 += phaseStep * 0.42;
     // breathing shimmer on amplitude — subtle, makes it feel alive not mechanical
     tonaleWaveShimmer += 0.04;
     // slow palette cycle
@@ -32047,9 +32058,6 @@ function tonaleStartWave() {
     var rgb = tonalePaletteRGB(tonaleWaveColorT);
     var col = 'rgb('+rgb[0]+','+rgb[1]+','+rgb[2]+')';
 
-    // cycles across the canvas scale with pitch (log position)
-    var cycles = 1.2 + tonaleFreqToPos(tonaleWaveFreq) * 7;
-    var cy = h/2;
     // shimmer modulates amplitude ±5%
     var ampNow = tonaleWaveAmp * (1 + 0.05 * Math.sin(tonaleWaveShimmer));
 
@@ -32120,6 +32128,8 @@ function tonaleUpdateSlider() {
   if (read) {
     read.textContent = Math.round(tonaleGuessFreq) + ' Hz' +
       (tonaleMode && tonaleMode.snap ? '  ·  ' + tonaleNoteName(tonaleGuessFreq) : '');
+    // flip the pill below the bar when near the top edge so it doesn't clip
+    read.style.top = (tonalePos > 0.9) ? '6px' : '-13px';
   }
 }
 function tonaleRenderTicks() {
@@ -32136,6 +32146,21 @@ function tonaleRenderTicks() {
       '%;background:var(--border)'+(isC?'-soft':'')+';opacity:'+(isC?0.9:0.4);
     box.appendChild(line);
   }
+}
+// Always-on frequency ladder down both edges — purely decorative reference marks.
+function tonaleRenderLadder() {
+  var box = document.getElementById('tonaleLadder'); if (!box) return;
+  var N = 24, html = '';
+  for (var i=0;i<=N;i++) {
+    var topPct = (i/N)*100;
+    var oct = (i%6)===0;
+    var len = oct ? 22 : 12;
+    var op = oct ? 0.5 : 0.22;
+    var w = oct ? 2 : 1;
+    html += '<div style="position:absolute;left:0;top:'+topPct+'%;width:'+len+'px;height:'+w+'px;background:var(--accent);opacity:'+op+'"></div>';
+    html += '<div style="position:absolute;right:0;top:'+topPct+'%;width:'+len+'px;height:'+w+'px;background:var(--accent);opacity:'+op+'"></div>';
+  }
+  box.innerHTML = html;
 }
 function tonaleApplySnap() {
   if (!tonaleMode.snap) return;
@@ -32245,7 +32270,7 @@ function tonaleSubmit() {
   if (tonaleIsDaily) tonaleSaveDailyProgress();
   tonaleState = 'revealed';
   // green/yellow = correct cue, red = wrong cue
-  if (pts >= 5) { hapticCorrect(); playCueCorrect(); }
+  if (pts >= 6.5) { hapticCorrect(); playCueCorrect(); }
   else { hapticWrong(); playCueWrong(); }
   tonaleShowReveal(target, tonaleGuessFreq, cents, pts);
 }
@@ -32275,7 +32300,7 @@ function tonaleShowReveal(target, guess, cents, pts) {
     var semisOff = Math.abs(Math.round(tonaleFreqToMidi(guess)) - Math.round(tonaleFreqToMidi(target)));
     revColor = semisOff===0 ? 'var(--in-tune)' : semisOff===1 ? 'var(--accent)' : 'var(--out-tune,#d6455d)';
   } else {
-    revColor = pts>=9 ? 'var(--in-tune)' : pts>=5 ? 'var(--accent)' : 'var(--out-tune,#d6455d)';
+    revColor = pts>=9.5 ? 'var(--in-tune)' : pts>=7 ? 'var(--accent)' : 'var(--out-tune,#d6455d)';
   }
   ptsEl.style.color = revColor;
   var dir = cents>0 ? t('tonale_sharp') : t('tonale_flat');
@@ -32673,7 +32698,7 @@ function tonaleStartMode(modeKey, isDaily) {
     if (nm){ nm.textContent = isDaily ? t('tonale_daily') : t(tonaleMode.nameKey); }
   })();
   tonaleSliderInit();
-  tonaleRenderTicks();
+  tonaleRenderTicks(); tonaleRenderLadder();
   tonaleUpdateHeader();
   tonaleUpdateReplayBtn();
   tonaleStartWave();
@@ -32753,7 +32778,7 @@ function tonaleResumeDaily(ip) {
     if (nm){ nm.textContent = t('tonale_daily'); }
   })();
   tonaleSliderInit();
-  tonaleRenderTicks();
+  tonaleRenderTicks(); tonaleRenderLadder();
   tonaleUpdateHeader();
   tonaleUpdateReplayBtn();
   tonaleStartWave();
@@ -53178,9 +53203,11 @@ function hpPlayChord() {
   });
   midiPairs.sort((a,b) => a[0]-b[0]);
   if (!midiPairs.length) return;
-  const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.45);
+  const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.42);
   const tone = REF_TONES['bell'] || REF_TONES['guitar'];
-  const vol = 0.28 / Math.sqrt(midiPairs.length);
+  // Match the per-string touch loudness (0.16). Notes arpeggiate 65ms apart and ring out,
+  // so a very gentle taper keeps stacked chords from clipping without going quiet.
+  const vol = 0.18 / Math.pow(midiPairs.length, 0.12);
   const hpCSvg = document.getElementById('hpChordSvg');
   midiPairs.forEach(([baseMidi, soundingMidi], i) => {
     tone.synth(ctx, midiToFreq(soundingMidi), ctx.currentTime + i * 0.065, 1.6, chain.gain, vol);
@@ -53222,12 +53249,12 @@ function hpPlayScale() {
                : HP_PEDAL_MAP[pIdx].nat;
     return m + (sPc - bPc);
   });
-  const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.45);
+  const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.42);
   const tone = REF_TONES['bell'] || REF_TONES['guitar'];
   const isChords2 = gccToolMode === 'chords';
   const hpSvgId  = isChords2 ? 'hpChordSvg' : 'hpScaleSvg';
   soundingMidis.forEach((midi, i) => {
-    const node = tone.synth(ctx, midiToFreq(midi), ctx.currentTime + i * hpStepDelay, 1.0, chain.gain, 0.28);
+    const node = tone.synth(ctx, midiToFreq(midi), ctx.currentTime + i * hpStepDelay, 1.4, chain.gain, 0.16);
     if (node) hpScaleNodes.push(node);
     // Flash the string dot for this note
     const flashDur = Math.min(hpStepDelay * 900, 400);
