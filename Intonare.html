@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.20.36 -->
+<!-- INTONARE_VERSION: 0.20.39 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -13305,7 +13305,7 @@
             <div class="cs-trumpet-fingering-text" id="trpCardFingering" style="font-size:13px;letter-spacing:2px"></div>
             <div id="wwAltNav" style="display:none"></div>
             <div id="tbnAltNav" style="display:none"></div>
-            <div id="trpCardEmbouchure" style="font-family:'Fraunces',serif;font-style:italic;font-size:11px;color:var(--text-dim);text-align:center;max-width:220px;line-height:1.4"></div>
+            <div id="trpCardEmbouchure" style="font-family:'Fraunces',serif;font-style:italic;font-size:11px;color:var(--text-dim);text-align:center;max-width:220px;line-height:1.4;min-height:78px;display:flex;align-items:center;justify-content:center"></div>
             <!-- Octave selector -->
             <div class="cs-sub-row" id="trpOctRow" style="width:100%;margin-bottom:0"></div>
           </div>
@@ -13439,7 +13439,7 @@
               <div class="cs-trumpet-fingering-text" id="trpFingeringText" data-i18n="cs_open_fing">Open</div>
               <div id="wwAltNavNav" style="display:none"></div>
               <div id="tbnAltNavNav" style="display:none"></div>
-              <div id="trpEmbouchure" style="font-family:'Fraunces',serif;font-style:italic;font-size:11px;color:var(--text-dim);text-align:center;max-width:220px;line-height:1.4;margin-top:2px"></div>
+              <div id="trpEmbouchure" style="font-family:'Fraunces',serif;font-style:italic;font-size:11px;color:var(--text-dim);text-align:center;max-width:220px;line-height:1.4;margin-top:2px;min-height:78px;display:flex;align-items:center;justify-content:center"></div>
             </div>
             <div class="cs-trumpet-nav">
               <button class="cs-trumpet-nav-btn" onclick="trpNav(-1)">◀</button>
@@ -15446,7 +15446,8 @@
     <div id="tonaleEndScore" style="font-size:46px;font-weight:800;margin:6px 0 2px;font-variant-numeric:tabular-nums">0</div>
     <div id="tonaleEndOutOf" style="font-size:13px;color:var(--text-faint);margin-bottom:10px">/ 50</div>
     <div id="tonaleEndSquares" style="font-size:22px;letter-spacing:3px;margin-bottom:4px"></div>
-    <div id="tonaleEndQuip" style="font-size:12px;font-style:italic;font-family:'Fraunces',serif;color:var(--text-soft);margin-bottom:16px;min-height:16px"></div>
+    <div id="tonaleEndQuip" style="font-size:12px;font-style:italic;font-family:'Fraunces',serif;color:var(--text-soft);margin-bottom:14px;min-height:16px"></div>
+    <div id="tonaleEndBreakdown" style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px;text-align:left"></div>
     <div style="display:flex;gap:10px">
       <button id="tonaleShareBtn" onclick="tonaleShare()" style="flex:1;background:var(--surface-2,var(--surface));border:1px solid var(--border);color:var(--text);border-radius:100px;padding:11px 0;font-size:11px;font-weight:700;letter-spacing:1.5px;cursor:pointer;font-family:inherit" data-i18n="tonale_share">SHARE</button>
       <button id="tonaleAgainBtn" onclick="tonalePlayAgain()" style="flex:1;background:linear-gradient(135deg,var(--accent),var(--accent-soft));color:#000;border:none;border-radius:100px;padding:11px 0;font-size:11px;font-weight:700;letter-spacing:1.5px;cursor:pointer;font-family:inherit"></button>
@@ -15797,7 +15798,7 @@
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.20.36';
+const INTONARE_VERSION = '0.20.39';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -32009,6 +32010,16 @@ function tonaleSetStatus(txt) {
 }
 
 // ── waveform + colour animation ──
+function tonaleResolveColor(c) {
+  // Turn a 'var(--name[,fallback])' string into a concrete colour the canvas can use.
+  if (typeof c !== 'string') return '#b6f25b';
+  var m = c.match(/var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\)/);
+  if (!m) return c;  // already concrete
+  var val = '';
+  try { val = getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim(); } catch(e) {}
+  if (!val && m[2]) val = m[2].trim();
+  return val || '#b6f25b';
+}
 function tonaleStartWave() {
   cancelAnimationFrame(tonaleRAF);
   var cv = document.getElementById('tonaleWave'); if (!cv) return;
@@ -32057,6 +32068,13 @@ function tonaleStartWave() {
 
     var rgb = tonalePaletteRGB(tonaleWaveColorT);
     var col = 'rgb('+rgb[0]+','+rgb[1]+','+rgb[2]+')';
+    // When the round is revealed, the guess plays back tinted to its SCORE colour
+    // (green / amber / red) instead of the ambient rainbow — a clear at-a-glance
+    // signal of how close you were. tonaleCmp.colorResolved is a concrete colour
+    // string computed at reveal time (canvas can't read CSS var() directly).
+    if (tonaleState==='revealed' && tonaleCmp && tonaleCmp.colorResolved) {
+      col = tonaleCmp.colorResolved;
+    }
 
     // shimmer modulates amplitude ±5%
     var ampNow = tonaleWaveAmp * (1 + 0.05 * Math.sin(tonaleWaveShimmer));
@@ -32316,7 +32334,7 @@ function tonaleShowReveal(target, guess, cents, pts) {
   var nextBtn = document.getElementById('tonaleNextBtn');
   nextBtn.textContent = (tonaleRound+1 >= TONALE_ROUNDS) ? t('tonale_see_score') : t('tonale_next_round');
   // wire up comparison player
-  tonaleCmp = { target: target, guess: guess, color: revColor };
+  tonaleCmp = { target: target, guess: guess, color: revColor, colorResolved: tonaleResolveColor(revColor) };
   var tv=document.getElementById('tonaleCmpTargetVal'), gv=document.getElementById('tonaleCmpGuessVal');
   if (tv) tv.textContent = tonaleMode.snap ? tonaleNoteName(target) : Math.round(target)+' Hz';
   if (gv) gv.textContent = tonaleMode.snap ? tonaleNoteName(guess) : Math.round(guess)+' Hz';
@@ -32536,6 +32554,7 @@ function tonaleShowFinal(rounded) {
   ];
   var q = quips.find(function(x){return rounded>=x[0];})[1];
   document.getElementById('tonaleEndQuip').textContent = q;
+  tonaleRenderBreakdown();
   document.getElementById('tonaleAgainBtn').textContent =
     tonaleIsDaily ? t('tonale_done') : t('tonale_play_again');
   // hide "again" on daily (one shot)
@@ -32547,16 +32566,43 @@ function tonaleShowFinal(rounded) {
   tonaleCountUp(rounded);
 }
 
+function tonaleRenderBreakdown() {
+  var box = document.getElementById('tonaleEndBreakdown');
+  if (!box) return;
+  box.innerHTML = '';
+  tonaleGuesses.forEach(function(g, i) {
+    var cents = 1200 * Math.log2(g.guess / g.target);
+    var colVar = g.pts>=9.5 ? 'var(--in-tune)' : g.pts>=7 ? 'var(--accent)' : 'var(--out-tune,#d6455d)';
+    if (tonaleMode.snap) {
+      var semisOff = Math.abs(Math.round(tonaleFreqToMidi(g.guess)) - Math.round(tonaleFreqToMidi(g.target)));
+      colVar = semisOff===0 ? 'var(--in-tune)' : semisOff===1 ? 'var(--accent)' : 'var(--out-tune,#d6455d)';
+    }
+    var dir = cents>0 ? t('tonale_sharp') : t('tonale_flat');
+    var offTxt = tonaleMode.snap
+      ? (tonaleNoteName(g.guess) + ' → ' + tonaleNoteName(g.target))
+      : (Math.abs(Math.round(cents)) + '¢ ' + dir);
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:9px;font-size:11px;font-family:\'JetBrains Mono\',monospace';
+    row.innerHTML =
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+colVar+';flex-shrink:0"></span>'
+      + '<span style="color:var(--text-faint);width:30px">'+t('tonale_round_abbr')+(i+1)+'</span>'
+      + '<span style="color:var(--text-soft);flex:1">'+offTxt+'</span>'
+      + '<span style="color:'+colVar+';font-weight:700">'+g.pts.toFixed(1)+'</span>';
+    box.appendChild(row);
+  });
+}
 function tonaleCountUp(target) {
   var el = document.getElementById('tonaleEndScore');
   if (!el) return;
+  // Whole-number score to match the in-game header (N / 50) and the share text.
+  var endVal = Math.round(target);
   var start = performance.now(), dur = 1100;
   function step(now) {
     var p = Math.min(1, (now-start)/dur);
     var eased = 1 - Math.pow(1-p, 3);
-    el.textContent = (target*eased).toFixed(p<1?1:1);
+    el.textContent = String(Math.round(endVal*eased));
     if (p<1) requestAnimationFrame(step);
-    else el.textContent = target.toFixed(1);
+    else el.textContent = String(endVal);
   }
   requestAnimationFrame(step);
 }
@@ -35402,7 +35448,7 @@ const STRINGS = {
     tonale_daily_done:'Done today ·', tonale_done:'DONE',
     tonale_listen:'LISTEN…', tonale_drag_hint:'DRAG TO MATCH',
     tonale_replay:'REPLAY', tonale_lock:'LOCK IN',
-    tonale_round:'Round', tonale_target:'Target', tonale_you:'You',
+    tonale_round:'Round', tonale_round_abbr:'R', tonale_target:'Target', tonale_you:'You',
     tonale_sharp:'sharp', tonale_flat:'flat',
     tonale_next_round:'NEXT ROUND →', tonale_see_score:'SEE YOUR SCORE →',
     tonale_complete:'COMPLETE', tonale_play_again:'PLAY AGAIN', tonale_share:'SHARE', tonale_copied:'COPIED!',
@@ -36018,7 +36064,7 @@ const STRINGS = {
     tonale_daily_done:'Fatta oggi ·', tonale_done:'FATTO',
     tonale_listen:'ASCOLTA…', tonale_drag_hint:'TRASCINA PER ABBINARE',
     tonale_replay:'RIPETI', tonale_lock:'CONFERMA',
-    tonale_round:'Round', tonale_target:'Obiettivo', tonale_you:'Tu',
+    tonale_round:'Round', tonale_round_abbr:'R', tonale_target:'Obiettivo', tonale_you:'Tu',
     tonale_sharp:'crescente', tonale_flat:'calante',
     tonale_next_round:'PROSSIMO →', tonale_see_score:'VEDI IL PUNTEGGIO →',
     tonale_complete:'COMPLETATO', tonale_play_again:'GIOCA ANCORA', tonale_share:'CONDIVIDI', tonale_copied:'COPIATO!',
@@ -45724,10 +45770,10 @@ const WIND_RANGES = {
   // Bass clarinet: written Eb3–Bb6 (sounds Bb2–G5 concert, M9 lower).
   // Concert MIDI 34(Bb1)–70(Bb4) practical range.
   ww_piccolo:  { low: 74, high: 108, octaves:[5,6,7], defaultOct:6 },
-  ww_ocarina:  { low: 69, high: 89, octaves:[4,5], defaultOct:5,
+  ww_ocarina:  { low: 69, high: 89, octaves:[4,5,6], defaultOct:5,
     subRanges: {
-      '12hole': { low:69, high:89, octaves:[4,5], defaultOct:5 },
-      '7hole':  { low:69, high:84, octaves:[4,5], defaultOct:5 },
+      '12hole': { low:69, high:89, octaves:[4,5,6], defaultOct:5 },
+      '7hole':  { low:69, high:84, octaves:[4,5,6], defaultOct:5 },
     },
   },
   harmonica:   { low: 60, high: 96, octaves:[4,5,6], defaultOct:5 },
@@ -50328,11 +50374,21 @@ let trpCurrentNote = 'C';
 let trpCurrentOctave = 4; // 3, 4, or 5
 
 function trpInitNoteMode() {
-  // Build octave selector
+  const rng = windActiveRange() || {};
+  const rLo = (typeof rng.low === 'number') ? rng.low : 0;
+  const rHi = (typeof rng.high === 'number') ? rng.high : 127;
+  // Build octave selector — only octaves that actually contain an in-range note.
   const octRow = document.getElementById('trpOctRow');
   if (octRow) {
     octRow.innerHTML = '';
-    const octOptions = windActiveRange()?.octaves ?? [3,4,5];
+    let octOptions = (windActiveRange()?.octaves ?? [3,4,5]).filter(oct => {
+      const base = (oct + 1) * 12;            // MIDI of C in that octave
+      // keep the octave if any of its 12 pitch classes falls within [rLo, rHi]
+      return (base + 11) >= rLo && base <= rHi;
+    });
+    if (!octOptions.length) octOptions = windActiveRange()?.octaves ?? [4];
+    // Clamp current octave into the available set
+    if (!octOptions.includes(trpCurrentOctave)) trpCurrentOctave = octOptions[0];
     octOptions.forEach(oct => {
       const btn = document.createElement('button');
       btn.className = 'cs-sub-pill' + (oct === trpCurrentOctave ? ' active' : '');
@@ -50341,7 +50397,7 @@ function trpInitNoteMode() {
         trpCurrentOctave = oct;
         octRow.querySelectorAll('.cs-sub-pill').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        trpDrawNoteCard(GCC_ROOTS.indexOf(trpCurrentNote));
+        trpInitNoteMode();
       };
       octRow.appendChild(btn);
     });
@@ -50354,10 +50410,21 @@ function trpInitNoteMode() {
     GCC_ROOTS.forEach((r, i) => {
       // Display name: shift by offset for written mode
       const displayPc = (i + offset + 12) % 12;
-      const isActive  = r === trpCurrentNote;
+      const noteMidi  = (trpCurrentOctave + 1) * 12 + i;
+      const inRange   = noteMidi >= rLo && noteMidi <= rHi;
+      const isActive  = r === trpCurrentNote && inRange;
       const btn = document.createElement('button');
       btn.className = 'gcc-root-btn' + (isActive ? ' active' : '');
       btn.textContent = gccRootDisplayName(displayPc);
+      if (!inRange) {
+        // note can't be played by this instrument at this octave — disable it
+        btn.disabled = true;
+        btn.style.opacity = '0.28';
+        btn.style.cursor = 'not-allowed';
+        btn.title = 'Out of range for this instrument';
+        grid.appendChild(btn);
+        return;
+      }
       if (isActive && GCC_ENHARMONIC_SEMIS.has(displayPc)) btn.title = 'Tap again to flip ♯/♭';
       btn.onclick = () => {
         if (r === trpCurrentNote && GCC_ENHARMONIC_SEMIS.has(displayPc)) {
@@ -50368,8 +50435,7 @@ function trpInitNoteMode() {
         trpCurrentNote = r; // always stored as concert pitch root
         wwResetAlts();
         trpInitNoteMode();
-        const midi = (trpCurrentOctave + 1) * 12 + i;
-        gccPlayString(midi);
+        gccPlayString(noteMidi);
       };
       grid.appendChild(btn);
     });
@@ -50384,6 +50450,22 @@ function trpInitNoteMode() {
     else if (chordScaleInstrument === 'trombone') legendEl.innerHTML = '● = active position';
     else if (isHarmonicaInst()) legendEl.innerHTML = '↑ = blow (exhale) &nbsp; ↓ = draw (inhale)';
     else legendEl.innerHTML = '● = down &nbsp; ○ = up';
+  }
+  // If the currently-selected note is out of range at this octave, snap to the
+  // lowest in-range note so the card never shows an unplayable note.
+  {
+    const curMidi = (trpCurrentOctave + 1) * 12 + GCC_ROOTS.indexOf(trpCurrentNote);
+    if (curMidi < rLo || curMidi > rHi) {
+      let snapped = false;
+      for (let oct of (windActiveRange()?.octaves ?? [trpCurrentOctave])) {
+        for (let pc = 0; pc < 12; pc++) {
+          const m = (oct + 1) * 12 + pc;
+          if (m >= rLo && m <= rHi) { trpCurrentOctave = oct; trpCurrentNote = GCC_ROOTS[pc]; snapped = true; break; }
+        }
+        if (snapped) break;
+      }
+      if (snapped) { trpInitNoteMode(); return; }  // rebuild with corrected selection
+    }
   }
   trpDrawNoteCard(GCC_ROOTS.indexOf(trpCurrentNote));
 }
