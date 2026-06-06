@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.20.35 -->
+<!-- INTONARE_VERSION: 0.20.36 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -15797,7 +15797,7 @@
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.20.35';
+const INTONARE_VERSION = '0.20.36';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -45727,7 +45727,7 @@ const WIND_RANGES = {
   ww_ocarina:  { low: 69, high: 89, octaves:[4,5], defaultOct:5,
     subRanges: {
       '12hole': { low:69, high:89, octaves:[4,5], defaultOct:5 },
-      '7hole':  { low:69, high:89, octaves:[4,5], defaultOct:5 },
+      '7hole':  { low:69, high:84, octaves:[4,5], defaultOct:5 },
     },
   },
   harmonica:   { low: 60, high: 96, octaves:[4,5,6], defaultOct:5 },
@@ -45808,9 +45808,11 @@ function windEmbouchure(inst, midi) {
     return 'High register (C5+): maximum embouchure control, fast focused air, advanced technique — upper bassoon';
   }
   if (inst === 'ww_ocarina') {
-    if (midi < 77)  return 'Lower register (A4–E5): gentle relaxed breath, even pressure into the mouthpiece — the ocarina is sensitive, avoid overblowing';
-    if (midi < 81)  return 'Mid register (F5–A5): slightly increased breath support, keep pressure steady';
-    return 'Upper register (Bb5+): increase breath pressure and speed — the upper octave needs a faster focused airstream';
+    // Ocarina has no octave registers — pitch rises by opening more holes plus a
+    // gradual, continuous increase in breath pressure. No overblowing.
+    if (midi < 77)  return 'Low notes (A4–E5): gentle, relaxed breath with even pressure — the ocarina is sensitive, so keep the airstream soft and steady';
+    if (midi < 84)  return 'Middle notes (F5–B5): increase breath support smoothly as you open more holes — pitch climbs with both fingering and air pressure';
+    return 'High notes (C6+): firmer, faster airstream — but raise pressure gradually, never overblow (the ocarina does not jump octaves)';
   }
   if (inst === 'ww_piccolo') {
     if (midi < 84) return 'Low register (D5–B5): full warm embouchure despite small head joint, steady air, avoid overblowing';
@@ -46897,61 +46899,65 @@ function wwResetAlts() { wwAltIdxMap = {}; }
 // For mini (full-grid overview cards): compact single-column per hand, no labels.
 // For full-size (note card, nav detail): split layout with hand labels + pinky cluster.
 // ── OCARINA fingerings ──────────────────────────────────────────────────────
-// 12-hole: [LT, L1, L2, L3, L4/SH_L, SH_R, SH_3, R1, R2, R3, R4, RT]
-// Transcribed from standard 12-hole transverse chart. Range: A4–F6 concert.
+// 12-hole Alto C ocarina, Asian (Taiwanese subhole) system.
+// SOURCE: Robert Hickman, "Serious Ocarina Player" / pureocarinas.com/ocarina-fingering-system;
+//         diatonic hole sequence corroborated by fingeringchart.org.
+// The ocarina has NO octave registers — it is one continuous hole-opening sequence:
+// open one more hole to go up. Range ~A4 (subholes) → F6. Slot order (matches renderer):
+// [L2, L3, L4, L1, subL, subR, R3, R2, R4, R1, TR, TL]. 1=covered, 0=open.
+// Naturals are verified from the source's lift sequence. Accidentals use standard
+// cross-fingerings (these vary slightly by ocarina maker — players fine-tune by breath/ear).
 const OCARINA_12_FINGERINGS = {
-  9:  { p:[1,1,1,1, 1,1,1, 1,1,1,1, 1] }, // A4
-  11: { p:[1,1,1,1, 1,1,1, 1,1,1,0, 0] }, // B4
-  0:  { p:[1,1,1,1, 1,1,1, 1,1,0,0, 0] }, // C5
-  2:  { p:[1,1,1,1, 1,1,1, 1,0,0,0, 0] }, // D5
-  4:  { p:[1,1,1,1, 1,1,1, 0,0,0,0, 0] }, // E5
-  5:  { p:[1,1,1,1, 0,1,1, 0,0,0,0, 0] }, // F5
-  7:  { p:[1,1,1,0, 0,1,1, 0,0,0,0, 0] }, // G5
-  10: { p:[1,1,1,1, 1,1,1, 1,1,1,1, 0] }, // Bb4
-  1:  { p:[1,1,1,1, 1,1,0, 1,1,0,0, 0] }, // Db5
-  3:  { p:[1,1,1,1, 1,0,1, 1,0,0,0, 0] }, // Eb5
-  6:  { p:[1,1,1,1, 1,0,0, 0,0,0,0, 0] }, // Gb5
-  8:  { p:[1,1,1,0, 1,0,1, 0,0,0,0, 0] }, // Ab5
+  9:  { p:[1,1,1,1,1,1,1,1,1,1,1,1] }, // A4  (both subholes)
+  10: { p:[1,1,1,1,0,1,1,1,1,1,1,1] }, // Bb4 (right subhole) — between A4 and B4
+  11: { p:[1,1,1,1,0,1,1,1,1,1,1,1] }, // B4  (right subhole)
+  0:  { p:[1,1,1,1,0,0,1,1,1,1,1,1] }, // C5  — home, all main closed
+  1:  { p:[1,1,1,1,0,0,0,1,1,1,1,1] }, // Db5 — cross
+  2:  { p:[1,1,1,1,0,0,1,1,0,1,1,1] }, // D5
+  3:  { p:[1,1,1,1,0,0,1,0,0,1,1,1] }, // Eb5 — cross
+  4:  { p:[1,1,1,1,0,0,0,1,0,1,1,1] }, // E5
+  5:  { p:[1,1,1,1,0,0,0,0,0,1,1,1] }, // F5
+  6:  { p:[1,1,1,1,0,0,0,1,0,0,1,1] }, // Gb5 — cross
+  7:  { p:[1,1,1,1,0,0,0,0,0,0,1,1] }, // G5
+  8:  { p:[1,1,0,1,0,0,0,0,0,0,1,1] }, // Ab5 — cross
 };
-// Upper octave (A5–F6): different fingerings for same pitch classes
+// Continuous sequence continues upward (NOT a separate register — same instrument,
+// just more holes open). Used at MIDI ≥ 81 (A5+).
 const OCARINA_12_OCT2 = {
-  9:  [1,1,0,0, 1,1,1, 0,0,0,0, 0], // A5
-  11: [1,0,0,0, 1,1,1, 0,0,0,0, 0], // B5
-  0:  [0,0,0,0, 1,1,1, 0,0,0,0, 0], // C6
-  2:  [0,0,0,0, 1,1,0, 0,0,0,0, 0], // D6
-  4:  [0,0,0,0, 0,0,0, 0,0,0,0, 0], // E6
-  5:  [0,0,0,0, 0,0,0, 0,0,0,0, 1], // F6
-  10: [1,1,0,0, 1,0,1, 0,0,0,0, 0], // Bb5
-  1:  [0,0,0,0, 1,1,0, 0,0,0,0, 0], // Db6
-  3:  [0,0,0,0, 0,1,0, 0,0,0,0, 0], // Eb6
+  9:  [1,0,1,1,0,0,0,0,0,0,1,1], // A5  — lift L ring
+  10: [1,0,0,1,0,0,0,0,0,0,1,1], // Bb5 — cross
+  11: [0,0,1,1,0,0,0,0,0,0,1,1], // B5  — lift L mid
+  0:  [0,0,1,0,0,0,0,0,0,0,1,1], // C6  — Asian: thumbs + L pinky
+  1:  [0,0,1,0,0,0,0,0,1,0,1,1], // Db6 — cross
+  2:  [0,0,1,0,0,0,0,0,0,0,1,0], // D6  — lift L thumb
+  3:  [0,0,1,0,0,0,0,0,0,0,1,0], // Eb6 — cross (≈D6, breath-adjusted)
+  4:  [0,0,1,0,0,0,0,0,0,0,0,0], // E6  — lift R thumb
+  5:  [0,0,0,0,0,0,0,0,0,0,0,0], // F6  — all open
 };
 
-// 7-hole: [TL, TR, ML, MR, SUB, BL, BR]
-// Same A4–F6 range, different fingering system.
+// 7-hole transverse ocarina. Slot order [TL, TR, ML, MR, SUB, BL, BR].
+// Same universal transverse principle as the 12-hole: open one more hole to ascend
+// (no register break). SUB extends below the home note. Naturals follow the lift
+// sequence; accidentals are cross-fingerings (maker-variable, fine-tuned by ear).
 const OCARINA_7_FINGERINGS = {
-  9:  { p:[1,1, 1,1, 1, 1,1] }, // A4
-  11: { p:[1,1, 1,1, 1, 1,0] }, // B4
-  0:  { p:[1,1, 1,1, 1, 0,0] }, // C5
-  2:  { p:[1,1, 1,1, 0, 0,0] }, // D5
-  4:  { p:[1,1, 1,0, 0, 0,0] }, // E5
-  5:  { p:[1,1, 0,0, 0, 0,0] }, // F5
-  7:  { p:[1,0, 0,0, 0, 0,0] }, // G5
-  10: { p:[1,1, 1,1, 1, 1,0] }, // Bb4
-  1:  { p:[1,1, 1,1, 0, 1,0] }, // Db5
-  3:  { p:[1,1, 1,0, 1, 0,0] }, // Eb5
-  6:  { p:[1,1, 0,0, 1, 0,0] }, // Gb5
-  8:  { p:[1,0, 0,0, 1, 0,0] }, // Ab5
+  9:  { p:[1,1, 1,1, 1, 1,1] }, // A4  (sub closed)
+  10: { p:[1,1, 1,1, 1, 0,1] }, // Bb4 — cross
+  11: { p:[1,1, 1,1, 1, 1,1] }, // B4  (sub closed)
+  0:  { p:[1,1, 1,1, 0, 1,1] }, // C5  — home, 6 main closed
+  1:  { p:[1,1, 1,1, 0, 0,1] }, // Db5 — cross
+  2:  { p:[1,1, 1,1, 0, 1,0] }, // D5
+  3:  { p:[1,1, 1,0, 0, 1,0] }, // Eb5 — cross
+  4:  { p:[1,1, 1,1, 0, 0,0] }, // E5
+  5:  { p:[1,1, 1,0, 0, 0,0] }, // F5
+  6:  { p:[1,1, 0,1, 0, 0,0] }, // Gb5 — cross
+  7:  { p:[1,1, 0,0, 0, 0,0] }, // G5
+  8:  { p:[1,0, 1,0, 0, 0,0] }, // Ab5 — cross
 };
 const OCARINA_7_OCT2 = {
-  9:  [0,0, 0,0, 0, 0,0], // A5
-  11: [0,0, 0,0, 0, 0,1], // B5
-  0:  [0,0, 0,0, 0, 1,1], // C6
-  2:  [0,0, 0,0, 1, 1,1], // D6
-  4:  [0,0, 0,1, 1, 1,1], // E6
-  5:  [0,0, 1,1, 1, 1,1], // F6
-  10: [0,0, 0,0, 1, 0,0], // Bb5
-  1:  [0,0, 0,0, 0, 1,0], // Db6
-  3:  [0,0, 0,1, 0, 1,1], // Eb6
+  9:  [1,0, 0,0, 0, 0,0], // A5  — lift TR
+  10: [1,0, 0,0, 0, 0,0], // Bb5 — cross (≈A5, breath-adjusted)
+  11: [0,0, 0,0, 0, 0,0], // B5  — all open
+  0:  [1,1, 0,0, 0, 0,0], // C6  — thumbs only (top of range)
 };
 
 // ── OCARINA SVG renderers ────────────────────────────────────────────────────
