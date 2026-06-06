@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.20.31 -->
+<!-- INTONARE_VERSION: 0.20.32 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -15796,7 +15796,7 @@
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.20.31';
+const INTONARE_VERSION = '0.20.32';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -33833,7 +33833,7 @@ const DIADLE_DEGREES = [
   { id:'♭3', st:3,  name:'minor 3rd',       deg:3 },
   { id:'3',  st:4,  name:'major 3rd',       deg:3 },
   { id:'4',  st:5,  name:'perfect 4th',     deg:4 },
-  { id:'♯4', st:6,  name:'tritone',         deg:4 },
+  { id:'TT', st:6,  name:'tritone',         deg:0 },
   { id:'5',  st:7,  name:'perfect 5th',     deg:5 },
   { id:'♭6', st:8,  name:'minor 6th',       deg:6 },
   { id:'6',  st:9,  name:'major 6th',       deg:6 },
@@ -33845,7 +33845,7 @@ function diadleDegBySt(st){ st=((st%12)+12)%12; for (var i=0;i<DIADLE_DEGREES.le
 // Pools per difficulty (which degrees can appear)
 const DIADLE_DIATONIC = ['2','3','4','5','6','7'];           // major-scale degrees (+root implied as anchor)
 const DIADLE_DIATONIC_FULL = ['1','2','3','4','5','6','7'];
-const DIADLE_CHROMATIC = ['1','♭2','2','♭3','3','4','♯4','5','♭6','6','♭7','7'];
+const DIADLE_CHROMATIC = ['1','♭2','2','♭3','3','4','TT','5','♭6','6','♭7','7'];
 function diadlePool(diff) {
   if (diff==='easy')   return DIADLE_DIATONIC_FULL;   // diatonic, includes 1
   return DIADLE_CHROMATIC;                            // medium + hard: full chromatic
@@ -33965,13 +33965,15 @@ function diadleVoice(midis, when, holdSec, relSec, peak) {
       var f=diadleMidiToFreq(m);
       var partials=[{mul:1,a:0.55},{mul:2,a:0.25},{mul:3,a:0.12},{mul:4,a:0.06},{mul:5,a:0.03}];
       var g=ctx.createGain();
-      var tEnd=when+holdSec+rel;
+      var atk=0.018;                        // 18ms attack — soft enough to avoid onset click
+      var relStart=when+holdSec;
+      var relTau=Math.max(0.05, rel*0.6);   // exponential release time-constant
       g.gain.setValueAtTime(0,when);
-      g.gain.linearRampToValueAtTime(pk,when+0.010);
-      g.gain.linearRampToValueAtTime(pk*0.86,when+holdSec*0.35);
-      g.gain.setValueAtTime(pk*0.81,when+holdSec);
-      g.gain.exponentialRampToValueAtTime(0.0008,tEnd);
-      g.gain.linearRampToValueAtTime(0,tEnd+0.03);   // settle to TRUE zero — kills end click
+      g.gain.linearRampToValueAtTime(pk,when+atk);
+      g.gain.linearRampToValueAtTime(pk*0.84,relStart);   // gentle sag during hold
+      // Smooth asymptotic release — no ramp-to-ramp slope break (that was the pop source)
+      g.gain.setTargetAtTime(0, relStart, relTau);
+      var tEnd=relStart + relTau*5;         // ~5τ ≈ fully decayed/silent
       g.connect(bus.input);
       var voiceOscs=[];
       partials.forEach(function(p){
@@ -33979,11 +33981,11 @@ function diadleVoice(midis, when, holdSec, relSec, peak) {
         o.type='sine'; o.frequency.value=f*p.mul;
         var pg=ctx.createGain(); pg.gain.value=p.a;
         o.connect(pg); pg.connect(g);
-        o.start(when); o.stop(tEnd+0.09);   // stop only after gain is truly 0
+        o.start(when); o.stop(tEnd+0.05);   // stop well after gain is inaudible
         voiceOscs.push(o);
       });
       // register so we can hard-stop on reset/exit
-      var rec={ g:g, oscs:voiceOscs, end:tEnd+0.09 };
+      var rec={ g:g, oscs:voiceOscs, end:tEnd+0.05 };
       diadleActiveVoices.push(rec);
       // auto-prune after it ends
       setTimeout(function(){
@@ -34489,7 +34491,7 @@ function diadleRenderSheet() {
     ['1',  null],
     ['2',  '♭2'],
     ['3',  '♭3'],
-    ['4',  '♯4'],
+    ['4',  'TT'],
     ['5',  null],
     ['6',  '♭6'],
     ['7',  '♭7'],
