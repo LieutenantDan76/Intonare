@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.25 -->
+<!-- INTONARE_VERSION: 0.29.26 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -10936,26 +10936,35 @@
   background:linear-gradient(180deg,#3a2010 0%,#221208 100%);
   box-shadow:inset 0 0 0 1px rgba(200,160,80,0.28);
 }
-/* Organ expand overlay — landscape via CSS rotation, scrollable for short phones.
-   The outer div clips to the screen. The inner is rotated -90deg and can overflow
-   in its own "height" (= device width after rotation), so swiping left/right
-   in landscape scrolls the content. Keys are sticky at the bottom of the rotated frame. */
-.pto-organ-overlay { display:none; position:fixed; inset:0; z-index:1100; background:#0e0a06; overflow:hidden; }
-.pto-organ-overlay.active { display:block; }
-.pto-organ-overlay-inner {
-  position:absolute; top:50%; left:50%;
-  width:100vh; height:calc(100vw - var(--nav-bar-h, 62px));
-  transform:translate(-50%,-50%) rotate(-90deg);
-  transform-origin:center center;
-  background:#0e0a06;
-  display:flex; flex-direction:column;
-  overflow:visible;
+/* Organ expand overlay — same rotation pattern as piano overlay (proven in Capacitor).
+   The outer div positions and rotates itself; no inner wrapper needed. */
+.pto-organ-overlay {
+  display:none; position:fixed; z-index:1100; background:#0e0a06;
+  flex-direction:column; overflow:hidden;
+}
+.pto-organ-overlay.active { display:flex; }
+/* Portrait: reposition + rotate the overlay itself, exactly like .piano-overlay */
+@media (orientation: portrait) {
+  .pto-organ-overlay.active {
+    width:100dvh; height:calc(100dvw - var(--nav-bar-h, 62px));
+    top:calc((100dvh - (100dvw - var(--nav-bar-h, 62px))) / 2);
+    left:calc(((100dvw - var(--nav-bar-h, 62px)) - 100dvh) / 2);
+    right:unset; bottom:unset;
+    transform:rotate(-90deg);
+    transform-origin:center center;
+  }
+}
+/* Landscape: just fill the screen normally */
+@media (orientation: landscape) {
+  .pto-organ-overlay.active {
+    inset:0;
+  }
 }
 .pto-organ-overlay-head { display:flex; align-items:center; justify-content:space-between; padding:6px 16px; background:#1a120a; border-bottom:1px solid #3a2a1a; flex-shrink:0; }
 .pto-organ-overlay-title { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:2px; color:#c8a070; }
 .pto-organ-overlay-close { font-size:15px; background:none; border:1px solid #3a2a1a; color:#a08060; border-radius:6px; padding:1px 9px; cursor:pointer; }
-.pto-organ-overlay-body { flex:1; padding:0; display:flex; flex-direction:column; }
-/* Console: natural height, full width, compact for landscape */
+.pto-organ-overlay-body { flex:1; overflow:hidden; padding:0; display:flex; flex-direction:column; }
+/* Console: compact for landscape */
 #ptoFKbdControls.organ-board { margin:0; width:100%; border-radius:0; padding:1px 6px 0; flex:0 0 auto; }
 .pto-organ-overlay-body #ptoFKbdControls .org-bar-track { height:104px; --track-h:83px; }
 .pto-organ-overlay-body #ptoFKbdControls .org-top-panel { padding:1px 6px 0; gap:4px; }
@@ -10971,31 +10980,18 @@
 .pto-organ-overlay-body #ptoFLeslie .leslie-unit { flex-direction:row; align-items:center; gap:6px; padding:2px 12px; border-radius:0 0 14px 14px; }
 .pto-organ-overlay-body #ptoFLeslie .leslie-toprow { gap:4px; }
 .pto-organ-overlay-body .kbd-oct-row { display:none; }
-/* Two manuals: each a fixed height, keys fill them absolutely */
+/* Two manuals: flex-fill remaining height equally */
 .pto-organ-overlay-body .pto-manual-upper,
-.pto-organ-overlay-body .pto-manual-lower {
-  flex:0 0 auto; height:calc((100vw - 60px) / 2);
-  width:100%; border-radius:0 !important;
-  position:relative; overflow:hidden;
-  background:repeating-linear-gradient(90deg,#4a2f17 0px,#5a3a1d 3px,#462c15 7px,#5a3a1d 11px);
-  box-shadow:none !important; border:0; margin:0 !important; padding:0 !important;
-}
-.pto-organ-overlay-body .pto-manual-lower { border-top:2px solid #0a0806; }
+.pto-organ-overlay-body .pto-manual-lower { flex:1 1 0; min-height:0; margin:0; padding:0 !important; width:100%; border-radius:0 !important; position:relative; overflow:hidden; background:repeating-linear-gradient(90deg,#4a2f17 0px,#5a3a1d 3px,#462c15 7px,#5a3a1d 11px); box-shadow:none !important; border:0; }
+.pto-organ-overlay-body .pto-manual-lower { border-top:0; }
 .pto-organ-overlay-body .pto-manual-upper.organ-skin,
-.pto-organ-overlay-body .pto-manual-lower.organ-skin {
-  background:repeating-linear-gradient(90deg,#4a2f17 0px,#5a3a1d 3px,#462c15 7px,#5a3a1d 11px) !important;
-  box-shadow:none !important; border:0 !important; margin:0 !important; width:100% !important; padding:0 !important;
-}
+.pto-organ-overlay-body .pto-manual-lower.organ-skin { background:repeating-linear-gradient(90deg,#4a2f17 0px,#5a3a1d 3px,#462c15 7px,#5a3a1d 11px) !important; box-shadow:none !important; border:0 !important; margin:0 !important; width:100% !important; padding:0 !important; }
 .pto-organ-overlay-body .pto-manual-upper .pss-keyboard-svg,
 .pto-organ-overlay-body .pto-manual-lower .pss-keyboard-svg,
 .pto-organ-overlay-body .pto-manual-upper.piano-mode .pss-keyboard-svg,
 .pto-organ-overlay-body .pto-manual-lower.piano-mode .pss-keyboard-svg,
 .pto-organ-overlay-body .pto-manual-upper.organ-skin .pss-keyboard-svg,
-.pto-organ-overlay-body .pto-manual-lower.organ-skin .pss-keyboard-svg {
-  position:absolute !important; inset:0 !important;
-  width:100% !important; height:100% !important;
-  max-width:none !important; max-height:none !important; display:block;
-}
+.pto-organ-overlay-body .pto-manual-lower.organ-skin .pss-keyboard-svg { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; max-width:none !important; max-height:none !important; display:block; }
 /* Rockers */
 .pto-organ-overlay-body #ptoFKbdControls .org-rocker { width:40px; height:54px; border-radius:4px; }
 .pto-organ-overlay-body #ptoFKbdControls .org-rocker .rk-top,
@@ -56970,71 +56966,11 @@ function openPtoOrganOverlay() {
   ov.classList.add('active');
   document.body.style.overflow = 'hidden';
   ptoRenderDual();
-  _initOrganOverlayScroll();
-}
-
-// JS-driven scroll for the rotated organ overlay.
-// Android WebView can't scroll CSS-transformed elements natively.
-// After -90deg rotation: swiping UP on screen = moving RIGHT in the rotated
-// content frame = scrolling the console out of view toward the keyboards.
-// We track pointer X delta on the overlay (screen coords) and apply it as
-// a translateY offset on the inner panel (rotated coords).
-let _orgScrollOffset = 0;
-let _orgScrollMax = 0;
-let _orgScrollStartX = 0;
-let _orgScrollStartOffset = 0;
-let _orgScrollActive = false;
-
-function _initOrganOverlayScroll() {
-  const ov  = document.getElementById('ptoOrganOverlay');
-  const inn = document.getElementById('ptoOrganOverlayInner');
-  if (!ov || !inn || ov._scrollInit) return;
-  ov._scrollInit = true;
-  _orgScrollOffset = 0;
-  _applyOrganScroll(inn, 0);
-
-  ov.addEventListener('pointerdown', e => {
-    // Don't hijack taps on interactive elements
-    if (e.target.closest('button,input,select,.org-bar-track,.org-rocker,.leslie-toggle,.leslie-brake,.org-vc-knob,.pss-keyboard-svg')) return;
-    _orgScrollActive = true;
-    _orgScrollStartX = e.clientX;
-    _orgScrollStartOffset = _orgScrollOffset;
-    ov.setPointerCapture(e.pointerId);
-  }, { passive: true });
-
-  ov.addEventListener('pointermove', e => {
-    if (!_orgScrollActive) return;
-    const dx = e.clientX - _orgScrollStartX;
-    // Swipe left (negative dx) = scroll content up in rotated frame
-    // Positive dx = scroll back toward start
-    // After rotation, screen X-delta maps directly to rotated-Y-delta
-    const raw = _orgScrollStartOffset - dx;
-    _orgScrollOffset = Math.max(0, Math.min(_orgScrollMax, raw));
-    _applyOrganScroll(inn, _orgScrollOffset);
-  }, { passive: true });
-
-  const end = () => { _orgScrollActive = false; };
-  ov.addEventListener('pointerup', end, { passive: true });
-  ov.addEventListener('pointercancel', end, { passive: true });
-
-  // Recalculate max scroll after render settles
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    _orgScrollMax = Math.max(0, inn.scrollHeight - inn.clientHeight);
-  }));
-}
-
-function _applyOrganScroll(inn, offset) {
-  // The inner is already positioned with translate(-50%,-50%) rotate(-90deg).
-  // We add an additional Y shift (in the rotated frame) to scroll content.
-  inn.style.transform = `translate(-50%, calc(-50% - ${offset}px)) rotate(-90deg)`;
 }
 
 function closePtoOrganOverlay() {
   const ov = document.getElementById('ptoOrganOverlay');
-  if (ov) { ov.classList.remove('active'); ov._scrollInit = false; }
-  const inn = document.getElementById('ptoOrganOverlayInner');
-  if (inn) inn.style.transform = '';
-  _orgScrollOffset = 0;
+  if (ov) ov.classList.remove('active');
   document.body.style.overflow = '';
 }
 
@@ -66470,7 +66406,6 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
 
 <!-- ── PIANO TOOL: Organ landscape overlay ── -->
 <div class="pto-organ-overlay" id="ptoOrganOverlay">
-  <div class="pto-organ-overlay-inner" id="ptoOrganOverlayInner">
     <div class="pto-organ-overlay-head">
       <span class="pto-organ-overlay-title">⛪ HAMMOND B-3</span>
       <div style="display:flex;align-items:center;gap:6px">
@@ -66497,7 +66432,6 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
         <div class="kbd-range-note hidden" id="ptoFRangeNote"></div>
       </div>
     </div>
-  </div>
 </div>
 
 </body>
