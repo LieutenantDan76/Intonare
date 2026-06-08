@@ -17126,8 +17126,8 @@ transition:transform 0.25s ease;
     <div id="cuePickerWrap"></div>
 
     <div class="sm-section-title sm-section-sub" style="margin-top:14px">Master Volume</div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-      <input type="range" class="sm-calib-slider" id="smMasterVolSlider" min="50" max="150" step="5" value="100" style="flex:1;margin:0" oninput="setMasterVolume(this.value)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">
+      <input type="range" class="sm-calib-slider" id="smMasterVolSlider" min="50" max="200" step="5" value="100" style="flex:1;margin:0" oninput="setMasterVolume(this.value)">
       <span id="smMasterVolValue" style="font-size:12px;font-weight:700;color:var(--text);min-width:36px;text-align:right;letter-spacing:.5px">100%</span>
     </div>
 
@@ -17396,10 +17396,9 @@ function getCueVol(event) {
   return Math.max(0.05, pct / 100);
 }
 
-// Global master volume scale — set from progState.masterVolume (50-150%)
-// Applied to every buildLimiterChain call and rrGetOut.
+// Global master volume scale — set from progState.masterVolume (50-200%)
 function _getMasterScale() {
-  return Math.max(0.1, Math.min(2.0, (progState?.masterVolume ?? 100) / 100));
+  return Math.max(0.1, Math.min(3.0, (progState?.masterVolume ?? 100) / 100));
 }
 
 // Shared limiter-chain factory: returns a gain -> compressor -> destination
@@ -37828,7 +37827,7 @@ const PROG_STORAGE_KEY = 'intonare_progress_v1';
 let progState = {
   xp: 0,
   level: 1,
-  masterVolume: 100,      // global volume scale 50–150 (%)
+  masterVolume: 100,      // global volume scale 50-200 (%)
   tapOffsetMs: 38,        // user-tunable tap calibration; see TAP_LATENCY_OFFSET
   noteNaming: 'english',  // 'english' (C,D,E) or 'solfege' (Do,Re,Mi - fixed Do)
   lang: 'en',              // 'en' or 'it'
@@ -39728,14 +39727,20 @@ function setTapCalibration(ms) {
 }
 
 function setMasterVolume(pct) {
-  const v = Math.max(50, Math.min(150, parseInt(pct) || 100));
+  const v = Math.max(50, Math.min(200, parseInt(pct) || 100));
   progState.masterVolume = v;
   const slider  = document.getElementById('smMasterVolSlider');
   const display = document.getElementById('smMasterVolValue');
   if (slider && slider.value != v) slider.value = v;
   if (display) display.textContent = v + '%';
-  // rrMasterGain is recreated per-session so no live update needed there;
-  // buildLimiterChain reads _getMasterScale() fresh on every sound event.
+  // Live-update any cached gain nodes so change takes effect immediately
+  // without requiring the user to restart each exercise/instrument.
+  const scale = _getMasterScale();
+  try { if (tlMasterGain) tlMasterGain.gain.value = 0.85 * scale; } catch(e) {}
+  try { if (tgMasterGain) tgMasterGain.gain.value = 0.85 * scale; } catch(e) {}
+  try { if (prMasterGain) prMasterGain.gain.value = 0.85 * scale; } catch(e) {}
+  try { if (dk_masterGain) dk_masterGain.gain.value = progDrumVolume * scale; } catch(e) {}
+  try { if (rrMasterGain) rrMasterGain.gain.value = scale; } catch(e) {}
   progSave();
 }
 
