@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.75 -->
+<!-- INTONARE_VERSION: 0.29.76 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -2504,16 +2504,13 @@
   }
   /* Piano key-well: outer cheek frame wrapping fallboard + keyboard */
   .piano-key-well {
-    border-left: 4px solid #0c0c12;
-    border-right: 4px solid #060608;
+    border-left: none;
+    border-right: none;
     border-bottom: 4px solid #060608;
     border-radius: 0 0 13px 13px;
     background: #08080e;
     box-shadow:
-      -3px 0 6px rgba(255,255,255,0.03) inset,
-      3px 0 6px rgba(0,0,0,0.5) inset,
-      0 10px 28px rgba(0,0,0,0.7),
-      -1px 0 0 rgba(255,255,255,0.03);
+      0 10px 28px rgba(0,0,0,0.7);
     overflow: hidden;
   }
   .piano-head {
@@ -11099,7 +11096,7 @@
   padding:0; overflow-x:hidden;
 }
 .pss-keyboard-wrap:has(#rhodesCardSvg) {
-  margin-left:-10px; margin-right:-10px; width:calc(100% + 20px);
+  margin-left:-8px; margin-right:-8px; width:calc(100% + 16px);
   padding:0; overflow-x:hidden;
 }
 /* Piano: bleed the whole key-well so the keyboard grows without clipping */
@@ -11170,9 +11167,9 @@
 /* Keyboard-line alignment: organ is tallest (drawbar console), so pad piano &
    Rhodes keyboards down by these amounts so all three land at the same Y when
    switching tabs. Tune these two numbers if the lines are off by a few px. */
-:root { --piano-align-pad: 5px; --rhodes-align-pad: 21px; }
+:root { --piano-align-pad: 5px; --rhodes-align-pad: 17px; }
 #ptoPianoPanel .piano-key-well { margin-top:0; padding-top: var(--piano-align-pad); }
-#ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); margin-left:-10px; margin-right:-10px; }
+#ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); margin-left:-8px; margin-right:-8px; }
 .piano-card#ptoPianoPanel { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoOrganPanel .card.warm { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoRhodesPanel .rhodes-card { border-top-left-radius:0; border-top-right-radius:0; }
@@ -17239,14 +17236,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.75</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.76</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.29.75';
+const INTONARE_VERSION = '0.29.76';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
