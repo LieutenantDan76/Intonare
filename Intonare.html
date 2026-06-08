@@ -39733,6 +39733,8 @@ function setMasterVolume(pct) {
   const display = document.getElementById('smMasterVolValue');
   if (slider && slider.value != v) slider.value = v;
   if (display) display.textContent = v + '%';
+  // DEBUG — remove after confirming
+  alert('masterVolume=' + v + ' scale=' + _getMasterScale().toFixed(3) + ' progState.masterVolume=' + progState.masterVolume);
   // Live-update any cached gain nodes so change takes effect immediately
   // without requiring the user to restart each exercise/instrument.
   const scale = _getMasterScale();
