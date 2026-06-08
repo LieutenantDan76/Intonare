@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.87 -->
+<!-- INTONARE_VERSION: 0.29.88 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17241,14 +17241,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.87</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.88</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.29.87';
+const INTONARE_VERSION = '0.29.88';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -27249,7 +27249,10 @@ const REF_TONES = {
       const clickF = ctx.createBiquadFilter(); clickF.type = 'bandpass';
       clickF.frequency.value = 900; clickF.Q.value = 3;
       const clickG = ctx.createGain();
-      clickG.gain.setValueAtTime(vol * 0.12 * _clickScale, when);
+      // Ramp the click up over ~2ms instead of an instant step so it doesn't
+      // inject a sample-level transient spike that the limiter's attack misses.
+      clickG.gain.setValueAtTime(0, when);
+      clickG.gain.linearRampToValueAtTime(vol * 0.12 * _clickScale, when + 0.002);
       clickG.gain.exponentialRampToValueAtTime(0.0001, when + 0.015);
       click.connect(clickF); clickF.connect(clickG); clickG.connect(comp);
       click.start(when); click.stop(when + 0.02);
