@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.80 -->
+<!-- INTONARE_VERSION: 0.29.81 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -11097,7 +11097,12 @@
 }
 .pss-keyboard-wrap:has(#rhodesCardSvg) {
   margin-left:-20px; margin-right:-20px; width:calc(100% + 40px);
-  padding:0 10px; overflow-x:hidden;
+  padding:8px 10px 10px; border-radius:10px; overflow:hidden;
+  background:
+    linear-gradient(180deg, rgba(10,8,8,0) 0%, rgba(8,4,4,0.4) 92%, rgba(4,2,2,0.8) 100%),
+    linear-gradient(180deg, #18120f 0%, #0e0a09 100%);
+  border:1px solid #0a0605;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5), inset 0 -3px 6px rgba(0,0,0,0.6), 0 3px 10px rgba(0,0,0,0.4);
 }
 /* Piano: bleed the whole key-well so the keyboard grows without clipping */
 #ptoPianoPanel .piano-key-well {
@@ -11167,9 +11172,9 @@
 /* Keyboard-line alignment: organ is tallest (drawbar console), so pad piano &
    Rhodes keyboards down by these amounts so all three land at the same Y when
    switching tabs. Tune these two numbers if the lines are off by a few px. */
-:root { --piano-align-pad: 5px; --rhodes-align-pad: 21px; }
+:root { --piano-align-pad: 5px; --rhodes-align-pad: 13px; }
 #ptoPianoPanel .piano-key-well { margin-top:0; padding-top: var(--piano-align-pad); }
-#ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); margin-left:-10px; margin-right:-10px; }
+#ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); margin-left:-20px; margin-right:-20px; }
 .piano-card#ptoPianoPanel { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoOrganPanel .card.warm { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoRhodesPanel .rhodes-card { border-top-left-radius:0; border-top-right-radius:0; }
@@ -17236,14 +17241,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.80</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.81</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.29.80';
+const INTONARE_VERSION = '0.29.81';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
