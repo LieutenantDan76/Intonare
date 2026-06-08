@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.26 -->
+<!-- INTONARE_VERSION: 0.29.69 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -2198,6 +2198,166 @@
   }
   .slider-body.hidden { max-width: 0; opacity: 0; pointer-events: none; }
 
+  /* ─── FENDER RHODES MARK I ─── */
+  .rhodes-card {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.9), 0 12px 40px rgba(0,0,0,0.85);
+    position: relative; overflow: hidden;
+  }
+
+  /* ── Black tolex shell — convex curved lid ── */
+  .rhodes-shell {
+    position: relative; z-index: 2;
+    height: 44px;
+    background: linear-gradient(180deg,
+      #2a2a2a 0%, #1e1e1e 18%,
+      #181818 35%, #141414 50%,
+      #181818 65%, #222 82%, #1a1a1a 100%
+    );
+    border-radius: 11px 11px 0 0;
+    overflow: hidden;
+  }
+  .rhodes-shell::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 60%;
+    background: radial-gradient(ellipse 70% 80% at 50% -20%,
+      rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.04) 45%, transparent 70%);
+    pointer-events: none;
+  }
+  .rhodes-shell::after {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px),
+      repeating-linear-gradient(90deg, transparent 0px, transparent 3px, rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px);
+    pointer-events: none; border-radius: 11px 11px 0 0;
+  }
+
+  /* ── Brushed aluminium name rail — taller, more room for knobs ── */
+  .rhodes-rail {
+    position: relative; z-index: 2;
+    height: 58px;
+    background: linear-gradient(180deg,
+      #d8d8d8 0%, #c8c8c8 20%,
+      #b8b8b8 45%, #c0c0c0 65%,
+      #acacac 85%, #a0a0a0 100%
+    );
+    display: flex; align-items: center;
+    padding: 0 12px; gap: 10px;
+    border-top: 1px solid rgba(255,255,255,0.55);
+    border-bottom: 1px solid rgba(0,0,0,0.3);
+    overflow: visible;
+  }
+  .rhodes-rail::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg,
+      transparent 0px, transparent 5px,
+      rgba(0,0,0,0.055) 5px, rgba(0,0,0,0.055) 6px
+    );
+    pointer-events: none;
+  }
+  .rhodes-rail::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75) 20%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0.75) 80%, transparent);
+    pointer-events: none;
+  }
+
+  /* Chrome knob */
+  .rhodes-knob-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    flex-shrink: 0; cursor: ns-resize; user-select: none; -webkit-user-select: none;
+  }
+  .rhodes-knob {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #e8e8e8 0%, #b0b0b0 40%, #787878 70%, #909090 100%);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+    position: relative; touch-action: none;
+    transition: box-shadow 0.15s;
+  }
+  .rhodes-knob:active { box-shadow: 0 1px 3px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.3); }
+  /* Indicator dot — rotates via --knob-angle; knob body stays put */
+  .rhodes-knob::after {
+    content: '';
+    position: absolute; top: 4px; left: 50%; width: 2px; height: 7px;
+    margin-left: -1px;
+    background: #2a2a2a; border-radius: 1px;
+    transform-origin: 1px 10px;
+    transform: rotate(var(--knob-angle, 0deg));
+  }
+  .rhodes-knob-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6px; font-weight: 700; letter-spacing: 0.8px;
+    color: rgba(30,30,30,0.55); text-transform: uppercase;
+    text-align: center; line-height: 1;
+  }
+
+  /* Rhodes logo — absolute center regardless of knob widths */
+  .rhodes-logo {
+    position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+    text-align: center; z-index: 0; pointer-events: none;
+    font-family: 'Fraunces', serif;
+    font-size: 20px; font-style: italic; font-weight: 700; letter-spacing: 1px;
+    color: transparent;
+    background: linear-gradient(180deg, #3a3a3a 0%, #1a1a1a 50%, #2a2a2a 100%);
+    -webkit-background-clip: text; background-clip: text;
+    filter: drop-shadow(0 1px 0 rgba(255,255,255,0.55)) drop-shadow(0 -0.5px 0 rgba(0,0,0,0.3));
+    user-select: none;
+  }
+  .rhodes-logo-sub {
+    display: block; font-size: 6px; font-style: normal; letter-spacing: 2.5px;
+    margin-top: -2px; opacity: 0.45;
+  }
+
+  /* Expand button on rail */
+  .rhodes-expand-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px;
+    background: rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.22);
+    border-radius: 5px;
+    color: rgba(40,40,40,0.6);
+    font-size: 13px;
+    cursor: pointer; flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+    transition: all 0.15s;
+  }
+  .rhodes-expand-btn:hover { background: rgba(0,0,0,0.22); color: #1a1a1a; }
+
+  /* ── Red felt strip — sits directly above keys ── */
+  .rhodes-felt {
+    position: absolute; top: 0; left: 10px; right: 10px;
+    height: 4px; z-index: 3;
+    background: linear-gradient(180deg, #c8181a 0%, #a01015 50%, #880e12 100%);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,120,120,0.18);
+  }
+  /* Felt bar above the SVG keyboard */
+  .rhodes-felt-bar {
+    height: 3px; border-radius: 2px 2px 0 0;
+    margin-left: -10px; margin-right: -10px;
+    background: linear-gradient(180deg, #c8181a 0%, #a01015 50%, #880e12 100%);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,120,120,0.18);
+  }
+
+  /* ── Controls strip ── */
+  .rhodes-controls {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap; row-gap: 4px;
+    padding: 6px 12px 4px;
+    background: #111;
+    border-bottom: 1px solid #1e1e1e;
+    position: relative; z-index: 2;
+  }
+  .rhodes-ctrl-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.5px; font-weight: 700; letter-spacing: 1px;
+    color: rgba(180,180,180,0.3); text-transform: uppercase; flex-shrink: 0;
+  }
+
   /* ─── PIANO VISUALIZATION ─── */
   .piano-card {
     background: linear-gradient(180deg, #111114 0%, #08080a 55%, #050507 100%);
@@ -2400,13 +2560,13 @@
   .piano-cents-badge.sharp { color: var(--sharp);   border-color: rgba(255,138,101,0.3); }
   .piano-cents-badge.flat  { color: var(--flat);    border-color: rgba(122,175,255,0.3); }
 
-  /* Piano keyboard — single octave, big tappable keys */
+  /* Piano keyboard — keys container */
   .piano-keyboard {
     position: relative;
-    height: 168px;
+    height: 200px;
     background: linear-gradient(180deg, #020204 0%, #050508 100%);
     border-radius: 0 0 10px 10px;
-    padding: 10px 10px 12px;
+    padding: 4px 10px 12px;
     /* 3D walls: thick dark borders on left/right/bottom give depth */
     border-left: 6px solid #080810;
     border-right: 6px solid #080810;
@@ -2464,8 +2624,27 @@
     font-size: 8px; letter-spacing: 2px; color: rgba(255,255,255,0.22);
     text-transform: uppercase;
   }
+  /* 2-octave keyboard — match organ key proportions */
+  #pianoKeyboard, #rhodesKeyboard {
+    height: 155px;
+    aspect-ratio: unset;
+  }
+  /* Black keys: ~65% of white key height (matches organ 60/92) */
+  .piano-black-row {
+    position: absolute; top: 4px; left: 10px; right: 10px;
+    height: 62%;
+    z-index: 2;
+    pointer-events: none;
+  }
+  /* Rhodes card allows vertical scroll outside the keyboard */
+  #ptoRhodesPanel .piano-card-body {
+    touch-action: pan-y;
+  }
+  #ptoRhodesPanel .piano-key-well {
+    touch-action: pan-y;
+  }
   .piano-white-row {
-    position: absolute; left: 10px; right: 10px; top: 10px; bottom: 12px;
+    position: absolute; left: 10px; right: 10px; top: 4px; bottom: 12px;
     display: flex; gap: 3px;
     z-index: 1;
   }
@@ -2532,12 +2711,6 @@
   .piano-white-key.user .piano-white-label,
   .piano-white-key.both .piano-white-label { color: rgba(0,0,0,0.78); font-weight: 700; }
 
-  .piano-black-row {
-    position: absolute; top: 10px; left: 10px; right: 10px;
-    height: 60%;
-    z-index: 2;
-    pointer-events: none;
-  }
   .piano-black-key {
     position: absolute;
     width: 9%;
@@ -2989,6 +3162,70 @@
   }
 
   /* Piano mode selector — segmented control */
+  /* ── Sustain pedal — chrome pedal in a recessed slot ── */
+  .sustain-pedal {
+    position: relative; flex-shrink: 0;
+    width: 46px; height: 34px;
+    display: flex; align-items: flex-start; justify-content: center;
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+    touch-action: none;
+    padding-top: 3px;
+  }
+  .sustain-pedal::before {
+    content: '';
+    position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px;
+    background: linear-gradient(180deg, #060608 0%, #0d0d12 60%, #141419 100%);
+    border-radius: 5px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.85), inset 0 -1px 0 rgba(255,255,255,0.04);
+  }
+  .sustain-pedal-pad {
+    position: relative; z-index: 1;
+    width: 38px; height: 24px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #e8e9ec 0%, #b8bcc4 35%, #8d929c 70%, #6d717a 100%);
+    box-shadow:
+      0 3px 4px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.7),
+      inset 0 -2px 3px rgba(0,0,0,0.3);
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sustain-pedal.engaged .sustain-pedal-pad {
+    transform: translateY(3px);
+    background: linear-gradient(180deg, #cfe8b0 0%, #aacf80 40%, #7fae55 75%, #5f8a3c 100%);
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(255,255,255,0.5),
+      inset 0 -1px 2px rgba(0,0,0,0.3),
+      0 0 8px rgba(140,210,90,0.45);
+  }
+  .sustain-pedal.drone .sustain-pedal-pad {
+    transform: translateY(3px);
+    background: linear-gradient(180deg, #f0d8a0 0%, #e0b860 40%, #c89840 75%, #a87820 100%);
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(255,255,255,0.5),
+      0 0 12px rgba(230,180,90,0.6);
+    animation: pedalPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pedalPulse {
+    0%,100% { box-shadow: 0 1px 2px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 10px rgba(230,180,90,0.5); }
+    50%     { box-shadow: 0 1px 2px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(230,180,90,0.85); }
+  }
+  /* Engraved label that lives ON the pad and travels with it */
+  .sustain-pedal-lbl {
+    font-family: 'JetBrains Mono', monospace; font-size: 6.5px; font-weight: 800;
+    letter-spacing: 0.5px; white-space: nowrap; pointer-events: none;
+    color: rgba(40,42,48,0.6);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.45); /* engraved: dark text, light lip below */
+  }
+  .sustain-pedal.engaged .sustain-pedal-lbl {
+    color: rgba(30,55,20,0.7); text-shadow: 0 1px 0 rgba(200,240,160,0.5);
+  }
+  .sustain-pedal.drone .sustain-pedal-lbl {
+    color: rgba(70,45,10,0.75); text-shadow: 0 1px 0 rgba(245,215,150,0.55);
+  }
+
   .piano-mode-sel {
     display: flex;
     border: 1px solid rgba(255,255,255,0.1);
@@ -10850,6 +11087,24 @@
 /* Piano: fit to a taller height (bigger keys), scroll horizontally if wide */
 .pss-keyboard-wrap.piano-mode { justify-content: safe center; }
 .pss-keyboard-wrap.piano-mode .pss-keyboard-svg { max-width: none; height: 168px; width: auto; }
+/* Piano/Rhodes CARD keyboards: fill width like the organ for consistent alignment */
+#pianoCardSvg, #rhodesCardSvg {
+  width: 100% !important; max-width: 100% !important; height: auto !important;
+}
+.pss-keyboard-wrap:has(#pianoCardSvg),
+.pss-keyboard-wrap:has(#rhodesCardSvg) {
+  overflow-x: hidden;
+  padding: 0;
+}
+/* Rhodes keyboard bleeds past the card padding (no key-well wrapper).
+   Slightly wider bleed so its keys read the same size as the piano card. */
+.pss-keyboard-wrap:has(#rhodesCardSvg) {
+  margin-left: -14px; margin-right: -14px; width: calc(100% + 28px);
+}
+/* Piano: bleed the whole key-well so the keyboard grows without clipping */
+#ptoPianoPanel .piano-key-well {
+  margin-left: -10px; margin-right: -10px;
+}
 /* ── Hammond B-3 organ console skin ── */
 .pss-keyboard-wrap.organ-skin {
   background:
@@ -10884,17 +11139,44 @@
   box-shadow: inset 0 1px 0 rgba(140,95,50,0.35), 0 2px 8px rgba(0,0,0,0.4);
 }
 /* Compact view: pull the wood board up to the card's top edge (cancel 16px top padding + expand btn space) */
-#ptoKbdControls.organ-board { margin-top:-16px; border-radius:0; border-top:none; padding-top:34px; }
+#ptoKbdControls.organ-board { margin-top:-16px; border-radius:0; border-top:none; padding-top:44px; }
 
 /* ── Piano Tool: PIANO / ORGAN tab strip ── */
-.pto-tab-strip { display:flex; gap:0; margin-bottom:12px; border-radius:10px; overflow:hidden; border:1px solid var(--border-soft); }
-.pto-tab { flex:1; padding:9px 0; text-align:center; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1.5px; cursor:pointer; background:var(--surface); color:var(--text-dim); border:none; transition:all .15s; }
+.pto-tab-strip { display:flex; gap:0; margin-bottom:0; border-radius:10px 10px 0 0; overflow:hidden; border:1px solid var(--border-soft); border-bottom:none; position:relative; z-index:3; }
+.pto-tab { flex:1; padding:9px 0; text-align:center; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1.5px; cursor:pointer; background:linear-gradient(180deg,#222226 0%,#1a1a1e 100%); color:rgba(255,255,255,0.4); border:none; transition:all .15s; }
 .pto-tab.active { background:var(--theme-a); color:#fff; }
+/* Active tab adopts the signature look of the instrument it selects, so the
+   strip matches the card below it instead of clashing with one fixed accent. */
+#ptoPianoTab.active {
+  background:linear-gradient(180deg,#3a3a42 0%,#22222a 100%);
+  color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -3px 0 #f0f0f0, inset 0 -5px 6px rgba(0,0,0,0.4);
+}
+#ptoOrganTab.active {
+  background:linear-gradient(180deg,#5a3a1d 0%,#3a2410 100%);
+  color:#f0d0a0; box-shadow:inset 0 1px 0 rgba(240,200,140,0.2), inset 0 -3px 0 #e8d4a0, inset 0 -5px 6px rgba(0,0,0,0.45);
+}
+#ptoRhodesTab.active {
+  background:linear-gradient(180deg,#d8d8d8 0%,#b0b0b0 55%,#9a9a9a 100%);
+  color:#1a1a1a;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -3px 0 #a01015, inset 0 -5px 6px rgba(0,0,0,0.2);
+}
 .pto-tab:first-child { border-radius:9px 0 0 9px; }
 .pto-tab:last-child  { border-radius:0 9px 9px 0; }
 /* Organ panel inside piano tool — reuses all organ CSS already defined */
 #ptoOrganPanel { display:none; }
 #ptoOrganPanel.visible { display:block; }
+/* Strip attaches to the card: square the top corners of each instrument panel */
+/* Keyboard-line alignment: organ is tallest (drawbar console), so pad piano &
+   Rhodes keyboards down by these amounts so all three land at the same Y when
+   switching tabs. Tune these two numbers if the lines are off by a few px. */
+:root { --piano-align-pad: -22px; --rhodes-align-pad: 4px; }
+#ptoPianoPanel .piano-key-well { margin-top: var(--piano-align-pad); }
+#ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); }
+.piano-card#ptoPianoPanel { border-top-left-radius:0; border-top-right-radius:0; }
+#ptoOrganPanel .card.warm { border-top-left-radius:0; border-top-right-radius:0; }
+#ptoRhodesPanel .rhodes-card { border-top-left-radius:0; border-top-right-radius:0; }
+/* Rail is now the Rhodes card's top edge — square it to meet the tab strip */
+#ptoRhodesPanel .rhodes-rail { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoOrganPanel .pss-keyboard-wrap { border-radius:0 0 10px 10px; }
 /* Organ card: override the green theme-a shine with warm amber wood tones */
 #ptoOrganPanel .card.warm::before {
@@ -10939,27 +11221,87 @@
 /* Organ expand overlay — same rotation pattern as piano overlay (proven in Capacitor).
    The outer div positions and rotates itself; no inner wrapper needed. */
 .pto-organ-overlay {
-  display:none; position:fixed; z-index:1100; background:#0e0a06;
+  display:none; position:fixed; inset:0; z-index:8000; background:#0e0a06;
   flex-direction:column; overflow:hidden;
 }
-.pto-organ-overlay.active { display:flex; }
-/* Portrait: reposition + rotate the overlay itself, exactly like .piano-overlay */
+/* Rhodes fullscreen overlay — same landscape-rotation pattern, dark/red theme */
+.pto-rhodes-overlay {
+  display:none; position:fixed; inset:0; z-index:8000; background:#0a0a0c;
+  flex-direction:column; overflow:hidden;
+}
+.pto-rhodes-overlay.active { display:flex; }
 @media (orientation: portrait) {
-  .pto-organ-overlay.active {
-    width:100dvh; height:calc(100dvw - var(--nav-bar-h, 62px));
-    top:calc((100dvh - (100dvw - var(--nav-bar-h, 62px))) / 2);
-    left:calc(((100dvw - var(--nav-bar-h, 62px)) - 100dvh) / 2);
+  .pto-rhodes-overlay.active {
+    width:100dvh; height:100dvw;
+    top:calc((100dvh - 100dvw) / 2);
+    left:calc((100dvw - 100dvh) / 2);
     right:unset; bottom:unset;
     transform:rotate(-90deg);
     transform-origin:center center;
   }
 }
-/* Landscape: just fill the screen normally */
-@media (orientation: landscape) {
+.pto-rhodes-overlay-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 16px; background:#161618; border-bottom:1px solid #2a2a2e; flex-shrink:0;
+}
+/* Standardized secondary control strip (instrument controls + octave) below the header */
+.pto-overlay-ctrl-strip {
+  display:flex; align-items:center; gap:6px; flex-wrap:wrap; row-gap:4px;
+  padding:5px 16px; background:#101012; border-bottom:1px solid #232327; flex-shrink:0;
+}
+.pto-rhodes-overlay-title {
+  font-family:'Fraunces',serif; font-style:italic; font-size:15px; font-weight:700;
+  letter-spacing:1px; color:#d0d0d0;
+}
+.pto-rhodes-overlay-close { font-size:15px; background:none; border:1px solid #2a2a2e; color:#999; border-radius:6px; padding:1px 9px; cursor:pointer; }
+.pto-rhodes-overlay-body { flex:1; overflow:hidden; padding:0; display:flex; flex-direction:column; }
+/* Convex tolex sliver + brushed-metal name rail above the felt — restores the
+   Rhodes character in the expanded view and takes up some of the excess height. */
+.pto-rhodes-overlay-body .rhodes-overlay-shell {
+  flex:0 0 auto; height:18px;
+  background:linear-gradient(180deg,#2a2a2a 0%,#1e1e1e 30%,#141414 60%,#1a1a1a 100%);
+  box-shadow:inset 0 2px 4px rgba(255,255,255,0.06), inset 0 -3px 6px rgba(0,0,0,0.6);
+}
+.pto-rhodes-overlay-body .rhodes-overlay-rail {
+  flex:0 0 auto; height:34px; position:relative; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  background:linear-gradient(180deg,#d8d8d8 0%,#c8c8c8 20%,#b8b8b8 45%,#c0c0c0 65%,#acacac 85%,#a0a0a0 100%);
+  border-top:1px solid rgba(255,255,255,0.55); border-bottom:1px solid rgba(0,0,0,0.3);
+}
+.pto-rhodes-overlay-body .rhodes-overlay-rail::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(90deg, transparent 0px, transparent 5px, rgba(0,0,0,0.055) 5px, rgba(0,0,0,0.055) 6px);
+}
+.pto-rhodes-overlay-body .rhodes-overlay-rail-logo {
+  font-family:'Fraunces',serif; font-style:italic; font-weight:700; font-size:18px;
+  color:#1a1a1a; letter-spacing:0.5px; position:relative; z-index:1;
+}
+.pto-rhodes-overlay-body .rhodes-overlay-rail-sub {
+  font-family:'JetBrains Mono',monospace; font-size:7px; font-weight:700; letter-spacing:2px;
+  color:#555; position:relative; z-index:1;
+}
+.pto-rhodes-overlay-body .rhodes-felt-bar { flex:0 0 auto; margin-left:0; margin-right:0; }
+.pto-rhodes-overlay-body .pss-keyboard-wrap { flex:1; overflow:hidden; }
+.pto-rhodes-overlay-body #rhodesFullSvg { width:100%; max-width:100%; height:100%; touch-action:none; }
+/* Overlay keyboards are rotated in portrait — a visual horizontal slide is a
+   physical vertical drag, which pan-y would hand to the browser. Force none so
+   the slide/glissando gesture always reaches the keyboard handler. */
+.pto-organ-overlay-body .pss-keyboard-svg,
+.pto-organ-overlay-body #ptoFSvg,
+.pto-organ-overlay-body #ptoFSvgLower { touch-action:none !important; }
+.pto-organ-overlay.active { display:flex; }
+/* Portrait: reposition + rotate the overlay itself, exactly like .piano-overlay */
+@media (orientation: portrait) {
   .pto-organ-overlay.active {
-    inset:0;
+    width:100dvh; height:100dvw;
+    top:calc((100dvh - 100dvw) / 2);
+    left:calc((100dvw - 100dvh) / 2);
+    right:unset; bottom:unset;
+    transform:rotate(-90deg);
+    transform-origin:center center;
   }
 }
+/* Landscape: inset:0 already set in base rule — nothing extra needed */
 .pto-organ-overlay-head { display:flex; align-items:center; justify-content:space-between; padding:6px 16px; background:#1a120a; border-bottom:1px solid #3a2a1a; flex-shrink:0; }
 .pto-organ-overlay-title { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:2px; color:#c8a070; }
 .pto-organ-overlay-close { font-size:15px; background:none; border:1px solid #3a2a1a; color:#a08060; border-radius:6px; padding:1px 9px; cursor:pointer; }
@@ -10993,13 +11335,13 @@
 .pto-organ-overlay-body .pto-manual-upper.organ-skin .pss-keyboard-svg,
 .pto-organ-overlay-body .pto-manual-lower.organ-skin .pss-keyboard-svg { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; max-width:none !important; max-height:none !important; display:block; }
 /* Rockers */
-.pto-organ-overlay-body #ptoFKbdControls .org-rocker { width:40px; height:54px; border-radius:4px; }
+.pto-organ-overlay-body #ptoFKbdControls .org-rocker { width:34px; height:48px; border-radius:4px; }
 .pto-organ-overlay-body #ptoFKbdControls .org-rocker .rk-top,
 .pto-organ-overlay-body #ptoFKbdControls .org-rocker .rk-bot { font-size:7px; padding:3px 0; }
 .pto-organ-overlay-body #ptoFKbdControls .org-rocker .rk-name { font-size:7px; padding:2px 0; }
 .pto-organ-overlay-body #ptoFKbdControls .org-rocker-row { gap:4px; }
-.pto-organ-overlay-body #ptoFKbdControls .org-vc-knob { width:60px; height:60px; }
-.pto-organ-overlay-body #ptoFKbdControls .org-vc-knob .org-vc-dial { width:30px; height:30px; margin:-15px 0 0 -15px; }
+.pto-organ-overlay-body #ptoFKbdControls .org-vc-knob { width:48px; height:48px; }
+.pto-organ-overlay-body #ptoFKbdControls .org-vc-knob .org-vc-dial { width:24px; height:24px; margin:-12px 0 0 -12px; }
 .pto-organ-overlay-body #ptoFKbdControls .org-vc-label { font-size:6px; }
 /* Percussion column: row layout in landscape */
 .pto-organ-overlay-body #ptoFKbdControls .org-top-panel > .org-side-col:last-child { flex-direction:row; align-items:flex-start; }
@@ -11011,6 +11353,15 @@
 .organ-board .kbd-oct-label { color:#c8a878; }
 .organ-board .kbd-oct-label b { color:#f0d0a0; }
 .organ-board .kbd-oct-btn { background:#2a1d10; border-color:#5a3a1d; color:#e0b888; width:26px; height:24px; }
+/* Compact organ card: float the octave row up into the HOLD/EXPAND row */
+#ptoOrganPanel .organ-board .kbd-oct-row {
+  position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  margin:0; padding:0; z-index:6; gap:6px; height:26px; align-items:center;
+}
+#ptoOrganPanel .organ-board .kbd-oct-btn { width:24px; height:24px; }
+#ptoOrganPanel .organ-board .kbd-oct-label { font-size:12px; letter-spacing:1px; }
+/* Drop the "OCTAVE" word in the compact card — just show C4–C5 to save room */
+#ptoOrganPanel .organ-board .kbd-oct-word { display:none; }
 /* ── Keyboard instrument controls (organ drawbars / melodica) ── */
 .kbd-controls { width:100%; margin:0 0 10px; }
 .kbd-oct-row { display:flex; gap:10px; justify-content:center; align-items:center; margin-bottom:8px; }
@@ -13211,23 +13562,21 @@ transition:transform 0.25s ease;
     <div id="toolPiano" class="hidden">
       <button class="train-back" onclick="exitTool()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
-      <!-- ── PIANO / ORGAN tab strip ── -->
+      <!-- ── PIANO / ORGAN / RHODES tab strip ── -->
       <div class="pto-tab-strip">
         <button class="pto-tab active" id="ptoPianoTab" onclick="switchPianoToolTab('piano')">🎹 PIANO</button>
         <button class="pto-tab" id="ptoOrganTab" onclick="switchPianoToolTab('organ')">⛪ ORGAN</button>
+        <button class="pto-tab" id="ptoRhodesTab" onclick="switchPianoToolTab('rhodes')">🎸 RHODES</button>
       </div>
 
       <!-- ── ORGAN panel — same card structure as Charts so the console fits identically ── -->
       <div id="ptoOrganPanel">
         <div class="card warm" style="padding:16px 14px 14px;overflow:hidden;position:relative">
           <div class="card-glow"></div>
-          <!-- Hold toggle + mute sit top-left; expand stays top-right absolute — no extra layout height -->
-          <div style="position:absolute;top:10px;left:12px;z-index:5;display:flex;align-items:center;gap:6px">
-            <div class="organ-mode-sel" onclick="cycleOrganHoldMode()" title="Tap to cycle: short · hold">
-              <span class="oms-seg active" data-m="0">—</span>
-              <span class="oms-seg" data-m="1">HOLD</span>
-            </div>
-            <button class="piano-drone-mute" id="organDroneMute" onclick="_organStopAll();document.querySelectorAll('.oms-seg').forEach(s=>s.classList.toggle('active',parseInt(s.dataset.m)===0));organHoldMode=0;_organRefreshControls()" title="Stop all held notes">✕ ALL</button>
+          <!-- Hold pedal + mute sit top-left; expand stays top-right absolute -->
+          <div style="position:absolute;top:7px;left:12px;z-index:7;display:flex;align-items:center;gap:8px">
+            <div class="sustain-pedal" id="organPedal" title="Press to latch held notes"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">HOLD</span></div></div>
+            <button class="piano-drone-mute" id="organDroneMute" onclick="_organStopAll();organHoldMode=0;_organRefreshControls();(function(){var p=document.getElementById('organPedal');if(p&&p._refresh)p._refresh();})()" title="Stop all held notes">✕</button>
           </div>
           <button class="pto-expand-btn pto-expand-btn-top" onclick="openPtoOrganOverlay()">⛶ EXPAND</button>
           <div class="kbd-controls" id="ptoKbdControls"></div>
@@ -13272,13 +13621,9 @@ transition:transform 0.25s ease;
         <!-- Card body -->
         <div class="piano-card-body">
 
-        <!-- Top bar: hold left, expand right -->
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <div class="piano-mode-sel" onclick="cyclePianoSustainMode()" title="Tap to cycle: short · hold · loop">
-            <span class="pms-seg active" data-m="0">—</span>
-            <span class="pms-seg" data-m="1" data-i18n="tuner_hold">HOLD</span>
-            <span class="pms-seg" data-m="2">∞</span>
-          </div>
+        <!-- Top bar: sustain pedal left, expand right -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div class="sustain-pedal" id="pianoPedal" title="Tap = sustain · Hold = drone"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">SUST</span></div></div>
           <button class="piano-drone-mute" id="pianoDroneMuteCard" onclick="stopAllPianoDrones()" title="Mute all drones" data-i18n="tuner_clear_all">✕ ALL</button>
           <div style="flex:1"></div>
           <button class="piano-expand-btn" onclick="openPianoOverlay()" title="Open fullscreen piano" data-i18n="tuner_expand">⛶ EXPAND</button>
@@ -13289,16 +13634,14 @@ transition:transform 0.25s ease;
         <div class="piano-fallboard"></div>
         <div class="piano-octave-bar" style="margin-top:10px">
           <button class="piano-oct-btn" id="pianoOctDown" onclick="shiftPianoOctave(-1)">◀</button>
-          <div class="piano-oct-indicator">
-            <div class="piano-oct-label" id="pianoOctLabel">OCTAVE 4</div>
-            <div class="piano-oct-range" id="pianoOctRange">C4 — B4</div>
+          <div class="piano-oct-indicator" id="pianoOctIndicator">
+            <div class="piano-oct-label" id="pianoOctLabel">OCT 4–5</div>
+            <div class="piano-oct-range" id="pianoOctRange">C4 — B5</div>
           </div>
-          <div id="refRefBadge" class="piano-ref-note">—</div>
           <button class="piano-oct-btn" id="pianoOctUp" onclick="shiftPianoOctave(1)">▶</button>
         </div>
-        <div class="piano-keyboard" id="pianoKeyboard">
-          <div class="piano-white-row" id="pianoWhiteRow"></div>
-          <div class="piano-black-row" id="pianoBlackRow"></div>
+        <div class="pss-keyboard-wrap">
+          <svg class="pss-keyboard-svg" id="pianoCardSvg" style="max-width:100%"></svg>
         </div>
         </div><!-- /piano-key-well -->
 
@@ -13313,6 +13656,68 @@ transition:transform 0.25s ease;
 
         </div><!-- /piano-card-body -->
       </div><!-- /ptoPianoPanel -->
+
+      <!-- ── RHODES panel ── -->
+      <div id="ptoRhodesPanel" style="display:none">
+        <div class="rhodes-card">
+
+          <!-- Brushed aluminium name rail (now the card top) -->
+          <div class="rhodes-rail">
+            <div class="rhodes-knob-wrap" id="rhodesKnobVolWrap" title="Volume">
+              <div class="rhodes-knob" id="rhodesKnobVol"></div>
+              <span class="rhodes-knob-label">VOL</span>
+            </div>
+            <div class="rhodes-knob-wrap" id="rhodesKnobTremWrap" title="Tremolo depth" style="margin-left:4px">
+              <div class="rhodes-knob" id="rhodesKnobTrem"></div>
+              <span class="rhodes-knob-label">TREM</span>
+            </div>
+            <div class="rhodes-logo">
+              Rhodes
+              <span class="rhodes-logo-sub">MARK I · STAGE PIANO</span>
+            </div>
+            <div style="flex:1"></div>
+            <button class="rhodes-expand-btn" onclick="openRhodesOverlay()" title="Fullscreen">⛶</button>
+          </div>
+
+          <!-- Controls strip -->
+          <div class="rhodes-controls">
+            <div class="sustain-pedal" id="rhodesPedal" title="Tap = sustain · Hold = drone"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">SUST</span></div></div>
+            <button class="piano-drone-mute" id="rhodesDroneMute" onclick="stopAllRhodesDrones()">✕ ALL</button>
+            <div style="flex:1"></div>
+            <span class="rhodes-ctrl-label">TREM</span>
+            <div class="piano-lid-seg-wrap">
+              <button class="piano-lid-seg" data-rt="off"   onclick="setRhodesTremolo('off')">OFF</button>
+              <button class="piano-lid-seg active" data-rt="soft" onclick="setRhodesTremolo('soft')">SOFT</button>
+              <button class="piano-lid-seg" data-rt="deep"  onclick="setRhodesTremolo('deep')">DEEP</button>
+            </div>
+            <span class="rhodes-ctrl-label" style="margin-left:4px">VIBE</span>
+            <div class="piano-lid-seg-wrap">
+              <button class="piano-lid-seg" data-rv="bright" onclick="setRhodesVibe('bright')">BRIGHT</button>
+              <button class="piano-lid-seg active" data-rv="warm" onclick="setRhodesVibe('warm')">WARM</button>
+            </div>
+          </div>
+
+          <!-- Keyboard in key-well with felt flush at top -->
+          <div class="piano-card-body" style="padding-top:8px">
+            <!-- Octave bar above the well -->
+            <div class="piano-octave-bar" style="margin-top:0;margin-bottom:6px">
+              <button class="piano-oct-btn" id="rhodesOctDown" onclick="shiftRhodesOctave(-1)">◀</button>
+              <div class="piano-oct-indicator" id="rhodesOctIndicator">
+                <div class="piano-oct-label" id="rhodesOctLabel">OCT 4–5</div>
+                <div class="piano-oct-range" id="rhodesOctRange">C4 — B5</div>
+              </div>
+              <button class="piano-oct-btn" id="rhodesOctUp" onclick="shiftRhodesOctave(1)">▶</button>
+            </div>
+            <!-- Red felt sits flush directly above keys -->
+            <div class="rhodes-felt-bar"></div>
+            <div class="pss-keyboard-wrap" id="rhodesKbdWrap" style="border-radius:0 0 8px 8px;overflow:hidden">
+              <svg class="pss-keyboard-svg" id="rhodesCardSvg" style="max-width:100%"></svg>
+            </div>
+            <div class="teach-hint">Tap keys. SOFT tremolo is classic Stage Rhodes. DEEP adds heavy wobble. BRIGHT adds tine clang.</div>
+          </div>
+
+        </div><!-- /rhodes-card -->
+      </div><!-- /ptoRhodesPanel -->
 
     </div><!-- /toolPiano -->
 
@@ -16175,14 +16580,10 @@ transition:transform 0.25s ease;
     </div>
   </div>
 
-  <!-- Controls row: drone mute · sustain mode only -->
+  <!-- Controls row: sustain pedal · drone mute -->
   <div class="piano-overlay-av-row">
+    <div class="sustain-pedal" id="pianoFullPedal" title="Tap = sustain · Hold = drone"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">SUST</span></div></div>
     <button class="piano-drone-mute" id="pianoDroneMuteFull" onclick="stopAllPianoDrones()" title="Mute all drones" data-i18n="tuner_clear_all">✕ ALL</button>
-    <div class="piano-mode-sel" onclick="cyclePianoSustainMode()" title="Tap to cycle: short · hold · loop">
-      <span class="pms-seg active" data-m="0">—</span>
-      <span class="pms-seg" data-m="1" data-i18n="ss_hold">HOLD</span>
-      <span class="pms-seg" data-m="2">∞</span>
-    </div>
     <div style="flex:1"></div>
   </div>
 </div>
@@ -18575,6 +18976,7 @@ function buildRefPitchGrid() {
 // ═══════════════════════════════════════════════
 // Show ONE octave at a time. Default C4-B4.
 let pianoOctave = 4;
+let pianoSingleOct = false; // long-press octave label → 1-octave view for easier play
 const PIANO_MIN_OCT = 1, PIANO_MAX_OCT = 6;
 const WHITE_NOTES_PER_OCT = [0,2,4,5,7,9,11];
 const BLACK_NOTES_PER_OCT = [1,3,6,8,10];
@@ -18651,10 +19053,449 @@ function setPianoLid(state) {
   }
 }
 
+// ─── FENDER RHODES ──────────────────────────────────────────────────────────
+let rhodesSustainMode = 0;  // 0=short, 1=hold, 2=drone
+let rhodesTremolo = 'soft'; // 'off' | 'soft' | 'deep'
+let rhodesVibe = 'warm';    // 'warm' | 'bright'
+let rhodesOctave = 4;
+let rhodesSingleOct = false;
+let rhodesOscs = {};        // key → voice object (drones)
+let _rhodesMultiTouchInit = false;
+
+const RHODES_MIN_OCT = 1;
+const RHODES_MAX_OCT = 6;
+
+// Tremolo rates + depths
+const RHODES_TREMOLO = {
+  off:  { rate: 0,   depth: 0 },
+  soft: { rate: 4.8, depth: 0.32 },
+  deep: { rate: 3.6, depth: 0.60 },
+};
+
+// Rhodes synth — tine model
+// Fundamental + inharmonic tine partial + percussive clang transient
+// Tremolo on amplitude. Vibe affects clang brightness.
+function rhodesPlayNote(midi) {
+  hapticLight();
+  const key = midi;
+  if (rhodesSustainMode === 2 && rhodesOscs[key]) {
+    // Drone mode: tap a droning key to silence it
+    rhodesStopNote(key); return;
+  }
+  // Polyphonic: only retrigger THIS key if it's already sounding (e.g. fast repeat).
+  // Other held notes keep ringing so chords sustain.
+  if (rhodesOscs[key]) rhodesStopNote(key);
+  const freq = midiToFreq(midi);
+  const ctx = ensureRefCtx();
+  const now = ctx.currentTime;
+
+  const freqFactor = Math.max(0.3, Math.min(2.0, 440 / freq));
+  const isBright = rhodesVibe === 'bright';
+
+  // Master gain
+  const g = ctx.createGain(); g.gain.value = 0;
+  g.connect(refMasterGain);
+
+  // Tine fundamental
+  // Real Rhodes tines are slightly stiff → fundamental is a touch sharp
+  // Stiffness coefficient B ≈ 0.0002–0.0004 for tine; higher partials are sharper
+  const B = 0.0003;
+  const tineFreq = freq * Math.sqrt(1 + B); // barely audible but adds realism
+
+  const tine = ctx.createOscillator(); tine.type = 'sine';
+  tine.frequency.value = tineFreq;
+  const tineG = ctx.createGain(); tineG.gain.value = 0;
+  tine.connect(tineG); tineG.connect(g);
+
+  // Faint 3rd harmonic — gives the tine its slightly hollow, woody body
+  // (real tines aren't pure sines; a touch of odd harmonic reads as "Rhodes")
+  const tine3 = ctx.createOscillator(); tine3.type = 'sine';
+  tine3.frequency.value = tineFreq * 3;
+  const tine3G = ctx.createGain(); tine3G.gain.value = 0;
+  tine3.connect(tine3G); tine3G.connect(g);
+
+  // Inharmonic tine overtone — the classic Rhodes "clang"
+  // Real value: ~1.48× for warm, ~1.52× for bright
+  const clangFreq = freq * (isBright ? 1.52 : 1.48);
+  const clang = ctx.createOscillator(); clang.type = 'sine';
+  clang.frequency.value = clangFreq;
+  // Pitch-drop: real tines bend slightly sharp on the strike then settle flat
+  clang.frequency.setValueAtTime(clangFreq * 1.012, now);
+  clang.frequency.exponentialRampToValueAtTime(clangFreq, now + 0.06);
+  const clangG = ctx.createGain(); clangG.gain.value = 0;
+  clang.connect(clangG); clangG.connect(g);
+
+  // Key mechanism click — very short bandpass noise burst, adds realism
+  const clickNoise = _noiseSource ? _noiseSource(ctx, 0.012) : null;
+  if (clickNoise) {
+    const cf = ctx.createBiquadFilter(); cf.type = 'bandpass';
+    cf.frequency.value = 1800; cf.Q.value = 3;
+    const cg = ctx.createGain();
+    cg.gain.setValueAtTime(isBright ? 0.12 : 0.07, now);
+    cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.012);
+    clickNoise.connect(cf); cf.connect(cg); cg.connect(g);
+    clickNoise.start(now); clickNoise.stop(now + 0.014);
+  }
+
+  const attackTime = isBright ? 0.003 : 0.005;
+  const sustainLevel = 0.60;
+  const clangSustain = isBright ? 0.16 : 0.08;
+  const decayTime = 1.8 * freqFactor; // slightly longer than before
+  const clangDecay = 0.18 * freqFactor;
+
+  // Attack — sharp onset, then let tine ring
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.80, now + attackTime);
+  g.gain.setValueAtTime(0.80, now + attackTime);
+
+  tineG.gain.setValueAtTime(0, now);
+  tineG.gain.linearRampToValueAtTime(sustainLevel, now + attackTime);
+
+  // 3rd harmonic — quiet, brighter on BRIGHT, decays faster than fundamental
+  tine3G.gain.setValueAtTime(0, now);
+  tine3G.gain.linearRampToValueAtTime(isBright ? 0.10 : 0.06, now + attackTime);
+  tine3G.gain.exponentialRampToValueAtTime(0.001, now + decayTime * 0.5);
+
+  clangG.gain.setValueAtTime(0, now);
+  clangG.gain.linearRampToValueAtTime(isBright ? 0.55 : 0.38, now + 0.001);
+  clangG.gain.exponentialRampToValueAtTime(Math.max(0.001, clangSustain), now + clangDecay);
+
+  // Tremolo — proper AM chain: tineG/tine3G/clangG → dryBus → tremAM → g → master
+  // LFO modulates tremAM.gain between (1-depth) and 1, never negative
+  let tremoloLfo = null;
+  const trem = RHODES_TREMOLO[rhodesTremolo];
+
+  // Disconnect initial direct-to-g routing, reroute through dryBus
+  tineG.disconnect(); tine3G.disconnect(); clangG.disconnect();
+  const dryBus = ctx.createGain(); dryBus.gain.value = 1;
+  tineG.connect(dryBus); tine3G.connect(dryBus); clangG.connect(dryBus);
+
+  // Always build the AM chain so tremolo can be toggled/updated on held notes.
+  // tremAM rides between (1-depth) and 1; LFO runs always, depth 0 when off.
+  const tremAM = ctx.createGain();
+  tremAM.gain.value = 1 - trem.depth * 0.5;
+  dryBus.connect(tremAM); tremAM.connect(g);
+
+  tremoloLfo = ctx.createOscillator(); tremoloLfo.type = 'sine';
+  tremoloLfo.frequency.value = trem.rate || 5;
+  const tremMod = ctx.createGain();
+  tremMod.gain.value = trem.depth * 0.5;
+  tremoloLfo.connect(tremMod); tremMod.connect(tremAM.gain);
+  tremoloLfo.start(now + attackTime + 0.05);
+
+  // Mode 0 = short (natural decay), Mode 1 = hold (longer decay), Mode 2 = drone (∞)
+  // Mode 2 = drone (∞), Mode 1 = pedal sustain (long decay), Mode 0 = natural decay
+  // (gated: dies on its own like a real tine; release handler cuts it short if lifted early)
+  const dur = rhodesSustainMode === 2 ? null
+            : rhodesSustainMode === 1 ? decayTime * 2.2
+            : decayTime;  // mode 0: natural decay
+
+  if (dur) {
+    tineG.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    // Fade out via the dry bus so tremolo doesn't fight the decay ramp
+    dryBus.gain.setValueAtTime(1, now + attackTime);
+    dryBus.gain.exponentialRampToValueAtTime(0.001, now + dur + 0.1);
+    if (tremoloLfo) { try { tremoloLfo.stop(now + dur + 0.2); } catch(e) {} }
+  }
+
+  // Start tone oscs (tremoloLfo already started above)
+  const allOscs = [tine, tine3, clang];
+  allOscs.forEach(o => {
+    try { o.start(now); } catch(e) {}
+    if (dur) { try { o.stop(now + dur + 0.2); } catch(e) {} }
+  });
+  // Include tremoloLfo in allOscs only for the stop() closure
+  if (tremoloLfo) allOscs.push(tremoloLfo);
+
+  const voice = {
+    g, tineG, clangG, tremoloLfo, tremAM, tremMod, dryBus, _cleanupTimer: null, _stopped: false,
+    stop(soft = true) {
+      if (this._stopped) return;
+      this._stopped = true;
+      if (this._cleanupTimer) { clearTimeout(this._cleanupTimer); this._cleanupTimer = null; }
+      const t = ctx.currentTime;
+      const release = soft ? 0.22 : 0.05;
+      dryBus.gain.cancelScheduledValues(t);
+      dryBus.gain.setValueAtTime(dryBus.gain.value, t);
+      dryBus.gain.linearRampToValueAtTime(0, t + release);
+      const end = t + release + 0.05;
+      allOscs.forEach(o => { try { o.stop(end); } catch(e) {} });
+      // Disconnect the whole voice from the shared master after it fades,
+      // so no stuck oscillator/LFO can keep modulating the shared output.
+      setTimeout(() => {
+        try { g.disconnect(); } catch(e) {}
+        try { tremAM.disconnect(); } catch(e) {}
+        try { dryBus.disconnect(); } catch(e) {}
+      }, (release + 0.1) * 1000);
+    }
+  };
+
+  if (rhodesSustainMode !== 2 && dur) {
+    // Short/hold: after the note's natural decay, fully tear down the voice
+    // (stops oscillators + LFO and disconnects from master) so nothing leaks.
+    voice._cleanupTimer = setTimeout(() => {
+      if (rhodesOscs[key] === voice) {
+        voice.stop(false);
+        delete rhodesOscs[key];
+        _updateRhodesDroneMute();
+      }
+    }, (dur + 0.3) * 1000);
+  }
+
+  rhodesOscs[key] = voice;
+  _updateRhodesDroneMute();
+}
+
+function rhodesStopNote(key) {
+  if (rhodesOscs[key]) { rhodesOscs[key].stop(); delete rhodesOscs[key]; }
+  _updateRhodesDroneMute();
+}
+
+// Gated release: in mode 0 (no pedal), lifting the finger stops the Rhodes note.
+function rhodesCardRelease(midi) {
+  if (rhodesSustainMode !== 0) return; // pedal/drone: let it ring
+  const v = rhodesOscs[midi];
+  if (v) { v.stop(false); delete rhodesOscs[midi]; _updateRhodesDroneMute(); } // fast release
+}
+
+function stopAllRhodesDrones() {
+  Object.keys(rhodesOscs).forEach(k => rhodesStopNote(+k));
+  _updateRhodesDroneMute();
+  rhodesSustainMode = 0;
+  ['rhodesPedal', 'rhodesFullPedal'].forEach(id => {
+    const p = document.getElementById(id);
+    if (p && p._refresh) p._refresh();
+  });
+}
+
+function _updateRhodesDroneMute() {
+  const hasHeld = Object.keys(rhodesOscs).length > 0 && rhodesSustainMode === 2;
+  const btn = document.getElementById('rhodesDroneMute');
+  if (btn) btn.classList.toggle('visible', hasHeld);
+}
+
+function cycleRhodesSustainMode() {
+  rhodesSustainMode = (rhodesSustainMode + 1) % 3;
+  if (rhodesSustainMode === 0) stopAllRhodesDrones();
+  document.querySelectorAll('#ptoRhodesPanel .pms-seg').forEach(s =>
+    s.classList.toggle('active', parseInt(s.dataset.m) === rhodesSustainMode));
+}
+
+function setRhodesTremolo(val) {
+  hapticLight();
+  rhodesTremolo = val;
+  document.querySelectorAll('[data-rt]').forEach(b =>
+    b.classList.toggle('active', b.dataset.rt === val));
+  // Live-update any held/droning notes
+  const trem = RHODES_TREMOLO[val] || { rate: 5, depth: 0 };
+  const ctx = refAudioCtx;
+  Object.values(rhodesOscs).forEach(v => {
+    if (!v.tremAM || !v.tremMod || !v.tremoloLfo) return;
+    const t = ctx ? ctx.currentTime : 0;
+    v.tremAM.gain.cancelScheduledValues(t);
+    v.tremAM.gain.setTargetAtTime(1 - trem.depth * 0.5, t, 0.05);
+    v.tremMod.gain.setTargetAtTime(trem.depth * 0.5, t, 0.05);
+    try { v.tremoloLfo.frequency.setTargetAtTime(trem.rate || 5, t, 0.05); } catch(e) {}
+  });
+}
+
+function setRhodesVibe(val) {
+  hapticLight();
+  rhodesVibe = val;
+  document.querySelectorAll('[data-rv]').forEach(b =>
+    b.classList.toggle('active', b.dataset.rv === val));
+}
+
+// ── Knob drag interaction ──
+// VOL knob: drag up = louder (stored as rhodesVolume 0–1)
+// TREM knob: drag up = cycle tremolo off→soft→deep
+let rhodesVolume = 0.8;
+let _rhodesKnobDrag = null; // { id, startY, startAngle }
+
+function _rhodesKnobAngle(value, min, max) {
+  // Maps 0–1 to -140deg..+140deg (like a real pot)
+  return -140 + (value - min) / (max - min) * 280;
+}
+
+function _setRhodesKnobAngle(knobEl, angleDeg) {
+  // Rotate only the indicator line (::after reads --knob-angle), leaving the
+  // knob body, gradient and shadow fixed so it reads as a physical knob.
+  knobEl.style.setProperty('--knob-angle', angleDeg + 'deg');
+}
+
+function initRhodesKnobs() {
+  function setupKnob(wrapId, knobId, onDrag) {
+    const wrap = document.getElementById(wrapId);
+    const knob = document.getElementById(knobId);
+    if (!wrap || !knob) return;
+    wrap.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      _rhodesKnobDrag = { id: knobId, startY: e.clientY, startVal: onDrag.getVal() };
+      wrap.setPointerCapture(e.pointerId);
+    }, { passive: false });
+    wrap.addEventListener('pointermove', e => {
+      if (!_rhodesKnobDrag || _rhodesKnobDrag.id !== knobId) return;
+      const dy = _rhodesKnobDrag.startY - e.clientY; // up = positive
+      const delta = dy / 80; // 80px = full range
+      const newVal = Math.max(0, Math.min(1, _rhodesKnobDrag.startVal + delta));
+      onDrag.setVal(newVal);
+      _setRhodesKnobAngle(knob, _rhodesKnobAngle(newVal, 0, 1));
+    }, { passive: true });
+    ['pointerup','pointercancel'].forEach(ev =>
+      wrap.addEventListener(ev, () => { _rhodesKnobDrag = null; }, { passive: true }));
+    // Set initial angle
+    _setRhodesKnobAngle(knob, _rhodesKnobAngle(onDrag.getVal(), 0, 1));
+  }
+
+  setupKnob('rhodesKnobVolWrap', 'rhodesKnobVol', {
+    getVal: () => rhodesVolume,
+    setVal: v => { rhodesVolume = v; }
+  });
+
+  // Trem knob: maps 0–1 to three zones: <0.33=off, 0.33–0.66=soft, >0.66=deep
+  const tremVals = { off: 0.15, soft: 0.5, deep: 0.85 };
+  setupKnob('rhodesKnobTremWrap', 'rhodesKnobTrem', {
+    getVal: () => tremVals[rhodesTremolo] || 0.5,
+    setVal: v => {
+      const s = v < 0.33 ? 'off' : v < 0.66 ? 'soft' : 'deep';
+      if (s !== rhodesTremolo) { hapticLight(); setRhodesTremolo(s); }
+    }
+  });
+}
+
+// Simple Rhodes fullscreen — reuse the piano overlay with Rhodes keyboard swap
+function openRhodesOverlay() {
+  hapticLight();
+  const ov = document.getElementById('ptoRhodesOverlay');
+  if (!ov) return;
+  ov.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  lockOrientation();
+  renderRhodesFull();
+  initSustainPedal('rhodesFullPedal', () => rhodesSustainMode, m => {
+    rhodesSustainMode = m;
+    if (m === 0) stopAllRhodesDrones();
+  });
+  _nudgeOverlayReflow(ov);
+}
+
+function closeRhodesOverlay() {
+  const ov = document.getElementById('ptoRhodesOverlay');
+  if (ov) ov.classList.remove('active');
+  document.body.style.overflow = '';
+  unlockOrientation();
+}
+
+let rhodesFullOctaves = 3; // wider span in landscape
+
+function renderRhodesFull() {
+  const svgEl = document.getElementById('rhodesFullSvg');
+  if (!svgEl) return;
+  // Keep the full view centered around the card's octave but show more range
+  const baseOct = Math.max(RHODES_MIN_OCT, Math.min(RHODES_MAX_OCT - rhodesFullOctaves, rhodesOctave));
+  const prevInst = chordScaleInstrument;
+  const prevMode = gccToolMode;
+  const prevBase = chromBaseOct;
+  chordScaleInstrument = 'piano';
+  gccToolMode = 'scales';
+  chromBaseOct = baseOct;
+  _ptoPlainKeys = true;
+  csDrawChromPerc(svgEl, new Set(), 0, null, rhodesFullOctaves,
+    (midi) => rhodesPlayNote(midi), false, null, null, 'asc');
+  if (svgEl._multiTouchInit) svgEl._svgKeyRelease = (midi) => rhodesCardRelease(midi);
+  // Stretch keys to fill the available height (no dead space), like the organ overlay
+  svgEl.setAttribute('preserveAspectRatio', 'none');
+  _ptoPlainKeys = false;
+  chordScaleInstrument = prevInst;
+  gccToolMode = prevMode;
+  chromBaseOct = prevBase;
+  const lbl = document.getElementById('rhodesFullOctLabel');
+  if (lbl) lbl.textContent = 'OCT ' + baseOct + '–' + (baseOct + rhodesFullOctaves - 1);
+}
+
+function shiftRhodesOctave(delta) {
+  hapticMedium();
+  rhodesOctave = Math.max(RHODES_MIN_OCT, Math.min(RHODES_MAX_OCT - 1, rhodesOctave + delta));
+  buildRhodesKeyboard();
+  const ov = document.getElementById('ptoRhodesOverlay');
+  if (ov && ov.classList.contains('active')) renderRhodesFull();
+}
+
+function buildRhodesKeyboard() {
+  const svgEl = document.getElementById('rhodesCardSvg');
+  const lbl = document.getElementById('rhodesOctLabel');
+  const rng = document.getElementById('rhodesOctRange');
+  const dn  = document.getElementById('rhodesOctDown');
+  const up  = document.getElementById('rhodesOctUp');
+  if (!svgEl) return;
+  const nOct = rhodesSingleOct ? 1 : 2;
+  const prevInst = chordScaleInstrument;
+  const prevMode = gccToolMode;
+  const prevBase = chromBaseOct;
+  chordScaleInstrument = 'piano';
+  gccToolMode = 'scales';
+  chromBaseOct = rhodesOctave;
+  _ptoPlainKeys = true;
+  csDrawChromPerc(svgEl, new Set(), 0, null, nOct,
+    (midi) => rhodesPlayNote(midi), false, null, null, 'asc');
+  if (svgEl._multiTouchInit) svgEl._svgKeyRelease = (midi) => rhodesCardRelease(midi);
+  _ptoPlainKeys = false;
+  chordScaleInstrument = prevInst;
+  gccToolMode = prevMode;
+  chromBaseOct = prevBase;
+  if (lbl) lbl.textContent = nOct === 1 ? 'OCT ' + rhodesOctave : 'OCT ' + rhodesOctave + '–' + (rhodesOctave + 1);
+  if (rng) rng.textContent = nOct === 1 ? 'C' + rhodesOctave + ' — B' + rhodesOctave
+                                        : 'C' + rhodesOctave + ' — B' + (rhodesOctave + 1);
+  if (dn)  dn.disabled = rhodesOctave <= RHODES_MIN_OCT;
+  if (up)  up.disabled = rhodesOctave + (nOct === 1 ? 0 : 1) >= RHODES_MAX_OCT;
+}
+
+function _rhodesPointerDown(e) {
+  e.preventDefault();
+  const midi = _pianoMidiFromPoint(e.clientX, e.clientY);
+  if (midi == null) return;
+  _rhodesPointers.set(e.pointerId, midi);
+  rhodesPlayNote(midi);
+}
+function _rhodesPointerMove(e) {
+  if (!_rhodesPointers.has(e.pointerId)) return;
+  e.preventDefault();
+  const midi = _pianoMidiFromPoint(e.clientX, e.clientY);
+  if (midi == null) return;
+  if (midi !== _rhodesPointers.get(e.pointerId)) {
+    if (rhodesSustainMode !== 2) rhodesStopNote(_rhodesPointers.get(e.pointerId));
+    _rhodesPointers.set(e.pointerId, midi);
+    rhodesPlayNote(midi);
+  }
+}
+function _rhodesPointerUp(e) {
+  const midi = _rhodesPointers.get(e.pointerId);
+  if (midi != null && rhodesSustainMode === 0) rhodesStopNote(midi);
+  _rhodesPointers.delete(e.pointerId);
+}
+const _rhodesPointers = new Map();
+
+function _initRhodesMultiTouch() {
+  const kb = document.getElementById('rhodesKeyboard');
+  if (!kb || kb._rhodesInit) return;
+  kb._rhodesInit = true;
+  kb.addEventListener('pointerdown',   _rhodesPointerDown,  { passive: false });
+  kb.addEventListener('pointermove',   _rhodesPointerMove,  { passive: false });
+  kb.addEventListener('pointerup',     _rhodesPointerUp);
+  kb.addEventListener('pointercancel', _rhodesPointerUp);
+}
+
 let pianoSustainMode = 0;
 
 function stopAllPianoDrones() {
   Object.keys(refOscs).filter(k => k.startsWith('pno-')).forEach(stopRef);
+  pianoSustainMode = 0;
+  ['pianoPedal', 'pianoFullPedal'].forEach(id => {
+    const p = document.getElementById(id);
+    if (p && p._refresh) p._refresh();
+  });
+  document.querySelectorAll('.pms-seg').forEach(s =>
+    s.classList.toggle('active', parseInt(s.dataset.m) === 0));
   updateRefDisplay();
 }
 
@@ -18669,12 +19510,108 @@ function cyclePianoSustainMode() {
   setPianoSustainMode((pianoSustainMode + 1) % 3);
 }
 
+// ── Sustain pedal controller ──────────────────────────────────────────────
+// Tap = toggle sustain on/off (modes 0 ↔ 1). Long-press = latch drone (mode 2).
+// Reused by piano and Rhodes; `apply(mode)` sets that instrument's sustain mode.
+function initSustainPedal(pedalId, getMode, apply) {
+  const pedal = document.getElementById(pedalId);
+  if (!pedal || pedal._pedalInit) return;
+  pedal._pedalInit = true;
+  let pressTimer = null, longFired = false;
+
+  function refresh() {
+    const m = getMode();
+    pedal.classList.toggle('engaged', m === 1);
+    pedal.classList.toggle('drone', m === 2);
+    const lbl = pedal.querySelector('.sustain-pedal-lbl');
+    if (lbl) lbl.textContent = m === 2 ? 'DRONE' : 'SUST';
+  }
+  pedal._refresh = refresh;
+
+  pedal.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    longFired = false;
+    pressTimer = setTimeout(() => {
+      longFired = true;
+      if (typeof hapticMedium === 'function') hapticMedium();
+      apply(2);          // long-press → drone latch
+      refresh();
+    }, 500);
+  }, { passive: false });
+
+  function release() {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    if (longFired) return;       // long-press already handled
+    if (typeof hapticLight === 'function') hapticLight();
+    const m = getMode();
+    // Quick tap toggles sustain on/off; from drone it returns to off
+    apply(m === 0 ? 1 : 0);
+    refresh();
+  }
+  pedal.addEventListener('pointerup', release);
+  pedal.addEventListener('pointercancel', () => {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  });
+  refresh();
+}
+
+function _initPianoPedal() {
+  initSustainPedal('pianoPedal', () => pianoSustainMode, m => setPianoSustainMode(m));
+}
+function _initRhodesPedal() {
+  initSustainPedal('rhodesPedal', () => rhodesSustainMode, m => {
+    rhodesSustainMode = m;
+    if (m === 0) stopAllRhodesDrones();
+  });
+}
+
+// Long-press the octave label to toggle a 1-octave (easier reach) vs 2-octave view.
+// Quick tap does nothing — the ◀/▶ arrows handle octave shifting.
+function initOctLongPress(indicatorId, getSingle, setSingleAndRebuild) {
+  const el = document.getElementById(indicatorId);
+  if (!el || el._octLpInit) return;
+  el._octLpInit = true;
+  let timer = null;
+  el.style.cursor = 'pointer';
+  el.title = 'Long-press to switch 1 / 2 octave view';
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    timer = setTimeout(() => {
+      timer = null;
+      if (typeof hapticMedium === 'function') hapticMedium();
+      setSingleAndRebuild(!getSingle());
+    }, 500);
+  }, { passive: false });
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  el.addEventListener('pointerup', cancel);
+  el.addEventListener('pointercancel', cancel);
+  el.addEventListener('pointerleave', cancel);
+}
+function _initPianoOctLongPress() {
+  initOctLongPress('pianoOctIndicator', () => pianoSingleOct, v => {
+    pianoSingleOct = v;
+    Object.keys(refOscs).filter(k => k.startsWith('pno-')).forEach(stopRef);
+    buildPiano();
+  });
+}
+function _initRhodesOctLongPress() {
+  initOctLongPress('rhodesOctIndicator', () => rhodesSingleOct, v => {
+    rhodesSingleOct = v;
+    if (typeof stopAllRhodesDrones === 'function') stopAllRhodesDrones();
+    buildRhodesKeyboard();
+  });
+}
+
 function setPianoSustainMode(mode) {
   // Stop all piano keys on any mode change — start fresh
   Object.keys(refOscs).filter(k => k.startsWith('pno-')).forEach(stopRef);
   pianoSustainMode = mode;
   document.querySelectorAll('.pms-seg').forEach(s =>
     s.classList.toggle('active', parseInt(s.dataset.m) === mode));
+  const pedal = document.getElementById('pianoPedal');
+  if (pedal && pedal._refresh) pedal._refresh();
+  const pedalFull = document.getElementById('pianoFullPedal');
+  if (pedalFull && pedalFull._refresh) pedalFull._refresh();
   updateRefDisplay();
 }
 
@@ -18808,10 +19745,23 @@ function pianoPlayNote(key, freq, noteName) {
     // Drone: dur = null, oscillator runs until explicitly stopped
     const sound = tone.synth(ctx, freq, now, null, refMasterGain, refVolume);
     refOscs[key] = { sound, timeoutId: null, freq };
+  } else if (pianoSustainMode === 0) {
+    // Gated (no pedal): note decays naturally like a real struck string. If the
+    // finger lifts before the decay finishes, the release handler stops it early.
+    // Either way it dies out on its own — holding is NOT a drone.
+    const dur = 1.8;
+    const ms  = 1900;
+    const sound = tone.synth(ctx, freq, now, dur, refMasterGain, refVolume);
+    const timeoutId = setTimeout(() => {
+      delete refOscs[key];
+      if (activeRefFreq === freq) { activeRefFreq = null; activeRefName = null; activeRefMidi = null; }
+      updateRefDisplay();
+    }, ms);
+    refOscs[key] = { sound, timeoutId, freq, gated: true };
   } else {
-    // Mode 0: 1.2s  Mode 1: 2.8s natural decay
-    const dur = pianoSustainMode === 1 ? 2.8 : 1.2;
-    const ms  = pianoSustainMode === 1 ? 2900 : 1300;
+    // Mode 1 (pedal down): rings out with a long natural decay after release
+    const dur = 2.8;
+    const ms  = 2900;
     const sound = tone.synth(ctx, freq, now, dur, refMasterGain, refVolume);
     const timeoutId = setTimeout(() => {
       delete refOscs[key];
@@ -18826,7 +19776,7 @@ function pianoPlayNote(key, freq, noteName) {
 
   // Start the visual decay animation to match the sound envelope
   if (pianoSustainMode !== 2) {
-    const dur = pianoSustainMode === 1 ? 2.8 : 1.2;
+    const dur = pianoSustainMode === 1 ? 2.8 : 1.8;
     // Strip .ref class from this key immediately before starting the rAF decay.
     // This hands full visual control to the rAF from frame 1 — no CSS class
     // fighting the inline styles at any point during or after the animation.
@@ -18862,62 +19812,102 @@ function pianoKeyClick(midi) {
 
 function shiftPianoOctave(delta) {
   hapticMedium();
-  pianoOctave = Math.max(PIANO_MIN_OCT, Math.min(PIANO_MAX_OCT, pianoOctave + delta));
+  pianoOctave = Math.max(PIANO_MIN_OCT, Math.min(PIANO_MAX_OCT - 1, pianoOctave + delta));
   buildPiano();
-  highlightPiano(null, null); // null avoids auto-follow logic overriding the manual shift
+  highlightPiano(null, null);
 }
 
 function buildPiano() {
-  const whiteRow = document.getElementById('pianoWhiteRow');
-  if (!whiteRow) return;
-  const blackRow = document.getElementById('pianoBlackRow');
-  if (!blackRow) return;
-  whiteRow.innerHTML = ''; blackRow.innerHTML = '';
-
-  const startMidi = (pianoOctave + 1) * 12;
-  document.getElementById('pianoOctLabel').textContent = t('piano_octave') + pianoOctave;
+  const svgEl = document.getElementById('pianoCardSvg');
+  if (!svgEl) return;
+  const nOct = pianoSingleOct ? 1 : 2;
+  document.getElementById('pianoOctLabel').textContent =
+    nOct === 1 ? 'OCT ' + pianoOctave : 'OCT ' + pianoOctave + '–' + (pianoOctave + 1);
   document.getElementById('pianoOctRange').textContent =
-    `${getDisplayNote('C')}${pianoOctave} — ${getDisplayNote('B')}${pianoOctave}`;
-  document.getElementById('pianoOctDown').disabled = pianoOctave <= PIANO_MIN_OCT;
-  document.getElementById('pianoOctUp').disabled   = pianoOctave >= PIANO_MAX_OCT;
+    nOct === 1 ? `${getDisplayNote('C')}${pianoOctave} — ${getDisplayNote('B')}${pianoOctave}`
+               : `${getDisplayNote('C')}${pianoOctave} — ${getDisplayNote('B')}${pianoOctave + 1}`;
+  const dn = document.getElementById('pianoOctDown'), up = document.getElementById('pianoOctUp');
+  if (dn) dn.disabled = pianoOctave <= PIANO_MIN_OCT;
+  if (up) up.disabled = pianoOctave + (nOct === 1 ? 0 : 1) >= PIANO_MAX_OCT;
 
-  const whiteKeys = [];
-  for (let i = 0; i < 7; i++) whiteKeys.push(startMidi + WHITE_NOTES_PER_OCT[i]);
+  // Render an SVG keyboard exactly like the organ, but with the piano (white) skin.
+  const prevInst = chordScaleInstrument;
+  const prevMode = gccToolMode;
+  const prevBase = chromBaseOct;
+  chordScaleInstrument = 'piano';
+  gccToolMode = 'scales';
+  chromBaseOct = pianoOctave;
+  _ptoPlainKeys = true; // no root-orange, no labels — clean playable keyboard
+  csDrawChromPerc(svgEl, new Set(), 0, null, nOct,
+    (midi) => pianoCardPlay(midi), false, null, null, 'asc');
+  if (svgEl._multiTouchInit) svgEl._svgKeyRelease = (midi) => pianoCardRelease(midi);
+  _ptoPlainKeys = false;
+  chordScaleInstrument = prevInst;
+  gccToolMode = prevMode;
+  chromBaseOct = prevBase;
+}
 
-  whiteKeys.forEach((midi) => {
-    const key = document.createElement('div');
-    key.className = 'piano-white-key';
-    key.dataset.midi = midi;
-    key.id = `pwk-${midi}`;
-    const label = document.createElement('div');
-    label.className = 'piano-white-label';
-    label.textContent = getDisplayNote(NOTE_NAMES[midi % 12]);
-    key.appendChild(label);
-    whiteRow.appendChild(key);
-  });
-
-  for (let i = 0; i < 5; i++) {
-    const m = startMidi + BLACK_NOTES_PER_OCT[i];
-    let lowerWhiteIdx = -1;
-    for (let j = 0; j < whiteKeys.length; j++) {
-      if (whiteKeys[j] < m) lowerWhiteIdx = j;
-      else break;
-    }
-    if (lowerWhiteIdx < 0 || lowerWhiteIdx >= whiteKeys.length - 1) continue;
-    const leftPct = ((lowerWhiteIdx + 0.7) / 7) * 100;
-    const bk = document.createElement('div');
-    bk.className = 'piano-black-key';
-    bk.dataset.midi = m;
-    bk.id = `pbk-${m}`;
-    bk.style.left = `calc(${leftPct}% - 1px)`;
-    blackRow.appendChild(bk);
+// Play a note from the piano card keyboard (no octave-follow, no self-highlight)
+function pianoCardPlay(midi) {
+  const freq = midiToFreq(midi);
+  const name = midiToNoteName(midi);
+  const refKey = 'pno-' + midi;
+  if (pianoSustainMode === 2 && refOscs[refKey]) {
+    stopRef(refKey);
+    return;
   }
+  pianoPlayNote(refKey, freq, name);
+}
+
+// Gated release: in mode 0 (no pedal), lifting the finger stops the note.
+function pianoCardRelease(midi) {
+  if (pianoSustainMode !== 0) return; // pedal/drone: let it ring
+  const refKey = 'pno-' + midi;
+  if (refOscs[refKey]) stopRef(refKey);
 }
 
 // ─── PIANO MULTI-TOUCH ────────────────────────────────────────────────────────
 // Each pointer (finger) tracked independently. Sliding across keys triggers
 // notes. elementFromPoint finds the correct key even when black keys overlay.
 const _pianoPointers = new Map(); // pointerId → midi
+
+// Shared key row builder — used by piano and Rhodes (prefix keeps IDs unique)
+// numOcts: number of octaves to show (default 1 for piano card, 2 for Rhodes/expanded)
+function _buildPianoKeyboardRows(wr, br, octave, prefix, numOcts) {
+  numOcts = numOcts || 1;
+  wr.innerHTML = ''; br.innerHTML = '';
+  const NOTES = ['C','D','E','F','G','A','B'];
+  const whiteOffsets = [0,2,4,5,7,9,11];
+  const blackOffsets = [1,3,6,8,10];
+  const totalWhites = 7 * numOcts;
+
+  for (let oct = 0; oct < numOcts; oct++) {
+    const baseMidi = (octave + oct + 1) * 12;
+    NOTES.forEach((n, i) => {
+      const midi = baseMidi + whiteOffsets[i];
+      const key = document.createElement('div');
+      key.className = 'piano-white-key'; key.dataset.midi = midi;
+      key.id = prefix + 'w' + midi;
+      const lbl = document.createElement('span');
+      lbl.className = 'piano-white-label'; lbl.textContent = n + (octave + oct);
+      key.appendChild(lbl); wr.appendChild(key);
+    });
+    blackOffsets.forEach(semi => {
+      const midi = baseMidi + semi;
+      // Index of the white key just below this black key within the full keyboard
+      const localWhiteIdx = whiteOffsets.filter(w => w < semi).length - 1;
+      const globalWhiteIdx = oct * 7 + localWhiteIdx;
+      const leftPct = ((globalWhiteIdx + 0.7) / totalWhites) * 100;
+      const key = document.createElement('div');
+      key.className = 'piano-black-key'; key.dataset.midi = midi;
+      key.id = prefix + 'b' + midi;
+      key.style.left = `calc(${leftPct}% - 1px)`;
+      // Black keys narrower when showing 2 octaves
+      if (numOcts > 1) key.style.width = `${(100 / totalWhites) * 0.65}%`;
+      br.appendChild(key);
+    });
+  }
+}
 
 function _pianoMidiFromPoint(x, y) {
   const el = document.elementFromPoint(x, y);
@@ -18940,12 +19930,16 @@ function _pianoPointerMove(e) {
   const midi = _pianoMidiFromPoint(e.clientX, e.clientY);
   if (midi == null) return;
   if (midi !== _pianoPointers.get(e.pointerId)) {
+    const prev = _pianoPointers.get(e.pointerId);
+    if (prev != null && typeof pianoCardRelease === 'function') pianoCardRelease(prev);
     _pianoPointers.set(e.pointerId, midi);
     pianoKeyClick(midi);
   }
 }
 
 function _pianoPointerUp(e) {
+  const midi = _pianoPointers.get(e.pointerId);
+  if (midi != null && typeof pianoCardRelease === 'function') pianoCardRelease(midi);
   _pianoPointers.delete(e.pointerId);
 }
 
@@ -18973,9 +19967,10 @@ function _initPianoFullMultiTouch() {
 // ─── SVG KEYBOARD MULTI-TOUCH ─────────────────────────────────────────────────
 // Used by csDrawKeyboard (chord/scale reference). Keys are SVG <g> elements with
 // data-midi. Stores callback on the element so redraws just update the reference.
-function _initSvgMultiTouch(svgEl, onKeyClick) {
+function _initSvgMultiTouch(svgEl, onKeyClick, onKeyRelease) {
   if (!svgEl) return;
   svgEl._svgKeyClick = onKeyClick; // update on every redraw (root/quality change)
+  svgEl._svgKeyRelease = onKeyRelease || null;
   if (svgEl._multiTouchInit) return;
   svgEl._multiTouchInit = true;
 
@@ -19023,14 +20018,24 @@ function _initSvgMultiTouch(svgEl, onKeyClick) {
     const midi = _midiFromPoint(e.clientX, e.clientY);
     if (midi == null) return;
     if (midi !== _svgPointers.get(e.pointerId)) {
+      const prev = _svgPointers.get(e.pointerId);
+      if (prev != null) svgEl._svgKeyRelease?.(prev);
       _svgPointers.set(e.pointerId, midi);
       _flashKey(e.clientX, e.clientY);
       svgEl._svgKeyClick?.(midi);
     }
   }, { passive: false });
 
-  svgEl.addEventListener('pointerup',     (e) => { _svgPointers.delete(e.pointerId); });
-  svgEl.addEventListener('pointercancel', (e) => { _svgPointers.delete(e.pointerId); });
+  svgEl.addEventListener('pointerup',     (e) => {
+    const m = _svgPointers.get(e.pointerId);
+    if (m != null) svgEl._svgKeyRelease?.(m);
+    _svgPointers.delete(e.pointerId);
+  });
+  svgEl.addEventListener('pointercancel', (e) => {
+    const m = _svgPointers.get(e.pointerId);
+    if (m != null) svgEl._svgKeyRelease?.(m);
+    _svgPointers.delete(e.pointerId);
+  });
 }
 
 function freqToMidi(freq) {
@@ -19039,45 +20044,8 @@ function freqToMidi(freq) {
 }
 
 function highlightPiano(refMidi, userMidi) {
-  document.querySelectorAll('.piano-white-key, .piano-black-key').forEach(k => {
-    k.classList.remove('ref', 'user', 'both');
-  });
-
-  // Auto-shift octave to follow the reference note if it's outside current view
-  if (refMidi) {
-    const refOct = Math.floor(refMidi / 12) - 1;
-    if (refOct !== pianoOctave && refOct >= PIANO_MIN_OCT && refOct <= PIANO_MAX_OCT) {
-      pianoOctave = refOct;
-      buildPiano();
-    }
-  }
-
-  const startMidi = (pianoOctave + 1) * 12;
-  const endMidi = startMidi + 11;
-
-  function highlight(midi, cls) {
-    if (!midi) return;
-    if (midi < startMidi || midi > endMidi) return;
-    const isBlack = BLACK_NOTES_PER_OCT.includes(midi % 12);
-    const id = (isBlack ? 'pbk-' : 'pwk-') + midi;
-    const el = document.getElementById(id);
-    if (el) {
-      if (el.classList.contains('ref') || el.classList.contains('user')) {
-        el.classList.remove('ref', 'user'); el.classList.add('both');
-      } else {
-        el.classList.add(cls);
-      }
-    }
-  }
-
-  // Highlight all currently playing piano keys (polyphonic + drone)
-  const activePnoKeys = Object.keys(refOscs).filter(k => k.startsWith('pno-'));
-  if (activePnoKeys.length > 0) {
-    activePnoKeys.forEach(key => highlight(parseInt(key.replace('pno-', '')), 'ref'));
-  } else {
-    highlight(refMidi, 'ref'); // fallback to single ref note (tuner/training modes)
-  }
-  highlight(userMidi, 'user');
+  // No-op: the SVG keyboard flashes its own keys on tap (via _initSvgMultiTouch)
+  // and we no longer auto-shift octaves or self-highlight played notes.
 }
 
 // ═══════════════════════════════════════════════
@@ -20910,7 +21878,7 @@ function enterTool(name, restoreState) {
     document.body.scrollTop = 0;
   });
 
-  if (name === 'piano') { buildRefPitchGrid(); buildPiano(); _initPianoMultiTouch(); resetPianoToolTabs && resetPianoToolTabs(); }
+  if (name === 'piano') { buildRefPitchGrid(); buildPiano(); _initPianoMultiTouch(); _initPianoPedal(); _initPianoOctLongPress(); resetPianoToolTabs && resetPianoToolTabs(); }
   if (name === 'survivalguide') { document.body.classList.add('sg-open'); try { sgInit(); } catch(e) { console.error('sgInit',e); } }
   if (name === 'tonal') tcInit();
   if (name === 'volume') dbStart();
@@ -26093,28 +27061,61 @@ const REF_TONES = {
   piano: {
     name: 'PIANO',  it: 'PIANOFORTE', icon: '♬',
     synth(ctx, freq, when, dur, master, vol) {
-      // Decay times scale with register: higher notes ring shorter, lower notes longer
-      const freqFactor = Math.max(0.35, Math.min(1.8, 440 / freq));
+      // Register-scaled decay: bass strings ring long, treble dies fast
+      const freqFactor = Math.max(0.3, Math.min(2.2, 440 / freq));
+      // Partials with more authentic relative amplitudes
+      // Piano: strong fundamental, 2nd harmonic falls off, higher partials add brightness
       const partials = [
-        { m: 1, a: 0.55, d: 1.4 * freqFactor }, { m: 2, a: 0.25, d: 0.7 * freqFactor },
-        { m: 3, a: 0.12, d: 0.45 * freqFactor }, { m: 4, a: 0.06, d: 0.32 * freqFactor },
-        { m: 5, a: 0.03, d: 0.25 * freqFactor },
+        { m: 1,    a: 0.60, d: 2.2 * freqFactor },
+        { m: 2,    a: 0.22, d: 1.0 * freqFactor },
+        { m: 3,    a: 0.09, d: 0.55 * freqFactor },
+        { m: 4,    a: 0.05, d: 0.32 * freqFactor },
+        { m: 5,    a: 0.025,d: 0.22 * freqFactor },
+        { m: 6,    a: 0.012,d: 0.15 * freqFactor },
       ];
       const oscs = [];
-      const g = ctx.createGain(); g.gain.value = vol;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(vol, when + 0.002);
+
+      // Hammer strike transient — very short burst of noise shaped like a mallet hit
+      const hammerNoise = _noiseSource ? _noiseSource(ctx, 0.018) : null;
+      if (hammerNoise) {
+        const hf = ctx.createBiquadFilter(); hf.type = 'bandpass';
+        hf.frequency.value = Math.min(6000, freq * 8); hf.Q.value = 2;
+        const hg = ctx.createGain();
+        // Ramp up over 1ms instead of an instant step — avoids the click/pop
+        hg.gain.setValueAtTime(0.0001, when);
+        hg.gain.exponentialRampToValueAtTime(vol * 0.22, when + 0.001);
+        hg.gain.exponentialRampToValueAtTime(0.0001, when + 0.018);
+        hammerNoise.connect(hf); hf.connect(hg); hg.connect(g);
+        hammerNoise.start(when); hammerNoise.stop(when + 0.02);
+      }
+
       partials.forEach(p => {
         const o = ctx.createOscillator(); o.type = 'sine';
         o.frequency.value = freq * p.m;
         const pg = ctx.createGain();
         pg.gain.setValueAtTime(0, when);
-        pg.gain.linearRampToValueAtTime(p.a, when + 0.006);
-        if (!dur || p.d < dur) {
-          pg.gain.exponentialRampToValueAtTime(Math.max(0.001, p.a * 0.35), when + p.d);
-        }
-        if (dur) pg.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+        pg.gain.linearRampToValueAtTime(p.a, when + 0.003); // sharp 3ms attack
         o.connect(pg); pg.connect(g);
-        o.start(when);
-        if (dur) o.stop(when + dur + 0.1);
+        o.start(when); // MUST start before scheduling any stop
+        if (dur) {
+          // Finite note: natural exponential decay to near-zero
+          const decayEnd = Math.min(p.d, dur);
+          pg.gain.exponentialRampToValueAtTime(Math.max(0.0001, p.a * 0.008), when + decayEnd);
+          pg.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+          o.stop(when + dur + 0.1);
+        } else {
+          // Drone: fundamental + 2nd partial sustain at a floor; upper partials decay out.
+          if (p.m <= 2) {
+            const floor = Math.max(0.02, p.a * 0.30);
+            pg.gain.exponentialRampToValueAtTime(floor, when + Math.min(p.d, 1.2));
+          } else {
+            pg.gain.exponentialRampToValueAtTime(0.0001, when + Math.min(p.d, 1.0));
+            o.stop(when + Math.min(p.d, 1.0) + 0.1);
+          }
+        }
         oscs.push(o);
       });
       g.connect(master);
@@ -26122,8 +27123,8 @@ const REF_TONES = {
         const t = ctx.currentTime;
         g.gain.cancelScheduledValues(t);
         g.gain.setValueAtTime(g.gain.value, t);
-        g.gain.linearRampToValueAtTime(0, t + 0.18);
-        oscs.forEach(o => { try { o.stop(t + 0.2); } catch(e){} });
+        g.gain.linearRampToValueAtTime(0, t + 0.15); // damper pedal release
+        oscs.forEach(o => { try { o.stop(t + 0.18); } catch(e){} });
       }};
     }
   },
@@ -40115,23 +41116,34 @@ function isAndroid() { return /Android/.test(navigator.userAgent); }
 //   import { ScreenOrientation } from '@capacitor/screen-orientation';
 //   lockOrientation  → ScreenOrientation.lock({ orientation: 'landscape' })
 //   unlockOrientation → ScreenOrientation.unlock()
+// Browser + Capacitor WebView: Screen Orientation API works on Android Chrome engine.
+// iOS ignores it silently — acceptable since iOS requires manual rotation anyway.
+// Capacitor plugin alternative: @capacitor/screen-orientation (see go.bat notes)
 function lockOrientation() {
-  if (isCapacitor()) {
-    // CAPACITOR SWAP: ScreenOrientation.lock({ orientation: 'landscape' });
-    return;
-  }
   if (screen.orientation && screen.orientation.lock) {
     screen.orientation.lock('landscape').catch(() => {});
   }
 }
 function unlockOrientation() {
-  if (isCapacitor()) {
-    // CAPACITOR SWAP: ScreenOrientation.unlock();
-    return;
-  }
   if (screen.orientation && screen.orientation.unlock) {
     screen.orientation.unlock();
   }
+}
+
+// Force the WebView to recompute dvh/dvw-based layout for a rotated overlay.
+// Without this, portrait overlays (where orientation lock silently fails, e.g.
+// plain Chrome) keep stale viewport sizing until a real rotation triggers reflow.
+function _nudgeOverlayReflow(el) {
+  if (!el) return;
+  requestAnimationFrame(() => {
+    // Toggle a no-op style read to force reflow, then again next frame
+    el.style.opacity = '0.999';
+    void el.offsetHeight;
+    requestAnimationFrame(() => {
+      el.style.opacity = '';
+      void el.offsetHeight;
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -40151,6 +41163,8 @@ function openPianoOverlay() {
   buildPianoFull();
   updateRefDisplay();
   _initPianoFullMultiTouch();
+  initSustainPedal('pianoFullPedal', () => pianoSustainMode, m => setPianoSustainMode(m));
+  _nudgeOverlayReflow(document.getElementById('pianoOverlay'));
 }
 
 function closePianoOverlay() {
@@ -55929,14 +56943,14 @@ function renderKbdControls(prefix) {
   chromClampOct();
   const _ob = chromOctBounds();
   // Use the correct octave count for this tab (pss vs pcc)
-  const _numOcts = prefix === 'pss' ? pssOctaves : prefix === 'pcc' ? pccOctaves : prefix === 'ptoF' ? 5 : (typeof ptoOctaves !== 'undefined' ? ptoOctaves : 2);
+  const _numOcts = prefix === 'pss' ? pssOctaves : prefix === 'pcc' ? pccOctaves : prefix === 'ptoF' ? 5 : (typeof ptoOctaves !== 'undefined' ? ((typeof organSingleOct !== 'undefined' && organSingleOct) ? 1 : ptoOctaves) : 2);
   // Show range label when showing multiple octaves (e.g. C4–C5)
   const octLbl = _numOcts > 1
     ? 'C' + chromBaseOct + '–C' + (chromBaseOct + _numOcts - 1)
     : 'C' + chromBaseOct;
   let oct = '<div class="kbd-oct-row">'
     + '<button class="kbd-oct-btn" ' + (chromBaseOct <= _ob.min ? 'disabled' : '') + ' onclick="chromOctShift(-1)">◀</button>'
-    + '<span class="kbd-oct-label">OCTAVE <b>' + octLbl + '</b></span>'
+    + '<span class="kbd-oct-label"><span class="kbd-oct-word">OCTAVE </span><b>' + octLbl + '</b></span>'
     + '<button class="kbd-oct-btn" ' + (chromBaseOct >= _ob.max ? 'disabled' : '') + ' onclick="chromOctShift(1)">▶</button>'
     + '</div>';
 
@@ -56258,7 +57272,7 @@ function csDrawChromPerc(svgEl, highlightSet, rootSemi, labelMap, numOctaves, on
     wrap.classList.toggle('organ-skin', chordScaleInstrument === 'organ' || _isOrganTab);
   }
   // Per-instrument control strip (organ drawbars / melodica breath) + range note
-  const _prefix = svgEl.id === 'pssSvg' ? 'pss' : svgEl.id === 'ptoSvg' ? 'pto' : svgEl.id === 'ptoFSvg' ? 'ptoF' : svgEl.id === 'ptoFSvgLower' ? null : 'pcc';
+  const _prefix = svgEl.id === 'pssSvg' ? 'pss' : svgEl.id === 'ptoSvg' ? 'pto' : svgEl.id === 'ptoFSvg' ? 'ptoF' : svgEl.id === 'ptoFSvgLower' ? null : (svgEl.id === 'pianoCardSvg' || svgEl.id === 'rhodesCardSvg' || svgEl.id === 'rhodesFullSvg') ? null : 'pcc';
   // ptoFSvgLower is the dual-overlay lower manual — its console is built by renderPtoFConsole, skip
   if (_prefix && typeof renderKbdControls === 'function') renderKbdControls(_prefix);
   if (isMalletInst()) {
@@ -56751,21 +57765,34 @@ function pccPlayNote(midi) {
 
 // ── Piano Tool: PIANO / ORGAN tabs ────────────────────────────────────────────
 
-let pianoToolTab = 'piano'; // 'piano' | 'organ'
+let pianoToolTab = 'piano'; // 'piano' | 'organ' | 'rhodes'
 let ptoOctave = 4;          // organ octave in piano tool (2-octave view)
 let ptoOctaves = 2;         // always 2 for organ (shows C4-C5 range)
+let organSingleOct = false; // long-press octave label → 1-octave view
 let _ptoPlainKeys = false;  // when true, suppress root-orange highlight + note labels (piano-tool organ)
 const PTO_OCT_MIN = 2, PTO_OCT_MAX = 5;
 
 function switchPianoToolTab(tab) {
+  // Stop any notes still sounding on the instrument we're leaving — otherwise a
+  // held Rhodes/organ drone keeps running on the shared output bus and bleeds
+  // (tremolo and all) under the next instrument.
+  try { if (typeof stopAllRhodesDrones === 'function') stopAllRhodesDrones(); } catch(e) {}
+  try { if (typeof stopAllPianoDrones === 'function') stopAllPianoDrones(); } catch(e) {}
+  try { if (typeof _organStopAll === 'function') _organStopAll(); } catch(e) {}
+
   pianoToolTab = tab;
-  document.getElementById('ptoPianoTab').classList.toggle('active', tab === 'piano');
-  document.getElementById('ptoOrganTab').classList.toggle('active', tab === 'organ');
-  const pianoPanel = document.getElementById('ptoPianoPanel');
-  const organPanel = document.getElementById('ptoOrganPanel');
-  if (pianoPanel)  pianoPanel.style.display  = tab === 'piano' ? '' : 'none';
+  document.getElementById('ptoPianoTab')?.classList.toggle('active', tab === 'piano');
+  document.getElementById('ptoOrganTab')?.classList.toggle('active', tab === 'organ');
+  document.getElementById('ptoRhodesTab')?.classList.toggle('active', tab === 'rhodes');
+  const pianoPanel  = document.getElementById('ptoPianoPanel');
+  const organPanel  = document.getElementById('ptoOrganPanel');
+  const rhodesPanel = document.getElementById('ptoRhodesPanel');
+  if (pianoPanel)  pianoPanel.style.display  = tab === 'piano'  ? '' : 'none';
   if (organPanel)  organPanel.classList.toggle('visible', tab === 'organ');
-  if (tab === 'organ') ptoRender();
+  if (rhodesPanel) rhodesPanel.style.display = tab === 'rhodes' ? '' : 'none';
+  if (tab === 'piano')  { buildPiano(); _initPianoPedal(); _initPianoOctLongPress(); }
+  if (tab === 'organ')  { ptoRender(); _initOrganPedal(); }
+  if (tab === 'rhodes') { buildRhodesKeyboard(); initRhodesKnobs(); _initRhodesPedal(); _initRhodesOctLongPress(); }
 }
 
 function ptoRender(forOverlay) {
@@ -56784,14 +57811,16 @@ function ptoRender(forOverlay) {
     chromBaseOct = 2;
     octs = 5;
   } else {
-    octs = ptoOctaves; // compact view: 2 octaves driven by the stepper
+    octs = organSingleOct ? 1 : ptoOctaves; // compact view: 1 or 2 octaves
   }
   csDrawChromPerc(svgEl, new Set(), 0, null, octs,
     (midi) => ptoPlayNote(midi), false, null, null, 'asc');
+  if (!forOverlay && svgEl._multiTouchInit) svgEl._svgKeyRelease = (midi) => ptoReleaseNote(midi);
   _ptoPlainKeys = false;
   chordScaleInstrument = prevInst;
   gccToolMode = prevMode;
   chromBaseOct = prevBase;
+  if (!forOverlay && typeof _attachOrganOctLongPress === 'function') _attachOrganOctLongPress();
 }
 
 // ── Expand overlay: dual-manual B-3 console ──────────────────────────────────
@@ -56922,6 +57951,15 @@ function ptoRenderDual() {
   renderPtoFConsole();
 }
 
+// Organ gated release: in mode 0 (pedal up), lifting the key stops the note.
+// In mode 1 (latched) the note keeps sounding until tapped again.
+function ptoReleaseNote(midi, manual) {
+  if (organHoldMode === 1) return; // latched: ignore release
+  const voiceKey = (manual === 'lower' ? -1 : 1) * (midi + 1);
+  if (typeof _organStopNote === 'function') _organStopNote(voiceKey);
+  if (typeof _updateOrganDroneMute === 'function') _updateOrganDroneMute();
+}
+
 function ptoPlayNote(midi, manual) {
   if (typeof hapticLight === 'function') hapticLight();
   const voiceKey = (manual === 'lower' ? -1 : 1) * (midi + 1);
@@ -56934,7 +57972,9 @@ function ptoPlayNote(midi, manual) {
   }
   const ctx   = getAudio ? getAudio() : ensureRefCtx();
   const chain = _getOrganChain(ctx);
-  const dur   = organHoldMode === 1 ? null : 1.8;
+  // Organ tones don't decay — in mode 0 (pedal up) the note sustains while the
+  // key is held and stops on release (gated). In mode 1 it latches until tapped.
+  const dur   = null;
   const prevManual = _organActiveManual;
   _organActiveManual = (manual === 'lower') ? 'lower' : 'upper';
   const voice = REF_TONES.organ.synth(ctx, midiToFreq(midi), ctx.currentTime, dur, chain.gain, 0.4);
@@ -56958,6 +57998,65 @@ function cycleOrganHoldMode() {
     s.classList.toggle('active', parseInt(s.dataset.m) === organHoldMode));
   _updateOrganDroneMute();
   _organRefreshControls();
+  const p = document.getElementById('organPedal');
+  if (p && p._refresh) p._refresh();
+}
+
+// Organ pedal: tap OR long-press latches "hold" (notes sustain until tapped/cleared).
+// Real organs have no decay-sustain, so the pedal here means latch-hold, shown amber.
+// Organ octave label long-press → toggle 1/2 octave view.
+// Attached fresh after each ptoRender (the controls are rebuilt each time).
+function _attachOrganOctLongPress() {
+  const host = document.getElementById('ptoKbdControls');
+  if (!host) return;
+  const lbl = host.querySelector('.kbd-oct-label');
+  if (!lbl || lbl._octLpInit) return;
+  lbl._octLpInit = true;
+  lbl.style.cursor = 'pointer';
+  lbl.style.padding = '6px 8px';      // bigger touch target
+  lbl.style.touchAction = 'none';
+  let timer = null;
+  lbl.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    timer = setTimeout(() => {
+      timer = null;
+      if (typeof hapticMedium === 'function') hapticMedium();
+      organSingleOct = !organSingleOct;
+      try { _organStopAll(); } catch(err) {}
+      ptoRender();
+    }, 500);
+  }, { passive: false });
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  lbl.addEventListener('pointerup', cancel);
+  lbl.addEventListener('pointercancel', cancel);
+  lbl.addEventListener('pointerleave', cancel);
+}
+
+function _initOrganPedal(pedalId) {
+  const pedal = document.getElementById(pedalId || 'organPedal');
+  if (!pedal || pedal._pedalInit) return;
+  pedal._pedalInit = true;
+  function refresh() {
+    pedal.classList.remove('engaged');
+    pedal.classList.toggle('drone', organHoldMode === 1);
+  }
+  pedal._refresh = refresh;
+  pedal.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (typeof hapticMedium === 'function') hapticMedium();
+    organHoldMode = organHoldMode === 0 ? 1 : 0;
+    _organStopAll();
+    document.querySelectorAll('.oms-seg').forEach(s =>
+      s.classList.toggle('active', parseInt(s.dataset.m) === organHoldMode));
+    if (typeof _updateOrganDroneMute === 'function') _updateOrganDroneMute();
+    if (typeof _organRefreshControls === 'function') _organRefreshControls();
+    // keep both pedals (card + overlay) in sync
+    ['organPedal', 'organFullPedal'].forEach(id => {
+      const p = document.getElementById(id);
+      if (p && p._refresh) p._refresh();
+    });
+  }, { passive: false });
+  refresh();
 }
 
 function openPtoOrganOverlay() {
@@ -56965,23 +58064,35 @@ function openPtoOrganOverlay() {
   if (!ov) return;
   ov.classList.add('active');
   document.body.style.overflow = 'hidden';
+  lockOrientation();
   ptoRenderDual();
+  _initOrganPedal('organFullPedal');
+  // Gated release on both manuals
+  const upSvg = document.getElementById('ptoFSvg');
+  const loSvg = document.getElementById('ptoFSvgLower');
+  if (upSvg && upSvg._multiTouchInit) upSvg._svgKeyRelease = (midi) => ptoReleaseNote(midi, 'upper');
+  if (loSvg && loSvg._multiTouchInit) loSvg._svgKeyRelease = (midi) => ptoReleaseNote(midi, 'lower');
+  _nudgeOverlayReflow(ov);
 }
 
 function closePtoOrganOverlay() {
   const ov = document.getElementById('ptoOrganOverlay');
   if (ov) ov.classList.remove('active');
   document.body.style.overflow = '';
+  unlockOrientation();
 }
 
 function resetPianoToolTabs() {
   pianoToolTab = 'piano';
   const pp = document.getElementById('ptoPianoPanel');
   const op = document.getElementById('ptoOrganPanel');
+  const rp = document.getElementById('ptoRhodesPanel');
   if (pp) pp.style.display = '';
   if (op) op.classList.remove('visible');
+  if (rp) rp.style.display = 'none';
   document.getElementById('ptoPianoTab')?.classList.add('active');
   document.getElementById('ptoOrganTab')?.classList.remove('active');
+  document.getElementById('ptoRhodesTab')?.classList.remove('active');
 }
 
 function pccCycleInversion() {
@@ -66408,12 +67519,9 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
 <div class="pto-organ-overlay" id="ptoOrganOverlay">
     <div class="pto-organ-overlay-head">
       <span class="pto-organ-overlay-title">⛪ HAMMOND B-3</span>
-      <div style="display:flex;align-items:center;gap:6px">
-        <div class="organ-mode-sel" onclick="cycleOrganHoldMode()" title="Tap to cycle: short · hold">
-          <span class="oms-seg active" data-m="0">—</span>
-          <span class="oms-seg" data-m="1">HOLD</span>
-        </div>
-        <button class="piano-drone-mute" id="organDroneMuteFull" onclick="_organStopAll();document.querySelectorAll('.oms-seg').forEach(s=>s.classList.toggle('active',parseInt(s.dataset.m)===0));organHoldMode=0;_organRefreshControls()" title="Stop all held notes">✕ ALL</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="sustain-pedal" id="organFullPedal" title="Press to latch held notes"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">HOLD</span></div></div>
+        <button class="piano-drone-mute" id="organDroneMuteFull" onclick="_organStopAll();organHoldMode=0;_organRefreshControls();(function(){var p=document.getElementById('organFullPedal');if(p&&p._refresh)p._refresh();})()" title="Stop all held notes">✕ ALL</button>
       </div>
       <button class="pto-organ-overlay-close" onclick="closePtoOrganOverlay()">✕</button>
     </div>
@@ -66430,6 +67538,42 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       <div class="kbd-underrow" id="ptoFUnderRow">
         <div class="kbd-leslie hidden" id="ptoFLeslie"></div>
         <div class="kbd-range-note hidden" id="ptoFRangeNote"></div>
+      </div>
+    </div>
+</div>
+
+<div class="pto-rhodes-overlay" id="ptoRhodesOverlay">
+    <div class="pto-rhodes-overlay-head">
+      <span class="pto-rhodes-overlay-title">Rhodes</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="sustain-pedal" id="rhodesFullPedal" title="Tap = sustain · Hold = drone"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">SUST</span></div></div>
+        <button class="piano-drone-mute" id="rhodesDroneMuteFull" onclick="stopAllRhodesDrones()">✕ ALL</button>
+      </div>
+      <button class="pto-rhodes-overlay-close" onclick="closeRhodesOverlay()">✕</button>
+    </div>
+    <div class="pto-overlay-ctrl-strip">
+      <span class="rhodes-ctrl-label">TREM</span>
+      <div class="piano-lid-seg-wrap">
+        <button class="piano-lid-seg" data-rt="off"  onclick="setRhodesTremolo('off')">OFF</button>
+        <button class="piano-lid-seg active" data-rt="soft" onclick="setRhodesTremolo('soft')">SOFT</button>
+        <button class="piano-lid-seg" data-rt="deep" onclick="setRhodesTremolo('deep')">DEEP</button>
+      </div>
+      <span class="rhodes-ctrl-label" style="margin-left:6px">VIBE</span>
+      <div class="piano-lid-seg-wrap">
+        <button class="piano-lid-seg" data-rv="bright" onclick="setRhodesVibe('bright')">BRIGHT</button>
+        <button class="piano-lid-seg active" data-rv="warm" onclick="setRhodesVibe('warm')">WARM</button>
+      </div>
+      <div style="flex:1"></div>
+      <button class="piano-oct-btn" onclick="shiftRhodesOctave(-1)" style="width:30px;height:26px">◀</button>
+      <span id="rhodesFullOctLabel" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#999;min-width:62px;text-align:center">OCT 3–5</span>
+      <button class="piano-oct-btn" onclick="shiftRhodesOctave(1)" style="width:30px;height:26px">▶</button>
+    </div>
+    <div class="pto-rhodes-overlay-body">
+      <div class="rhodes-overlay-shell"></div>
+      <div class="rhodes-overlay-rail"><span class="rhodes-overlay-rail-logo">Rhodes</span><span class="rhodes-overlay-rail-sub">MARK I · STAGE PIANO</span></div>
+      <div class="rhodes-felt-bar"></div>
+      <div class="pss-keyboard-wrap" style="border-radius:0">
+        <svg class="pss-keyboard-svg" id="rhodesFullSvg" style="max-width:100%"></svg>
       </div>
     </div>
 </div>
