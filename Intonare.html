@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.90 -->
+<!-- INTONARE_VERSION: 0.29.97 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17241,14 +17241,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.90</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.97</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.29.90';
+const INTONARE_VERSION = '0.29.97';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -20022,10 +20022,10 @@ function _initSvgMultiTouch(svgEl, onKeyClick, onKeyRelease) {
     if (midi == null) return;
     if (midi !== _svgPointers.get(e.pointerId)) {
       const prev = _svgPointers.get(e.pointerId);
-      if (prev != null) svgEl._svgKeyRelease?.(prev);
+      if (prev != null) svgEl._svgKeyRelease?.(prev, true); // slide-off: fast release
       _svgPointers.set(e.pointerId, midi);
       _flashKey(e.clientX, e.clientY);
-      svgEl._svgKeyClick?.(midi);
+      svgEl._svgKeyClick?.(midi, true); // slide onto a new key
     }
   }, { passive: false });
 
@@ -27162,8 +27162,7 @@ const REF_TONES = {
 
       let pitchLfoG = null;
       let pitchLfoNode = null;
-      // (debug) window._organNoLeslie = true disables the Leslie pitch LFO for A/B testing
-      if (leslie !== 'off' && !(typeof window !== 'undefined' && window._organNoLeslie)) {
+      if (leslie !== 'off') {
         // Use instantaneous rate — correct if note starts mid-ramp
         const rate  = (typeof _organLeslieCurrentRate  !== 'undefined') ? _organLeslieCurrentRate  : (leslie === 'fast' ? LESLIE_FAST_RATE  : LESLIE_SLOW_RATE);
         const depth = (typeof _organLeslieCurrentDepth !== 'undefined') ? _organLeslieCurrentDepth : (leslie === 'fast' ? LESLIE_FAST_DEPTH : LESLIE_SLOW_DEPTH);
@@ -27246,8 +27245,11 @@ const REF_TONES = {
         }
         _organLastNoteOnMs = nowMs;
       } catch (e) {}
-      // (debug) window._organNoClick = true disables the key click for A/B testing
-      if (!(typeof window !== 'undefined' && window._organNoClick)) {
+      // Slide-triggered notes (glissando across keys) skip the key-click entirely —
+      // a real organ doesn't re-strike on a slide, and dozens of clicks during a
+      // fast swipe were a source of crackle.
+      const _slide = (typeof _organSlideTrigger !== 'undefined' && _organSlideTrigger);
+      if (!_slide) {
       const click = _noiseSource(ctx, 0.02);
       const clickF = ctx.createBiquadFilter(); clickF.type = 'bandpass';
       clickF.frequency.value = 900; clickF.Q.value = 3;
@@ -27271,14 +27273,23 @@ const REF_TONES = {
         pitchLfoNode, pitchLfoG, ampLfoNode, ampLfoG, toneBus,
         stop(fast) {
           const t = ctx.currentTime;
-          // On rapid retrigger (swipe re-crossing the same key) use a near-instant
-          // release so the dying voice doesn't sum with the new note's attack
-          // (that overlap is what made a key briefly jump louder).
-          const rel = fast ? 0.006 : 0.06;
-          g.gain.cancelScheduledValues(t);
-          g.gain.setValueAtTime(g.gain.value, t);
+          // On rapid retrigger / slide-off use a quick release so dying voices
+          // don't sum or pile up. Stop the oscillators only AFTER the gain has
+          // fully reached zero (plus margin) so they're never cut mid-waveform
+          // — a mid-cycle hard stop is the scratchy/hollow pop on fast slides.
+          const rel = fast ? 0.012 : 0.06;
+          if (typeof g.gain.cancelAndHoldAtTime === 'function') {
+            g.gain.cancelAndHoldAtTime(t);
+          } else {
+            g.gain.cancelScheduledValues(t);
+            g.gain.setValueAtTime(g.gain.value, t);
+          }
           g.gain.linearRampToValueAtTime(0, t + rel);
-          oscs.forEach(o => { try { o.stop(t + rel + 0.02); } catch(e){} });
+          const stopAt = t + rel + 0.03;
+          oscs.forEach(o => { try { o.stop(stopAt); } catch(e){} });
+          // Disconnect the tone bus once silent so a late LFO/detune change can't
+          // ring through after the gain has closed.
+          try { setTimeout(() => { try { toneBus.disconnect(); } catch(e){} }, (rel + 0.05) * 1000); } catch(e){}
           if (typeof _organActiveVoices !== 'undefined')
             _organActiveVoices = _organActiveVoices.filter(v => v !== voice);
         }
@@ -56576,6 +56587,7 @@ let _organActiveManual = 'upper'; // which manual the next synth call should voi
 // and (b) live control changes (drawbars, Leslie, vol) can update playing voices.
 let _organActiveVoices = []; // [{ midi, stop, barGains, gGain }]
 let _organLastNoteOnMs = 0;  // timestamp of last organ note-on, for fast-swipe click softening
+let _organSlideTrigger = false; // true when a note is triggered by sliding onto a key (suppress key-click)
 
 // Stop voices for a specific midi note only (allows polyphony, prevents same-note stacking)
 // Shared organ output chain — ONE limiter for all organ voices (rebuilt only if the audio
@@ -56585,16 +56597,6 @@ let _organChain = null, _organChainCtx = null;
 function _getOrganChain(ctx) {
   if (_organChain && _organChainCtx === ctx) return _organChain;
   _organChain = buildLimiterChain(ctx, 0.40);
-  // Fast swipes hammer the limiter with rapid transients; the default 150ms
-  // release pumps, letting a note land in a recovery dip and pop louder. A
-  // quicker release recovers smoothly between rapid notes. Softer knee +
-  // gentler ratio also reduce the per-note gain-reduction jolt.
-  try {
-    _organChain.limiter.release.value = 0.05;
-    _organChain.limiter.knee.value = 8;
-    _organChain.limiter.ratio.value = 8;
-    _organChain.limiter.attack.value = 0.003;
-  } catch (e) {}
   _organChainCtx = ctx;
   return _organChain;
 }
@@ -57851,8 +57853,8 @@ function ptoRender(forOverlay) {
     octs = organSingleOct ? 1 : ptoOctaves; // compact view: 1 or 2 octaves
   }
   csDrawChromPerc(svgEl, new Set(), 0, null, octs,
-    (midi) => ptoPlayNote(midi), false, null, null, 'asc');
-  if (!forOverlay && svgEl._multiTouchInit) svgEl._svgKeyRelease = (midi) => ptoReleaseNote(midi);
+    (midi, slide) => ptoPlayNote(midi, undefined, slide), false, null, null, 'asc');
+  if (!forOverlay && svgEl._multiTouchInit) svgEl._svgKeyRelease = (midi, fast) => ptoReleaseNote(midi, undefined, fast);
   _ptoPlainKeys = false;
   chordScaleInstrument = prevInst;
   gccToolMode = prevMode;
@@ -57972,11 +57974,11 @@ function ptoRenderDual() {
   // Upper manual keyboard
   const upSvg = document.getElementById('ptoFSvg');
   if (upSvg) csDrawChromPerc(upSvg, new Set(), 0, null, 5,
-    (midi) => ptoPlayNote(midi, 'upper'), true, null, null, 'asc');
+    (midi, slide) => ptoPlayNote(midi, 'upper', slide), true, null, null, 'asc');
   // Lower manual keyboard
   const loSvg = document.getElementById('ptoFSvgLower');
   if (loSvg) csDrawChromPerc(loSvg, new Set(), 0, null, 5,
-    (midi) => ptoPlayNote(midi, 'lower'), true, null, null, 'asc');
+    (midi, slide) => ptoPlayNote(midi, 'lower', slide), true, null, null, 'asc');
   // Stretch keys to fill their fixed-height container
   if (upSvg) upSvg.setAttribute('preserveAspectRatio', 'none');
   if (loSvg) loSvg.setAttribute('preserveAspectRatio', 'none');
@@ -57990,14 +57992,14 @@ function ptoRenderDual() {
 
 // Organ gated release: in mode 0 (pedal up), lifting the key stops the note.
 // In mode 1 (latched) the note keeps sounding until tapped again.
-function ptoReleaseNote(midi, manual) {
+function ptoReleaseNote(midi, manual, fast) {
   if (organHoldMode === 1) return; // latched: ignore release
   const voiceKey = (manual === 'lower' ? -1 : 1) * (midi + 1);
-  if (typeof _organStopNote === 'function') _organStopNote(voiceKey);
+  if (typeof _organStopNote === 'function') _organStopNote(voiceKey, fast);
   if (typeof _updateOrganDroneMute === 'function') _updateOrganDroneMute();
 }
 
-function ptoPlayNote(midi, manual) {
+function ptoPlayNote(midi, manual, slide) {
   if (typeof hapticLight === 'function') hapticLight();
   const voiceKey = (manual === 'lower' ? -1 : 1) * (midi + 1);
   // In hold mode: tap a held note to stop it (drone toggle)
@@ -58014,7 +58016,9 @@ function ptoPlayNote(midi, manual) {
   const dur   = null;
   const prevManual = _organActiveManual;
   _organActiveManual = (manual === 'lower') ? 'lower' : 'upper';
-  const voice = REF_TONES.organ.synth(ctx, midiToFreq(midi), ctx.currentTime, dur, chain.gain, 0.4);
+  _organSlideTrigger = !!slide;
+  const voice = REF_TONES.organ.synth(ctx, midiToFreq(midi), ctx.currentTime, dur, chain.gain, 0.85);
+  _organSlideTrigger = false;
   _organActiveManual = prevManual;
   if (voice && typeof _organActiveVoices !== 'undefined') {
     const last = _organActiveVoices[_organActiveVoices.length - 1];
@@ -58107,8 +58111,8 @@ function openPtoOrganOverlay() {
   // Gated release on both manuals
   const upSvg = document.getElementById('ptoFSvg');
   const loSvg = document.getElementById('ptoFSvgLower');
-  if (upSvg && upSvg._multiTouchInit) upSvg._svgKeyRelease = (midi) => ptoReleaseNote(midi, 'upper');
-  if (loSvg && loSvg._multiTouchInit) loSvg._svgKeyRelease = (midi) => ptoReleaseNote(midi, 'lower');
+  if (upSvg && upSvg._multiTouchInit) upSvg._svgKeyRelease = (midi, fast) => ptoReleaseNote(midi, 'upper', fast);
+  if (loSvg && loSvg._multiTouchInit) loSvg._svgKeyRelease = (midi, fast) => ptoReleaseNote(midi, 'lower', fast);
   _nudgeOverlayReflow(ov);
 }
 
