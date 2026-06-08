@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.86 -->
+<!-- INTONARE_VERSION: 0.29.87 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17241,14 +17241,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.86</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.87</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.29.86';
+const INTONARE_VERSION = '0.29.87';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -56578,6 +56578,16 @@ let _organChain = null, _organChainCtx = null;
 function _getOrganChain(ctx) {
   if (_organChain && _organChainCtx === ctx) return _organChain;
   _organChain = buildLimiterChain(ctx, 0.40);
+  // Fast swipes hammer the limiter with rapid transients; the default 150ms
+  // release pumps, letting a note land in a recovery dip and pop louder. A
+  // quicker release recovers smoothly between rapid notes. Softer knee +
+  // gentler ratio also reduce the per-note gain-reduction jolt.
+  try {
+    _organChain.limiter.release.value = 0.05;
+    _organChain.limiter.knee.value = 8;
+    _organChain.limiter.ratio.value = 8;
+    _organChain.limiter.attack.value = 0.003;
+  } catch (e) {}
   _organChainCtx = ctx;
   return _organChain;
 }
