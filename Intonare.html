@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.97 -->
+<!-- INTONARE_VERSION: 0.30.0 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17125,6 +17125,12 @@ transition:transform 0.25s ease;
     <div style="font-size:10px;color:var(--muted);margin-bottom:10px" data-i18n="settings_audio_cues_hint">Tap cell to cycle · ▶ to replay</div>
     <div id="cuePickerWrap"></div>
 
+    <div class="sm-section-title sm-section-sub" style="margin-top:14px">Master Volume</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <input type="range" class="sm-calib-slider" id="smMasterVolSlider" min="50" max="150" step="5" value="100" style="flex:1;margin:0" oninput="setMasterVolume(this.value)">
+      <span id="smMasterVolValue" style="font-size:12px;font-weight:700;color:var(--text);min-width:36px;text-align:right;letter-spacing:.5px">100%</span>
+    </div>
+
     <!-- ── PRACTICE ── -->
     <div class="sm-section-title" style="margin-top:18px" data-i18n="settings_practice_section">Practice</div>
 
@@ -17241,14 +17247,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.97</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.0</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.29.97';
+const INTONARE_VERSION = '0.30.0';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -17390,13 +17396,20 @@ function getCueVol(event) {
   return Math.max(0.05, pct / 100);
 }
 
-// Shared limiter-chain factory: returns a gain → compressor → destination
+// Global master volume scale — set from progState.masterVolume (50-150%)
+// Applied to every buildLimiterChain call and rrGetOut.
+function _getMasterScale() {
+  return Math.max(0.1, Math.min(2.0, (progState?.masterVolume ?? 100) / 100));
+}
+
+// Shared limiter-chain factory: returns a gain -> compressor -> destination
 // chain on the given context with the same brick-wall settings we use
 // everywhere. Connect your sources to the returned gain node.
 function buildLimiterChain(ctx, gainValue) {
   const gain = ctx.createGain();
   const base = gainValue == null ? 0.8 : gainValue;
-  gain.gain.value = _applyingCueVol ? base * _cueVolScale : base;
+  const cueScale = _applyingCueVol ? _cueVolScale : 1.0;
+  gain.gain.value = base * cueScale * _getMasterScale();
   const lim = ctx.createDynamicsCompressor();
   lim.threshold.value = -12; lim.knee.value = 3;
   lim.ratio.value = 20;      lim.attack.value = 0.0003;
@@ -28285,7 +28298,7 @@ function tlEnsureCtx() {
   tlCtx = getAudio();
   if (!tlMasterGain || tlMasterGain.context !== tlCtx) {
     tlMasterGain = tlCtx.createGain();
-    tlMasterGain.gain.value = 0.85;
+    tlMasterGain.gain.value = 0.85 * _getMasterScale();
     tlMasterGain.connect(tlCtx.destination);
   }
 }
@@ -28721,7 +28734,7 @@ function tgEnsureCtx() {
   tgCtx = getAudio();
   if (!tgMasterGain || tgMasterGain.context !== tgCtx) {
     tgMasterGain = tgCtx.createGain();
-    tgMasterGain.gain.value = 0.85;
+    tgMasterGain.gain.value = 0.85 * _getMasterScale();
     tgMasterGain.connect(tgCtx.destination);
   }
 }
@@ -29145,7 +29158,7 @@ function prEnsureCtx() {
   prCtx = getAudio();
   if (!prMasterGain || prMasterGain.context !== prCtx) {
     prMasterGain = prCtx.createGain();
-    prMasterGain.gain.value = 0.85;
+    prMasterGain.gain.value = 0.85 * _getMasterScale();
     // Per-layer gain buses for instant mode mute/unmute
     prGainA = prCtx.createGain(); prGainA.gain.value = 1;
     prGainB = prCtx.createGain(); prGainB.gain.value = 1;
@@ -31487,7 +31500,7 @@ function rrActivateBar(idx, durBeats) {
 function rrGetOut(ctx) {
   if (!rrMasterGain) {
     rrMasterGain = ctx.createGain();
-    rrMasterGain.gain.value = 1.0;
+    rrMasterGain.gain.value = _getMasterScale();
     var lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -6;  lim.knee.value = 0;
     lim.ratio.value = 20;      lim.attack.value = 0.001;
@@ -37815,6 +37828,7 @@ const PROG_STORAGE_KEY = 'intonare_progress_v1';
 let progState = {
   xp: 0,
   level: 1,
+  masterVolume: 100,      // global volume scale 50–150 (%)
   tapOffsetMs: 38,        // user-tunable tap calibration; see TAP_LATENCY_OFFSET
   noteNaming: 'english',  // 'english' (C,D,E) or 'solfege' (Do,Re,Mi - fixed Do)
   lang: 'en',              // 'en' or 'it'
@@ -39713,6 +39727,18 @@ function setTapCalibration(ms) {
   progSave();
 }
 
+function setMasterVolume(pct) {
+  const v = Math.max(50, Math.min(150, parseInt(pct) || 100));
+  progState.masterVolume = v;
+  const slider  = document.getElementById('smMasterVolSlider');
+  const display = document.getElementById('smMasterVolValue');
+  if (slider && slider.value != v) slider.value = v;
+  if (display) display.textContent = v + '%';
+  // rrMasterGain is recreated per-session so no live update needed there;
+  // buildLimiterChain reads _getMasterScale() fresh on every sound event.
+  progSave();
+}
+
 // ─── Settings modal ───
 function openSettings() {
   // Safety: clear any stuck module-header state (shouldn't normally be needed)
@@ -39753,6 +39779,12 @@ function syncSettingsUI() {
   if (calSlider) calSlider.value = progState.tapOffsetMs || 38;
   if (calValue)  calValue.textContent = progState.tapOffsetMs || 38;
   if (calBtnVal) calBtnVal.textContent = progState.tapOffsetMs || 38;
+  // Master volume slider
+  const mvSlider  = document.getElementById('smMasterVolSlider');
+  const mvDisplay = document.getElementById('smMasterVolValue');
+  const mvPct = progState.masterVolume ?? 100;
+  if (mvSlider)  mvSlider.value = mvPct;
+  if (mvDisplay) mvDisplay.textContent = mvPct + '%';
 }
 function setNoteNaming(mode) {
   if (mode !== 'english' && mode !== 'solfege') mode = 'english';
@@ -43227,7 +43259,7 @@ function getCtx() {
   if (!dk_audioCtx || dk_audioCtx !== shared) {
     dk_audioCtx = shared;
     dk_masterGain = dk_audioCtx.createGain();
-    dk_masterGain.gain.value = progDrumVolume;
+    dk_masterGain.gain.value = progDrumVolume * _getMasterScale();
     dk_masterGain.connect(dk_audioCtx.destination);
   }
   if (dk_audioCtx.state === 'suspended') dk_audioCtx.resume();
