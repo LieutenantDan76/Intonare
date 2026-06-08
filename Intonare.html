@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.83 -->
+<!-- INTONARE_VERSION: 0.29.86 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -11174,7 +11174,7 @@
    switching tabs. Tune these two numbers if the lines are off by a few px. */
 :root { --piano-align-pad: 5px; --rhodes-align-pad: 13px; }
 #ptoPianoPanel .piano-key-well { margin-top:0; padding-top: var(--piano-align-pad); }
-#ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); margin-left:0; margin-right:0; position:relative; top:14px; z-index:1; }
+#ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); margin-left:-9px; margin-right:-9px; position:relative; top:10px; z-index:1; }
 .piano-card#ptoPianoPanel { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoOrganPanel .card.warm { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoRhodesPanel .rhodes-card { border-top-left-radius:0; border-top-right-radius:0; }
@@ -17241,14 +17241,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.83</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.29.86</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.29.83';
+const INTONARE_VERSION = '0.29.86';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -27241,7 +27241,7 @@ const REF_TONES = {
         const nowMs = (typeof performance !== 'undefined' ? performance.now() : Date.now());
         if (typeof _organLastNoteOnMs === 'number') {
           const gap = nowMs - _organLastNoteOnMs;
-          if (gap < 90) _clickScale = Math.max(0.18, gap / 90); // ramp 0.18→1 over 0–90ms
+          if (gap < 140) _clickScale = Math.max(0.08, gap / 140); // ramp 0.08→1 over 0–140ms
         }
         _organLastNoteOnMs = nowMs;
       } catch (e) {}
@@ -27262,12 +27262,16 @@ const REF_TONES = {
 
       const voice = { barGains, gGain: g, midi: null,
         pitchLfoNode, pitchLfoG, ampLfoNode, ampLfoG, toneBus,
-        stop() {
+        stop(fast) {
           const t = ctx.currentTime;
+          // On rapid retrigger (swipe re-crossing the same key) use a near-instant
+          // release so the dying voice doesn't sum with the new note's attack
+          // (that overlap is what made a key briefly jump louder).
+          const rel = fast ? 0.006 : 0.06;
           g.gain.cancelScheduledValues(t);
           g.gain.setValueAtTime(g.gain.value, t);
-          g.gain.linearRampToValueAtTime(0, t + 0.06);
-          oscs.forEach(o => { try { o.stop(t + 0.08); } catch(e){} });
+          g.gain.linearRampToValueAtTime(0, t + rel);
+          oscs.forEach(o => { try { o.stop(t + rel + 0.02); } catch(e){} });
           if (typeof _organActiveVoices !== 'undefined')
             _organActiveVoices = _organActiveVoices.filter(v => v !== voice);
         }
@@ -56578,14 +56582,14 @@ function _getOrganChain(ctx) {
   return _organChain;
 }
 
-function _organStopNote(midi) {
-  _organActiveVoices.filter(v => v.midi === midi).forEach(v => { try { v.stop(); } catch(e){} });
+function _organStopNote(midi, fast) {
+  _organActiveVoices.filter(v => v.midi === midi).forEach(v => { try { v.stop(fast); } catch(e){} });
   _organActiveVoices = _organActiveVoices.filter(v => v.midi !== midi);
   // Hard cap: if too many voices are stacking (e.g. rapid drag), evict the oldest
   const MAX_VOICES = 6;
   while (_organActiveVoices.length > MAX_VOICES) {
     const oldest = _organActiveVoices.shift();
-    try { oldest.stop(); } catch(e) {}
+    try { oldest.stop(true); } catch(e) {}
   }
 }
 function _organStopAll() {
@@ -57984,7 +57988,7 @@ function ptoPlayNote(midi, manual) {
     const held = _organActiveVoices.find(v => v.midi === voiceKey);
     if (held) { _organStopNote(voiceKey); return; }
   } else {
-    if (typeof _organStopNote === 'function') _organStopNote(voiceKey);
+    if (typeof _organStopNote === 'function') _organStopNote(voiceKey, true);
   }
   const ctx   = getAudio ? getAudio() : ensureRefCtx();
   const chain = _getOrganChain(ctx);
