@@ -17401,21 +17401,16 @@ function _getMasterScale() {
   return Math.max(0.1, Math.min(3.0, (progState?.masterVolume ?? 100) / 100));
 }
 
-// Shared limiter-chain factory: returns a gain -> compressor -> destination
-// chain on the given context with the same brick-wall settings we use
-// everywhere. Connect your sources to the returned gain node.
+// Shared output-chain factory. Previously included a DynamicsCompressor that
+// was silently clamping all gain changes — removed. Gain node connects directly
+// to destination. Returns { gain } for source nodes to connect to.
 function buildLimiterChain(ctx, gainValue) {
   const gain = ctx.createGain();
   const base = gainValue == null ? 0.8 : gainValue;
   const cueScale = _applyingCueVol ? _cueVolScale : 1.0;
   gain.gain.value = base * cueScale * _getMasterScale();
-  const lim = ctx.createDynamicsCompressor();
-  lim.threshold.value = -12; lim.knee.value = 3;
-  lim.ratio.value = 20;      lim.attack.value = 0.0003;
-  lim.release.value = 0.15;
-  gain.connect(lim);
-  lim.connect(ctx.destination);
-  return { gain, limiter: lim };
+  gain.connect(ctx.destination);
+  return { gain, limiter: gain }; // limiter alias kept for call-site compat
 }
 
 let selectedFamily = 'auto';
@@ -39733,8 +39728,6 @@ function setMasterVolume(pct) {
   const display = document.getElementById('smMasterVolValue');
   if (slider && slider.value != v) slider.value = v;
   if (display) display.textContent = v + '%';
-  // DEBUG — remove after confirming
-  alert('masterVolume=' + v + ' scale=' + _getMasterScale().toFixed(3) + ' progState.masterVolume=' + progState.masterVolume);
   // Live-update any cached gain nodes so change takes effect immediately
   // without requiring the user to restart each exercise/instrument.
   const scale = _getMasterScale();
