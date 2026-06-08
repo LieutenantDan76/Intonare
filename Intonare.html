@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.29.72 -->
+<!-- INTONARE_VERSION: 0.29.73 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -11096,10 +11096,11 @@
   overflow-x: hidden;
   padding: 0;
 }
-/* Rhodes keyboard bleeds past the card padding (no key-well wrapper).
-   Slightly wider bleed so its keys read the same size as the piano card. */
+/* Rhodes keyboard: inset from the card edge like the piano well and organ
+   console, so the keys read as framed rather than bleeding off the cabinet. */
 .pss-keyboard-wrap:has(#rhodesCardSvg) {
-  margin-left: -14px; margin-right: -14px; width: calc(100% + 28px);
+  margin-left: 0; margin-right: 0; width: 100%;
+  padding: 0 4px;
 }
 /* Piano: bleed the whole key-well so the keyboard grows without clipping */
 #ptoPianoPanel .piano-key-well {
@@ -11169,9 +11170,9 @@
 /* Keyboard-line alignment: organ is tallest (drawbar console), so pad piano &
    Rhodes keyboards down by these amounts so all three land at the same Y when
    switching tabs. Tune these two numbers if the lines are off by a few px. */
-:root { --piano-align-pad: 15px; --rhodes-align-pad: 21px; }
+:root { --piano-align-pad: 5px; --rhodes-align-pad: 21px; }
 #ptoPianoPanel .piano-key-well { margin-top:0; padding-top: var(--piano-align-pad); }
-#ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); }
+#ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); margin-left:4px; margin-right:4px; }
 .piano-card#ptoPianoPanel { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoOrganPanel .card.warm { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoRhodesPanel .rhodes-card { border-top-left-radius:0; border-top-right-radius:0; }
