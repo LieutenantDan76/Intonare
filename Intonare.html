@@ -8585,7 +8585,7 @@
   .mic-head-btn.listening {
     color: var(--green); border-color: rgba(182,242,91,0.6);
     background: rgba(182,242,91,0.08);
-    transform: scale(1.22);
+    transform: scale(1.08);
     outline: 2px solid rgba(182,242,91,0.25); outline-offset: 2px;
     transition: color 0.2s, border-color 0.2s, background 0.2s,
                 transform 0.4s cubic-bezier(0.34,1.56,0.64,1),
@@ -8824,8 +8824,8 @@
   /* ─── MIC BUTTON STATES ─── */
   @keyframes mic-add-pulse {
     0%   { transform: scale(1);    filter: brightness(1)   drop-shadow(0 0 0px var(--green)); }
-    30%  { transform: scale(1.32); filter: brightness(2.0) drop-shadow(0 0 10px var(--green)); }
-    100% { transform: scale(1.22); filter: brightness(1)   drop-shadow(0 0 2px var(--green)); }
+    30%  { transform: scale(1.15); filter: brightness(1.6) drop-shadow(0 0 6px var(--green)); }
+    100% { transform: scale(1.08); filter: brightness(1)   drop-shadow(0 0 2px var(--green)); }
   }
   @keyframes mic-ripple {
     0%   { transform: scale(1);   opacity: 0.7; }
@@ -8841,7 +8841,7 @@
   .mic-head-btn.listening {
     color: var(--green);
     border-color: rgba(182,242,91,0.6);
-    transform: scale(1.22);
+    transform: scale(1.08);
     outline: 2px solid rgba(182,242,91,0.25); outline-offset: 2px;
     transition: color 0.2s, border-color 0.2s,
                 transform 0.4s cubic-bezier(0.34,1.56,0.64,1),
@@ -18499,8 +18499,7 @@ function showMic() {
   if (hvw) hvw.style.display = '';
 }
 function hideMic() {
-  // Button stays visible in header at all times — just stop mic processing
-  if (isListening) toggleMic();
+  // Mic stays on across all tabs and modules — user controls it manually
 }
 
 function setMode(m) {
@@ -27466,12 +27465,20 @@ function _salamanderNotes() {
   if (n[n.length-1] !== 108) n.push(108); return n;
 }
 
+// Shared gleitz note-to-filename for all FatBoy soundfonts
+function _gleitzNoteToFile(midi) {
+  const NAMES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+  const octave = Math.floor(midi / 12) - 1;
+  return NAMES[midi % 12] + octave + '.mp3';
+}
+const _gleitzAllNotes = (function() { const n = []; for (let m = 21; m <= 108; m++) n.push(m); return n; })();
+
 SampleEngine.register({
   id: 'honky_tonk',
   name: 'Honky Tonk',
   assetUrl: (fname) => _capacitorAssetUrl('honky_tonk', fname),
-  noteToFile: (midi) => _salamanderNoteToFile(midi),
-  sampledNotes: _salamanderNotes(),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
   onFailed() { console.warn('[SampleEngine] Honky tonk samples unavailable'); },
 });
 
@@ -27501,8 +27508,8 @@ SampleEngine.register({
   id: 'harpsichord',
   name: 'Harpsichord',
   assetUrl: (fname) => _capacitorAssetUrl('harpsichord', fname),
-  noteToFile: (midi) => _salamanderNoteToFile(midi),
-  sampledNotes: _salamanderNotes(),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
   onFailed() { console.warn('[SampleEngine] Harpsichord samples unavailable'); },
 });
 
@@ -27510,17 +27517,17 @@ SampleEngine.register({
   id: 'vibraphone',
   name: 'Vibraphone',
   assetUrl: (fname) => _capacitorAssetUrl('vibraphone', fname),
-  noteToFile: (midi) => _salamanderNoteToFile(midi),
-  sampledNotes: _salamanderNotes(),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
   onFailed() { console.warn('[SampleEngine] Vibraphone samples unavailable'); },
 });
 
 SampleEngine.register({
   id: 'nylon_guitar',
-  name: 'Nylon Guitar',
+  name: 'Nylon Gtr',
   assetUrl: (fname) => _capacitorAssetUrl('nylon_guitar', fname),
-  noteToFile: (midi) => _salamanderNoteToFile(midi),
-  sampledNotes: _salamanderNotes(),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
   onFailed() { console.warn('[SampleEngine] Nylon guitar samples unavailable'); },
 });
 
