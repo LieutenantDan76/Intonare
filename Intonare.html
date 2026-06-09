@@ -27306,13 +27306,6 @@ SampleEngine.register({
   id: 'grand_piano',
   name: 'Grand Piano',
   assetUrl(fname) {
-    // Capacitor local asset URL — works offline, no network needed
-    if (window.Capacitor) {
-      return window.Capacitor.convertFileSrc(
-        'file:///android_asset/public/audio/grand_piano/' + fname
-      );
-    }
-    // Browser dev fallback
     return '/audio/grand_piano/' + fname;
   },
   noteToFile(midi) {
@@ -27351,11 +27344,8 @@ function _salamanderNoteToFile(midi) {
   return 'piano' + String(midi).padStart(3, '0') + 'v100.wav';
 }
 function _capacitorAssetUrl(folder, fname) {
-  if (window.Capacitor) {
-    return window.Capacitor.convertFileSrc(
-      'file:///android_asset/public/audio/' + folder + '/' + fname
-    );
-  }
+  // Android assets under public/ are served directly from localhost/
+  // No convertFileSrc needed — that's for filesystem paths, not bundled assets
   return '/audio/' + folder + '/' + fname;
 }
 function _salamanderNotes() {
