@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.30.6 -->
+<!-- INTONARE_VERSION: 0.30.7 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17287,14 +17287,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.6</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.7</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.30.6';
+const INTONARE_VERSION = '0.30.7';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -19165,7 +19165,73 @@ function rhodesPlayNote(midi) {
   const ctx = ensureRefCtx();
   const now = ctx.currentTime;
 
-  const freqFactor = Math.max(0.3, Math.min(2.0, 440 / freq));
+  // ── Sample-based path ─────────────────────────────────────────────────────
+  if (SampleEngine.isReady('electric_piano')) {
+    const freqFactor = Math.max(0.3, Math.min(2.0, 440 / freq));
+    const decayTime = 1.8 * freqFactor;
+    const dur = rhodesSustainMode === 2 ? null
+              : rhodesSustainMode === 1 ? decayTime * 2.2
+              : decayTime;
+
+    // Main sample node
+    const sampleNode = SampleEngine.play('electric_piano', midi, ctx, refMasterGain, refVolume, dur);
+    if (!sampleNode) { /* fall through to synthesis below */ }
+    else {
+      // Key click transient on top — keeps the mechanism feel
+      const isBright = rhodesVibe === 'bright';
+      const clickNoise = _noiseSource ? _noiseSource(ctx, 0.012) : null;
+      if (clickNoise) {
+        const cf = ctx.createBiquadFilter(); cf.type = 'bandpass';
+        cf.frequency.value = 1800; cf.Q.value = 3;
+        const cg = ctx.createGain();
+        cg.gain.setValueAtTime(isBright ? 0.12 : 0.07, now);
+        cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.012);
+        clickNoise.connect(cf); cf.connect(cg); cg.connect(refMasterGain);
+        clickNoise.start(now); clickNoise.stop(now + 0.014);
+      }
+
+      // Tremolo via gain modulation on the sample output
+      const trem = RHODES_TREMOLO[rhodesTremolo];
+      let tremoloLfo = null;
+      if (trem && trem.depth > 0) {
+        tremoloLfo = ctx.createOscillator(); tremoloLfo.type = 'sine';
+        tremoloLfo.frequency.value = trem.rate || 5;
+        const tremMod = ctx.createGain(); tremMod.gain.value = trem.depth * 0.5;
+        tremoloLfo.connect(tremMod); tremMod.connect(sampleNode.gain.gain);
+        tremoloLfo.start(now + 0.05);
+        if (dur) { try { tremoloLfo.stop(now + dur + 0.2); } catch(e) {} }
+      }
+
+      const voice = {
+        _stopped: false, _cleanupTimer: null,
+        stop(soft = true) {
+          if (this._stopped) return;
+          this._stopped = true;
+          if (this._cleanupTimer) { clearTimeout(this._cleanupTimer); this._cleanupTimer = null; }
+          if (tremoloLfo) { try { tremoloLfo.stop(); } catch(e) {} }
+          sampleNode.stop();
+          // Play release sample if available
+          SampleEngine.playRelease('electric_piano', midi, ctx, refMasterGain, refVolume);
+        }
+      };
+
+      if (rhodesSustainMode !== 2 && dur) {
+        voice._cleanupTimer = setTimeout(() => {
+          if (rhodesOscs[key] === voice) {
+            voice.stop(false);
+            delete rhodesOscs[key];
+            _updateRhodesDroneMute();
+          }
+        }, (dur + 0.3) * 1000);
+      }
+
+      rhodesOscs[key] = voice;
+      _updateRhodesDroneMute();
+      return;
+    }
+  }
+
+  // ── Synthesis fallback ────────────────────────────────────────────────────
   const isBright = rhodesVibe === 'bright';
 
   // Master gain
@@ -19810,7 +19876,6 @@ function clearPianoKeyDecay(key) {
 function _pianoSamplesInit() {
   const lbl = document.getElementById('pianoSampleStatus');
   if (SampleEngine.isReady('grand_piano')) {
-    // Already loaded — hide label
     if (lbl) { lbl.textContent = ''; lbl.style.display = 'none'; }
     return;
   }
@@ -19818,9 +19883,13 @@ function _pianoSamplesInit() {
     if (lbl) { lbl.textContent = ''; lbl.style.display = 'none'; }
     return;
   }
-  // Still loading or not started yet
   if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.display = ''; }
   SampleEngine.load('grand_piano');
+}
+
+function _rhodesLoadSamples() {
+  if (SampleEngine.isReady('electric_piano') || SampleEngine.isFailed('electric_piano')) return;
+  SampleEngine.load('electric_piano');
 }
 
 function pianoPlayNote(key, freq, noteName) {
@@ -27418,12 +27487,7 @@ SampleEngine.register({
     };
     return map[midi] || ('Rdcus ' + String(midi).padStart(3,'0') + ' 060.wav');
   },
-  sampledNotes: [24,28,32,36,40,44,48,52,56,60,63,66,69,72,75,78,81,84,87,90,93,96,99,102,105,108],
-  // Release samples: authentic Rhodes damper thunk on note-off (midi 60-108)
-  releaseNotes: (function() {
-    const n = []; for (let m = 60; m <= 108; m++) n.push(m); return n;
-  })(),
-  releaseToFile: (midi) => 'rel ' + String(midi).padStart(3,'0') + '.wav',
+  sampledNotes: [24,32,40,48,56,63,69,75,81,87,93,99,105],
   onFailed() { console.warn('[SampleEngine] Rhodes samples unavailable'); },
 });
 
@@ -28532,7 +28596,7 @@ function buildRefToneBank() {
   container.innerHTML = '';
 
   const TONE_GROUPS = [
-    { label: 'KEYBOARD', keys: ['grand_piano','honky_tonk','electric_piano','harpsichord','vibraphone','nylon_guitar'] },
+    { label: 'KEYBOARD', keys: ['grand_piano','honky_tonk','harpsichord','vibraphone','nylon_guitar'] },
     { label: 'GENERAL',  keys: ['sine','piano','organ','bell','pad'] },
     { label: 'PLUCKED',  keys: ['guitar','bass','mandolin','banjo','ukebass','harp'] },
     { label: 'BRASS',    keys: ['trumpet','trombone','frenchhorn','tuba','brass'] },
@@ -58404,7 +58468,7 @@ function switchPianoToolTab(tab) {
   if (rhodesPanel) rhodesPanel.style.display = tab === 'rhodes' ? '' : 'none';
   if (tab === 'piano')  { buildPiano(); _initPianoPedal(); _initPianoOctLongPress(); }
   if (tab === 'organ')  { ptoRender(); _initOrganPedal(); }
-  if (tab === 'rhodes') { buildRhodesKeyboard(); initRhodesKnobs(); _initRhodesPedal(); _initRhodesOctLongPress(); }
+  if (tab === 'rhodes') { buildRhodesKeyboard(); initRhodesKnobs(); _initRhodesPedal(); _initRhodesOctLongPress(); _rhodesLoadSamples(); }
 }
 
 function ptoRender(forOverlay) {
