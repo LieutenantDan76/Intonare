@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.31.4 -->
+<!-- INTONARE_VERSION: 0.31.5 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17309,14 +17309,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.4</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.5</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.31.4';
+const INTONARE_VERSION = '0.31.5';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -20299,9 +20299,14 @@ function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
   const t = when ?? ctx.currentTime;
   const instGain = (SampleEngine._instruments[toneId] && SampleEngine._instruments[toneId].gain) || 1.0;
   if (SampleEngine.isReady(toneId)) {
-    if (when && when > ctx.currentTime + 0.001) {
-      const tone = REF_TONES[toneId] || REF_TONES.sine;
-      return tone.synth(ctx, freq, t, dur, dest, vol * instGain);
+    const delay = t - ctx.currentTime;
+    if (delay > 0.005) {
+      // Future note: schedule via setTimeout so SampleEngine.play fires at the right time
+      const handle = setTimeout(() => {
+        SampleEngine.play(toneId, freqToMidi(freq), ctx, dest, vol, dur);
+      }, delay * 1000);
+      // Return a stoppable proxy so callers can cancel if needed
+      return { stop() { clearTimeout(handle); } };
     }
     const node = SampleEngine.play(toneId, freqToMidi(freq), ctx, dest, vol, dur);
     if (node) return node;
@@ -22156,6 +22161,12 @@ function exitTool(resetToHub) {
   if (currentTool === 'drumkit') dkClosePresetPanel();
   if (currentTool === 'progression') { progStop(); progCloseSyncTray(); }
   if (currentTool === 'survivalguide') { document.body.classList.remove('sg-open'); try { sgExit(); } catch(e) {} }
+  if (currentTool === 'piano') {
+    try { stopAllRef(); } catch(e) {}
+    try { stopAllRhodesDrones(); } catch(e) {}
+    try { stopAllPianoDrones(); } catch(e) {}
+    try { _organStopAll(); } catch(e) {}
+  }
 
   const folder = TOOL_FOLDER_MAP[currentTool];
   currentTool = null;
@@ -27429,11 +27440,13 @@ const SampleEngine = (function() {
         // capped at 8s. Low piano notes can be 4-6s — don't cut them off early.
         const sampleDur = src.buffer.duration / src.playbackRate.value;
         const actualDur = Math.min(8, Math.max(dur, sampleDur * 0.85));
+        // Release tail: short samples get a longer fade so they don't click off
+        const releaseTail = Math.max(0.15, Math.min(0.5, sampleDur * 0.3));
         src.start(ctx.currentTime);
         const end = ctx.currentTime + actualDur;
-        g.gain.setValueAtTime(vol, Math.max(ctx.currentTime, end - 0.15));
-        g.gain.linearRampToValueAtTime(0.0001, end);
-        src.stop(end + 0.05);
+        g.gain.setValueAtTime(vol, Math.max(ctx.currentTime, end - releaseTail * 0.5));
+        g.gain.linearRampToValueAtTime(0.0001, end + releaseTail);
+        src.stop(end + releaseTail + 0.05);
       } else {
         // Drone: loop the sample indefinitely until stop() is called.
         src.loop = true;
@@ -58633,40 +58646,32 @@ function pssPlay() {
 
   const ctx      = getAudio();
   const chain    = buildLimiterChain(ctx, 0.5);
-  const tone     = REF_TONES[selectedRefTone] || REF_TONES.sine;
+  const toneId   = selectedRefTone;
   const rootMidi = 60 + rootIdx;
   const now      = ctx.currentTime;
   let i = 0;
 
+  const _play = (midi, when, noteDur, v) => {
+    const node = _samplePlay(toneId, midiToFreq(midi), ctx, chain.gain, v, noteDur, when);
+    if (node) pssNodes.push(node);
+  };
+
   if (pssDirection === 'desc') {
-    // Start on top root, play down through each octave
-    const topNode = tone.synth(ctx, midiToFreq(rootMidi + 12 * pssOctaves), now + i * pssStepDelay, 1.0, chain.gain, 0.38);
-    if (topNode) pssNodes.push(topNode);
-    pssFlashKey(rootMidi + 12 * pssOctaves, pssStepDelay, i);
-    i++;
+    _play(rootMidi + 12 * pssOctaves, now + i * pssStepDelay, 1.0, 0.38); pssFlashKey(rootMidi + 12 * pssOctaves, pssStepDelay, i); i++;
     for (let oct = pssOctaves - 1; oct >= 0; oct--) {
       [...st.intervals].reverse().forEach(interval => {
-        const node = tone.synth(ctx, midiToFreq(rootMidi + oct * 12 + interval), now + i * pssStepDelay, 1.0, chain.gain, 0.35);
-        if (node) pssNodes.push(node);
-        pssFlashKey(rootMidi + oct * 12 + interval, pssStepDelay, i);
-        i++;
+        _play(rootMidi + oct * 12 + interval, now + i * pssStepDelay, 1.0, 0.35);
+        pssFlashKey(rootMidi + oct * 12 + interval, pssStepDelay, i); i++;
       });
     }
   } else {
-    // Ascending: play all octaves then land on top root
     for (let oct = 0; oct < pssOctaves; oct++) {
       st.intervals.forEach(interval => {
-        const node = tone.synth(ctx, midiToFreq(rootMidi + oct * 12 + interval), now + i * pssStepDelay, 1.0, chain.gain, 0.35);
-        if (node) pssNodes.push(node);
-        pssFlashKey(rootMidi + oct * 12 + interval, pssStepDelay, i);
-        i++;
+        _play(rootMidi + oct * 12 + interval, now + i * pssStepDelay, 1.0, 0.35);
+        pssFlashKey(rootMidi + oct * 12 + interval, pssStepDelay, i); i++;
       });
     }
-    // Bookend: land on the top root
-    const topNode = tone.synth(ctx, midiToFreq(rootMidi + 12 * pssOctaves), now + i * pssStepDelay, 1.4, chain.gain, 0.38);
-    if (topNode) pssNodes.push(topNode);
-    pssFlashKey(rootMidi + 12 * pssOctaves, pssStepDelay, i);
-    i++;
+    _play(rootMidi + 12 * pssOctaves, now + i * pssStepDelay, 1.4, 0.38); pssFlashKey(rootMidi + 12 * pssOctaves, pssStepDelay, i); i++;
   }
 
   const _pb=document.getElementById('pssPlayBtn'); if(_pb) _pb.textContent='■ STOP';
@@ -58877,12 +58882,11 @@ let _ptoPlainKeys = false;  // when true, suppress root-orange highlight + note 
 const PTO_OCT_MIN = 2, PTO_OCT_MAX = 5;
 
 function switchPianoToolTab(tab) {
-  // Stop any notes still sounding on the instrument we're leaving — otherwise a
-  // held Rhodes/organ drone keeps running on the shared output bus and bleeds
-  // (tremolo and all) under the next instrument.
+  // Stop all sounding notes on the instrument we're leaving
   try { if (typeof stopAllRhodesDrones === 'function') stopAllRhodesDrones(); } catch(e) {}
   try { if (typeof stopAllPianoDrones === 'function') stopAllPianoDrones(); } catch(e) {}
   try { if (typeof _organStopAll === 'function') _organStopAll(); } catch(e) {}
+  try { stopAllRef(); } catch(e) {} // stop any piano key samples still ringing
 
   pianoToolTab = tab;
   document.getElementById('ptoPianoTab')?.classList.toggle('active', tab === 'piano');
