@@ -27373,8 +27373,9 @@ const SampleEngine = (function() {
       src.playbackRate.value = Math.pow(2, (midi - nearest) / 12);
 
       const g = ctx.createGain();
+      const instGain = desc.gain || 1.0;
       g.gain.setValueAtTime(0.0001, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.004);
+      g.gain.exponentialRampToValueAtTime(vol * instGain, ctx.currentTime + 0.004);
 
       src.connect(g);
       g.connect(dest);
@@ -27479,6 +27480,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('honky_tonk', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
+  gain: 2.5,
   onFailed() { console.warn('[SampleEngine] Honky tonk samples unavailable'); },
 });
 
@@ -27510,6 +27512,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('harpsichord', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
+  gain: 2.5,
   onFailed() { console.warn('[SampleEngine] Harpsichord samples unavailable'); },
 });
 
@@ -27519,6 +27522,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('vibraphone', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
+  gain: 2.5,
   onFailed() { console.warn('[SampleEngine] Vibraphone samples unavailable'); },
 });
 
@@ -27528,6 +27532,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('nylon_guitar', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
+  gain: 2.5,
   onFailed() { console.warn('[SampleEngine] Nylon guitar samples unavailable'); },
 });
 
