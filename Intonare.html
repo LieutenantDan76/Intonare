@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.31.1 -->
+<!-- INTONARE_VERSION: 0.31.4 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17309,14 +17309,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.1</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.4</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.31.1';
+const INTONARE_VERSION = '0.31.4';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -18788,38 +18788,44 @@ const INST_TONE_MAP = {
   dadgad: 'guitar', open_d: 'guitar', open_e: 'guitar', open_g: 'guitar',
   double_drop_d: 'guitar', baritone: 'guitar',
   // Bass
-  bass4: 'guitar', bass5: 'guitar', bass6: 'guitar', bass_dropd: 'guitar',
-  // Ukulele
-  uke_soprano: 'guitar', uke_concert: 'guitar', uke_tenor: 'guitar', uke_baritone: 'guitar',
-  // Bowed strings → pad (sustained)
-  violin: 'pad', viola: 'pad', cello: 'pad', doublebass: 'pad',
+  bass4: 'bass', bass5: 'bass', bass6: 'bass', bass_dropd: 'bass',
+  // Ukulele → nylon guitar (warmer, closer to uke timbre than steel)
+  uke_soprano: 'nylon_guitar', uke_concert: 'nylon_guitar', uke_tenor: 'nylon_guitar', uke_baritone: 'nylon_guitar',
+  uke: 'nylon_guitar',
+  // Bowed strings — each gets its own tone
+  violin: 'bowed_violin', viola: 'bowed_viola', cello: 'bowed_cello', doublebass: 'bowed_doublebass',
+  bowed_violin: 'bowed_violin', bowed_viola: 'bowed_viola', bowed_cello: 'bowed_cello', bowed_doublebass: 'bowed_doublebass',
   // Plucked
-  mandolin: 'mandolin', banjo5: 'guitar', harp: 'harp',
-  // Wind → flute (closest analog synth)
-  flute: 'flute', clarinet: 'flute', oboe: 'flute', bassoon: 'flute',
-  altosax: 'flute', tenorsax: 'flute',
-  // New woodwind instruments
-  ww_flute: 'flute', ww_piccolo: 'flute', ww_altoflute: 'flute', ww_ocarina: 'flute',
-  ww_recorder: 'flute', ww_whistle: 'flute',
-  ww_oboe: 'reed', ww_clarinet: 'reed', ww_bassclarinet: 'reed', ww_coranglais: 'reed', ww_bassoon: 'reed',
-  ww_sax: 'reed_conical',
-  trombone: 'trombone', harmonica: 'harmonica',
+  mandolin: 'mandolin', banjo5: 'banjo', banjo: 'banjo', harp: 'harp',
+  bouzouki: 'mandolin', lute: 'nylon_guitar',
+  // Bass (CS alias)
+  bass: 'bass',
+  // Uke bass
+  ukebass: 'ukebass',
+  // Woodwind — each gets its own tone where possible
+  flute: 'flute', ww_flute: 'flute', ww_altoflute: 'flute', ww_whistle: 'flute',
+  ww_piccolo: 'piccolo', piccolo: 'piccolo',
+  ww_recorder: 'recorder',
+  ww_ocarina: 'ocarina',
+  ww_oboe: 'oboe', oboe: 'oboe',
+  ww_clarinet: 'reed', clarinet: 'reed', ww_bassclarinet: 'reed', ww_coranglais: 'reed',
+  ww_bassoon: 'bassoon', bassoon: 'bassoon',
+  ww_sax: 'reed_conical', altosax: 'alto_sax', tenorsax: 'tenor_sax',
+  ww_chrom_harp: 'harmonica', harmonica: 'harmonica',
   // Brass
-  trumpet: 'trumpet', trombone: 'trombone', frenchhorn: 'frenchhorn', tuba: 'tuba',
+  trumpet: 'trumpet', frenchhorn: 'frenchhorn', tuba: 'tuba',
+  trombone: 'trombone',
+  flugelhorn: 'trumpet', euphonium: 'trombone',
   // Keys
-  piano: 'piano',
-  // Chromatic percussion (mallet voices — subtypes resolve via malletToneFor())
+  piano: 'grand_piano',
+  // Chromatic percussion
   mallet: 'marimba', glockenspiel: 'bell', xylophone: 'xylophone', marimba: 'marimba', vibraphone: 'vibraphone',
   organ: 'organ', melodica: 'melodica',
-  // Voice → pad (soft sustained, closest to a held vocal tone)
+  // Voice → pad
   v_bass: 'pad', v_baritone: 'pad', v_tenor: 'pad',
   v_alto: 'pad', v_mezzo: 'pad', v_soprano: 'pad',
-  // CS instrument key aliases (used by SG note-player and range chart)
-  bass: 'bass', uke: 'guitar', banjo: 'banjo',
-  ww_piccolo: 'flute', ww_altoflute: 'flute', ww_bassclarinet: 'flute', ww_ocarina: 'flute',
-  ww_coranglais: 'flute',
-  flugelhorn: 'brass', euphonium: 'brass', frenchhorn: 'frenchhorn',
-  didgeridoo: 'pad', harmonica: 'harmonica',
+  // Misc
+  didgeridoo: 'pad',
 };
 
 function getInstTone(instrument) {
@@ -20291,20 +20297,17 @@ function togglePlayRef(key, freq, noteName) {
 // Shared sample-aware note player. Tries SampleEngine first, falls back to REF_TONES synth.
 function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
   const t = when ?? ctx.currentTime;
+  const instGain = (SampleEngine._instruments[toneId] && SampleEngine._instruments[toneId].gain) || 1.0;
   if (SampleEngine.isReady(toneId)) {
-    const midi = freqToMidi(freq);
-    // SampleEngine.play always uses ctx.currentTime internally; for scheduled future notes
-    // we create a delayed gain envelope manually
     if (when && when > ctx.currentTime + 0.001) {
-      // Future note: use synthesis with when parameter (samples don't support future scheduling yet)
       const tone = REF_TONES[toneId] || REF_TONES.sine;
-      return tone.synth(ctx, freq, t, dur, dest, vol);
+      return tone.synth(ctx, freq, t, dur, dest, vol * instGain);
     }
-    const node = SampleEngine.play(toneId, midi, ctx, dest, vol, dur);
+    const node = SampleEngine.play(toneId, freqToMidi(freq), ctx, dest, vol, dur);
     if (node) return node;
   }
   const tone = REF_TONES[toneId] || REF_TONES.sine;
-  return tone.synth(ctx, freq, t, dur, dest, vol);
+  return tone.synth(ctx, freq, t, dur, dest, vol * instGain);
 }
 
 function playRef(key, freq, noteName) {
@@ -27720,6 +27723,118 @@ SampleEngine.register({
   onFailed() { console.warn('[SampleEngine] Harmonica samples unavailable'); },
 });
 
+// ── Bowed strings ─────────────────────────────────────────────────────────────
+SampleEngine.register({
+  id: 'bowed_violin', name: 'Violin',
+  assetUrl: (f) => _capacitorAssetUrl('bowed_violin', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Violin unavailable'); },
+});
+SampleEngine.register({
+  id: 'bowed_viola', name: 'Viola',
+  assetUrl: (f) => _capacitorAssetUrl('bowed_viola', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Viola unavailable'); },
+});
+SampleEngine.register({
+  id: 'bowed_cello', name: 'Cello',
+  assetUrl: (f) => _capacitorAssetUrl('bowed_cello', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Cello unavailable'); },
+});
+SampleEngine.register({
+  id: 'bowed_doublebass', name: 'Dbl Bass',
+  assetUrl: (f) => _capacitorAssetUrl('bowed_doublebass', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Double bass unavailable'); },
+});
+
+// ── Mandolin + Bell ───────────────────────────────────────────────────────────
+SampleEngine.register({
+  id: 'mandolin', name: 'Mandolin',
+  assetUrl: (f) => _capacitorAssetUrl('mandolin', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Mandolin unavailable'); },
+});
+SampleEngine.register({
+  id: 'bell', name: 'Bell',
+  assetUrl: (f) => _capacitorAssetUrl('bell', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Bell unavailable'); },
+});
+
+// ── New woodwinds ─────────────────────────────────────────────────────────────
+SampleEngine.register({
+  id: 'piccolo', name: 'Piccolo',
+  assetUrl: (f) => _capacitorAssetUrl('piccolo', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Piccolo unavailable'); },
+});
+SampleEngine.register({
+  id: 'recorder', name: 'Recorder',
+  assetUrl: (f) => _capacitorAssetUrl('recorder', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Recorder unavailable'); },
+});
+SampleEngine.register({
+  id: 'ocarina', name: 'Ocarina',
+  assetUrl: (f) => _capacitorAssetUrl('ocarina', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Ocarina unavailable'); },
+});
+SampleEngine.register({
+  id: 'oboe', name: 'Oboe',
+  assetUrl: (f) => _capacitorAssetUrl('oboe', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Oboe unavailable'); },
+});
+SampleEngine.register({
+  id: 'bassoon', name: 'Bassoon',
+  assetUrl: (f) => _capacitorAssetUrl('bassoon', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Bassoon unavailable'); },
+});
+
+// ── Sax subtypes ──────────────────────────────────────────────────────────────
+SampleEngine.register({
+  id: 'alto_sax', name: 'Alto Sax',
+  assetUrl: (f) => _capacitorAssetUrl('alto_sax', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Alto sax unavailable'); },
+});
+SampleEngine.register({
+  id: 'tenor_sax', name: 'Tenor Sax',
+  assetUrl: (f) => _capacitorAssetUrl('tenor_sax', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Tenor sax unavailable'); },
+});
+SampleEngine.register({
+  id: 'soprano_sax', name: 'Soprano Sax',
+  assetUrl: (f) => _capacitorAssetUrl('soprano_sax', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Soprano sax unavailable'); },
+});
+SampleEngine.register({
+  id: 'bari_sax', name: 'Bari Sax',
+  assetUrl: (f) => _capacitorAssetUrl('bari_sax', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Bari sax unavailable'); },
+});
+
+// ── Uke bass + Melodica ───────────────────────────────────────────────────────
+SampleEngine.register({
+  id: 'ukebass', name: 'Uke Bass',
+  assetUrl: (f) => _capacitorAssetUrl('ukebass', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Uke bass unavailable'); },
+});
+SampleEngine.register({
+  id: 'melodica', name: 'Melodica',
+  assetUrl: (f) => _capacitorAssetUrl('melodica', f),
+  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Melodica unavailable'); },
+});
+
 
 // ═══════════════════════════════════════════════
 // SOUND BANKS — Reference tones + Metronome clicks
@@ -28479,6 +28594,76 @@ const REF_TONES = {
     synth(ctx, freq, when, dur, master, vol) {
       return REF_TONES.guitar.synth(ctx, freq, when, dur, master, vol);
     }
+  },
+
+  // ── Bowed strings ──────────────────────────────────────────────────────────
+  bowed_violin: {
+    name: 'VIOLIN', it: 'VIOLINO', icon: '🎻',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.pad.synth(ctx, freq, when, dur, master, vol); }
+  },
+  bowed_viola: {
+    name: 'VIOLA', it: 'VIOLA', icon: '🎻',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.pad.synth(ctx, freq, when, dur, master, vol); }
+  },
+  bowed_cello: {
+    name: 'CELLO', it: 'VIOLONCELLO', icon: '🎻',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.pad.synth(ctx, freq, when, dur, master, vol); }
+  },
+  bowed_doublebass: {
+    name: 'DBL BASS', it: 'CONTRABBASSO', icon: '🎻',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.pad.synth(ctx, freq, when, dur, master, vol); }
+  },
+
+  // ── New woodwind tones ──────────────────────────────────────────────────────
+  piccolo: {
+    name: 'PICCOLO', it: 'OTTAVINO', icon: '🪈',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.flute.synth(ctx, freq, when, dur, master, vol); }
+  },
+  recorder: {
+    name: 'RECORDER', it: 'FLAUTO DOLCE', icon: '🪈',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.flute.synth(ctx, freq, when, dur, master, vol); }
+  },
+  ocarina: {
+    name: 'OCARINA', it: 'OCARINA', icon: '🎵',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.flute.synth(ctx, freq, when, dur, master, vol); }
+  },
+  oboe: {
+    name: 'OBOE', it: 'OBOE', icon: '🪈',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed.synth(ctx, freq, when, dur, master, vol); }
+  },
+  bassoon: {
+    name: 'BASSOON', it: 'FAGOTTO', icon: '🪈',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed.synth(ctx, freq, when, dur, master, vol); }
+  },
+
+  // ── Sax subtypes ───────────────────────────────────────────────────────────
+  alto_sax: {
+    name: 'ALTO SAX', it: 'SAX CONTRALTO', icon: '🎷',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed_conical.synth(ctx, freq, when, dur, master, vol); }
+  },
+  tenor_sax: {
+    name: 'TENOR SAX', it: 'SAX TENORE', icon: '🎷',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed_conical.synth(ctx, freq, when, dur, master, vol); }
+  },
+  soprano_sax: {
+    name: 'SOPR SAX', it: 'SAX SOPRANO', icon: '🎷',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed_conical.synth(ctx, freq, when, dur, master, vol); }
+  },
+  bari_sax: {
+    name: 'BARI SAX', it: 'SAX BARITONO', icon: '🎷',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed_conical.synth(ctx, freq, when, dur, master, vol); }
+  },
+
+  // ── Uke bass ───────────────────────────────────────────────────────────────
+  ukebass: {
+    name: 'UKE BASS', it: 'UKE BASS', icon: '🎸',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.bass.synth(ctx, freq, when, dur, master, vol); }
+  },
+
+  // ── Melodica ───────────────────────────────────────────────────────────────
+  melodica_samp: {
+    name: 'MELODICA', it: 'MELODICA', icon: '🎹',
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed.synth(ctx, freq, when, dur, master, vol); }
   },
 };
 
@@ -54705,6 +54890,14 @@ function tubaSynth(ctx, freq, when, dur, master, vol, tonguing) {
 
 // ── Wind synth router ─────────────────────────────────────────────────────────
 function windSynth(inst, ctx, freq, when, dur, master, vol, tonguing) {
+  // Use samples when available — fall back to dedicated synthesis per instrument
+  const toneId = (inst === 'ww_sax') ? saxToneFor()
+               : INST_TONE_MAP[inst] || null;
+  if (toneId && SampleEngine.isReady(toneId)) {
+    const node = _samplePlay(toneId, freq, ctx, master, vol, dur, when);
+    if (node) return node;
+  }
+  // Synthesis fallback
   if (inst === 'frenchhorn') return hornSynth(ctx, freq, when, dur, master, vol, tonguing);
   if (inst === 'tuba')       return tubaSynth(ctx, freq, when, dur, master, vol, tonguing);
   if (inst === 'trombone')   return tromboneSynth(ctx, freq, when, dur, master, vol, tonguing);
@@ -55506,36 +55699,39 @@ function _frettedToneId() {
 }
 
 function getFrettedTone() {
-  if (isUkeBass())                             return REF_TONES['ukebass']    || REF_TONES['guitar'];
-  if (isMandoFamily('mandocello'))             return REF_TONES['mandocello'] || REF_TONES['mandolin'] || REF_TONES['guitar'];
-  if (chordScaleInstrument === 'mandolin')     return REF_TONES['mandolin']   || REF_TONES['guitar'];
-  if (chordScaleInstrument === 'banjo')        return REF_TONES['banjo']      || REF_TONES['guitar'];
-  if (chordScaleInstrument === 'bass')         return REF_TONES['bass']       || REF_TONES['guitar'];
+  let toneId;
+  if (isUkeBass())                      toneId = 'ukebass';
+  else if (isMandoFamily('mandocello')) toneId = 'mandocello';
+  else                                  toneId = _frettedToneId();
+
   if (is12StringGuitar()) {
-    // Wrap guitar tone to add the characteristic octave doubling.
-    const toneId = _frettedToneId();
-    const base = REF_TONES['guitar'];
     return {
       synth(ctx, freq, when, dur, master, vol, ...rest) {
-        // Use samples if ready, otherwise synthesis
-        const node1 = SampleEngine.isReady(toneId)
-          ? SampleEngine.play(toneId, freqToMidi(freq), ctx, master, vol * 0.75, dur)
-          : base.synth(ctx, freq, when, dur, master, vol * 0.75, ...rest);
+        const node1 = _samplePlay(toneId, freq, ctx, master, vol * 0.75, dur, when);
         const isLowerStr = freq < 247;
         const doubleFreq = isLowerStr ? freq * 2 : freq * 1.003;
         const doubleVol  = isLowerStr ? vol * 0.45 : vol * 0.35;
-        const doubleWhen = when + 0.008;
-        base.synth(ctx, doubleFreq, doubleWhen, dur, master, doubleVol, ...rest);
+        _samplePlay(toneId, doubleFreq, ctx, master, doubleVol, dur, when + 0.008);
         return node1;
       }
     };
   }
-  // Standard fretted: wrap with sample-aware synth
-  const toneId = _frettedToneId();
-  const fallback = REF_TONES[toneId] || REF_TONES['guitar'];
+
+  if (toneId === 'mandocello') {
+    return {
+      synth(ctx, freq, when, dur, master, vol, ...rest) {
+        const fb = SampleEngine.isReady('mandocello') ? 'mandocello'
+                 : SampleEngine.isReady('mandolin')   ? 'mandolin' : null;
+        if (fb) return _samplePlay(fb, freq, ctx, master, vol, dur, when);
+        return (REF_TONES['mandocello'] || REF_TONES['mandolin'] || REF_TONES['guitar'])
+               .synth(ctx, freq, when, dur, master, vol, ...rest);
+      }
+    };
+  }
+
   return {
     synth(ctx, freq, when, dur, master, vol, ...rest) {
-      return _samplePlay(toneId, freq, ctx, master, vol, dur);
+      return _samplePlay(toneId, freq, ctx, master, vol, dur, when);
     }
   };
 }
@@ -55574,6 +55770,7 @@ function switchChordScaleInstrument(inst) {
   const meta = CS_INSTRUMENTS[inst] || {};
   // Set synth voice for piano-render instruments (piano + mallets + organ + melodica)
   if (inst === 'mallet') { selectedRefTone = malletToneFor(); }
+  else if (inst === 'ww_sax')   { selectedRefTone = saxToneFor(); }
   else if (inst === 'organ')    { selectedRefTone = 'organ'; }
   else if (inst === 'melodica') { selectedRefTone = 'melodica'; }
   else if (isPianoRenderInst(inst) && typeof setRefToneForInst === 'function') setRefToneForInst(inst);
@@ -59944,6 +60141,16 @@ function malletToneFor(sub) {
   }
 }
 
+function saxToneFor(sub) {
+  switch (sub || wwSubType) {
+    case 'soprano': return 'soprano_sax';
+    case 'alto':    return 'alto_sax';
+    case 'tenor':   return 'tenor_sax';
+    case 'bari':    return 'bari_sax';
+    default:        return 'alto_sax';
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // BOWED STRINGS — Notes · Double Stops · Scales  (v6)
 // ═══════════════════════════════════════════════════════════════
@@ -60276,7 +60483,8 @@ function _bowedPlaySingle(midi, grp) {
   if(typeof hapticLight==='function') hapticLight();
   _bowedStopAll();
   const ctx=getAudio(), chain=buildLimiterChain(ctx,0.6);
-  const node=_bowSynth(ctx,midiToFreq(midi),ctx.currentTime,1.8,chain.gain,0.42,0.12);
+  const toneId = INST_TONE_MAP[chordScaleInstrument] || 'bowed_violin';
+  const node = _samplePlay(toneId, midiToFreq(midi), ctx, chain.gain, 0.42, 1.8);
   bowedActiveNodes.push(node);
   if(grp){ const c=grp.querySelector('circle'); if(c){ const orig=c.getAttribute('fill'); c.setAttribute('fill','rgba(52,211,153,0.95)'); setTimeout(()=>c.setAttribute('fill',orig),400); } }
 }
@@ -60284,9 +60492,10 @@ function _bowedPlaySingle(midi, grp) {
 function _bowedPlayDouble(lo, hi) {
   if(typeof hapticLight==='function') hapticLight();
   _bowedStopAll();
-  const ctx=getAudio(), chain=buildLimiterChain(ctx,0.6), now=ctx.currentTime;
-  bowedActiveNodes.push(_bowSynth(ctx,midiToFreq(lo),now,2.2,chain.gain,0.38,0.15));
-  bowedActiveNodes.push(_bowSynth(ctx,midiToFreq(hi),now,2.2,chain.gain,0.38,0.15));
+  const ctx=getAudio(), chain=buildLimiterChain(ctx,0.6);
+  const toneId = INST_TONE_MAP[chordScaleInstrument] || 'bowed_violin';
+  bowedActiveNodes.push(_samplePlay(toneId, midiToFreq(lo), ctx, chain.gain, 0.38, 2.2));
+  bowedActiveNodes.push(_samplePlay(toneId, midiToFreq(hi), ctx, chain.gain, 0.38, 2.2));
 }
 
 function _bowedStopAll() {
