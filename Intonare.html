@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.30.8 -->
+<!-- INTONARE_VERSION: 0.31.0 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -6292,6 +6292,18 @@
     display: grid;
     grid-template-columns: repeat(var(--tone-cols, 5), 1fr);
     gap: 5px;
+  }
+  /* When last row has 3 orphans in a 4-col grid (count=7), span them to fill nicely */
+  .tone-tile-row[data-count="7"][data-cols="4"] .tone-tile:nth-child(5),
+  .tone-tile-row[data-count="7"][data-cols="4"] .tone-tile:nth-child(6),
+  .tone-tile-row[data-count="7"][data-cols="4"] .tone-tile:nth-child(7) {
+    /* 3 tiles across 4 cols — let each take their natural 1fr, looks fine */
+  }
+  /* Single orphan: span full width */
+  .tone-tile-row[data-cols="4"] .tone-tile:last-child:nth-child(4n+1),
+  .tone-tile-row[data-cols="5"] .tone-tile:last-child:nth-child(5n+1),
+  .tone-tile-row[data-cols="6"] .tone-tile:last-child:nth-child(6n+1) {
+    grid-column: 1 / -1;
   }
   /* Individual tone tile — bigger, more tappable */
   .tone-tile {
@@ -17297,14 +17309,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.8</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.0</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.30.8';
+const INTONARE_VERSION = '0.31.0';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -27566,6 +27578,129 @@ SampleEngine.register({
   onFailed() { console.warn('[SampleEngine] Xylophone samples unavailable'); },
 });
 
+// ── PLUCKED ───────────────────────────────────────────────────────────────────
+SampleEngine.register({
+  id: 'guitar',
+  name: 'Guitar',
+  assetUrl: (fname) => _capacitorAssetUrl('guitar', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Guitar samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'banjo',
+  name: 'Banjo',
+  assetUrl: (fname) => _capacitorAssetUrl('banjo', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Banjo samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'harp',
+  name: 'Harp',
+  assetUrl: (fname) => _capacitorAssetUrl('harp', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Harp samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'bass',
+  name: 'Bass',
+  assetUrl: (fname) => _capacitorAssetUrl('bass', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Bass samples unavailable'); },
+});
+
+// ── BRASS ─────────────────────────────────────────────────────────────────────
+SampleEngine.register({
+  id: 'trumpet',
+  name: 'Trumpet',
+  assetUrl: (fname) => _capacitorAssetUrl('trumpet', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Trumpet samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'trombone',
+  name: 'Trombone',
+  assetUrl: (fname) => _capacitorAssetUrl('trombone', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Trombone samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'frenchhorn',
+  name: 'Fr Horn',
+  assetUrl: (fname) => _capacitorAssetUrl('frenchhorn', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] French horn samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'tuba',
+  name: 'Tuba',
+  assetUrl: (fname) => _capacitorAssetUrl('tuba', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Tuba samples unavailable'); },
+});
+
+// ── WOODWIND ──────────────────────────────────────────────────────────────────
+SampleEngine.register({
+  id: 'flute',
+  name: 'Flute',
+  assetUrl: (fname) => _capacitorAssetUrl('flute', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Flute samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'reed',
+  name: 'Clarinet',
+  assetUrl: (fname) => _capacitorAssetUrl('reed', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Reed/clarinet samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'reed_conical',
+  name: 'Sax',
+  assetUrl: (fname) => _capacitorAssetUrl('reed_conical', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Sax samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'harmonica',
+  name: 'Harmonica',
+  assetUrl: (fname) => _capacitorAssetUrl('harmonica', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Harmonica samples unavailable'); },
+});
+
 
 // ═══════════════════════════════════════════════
 // SOUND BANKS — Reference tones + Metronome clicks
@@ -28675,9 +28810,10 @@ function buildRefToneBank() {
     tileRow.innerHTML = '';
     const group = TONE_GROUPS[groupIdx];
     const count = group.keys.filter(k => REF_TONES[k] && !_excludedTones.has(k)).length;
-    // Fit tiles: 5 cols for ≤5, 6 for 6, else 4
-    const cols = count <= 5 ? count : (count === 6 ? 6 : 4);
+    const cols = Math.min(count, 4);
     tileRow.style.setProperty('--tone-cols', cols);
+    tileRow.dataset.count = count;
+    tileRow.dataset.cols = cols;
 
     group.keys.forEach(key => {
       const tone = REF_TONES[key];
@@ -28738,20 +28874,24 @@ function buildRefToneBank() {
   };
 }
 
+const _EXCLUDED_TONES = new Set(['piano','brass','mandocello','electric_piano']);
+
 function buildChordToneBank(rowId) {
   const row = document.getElementById(rowId);
   if (!row) return;
   row.innerHTML = '';
   Object.entries(REF_TONES).forEach(([key, tone]) => {
+    if (_EXCLUDED_TONES.has(key)) return;
     const chip = document.createElement('button');
     chip.className = 'tone-chip' + (key === selectedRefTone ? ' active' : '');
     chip.dataset.tone = key;
     chip.innerHTML = `<span class="tone-chip-icon">${tone.icon}</span>${(progState.lang === 'it')&&tone.it?tone.it:tone.name}`;
     chip.onclick = () => {
       selectedRefTone = key;
-      // Sync all tone banks
       document.querySelectorAll('.tone-chip').forEach(c =>
         c.classList.toggle('active', c.dataset.tone === key));
+      if (SampleEngine._instruments[key] && !SampleEngine.isReady(key) && !SampleEngine.isFailed(key))
+        SampleEngine.load(key);
     };
     row.appendChild(chip);
   });
@@ -28763,6 +28903,7 @@ function buildExerciseToneBank(rowId) {
   if (!row) return;
   row.innerHTML = '';
   Object.entries(REF_TONES).forEach(([key, tone]) => {
+    if (_EXCLUDED_TONES.has(key)) return;
     const chip = document.createElement('button');
     chip.className = 'tone-chip' + (key === selectedRefTone ? ' active' : '');
     chip.dataset.tone = key;
@@ -28771,6 +28912,8 @@ function buildExerciseToneBank(rowId) {
       selectedRefTone = key;
       document.querySelectorAll('.tone-chip').forEach(c =>
         c.classList.toggle('active', c.dataset.tone === key));
+      if (SampleEngine._instruments[key] && !SampleEngine.isReady(key) && !SampleEngine.isFailed(key))
+        SampleEngine.load(key);
     };
     row.appendChild(chip);
   });
