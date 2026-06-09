@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.30.3 -->
+<!-- INTONARE_VERSION: 0.30.4 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17287,14 +17287,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.3</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.4</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.30.3';
+const INTONARE_VERSION = '0.30.4';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -19830,7 +19830,6 @@ function pianoPlayNote(key, freq, noteName) {
   // Use real samples when available for any sample-backed tone
   const sampleId = SampleEngine._instruments[selectedRefTone] ? selectedRefTone : null;
   const useSamples = sampleId && SampleEngine.isReady(sampleId);
-  console.log('[piano] selectedRefTone:', selectedRefTone, 'sampleId:', sampleId, 'isReady:', sampleId && SampleEngine.isReady(sampleId), 'state:', sampleId && SampleEngine._state && SampleEngine._state[sampleId]);
 
   if (pianoSustainMode === 2) {
     // Drone mode
@@ -27210,15 +27209,10 @@ const SampleEngine = (function() {
 
       _state[id] = 'loading';
       const ctx  = getAudio();
-      console.log('[SampleEngine] starting load for', id, '— Capacitor present:', !!window.Capacitor);
 
       _loadPromise[id] = (async () => {
         try {
           const notes = desc.sampledNotes || _salamanderNotes();
-          console.log('[SampleEngine]', id, 'fetching', notes.length, 'samples...');
-          // Log the first URL so we can verify path construction
-          const firstUrl = desc.assetUrl(desc.noteToFile(notes[0]));
-          console.log('[SampleEngine] sample URL example:', firstUrl);
           // Load all samples in parallel — faster than sequential
           await Promise.all(notes.map(async midi => {
             const fname = desc.noteToFile(midi);
