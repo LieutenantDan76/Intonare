@@ -27480,7 +27480,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('honky_tonk', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
-  gain: 2.5,
+  gain: 3.0,
   onFailed() { console.warn('[SampleEngine] Honky tonk samples unavailable'); },
 });
 
@@ -27512,7 +27512,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('harpsichord', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
-  gain: 2.5,
+  gain: 3.0,
   onFailed() { console.warn('[SampleEngine] Harpsichord samples unavailable'); },
 });
 
@@ -27522,7 +27522,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('vibraphone', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
-  gain: 2.5,
+  gain: 3.0,
   onFailed() { console.warn('[SampleEngine] Vibraphone samples unavailable'); },
 });
 
@@ -27532,8 +27532,28 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('nylon_guitar', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
-  gain: 2.5,
+  gain: 3.0,
   onFailed() { console.warn('[SampleEngine] Nylon guitar samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'marimba',
+  name: 'Marimba',
+  assetUrl: (fname) => _capacitorAssetUrl('marimba', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Marimba samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'xylophone',
+  name: 'Xylophone',
+  assetUrl: (fname) => _capacitorAssetUrl('xylophone', fname),
+  noteToFile: _gleitzNoteToFile,
+  sampledNotes: _gleitzAllNotes,
+  gain: 3.0,
+  onFailed() { console.warn('[SampleEngine] Xylophone samples unavailable'); },
 });
 
 
@@ -28614,11 +28634,11 @@ function buildRefToneBank() {
   container.innerHTML = '';
 
   const TONE_GROUPS = [
-    { label: 'KEYBOARD', keys: ['grand_piano','honky_tonk','harpsichord','vibraphone','nylon_guitar'] },
-    { label: 'GENERAL',  keys: ['sine','piano','organ','bell','pad'] },
-    { label: 'PLUCKED',  keys: ['guitar','bass','mandolin','banjo','ukebass','harp'] },
-    { label: 'BRASS',    keys: ['trumpet','trombone','frenchhorn','tuba','brass'] },
-    { label: 'WOODWIND', keys: ['flute','reed','reed_conical','harmonica'] },
+    { label: 'KEYBOARD', keys: ['grand_piano','honky_tonk','harpsichord','vibraphone','marimba','xylophone'] },
+    { label: 'WAVES',    keys: ['sine','organ','bell','pad'] },
+    { label: 'PLUCKED',  keys: ['nylon_guitar','guitar','harp','banjo','mandolin','bass','ukebass'] },
+    { label: 'BRASS',    keys: ['trumpet','trombone','frenchhorn','tuba'] },
+    { label: 'WOODWIND', keys: ['flute','reed','reed_conical','harmonica','melodica'] },
   ];
 
   // Any ungrouped tones get appended to GENERAL for future-proofing
