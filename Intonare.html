@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.31.7 -->
+<!-- INTONARE_VERSION: 0.31.8 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -12615,13 +12615,27 @@ transition:transform 0.25s ease;
     const el = document.getElementById('intonare-splash');
     if (el) el.remove();
 
-    // Preload all registered sample instruments on first touch so they're
-    // ready before the user opens any tool. Runs silently in background.
+    // Preload registered sample instruments on first touch. Staggered in priority
+    // order so common instruments are ready first and we don't saturate the
+    // connection with thousands of simultaneous fetches (which made loads slow).
     document.addEventListener('touchend', function _preloadSamples() {
       document.removeEventListener('touchend', _preloadSamples);
-      Object.keys(SampleEngine._instruments).forEach(id => {
-        SampleEngine.load(id);
-      });
+      const PRIORITY = ['grand_piano','guitar','nylon_guitar','bass','harp','electric_piano'];
+      const all = Object.keys(SampleEngine._instruments);
+      const ordered = [...PRIORITY.filter(id => all.includes(id)),
+                       ...all.filter(id => !PRIORITY.includes(id))];
+      // Load in small batches; each batch starts after the previous settles
+      let idx = 0;
+      const BATCH = 3;
+      function loadBatch() {
+        const slice = ordered.slice(idx, idx + BATCH);
+        if (!slice.length) return;
+        idx += BATCH;
+        Promise.allSettled(slice.map(id => SampleEngine.load(id))).then(() => {
+          setTimeout(loadBatch, 150);
+        });
+      }
+      loadBatch();
     }, { once: true });
 
     if (window.Capacitor) {
@@ -17309,14 +17323,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.7</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.8</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.31.7';
+const INTONARE_VERSION = '0.31.8';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -27503,6 +27517,7 @@ SampleEngine.register({
     const n = []; for (let m = 21; m <= 108; m += 3) n.push(m);
     if (n[n.length-1] !== 108) n.push(108); return n;
   })(),
+  gain: 1.6,
   onReady() {
     // Refresh the piano UI to show samples are active
     const lbl = document.getElementById('pianoSampleStatus');
@@ -27565,6 +27580,7 @@ SampleEngine.register({
     return map[midi] || ('Rdcus ' + String(midi).padStart(3,'0') + ' 060.wav');
   },
   sampledNotes: [24,32,40,48,56,63,69,75,81,87,93,99,105],
+  gain: 1.6,
   onFailed() { console.warn('[SampleEngine] Rhodes samples unavailable'); },
 });
 
@@ -58879,16 +58895,16 @@ function pccPlayNote(midi) {
   if (chordScaleInstrument === 'organ' && typeof _organStopNote === 'function') _organStopNote(midi);
   const ctx   = getAudio();
   const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.55);
-  const tone  = REF_TONES[selectedRefTone] || REF_TONES.sine;
+  const toneId = selectedRefTone;
   const freq  = midiToFreq(midi);
   const dur = isMalletInst() ? (malletSubType === 'vibraphone' ? 4.5 : malletSubType === 'glockenspiel' ? 3 : malletSubType === 'marimba' ? 2.2 : 1.4) : (chordScaleInstrument === 'organ' ? 1.8 : chordScaleInstrument === 'melodica' ? 1.6 : 1.5);
-  const _voice = tone.synth(ctx, freq, ctx.currentTime, dur, chain.gain, 0.4);
+  const _voice = _samplePlay(toneId, freq, ctx, chain.gain, 0.4, dur);
   if (chordScaleInstrument === 'organ' && _voice && typeof _organActiveVoices !== 'undefined') {
     const last = _organActiveVoices[_organActiveVoices.length - 1];
     if (last && !last.midi) last.midi = midi;
   }
-  // Organ synthesizes its own harmonics via drawbars — skip addLowFreqHarmonics
-  if (!isMalletInst() && chordScaleInstrument !== 'organ') addLowFreqHarmonics(ctx, freq, ctx.currentTime, 1.5, chain.gain, 0.15);
+  // Organ synthesizes its own harmonics via drawbars; samples carry their own body — skip for both
+  if (!isMalletInst() && chordScaleInstrument !== 'organ' && !SampleEngine.isReady(toneId)) addLowFreqHarmonics(ctx, freq, ctx.currentTime, 1.5, chain.gain, 0.15);
 }
 
 // ── Piano Tool: PIANO / ORGAN tabs ────────────────────────────────────────────
