@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.30.5 -->
+<!-- INTONARE_VERSION: 0.30.6 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17287,14 +17287,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.5</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.6</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.30.5';
+const INTONARE_VERSION = '0.30.6';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -19808,9 +19808,17 @@ function clearPianoKeyDecay(key) {
 // Kick off grand piano sample loading. Called when piano tool is opened.
 // No-op if already loading or loaded. Shows a subtle status label while loading.
 function _pianoSamplesInit() {
-  if (SampleEngine.isReady('grand_piano') || SampleEngine.isFailed('grand_piano')) return;
-  // Show a subtle loading hint
   const lbl = document.getElementById('pianoSampleStatus');
+  if (SampleEngine.isReady('grand_piano')) {
+    // Already loaded — hide label
+    if (lbl) { lbl.textContent = ''; lbl.style.display = 'none'; }
+    return;
+  }
+  if (SampleEngine.isFailed('grand_piano')) {
+    if (lbl) { lbl.textContent = ''; lbl.style.display = 'none'; }
+    return;
+  }
+  // Still loading or not started yet
   if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.display = ''; }
   SampleEngine.load('grand_piano');
 }
@@ -19968,6 +19976,12 @@ function pianoCardRelease(midi) {
   if (pianoSustainMode !== 0) return; // pedal/drone: let it ring
   const refKey = 'pno-' + midi;
   if (refOscs[refKey]) stopRef(refKey);
+  // Play release sample if available (e.g. Rhodes damper thunk)
+  const sampleId = SampleEngine._instruments[selectedRefTone] ? selectedRefTone : null;
+  if (sampleId && SampleEngine.isReady(sampleId)) {
+    const ctx = ensureRefCtx();
+    SampleEngine.playRelease(sampleId, midi, ctx, refMasterGain, refVolume);
+  }
 }
 
 // ─── PIANO MULTI-TOUCH ────────────────────────────────────────────────────────
@@ -27150,6 +27164,7 @@ function scaleStop() {
 const SampleEngine = (function() {
   const _instruments = {};  // id → descriptor
   const _buffers     = {};  // id → Map(midi → AudioBuffer)
+  const _relBuffers  = {};  // id → Map(midi → AudioBuffer) for release samples
   const _state       = {};  // id → 'idle'|'loading'|'ready'|'failed'
   const _loadPromise = {};  // id → Promise (prevents duplicate fetches)
 
@@ -27192,6 +27207,7 @@ const SampleEngine = (function() {
       const id = descriptor.id;
       _instruments[id] = descriptor;
       _buffers[id]     = new Map();
+      _relBuffers[id]  = new Map();
       _state[id]       = 'idle';
     },
 
@@ -27199,6 +27215,22 @@ const SampleEngine = (function() {
     isFailed(id) { return _state[id] === 'failed'; },
     get _instruments() { return _instruments; },
     get _state() { return _state; },
+
+    // Play a release sample for the given instrument and midi note.
+    // Returns null silently if no release sample is available.
+    playRelease(id, midi, ctx, dest, vol) {
+      const buf = _relBuffers[id] && _relBuffers[id].get(midi);
+      if (!buf) return null;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(vol * 0.5, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + buf.duration);
+      src.connect(g); g.connect(dest);
+      src.start(ctx.currentTime);
+      src.stop(ctx.currentTime + buf.duration + 0.05);
+      return { stop() { try { src.stop(); } catch(e) {} } };
+    },
 
     // Trigger async load of all samples for an instrument.
     // Safe to call multiple times — deduplicates.
@@ -27229,6 +27261,16 @@ const SampleEngine = (function() {
             _state[id] = 'ready';
             console.log('[SampleEngine]', id, 'ready —', _buffers[id].size, 'samples loaded');
             if (desc.onReady) desc.onReady();
+            // Load release samples in background if descriptor has them (non-blocking)
+            if (desc.releaseNotes && desc.releaseToFile) {
+              desc.releaseNotes.forEach(async midi => {
+                const url = desc.assetUrl(desc.releaseToFile(midi));
+                try {
+                  const buf = await _fetchBuffer(url, ctx);
+                  _relBuffers[id].set(midi, buf);
+                } catch(e) {} // release samples are optional — fail silently
+              });
+            }
           } else {
             throw new Error('Too many failed samples (' + _buffers[id].size + '/' + notes.length + ')');
           }
@@ -27360,11 +27402,29 @@ SampleEngine.register({
 
 SampleEngine.register({
   id: 'electric_piano',
-  name: 'Electric Piano',
+  name: 'Rhodes',
   assetUrl: (fname) => _capacitorAssetUrl('electric_piano', fname),
-  noteToFile: (midi) => _salamanderNoteToFile(midi),
-  sampledNotes: _salamanderNotes(),
-  onFailed() { console.warn('[SampleEngine] Electric piano samples unavailable'); },
+  noteToFile(midi) {
+    const map = {
+      24:'Rdcus 024 060.wav', 28:'Rdcus 028 060.wav', 32:'Rdcus 032 060.wav',
+      36:'Rdcus 036 060.wav', 40:'Rdcus 040 060.wav', 44:'Rdcus 044 060.wav',
+      48:'Rdcus 048 060.wav', 52:'Rdcus 052 060.wav', 56:'Rdcus 056 060.wav',
+      60:'Rdcus 060 060.wav', 63:'Rdcus 063 060.wav', 66:'Rdcus 066 060.wav',
+      69:'Rdcus 069 060.wav', 72:'Rdcus 072 060.wav', 75:'Rdcus 075 060.wav',
+      78:'Rdcus 078 060.wav', 81:'Rdcus 081 060.wav', 84:'Rdcus 084 060.wav',
+      87:'Rdcus 087 060.wav', 90:'Rdcus 090 060.wav', 93:'Rdcus 093 060.wav',
+      96:'Rdcus 096 060.wav', 99:'Rdcus 099 060.wav', 102:'Rdcus 102 060.wav',
+      105:'Rdcus 105 060.wav', 108:'Rdcus 108 060.wav',
+    };
+    return map[midi] || ('Rdcus ' + String(midi).padStart(3,'0') + ' 060.wav');
+  },
+  sampledNotes: [24,28,32,36,40,44,48,52,56,60,63,66,69,72,75,78,81,84,87,90,93,96,99,102,105,108],
+  // Release samples: authentic Rhodes damper thunk on note-off (midi 60-108)
+  releaseNotes: (function() {
+    const n = []; for (let m = 60; m <= 108; m++) n.push(m); return n;
+  })(),
+  releaseToFile: (midi) => 'rel ' + String(midi).padStart(3,'0') + '.wav',
+  onFailed() { console.warn('[SampleEngine] Rhodes samples unavailable'); },
 });
 
 SampleEngine.register({
@@ -28131,7 +28191,7 @@ const REF_TONES = {
     }
   },
   electric_piano: {
-    name: 'ELECTRIC', it: 'PIANO ELETTRICO', icon: '⚡',
+    name: 'RHODES', it: 'RHODES', icon: '🎹',
     synth(ctx, freq, when, dur, master, vol) {
       return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
     }

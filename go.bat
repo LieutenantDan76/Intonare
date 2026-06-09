@@ -40,8 +40,16 @@ copy /Y colors.xml android\app\src\main\res\values\colors.xml
 echo [4f] Restoring app icons...
 xcopy /E /Y /I icon_res android\app\src\main\res
 
-echo [4g] Restoring audio samples...
-xcopy /E /Y /I audio_assets android\app\src\main\assets\public\audio
+echo [4g] Restoring audio samples (skipping folders already present)...
+if exist audio_assets (
+    for /D %%i in (audio_assets\*) do (
+        set "dest=android\app\src\main\assets\public\audio\%%~ni"
+        if not exist "android\app\src\main\assets\public\audio\%%~ni" (
+            echo   Copying %%~ni...
+            xcopy /E /Y /I "%%i" "android\app\src\main\assets\public\audio\%%~ni"
+        )
+    )
+)
 
 echo [4h] Patching build.gradle proguard reference...
 powershell -Command "(Get-Content android\app\build.gradle) -replace 'proguard-android\.txt', 'proguard-android-optimize.txt' | Set-Content android\app\build.gradle"
