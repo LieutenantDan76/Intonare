@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.32.0 -->
+<!-- INTONARE_VERSION: 0.32.1 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17323,14 +17323,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.32.0</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.32.1</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.32.0';
+const INTONARE_VERSION = '0.32.1';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -20333,8 +20333,8 @@ function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
 // synthesis voices, which sat louder per-unit than the sample voices. For sample
 // playback we normalize to a consistent strong level so every chart family matches
 // the standalone piano tool. Synth fallback keeps the caller's original vol.
-const _CHART_SAMPLE_VOL = 0.92;   // uniform note vol for sample playback in charts
-const _CHART_SYNTH_BOOST = 1.6;   // gentler boost for synth-only fallback tones
+const _CHART_SAMPLE_VOL = 1.0;    // uniform note vol for sample playback in charts
+const _CHART_SYNTH_BOOST = 1.8;   // gentler boost for synth-only fallback tones
 function _chartPlay(toneId, freq, ctx, dest, vol, dur, when) {
   if (SampleEngine.isReady(toneId)) {
     // Samples carry their own instGain; feed a uniform vol so families are even
@@ -53930,7 +53930,7 @@ function gccPlayChord() {
   if (cont) cont.classList.add('playing');
 
   const ctx = getAudio();
-  const chain = buildLimiterChain(ctx, 0.8);
+  const chain = buildLimiterChain(ctx, 0.9);
   const guitarTone = getFrettedTone();
   const vol = 0.38 / Math.sqrt(midiNotes.length);
   const now = ctx.currentTime;
@@ -55471,7 +55471,7 @@ let trpLastTapNode = null; // track most recent single-note tap for trumpet
 function gccPlayString(midi) {
   if (typeof hapticLight === 'function') hapticLight();
   const ctx   = getAudio();
-  const chain = buildLimiterChain(ctx, 0.8);
+  const chain = buildLimiterChain(ctx, 0.9);
   if (isWindInst()) {
     // Stop previous note cleanly before new one
     if (trpLastTapNode) { try { trpLastTapNode.stop(); } catch(e){} trpLastTapNode = null; }
@@ -55506,7 +55506,7 @@ function gssStop() {
 function gssPlayNote(midi, dotGroup) {
   if (typeof hapticLight === 'function') hapticLight();
   const ctx   = getAudio();
-  const chain = buildLimiterChain(ctx, 0.8);
+  const chain = buildLimiterChain(ctx, 0.9);
   const tone  = getFrettedTone();
   tone.synth(ctx, midiToFreq(midi), ctx.currentTime, 1.2, chain.gain, 0.42);
 
@@ -55566,7 +55566,7 @@ function gssPlay() {
   if (gssDirection === 'desc') steps = [...steps].reverse();
 
   const ctx   = getAudio();
-  const chain = buildLimiterChain(ctx, 0.8);
+  const chain = buildLimiterChain(ctx, 0.9);
   const toneId = _frettedToneId();
   const now   = ctx.currentTime;
   const noteDur = gssStepDelay * 0.82; // end just before next note starts
@@ -56892,7 +56892,7 @@ function trpPlay() {
   if (!notes.length) return;
 
   const ctx   = getAudio();
-  const chain = buildLimiterChain(ctx, 0.8);
+  const chain = buildLimiterChain(ctx, 0.9);
   const now   = ctx.currentTime;
   const tonguing = Math.max(0, Math.min(1, (0.58 - trpStepDelay) / 0.51));
   const dur = trpStepDelay * 0.97;
@@ -58590,7 +58590,7 @@ function pssPlayNote(midi) {
   if (typeof hapticLight === 'function') hapticLight();
   if (chordScaleInstrument === 'organ' && typeof _organStopNote === 'function') _organStopNote(midi);
   const ctx  = getAudio();
-  const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.8);
+  const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.9);
   // Mallets ring longer; let the decay breathe
   const dur = isMalletInst() ? (malletSubType === 'vibraphone' ? 4.5 : malletSubType === 'glockenspiel' ? 3 : malletSubType === 'marimba' ? 2.2 : 1.4) : (chordScaleInstrument === 'organ' ? 1.6 : chordScaleInstrument === 'melodica' ? 1.4 : 1.2);
   const toneId = selectedRefTone;
@@ -58691,7 +58691,7 @@ function pssPlay() {
   pssStop();
 
   const ctx      = getAudio();
-  const chain    = buildLimiterChain(ctx, 0.8);
+  const chain    = buildLimiterChain(ctx, 0.9);
   const toneId   = selectedRefTone;
   const rootMidi = 60 + rootIdx;
   const now      = ctx.currentTime;
@@ -58907,7 +58907,7 @@ function pccPlayNote(midi) {
   // Stop same midi note only — preserves polyphony, prevents exact duplicate stacking
   if (chordScaleInstrument === 'organ' && typeof _organStopNote === 'function') _organStopNote(midi);
   const ctx   = getAudio();
-  const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.8);
+  const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.9);
   const toneId = selectedRefTone;
   const freq  = midiToFreq(midi);
   const dur = isMalletInst() ? (malletSubType === 'vibraphone' ? 4.5 : malletSubType === 'glockenspiel' ? 3 : malletSubType === 'marimba' ? 2.2 : 1.4) : (chordScaleInstrument === 'organ' ? 1.8 : chordScaleInstrument === 'melodica' ? 1.6 : 1.5);
@@ -59291,7 +59291,7 @@ function pccPlay() {
   if (typeof hapticLight === 'function') hapticLight();
 
   const ctx      = getAudio();
-  const chain    = buildLimiterChain(ctx, chordScaleInstrument === 'organ' ? 0.38 : 0.8);
+  const chain    = buildLimiterChain(ctx, chordScaleInstrument === 'organ' ? 0.38 : 0.9);
   const toneId   = selectedRefTone;
   const now      = ctx.currentTime;
 
@@ -59826,10 +59826,10 @@ function hpDrawStrings(svgEl, activePcs, rootPc, startIdx, count, pedalPositions
       lastStrumIdx = midi;
       const ctx = getAudio();
       if (!hpStrumChain || hpStrumChain.gain.context !== ctx) {
-        hpStrumChain = buildLimiterChain(ctx, 0.42);
+        hpStrumChain = buildLimiterChain(ctx, 0.7);
       }
       const soundingMidi = parseInt(hitEl.dataset.soundingMidi ?? hitEl.dataset.midi);
-      _samplePlay('harp', midiToFreq(soundingMidi), ctx, hpStrumChain.gain, 0.16, null);
+      _chartPlay('harp', midiToFreq(soundingMidi), ctx, hpStrumChain.gain, 0.16, null);
       if (typeof hapticLight === 'function') hapticLight();
     }
 
@@ -60535,7 +60535,7 @@ function _bowedDot(ctx, x, y, midi, finger, isRoot, inBound, isOpen, svgId, sIdx
 function _bowedPlaySingle(midi, grp) {
   if(typeof hapticLight==='function') hapticLight();
   _bowedStopAll();
-  const ctx=getAudio(), chain=buildLimiterChain(ctx, 0.8);
+  const ctx=getAudio(), chain=buildLimiterChain(ctx, 0.9);
   const toneId = INST_TONE_MAP[chordScaleInstrument] || 'bowed_violin';
   const node = _chartPlay(toneId, midiToFreq(midi), ctx, chain.gain, 0.42, 1.8);
   bowedActiveNodes.push(node);
@@ -60545,7 +60545,7 @@ function _bowedPlaySingle(midi, grp) {
 function _bowedPlayDouble(lo, hi) {
   if(typeof hapticLight==='function') hapticLight();
   _bowedStopAll();
-  const ctx=getAudio(), chain=buildLimiterChain(ctx, 0.8);
+  const ctx=getAudio(), chain=buildLimiterChain(ctx, 0.9);
   const toneId = INST_TONE_MAP[chordScaleInstrument] || 'bowed_violin';
   bowedActiveNodes.push(_chartPlay(toneId, midiToFreq(lo), ctx, chain.gain, 0.38, 2.2));
   bowedActiveNodes.push(_chartPlay(toneId, midiToFreq(hi), ctx, chain.gain, 0.38, 2.2));
@@ -61367,11 +61367,11 @@ function hpPlayChord() {
   });
   midiPairs.sort((a,b) => a[0]-b[0]);
   if (!midiPairs.length) return;
-  const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.42);
+  const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.7);
   const vol = 0.18 / Math.pow(midiPairs.length, 0.12);
   const hpCSvg = document.getElementById('hpChordSvg');
   midiPairs.forEach(([baseMidi, soundingMidi], i) => {
-    _samplePlay('harp', midiToFreq(soundingMidi), ctx, chain.gain, vol, 1.6, ctx.currentTime + i * 0.065);
+    _chartPlay('harp', midiToFreq(soundingMidi), ctx, chain.gain, vol, 1.6, ctx.currentTime + i * 0.065);
     setTimeout(() => {
       const svgs = [hpCSvg, ...document.querySelectorAll('.hp-exp-svg')].filter(Boolean);
       svgs.forEach(svg => {
@@ -61410,11 +61410,11 @@ function hpPlayScale() {
                : HP_PEDAL_MAP[pIdx].nat;
     return m + (sPc - bPc);
   });
-  const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.42);
+  const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.7);
   const isChords2 = gccToolMode === 'chords';
   const hpSvgId  = isChords2 ? 'hpChordSvg' : 'hpScaleSvg';
   soundingMidis.forEach((midi, i) => {
-    const node = _samplePlay('harp', midiToFreq(midi), ctx, chain.gain, 0.16, 1.4, ctx.currentTime + i * hpStepDelay);
+    const node = _chartPlay('harp', midiToFreq(midi), ctx, chain.gain, 0.16, 1.4, ctx.currentTime + i * hpStepDelay);
     if (node) hpScaleNodes.push(node);
     // Flash the string dot for this note
     const flashDur = Math.min(hpStepDelay * 900, 400);
