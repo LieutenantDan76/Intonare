@@ -19169,9 +19169,14 @@ function rhodesPlayNote(midi) {
   if (SampleEngine.isReady('electric_piano')) {
     const freqFactor = Math.max(0.3, Math.min(2.0, 440 / freq));
     const decayTime = 1.8 * freqFactor;
-    const dur = rhodesSustainMode === 2 ? null
-              : rhodesSustainMode === 1 ? decayTime * 2.2
-              : decayTime;
+    // For drone: null (loops). For normal play: use actual buffer length so sample
+    // plays to natural end without cutoff. Voice cleanup timer handles voice removal.
+    const sampleId2 = 'electric_piano';
+    const nearestMidi2 = [...SampleEngine._buffers[sampleId2].keys()].reduce((b,n) => Math.abs(n-midi)<Math.abs(b-midi)?n:b);
+    const buf2 = SampleEngine._buffers[sampleId2].get(nearestMidi2);
+    const playbackRate2 = Math.pow(2, (midi - nearestMidi2) / 12);
+    const naturalDur = buf2 ? (buf2.duration / playbackRate2) : decayTime;
+    const dur = rhodesSustainMode === 2 ? null : Math.min(naturalDur, 6);
 
     // Main sample node
     const sampleNode = SampleEngine.play('electric_piano', midi, ctx, refMasterGain, refVolume, dur);
@@ -19222,7 +19227,7 @@ function rhodesPlayNote(midi) {
             delete rhodesOscs[key];
             _updateRhodesDroneMute();
           }
-        }, (dur + 0.3) * 1000);
+        }, (dur + 0.5) * 1000);
       }
 
       rhodesOscs[key] = voice;
@@ -27284,6 +27289,7 @@ const SampleEngine = (function() {
     isFailed(id) { return _state[id] === 'failed'; },
     get _instruments() { return _instruments; },
     get _state() { return _state; },
+    get _buffers() { return _buffers; },
 
     // Play a release sample for the given instrument and midi note.
     // Returns null silently if no release sample is available.
