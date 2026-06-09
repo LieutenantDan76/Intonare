@@ -19830,6 +19830,7 @@ function pianoPlayNote(key, freq, noteName) {
   // Use real samples when available for any sample-backed tone
   const sampleId = SampleEngine._instruments[selectedRefTone] ? selectedRefTone : null;
   const useSamples = sampleId && SampleEngine.isReady(sampleId);
+  console.log('[piano] selectedRefTone:', selectedRefTone, 'sampleId:', sampleId, 'isReady:', sampleId && SampleEngine.isReady(sampleId), 'state:', sampleId && SampleEngine._state && SampleEngine._state[sampleId]);
 
   if (pianoSustainMode === 2) {
     // Drone mode
@@ -27197,7 +27198,8 @@ const SampleEngine = (function() {
 
     isReady(id) { return _state[id] === 'ready'; },
     isFailed(id) { return _state[id] === 'failed'; },
-    get _instruments() { return _instruments; }, // read-only access for pianoPlayNote
+    get _instruments() { return _instruments; },
+    get _state() { return _state; },
 
     // Trigger async load of all samples for an instrument.
     // Safe to call multiple times — deduplicates.
@@ -27208,10 +27210,15 @@ const SampleEngine = (function() {
 
       _state[id] = 'loading';
       const ctx  = getAudio();
+      console.log('[SampleEngine] starting load for', id, '— Capacitor present:', !!window.Capacitor);
 
       _loadPromise[id] = (async () => {
         try {
           const notes = desc.sampledNotes || _salamanderNotes();
+          console.log('[SampleEngine]', id, 'fetching', notes.length, 'samples...');
+          // Log the first URL so we can verify path construction
+          const firstUrl = desc.assetUrl(desc.noteToFile(notes[0]));
+          console.log('[SampleEngine] sample URL example:', firstUrl);
           // Load all samples in parallel — faster than sequential
           await Promise.all(notes.map(async midi => {
             const fname = desc.noteToFile(midi);
