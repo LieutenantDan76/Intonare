@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.31.9 -->
+<!-- INTONARE_VERSION: 0.32.0 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17323,14 +17323,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.9</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.32.0</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.31.9';
+const INTONARE_VERSION = '0.32.0';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -20330,12 +20330,18 @@ function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
 }
 
 // Chart note players historically passed low vols (0.30–0.42) tuned for the old
-// synthesis voices, which sat louder per-unit than the sample voices. Boost chart
-// sample playback so the charts module matches the standalone piano tool's level.
-const _CHART_VOL_BOOST = 2.4;
+// synthesis voices, which sat louder per-unit than the sample voices. For sample
+// playback we normalize to a consistent strong level so every chart family matches
+// the standalone piano tool. Synth fallback keeps the caller's original vol.
+const _CHART_SAMPLE_VOL = 0.92;   // uniform note vol for sample playback in charts
+const _CHART_SYNTH_BOOST = 1.6;   // gentler boost for synth-only fallback tones
 function _chartPlay(toneId, freq, ctx, dest, vol, dur, when) {
-  const boosted = Math.min(1.0, vol * _CHART_VOL_BOOST);
-  return _samplePlay(toneId, freq, ctx, dest, boosted, dur, when);
+  if (SampleEngine.isReady(toneId)) {
+    // Samples carry their own instGain; feed a uniform vol so families are even
+    return _samplePlay(toneId, freq, ctx, dest, _CHART_SAMPLE_VOL, dur, when);
+  }
+  // Synth fallback — modest boost, respect relative dynamics the caller intended
+  return _samplePlay(toneId, freq, ctx, dest, Math.min(1.0, vol * _CHART_SYNTH_BOOST), dur, when);
 }
 
 function playRef(key, freq, noteName) {
@@ -53924,7 +53930,7 @@ function gccPlayChord() {
   if (cont) cont.classList.add('playing');
 
   const ctx = getAudio();
-  const chain = buildLimiterChain(ctx, 0.55);
+  const chain = buildLimiterChain(ctx, 0.8);
   const guitarTone = getFrettedTone();
   const vol = 0.38 / Math.sqrt(midiNotes.length);
   const now = ctx.currentTime;
@@ -55465,7 +55471,7 @@ let trpLastTapNode = null; // track most recent single-note tap for trumpet
 function gccPlayString(midi) {
   if (typeof hapticLight === 'function') hapticLight();
   const ctx   = getAudio();
-  const chain = buildLimiterChain(ctx, 0.6);
+  const chain = buildLimiterChain(ctx, 0.8);
   if (isWindInst()) {
     // Stop previous note cleanly before new one
     if (trpLastTapNode) { try { trpLastTapNode.stop(); } catch(e){} trpLastTapNode = null; }
@@ -55500,7 +55506,7 @@ function gssStop() {
 function gssPlayNote(midi, dotGroup) {
   if (typeof hapticLight === 'function') hapticLight();
   const ctx   = getAudio();
-  const chain = buildLimiterChain(ctx, 0.6);
+  const chain = buildLimiterChain(ctx, 0.8);
   const tone  = getFrettedTone();
   tone.synth(ctx, midiToFreq(midi), ctx.currentTime, 1.2, chain.gain, 0.42);
 
@@ -55560,7 +55566,7 @@ function gssPlay() {
   if (gssDirection === 'desc') steps = [...steps].reverse();
 
   const ctx   = getAudio();
-  const chain = buildLimiterChain(ctx, 0.5);
+  const chain = buildLimiterChain(ctx, 0.8);
   const toneId = _frettedToneId();
   const now   = ctx.currentTime;
   const noteDur = gssStepDelay * 0.82; // end just before next note starts
@@ -56886,7 +56892,7 @@ function trpPlay() {
   if (!notes.length) return;
 
   const ctx   = getAudio();
-  const chain = buildLimiterChain(ctx, 0.5);
+  const chain = buildLimiterChain(ctx, 0.8);
   const now   = ctx.currentTime;
   const tonguing = Math.max(0, Math.min(1, (0.58 - trpStepDelay) / 0.51));
   const dur = trpStepDelay * 0.97;
@@ -58584,7 +58590,7 @@ function pssPlayNote(midi) {
   if (typeof hapticLight === 'function') hapticLight();
   if (chordScaleInstrument === 'organ' && typeof _organStopNote === 'function') _organStopNote(midi);
   const ctx  = getAudio();
-  const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.55);
+  const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.8);
   // Mallets ring longer; let the decay breathe
   const dur = isMalletInst() ? (malletSubType === 'vibraphone' ? 4.5 : malletSubType === 'glockenspiel' ? 3 : malletSubType === 'marimba' ? 2.2 : 1.4) : (chordScaleInstrument === 'organ' ? 1.6 : chordScaleInstrument === 'melodica' ? 1.4 : 1.2);
   const toneId = selectedRefTone;
@@ -58685,7 +58691,7 @@ function pssPlay() {
   pssStop();
 
   const ctx      = getAudio();
-  const chain    = buildLimiterChain(ctx, 0.5);
+  const chain    = buildLimiterChain(ctx, 0.8);
   const toneId   = selectedRefTone;
   const rootMidi = 60 + rootIdx;
   const now      = ctx.currentTime;
@@ -58901,7 +58907,7 @@ function pccPlayNote(midi) {
   // Stop same midi note only — preserves polyphony, prevents exact duplicate stacking
   if (chordScaleInstrument === 'organ' && typeof _organStopNote === 'function') _organStopNote(midi);
   const ctx   = getAudio();
-  const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.55);
+  const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.8);
   const toneId = selectedRefTone;
   const freq  = midiToFreq(midi);
   const dur = isMalletInst() ? (malletSubType === 'vibraphone' ? 4.5 : malletSubType === 'glockenspiel' ? 3 : malletSubType === 'marimba' ? 2.2 : 1.4) : (chordScaleInstrument === 'organ' ? 1.8 : chordScaleInstrument === 'melodica' ? 1.6 : 1.5);
@@ -59285,7 +59291,7 @@ function pccPlay() {
   if (typeof hapticLight === 'function') hapticLight();
 
   const ctx      = getAudio();
-  const chain    = buildLimiterChain(ctx, chordScaleInstrument === 'organ' ? 0.38 : 0.55);
+  const chain    = buildLimiterChain(ctx, chordScaleInstrument === 'organ' ? 0.38 : 0.8);
   const toneId   = selectedRefTone;
   const now      = ctx.currentTime;
 
@@ -60529,7 +60535,7 @@ function _bowedDot(ctx, x, y, midi, finger, isRoot, inBound, isOpen, svgId, sIdx
 function _bowedPlaySingle(midi, grp) {
   if(typeof hapticLight==='function') hapticLight();
   _bowedStopAll();
-  const ctx=getAudio(), chain=buildLimiterChain(ctx,0.6);
+  const ctx=getAudio(), chain=buildLimiterChain(ctx, 0.8);
   const toneId = INST_TONE_MAP[chordScaleInstrument] || 'bowed_violin';
   const node = _chartPlay(toneId, midiToFreq(midi), ctx, chain.gain, 0.42, 1.8);
   bowedActiveNodes.push(node);
@@ -60539,7 +60545,7 @@ function _bowedPlaySingle(midi, grp) {
 function _bowedPlayDouble(lo, hi) {
   if(typeof hapticLight==='function') hapticLight();
   _bowedStopAll();
-  const ctx=getAudio(), chain=buildLimiterChain(ctx,0.6);
+  const ctx=getAudio(), chain=buildLimiterChain(ctx, 0.8);
   const toneId = INST_TONE_MAP[chordScaleInstrument] || 'bowed_violin';
   bowedActiveNodes.push(_chartPlay(toneId, midiToFreq(lo), ctx, chain.gain, 0.38, 2.2));
   bowedActiveNodes.push(_chartPlay(toneId, midiToFreq(hi), ctx, chain.gain, 0.38, 2.2));
