@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.31.8 -->
+<!-- INTONARE_VERSION: 0.31.9 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17323,14 +17323,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.8</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.9</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.31.8';
+const INTONARE_VERSION = '0.31.9';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -20327,6 +20327,15 @@ function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
   }
   const tone = REF_TONES[toneId] || REF_TONES.sine;
   return tone.synth(ctx, freq, t, dur, dest, vol * instGain);
+}
+
+// Chart note players historically passed low vols (0.30–0.42) tuned for the old
+// synthesis voices, which sat louder per-unit than the sample voices. Boost chart
+// sample playback so the charts module matches the standalone piano tool's level.
+const _CHART_VOL_BOOST = 2.4;
+function _chartPlay(toneId, freq, ctx, dest, vol, dur, when) {
+  const boosted = Math.min(1.0, vol * _CHART_VOL_BOOST);
+  return _samplePlay(toneId, freq, ctx, dest, boosted, dur, when);
 }
 
 function playRef(key, freq, noteName) {
@@ -27517,7 +27526,6 @@ SampleEngine.register({
     const n = []; for (let m = 21; m <= 108; m += 3) n.push(m);
     if (n[n.length-1] !== 108) n.push(108); return n;
   })(),
-  gain: 1.6,
   onReady() {
     // Refresh the piano UI to show samples are active
     const lbl = document.getElementById('pianoSampleStatus');
@@ -27580,7 +27588,6 @@ SampleEngine.register({
     return map[midi] || ('Rdcus ' + String(midi).padStart(3,'0') + ' 060.wav');
   },
   sampledNotes: [24,32,40,48,56,63,69,75,81,87,93,99,105],
-  gain: 1.6,
   onFailed() { console.warn('[SampleEngine] Rhodes samples unavailable'); },
 });
 
@@ -54928,7 +54935,7 @@ function windSynth(inst, ctx, freq, when, dur, master, vol, tonguing) {
   const toneId = (inst === 'ww_sax') ? saxToneFor()
                : INST_TONE_MAP[inst] || null;
   if (toneId && SampleEngine.isReady(toneId)) {
-    const node = _samplePlay(toneId, freq, ctx, master, vol, dur, when);
+    const node = _chartPlay(toneId, freq, ctx, master, vol, dur, when);
     if (node) return node;
   }
   // Synthesis fallback
@@ -55559,7 +55566,7 @@ function gssPlay() {
   const noteDur = gssStepDelay * 0.82; // end just before next note starts
 
   steps.forEach((step, i) => {
-    const node = _samplePlay(toneId, midiToFreq(step.midi), ctx, chain.gain, 0.30, noteDur, now + i * gssStepDelay);
+    const node = _chartPlay(toneId, midiToFreq(step.midi), ctx, chain.gain, 0.30, noteDur, now + i * gssStepDelay);
     if (node) gssNodes.push(node);
     const flashDelay = i * gssStepDelay * 1000;
     const flashDur   = Math.min(gssStepDelay * 900, 350);
@@ -55742,11 +55749,11 @@ function getFrettedTone() {
   if (is12StringGuitar()) {
     return {
       synth(ctx, freq, when, dur, master, vol, ...rest) {
-        const node1 = _samplePlay(toneId, freq, ctx, master, vol * 0.75, dur, when);
+        const node1 = _chartPlay(toneId, freq, ctx, master, vol * 0.75, dur, when);
         const isLowerStr = freq < 247;
         const doubleFreq = isLowerStr ? freq * 2 : freq * 1.003;
         const doubleVol  = isLowerStr ? vol * 0.45 : vol * 0.35;
-        _samplePlay(toneId, doubleFreq, ctx, master, doubleVol, dur, when + 0.008);
+        _chartPlay(toneId, doubleFreq, ctx, master, doubleVol, dur, when + 0.008);
         return node1;
       }
     };
@@ -55766,7 +55773,7 @@ function getFrettedTone() {
 
   return {
     synth(ctx, freq, when, dur, master, vol, ...rest) {
-      return _samplePlay(toneId, freq, ctx, master, vol, dur, when);
+      return _chartPlay(toneId, freq, ctx, master, vol, dur, when);
     }
   };
 }
@@ -58581,7 +58588,7 @@ function pssPlayNote(midi) {
   // Mallets ring longer; let the decay breathe
   const dur = isMalletInst() ? (malletSubType === 'vibraphone' ? 4.5 : malletSubType === 'glockenspiel' ? 3 : malletSubType === 'marimba' ? 2.2 : 1.4) : (chordScaleInstrument === 'organ' ? 1.6 : chordScaleInstrument === 'melodica' ? 1.4 : 1.2);
   const toneId = selectedRefTone;
-  const _vpss = _samplePlay(toneId, midiToFreq(midi), ctx, chain.gain, 0.38, dur);
+  const _vpss = _chartPlay(toneId, midiToFreq(midi), ctx, chain.gain, 0.38, dur);
   if (chordScaleInstrument === 'organ' && _vpss && typeof _organActiveVoices !== 'undefined') {
     const last = _organActiveVoices[_organActiveVoices.length - 1];
     if (last && !last.midi) last.midi = midi;
@@ -58687,7 +58694,7 @@ function pssPlay() {
   let i = 0;
 
   const _play = (midi, when, v) => {
-    const node = _samplePlay(toneId, midiToFreq(midi), ctx, chain.gain, v, noteDur, when);
+    const node = _chartPlay(toneId, midiToFreq(midi), ctx, chain.gain, v, noteDur, when);
     if (node) pssNodes.push(node);
   };
 
@@ -58898,7 +58905,7 @@ function pccPlayNote(midi) {
   const toneId = selectedRefTone;
   const freq  = midiToFreq(midi);
   const dur = isMalletInst() ? (malletSubType === 'vibraphone' ? 4.5 : malletSubType === 'glockenspiel' ? 3 : malletSubType === 'marimba' ? 2.2 : 1.4) : (chordScaleInstrument === 'organ' ? 1.8 : chordScaleInstrument === 'melodica' ? 1.6 : 1.5);
-  const _voice = _samplePlay(toneId, freq, ctx, chain.gain, 0.4, dur);
+  const _voice = _chartPlay(toneId, freq, ctx, chain.gain, 0.4, dur);
   if (chordScaleInstrument === 'organ' && _voice && typeof _organActiveVoices !== 'undefined') {
     const last = _organActiveVoices[_organActiveVoices.length - 1];
     if (last && !last.midi) last.midi = midi;
@@ -59302,7 +59309,7 @@ function pccPlay() {
   const _samplesReady = SampleEngine.isReady(toneId);
   midiNotes.forEach(midi => {
     const freq = midiToFreq(midi);
-    const node = _samplePlay(toneId, freq, ctx, chain.gain, vol, 3.0);
+    const node = _chartPlay(toneId, freq, ctx, chain.gain, vol, 3.0);
     // Organ has its own harmonic synthesis; samples carry their own body — only add for synth tones
     if (chordScaleInstrument !== 'organ' && !_samplesReady) addLowFreqHarmonics(ctx, freq, now, 3.0, chain.gain, vol * 0.4);
     if (node && node.stop) pccNodes.push(node);
@@ -60524,7 +60531,7 @@ function _bowedPlaySingle(midi, grp) {
   _bowedStopAll();
   const ctx=getAudio(), chain=buildLimiterChain(ctx,0.6);
   const toneId = INST_TONE_MAP[chordScaleInstrument] || 'bowed_violin';
-  const node = _samplePlay(toneId, midiToFreq(midi), ctx, chain.gain, 0.42, 1.8);
+  const node = _chartPlay(toneId, midiToFreq(midi), ctx, chain.gain, 0.42, 1.8);
   bowedActiveNodes.push(node);
   if(grp){ const c=grp.querySelector('circle'); if(c){ const orig=c.getAttribute('fill'); c.setAttribute('fill','rgba(52,211,153,0.95)'); setTimeout(()=>c.setAttribute('fill',orig),400); } }
 }
@@ -60534,8 +60541,8 @@ function _bowedPlayDouble(lo, hi) {
   _bowedStopAll();
   const ctx=getAudio(), chain=buildLimiterChain(ctx,0.6);
   const toneId = INST_TONE_MAP[chordScaleInstrument] || 'bowed_violin';
-  bowedActiveNodes.push(_samplePlay(toneId, midiToFreq(lo), ctx, chain.gain, 0.38, 2.2));
-  bowedActiveNodes.push(_samplePlay(toneId, midiToFreq(hi), ctx, chain.gain, 0.38, 2.2));
+  bowedActiveNodes.push(_chartPlay(toneId, midiToFreq(lo), ctx, chain.gain, 0.38, 2.2));
+  bowedActiveNodes.push(_chartPlay(toneId, midiToFreq(hi), ctx, chain.gain, 0.38, 2.2));
 }
 
 function _bowedStopAll() {
