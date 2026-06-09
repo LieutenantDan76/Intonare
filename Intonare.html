@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.31.5 -->
+<!-- INTONARE_VERSION: 0.31.7 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17309,14 +17309,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.5</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.7</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.31.5';
+const INTONARE_VERSION = '0.31.7';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -18869,9 +18869,8 @@ function playStringNote(i, freq, noteName, instrument) {
   // Play
   const ctx = ensureRefCtx();
   const now = ctx.currentTime;
-  const tone = REF_TONES[selectedRefTone] || REF_TONES.sine;
   const dur = 2.8;
-  const sound = tone.synth(ctx, freq, now, dur, refMasterGain, refVolume);
+  const sound = _samplePlay(selectedRefTone, freq, ctx, refMasterGain, refVolume, dur);
   _playingStringKey = key;
   const sr = document.getElementById(`sr-${i}`);
   if (sr) sr.classList.add('playing');
@@ -20302,11 +20301,12 @@ function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
     const delay = t - ctx.currentTime;
     if (delay > 0.005) {
       // Future note: schedule via setTimeout so SampleEngine.play fires at the right time
+      let liveNode = null;
       const handle = setTimeout(() => {
-        SampleEngine.play(toneId, freqToMidi(freq), ctx, dest, vol, dur);
+        liveNode = SampleEngine.play(toneId, freqToMidi(freq), ctx, dest, vol, dur);
       }, delay * 1000);
-      // Return a stoppable proxy so callers can cancel if needed
-      return { stop() { clearTimeout(handle); } };
+      // Proxy: cancel the pending timer AND stop the note if it already started
+      return { stop() { clearTimeout(handle); if (liveNode && liveNode.stop) { try { liveNode.stop(); } catch(e){} } } };
     }
     const node = SampleEngine.play(toneId, freqToMidi(freq), ctx, dest, vol, dur);
     if (node) return node;
@@ -23737,7 +23737,12 @@ function ivNext() {
 // Shared note player for TRAIN exercises — respects selectedRefTone
 function practicePlayNote(freq, when, dur, vol) {
   const ctx  = ensurePracticeCtx();
-  const tone = REF_TONES[selectedRefTone] || REF_TONES.sine;
+  const toneId = selectedRefTone;
+  if (SampleEngine.isReady(toneId)) {
+    _samplePlay(toneId, freq, ctx, practiceMasterGain, vol ?? 0.35, dur, when);
+    return;
+  }
+  const tone = REF_TONES[toneId] || REF_TONES.sine;
   tone.synth(ctx, freq, when, dur, practiceMasterGain, vol ?? 0.35);
   addLowFreqHarmonics(ctx, freq, when, dur, practiceMasterGain, vol ?? 0.35);
 }
@@ -24027,7 +24032,7 @@ function chordPlayMidi(midiNotes, arpeggiate, arpDelay) {
   chordStop();
   const ctx   = getAudio();
   const chain = buildLimiterChain(ctx, 0.55);
-  const tone  = REF_TONES[selectedRefTone] || REF_TONES.sine;
+  const toneId = selectedRefTone;
   const vol   = (0.38 / Math.sqrt(midiNotes.length)) * chordVolume;
   const now   = ctx.currentTime;
   const step  = (arpeggiate && arpDelay != null) ? arpDelay : 0.13;
@@ -24035,8 +24040,8 @@ function chordPlayMidi(midiNotes, arpeggiate, arpDelay) {
     const when = arpeggiate ? now + i * step : now;
     const dur  = arpeggiate ? Math.max(2.0, step * midiNotes.length + 1.8) : 3.0;
     const freq = midiToFreq(midi);
-    const node = tone.synth(ctx, freq, when, dur, chain.gain, vol);
-    addLowFreqHarmonics(ctx, freq, when, dur, chain.gain, vol);
+    const node = _samplePlay(toneId, freq, ctx, chain.gain, vol, dur, when);
+    if (!SampleEngine.isReady(toneId)) addLowFreqHarmonics(ctx, freq, when, dur, chain.gain, vol);
     if (node && node.stop) chordNodes.push(node);
   });
   const delay = arpeggiate ? midiNotes.length * Math.round(step * 1000) + 3000 : 3000;
@@ -53907,7 +53912,7 @@ function gccPlayChord() {
     const dur  = Math.max(2.2, arpDelay * midiNotes.length + 1.8);
     const freq = midiToFreq(midi);
     const node = guitarTone.synth(ctx, freq, when, dur, chain.gain, vol);
-    addLowFreqHarmonics(ctx, freq, when, dur, chain.gain, vol * 0.4);
+    if (!SampleEngine.isReady(_frettedToneId())) addLowFreqHarmonics(ctx, freq, when, dur, chain.gain, vol * 0.4);
     if (node) gccNodes.push(node);
   });
 
@@ -55533,11 +55538,12 @@ function gssPlay() {
 
   const ctx   = getAudio();
   const chain = buildLimiterChain(ctx, 0.5);
-  const tone  = getFrettedTone();
+  const toneId = _frettedToneId();
   const now   = ctx.currentTime;
+  const noteDur = gssStepDelay * 0.82; // end just before next note starts
 
   steps.forEach((step, i) => {
-    const node = tone.synth(ctx, midiToFreq(step.midi), now + i * gssStepDelay, 1.0, chain.gain, 0.30);
+    const node = _samplePlay(toneId, midiToFreq(step.midi), ctx, chain.gain, 0.30, noteDur, now + i * gssStepDelay);
     if (node) gssNodes.push(node);
     const flashDelay = i * gssStepDelay * 1000;
     const flashDur   = Math.min(gssStepDelay * 900, 350);
@@ -55778,6 +55784,17 @@ function switchChordScaleInstrument(inst) {
   if (typeof wwResetAlts === 'function') wwResetAlts();
   if (typeof tromboneResetAlts === 'function') tromboneResetAlts();
   chordScaleInstrument = inst;
+  // Eagerly load samples for the instrument we just switched to (fretted/bowed/wind tones)
+  (function _loadInstSamples() {
+    const ids = new Set();
+    if (typeof _frettedToneId === 'function' && CS_INST_FAMILY_MAP[inst] === 'fretted') ids.add(_frettedToneId());
+    if (inst === 'ww_sax') ids.add(saxToneFor());
+    const mapped = INST_TONE_MAP[inst];
+    if (mapped) ids.add(mapped);
+    ids.forEach(id => {
+      if (SampleEngine._instruments[id] && !SampleEngine.isReady(id) && !SampleEngine.isFailed(id)) SampleEngine.load(id);
+    });
+  })();
   // Organ defaults to a 2-octave view (keys auto-shrink to fit width, like a real B-3 manual)
   if (inst === 'organ') { pssOctaves = 2; pccOctaves = 2; }
   const meta = CS_INSTRUMENTS[inst] || {};
@@ -58545,10 +58562,10 @@ function pssPlayNote(midi) {
   if (chordScaleInstrument === 'organ' && typeof _organStopNote === 'function') _organStopNote(midi);
   const ctx  = getAudio();
   const chain = (chordScaleInstrument === 'organ') ? _getOrganChain(ctx) : buildLimiterChain(ctx, 0.55);
-  const tone  = REF_TONES[selectedRefTone] || REF_TONES.sine;
   // Mallets ring longer; let the decay breathe
   const dur = isMalletInst() ? (malletSubType === 'vibraphone' ? 4.5 : malletSubType === 'glockenspiel' ? 3 : malletSubType === 'marimba' ? 2.2 : 1.4) : (chordScaleInstrument === 'organ' ? 1.6 : chordScaleInstrument === 'melodica' ? 1.4 : 1.2);
-  const _vpss = tone.synth(ctx, midiToFreq(midi), ctx.currentTime, dur, chain.gain, 0.38);
+  const toneId = selectedRefTone;
+  const _vpss = _samplePlay(toneId, midiToFreq(midi), ctx, chain.gain, 0.38, dur);
   if (chordScaleInstrument === 'organ' && _vpss && typeof _organActiveVoices !== 'undefined') {
     const last = _organActiveVoices[_organActiveVoices.length - 1];
     if (last && !last.midi) last.midi = midi;
@@ -58649,29 +58666,31 @@ function pssPlay() {
   const toneId   = selectedRefTone;
   const rootMidi = 60 + rootIdx;
   const now      = ctx.currentTime;
+  // Cap note duration so each note ends just before the next one starts
+  const noteDur  = pssStepDelay * 0.82;
   let i = 0;
 
-  const _play = (midi, when, noteDur, v) => {
+  const _play = (midi, when, v) => {
     const node = _samplePlay(toneId, midiToFreq(midi), ctx, chain.gain, v, noteDur, when);
     if (node) pssNodes.push(node);
   };
 
   if (pssDirection === 'desc') {
-    _play(rootMidi + 12 * pssOctaves, now + i * pssStepDelay, 1.0, 0.38); pssFlashKey(rootMidi + 12 * pssOctaves, pssStepDelay, i); i++;
+    _play(rootMidi + 12 * pssOctaves, now + i * pssStepDelay, 0.38); pssFlashKey(rootMidi + 12 * pssOctaves, pssStepDelay, i); i++;
     for (let oct = pssOctaves - 1; oct >= 0; oct--) {
       [...st.intervals].reverse().forEach(interval => {
-        _play(rootMidi + oct * 12 + interval, now + i * pssStepDelay, 1.0, 0.35);
+        _play(rootMidi + oct * 12 + interval, now + i * pssStepDelay, 0.35);
         pssFlashKey(rootMidi + oct * 12 + interval, pssStepDelay, i); i++;
       });
     }
   } else {
     for (let oct = 0; oct < pssOctaves; oct++) {
       st.intervals.forEach(interval => {
-        _play(rootMidi + oct * 12 + interval, now + i * pssStepDelay, 1.0, 0.35);
+        _play(rootMidi + oct * 12 + interval, now + i * pssStepDelay, 0.35);
         pssFlashKey(rootMidi + oct * 12 + interval, pssStepDelay, i); i++;
       });
     }
-    _play(rootMidi + 12 * pssOctaves, now + i * pssStepDelay, 1.4, 0.38); pssFlashKey(rootMidi + 12 * pssOctaves, pssStepDelay, i); i++;
+    _play(rootMidi + 12 * pssOctaves, now + i * pssStepDelay, 0.38); pssFlashKey(rootMidi + 12 * pssOctaves, pssStepDelay, i); i++;
   }
 
   const _pb=document.getElementById('pssPlayBtn'); if(_pb) _pb.textContent='■ STOP';
@@ -59244,7 +59263,7 @@ function pccPlay() {
 
   const ctx      = getAudio();
   const chain    = buildLimiterChain(ctx, chordScaleInstrument === 'organ' ? 0.38 : 0.55);
-  const tone     = REF_TONES[selectedRefTone] || REF_TONES.sine;
+  const toneId   = selectedRefTone;
   const now      = ctx.currentTime;
 
   // Compute inverted intervals same way pccRender does
@@ -59264,11 +59283,12 @@ function pccPlay() {
   }
 
   const vol = 0.38 / Math.sqrt(midiNotes.length);
+  const _samplesReady = SampleEngine.isReady(toneId);
   midiNotes.forEach(midi => {
     const freq = midiToFreq(midi);
-    const node = tone.synth(ctx, freq, now, 3.0, chain.gain, vol);
-    // Organ has its own harmonic synthesis — skip addLowFreqHarmonics
-    if (chordScaleInstrument !== 'organ') addLowFreqHarmonics(ctx, freq, now, 3.0, chain.gain, vol * 0.4);
+    const node = _samplePlay(toneId, freq, ctx, chain.gain, vol, 3.0);
+    // Organ has its own harmonic synthesis; samples carry their own body — only add for synth tones
+    if (chordScaleInstrument !== 'organ' && !_samplesReady) addLowFreqHarmonics(ctx, freq, now, 3.0, chain.gain, vol * 0.4);
     if (node && node.stop) pccNodes.push(node);
   });
 
