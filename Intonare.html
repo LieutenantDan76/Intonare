@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.30.0 -->
+<!-- INTONARE_VERSION: 0.30.3 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -8860,20 +8860,30 @@
     display: flex; align-items: center; gap: 2px;
     flex: 1 1 0; min-width: 0;
   }
+  /* When section title wraps to two lines, nudge it down so the first line
+     sits level with the back chevron rather than the whole block centering */
+  .header--section #appLogo[data-len="long"] {
+    padding-top: 0.55em;
+  }
   .logo-area .logo { min-width: 0; overflow: hidden; white-space: nowrap; width: 100%; }
   .header-back-btn {
     display: none;
-    align-items: center; justify-content: center; align-self: center;
-    width: 22px; height: 22px; flex-shrink: 0;
-    border-radius: 50%;
+    align-items: center; gap: 3px;
+    align-self: center;
+    height: 32px; padding: 0 6px 0 2px;
+    flex-shrink: 0;
+    border-radius: 6px;
     background: transparent;
     border: none;
-    color: var(--text-dim);
+    color: var(--accent);
     cursor: pointer;
-    transition: color .15s;
-    padding: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    opacity: 0.85;
   }
-  .header-back-btn:active { color: var(--text); }
+  .header-back-btn:active { opacity: 1; }
 
   /* ── Module controls slot (e.g. Chordle speed/settings) ── */
   .header-module-controls {
@@ -8919,17 +8929,42 @@
   body.in-section #rhythmHub .train-header { display: none !important; }
 
   /* module mode: slightly smaller than INTONARE logo so back chevron fits on narrow phones */
-  .header--module #appLogo { font-family: 'Bebas Neue', sans-serif; font-style: normal; font-weight: 400; font-size: clamp(32px, 9vw, 46px); letter-spacing: 3px; flex: 1 1 0; min-width: 0; }
+  .header--module #appLogo {
+    display: none;
+  }
   /* Section-level header (tab hub + folder browsing) */
-  .header--section #appLogo { font-family: 'Bebas Neue', sans-serif; font-style: normal; font-weight: 400; font-size: clamp(32px, 9vw, 46px); letter-spacing: 3px; flex: 1 1 0; min-width: 0; white-space: nowrap; }
-  .header--module #headerSub,
+  .header--section #appLogo {
+    font-family: 'Bebas Neue', sans-serif; font-style: normal; font-weight: 400;
+    font-size: clamp(22px, 6.5vw, 34px); letter-spacing: 2px;
+    flex: 1 1 0; min-width: 0;
+    white-space: normal; line-height: 1.05;
+    overflow: hidden;
+  }
+  /* Folder back chevron — plain but slightly more visible than bare dimmed icon */
+  body.in-section-back .header-back-btn {
+    color: var(--text-dim);
+    opacity: 0.7;
+    padding: 0 4px;
+    width: 28px; height: 32px;
+    border-radius: 6px;
+  }
+  body.in-section-back .header-back-btn:active {
+    opacity: 1;
+    background: var(--surface-2);
+  }
   body.in-section-back #headerSub {
-    padding-left: 24px;  /* subtitle aligns under title, past the back button */
-    /* padding-bottom intentionally NOT reduced — keeps tagline row height = session bar stays put */
+    padding-left: 24px;  /* subtitle aligns under folder title, past the back chevron */
   }
   .header--module #headerTagline {
-    font-style: italic;
-    letter-spacing: 0.5px;
+    font-family: 'Bebas Neue', sans-serif; font-style: normal;
+    font-size: clamp(17px, 5vw, 22px); letter-spacing: 2px;
+    color: var(--accent);
+  }
+  /* The italic subtitle sits after the module name inline — injected as a <span> by setHeaderModule */
+  .header--module .hdr-mod-sub {
+    font-family: 'Fraunces', serif; font-style: italic;
+    font-size: clamp(9px, 2.4vw, 12px); letter-spacing: 0.5px;
+    color: var(--text-dim); margin-left: 7px;
   }
 
   /* ── Tighter layout when in a module ── */
@@ -8950,28 +8985,9 @@
   /* ── Length-based sizing — language-agnostic (data-len from text length) ──
      short (<9): big single line.  medium (9-13): mid single line.
      long (14+): readable size, wraps to 2 lines instead of shrinking tiny. */
-  .header--module #appLogo,
   .header--section #appLogo {
     line-height: 1.05;
   }
-  .header--module #appLogo[data-len="short"],
-  .header--section #appLogo[data-len="short"]  {
-    font-size: clamp(30px, 8.5vw, 44px); letter-spacing: 2px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .header--module #appLogo[data-len="medium"],
-  .header--section #appLogo[data-len="medium"] {
-    font-size: clamp(24px, 6.8vw, 34px); letter-spacing: 1.5px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  /* Long: readable size, wraps to two lines, stays vertically centered */
-  .header--module #appLogo[data-len="long"],
-  .header--section #appLogo[data-len="long"]   {
-    font-size: clamp(21px, 6vw, 30px); letter-spacing: 1px;
-    white-space: normal; line-height: 1.05; text-align: left;
-    overflow: hidden;
-  }
-
   /* Bottom tab bar */
   .mode-toggle {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
@@ -12591,13 +12607,36 @@ transition:transform 0.25s ease;
       const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
       if (notifPlugin) notifPlugin.requestPermissions().catch(() => {});
 
-      // Mic permission — requires user gesture, fire on first touch
-      document.addEventListener('touchend', function _reqMicPerm() {
-        document.removeEventListener('touchend', _reqMicPerm);
-        navigator.mediaDevices && navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(s => s.getTracks().forEach(t => t.stop()))
-          .catch(() => {});
-      }, { once: true });
+      // Check mic permission state. If already granted, start immediately.
+      // If not yet granted, wait for first touch (which satisfies the user-gesture
+      // requirement for the OS permission dialog) then start.
+      const permPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.Permissions;
+      if (permPlugin) {
+        permPlugin.query({ name: 'microphone' }).then(result => {
+          if (result && result.state === 'granted') {
+            // Permission already granted — start mic directly, no gesture needed
+            if (!isListening) startMic().catch(() => {});
+          } else {
+            // Not yet granted — wait for first touch then request + start
+            document.addEventListener('touchend', function _reqMicPerm() {
+              document.removeEventListener('touchend', _reqMicPerm);
+              if (!isListening) startMic().catch(() => {});
+            }, { once: true });
+          }
+        }).catch(() => {
+          // Can't query — fall back to first-touch approach
+          document.addEventListener('touchend', function _reqMicPerm() {
+            document.removeEventListener('touchend', _reqMicPerm);
+            if (!isListening) startMic().catch(() => {});
+          }, { once: true });
+        });
+      } else {
+        // No Permissions plugin — first touch fallback
+        document.addEventListener('touchend', function _reqMicPerm() {
+          document.removeEventListener('touchend', _reqMicPerm);
+          if (!isListening) startMic().catch(() => {});
+        }, { once: true });
+      }
     }
   }
 
@@ -13060,7 +13099,7 @@ transition:transform 0.25s ease;
   <div class="header" id="appHeader">
     <div class="header-top">
       <div class="logo-area" id="logoArea">
-        <button class="header-back-btn" id="headerBackBtn" onclick="headerBack()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="header-back-btn" id="headerBackBtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="15 18 9 12 15 6"/></svg><span id="headerBackLabel" style="padding:0 4px 0 2px"></span></button>
         <div class="logo" id="appLogo">Intonare</div>
       </div>
       <!-- Status elements kept in DOM for JS — visually hidden -->
@@ -13646,6 +13685,7 @@ transition:transform 0.25s ease;
         <div class="pss-keyboard-wrap">
           <svg class="pss-keyboard-svg" id="pianoCardSvg" style="max-width:100%"></svg>
         </div>
+        <div id="pianoSampleStatus" style="display:none;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);text-align:center;padding:3px 0;opacity:0.7"></div>
         </div><!-- /piano-key-well -->
 
         <!-- Tone picker -->
@@ -17247,14 +17287,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.0</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.3</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.30.0';
+const INTONARE_VERSION = '0.30.3';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -17401,16 +17441,42 @@ function _getMasterScale() {
   return Math.max(0.1, Math.min(3.0, (progState?.masterVolume ?? 100) / 100));
 }
 
-// Shared output-chain factory. Previously included a DynamicsCompressor that
-// was silently clamping all gain changes — removed. Gain node connects directly
-// to destination. Returns { gain } for source nodes to connect to.
+// Registry of every gain node created by buildLimiterChain, keyed by node → base gain value.
+// setMasterVolume iterates this to update all of them at once.
+const _masterGainRegistry = new Map();
+
+// Blanket boost applied to every buildLimiterChain call site.
+// Value of 0.9 pushes the loudest call sites (base 0.8) to just under the
+// limiter threshold (-3 dB = 0.708), maximising loudness before the limiter
+// starts working. The one 0.9-base outlier goes slightly over; the limiter
+// catches it cleanly. Quietest sites (0.32) land at 0.29 — audible but not hot.
+const BASE_GAIN_BOOST = 0.9;
+
+// Shared output-chain factory. Gain node → soft limiter → destination.
+// Limiter threshold is high (-3 dB) so it only catches true clipping peaks,
+// not normal signal — unlike the old -12 dB setting which clamped everything.
 function buildLimiterChain(ctx, gainValue) {
   const gain = ctx.createGain();
-  const base = gainValue == null ? 0.8 : gainValue;
+  const base = (gainValue == null ? 0.8 : gainValue) * BASE_GAIN_BOOST;
   const cueScale = _applyingCueVol ? _cueVolScale : 1.0;
   gain.gain.value = base * cueScale * _getMasterScale();
-  gain.connect(ctx.destination);
-  return { gain, limiter: gain }; // limiter alias kept for call-site compat
+  // Low shelf: boost bass frequencies to compensate for phone speaker rolloff.
+  // +8 dB below 300 Hz — audible improvement without making bass muddy.
+  const bass = ctx.createBiquadFilter();
+  bass.type = 'lowshelf';
+  bass.frequency.value = 300;
+  bass.gain.value = 8;
+  const lim = ctx.createDynamicsCompressor();
+  lim.threshold.value = -3;  // only clamps genuine peaks
+  lim.knee.value = 3;
+  lim.ratio.value = 20;
+  lim.attack.value = 0.001;
+  lim.release.value = 0.1;
+  gain.connect(bass);
+  bass.connect(lim);
+  lim.connect(ctx.destination);
+  _masterGainRegistry.set(gain, base); // register for live updates
+  return { gain, limiter: lim };
 }
 
 let selectedFamily = 'auto';
@@ -19739,6 +19805,16 @@ function clearPianoKeyDecay(key) {
 }
 
 
+// Kick off grand piano sample loading. Called when piano tool is opened.
+// No-op if already loading or loaded. Shows a subtle status label while loading.
+function _pianoSamplesInit() {
+  if (SampleEngine.isReady('grand_piano') || SampleEngine.isFailed('grand_piano')) return;
+  // Show a subtle loading hint
+  const lbl = document.getElementById('pianoSampleStatus');
+  if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.display = ''; }
+  SampleEngine.load('grand_piano');
+}
+
 function pianoPlayNote(key, freq, noteName) {
   // Clean up previous instance — prevents orphaned oscillators and corrupt timeouts
   if (refOscs[key]) {
@@ -19749,19 +19825,35 @@ function pianoPlayNote(key, freq, noteName) {
   }
   const ctx = ensureRefCtx();
   const now = ctx.currentTime;
-  const tone = REF_TONES[selectedRefTone] || REF_TONES.sine;
+  const midi = freqToMidi(freq);
+
+  // Use real samples when available for any sample-backed tone
+  const sampleId = SampleEngine._instruments[selectedRefTone] ? selectedRefTone : null;
+  const useSamples = sampleId && SampleEngine.isReady(sampleId);
 
   if (pianoSustainMode === 2) {
-    // Drone: dur = null, oscillator runs until explicitly stopped
-    const sound = tone.synth(ctx, freq, now, null, refMasterGain, refVolume);
+    // Drone mode
+    let sound;
+    if (useSamples) {
+      sound = SampleEngine.play(sampleId, midi, ctx, refMasterGain, refVolume, null);
+    }
+    if (!sound) {
+      const tone = REF_TONES[selectedRefTone] || REF_TONES.sine;
+      sound = tone.synth(ctx, freq, now, null, refMasterGain, refVolume);
+    }
     refOscs[key] = { sound, timeoutId: null, freq };
   } else if (pianoSustainMode === 0) {
-    // Gated (no pedal): note decays naturally like a real struck string. If the
-    // finger lifts before the decay finishes, the release handler stops it early.
-    // Either way it dies out on its own — holding is NOT a drone.
+    // Gated (no pedal)
     const dur = 1.8;
     const ms  = 1900;
-    const sound = tone.synth(ctx, freq, now, dur, refMasterGain, refVolume);
+    let sound;
+    if (useSamples) {
+      sound = SampleEngine.play(sampleId, midi, ctx, refMasterGain, refVolume, dur);
+    }
+    if (!sound) {
+      const tone = REF_TONES[selectedRefTone] || REF_TONES.sine;
+      sound = tone.synth(ctx, freq, now, dur, refMasterGain, refVolume);
+    }
     const timeoutId = setTimeout(() => {
       delete refOscs[key];
       if (activeRefFreq === freq) { activeRefFreq = null; activeRefName = null; activeRefMidi = null; }
@@ -19769,10 +19861,17 @@ function pianoPlayNote(key, freq, noteName) {
     }, ms);
     refOscs[key] = { sound, timeoutId, freq, gated: true };
   } else {
-    // Mode 1 (pedal down): rings out with a long natural decay after release
+    // Pedal down — longer ring
     const dur = 2.8;
     const ms  = 2900;
-    const sound = tone.synth(ctx, freq, now, dur, refMasterGain, refVolume);
+    let sound;
+    if (useSamples) {
+      sound = SampleEngine.play(sampleId, midi, ctx, refMasterGain, refVolume, dur);
+    }
+    if (!sound) {
+      const tone = REF_TONES[selectedRefTone] || REF_TONES.sine;
+      sound = tone.synth(ctx, freq, now, dur, refMasterGain, refVolume);
+    }
     const timeoutId = setTimeout(() => {
       delete refOscs[key];
       if (activeRefFreq === freq) { activeRefFreq = null; activeRefName = null; activeRefMidi = null; }
@@ -19787,19 +19886,14 @@ function pianoPlayNote(key, freq, noteName) {
   // Start the visual decay animation to match the sound envelope
   if (pianoSustainMode !== 2) {
     const dur = pianoSustainMode === 1 ? 2.8 : 1.8;
-    // Strip .ref class from this key immediately before starting the rAF decay.
-    // This hands full visual control to the rAF from frame 1 — no CSS class
-    // fighting the inline styles at any point during or after the animation.
-    const midi = parseInt(key.replace('pno-', ''));
-    if (!isNaN(midi)) {
-      const isBlack = BLACK_NOTES_PER_OCT.includes(midi % 12);
-      _pianoKeyEls(midi, isBlack).forEach(el => el.classList.remove('ref', 'user', 'both'));
+    const midiN = parseInt(key.replace('pno-', ''));
+    if (!isNaN(midiN)) {
+      const isBlack = BLACK_NOTES_PER_OCT.includes(midiN % 12);
+      _pianoKeyEls(midiN, isBlack).forEach(el => el.classList.remove('ref', 'user', 'both'));
     }
-    // Visual duration runs longer than the audio so the fade reaches zero
-    // naturally — no abrupt handoff to CSS defaults at the end.
     startPianoKeyDecay(key, dur * 2.2);
   } else {
-    clearPianoKeyDecay(key); // drone: no decay
+    clearPianoKeyDecay(key);
   }
 }
 
@@ -21843,7 +21937,8 @@ function enterToolFolder(folder) {
   const idMap = { pitch:'toolFolderPitch', harmony:'toolFolderHarmony', rhythm:'toolFolderRhythm', reference:'toolFolderReference', utilities:'toolFolderUtilities' };
   document.getElementById(idMap[folder]).classList.remove('hidden');
   try { favUpdatePins(); } catch(e) {}
-  setHeaderSection(TOOL_FOLDER_NAME(folder), exitToolFolder);
+  const subMap = { pitch:'folder_pitch_sub', harmony:'folder_harmony_sub', rhythm:'folder_rhythm_tools_sub', reference:'folder_reference_sub', utilities:'folder_utilities_sub' };
+  setHeaderSection(TOOL_FOLDER_NAME(folder), exitToolFolder, subMap[folder]);
 }
 
 function exitToolFolder() {
@@ -21877,8 +21972,10 @@ function enterTool(name, restoreState) {
   document.getElementById('toolSurvivalGuide')?.classList.toggle('hidden', name !== 'survivalguide');
 
   // Module header — same pattern as enterExercise
-  _headerBackFn = exitTool;
-  setHeaderModule(TOOL_NAME(name), TOOL_SUB(name));
+  var _toolFolder = TOOL_FOLDER_MAP[name];
+  var _toolBackLabel = _toolFolder ? ('back to ' + TOOL_FOLDER_NAME(_toolFolder)) : ('back to ' + (t('mode_tools') || 'Tools'));
+  setHeaderModule(TOOL_NAME(name), TOOL_SUB(name), null, _toolBackLabel);
+  _headerBackFn = exitTool; // must be set AFTER setHeaderModule (which nulls it)
   // Force layout tight (inline beats CSS for first-paint timing)
 
   // Scroll to top
@@ -21888,7 +21985,7 @@ function enterTool(name, restoreState) {
     document.body.scrollTop = 0;
   });
 
-  if (name === 'piano') { buildRefPitchGrid(); buildPiano(); _initPianoMultiTouch(); _initPianoPedal(); _initPianoOctLongPress(); resetPianoToolTabs && resetPianoToolTabs(); }
+  if (name === 'piano') { buildRefPitchGrid(); buildPiano(); _initPianoMultiTouch(); _initPianoPedal(); _initPianoOctLongPress(); resetPianoToolTabs && resetPianoToolTabs(); _pianoSamplesInit(); }
   if (name === 'survivalguide') { document.body.classList.add('sg-open'); try { sgInit(); } catch(e) { console.error('sgInit',e); } }
   if (name === 'tonal') tcInit();
   if (name === 'volume') dbStart();
@@ -23018,13 +23115,14 @@ var TOOL_SUB_KEYS = {
 };
 function TOOL_SUB(k){ return t(TOOL_SUB_KEYS[k]) || ''; }
 
-function setHeaderModule(name, subtitle, exerciseId) {
+function setHeaderModule(name, subtitle, exerciseId, backLabel) {
   var header    = document.getElementById('appHeader');
   var logo      = document.getElementById('appLogo');
   var logoArea  = document.getElementById('logoArea');
   var tagline   = document.getElementById('headerTagline');
   var controls  = document.getElementById('headerModuleControls');
   var headerSub = document.getElementById('headerSub');
+  var backLbl   = document.getElementById('headerBackLabel');
 
   _headerBackFn = null;
   clearTimeout(_pendingHeaderTimeout);
@@ -23041,12 +23139,18 @@ function setHeaderModule(name, subtitle, exerciseId) {
     if (header) header.classList.remove('header--module', 'header--section');
     if (name && header) header.classList.add('header--module');
     if (name) {
-      if (logo)    logo.textContent = name;
-      if (tagline) tagline.textContent = subtitle || '\u200b';
-      if (logo) { var len = name.length; logo.dataset.len = len >= 14 ? 'long' : len >= 9 ? 'medium' : 'short'; logo.dataset.title = name; }
+      // Back button pill label (no arrow — chevron is in the button HTML)
+      if (backLbl) backLbl.textContent = backLabel || '';
+      // appLogo hidden in module mode via CSS — clear it
+      if (logo) { logo.textContent = '\u200b'; delete logo.dataset.len; delete logo.dataset.title; }
+      // Subtitle row: module name (Bebas) + optional italic subtitle
+      if (tagline) {
+        tagline.innerHTML = name + (subtitle ? '<span class="hdr-mod-sub">' + subtitle + '</span>' : '');
+      }
       var ids = exerciseId && EXERCISE_CONTROLS[exerciseId] ? EXERCISE_CONTROLS[exerciseId] : [];
       ids.forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = ''; });
     } else {
+      if (backLbl) backLbl.textContent = '';
       if (logo)    logo.textContent = t('app_name');
       if (tagline) tagline.textContent = 'suona in sintonia · play in tune';
       if (logo)    { delete logo.dataset.len; delete logo.dataset.title; }
@@ -23065,6 +23169,7 @@ function setHeaderSection(name, onBack, subKey) {
   var logoArea  = document.getElementById('logoArea');
   var headerSub = document.getElementById('headerSub');
   var tagline   = document.getElementById('headerTagline');
+  var backLbl   = document.getElementById('headerBackLabel');
   if (!logo) return;
 
   _headerBackFn = onBack || null;
@@ -23082,10 +23187,8 @@ function setHeaderSection(name, onBack, subKey) {
     if (name) {
       logo.textContent = name;
       var len = name.length;
-      logo.dataset.len = len >= 14 ? 'long' : len >= 9 ? 'medium' : 'short';
+      logo.dataset.len = len >= 10 ? 'long' : len >= 6 ? 'medium' : 'short';
       logo.dataset.title = name;
-      // Subtitle resolved from the explicit subKey passed in (translatable),
-      // falling back to a blank line if none provided.
       if (tagline) tagline.textContent = (subKey ? (t(subKey) || '') : '') || '\u200b';
       if (header) header.classList.add('header--section');
       document.body.classList.add('in-section');
@@ -23096,6 +23199,8 @@ function setHeaderSection(name, onBack, subKey) {
       delete logo.dataset.title;
       if (tagline) tagline.textContent = 'suona in sintonia · play in tune';
     }
+    // Always clear the module back label when switching to section mode
+    if (backLbl) backLbl.textContent = '';
     requestAnimationFrame(function() {
       if (logoArea) logoArea.style.opacity = '1';
       if (headerSub) headerSub.style.opacity = '1';
@@ -23113,8 +23218,21 @@ function headerBack() {
 function enterExercise(name) {
   sesEnter();
   sesTrackModule('e:' + name);
-  // Swap app header to show module name
-  setHeaderModule(EXERCISE_NAME(name), EXERCISE_SUB(name), name);
+  // Swap app header to show module name with contextual back label
+  var _exBackMap = {
+    scales: 'practice',
+    tempo: 'rhythm', tempoguess: 'rhythm', poly: 'rhythm', rhythmread: 'rhythm',
+    interval: 'ear_training', chords: 'ear_training', singsing: 'ear_training',
+    chordle: 'games', diadle: 'games', tonale: 'games'
+  };
+  var _exBackKey = _exBackMap[name] || 'practice';
+  var _exBackLabels = {
+    practice: 'back to ' + (t('mode_train') || 'Train'),
+    rhythm: 'back to Rhythm',
+    ear_training: 'back to Ear Training',
+    games: 'back to Games'
+  };
+  setHeaderModule(EXERCISE_NAME(name), EXERCISE_SUB(name), name, _exBackLabels[_exBackKey]);
   // Hide the section-level hint so exercises start at the top of the viewport
   var th = document.querySelector('.train-only > .teach-hint');
   if (th) th.style.display = 'none';
@@ -25697,7 +25815,7 @@ function progDkAdjBpm(delta) { progDkSetBpm(bpm + delta); }
 
 function progDkSetVolume(v) {
   progDrumVolume = v / 100;
-  if (dk_masterGain) dk_masterGain.gain.value = progDrumVolume;
+  if (dk_masterGain) dk_masterGain.gain.value = progDrumVolume * BASE_GAIN_BOOST * _getMasterScale();
   const dkSlider = document.getElementById('progDkVolSlider');
   const dkLabel  = document.getElementById('progDkVolLabel');
   const mSlider  = document.getElementById('progMetroVolSlider');
@@ -27022,6 +27140,268 @@ function scaleStop() {
   document.querySelectorAll('#scaleNotes span').forEach(s => s.classList.remove('current'));
 }
 
+
+// ═══════════════════════════════════════════════
+// SAMPLE ENGINE
+// Universal sample-based instrument system.
+// Instruments register a descriptor; the engine handles
+// fetch → decode → cache → playback → pitch-shift → fallback.
+// ═══════════════════════════════════════════════
+const SampleEngine = (function() {
+  const _instruments = {};  // id → descriptor
+  const _buffers     = {};  // id → Map(midi → AudioBuffer)
+  const _state       = {};  // id → 'idle'|'loading'|'ready'|'failed'
+  const _loadPromise = {};  // id → Promise (prevents duplicate fetches)
+
+  // Convert a MIDI number to a Salamander-style note name, e.g. 69 → 'A4', 61 → 'Cs4'
+  function _midiToSalaName(midi) {
+    const NAMES = ['A','Bb','B','C','Cs','D','Eb','E','F','Fs','G','Gs'];
+    // Salamander names start from A (midi 21 = A0)
+    const idx  = (midi - 21) % 12;
+    const oct  = Math.floor((midi - 12) / 12);
+    return NAMES[((idx % 12) + 12) % 12] + oct;
+  }
+
+  // Standard Salamander sampled notes: every 3 semitones from A0 (21) to C8 (108)
+  function _salamanderNotes() {
+    const notes = [];
+    for (let m = 21; m <= 108; m += 3) notes.push(m);
+    // Always include C8 (108)
+    if (notes[notes.length - 1] !== 108) notes.push(108);
+    return notes;
+  }
+
+  // Find the nearest sampled MIDI note for a given midi number
+  function _nearest(sampledNotes, midi) {
+    return sampledNotes.reduce((best, n) =>
+      Math.abs(n - midi) < Math.abs(best - midi) ? n : best
+    );
+  }
+
+  // Fetch and decode a single audio file → AudioBuffer
+  async function _fetchBuffer(url, ctx) {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + url);
+    const arrayBuf = await resp.arrayBuffer();
+    return await ctx.decodeAudioData(arrayBuf);
+  }
+
+  return {
+    // Register an instrument. Call once at startup.
+    register(descriptor) {
+      const id = descriptor.id;
+      _instruments[id] = descriptor;
+      _buffers[id]     = new Map();
+      _state[id]       = 'idle';
+    },
+
+    isReady(id) { return _state[id] === 'ready'; },
+    isFailed(id) { return _state[id] === 'failed'; },
+    get _instruments() { return _instruments; }, // read-only access for pianoPlayNote
+
+    // Trigger async load of all samples for an instrument.
+    // Safe to call multiple times — deduplicates.
+    load(id) {
+      if (_state[id] === 'ready' || _state[id] === 'loading') return _loadPromise[id];
+      const desc = _instruments[id];
+      if (!desc) return Promise.reject(new Error('Unknown instrument: ' + id));
+
+      _state[id] = 'loading';
+      const ctx  = getAudio();
+
+      _loadPromise[id] = (async () => {
+        try {
+          const notes = desc.sampledNotes || _salamanderNotes();
+          // Load all samples in parallel — faster than sequential
+          await Promise.all(notes.map(async midi => {
+            const fname = desc.noteToFile(midi);
+            const url   = desc.assetUrl(fname);
+            try {
+              const buf = await _fetchBuffer(url, ctx);
+              _buffers[id].set(midi, buf);
+            } catch(e) {
+              console.warn('[SampleEngine] failed to load', url, e.message);
+            }
+          }));
+          // Consider ready if we loaded at least 70% of notes
+          if (_buffers[id].size >= notes.length * 0.7) {
+            _state[id] = 'ready';
+            console.log('[SampleEngine]', id, 'ready —', _buffers[id].size, 'samples loaded');
+            if (desc.onReady) desc.onReady();
+          } else {
+            throw new Error('Too many failed samples (' + _buffers[id].size + '/' + notes.length + ')');
+          }
+        } catch(e) {
+          _state[id] = 'failed';
+          console.warn('[SampleEngine]', id, 'failed:', e.message);
+          if (desc.onFailed) desc.onFailed();
+        }
+      })();
+      return _loadPromise[id];
+    },
+
+    // Play a sample. Returns a stoppable node compatible with refOscs.
+    // Falls back gracefully (returns null) if not ready.
+    play(id, midi, ctx, dest, vol, dur) {
+      if (!this.isReady(id)) return null;
+      const desc    = _instruments[id];
+      const notes   = desc.sampledNotes || _salamanderNotes();
+      const nearest = _nearest([..._buffers[id].keys()], midi);
+      const buf     = _buffers[id].get(nearest);
+      if (!buf) return null;
+
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      // Pitch-shift via playbackRate: 2^(semitones/12)
+      src.playbackRate.value = Math.pow(2, (midi - nearest) / 12);
+
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.004);
+
+      src.connect(g);
+      g.connect(dest);
+
+      if (dur) {
+        // Finite note: schedule fade-out and stop
+        src.start(ctx.currentTime);
+        const end = ctx.currentTime + dur;
+        g.gain.setValueAtTime(vol, Math.max(ctx.currentTime, end - 0.08));
+        g.gain.linearRampToValueAtTime(0.0001, end);
+        src.stop(end + 0.05);
+      } else {
+        // Drone: loop the sample indefinitely until stop() is called.
+        // Set loop points to the body of the sample (skip attack transient on loop).
+        src.loop = true;
+        src.loopStart = src.buffer.duration * 0.1;
+        src.loopEnd   = src.buffer.duration;
+        src.start(ctx.currentTime);
+      }
+
+      return {
+        gain: g,
+        stop() {
+          const t = ctx.currentTime;
+          g.gain.cancelScheduledValues(t);
+          g.gain.setValueAtTime(g.gain.value, t);
+          g.gain.linearRampToValueAtTime(0.0001, t + 0.08);
+          try { src.stop(t + 0.1); } catch(e) {}
+        }
+      };
+    },
+  };
+})();
+
+// ── Instrument registrations ──────────────────────────────────────────────────
+// Grand Piano (Salamander Grand Piano v3 — free, CC BY 3.0)
+// Asset path: android/app/src/main/assets/public/audio/grand_piano/
+SampleEngine.register({
+  id: 'grand_piano',
+  name: 'Grand Piano',
+  assetUrl(fname) {
+    // Capacitor local asset URL — works offline, no network needed
+    if (window.Capacitor) {
+      return window.Capacitor.convertFileSrc(
+        'file:///android_asset/public/audio/grand_piano/' + fname
+      );
+    }
+    // Browser dev fallback
+    return '/audio/grand_piano/' + fname;
+  },
+  noteToFile(midi) {
+    // Exact filename map — closest velocity to 100 per sampled note
+    const map = {
+      21:'piano021v100.wav', 24:'piano024v096.wav', 27:'piano027v104.wav',
+      30:'piano030v085.wav', 33:'piano033v100.wav', 36:'piano036v096.wav',
+      39:'piano039v105.wav', 42:'piano042v095.wav', 45:'piano045v100.wav',
+      48:'piano048v105.wav', 51:'piano051v095.wav', 54:'piano054v100.wav',
+      57:'piano057v095.wav', 60:'piano060v100.wav', 63:'piano063v095.wav',
+      66:'piano066v105.wav', 69:'piano069v105.wav', 72:'piano072v100.wav',
+      75:'piano075v103.wav', 78:'piano078v100.wav', 81:'piano081v105.wav',
+      84:'piano084v100.wav', 87:'piano087v100.wav', 90:'piano090v100.wav',
+      93:'piano093v100.wav', 96:'piano096v100.wav', 99:'piano099v100.wav',
+      102:'piano102v100.wav',105:'piano105v112.wav',108:'piano108v100.wav',
+    };
+    return map[midi] || ('piano' + String(midi).padStart(3,'0') + 'v100.wav');
+  },
+  sampledNotes: (function() {
+    const n = []; for (let m = 21; m <= 108; m += 3) n.push(m);
+    if (n[n.length-1] !== 108) n.push(108); return n;
+  })(),
+  onReady() {
+    // Refresh the piano UI to show samples are active
+    const lbl = document.getElementById('pianoSampleStatus');
+    if (lbl) { lbl.textContent = ''; lbl.style.display = 'none'; }
+  },
+  onFailed() {
+    console.warn('[SampleEngine] Grand piano samples unavailable — using synthesis');
+  },
+});
+
+// Helper shared by all Salamander-convention soundfonts (sampled every 3 semitones A0–C8)
+function _salamanderNoteToFile(midi) {
+  // Naming convention: piano021v100.wav (MIDI number zero-padded to 3 digits, velocity 100)
+  return 'piano' + String(midi).padStart(3, '0') + 'v100.wav';
+}
+function _capacitorAssetUrl(folder, fname) {
+  if (window.Capacitor) {
+    return window.Capacitor.convertFileSrc(
+      'file:///android_asset/public/audio/' + folder + '/' + fname
+    );
+  }
+  return '/audio/' + folder + '/' + fname;
+}
+function _salamanderNotes() {
+  const n = []; for (let m = 21; m <= 108; m += 3) n.push(m);
+  if (n[n.length-1] !== 108) n.push(108); return n;
+}
+
+SampleEngine.register({
+  id: 'honky_tonk',
+  name: 'Honky Tonk',
+  assetUrl: (fname) => _capacitorAssetUrl('honky_tonk', fname),
+  noteToFile: (midi) => _salamanderNoteToFile(midi),
+  sampledNotes: _salamanderNotes(),
+  onFailed() { console.warn('[SampleEngine] Honky tonk samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'electric_piano',
+  name: 'Electric Piano',
+  assetUrl: (fname) => _capacitorAssetUrl('electric_piano', fname),
+  noteToFile: (midi) => _salamanderNoteToFile(midi),
+  sampledNotes: _salamanderNotes(),
+  onFailed() { console.warn('[SampleEngine] Electric piano samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'harpsichord',
+  name: 'Harpsichord',
+  assetUrl: (fname) => _capacitorAssetUrl('harpsichord', fname),
+  noteToFile: (midi) => _salamanderNoteToFile(midi),
+  sampledNotes: _salamanderNotes(),
+  onFailed() { console.warn('[SampleEngine] Harpsichord samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'vibraphone',
+  name: 'Vibraphone',
+  assetUrl: (fname) => _capacitorAssetUrl('vibraphone', fname),
+  noteToFile: (midi) => _salamanderNoteToFile(midi),
+  sampledNotes: _salamanderNotes(),
+  onFailed() { console.warn('[SampleEngine] Vibraphone samples unavailable'); },
+});
+
+SampleEngine.register({
+  id: 'nylon_guitar',
+  name: 'Nylon Guitar',
+  assetUrl: (fname) => _capacitorAssetUrl('nylon_guitar', fname),
+  noteToFile: (midi) => _salamanderNoteToFile(midi),
+  sampledNotes: _salamanderNotes(),
+  onFailed() { console.warn('[SampleEngine] Nylon guitar samples unavailable'); },
+});
+
+
 // ═══════════════════════════════════════════════
 // SOUND BANKS — Reference tones + Metronome clicks
 // ═══════════════════════════════════════════════
@@ -27741,7 +28121,46 @@ const REF_TONES = {
         ? harmonicaSynth(ctx, freq, when, dur, master, vol)
         : REF_TONES.organ.synth(ctx, freq, when, dur, master, vol);
     }
-  }
+  },
+
+  // ── Sample-backed instruments ─────────────────────────────────────────────
+  // These use SampleEngine for playback; synth() is a fallback while loading.
+  grand_piano: {
+    name: 'GRAND PIANO', it: 'GRAN PIANOFORTE', icon: '🎹',
+    synth(ctx, freq, when, dur, master, vol) {
+      return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
+    }
+  },
+  honky_tonk: {
+    name: 'HONKY TONK', it: 'HONKY TONK', icon: '🤠',
+    synth(ctx, freq, when, dur, master, vol) {
+      return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
+    }
+  },
+  electric_piano: {
+    name: 'ELECTRIC', it: 'PIANO ELETTRICO', icon: '⚡',
+    synth(ctx, freq, when, dur, master, vol) {
+      return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
+    }
+  },
+  harpsichord: {
+    name: 'HARPSICHORD', it: 'CLAVICEMBALO', icon: '🎼',
+    synth(ctx, freq, when, dur, master, vol) {
+      return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
+    }
+  },
+  vibraphone: {
+    name: 'VIBRAPHONE', it: 'VIBRAFONO', icon: '✨',
+    synth(ctx, freq, when, dur, master, vol) {
+      return REF_TONES.bell.synth(ctx, freq, when, dur, master, vol);
+    }
+  },
+  nylon_guitar: {
+    name: 'NYLON GTR', it: 'CHITARRA CLASSICA', icon: '🎸',
+    synth(ctx, freq, when, dur, master, vol) {
+      return REF_TONES.guitar.synth(ctx, freq, when, dur, master, vol);
+    }
+  },
 };
 
 const METRO_SOUNDS = {
@@ -28060,6 +28479,7 @@ function buildRefToneBank() {
   container.innerHTML = '';
 
   const TONE_GROUPS = [
+    { label: 'KEYBOARD', keys: ['grand_piano','honky_tonk','electric_piano','harpsichord','vibraphone','nylon_guitar'] },
     { label: 'GENERAL',  keys: ['sine','piano','organ','bell','pad'] },
     { label: 'PLUCKED',  keys: ['guitar','bass','mandolin','banjo','ukebass','harp'] },
     { label: 'BRASS',    keys: ['trumpet','trombone','frenchhorn','tuba','brass'] },
@@ -28102,10 +28522,21 @@ function buildRefToneBank() {
       tile.onclick = () => {
         selectedRefTone = key;
         tileRow.querySelectorAll('.tone-tile').forEach(t => t.classList.toggle('active', t.dataset.tone === key));
+        // If this is a sample-backed tone, trigger lazy load
+        if (SampleEngine._instruments[key]) {
+          if (!SampleEngine.isReady(key) && !SampleEngine.isFailed(key)) {
+            const lbl = document.getElementById('pianoSampleStatus');
+            if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.display = ''; }
+            SampleEngine.load(key);
+          }
+        }
         // Preview sound on selection
         if (!droneMode && Object.keys(refOscs).length === 0 && !metroPlaying) {
           const ctx = ensureRefCtx();
-          REF_TONES[key].synth(ctx, 440, ctx.currentTime, 0.8, refMasterGain, refVolume);
+          const sampleNode = SampleEngine.isReady(key)
+            ? SampleEngine.play(key, 69, ctx, refMasterGain, refVolume, 0.8)
+            : null;
+          if (!sampleNode) REF_TONES[key] && REF_TONES[key].synth(ctx, 440, ctx.currentTime, 0.8, refMasterGain, refVolume);
         }
       };
       tileRow.appendChild(tile);
@@ -28292,8 +28723,10 @@ function tlEnsureCtx() {
   tlCtx = getAudio();
   if (!tlMasterGain || tlMasterGain.context !== tlCtx) {
     tlMasterGain = tlCtx.createGain();
-    tlMasterGain.gain.value = 0.85 * _getMasterScale();
-    tlMasterGain.connect(tlCtx.destination);
+    tlMasterGain.gain.value = 0.85 * BASE_GAIN_BOOST * _getMasterScale();
+    var tlBass = tlCtx.createBiquadFilter();
+    tlBass.type = 'lowshelf'; tlBass.frequency.value = 300; tlBass.gain.value = 8;
+    tlMasterGain.connect(tlBass); tlBass.connect(tlCtx.destination);
   }
 }
 
@@ -28728,8 +29161,10 @@ function tgEnsureCtx() {
   tgCtx = getAudio();
   if (!tgMasterGain || tgMasterGain.context !== tgCtx) {
     tgMasterGain = tgCtx.createGain();
-    tgMasterGain.gain.value = 0.85 * _getMasterScale();
-    tgMasterGain.connect(tgCtx.destination);
+    tgMasterGain.gain.value = 0.85 * BASE_GAIN_BOOST * _getMasterScale();
+    var tgBass = tgCtx.createBiquadFilter();
+    tgBass.type = 'lowshelf'; tgBass.frequency.value = 300; tgBass.gain.value = 8;
+    tgMasterGain.connect(tgBass); tgBass.connect(tgCtx.destination);
   }
 }
 
@@ -29152,13 +29587,15 @@ function prEnsureCtx() {
   prCtx = getAudio();
   if (!prMasterGain || prMasterGain.context !== prCtx) {
     prMasterGain = prCtx.createGain();
-    prMasterGain.gain.value = 0.85 * _getMasterScale();
+    prMasterGain.gain.value = 0.85 * BASE_GAIN_BOOST * _getMasterScale();
     // Per-layer gain buses for instant mode mute/unmute
     prGainA = prCtx.createGain(); prGainA.gain.value = 1;
     prGainB = prCtx.createGain(); prGainB.gain.value = 1;
     prGainA.connect(prMasterGain);
     prGainB.connect(prMasterGain);
-    prMasterGain.connect(prCtx.destination);
+    var prBass = prCtx.createBiquadFilter();
+    prBass.type = 'lowshelf'; prBass.frequency.value = 300; prBass.gain.value = 8;
+    prMasterGain.connect(prBass); prBass.connect(prCtx.destination);
     prApplyModeRouting();
   }
 }
@@ -31494,7 +31931,7 @@ function rrActivateBar(idx, durBeats) {
 function rrGetOut(ctx) {
   if (!rrMasterGain) {
     rrMasterGain = ctx.createGain();
-    rrMasterGain.gain.value = _getMasterScale();
+    rrMasterGain.gain.value = BASE_GAIN_BOOST * _getMasterScale();
     var lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -6;  lim.knee.value = 0;
     lim.ratio.value = 20;      lim.attack.value = 0.001;
@@ -34227,9 +34664,9 @@ var TONALE_MODES = {
   easy:   { key:'easy',   nameKey:'tonale_m_easy_n',   subKey:'tonale_m_easy_s',   color:'#54d18a',
             fLo:130.81, fHi:659.25, snap:true,  replays:Infinity, listenMs:2200, decoy:false, sigma:92, perfect:6, skew:1.0 },
   medium: { key:'medium', nameKey:'tonale_m_med_n',    subKey:'tonale_m_med_s',    color:'#f2c14e',
-            fLo:98.00,  fHi:1046.5, snap:false, replays:1,        listenMs:1600, decoy:false, sigma:80, perfect:4, skew:0.62 },
+            fLo:98.00,  fHi:2093.0, snap:false, replays:1,        listenMs:1600, decoy:false, sigma:80, perfect:4, skew:0.62 },
   hard:   { key:'hard',   nameKey:'tonale_m_hard_n',   subKey:'tonale_m_hard_s',   color:'#e8743b',
-            fLo:98.00,  fHi:3520.0, snap:false, replays:0,        listenMs:1200, decoy:false, sigma:64, perfect:3, skew:0.55 },
+            fLo:98.00,  fHi:4186.0, snap:false, replays:0,        listenMs:1200, decoy:false, sigma:64, perfect:3, skew:0.55 },
   insane: { key:'insane', nameKey:'tonale_m_insane_n', subKey:'tonale_m_insane_s', color:'#d6455d',
             fLo:130.81, fHi:6271.9, snap:false, replays:0,        listenMs:1000, decoy:true,  sigma:50, perfect:2, skew:0.5 },
 };
@@ -34247,6 +34684,7 @@ var tonaleGuessFreq = 0;      // current slider freq
 var tonalePos = 0.5;          // slider position 0..1 (bottom..top)
 var tonaleState = 'idle';     // idle | listening | answering | revealed | done
 var tonaleOsc = null, tonaleGain = null, tonaleCtx = null;
+var tonaleOctOsc = null, tonaleOctGain = null; // octave-up doubler for low-freq audibility
 var tonaleRAF = null, tonaleWavePhase = 0, tonaleHue = 0;
 var tonaleWaveFreq = 220;      // smoothed (eased) display frequency
 var tonaleWaveAmp = 0;         // smoothed amplitude (flops in/out)
@@ -34344,31 +34782,77 @@ function tonaleGenTargets(rng) {
   return arr;
 }
 
+// ── Shared Tonale output bus: bass shelf + limiter ──
+// All Tonale oscillators connect here instead of straight to destination.
+var tonaleOutBass = null, tonaleOutLim = null;
+function tonaleEnsureOutBus() {
+  var ctx = getAudio();
+  if (!tonaleOutBass || tonaleOutBass.context !== ctx) {
+    tonaleOutBass = ctx.createBiquadFilter();
+    tonaleOutBass.type = 'lowshelf';
+    tonaleOutBass.frequency.value = 300;
+    tonaleOutBass.gain.value = 8;
+    tonaleOutLim = ctx.createDynamicsCompressor();
+    tonaleOutLim.threshold.value = -3;
+    tonaleOutLim.knee.value = 3;
+    tonaleOutLim.ratio.value = 20;
+    tonaleOutLim.attack.value = 0.001;
+    tonaleOutLim.release.value = 0.1;
+    tonaleOutBass.connect(tonaleOutLim);
+    tonaleOutLim.connect(ctx.destination);
+  }
+  return tonaleOutBass;
+}
+
 // ── audio: continuous theremin-style voice that tracks the slider ──
 function tonaleEnsureVoice() {
   tonaleCtx = getAudio();
   if (!tonaleOsc) {
+    var bus = tonaleEnsureOutBus();
     tonaleOsc = tonaleCtx.createOscillator();
     tonaleGain = tonaleCtx.createGain();
     tonaleOsc.type = 'sine';
     tonaleGain.gain.value = 0;
-    tonaleOsc.connect(tonaleGain).connect(tonaleCtx.destination);
+    tonaleOsc.connect(tonaleGain);
+    tonaleGain.connect(bus);
     tonaleOsc.start();
+    // Octave doubler — one octave up at low gain, fades out above ~200 Hz
+    // Makes low fundamentals findable on phone speakers without changing timbre much
+    tonaleOctOsc = tonaleCtx.createOscillator();
+    tonaleOctGain = tonaleCtx.createGain();
+    tonaleOctOsc.type = 'sine';
+    tonaleOctGain.gain.value = 0;
+    tonaleOctOsc.connect(tonaleOctGain);
+    tonaleOctGain.connect(bus);
+    tonaleOctOsc.start();
   }
+}
+function _tonaleOctGainFor(freq) {
+  // Crossfade: full (0.12) below 130 Hz, gone above 220 Hz, linear between
+  if (freq >= 220) return 0;
+  if (freq <= 130) return 0.07;
+  return 0.07 * (220 - freq) / (220 - 130);
 }
 function tonaleVoiceOn(freq) {
   tonaleEnsureVoice();
   var now = tonaleCtx.currentTime;
   tonaleOsc.frequency.setTargetAtTime(freq, now, 0.012);
   tonaleGain.gain.setTargetAtTime(0.16, now, 0.02);
+  tonaleOctOsc.frequency.setTargetAtTime(freq * 2, now, 0.012);
+  tonaleOctGain.gain.setTargetAtTime(_tonaleOctGainFor(freq), now, 0.02);
 }
 function tonaleVoiceFreq(freq) {
   if (!tonaleOsc) return;
-  tonaleOsc.frequency.setTargetAtTime(freq, tonaleCtx.currentTime, 0.012);
+  var now = tonaleCtx.currentTime;
+  tonaleOsc.frequency.setTargetAtTime(freq, now, 0.012);
+  tonaleOctOsc.frequency.setTargetAtTime(freq * 2, now, 0.012);
+  tonaleOctGain.gain.setTargetAtTime(_tonaleOctGainFor(freq), now, 0.04);
 }
 function tonaleVoiceOff() {
   if (!tonaleGain) return;
-  tonaleGain.gain.setTargetAtTime(0, tonaleCtx.currentTime, 0.04);
+  var now = tonaleCtx.currentTime;
+  tonaleGain.gain.setTargetAtTime(0, now, 0.04);
+  tonaleOctGain.gain.setTargetAtTime(0, now, 0.04);
 }
 
 // play the target tone for the listen window
@@ -34788,9 +35272,9 @@ function tonaleShowReveal(target, guess, cents, pts) {
   var revColor;
   if (tonaleMode.snap) {
     var semisOff = Math.abs(Math.round(tonaleFreqToMidi(guess)) - Math.round(tonaleFreqToMidi(target)));
-    revColor = semisOff===0 ? 'var(--in-tune)' : semisOff===1 ? 'var(--accent)' : 'var(--out-tune,#d6455d)';
+    revColor = semisOff===0 ? 'var(--in-tune)' : semisOff===1 ? 'var(--metro)' : 'var(--out-tune,#d6455d)';
   } else {
-    revColor = pts>=9.5 ? 'var(--in-tune)' : pts>=7 ? 'var(--accent)' : 'var(--out-tune,#d6455d)';
+    revColor = pts>=9.5 ? 'var(--in-tune)' : pts>=7 ? 'var(--metro)' : 'var(--out-tune,#d6455d)';
   }
   ptsEl.style.color = revColor;
   var dir = cents>0 ? t('tonale_sharp') : t('tonale_flat');
@@ -34826,12 +35310,13 @@ var tonaleCmpOscA = null, tonaleCmpGainA = null, tonaleCmpOscB = null, tonaleCmp
 function tonaleCmpEnsure() {
   var ctx = getAudio();
   if (!tonaleCmpOscA) {
+    var bus = tonaleEnsureOutBus();
     tonaleCmpOscA = ctx.createOscillator(); tonaleCmpGainA = ctx.createGain();
     tonaleCmpOscA.type='sine'; tonaleCmpGainA.gain.value=0;
-    tonaleCmpOscA.connect(tonaleCmpGainA).connect(ctx.destination); tonaleCmpOscA.start();
+    tonaleCmpOscA.connect(tonaleCmpGainA); tonaleCmpGainA.connect(bus); tonaleCmpOscA.start();
     tonaleCmpOscB = ctx.createOscillator(); tonaleCmpGainB = ctx.createGain();
     tonaleCmpOscB.type='sine'; tonaleCmpGainB.gain.value=0;
-    tonaleCmpOscB.connect(tonaleCmpGainB).connect(ctx.destination); tonaleCmpOscB.start();
+    tonaleCmpOscB.connect(tonaleCmpGainB); tonaleCmpGainB.connect(bus); tonaleCmpOscB.start();
   }
   return ctx;
 }
@@ -35044,10 +35529,10 @@ function tonaleRenderBreakdown() {
   box.innerHTML = '';
   tonaleGuesses.forEach(function(g, i) {
     var cents = 1200 * Math.log2(g.guess / g.target);
-    var colVar = g.pts>=9.5 ? 'var(--in-tune)' : g.pts>=7 ? 'var(--accent)' : 'var(--out-tune,#d6455d)';
+    var colVar = g.pts>=9.5 ? 'var(--in-tune)' : g.pts>=7 ? 'var(--metro)' : 'var(--out-tune,#d6455d)';
     if (tonaleMode.snap) {
       var semisOff = Math.abs(Math.round(tonaleFreqToMidi(g.guess)) - Math.round(tonaleFreqToMidi(g.target)));
-      colVar = semisOff===0 ? 'var(--in-tune)' : semisOff===1 ? 'var(--accent)' : 'var(--out-tune,#d6455d)';
+      colVar = semisOff===0 ? 'var(--in-tune)' : semisOff===1 ? 'var(--metro)' : 'var(--out-tune,#d6455d)';
     }
     var dir = cents>0 ? t('tonale_sharp') : t('tonale_flat');
     var offTxt = tonaleMode.snap
@@ -35162,7 +35647,7 @@ function tonaleBackToPicker() {
   // close any open reveal/end overlays
   var ro=document.getElementById('tonaleRevealOverlay'); if(ro) ro.style.display='none';
   tonaleInit();
-  setHeaderModule(EXERCISE_NAME('tonale'), t('hsub_tonale'), 'tonale');
+  setHeaderModule(EXERCISE_NAME('tonale'), t('hsub_tonale'), 'tonale', 'back to Games');
   hapticLight();
 }
 function tonaleModesFromEnd() {
@@ -35187,7 +35672,7 @@ function tonaleStartMode(modeKey, isDaily) {
   var _pick = document.getElementById('tonalePicker');
   var _game = document.getElementById('tonaleGame');
   setHeaderModule(isDaily ? t('tonale_title')+' · '+t('tonale_daily') : EXERCISE_NAME('tonale'),
-                  isDaily ? tonaleDateLabel() : t(tonaleMode.subKey), 'tonale');
+                  isDaily ? tonaleDateLabel() : t(tonaleMode.subKey), 'tonale', 'back to Games');
   // pre-stage the game hidden
   _game.style.display='flex';
   _game.style.flexDirection='column';
@@ -35278,7 +35763,7 @@ function tonaleResumeDaily(ip) {
   // crossfade picker → game (matches startMode)
   var _pick = document.getElementById('tonalePicker');
   var _game = document.getElementById('tonaleGame');
-  setHeaderModule(t('tonale_title')+' · '+t('tonale_daily'), tonaleDateLabel(), 'tonale');
+  setHeaderModule(t('tonale_title')+' · '+t('tonale_daily'), tonaleDateLabel(), 'tonale', 'back to Games');
   _game.style.display='flex'; _game.style.flexDirection='column';
   _game.style.minHeight='calc(100dvh - var(--header-h,56px) - var(--nav-bar-h,62px) - env(safe-area-inset-bottom) - 24px)';
   _game.style.transition='none'; _game.style.opacity='0'; _game.style.transform='translateY(8px)';
@@ -39728,14 +40213,17 @@ function setMasterVolume(pct) {
   const display = document.getElementById('smMasterVolValue');
   if (slider && slider.value != v) slider.value = v;
   if (display) display.textContent = v + '%';
-  // Live-update any cached gain nodes so change takes effect immediately
-  // without requiring the user to restart each exercise/instrument.
   const scale = _getMasterScale();
-  try { if (tlMasterGain) tlMasterGain.gain.value = 0.85 * scale; } catch(e) {}
-  try { if (tgMasterGain) tgMasterGain.gain.value = 0.85 * scale; } catch(e) {}
-  try { if (prMasterGain) prMasterGain.gain.value = 0.85 * scale; } catch(e) {}
-  try { if (dk_masterGain) dk_masterGain.gain.value = progDrumVolume * scale; } catch(e) {}
-  try { if (rrMasterGain) rrMasterGain.gain.value = scale; } catch(e) {}
+  // Update every gain node registered via buildLimiterChain
+  _masterGainRegistry.forEach((base, node) => {
+    try { node.gain.value = base * scale; } catch(e) {}
+  });
+  // Update manually-created cached gain nodes (not via buildLimiterChain)
+  try { if (tlMasterGain)  tlMasterGain.gain.value  = 0.85 * BASE_GAIN_BOOST * scale; } catch(e) {}
+  try { if (tgMasterGain)  tgMasterGain.gain.value  = 0.85 * BASE_GAIN_BOOST * scale; } catch(e) {}
+  try { if (prMasterGain)  prMasterGain.gain.value  = 0.85 * BASE_GAIN_BOOST * scale; } catch(e) {}
+  try { if (dk_masterGain) dk_masterGain.gain.value = progDrumVolume * BASE_GAIN_BOOST * scale; } catch(e) {}
+  try { if (rrMasterGain)  rrMasterGain.gain.value  = BASE_GAIN_BOOST * scale; } catch(e) {}
   progSave();
 }
 
@@ -43259,7 +43747,7 @@ function getCtx() {
   if (!dk_audioCtx || dk_audioCtx !== shared) {
     dk_audioCtx = shared;
     dk_masterGain = dk_audioCtx.createGain();
-    dk_masterGain.gain.value = progDrumVolume * _getMasterScale();
+    dk_masterGain.gain.value = progDrumVolume * BASE_GAIN_BOOST * _getMasterScale();
     dk_masterGain.connect(dk_audioCtx.destination);
   }
   if (dk_audioCtx.state === 'suspended') dk_audioCtx.resume();
@@ -61013,6 +61501,7 @@ function sesRefreshGoalChips() {
 // Single point-of-truth called by every page-exit / background path.
 // Each call is guarded so it never throws if a module hasn\'t loaded yet.
 function stopAllAudio() {
+  try { if (typeof stopMetro === 'function') stopMetro(); } catch(e) {}
   const fns = [
     'dbStop','ivStop','chordStop','progStop','pitchHistStop',
     'droneStop','scaleStop','tlStop','tgStop','prStop','rrStop',
@@ -61033,6 +61522,10 @@ document.addEventListener('visibilitychange', () => {
     if (_sesActive) sesLeave();
     stopAllAudio();
   } else {
+    // Resume any suspended audio contexts so the first sound event isn't dropped
+    if (typeof _sharedAudio !== 'undefined' && _sharedAudio && _sharedAudio.state === 'suspended') {
+      _sharedAudio.resume().catch(() => {});
+    }
     // Re-entering: if we were in a module, resume
     if (typeof currentTool !== 'undefined' && currentTool) sesEnter();
     else if (typeof currentExercise !== 'undefined' && currentExercise) sesEnter();
@@ -61048,6 +61541,10 @@ try {
         stopAllAudio();
       }
       else {
+        // Resume any suspended audio contexts so the first sound event isn't dropped
+        if (typeof _sharedAudio !== 'undefined' && _sharedAudio && _sharedAudio.state === 'suspended') {
+          _sharedAudio.resume().catch(() => {});
+        }
         if (typeof currentTool !== 'undefined' && currentTool) sesEnter();
         else if (typeof currentExercise !== 'undefined' && currentExercise) sesEnter();
       }
@@ -61608,6 +62105,27 @@ document.addEventListener('DOMContentLoaded', () => {
   // Belt-and-suspenders: explicit listener for settings button in case onclick attr is swallowed
   var _settingsBtn = document.getElementById('mode-settings');
   if (_settingsBtn) _settingsBtn.addEventListener('click', openSettings);
+  // Back button — wired via addEventListener (onclick unreliable in Capacitor WebView)
+  var _backBtn = document.getElementById('headerBackBtn');
+  if (_backBtn) {
+    _backBtn.addEventListener('click', headerBack);
+    _backBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      headerBack();
+      // Ghost-tap guard: briefly disable pointer events so the touchend/tap
+      // doesn't land on whatever element is newly revealed after navigation
+      var _app = document.getElementById('app') || document.querySelector('.app');
+      if (_app) {
+        _app.style.pointerEvents = 'none';
+        setTimeout(function() { _app.style.pointerEvents = ''; }, 350);
+      }
+    }, { passive: false });
+    _backBtn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }, { passive: false });
+  }
   favUpdateBtn();
   favUpdatePins();
   sesCheckDay();
