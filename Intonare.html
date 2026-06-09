@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.30.4 -->
+<!-- INTONARE_VERSION: 0.30.5 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17287,14 +17287,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.4</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.5</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.30.4';
+const INTONARE_VERSION = '0.30.5';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -27264,18 +27264,20 @@ const SampleEngine = (function() {
       g.connect(dest);
 
       if (dur) {
-        // Finite note: schedule fade-out and stop
+        // Finite note: use the longer of the requested dur or the actual sample length,
+        // capped at 8s. Low piano notes can be 4-6s — don't cut them off early.
+        const sampleDur = src.buffer.duration / src.playbackRate.value;
+        const actualDur = Math.min(8, Math.max(dur, sampleDur * 0.85));
         src.start(ctx.currentTime);
-        const end = ctx.currentTime + dur;
-        g.gain.setValueAtTime(vol, Math.max(ctx.currentTime, end - 0.08));
+        const end = ctx.currentTime + actualDur;
+        g.gain.setValueAtTime(vol, Math.max(ctx.currentTime, end - 0.15));
         g.gain.linearRampToValueAtTime(0.0001, end);
         src.stop(end + 0.05);
       } else {
         // Drone: loop the sample indefinitely until stop() is called.
-        // Set loop points to the body of the sample (skip attack transient on loop).
         src.loop = true;
-        src.loopStart = src.buffer.duration * 0.1;
-        src.loopEnd   = src.buffer.duration;
+        src.loopStart = src.buffer.duration * 0.15;
+        src.loopEnd   = src.buffer.duration * 0.95;
         src.start(ctx.currentTime);
       }
 
@@ -27396,7 +27398,7 @@ SampleEngine.register({
 // ═══════════════════════════════════════════════
 // SOUND BANKS — Reference tones + Metronome clicks
 // ═══════════════════════════════════════════════
-let selectedRefTone = 'piano';
+let selectedRefTone = 'grand_piano';
 let selectedMetroSound = 'click';
 
 // Helper: make a looping noise buffer
