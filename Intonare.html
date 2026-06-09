@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.30.7 -->
+<!-- INTONARE_VERSION: 0.30.8 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -12602,6 +12602,16 @@ transition:transform 0.25s ease;
   function removeSplash() {
     const el = document.getElementById('intonare-splash');
     if (el) el.remove();
+
+    // Preload all registered sample instruments on first touch so they're
+    // ready before the user opens any tool. Runs silently in background.
+    document.addEventListener('touchend', function _preloadSamples() {
+      document.removeEventListener('touchend', _preloadSamples);
+      Object.keys(SampleEngine._instruments).forEach(id => {
+        SampleEngine.load(id);
+      });
+    }, { once: true });
+
     if (window.Capacitor) {
       // Notification permission — doesn't need user gesture, fire immediately
       const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
@@ -17287,14 +17297,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.7</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.30.8</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.30.7';
+const INTONARE_VERSION = '0.30.8';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -28642,9 +28652,12 @@ function buildRefToneBank() {
   ];
 
   // Any ungrouped tones get appended to GENERAL for future-proofing
+  // Tones not in any group are excluded from the picker entirely.
+  // electric_piano is a module instrument (Rhodes overlay), not a tone bank option.
+  // piano/brass/mandocello are superseded or niche — keep in REF_TONES for
+  // instrument auto-detect but don't show in the picker.
+  const _excludedTones = new Set(['piano','brass','mandocello','electric_piano']);
   const grouped = TONE_GROUPS.flatMap(g => g.keys);
-  const ungrouped = Object.keys(REF_TONES).filter(k => !grouped.includes(k));
-  if (ungrouped.length) TONE_GROUPS[0].keys.push(...ungrouped);
 
   // Find which group the active tone belongs to (default to first)
   let activeGroupIdx = TONE_GROUPS.findIndex(g => g.keys.includes(selectedRefTone));
@@ -28661,14 +28674,14 @@ function buildRefToneBank() {
   function renderTiles(groupIdx) {
     tileRow.innerHTML = '';
     const group = TONE_GROUPS[groupIdx];
-    const count = group.keys.filter(k => REF_TONES[k]).length;
+    const count = group.keys.filter(k => REF_TONES[k] && !_excludedTones.has(k)).length;
     // Fit tiles: 5 cols for ≤5, 6 for 6, else 4
     const cols = count <= 5 ? count : (count === 6 ? 6 : 4);
     tileRow.style.setProperty('--tone-cols', cols);
 
     group.keys.forEach(key => {
       const tone = REF_TONES[key];
-      if (!tone) return;
+      if (!tone || _excludedTones.has(key)) return;
       const tile = document.createElement('button');
       tile.className = 'tone-tile' + (key === selectedRefTone ? ' active' : '');
       tile.dataset.tone = key;
