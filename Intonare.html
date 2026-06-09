@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.31.0 -->
+<!-- INTONARE_VERSION: 0.31.1 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -17309,14 +17309,14 @@ transition:transform 0.25s ease;
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.0</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.31.1</span>
     </div>
   </div>
 </div>
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.31.0';
+const INTONARE_VERSION = '0.31.1';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -20288,14 +20288,33 @@ function togglePlayRef(key, freq, noteName) {
   playRef(key, freq, noteName);
 }
 
+// Shared sample-aware note player. Tries SampleEngine first, falls back to REF_TONES synth.
+function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
+  const t = when ?? ctx.currentTime;
+  if (SampleEngine.isReady(toneId)) {
+    const midi = freqToMidi(freq);
+    // SampleEngine.play always uses ctx.currentTime internally; for scheduled future notes
+    // we create a delayed gain envelope manually
+    if (when && when > ctx.currentTime + 0.001) {
+      // Future note: use synthesis with when parameter (samples don't support future scheduling yet)
+      const tone = REF_TONES[toneId] || REF_TONES.sine;
+      return tone.synth(ctx, freq, t, dur, dest, vol);
+    }
+    const node = SampleEngine.play(toneId, midi, ctx, dest, vol, dur);
+    if (node) return node;
+  }
+  const tone = REF_TONES[toneId] || REF_TONES.sine;
+  return tone.synth(ctx, freq, t, dur, dest, vol);
+}
+
 function playRef(key, freq, noteName) {
   const ctx = ensureRefCtx();
   const now = ctx.currentTime;
   const isDrone = droneMode;
   const dur = isDrone ? null : 2.8;
 
-  const tone = REF_TONES[selectedRefTone] || REF_TONES.sine;
-  const sound = tone.synth(ctx, freq, now, dur, refMasterGain, refVolume);
+  const toneId = selectedRefTone;
+  const sound = _samplePlay(toneId, freq, ctx, refMasterGain, refVolume, dur);
 
   let timeoutId = null;
   if (!isDrone) {
@@ -20304,7 +20323,7 @@ function playRef(key, freq, noteName) {
       const btn = document.getElementById(`pb-${key}`);
       if (btn) btn.classList.remove('playing');
       if (activeRefFreq === freq) { activeRefFreq = null; activeRefName = null; activeRefMidi = null; }
-      updateRefDisplay(); // always refresh so polyphonic highlights clear correctly
+      updateRefDisplay();
     }, 2900);
   }
 
@@ -55475,6 +55494,17 @@ function pickInst(inst) {
 }
 
 
+// Returns a tone-like object for the current fretted instrument.
+// Checks SampleEngine first, falls back to REF_TONES synthesis.
+function _frettedToneId() {
+  if (isUkeBass())                         return 'ukebass';
+  if (isMandoFamily('mandocello'))         return 'mandocello';
+  if (chordScaleInstrument === 'mandolin') return 'mandolin';
+  if (chordScaleInstrument === 'banjo')    return 'banjo';
+  if (chordScaleInstrument === 'bass')     return 'bass';
+  return 'guitar';
+}
+
 function getFrettedTone() {
   if (isUkeBass())                             return REF_TONES['ukebass']    || REF_TONES['guitar'];
   if (isMandoFamily('mandocello'))             return REF_TONES['mandocello'] || REF_TONES['mandolin'] || REF_TONES['guitar'];
@@ -55483,24 +55513,31 @@ function getFrettedTone() {
   if (chordScaleInstrument === 'bass')         return REF_TONES['bass']       || REF_TONES['guitar'];
   if (is12StringGuitar()) {
     // Wrap guitar tone to add the characteristic octave doubling.
-    // Lower 4 strings (MIDI < 59 = B3): double at octave up, slight offset for shimmer.
-    // Upper 2 strings (B3, E4): double in unison with tiny detune.
+    const toneId = _frettedToneId();
     const base = REF_TONES['guitar'];
     return {
       synth(ctx, freq, when, dur, master, vol, ...rest) {
-        const node1 = base.synth(ctx, freq, when, dur, master, vol * 0.75, ...rest);
-        // Determine if this is a lower string (below B3 = 246.94 Hz)
+        // Use samples if ready, otherwise synthesis
+        const node1 = SampleEngine.isReady(toneId)
+          ? SampleEngine.play(toneId, freqToMidi(freq), ctx, master, vol * 0.75, dur)
+          : base.synth(ctx, freq, when, dur, master, vol * 0.75, ...rest);
         const isLowerStr = freq < 247;
-        const doubleFreq = isLowerStr ? freq * 2 : freq * 1.003; // octave up or slight detune
+        const doubleFreq = isLowerStr ? freq * 2 : freq * 1.003;
         const doubleVol  = isLowerStr ? vol * 0.45 : vol * 0.35;
-        const doubleWhen = when + 0.008; // tiny stagger — the shimmer
+        const doubleWhen = when + 0.008;
         base.synth(ctx, doubleFreq, doubleWhen, dur, master, doubleVol, ...rest);
-        return node1; // caller only needs one node for stop()
+        return node1;
       }
     };
   }
-  return REF_TONES['guitar'];
-  // baritone and tenor guitar fall through to guitar tone — same body, different tuning
+  // Standard fretted: wrap with sample-aware synth
+  const toneId = _frettedToneId();
+  const fallback = REF_TONES[toneId] || REF_TONES['guitar'];
+  return {
+    synth(ctx, freq, when, dur, master, vol, ...rest) {
+      return _samplePlay(toneId, freq, ctx, master, vol, dur);
+    }
+  };
 }
 function isWindInst(i) { return CS_INSTRUMENTS[i ?? chordScaleInstrument]?.family === 'wind'; }
 function isWoodwindInst(i) { return CS_INSTRUMENTS[i ?? chordScaleInstrument]?.subFamily === 'woodwind'; }
@@ -59541,9 +59578,8 @@ function hpDrawStrings(svgEl, activePcs, rootPc, startIdx, count, pedalPositions
       if (!hpStrumChain || hpStrumChain.gain.context !== ctx) {
         hpStrumChain = buildLimiterChain(ctx, 0.42);
       }
-      const tone = REF_TONES['harp'] || REF_TONES['guitar'];
       const soundingMidi = parseInt(hitEl.dataset.soundingMidi ?? hitEl.dataset.midi);
-      tone.synth(ctx, midiToFreq(soundingMidi), ctx.currentTime, null, hpStrumChain.gain, 0.16);
+      _samplePlay('harp', midiToFreq(soundingMidi), ctx, hpStrumChain.gain, 0.16, null);
       if (typeof hapticLight === 'function') hapticLight();
     }
 
@@ -61070,13 +61106,10 @@ function hpPlayChord() {
   midiPairs.sort((a,b) => a[0]-b[0]);
   if (!midiPairs.length) return;
   const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.42);
-  const tone = REF_TONES['harp'] || REF_TONES['guitar'];
-  // Match the per-string touch loudness (0.16). Notes arpeggiate 65ms apart and ring out,
-  // so a very gentle taper keeps stacked chords from clipping without going quiet.
   const vol = 0.18 / Math.pow(midiPairs.length, 0.12);
   const hpCSvg = document.getElementById('hpChordSvg');
   midiPairs.forEach(([baseMidi, soundingMidi], i) => {
-    tone.synth(ctx, midiToFreq(soundingMidi), ctx.currentTime + i * 0.065, 1.6, chain.gain, vol);
+    _samplePlay('harp', midiToFreq(soundingMidi), ctx, chain.gain, vol, 1.6, ctx.currentTime + i * 0.065);
     setTimeout(() => {
       const svgs = [hpCSvg, ...document.querySelectorAll('.hp-exp-svg')].filter(Boolean);
       svgs.forEach(svg => {
@@ -61116,11 +61149,10 @@ function hpPlayScale() {
     return m + (sPc - bPc);
   });
   const ctx = getAudio(); const chain = buildLimiterChain(ctx, 0.42);
-  const tone = REF_TONES['harp'] || REF_TONES['guitar'];
   const isChords2 = gccToolMode === 'chords';
   const hpSvgId  = isChords2 ? 'hpChordSvg' : 'hpScaleSvg';
   soundingMidis.forEach((midi, i) => {
-    const node = tone.synth(ctx, midiToFreq(midi), ctx.currentTime + i * hpStepDelay, 1.4, chain.gain, 0.16);
+    const node = _samplePlay('harp', midiToFreq(midi), ctx, chain.gain, 0.16, 1.4, ctx.currentTime + i * hpStepDelay);
     if (node) hpScaleNodes.push(node);
     // Flash the string dot for this note
     const flashDur = Math.min(hpStepDelay * 900, 400);
