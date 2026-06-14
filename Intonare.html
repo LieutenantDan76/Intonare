@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.55.25 -->
+<!-- INTONARE_VERSION: 0.55.26 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -6091,11 +6091,19 @@
   }
   .db-meter-peak.live { opacity: 1; }
   .db-ruler-labels {
-    display: flex; justify-content: space-between;
+    position: relative; height: 12px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 8px; color: var(--muted); letter-spacing: 0.5px;
-    margin-top: 3px; padding: 0 1px;
+    margin-top: 3px;
   }
+  .db-ruler-labels span {
+    position: absolute; top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  /* First and last labels hug the edges instead of centering (so they don't clip) */
+  .db-ruler-labels span:first-child { transform: translateX(0); }
+  .db-ruler-labels span:last-child  { transform: translateX(-100%); }
 
   /* ─── FLASH OVERLAY ─── */
   .flash-overlay {
@@ -14666,7 +14674,11 @@ transition:transform 0.25s ease;
             <div class="db-meter-peak" id="dbMeterPeak"></div>
           </div>
           <div class="db-ruler-labels">
-            <span>40</span><span>70</span><span>85</span><span>91</span><span>110 dB</span>
+            <span style="left:0%">40</span>
+            <span style="left:42.9%">70</span>
+            <span style="left:64.3%">85</span>
+            <span style="left:72.9%">91</span>
+            <span style="left:100%">110 dB</span>
           </div>
         </div>
 
@@ -18497,7 +18509,7 @@ transition:transform 0.25s ease;
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.55.25';
+const INTONARE_VERSION = '0.55.26';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
