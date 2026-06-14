@@ -40,6 +40,13 @@ copy /Y colors.xml android\app\src\main\res\values\colors.xml
 echo [4f] Restoring app icons...
 xcopy /E /Y /I icon_res android\app\src\main\res
 
+echo [4f2] Restoring notification icon...
+xcopy /Y /I icon_res\notification\drawable-mdpi\ic_stat_intonare.png android\app\src\main\res\drawable-mdpi\
+xcopy /Y /I icon_res\notification\drawable-hdpi\ic_stat_intonare.png android\app\src\main\res\drawable-hdpi\
+xcopy /Y /I icon_res\notification\drawable-xhdpi\ic_stat_intonare.png android\app\src\main\res\drawable-xhdpi\
+xcopy /Y /I icon_res\notification\drawable-xxhdpi\ic_stat_intonare.png android\app\src\main\res\drawable-xxhdpi\
+xcopy /Y /I icon_res\notification\drawable-xxxhdpi\ic_stat_intonare.png android\app\src\main\res\drawable-xxxhdpi\
+
 echo [4g] Restoring audio samples (skipping folders already present)...
 if exist audio_assets (
     for /D %%i in (audio_assets\*) do (
