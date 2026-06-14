@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.55.21 -->
+<!-- INTONARE_VERSION: 0.55.25 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -1428,7 +1428,6 @@
 
     /* dB canvas shorter in landscape to save vertical space */
     .db-canvas-wrap { height: 110px; }
-    .db-vu-wrap { height: 18px; }
   }
   body::after {
     content: ''; position: fixed; inset: 0;
@@ -5886,7 +5885,7 @@
   #toolTranspose .sg-dd-arrow { color:var(--muted); font-size:9px; flex-shrink:0; transition:transform .15s; }
   #toolTranspose .sg-dd-btn.open .sg-dd-arrow { transform:rotate(180deg); }
   /* Portal list — appended to <body>, positioned with JS via getBoundingClientRect */
-  .tp-dd-portal { position:fixed; background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--r-sm); z-index:9999; display:none; max-height:240px; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,.6); }
+  .tp-dd-portal { position:fixed; background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--r-sm); z-index:9999; display:none; max-height:240px; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y; box-shadow:0 8px 32px rgba(0,0,0,.6); }
   .tp-dd-portal::-webkit-scrollbar { display:none; }
   .tp-dd-portal.open { display:block; animation:fadeUp .12s ease; }
   .tp-dd-portal .sg-dd-item { padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.5px; color:var(--text-dim); cursor:pointer; transition:background .1s; }
@@ -6044,14 +6043,6 @@
   .db-peak-reset:active { border-color: var(--accent-soft); color: var(--accent-soft); }
 
   /* ── VU bar ── */
-  .db-vu-wrap {
-    width: 100%; height: 24px;
-    border-radius: 6px; overflow: hidden;
-    background: var(--bg-1); border: 1px solid var(--border-soft);
-    margin-bottom: 8px;
-  }
-  #dbVuCanvas { display: block; width: 100%; height: 100%; }
-
   /* ── Scrolling history canvas ── */
   .db-canvas-wrap {
     position: relative; width: 100%; height: 180px;
@@ -6062,22 +6053,43 @@
   }
   #dbCanvas { display: block; width: 100%; height: 100%; }
 
-  /* ── Zone ruler ── */
+  /* ── Combined live meter + zone scale ── */
   .db-zone-ruler { margin-top: 2px; }
-  .db-ruler-track {
-    display: flex; height: 12px; border-radius: 4px; overflow: hidden;
+  .db-meter-track {
+    position: relative;
+    display: flex; height: 26px; border-radius: 5px; overflow: hidden;
     border: 1px solid var(--border-soft);
   }
   .db-ruler-seg {
-    flex: 1; display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-family: 'JetBrains Mono', monospace;
     font-size: 7px; letter-spacing: 1px; font-weight: 700;
-    color: rgba(0,0,0,0.7);
+    color: rgba(0,0,0,0.55);
+    overflow: hidden; white-space: nowrap;
   }
-  .db-ruler-safe    { background: rgba(182,242,91,0.55);  flex: 3.5; }
-  .db-ruler-caution { background: rgba(255,209,102,0.65); flex: 1.5; }
-  .db-ruler-warn    { background: rgba(255,138,101,0.70); flex: 0.7; }
-  .db-ruler-danger  { background: rgba(255,68,68,0.75);   flex: 0.9; }
+  /* Band widths match the linear 40–110 dB SPL scale (70 dB span):
+     SAFE 40–70 = 30/70, CAUTION 70–85 = 15/70, WARN 85–91 = 6/70, DANGER 91–110 = 19/70 */
+  .db-ruler-safe    { background: rgba(182,242,91,0.28);  flex: 30; }
+  .db-ruler-caution { background: rgba(255,209,102,0.32); flex: 15; }
+  .db-ruler-warn    { background: rgba(255,138,101,0.36); flex: 6; }
+  .db-ruler-danger  { background: rgba(255,68,68,0.40);   flex: 19; }
+  /* Live fill needle — a bright vertical marker showing current level */
+  .db-meter-needle {
+    position: absolute; top: 0; bottom: 0; left: 0; width: 3px;
+    background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.8);
+    border-radius: 2px; transform: translateX(-1.5px);
+    transition: left 0.08s linear, background 0.2s ease, box-shadow 0.2s ease;
+    opacity: 0; pointer-events: none;
+  }
+  .db-meter-needle.live { opacity: 1; }
+  /* Peak-hold marker — thin persistent line */
+  .db-meter-peak {
+    position: absolute; top: 0; bottom: 0; left: 0; width: 2px;
+    background: rgba(255,255,255,0.5); border-radius: 1px;
+    transform: translateX(-1px);
+    opacity: 0; pointer-events: none;
+  }
+  .db-meter-peak.live { opacity: 1; }
   .db-ruler-labels {
     display: flex; justify-content: space-between;
     font-family: 'JetBrains Mono', monospace;
@@ -14637,21 +14649,21 @@ transition:transform 0.25s ease;
           </div>
         </div>
 
-        <!-- VU bar -->
-        <div class="db-vu-wrap">
-          <canvas id="dbVuCanvas"></canvas>
-        </div>
-
         <!-- Scrolling history graph -->
         <div class="db-canvas-wrap"><canvas id="dbCanvas"></canvas></div>
 
-        <!-- Zone ruler: coloured bar with labels -->
+        <!-- Combined live meter + zone scale: colored zone bands with a live fill overlay -->
         <div class="db-zone-ruler">
-          <div class="db-ruler-track">
+          <div class="db-meter-track" id="dbMeterTrack">
+            <!-- Zone bands sized to match the linear 40-110 dB SPL scale -->
             <div class="db-ruler-seg db-ruler-safe"  data-i18n="vol_safe">SAFE</div>
             <div class="db-ruler-seg db-ruler-caution" data-i18n="vol_caution">CAUTION</div>
             <div class="db-ruler-seg db-ruler-warn"  data-i18n="vol_warn">WARN</div>
             <div class="db-ruler-seg db-ruler-danger" data-i18n="vol_danger">DANGER</div>
+            <!-- Live position marker — moved by JS -->
+            <div class="db-meter-needle" id="dbMeterNeedle"></div>
+            <!-- Peak-hold marker -->
+            <div class="db-meter-peak" id="dbMeterPeak"></div>
           </div>
           <div class="db-ruler-labels">
             <span>40</span><span>70</span><span>85</span><span>91</span><span>110 dB</span>
@@ -18485,7 +18497,7 @@ transition:transform 0.25s ease;
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.55.21';
+const INTONARE_VERSION = '0.55.25';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22489,9 +22501,34 @@ function stopMic() {
   updateDetectedBPMDisplay();
 }
 
-// ═══════════════════════════════════════════════
-// METRONOME
-// ═══════════════════════════════════════════════
+// ── Resume mic + active mic-tool after returning from background ──
+// Android suspends the AudioContext and may end the MediaStreamTrack while
+// backgrounded. On return, restart the mic if its track died, then restart
+// whichever mic-driven tool is open so the readout comes back to life.
+async function micResumeAfterBackground() {
+  if (!isListening) return; // user had it off — leave it off
+  // Has the mic track been killed by the OS?
+  const track = micStream && micStream.getAudioTracks ? micStream.getAudioTracks()[0] : null;
+  const dead = !micStream || !track || track.readyState === 'ended';
+  if (dead) {
+    // Tear down the stale state, then re-acquire cleanly.
+    isListening = false;
+    if (micSource) { try { micSource.disconnect(); } catch(e) {} }
+    if (analyser)  { try { analyser.disconnect(); } catch(e) {} }
+    if (micStream) { try { micStream.getTracks().forEach(t => t.stop()); } catch(e) {} }
+    micSource = analyser = micStream = null;
+    try {
+      await startMic();
+    } catch(e) {
+      return; // permission lost or no device — bail quietly
+    }
+  } else {
+    // Track is alive — just make sure the shared context is running again.
+    try { const c = getAudio(); if (c.state === 'suspended') await c.resume(); } catch(e) {}
+  }
+  // Restart whichever mic-tool is open so its render loop resumes.
+  if (currentTool === 'volume') { dbStop(); dbStart(); }
+}
 let metroMasterGain = null;
 let metroLimiter = null;
 
@@ -23592,6 +23629,8 @@ function dbResetPeak() {
   if (dbPeakTimer) { clearTimeout(dbPeakTimer); dbPeakTimer = null; }
   const el = document.getElementById('dbPeakVal');
   if (el) el.textContent = '—';
+  const pk = document.getElementById('dbMeterPeak');
+  if (pk) pk.classList.remove('live');
 }
 
 function dbGetZone(db) {
@@ -23676,58 +23715,34 @@ function splToY(db, H) {
 // At 40 dB SPL (quiet room) = empty; 110 dB SPL (damage) = full.
 const DB_VU_SPL_MIN = 40;
 const DB_VU_SPL_MAX = 110;
-function dbDrawVU(db) {
-  const canvas = document.getElementById('dbVuCanvas');
-  if (!canvas) return;
-  const W = canvas.offsetWidth, H = canvas.offsetHeight || 24;
-  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, W, H);
-
-  // Background track
-  ctx.fillStyle = 'rgba(255,255,255,0.04)';
-  const r = 4;
-  ctx.beginPath();
-  ctx.roundRect(0, 0, W, H, r);
-  ctx.fill();
-
-  if (db <= DB_MIN) return;
-
-  // Map SPL (db + SPL_OFFSET) to 0..1 within the useful SPL range
+// Convert a dBFS reading to a 0..1 fraction across the meter's SPL range
+function _dbSplFrac(db) {
   const spl = db + SPL_OFFSET;
-  const frac = Math.max(0, Math.min(1, (spl - DB_VU_SPL_MIN) / (DB_VU_SPL_MAX - DB_VU_SPL_MIN)));
-  const fillW = Math.round(frac * W);
-  if (fillW < 2) return;
-
-  // Gradient mapped to the same SPL range so colours align with zone boundaries
-  // 70 dB = (70-40)/(110-40) = 43% → green
-  // 85 dB = 64% → amber
-  // 91 dB = 73% → orange  
-  // 110 dB = 100% → red
-  const grad = ctx.createLinearGradient(0, 0, W, 0);
-  grad.addColorStop(0,    'rgba(182,242,91,0.7)');
-  grad.addColorStop(0.43, 'rgba(182,242,91,0.85)');
-  grad.addColorStop(0.64, 'rgba(255,209,102,0.90)');
-  grad.addColorStop(0.73, 'rgba(255,138,101,0.92)');
-  grad.addColorStop(1.0,  'rgba(255,68,68,0.95)');
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  if (fillW >= W) {
-    ctx.roundRect(0, 0, W, H, r);
-  } else {
-    ctx.roundRect(0, 0, fillW, H, [r, 0, 0, r]);
+  return Math.max(0, Math.min(1, (spl - DB_VU_SPL_MIN) / (DB_VU_SPL_MAX - DB_VU_SPL_MIN)));
+}
+function dbDrawVU(db) {
+  const needle = document.getElementById('dbMeterNeedle');
+  if (!needle) return;
+  if (db <= DB_MIN) {
+    needle.classList.remove('live');
+    return;
   }
-  ctx.fill();
-
-  // Glow at the tip when WARN or DANGER (85+ dB SPL = dBFS -9)
-  if (db >= -9) {
-    const glowCol = db >= -3 ? 'rgba(255,68,68,0.6)' : 'rgba(255,138,101,0.5)';
-    const grd = ctx.createRadialGradient(fillW, H/2, 0, fillW, H/2, H * 1.5);
-    grd.addColorStop(0, glowCol);
-    grd.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grd;
-    ctx.fillRect(Math.max(0, fillW - H*2), 0, H*3, H);
+  const frac = _dbSplFrac(db);
+  needle.style.left = (frac * 100) + '%';
+  needle.style.background = dbBlendedColor(db);
+  needle.style.boxShadow = '0 0 8px ' + dbBlendedColor(db, 0.9);
+  needle.classList.add('live');
+}
+function dbDrawPeakMarker() {
+  const pk = document.getElementById('dbMeterPeak');
+  if (!pk) return;
+  if (dbPeak === null || dbPeak <= DB_MIN) {
+    pk.classList.remove('live');
+    return;
   }
+  pk.style.left = (_dbSplFrac(dbPeak) * 100) + '%';
+  pk.style.background = dbBlendedColor(dbPeak, 0.85);
+  pk.classList.add('live');
 }
 
 function dbDraw() {
@@ -23857,11 +23872,10 @@ function dbTick() {
       accent.style.background = `linear-gradient(90deg, transparent, ${c}, transparent)`;
       accent.style.opacity = displayDb > DB_MIN ? '0.7' : '0.35';
     }
-    // Peak hold uses raw db (not smoothed) so it captures true peaks
+    // Peak hold uses raw db (not smoothed) so it captures true peaks.
+    // Holds until the user taps RESET — no auto-clear.
     if (db > DB_MIN && (dbPeak === null || db > dbPeak)) {
       dbPeak = db;
-      if (dbPeakTimer) clearTimeout(dbPeakTimer);
-      dbPeakTimer = setTimeout(dbResetPeak, DB_PEAK_HOLD_MS);
       const pv = document.getElementById('dbPeakVal');
       if (pv) pv.textContent = Math.max(0, Math.round(db + 94)).toString();
     }
@@ -23875,6 +23889,7 @@ function dbTick() {
 
   dbDraw();
   dbDrawVU(db !== null ? (dbSmoothed !== null ? dbSmoothed : DB_MIN) : DB_MIN);
+  dbDrawPeakMarker();
   dbAnimFrame = setTimeout(dbTick, 1000 / DB_FPS);
 }
 
@@ -23900,8 +23915,8 @@ function dbStop() {
   const accent = document.getElementById('dbCardAccent');
   if (accent) { accent.style.background = ''; accent.style.opacity = ''; }
   if (dbCtx2d && dbCanvas) dbCtx2d.clearRect(0, 0, dbCanvas.width, dbCanvas.height);
-  const vuC = document.getElementById('dbVuCanvas');
-  if (vuC) { const c = vuC.getContext('2d'); if (c) c.clearRect(0, 0, vuC.width, vuC.height); }
+  const needle = document.getElementById('dbMeterNeedle');
+  if (needle) needle.classList.remove('live');
   dbCtx2d = dbCanvas = null;
   dbSmoothed = null;
   _dbTimeBuf = null; _dbFreqBuf = null;
@@ -29132,8 +29147,14 @@ function _tpWireDdListeners() {
     if (openList.contains(e.target) || (openList._tpBtn && openList._tpBtn.contains(e.target))) return;
     _tpCloseAllDropdowns();
   }, { passive: true });
-  // Fixed-position lists won't track their button on scroll — close them.
-  window.addEventListener('scroll', () => _tpCloseAllDropdowns(), { passive: true, capture: true });
+  // Fixed-position lists won't track their button when the PAGE scrolls — close them.
+  // But ignore scrolls that originate inside the open list (its own overflow scroll).
+  window.addEventListener('scroll', e => {
+    const openList = document.querySelector('.tp-dd-portal.open');
+    if (!openList) return;
+    if (openList.contains(e.target)) return;
+    _tpCloseAllDropdowns();
+  }, { passive: true, capture: true });
 }
 
 function _tpBuildInstDrop(containerId, items, currentVal, onChange) {
@@ -29188,8 +29209,20 @@ function _tpBuildInstDrop(containerId, items, currentVal, onChange) {
     } else {
       opt.className = 'sg-dd-item' + (item[0] === currentVal ? ' active' : '');
       opt.textContent = item[1];
+      // Tap vs. drag: record where the finger went down; only select if it
+      // lifts in roughly the same spot (a tap), so dragging to scroll the list
+      // doesn't fire a selection.
+      let _downX = 0, _downY = 0, _moved = false;
       opt.addEventListener('pointerdown', e => {
         e.stopPropagation();
+        _downX = e.clientX; _downY = e.clientY; _moved = false;
+      });
+      opt.addEventListener('pointermove', e => {
+        if (Math.abs(e.clientX - _downX) > 8 || Math.abs(e.clientY - _downY) > 8) _moved = true;
+      });
+      opt.addEventListener('pointerup', e => {
+        e.stopPropagation();
+        if (_moved) return; // was a scroll drag, not a tap
         list.querySelectorAll('.sg-dd-item').forEach(o => o.classList.remove('active'));
         opt.classList.add('active');
         valEl.textContent = item[1];
@@ -69346,6 +69379,8 @@ document.addEventListener('visibilitychange', () => {
     // Re-entering: if we were in a module, resume
     if (typeof currentTool !== 'undefined' && currentTool) sesEnter();
     else if (typeof currentExercise !== 'undefined' && currentExercise) sesEnter();
+    // Restore mic + active mic-tool if the OS killed the stream while backgrounded
+    if (typeof micResumeAfterBackground === 'function') micResumeAfterBackground();
   }
 });
 
@@ -69364,6 +69399,7 @@ try {
         }
         if (typeof currentTool !== 'undefined' && currentTool) sesEnter();
         else if (typeof currentExercise !== 'undefined' && currentExercise) sesEnter();
+        if (typeof micResumeAfterBackground === 'function') micResumeAfterBackground();
       }
     });
   }
