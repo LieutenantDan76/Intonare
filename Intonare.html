@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.55.26 -->
+<!-- INTONARE_VERSION: 0.55.28 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -18509,7 +18509,7 @@ transition:transform 0.25s ease;
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.55.26';
+const INTONARE_VERSION = '0.55.28';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -23631,6 +23631,10 @@ const SPL_G_MIN     = 0;    // graph bottom (dB SPL)
 const SPL_G_MAX     = 110;  // graph top (dB SPL) — gives headroom above mic ceiling
 const DB_SMOOTH_SLOW = 0.06; // decay (number falls slowly — easy to read)
 let _dbReadoutLast = 0; // throttle text updates
+// Needle follower: snaps UP to any peak instantly (true-peak feel), falls back
+// smoothly so it's lively but not strobing frame-to-frame.
+let dbNeedle = null;
+const DB_NEEDLE_DECAY = 0.35; // fraction of the gap closed per frame on the way down
 // Pre-allocated buffers — avoids 160KB/s of GC pressure at 20fps
 // Sized lazily on first use so we don't depend on analyser existing at parse time
 let _dbTimeBuf = null;
@@ -23849,6 +23853,12 @@ function dbTick() {
       const alpha = db > dbSmoothed ? DB_SMOOTH_FAST : DB_SMOOTH_SLOW;
       dbSmoothed = dbSmoothed + alpha * (db - dbSmoothed);
     }
+    // Needle follower: jump up instantly to any new peak, decay smoothly down.
+    if (dbNeedle === null || db >= dbNeedle) {
+      dbNeedle = db;
+    } else {
+      dbNeedle = dbNeedle + DB_NEEDLE_DECAY * (db - dbNeedle);
+    }
     const displayDb = dbSmoothed;
     const zone = dbGetZone(displayDb);
     const el  = document.getElementById('dbReadout');
@@ -23884,8 +23894,9 @@ function dbTick() {
       accent.style.background = `linear-gradient(90deg, transparent, ${c}, transparent)`;
       accent.style.opacity = displayDb > DB_MIN ? '0.7' : '0.35';
     }
-    // Peak hold uses raw db (not smoothed) so it captures true peaks.
-    // Holds until the user taps RESET — no auto-clear.
+    // Peak hold uses RAW db — captures true transient peaks (a snare hit, a stab)
+    // that the needle flicks to but the smoothed number rounds off. This is the
+    // hearing-safety-correct behaviour. Holds until RESET.
     if (db > DB_MIN && (dbPeak === null || db > dbPeak)) {
       dbPeak = db;
       const pv = document.getElementById('dbPeakVal');
@@ -23897,10 +23908,14 @@ function dbTick() {
     if (el)  { el.textContent = '—'; el.className = 'db-number'; }
     if (lbl) { lbl.textContent = t('mic_off'); lbl.className = 'db-zone-badge muted'; }
     dbSmoothed = null;
+    dbNeedle = null;
   }
 
   dbDraw();
-  dbDrawVU(db !== null ? (dbSmoothed !== null ? dbSmoothed : DB_MIN) : DB_MIN);
+  // Needle uses its follower (instant rise to peaks, smooth fall) so it catches
+  // transients without strobing. The big number + zone badge stay on the smoothed
+  // value for a calm, readable ambient reading.
+  dbDrawVU(db !== null ? (dbNeedle !== null ? dbNeedle : DB_MIN) : DB_MIN);
   dbDrawPeakMarker();
   dbAnimFrame = setTimeout(dbTick, 1000 / DB_FPS);
 }
@@ -23931,6 +23946,7 @@ function dbStop() {
   if (needle) needle.classList.remove('live');
   dbCtx2d = dbCanvas = null;
   dbSmoothed = null;
+  dbNeedle = null;
   _dbTimeBuf = null; _dbFreqBuf = null;
 }
 
