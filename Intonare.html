@@ -54069,12 +54069,12 @@ function lockOrientation() {
   window._ovRotateActive = true;
   const so = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenOrientation;
   if (so && so.lock) {
-    // Lock to landscape-primary for the whole time the overlay is open. The OS
+    // Lock to landscape-secondary for the whole time the overlay is open. The OS
     // never rotates the window, so there's no flash through portrait. Users tilt
-    // the phone to the right (home/nav edge to the right) to play.
+    // the phone the matching way to play.
     window._ovNativeLocked = true;
     document.body.classList.remove('ov-portrait-rotate');
-    so.lock({ orientation: 'landscape-primary' }).catch(() => {
+    so.lock({ orientation: 'landscape-secondary' }).catch(() => {
       window._ovNativeLocked = false;
       _applyOvRotate();
     });
