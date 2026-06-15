@@ -54068,6 +54068,13 @@ function _applyOvRotate() {
 function lockOrientation() {
   window._ovRotateActive = true;
   const so = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenOrientation;
+  // TEMP DIAGNOSTIC — remove after debugging
+  try {
+    alert('lockOrientation:\nCapacitor=' + (!!window.Capacitor) +
+          '\nPlugins=' + (!!(window.Capacitor && window.Capacitor.Plugins)) +
+          '\nScreenOrientation=' + (!!so) +
+          '\nplugin keys=' + (window.Capacitor && window.Capacitor.Plugins ? Object.keys(window.Capacitor.Plugins).join(',') : 'none'));
+  } catch(e) {}
   if (so && so.lock) {
     // Native device lock — 'landscape' lets the OS pick whichever landscape side
     // the phone is already nearest, so users keep their preferred direction, and
