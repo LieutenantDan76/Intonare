@@ -54047,40 +54047,62 @@ function isAndroid() { return /Android/.test(navigator.userAgent); }
 //   unlockOrientation → ScreenOrientation.unlock()
 // Browser + Capacitor WebView: Screen Orientation API works on Android Chrome engine.
 // iOS ignores it silently — acceptable since iOS requires manual rotation anyway.
-// Capacitor plugin alternative: @capacitor/screen-orientation (see go.bat notes)
-// The fullscreen overlays (piano, Rhodes, organ, theremin) present landscape via
-// CSS — `body.ov-portrait-rotate` rotates them -90deg with 100dvh/100dvw swapped.
-// We DON'T lock the device orientation (users may prefer either landscape side),
-// and we DON'T leave the rotation on a raw `@media (orientation: portrait)` query:
-// that re-matched continuously mid-rotation, flashing the layout through portrait
-// (the "phantom rotation"). Instead JS toggles the class once per *settled*
-// orientation change, so:
-//   • Open in portrait → class on → CSS shows landscape.
-//   • Turn to real landscape → class off in one step → already landscape, no flash.
-//   • Turn to the other landscape → stays landscape (browser handles it natively).
-window._ovRotateActive = false;  // true while any rotating overlay is open
+// Fullscreen overlays (piano, Rhodes, organ, theremin) play in landscape.
+// Strategy:
+//   • Native (Capacitor): lock the DEVICE to landscape via the ScreenOrientation
+//     plugin. The OS never rotates the window, so there's no flash through
+//     portrait — the layout is genuinely landscape. This is the only reliable
+//     way; the Web orientation API silently failed in the Android WebView, and
+//     the CSS @media handoff flashed mid-rotation.
+//   • Non-native (plain browser / PWA): fall back to the CSS body-class rotate
+//     so desktop/test still presents landscape without a device lock.
+window._ovRotateActive = false;
 
 function _applyOvRotate() {
-  // Rotate only when an overlay is open AND the device is physically portrait.
+  // CSS fallback only — applies the rotate class when NOT able to lock natively
+  // and the device is physically portrait.
   const portrait = window.matchMedia('(orientation: portrait)').matches;
-  document.body.classList.toggle('ov-portrait-rotate', window._ovRotateActive && portrait);
+  document.body.classList.toggle('ov-portrait-rotate', window._ovRotateActive && portrait && !window._ovNativeLocked);
 }
-function _onOrientationSettled() {
-  // Fires after the OS finishes rotating — apply in one clean step (no mid-turn thrash)
-  _applyOvRotate();
+
+function lockOrientation() {
+  window._ovRotateActive = true;
+  const so = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenOrientation;
+  if (so && so.lock) {
+    // Native device lock — 'landscape' lets the OS pick whichever landscape side
+    // the phone is already nearest, so users keep their preferred direction, and
+    // it won't rotate away from it once locked.
+    window._ovNativeLocked = true;
+    document.body.classList.remove('ov-portrait-rotate');
+    so.lock({ orientation: 'landscape' }).catch(() => {
+      // lock failed — fall back to CSS rotate
+      window._ovNativeLocked = false;
+      _applyOvRotate();
+    });
+  } else {
+    window._ovNativeLocked = false;
+    _applyOvRotate();
+  }
 }
+function unlockOrientation() {
+  window._ovRotateActive = false;
+  const so = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenOrientation;
+  if (window._ovNativeLocked && so && so.unlock) {
+    so.unlock().catch(() => {});
+  }
+  window._ovNativeLocked = false;
+  document.body.classList.remove('ov-portrait-rotate');
+}
+
+// CSS-fallback path only: re-evaluate the rotate class on settled orientation
+// change (no effect when natively locked).
+function _onOrientationSettled() { _applyOvRotate(); }
 window.addEventListener('orientationchange', _onOrientationSettled);
-// Some WebViews don't fire orientationchange reliably; matchMedia change is the
-// settled signal there. Both call the same single-step apply.
 try {
   window.matchMedia('(orientation: portrait)').addEventListener('change', _onOrientationSettled);
 } catch (e) {
-  // older WebView: fall back to resize (debounced by the browser's own settle)
   window.addEventListener('resize', _onOrientationSettled);
 }
-
-function lockOrientation()   { window._ovRotateActive = true;  _applyOvRotate(); }
-function unlockOrientation() { window._ovRotateActive = false; _applyOvRotate(); }
 
 // Force the WebView to recompute dvh/dvw-based layout for a rotated overlay.
 // Without this, portrait overlays (where orientation lock silently fails, e.g.
