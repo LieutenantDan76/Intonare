@@ -1327,9 +1327,11 @@
   body {
     display: flex; flex-direction: column; align-items: center; position: relative;
     /* Safe area padding for notched phones.
-       Android 15+ forces edge-to-edge so the WebView renders behind the status bar —
-       padding-top is required. iOS uses the same env() value. */
-    padding-top: env(safe-area-inset-top);
+       Status bar is hidden via immersive mode, but Android still reports the
+       status-region inset — so trim it by the bar height to reclaim the dead
+       gap, while max(0px, …) keeps clearance under a camera cutout on notched
+       devices. */
+    padding-top: max(0px, calc(env(safe-area-inset-top) - 24px));
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
