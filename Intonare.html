@@ -1327,9 +1327,10 @@
   body {
     display: flex; flex-direction: column; align-items: center; position: relative;
     /* Native sticky-immersive (MainActivity) hides both bars and may zero out
-       env(safe-area-inset-top). Keep a small floor so the header never jams the
-       top edge / camera cutout, but use the real inset when it's larger. */
-    padding-top: max(8px, env(safe-area-inset-top));
+       env(safe-area-inset-top). Keep a tiny floor so the header never jams the
+       top edge / camera cutout, capped so a large reported inset can't balloon
+       the gap now that the status bar is gone. */
+    padding-top: min(8px, max(2px, env(safe-area-inset-top)));
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
@@ -31330,7 +31331,7 @@ function closeThereminOverlay() {
   thmnOverlayOpen = false;
   document.getElementById('thereminOverlay').classList.remove('active');
   document.body.style.overflow = '';
-  if (screen.orientation && screen.orientation.unlock) { try { screen.orientation.unlock(); } catch(e){} }
+  // (orientation no longer locked — overlay presents landscape via CSS)
 }
 
 function _thmnOvFinger(nx, ny, show) {
@@ -54055,20 +54056,17 @@ function isAndroid() { return /Android/.test(navigator.userAgent); }
 // Browser + Capacitor WebView: Screen Orientation API works on Android Chrome engine.
 // iOS ignores it silently — acceptable since iOS requires manual rotation anyway.
 // Capacitor plugin alternative: @capacitor/screen-orientation (see go.bat notes)
-function lockOrientation() {
-  if (screen.orientation && screen.orientation.lock) {
-    // Lock to the current landscape variant (primary or secondary) so the OS
-    // can't rotate between them when the user physically turns the phone.
-    var type = screen.orientation.type || '';
-    var target = type === 'landscape-secondary' ? 'landscape-secondary' : 'landscape-primary';
-    screen.orientation.lock(target).catch(() => {});
-  }
-}
-function unlockOrientation() {
-  if (screen.orientation && screen.orientation.unlock) {
-    screen.orientation.unlock();
-  }
-}
+// NOTE: The fullscreen overlays (piano, Rhodes, organ, theremin) already present
+// landscape entirely via CSS — a `@media (orientation: portrait)` block rotates
+// them -90deg with 100dvh/100dvw swapped. Calling screen.orientation.lock() on
+// top of that made the device ALSO physically rotate, so the CSS rotation and the
+// real rotation stacked / fought each other — the "phantom rerotation" when the
+// user turned the phone. The CSS is the whole mechanism, so these are no-ops:
+//   • Portrait → CSS fakes landscape.
+//   • Real landscape → media query drops the transform; already landscape.
+// Either way there's nothing for the orientation API to fight.
+function lockOrientation() { /* intentionally no-op — overlays rotate via CSS */ }
+function unlockOrientation() { /* intentionally no-op — overlays rotate via CSS */ }
 
 // Force the WebView to recompute dvh/dvw-based layout for a rotated overlay.
 // Without this, portrait overlays (where orientation lock silently fails, e.g.
@@ -58723,10 +58721,27 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('dk-prec-prev')?.addEventListener('click', () => _precNavigate(-1));
   document.getElementById('dk-prec-next')?.addEventListener('click', () => _precNavigate(1));
 
-  // iOS safe-area top padding — Android WebView already sits below the status bar so
-  // env(safe-area-inset-top) is omitted from CSS; restore it only on iOS Capacitor.
-  if (isCapacitor() && window.Capacitor?.getPlatform() === 'ios') {
-    document.body.style.paddingTop = 'env(safe-area-inset-top)';
+  // ── Platform-aware top inset ────────────────────────────────────────────
+  // The CSS default (a small clamp) covers desktop/PWA and acts as a pre-JS
+  // fallback. Native shells override it here:
+  //  • iOS — use the FULL safe-area inset, uncapped. The notch / Dynamic Island
+  //    reports real values and the region can't be hidden, so content must clear
+  //    it. Capping here would jam the header under the Island.
+  //  • Android — both bars are hidden via native sticky-immersive, so the inset
+  //    is mostly phantom. Use the real cutout depth when present (notched/punch-
+  //    hole phones), floored small so flat-top devices stay tight.
+  if (isCapacitor()) {
+    var _plat = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform();
+    if (_plat === 'ios') {
+      document.body.style.paddingTop = 'env(safe-area-inset-top)';
+    } else if (_plat === 'android') {
+      // Punch-hole / pinhole cameras are small and centred, so the header can
+      // ride up close without colliding. Use ~60% of the reported inset —
+      // tighter than full clearance, still scales with the device's cutout —
+      // floored at 2px so flat-top phones stay tight.
+      document.body.style.paddingTop =
+        'max(2px, calc(env(safe-area-inset-top) * 0.6))';
+    }
   }
 });
 
@@ -73052,7 +73067,6 @@ function ptoReleaseNote(midi, manual, fast) {
 }
 
 function ptoPlayNote(midi, manual, slide, fromRiff) {
-  if (typeof hapticLight === 'function') hapticLight();
   const voiceKey = (manual === 'lower' ? -1 : 1) * (midi + 1);
   // In hold mode: tap a held note to stop it (drone toggle)
   if (organHoldMode === 1) {
