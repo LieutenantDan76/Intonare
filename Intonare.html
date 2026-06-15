@@ -54068,21 +54068,21 @@ function _applyOvRotate() {
 function lockOrientation() {
   window._ovRotateActive = true;
   const so = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenOrientation;
-  // TEMP DIAGNOSTIC — remove after debugging
-  try {
-    alert('lockOrientation:\nCapacitor=' + (!!window.Capacitor) +
-          '\nPlugins=' + (!!(window.Capacitor && window.Capacitor.Plugins)) +
-          '\nScreenOrientation=' + (!!so) +
-          '\nplugin keys=' + (window.Capacitor && window.Capacitor.Plugins ? Object.keys(window.Capacitor.Plugins).join(',') : 'none'));
-  } catch(e) {}
   if (so && so.lock) {
-    // Native device lock — 'landscape' lets the OS pick whichever landscape side
-    // the phone is already nearest, so users keep their preferred direction, and
-    // it won't rotate away from it once locked.
+    // Lock to landscape-primary so the overlay always OPENS the same way with no
+    // flash through portrait. Then release the lock shortly after so the user can
+    // still flip to the other landscape side if they prefer. The brief lock is
+    // what kills the open-time phantom rotation; releasing keeps it switchable.
     window._ovNativeLocked = true;
     document.body.classList.remove('ov-portrait-rotate');
-    so.lock({ orientation: 'landscape' }).catch(() => {
-      // lock failed — fall back to CSS rotate
+    so.lock({ orientation: 'landscape-primary' }).then(() => {
+      // Give the OS a beat to settle into landscape, then unlock for free rotation.
+      setTimeout(() => {
+        if (window._ovNativeLocked && so.unlock) {
+          so.unlock().catch(() => {});
+        }
+      }, 450);
+    }).catch(() => {
       window._ovNativeLocked = false;
       _applyOvRotate();
     });
