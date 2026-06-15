@@ -13580,11 +13580,26 @@ transition:transform 0.25s ease;
       // Status bar — immersive: hide it and let the app draw edge-to-edge.
       // Android keeps the swipe-down-to-reveal gesture by default, so the bar
       // (clock/battery) is reachable but stays out of the way during play.
-      const sbPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar;
-      if (sbPlugin) {
-        try { sbPlugin.setOverlaysWebView({ overlay: true }); } catch (e) {}
-        try { sbPlugin.hide(); } catch (e) {}
-      }
+      // Exposed globally so we can re-assert it whenever the bar sneaks back
+      // (after a permission dialog, app resume, or a reveal swipe) — calling
+      // hide() only once at launch leaves it stuck visible otherwise.
+      window._enforceImmersive = function() {
+        const sb = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar;
+        if (!sb) return;
+        try { sb.setOverlaysWebView({ overlay: true }); } catch (e) {}
+        try { sb.hide(); } catch (e) {}
+      };
+      window._enforceImmersive();
+
+      // Re-assert immersive whenever the page regains focus/visibility — a reveal
+      // swipe or transient system UI doesn't fire appStateChange, so without this
+      // the bar can stay up once it's been pulled down.
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && window._enforceImmersive) window._enforceImmersive();
+      });
+      window.addEventListener('focus', function() {
+        if (window._enforceImmersive) window._enforceImmersive();
+      });
 
       // Notification permission — doesn't need user gesture, fire immediately
       const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
@@ -76264,6 +76279,9 @@ try {
         stopAllAudio();
       }
       else {
+        // Re-hide the status bar — coming back from background (or a permission
+        // dialog) often leaves it showing again.
+        if (typeof window._enforceImmersive === 'function') window._enforceImmersive();
         // Resume any suspended audio contexts so the first sound event isn't dropped
         if (typeof _sharedAudio !== 'undefined' && _sharedAudio && _sharedAudio.state === 'suspended') {
           _sharedAudio.resume().catch(() => {});
