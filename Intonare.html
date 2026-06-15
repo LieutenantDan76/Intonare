@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.57.26 -->
+<!-- INTONARE_VERSION: 0.57.32 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -2327,17 +2327,17 @@
   /* Expand button on rail */
   .rhodes-expand-btn {
     display: flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px;
-    background: rgba(0,0,0,0.12);
-    border: 1px solid rgba(0,0,0,0.22);
-    border-radius: 5px;
-    color: rgba(40,40,40,0.6);
-    font-size: 13px;
-    cursor: pointer; flex-shrink: 0;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+    align-self: flex-start; margin-top: 10px;
+    font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:1px;
+    padding:5px 11px; border-radius:6px; cursor:pointer; flex-shrink:0; white-space:nowrap;
+    /* Brushed-metal tablet to suit the Rhodes name rail (parallels the organ's
+       wood-toned EXPAND tablet, just in cool steel instead of walnut). */
+    background:linear-gradient(180deg,#3a3a40,#222226);
+    border:1px solid #55555e; color:#cfd2d8;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 3px rgba(0,0,0,0.5);
     transition: all 0.15s;
   }
-  .rhodes-expand-btn:hover { background: rgba(0,0,0,0.22); color: #1a1a1a; }
+  .rhodes-expand-btn:hover { border-color:#7a7a86; color:#fff; background:linear-gradient(180deg,#46464e,#2c2c32); }
 
   /* ── Red felt strip — sits directly above keys ── */
   .rhodes-felt {
@@ -6455,6 +6455,11 @@
     display: grid;
     grid-template-columns: repeat(var(--tone-cols, 5), 1fr);
     gap: 5px;
+    /* Reserve 2 rows' height so switching families (which have different tile
+       counts) never resizes the card. 2×52px tiles + 5px gap = 109px. */
+    grid-auto-rows: 52px;
+    min-height: 109px;
+    align-content: start;
   }
   /* When last row has 3 orphans in a 4-col grid (count=7), span them to fill nicely */
   .tone-tile-row[data-count="7"][data-cols="4"] .tone-tile:nth-child(5),
@@ -11515,6 +11520,13 @@
 #ptoRhodesPanel .rhodes-felt-bar { margin-top: var(--rhodes-align-pad); margin-left:-9px; margin-right:-9px; position:relative; top:10px; z-index:1; }
 .piano-card#ptoPianoPanel { border-top-left-radius:0; border-top-right-radius:0; }
 #ptoOrganPanel .card.warm { border-top-left-radius:0; border-top-right-radius:0; }
+/* The organ console is wood-toned and bleeds full-width; on themes with a
+   coloured surface (e.g. the emerald theme's green) the card base peeks around
+   the wood and clashes. Pin the organ card to a neutral near-black so the wood
+   always sits on dark, regardless of theme. */
+#ptoOrganPanel .card.warm {
+  background:linear-gradient(180deg,#1a160f 0%,#120f0a 100%);
+}
 #ptoRhodesPanel .rhodes-card { border-top-left-radius:0; border-top-right-radius:0; }
 /* Rail is now the Rhodes card's top edge — square it to meet the tab strip */
 #ptoRhodesPanel .rhodes-rail { border-top-left-radius:0; border-top-right-radius:0; }
@@ -12973,11 +12985,81 @@ transition:transform 0.25s ease;
   text-transform:uppercase; cursor:pointer; white-space:nowrap; touch-action:manipulation;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08); }
 .pto-riff-trigger:active { background:linear-gradient(180deg,#16161c,#22222a); }
-.pto-riff-stop { flex:0 0 auto; padding:7px 14px; border-radius:8px;
-  background:linear-gradient(180deg,rgba(255,120,90,.22),rgba(255,120,90,.08));
-  border:1px solid rgba(255,140,110,.55); color:#ffb4a0; font-size:10px; letter-spacing:1.2px;
-  font-weight:800; text-transform:uppercase; cursor:pointer; white-space:nowrap; touch-action:manipulation; }
-.pto-riff-stop:active { background:linear-gradient(180deg,rgba(255,120,90,.32),rgba(255,120,90,.12)); }
+
+/* ── Now-playing display: a dark LCD-style screen (matches the tuner chroma
+   screen) showing the song title that lights up while a song plays, with
+   inline play/pause + stop transport. Sits left of the SONGS button. ── */
+.np-screen {
+  flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:8px;
+  background:#010408; border-radius:6px; padding:6px 9px;
+  border:1px solid rgba(255,255,255,0.05);
+  box-shadow:
+    inset 0 1px 6px rgba(0,0,0,0.9),
+    inset 0 -1px 3px rgba(0,0,0,0.4),
+    inset 0 0 16px color-mix(in srgb, var(--theme) 3%, transparent);
+  position:relative; overflow:hidden;
+  transition:box-shadow .3s ease;
+}
+.np-screen::after {           /* scanlines */
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+  background:repeating-linear-gradient(0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px);
+}
+.np-screen.np-active {
+  border-color:color-mix(in srgb, var(--theme) 30%, transparent);
+  box-shadow:
+    inset 0 1px 6px rgba(0,0,0,0.9),
+    inset 0 0 18px color-mix(in srgb, var(--theme) 10%, transparent),
+    0 0 12px color-mix(in srgb, var(--theme) 18%, transparent);
+}
+.np-transport { display:flex; gap:5px; flex:0 0 auto; position:relative; z-index:2; }
+.np-btn {
+  width:26px; height:26px; flex:0 0 auto; border-radius:5px;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(180deg,#1a1a20,#0e0e12);
+  border:1px solid rgba(255,255,255,0.08); color:rgba(255,255,255,0.3);
+  font-size:11px; cursor:pointer; touch-action:manipulation;
+  transition:color .2s, border-color .2s;
+}
+.np-screen.np-active .np-btn {
+  color:color-mix(in srgb, var(--theme) 75%, white 10%);
+  border-color:color-mix(in srgb, var(--theme) 25%, transparent);
+}
+.np-btn:active { background:linear-gradient(180deg,#0e0e12,#1a1a20); }
+.np-btn.np-stop { color:rgba(255,160,140,0.35); }
+.np-screen.np-active .np-btn.np-stop { color:#ff9d85; border-color:rgba(255,140,110,0.4); }
+.np-marquee { flex:1 1 auto; min-width:0; overflow:hidden; position:relative; z-index:2; }
+.np-title {
+  font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.5px;
+  white-space:nowrap; color:rgba(255,255,255,0.18);
+  transition:color .3s ease; display:inline-block;
+}
+/* Radio ticker: when the title overflows, JS clones the text (with a gap) into a
+   second span and we slide left by exactly one copy's width — so the loop is
+   seamless, no snap-back. A long initial hold lets you read the start first. */
+.np-marquee.np-scrolling .np-title { animation:npTicker linear infinite; }
+.np-title > span { display:inline-block; }
+.np-ticker-gap { display:inline-block; width:2.5em; }
+@keyframes npTicker {
+  0%, 20%    { transform:translateX(0); }
+  80%, 100%  { transform:translateX(var(--np-shift, 0)); }
+}
+.np-screen.np-active .np-title {
+  color:color-mix(in srgb, var(--theme) 80%, white 15%);
+  text-shadow:0 0 6px color-mix(in srgb, var(--theme) 45%, transparent);
+}
+.np-screen.np-paused .np-title { animation:npPulse 1.2s ease-in-out infinite; }
+@keyframes npPulse { 0%,100%{ opacity:1; } 50%{ opacity:0.45; } }
+.np-idle-label {
+  font-family:'JetBrains Mono', monospace; font-size:7px; letter-spacing:2px;
+  color:rgba(255,255,255,0.14); text-transform:uppercase;
+}
+.np-screen.np-active .np-idle-label { display:none; }
+.np-screen-compact { flex:0 1 auto; max-width:200px; padding:5px 7px; }
+.np-screen-compact .np-title, .np-screen-compact .np-idle-label { font-size:9px; }
+/* The now-playing transport must stay tappable while the panel is riff-locked. */
+.riff-locked .np-screen, .riff-locked .np-btn {
+  pointer-events:auto !important; opacity:1 !important; }
 /* During playback: dim & disable the panel's interactive controls so the user watches.
    Octave navigation is deliberately NOT locked — the player can scroll the visible
    register to follow the action while a song plays. */
@@ -14537,8 +14619,16 @@ transition:transform 0.25s ease;
             <div class="kbd-range-note hidden" id="ptoRangeNote"></div>
           </div>
           <div class="pto-riff-bar" style="margin-top:10px">
-            <div style="flex:1"></div>
-            <button class="pto-riff-stop" id="organRiffStop" onclick="riffStop()" style="display:none">■ STOP</button>
+            <div class="np-screen" id="organNowPlaying">
+              <div class="np-transport">
+                <button class="np-btn np-playpause" id="organNpPlayPause" onclick="riffTogglePause()" title="Play/Pause">❚❚</button>
+                <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
+              </div>
+              <div class="np-marquee">
+                <span class="np-idle-label">Now Playing</span>
+                <span class="np-title"></span>
+              </div>
+            </div>
             <button class="pto-riff-trigger" onclick="riffOpenPopup('organ')">▶ SONGS</button>
           </div>
         </div>
@@ -14597,21 +14687,30 @@ transition:transform 0.25s ease;
         <div class="pss-keyboard-wrap">
           <svg class="pss-keyboard-svg" id="pianoCardSvg" style="max-width:100%"></svg>
         </div>
-        <div id="pianoSampleStatus" style="display:none;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);text-align:center;padding:3px 0;opacity:0.7"></div>
+        <div id="pianoSampleStatus" style="visibility:hidden;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);text-align:center;padding:3px 0;opacity:0.7;min-height:18px"></div>
         </div><!-- /piano-key-well -->
 
-        <!-- Tone picker -->
+        <div class="pto-riff-bar">
+          <div class="np-screen" id="pianoNowPlaying">
+            <div class="np-transport">
+              <button class="np-btn np-playpause" id="pianoNpPlayPause" onclick="riffTogglePause()" title="Play/Pause">❚❚</button>
+              <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
+            </div>
+            <div class="np-marquee">
+              <span class="np-idle-label">Now Playing</span>
+              <span class="np-title"></span>
+            </div>
+          </div>
+          <button class="pto-riff-trigger" onclick="riffOpenPopup('piano')">▶ SONGS</button>
+        </div>
+
+        <!-- Tone picker (now below the now-playing bar to match organ/rhodes) -->
         <div style="height:1px;background:rgba(255,255,255,0.06);margin:12px -14px 10px"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
           <div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.25);text-transform:uppercase;font-weight:700">TONE</div>
           <button class="help-btn" onclick="showHelp('reftone')">?</button>
         </div>
         <div class="tone-picker" id="refToneBank"></div>
-        <div class="pto-riff-bar">
-          <div style="flex:1"></div>
-          <button class="pto-riff-stop" id="pianoRiffStop" onclick="riffStop()" style="display:none">■ STOP</button>
-          <button class="pto-riff-trigger" onclick="riffOpenPopup('piano')">▶ SONGS</button>
-        </div>
         <div class="teach-hint" data-i18n-html="hint_piano_keys">Tap any key to hear it. Use arrows to shift octaves. Pick a tone below.</div>
 
         </div><!-- /piano-card-body -->
@@ -14636,7 +14735,7 @@ transition:transform 0.25s ease;
               <span class="rhodes-logo-sub">MARK I · STAGE PIANO</span>
             </div>
             <div style="flex:1"></div>
-            <button class="rhodes-expand-btn" onclick="openRhodesOverlay()" title="Fullscreen">⛶</button>
+            <button class="rhodes-expand-btn" onclick="openRhodesOverlay()" title="Fullscreen">⛶ EXPAND</button>
           </div>
 
           <!-- Controls strip -->
@@ -14674,8 +14773,16 @@ transition:transform 0.25s ease;
               <svg class="pss-keyboard-svg" id="rhodesCardSvg" style="max-width:100%"></svg>
             </div>
             <div class="pto-riff-bar">
-              <div style="flex:1"></div>
-              <button class="pto-riff-stop" id="rhodesRiffStop" onclick="riffStop()" style="display:none">■ STOP</button>
+              <div class="np-screen" id="rhodesNowPlaying">
+                <div class="np-transport">
+                  <button class="np-btn np-playpause" id="rhodesNpPlayPause" onclick="riffTogglePause()" title="Play/Pause">❚❚</button>
+                  <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
+                </div>
+                <div class="np-marquee">
+                  <span class="np-idle-label">Now Playing</span>
+                  <span class="np-title"></span>
+                </div>
+              </div>
               <button class="pto-riff-trigger" onclick="riffOpenPopup('rhodes')">▶ SONGS</button>
             </div>
             <div class="teach-hint" data-i18n-html="hint_rhodes_keys">Tap keys. SOFT tremolo is classic Stage Rhodes. DEEP adds heavy wobble. BRIGHT adds tine clang.</div>
@@ -17862,13 +17969,21 @@ transition:transform 0.25s ease;
     </div>
   </div>
 
-  <!-- Controls row: sustain pedal · drone mute -->
+  <!-- Controls row: sustain pedal · drone mute · now-playing -->
   <div class="piano-overlay-av-row">
     <div class="sustain-pedal" id="pianoFullPedal" title="Tap = sustain · Hold = drone"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">SUST</span></div></div>
     <button class="piano-drone-mute" id="pianoDroneMuteFull" onclick="stopAllPianoDrones()" title="Mute all drones" data-i18n="tuner_clear_all">✕ ALL</button>
+    <div class="np-screen" id="pianoNowPlayingFull">
+      <div class="np-transport">
+        <button class="np-btn np-playpause" id="pianoNpPlayPauseFull" onclick="riffTogglePause()" title="Play/Pause">❚❚</button>
+        <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
+      </div>
+      <div class="np-marquee">
+        <span class="np-idle-label">Now Playing</span>
+        <span class="np-title"></span>
+      </div>
+    </div>
     <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('piano')" title="Song bank">▶ SONGS</button>
-    <button class="pto-riff-stop" id="pianoRiffStopFull" onclick="riffStop()" style="display:none">■ STOP</button>
-    <div style="flex:1"></div>
   </div>
 </div>
 
@@ -18703,7 +18818,7 @@ transition:transform 0.25s ease;
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.57.26';
+const INTONARE_VERSION = '0.57.32';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -21324,21 +21439,22 @@ function _updateSampleStatusLabel() {
   if (!lbl) return;
   const id = (typeof selectedRefTone !== 'undefined') ? selectedRefTone : 'grand_piano';
   // Only sample-backed tones have a load state; pure-synth tones show nothing.
-  if (!SampleEngine._instruments[id]) { lbl.style.display = 'none'; lbl.textContent = ''; return; }
+  // Toggle visibility (not display) so the reserved line never shifts the card.
+  if (!SampleEngine._instruments[id]) { lbl.style.visibility = 'hidden'; lbl.textContent = ''; return; }
   const st = SampleEngine._state[id];
   if (st === 'loading') {
-    lbl.textContent = 'loading samples…'; lbl.style.display = '';
+    lbl.textContent = 'loading samples…'; lbl.style.visibility = 'visible';
   } else if (st === 'failed') {
-    lbl.textContent = 'using synth voice'; lbl.style.display = '';
+    lbl.textContent = 'using synth voice'; lbl.style.visibility = 'visible';
     // fade the failure note away after a moment so it isn't permanent
     setTimeout(() => {
       if (SampleEngine._state[id] === 'failed' &&
           (typeof selectedRefTone === 'undefined' || selectedRefTone === id)) {
-        lbl.style.display = 'none'; lbl.textContent = '';
+        lbl.style.visibility = 'hidden'; lbl.textContent = '';
       }
     }, 2600);
   } else { // ready or idle
-    lbl.style.display = 'none'; lbl.textContent = '';
+    lbl.style.visibility = 'hidden'; lbl.textContent = '';
   }
 }
 // Kick off grand piano sample loading. Called when piano tool is opened.
@@ -21355,14 +21471,14 @@ function _pianoSamplesInit() {
   }
   const lbl = document.getElementById('pianoSampleStatus');
   if (SampleEngine.isReady('grand_piano')) {
-    if (lbl) { lbl.textContent = ''; lbl.style.display = 'none'; }
+    if (lbl) { lbl.textContent = ''; lbl.style.visibility = 'hidden'; }
     return;
   }
   if (SampleEngine.isFailed('grand_piano')) {
-    if (lbl) { lbl.textContent = ''; lbl.style.display = 'none'; }
+    if (lbl) { lbl.textContent = ''; lbl.style.visibility = 'hidden'; }
     return;
   }
-  if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.display = ''; }
+  if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.visibility = 'visible'; }
   SampleEngine.load('grand_piano');
 }
 
@@ -30153,6 +30269,16 @@ var _riffTimers   = [];
 var _riffSaved    = null;   // saved control state to restore on stop
 var _riffInst     = null;   // 'piano' | 'organ' | 'rhodes'
 var _riffId       = null;
+// ── Pause/resume support ──────────────────────────────────────────────────
+// The scheduler precomputes a flat event list (each {t, fn}), then schedules
+// them all via setTimeout. To pause we clear the timers and remember how much
+// wall-clock time has elapsed; to resume we reschedule every not-yet-fired
+// event at (event.t − elapsed). Visual highlights are deliberately left lit on
+// pause so a learner can freeze on a chord and study which keys are down.
+var _riffPaused   = false;
+var _riffEvents   = [];     // [{t, fn}] full precomputed schedule
+var _riffStartWall = 0;     // Date.now() when (re)started
+var _riffElapsed  = 0;      // ms played before the current pause
 var _riffOrganDuck = 1.0;   // organ per-note vol multiplier during riffs (clip control)
 var _riffSavedRefVol = null;// piano/Rhodes: refVolume saved before ducking
 
@@ -30242,7 +30368,13 @@ function _riffFlashSvgKey(svgId, midi, holdMs) {
   g.appendChild(ov);
   // Keep lit for the note duration; floor at 160ms so short notes still flash visibly
   var litFor = holdMs ? Math.max(160, holdMs) : 170;
-  setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, litFor);
+  (function _arm(){
+    setTimeout(function(){
+      // Freeze on pause: keep the overlay rect alive and re-check until resume.
+      if (_riffActive && _riffPaused) { _arm(); return; }
+      if (ov.parentNode) ov.parentNode.removeChild(ov);
+    }, litFor);
+  })();
 }
 
 // Stop a single organ riff note (organ notes sustain forever otherwise).
@@ -30332,7 +30464,14 @@ function _riffFlashPianoFullKey(midi, dur) {
   var el = document.getElementById((isBlack ? 'pbkf-' : 'pwkf-') + midi);
   if (!el) return;
   el.classList.add('riff-flash');
-  setTimeout(function(){ el.classList.remove('riff-flash'); }, Math.max(160, dur || 170));
+  var hold = Math.max(160, dur || 170);
+  (function _arm(){
+    setTimeout(function(){
+      // If paused, keep the key lit (freeze) and re-check shortly — resume clears it.
+      if (_riffActive && _riffPaused) { _arm(); return; }
+      el.classList.remove('riff-flash');
+    }, hold);
+  })();
 }
 
 function _riffSound(inst, midi, manual, dur) {
@@ -30409,11 +30548,8 @@ function _riffSetLock(inst, on) {
   var panelId = inst === 'piano' ? 'ptoPianoPanel' : inst === 'organ' ? 'ptoOrganPanel' : 'ptoRhodesPanel';
   var panel = document.getElementById(panelId);
   if (panel) panel.classList.toggle('riff-locked', on);
-  // Show/hide stop button in both the compact card and the expanded overlay
-  [inst + 'RiffStop', inst + 'RiffStopFull'].forEach(function(id) {
-    var btn = document.getElementById(id);
-    if (btn) btn.style.display = on ? '' : 'none';
-  });
+  // Transport now lives in the always-visible now-playing screen; just refresh it.
+  _riffUpdateTransport();
 }
 
 function riffOpenPopup(inst) {
@@ -30517,6 +30653,7 @@ function riffStart(inst, id) {
   if (!riff) return;
 
   _riffInst = inst; _riffId = id; _riffActive = true;
+  _riffPaused = false; _riffElapsed = 0; _riffEvents = [];
   _riffSaved = _riffSaveState(inst);
   _riffSetLock(inst, true);
   if (inst === 'rhodes' && typeof _rhodesLoadSamples === 'function') _rhodesLoadSamples();
@@ -30571,12 +30708,13 @@ function riffStart(inst, id) {
       // Riff can request a tone (e.g. honky-tonk for rags, harpsichord for Baroque)
       if (riff.tone && typeof _syncToneUI === 'function') _syncToneUI(riff.tone);
     }
+    _riffEvents = [];
     // ctls: for piano, pedal ctls route through the damper model. The riff data's
     // ctl closures call _riffPiano('pedal',x) — we intercept by also exposing a
     // 'ped' shorthand. Keep the lid/setup ctl at b:0 firing normally.
     (riff.ctls || []).forEach(function(c){
       var at = _beatMs(c.b);
-      _riffTimers.push(setTimeout(function(){ if (_riffActive && c.ctl) { try { c.ctl(); } catch(e){} } }, at));
+      _riffEvents.push({ t: at, fn: function(){ if (_riffActive && c.ctl) { try { c.ctl(); } catch(e){} } } });
     });
     ['rh','lh'].forEach(function(hand){
       (riff[hand] || []).forEach(function(n){
@@ -30589,7 +30727,7 @@ function riffStart(inst, id) {
         var roll = (n.roll != null ? n.roll : (mids.length > 1 ? 5 : 0));
         mids.slice().sort(function(a,b){return a-b;}).forEach(function(mid, i){
           // NOTE ON at the beat
-          _riffTimers.push(setTimeout(function(){
+          _riffEvents.push({ t: at + i * roll, fn: function(){
             if (!_riffActive) return;
             if (isPiano) {
               if (isGrace) {
@@ -30598,21 +30736,21 @@ function riffStart(inst, id) {
                 _riffFlashPianoFullKey(mid, dur);
               } else { _riffPianoNoteOn(mid); }
             } else _riffSound(inst, mid, n.man, dur);
-          }, at + i * roll));
+          }});
           if (isGrace) {
-            _riffTimers.push(setTimeout(function(){
+            _riffEvents.push({ t: end + 10 + i * roll, fn: function(){
               if (!_riffActive) return;
               if (isPiano) _riffPianoNoteOff(mid, true);
               else if (inst === 'organ') _riffOrganNoteOff(mid, n.man);
               else if (inst === 'rhodes' && typeof rhodesCardRelease === 'function') rhodesCardRelease(mid);
-            }, end + 10 + i * roll));
+            }});
           } else if (isPiano) {
             // FINGER LIFT at b+d — damper model decides whether it actually stops
             // (pedal up → stops; pedal down → keeps ringing until pedal lifts).
             // Small overlap (−20ms) so legato fingering doesn't gap.
-            _riffTimers.push(setTimeout(function(){
+            _riffEvents.push({ t: end - 20 + i * roll, fn: function(){
               if (_riffActive) _riffPianoNoteOff(mid, false);
-            }, end - 20 + i * roll));
+            }});
           } else if (inst === 'organ') {
             // Organ has no natural decay, so the note-off triggers an exponential
             // fade (~75ms). The legato overlap must scale with the note: a long held
@@ -30621,20 +30759,23 @@ function riffStart(inst, id) {
             // smeared cluster. Use ~40% of the note's own length, capped to [25,160]ms.
             var noteDur = dur;
             var organOverlap = Math.max(25, Math.min(160, noteDur * 0.4));
-            _riffTimers.push(setTimeout(function(){
+            _riffEvents.push({ t: end + organOverlap, fn: function(){
               if (_riffActive) _riffOrganNoteOff(mid, n.man);
-            }, end + organOverlap));
+            }});
           } else if (inst === 'rhodes') {
             // Rhodes has a natural decay; finger-lift at b+d damps it (unless the
             // riff holds the sustain pedal). Small overlap keeps phrases legato.
-            _riffTimers.push(setTimeout(function(){
+            _riffEvents.push({ t: end - 20 + i * roll, fn: function(){
               if (_riffActive && typeof rhodesCardRelease === 'function') rhodesCardRelease(mid);
-            }, end - 20 + i * roll));
+            }});
           }
         });
       });
     });
-    _riffTimers.push(setTimeout(function(){ riffStop(); }, lastEnd + 500));
+    _riffEvents.push({ t: lastEnd + 500, fn: function(){ riffStop(); } });
+    _riffElapsed = 0;
+    _riffScheduleFrom(0);
+    _riffUpdateTransport();
     return;
   }
 
@@ -30707,6 +30848,7 @@ function riffStart(inst, id) {
   });
   // Auto-stop after the final note rings out
   _riffTimers.push(setTimeout(function(){ riffStop(); }, t + 1100));
+  _riffUpdateTransport();
 }
 
 function riffStop() {
@@ -30735,6 +30877,133 @@ function riffStop() {
     _riffSavedRefVol = null;
   }
   _riffSaved = null; _riffInst = null; _riffId = null;
+  _riffEvents = []; _riffPaused = false; _riffElapsed = 0;
+  _riffUpdateTransport();
+}
+
+// Schedule every event whose time is at/after `offsetMs`, shifted so the
+// soonest fires right away. Used both on initial start (offset 0) and resume.
+function _riffScheduleFrom(offsetMs) {
+  _riffTimers.forEach(clearTimeout);
+  _riffTimers = [];
+  _riffStartWall = Date.now();
+  _riffElapsed = offsetMs;
+  _riffEvents.forEach(function(ev){
+    var delay = ev.t - offsetMs;
+    if (delay < 0) return;            // already happened before the resume point
+    _riffTimers.push(setTimeout(ev.fn, delay));
+  });
+}
+
+function riffPause() {
+  if (!_riffActive || _riffPaused) return;
+  _riffPaused = true;
+  _riffElapsed += Date.now() - _riffStartWall;   // accumulate played time
+  _riffTimers.forEach(clearTimeout);
+  _riffTimers = [];
+  // Silence sounding notes but DON'T clear the visual highlights — freeze the
+  // currently-lit keys so a learner can study the chord under their fingers.
+  if (_riffInst === 'piano') {
+    _riffPianoAllOff();
+    Object.keys(refOscs).filter(function(k){return k.indexOf('pno-')===0;}).forEach(stopRef);
+  } else if (_riffInst === 'rhodes' && typeof stopAllRhodesDrones === 'function') {
+    stopAllRhodesDrones();
+  } else if (_riffInst === 'organ' && typeof _organStopAll === 'function') {
+    _organStopAll();
+  }
+  _riffUpdateTransport();
+}
+
+function riffResume() {
+  if (!_riffActive || !_riffPaused) return;
+  _riffPaused = false;
+  // Clear the frozen highlights now — playback is about to relight them.
+  document.querySelectorAll('.riff-key-hold').forEach(function(el){ if (el.parentNode) el.parentNode.removeChild(el); });
+  document.querySelectorAll('.riff-flash').forEach(function(el){ el.classList.remove('riff-flash'); });
+  _riffScheduleFrom(_riffElapsed);
+  _riffUpdateTransport();
+}
+
+function riffTogglePause() {
+  if (!_riffActive) return;
+  // Old-format riffs (riff.notes) don't build an event list, so they can't be
+  // resumed — for those, the play/pause button acts as stop.
+  if (!_riffEvents.length) { riffStop(); return; }
+  if (_riffPaused) riffResume(); else riffPause();
+}
+
+// Radio ticker: if the title overflows its window, duplicate the text (with a
+// gap) and scroll left by exactly one copy's width so the loop is seamless — the
+// second copy is in the start position right as the first finishes. A long hold
+// at the top of each cycle lets the reader catch the start before it moves.
+function _riffSetupMarquee(titleEl) {
+  var box = titleEl.parentNode;
+  if (!box) return;
+  // Reset to a clean single-text state first.
+  box.classList.remove('np-scrolling');
+  var baseText = titleEl.dataset.fulltext || titleEl.textContent;
+  titleEl.dataset.fulltext = baseText;
+  titleEl.textContent = baseText;
+  titleEl.style.removeProperty('animation-duration');
+  titleEl.style.removeProperty('--np-shift');
+  // Defer so layout measures the new text.
+  requestAnimationFrame(function(){
+    var overflow = titleEl.scrollWidth - box.clientWidth;
+    if (overflow <= 4) return;                  // fits — no scroll
+    // Build [copy1][gap][copy2] with each piece wrapped so we can measure the
+    // EXACT pixel offset of copy2. Scrolling left by that offset lands copy2
+    // precisely where copy1 began — a seamless reset with no blank gap.
+    titleEl.innerHTML = '';
+    var c1 = document.createElement('span'); c1.textContent = baseText;
+    var gap = document.createElement('span'); gap.className = 'np-ticker-gap';
+    var c2 = document.createElement('span'); c2.textContent = baseText;
+    titleEl.appendChild(c1); titleEl.appendChild(gap); titleEl.appendChild(c2);
+    requestAnimationFrame(function(){
+      // Distance from copy1's left edge to copy2's left edge = exactly what we
+      // shift so copy2 sits at the start position when the scroll completes.
+      var shift = c2.offsetLeft - c1.offsetLeft;
+      if (shift <= 4) return;
+      var moveSecs = shift / 22;                 // ~22px/sec readout speed
+      var total = moveSecs / 0.60;               // movement is 60% of the cycle
+      titleEl.style.setProperty('--np-shift', (-shift) + 'px');
+      titleEl.style.animationDuration = Math.max(6, total).toFixed(1) + 's';
+      box.classList.add('np-scrolling');
+    });
+  });
+}
+
+// Sync all three instruments' now-playing displays + transport button states.
+function _riffUpdateTransport() {
+  ['piano','organ','rhodes'].forEach(function(inst){
+    var playing = _riffActive && _riffInst === inst;
+    var paused  = playing && _riffPaused;
+    ['', 'Full'].forEach(function(suf){
+      var scr = document.getElementById(inst + 'NowPlaying' + suf);
+      if (scr) {
+        scr.classList.toggle('np-active', playing);
+        scr.classList.toggle('np-paused', paused);
+        var titleEl = scr.querySelector('.np-title');
+        if (titleEl) {
+          if (playing) {
+            var riff = RIFFS[inst] && RIFFS[inst][_riffId];
+            var meta = (typeof RIFF_META !== 'undefined' && RIFF_META[inst]) ? RIFF_META[inst][_riffId] : null;
+            var artist = meta && meta.composer ? meta.composer : '';
+            titleEl.dataset.fulltext = riff ? (riff.label + (artist ? ' — ' + artist : '')) : '';
+            titleEl.textContent = titleEl.dataset.fulltext;
+            _riffSetupMarquee(titleEl);
+          } else {
+            titleEl.textContent = '';
+            titleEl.dataset.fulltext = '';
+            if (titleEl.parentNode) titleEl.parentNode.classList.remove('np-scrolling');
+            titleEl.style.removeProperty('animation-duration');
+            titleEl.style.removeProperty('--np-shift');
+          }
+        }
+      }
+      var pp = document.getElementById(inst + 'NpPlayPause' + suf);
+      if (pp) pp.textContent = paused ? '▶' : '❚❚';
+    });
+  });
 }
 
 // ═══ THEREMIN EXPAND OVERLAY — two-handed pointer multi-touch ═══
@@ -37121,7 +37390,7 @@ SampleEngine.register({
   onReady() {
     // Refresh the piano UI to show samples are active
     const lbl = document.getElementById('pianoSampleStatus');
-    if (lbl) { lbl.textContent = ''; lbl.style.display = 'none'; }
+    if (lbl) { lbl.textContent = ''; lbl.style.visibility = 'hidden'; }
   },
   onFailed() {
     console.warn('[SampleEngine] Grand piano samples unavailable — using synthesis');
@@ -38702,7 +38971,7 @@ function buildRefToneBank() {
         if (SampleEngine._instruments[key]) {
           if (!SampleEngine.isReady(key) && !SampleEngine.isFailed(key)) {
             const lbl = document.getElementById('pianoSampleStatus');
-            if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.display = ''; }
+            if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.visibility = 'visible'; }
             SampleEngine.load(key);
           }
         }
@@ -82363,7 +82632,13 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       <div style="display:flex;align-items:center;gap:8px">
         <div class="sustain-pedal" id="organFullPedal" title="Press to latch held notes"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">HOLD</span></div></div>
         <button class="piano-drone-mute" id="organDroneMuteFull" onclick="_organStopAll();organHoldMode=0;_organRefreshControls();(function(){var p=document.getElementById('organFullPedal');if(p&&p._refresh)p._refresh();})()" title="Stop all held notes">✕ ALL</button>
-        <button class="pto-riff-stop" id="organRiffStopFull" onclick="riffStop()" style="display:none">■ STOP</button>
+        <div class="np-screen np-screen-compact" id="organNowPlayingFull">
+          <div class="np-transport">
+            <button class="np-btn np-playpause" id="organNpPlayPauseFull" onclick="riffTogglePause()" title="Play/Pause">❚❚</button>
+            <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
+          </div>
+          <div class="np-marquee"><span class="np-title"></span></div>
+        </div>
         <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('organ')" title="Riffs">▶ SONGS</button>
       </div>
       <button class="pto-organ-overlay-close" onclick="closePtoOrganOverlay()">✕</button>
@@ -82391,7 +82666,13 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       <div style="display:flex;align-items:center;gap:8px">
         <div class="sustain-pedal" id="rhodesFullPedal" title="Tap = sustain · Hold = drone"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">SUST</span></div></div>
         <button class="piano-drone-mute" id="rhodesDroneMuteFull" onclick="stopAllRhodesDrones()">✕ ALL</button>
-        <button class="pto-riff-stop" id="rhodesRiffStopFull" onclick="riffStop()" style="display:none">■ STOP</button>
+        <div class="np-screen np-screen-compact" id="rhodesNowPlayingFull">
+          <div class="np-transport">
+            <button class="np-btn np-playpause" id="rhodesNpPlayPauseFull" onclick="riffTogglePause()" title="Play/Pause">❚❚</button>
+            <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
+          </div>
+          <div class="np-marquee"><span class="np-title"></span></div>
+        </div>
         <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('rhodes')" title="Riffs">▶ SONGS</button>
       </div>
       <button class="pto-rhodes-overlay-close" onclick="closeRhodesOverlay()">✕</button>
