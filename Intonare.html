@@ -1326,12 +1326,10 @@
   body.sg-open { overflow: hidden; position: fixed; width: 100%; overscroll-behavior: none; }
   body {
     display: flex; flex-direction: column; align-items: center; position: relative;
-    /* Safe area padding for notched phones.
-       Status bar is hidden via immersive mode, but Android still reports the
-       status-region inset — so trim it by the bar height to reclaim the dead
-       gap, while max(0px, …) keeps clearance under a camera cutout on notched
-       devices. */
-    padding-top: max(0px, calc(env(safe-area-inset-top) - 24px));
+    /* Native sticky-immersive (MainActivity) hides both bars and may zero out
+       env(safe-area-inset-top). Keep a small floor so the header never jams the
+       top edge / camera cutout, but use the real inset when it's larger. */
+    padding-top: max(8px, env(safe-area-inset-top));
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
