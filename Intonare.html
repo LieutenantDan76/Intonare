@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.57.32 -->
+<!-- INTONARE_VERSION: 0.57.45 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -3134,8 +3134,8 @@
 
   .piano-white-row .riff-flash, .piano-black-row .riff-flash,
   #pianoWhiteRowFull .riff-flash, #pianoBlackRowFull .riff-flash {
-    background: rgba(127,231,196,0.55) !important;
-    box-shadow: 0 0 8px rgba(127,231,196,0.6);
+    background: #7fe7c4 !important;
+    box-shadow: 0 0 10px rgba(127,231,196,0.85), inset 0 0 4px rgba(255,255,255,0.4);
     transition: background .04s ease;
   }
   .piano-keyboard-full {
@@ -13069,6 +13069,10 @@ transition:transform 0.25s ease;
 /* Re-enable octave scrolling during playback (overrides the lock above). */
 .riff-locked .piano-oct-btn, .riff-locked .piano-oct-nav-btn {
   pointer-events:auto !important; opacity:1 !important; }
+/* Expand buttons stay live mid-song so the player can pop into the big keyboard
+   view while a song plays. (The Rhodes one lives inside the locked name rail.) */
+.riff-locked .rhodes-expand-btn, .riff-locked .pto-expand-btn, .riff-locked .piano-expand-btn {
+  pointer-events:auto !important; opacity:1 !important; }
 .riff-locked .pto-riff-trigger { pointer-events:none; opacity:.4; }
 /* During playback the keyboard stays full-brightness so the player can watch the
    keys light up, and the expand buttons stay live so they can pop into the larger
@@ -13897,12 +13901,34 @@ transition:transform 0.25s ease;
       drawBackground(rgb);
     }
 
+    // ── Continuous splash motion curve (Take 2 "Momentum") ──────────────
+    // Speed follows one smooth curve over elapsed time — raised-cosine rise to
+    // a peak, then a steep exponential settle to dead-flat. No target-chasing,
+    // so there are no plateaus or hitches. Amplitude rides the speed directly.
+    let _waveT0 = 0;
+    function _splashSpeed(t) {
+      const PEAK = 0.46, DRIFT = 0.004, RISE = 0.6, TAU = 0.85, FLAT_AT = 3.2;
+      if (t < RISE) {
+        const u = t / RISE;
+        const e = 0.5 - 0.5 * Math.cos(u * Math.PI); // smooth 0→1
+        return 0.05 + (PEAK - 0.05) * e;
+      }
+      const td = t - RISE;
+      const expPart = DRIFT + (PEAK - DRIFT) * Math.exp(-td / TAU);
+      if (t < FLAT_AT) return expPart;
+      return Math.max(0.0015, expPart * Math.exp(-(t - FLAT_AT) / 0.5));
+    }
+
     function loop() {
       if (!running) return;
-      // Wave speed decelerates: fast burst at open, settles into a slow drift
-      phaseSpeed  += (targetSpeed  - phaseSpeed)  * 0.011;
+      // Time-driven speed: continuous curve, no easing toward targets.
+      const _t = (performance.now() - _waveT0) / 1000;
+      phaseSpeed  = _splashSpeed(_t);
       phase       += phaseSpeed;
-      amplitude   += (targetAmp    - amplitude)   * 0.014;
+      // Amplitude rides the speed (clamped), so the wave swells while fast and
+      // flattens as it settles — one unified curve. targetAmp acts as a ceiling.
+      const _ampFromSpeed = Math.min(targetAmp, phaseSpeed * 150);
+      amplitude   += (_ampFromSpeed - amplitude)   * 0.08;
       colorT      += (targetColorT - colorT)      * 0.007;
       // CA eases very slowly — deliberate, visible "locking in"
       caberration += (targetCA     - caberration) * 0.006;
@@ -13969,8 +13995,7 @@ transition:transform 0.25s ease;
     targetColorT = 0;
     caberration  = 1.0;
     targetCA     = 0.0;
-    phaseSpeed   = 0.15;  // entry speed
-    targetSpeed  = 0.15;  // hold — don't let easing pull back yet
+    phaseSpeed   = 0.05;  // entry speed (matches curve start)
 
     await af(200); // give startWhenStable time to fire
 
@@ -13981,21 +14006,18 @@ transition:transform 0.25s ease;
     if (bgCanvas) { bgCanvas.style.opacity = '0'; bgCanvas.style.transition = 'opacity 1.4s ease'; }
 
     amplitude    = 0;
-    targetAmp    = 52;  // peak — wave swells large before settling
+    targetAmp    = 70;  // ceiling — amplitude rides the speed curve up to this
     targetColorT = 0.18;
     running      = true;
+    _waveT0      = performance.now();  // start the continuous motion clock
     requestAnimationFrame(loop);
 
     await af(40); // one tick so loop has drawn a frame before we show it
     if (canvas)   canvas.style.opacity   = '1';
     if (bgCanvas) bgCanvas.style.opacity = '1';
 
-    // ── Wild phase: hold fast speed for a beat ───────────────────
-    await af(320);
-    targetSpeed = 0.026; // begin slowdown
-
-    // Shockwaves fire as speed starts dropping
-    await af(160);
+    // ── Crest: color + shockwaves fire as the speed curve peaks (~0.6s) ──
+    await af(560);
     targetColorT   = 0.33;
     targetLogoGlow = 1.0;
     {
@@ -14025,16 +14047,12 @@ transition:transform 0.25s ease;
       tag.style.opacity     = '.75';
     }
     targetColorT = 0.66;
-    targetAmp    = 22;  // settle — fires earlier so wave arrives by text-in
 
     await af(600);
     targetColorT = 1.0;
     await af(700);
-    targetAmp   = 0;
-    targetSpeed = 0.012;  // near-still before dissolve
-    // Boost amplitude easing so wave visibly reaches flat before exit
-    // We patch the loop easing indirectly via a flag checked in loop
-    // Simpler: just give enough runway — 3s at 0.014 gets amplitude to ~0.5
+    // Speed + amplitude settle to flat on their own via the continuous curve
+    // (FLAT_AT pulls the wave to dead-still ~3.2s in). Just give it runway.
     await af(2400);
 
     // ── Exit: full splash dissolve into the app ────────────
@@ -14625,11 +14643,11 @@ transition:transform 0.25s ease;
                 <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
               </div>
               <div class="np-marquee">
-                <span class="np-idle-label">Now Playing</span>
+                <span class="np-idle-label" data-i18n="now_playing">Now Playing</span>
                 <span class="np-title"></span>
               </div>
             </div>
-            <button class="pto-riff-trigger" onclick="riffOpenPopup('organ')">▶ SONGS</button>
+            <button class="pto-riff-trigger" onclick="riffOpenPopup('organ')" data-i18n="riff_songs">▶ SONGS</button>
           </div>
         </div>
       </div>
@@ -14697,11 +14715,11 @@ transition:transform 0.25s ease;
               <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
             </div>
             <div class="np-marquee">
-              <span class="np-idle-label">Now Playing</span>
+              <span class="np-idle-label" data-i18n="now_playing">Now Playing</span>
               <span class="np-title"></span>
             </div>
           </div>
-          <button class="pto-riff-trigger" onclick="riffOpenPopup('piano')">▶ SONGS</button>
+          <button class="pto-riff-trigger" onclick="riffOpenPopup('piano')" data-i18n="riff_songs">▶ SONGS</button>
         </div>
 
         <!-- Tone picker (now below the now-playing bar to match organ/rhodes) -->
@@ -14779,11 +14797,11 @@ transition:transform 0.25s ease;
                   <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
                 </div>
                 <div class="np-marquee">
-                  <span class="np-idle-label">Now Playing</span>
+                  <span class="np-idle-label" data-i18n="now_playing">Now Playing</span>
                   <span class="np-title"></span>
                 </div>
               </div>
-              <button class="pto-riff-trigger" onclick="riffOpenPopup('rhodes')">▶ SONGS</button>
+              <button class="pto-riff-trigger" onclick="riffOpenPopup('rhodes')" data-i18n="riff_songs">▶ SONGS</button>
             </div>
             <div class="teach-hint" data-i18n-html="hint_rhodes_keys">Tap keys. SOFT tremolo is classic Stage Rhodes. DEEP adds heavy wobble. BRIGHT adds tine clang.</div>
           </div>
@@ -15034,12 +15052,11 @@ transition:transform 0.25s ease;
       </div>
 
       <div class="thmn-toggles">
-        <button class="thmn-toggle thmn-demos-trigger-c" onclick="thmnOpenDemoPopup()"><span data-i18n="thmn_demos_title">TRY A SOUND</span></button>
+        <button class="thmn-toggle thmn-demos-trigger-c" id="thmnDemosTriggerC" onclick="thmnOpenDemoPopup()"><span data-i18n="thmn_demos_title">TRY A SOUND</span></button>
         <button class="thmn-toggle" id="thmnGridToggle" onclick="thmnToggleGrid()" data-i18n="thmn_grid_show">NOTE GRID</button>
         <button class="thmn-toggle" id="thmnSnapToggle" onclick="thmnToggleSnap()" data-i18n="thmn_snap">SNAP TO SCALE</button>
         <button class="thmn-toggle thmn-reset" onclick="thmnResetDefaults()" data-i18n="thmn_reset">DEFAULTS</button>
       </div>
-      <button class="thmn-demo-stop thmn-demo-stop-c" id="thmnDemoStopC" onclick="thmnStopDemo()" style="display:none" data-i18n="thmn_demo_stop">■ STOP</button>
       <div class="teach-hint" data-i18n-html="hint_theremin">Drag in the play area beside the antenna — move <strong>right for higher pitch</strong>, <strong>up for louder</strong>. It glides continuously like a real theremin, so there are no keys to hit. Turn on <strong>NOTE GRID</strong> to see where each note sits, or <strong>SNAP TO SCALE</strong> to lock the glide onto a C-major scale for practice. Tap <strong>EXPAND</strong> for full-screen two-handed play.</div>
     </div><!-- /toolTheremin -->
 
@@ -17979,11 +17996,11 @@ transition:transform 0.25s ease;
         <button class="np-btn np-stop" onclick="riffStop()" title="Stop">■</button>
       </div>
       <div class="np-marquee">
-        <span class="np-idle-label">Now Playing</span>
+        <span class="np-idle-label" data-i18n="now_playing">Now Playing</span>
         <span class="np-title"></span>
       </div>
     </div>
-    <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('piano')" title="Song bank">▶ SONGS</button>
+    <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('piano')" title="Song bank" data-i18n="riff_songs">▶ SONGS</button>
   </div>
 </div>
 
@@ -18111,18 +18128,19 @@ transition:transform 0.25s ease;
 <div class="riff-popup" id="creditsModal" style="display:none">
   <div class="riff-popup-card">
     <div class="riff-popup-head">
-      <span>Credits &amp; Thanks</span>
+      <span data-i18n="credits_title">Credits &amp; Thanks</span>
       <button class="riff-popup-close" onclick="closeCreditsModal()">✕</button>
     </div>
     <div class="credits-body">
       <div class="credits-group">
-        <div class="credits-group-title">With thanks</div>
+        <div class="credits-group-title" data-i18n="credits_thanks">With thanks</div>
         <div class="credits-item">Mum &amp; Dad &mdash; for the support, patience, and endless test sessions.</div>
       </div>
       <div class="credits-group">
-        <div class="credits-group-title">Sheet music arrangements</div>
+        <div class="credits-group-title" data-i18n="credits_arrangements">Sheet music arrangements</div>
         <div class="credits-item"><a href="https://musescore.com/user/52788523" target="_blank">Crazystride</a> &mdash; &ldquo;Twinkle Twinkle Little Star in Stride&rdquo; &mdash; <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a></div>
         <div class="credits-item"><a href="https://openscore.cc" target="_blank">OpenScore Lieder</a> &mdash; Brahms Lullaby, St&auml;ndchen &mdash; <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a></div>
+        <div class="credits-item">Ivan Di Sipio &mdash; Wagner Bridal Chorus &mdash; <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">CC0 1.0</a></div>
       </div>
     </div>
   </div>
@@ -18806,7 +18824,7 @@ transition:transform 0.25s ease;
       </div>
     </div>
 
-    <button class="sm-credits-btn" onclick="openCreditsModal()">Credits &amp; Thanks</button>
+    <button class="sm-credits-btn" onclick="openCreditsModal()" data-i18n="credits_title">Credits &amp; Thanks</button>
 
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
@@ -18818,7 +18836,7 @@ transition:transform 0.25s ease;
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.57.32';
+const INTONARE_VERSION = '0.57.45';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -20703,7 +20721,6 @@ const RHODES_TREMOLO = {
 // Fundamental + inharmonic tine partial + percussive clang transient
 // Tremolo on amplitude. Vibe affects clang brightness.
 function rhodesPlayNote(midi) {
-  hapticLight();
   const key = midi;
   if (rhodesSustainMode === 2 && rhodesOscs[key]) {
     // Drone mode: tap a droning key to silence it
@@ -21443,9 +21460,9 @@ function _updateSampleStatusLabel() {
   if (!SampleEngine._instruments[id]) { lbl.style.visibility = 'hidden'; lbl.textContent = ''; return; }
   const st = SampleEngine._state[id];
   if (st === 'loading') {
-    lbl.textContent = 'loading samples…'; lbl.style.visibility = 'visible';
+    lbl.textContent = t('samples_loading'); lbl.style.visibility = 'visible';
   } else if (st === 'failed') {
-    lbl.textContent = 'using synth voice'; lbl.style.visibility = 'visible';
+    lbl.textContent = t('samples_synth'); lbl.style.visibility = 'visible';
     // fade the failure note away after a moment so it isn't permanent
     setTimeout(() => {
       if (SampleEngine._state[id] === 'failed' &&
@@ -21478,7 +21495,7 @@ function _pianoSamplesInit() {
     if (lbl) { lbl.textContent = ''; lbl.style.visibility = 'hidden'; }
     return;
   }
-  if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.visibility = 'visible'; }
+  if (lbl) { lbl.textContent = t('samples_loading'); lbl.style.visibility = 'visible'; }
   SampleEngine.load('grand_piano');
 }
 
@@ -21570,7 +21587,6 @@ function pianoPlayNote(key, freq, noteName) {
 }
 
 function pianoKeyClick(midi) {
-  hapticLight();
   const freq = midiToFreq(midi);
   const name = midiToNoteName(midi);
   const refKey = 'pno-' + midi;
@@ -21824,6 +21840,12 @@ function freqToMidi(freq) {
   if (!freq || freq <= 0) return null;
   return Math.round(69 + 12 * Math.log2(freq / 440));
 }
+// Exact fractional MIDI — no rounding. Used in _samplePlay so playbackRate
+// reflects the true target frequency, including refPitch offsets from 440.
+function freqToMidiExact(freq) {
+  if (!freq || freq <= 0) return null;
+  return 69 + 12 * Math.log2(freq / 440);
+}
 
 function highlightPiano(refMidi, userMidi) {
   // No-op: the SVG keyboard flashes its own keys on tap (via _initSvgMultiTouch)
@@ -21872,12 +21894,14 @@ function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
       // Future note: schedule via setTimeout so SampleEngine.play fires at the right time
       let liveNode = null;
       const handle = setTimeout(() => {
-        liveNode = SampleEngine.play(toneId, freqToMidi(freq), ctx, dest, vol, dur);
+        // Exact MIDI (no rounding) so playbackRate tracks true freq, e.g. 432 Hz refPitch
+        liveNode = SampleEngine.play(toneId, freqToMidiExact(freq), ctx, dest, vol, dur);
       }, delay * 1000);
       // Proxy: cancel the pending timer AND stop the note if it already started
       return { stop() { clearTimeout(handle); if (liveNode && liveNode.stop) { try { liveNode.stop(); } catch(e){} } } };
     }
-    const node = SampleEngine.play(toneId, freqToMidi(freq), ctx, dest, vol, dur);
+    // Exact MIDI (no rounding) so playbackRate tracks true freq, e.g. 432 Hz refPitch
+    const node = SampleEngine.play(toneId, freqToMidiExact(freq), ctx, dest, vol, dur);
     if (node) return node;
   }
   const tone = REF_TONES[toneId] || REF_TONES.sine;
@@ -22260,14 +22284,20 @@ function playTunerFork() {
   }
   if (!droneMode) stopAllRef();
   hapticSelect();
-  playRef(key, refPitch, 'A4');
-  if (btn) btn.classList.add('playing');
-  // Clear playing state when tone ends
+  // Always use sine synth for the tuning fork — it must track refPitch exactly
+  // (e.g. 432 Hz), and sample playback can't reliably pitch-shift to non-440 tunings.
+  const ctx = ensureRefCtx();
+  const dur = droneMode ? null : 2.8;
+  const sound = REF_TONES.sine.synth(ctx, refPitch, ctx.currentTime, dur, refMasterGain, refVolume);
+  let timeoutId = null;
   if (!droneMode) {
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
+      delete refOscs[key];
       if (btn) btn.classList.remove('playing');
     }, 2900);
   }
+  refOscs[key] = { sound, timeoutId, freq: refPitch };
+  if (btn) btn.classList.add('playing');
 }
 
 // Init pill on load — runs after refPitch is restored from localStorage
@@ -23741,7 +23771,7 @@ function enterTool(name, restoreState) {
     document.body.scrollTop = 0;
   });
 
-  if (name === 'piano') { buildRefPitchGrid(); buildPiano(); _initPianoMultiTouch(); _initPianoPedal(); _initPianoOctLongPress(); resetPianoToolTabs && resetPianoToolTabs(); _pianoSamplesInit(); }
+  if (name === 'piano') { selectedRefTone = 'grand_piano'; buildRefPitchGrid(); buildPiano(); _initPianoMultiTouch(); _initPianoPedal(); _initPianoOctLongPress(); resetPianoToolTabs && resetPianoToolTabs(); _pianoSamplesInit(); }
   if (name === 'survivalguide') { document.body.classList.add('sg-open'); try { sgInit(); } catch(e) { console.error('sgInit',e); } }
   if (name === 'tonal') tcInit();
   if (name === 'volume') dbStart();
@@ -23801,7 +23831,7 @@ function exitTool(resetToHub) {
 
   const folder = TOOL_FOLDER_MAP[currentTool];
   currentTool = null;
-  ['toolPiano','toolTonal','toolVolume','toolTranspose','toolChords','toolCof','toolVocalRange','toolDrumkit','toolRhythmCards','toolGuitarChords','toolProgression','toolSurvivalGuide'].forEach(id =>
+  ['toolPiano','toolTonal','toolVolume','toolTranspose','toolChords','toolCof','toolVocalRange','toolDrumkit','toolRhythmCards','toolGuitarChords','toolProgression','toolSurvivalGuide','toolTheremin'].forEach(id =>
     document.getElementById(id)?.classList.add('hidden'));
 
   if (resetToHub) {
@@ -25022,8 +25052,25 @@ function _thmnSetDemoLock(on) {
     if (!root) return;
     root.classList.toggle('thmn-demo-locked', on);
   });
-  var bc = document.getElementById('thmnDemoStopC');
-  if (bc) bc.style.display = on ? '' : 'none';
+  var bc = document.getElementById('thmnDemosTriggerC');
+  if (bc) {
+    if (on) {
+      bc.style.width  = bc.offsetWidth  + 'px'; // lock size before changing text
+      bc.style.height = bc.offsetHeight + 'px';
+      bc.dataset.prevText = bc.innerHTML;
+      bc.innerHTML = '■ STOP';
+      bc.onclick = thmnStopDemo;
+      bc.style.color = '#ff7a7a';
+      bc.style.borderColor = 'rgba(255,100,100,.5)';
+    } else {
+      bc.style.width  = '';
+      bc.style.height = '';
+      bc.innerHTML = bc.dataset.prevText || '<span data-i18n="thmn_demos_title">TRY A SOUND</span>';
+      bc.onclick = thmnOpenDemoPopup;
+      bc.style.color = '';
+      bc.style.borderColor = '';
+    }
+  }
   var bo = document.getElementById('thmnDemoStopOv');
   if (bo) bo.style.visibility = on ? 'visible' : 'hidden';
   // a started demo closes the picker popup so the dot/knobs are visible
@@ -25108,6 +25155,8 @@ var RIFF_META = {
 
     air_g:        { composer:'J. S. Bach', year:'1731', style:'Baroque',  note:'Bach\u2019s Air on the G String \u2014 sustained chorale harmony over a walking bass. Soft flutes, a warm and sacred sound.' },
     hallelujah:   { composer:'G. F. Handel', year:'1741', style:'Baroque',  note:'Handel\u2019s Hallelujah Chorus from Messiah \u2014 the opening theme and its monumental final cadence, full principal chorus.' },
+    lacrimosa:    { composer:'W. A. Mozart', year:'1791', style:'Sacred',   note:'The Lacrimosa from Mozart\u2019s unfinished Requiem \u2014 a solemn, weeping Adagio. The sustained voices suit the organ\u2019s pipes perfectly.' },
+    bridal_chorus:{ composer:'Richard Wagner', year:'1850', style:'Sacred',   note:'Wagner\u2019s Bridal Chorus from Lohengrin \u2014 \u201cHere Comes the Bride.\u201d The wedding processional, stately on the organ.' },
   },
   rhodes: {
     twinkle_stride_rh: { composer:'Crazystride', year:'2025', style:'Stride', note:'Twinkle Twinkle as stride on Rhodes — the warm electric piano voice gives the bouncy left hand a whole new personality. Arr. Crazystride, CC BY 4.0.' },
@@ -28330,15 +28379,15 @@ var RIFFS = {
       // Per-voice parser. Mordents A(94ms)->G->A. Tempo: 34bpm opening (gravitas),
       // 45bpm buildup (voice entries every 1.3s), adagio 12-20bpm, smooth ramp
       // b16.5 into triplets, accelerando b34-42, ritardando b110-121. Final chord 3s.
-      tempoMap:[[0,34],[1.25,26],[2,34],[3.25,26],[4,45],[12,85],[13,18],[14,12],[15,20],[16.5,45],[17,75],[22.75,75],[25,75],[30.75,75],[33,75],[34,77],[35.5,78],[36,79],[37,80],[38,81],[39,82],[40,83],[41,84],[42,80],[43,25],[45,75],[46.25,70],[47.25,50],[48,42],[48.75,20],[50,90],[51,65],[51.5,68],[52,70],[52.75,73],[53.75,75],[61.25,72],[63.5,68],[65,20],[67.5,58],[69,30],[69.5,65],[71.5,58],[73,65],[74.5,65],[75,70],[78,35],[80,30],[80.5,130],[82.5,58],[84,25],[84.5,20],[85,40],[87.5,65],[88,72],[89,65],[91.167,87],[92,92],[95,95],[107,90],[108,85],[109,82],[109.5,80],[110,70],[110.833,10],[112,40],[113,45],[114,35],[115,35],[117,32],[118,25],[119,16],[119.5,13],[121,60],[123,83]],
+      tempoMap:[[0,34],[1.25,26],[2,34],[3.25,26],[4,34],[5.25,26],[6,80],[12,95],[13,18],[14,12],[15,20],[16.5,45],[17,75],[22.75,75],[25,75],[30.75,75],[33,75],[34,77],[35.5,78],[36,79],[37,80],[38,81],[39,82],[40,83],[41,84],[42,80],[43,25],[45,75],[46.25,70],[47.25,50],[48,42],[48.75,20],[50,90],[51,65],[51.5,68],[52,70],[52.75,73],[53.75,75],[61.25,72],[63.5,68],[65,20],[67.5,58],[69,30],[69.5,65],[71.5,58],[73,65],[74.5,65],[75,70],[78,35],[80,30],[80.5,130],[82.5,58],[84,25],[84.5,20],[85,40],[87.5,65],[88,72],[89,65],[91.167,87],[92,92],[95,95],[107,90],[108,85],[109,82],[109.5,80],[110,70],[110.833,10],[112,40],[113,45],[114,35],[115,35],[117,32],[118,25],[119,16],[119.5,13],[121,60],[123,83]],
       ctls:[
-        {b:0, ctl:()=>{_riffOrgan('draw',[8,8,8,8,5,7,3,5,7]);_riffOrgan('draw',[6,5,6,4,0,3,0,0,2],'lower');_riffOrgan('leslie','slow');_riffOrgan('perc','off');_riffOrgan('vibChorus','off');}}
+        {b:0, ctl:()=>{_riffOrgan('draw',[8,8,8,8,8,8,7,8,8]);_riffOrgan('draw',[8,6,8,6,4,5,2,4,5],'lower');_riffOrgan('leslie','slow');_riffOrgan('perc','off');_riffOrgan('vibChorus','off');}}
       ],
       rh:[
-        {b:0,d:0.0625,m:[69,81],man:'upper'}, {b:0.0625,d:0.0625,m:[67,79],man:'upper'}, {b:0.125,d:0.375,m:[69,81],man:'upper'}, {b:0.625,d:0.0625,m:[67,79],man:'upper'},
+        {b:0,d:0.0625,m:[69,81],man:'upper'}, {b:0.0625,d:0.0625,m:[67,79],man:'upper'}, {b:0.125,d:0.5,m:[69,81],man:'upper'}, {b:0.625,d:0.0625,m:[67,79],man:'upper'},
         {b:0.6875,d:0.0625,m:[65,77],man:'upper'}, {b:0.75,d:0.0625,m:[64,76],man:'upper'}, {b:0.8125,d:0.0625,m:[62,74],man:'upper'}, {b:0.875,d:0.125,m:[61,73],man:'upper'},
-        {b:1,d:0.25,m:[62,74],man:'upper'}, {b:2,d:0.0625,m:69,man:'upper'}, {b:2.0625,d:0.0625,m:67,man:'upper'}, {b:2.125,d:0.375,m:69,man:'upper'},
-        {b:2.625,d:0.125,m:64,man:'upper'}, {b:2.75,d:0.125,m:65,man:'upper'}, {b:2.875,d:0.125,m:61,man:'upper'}, {b:3,d:0.25,m:62,man:'upper'},
+        {b:1,d:0.4,m:[62,74],man:'upper'}, {b:2,d:0.0625,m:69,man:'upper'}, {b:2.0625,d:0.0625,m:67,man:'upper'}, {b:2.125,d:0.5,m:69,man:'upper'},
+        {b:2.625,d:0.125,m:64,man:'upper'}, {b:2.75,d:0.125,m:65,man:'upper'}, {b:2.875,d:0.125,m:61,man:'upper'}, {b:3,d:0.4,m:62,man:'upper'},
         {b:7,d:3,m:61,man:'upper'}, {b:10,d:4,m:58,man:'upper'}, {b:12,d:2,m:64,man:'upper'}, {b:14,d:1,m:[57,62],man:'upper'},
         {b:15,d:1,m:62,man:'upper'}, {b:16.75,d:0.25,m:61,man:'upper'}, {b:17,d:0.16667,m:62,man:'upper'}, {b:17.16667,d:0.16667,m:64,man:'upper'},
         {b:17.33333,d:0.16667,m:61,man:'upper'}, {b:17.5,d:0.16667,m:62,man:'upper'}, {b:17.66667,d:0.16667,m:64,man:'upper'}, {b:17.83333,d:0.16667,m:61,man:'upper'},
@@ -28459,10 +28508,10 @@ var RIFFS = {
         {b:120.5,d:0.5,m:61,man:'upper'}, {b:121,d:3,m:62,man:'upper'}
       ],
       lh:[
-        {b:2,d:0.0625,m:57,man:'lower'}, {b:2.0625,d:0.0625,m:55,man:'lower'}, {b:2.125,d:0.375,m:57,man:'lower'}, {b:2.625,d:0.125,m:52,man:'lower'},
-        {b:2.75,d:0.125,m:53,man:'lower'}, {b:2.875,d:0.125,m:49,man:'lower'}, {b:3,d:0.25,m:50,man:'lower'}, {b:4,d:9,m:[26,45,57],man:'lower'},
-        {b:4.0625,d:0.0625,m:[43,55],man:'lower'}, {b:4.125,d:0.375,m:[45,57],man:'lower'}, {b:4.625,d:0.0625,m:[43,55],man:'lower'}, {b:4.6875,d:0.0625,m:[41,53],man:'lower'},
-        {b:4.75,d:0.0625,m:[40,52],man:'lower'}, {b:4.8125,d:0.0625,m:[38,50],man:'lower'}, {b:4.875,d:0.125,m:[37,49],man:'lower'}, {b:5,d:0.25,m:[38,50],man:'lower'},
+        {b:2,d:0.0625,m:57,man:'lower'}, {b:2.0625,d:0.0625,m:55,man:'lower'}, {b:2.125,d:0.5,m:57,man:'lower'}, {b:2.625,d:0.125,m:52,man:'lower'},
+        {b:2.75,d:0.125,m:53,man:'lower'}, {b:2.875,d:0.125,m:49,man:'lower'}, {b:3,d:0.4,m:50,man:'lower'}, {b:4,d:9,m:[26,45,57],man:'lower'},
+        {b:4.0625,d:0.0625,m:[43,55],man:'lower'}, {b:4.125,d:0.5,m:[45,57],man:'lower'}, {b:4.625,d:0.0625,m:[43,55],man:'lower'}, {b:4.6875,d:0.0625,m:[41,53],man:'lower'},
+        {b:4.75,d:0.0625,m:[40,52],man:'lower'}, {b:4.8125,d:0.0625,m:[38,50],man:'lower'}, {b:4.875,d:0.125,m:[37,49],man:'lower'}, {b:5,d:0.4,m:[38,50],man:'lower'},
         {b:6,d:9,m:38,man:'lower'}, {b:7,d:9,m:[26,49],man:'lower'}, {b:9,d:3,m:52,man:'lower'}, {b:10,d:4.25,m:55,man:'lower'},
         {b:13,d:3.25,m:52,man:'lower'}, {b:14,d:1.16667,m:[50,55],man:'lower'}, {b:14.5,d:0.5,m:54,man:'lower'}, {b:16.75,d:0.25,m:49,man:'lower'},
         {b:17,d:0.16667,m:50,man:'lower'}, {b:17.16667,d:0.16667,m:52,man:'lower'}, {b:17.33333,d:0.16667,m:49,man:'lower'}, {b:17.5,d:0.16667,m:50,man:'lower'},
@@ -28824,6 +28873,199 @@ var RIFFS = {
         {b:156,d:1.5,m:61,man:'lower'}, {b:156,d:1.5,m:64,man:'lower'}, {b:156,d:1.5,m:69,man:'lower'}, {b:157,d:1,m:30,man:'lower'}, {b:157.5,d:0.5,m:62,man:'lower'},
         {b:157.5,d:0.5,m:69,man:'lower'}, {b:158,d:1,m:31,man:'lower'}, {b:158,d:1,m:62,man:'lower'}, {b:158,d:1,m:67,man:'lower'}, {b:158,d:1,m:71,man:'lower'},
         {b:159,d:1,m:28,man:'lower'}, {b:159,d:1,m:64,man:'lower'}, {b:159,d:1,m:67,man:'lower'}, {b:159,d:1,m:73,man:'lower'}, {b:160,d:4,m:[26,38,66,69,74],man:'lower'}
+      ] },
+    lacrimosa: { label:'Lacrimosa (Requiem)', tempo:1.0, bpm:64,
+      // Mozart, Requiem in D minor K.626 - Lacrimosa, PD. Solemn 12/8 Adagio.
+      // Staff 1 = upper voices, staff 2 = lower. Ends on the sustained D-major Amen.
+      ctls:[
+        {b:0, ctl:()=>{_riffOrgan('draw',[8,4,8,4,2,0,0,0,0]);_riffOrgan('draw',[7,2,7,2,0,0,0,0,0],'lower');_riffOrgan('leslie','slow');_riffOrgan('perc','off');_riffOrgan('vibChorus','on');}}
+      ],
+      rh:[
+        {b:0.5,d:0.5,m:73,man:'upper'}, {b:1,d:0.5,m:74,man:'upper'}, {b:2,d:0.5,m:81,man:'upper'}, {b:2.5,d:0.5,m:82,man:'upper'},
+        {b:3.5,d:0.5,m:74,man:'upper'}, {b:4,d:0.5,m:73,man:'upper'}, {b:5,d:0.5,m:84,man:'upper'}, {b:5.5,d:0.5,m:82,man:'upper'},
+        {b:6.5,d:0.5,m:81,man:'upper'}, {b:7,d:0.5,m:86,man:'upper'}, {b:8,d:0.5,m:82,man:'upper'}, {b:8.5,d:0.5,m:79,man:'upper'},
+        {b:9.5,d:0.5,m:76,man:'upper'}, {b:10,d:0.5,m:77,man:'upper'}, {b:11,d:0.5,m:81,man:'upper'}, {b:11.5,d:0.5,m:73,man:'upper'},
+        {b:12,d:2,m:[65,69],man:'upper'}, {b:14,d:0.5,m:[69,77],man:'upper'}, {b:14.5,d:0.5,m:[65,74],man:'upper'}, {b:15,d:2.5,m:[67,70,74],man:'upper'},
+        {b:16.5,d:1,m:[69,73],man:'upper'}, {b:18,d:2,m:[65,69],man:'upper'}, {b:20,d:0.5,m:[69,77],man:'upper'}, {b:20.5,d:0.5,m:[65,74],man:'upper'},
+        {b:21,d:2.5,m:[67,70,74],man:'upper'}, {b:22.5,d:1,m:[69,73],man:'upper'}, {b:24,d:1,m:[53,57,62],man:'upper'}, {b:25.5,d:1,m:[57,61,64],man:'upper'},
+        {b:27,d:1,m:[57,62,65],man:'upper'}, {b:28.5,d:1,m:[60,64,67],man:'upper'}, {b:30,d:1,m:[60,65,69],man:'upper'}, {b:31.5,d:1,m:[64,68,71],man:'upper'},
+        {b:33,d:1,m:[64,69,72],man:'upper'}, {b:34.5,d:1,m:[67,71,74],man:'upper'}, {b:36,d:1.5,m:[67,72,75],man:'upper'}, {b:37.5,d:1.5,m:[67,72,76],man:'upper'},
+        {b:39,d:1.5,m:[65,72,77],man:'upper'}, {b:40.5,d:1.5,m:[69,75,78],man:'upper'}, {b:42,d:1.5,m:[67,74,79],man:'upper'}, {b:43.5,d:1.5,m:[68,74,77,80],man:'upper'},
+        {b:45,d:1.5,m:[69,74,77,81],man:'upper'}, {b:46.5,d:1,m:[64,69,73],man:'upper'}, {b:48,d:2,m:[64,67,69],man:'upper'}, {b:50,d:0.5,m:[62,70],man:'upper'},
+        {b:50.5,d:0.5,m:[61,67,69],man:'upper'}, {b:51,d:2,m:[62,65,69],man:'upper'}, {b:53,d:0.5,m:[69,77],man:'upper'}, {b:53.5,d:0.5,m:[65,74],man:'upper'},
+        {b:54,d:2.5,m:[67,70,73],man:'upper'}, {b:56,d:0.5,m:[69,73],man:'upper'}, {b:56.5,d:0.5,m:[67,73,76],man:'upper'}, {b:57,d:3,m:[65,69,76],man:'upper'},
+        {b:58.5,d:1.5,m:74,man:'upper'}, {b:60,d:2,m:[63,70,75],man:'upper'}, {b:61.5,d:0.5,m:75,man:'upper'}, {b:62,d:0.5,m:[70,79],man:'upper'},
+        {b:62.5,d:0.5,m:[67,75],man:'upper'}, {b:63,d:3,m:[65,69,75],man:'upper'}, {b:64.5,d:1.5,m:74,man:'upper'}, {b:66,d:1.5,m:[65,69,74],man:'upper'},
+        {b:67.5,d:0.5,m:[65,69,74],man:'upper'}, {b:68,d:0.5,m:[69,77],man:'upper'}, {b:68.5,d:0.5,m:[67,76],man:'upper'}, {b:69,d:2,m:[65,76],man:'upper'},
+        {b:70.5,d:1,m:74,man:'upper'}, {b:71,d:0.5,m:70,man:'upper'}, {b:71.5,d:0.5,m:68,man:'upper'}, {b:72,d:2,m:[65,68,74],man:'upper'},
+        {b:73.5,d:0.5,m:67,man:'upper'}, {b:74,d:0.5,m:79,man:'upper'}, {b:74.5,d:0.5,m:77,man:'upper'}, {b:75,d:2,m:[67,77],man:'upper'},
+        {b:76.5,d:1,m:76,man:'upper'}, {b:77,d:0.5,m:72,man:'upper'}, {b:77.5,d:0.5,m:70,man:'upper'}, {b:78,d:2.5,m:[67,70,76],man:'upper'},
+        {b:80,d:0.5,m:69,man:'upper'}, {b:80.5,d:0.5,m:[64,67,69],man:'upper'}, {b:81,d:1.5,m:[64,67,69],man:'upper'}, {b:82.5,d:1.5,m:[62,65,69],man:'upper'},
+        {b:84,d:1.5,m:[65,68,71],man:'upper'}, {b:85.5,d:1.5,m:[65,68,72],man:'upper'}, {b:87,d:1.5,m:[65,68,74],man:'upper'}, {b:88.5,d:1.5,m:[65,68,74],man:'upper'},
+        {b:90,d:1.5,m:[65,68,74],man:'upper'}, {b:91.5,d:1.5,m:[65,68,72],man:'upper'}, {b:93,d:1.5,m:[65,68,71],man:'upper'}, {b:94.5,d:1.5,m:[65,68,71],man:'upper'},
+        {b:96,d:1.5,m:[65,67,71],man:'upper'}, {b:97.5,d:1.5,m:[64,67,72],man:'upper'}, {b:99,d:1.5,m:[64,67,74],man:'upper'}, {b:100.5,d:1.5,m:[65,72],man:'upper'},
+        {b:101.5,d:0.5,m:77,man:'upper'}, {b:102,d:2.5,m:[65,70,74,77],man:'upper'}, {b:103.5,d:1,m:[69,77],man:'upper'}, {b:104,d:0.5,m:74,man:'upper'},
+        {b:104.5,d:0.5,m:[65,69,71],man:'upper'}, {b:105,d:2,m:[65,69,72],man:'upper'}, {b:106.5,d:1,m:[64,67],man:'upper'}, {b:107,d:0.5,m:70,man:'upper'},
+        {b:107.5,d:0.5,m:[64,67],man:'upper'}, {b:108,d:0.5,m:65,man:'upper'}, {b:108.5,d:0.5,m:65,man:'upper'}, {b:109,d:0.5,m:77,man:'upper'},
+        {b:110,d:0.5,m:65,man:'upper'}, {b:110.5,d:0.5,m:77,man:'upper'}, {b:111.5,d:0.5,m:65,man:'upper'}, {b:112,d:0.5,m:77,man:'upper'},
+        {b:112.5,d:0.5,m:69,man:'upper'}, {b:113,d:0.5,m:72,man:'upper'}, {b:113.5,d:0.5,m:77,man:'upper'}, {b:114,d:2,m:77,man:'upper'},
+        {b:114.5,d:0.5,m:65,man:'upper'}, {b:115,d:0.5,m:70,man:'upper'}, {b:116,d:0.5,m:74,man:'upper'}, {b:116.5,d:0.5,m:71,man:'upper'},
+        {b:117,d:2,m:72,man:'upper'}, {b:117.5,d:0.5,m:84,man:'upper'}, {b:118,d:0.5,m:81,man:'upper'}, {b:119,d:0.5,m:[70,82],man:'upper'},
+        {b:119.5,d:0.5,m:[67,79],man:'upper'}, {b:120,d:1,m:65,man:'upper'}, {b:120.5,d:0.5,m:76,man:'upper'}, {b:121,d:0.5,m:77,man:'upper'},
+        {b:121.5,d:1,m:[69,74],man:'upper'}, {b:122,d:0.5,m:85,man:'upper'}, {b:122.5,d:0.5,m:86,man:'upper'}, {b:123,d:1,m:[67,70],man:'upper'},
+        {b:123.5,d:0.5,m:74,man:'upper'}, {b:124,d:0.5,m:73,man:'upper'}, {b:124.5,d:1,m:[64,69],man:'upper'}, {b:125,d:0.5,m:81,man:'upper'},
+        {b:125.5,d:0.5,m:69,man:'upper'}, {b:126,d:2,m:[65,69],man:'upper'}, {b:128,d:0.5,m:[69,77],man:'upper'}, {b:128.5,d:0.5,m:[65,74],man:'upper'},
+        {b:129,d:2.5,m:[67,70,74],man:'upper'}, {b:130.5,d:1,m:[69,73],man:'upper'}, {b:132,d:2,m:[65,69],man:'upper'}, {b:134,d:0.5,m:[69,77],man:'upper'},
+        {b:134.5,d:0.5,m:[65,74],man:'upper'}, {b:135,d:2.5,m:[67,70,74],man:'upper'}, {b:136.5,d:1,m:[69,73],man:'upper'}, {b:138,d:1.5,m:[65,69,74],man:'upper'},
+        {b:139.5,d:1.5,m:[69,72],man:'upper'}, {b:141,d:1.5,m:[74,82,86],man:'upper'}, {b:142.5,d:1.5,m:[72,78,81,84],man:'upper'}, {b:144,d:1.5,m:[70,79,82],man:'upper'},
+        {b:145.5,d:1.5,m:[69,75,81],man:'upper'}, {b:147,d:1.5,m:[67,70,76,79],man:'upper'}, {b:148.5,d:1.5,m:[65,69,74,77],man:'upper'}, {b:151.5,d:1.5,m:[62,65,70,74],man:'upper'},
+        {b:153,d:1.5,m:[61,64,69,72],man:'upper'}, {b:154.5,d:1.5,m:[62,65,69,74],man:'upper'}, {b:156,d:1.5,m:[64,69,73,76],man:'upper'}, {b:157.5,d:1.5,m:[65,69,74,77],man:'upper'},
+        {b:159,d:1.5,m:[64,69,74,76],man:'upper'}, {b:160.5,d:1.5,m:[64,69,73,76],man:'upper'}, {b:162,d:1,m:[65,69,74],man:'upper'}, {b:162.5,d:0.5,m:73,man:'upper'},
+        {b:163,d:0.5,m:74,man:'upper'}, {b:163.5,d:1,m:[69,72],man:'upper'}, {b:164,d:0.5,m:79,man:'upper'}, {b:164.5,d:0.5,m:78,man:'upper'},
+        {b:165,d:1,m:[72,78],man:'upper'}, {b:165.5,d:0.5,m:82,man:'upper'}, {b:166,d:0.5,m:81,man:'upper'}, {b:166.5,d:1,m:[78,81],man:'upper'},
+        {b:167,d:0.5,m:86,man:'upper'}, {b:167.5,d:0.5,m:84,man:'upper'}, {b:168,d:6,m:[67,70,74],man:'upper'}, {b:174,d:6,m:[66,69,74],man:'upper'}
+      ],
+      lh:[
+        {b:0,d:1,m:[62,65],man:'lower'}, {b:1.5,d:1,m:[65,69],man:'lower'}, {b:3,d:1,m:[64,67],man:'lower'}, {b:4.5,d:1,m:[67,73],man:'lower'},
+        {b:6,d:1,m:[65,74],man:'lower'}, {b:7.5,d:1,m:[55,64],man:'lower'}, {b:9,d:1,m:[53,62],man:'lower'}, {b:10.5,d:1,m:[57,67],man:'lower'},
+        {b:12,d:0.5,m:50,man:'lower'}, {b:12.5,d:0.5,m:61,man:'lower'}, {b:13,d:0.5,m:62,man:'lower'}, {b:13.5,d:0.5,m:53,man:'lower'},
+        {b:14,d:0.5,m:57,man:'lower'}, {b:14.5,d:0.5,m:58,man:'lower'}, {b:15,d:0.5,m:52,man:'lower'}, {b:15.5,d:0.5,m:62,man:'lower'},
+        {b:16,d:0.5,m:61,man:'lower'}, {b:16.5,d:0.5,m:45,man:'lower'}, {b:17,d:0.5,m:58,man:'lower'}, {b:17.5,d:0.5,m:57,man:'lower'},
+        {b:18,d:0.5,m:50,man:'lower'}, {b:18.5,d:0.5,m:61,man:'lower'}, {b:19,d:0.5,m:62,man:'lower'}, {b:19.5,d:0.5,m:53,man:'lower'},
+        {b:20,d:0.5,m:57,man:'lower'}, {b:20.5,d:0.5,m:58,man:'lower'}, {b:21,d:0.5,m:52,man:'lower'}, {b:21.5,d:0.5,m:62,man:'lower'},
+        {b:22,d:0.5,m:61,man:'lower'}, {b:22.5,d:0.5,m:45,man:'lower'}, {b:23,d:0.5,m:58,man:'lower'}, {b:23.5,d:0.5,m:57,man:'lower'},
+        {b:24,d:0.5,m:38,man:'lower'}, {b:24.5,d:0.5,m:50,man:'lower'}, {b:25,d:0.5,m:45,man:'lower'}, {b:25.5,d:0.5,m:33,man:'lower'},
+        {b:26,d:0.5,m:52,man:'lower'}, {b:26.5,d:0.5,m:45,man:'lower'}, {b:27,d:0.5,m:38,man:'lower'}, {b:27.5,d:0.5,m:53,man:'lower'},
+        {b:28,d:0.5,m:50,man:'lower'}, {b:28.5,d:0.5,m:36,man:'lower'}, {b:29,d:0.5,m:55,man:'lower'}, {b:29.5,d:0.5,m:48,man:'lower'},
+        {b:30,d:0.5,m:41,man:'lower'}, {b:30.5,d:0.5,m:57,man:'lower'}, {b:31,d:0.5,m:53,man:'lower'}, {b:31.5,d:0.5,m:40,man:'lower'},
+        {b:32,d:0.5,m:59,man:'lower'}, {b:32.5,d:0.5,m:52,man:'lower'}, {b:33,d:0.5,m:45,man:'lower'}, {b:33.5,d:0.5,m:60,man:'lower'},
+        {b:34,d:0.5,m:57,man:'lower'}, {b:34.5,d:0.5,m:43,man:'lower'}, {b:35,d:0.5,m:62,man:'lower'}, {b:35.5,d:0.5,m:55,man:'lower'},
+        {b:36,d:0.5,m:48,man:'lower'}, {b:36.5,d:0.5,m:60,man:'lower'}, {b:37,d:0.5,m:55,man:'lower'}, {b:37.5,d:0.5,m:46,man:'lower'},
+        {b:38,d:0.5,m:60,man:'lower'}, {b:38.5,d:0.5,m:55,man:'lower'}, {b:39,d:0.5,m:45,man:'lower'}, {b:39.5,d:0.5,m:60,man:'lower'},
+        {b:40,d:0.5,m:53,man:'lower'}, {b:40.5,d:0.5,m:48,man:'lower'}, {b:41,d:0.5,m:63,man:'lower'}, {b:41.5,d:0.5,m:57,man:'lower'},
+        {b:42,d:0.5,m:47,man:'lower'}, {b:42.5,d:0.5,m:62,man:'lower'}, {b:43,d:0.5,m:55,man:'lower'}, {b:43.5,d:0.5,m:46,man:'lower'},
+        {b:44,d:0.5,m:62,man:'lower'}, {b:44.5,d:0.5,m:56,man:'lower'}, {b:45,d:0.5,m:45,man:'lower'}, {b:45.5,d:0.5,m:62,man:'lower'},
+        {b:46,d:0.5,m:57,man:'lower'}, {b:46.5,d:0.5,m:45,man:'lower'}, {b:47,d:0.5,m:61,man:'lower'}, {b:47.5,d:0.5,m:57,man:'lower'},
+        {b:48,d:0.5,m:49,man:'lower'}, {b:48.5,d:0.5,m:57,man:'lower'}, {b:49,d:0.5,m:52,man:'lower'}, {b:49.5,d:0.5,m:45,man:'lower'},
+        {b:50,d:0.5,m:57,man:'lower'}, {b:50.5,d:0.5,m:55,man:'lower'}, {b:51,d:0.5,m:50,man:'lower'}, {b:51.5,d:0.5,m:57,man:'lower'},
+        {b:52,d:0.5,m:53,man:'lower'}, {b:52.5,d:0.5,m:45,man:'lower'}, {b:53,d:0.5,m:62,man:'lower'}, {b:53.5,d:0.5,m:57,man:'lower'},
+        {b:54,d:0.5,m:52,man:'lower'}, {b:54.5,d:0.5,m:58,man:'lower'}, {b:55,d:0.5,m:55,man:'lower'}, {b:55.5,d:0.5,m:45,man:'lower'},
+        {b:56,d:0.5,m:64,man:'lower'}, {b:56.5,d:0.5,m:57,man:'lower'}, {b:57,d:0.5,m:53,man:'lower'}, {b:57.5,d:0.5,m:62,man:'lower'},
+        {b:58,d:0.5,m:57,man:'lower'}, {b:58.5,d:0.5,m:45,man:'lower'}, {b:59,d:0.5,m:61,man:'lower'}, {b:59.5,d:0.5,m:62,man:'lower'},
+        {b:60,d:0.5,m:43,man:'lower'}, {b:60.5,d:0.5,m:58,man:'lower'}, {b:61,d:0.5,m:51,man:'lower'}, {b:61.5,d:0.5,m:43,man:'lower'},
+        {b:62,d:0.5,m:63,man:'lower'}, {b:62.5,d:0.5,m:58,man:'lower'}, {b:63,d:0.5,m:44,man:'lower'}, {b:63.5,d:0.5,m:63,man:'lower'},
+        {b:64,d:0.5,m:53,man:'lower'}, {b:64.5,d:0.5,m:44,man:'lower'}, {b:65,d:0.5,m:62,man:'lower'}, {b:65.5,d:0.5,m:58,man:'lower'},
+        {b:66,d:0.5,m:45,man:'lower'}, {b:66.5,d:0.5,m:62,man:'lower'}, {b:67,d:0.5,m:57,man:'lower'}, {b:67.5,d:0.5,m:45,man:'lower'},
+        {b:68,d:0.5,m:62,man:'lower'}, {b:68.5,d:0.5,m:57,man:'lower'}, {b:69,d:0.5,m:46,man:'lower'}, {b:69.5,d:0.5,m:58,man:'lower'},
+        {b:70,d:0.5,m:53,man:'lower'}, {b:70.5,d:0.5,m:46,man:'lower'}, {b:71,d:0.5,m:62,man:'lower'}, {b:71.5,d:0.5,m:58,man:'lower'},
+        {b:72,d:0.5,m:47,man:'lower'}, {b:72.5,d:0.5,m:62,man:'lower'}, {b:73,d:0.5,m:56,man:'lower'}, {b:73.5,d:0.5,m:47,man:'lower'},
+        {b:74,d:0.5,m:62,man:'lower'}, {b:74.5,d:0.5,m:55,man:'lower'}, {b:75,d:0.5,m:48,man:'lower'}, {b:75.5,d:0.5,m:60,man:'lower'},
+        {b:76,d:0.5,m:55,man:'lower'}, {b:76.5,d:0.5,m:48,man:'lower'}, {b:77,d:0.5,m:64,man:'lower'}, {b:77.5,d:0.5,m:60,man:'lower'},
+        {b:78,d:0.5,m:49,man:'lower'}, {b:78.5,d:0.5,m:64,man:'lower'}, {b:79,d:0.5,m:58,man:'lower'}, {b:79.5,d:0.5,m:49,man:'lower'},
+        {b:80,d:0.5,m:64,man:'lower'}, {b:80.5,d:0.5,m:57,man:'lower'}, {b:81,d:0.5,m:53,man:'lower'}, {b:81.5,d:0.5,m:62,man:'lower'},
+        {b:82,d:0.5,m:57,man:'lower'}, {b:82.5,d:0.5,m:50,man:'lower'}, {b:83,d:0.5,m:57,man:'lower'}, {b:83.5,d:0.5,m:53,man:'lower'},
+        {b:84,d:1.5,m:50,man:'lower'}, {b:84.5,d:0.5,m:53,man:'lower'}, {b:85,d:0.5,m:59,man:'lower'}, {b:85.5,d:1.5,m:48,man:'lower'},
+        {b:86,d:0.5,m:50,man:'lower'}, {b:86.5,d:0.5,m:60,man:'lower'}, {b:87,d:1.5,m:47,man:'lower'}, {b:87.5,d:0.5,m:53,man:'lower'},
+        {b:88,d:0.5,m:62,man:'lower'}, {b:88.5,d:1.5,m:47,man:'lower'}, {b:89,d:0.5,m:53,man:'lower'}, {b:89.5,d:0.5,m:59,man:'lower'},
+        {b:90,d:0.5,m:47,man:'lower'}, {b:90.5,d:0.5,m:53,man:'lower'}, {b:91,d:0.5,m:62,man:'lower'}, {b:91.5,d:0.5,m:48,man:'lower'},
+        {b:92,d:0.5,m:53,man:'lower'}, {b:92.5,d:0.5,m:60,man:'lower'}, {b:93,d:0.5,m:49,man:'lower'}, {b:93.5,d:0.5,m:53,man:'lower'},
+        {b:94,d:0.5,m:59,man:'lower'}, {b:94.5,d:0.5,m:49,man:'lower'}, {b:95,d:0.5,m:53,man:'lower'}, {b:95.5,d:0.5,m:59,man:'lower'},
+        {b:96,d:0.5,m:50,man:'lower'}, {b:96.5,d:0.5,m:55,man:'lower'}, {b:97,d:0.5,m:59,man:'lower'}, {b:97.5,d:0.5,m:48,man:'lower'},
+        {b:98,d:0.5,m:55,man:'lower'}, {b:98.5,d:0.5,m:60,man:'lower'}, {b:99,d:0.5,m:46,man:'lower'}, {b:99.5,d:0.5,m:55,man:'lower'},
+        {b:100,d:0.5,m:58,man:'lower'}, {b:100.5,d:0.5,m:45,man:'lower'}, {b:101,d:0.5,m:53,man:'lower'}, {b:101.5,d:0.5,m:53,man:'lower'},
+        {b:102,d:0.5,m:46,man:'lower'}, {b:102.5,d:0.5,m:53,man:'lower'}, {b:103,d:0.5,m:58,man:'lower'}, {b:103.5,d:0.5,m:50,man:'lower'},
+        {b:104,d:0.5,m:53,man:'lower'}, {b:104.5,d:0.5,m:59,man:'lower'}, {b:105,d:0.5,m:48,man:'lower'}, {b:105.5,d:0.5,m:53,man:'lower'},
+        {b:106,d:0.5,m:60,man:'lower'}, {b:106.5,d:0.5,m:48,man:'lower'}, {b:107,d:0.5,m:55,man:'lower'}, {b:107.5,d:0.5,m:58,man:'lower'},
+        {b:108,d:1,m:[53,57],man:'lower'}, {b:109.5,d:1,m:[45,48,51,53],man:'lower'}, {b:111,d:1,m:[46,50,53],man:'lower'}, {b:112.5,d:1,m:[48,51,53],man:'lower'},
+        {b:114,d:1,m:[46,50,58],man:'lower'}, {b:115.5,d:1,m:[50,53,56],man:'lower'}, {b:117,d:1,m:[48,53,57],man:'lower'}, {b:118.5,d:1,m:[48,52,58],man:'lower'},
+        {b:120,d:1,m:[53,57],man:'lower'}, {b:121.5,d:1,m:[41,53],man:'lower'}, {b:123,d:1,m:[40,52],man:'lower'}, {b:124.5,d:1,m:[33,45],man:'lower'},
+        {b:126,d:0.5,m:50,man:'lower'}, {b:126.5,d:0.5,m:61,man:'lower'}, {b:127,d:0.5,m:62,man:'lower'}, {b:127.5,d:0.5,m:53,man:'lower'},
+        {b:128,d:0.5,m:57,man:'lower'}, {b:128.5,d:0.5,m:58,man:'lower'}, {b:129,d:0.5,m:52,man:'lower'}, {b:129.5,d:0.5,m:62,man:'lower'},
+        {b:130,d:0.5,m:61,man:'lower'}, {b:130.5,d:0.5,m:45,man:'lower'}, {b:131,d:0.5,m:58,man:'lower'}, {b:131.5,d:0.5,m:57,man:'lower'},
+        {b:132,d:0.5,m:50,man:'lower'}, {b:132.5,d:0.5,m:61,man:'lower'}, {b:133,d:0.5,m:62,man:'lower'}, {b:133.5,d:0.5,m:53,man:'lower'},
+        {b:134,d:0.5,m:57,man:'lower'}, {b:134.5,d:0.5,m:58,man:'lower'}, {b:135,d:0.5,m:52,man:'lower'}, {b:135.5,d:0.5,m:62,man:'lower'},
+        {b:136,d:0.5,m:61,man:'lower'}, {b:136.5,d:0.5,m:45,man:'lower'}, {b:137,d:0.5,m:58,man:'lower'}, {b:137.5,d:0.5,m:57,man:'lower'},
+        {b:138,d:0.5,m:50,man:'lower'}, {b:138.5,d:0.5,m:61,man:'lower'}, {b:139,d:0.5,m:62,man:'lower'}, {b:139.5,d:0.5,m:54,man:'lower'},
+        {b:140,d:0.5,m:57,man:'lower'}, {b:140.5,d:0.5,m:62,man:'lower'}, {b:141,d:0.5,m:55,man:'lower'}, {b:141.5,d:0.5,m:61,man:'lower'},
+        {b:142,d:0.5,m:62,man:'lower'}, {b:142.5,d:0.5,m:50,man:'lower'}, {b:143,d:0.5,m:57,man:'lower'}, {b:143.5,d:0.5,m:62,man:'lower'},
+        {b:144,d:0.5,m:51,man:'lower'}, {b:144.5,d:0.5,m:58,man:'lower'}, {b:145,d:0.5,m:63,man:'lower'}, {b:145.5,d:0.5,m:48,man:'lower'},
+        {b:146,d:0.5,m:[55,57],man:'lower'}, {b:146.5,d:0.5,m:63,man:'lower'}, {b:147,d:0.5,m:49,man:'lower'}, {b:147.5,d:0.5,m:[55,58],man:'lower'},
+        {b:148,d:0.5,m:64,man:'lower'}, {b:148.5,d:0.5,m:50,man:'lower'}, {b:149,d:0.5,m:57,man:'lower'}, {b:149.5,d:0.5,m:62,man:'lower'},
+        {b:150,d:0.5,m:43,man:'lower'}, {b:150.5,d:0.5,m:51,man:'lower'}, {b:151,d:0.5,m:54,man:'lower'}, {b:151.5,d:0.5,m:39,man:'lower'},
+        {b:152,d:0.5,m:[46,48],man:'lower'}, {b:152.5,d:0.5,m:54,man:'lower'}, {b:153,d:0.5,m:40,man:'lower'}, {b:153.5,d:0.5,m:[46,49],man:'lower'},
+        {b:154,d:0.5,m:55,man:'lower'}, {b:154.5,d:0.5,m:41,man:'lower'}, {b:155,d:0.5,m:48,man:'lower'}, {b:155.5,d:0.5,m:53,man:'lower'},
+        {b:156,d:0.5,m:33,man:'lower'}, {b:156.5,d:0.5,m:52,man:'lower'}, {b:157,d:0.5,m:57,man:'lower'}, {b:157.5,d:0.5,m:45,man:'lower'},
+        {b:158,d:0.5,m:53,man:'lower'}, {b:158.5,d:0.5,m:62,man:'lower'}, {b:159,d:0.5,m:45,man:'lower'}, {b:159.5,d:0.5,m:52,man:'lower'},
+        {b:160,d:0.5,m:57,man:'lower'}, {b:160.5,d:0.5,m:33,man:'lower'}, {b:161,d:0.5,m:61,man:'lower'}, {b:161.5,d:0.5,m:52,man:'lower'},
+        {b:162,d:1,m:[38,50],man:'lower'}, {b:163.5,d:1,m:[38,50],man:'lower'}, {b:165,d:1,m:[38,50],man:'lower'}, {b:166.5,d:1,m:[38,50],man:'lower'},
+        {b:168,d:0.5,m:43,man:'lower'}, {b:168.5,d:0.5,m:58,man:'lower'}, {b:169,d:0.5,m:55,man:'lower'}, {b:169.5,d:0.5,m:50,man:'lower'},
+        {b:170,d:0.5,m:67,man:'lower'}, {b:170.5,d:0.5,m:62,man:'lower'}, {b:171,d:0.5,m:46,man:'lower'}, {b:171.5,d:0.5,m:62,man:'lower'},
+        {b:172,d:0.5,m:58,man:'lower'}, {b:172.5,d:0.5,m:43,man:'lower'}, {b:173,d:0.5,m:58,man:'lower'}, {b:173.5,d:0.5,m:55,man:'lower'},
+        {b:174,d:6,m:[38,50],man:'lower'}
+      ] },
+    bridal_chorus: { label:'Bridal Chorus', tempo:1.0, bpm:70,
+      // Wagner, Bridal Chorus from Lohengrin (\u201cHere Comes the Bride\u201d), PD.
+      // Arr. Ivan Di Sipio, CC0 1.0. Staff 1 = melody/upper, staff 2 = bass.
+      ctls:[
+        {b:0, ctl:()=>{_riffOrgan('draw',[8,8,8,6,4,5,2,3,5]);_riffOrgan('draw',[8,5,8,4,0,3,0,0,2],'lower');_riffOrgan('leslie','slow');_riffOrgan('perc','off');_riffOrgan('vibChorus','off');}}
+      ],
+      rh:[
+        {b:0,d:1,m:[65,77],man:'upper'}, {b:1,d:0.75,m:[65,77],man:'upper'}, {b:1.75,d:0.25,m:[65,77],man:'upper'}, {b:2,d:1,m:[65,77],man:'upper'},
+        {b:3,d:1,m:[65,77],man:'upper'}, {b:4,d:2,m:[65,77],man:'upper'}, {b:6,d:2,m:[65,77],man:'upper'}, {b:8,d:1,m:[58,62,65],man:'upper'},
+        {b:9,d:0.75,m:[62,65,70],man:'upper'}, {b:9.75,d:0.25,m:[62,65,70],man:'upper'}, {b:10,d:1.5,m:[62,65,70],man:'upper'}, {b:12,d:1,m:[58,62,65],man:'upper'},
+        {b:13,d:0.75,m:[63,69,72],man:'upper'}, {b:13.75,d:0.25,m:[60,65,69],man:'upper'}, {b:14,d:1.5,m:[62,65,70],man:'upper'}, {b:16,d:1,m:[58,62,65],man:'upper'},
+        {b:17,d:0.75,m:[62,65,70],man:'upper'}, {b:17.75,d:0.25,m:[67,70,75],man:'upper'}, {b:18,d:1,m:[67,70,75],man:'upper'}, {b:19,d:0.5,m:[65,70,74],man:'upper'},
+        {b:19.75,d:0.25,m:[63,69,72],man:'upper'}, {b:20,d:1,m:[62,65,70],man:'upper'}, {grace:1,b:20.875,d:0.125,m:72,man:'upper'}, {grace:1,b:20.875,d:0.125,m:70,man:'upper'},
+        {b:21,d:0.75,m:[58,64,69],man:'upper'}, {b:21.75,d:0.25,m:[58,64,70],man:'upper'}, {b:22,d:1.5,m:[65,69,72],man:'upper'}, {b:24,d:1,m:[58,62,65],man:'upper'},
+        {b:25,d:0.75,m:[62,65,70],man:'upper'}, {b:25.75,d:0.25,m:[62,65,70],man:'upper'}, {b:26,d:1.5,m:[62,65,70],man:'upper'}, {b:28,d:1,m:[58,62,65],man:'upper'},
+        {b:29,d:0.75,m:[63,69,72],man:'upper'}, {b:29.75,d:0.25,m:[60,65,69],man:'upper'}, {b:30,d:1.5,m:[62,65,70],man:'upper'}, {b:32,d:1,m:[58,62,65],man:'upper'},
+        {b:33,d:0.75,m:[62,65,70],man:'upper'}, {b:33.75,d:0.25,m:[65,70,74],man:'upper'}, {b:34,d:1,m:[69,74,77],man:'upper'}, {b:35,d:0.75,m:[67,70,74],man:'upper'},
+        {b:35.75,d:0.25,m:[62,67,70],man:'upper'}, {b:36,d:1,m:[60,63,67],man:'upper'}, {b:37,d:0.75,m:[63,69,72],man:'upper'}, {b:37.75,d:0.25,m:[65,69,74],man:'upper'},
+        {b:38,d:0.5,m:[62,65,70],man:'upper'}, {b:38.5,d:0.16667,m:70,man:'upper'}, {b:38.66667,d:0.16667,m:70,man:'upper'}, {b:38.83333,d:0.16667,m:70,man:'upper'},
+        {b:39,d:0.5,m:70,man:'upper'}, {b:39.5,d:0.5,m:70,man:'upper'}, {b:40,d:1,m:[67,70,75],man:'upper'}, {b:41,d:0.5,m:[65,70,74],man:'upper'},
+        {b:41.5,d:0.5,m:[63,67,72],man:'upper'}, {b:42,d:1,m:[60,63,67],man:'upper'}, {b:43,d:1,m:[60,63,67],man:'upper'}, {b:44,d:1,m:[60,65,69],man:'upper'},
+        {b:45,d:0.75,m:[62,65,70],man:'upper'}, {b:45.75,d:0.25,m:[65,69,72],man:'upper'}, {b:46,d:0.5,m:[65,69,72],man:'upper'}, {b:46.5,d:0.16667,m:65,man:'upper'},
+        {b:46.66667,d:0.16667,m:65,man:'upper'}, {b:46.83333,d:0.16667,m:65,man:'upper'}, {b:47,d:0.5,m:65,man:'upper'}, {b:47.5,d:0.5,m:65,man:'upper'},
+        {b:48,d:1,m:[67,70,75],man:'upper'}, {b:49,d:0.5,m:[65,70,74],man:'upper'}, {b:49.5,d:0.5,m:[63,67,72],man:'upper'}, {b:50,d:1,m:[60,63,67],man:'upper'},
+        {b:51,d:1,m:[60,63,67],man:'upper'}, {b:52,d:1,m:[59,62,67],man:'upper'}, {b:53,d:0.75,m:[62,66,69],man:'upper'}, {b:53.75,d:0.25,m:[62,67,71],man:'upper'},
+        {b:54,d:2,m:[62,67,71],man:'upper'}, {b:56,d:1,m:[67,71,74],man:'upper'}, {b:57,d:0.5,m:[67,72,76],man:'upper'}, {b:57.5,d:0.5,m:[67,71,74],man:'upper'},
+        {b:58,d:1,m:[64,69,72],man:'upper'}, {b:58.5,d:0.5,m:[63,66],man:'upper'}, {b:59,d:1,m:[62,67,71],man:'upper'}, {b:59.5,d:0.5,m:59,man:'upper'},
+        {b:60,d:1,m:[66,69,74],man:'upper'}, {b:60.5,d:0.5,m:73,man:'upper'}, {b:61,d:0.5,m:[66,69,72],man:'upper'}, {b:61.5,d:0.5,m:[62,67,71],man:'upper'},
+        {b:62,d:1,m:[60,66,71],man:'upper'}, {b:63,d:1,m:[60,66,69],man:'upper'}, {b:64,d:1,m:[67,71,74],man:'upper'}, {b:65,d:0.5,m:[67,71,76],man:'upper'},
+        {b:65.5,d:0.5,m:[67,71,78],man:'upper'}, {b:66,d:1,m:[67,71,79],man:'upper'}, {b:67,d:1,m:[64,67,71],man:'upper'}, {b:68,d:1,m:[62,67,71],man:'upper'},
+        {b:69,d:0.75,m:[61,64,69],man:'upper'}, {b:69.75,d:0.25,m:[61,64,67],man:'upper'}, {b:70,d:1,m:[66,69,76],man:'upper'}, {b:71,d:1,m:[66,69,74],man:'upper'},
+        {b:72,d:1,m:[67,71,74],man:'upper'}, {b:73,d:0.5,m:[67,70,74],man:'upper'}, {b:73.5,d:0.5,m:[67,70,76],man:'upper'}, {b:74,d:1.5,m:[70,74,77],man:'upper'},
+        {b:75.5,d:0.5,m:[65,70,74],man:'upper'}, {b:76,d:0.5,m:[69,72,77],man:'upper'}, {b:76.5,d:0.5,m:76,man:'upper'}, {b:77,d:0.5,m:[69,72,75],man:'upper'},
+        {b:77.5,d:0.5,m:72,man:'upper'}, {b:78,d:2,m:[65,70,74],man:'upper'}, {b:80,d:1,m:[65,70,74],man:'upper'}, {b:81,d:0.5,m:[65,70,74],man:'upper'},
+        {b:81.5,d:0.5,m:[70,72,76],man:'upper'}, {b:82,d:1,m:[69,72,77],man:'upper'}, {b:83,d:0.5,m:67,man:'upper'}, {b:83.5,d:0.5,m:75,man:'upper'},
+        {b:84,d:1,m:[64,65,67,70,74],man:'upper'}, {b:84.5,d:0.5,m:[64,67],man:'upper'}, {b:85,d:0.25,m:74,man:'upper'}, {b:85.25,d:0.25,m:73,man:'upper'},
+        {b:85.5,d:0.25,m:71,man:'upper'}, {b:85.75,d:0.25,m:73,man:'upper'}, {b:86,d:1.5,m:[66,69,74],man:'upper'}, {b:87.5,d:0.5,m:65,man:'upper'},
+        {b:88,d:2,m:[72,75,79],man:'upper'}, {b:90,d:0.5,m:[69,72,77],man:'upper'}, {b:90.5,d:0.5,m:75,man:'upper'}, {b:91,d:0.75,m:[63,69,74],man:'upper'},
+        {b:91.75,d:0.25,m:[63,69,72],man:'upper'}, {b:92,d:1.5,m:[62,65,70],man:'upper'}, {b:95.75,d:0.25,m:[65,70,74],man:'upper'}, {b:96,d:2,m:[65,70,74],man:'upper'},
+        {b:98,d:1.5,m:[67,70,75],man:'upper'}, {b:99.5,d:0.5,m:[65,70,74],man:'upper'}, {b:100,d:3,m:[70,74,77],man:'upper'}
+      ],
+      lh:[
+        {b:8,d:1,m:46,man:'lower'}, {b:9,d:0.75,m:46,man:'lower'}, {b:9.75,d:0.25,m:46,man:'lower'}, {b:10,d:1.5,m:46,man:'lower'},
+        {b:12,d:1,m:46,man:'lower'}, {b:13,d:0.75,m:41,man:'lower'}, {b:13.75,d:0.25,m:41,man:'lower'}, {b:14,d:1.5,m:46,man:'lower'},
+        {b:16,d:1,m:46,man:'lower'}, {b:17,d:0.75,m:46,man:'lower'}, {b:17.75,d:0.25,m:46,man:'lower'}, {b:18,d:3,m:46,man:'lower'},
+        {b:21,d:0.75,m:43,man:'lower'}, {b:21.75,d:0.25,m:43,man:'lower'}, {b:22,d:1.5,m:41,man:'lower'}, {b:24,d:1,m:46,man:'lower'},
+        {b:25,d:0.75,m:46,man:'lower'}, {b:25.75,d:0.25,m:46,man:'lower'}, {b:26,d:1.5,m:46,man:'lower'}, {b:28,d:1,m:46,man:'lower'},
+        {b:29,d:0.75,m:41,man:'lower'}, {b:29.75,d:0.25,m:41,man:'lower'}, {b:30,d:1.5,m:46,man:'lower'}, {b:32,d:1,m:46,man:'lower'},
+        {b:33,d:0.75,m:46,man:'lower'}, {b:33.75,d:0.25,m:46,man:'lower'}, {b:34,d:1,m:38,man:'lower'}, {b:35,d:0.75,m:43,man:'lower'},
+        {b:35.75,d:0.25,m:43,man:'lower'}, {b:36,d:1,m:39,man:'lower'}, {b:37,d:0.75,m:41,man:'lower'}, {b:37.75,d:0.25,m:41,man:'lower'},
+        {b:38,d:1.5,m:46,man:'lower'}, {b:44,d:1,m:41,man:'lower'}, {b:45,d:0.75,m:41,man:'lower'}, {b:45.75,d:0.25,m:41,man:'lower'},
+        {b:46,d:1.5,m:41,man:'lower'}, {b:52,d:1,m:43,man:'lower'}, {b:53,d:0.75,m:38,man:'lower'}, {b:53.75,d:0.25,m:43,man:'lower'},
+        {b:54,d:1.5,m:43,man:'lower'}, {b:55.5,d:0.5,m:43,man:'lower'}, {b:56,d:3,m:43,man:'lower'}, {b:59,d:1,m:43,man:'lower'},
+        {b:60,d:1.5,m:38,man:'lower'}, {b:61.5,d:0.5,m:38,man:'lower'}, {b:62,d:1.5,m:38,man:'lower'}, {b:63.5,d:0.5,m:38,man:'lower'},
+        {b:64,d:1,m:47,man:'lower'}, {b:65,d:0.5,m:47,man:'lower'}, {b:65.5,d:0.5,m:47,man:'lower'}, {b:66,d:1,m:40,man:'lower'},
+        {b:67,d:1,m:40,man:'lower'}, {b:68,d:1,m:38,man:'lower'}, {b:69,d:0.75,m:37,man:'lower'}, {b:69.75,d:0.25,m:37,man:'lower'},
+        {b:70,d:1.5,m:38,man:'lower'}, {b:71.5,d:0.5,m:38,man:'lower'}, {b:72,d:1,m:43,man:'lower'}, {b:73,d:0.5,m:43,man:'lower'},
+        {b:73.5,d:0.5,m:43,man:'lower'}, {b:74,d:1,m:41,man:'lower'}, {b:75,d:1,m:41,man:'lower'}, {b:76,d:1,m:41,man:'lower'},
+        {b:77,d:0.5,m:41,man:'lower'}, {b:77.5,d:0.5,m:41,man:'lower'}, {b:78,d:2,m:46,man:'lower'}, {b:80,d:1,m:46,man:'lower'},
+        {b:81,d:0.5,m:43,man:'lower'}, {b:81.5,d:0.5,m:43,man:'lower'}, {b:82,d:1,m:41,man:'lower'}, {b:83,d:1,m:43,man:'lower'},
+        {b:84,d:1,m:45,man:'lower'}, {b:85,d:0.75,m:45,man:'lower'}, {b:85.75,d:0.25,m:45,man:'lower'}, {b:86,d:1,m:38,man:'lower'},
+        {b:88,d:2,m:39,man:'lower'}, {b:90,d:1,m:41,man:'lower'}, {b:91,d:1,m:41,man:'lower'}, {b:92,d:1.5,m:46,man:'lower'},
+        {b:95.75,d:0.25,m:58,man:'lower'}, {b:96,d:2,m:58,man:'lower'}, {b:98,d:1,m:58,man:'lower'}
       ] },
   },
 
@@ -30361,7 +30603,7 @@ function _riffFlashSvgKey(svgId, midi, holdMs) {
   var ov = document.createElementNS(NS, 'rect');
   ['x','y','width','height'].forEach(function(a){ ov.setAttribute(a, rect.getAttribute(a)); });
   ov.setAttribute('rx', rect.getAttribute('rx') || '0');
-  ov.setAttribute('fill', 'rgba(127,231,196,0.42)');
+  ov.setAttribute('fill', 'rgba(127,231,196,0.92)');
   ov.setAttribute('pointer-events', 'none');
   // Tag so riffStop can clear all highlights at once
   ov.setAttribute('class', 'riff-key-hold');
@@ -30752,14 +30994,20 @@ function riffStart(inst, id) {
               if (_riffActive) _riffPianoNoteOff(mid, false);
             }});
           } else if (inst === 'organ') {
-            // Organ has no natural decay, so the note-off triggers an exponential
-            // fade (~75ms). The legato overlap must scale with the note: a long held
-            // chord wants a generous overlap so it rings smoothly into the next, but
-            // a fast 32nd-note run wants only a tiny overlap or the notes pile into a
-            // smeared cluster. Use ~40% of the note's own length, capped to [25,160]ms.
-            var noteDur = dur;
-            var organOverlap = Math.max(25, Math.min(160, noteDur * 0.4));
-            _riffEvents.push({ t: end + organOverlap, fn: function(){
+            // Organ pipes have no natural decay; note-off triggers a short fade.
+            // Three regimes by note length:
+            //  • Very short notes (fast runs, <140ms): let them ring a touch PAST
+            //    their end so the flourish flows legato instead of sounding like
+            //    detached blips. The next note layers in naturally.
+            //  • Long sustains (>600ms): tiny pre-end gap so the big held chords
+            //    ring essentially full length.
+            //  • Mid notes: small pre-end gap so repeated same-pitch notes can
+            //    re-articulate (avoids the previous note's late release killing them).
+            var offAt;
+            if (dur < 140)      offAt = end + Math.min(90, dur * 0.9);   // legato overlap
+            else if (dur > 600) offAt = end - 12;
+            else                offAt = end - Math.max(14, Math.min(38, dur * 0.12));
+            _riffEvents.push({ t: Math.max(at + 5, offAt) + i * roll, fn: function(){
               if (_riffActive) _riffOrganNoteOff(mid, n.man);
             }});
           } else if (inst === 'rhodes') {
@@ -31110,8 +31358,8 @@ function _thmnBindOverlayTouch() {
       if (e.pointerId === _thmnPitchPID) {
         var c = _thmnVisCoords(pad, e);
         _thmnOvNx = c.vx;
-        _thmnOvPadY = 0.5;                   // dot stays vertically centred; Y is not volume here
-        _thmnOvFinger(c.vx, 0.5, true);
+        _thmnOvPadY = c.vy;                  // dot follows finger vertically (display only, not volume)
+        _thmnOvFinger(c.vx, c.vy, true);
         _thmnOvApply();
       } else if (e.pointerId === _thmnVolPID) {
         var cv = _thmnVisCoords(bar, e);
@@ -31152,9 +31400,9 @@ function _thmnBindOverlayTouch() {
       _thmnPitchPID = e.pointerId;
       var c = _thmnVisCoords(pad, e);
       _thmnOvNx = c.vx;
-      _thmnOvPadY = 0.5;
+      _thmnOvPadY = c.vy;
       if (_thmnOvVol <= 0.001 && _thmnVolPID === null) _thmnOvVol = thmnState.vol;
-      _thmnOvFinger(c.vx, 0.5, true);
+      _thmnOvFinger(c.vx, c.vy, true);
       _thmnOvVolFill();
       _thmnOvApply();
     }, { passive:false });
@@ -37468,7 +37716,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('vibraphone', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
-  gain: 0.85,
+  gain: 3.0,
   onFailed() { console.warn('[SampleEngine] Vibraphone samples unavailable'); },
 });
 
@@ -37488,7 +37736,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('marimba', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
-  gain: 0.85,
+  gain: 3.0,
   onFailed() { console.warn('[SampleEngine] Marimba samples unavailable'); },
 });
 
@@ -37498,7 +37746,7 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('xylophone', fname),
   noteToFile: _gleitzNoteToFile,
   sampledNotes: _gleitzAllNotes,
-  gain: 0.85,
+  gain: 3.0,
   onFailed() { console.warn('[SampleEngine] Xylophone samples unavailable'); },
 });
 
@@ -38966,12 +39214,12 @@ function buildRefToneBank() {
       tile.innerHTML = `<span class="tone-tile-icon">${tone.icon}</span><span class="tone-tile-name">${name}</span>`;
       tile.onclick = () => {
         selectedRefTone = key;
-        tileRow.querySelectorAll('.tone-tile').forEach(t => t.classList.toggle('active', t.dataset.tone === key));
+        tileRow.querySelectorAll('.tone-tile').forEach(el => el.classList.toggle('active', el.dataset.tone === key));
         // If this is a sample-backed tone, trigger lazy load
         if (SampleEngine._instruments[key]) {
           if (!SampleEngine.isReady(key) && !SampleEngine.isFailed(key)) {
             const lbl = document.getElementById('pianoSampleStatus');
-            if (lbl) { lbl.textContent = 'loading samples…'; lbl.style.visibility = 'visible'; }
+            if (lbl) { lbl.textContent = t('samples_loading'); lbl.style.visibility = 'visible'; }
             SampleEngine.load(key);
           }
         }
@@ -50431,6 +50679,12 @@ const STRINGS = {
     chord_tab_player:'PLAYER', chord_tab_builder:'BUILDER',
     scale_subtitle:'hear it · play it · improvise over it',
     now_playing:'NOW PLAYING',
+    riff_songs:'▶ SONGS',
+    samples_loading:'loading samples…',
+    samples_synth:'using synth voice',
+    credits_title:'Credits & Thanks',
+    credits_thanks:'With thanks',
+    credits_arrangements:'Sheet music arrangements',
     scale_up:'UP', scale_down:'DOWN', scale_loop:'LOOP',
     chrome_root:'ROOT', chrome_in:'IN SCALE',
     subdiv_quarter:'QUARTER', subdiv_eighth:'EIGHTH',
@@ -51114,6 +51368,12 @@ const STRINGS = {
     chord_tab_player:'SUONA', chord_tab_builder:'COSTRUISCI',
     scale_subtitle:'ascoltala · suonala · improvvisaci',
     now_playing:'IN RIPRODUZIONE',
+    riff_songs:'▶ BRANI',
+    samples_loading:'caricamento campioni…',
+    samples_synth:'voce sintetizzata',
+    credits_title:'Crediti e ringraziamenti',
+    credits_thanks:'Con gratitudine',
+    credits_arrangements:'Arrangiamenti musicali',
     scale_up:'SU', scale_down:'GIÙ', scale_loop:'LOOP',
     chrome_root:'TONICA', chrome_in:'IN SCALA',
     subdiv_quarter:'SEMIMINIMA', subdiv_eighth:'CROMA',
@@ -53773,7 +54033,11 @@ function isAndroid() { return /Android/.test(navigator.userAgent); }
 // Capacitor plugin alternative: @capacitor/screen-orientation (see go.bat notes)
 function lockOrientation() {
   if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock('landscape').catch(() => {});
+    // Lock to the current landscape variant (primary or secondary) so the OS
+    // can't rotate between them when the user physically turns the phone.
+    var type = screen.orientation.type || '';
+    var target = type === 'landscape-secondary' ? 'landscape-secondary' : 'landscape-primary';
+    screen.orientation.lock(target).catch(() => {});
   }
 }
 function unlockOrientation() {
@@ -82639,7 +82903,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
           </div>
           <div class="np-marquee"><span class="np-title"></span></div>
         </div>
-        <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('organ')" title="Riffs">▶ SONGS</button>
+        <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('organ')" title="Riffs" data-i18n="riff_songs">▶ SONGS</button>
       </div>
       <button class="pto-organ-overlay-close" onclick="closePtoOrganOverlay()">✕</button>
     </div>
@@ -82673,7 +82937,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
           </div>
           <div class="np-marquee"><span class="np-title"></span></div>
         </div>
-        <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('rhodes')" title="Riffs">▶ SONGS</button>
+        <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('rhodes')" title="Riffs" data-i18n="riff_songs">▶ SONGS</button>
       </div>
       <button class="pto-rhodes-overlay-close" onclick="closeRhodesOverlay()">✕</button>
     </div>
