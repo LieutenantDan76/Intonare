@@ -54069,20 +54069,12 @@ function lockOrientation() {
   window._ovRotateActive = true;
   const so = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenOrientation;
   if (so && so.lock) {
-    // Lock to landscape-primary so the overlay always OPENS the same way with no
-    // flash through portrait. Then release the lock shortly after so the user can
-    // still flip to the other landscape side if they prefer. The brief lock is
-    // what kills the open-time phantom rotation; releasing keeps it switchable.
+    // Lock to landscape-primary for the whole time the overlay is open. The OS
+    // never rotates the window, so there's no flash through portrait. Users tilt
+    // the phone to the right (home/nav edge to the right) to play.
     window._ovNativeLocked = true;
     document.body.classList.remove('ov-portrait-rotate');
-    so.lock({ orientation: 'landscape-primary' }).then(() => {
-      // Give the OS a beat to settle into landscape, then unlock for free rotation.
-      setTimeout(() => {
-        if (window._ovNativeLocked && so.unlock) {
-          so.unlock().catch(() => {});
-        }
-      }, 450);
-    }).catch(() => {
+    so.lock({ orientation: 'landscape-primary' }).catch(() => {
       window._ovNativeLocked = false;
       _applyOvRotate();
     });
