@@ -2821,8 +2821,7 @@
   /* Force landscape via CSS transform when device is in portrait.
      Rotates -90deg (counter-clockwise) so the user naturally tilts
      their phone clockwise — home button to the right. */
-  @media (orientation: portrait) {
-    .piano-overlay.active {
+  body.ov-portrait-rotate .piano-overlay.active {
       width: 100dvh;
       height: 100dvw;
       top: calc((100dvh - 100dvw) / 2);
@@ -2831,7 +2830,6 @@
       bottom: unset;
       transform: rotate(-90deg);
       transform-origin: center center;
-    }
   }
 
   /* ── Chord zoom button — top-right of card display, mirrors EXPAND button ── */
@@ -11584,15 +11582,13 @@
   flex-direction:column; overflow:hidden;
 }
 .pto-rhodes-overlay.active { display:flex; }
-@media (orientation: portrait) {
-  .pto-rhodes-overlay.active {
+body.ov-portrait-rotate .pto-rhodes-overlay.active {
     width:100dvh; height:100dvw;
     top:calc((100dvh - 100dvw) / 2);
     left:calc((100dvw - 100dvh) / 2);
     right:unset; bottom:unset;
     transform:rotate(-90deg);
     transform-origin:center center;
-  }
 }
 .pto-rhodes-overlay-head {
   display:flex; align-items:center; justify-content:space-between;
@@ -11645,15 +11641,13 @@
 .pto-organ-overlay-body #ptoFSvgLower { touch-action:none !important; }
 .pto-organ-overlay.active { display:flex; }
 /* Portrait: reposition + rotate the overlay itself, exactly like .piano-overlay */
-@media (orientation: portrait) {
-  .pto-organ-overlay.active {
+body.ov-portrait-rotate .pto-organ-overlay.active {
     width:100dvh; height:100dvw;
     top:calc((100dvh - 100dvw) / 2);
     left:calc((100dvw - 100dvh) / 2);
     right:unset; bottom:unset;
     transform:rotate(-90deg);
     transform-origin:center center;
-  }
 }
 /* Landscape: inset:0 already set in base rule — nothing extra needed */
 .pto-organ-overlay-head { display:flex; align-items:center; justify-content:space-between; padding:6px 16px; background:#1a120a; border-bottom:1px solid #3a2a1a; flex-shrink:0; }
@@ -13149,9 +13143,7 @@ transition:transform 0.25s ease;
 .thmn-overlay { display: none; position: fixed; inset: 0; z-index: 8000;
   background: linear-gradient(180deg,#15130f 0%,#0a0908 55%,#050505 100%); flex-direction: column; padding: 10px 12px 12px; gap: 8px; }
 .thmn-overlay.active { display: flex; }
-@media (orientation: portrait) {
-  .thmn-overlay.active { width: 100dvh; height: 100dvw; top: calc((100dvh - 100dvw)/2); left: calc((100dvw - 100dvh)/2); right: unset; bottom: unset; transform: rotate(-90deg); transform-origin: center center; }
-}
+body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; top: calc((100dvh - 100dvw)/2); left: calc((100dvw - 100dvh)/2); right: unset; bottom: unset; transform: rotate(-90deg); transform-origin: center center; }
 .thmn-ov-close { position: absolute; top: 10px; right: 10px; z-index: 50; }
 /* TOP play stage: vol bar left · pad fills rest (antenna overlaid on pad right) */
 .thmn-ov-stage { flex: 1; display: flex; gap: 0; align-items: stretch; min-height: 0; }
@@ -31331,7 +31323,7 @@ function closeThereminOverlay() {
   thmnOverlayOpen = false;
   document.getElementById('thereminOverlay').classList.remove('active');
   document.body.style.overflow = '';
-  // (orientation no longer locked — overlay presents landscape via CSS)
+  unlockOrientation();  // clears the portrait-rotate class
 }
 
 function _thmnOvFinger(nx, ny, show) {
@@ -54056,17 +54048,39 @@ function isAndroid() { return /Android/.test(navigator.userAgent); }
 // Browser + Capacitor WebView: Screen Orientation API works on Android Chrome engine.
 // iOS ignores it silently — acceptable since iOS requires manual rotation anyway.
 // Capacitor plugin alternative: @capacitor/screen-orientation (see go.bat notes)
-// NOTE: The fullscreen overlays (piano, Rhodes, organ, theremin) already present
-// landscape entirely via CSS — a `@media (orientation: portrait)` block rotates
-// them -90deg with 100dvh/100dvw swapped. Calling screen.orientation.lock() on
-// top of that made the device ALSO physically rotate, so the CSS rotation and the
-// real rotation stacked / fought each other — the "phantom rerotation" when the
-// user turned the phone. The CSS is the whole mechanism, so these are no-ops:
-//   • Portrait → CSS fakes landscape.
-//   • Real landscape → media query drops the transform; already landscape.
-// Either way there's nothing for the orientation API to fight.
-function lockOrientation() { /* intentionally no-op — overlays rotate via CSS */ }
-function unlockOrientation() { /* intentionally no-op — overlays rotate via CSS */ }
+// The fullscreen overlays (piano, Rhodes, organ, theremin) present landscape via
+// CSS — `body.ov-portrait-rotate` rotates them -90deg with 100dvh/100dvw swapped.
+// We DON'T lock the device orientation (users may prefer either landscape side),
+// and we DON'T leave the rotation on a raw `@media (orientation: portrait)` query:
+// that re-matched continuously mid-rotation, flashing the layout through portrait
+// (the "phantom rotation"). Instead JS toggles the class once per *settled*
+// orientation change, so:
+//   • Open in portrait → class on → CSS shows landscape.
+//   • Turn to real landscape → class off in one step → already landscape, no flash.
+//   • Turn to the other landscape → stays landscape (browser handles it natively).
+window._ovRotateActive = false;  // true while any rotating overlay is open
+
+function _applyOvRotate() {
+  // Rotate only when an overlay is open AND the device is physically portrait.
+  const portrait = window.matchMedia('(orientation: portrait)').matches;
+  document.body.classList.toggle('ov-portrait-rotate', window._ovRotateActive && portrait);
+}
+function _onOrientationSettled() {
+  // Fires after the OS finishes rotating — apply in one clean step (no mid-turn thrash)
+  _applyOvRotate();
+}
+window.addEventListener('orientationchange', _onOrientationSettled);
+// Some WebViews don't fire orientationchange reliably; matchMedia change is the
+// settled signal there. Both call the same single-step apply.
+try {
+  window.matchMedia('(orientation: portrait)').addEventListener('change', _onOrientationSettled);
+} catch (e) {
+  // older WebView: fall back to resize (debounced by the browser's own settle)
+  window.addEventListener('resize', _onOrientationSettled);
+}
+
+function lockOrientation()   { window._ovRotateActive = true;  _applyOvRotate(); }
+function unlockOrientation() { window._ovRotateActive = false; _applyOvRotate(); }
 
 // Force the WebView to recompute dvh/dvw-based layout for a rotated overlay.
 // Without this, portrait overlays (where orientation lock silently fails, e.g.
