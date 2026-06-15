@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.57.45 -->
+<!-- INTONARE_VERSION: 0.58.4 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -13628,6 +13628,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         }, { once: true });
       }
     }
+
   }
 
   async function runSplash() {
@@ -18854,7 +18855,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.57.45';
+const INTONARE_VERSION = '0.58.4';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -23759,7 +23760,6 @@ function enterTool(name, restoreState) {
   const MIC_TOOLS = ['piano', 'tonal', 'volume', 'vocalrange'];
   if (MIC_TOOLS.includes(name)) showMic(); else hideMic();
   currentTool = name;
-  document.getElementById('toolsHub')?.classList.add('hidden');
   TOOL_FOLDER_IDS.forEach(id => document.getElementById(id)?.classList.add('hidden'));
   document.getElementById('toolPiano')?.classList.toggle('hidden', name !== 'piano');
   document.getElementById('toolTonal')?.classList.toggle('hidden', name !== 'tonal');
@@ -79713,9 +79713,18 @@ window.sgExit = function() {
               <div class="mq-card-arrow">›</div>
             </div>
           </div>
+          <!-- In-progress resume banner — shown/hidden by mqMaybeShowResumeBanner() -->
+          <div id="mqResumeBanner" style="display:none;margin:0 0 12px;background:var(--surface-2,rgba(255,255,255,.06));border:1px solid var(--border-soft,rgba(255,255,255,.12));border-radius:12px;padding:12px 14px;gap:10px;align-items:center;flex-direction:row;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-bottom:3px;">QUIZ IN PROGRESS</div>
+              <div id="mqResumeBannerDesc" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg,#fff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+              <button onclick="mqResumeBannerDiscard()" style="background:none;border:1px solid var(--border-soft,rgba(255,255,255,.18));border-radius:8px;padding:6px 11px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);cursor:pointer;">DISCARD</button>
+              <button onclick="mqResumeBannerResume()" style="background:var(--accent,#7f5af0);border:none;border-radius:8px;padding:6px 13px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:#fff;cursor:pointer;font-weight:600;">RESUME →</button>
+            </div>
+          </div>
         </div>
-
-        <!-- CUSTOM SETUP -->
         <div class="mq-screen" id="mqScreenCustom">
           <div style="display:flex;flex-direction:column;gap:12px;">
             <button class="mq-back-btn" onclick="mqGoLanding()">
@@ -81936,6 +81945,8 @@ function mqOpen() {
   mqSyncOnlineChipsVisibility();
   mqAmbStart();
   mqNpUpdate();
+  // Show resume banner if a quiz was in-progress when the app was killed
+  mqMaybeShowResumeBanner();
 }
 
 // ── Global difficulty ─────────────────────────────────────
@@ -82119,6 +82130,112 @@ function mqDefaultStats() {
 function mqSaveStats(s) {
   try { localStorage.setItem('mq_stats', JSON.stringify(s)); } catch(e) {}
 }
+
+// ── In-progress quiz persistence ────────────────────────────────────────────
+// Saves enough state to resume after a background-kill. Questions are stored as
+// {pack, idx} refs and reconstructed from PACKS — avoids serialising full objects.
+function mqSaveInProgress() {
+  if (!MQ.questions || !MQ.questions.length) return;
+  var snap = {
+    mode:    MQ.mode,
+    diff:    MQ.diff,
+    qCount:  MQ.qCount,
+    timed:   MQ.timed,
+    packs:   [...MQ.selectedPacks],
+    current: MQ.current,
+    score:   MQ.score,
+    correct: MQ.correct,
+    streak:  MQ.streak,
+    bestStreak: MQ.bestStreak,
+    xp:      MQ.xp,
+    lives:   MQ.lives,
+    packStats: MQ.packStats,
+    // Lightweight question list: pack + original index only
+    questions: MQ.questions.map(function(q){ return { pack: q.pack, idx: q.idx }; })
+  };
+  try { localStorage.setItem('mq_in_progress', JSON.stringify(snap)); } catch(e) {}
+}
+function mqClearInProgress() {
+  try { localStorage.removeItem('mq_in_progress'); } catch(e) {}
+}
+function mqGetInProgress() {
+  try {
+    var raw = localStorage.getItem('mq_in_progress');
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+// Reconstruct full question objects from saved {pack, idx} refs.
+// Returns null if any referenced question no longer exists (pack removed etc.).
+function mqReconstructQuestions(qRefs) {
+  var out = [];
+  for (var i = 0; i < qRefs.length; i++) {
+    var ref = qRefs[i];
+    var pack = PACKS[ref.pack];
+    if (!pack) return null;
+    var q = pack.questions[ref.idx];
+    if (!q || !q.q) return null;
+    out.push(Object.assign({}, q, { pack: ref.pack, idx: ref.idx }));
+  }
+  return out;
+}
+// Resume an in-progress quiz: restore MQ state and jump straight to the saved question.
+function mqResumeInProgress(snap) {
+  var questions = mqReconstructQuestions(snap.questions);
+  if (!questions || !questions.length) { mqClearInProgress(); return false; }
+  MQ.mode        = snap.mode;
+  MQ.diff        = snap.diff;
+  MQ.qCount      = snap.qCount;
+  MQ.timed       = snap.timed;
+  MQ.selectedPacks = new Set(snap.packs);
+  MQ.questions   = questions;
+  MQ.current     = Math.min(snap.current, questions.length - 1);
+  MQ.score       = snap.score   || 0;
+  MQ.correct     = snap.correct || 0;
+  MQ.streak      = snap.streak  || 0;
+  MQ.bestStreak  = snap.bestStreak || 0;
+  MQ.xp          = snap.xp     || 0;
+  MQ.lives       = snap.lives  != null ? snap.lives : 3;
+  MQ.packStats   = snap.packStats || {};
+  MQ.answered    = false;
+  MQ.misses      = [];
+  // Bring up the quiz UI and land on the saved question
+  mqShowScreen('mqScreenQuiz');
+  mqSetHeader('MUSIC QUIZ','');
+  document.getElementById('mqScoreDisp').textContent = MQ.score + ' pts';
+  mqRenderQ();
+  return true;
+}
+// Show/hide the resume banner on the MQ landing screen.
+function mqMaybeShowResumeBanner() {
+  var banner = document.getElementById('mqResumeBanner');
+  if (!banner) return;
+  var snap = mqGetInProgress();
+  if (!snap) { banner.style.display = 'none'; return; }
+  // Build a human-readable description: mode label + pack names + progress
+  var modeLabel = snap.mode === 'survival' ? 'SURVIVAL' : snap.mode === 'quick' ? 'QUICK PLAY' : 'CUSTOM';
+  var packNames = (snap.packs || []).map(function(p) {
+    return (PACKS[p] && PACKS[p].name) ? PACKS[p].name : p;
+  }).join(', ');
+  var progress = snap.mode === 'survival'
+    ? snap.correct + ' correct'
+    : 'Q' + (snap.current + 1) + '/' + snap.qCount + ' · ' + snap.score + ' pts';
+  var desc = document.getElementById('mqResumeBannerDesc');
+  if (desc) desc.textContent = modeLabel + ' · ' + (packNames || '—') + ' · ' + progress;
+  banner.style.display = 'flex';
+}
+function mqResumeBannerResume() {
+  var banner = document.getElementById('mqResumeBanner');
+  if (banner) banner.style.display = 'none';
+  var snap = mqGetInProgress();
+  if (!snap) return;
+  if (progState.mqMusicOn !== false) mqAmbStart();
+  mqResumeInProgress(snap);
+}
+function mqResumeBannerDiscard() {
+  var banner = document.getElementById('mqResumeBanner');
+  if (banner) banner.style.display = 'none';
+  mqClearInProgress();
+}
 function mqCommitSessionStats() {
   var s = mqGetStats();
   s.totalQ += MQ.current || 0;
@@ -82235,6 +82352,7 @@ function mqSetHeader(title, sub) {
 }
 function mqGoLanding() {
   if (MQ.timerInterval) clearInterval(MQ.timerInterval);
+  mqClearInProgress();
   mqSetHeader('MUSIC QUIZ','test your knowledge');
   mqShowScreen('mqScreenLanding');
   // Restart the ambient track from the top on the menu (music was stopped at results)
@@ -82577,6 +82695,8 @@ function mqRenderQ() {
   if (!q || !q.q) { mqShowResults(); return; }
   MQ.answered = false;
   mqMarkSeen(q.pack, q.idx);
+  // Persist quiz state so a background-kill can offer a resume
+  mqSaveInProgress();
   var isSurv = MQ.mode==='survival';
   var labels = {quick:'QUICK PLAY',custom:'CUSTOM',survival:'SURVIVAL'};
   document.getElementById('mqModeLabel').textContent = labels[MQ.mode]||'';
@@ -82783,6 +82903,7 @@ function mqStartTimer() {
 // ── Win state ───────────────────────────────────────────
 function mqShowWin() {
   if (MQ.timerInterval) clearInterval(MQ.timerInterval);
+  mqClearInProgress();
   mqCommitSessionStats();
   mqShowScreen('mqScreenWin');
   var packNames = [...MQ.selectedPacks].map(function(p){ return PACKS[p].name; }).join(', ');
@@ -82794,6 +82915,7 @@ function mqShowWin() {
 
 function mqShowResults() {
   if (MQ.timerInterval) clearInterval(MQ.timerInterval);
+  mqClearInProgress();
   mqCommitSessionStats();
   mqShowScreen('mqScreenResults');
   var isSurv=MQ.mode==='survival';
