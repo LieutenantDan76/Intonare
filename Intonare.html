@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.58.4 -->
+<!-- INTONARE_VERSION: 0.66.15 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -607,6 +607,69 @@
     transition: all .14s; width: 34px; height: 34px; z-index: 1;
   }
   .mq-stats-btn:hover { color: var(--text); border-color: var(--text-dim); }
+  /* ── Daily badge (top-right) ── */
+  .mq-daily-badge {
+    position: absolute; top: 4px; right: 6px;
+    background: color-mix(in srgb, var(--accent-warm) 8%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--accent-warm) 35%, transparent);
+    border-radius: 10px; color: var(--accent-warm); cursor: pointer;
+    padding: 7px 11px; display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
+    transition: all .14s; z-index: 3;
+  }
+  .mq-daily-badge:hover { background: color-mix(in srgb, var(--accent-warm) 14%, var(--surface)); border-color: var(--accent-warm); }
+  .mq-daily-badge:active { transform: scale(.96); }
+  .mq-daily-badge.mq-daily-done-badge { color: var(--in-tune); border-color: color-mix(in srgb, var(--in-tune) 35%, transparent); background: color-mix(in srgb, var(--in-tune) 8%, var(--surface)); }
+  .mq-daily-badge-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent-warm);
+    box-shadow: 0 0 6px var(--accent-warm); display: none;
+  }
+  .mq-daily-badge-dot.show { display: block; animation: mqDailyPulse 2s ease-in-out infinite; }
+  @keyframes mqDailyPulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  /* ── Daily popup ── */
+  .mq-daily-pop-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: none; align-items: center; justify-content: center;
+    z-index: 2080; padding: 24px; backdrop-filter: blur(3px);
+  }
+  .mq-daily-pop-overlay.active { display: flex; }
+  .mq-daily-pop {
+    background: var(--panel); border: 1px solid var(--border-soft);
+    border-radius: 18px; padding: 22px 20px; max-width: 320px; width: 100%;
+    box-shadow: 0 16px 48px rgba(0,0,0,.5); position: relative;
+    animation: mqDailyPopIn .22s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes mqDailyPopIn { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+  .mq-daily-pop-tag { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 2px; color: var(--accent-warm); text-align: center; }
+  .mq-daily-pop-date { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1px; color: var(--muted); text-align: center; margin-top: 2px; }
+  .mq-daily-pop-emoji { font-size: 44px; margin: 12px auto 6px; display: flex; align-items: center; justify-content: center; min-height: 44px; }
+  .mq-daily-pop-name { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--text); text-align: center; line-height: 1; }
+  .mq-daily-pop-desc { font-family: 'JetBrains Mono', monospace; font-size: 9px; line-height: 1.6; color: var(--text-dim); text-align: center; margin: 8px 0 4px; padding: 0 6px; }
+  .mq-daily-pop-meta { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1px; color: var(--muted); text-align: center; margin: 6px 0 16px; }
+  .mq-daily-pop-start {
+    background: linear-gradient(135deg, var(--accent-warm), color-mix(in srgb, var(--accent-warm) 70%, #ff8c5a));
+    color: #1a1206; border: none; border-radius: 12px; padding: 13px 0; width: 100%;
+    font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px; cursor: pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .mq-daily-pop-start:hover { filter: brightness(1.08); }
+  .mq-daily-pop-start:active { transform: scale(.98); }
+  .mq-daily-pop-secondary {
+    background: none; border: 1px solid var(--border-soft); border-radius: 10px;
+    padding: 10px 0; width: 100%; margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
+    color: var(--text-dim); cursor: pointer; transition: all .15s;
+  }
+  .mq-daily-pop-secondary:active { border-color: var(--accent-warm); color: var(--accent-warm); }
+  .mq-daily-pop-close {
+    position: absolute; top: 12px; right: 12px; background: none; border: none;
+    color: var(--muted); cursor: pointer; padding: 4px; line-height: 0;
+  }
+  .mq-daily-pop-close:hover { color: var(--text); }
+  .mq-daily-pop-progress {
+    font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1px;
+    color: var(--accent-warm); text-align: center; margin: -2px 0 14px;
+  }
   /* ── Now Playing widget ── */
   .mq-np {
     display: flex; align-items: center; gap: 11px;
@@ -665,7 +728,7 @@
     background: color-mix(in srgb, var(--metro) 8%, var(--surface));
   }
   .mq-bands-chip.offline { opacity: .38; cursor: not-allowed; pointer-events: none; }
-  .mq-bands-chip-icon { font-size: 18px; flex-shrink: 0; }
+  .mq-bands-chip-icon { font-size: 18px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
   .mq-bands-chip-text { flex: 1; min-width: 0; }
   .mq-bands-chip-name {
     font-family: 'Bebas Neue', sans-serif; font-size: 14px;
@@ -723,7 +786,7 @@
   @keyframes mqFadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
   /* ── Landing hero ── */
-  .mq-hero { text-align: center; padding: 2px 0 14px; }
+  .mq-hero { text-align: center; padding: 2px 0 14px; position: relative; }
   .mq-hero-compact { padding: 6px 0 10px; }
   .mq-hero-compact .mq-hero-pill { margin-bottom: 0; }
   .mq-hero-pill {
@@ -764,6 +827,19 @@
   .mqc-quick::before  { background: linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 8%, transparent), transparent); }
   .mqc-custom::before { background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent); }
   .mqc-survival::before { background: linear-gradient(135deg, color-mix(in srgb, var(--sharp) 8%, transparent), transparent); }
+  .mqc-daily { background: color-mix(in srgb, var(--accent-warm) 6%, var(--surface)); border-color: color-mix(in srgb, var(--accent-warm) 30%, transparent) !important; }
+  .mqc-daily::before { background: linear-gradient(135deg, color-mix(in srgb, var(--accent-warm) 10%, transparent), transparent); }
+  .mqc-daily:hover { border-color: color-mix(in srgb, var(--accent-warm) 55%, transparent); }
+  .mqc-daily .mq-card-icon { background: color-mix(in srgb, var(--accent-warm) 14%, var(--panel)); }
+  .mqc-daily .mq-card-name { color: var(--accent-warm); }
+  .mqc-daily .mq-card-badge { background: color-mix(in srgb,var(--accent-warm) 12%,transparent); color:var(--accent-warm); border:1px solid color-mix(in srgb,var(--accent-warm) 28%,transparent); }
+  .mqc-daily.mq-daily-done { opacity: .72; }
+  .mqc-daily.mq-daily-done .mq-card-badge { background: color-mix(in srgb,var(--in-tune) 12%,transparent); color:var(--in-tune); border-color:color-mix(in srgb,var(--in-tune) 28%,transparent); }
+  #mqScreenDailyResult .mq-daily-score-big { font-family:'Bebas Neue',sans-serif; font-size:68px; line-height:1; color:var(--accent-warm); text-align:center; letter-spacing:2px; }
+  #mqScreenDailyResult .mq-daily-score-denom { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-align:center; margin-bottom:14px; }
+  #mqScreenDailyResult .mq-daily-emoji-grid { font-size:22px; letter-spacing:4px; text-align:center; margin:8px 0 16px; line-height:1.6; word-break:break-all; }
+  #mqScreenDailyResult .mq-daily-share-btn { background:none; border:1px solid var(--border-soft); border-radius:10px; padding:11px 0; width:100%; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--text-dim); cursor:pointer; transition:border-color .15s,color .15s; }
+  #mqScreenDailyResult .mq-daily-share-btn:active { border-color:var(--accent-warm); color:var(--accent-warm); }
   .mqc-quick:hover    { border-color: color-mix(in srgb, var(--accent-soft) 50%, transparent); }
   .mqc-custom:hover   { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
   .mqc-survival:hover { border-color: color-mix(in srgb, var(--sharp) 50%, transparent); }
@@ -804,7 +880,8 @@
     position: relative; overflow: hidden;
   }
   .mq-pack-btn:active { transform: scale(.97); }
-  .mq-pack-emoji { font-size: 15px; flex-shrink: 0; position: relative; z-index: 1; }
+  .mq-pack-emoji { font-size: 15px; flex-shrink: 0; position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; color: var(--accent-soft); }
+  .mq-bk-ic { display: inline-flex; align-items: center; vertical-align: middle; color: var(--accent-soft); }
   .mq-pack-info  { flex: 1; min-width: 0; position: relative; z-index: 1; }
   .mq-pack-name  { font-family: 'Bebas Neue', sans-serif; font-size: 12px; letter-spacing: 1.2px; line-height: 1; margin-bottom: 2px; }
   .mq-pack-desc  { font-family: 'JetBrains Mono', monospace; font-size: 7px; color: var(--muted); letter-spacing: .2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1099,7 +1176,7 @@
   }
   .mq-sheet-pack-btn:hover { border-color: var(--accent-soft); background: color-mix(in srgb,var(--accent-soft) 5%,var(--surface)); }
   .mq-sheet-pack-btn:active { transform: scale(.97); }
-  .mq-sheet-pack-emoji { font-size: 15px; flex-shrink: 0; }
+  .mq-sheet-pack-emoji { font-size: 15px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--accent-soft); }
   .mq-sheet-pack-name  { font-family:'Bebas Neue',sans-serif; font-size: 13px; letter-spacing: 1px; color: var(--text-dim); line-height:1; }
   .mq-sheet-pack-desc  { font-family:'JetBrains Mono',monospace; font-size: 7px; letter-spacing: .3px; color: var(--muted); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
@@ -1118,7 +1195,7 @@
     text-align: center; transition: all .15s;
     display: flex; flex-direction: column; align-items: center; gap: 2px;
   }
-  .mq-group-tab-emoji { font-size: 14px; line-height: 1; }
+  .mq-group-tab-emoji { font-size: 14px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; color: currentColor; }
   .mq-group-tab.active {
     background: var(--surface);
     color: var(--text);
@@ -5350,15 +5427,18 @@
   /* Mode switcher chips in drawer headers */
   .prog-mode-chips {
     display: flex; gap: 4px; align-items: center;
+    flex: 0 0 auto; justify-content: center;
   }
   .prog-mode-chip {
     background: var(--panel); border: 1px solid var(--border-soft);
     border-radius: 6px; padding: 4px 7px; font-size: 14px;
     cursor: pointer; transition: all 0.15s; line-height: 1;
-    color: initial;
+    color: var(--muted);
+    display: inline-flex; align-items: center; justify-content: center;
   }
   .prog-mode-chip.active {
     background: rgba(255,160,122,0.12); border-color: var(--accent-warm);
+    color: var(--accent-warm);
   }
 
   /* Chord picker sheet */
@@ -5792,7 +5872,7 @@
     cursor: pointer; flex: 1; transition: border-color 0.15s; min-width: 0;
   }
   .prog-bpm-pill:hover { border-color: rgba(255,160,122,0.4); }
-  .prog-bpm-mode-icon { font-size: 16px; line-height: 1; flex-shrink: 0; }
+  .prog-bpm-mode-icon { font-size: 16px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--accent-warm); }
   .prog-bpm-center { display: flex; align-items: baseline; gap: 4px; flex: 1; }
   .prog-bpm-number {
     font-family: 'Bebas Neue', sans-serif; font-size: 20px;
@@ -5844,6 +5924,7 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px; letter-spacing: 2px; color: var(--muted);
     text-transform: uppercase;
+    flex: 1 1 0; min-width: 0;
   }
   .prog-metro-back-btn {
     padding: 7px 14px;
@@ -5851,7 +5932,10 @@
     border-radius: 20px; color: var(--text-dim);
     font-family: 'JetBrains Mono', monospace;
     font-size: 8px; letter-spacing: 1.5px; cursor: pointer;
-  }
+    flex: 0 0 auto; }
+  /* Right-side spacer mirrors the flex:1 title so the chips stay centered
+     without the back button itself stretching. */
+  .prog-metro-back-wrap { flex: 1 1 0; display: flex; justify-content: flex-end; }
   .prog-metro-back-btn:hover { color: var(--text); border-color: var(--text-dim); }
   .prog-metro-bpm-row {
     display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
@@ -8130,7 +8214,7 @@
     font-size: 14px; letter-spacing: 1.5px;
     color: var(--text);
   }
-  .pm-stat-name .pm-stat-icon { margin-right: 6px; }
+  .pm-stat-name .pm-stat-icon { margin-right: 6px; display: inline-flex; align-items: center; vertical-align: middle; color: var(--accent-soft); }
   .pm-stat-value {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px; letter-spacing: 1px;
@@ -13829,29 +13913,39 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       drawParticles();
     }
 
-        function wavePoints() {
-      const pts = [], cy = H / 2;
-      // Extend 25% past each edge so sides are never at the pinned zero-crossing.
-      // The canvas clips the overflow naturally — only the visible wriggle shows.
-      const pad = Math.round(W * 0.25);
-      for (let x = -pad; x <= W + pad; x++) {
-        // No envelope — full amplitude all the way to (and past) both edges
-        pts.push([x, cy + Math.sin((x / W) * Math.PI * 4 + phase) * amplitude]);
-      }
-      return pts;
-    }
+    // secondary phase for the organic rolling layer
+    let phase2 = 0;
 
-    function strokePath(pts, ox, oy) {
+    function buildWavePath(offY) {
+      offY = offY || 0;
+      const cy = H / 2;
+      // cycles: fixed mid-range feel (like Tónale at a medium pitch)
+      const cycles = 3.5;
       ctx.beginPath();
-      pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x + ox, y + oy) : ctx.lineTo(x + ox, y + oy)));
-      ctx.stroke();
+      for (let x = 0; x <= W; x += 2) {
+        const u = x / W;
+        // edge envelope — zero at both sides, full in the middle
+        let env = Math.sin(u * Math.PI);
+        // travelling skew: a soft hump that drifts left, giving clear direction
+        const crest = 0.5 + 0.5 * Math.sin(u * Math.PI * 2 - phase * 0.5);
+        env *= (0.7 + 0.3 * crest);
+        // primary carrier (right→left) + slower secondary for organic feel
+        const primary   = Math.sin(u * cycles * Math.PI * 2 + phase);
+        const secondary = Math.sin(u * (cycles * 0.5) * Math.PI * 2 + phase2) * 0.25;
+        const y = cy + (primary + secondary) * amplitude * env;
+        if (x === 0) ctx.moveTo(x, y + offY); else ctx.lineTo(x, y + offY);
+      }
     }
 
     function drawWave() {
       ctx.clearRect(0, 0, W, H);
       const rgb = paletteRGB(colorT);
       const col = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
-      const pts = wavePoints();
+
+      // tGlow: floors at 0.48 so halo stays present even when quiet
+      const tRaw  = Math.min(1, amplitude / 22);
+      const tGlow = Math.max(0.48, tRaw);
+      const tCore = Math.max(0.22, tRaw);
 
       // ── Chromatic aberration ──────────────────────────────────
       const ca = caberration * 7;
@@ -13862,30 +13956,23 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         ctx.globalAlpha = caAlpha;
         ctx.strokeStyle = 'rgba(255,50,50,0.8)';
         ctx.lineWidth = 2.2;
-        strokePath(pts,  ca, 0);
+        buildWavePath(ca); ctx.stroke();
         ctx.restore();
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
         ctx.globalAlpha = caAlpha;
         ctx.strokeStyle = 'rgba(50,100,255,0.8)';
         ctx.lineWidth = 2.2;
-        strokePath(pts, -ca, 0);
+        buildWavePath(-ca); ctx.stroke();
         ctx.restore();
       }
-
-      // tGlow: thickness for glow layers — floors at 0.48 so halo stays present
-      // tCore: thickness for the crisp centre line — floors lower so it fades more,
-      //        giving a "glow without a line" effect at the very end
-      const tRaw  = Math.min(1, amplitude / 22);
-      const tGlow = Math.max(0.48, tRaw);
-      const tCore = Math.max(0.22, tRaw);
 
       // ── Wide atmospheric glow ─────────────────────────────────────────
       ctx.save();
       ctx.globalAlpha = 0.16;
       ctx.strokeStyle = col; ctx.lineWidth = 26 * tGlow;
       ctx.shadowColor = col; ctx.shadowBlur = 55 * tGlow;
-      strokePath(pts, 0, 0);
+      buildWavePath(); ctx.stroke();
       ctx.restore();
 
       // ── Mid glow ──────────────────────────────────────────────────────
@@ -13893,26 +13980,24 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       ctx.globalAlpha = 0.26;
       ctx.strokeStyle = col; ctx.lineWidth = 11 * tGlow;
       ctx.shadowColor = col; ctx.shadowBlur = 38 * tGlow;
-      strokePath(pts, 0, 0);
+      buildWavePath(); ctx.stroke();
       ctx.restore();
 
       // ── Crisp core line ───────────────────────────────────────────────
       ctx.save();
       ctx.strokeStyle = col; ctx.lineWidth = Math.max(0.5, 2.5 * tCore);
       ctx.shadowColor = col; ctx.shadowBlur = 18 * tCore;
-      strokePath(pts, 0, 0);
+      buildWavePath(); ctx.stroke();
       ctx.restore();
 
-      // ── White-hot centre — colour glow with bright core ───────────────
-      // Composites a thin white line over the colour core, like the
-      // bright centre of a neon tube or hot wire. Colour stays as the aura.
+      // ── White-hot centre line ─────────────────────────────────────────
       ctx.save();
       ctx.globalAlpha = 0.72 * tCore;
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = Math.max(0.3, 1.0 * tCore);
       ctx.shadowColor = '#ffffff';
       ctx.shadowBlur = 6 * tCore;
-      strokePath(pts, 0, 0);
+      buildWavePath(); ctx.stroke();
       ctx.restore();
 
       // ── Background + particles ─────────────────────────────────────────
@@ -13943,7 +14028,10 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // Time-driven speed: continuous curve, no easing toward targets.
       const _t = (performance.now() - _waveT0) / 1000;
       phaseSpeed  = _splashSpeed(_t);
-      phase       += phaseSpeed;
+      // Phase advances at the same rate as the old scrolling wave — no cycle scaling.
+      // The edge envelope creates the contained look without needing faster phase.
+      phase  += phaseSpeed;
+      phase2 += phaseSpeed * 0.42;  // secondary layer, slower
       // Amplitude rides the speed (clamped), so the wave swells while fast and
       // flattens as it settles — one unified curve. targetAmp acts as a ceiling.
       const _ampFromSpeed = Math.min(targetAmp, phaseSpeed * 150);
@@ -14025,7 +14113,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     if (bgCanvas) { bgCanvas.style.opacity = '0'; bgCanvas.style.transition = 'opacity 1.4s ease'; }
 
     amplitude    = 0;
-    targetAmp    = 70;  // ceiling — amplitude rides the speed curve up to this
+    targetAmp    = 30;  // ceiling — kept low so edge-envelope peaks stay within the 120px canvas
     targetColorT = 0.18;
     running      = true;
     _waveT0      = performance.now();  // start the continuous motion clock
@@ -14117,7 +14205,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       <!-- Module controls slot — per-module buttons injected here -->
       <div class="header-module-controls" id="headerModuleControls"></div>
       <div class="header-top-right">
-        <button class="head-btn mic-head-btn" id="micBtn" onclick="toggleMic()" title="Mic on/off" aria-label="Microphone on/off">🎤</button>
+        <button class="head-btn mic-head-btn" id="micBtn" onclick="toggleMic()" title="Mic on/off" aria-label="Microphone on/off"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M12 19v3" /> <path d="M19 10v2a7 7 0 0 1-14 0v-2" /> <rect x="9" y="2" width="6" height="13" rx="3" /></svg></button>
         <button class="head-btn fav-btn" onclick="openFavSheet()" title="Quick Access" aria-label="Quick access favorites"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
         <button class="level-chip" id="levelChip" onclick="openProgress()" title="Progress" aria-label="Progress and level"
           ontouchstart="_dbgHoldStart(event)" ontouchend="_dbgHoldEnd()" ontouchcancel="_dbgHoldEnd()">
@@ -14379,8 +14467,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           </svg></div>
           <div class="practice-card-title" data-i18n="folder_pitch_title">PITCH &amp; SOUND</div>
-          <div class="practice-card-sub" data-i18n="folder_pitch_sub">Piano · Tonal Center</div>
-          <div class="practice-folder-badge" data-i18n="folder_badge_2">2 tools ›</div>
+          <div class="practice-card-sub" data-i18n="folder_pitch_sub">Piano · Tonal Center · Theremin</div>
+          <div class="practice-folder-badge" data-i18n="folder_badge_3">3 tools ›</div>
         </button>
 
         <button class="practice-card-btn practice-folder-btn" onclick="enterToolFolder('harmony')">
@@ -14388,7 +14476,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           </svg></div>
           <div class="practice-card-title" data-i18n="folder_harmony_title">HARMONY</div>
-          <div class="practice-card-sub" data-i18n="folder_harmony_sub">Chords · Progressions · Guitar</div>
+          <div class="practice-card-sub" data-i18n="folder_harmony_sub">Charts · Chords · Progression</div>
           <div class="practice-folder-badge" data-i18n="folder_badge_3">3 tools ›</div>
         </button>
 
@@ -14428,7 +14516,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <button class="train-back" onclick="exitToolFolder()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <div class="train-title-block">
           <div class="train-title" data-i18n="folder_pitch_title">PITCH &amp; SOUND</div>
-          <div class="train-subtitle" data-i18n="folder_pitch_subtitle">piano · tonal center</div>
+          <div class="train-subtitle" data-i18n="folder_pitch_subtitle">piano · tonal center · theremin</div>
         </div>
       </div>
       <div class="practice-hub">
@@ -14472,7 +14560,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <button class="train-back" onclick="exitToolFolder()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <div class="train-title-block">
           <div class="train-title" data-i18n="folder_harmony_title">HARMONY</div>
-          <div class="train-subtitle" data-i18n="folder_harmony_subtitle">chords · progressions · guitar</div>
+          <div class="train-subtitle" data-i18n="folder_harmony_subtitle">charts · chords · progression</div>
         </div>
       </div>
       <div class="practice-hub">
@@ -14632,9 +14720,9 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
       <!-- ── PIANO / ORGAN / RHODES tab strip ── -->
       <div class="pto-tab-strip">
-        <button class="pto-tab active" id="ptoPianoTab" onclick="switchPianoToolTab('piano')">🎹 PIANO</button>
-        <button class="pto-tab" id="ptoOrganTab" onclick="switchPianoToolTab('organ')">⛪ ORGAN</button>
-        <button class="pto-tab" id="ptoRhodesTab" onclick="switchPianoToolTab('rhodes')">🎸 RHODES</button>
+        <button class="pto-tab active" id="ptoPianoTab" onclick="switchPianoToolTab('piano')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M18.5 8c-1.4 0-2.6-.8-3.2-2A6.87 6.87 0 0 0 2 9v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8.5C22 9.6 20.4 8 18.5 8" /> <path d="M2 14h20" /> <path d="M6 14v4" /> <path d="M10 14v4" /> <path d="M14 14v4" /> <path d="M18 14v4" /></svg>PIANO</button>
+        <button class="pto-tab" id="ptoOrganTab" onclick="switchPianoToolTab('organ')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M10 9h4" /> <path d="M12 7v5" /> <path d="M14 21v-3a2 2 0 0 0-4 0v3" /> <path d="m18 9 3.52 2.147a1 1 0 0 1 .48.854V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6.999a1 1 0 0 1 .48-.854L6 9" /> <path d="M6 21V7a1 1 0 0 1 .376-.782l5-3.999a1 1 0 0 1 1.249.001l5 4A1 1 0 0 1 18 7v14" /></svg>ORGAN</button>
+        <button class="pto-tab" id="ptoRhodesTab" onclick="switchPianoToolTab('rhodes')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><rect width="20" height="16" x="2" y="4" rx="2" /> <path d="M6 8h4" /> <path d="M14 8h.01" /> <path d="M18 8h.01" /> <path d="M2 12h20" /> <path d="M6 12v4" /> <path d="M10 12v4" /> <path d="M14 12v4" /> <path d="M18 12v4" /></svg>RHODES</button>
       </div>
 
       <!-- ── ORGAN panel — same card structure as Charts so the console fits identically ── -->
@@ -15393,7 +15481,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <button class="prog-loop-btn active" id="progLoopBtn" onclick="progToggleLoop()">⟳</button>
         <button class="prog-timesig-btn" id="progTimeSigBtn" onclick="progCycleTimeSig()">4/4</button>
         <div class="prog-bpm-pill" id="progBpmDisplay" onclick="progOpenSyncTray()">
-          <span class="prog-bpm-mode-icon" id="progBpmModeIcon">🔇</span>
+          <span class="prog-bpm-mode-icon" id="progBpmModeIcon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /> <line x1="22" x2="16" y1="9" y2="15" /> <line x1="16" x2="22" y1="9" y2="15" /></svg></span>
           <div class="prog-bpm-center">
             <div class="prog-bpm-number" id="progBpmNumber">120</div>
             <div class="prog-bpm-unit">BPM</div>
@@ -15464,11 +15552,11 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="prog-metro-sheet-header">
           <div class="prog-metro-sheet-title" id="progSyncTrayTitle" data-i18n="prog_tempo_label">TEMPO</div>
           <div class="prog-mode-chips">
-            <button class="prog-mode-chip active" id="progModeChipSilent" onclick="progSwitchTray('silent')">🔇</button>
-            <button class="prog-mode-chip" id="progModeChipMetro" onclick="progSwitchTray('metro')">🎵</button>
-            <button class="prog-mode-chip" id="progModeChipKit" onclick="progSwitchTray('kit')">🥁</button>
+            <button class="prog-mode-chip active" id="progModeChipSilent" onclick="progSwitchTray('silent')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /> <line x1="22" x2="16" y1="9" y2="15" /> <line x1="16" x2="22" y1="9" y2="15" /></svg></button>
+            <button class="prog-mode-chip" id="progModeChipMetro" onclick="progSwitchTray('metro')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M12 11.4V9.1" /> <path d="m12 17 6.59-6.59" /> <path d="m15.05 5.7-.218-.691a3 3 0 0 0-5.663 0L4.418 19.695A1 1 0 0 0 5.37 21h13.253a1 1 0 0 0 .951-1.31L18.45 16.2" /> <circle cx="20" cy="9" r="2" /></svg></button>
+            <button class="prog-mode-chip" id="progModeChipKit" onclick="progSwitchTray('kit')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="m2 2 8 8" /> <path d="m22 2-8 8" /> <ellipse cx="12" cy="9" rx="10" ry="5" /> <path d="M7 13.4v7.9" /> <path d="M12 14v8" /> <path d="M17 13.4v7.9" /> <path d="M2 9v8a10 5 0 0 0 20 0V9" /></svg></button>
           </div>
-          <button class="prog-metro-back-btn" onclick="progCloseSyncTray()">← BACK</button>
+          <div class="prog-metro-back-wrap"><button class="prog-metro-back-btn" onclick="progCloseSyncTray()">← BACK</button></div>
         </div>
 
         <!-- ── SILENT content ── -->
@@ -17043,7 +17131,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
 </svg></div>
           <div class="practice-card-title" data-i18n="folder_rhythm_title">RHYTHM TRAINING</div>
-          <div class="practice-card-sub" data-i18n="folder_rhythm_sub">Tempo Lock · Tempo Guess · Polyrhythm</div>
+          <div class="practice-card-sub" data-i18n="folder_rhythm_sub">Tempo Lock · Tempo Guess · Polyrhythm · Rhythm Reading</div>
           <div class="practice-folder-badge" data-i18n="folder_badge_ex4">4 exercises ›</div>
         </button>
 
@@ -17055,7 +17143,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   <circle cx="18.5" cy="14" r="1" fill="currentColor" stroke="none"/>
 </svg></div>
           <div class="practice-card-title" data-i18n="folder_games_title">GAMES</div>
-          <div class="practice-card-sub" data-i18n="folder_games_sub">Chordle · Tónale · Music Quiz</div>
+          <div class="practice-card-sub" data-i18n="folder_games_sub">Chordle · Diadle · Tónale · Music Quiz</div>
           <div class="practice-folder-badge" data-i18n="folder_badge_games4">4 games ›</div>
         </button>
 
@@ -17253,7 +17341,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   <line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5" stroke-linecap="round"/>
 </svg></div>
           <div class="practice-card-title" data-i18n="card_musicquiz_title">MUSIC QUIZ</div>
-          <div class="practice-card-sub" data-i18n="card_musicquiz_sub">474 questions · 8 packs · Quick Play, Custom &amp; Survival</div>
+          <div class="practice-card-sub" data-i18n="card_musicquiz_sub">1,152 questions · 19 packs · Quick Play, Custom &amp; Survival</div>
         </button>
       </div>
       <div class="teach-hint" data-i18n-html="hint_games_exs"><strong>Chordle</strong>: hear a chord progression and identify each chord in sequence, Wordle-style. <strong>Tónale</strong>: we play a tone, you recreate it from memory — with a daily challenge everyone shares. <strong>Music Quiz</strong>: test your music theory and trivia knowledge across hundreds of questions.</div>
@@ -17764,8 +17852,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <!-- Mode selector + NEW button -->
         <div style="display:flex;gap:8px;align-items:stretch;">
           <div class="rr-mode-row" id="rrModeRow">
-            <button class="rr-mode-btn active" id="rrModeListenBtn" onclick="rrSetMode('listen')" data-i18n="rr_mode_listen">👂 LISTEN FIRST</button>
-            <button class="rr-mode-btn" id="rrModeSightBtn" onclick="rrSetMode('sight')" data-i18n="rr_mode_sight">👁 SIGHT READ</button>
+            <button class="rr-mode-btn active" id="rrModeListenBtn" onclick="rrSetMode('listen')" data-i18n-html="rr_mode_listen"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>LISTEN FIRST</button>
+            <button class="rr-mode-btn" id="rrModeSightBtn" onclick="rrSetMode('sight')" data-i18n-html="rr_mode_sight"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>SIGHT READ</button>
           </div>
           <button id="rrGoBtn" onclick="rrNew()" style="padding:9px 16px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent-soft),var(--accent));color:var(--bg-0);font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;flex-shrink:0;box-shadow:0 0 14px rgba(184,163,255,0.44);" data-i18n="rr_new_btn">▶ NEW</button>
         </div>
@@ -18153,13 +18241,18 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     <div class="credits-body">
       <div class="credits-group">
         <div class="credits-group-title" data-i18n="credits_thanks">With thanks</div>
-        <div class="credits-item">Mum &amp; Dad &mdash; for the support, patience, and endless test sessions.</div>
+        <div class="credits-item" data-i18n="credits_ded_father">Made for my father Luca, who first inspired the music in me.</div>
+        <div class="credits-item" data-i18n="credits_ded_mother">Made possible by my mother Linda, who always believes in my dreams even when I don't.</div>
       </div>
       <div class="credits-group">
         <div class="credits-group-title" data-i18n="credits_arrangements">Sheet music arrangements</div>
         <div class="credits-item"><a href="https://musescore.com/user/52788523" target="_blank">Crazystride</a> &mdash; &ldquo;Twinkle Twinkle Little Star in Stride&rdquo; &mdash; <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a></div>
         <div class="credits-item"><a href="https://openscore.cc" target="_blank">OpenScore Lieder</a> &mdash; Brahms Lullaby, St&auml;ndchen &mdash; <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a></div>
         <div class="credits-item">Ivan Di Sipio &mdash; Wagner Bridal Chorus &mdash; <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">CC0 1.0</a></div>
+      </div>
+      <div class="credits-group">
+        <div class="credits-group-title">Fingering diagrams</div>
+        <div class="credits-item"><a href="https://fingering.bretpimentel.com" target="_blank">Bret Pimentel</a> &mdash; Bassoon &amp; Contrabassoon body diagrams &mdash; <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></div>
       </div>
     </div>
   </div>
@@ -18168,7 +18261,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <div class="riff-popup" id="tonePopup" style="display:none">
   <div class="riff-popup-card">
     <div class="riff-popup-head">
-      <span>🎚️ VOICE</span>
+      <span style='display:inline-flex;align-items:center;gap:6px;'><svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><path d="M2 13a2 2 0 0 0 2-2V7a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0V4a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0v-4a2 2 0 0 1 2-2" /></svg>VOICE</span>
       <button class="riff-popup-close" onclick="closeTonePopup()">✕</button>
     </div>
     <div id="tonePopupList"></div>
@@ -18204,7 +18297,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       <div style="display:flex;align-items:center;gap:6px">
         <button id="chordleArpBtn" onclick="chordleToggleArp()" style="background:transparent;color:var(--muted);border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;font-family:inherit;transition:all .15s" data-i18n="btn_arp">ARP</button>
         <button id="chordleSpeedBtn" onclick="chordleCycleSpeed()" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:5px 9px;font-size:9px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit;transition:all .15s">MED</button>
-        <button id="chordleCfgBtn" onclick="chordleToggleCfg()" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s">⚙</button>
+        <button id="chordleCfgBtn" onclick="chordleToggleCfg()" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M14 17H5" /> <path d="M19 7h-9" /> <circle cx="17" cy="17" r="3" /> <circle cx="7" cy="7" r="3" /></svg></button>
       </div>
     </div>
 
@@ -18855,7 +18948,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.58.4';
+const INTONARE_VERSION = '0.66.15';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -30834,9 +30927,9 @@ function _riffBuildList(inst) {
   var host = document.getElementById('riffList');
   if (!host) return;
   var set = RIFFS[inst] || {};
-  var titleMap = { piano:'🎹 SONG BANK', organ:'⛪ ORGAN RIFFS', rhodes:'🎸 RHODES RIFFS' };
+  var titleMap = { piano:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M18.5 8c-1.4 0-2.6-.8-3.2-2A6.87 6.87 0 0 0 2 9v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8.5C22 9.6 20.4 8 18.5 8" /> <path d="M2 14h20" /> <path d="M6 14v4" /> <path d="M10 14v4" /> <path d="M14 14v4" /> <path d="M18 14v4" /></svg>SONG BANK', organ:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M10 9h4" /> <path d="M12 7v5" /> <path d="M14 21v-3a2 2 0 0 0-4 0v3" /> <path d="m18 9 3.52 2.147a1 1 0 0 1 .48.854V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6.999a1 1 0 0 1 .48-.854L6 9" /> <path d="M6 21V7a1 1 0 0 1 .376-.782l5-3.999a1 1 0 0 1 1.249.001l5 4A1 1 0 0 1 18 7v14" /></svg>ORGAN RIFFS', rhodes:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><rect width="20" height="16" x="2" y="4" rx="2" /> <path d="M6 8h4" /> <path d="M14 8h.01" /> <path d="M18 8h.01" /> <path d="M2 12h20" /> <path d="M6 12v4" /> <path d="M10 12v4" /> <path d="M14 12v4" /> <path d="M18 12v4" /></svg>RHODES RIFFS' };
   var head = document.getElementById('riffPopupTitle');
-  if (head) head.textContent = titleMap[inst] || 'RIFFS';
+  if (head) head.innerHTML = titleMap[inst] || 'RIFFS';
   var meta = RIFF_META[inst];
 
   // Empty group (e.g. Rhodes has no pieces yet) — show a friendly placeholder
@@ -35441,7 +35534,8 @@ function progSetSyncMode(mode) {
 function progUpdateBpmModeIcon() {
   const el = document.getElementById('progBpmModeIcon');
   if (!el) return;
-  el.textContent = progSyncMode === 'kit' ? '🥁' : progSyncMode === 'metro' ? '🎵' : '🔇';
+  var _modeIcons = { kit:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="m2 2 8 8" /> <path d="m22 2-8 8" /> <ellipse cx="12" cy="9" rx="10" ry="5" /> <path d="M7 13.4v7.9" /> <path d="M12 14v8" /> <path d="M17 13.4v7.9" /> <path d="M2 9v8a10 5 0 0 0 20 0V9" /></svg>', metro:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M12 11.4V9.1" /> <path d="m12 17 6.59-6.59" /> <path d="m15.05 5.7-.218-.691a3 3 0 0 0-5.663 0L4.418 19.695A1 1 0 0 0 5.37 21h13.253a1 1 0 0 0 .951-1.31L18.45 16.2" /> <circle cx="20" cy="9" r="2" /></svg>', silent:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /> <line x1="22" x2="16" y1="9" y2="15" /> <line x1="16" x2="22" y1="9" y2="15" /></svg>' };
+  el.innerHTML = _modeIcons[progSyncMode] || _modeIcons.silent;
 }
 
 // ── Unified sync tray ─────────────────────────
@@ -36423,6 +36517,20 @@ let cofMode     = 'major';   // 'major' | 'minor' — which ring frames the circ
 let cofAccent   = 0;         // 0 = none, 1 = sharps highlighted, -1 = flats highlighted
 let cofSpinT    = 1;         // spin progress 0→1 (1 = settled, no rotation)
 let cofSpinRAF  = null;
+// Accent ripple: when sharps/flats toggle, the highlighted wedges pulse in along
+// the rim in circle order (sharps clockwise from C, flats counter-clockwise) and
+// ripple back out when cleared. cofAccentWaveT runs 0→1; cofAccentWaveDir is +1
+// (accent turning ON) or -1 (accent turning OFF, ripple reverses).
+let cofAccentWaveT   = 1;    // 0→1 progress of the current ripple (1 = settled)
+let cofAccentWaveDir = 1;    // +1 = applying accent, -1 = clearing it
+let cofAccentWaveFor = 0;    // which accent the ripple is animating (1 sharps, -1 flats)
+let cofAccentWaveRAF = null;
+// Major/minor swap: when the mode toggles, the two ring labels slide radially past
+// each other (major↔minor trade the inner/outer rings). cofModeT runs 0→1; cofModeFrom
+// is the mode we're animating AWAY from, so each label knows its start radius.
+let cofModeT    = 1;         // 0→1 progress of the ring swap (1 = settled)
+let cofModeFrom = 'major';   // mode at the START of the current swap
+let cofModeRAF  = null;
 
 // Enharmonic re-spellings for the accent modes. By circle position (0=C … 11=F):
 // SHARP mode continues the sharp progression past F♯(6) to C♯(7), G♯(8)… so the
@@ -36488,6 +36596,13 @@ function cofInit() {
     _cofTapBound = true;
   }
   try { SampleEngine.load('grand_piano'); } catch(e) {}   // warm the piano voice
+  // Always open in the default state: no accent highlighted, nothing selected.
+  cofAccent = 0;
+  cofSelected = -1;
+  cofAccentWaveT = 1; cofAccentWaveDir = 1; cofAccentWaveFor = 0;
+  cofModeT = 1; cofModeFrom = cofMode;
+  if (cofAccentWaveRAF) { cancelAnimationFrame(cofAccentWaveRAF); cofAccentWaveRAF = null; }
+  if (cofModeRAF) { cancelAnimationFrame(cofModeRAF); cofModeRAF = null; }
   cofSyncControls();
   cofUpdateInfo();
   cofRenderScale();
@@ -36499,12 +36614,18 @@ function cofDraw() {
   if (!canvas) return;
   const dpr  = Math.max(1, window.devicePixelRatio || 1);
   const size = Math.min(canvas.parentElement.clientWidth - 16, 300);
-  // Backing store at device resolution → crisp on hi-dpi screens.
-  canvas.width  = Math.round(size * dpr);
-  canvas.height = Math.round(size * dpr);
-  canvas.style.width  = size + 'px';
-  canvas.style.height = size + 'px';
+  if (size <= 0) return;   // panel hidden / not laid out yet → nothing to draw (avoids negative radii)
   const c = canvas.getContext('2d');
+  // Only resize the backing store when it actually changes. Reassigning
+  // canvas.width every frame clears + reallocates the buffer (and resets the
+  // context state), which causes visible stutter during animation.
+  const bw = Math.round(size * dpr), bh = Math.round(size * dpr);
+  if (canvas.width !== bw || canvas.height !== bh) {
+    canvas.width  = bw;
+    canvas.height = bh;
+    canvas.style.width  = size + 'px';
+    canvas.style.height = size + 'px';
+  }
   c.setTransform(dpr, 0, 0, dpr, 0, 0);   // draw in CSS-pixel coordinates
 
   const cx  = size / 2, cy = size / 2;
@@ -36523,8 +36644,9 @@ function cofDraw() {
   // highlighted wedge uses that mode's single colour; otherwise warm=sharp, cool=flat.
   const sectorTint = (i, baseA) => {
     let col, depth;
-    const sInfo = cofAccent === 1 ? cofSharpInfo(i) : null;
-    const fInfo = cofAccent === -1 ? cofFlatInfo(i) : null;
+    const wa = wedgeAccentFor(i);   // safe: sectorTint is only called after this const inits
+    const sInfo = wa === 1 ? cofSharpInfo(i) : null;
+    const fInfo = wa === -1 ? cofFlatInfo(i) : null;
     if (sInfo && sInfo.active)      { col = SH; depth = sInfo.count / 7; }
     else if (fInfo && fInfo.active) { col = FL; depth = fInfo.count  / 7; }
     else {
@@ -36535,79 +36657,114 @@ function cofDraw() {
     if (depth === 0) return `rgba(255,255,255,${baseA * 0.5})`;
     return rgba(col, baseA * (0.25 + 0.75 * depth));
   };
-  // Labels honour the active accent (re-spelled where meaningful) or natural names.
+  // Which accent THIS wedge should display right now (declared early so the label
+  // helpers below can use it). Follows the ripple so colour/respell sweeps in with
+  // the pop instead of flipping instantly.
+  const wedgeAccentFor = (i) => {
+    if (cofAccentWaveT >= 1) return cofAccent;
+    if (cofAccentWaveFor === 0) return cofAccent;
+    return cofAccentLevel(i) >= 0.5 ? cofAccentWaveFor : 0;
+  };
+  // Labels honour the per-wedge accent (re-spelled where meaningful) or natural names.
   const majLabel = (i) => {
-    if (cofAccent === 1)  { const s = cofSharpInfo(i); return s.active ? s.maj : cofMajLabel(i); }
-    if (cofAccent === -1) { const f = cofFlatInfo(i);  return f.active ? f.maj : cofMajLabel(i); }
+    const wa = wedgeAccentFor(i);
+    if (wa === 1)  { const s = cofSharpInfo(i); return s.active ? s.maj : cofMajLabel(i); }
+    if (wa === -1) { const f = cofFlatInfo(i);  return f.active ? f.maj : cofMajLabel(i); }
     return cofMajLabel(i);
   };
   const minLabel = (i) => {
-    if (cofAccent === 1)  { const s = cofSharpInfo(i); return s.active ? s.min : cofMinLabel(i); }
-    if (cofAccent === -1) { const f = cofFlatInfo(i);  return f.active ? f.min : cofMinLabel(i); }
+    const wa = wedgeAccentFor(i);
+    if (wa === 1)  { const s = cofSharpInfo(i); return s.active ? s.min : cofMinLabel(i); }
+    if (wa === -1) { const f = cofFlatInfo(i);  return f.active ? f.min : cofMinLabel(i); }
     return cofMinLabel(i);
   };
+  // Accent-aware key-signature count reads the PER-WEDGE accent (sweeps with ripple).
   const sigCountOf = (i) => {
-    if (cofAccent === 1)  { const s = cofSharpInfo(i); return s.active ?  s.count : COF_SHARPS[i]; }
-    if (cofAccent === -1) { const f = cofFlatInfo(i);  return f.active ? -f.count : COF_SHARPS[i]; }
+    const wa = wedgeAccentFor(i);
+    if (wa === 1)  { const s = cofSharpInfo(i); return s.active ?  s.count : COF_SHARPS[i]; }
+    if (wa === -1) { const f = cofFlatInfo(i);  return f.active ? -f.count : COF_SHARPS[i]; }
     return COF_SHARPS[i];
   };
 
   c.clearRect(0, 0, size, size);
 
-  // Spin: rotate the whole wheel while cofSpinT < 1 (one eased turn on open).
+  // Intro: wedges grow in a clockwise wave (circle stays put). Each wedge has its
+  // own eased progress, staggered by clockwise position, so they pop in sequence.
   c.save();
-  if (cofSpinT < 1) {
-    const ease = 1 - Math.pow(1 - cofSpinT, 3);   // ease-out cubic
-    const ang  = (1 - ease) * Math.PI * 2;        // one full turn → 0
-    c.translate(cx, cy); c.rotate(ang); c.translate(-cx, -cy);
-  }
+  // Per-wedge grow factor 0→1 for the clockwise reveal. STAGGER spreads the start
+  // times across the 12 wedges; SPAN is how long each individual wedge takes.
+  const COF_STAGGER = 0.5;    // fraction of timeline spent staggering wedge starts
+  const COF_SPAN    = 1 - COF_STAGGER;  // each wedge's own grow window
+  const wedgeGrow = (i) => {
+    if (cofSpinT >= 1) return 1;
+    const start = (i / 11) * COF_STAGGER;      // clockwise: wedge 0 (C) first, wedge 11 last lands at T=1
+    const local = (cofSpinT - start) / COF_SPAN;
+    if (local <= 0) return 0;
+    if (local >= 1) return 1;
+    // ease-out cubic — grows smoothly to full size with NO overshoot (no "jelly" bounce).
+    return 1 - Math.pow(1 - local, 3);
+  };
 
   for (let i = 0; i < 12; i++) {
+    const grow = wedgeGrow(i);
+    if (grow <= 0) continue;   // not yet revealed
     const startAngle = (i - 0.5) * Math.PI / 6 - Math.PI / 2;
     const endAngle   = startAngle + Math.PI / 6;
     const isSelected = cofSelected === i;
-    const isAccent   = cofAccentActive(i);
+    // Accent intensity for this wedge: 0→1, animated by the rim ripple. A wedge is
+    // "accented" enough to highlight once its level crosses ~half.
+    const accentLvl = cofAccentLevel(i);
+    const isAccent   = accentLvl > 0.5;
 
     // Relationship glow only when a key is selected AND no accent mode is active.
     let rel = 0;
-    if (cofSelected >= 0 && !isSelected && cofAccent === 0) {
+    if (cofSelected >= 0 && !isSelected && cofAccent === 0 && cofAccentWaveT >= 1) {
       const d = Math.min((i - cofSelected + 12) % 12, (cofSelected - i + 12) % 12);
       if (d === 1) rel = 0.40;
       else if (d === 2) rel = 0.15;
     }
 
-    // Pop-out: selected key, or any wedge in an active accent group.
-    const pop  = (isSelected || isAccent) ? POP : 0;
-    const oR1  = r1 + pop, oR2 = r2 + pop * 0.55;
+    // Pop-out: selected key (full), or any accent wedge scaled by its ripple level.
+    const pop  = isSelected ? POP : POP * accentLvl;
+    // Clamp grow for radius (allow overshoot >1 to read as a pop, capped a touch).
+    const gR   = Math.min(grow, 1.06);
+    const oR1  = (r1 + pop) * gR, oR2 = (r2 + pop * 0.55) * gR;
+    // Fade wedge in over its own grow window.
+    const gA   = Math.max(0, Math.min(1, grow));
 
     // ── Outer sector ──
     c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, oR1, startAngle, endAngle); c.closePath();
-    if (isSelected)      c.fillStyle = sectorTint(i, 0.60);
-    else if (isAccent)   c.fillStyle = sectorTint(i, 0.45);
-    else if (rel)        c.fillStyle = sectorTint(i, rel);
-    else                 c.fillStyle = sectorTint(i, 0.12);
+    // Outer alpha: base 0.12 lifts toward 0.45 as the accent ripple fills this wedge.
+    if (isSelected)      c.fillStyle = sectorTint(i, 0.60 * gA);
+    else if (accentLvl > 0) c.fillStyle = sectorTint(i, (0.12 + 0.33 * accentLvl) * gA);
+    else if (rel)        c.fillStyle = sectorTint(i, rel * gA);
+    else                 c.fillStyle = sectorTint(i, 0.12 * gA);
     c.fill();
-    c.strokeStyle = (isSelected || isAccent) ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.08)';
-    c.lineWidth = (isSelected || isAccent) ? 1.4 : 1; c.stroke();
+    const strokeA = isSelected ? 0.22 : (0.08 + 0.14 * accentLvl);
+    c.strokeStyle = `rgba(255,255,255,${strokeA*gA})`;
+    c.lineWidth = (isSelected || accentLvl > 0.5) ? 1.4 : 1; c.stroke();
 
     // ── Inner sector ──
     c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, oR2, startAngle, endAngle); c.closePath();
-    if (isSelected)      c.fillStyle = sectorTint(i, 0.32);
-    else if (isAccent)   c.fillStyle = sectorTint(i, 0.24);
-    else if (rel)        c.fillStyle = sectorTint(i, rel * 0.55);
-    else                 c.fillStyle = sectorTint(i, 0.07);
+    if (isSelected)      c.fillStyle = sectorTint(i, 0.32 * gA);
+    else if (accentLvl > 0) c.fillStyle = sectorTint(i, (0.07 + 0.17 * accentLvl) * gA);
+    else if (rel)        c.fillStyle = sectorTint(i, rel * 0.55 * gA);
+    else                 c.fillStyle = sectorTint(i, 0.07 * gA);
     c.fill(); c.stroke();
 
     const emR = pop;   // push labels outward with the wedge
+    const labelsVisible = grow >= 0.85;   // hold labels until wedge nearly settled
 
     // ── Key signature label ──
+    if (labelsVisible) {
     const sigAngle = (i) * Math.PI / 6 - Math.PI / 2;
     const sigX = cx + Math.cos(sigAngle) * ((r3 + r4) / 2);
     const sigY = cy + Math.sin(sigAngle) * ((r3 + r4) / 2);
     const sigCount = sigCountOf(i);
     const sigText  = sigCount === 0 ? '♮' : (sigCount > 0 ? `${sigCount}♯` : `${Math.abs(sigCount)}♭`);
     c.font = `${Math.round(size * 0.038)}px monospace`;
-    c.fillStyle = (isSelected || isAccent) ? sectorTint(i, 1) : 'rgba(255,255,255,0.25)';
+    c.fillStyle = (isSelected || isAccent) ? sectorTint(i, 1)
+               : (accentLvl > 0 ? sectorTint(i, 0.25 + 0.75 * accentLvl) : 'rgba(255,255,255,0.25)');
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(sigText, sigX, sigY);
 
@@ -36616,41 +36773,57 @@ function cofDraw() {
     // minors in the lighter mono face (with their lowercase m), wherever they sit.
     // The outer (current-mode) ring just reads a touch larger + brighter.
     const majAngle = (i) * Math.PI / 6 - Math.PI / 2;
-    const outR     = (r1 + r2) / 2 + emR;
-    const outX     = cx + Math.cos(majAngle) * outR;
-    const outY     = cy + Math.sin(majAngle) * outR;
-    const inR      = (r2 + r3) / 2 + emR * 0.6;
-    const inX      = cx + Math.cos(majAngle) * inR;
-    const inY      = cy + Math.sin(majAngle) * inR;
+    // The two ring radii (outer = current-mode ring, inner = other). A label's
+    // position is interpolated between them by its "outerness" 0→1.
+    const outerRing = (r1 + r2) / 2 + emR;
+    const innerRing = (r2 + r3) / 2 + emR * 0.6;
+    const cosA = Math.cos(majAngle), sinA = Math.sin(majAngle);
     c.textAlign = 'center'; c.textBaseline = 'middle';
 
     const bright = (isSelected || isAccent);
-    // Helper: draw a key label with type-appropriate font/size at a radius.
-    // Minors use a lighter weight, so their alpha runs a touch higher than the
-    // bold majors to read at the same perceived brightness.
-    const drawKeyLabel = (isMinor, outer, x, y) => {
+    const ease = 1 - Math.pow(1 - cofModeT, 3);   // ease-out for the slide
+
+    // Each key TYPE has a target outerness for the current mode, and a start
+    // outerness for the mode we toggled away from. We slide between them.
+    // major is outer in 'major' mode; minor is outer in 'minor' mode.
+    const majTarget = (cofMode    === 'major') ? 1 : 0;
+    const majStart  = (cofModeFrom === 'major') ? 1 : 0;
+    const majOuterness = majStart + (majTarget - majStart) * ease;
+    const minOuterness = 1 - majOuterness;        // minor is always the complement
+
+    // Draw a key label at an interpolated outerness (0=inner ring, 1=outer ring).
+    // Radius, font size and brightness all lerp with outerness so the swap reads as
+    // the two labels physically trading rings, crossing past each other mid-swap.
+    const drawKeyLabel = (isMinor, outerness) => {
       const txt = isMinor ? minLabel(i) : majLabel(i);
+      const radius = innerRing + (outerRing - innerRing) * outerness;
+      const x = cx + cosA * radius, y = cy + sinA * radius;
       if (isMinor) {
-        c.font = `500 ${Math.round(size * (outer ? 0.045 : 0.038))}px 'JetBrains Mono', monospace`;
+        const fs = size * (0.038 + 0.007 * outerness);   // 0.038 inner → 0.045 outer
+        c.font = `500 ${Math.round(fs)}px 'JetBrains Mono', monospace`;
         c.fillStyle = bright ? 'rgba(255,255,255,1)'
-                    : `rgba(255,255,255,${outer ? 0.95 : 0.62})`;
+                    : `rgba(255,255,255,${0.62 + 0.33 * outerness})`;
       } else {
-        c.font = `${Math.round(size * (outer ? 0.056 : 0.046))}px 'Bebas Neue', sans-serif`;
+        const fs = size * (0.046 + 0.010 * outerness);   // 0.046 inner → 0.056 outer
+        c.font = `${Math.round(fs)}px 'Bebas Neue', sans-serif`;
         c.fillStyle = bright ? 'rgba(255,255,255,0.96)'
-                    : `rgba(255,255,255,${outer ? 0.85 : 0.55})`;
+                    : `rgba(255,255,255,${0.55 + 0.30 * outerness})`;
       }
       c.fillText(txt, x, y);
     };
 
-    if (cofMode === 'minor') {
-      drawKeyLabel(true,  true,  outX, outY);   // minor on outer
-      drawKeyLabel(false, false, inX,  inY);    // major on inner
+    // Draw the label that's currently further IN first, so the outward-moving one
+    // overlaps on top as they cross (reads cleaner during the swap).
+    if (majOuterness >= minOuterness) {
+      drawKeyLabel(true,  minOuterness);   // minor (inner-ish) underneath
+      drawKeyLabel(false, majOuterness);   // major (outer-ish) on top
     } else {
-      drawKeyLabel(false, true,  outX, outY);   // major on outer
-      drawKeyLabel(true,  false, inX,  inY);    // minor on inner
+      drawKeyLabel(false, majOuterness);
+      drawKeyLabel(true,  minOuterness);
     }
+    }   // end labelsVisible gate
   }
-  c.restore();   // end spin transform
+  c.restore();   // end intro transform
 
   // ── Centre circle ── (not rotated — stays readable through the spin)
   c.beginPath(); c.arc(cx, cy, r3, 0, Math.PI * 2);
@@ -36689,7 +36862,7 @@ function cofStartSpin() {
     cofSpinT = 1; cofDraw(); return;
   }
   cofSpinT = 0;
-  const dur = 650, t0 = performance.now();
+  const dur = 900, t0 = performance.now();   // longer so the clockwise wave reads
   const step = (now) => {
     cofSpinT = Math.min(1, (now - t0) / dur);
     cofDraw();
@@ -36697,6 +36870,73 @@ function cofStartSpin() {
     else cofSpinRAF = null;
   };
   cofSpinRAF = requestAnimationFrame(step);
+}
+
+// Order in which accent wedges light up — this MUST cover exactly the same wedges
+// that cofAccentActive() highlights, or the ones it misses snap in after the ripple
+// (which read as the wave "stopping" before the final key). Both accents span 7
+// wedges (counts 1..7). Sharps ripple CLOCKWISE from C: positions 1..7
+// (G,D,A,E,B,F#,C#). Flats ripple COUNTER-CLOCKWISE: positions 11,10,9,8,7,6,5
+// (F,Bb,Eb,Ab,Db,Gb,Cb). Returns this wedge's step index, or -1 if not in the group.
+function cofAccentStep(i, accent) {
+  if (accent === 1) {        // sharps: clockwise, positions 1..7
+    return (i >= 1 && i <= 7) ? (i - 1) : -1;
+  } else if (accent === -1) { // flats: counter-clockwise via the flat progression
+    const fi = COF_FLAT_POS.indexOf(i);   // flat-progression index at this position
+    return (fi >= 1 && fi <= 7) ? (fi - 1) : -1;
+  }
+  return -1;
+}
+// How many wedges participate in an accent ripple (for normalising the stagger).
+// Both accents highlight 7 keys (1..7 accidentals).
+const COF_ACCENT_COUNT = { '1': 7, '-1': 7 };
+
+// Per-wedge accent intensity 0→1, driven by the ripple. 1 = fully popped/highlighted.
+// When no ripple is running it just mirrors the settled accent state.
+function cofAccentLevel(i) {
+  // Settled: full level if this wedge belongs to the current accent, else 0.
+  if (cofAccentWaveT >= 1) {
+    return cofAccentActive(i) ? 1 : 0;
+  }
+  const rawStep = cofAccentStep(i, cofAccentWaveFor);
+  if (rawStep < 0) return 0;                    // not part of this accent group
+  const n = COF_ACCENT_COUNT[String(cofAccentWaveFor)] || 6;
+  // On clear (dir -1) reverse the spatial order: the wedge that lit up LAST is the
+  // first to recede, so the ripple visibly runs backwards along the rim.
+  const step = cofAccentWaveDir === 1 ? rawStep : (n - 1 - rawStep);
+  const STAG = 0.5, SPAN = 1 - STAG;            // stagger vs per-wedge window
+  // Spread starts across (n-1) gaps so the FIRST wedge starts at 0 and the LAST
+  // starts at exactly STAG — every wedge gets the full SPAN, finishing at T=1.
+  const start = (n > 1) ? (step / (n - 1)) * STAG : 0;
+  let local = (cofAccentWaveT - start) / SPAN;
+  local = Math.max(0, Math.min(1, local));
+  // LINEAR per-wedge ramp (no ease-out). An ease-out tail makes the LAST wedge
+  // crawl to completion alone, which reads as the wave "stopping" near the end.
+  // Constant per-wedge speed keeps the ripple moving steadily right to T=1.
+  const eased = local;
+  // dir +1: each wedge ramps 0→1 (grows in). dir -1: each ramps 1→0 (shrinks out),
+  // in reversed order so the highlight peels back the way it came.
+  return cofAccentWaveDir === 1 ? eased : (1 - eased);
+}
+
+// Kick off an accent ripple. `dir` +1 = accent turning on, -1 = turning off.
+// `forAccent` is which accent (1 sharps / -1 flats) the ripple animates.
+function cofStartAccentWave(forAccent, dir) {
+  if (cofAccentWaveRAF) cancelAnimationFrame(cofAccentWaveRAF);
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    cofAccentWaveT = 1; cofDraw(); return;
+  }
+  cofAccentWaveFor = forAccent;
+  cofAccentWaveDir = dir;
+  cofAccentWaveT = 0;
+  const dur = 520, t0 = performance.now();
+  const step = (now) => {
+    cofAccentWaveT = Math.min(1, (now - t0) / dur);
+    cofDraw();
+    if (cofAccentWaveT < 1) cofAccentWaveRAF = requestAnimationFrame(step);
+    else cofAccentWaveRAF = null;
+  };
+  cofAccentWaveRAF = requestAnimationFrame(step);
 }
 
 // Tap handler — attached once (not re-bound every draw).
@@ -36728,15 +36968,41 @@ function cofHandleTap(e) {
 
 // Top-row controls.
 function cofToggleAccent(dir) {       // dir: 1 = sharps, -1 = flats
+  const prev = cofAccent;
   cofAccent = cofAccent === dir ? 0 : dir;
+  // Ripple the highlighted wedges along the rim: applying an accent pulses them
+  // in (dir +1); clearing one ripples them back out (dir -1).
+  if (cofAccent !== 0) {
+    cofStartAccentWave(cofAccent, 1);          // turning an accent on
+  } else if (prev !== 0) {
+    cofStartAccentWave(prev, -1);              // clearing — reverse along prev accent
+  }
   // Selection and accent now coexist: toggling sharps/flats re-spells the selected key
   // (and highlights that side of the circle) rather than clearing the selection.
   cofSyncControls(); cofDraw(); cofUpdateInfo(); cofRenderScale();
 }
 function cofToggleMode() {
+  cofModeFrom = cofMode;                              // remember where we're sliding from
   cofMode = cofMode === 'major' ? 'minor' : 'major';
   cofStopScale();
-  cofSyncControls(); cofDraw(); cofUpdateInfo(); cofRenderScale();
+  cofStartModeSwap();                                 // animate the ring labels swapping
+  cofSyncControls(); cofUpdateInfo(); cofRenderScale();
+}
+// Slide the major/minor labels between the inner and outer rings on a mode toggle.
+function cofStartModeSwap() {
+  if (cofModeRAF) cancelAnimationFrame(cofModeRAF);
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    cofModeT = 1; cofDraw(); return;
+  }
+  cofModeT = 0;
+  const dur = 420, t0 = performance.now();
+  const step = (now) => {
+    cofModeT = Math.min(1, (now - t0) / dur);
+    cofDraw();
+    if (cofModeT < 1) cofModeRAF = requestAnimationFrame(step);
+    else cofModeRAF = null;
+  };
+  cofModeRAF = requestAnimationFrame(step);
 }
 function cofSyncControls() {
   const fb = document.getElementById('cofFlatBtn');
@@ -46752,14 +47018,7 @@ function chordleDailyShareText() {
   return head+'  '+line+'\n'+chordleDailySquares()+'\nintonare';
 }
 function chordleDailyShare() {
-  var txt = chordleDailyShareText();
-  hapticLight();
-  if (navigator.share) {
-    navigator.share({ text: txt }).catch(function(err){
-      if (err && err.name==='AbortError') return;
-      chordleDailyCopy(txt);
-    });
-  } else { chordleDailyCopy(txt); }
+  intonareNativeShare(chordleDailyShareText(), chordleDailyCopy, 'Chordle');
 }
 function chordleDailyCopy(txt) {
   try {
@@ -46967,6 +47226,42 @@ function tonaleLoad() {
 }
 function tonaleSaveState(o) {
   try { localStorage.setItem('intonare_tonale', JSON.stringify(o)); } catch(e) {}
+}
+
+// ── Shared share helper ─────────────────────────────────────────────────────
+// Tries the native Capacitor Share plugin (real Android share sheet) first,
+// then the web navigator.share, then a copy-to-clipboard fallback.
+//   txt        : the text to share
+//   copyFn     : function(txt) that copies + shows "copied" feedback
+//   title      : optional share-sheet title (dialog header)
+function intonareNativeShare(txt, copyFn, title) {
+  if (typeof hapticLight === 'function') hapticLight();
+  // Tier 1: native Capacitor Share plugin (proper Android share sheet)
+  try {
+    var P = window.Capacitor && window.Capacitor.Plugins;
+    if (P && P.Share) {
+      // canShare() isn't on every version; just attempt share() and fall back on error.
+      P.Share.share({ text: txt, title: title || 'Intonare', dialogTitle: title || 'Share' })
+        .catch(function(err) {
+          // User dismissed the sheet — don't also copy.
+          if (err && (err.message || '').toLowerCase().indexOf('cancel') !== -1) return;
+          if (err && err.name === 'AbortError') return;
+          // Plugin present but failed for another reason — fall through to copy.
+          if (typeof copyFn === 'function') copyFn(txt);
+        });
+      return;
+    }
+  } catch(e) {}
+  // Tier 2: web share API (works in some browsers / PWA contexts)
+  if (navigator.share) {
+    navigator.share({ text: txt }).catch(function(err) {
+      if (err && err.name === 'AbortError') return;  // user cancelled
+      if (typeof copyFn === 'function') copyFn(txt);
+    });
+    return;
+  }
+  // Tier 3: copy to clipboard
+  if (typeof copyFn === 'function') copyFn(txt);
 }
 
 // ── deterministic daily RNG (mulberry32 seeded from date) ──
@@ -47875,20 +48170,7 @@ function tonaleExecCopy(txt) {
   } catch(e) {}
 }
 function tonaleShare() {
-  var txt = tonaleShareText();
-  hapticLight();
-  // Try the native share sheet; if it's unavailable OR rejects, fall back to copy.
-  if (navigator.share) {
-    navigator.share({ text: txt })
-      .then(function(){ /* shared via sheet */ })
-      .catch(function(err){
-        // user cancel (AbortError) shouldn't spam clipboard; anything else -> copy
-        if (err && err.name === 'AbortError') return;
-        tonaleCopyFallback(txt);
-      });
-  } else {
-    tonaleCopyFallback(txt);
-  }
+  intonareNativeShare(tonaleShareText(), tonaleCopyFallback, 'T\u00f3nale');
 }
 
 function tonaleBackToPicker() {
@@ -49981,11 +50263,7 @@ function diadleDailyShareText() {
   return head+'  '+line+'\n'+diadleDailySquares()+'\nintonare';
 }
 function diadleDailyShare() {
-  var txt=diadleDailyShareText();
-  hapticLight();
-  if (navigator.share) {
-    navigator.share({text:txt}).catch(function(err){ if(err&&err.name==='AbortError')return; diadleDailyCopy(txt); });
-  } else { diadleDailyCopy(txt); }
+  intonareNativeShare(diadleDailyShareText(), diadleDailyCopy, 'Diadle');
 }
 function diadleDailyCopy(txt) {
   try {
@@ -50424,14 +50702,14 @@ let pmGraphWeekOffset = 0;  // 0 = current 7 days, -1 = previous 7, etc.
 let pmGraphExpandedKey = null;
 
 const GRAPH_EXERCISES = [
-  { key: 'interval',   label: 'INTERVALS',  labelIt: 'INTERVALLI',   icon: '🎯' },
-  { key: 'chords',     label: 'CHORDS',     labelIt: 'ACCORDI',      icon: '🎼' },
-  { key: 'chordle',    label: 'CHORDLE',    labelIt: 'CHORDLE',      icon: '🎹' },
-  { key: 'singsing',   label: 'SIGHT SING', labelIt: 'LETTURA',      icon: '🎤' },
-  { key: 'scales',     label: 'SCALES',     labelIt: 'SCALE',        icon: '🎵' },
-  { key: 'tempo',      label: 'TEMPO LOCK', labelIt: 'TEMPO LOCK',   icon: '⏱' },
-  { key: 'tempoguess', label: 'TEMPO GUESS',labelIt: 'INDOVINA BPM', icon: '🎲' },
-  { key: 'poly',       label: 'POLYRHYTHM', labelIt: 'POLIRITMIA',   icon: '🌀' },
+  { key: 'interval',   label: 'INTERVALS',  labelIt: 'INTERVALLI',   icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><circle cx='12' cy='12' r='10' /> <circle cx='12' cy='12' r='6' /> <circle cx='12' cy='12' r='2' /></svg>" },
+  { key: 'chords',     label: 'CHORDS',     labelIt: 'ACCORDI',      icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><path d='M3 5h18' /> <path d='M3 12h18' /> <path d='M3 19h18' /></svg>" },
+  { key: 'chordle',    label: 'CHORDLE',    labelIt: 'CHORDLE',      icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><path d='M18.5 8c-1.4 0-2.6-.8-3.2-2A6.87 6.87 0 0 0 2 9v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8.5C22 9.6 20.4 8 18.5 8' /> <path d='M2 14h20' /> <path d='M6 14v4' /> <path d='M10 14v4' /> <path d='M14 14v4' /> <path d='M18 14v4' /></svg>" },
+  { key: 'singsing',   label: 'SIGHT SING', labelIt: 'LETTURA',      icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><path d='M12 19v3' /> <path d='M19 10v2a7 7 0 0 1-14 0v-2' /> <rect x='9' y='2' width='6' height='13' rx='3' /></svg>" },
+  { key: 'scales',     label: 'SCALES',     labelIt: 'SCALE',        icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><path d='M16 7h6v6' /> <path d='m22 7-8.5 8.5-5-5L2 17' /></svg>" },
+  { key: 'tempo',      label: 'TEMPO LOCK', labelIt: 'TEMPO LOCK',   icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><line x1='10' x2='14' y1='2' y2='2' /> <line x1='12' x2='15' y1='14' y2='11' /> <circle cx='12' cy='14' r='8' /></svg>" },
+  { key: 'tempoguess', label: 'TEMPO GUESS',labelIt: 'INDOVINA BPM', icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><rect width='12' height='12' x='2' y='10' rx='2' ry='2' /> <path d='m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6' /> <path d='M6 18h.01' /> <path d='M10 14h.01' /> <path d='M15 6h.01' /> <path d='M18 9h.01' /></svg>" },
+  { key: 'poly',       label: 'POLYRHYTHM', labelIt: 'POLIRITMIA',   icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><circle cx='12' cy='18' r='3' /> <circle cx='6' cy='6' r='3' /> <circle cx='18' cy='6' r='3' /> <path d='M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9' /> <path d='M12 12v3' /></svg>" },
 ];
 
 function pmGetWeekData(weekOffset) {
@@ -50702,6 +50980,8 @@ const STRINGS = {
     samples_synth:'using synth voice',
     credits_title:'Credits & Thanks',
     credits_thanks:'With thanks',
+    credits_ded_father:'Made for my father Luca, who first inspired the music in me.',
+    credits_ded_mother:"Made possible by my mother Linda, who always believes in my dreams even when I don't.",
     credits_arrangements:'Sheet music arrangements',
     scale_up:'UP', scale_down:'DOWN', scale_loop:'LOOP',
     chrome_root:'ROOT', chrome_in:'IN SCALE',
@@ -50899,10 +51179,10 @@ const STRINGS = {
     hub_section_soon:'Coming Soon', wip_badge:'In development',
     tone_group_other:'OTHER',
     // Tools hub folder cards
-    folder_pitch_title:'PITCH & SOUND', folder_pitch_sub:'Piano · Tonal Center',
-    folder_pitch_subtitle:'piano · tonal center',
-    folder_harmony_title:'HARMONY', folder_harmony_sub:'Chords · Progressions · Guitar',
-    folder_harmony_subtitle:'chords · progressions · guitar',
+    folder_pitch_title:'PITCH & SOUND', folder_pitch_sub:'Piano · Tonal Center · Theremin',
+    folder_pitch_subtitle:'piano · tonal center · theremin',
+    folder_harmony_title:'HARMONY', folder_harmony_sub:'Charts · Chords · Progression',
+    folder_harmony_subtitle:'charts · chords · progression',
     folder_rhythm_tools_title:'RHYTHM', folder_rhythm_tools_sub:'Drumkit · Flash Cards',
     folder_analysis_title:'ANALYSIS & REFERENCE',
     folder_reference_title:'REFERENCE', folder_reference_hdr:'REFERENCE',
@@ -50919,7 +51199,7 @@ const STRINGS = {
     folder_badge_ex4:'4 exercises ›', folder_badge_ex3:'3 exercises ›', folder_badge_games4:'4 games ›',
     folder_ear_sub:'Intervals · Chords · Sight Singing',
     folder_games_title:'GAMES', folder_games_sub:'Chordle · Diadle · Tónale · Music Quiz', folder_games_subtitle:'play · compete · daily challenges',
-    card_musicquiz_title:'MUSIC QUIZ', card_musicquiz_sub:'474 questions · 8 packs · Quick Play, Custom & Survival',
+    card_musicquiz_title:'MUSIC QUIZ', card_musicquiz_sub:'1,152 questions · 19 packs · Quick Play, Custom & Survival',
     hint_games_exs:'<strong>Chordle</strong>: hear a chord progression and identify each chord in sequence, Wordle-style. <strong>Tónale</strong>: we play a tone, you recreate it from memory — with a shared daily challenge. <strong>Music Quiz</strong>: test your music theory and trivia knowledge across hundreds of questions.',
     // Tool card titles & subs
     tool_piano_title:'PIANO', tool_piano_sub:'Play any note · tone bank · A440 · instrument reference pitches',
@@ -51118,7 +51398,7 @@ const STRINGS = {
     rr_status_idle:'SELECT DIFFICULTY · TAP NEW',
     rr_tap_lbl:'TAP', rr_next_btn:'NEXT PATTERN →',
     rr_stat_score:'Score', rr_stat_streak:'Streak', rr_stat_rounds:'Rounds',
-    rr_mode_listen:'👂 LISTEN FIRST', rr_mode_sight:'👁 SIGHT READ', rr_new_btn:'▶ NEW',
+    rr_mode_listen:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>LISTEN FIRST', rr_mode_sight:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>SIGHT READ', rr_new_btn:'▶ NEW',
     rr_phase_listen_lbl:'LISTENING…', rr_phase_listen_status:'LISTEN TO THE PATTERN',
     rr_phase_countin_lbl:'COUNTING IN…', rr_phase_countin_status:'COUNT IN',
     rr_phase_tap_lbl:'TAP!', rr_phase_tap_status:'TAP NOW!', rr_phase_done_lbl:'DONE',
@@ -51391,6 +51671,8 @@ const STRINGS = {
     samples_synth:'voce sintetizzata',
     credits_title:'Crediti e ringraziamenti',
     credits_thanks:'Con gratitudine',
+    credits_ded_father:'Per mio papà Luca, che per primo ha acceso in me la musica.',
+    credits_ded_mother:'Grazie a mia mamma Linda, che crede sempre nei miei sogni anche quando non ci credo io.',
     credits_arrangements:'Arrangiamenti musicali',
     scale_up:'SU', scale_down:'GIÙ', scale_loop:'LOOP',
     chrome_root:'TONICA', chrome_in:'IN SCALA',
@@ -51588,10 +51870,10 @@ const STRINGS = {
     hub_section_soon:'Prossimamente', wip_badge:'In sviluppo',
     tone_group_other:'ALTRO',
     // Tools hub folder cards
-    folder_pitch_title:'INTONAZIONE', folder_pitch_sub:'Pianoforte · Centro Tonale',
-    folder_pitch_subtitle:'pianoforte · centro tonale',
-    folder_harmony_title:'ARMONIA', folder_harmony_sub:'Accordi · Progressioni · Chitarra',
-    folder_harmony_subtitle:'accordi · progressioni · chitarra',
+    folder_pitch_title:'INTONAZIONE', folder_pitch_sub:'Pianoforte · Centro Tonale · Theremin',
+    folder_pitch_subtitle:'pianoforte · centro tonale · theremin',
+    folder_harmony_title:'ARMONIA', folder_harmony_sub:'Accordi · Progressioni · Charts',
+    folder_harmony_subtitle:'accordi · progressioni · charts',
     folder_rhythm_tools_title:'RITMO', folder_rhythm_tools_sub:'Batteria · Flash Card',
     folder_analysis_title:'ANALISI & RIFERIMENTO',
     folder_reference_title:'RIFERIMENTO', folder_reference_hdr:'RIFERIMENTO',
@@ -51607,7 +51889,7 @@ const STRINGS = {
     folder_badge_1:'1 strumento ›', folder_badge_2:'2 strumenti ›', folder_badge_3:'3 strumenti ›', folder_badge_4:'4 strumenti ›', folder_badge_5:'5 strumenti ›',
     folder_badge_ex4:'4 esercizi ›', folder_badge_ex3:'3 esercizi ›', folder_badge_games4:'4 giochi ›',
     folder_games_title:'GIOCHI', folder_games_sub:'Chordle · Diadle · Tónale · Quiz Musicale', folder_games_subtitle:'gioca · competi · sfide giornaliere',
-    card_musicquiz_title:'QUIZ MUSICALE', card_musicquiz_sub:'474 domande · 8 pacchetti · Rapida, Personalizzata e Sopravvivenza',
+    card_musicquiz_title:'QUIZ MUSICALE', card_musicquiz_sub:'1.152 domande · 19 pacchetti · Rapida, Personalizzata e Sopravvivenza',
     hint_games_exs:'<strong>Chordle</strong>: ascolta una progressione e identifica ogni accordo, stile Wordle. <strong>Tónale</strong>: suoniamo un tono, tu lo ricrei a memoria — con una sfida giornaliera condivisa. <strong>Quiz Musicale</strong>: metti alla prova la tua teoria e cultura musicale.',
     folder_ear_sub:'Intervalli · Accordi · Solfeggio',
     // Tool card titles & subs
@@ -51807,7 +52089,7 @@ const STRINGS = {
     rr_status_idle:'SELEZIONA DIFFICOLTÀ · NUOVO',
     rr_tap_lbl:'BATTI', rr_next_btn:'PATTERN SUCCESSIVO →',
     rr_stat_score:'Punteggio', rr_stat_streak:'Serie', rr_stat_rounds:'Round',
-    rr_mode_listen:'👂 ASCOLTA PRIMA', rr_mode_sight:'👁 LETTURA VISTA', rr_new_btn:'▶ NUOVO',
+    rr_mode_listen:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>ASCOLTA PRIMA', rr_mode_sight:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>LETTURA VISTA', rr_new_btn:'▶ NUOVO',
     rr_phase_listen_lbl:'ASCOLTO…', rr_phase_listen_status:'ASCOLTA IL PATTERN',
     rr_phase_countin_lbl:'CONTO…', rr_phase_countin_status:'CONTO',
     rr_phase_tap_lbl:'BATTI!', rr_phase_tap_status:'BATTI ORA!', rr_phase_done_lbl:'FATTO',
@@ -53149,7 +53431,7 @@ function renderCueDropdowns() {
 
       const volIcon = document.createElement('span');
       volIcon.style.cssText = 'font-size:9px;color:var(--muted);flex-shrink:0;';
-      volIcon.textContent = '🔊';
+      volIcon.innerHTML = "<svg viewBox='0 0 24 24' width='12' height='12' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:middle'><path d='M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z' /> <path d='M16 9a5 5 0 0 1 0 6' /> <path d='M19.364 18.364a9 9 0 0 0 0-12.728' /></svg>";
 
       const slider = document.createElement('input');
       slider.type = 'range';
@@ -53950,13 +54232,13 @@ function progRenderModal() {
   const list = document.getElementById('pmStatsList');
   list.innerHTML = '';
   const rows = [
-    { key: 'interval',   icon: '🎯', label: 'INTERVALS',        format: s => s.correct ? `${s.correct}/${s.total || s.correct} · streak ${s.bestStreak || s.streak || 0}` : null },
-    { key: 'chords',     icon: '🎼', label: 'CHORD EAR',         format: s => s.total ? `${s.correct}/${s.total} · streak ${s.streak || 0}` : null },
-    { key: 'singsing',   icon: '🎤', label: 'SIGHT SINGING',     format: s => s.total ? `${s.correct}/${s.total} · streak ${s.streak || 0}` : null },
-    { key: 'tempo',      icon: '⏱️', label: 'TEMPO LOCK',        format: s => s.bestMs ? `${Math.round(s.bestMs)} ms · ${s.rounds || 0} rounds` : null },
-    { key: 'tempoguess', icon: '🎲', label: 'TEMPO GUESS',       format: s => s.bestDelta != null ? `±${s.bestDelta} BPM · ${s.rounds || 0} rounds` : null },
-    { key: 'poly',       icon: '🌀', label: 'POLYRHYTHM',        format: s => s.cycles ? `${s.cycles} cycles · last ${s.ratio || '—'}` : null },
-    { key: 'chordle',    icon: '🎹', label: 'CHORDLE',             format: s => s.correct != null ? `${s.correct||0} solved · best ${s.bestGuesses||'—'} guesses` : null },
+    { key: 'interval',   icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><circle cx='12' cy='12' r='10' /> <circle cx='12' cy='12' r='6' /> <circle cx='12' cy='12' r='2' /></svg>", label: 'INTERVALS',        format: s => s.correct ? `${s.correct}/${s.total || s.correct} · streak ${s.bestStreak || s.streak || 0}` : null },
+    { key: 'chords',     icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><path d='M3 5h18' /> <path d='M3 12h18' /> <path d='M3 19h18' /></svg>", label: 'CHORD EAR',         format: s => s.total ? `${s.correct}/${s.total} · streak ${s.streak || 0}` : null },
+    { key: 'singsing',   icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><path d='M12 19v3' /> <path d='M19 10v2a7 7 0 0 1-14 0v-2' /> <rect x='9' y='2' width='6' height='13' rx='3' /></svg>", label: 'SIGHT SINGING',     format: s => s.total ? `${s.correct}/${s.total} · streak ${s.streak || 0}` : null },
+    { key: 'tempo',      icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><line x1='10' x2='14' y1='2' y2='2' /> <line x1='12' x2='15' y1='14' y2='11' /> <circle cx='12' cy='14' r='8' /></svg>", label: 'TEMPO LOCK',        format: s => s.bestMs ? `${Math.round(s.bestMs)} ms · ${s.rounds || 0} rounds` : null },
+    { key: 'tempoguess', icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><rect width='12' height='12' x='2' y='10' rx='2' ry='2' /> <path d='m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6' /> <path d='M6 18h.01' /> <path d='M10 14h.01' /> <path d='M15 6h.01' /> <path d='M18 9h.01' /></svg>", label: 'TEMPO GUESS',       format: s => s.bestDelta != null ? `±${s.bestDelta} BPM · ${s.rounds || 0} rounds` : null },
+    { key: 'poly',       icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><circle cx='12' cy='18' r='3' /> <circle cx='6' cy='6' r='3' /> <circle cx='18' cy='6' r='3' /> <path d='M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9' /> <path d='M12 12v3' /></svg>", label: 'POLYRHYTHM',        format: s => s.cycles ? `${s.cycles} cycles · last ${s.ratio || '—'}` : null },
+    { key: 'chordle',    icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><path d='M18.5 8c-1.4 0-2.6-.8-3.2-2A6.87 6.87 0 0 0 2 9v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8.5C22 9.6 20.4 8 18.5 8' /> <path d='M2 14h20' /> <path d='M6 14v4' /> <path d='M10 14v4' /> <path d='M14 14v4' /> <path d='M18 14v4' /></svg>", label: 'CHORDLE',             format: s => s.correct != null ? `${s.correct||0} solved · best ${s.bestGuesses||'—'} guesses` : null },
   ];
   rows.forEach(r => {
     const s = progGet(r.key);
@@ -55432,7 +55714,7 @@ function vrRenderSingingStep(stepId) {
       <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--text);margin-bottom:6px;line-height:1.1;">${cfg.heading}</div>
       <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;margin-bottom:10px;">${cfg.body}</div>
       <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:${cfg.warm?'rgba(255,160,122,0.06)':'rgba(52,211,153,0.06)'};border:1px solid ${cfg.warm?'rgba(255,160,122,0.15)':'rgba(52,211,153,0.15)'};border-radius:var(--r-sm);">
-        <span style="font-size:13px;flex-shrink:0;margin-top:1px;">⚠️</span>
+        <span style='flex-shrink:0;margin-top:1px;display:inline-flex;color:var(--accent-warm);'><svg viewBox='0 0 24 24' width='14' height='14' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:middle'><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg></span>
         <div style="font-size:11px;color:var(--text-dim);line-height:1.5;">${cfg.tip}</div>
       </div>
     </div>
@@ -55540,7 +55822,7 @@ function vrRenderResults(r) {
     <div class="vr-strip-wrap" id="vrResStrip"></div>
 
     <div style="padding:13px 15px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);display:flex;align-items:center;gap:12px;">
-      <span style="font-size:18px;">📍</span>
+      <span style='display:inline-flex;color:var(--accent);'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:middle'><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></svg></span>
       <div>
         <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;">Closest adjacent type</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:2px;color:var(--accent);">${adj ? `${adjSemi} <span style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">semitones from ${adj.name}</span>` : '—'}</div>
@@ -55673,7 +55955,7 @@ function vrRenderHistory() {
   const sessions = vrGetSessions();
   if (sessions.length === 0) {
     el.innerHTML = `<div class="vr-history-empty">
-      <div style="font-size:32px;margin-bottom:12px;opacity:0.35;">📊</div>
+      <div style='margin-bottom:12px;opacity:0.35;color:var(--muted);display:flex;justify-content:center;'><svg viewBox='0 0 24 24' width='32' height='32' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:middle'><path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="m19 9-5 5-4-4-3 3" /></svg></div>
       <div style="font-family:'Fraunces',serif;font-style:italic;font-size:12.5px;color:var(--muted);">No sessions saved yet. Complete an assessment and tap Save to track your progress.</div>
     </div>`;
     return;
@@ -63413,7 +63695,10 @@ const WW_SUBS = {
     { key:'d',     label:'D',     transposition:0 }, // high D, concert pitch
     { key:'low_d', label:'LOW D', transposition:0 }, // low D, concert pitch — same fingerings, lower range
   ],
-  ww_bassoon:  null,
+  ww_bassoon: [
+    { key:'bassoon', label:'BASSOON',      transposition:0 }, // concert pitch (non-transposing)
+    { key:'contra',  label:'CONTRA',       transposition:0 }, // contrabassoon: same fingerings, sounds 8va lower (handled as range shift, not transposition)
+  ],
   ww_ocarina: [
     { key:'12hole', label:'12-HOLE', transposition:0 },
     { key:'7hole',  label:'7-HOLE',  transposition:0 },
@@ -65819,6 +66104,138 @@ function _clarinetSvgDraw(containerEl, data, mini) {
 }
 
 
+// ── Bassoon / Contrabassoon SVG fingering diagram ──────────────────────────
+// Body and key paths reproduced verbatim from Bret Pimentel's Fingering Diagram
+// Builder exports (fingering.bretpimentel.com), used with permission CC BY-NC-SA 4.0.
+// 17 fingering slots:
+// [W, LH1,LH2,LH3, LH-C,LH-D,LH-Db,LH-Eb,LH-F, RH1,RH2,RH3,RH4, RH-D,RH-F,RH-Ab,RH-Bb]
+//  0   1   2   3    4    5    6     7     8    9   10   11   12   13   14   15    16
+function _bassoonSvgDraw(containerEl, data, mini, isContra) {
+  containerEl.innerHTML = '';
+  const NS = 'http://www.w3.org/2000/svg';
+  const ACCENT  = '#2ec78f';
+  const GREY    = '#8a99a6';
+
+  // Original SVG viewBox: 0 0 255.778 371.889, transform: matrix(.75 0 0 .75 3.718 2.395)
+  // Rendered size: 341.038 x 495.852 — but content extends to y≈472 in orig = screen y≈356
+  // We use the original viewBox and let the SVG scale naturally.
+  const VBW = 255.778, VBH = 371.889;
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + VBW + ' ' + VBH);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  svg.setAttribute('shape-rendering', 'geometricPrecision');
+  const maxH = mini ? 110 : 300;
+  const w = Math.round(maxH * VBW / VBH);
+  svg.setAttribute('width', String(w));
+  svg.setAttribute('height', String(maxH));
+  svg.style.cssText = 'width:' + w + 'px;height:' + maxH + 'px;max-width:' + (mini ? '32px' : '200px') + ';flex:0 0 auto;align-self:center;';
+
+  function el(tag, attrs) {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  }
+
+  // All paths use the original SVG transform
+  const g = el('g', { transform: 'matrix(.75 0 0 .75 3.718 2.395)' });
+  svg.appendChild(g);
+
+  function path(d, fill, stroke, sw) {
+    return el('path', { d, fill, stroke, 'stroke-width': sw || '2',
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'fill-rule': 'evenodd' });
+  }
+
+  const sw = '2'; // original stroke-width from Bret's SVG
+  const swm = mini ? '3' : '2'; // slightly heavier in mini to stay visible
+
+  // Helper: colour a key path based on its data slot value
+  // Bassoon fingerings use only 0 (open) and 1 (closed) — no half-holes.
+  function keyPath(d, slot) {
+    const closed = (data[slot] || 0) === 1;
+    g.appendChild(path(d, closed ? ACCENT : 'none', closed ? ACCENT : GREY, sw));
+  }
+
+  function bodyPath(d) {
+    g.appendChild(path(d, 'none', GREY, sw));
+  }
+
+  // ── Standard bassoon paths (verbatim from Bret's SVG export) ─────────────
+
+  // Bocal/crook — standard only
+  if (!isContra) {
+    bodyPath('M 120.001088 34.536231 C 121.18338 41.249772 118.600047 46.213314 114.131297 51.833106 C 106.27713 61.713314 99.251088 68.286231 102.001088 76.536231 C 105.001088 85.536231 129.001088 100.536231 129.001088 64.536231 C 129.001088 64.536231 129.001088 34.536231 129.001088 34.536231 C 129.001088 34.536231 120.001088 34.536231 120.001088 34.536231');
+  }
+
+  // LH1 hook, tenor bell oval, LH2 hook
+  keyPath('M136.199005 64.536231C136.199005 64.536231 136.199005 82.031022 136.199005 82.031022 136.199005 86.640397 133.30838 90.098731 129.001088 91.536231 120.001088 94.536231 110.730255 95.859147 113.40213 106.536231 117.771922 124.031022 147.001088 121.536231 144.001088 94.536231 144.001088 94.536231 144.001088 64.536231 144.001088 64.536231 144.001088 64.536231 136.199005 64.536231 136.199005 64.536231', 1);
+  bodyPath('M171.001088 136.536231C171.001088 143.156022 156.21463 148.536231 138.001088 148.536231 105.001088 148.536231 105.001088 143.156022 105.001088 136.536231 105.001088 129.911231 105.001088 124.536231 138.001088 124.536231 156.21463 124.536231 171.001088 129.911231 171.001088 136.536231');
+  keyPath('M138.001088 208.536231C138.001088 208.536231 138.001088 187.833106 138.001088 187.833106 138.001088 184.010189 135.881297 181.536231 132.001088 181.536231 114.001088 181.536231 93.329213 177.208106 96.001088 166.536231 100.376088 149.041439 148.797963 151.536231 145.797963 178.536231 145.797963 178.536231 145.797963 208.536231 145.797963 208.536231 145.797963 208.536231 138.001088 208.536231 138.001088 208.536231', 2);
+
+  // LH-F oval, LT thumb tube, W whisper, LH-C crescent, LH-D crescent,
+  // horizontal line, vertical bore, RH1, RH2, RH3, RT top, RT bottom,
+  // horizontal line 2, decorative swirl
+  if (!isContra) {
+    keyPath('M126.001088 199.536231C126.001088 206.156022 117.938588 211.536231 108.001088 211.536231 98.063588 211.536231 90.001088 206.156022 90.001088 199.536231 90.001088 192.911231 98.063588 187.536231 108.001088 187.536231 117.938588 187.536231 126.001088 192.911231 126.001088 199.536231', 8);
+  }
+  bodyPath('M49.376088 210.176856C49.376088 183.791439 49.376088 157.411231 49.376088 131.025814 46.292755 121.463314 33.230255 116.656022 24.985463 122.739356 20.428172 126.156022 17.787547 131.921647 17.636505 137.551856 18.02713 146.708106 22.162547 155.114356 25.360463 163.536231 31.584422 178.671647 37.094838 194.161231 40.584422 210.176856 43.511505 210.176856 46.443797 210.176856 49.376088 210.176856');
+  keyPath('M47.771922 113.635189C3.797963 120.228939-9.394745 87.249772 32.381297 65.260189 40.303172 80.786231 45.172963 96.968522 47.771922 113.635189', 0);
+  keyPath('M41.204213 62.525814C56.594838 95.510189 49.954213 110.744564 63.193797 110.020606 87.376088 108.702897 54.396922 71.322689 50.001088 51.536231 50.001088 51.536231 50.001088 44.937272 50.001088 44.937272 50.001088 44.937272 41.204213 44.937272 41.204213 44.937272 41.204213 44.937272 41.204213 62.525814 41.204213 62.525814', 4);
+  keyPath('M64.766713 61.458106C80.157338 94.442481 73.516713 109.676856 86.756297 108.952897 110.938588 107.635189 77.959422 70.254981 73.563588 50.468522 73.563588 50.468522 73.563588 43.869564 73.563588 43.869564 73.563588 43.869564 64.766713 43.869564 64.766713 43.869564 64.766713 43.869564 64.766713 61.458106 64.766713 61.458106', 5);
+  bodyPath('M95.001088 219.999772C190.001088 219.999772 180.001088 219.999772 180.001088 219.999772');
+  bodyPath('M180.001088 34.140397C180.001088 395.739356 180.001088 395.739356 180.001088 395.739356');
+  keyPath('M222.657338 70.286231C234.240672 70.286231 243.657338 60.869564 243.657338 49.286231 243.657338 37.708106 234.240672 28.286231 222.657338 28.286231 211.074005 28.286231 201.657338 37.708106 201.657338 49.286231 201.657338 60.869564 211.074005 70.286231 222.657338 70.286231', 9);
+  keyPath('M222.657338 131.400814C234.240672 131.400814 243.657338 121.978939 243.657338 110.400814 243.657338 98.817481 234.240672 89.400814 222.657338 89.400814 211.074005 89.400814 201.657338 98.817481 201.657338 110.400814 201.657338 121.978939 211.074005 131.400814 222.657338 131.400814', 10);
+  keyPath('M222.657338 191.400814C234.240672 191.400814 243.657338 181.978939 243.657338 170.400814 243.657338 158.817481 234.240672 149.400814 222.657338 149.400814 211.074005 149.400814 201.657338 158.817481 201.657338 170.400814 201.657338 181.978939 211.074005 191.400814 222.657338 191.400814', 11);
+  bodyPath('M277.787547 178.921647C277.787547 178.921647 299.355255 178.921647 299.355255 178.921647 300.719838 178.921647 301.756297 177.546647 301.615672 176.218522 300.396922 164.817481 289.209422 158.640397 277.787547 158.572689 266.365672 158.640397 255.178172 164.817481 253.96463 176.218522 253.824005 177.546647 254.860463 178.921647 256.225047 178.921647 256.225047 178.921647 277.787547 178.921647 277.787547 178.921647');
+  bodyPath('M277.787547 184.775814C277.787547 184.775814 299.355255 184.775814 299.355255 184.775814 300.719838 184.775814 301.756297 186.150814 301.615672 187.484147 300.396922 198.879981 289.209422 205.057064 277.787547 205.124772 266.365672 205.057064 255.178172 198.879981 253.96463 187.484147 253.824005 186.150814 254.860463 184.775814 256.225047 184.775814 256.225047 184.775814 277.787547 184.775814 277.787547 184.775814');
+  bodyPath('M180.001088 219.999772C180.001088 219.999772 264.834422 219.999772 264.834422 219.999772');
+  bodyPath('M76.954213 266.775814C92.266713 213.484147 143.344838 226.010189 145.438588 238.577897 149.469838 262.744564 91.459422 230.520606 83.40213 266.775814 83.40213 266.775814 76.954213 266.775814 76.954213 266.775814');
+
+  // Contrabassoon extra key (small oval at cx=193,cy=108 in screen)
+  if (isContra) {
+    bodyPath('M252.287547 132.687272C261.704213 132.687272 269.282338 136.129981 269.282338 140.400814 269.282338 144.671647 261.704213 148.109147 252.287547 148.109147 242.87088 148.109147 235.292755 144.671647 235.292755 140.400814 235.292755 136.129981 242.87088 132.687272 252.287547 132.687272');
+    bodyPath('M275.209422 227.697689C275.209422 227.697689 275.209422 232.468522 275.209422 232.468522 275.209422 235.546647 274.126088 237.656022 271.219838 237.656022 259.24588 237.656022 245.501088 240.536231 247.271922 247.635189 250.18338 259.270606 284.391713 257.614356 282.396922 239.656022 282.396922 239.656022 282.396922 227.697689 282.396922 227.697689 282.396922 227.697689 275.209422 227.697689 275.209422 227.697689');
+  }
+
+  // LH3 circle
+  keyPath('M 141.412547 278.833106 C 141.412547 292.171647 129.678172 302.999772 115.225047 302.999772 C 100.771922 302.999772 89.042755 292.171647 89.042755 278.833106 C 89.042755 265.489356 100.771922 254.661231 115.225047 254.661231 C 129.678172 254.661231 141.412547 265.489356 141.412547 278.833106', 3);
+
+  // LH-Db curve
+  keyPath('M 105.157338 337.228939 C 109.18338 300.973731 148.631297 298.760189 147.454213 311.447689 C 145.438588 333.197689 117.240672 304.999772 110.844838 337.228939 C 110.844838 337.228939 105.157338 337.228939 105.157338 337.228939', 6);
+
+  // LH-Eb curve (standard only), bore lines, RH4, RH-Bb, bell shapes, boot keys
+  if (!isContra) {
+    keyPath('M121.266713 357.343522C125.297963 321.088314 164.74588 318.874772 163.568797 331.562272 161.553172 353.312272 133.355255 325.114356 126.954213 357.343522 126.954213 357.343522 121.266713 357.343522 121.266713 357.343522', 7);
+  }
+  bodyPath('M95.001088 219.999772C190.001088 219.999772 180.001088 219.999772 180.001088 219.999772');
+  bodyPath('M180.001088 34.140397C180.001088 395.739356 180.001088 395.739356 180.001088 395.739356');
+  keyPath('M222.657338 284.890397C234.240672 284.890397 243.657338 275.468522 243.657338 263.890397 243.657338 252.307064 234.240672 242.890397 222.657338 242.890397 211.074005 242.890397 201.657338 252.307064 201.657338 263.890397 201.657338 275.468522 211.074005 284.890397 222.657338 284.890397', 12);
+  keyPath('M222.657338 345.999772C234.240672 345.999772 243.657338 336.583106 243.657338 324.999772 243.657338 313.421647 234.240672 303.999772 222.657338 303.999772 211.074005 303.999772 201.657338 313.421647 201.657338 324.999772 201.657338 336.583106 211.074005 345.999772 222.657338 345.999772', 16);
+  bodyPath('M247.08963 350.051856C260.46463 350.051856 271.225047 354.218522 271.225047 359.385189 271.225047 364.557064 260.46463 368.723731 247.08963 368.723731 233.719838 368.723731 222.954213 364.557064 222.954213 359.385189 222.954213 354.218522 233.719838 350.051856 247.08963 350.051856');
+  bodyPath('M222.657338 372.775814C239.199005 372.775814 252.516713 379.353939 252.516713 387.525814 252.516713 395.697689 239.199005 402.275814 222.657338 402.275814 206.115672 402.275814 192.797963 395.697689 192.797963 387.525814 192.797963 379.353939 206.115672 372.775814 222.657338 372.775814');
+  keyPath('M247.579213 423.098731C247.579213 423.098731 254.928172 410.228939 254.928172 410.228939 256.96463 406.666439 261.475047 405.432064 265.037547 407.468522 265.037547 407.468522 277.907338 414.822689 277.907338 414.822689 281.475047 416.853939 282.704213 421.364356 280.667755 424.932064 280.667755 424.932064 273.318797 437.801856 273.318797 437.801856 271.282338 441.369564 266.771922 442.598731 263.209422 440.562272 263.209422 440.562272 250.33963 433.213314 250.33963 433.213314 246.771922 431.176856 245.542755 426.666439 247.579213 423.098731', 14);
+  keyPath('M278.074005 442.827897C278.074005 442.827897 285.422963 429.958106 285.422963 429.958106 287.459422 426.390397 291.969838 425.161231 295.532338 427.197689 302.459422 434.656022 309.18338 440.702897 313.594838 452.468522 315.860463 458.520606 312.563588 469.629981 302.459422 465.827897 302.459422 465.827897 280.834422 452.937272 280.834422 452.937272 277.266713 450.900814 276.037547 446.390397 278.074005 442.827897', 15);
+  keyPath('M244.626088 472.098731C244.626088 472.098731 257.83963 479.676856 257.83963 479.676856 261.407338 481.713314 265.917755 480.484147 267.949005 476.916439 267.949005 476.916439 275.303172 464.046647 275.303172 464.046647 277.33963 460.478939 276.105255 455.973731 272.542755 453.937272 272.542755 453.937272 259.324005 446.353939 259.324005 446.353939 259.324005 446.353939 246.110463 438.775814 246.110463 438.775814 242.547963 436.739356 238.037547 437.968522 236.001088 441.536231 236.001088 441.536231 228.65213 454.406022 228.65213 454.406022 226.615672 457.968522 227.844838 462.478939 231.407338 464.515397 231.407338 464.515397 244.626088 472.098731 244.626088 472.098731', 13);
+
+  // Section labels — audience view: LT top-left, RT top-right, LH bottom-left, RH bottom-right
+  if (!mini) {
+    const lblAttrs = { 'font-family': 'JetBrains Mono,monospace', 'font-size': '10',
+      'font-weight': '700', 'letter-spacing': '0.8', fill: GREY };
+    // Labels in viewBox coords (0 0 255.778 371.889)
+    [['LT',  4, 22, 'start'],
+     ['RT', 252, 22, 'end'  ],
+     ['LH',  4, 200, 'start'],
+     ['RH', 252, 200, 'end'  ]
+    ].forEach(([text, x, y, anchor]) => {
+      const t = el('text', { x: String(x), y: String(y), 'text-anchor': anchor, ...lblAttrs });
+      t.textContent = text;
+      svg.appendChild(t);
+    });
+  }
+
+  containerEl.appendChild(svg);
+}
+
 function _saxSvgDraw(containerEl, data, mini, moving) {
   // Realistic saxophone fingering diagram — potrace of a standard empty-body sax chart
   // (alto/tenor/soprano/bari all share it; only transposition differs, handled in
@@ -66011,6 +66428,15 @@ function woodwindHoleDraw(containerEl, concertPc, mini, altIdx, midi) {
   // Bass clarinet: same Boehm 16-slot model as Bb clarinet — reuse the same renderer.
   if (chordScaleInstrument === 'ww_bassclarinet' && data.length >= 14) {
     _clarinetSvgDraw(containerEl, data, mini);
+    return;
+  }
+
+  // Bassoon / Contrabassoon: Heckel system, 17-slot model.
+  // Both share the same fingering data; contrabassoon body differs visually.
+  if ((chordScaleInstrument === 'ww_bassoon') && data.length >= 17) {
+    const sub = wwActiveSub && wwActiveSub();
+    const isContra = sub && sub.key === 'contra';
+    _bassoonSvgDraw(containerEl, data, mini, isContra);
     return;
   }
 
@@ -69040,7 +69466,8 @@ const CS_INSTRUMENTS = {
     subs:[{key:'soprano',label:'SOPRANO'},{key:'alto',label:'ALTO'},{key:'tenor',label:'TENOR'},{key:'bass',label:'BASS'}] },
   ww_whistle:  { label:'🪈 Tin Whistle',  family:'wind', subFamily:'woodwind',
     subs:[{key:'d',label:'D (high)'},{key:'low_d',label:'D (low)'}] },
-  ww_bassoon:  { label:'🪈 Bassoon',      family:'wind', subFamily:'woodwind', subs:null },
+  ww_bassoon:  { label:'🪈 Bassoon',      family:'wind', subFamily:'woodwind',
+    subs:[{key:'bassoon',label:'BASSOON'},{key:'contra',label:'CONTRA'}] },
   ww_ocarina:  { label:'🎵 Ocarina',      family:'wind', subFamily:'woodwind', subs:[
     {key:'12hole', label:'12-HOLE'},
     {key:'7hole',  label:'7-HOLE'},
@@ -69182,6 +69609,7 @@ function switchChordScaleInstrument(inst) {
   if (inst === 'ww_bassclarinet') wwSubType = 'bb';
   if (inst === 'ww_coranglais')  wwSubType = 'f';
   if (inst === 'ww_whistle')     wwSubType = 'd';
+  if (inst === 'ww_bassoon')     wwSubType = 'bassoon';
   // Reset brass sub-type defaults
   if (inst === 'trumpet')   brassSubType = 'standard';
   if (inst === 'tuba')      brassSubType = 'standard';
@@ -69283,7 +69711,7 @@ function _buildSubRow(inst, subs) {
   row.innerHTML = '';
   if (!subs || !subs.length) { row.classList.add('hidden'); return; }
   row.classList.remove('hidden');
-  const currentSub = inst === 'uke' ? ukeSubType : inst === 'bass' ? bassSubType : inst === 'mandolin' ? mandoSubType : inst === 'lute' ? luteSubType : inst === 'bouzouki' ? bouzoukiSubType : inst === 'guitar' ? guitarSubType : inst === 'ww_flute' || inst === 'ww_clarinet' || inst === 'ww_sax' || inst === 'ww_recorder' || inst === 'ww_oboe' || inst === 'ww_coranglais' || inst === 'ww_whistle' || inst === 'ww_ocarina' ? wwSubType : inst === 'trumpet' || inst === 'tuba' || inst === 'trombone' ? brassSubType : inst === 'harmonica' ? harmonicaKey
+  const currentSub = inst === 'uke' ? ukeSubType : inst === 'bass' ? bassSubType : inst === 'mandolin' ? mandoSubType : inst === 'lute' ? luteSubType : inst === 'bouzouki' ? bouzoukiSubType : inst === 'guitar' ? guitarSubType : inst === 'ww_flute' || inst === 'ww_clarinet' || inst === 'ww_sax' || inst === 'ww_recorder' || inst === 'ww_oboe' || inst === 'ww_coranglais' || inst === 'ww_whistle' || inst === 'ww_ocarina' || inst === 'ww_bassoon' ? wwSubType : inst === 'trumpet' || inst === 'tuba' || inst === 'trombone' ? brassSubType : inst === 'harmonica' ? harmonicaKey
            : inst === 'mallet' ? malletSubType
            : inst === 'ww_chrom_harp' ? null : null;
   subs.forEach(s => {
@@ -69315,6 +69743,7 @@ function switchSubType(inst, key) {
   if (inst === 'ww_oboe')          { wwSubType = key; trpCurrentOctave = windActiveRange()?.defaultOct ?? 4; }
   if (inst === 'ww_coranglais')   wwSubType     = key;
   if (inst === 'ww_whistle')      wwSubType     = key;
+  if (inst === 'ww_bassoon')      wwSubType     = key;
   if (inst === 'ww_whistle')      trpCurrentOctave = windActiveRange()?.defaultOct ?? 4;
   if (inst === 'trumpet')         { brassSubType = key; trpCurrentOctave = windActiveRange()?.defaultOct ?? 4; }
   if (inst === 'tuba')            { brassSubType = key; trpCurrentOctave = windActiveRange()?.defaultOct ?? 4; }
@@ -79664,6 +80093,11 @@ window.sgExit = function() {
             <div class="mq-hero-pill"><div class="mq-hero-dot"></div>INTONARE</div>
             <div class="mq-hero-title">MUSIC<br>QUIZ</div>
             <div class="mq-hero-sub">Test your music knowledge</div>
+            <button class="mq-daily-badge" id="mqDailyBadge" onclick="mqOpenDailyPopup()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span id="mqDailyBadgeLabel">DAILY</span>
+              <span class="mq-daily-badge-dot" id="mqDailyBadgeDot"></span>
+            </button>
           </div>
           <!-- Now Playing widget -->
           <div class="mq-np" id="mqNowPlaying">
@@ -79686,7 +80120,7 @@ window.sgExit = function() {
           </div>
           <div class="mq-mode-cards">
             <div class="mq-mode-card mqc-quick" onclick="mqShowQuickSheet()">
-              <div class="mq-card-icon">⚡</div>
+              <div class="mq-card-icon" style="color:var(--accent-soft)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg></div>
               <div class="mq-card-info">
                 <div class="mq-card-name">QUICK PLAY</div>
                 <div class="mq-card-desc">Select a pack, set question count</div>
@@ -79695,7 +80129,7 @@ window.sgExit = function() {
               <div class="mq-card-arrow">›</div>
             </div>
             <div class="mq-mode-card mqc-custom" onclick="mqGoCustom()">
-              <div class="mq-card-icon">🎛️</div>
+              <div class="mq-card-icon" style="color:var(--accent)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M10 5H3" /> <path d="M12 19H3" /> <path d="M14 3v4" /> <path d="M16 17v4" /> <path d="M21 12h-9" /> <path d="M21 19h-5" /> <path d="M21 5h-7" /> <path d="M8 10v4" /> <path d="M8 12H3" /></svg></div>
               <div class="mq-card-info">
                 <div class="mq-card-name">CUSTOM</div>
                 <div class="mq-card-desc">Choose packs, difficulty, and length</div>
@@ -79704,7 +80138,7 @@ window.sgExit = function() {
               <div class="mq-card-arrow">›</div>
             </div>
             <div class="mq-mode-card mqc-survival" onclick="mqSurvivalPlay()">
-              <div class="mq-card-icon">💀</div>
+              <div class="mq-card-icon" style="color:var(--sharp)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="m12.5 17-.5-1-.5 1h1z" /> <path d="M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z" /> <circle cx="15" cy="12" r="1" /> <circle cx="9" cy="12" r="1" /></svg></div>
               <div class="mq-card-info">
                 <div class="mq-card-name">SURVIVAL</div>
                 <div class="mq-card-desc">3 lives · select packs · no end</div>
@@ -79898,6 +80332,26 @@ window.sgExit = function() {
           <button class="mq-review-btn" id="mqReviewBtn" onclick="mqShowMissReview()" style="display:none">REVIEW MISSES →</button>
         </div>
 
+        <!-- DAILY QUIZ RESULT -->
+        <div class="mq-screen" id="mqScreenDailyResult">
+          <div style="text-align:center;padding-top:6px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--accent-warm);margin-bottom:3px;">DAILY QUIZ</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--muted)" id="mqDailyResDate"></div>
+          </div>
+          <div class="mq-daily-score-big" id="mqDailyResScore">—</div>
+          <div class="mq-daily-score-denom" id="mqDailyResDenom">/ 10 correct</div>
+          <div class="mq-daily-emoji-grid" id="mqDailyResEmoji"></div>
+          <div class="mq-stats-grid" style="margin-bottom:12px;">
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResPct" style="color:var(--accent-warm)">—</div><div class="mq-stat-lbl">ACCURACY</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResStreak" style="color:var(--accent-soft)">—</div><div class="mq-stat-lbl">BEST STREAK</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResXP" style="color:var(--in-tune)">—</div><div class="mq-stat-lbl">XP EARNED</div></div>
+          </div>
+          <button class="mq-daily-share-btn" onclick="mqDailyShare()">&#128203;  SHARE RESULT</button>
+          <div class="mq-res-btns" style="margin-top:12px;">
+            <button class="mq-res-btn secondary" onclick="mqGoLanding()">DONE</button>
+          </div>
+        </div>
+
         <!-- MISS REVIEW -->
         <div class="mq-screen" id="mqScreenReview">
           <div style="position:relative;display:flex;align-items:center;justify-content:center;padding-bottom:8px;border-bottom:1px solid var(--border-soft);margin-bottom:4px;min-height:24px;">
@@ -79932,7 +80386,7 @@ window.sgExit = function() {
     <div class="mq-sheet" style="padding-bottom:20px;">
       <div class="mq-sheet-handle"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-        <div id="mqPopupEmoji" style="font-size:28px;"></div>
+        <div id="mqPopupEmoji" style="font-size:28px;display:flex;align-items:center;justify-content:center;color:var(--accent-soft);width:40px;height:40px;"></div>
         <div>
           <div id="mqPopupName" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--text)"></div>
           <div id="mqPopupCount" style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--muted)"></div>
@@ -79955,6 +80409,24 @@ window.sgExit = function() {
       <div class="mq-sheet-pack-grid" id="mqSurvivalPackGrid"></div>
       <div id="mqSurvivalOnlineChips" style="display:none;flex-direction:column;gap:6px;"></div>
       <button class="mq-sheet-all-btn" style="margin-top:11px;margin-bottom:0" onclick="mqStartSurvival()">START SURVIVAL →</button>
+    </div>
+  </div>
+
+  <!-- Daily quiz popup -->
+  <div class="mq-daily-pop-overlay" id="mqDailyPop" onclick="if(event.target===this)mqCloseDailyPopup()">
+    <div class="mq-daily-pop">
+      <button class="mq-daily-pop-close" onclick="mqCloseDailyPopup()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="mq-daily-pop-tag">DAILY QUIZ</div>
+      <div class="mq-daily-pop-date" id="mqDailyPopDate"></div>
+      <div class="mq-daily-pop-emoji" id="mqDailyPopEmoji"></div>
+      <div class="mq-daily-pop-name" id="mqDailyPopName">—</div>
+      <div class="mq-daily-pop-desc" id="mqDailyPopDesc"></div>
+      <div class="mq-daily-pop-meta" id="mqDailyPopMeta">10 questions · one attempt</div>
+      <div class="mq-daily-pop-progress" id="mqDailyPopProgress" style="display:none;"></div>
+      <button class="mq-daily-pop-start" id="mqDailyPopStartBtn" onclick="mqDailyPopAction()">START →</button>
+      <button class="mq-daily-pop-secondary" id="mqDailyPopShareBtn" onclick="mqDailyShare()" style="display:none;">📋 SHARE RESULT</button>
     </div>
   </div>
 
@@ -81275,21 +81747,25 @@ noughties: {
 }; // end PACKS
 
 const MQ_PACK_COLORS = {
-  guitar_gods:'var(--accent)',
+  guitar_gods:'#7c6cf0',
   beatles:'#f9a8d4',
-  jazz_legends:'var(--metro)',
-  rock_metal:'var(--sharp)',
-  theory_fundamentals:'var(--accent-soft)',
-  studio_recording:'var(--in-tune)',
+  jazz_legends:'#f5b942',
+  rock_metal:'#ff6b6b',
+  theory_fundamentals:'#a99cf5',
+  studio_recording:'#5ed47a',
   gear_equipment:'#60a5fa',
   music_history:'#fb923c',
-  guitar_technique:'var(--accent)',
+  guitar_technique:'#22d3ee',
   bass:'#a78bfa',
-  drums:'var(--sharp)',
-  keys:'var(--metro)',
+  drums:'#fb7185',
+  keys:'#facc15',
   vocals:'#f472b6',
-  sixties:'#f9a8d4', seventies:'var(--metro)', eighties:'#a78bfa',
-  fifties:'var(--in-tune)', nineties:'var(--sharp)', noughties:'#60a5fa'
+  fifties:'#2dd4bf',
+  sixties:'#fbbf24',
+  seventies:'#c084fc',
+  eighties:'#38bdf8',
+  nineties:'#34d399',
+  noughties:'#818cf8',
 };
 
 let MQ = {
@@ -81943,6 +82419,7 @@ function mqOpen() {
   mqSyncGlobalDiffChips();
   mqCheckOnline();
   mqSyncOnlineChipsVisibility();
+  mqSyncDailyCard();
   mqAmbStart();
   mqNpUpdate();
   // Show resume banner if a quiz was in-progress when the app was killed
@@ -81968,9 +82445,9 @@ function mqSyncGlobalDiffChips() {
 
 // ── Online category config ────────────────────────────────
 var MQ_ONLINE_CATS = [
-  { id:'bands',      catId:12, name:'BANDS',       emoji:'🎸', sub:'opentdb.com · user-submitted questions' },
-  { id:'musicals',   catId:13, name:'MUSICALS',    emoji:'🎭', sub:'opentdb.com · user-submitted questions' },
-  { id:'videogames', catId:15, name:'VIDEO GAMES', emoji:'🕹️', sub:'opentdb.com · user-submitted questions' },
+  { id:'bands',      catId:12, name:'BANDS',       emoji:'🎸', icon:'<path d="m11.9 12.1 4.514-4.514" /> <path d="M20.1 2.3a1 1 0 0 0-1.4 0l-1.114 1.114A2 2 0 0 0 17 4.828v1.344a2 2 0 0 1-.586 1.414A2 2 0 0 1 17.828 7h1.344a2 2 0 0 0 1.414-.586L21.7 5.3a1 1 0 0 0 0-1.4z" /> <path d="m6 16 2 2" /> <path d="M8.23 9.85A3 3 0 0 1 11 8a5 5 0 0 1 5 5 3 3 0 0 1-1.85 2.77l-.92.38A2 2 0 0 0 12 18a4 4 0 0 1-4 4 6 6 0 0 1-6-6 4 4 0 0 1 4-4 2 2 0 0 0 1.85-1.23z" />', color:'var(--accent)',      sub:'opentdb.com · user-submitted questions' },
+  { id:'musicals',   catId:13, name:'MUSICALS',    emoji:'🎭', icon:'<path d="M10 11h.01" /> <path d="M14 6h.01" /> <path d="M18 6h.01" /> <path d="M6.5 13.1h.01" /> <path d="M22 5c0 9-4 12-6 12s-6-3-6-12c0-2 2-3 6-3s6 1 6 3" /> <path d="M17.4 9.9c-.8.8-2 .8-2.8 0" /> <path d="M10.1 7.1C9 7.2 7.7 7.7 6 8.6c-3.5 2-4.7 3.9-3.7 5.6 4.5 7.8 9.5 8.4 11.2 7.4.9-.5 1.9-2.1 1.9-4.7" /> <path d="M9.1 16.5c.3-1.1 1.4-1.7 2.4-1.4" />', color:'var(--warm)',        sub:'opentdb.com · user-submitted questions' },
+  { id:'videogames', catId:15, name:'VIDEO GAMES', emoji:'🕹️', icon:'<line x1="6" x2="10" y1="11" y2="11" /> <line x1="8" x2="8" y1="9" y2="13" /> <line x1="15" x2="15.01" y1="12" y2="12" /> <line x1="18" x2="18.01" y1="10" y2="10" /> <path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z" />', color:'var(--in-tune)',     sub:'opentdb.com · user-submitted questions' },
 ];
 
 var MQ_BANDS_ONLINE = navigator.onLine !== false;
@@ -82013,7 +82490,7 @@ function mqRenderOnlineChips() {
       })(cat.id, c.surv, c.sheet);
       var checkId = 'mqOnlineCheck_' + (c.surv ? 'surv_' : '') + cat.id;
       var checkHtml = !c.sheet ? '<div class="mq-bands-chip-check" id="' + checkId + '"></div>' : '';
-      chip.innerHTML = '<span class="mq-bands-chip-icon">' + cat.emoji + '</span>'
+      chip.innerHTML = '<span class="mq-bands-chip-icon" style="color:'+(cat.color||'currentColor')+'">' + (cat.icon ? mqIconSVG(cat.icon,20) : cat.emoji) + '</span>'
         + '<div class="mq-bands-chip-text">'
         + '<div class="mq-bands-chip-name">' + cat.name + '</div>'
         + '<div class="mq-bands-chip-sub">' + cat.sub + '</div>'
@@ -82135,6 +82612,7 @@ function mqSaveStats(s) {
 // Saves enough state to resume after a background-kill. Questions are stored as
 // {pack, idx} refs and reconstructed from PACKS — avoids serialising full objects.
 function mqSaveInProgress() {
+  if (MQ.mode === 'daily') return;   // daily uses its own dedicated mq_daily persistence
   if (!MQ.questions || !MQ.questions.length) return;
   var snap = {
     mode:    MQ.mode,
@@ -82355,6 +82833,7 @@ function mqGoLanding() {
   mqClearInProgress();
   mqSetHeader('MUSIC QUIZ','test your knowledge');
   mqShowScreen('mqScreenLanding');
+  if (typeof mqSyncDailyCard === 'function') mqSyncDailyCard();
   // Restart the ambient track from the top on the menu (music was stopped at results)
   if (progState.mqMusicOn !== false) mqAmbStart();
 }
@@ -82401,6 +82880,64 @@ function mqToggleSurvivalPack(id) {
   mqRenderSurvivalPackGrid();
 }
 // ── Pack groups ───────────────────────────────────────────
+
+// ── Lucide line-icons for Music Quiz (Pass 1) ───────────────────────────────
+// SVG path bodies pulled from lucide-static (ISC licensed). Rendered via mqIconSVG().
+// The emoji fields on PACKS/MQ_GROUPS are kept for plain-text contexts (share text).
+var MQ_PACK_ICONS = {
+  'guitar_gods': '<path d="m11.9 12.1 4.514-4.514" /> <path d="M20.1 2.3a1 1 0 0 0-1.4 0l-1.114 1.114A2 2 0 0 0 17 4.828v1.344a2 2 0 0 1-.586 1.414A2 2 0 0 1 17.828 7h1.344a2 2 0 0 0 1.414-.586L21.7 5.3a1 1 0 0 0 0-1.4z" /> <path d="m6 16 2 2" /> <path d="M8.23 9.85A3 3 0 0 1 11 8a5 5 0 0 1 5 5 3 3 0 0 1-1.85 2.77l-.92.38A2 2 0 0 0 12 18a4 4 0 0 1-4 4 6 6 0 0 1-6-6 4 4 0 0 1 4-4 2 2 0 0 0 1.85-1.23z" />',
+  'beatles': '<circle cx="12" cy="12" r="10" /> <path d="M6 12c0-1.7.7-3.2 1.8-4.2" /> <circle cx="12" cy="12" r="2" /> <path d="M18 12c0 1.7-.7 3.2-1.8 4.2" />',
+  'jazz_legends': '<path d="M2 10v3" /> <path d="M6 6v11" /> <path d="M10 3v18" /> <path d="M14 8v7" /> <path d="M18 5v13" /> <path d="M22 10v3" />',
+  'rock_metal': '<path d="M18 12.5V10a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1.4" /> <path d="M14 11V9a2 2 0 1 0-4 0v2" /> <path d="M10 10.5V5a2 2 0 1 0-4 0v9" /> <path d="m7 15-1.76-1.76a2 2 0 0 0-2.83 2.82l3.6 3.6C7.5 21.14 9.2 22 12 22h2a8 8 0 0 0 8-8V7a2 2 0 1 0-4 0v5" />',
+  'theory_fundamentals': '<path d="M12 7v14" /> <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />',
+  'studio_recording': '<path d="M10 8h4" /> <path d="M12 21v-9" /> <path d="M12 8V3" /> <path d="M17 16h4" /> <path d="M19 12V3" /> <path d="M19 21v-5" /> <path d="M3 14h4" /> <path d="M5 10V3" /> <path d="M5 21v-7" />',
+  'gear_equipment': '<path d="M14 17H5" /> <path d="M19 7h-9" /> <circle cx="17" cy="17" r="3" /> <circle cx="7" cy="7" r="3" />',
+  'music_history': '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" />',
+  'guitar_technique': '<path d="m11.9 12.1 4.514-4.514" /> <path d="M20.1 2.3a1 1 0 0 0-1.4 0l-1.114 1.114A2 2 0 0 0 17 4.828v1.344a2 2 0 0 1-.586 1.414A2 2 0 0 1 17.828 7h1.344a2 2 0 0 0 1.414-.586L21.7 5.3a1 1 0 0 0 0-1.4z" /> <path d="m6 16 2 2" /> <path d="M8.23 9.85A3 3 0 0 1 11 8a5 5 0 0 1 5 5 3 3 0 0 1-1.85 2.77l-.92.38A2 2 0 0 0 12 18a4 4 0 0 1-4 4 6 6 0 0 1-6-6 4 4 0 0 1 4-4 2 2 0 0 0 1.85-1.23z" />',
+  'bass': '<rect width="16" height="20" x="4" y="2" rx="2" /> <path d="M12 6h.01" /> <circle cx="12" cy="14" r="4" /> <path d="M12 14h.01" />',
+  'drums': '<path d="m2 2 8 8" /> <path d="m22 2-8 8" /> <ellipse cx="12" cy="9" rx="10" ry="5" /> <path d="M7 13.4v7.9" /> <path d="M12 14v8" /> <path d="M17 13.4v7.9" /> <path d="M2 9v8a10 5 0 0 0 20 0V9" />',
+  'keys': '<path d="M18.5 8c-1.4 0-2.6-.8-3.2-2A6.87 6.87 0 0 0 2 9v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8.5C22 9.6 20.4 8 18.5 8" /> <path d="M2 14h20" /> <path d="M6 14v4" /> <path d="M10 14v4" /> <path d="M14 14v4" /> <path d="M18 14v4" />',
+  'vocals': '<path d="m11 7.601-5.994 8.19a1 1 0 0 0 .1 1.298l.817.818a1 1 0 0 0 1.314.087L15.09 12" /> <path d="M16.5 21.174C15.5 20.5 14.372 20 13 20c-2.058 0-3.928 2.356-6 2-2.072-.356-2.775-3.369-1.5-4.5" /> <circle cx="16" cy="7" r="5" />',
+  'fifties': '<circle cx="12" cy="12" r="10" /> <path d="M6 12c0-1.7.7-3.2 1.8-4.2" /> <circle cx="12" cy="12" r="2" /> <path d="M18 12c0 1.7-.7 3.2-1.8 4.2" />',
+  'sixties': '<circle cx="12" cy="12" r="3" /> <path d="M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5" /> <path d="M12 7.5V9" /> <path d="M7.5 12H9" /> <path d="M16.5 12H15" /> <path d="M12 16.5V15" /> <path d="m8 8 1.88 1.88" /> <path d="M14.12 9.88 16 8" /> <path d="m8 16 1.88-1.88" /> <path d="M14.12 14.12 16 16" />',
+  'seventies': '<rect width="20" height="16" x="2" y="4" rx="2" /> <circle cx="8" cy="10" r="2" /> <path d="M8 12h8" /> <circle cx="16" cy="10" r="2" /> <path d="m6 20 .7-2.9A1.4 1.4 0 0 1 8.1 16h7.8a1.4 1.4 0 0 1 1.4 1l.7 3" />',
+  'eighties': '<path d="m17 2-5 5-5-5" /> <rect width="20" height="15" x="2" y="7" rx="2" />',
+  'nineties': '<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" />',
+  'noughties': '<rect width="14" height="20" x="5" y="2" rx="2" ry="2" /> <path d="M12 18h.01" />'
+};
+var MQ_GROUP_ICONS = {
+  'general': '<path d="M9 18V5l12-2v13" /> <circle cx="6" cy="18" r="3" /> <circle cx="18" cy="16" r="3" />',
+  'instrument': '<path d="m11.9 12.1 4.514-4.514" /> <path d="M20.1 2.3a1 1 0 0 0-1.4 0l-1.114 1.114A2 2 0 0 0 17 4.828v1.344a2 2 0 0 1-.586 1.414A2 2 0 0 1 17.828 7h1.344a2 2 0 0 0 1.414-.586L21.7 5.3a1 1 0 0 0 0-1.4z" /> <path d="m6 16 2 2" /> <path d="M8.23 9.85A3 3 0 0 1 11 8a5 5 0 0 1 5 5 3 3 0 0 1-1.85 2.77l-.92.38A2 2 0 0 0 12 18a4 4 0 0 1-4 4 6 6 0 0 1-6-6 4 4 0 0 1 4-4 2 2 0 0 0 1.85-1.23z" />',
+  'decades': '<path d="M8 2v4" /> <path d="M16 2v4" /> <rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M3 10h18" /> <path d="M8 14h.01" /> <path d="M12 14h.01" /> <path d="M16 14h.01" /> <path d="M8 18h.01" /> <path d="M12 18h.01" /> <path d="M16 18h.01" />',
+  'online': '<circle cx="12" cy="12" r="10" /> <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /> <path d="M2 12h20" />'
+};
+var MQ_MODE_ICONS = {
+  'quick': '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />',
+  'custom': '<path d="M10 5H3" /> <path d="M12 19H3" /> <path d="M14 3v4" /> <path d="M16 17v4" /> <path d="M21 12h-9" /> <path d="M21 19h-5" /> <path d="M21 5h-7" /> <path d="M8 10v4" /> <path d="M8 12H3" />',
+  'survival': '<path d="m12.5 17-.5-1-.5 1h1z" /> <path d="M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z" /> <circle cx="15" cy="12" r="1" /> <circle cx="9" cy="12" r="1" />',
+  'daily': '<path d="M8 2v4" /> <path d="M16 2v4" /> <rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M3 10h18" /> <path d="M8 14h.01" /> <path d="M12 14h.01" /> <path d="M16 14h.01" /> <path d="M8 18h.01" /> <path d="M12 18h.01" /> <path d="M16 18h.01" />'
+};
+// Wrap a stored icon-body in an <svg>. size in px. Returns '' if no icon (caller can fall back to emoji).
+function mqIconSVG(body, size) {
+  if (!body) return '';
+  size = size || 22;
+  return '<svg viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" '
+       + 'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block">'+body+'</svg>';
+}
+// Icon for a pack id (falls back to emoji span if no mapped icon).
+function mqPackIcon(packId, size) {
+  var body = MQ_PACK_ICONS[packId];
+  if (body) {
+    var col = (typeof MQ_PACK_COLORS !== 'undefined' && MQ_PACK_COLORS[packId]) ? MQ_PACK_COLORS[packId] : '';
+    // Colour via a wrapper's CSS `color` + SVG currentColor. CSS resolves var()
+    // reliably (SVG stroke="var(--x)" does NOT render in some WebViews).
+    var svg = mqIconSVG(body, size);
+    return col ? '<span style="color:' + col + ';display:inline-flex">' + svg + '</span>' : svg;
+  }
+  var p = PACKS[packId];
+  return (p && p.emoji) ? p.emoji : '';
+}
+
 var MQ_GROUPS = [
   { id:'general',    label:'GENERAL',    emoji:'\uD83C\uDFB5' },
   { id:'instrument', label:'INSTRUMENT', emoji:'\uD83C\uDFB8' },
@@ -82442,7 +82979,7 @@ function mqGroupTabs() {
   MQ_GROUPS.forEach(function(grp) {
     var tab = document.createElement('div');
     tab.className = 'mq-group-tab' + (MQ_GROUP_EXPANDED[grp.id] ? ' active' : '');
-    tab.innerHTML = '<div class="mq-group-tab-emoji">' + grp.emoji + '</div>'
+    tab.innerHTML = '<div class="mq-group-tab-emoji">' + (mqIconSVG(MQ_GROUP_ICONS[grp.id],16) || grp.emoji) + '</div>'
       + '<div>' + grp.label + '</div>';
     (function(id){ tab.onclick = function() { mqSetGroup(id); }; })(grp.id);
     wrap.appendChild(tab);
@@ -82480,7 +83017,7 @@ function mqRenderSurvivalPackGrid() {
       if (sel) btn.style.cssText = 'border-color:'+col+';background:color-mix(in srgb,'+col+' 8%,var(--surface));';
       var qCount = pack.questions ? pack.questions.filter(function(q){return q&&q.q;}).length : 0;
       var countLabel = qCount > 0 ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7.5px;color:'+(sel?col:'var(--muted)')+';margin-left:auto;flex-shrink:0;">'+qCount+'Q</span>' : '';
-      btn.innerHTML = '<span class="mq-sheet-pack-emoji">'+pack.emoji+'</span>'
+      btn.innerHTML = '<span class="mq-sheet-pack-emoji">'+mqPackIcon(id,18)+'</span>'
         + '<span class="mq-sheet-pack-name" style="'+(sel?'color:'+col:'')+'">'+pack.name+'</span>'
         + countLabel;
       (function(pid){ btn.onclick = function() { mqToggleSurvivalPack(pid); }; })(id);
@@ -82514,7 +83051,7 @@ function mqRenderPackGrid() {
       var btn = document.createElement('div');
       btn.className = 'mq-pack-btn' + (sel ? ' selected' : '');
       if (sel) btn.style.cssText = 'border-color:'+col+';background:color-mix(in srgb,'+col+' 6%,var(--surface));';
-      btn.innerHTML = '<span class="mq-pack-emoji">'+pack.emoji+'</span>'
+      btn.innerHTML = '<span class="mq-pack-emoji">'+mqPackIcon(id,18)+'</span>'
         + '<div class="mq-pack-info">'
         + '<div class="mq-pack-name" style="color:'+col+'">'+pack.name+'</div>'
         + '<div class="mq-pack-desc">'+pack.desc+'</div></div>'
@@ -82550,7 +83087,7 @@ function mqRenderSheetPackGrid() {
       var col = MQ_PACK_COLORS[id] || 'var(--accent-soft)';
       var btn = document.createElement('div');
       btn.className = 'mq-sheet-pack-btn';
-      btn.innerHTML = '<span class="mq-sheet-pack-emoji">'+pack.emoji+'</span>'
+      btn.innerHTML = '<span class="mq-sheet-pack-emoji">'+mqPackIcon(id,18)+'</span>'
         + '<span class="mq-sheet-pack-name" style="color:'+col+'">'+pack.name+'</span>';
       (function(packId){ btn.onclick = function() { mqShowPackPopup(packId); }; })(id);
       subGrid.appendChild(btn);
@@ -82699,7 +83236,12 @@ function mqRenderQ() {
   mqSaveInProgress();
   var isSurv = MQ.mode==='survival';
   var labels = {quick:'QUICK PLAY',custom:'CUSTOM',survival:'SURVIVAL'};
-  document.getElementById('mqModeLabel').textContent = labels[MQ.mode]||'';
+  if (MQ.mode === 'daily') {
+    var _dp = PACKS[MQ.dailyPackId] || {};
+    document.getElementById('mqModeLabel').textContent = 'DAILY \u00b7 ' + (_dp.name || 'QUIZ').toUpperCase();
+  } else {
+    document.getElementById('mqModeLabel').textContent = labels[MQ.mode]||'';
+  }
   var pct = isSurv ? 0 : (MQ.current/MQ.qCount)*100;
   document.getElementById('mqProgressFill').style.width = pct+'%';
   if (isSurv) {
@@ -82787,6 +83329,7 @@ function mqAnswer(idx) {
   if (correct) {
     if (MQ.packStats[q.pack]) MQ.packStats[q.pack][0]++;
     MQ.streak++; MQ.correct++;
+    if (MQ.mode === 'daily' && MQ.dailyAnswers) { MQ.dailyAnswers.push(true); mqDailyLockAnswer(); }
     if (MQ.streak>MQ.bestStreak) MQ.bestStreak=MQ.streak;
     var pts = MQ.timed ? Math.round(100+MQ.timerVal*6) : MQ.streak>=3?120:100;
     MQ.score+=pts; MQ.xp+=MQ.streak>=3?15:10;
@@ -82801,6 +83344,7 @@ function mqAnswer(idx) {
     mqAmbDuck();
   } else {
     MQ.streak=0;
+    if (MQ.mode === 'daily' && MQ.dailyAnswers) { MQ.dailyAnswers.push(false); mqDailyLockAnswer(); }
     hapticWrong(); playCueWrong();
     mqAmbDuck();
     if (MQ.mode==='survival') {
@@ -82875,6 +83419,13 @@ function mqHideFeedbackSheet() {
 function mqNextQ() {
   mqHideFeedbackSheet();
   MQ.current++;
+  // Daily: persist progress after every answer (anti-cheese resume), always finish via results.
+  if (MQ.mode === 'daily') {
+    if (MQ.current >= MQ.qCount) { mqShowResults(); return; }
+    mqDailyPersist('in_progress');
+    mqRenderQ();
+    return;
+  }
   // Check win state (cleared all questions in selected packs)
   if (MQ.mode !== 'survival' && mqCheckAllCleared()) { mqShowWin(); return; }
   if (MQ.current >= MQ.qCount) { mqShowResults(); return; }
@@ -82917,6 +83468,7 @@ function mqShowResults() {
   if (MQ.timerInterval) clearInterval(MQ.timerInterval);
   mqClearInProgress();
   mqCommitSessionStats();
+  if (MQ.mode === 'daily') { mqMaybeSaveDaily(); mqShowDailyResult(mqDailyLoad()); return; }
   mqShowScreen('mqScreenResults');
   var isSurv=MQ.mode==='survival';
   // Stop background music and fire the appropriate ending stinger
@@ -82985,7 +83537,7 @@ function mqShowResults() {
     var row=document.createElement('div');
     row.className='mq-bk-row';
     row.innerHTML='<div class="mq-bk-dot" style="background:'+col+'"></div>'
-      +'<div class="mq-bk-name">'+pack.emoji+' '+pack.name.toUpperCase()+'</div>'
+      +'<div class="mq-bk-name"><span class="mq-bk-ic">'+(mqPackIcon(packId,13)||pack.emoji)+'</span> '+pack.name.toUpperCase()+'</div>'
       +'<div class="mq-bk-bar-wrap"><div class="mq-bk-bar" style="width:0%;background:'+col+'" data-p="'+pct+'"></div></div>'
       +'<div class="mq-bk-score">'+got+'/'+tot+'</div>';
     bd.appendChild(row);
@@ -83042,7 +83594,7 @@ function mqShowPackPopup(packId) {
   var pack = PACKS[packId];
   var col = MQ_PACK_COLORS[packId] || 'var(--accent-soft)';
   var qTotal = pack.questions ? pack.questions.filter(function(q){return q&&q.q;}).length : 0;
-  document.getElementById('mqPopupEmoji').textContent = pack.emoji;
+  document.getElementById('mqPopupEmoji').innerHTML = mqPackIcon(packId,28) || pack.emoji;
   document.getElementById('mqPopupName').textContent = pack.name;
   document.getElementById('mqPopupName').style.color = col;
   document.getElementById('mqPopupCount').textContent = qTotal + ' QUESTIONS IN PACK';
@@ -83079,6 +83631,339 @@ function mqPopupPlay() {
   mqBuildAndStart();
 }
 function mqShuffle(a){ for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a; }
+
+// ── MUSIC QUIZ — DAILY CHALLENGE ────────────────────────────────────────────
+// Seeded with intonareDailySeed('quiz') (same FNV-1a mechanism as Chordle/Tonale/Diadle).
+// One pack chosen per day, deterministic for everyone. 10 questions, ONE attempt.
+//
+// Anti-cheese: progress is persisted after every answer. Backing out and re-entering
+// RESUMES from the next unanswered question — you cannot restart, retry a missed
+// question, or cheese by closing the app. The attempt is committed the moment you start.
+//
+// localStorage 'mq_daily' shape:
+//   { date, packId, status:'in_progress'|'done',
+//     current, score, correct, streak, bestStreak, xp, answers[] }
+
+function mqDailyLoad() {
+  try { return JSON.parse(localStorage.getItem('mq_daily') || 'null') || null; }
+  catch(e) { return null; }
+}
+function mqDailySave(o) {
+  try { localStorage.setItem('mq_daily', JSON.stringify(o)); } catch(e) {}
+}
+function mqDailyDate() {
+  var d = new Date();
+  return (d.getMonth()+1) + '/' + d.getDate() + '/' + d.getFullYear();
+}
+
+// Today's daily state, or null if none / stale (different day).
+function mqDailyState() {
+  var s = mqDailyLoad();
+  if (!s || s.date !== todayStr()) return null;
+  return s;
+}
+
+// Deterministic pack id for today.
+function mqGetDailyPack() {
+  var packIds = Object.keys(PACKS);
+  var rng = intonareMulberry(intonareDailySeed('quiz'));
+  return packIds[Math.floor(rng() * packIds.length)];
+}
+
+// Deterministic 10-question list for today (one pack, seeded shuffle).
+function mqBuildDailyQuestions() {
+  var rng = intonareMulberry(intonareDailySeed('quiz'));
+  var packIds = Object.keys(PACKS);
+  var packIdx = Math.floor(rng() * packIds.length);   // 1st rng call = pack pick
+  var packId  = packIds[packIdx];
+  var pack    = PACKS[packId];
+  if (!pack) return [];
+  var pool = [];
+  for (var i = 0; i < pack.questions.length; i++) {
+    var q = pack.questions[i];
+    if (q && q.q && q.opts && q.opts.length === 4) {
+      pool.push(Object.assign({}, q, { pack: packId, idx: i }));
+    }
+  }
+  for (var i = pool.length - 1; i > 0; i--) {        // rng continues = question shuffle
+    var j = Math.floor(rng() * (i + 1));
+    var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+  }
+  return pool.slice(0, 10);
+}
+
+// ── Badge sync (top-right) ──────────────────────────────────────────────────
+function mqSyncDailyCard() {
+  var badge = document.getElementById('mqDailyBadge');
+  var dot   = document.getElementById('mqDailyBadgeDot');
+  var label = document.getElementById('mqDailyBadgeLabel');
+  if (!badge) return;
+  var st = mqDailyState();
+  if (st && st.status === 'done') {
+    badge.classList.add('mq-daily-done-badge');
+    if (label) label.textContent = (st.correct || 0) + '/10';
+    if (dot) dot.classList.remove('show');
+  } else if (st && st.status === 'in_progress') {
+    badge.classList.remove('mq-daily-done-badge');
+    if (label) label.textContent = 'RESUME';
+    if (dot) dot.classList.add('show');     // pulse: unfinished daily
+  } else {
+    badge.classList.remove('mq-daily-done-badge');
+    if (label) label.textContent = 'DAILY';
+    if (dot) dot.classList.add('show');     // pulse: not played yet today
+  }
+}
+
+// ── Popup ───────────────────────────────────────────────────────────────────
+function mqOpenDailyPopup() {
+  var packId = mqGetDailyPack();
+  var pack   = PACKS[packId] || {};
+  var st     = mqDailyState();
+  document.getElementById('mqDailyPopDate').textContent  = mqDailyDate();
+  document.getElementById('mqDailyPopEmoji').innerHTML = mqPackIcon(packId,40) || pack.emoji || '\uD83D\uDCC5';
+  document.getElementById('mqDailyPopName').textContent  = (pack.name || 'Daily Quiz').toUpperCase();
+  document.getElementById('mqDailyPopDesc').textContent  = pack.desc || 'A mix of questions from this pack.';
+
+  var startBtn = document.getElementById('mqDailyPopStartBtn');
+  var shareBtn = document.getElementById('mqDailyPopShareBtn');
+  var meta     = document.getElementById('mqDailyPopMeta');
+  var prog     = document.getElementById('mqDailyPopProgress');
+
+  if (st && st.status === 'done') {
+    // Completed today — show score + share, no replay
+    meta.textContent = 'Completed · ' + (st.correct || 0) + '/10 correct';
+    prog.style.display = 'none';
+    startBtn.textContent = 'VIEW RESULT';
+    startBtn.dataset.mode = 'view';
+    shareBtn.style.display = 'block';
+  } else if (st && (st.status === 'in_progress' || st.status === 'awaiting_finish')) {
+    // Mid-attempt — resume only
+    var done = (st.answers || []).length;
+    meta.textContent = '10 questions · one attempt';
+    prog.style.display = 'block';
+    prog.textContent = 'IN PROGRESS · Q' + Math.min(done + 1, 10) + '/10';
+    startBtn.textContent = 'RESUME →';
+    startBtn.dataset.mode = 'resume';
+    shareBtn.style.display = 'none';
+  } else {
+    // Fresh
+    meta.textContent = '10 questions · one attempt';
+    prog.style.display = 'none';
+    startBtn.textContent = 'START →';
+    startBtn.dataset.mode = 'start';
+    shareBtn.style.display = 'none';
+  }
+  document.getElementById('mqDailyPop').classList.add('active');
+}
+function mqCloseDailyPopup() {
+  document.getElementById('mqDailyPop').classList.remove('active');
+}
+function mqDailyPopAction() {
+  var mode = document.getElementById('mqDailyPopStartBtn').dataset.mode;
+  mqCloseDailyPopup();
+  if (mode === 'view') {
+    mqShowDailyResult(mqDailyState());
+  } else if (mode === 'resume') {
+    mqResumeDaily();
+  } else {
+    mqStartDaily();
+  }
+}
+
+// Lock the just-given answer into persistent storage IMMEDIATELY (before the
+// user taps Next), so backing out from the feedback sheet can't retry it.
+// current is set to answers.length → resume lands on the next unanswered question.
+function mqDailyLockAnswer() {
+  if (MQ.mode !== 'daily') return;
+  var answered = (MQ.dailyAnswers || []).length;
+  mqDailySave({
+    date:       todayStr(),
+    packId:     MQ.dailyPackId || mqGetDailyPack(),
+    status:     answered >= MQ.qCount ? 'awaiting_finish' : 'in_progress',
+    current:    answered,
+    score:      MQ.score      || 0,
+    correct:    MQ.correct    || 0,
+    streak:     MQ.streak     || 0,
+    bestStreak: MQ.bestStreak || 0,
+    xp:         MQ.xp         || 0,
+    answers:    MQ.dailyAnswers || []
+  });
+}
+
+// Push current MQ state into the daily save (called after each answer + on start).
+function mqDailyPersist(status) {
+  if (MQ.mode !== 'daily') return;
+  mqDailySave({
+    date:       todayStr(),
+    packId:     MQ.dailyPackId || mqGetDailyPack(),
+    status:     status,
+    current:    MQ.current     || 0,
+    score:      MQ.score       || 0,
+    correct:    MQ.correct     || 0,
+    streak:     MQ.streak      || 0,
+    bestStreak: MQ.bestStreak  || 0,
+    xp:         MQ.xp          || 0,
+    answers:    MQ.dailyAnswers || []
+  });
+}
+
+// Wire MQ state for a daily run (fresh or resumed).
+function mqDailyEngineSetup(packId, questions) {
+  if (progState.mqMusicOn !== false) mqAmbStart();
+  MQ.mode          = 'daily';
+  MQ.diff          = 'medium';
+  MQ.qCount        = 10;
+  MQ.timed         = false;
+  MQ.selectedPacks = new Set([packId]);
+  MQ.questions     = questions;
+  MQ.lives = 3; MQ.answered = false; MQ.packStats = {};
+  MQ.misses = [];
+  MQ.dailyPackId = packId;
+  Object.keys(PACKS).forEach(function(k) { MQ.packStats[k] = [0,0]; });
+}
+
+function mqStartDaily() {
+  var st = mqDailyState();
+  if (st && st.status === 'done') { mqShowDailyResult(st); return; }
+  if (st && (st.status === 'in_progress' || st.status === 'awaiting_finish')) { mqResumeDaily(); return; }
+  var packId    = mqGetDailyPack();
+  var pack      = PACKS[packId] || {};
+  var questions = mqBuildDailyQuestions();
+  if (!questions || !questions.length) return;
+  mqDailyEngineSetup(packId, questions);
+  MQ.current = 0; MQ.score = 0; MQ.correct = 0;
+  MQ.streak  = 0; MQ.bestStreak = 0; MQ.xp = 0;
+  MQ.dailyAnswers = [];
+  mqDailyPersist('in_progress');   // commit attempt immediately (anti-cheese)
+  mqSyncDailyCard();
+  mqShowScreen('mqScreenQuiz');
+  var lbl = document.getElementById('mqModeLabel');
+  if (lbl) lbl.textContent = 'DAILY \u00b7 ' + (pack.name || 'Quiz').toUpperCase();
+  mqRenderQ();
+}
+
+// Resume a half-finished daily from the next unanswered question.
+function mqResumeDaily() {
+  var st = mqDailyState();
+  if (st && st.status === 'awaiting_finish') {
+    // All 10 answered but never finalised — set up engine then jump to results.
+    var fpack = st.packId || mqGetDailyPack();
+    var fq = mqBuildDailyQuestions();
+    mqDailyEngineSetup(fpack, fq);
+    MQ.dailyAnswers = st.answers || [];
+    MQ.current = MQ.qCount;
+    MQ.score = st.score||0; MQ.correct = st.correct||0;
+    MQ.streak = st.streak||0; MQ.bestStreak = st.bestStreak||0; MQ.xp = st.xp||0;
+    mqShowResults();
+    return;
+  }
+  if (!st || st.status !== 'in_progress') { mqStartDaily(); return; }
+  var packId    = st.packId || mqGetDailyPack();
+  var pack      = PACKS[packId] || {};
+  var questions = mqBuildDailyQuestions();
+  if (!questions || !questions.length) { mqStartDaily(); return; }
+  mqDailyEngineSetup(packId, questions);
+  // Restore counters; jump to the next unanswered question.
+  MQ.dailyAnswers = st.answers || [];
+  MQ.current      = Math.min(MQ.dailyAnswers.length, questions.length);
+  MQ.score        = st.score      || 0;
+  MQ.correct      = st.correct    || 0;
+  MQ.streak       = st.streak     || 0;
+  MQ.bestStreak   = st.bestStreak || 0;
+  MQ.xp           = st.xp         || 0;
+  // If somehow already at/over the end, finalise.
+  if (MQ.current >= questions.length) { mqShowResults(); return; }
+  mqShowScreen('mqScreenQuiz');
+  var lbl = document.getElementById('mqModeLabel');
+  if (lbl) lbl.textContent = 'DAILY \u00b7 ' + (pack.name || 'Quiz').toUpperCase();
+  document.getElementById('mqScoreDisp').textContent = MQ.score + ' pts';
+  mqRenderQ();
+}
+
+// Called from mqShowResults() when mode === 'daily' — flips status to done.
+function mqMaybeSaveDaily() {
+  if (MQ.mode !== 'daily') return;
+  var st = mqDailyState();
+  if (st && st.status === 'done') return;   // idempotent
+  mqDailyPersist('done');
+  mqSyncDailyCard();
+}
+
+function mqShowDailyResult(data) {
+  if (!data) return;
+  var score  = data.correct || 0;
+  var total  = 10;
+  var pct    = Math.round((score / total) * 100);
+  var packId = data.packId || mqGetDailyPack();
+  var pack   = PACKS[packId] || {};
+  document.getElementById('mqDailyResScore').textContent  = score;
+  document.getElementById('mqDailyResDenom').textContent  = '/ ' + total + ' correct';
+  document.getElementById('mqDailyResPct').textContent    = pct + '%';
+  document.getElementById('mqDailyResStreak').textContent = data.bestStreak || 0;
+  document.getElementById('mqDailyResXP').textContent     = '+' + (data.xp || 0);
+  document.getElementById('mqDailyResDate').textContent   = (pack.emoji || '') + '  ' + (pack.name || 'Daily Quiz').toUpperCase() + '  \u00b7  ' + mqDailyDate();
+  var answers = data.answers || [];
+  var emoji = answers.map(function(a) { return a ? '\uD83D\uDFE9' : '\uD83D\uDFE5'; }).join('');
+  document.getElementById('mqDailyResEmoji').textContent  = emoji;
+  mqShowScreen('mqScreenDailyResult');
+  var lbl = document.getElementById('mqModeLabel');
+  if (lbl) lbl.textContent = 'DAILY QUIZ';
+}
+
+function mqDailyShareText() {
+  var data = mqDailyState();
+  if (!data) return '';
+  var packId = data.packId || mqGetDailyPack();
+  var pack   = PACKS[packId] || {};
+  var answers = data.answers || [];
+  var emoji   = answers.map(function(a) { return a ? '\uD83D\uDFE9' : '\uD83D\uDFE5'; }).join('');
+  return 'Intonare Daily Quiz \u2014 ' + mqDailyDate() + '\n' +
+         (pack.emoji || '') + ' ' + (pack.name || 'Daily Quiz') + '\n' +
+         (data.correct || 0) + '/10 correct\n' +
+         emoji + '\nintonare';
+}
+function mqDailyShare() {
+  var txt = mqDailyShareText();
+  if (!txt) return;
+  intonareNativeShare(txt, mqDailyCopy, 'Music Quiz');
+}
+function mqDailyCopy(txt) {
+  // Tier 1: Capacitor Clipboard plugin (most reliable in the Android WebView)
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Clipboard) {
+      window.Capacitor.Plugins.Clipboard.write({ string: txt });
+      mqDailyShareFeedback(); return;
+    }
+  } catch(e) {}
+  // Tier 2: async clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(mqDailyShareFeedback).catch(function(){ mqDailyExecCopy(txt); });
+    return;
+  }
+  // Tier 3: legacy execCommand via temp textarea
+  mqDailyExecCopy(txt);
+}
+function mqDailyExecCopy(txt) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.setAttribute('readonly','');
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, txt.length);
+    document.execCommand('copy'); document.body.removeChild(ta);
+    mqDailyShareFeedback();
+  } catch(e) {}
+}
+function mqDailyShareFeedback() {
+  // Flash "COPIED" on whichever share button is currently visible.
+  var btn = document.querySelector('#mqScreenDailyResult .mq-daily-share-btn') ||
+            document.getElementById('mqDailyPopShareBtn');
+  if (!btn) return;
+  if (btn._orig == null) btn._orig = btn.textContent;
+  btn.textContent = '\u2713 COPIED';
+  clearTimeout(btn._fbTO);
+  btn._fbTO = setTimeout(function(){ btn.textContent = btn._orig; btn._orig = null; }, 1500);
+}
+
 function mqShowXP(msg){
   var t=document.getElementById('mqXpToast');
   t.textContent=msg; t.classList.add('show');
