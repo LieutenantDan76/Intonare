@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.66.20 -->
+<!-- INTONARE_VERSION: 0.66.21 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -13564,7 +13564,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   <!-- Noise grain — subtle texture so it doesn't look purely digital -->
   <div style="position:absolute;inset:0;pointer-events:none;opacity:0.035;mix-blend-mode:overlay;background-image:url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'2\'/%3E%3CfeColorMatrix values=\'0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.08 0\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E')"></div>
   <div id="splash-canvas-wrap" style="position:absolute;left:0;right:0;">
-    <canvas id="splash-canvas" style="width:100%;height:120px"></canvas>
+    <canvas id="splash-canvas" style="width:100%;height:240px"></canvas>
   </div>
   <div id="splash-logo" style="
     position:absolute;
@@ -13741,7 +13741,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     function pinSplashPositions() {
       const half = window.innerHeight / 2;
       const canvasWrap = document.getElementById('splash-canvas-wrap');
-      if (canvasWrap) canvasWrap.style.top = (half - 130) + 'px';
+      if (canvasWrap) canvasWrap.style.top = (half - 190) + 'px';
       if (logo)        logo.style.top      = (half - 10)  + 'px';
       // Base sub/tag off actual logo bottom to avoid overlap at large font sizes
       const logoH = logo ? logo.offsetHeight || 82 : 82;
@@ -13753,7 +13753,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     // ── Wave canvas ────────────────────────────────────────
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
-    let W = 0, H = 120;
+    let W = 0, H = 240;
 
     // ── Background canvas ──────────────────────────────────
     let bgCtx, BW = 0, BH = 0;
@@ -13823,7 +13823,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
     function drawParticles() {
       if (!bgCtx) return;
-      const canvasTop = BH / 2 - 130; // matches pinSplashPositions offset
+      const canvasTop = BH / 2 - 190; // matches pinSplashPositions offset
       particles.forEach(p => {
         const alpha  = p.life * p.life * 0.55;
         const radius = p.size * p.life;
@@ -13951,7 +13951,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       const col = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
 
       // tGlow: floors at 0.48 so halo stays present even when quiet; tracks noisyAmp
-      const tRaw  = Math.min(1, noisyAmp / 22);
+      const tRaw  = Math.min(1, noisyAmp / 44);
       const tGlow = Math.max(0.48, tRaw);
       const tCore = Math.max(0.22, tRaw);
 
@@ -14046,7 +14046,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       const _t2 = (performance.now() - _waveT0) / 1000;
       // Burst envelope: rises fast to peak (~55px) then decays toward a low rest (~14px).
       // RISE: smooth raised-cosine 0→1 over 0.5s. DECAY: exponential from peak to rest.
-      const AMP_PEAK = 55, AMP_REST = 0, RISE_T = 0.5, DECAY_TAU = 0.7;
+      const AMP_PEAK = 100, AMP_REST = 0, RISE_T = 0.5, DECAY_TAU = 0.7;
       let ampCurve;
       if (_t2 < RISE_T) {
         const u = _t2 / RISE_T;
@@ -14058,9 +14058,9 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // Noise scale rides ampCurve directly — noise dies as the wave does
       const noiseScale = Math.min(1, ampCurve / AMP_PEAK);
       noisyAmp = ampCurve
-        + Math.sin(noiseT * 1.00) * 14 * noiseScale
-        + Math.sin(noiseT * 1.73) *  8 * noiseScale
-        + Math.sin(noiseT * 2.41) *  4 * noiseScale;
+        + Math.sin(noiseT * 1.00) * 22 * noiseScale
+        + Math.sin(noiseT * 1.73) * 13 * noiseScale
+        + Math.sin(noiseT * 2.41) *  6 * noiseScale;
       // Hard clamp: can never exceed canvas half-height minus a small margin
       noisyAmp = Math.max(0, Math.min(H / 2 - 5, noisyAmp));
       amplitude = noisyAmp;  // keep amplitude in sync for particles/glow
@@ -14095,32 +14095,27 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     // and wait until it hasn't changed for 2 frames. Falls back to 200ms if
     // visualViewport isn't available (older WebViews). All elements are opacity:0
     // so nothing is visible while we wait.
-    function startWhenStable(cb) {
-      if (!window.visualViewport) { setTimeout(cb, 200); return; }
-      let lastH = window.visualViewport.height;
-      let stableFrames = 0;
-      const needed = 3; // 3 consecutive stable frames (~50ms at 60fps)
-      const maxWait = setTimeout(cb, 500); // hard cap — never wait more than 500ms
-      function check() {
-        const h = window.visualViewport.height;
-        if (h === lastH) {
-          stableFrames++;
-          if (stableFrames >= needed) { clearTimeout(maxWait); cb(); return; }
-        } else {
-          stableFrames = 0;
-          lastH = h;
+    function startWhenStable() {
+      return new Promise(resolve => {
+        if (!window.visualViewport) { setTimeout(resolve, 200); return; }
+        let lastH = window.visualViewport.height;
+        let stableFrames = 0;
+        const needed = 3; // 3 consecutive stable frames (~50ms at 60fps)
+        const maxWait = setTimeout(resolve, 500); // hard cap — never wait more than 500ms
+        function check() {
+          const h = window.visualViewport.height;
+          if (h === lastH) {
+            stableFrames++;
+            if (stableFrames >= needed) { clearTimeout(maxWait); resolve(); return; }
+          } else {
+            stableFrames = 0;
+            lastH = h;
+          }
+          requestAnimationFrame(check);
         }
         requestAnimationFrame(check);
-      }
-      requestAnimationFrame(check);
+      });
     }
-
-    startWhenStable(() => {
-      pinSplashPositions();
-      initCanvasSizes();
-      // Don't call drawWave or start loop here — sequence drives startup
-      // to prevent a stray full-amplitude frame before amplitude=0 is set
-    });
 
     // ── Sequence ──────────────────────────────────────────────────
 
@@ -14132,7 +14127,25 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     targetCA     = 0.0;
     phaseSpeed   = 0.05;  // entry speed (matches curve start)
 
-    await af(200); // give startWhenStable time to fire
+    // Wait for the viewport to actually settle, THEN pin positions and size the
+    // canvas — and only after that does the wave loop start. This is the fix for
+    // the wave occasionally snapping: previously the loop raced a fixed 200ms
+    // delay and could draw before the canvas was positioned/sized.
+    await startWhenStable();
+    pinSplashPositions();
+    initCanvasSizes();
+    // Guard against later viewport shifts (permission dialogs, status bar changes):
+    // re-pin and re-size on any resize so the wave can't drift after it's started.
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        if (!running) return;
+        pinSplashPositions();
+        initCanvasSizes();
+      });
+    }
+    // One rAF so the browser commits the new canvasWrap.top / canvas dimensions
+    // to layout before we draw the first wave frame.
+    await new Promise(r => requestAnimationFrame(r));
 
     // ── Wave fades in on opacity while amplitude rises ───────────
     // Both canvas elements start at 0 opacity so the CA aberration
@@ -18976,7 +18989,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.66.20';
+const INTONARE_VERSION = '0.66.21';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
