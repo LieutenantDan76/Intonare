@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.66.23 -->
+<!-- INTONARE_VERSION: 0.66.24 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -13796,47 +13796,112 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     const shockwaves = [];  // expanding rings fired when wave crests
 
 
-    // ── Particles ─────────────────────────────────────────────────────────
-    function spawnParticle(rgb) {
-      particles.push({
-        x:     W * (0.2 + Math.random() * 0.6),
-        y:     H / 2 + (Math.random() - 0.5) * amplitude * 0.8,
-        vx:    (Math.random() - 0.5) * 0.4,
-        vy:    -(0.35 + Math.random() * 0.55),
-        size:  0.8 + Math.random() * 1.6,
-        life:  1.0,
-        decay: 0.008 + Math.random() * 0.006,
-        r: rgb[0], g: rgb[1], b: rgb[2],
-      });
-    }
-
-    function updateParticles(rgb) {
-      particleTimer++;
-      const spawnInterval = Math.max(3, Math.round(8 - amplitude * 0.15));
-      if (particleTimer % spawnInterval === 0 && amplitude > 2) spawnParticle(rgb);
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x  += p.vx; p.y  += p.vy; p.vy *= 0.995; p.life -= p.decay;
-        if (p.life <= 0) particles.splice(i, 1);
+    // ── Gather particles ──────────────────────────────────────────────────
+    // Concept B: scattered dots fly in and assemble into a waveform along the
+    // canvas centre line, the waveform lives briefly, then the dots scatter
+    // outward and fade to nothing — clearing the stage for the logo.
+    const GP_COUNT = 110;
+    const gparts = [];
+    function initGatherParticles() {
+      gparts.length = 0;
+      for (let i = 0; i < GP_COUNT; i++) {
+        gparts.push({
+          sx: Math.random() * W,           // scattered start x
+          sy: Math.random() * H,           // scattered start y
+          dx: (Math.random() - 0.5) * 2,   // scatter direction
+          dy: (Math.random() - 0.5) * 2,
+          jitter: Math.random() * 6.28,    // per-particle phase offset on the wave
+          size: 1.4 + Math.random() * 1.0,
+        });
       }
     }
 
-    function drawParticles() {
-      if (!bgCtx) return;
-      const canvasTop = BH / 2 - 190; // matches pinSplashPositions offset
-      particles.forEach(p => {
-        const alpha  = p.life * p.life * 0.55;
-        const radius = p.size * p.life;
-        const sy = canvasTop + (H / 2) + (p.y - H / 2);
-        const grad = bgCtx.createRadialGradient(p.x, sy, 0, p.x, sy, radius * 5);
-        grad.addColorStop(0,   `rgba(${p.r},${p.g},${p.b},${alpha * 0.9})`);
-        grad.addColorStop(0.4, `rgba(${p.r},${p.g},${p.b},${alpha * 0.3})`);
-        grad.addColorStop(1,   'rgba(0,0,0,0)');
-        bgCtx.beginPath();
-        bgCtx.arc(p.x, sy, radius * 5, 0, Math.PI * 2);
-        bgCtx.fillStyle = grad; bgCtx.fill();
-      });
+    // Animation phase clock (seconds since wave start)
+    let _waveT0 = 0;
+    let gatherEl = 0;
+
+    // The wave the particles assemble onto — a calm multi-sine along the centre.
+    function gatherWaveY(u, t) {
+      const env = Math.sin(u * Math.PI);          // zero at edges, full in middle
+      const w1 = Math.sin(u * 3.0 * Math.PI * 2 + t * 1.4) * 0.55;
+      const w2 = Math.sin(u * 1.6 * Math.PI * 2 + t * 0.9 + 1.7) * 0.30;
+      const w3 = Math.sin(u * 4.4 * Math.PI * 2 + t * 2.0 + 3.2) * 0.16;
+      return (w1 + w2 + w3) * env;
     }
+
+    function drawGatherParticles(rgb) {
+      const t = gatherEl;
+      const col = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+      const cy = H / 2;
+      // Timeline (seconds):
+      //   0   → 1.0  gather: dots fly from scatter to their wave slot
+      //   1.0 → 2.2  waveform alive (full amplitude)
+      //   2.2 → 2.7  scatter: dots fly outward and fade to zero
+      const g       = _smoothstep(Math.min(1, t / 1.0));        // 0→1 assemble
+      const waveAmp = (H / 2 - 8) * 0.9;                         // big amplitude
+      // waveform energy: full while alive, decays to 0 between 2.2 and 2.7
+      let waveE;
+      if (t < 1.0)      waveE = g;
+      else if (t < 2.2) waveE = 1;
+      else              waveE = Math.max(0, 1 - (t - 2.2) / 0.5);
+      const scatter = Math.max(0, (t - 2.2) / 0.45);            // outward fly after 2.2s
+
+      ctx.clearRect(0, 0, W, H);
+
+      for (let i = 0; i < GP_COUNT; i++) {
+        const p = gparts[i];
+        const u = i / (GP_COUNT - 1);
+        // target slot on the wave (with tiny per-particle jitter so it's not a rigid line)
+        const tx = u * W;
+        const ty = cy + gatherWaveY(u, t) * waveAmp * waveE
+                      + Math.sin(p.jitter + t * 3) * 2;
+        // position lerps from scatter origin → wave slot by g
+        let px = p.sx + (tx - p.sx) * g;
+        let py = p.sy + (ty - p.sy) * g;
+        // then flies outward on scatter
+        px += p.dx * scatter * 80;
+        py += p.dy * scatter * 80;
+        const alpha = Math.max(0, (0.35 + 0.65 * g) * (1 - scatter));
+        if (alpha <= 0) continue;
+        const rad = p.size * (0.6 + 0.4 * g);
+        // soft glow dot
+        const grad = ctx.createRadialGradient(px, py, 0, px, py, rad * 4);
+        grad.addColorStop(0,   `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`);
+        grad.addColorStop(0.5, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha * 0.35})`);
+        grad.addColorStop(1,   'rgba(0,0,0,0)');
+        ctx.beginPath();
+        ctx.arc(px, py, rad * 4, 0, Math.PI * 2);
+        ctx.fillStyle = grad; ctx.fill();
+        // crisp core
+        ctx.beginPath();
+        ctx.arc(px, py, rad, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${alpha * 0.7})`;
+        ctx.fill();
+      }
+
+      // Once assembled, trace a faint connecting line through the waveform so it
+      // reads as a continuous wave, not just dots. Fades with waveE.
+      if (waveE > 0.02 && g > 0.4) {
+        const lineA = Math.min(1, (g - 0.4) / 0.3) * waveE;
+        ctx.save();
+        ctx.globalAlpha = 0.3 * lineA;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 16 * waveE;
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 3) {
+          const u = x / W;
+          const y = cy + gatherWaveY(u, t) * waveAmp * waveE;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.shadowBlur = 0;
+    }
+
+    function _smoothstep(t) { return t * t * (3 - 2 * t); }
 
     // ── OLED edge lighting ────────────────────────────────────────────────────
     // No centre radials — pure black OLED background.
@@ -13916,184 +13981,28 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         bgCtx.restore();
       });
 
-      // Particles on top
-      drawParticles();
+      // (Gather particles now draw on the main wave canvas, not here.)
     }
 
     // secondary phase for the organic rolling layer
-    let phase2 = 0;  // secondary phase (still used for CA offset)
-    let noiseT = 0;  // drives the noise-drift amplitude modulation
-    let noisyAmp = 28;  // current amplitude, drifts via layered incommensurable sines
-
-    function buildWavePath(offY) {
-      offY = offY || 0;
-      const cy = H / 2;
-      const cycles = 3.5;
-      ctx.beginPath();
-      for (let x = 0; x <= W; x += 2) {
-        const u = x / W;
-        // edge envelope — zero at both sides, full in the middle
-        let env = Math.sin(u * Math.PI);
-        // travelling skew: soft hump drifts left, giving clear direction
-        const crest = 0.5 + 0.5 * Math.sin(u * Math.PI * 2 - phase * 0.5);
-        env *= (0.7 + 0.3 * crest);
-        // Carrier: blend a traveling wave with a standing component. Pure travel reads
-        // as a sideways scroll; pure standing reads as jello. ~55/45 mix gives a sine
-        // that flows but whose crests also rise/fall in place — liquid.
-        const travel   = Math.sin(u * cycles * Math.PI * 2 + phase);
-        const standing = Math.sin(u * cycles * Math.PI * 2) * Math.sin(phase);
-        const primary  = travel * 0.55 + standing * 0.45;
-        const secondary = Math.sin(u * (cycles * 0.5) * Math.PI * 2 + phase2) * 0.25;
-        const y = cy + (primary + secondary) * noisyAmp * env;
-        if (x === 0) ctx.moveTo(x, y + offY); else ctx.lineTo(x, y + offY);
-      }
-    }
-
-    function drawWave() {
-      ctx.clearRect(0, 0, W, H);
-      const rgb = paletteRGB(colorT);
-      const col = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
-
-      // tGlow: floors at 0.48 so halo stays present even when quiet; tracks noisyAmp
-      const tRaw  = Math.min(1, noisyAmp / 44);
-      const tGlow = Math.max(0.48, tRaw);
-      const tCore = Math.max(0.22, tRaw);
-
-      // ── Chromatic aberration ──────────────────────────────────
-      const ca = caberration * 7;
-      if (ca > 0.15) {
-        const caAlpha = Math.min(0.7, caberration * 0.7);
-        ctx.save();
-        ctx.globalCompositeOperation = 'screen';
-        ctx.globalAlpha = caAlpha;
-        ctx.strokeStyle = 'rgba(255,50,50,0.8)';
-        ctx.lineWidth = 2.2;
-        buildWavePath(ca); ctx.stroke();
-        ctx.restore();
-        ctx.save();
-        ctx.globalCompositeOperation = 'screen';
-        ctx.globalAlpha = caAlpha;
-        ctx.strokeStyle = 'rgba(50,100,255,0.8)';
-        ctx.lineWidth = 2.2;
-        buildWavePath(-ca); ctx.stroke();
-        ctx.restore();
-      }
-
-      // ── Wide atmospheric glow ─────────────────────────────────────────
-      ctx.save();
-      ctx.globalAlpha = 0.16;
-      ctx.strokeStyle = col; ctx.lineWidth = 26 * tGlow;
-      ctx.shadowColor = col; ctx.shadowBlur = 55 * tGlow;
-      buildWavePath(); ctx.stroke();
-      ctx.restore();
-
-      // ── Mid glow ──────────────────────────────────────────────────────
-      ctx.save();
-      ctx.globalAlpha = 0.26;
-      ctx.strokeStyle = col; ctx.lineWidth = 11 * tGlow;
-      ctx.shadowColor = col; ctx.shadowBlur = 38 * tGlow;
-      buildWavePath(); ctx.stroke();
-      ctx.restore();
-
-      // ── Crisp core line ───────────────────────────────────────────────
-      ctx.save();
-      ctx.strokeStyle = col; ctx.lineWidth = Math.max(0.5, 2.5 * tCore);
-      ctx.shadowColor = col; ctx.shadowBlur = 18 * tCore;
-      buildWavePath(); ctx.stroke();
-      ctx.restore();
-
-      // ── White-hot centre line ─────────────────────────────────────────
-      ctx.save();
-      ctx.globalAlpha = 0.72 * tCore;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = Math.max(0.3, 1.0 * tCore);
-      ctx.shadowColor = '#ffffff';
-      ctx.shadowBlur = 6 * tCore;
-      buildWavePath(); ctx.stroke();
-      ctx.restore();
-
-      // ── Background + particles ─────────────────────────────────────────
-      updateParticles(rgb);
-      drawBackground(rgb);
-    }
-
-    // ── Continuous splash motion curve (Take 2 "Momentum") ──────────────
-    // Speed follows one smooth curve over elapsed time — raised-cosine rise to
-    // a peak, then a steep exponential settle to dead-flat. No target-chasing,
-    // so there are no plateaus or hitches. Amplitude rides the speed directly.
-    let _waveT0 = 0;
-    function _splashSpeed(t) {
-      const PEAK = 0.30, DRIFT = 0.004, RISE = 0.6, TAU = 0.85, FLAT_AT = 3.2;
-      if (t < RISE) {
-        const u = t / RISE;
-        const e = 0.5 - 0.5 * Math.cos(u * Math.PI); // smooth 0→1
-        return 0.05 + (PEAK - 0.05) * e;
-      }
-      const td = t - RISE;
-      const expPart = DRIFT + (PEAK - DRIFT) * Math.exp(-td / TAU);
-      if (t < FLAT_AT) return expPart;
-      return Math.max(0.0015, expPart * Math.exp(-(t - FLAT_AT) / 0.5));
-    }
-
     function loop() {
       if (!running) return;
-      // Time-driven speed: continuous curve, no easing toward targets.
-      const _t = (performance.now() - _waveT0) / 1000;
-      phaseSpeed  = _splashSpeed(_t);
-      // Phase advances — edge envelope creates the contained look. A gentle speed
-      // wander (two slow sines, ±18%) keeps it from looking metronomic.
-      const _spdMod = 1 + 0.12 * Math.sin(_t * 1.3) + 0.06 * Math.sin(_t * 2.7);
-      phase  += phaseSpeed * _spdMod;
-      phase2 += phaseSpeed * 0.42;  // secondary layer, slower
-      // Amplitude follows a burst curve driven by elapsed time — big surge on entry
-      // then a long exponential decay to a low resting flutter. No targetAmp ceiling;
-      // the curve owns the shape entirely. noiseT adds organic drift on top.
-      noiseT += 0.007;
-      const _t2 = (performance.now() - _waveT0) / 1000;
-      // Burst envelope: rises fast to peak (~55px) then decays toward a low rest (~14px).
-      // RISE: smooth raised-cosine 0→1 over 0.5s. DECAY: exponential from peak to rest.
-      const AMP_PEAK = 100, AMP_REST = 0, RISE_T = 0.5, DECAY_TAU = 0.7;
-      let ampCurve;
-      if (_t2 < RISE_T) {
-        const u = _t2 / RISE_T;
-        ampCurve = AMP_PEAK * (0.5 - 0.5 * Math.cos(u * Math.PI));
-      } else {
-        const td = _t2 - RISE_T;
-        ampCurve = AMP_REST + (AMP_PEAK - AMP_REST) * Math.exp(-td / DECAY_TAU);
-      }
-      // Noise scale rides ampCurve directly — noise dies as the wave does
-      const noiseScale = Math.min(1, ampCurve / AMP_PEAK);
-      noisyAmp = ampCurve
-        + Math.sin(noiseT * 1.00) * 22 * noiseScale
-        + Math.sin(noiseT * 1.73) * 13 * noiseScale
-        + Math.sin(noiseT * 2.41) *  6 * noiseScale;
-      // Hard clamp: can never exceed canvas half-height minus a small margin
-      noisyAmp = Math.max(0, Math.min(H / 2 - 5, noisyAmp));
-      amplitude = noisyAmp;  // keep amplitude in sync for particles/glow
-      colorT      += (targetColorT - colorT)      * 0.007;
-      // CA eases very slowly — deliberate, visible "locking in"
-      caberration += (targetCA     - caberration) * 0.006;
-      bgPulse     += 0.012;
-      logoPulse   += 0.008;
-      logoGlow    += (targetLogoGlow - logoGlow)  * 0.025;
-      // Animate logo gradient in sync with wave palette
+      gatherEl = (performance.now() - _waveT0) / 1000;
+      const rgb = paletteRGB(colorT);
+      // Ease colour toward its scheduled target
+      colorT     += (targetColorT - colorT)     * 0.012;
+      bgPulse    += 0.012;
+      logoPulse  += 0.008;
+      logoGlow   += (targetLogoGlow - logoGlow) * 0.025;
+      // Animate logo gradient in sync with palette
       if (logo && logoGlow > 0.01) {
         const lrgb  = paletteRGB(colorT);
         const lrgb2 = paletteRGB(Math.min(1, colorT + 0.22));
         logo.style.backgroundImage =
           `linear-gradient(135deg,rgb(${lrgb[0]},${lrgb[1]},${lrgb[2]}),rgb(${lrgb2[0]},${lrgb2[1]},${lrgb2[2]}))`;
       }
-      // Tick shockwaves
-      for (let i = shockwaves.length - 1; i >= 0; i--) {
-        const sw = shockwaves[i];
-        sw.speed *= 0.95;
-        sw.radius += sw.speed;
-        // Fade faster as it approaches max radius
-        const prog = sw.maxR ? sw.radius / sw.maxR : 1;
-        sw.alpha -= 0.013 + prog * 0.012;
-        if (sw.alpha <= 0 || (sw.maxR && sw.radius >= sw.maxR)) shockwaves.splice(i, 1);
-      }
-      drawWave();
+      drawBackground(rgb);          // edge lighting on bg canvas
+      drawGatherParticles(rgb);     // particles + waveform on main canvas
       requestAnimationFrame(loop);
     }
     // Wait for viewport to stabilise before pinning positions and starting the loop.
@@ -14153,40 +14062,29 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     // to layout before we draw the first wave frame.
     await new Promise(r => requestAnimationFrame(r));
 
-    // ── Wave fades in on opacity while amplitude rises ───────────
-    // Both canvas elements start at 0 opacity so the CA aberration
-    // lines don’t pop — everything materialises together.
-    if (canvas)   { canvas.style.opacity   = '0'; canvas.style.transition = 'opacity 1.4s ease'; }
-    if (bgCanvas) { bgCanvas.style.opacity = '0'; bgCanvas.style.transition = 'opacity 1.4s ease'; }
+    // ── Canvas fades in as particles begin to gather ───────────
+    if (canvas)   { canvas.style.opacity   = '0'; canvas.style.transition = 'opacity 0.9s ease'; }
+    if (bgCanvas) { bgCanvas.style.opacity = '0'; bgCanvas.style.transition = 'opacity 0.9s ease'; }
 
-    amplitude    = 0;
-    noisyAmp     = 0;
+    initGatherParticles();         // build the scattered starting field
+    gatherEl     = 0;
     targetColorT = 0.18;
     running      = true;
-    _waveT0      = performance.now();  // start the continuous motion clock
+    _waveT0      = performance.now();  // start the gather clock
     requestAnimationFrame(loop);
 
     await af(40); // one tick so loop has drawn a frame before we show it
     if (canvas)   canvas.style.opacity   = '1';
     if (bgCanvas) bgCanvas.style.opacity = '1';
 
-    // ── Crest: color + shockwaves fire as the speed curve peaks (~0.6s) ──
+    // ── Colour warms as particles converge (~0.56s) ──
     await af(560);
     targetColorT   = 0.33;
     targetLogoGlow = 1.0;
-    {
-      const rgb = paletteRGB(colorT);
-      shockwaves.push({ radius: 4, speed: 5.5, maxR: 55, alpha: 1.0, r: rgb[0], g: rgb[1], b: rgb[2] });
-      setTimeout(() => {
-        const rgb2 = paletteRGB(colorT);
-        shockwaves.push({ radius: 4, speed: 3.5, maxR: 40, alpha: 0.55, r: rgb2[0], g: rgb2[1], b: rgb2[2] });
-      }, 200);
-    }
 
-    // ── All text arrives as one overlapping group ───────────────
-    // Logo leads, sub and tag follow within the same breath via
-    // CSS transition-delay so it reads as one motion, not three loads.
-    await af(120);
+    // ── Particles assemble into the waveform by ~1.0s; logo + text arrive
+    // riding the formed wave. Timed so the wave is fully assembled behind them.
+    await af(480);  // ~1.04s total — wave just finished assembling
     if (logo) {
       logo.style.transition = 'opacity .9s ease, transform 1.0s cubic-bezier(.16,1,.3,1)';
       logo.style.opacity    = '1';
@@ -14202,12 +14100,13 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     }
     targetColorT = 0.66;
 
-    await af(600);
+    await af(640);
     targetColorT = 1.0;
-    await af(700);
-    // Speed + amplitude settle to flat on their own via the continuous curve
-    // (FLAT_AT pulls the wave to dead-still ~3.2s in). Just give it runway.
-    await af(2400);
+
+    // Particles scatter and clear between 2.2s and ~2.7s on their own (driven by
+    // gatherEl in drawGatherParticles), leaving just the logo. Give runway for the
+    // scatter to finish, then hold the clean logo a beat before dissolving.
+    await af(1900);
 
     // ── Exit: full splash dissolve into the app ────────────
     running = false;
@@ -18995,7 +18894,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.66.23';
+const INTONARE_VERSION = '0.66.24';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
