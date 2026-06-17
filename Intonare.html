@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.66.21 -->
+<!-- INTONARE_VERSION: 0.66.22 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -13937,8 +13937,12 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         // travelling skew: soft hump drifts left, giving clear direction
         const crest = 0.5 + 0.5 * Math.sin(u * Math.PI * 2 - phase * 0.5);
         env *= (0.7 + 0.3 * crest);
-        // primary carrier + slower secondary for organic feel
-        const primary   = Math.sin(u * cycles * Math.PI * 2 + phase);
+        // Carrier: blend a traveling wave with a standing component. Pure travel reads
+        // as a sideways scroll; pure standing reads as jello. ~55/45 mix gives a sine
+        // that flows but whose crests also rise/fall in place — liquid.
+        const travel   = Math.sin(u * cycles * Math.PI * 2 + phase);
+        const standing = Math.sin(u * cycles * Math.PI * 2) * Math.sin(phase);
+        const primary  = travel * 0.55 + standing * 0.45;
         const secondary = Math.sin(u * (cycles * 0.5) * Math.PI * 2 + phase2) * 0.25;
         const y = cy + (primary + secondary) * noisyAmp * env;
         if (x === 0) ctx.moveTo(x, y + offY); else ctx.lineTo(x, y + offY);
@@ -14036,8 +14040,10 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // Time-driven speed: continuous curve, no easing toward targets.
       const _t = (performance.now() - _waveT0) / 1000;
       phaseSpeed  = _splashSpeed(_t);
-      // Phase advances — no cycle scaling, edge envelope creates the contained look.
-      phase  += phaseSpeed;
+      // Phase advances — edge envelope creates the contained look. A gentle speed
+      // wander (two slow sines, ±18%) keeps it from looking metronomic.
+      const _spdMod = 1 + 0.12 * Math.sin(_t * 1.3) + 0.06 * Math.sin(_t * 2.7);
+      phase  += phaseSpeed * _spdMod;
       phase2 += phaseSpeed * 0.42;  // secondary layer, slower
       // Amplitude follows a burst curve driven by elapsed time — big surge on entry
       // then a long exponential decay to a low resting flutter. No targetAmp ceiling;
@@ -18989,7 +18995,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.66.21';
+const INTONARE_VERSION = '0.66.22';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
