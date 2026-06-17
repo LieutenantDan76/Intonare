@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.66.18 -->
+<!-- INTONARE_VERSION: 0.66.19 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -13628,6 +13628,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   function removeSplash() {
     const el = document.getElementById('intonare-splash');
     if (el) el.remove();
+    document.body.style.overflow = '';  // restore scroll
 
     // Preload registered sample instruments on first touch. Staggered in priority
     // order so common instruments are ready first and we don't saturate the
@@ -13716,6 +13717,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   }
 
   async function runSplash() {
+    document.body.style.overflow = 'hidden';  // prevent ghost scrolling during splash
     const splash  = document.getElementById('intonare-splash');
     const canvas  = document.getElementById('splash-canvas');
     const bgCanvas= document.getElementById('splash-bg');
@@ -14039,7 +14041,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       const _t2 = (performance.now() - _waveT0) / 1000;
       // Burst envelope: rises fast to peak (~55px) then decays toward a low rest (~14px).
       // RISE: smooth raised-cosine 0→1 over 0.5s. DECAY: exponential from peak to rest.
-      const AMP_PEAK = 55, AMP_REST = 14, RISE_T = 0.5, DECAY_TAU = 1.4;
+      const AMP_PEAK = 55, AMP_REST = 0, RISE_T = 0.5, DECAY_TAU = 1.4;
       let ampCurve;
       if (_t2 < RISE_T) {
         const u = _t2 / RISE_T;
@@ -14048,8 +14050,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         const td = _t2 - RISE_T;
         ampCurve = AMP_REST + (AMP_PEAK - AMP_REST) * Math.exp(-td / DECAY_TAU);
       }
-      // Noise drift: wider range during the surge, narrows as wave settles
-      const noiseScale = 0.3 + 0.7 * Math.min(1, ampCurve / AMP_PEAK);
+      // Noise scale rides ampCurve directly — noise dies as the wave does
+      const noiseScale = Math.min(1, ampCurve / AMP_PEAK);
       noisyAmp = ampCurve
         + Math.sin(noiseT * 1.00) * 14 * noiseScale
         + Math.sin(noiseT * 1.73) *  8 * noiseScale
@@ -18969,7 +18971,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.66.18';
+const INTONARE_VERSION = '0.66.19';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
