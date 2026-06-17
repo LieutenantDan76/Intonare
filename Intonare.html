@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.66.16 -->
+<!-- INTONARE_VERSION: 0.66.17 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -13914,25 +13914,26 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     }
 
     // secondary phase for the organic rolling layer
-    let phase2 = 0;
+    let phase2 = 0;  // secondary phase (still used for CA offset)
+    let noiseT = 0;  // drives the noise-drift amplitude modulation
+    let noisyAmp = 28;  // current amplitude, drifts via layered incommensurable sines
 
     function buildWavePath(offY) {
       offY = offY || 0;
       const cy = H / 2;
-      // cycles: fixed mid-range feel (like Tónale at a medium pitch)
       const cycles = 3.5;
       ctx.beginPath();
       for (let x = 0; x <= W; x += 2) {
         const u = x / W;
         // edge envelope — zero at both sides, full in the middle
         let env = Math.sin(u * Math.PI);
-        // travelling skew: a soft hump that drifts left, giving clear direction
+        // travelling skew: soft hump drifts left, giving clear direction
         const crest = 0.5 + 0.5 * Math.sin(u * Math.PI * 2 - phase * 0.5);
         env *= (0.7 + 0.3 * crest);
-        // primary carrier (right→left) + slower secondary for organic feel
+        // primary carrier + slower secondary for organic feel
         const primary   = Math.sin(u * cycles * Math.PI * 2 + phase);
         const secondary = Math.sin(u * (cycles * 0.5) * Math.PI * 2 + phase2) * 0.25;
-        const y = cy + (primary + secondary) * amplitude * env;
+        const y = cy + (primary + secondary) * noisyAmp * env;
         if (x === 0) ctx.moveTo(x, y + offY); else ctx.lineTo(x, y + offY);
       }
     }
@@ -13942,8 +13943,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       const rgb = paletteRGB(colorT);
       const col = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
 
-      // tGlow: floors at 0.48 so halo stays present even when quiet
-      const tRaw  = Math.min(1, amplitude / 22);
+      // tGlow: floors at 0.48 so halo stays present even when quiet; tracks noisyAmp
+      const tRaw  = Math.min(1, noisyAmp / 22);
       const tGlow = Math.max(0.48, tRaw);
       const tCore = Math.max(0.22, tRaw);
 
@@ -14028,14 +14029,19 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // Time-driven speed: continuous curve, no easing toward targets.
       const _t = (performance.now() - _waveT0) / 1000;
       phaseSpeed  = _splashSpeed(_t);
-      // Phase advances at the same rate as the old scrolling wave — no cycle scaling.
-      // The edge envelope creates the contained look without needing faster phase.
+      // Phase advances — no cycle scaling, edge envelope creates the contained look.
       phase  += phaseSpeed;
       phase2 += phaseSpeed * 0.42;  // secondary layer, slower
-      // Amplitude rides the speed (clamped), so the wave swells while fast and
-      // flattens as it settles — one unified curve. targetAmp acts as a ceiling.
-      const _ampFromSpeed = Math.min(targetAmp, phaseSpeed * 200);
-      amplitude   += (_ampFromSpeed - amplitude)   * 0.12;
+      noiseT += 0.007;
+      // Noise-drift amplitude: layered sines at incommensurable frequencies so it
+      // never repeats. targetAmp acts as a ceiling on the base level.
+      const _ampBase = Math.min(targetAmp, phaseSpeed * 200);
+      amplitude += (_ampBase - amplitude) * 0.12;  // smoothed base (for particles/glow scale)
+      noisyAmp = amplitude
+        + Math.sin(noiseT * 1.00) * 10
+        + Math.sin(noiseT * 1.73) *  6
+        + Math.sin(noiseT * 2.41) *  3;
+      noisyAmp = Math.max(0, noisyAmp);
       colorT      += (targetColorT - colorT)      * 0.007;
       // CA eases very slowly — deliberate, visible "locking in"
       caberration += (targetCA     - caberration) * 0.006;
@@ -18948,7 +18954,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.66.16';
+const INTONARE_VERSION = '0.66.17';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
