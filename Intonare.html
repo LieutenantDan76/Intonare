@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.66.15 -->
+<!-- INTONARE_VERSION: 0.66.16 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -14034,8 +14034,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       phase2 += phaseSpeed * 0.42;  // secondary layer, slower
       // Amplitude rides the speed (clamped), so the wave swells while fast and
       // flattens as it settles — one unified curve. targetAmp acts as a ceiling.
-      const _ampFromSpeed = Math.min(targetAmp, phaseSpeed * 150);
-      amplitude   += (_ampFromSpeed - amplitude)   * 0.08;
+      const _ampFromSpeed = Math.min(targetAmp, phaseSpeed * 200);
+      amplitude   += (_ampFromSpeed - amplitude)   * 0.12;
       colorT      += (targetColorT - colorT)      * 0.007;
       // CA eases very slowly — deliberate, visible "locking in"
       caberration += (targetCA     - caberration) * 0.006;
@@ -14113,7 +14113,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     if (bgCanvas) { bgCanvas.style.opacity = '0'; bgCanvas.style.transition = 'opacity 1.4s ease'; }
 
     amplitude    = 0;
-    targetAmp    = 30;  // ceiling — kept low so edge-envelope peaks stay within the 120px canvas
+    targetAmp    = 42;  // ceiling — edge-envelope peaks stay within 120px canvas with headroom
     targetColorT = 0.18;
     running      = true;
     _waveT0      = performance.now();  // start the continuous motion clock
@@ -18948,7 +18948,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.66.15';
+const INTONARE_VERSION = '0.66.16';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
