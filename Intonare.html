@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.66.17 -->
+<!-- INTONARE_VERSION: 0.66.18 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -14032,16 +14032,31 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // Phase advances — no cycle scaling, edge envelope creates the contained look.
       phase  += phaseSpeed;
       phase2 += phaseSpeed * 0.42;  // secondary layer, slower
+      // Amplitude follows a burst curve driven by elapsed time — big surge on entry
+      // then a long exponential decay to a low resting flutter. No targetAmp ceiling;
+      // the curve owns the shape entirely. noiseT adds organic drift on top.
       noiseT += 0.007;
-      // Noise-drift amplitude: layered sines at incommensurable frequencies so it
-      // never repeats. targetAmp acts as a ceiling on the base level.
-      const _ampBase = Math.min(targetAmp, phaseSpeed * 200);
-      amplitude += (_ampBase - amplitude) * 0.12;  // smoothed base (for particles/glow scale)
-      noisyAmp = amplitude
-        + Math.sin(noiseT * 1.00) * 10
-        + Math.sin(noiseT * 1.73) *  6
-        + Math.sin(noiseT * 2.41) *  3;
-      noisyAmp = Math.max(0, noisyAmp);
+      const _t2 = (performance.now() - _waveT0) / 1000;
+      // Burst envelope: rises fast to peak (~55px) then decays toward a low rest (~14px).
+      // RISE: smooth raised-cosine 0→1 over 0.5s. DECAY: exponential from peak to rest.
+      const AMP_PEAK = 55, AMP_REST = 14, RISE_T = 0.5, DECAY_TAU = 1.4;
+      let ampCurve;
+      if (_t2 < RISE_T) {
+        const u = _t2 / RISE_T;
+        ampCurve = AMP_PEAK * (0.5 - 0.5 * Math.cos(u * Math.PI));
+      } else {
+        const td = _t2 - RISE_T;
+        ampCurve = AMP_REST + (AMP_PEAK - AMP_REST) * Math.exp(-td / DECAY_TAU);
+      }
+      // Noise drift: wider range during the surge, narrows as wave settles
+      const noiseScale = 0.3 + 0.7 * Math.min(1, ampCurve / AMP_PEAK);
+      noisyAmp = ampCurve
+        + Math.sin(noiseT * 1.00) * 14 * noiseScale
+        + Math.sin(noiseT * 1.73) *  8 * noiseScale
+        + Math.sin(noiseT * 2.41) *  4 * noiseScale;
+      // Hard clamp: can never exceed canvas half-height minus a small margin
+      noisyAmp = Math.max(0, Math.min(H / 2 - 5, noisyAmp));
+      amplitude = noisyAmp;  // keep amplitude in sync for particles/glow
       colorT      += (targetColorT - colorT)      * 0.007;
       // CA eases very slowly — deliberate, visible "locking in"
       caberration += (targetCA     - caberration) * 0.006;
@@ -14119,7 +14134,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     if (bgCanvas) { bgCanvas.style.opacity = '0'; bgCanvas.style.transition = 'opacity 1.4s ease'; }
 
     amplitude    = 0;
-    targetAmp    = 42;  // ceiling — edge-envelope peaks stay within 120px canvas with headroom
+    noisyAmp     = 0;
     targetColorT = 0.18;
     running      = true;
     _waveT0      = performance.now();  // start the continuous motion clock
@@ -18954,7 +18969,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.66.17';
+const INTONARE_VERSION = '0.66.18';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
