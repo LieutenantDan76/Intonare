@@ -120,8 +120,11 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onPause() {
         super.onPause();
-        // Stop the tail if the user backgrounds the app mid-sound.
-        releaseSplashPlayer();
+        // Only stop if the sound has actually started playing. On first launch the
+        // permission dialog fires an onPause BEFORE the splash triggers playback —
+        // releasing here would destroy the primed player and the sound would never
+        // play. So we leave a not-yet-started player alone and let it fire on resume.
+        if (splashPlayed) releaseSplashPlayer();
     }
 
     @Override
