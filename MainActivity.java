@@ -93,14 +93,14 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         // Stop the tail if the user backgrounds the app mid-sound.
         releaseSplashPlayer();
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         releaseSplashPlayer();
         super.onDestroy();
     }
