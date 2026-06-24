@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.68.102 -->
+<!-- INTONARE_VERSION: 0.68.103 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -14645,6 +14645,10 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
       if (notifPlugin) notifPlugin.requestPermissions().catch(() => {});
 
+      // RevenueCat (Pro purchases) — configure the SDK and silently sync any
+      // existing entitlement. No user gesture needed; safe if it fails.
+      try { configureRevenueCat(); } catch (e) {}
+
       // Check mic permission state. If already granted, start immediately.
       // If not yet granted, wait for first touch (which satisfies the user-gesture
       // requirement for the OS permission dialog) then start.
@@ -20328,7 +20332,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.68.102';
+const INTONARE_VERSION = '0.68.103';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -25293,6 +25297,90 @@ function closeProUnlocked() {
   document.getElementById('proUnlockedModal')?.classList.remove('active');
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// REVENUECAT (LAYER 2) — real one-time purchase of Pro via Google Play.
+// Plugin is reached through the Capacitor global bridge (confirmed: registers
+// as window.Capacitor.Plugins.Purchases). No bundler; matches the same pattern
+// used for StatusBar/Share/etc. elsewhere in this file.
+// ───────────────────────────────────────────────────────────────────────────
+const RC_API_KEY = 'goog_rbcoHGgwLmrhKklhmYPGFtvsSKL'; // Android PUBLIC SDK key (safe to ship)
+const RC_ENTITLEMENT = 'pro';                            // entitlement id wired in RevenueCat
+let _rcConfigured = false;
+let _rcCachedPrice = '';                                 // localized price string from the offering
+
+// Accessor for the plugin object; null when not in a Capacitor shell.
+function _rc() {
+  try {
+    if (!isCapacitor()) return null;
+    return (window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases) || null;
+  } catch (e) { return null; }
+}
+
+// Configure the SDK once at startup. Safe no-op on web/desktop.
+async function configureRevenueCat() {
+  const P = _rc();
+  if (!P || _rcConfigured) return;
+  try {
+    await P.configure({ apiKey: RC_API_KEY });
+    _rcConfigured = true;
+    // Silent entitlement sync: if this account already owns Pro (reinstall,
+    // new device, prior purchase), reflect it without making them tap Restore.
+    try {
+      const info = await P.getCustomerInfo();
+      if (_rcHasPro(info && info.customerInfo)) grantPro(true);
+    } catch (e) {}
+    // Prefetch the price so the paywall can show it immediately.
+    try { await refreshPaywallPrice(); } catch (e) {}
+  } catch (e) {
+    // Configuration failure leaves the app fully usable via the code path.
+  }
+}
+
+// True if the customerInfo object shows the Pro entitlement active.
+function _rcHasPro(customerInfo) {
+  try {
+    const ent = customerInfo && customerInfo.entitlements && customerInfo.entitlements.active;
+    return !!(ent && ent[RC_ENTITLEMENT]);
+  } catch (e) { return false; }
+}
+
+// Find the Pro package inside the current offering. The lifetime product may
+// surface under .lifetime, under a custom package id, or just as the first
+// available package — so try the standard slots, then scan. Returns null if none.
+function _rcFindProPackage(offerings) {
+  try {
+    const cur = offerings && offerings.current;
+    if (!cur) return null;
+    if (cur.lifetime) return cur.lifetime;
+    const list = cur.availablePackages || [];
+    if (!list.length) return null;
+    // Prefer a package whose store product id matches our Play product.
+    for (const pkg of list) {
+      const pid = pkg && pkg.product && (pkg.product.identifier || pkg.product.productIdentifier);
+      if (pid === 'intonare_pro_lifetime') return pkg;
+    }
+    // Fallback: first available package.
+    return list[0];
+  } catch (e) { return null; }
+}
+
+// Pull the localized price string (e.g. "$4.99") into the paywall button.
+async function refreshPaywallPrice() {
+  const P = _rc();
+  if (!P) return;
+  try {
+    const offerings = await P.getOfferings();
+    const pkg = _rcFindProPackage(offerings);
+    const price = pkg && pkg.product && (pkg.product.priceString || pkg.product.price_string);
+    if (price) {
+      _rcCachedPrice = price;
+      const el = document.getElementById('pwPrice');
+      if (el) el.textContent = price;
+    }
+  } catch (e) {}
+}
+
+
 // Validate an entered unlock code. Returns true on success and grants Pro.
 function tryUnlockCode(raw) {
   const code = (raw || '').trim().toUpperCase();
@@ -25368,6 +25456,10 @@ function showPaywall(kind, name) {
     if (inp) inp.value = '';
     const err = document.getElementById('pwCodeError');
     if (err) err.style.display = 'none';
+    // Show the cached price immediately if we have it, then refresh from the store.
+    const priceEl = document.getElementById('pwPrice');
+    if (priceEl && _rcCachedPrice) priceEl.textContent = _rcCachedPrice;
+    try { refreshPaywallPrice(); } catch (e) {}
     modal.classList.add('active');
   }
 }
@@ -25411,16 +25503,67 @@ function closeCodeModal() {
   document.getElementById('codeModal')?.classList.remove('active');
 }
 
-// ─── Purchase / restore (layer 2 wiring lands here) ───
-// Dormant until RevenueCat is wired. For now they explain that purchasing isn't
-// live yet, so the paywall is fully functional via the code path in the meantime.
-function paywallBuy() {
-  // LAYER 2: call RevenueCat purchasePackage here, then grantPro() on success.
-  alert(t('pw_soon') || 'Purchasing will be available at launch. For now, enter an unlock code.');
+// ─── Purchase / restore (layer 2 — RevenueCat) ───
+// Real one-time purchase flow. Falls back to a clear message if the store
+// isn't reachable; the unlock-code path remains available regardless.
+async function paywallBuy() {
+  const P = _rc();
+  if (!P) {
+    alert(t('pw_store_unavailable') || 'The store is only available in the installed app.');
+    return;
+  }
+  const btn = document.getElementById('pwBuyBtn');
+  if (btn) btn.disabled = true;
+  try {
+    if (!_rcConfigured) await configureRevenueCat();
+    const offerings = await P.getOfferings();
+    const pkg = _rcFindProPackage(offerings);
+    if (!pkg) {
+      alert(t('pw_no_product') || 'Pro is not available to purchase right now. Please try again later.');
+      return;
+    }
+    const res = await P.purchasePackage({ aPackage: pkg });
+    const info = res && (res.customerInfo || res.purchaserInfo);
+    if (_rcHasPro(info)) {
+      grantPro(true); // shows the celebratory unlocked modal
+    } else {
+      // Purchase returned but entitlement not active (rare; backend lag).
+      alert(t('pw_purchase_pending') || 'Your purchase is being confirmed. If Pro does not unlock shortly, tap Restore.');
+    }
+  } catch (e) {
+    // RevenueCat sets userCancelled on the error when the user backs out.
+    if (e && (e.userCancelled || e.code === '1' || e.code === 1)) {
+      // Silent — the user chose to cancel; no scary dialog.
+    } else {
+      alert(t('pw_purchase_failed') || 'The purchase could not be completed. Please try again.');
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
-function paywallRestore() {
-  // LAYER 2: call RevenueCat restorePurchases here, then grantPro() if entitled.
-  alert(t('pw_soon') || 'Purchasing will be available at launch. For now, enter an unlock code.');
+
+async function paywallRestore() {
+  const P = _rc();
+  if (!P) {
+    alert(t('pw_store_unavailable') || 'The store is only available in the installed app.');
+    return;
+  }
+  const btn = document.getElementById('pwRestoreBtn');
+  if (btn) btn.disabled = true;
+  try {
+    if (!_rcConfigured) await configureRevenueCat();
+    const res = await P.restorePurchases();
+    const info = res && (res.customerInfo || res.purchaserInfo);
+    if (_rcHasPro(info)) {
+      grantPro(true);
+    } else {
+      alert(t('pw_restore_none') || 'No previous purchase was found on this account.');
+    }
+  } catch (e) {
+    alert(t('pw_restore_failed') || 'Restore could not be completed. Please try again.');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 function enterTool(name, restoreState) {
@@ -55897,7 +56040,12 @@ const STRINGS = {
     pw_done_body:'Every tool and training module is open. Thanks for the support, it genuinely helps keep Intonare growing.',
     pw_done_btn:'Let\u2019s go',
     pw_code_bad:'That code didn\\u2019t work.',
-    pw_soon:'Purchasing will be available at launch. For now, enter an unlock code.',
+    pw_store_unavailable:'The store is only available in the installed app.',
+    pw_no_product:'Pro is not available to purchase right now. Please try again later.',
+    pw_purchase_pending:'Your purchase is being confirmed. If Pro does not unlock shortly, tap Restore.',
+    pw_purchase_failed:'The purchase could not be completed. Please try again.',
+    pw_restore_none:'No previous purchase was found on this account.',
+    pw_restore_failed:'Restore could not be completed. Please try again.',
     settings_audio_cues:'Audio Cues',
     settings_audio_cues_hint:'Tap cell to cycle · ▶ to replay',
     // Card labels
@@ -56683,7 +56831,12 @@ const STRINGS = {
     pw_done_body:'Tutti gli strumenti e i moduli di allenamento sono sbloccati. Grazie per il supporto, aiuta davvero a far crescere Intonare.',
     pw_done_btn:'Iniziamo',
     pw_code_bad:'Codice non valido.',
-    pw_soon:'L\u2019acquisto sar\u00e0 disponibile al lancio. Per ora, inserisci un codice di sblocco.',
+    pw_store_unavailable:'Lo store \u00e8 disponibile solo nell\u2019app installata.',
+    pw_no_product:'Pro non \u00e8 acquistabile al momento. Riprova pi\u00f9 tardi.',
+    pw_purchase_pending:'L\u2019acquisto \u00e8 in fase di conferma. Se Pro non si sblocca a breve, tocca Ripristina.',
+    pw_purchase_failed:'Non \u00e8 stato possibile completare l\u2019acquisto. Riprova.',
+    pw_restore_none:'Nessun acquisto precedente trovato su questo account.',
+    pw_restore_failed:'Non \u00e8 stato possibile completare il ripristino. Riprova.',
     settings_audio_cues:'Segnali Audio',
     settings_audio_cues_hint:'Tocca per ciclare · ▶ per riascoltare',
     // Card labels
@@ -59105,33 +59258,6 @@ HELP_CONTENT.prmode = {
 function isCapacitor() {
   return typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
 }
-// ─── PHASE 5 PROBE (TEMPORARY — REMOVE AFTER WIRING) ───
-// One-time diagnostic: reports how @revenuecat/purchases-capacitor is exposed
-// in this non-bundled WebView. Fires once on first Capacitor launch.
-function __rcProbe() {
-  try {
-    if (!(typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform())) return;
-    var plugins = (window.Capacitor && window.Capacitor.Plugins) ? Object.keys(window.Capacitor.Plugins) : [];
-    var hasGlobalPurchases = (typeof window.Purchases !== 'undefined');
-    var rcCandidate = window.Capacitor.Plugins && (window.Capacitor.Plugins.Purchases || window.Capacitor.Plugins.PurchasesCapacitor || window.Capacitor.Plugins.RevenueCat || window.Capacitor.Plugins.CapacitorPurchases);
-    var methods = [];
-    var probeObj = rcCandidate || (hasGlobalPurchases ? window.Purchases : null);
-    if (probeObj) {
-      ['configure','getOfferings','purchasePackage','restorePurchases','getCustomerInfo'].forEach(function(m){
-        if (typeof probeObj[m] === 'function') methods.push(m);
-      });
-    }
-    var msg = 'RC PROBE\n'
-      + 'Plugins: ' + plugins.join(', ') + '\n'
-      + 'window.Purchases: ' + hasGlobalPurchases + '\n'
-      + 'RC candidate found: ' + (!!rcCandidate) + '\n'
-      + 'methods present: ' + (methods.length ? methods.join(', ') : 'NONE');
-    alert(msg);
-  } catch (e) {
-    alert('RC PROBE error: ' + (e && e.message ? e.message : e));
-  }
-}
-try { setTimeout(__rcProbe, 2500); } catch (e) {}
 function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
