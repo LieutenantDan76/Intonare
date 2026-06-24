@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.68.92 -->
+<!-- INTONARE_VERSION: 0.68.93 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -15149,10 +15149,13 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     await af(640);
     targetColorT = 1.0;
 
-    // Wave lives and settles toward a thin line (1.0–2.8s), then dots burst outward
-    // and everything clears by ~3.5s, leaving just the logo. Hold the clean logo a
-    // beat, then dissolve.
-    await af(1900);
+    // Wave settles to a thin line, then the CRT collapse runs to completion at
+    // T_BURST_END (~3.5s after the clock start). The exit must begin AFTER that, or
+    // running=false freezes the canvas mid-collapse and the splash hard-cuts instead
+    // of dissolving. Hold the finished logo a beat, then dissolve.
+    // Budget before here: 40+560+280+640 = 1520ms. CRT done ~3500ms, +~400ms hold
+    // ⇒ wait ~2380ms so the dissolve starts on a clean, fully-collapsed frame.
+    await af(2380);
 
     // ── Exit: full splash dissolve into the app ────────────
     running = false;
@@ -20200,7 +20203,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.68.92';
+const INTONARE_VERSION = '0.68.93';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
