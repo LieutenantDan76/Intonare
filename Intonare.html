@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.68.94 -->
+<!-- INTONARE_VERSION: 0.68.95 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -14857,16 +14857,12 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         const p3 = Math.max(0, Math.min(1, (crt - 0.85) / 0.15));  // flare progress 0→1
         const cx = W / 2;
         const half = (W / 2) * (1 - _smoothstep(p2));               // bar shrinks to centre
-        // bar eases IN over the first slice of the hold so it doesn't pop on as the
-        // thin wave finishes fading; then full bright; then fades out on the flare.
-        const barIn = _smoothstep(Math.min(1, crt / 0.12));
-        // Brightness ENVELOPE across the bar's life: it must NOT arrive at full level,
-        // or it flashes — the wave line had tapered to a thin faint tail just before,
-        // so a full-width solid bar appearing at full brightness reads as a pop. Hold
-        // it dim (matching the dying line), then let it brighten as it pinches inward
-        // and concentrates. holdLvl→1 across the pinch (p2).
+        // The bar must be present the instant the wave line ends — no fade-from-zero,
+        // or the line visibly vanishes then the bar re-enters (a blink). The wave line
+        // tapers to a faint thin tail right at T_WAVE_END, and the bar picks up from a
+        // matching dim level and holds, brightening only as it pinches inward.
         const holdLvl = 0.34 + 0.66 * _smoothstep(p2);             // dim during hold, full by pinch
-        const fade = (p3 > 0 ? (1 - _smoothstep(p3)) : 1) * barIn * holdLvl;  // whole thing fades on flare
+        const fade = (p3 > 0 ? (1 - _smoothstep(p3)) : 1) * holdLvl;  // whole thing fades on flare
         // bright collapsing bar (coloured glow + white core)
         ctx.save();
         ctx.globalAlpha = 0.5 * fade; ctx.strokeStyle = col;
@@ -20209,7 +20205,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.68.94';
+const INTONARE_VERSION = '0.68.95';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
