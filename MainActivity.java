@@ -24,6 +24,7 @@ public class MainActivity extends BridgeActivity {
     // toggle writes it via the "Android" bridge below.
     private static final String PREFS = "intonare_prefs";
     private static final String KEY_SPLASH_SOUND = "splashSound"; // "1" on (default), "0" muted
+    private static final float SPLASH_VOLUME = 0.55f; // hard playback multiplier (0..1)
     private MediaPlayer splashPlayer;
 
     @Override
@@ -80,9 +81,13 @@ public class MainActivity extends BridgeActivity {
             splashPlayer.setAudioAttributes(
                 new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             );
+            // Hard playback-level multiplier. Independent of the clip's internal gain
+            // and not subject to sonification loudness compensation — this is the
+            // reliable lever for how loud the launch sound actually is on device.
+            try { splashPlayer.setVolume(SPLASH_VOLUME, SPLASH_VOLUME); } catch (Exception ignored) {}
             // Release as soon as it finishes so it never lingers.
             splashPlayer.setOnCompletionListener(mp -> releaseSplashPlayer());
             // Prime: seek to 0 so the eventual start() resumes instantly with no
