@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.68.74 -->
+<!-- INTONARE_VERSION: 0.68.91 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -8685,6 +8685,12 @@
   .pr-game-good  { color: var(--accent); }
   .pr-game-meh   { color: var(--metro); }
   .pr-game-bad   { color: var(--sharp); }
+  .pr-game-skip  { color: var(--muted); opacity: 0.85; }
+  .pr-attempt-pips {
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 3px;
+    color: var(--accent-soft); text-align: center; min-height: 16px; margin: 4px 0 2px;
+    opacity: 0.8;
+  }
   .pr-game-result strong { font-weight: 700; letter-spacing: 1.5px; }
   .pr-tabs {
     display: flex; gap: 4px; margin: 12px 0 10px;
@@ -8858,8 +8864,11 @@
   .pr-ch-zone.pulse { animation: prTwoPulse 0.35s ease-out; }
   /* Hardcore: your layer (ring A) loses its visual crutch — playhead hidden,
      dots greyed/static (handled in the visual loop). The bed (ring B) keeps its
-     playhead + lighting as a reference pulse. Same layout as the other modes. */
-  .pr-challenge-play.hardcore #pr-head-a { display: none !important; }
+     per-node lighting as an audible reference, but its orbiting playhead is
+     hidden too — the lit node says "this is the one sounding", no spinning ball
+     to ride. Same layout as the other modes. */
+  .pr-challenge-play.hardcore #pr-head-a,
+  .pr-challenge-play.hardcore #pr-head-b { display: none !important; }
   .pr-challenge-play.hardcore .pr-ch-zone { border-color: rgba(224,85,85,0.6); }
   .pr-challenge-play.hardcore .pr-ch-zone .pr-tap-icon { color: #e05555; }
   .pr-challenge-end { text-align: center; padding: 30px 0; }
@@ -14514,18 +14523,28 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       const all = Object.keys(SampleEngine._instruments);
       const ordered = [...PRIORITY.filter(id => all.includes(id)),
                        ...all.filter(id => !PRIORITY.includes(id))];
-      // Load in small batches; each batch starts after the previous settles
-      let idx = 0;
-      const BATCH = 3;
+      // Load in batches that RAMP UP (1 → 2 → 3 → 3 …) so the first hit right after
+      // the touch is light — three simultaneous fetch+decode jobs landing on the main
+      // thread at the same moment as the touch handler is what caused the lag spike.
+      // Each batch waits for an idle window (requestIdleCallback) so decoding slots
+      // into gaps rather than competing with UI work; falls back to a timer where rIC
+      // isn't available (older WebViews).
+      let idx = 0, batch = 1;
+      const idle = window.requestIdleCallback
+        ? (fn) => window.requestIdleCallback(fn, { timeout: 400 })
+        : (fn) => setTimeout(fn, 150);
       function loadBatch() {
-        const slice = ordered.slice(idx, idx + BATCH);
+        const slice = ordered.slice(idx, idx + batch);
         if (!slice.length) return;
-        idx += BATCH;
+        idx += batch;
+        batch = Math.min(3, batch + 1);   // ramp 1 → 2 → 3, then hold
         Promise.allSettled(slice.map(id => SampleEngine.load(id))).then(() => {
-          setTimeout(loadBatch, 150);
+          idle(loadBatch);
         });
       }
-      loadBatch();
+      // Hold the first batch back ~450ms so it doesn't collide with the touch the
+      // user just made (UI response + audio context resume happen on that same gesture).
+      setTimeout(() => idle(loadBatch), 450);
     }, { once: true });
 
     if (window.Capacitor) {
@@ -14709,8 +14728,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     function waveShape(u) {
       const env = Math.sin(u * Math.PI);
       // Original: a smooth traveling sine with a gentle slower secondary layer.
-      const primary   = Math.sin(u * 3.5 * Math.PI * 2 + wavePhase);
-      const secondary = Math.sin(u * 1.75 * Math.PI * 2 + wavePhase * 0.42) * 0.28;
+      const primary   = Math.sin(u * 2.2 * Math.PI * 2 + wavePhase);
+      const secondary = Math.sin(u * 1.1 * Math.PI * 2 + wavePhase * 0.42) * 0.28;
       return (primary + secondary) * env;
     }
 
@@ -14719,7 +14738,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     // which arrive at each endpoint with zero slope.
     function waveAmplitude(t) {
       const MAXA = (H / 2 - 8);          // px
-      const peak = 0.62, gatherA = 0.20;
+      const peak = 0.70, gatherA = 0.20;
       if (t < T_GATHER) {
         // Dots assemble onto a small wave; the surge is saved for the visible line.
         return MAXA * gatherA * _smoothstep(t / T_GATHER);
@@ -14729,9 +14748,10 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         const u = (t - T_GATHER) / span;          // 0..1 across wave phase
         // ATTACK (0 → 0.16): raised-cosine climb gatherA → peak. Ends at 0 velocity.
         // DECAY  (0.16 → 1.0): raised-cosine ease peak → 0 that lands EXACTLY at the
-        //   burst (u=1). Raised-cosine arrives with zero velocity, so the wave keeps
-        //   shrinking right up to the end and glides to a complete stop — no early
-        //   flat hold, no braking.
+        //   CRT start (u=1). Raised-cosine arrives with zero velocity, so the wave
+        //   keeps shrinking right up to the end and glides to a complete stop — the
+        //   thickness tapers to nothing by T_WAVE_END (no held heavy line). The CRT
+        //   pinch + dot then take over on an already-thin line.
         const ATTACK = 0.16;
         let a;
         if (u < ATTACK) {
@@ -14754,76 +14774,137 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
       const g       = _smoothstep(Math.min(1, t / T_GATHER));   // 0→1 assemble
       const amp     = waveAmplitude(t);
-      const scatter = Math.max(0, (t - T_WAVE_END) / 0.45);     // outward fly during burst
 
       ctx.clearRect(0, 0, W, H);
 
-      // ── The wave line itself (glow layers) — fades in as dots land, leads during
-      // the WAVE phase, then vanishes FAST the instant the burst begins so it reads
-      // as the wave dissipating INTO the particles (no lingering line behind them) ──
+      // ── CRT power-off ending: the wave has already tapered to a thin line by
+      // T_WAVE_END (waveAmplitude decays to 0). The ending then pinches that line
+      // horizontally toward centre and flares a single white dot. crt: 0→1 across
+      // T_WAVE_END..T_BURST_END (~0.7s). Sub-phases:  pinch 0→0.72 | flare 0.72→1
+      const crt = Math.max(0, Math.min(1, (t - T_WAVE_END) / (T_BURST_END - T_WAVE_END)));
+
+      // ── The wave line itself (glow layers) — fades in as dots land, then leads
+      // through the WAVE phase, naturally thinning to nothing as amp → 0 ──
       const lineAlpha = (t < T_GATHER)
         ? _smoothstep(Math.max(0, (g - 0.35) / 0.65))    // eased fade-in as dots arrive
-        : (t < T_WAVE_END ? 1 : 1 - _smoothstep(Math.min(1, scatter / 0.3))); // eased vanish on burst
-      if (lineAlpha > 0.02 && amp >= 0) {
-        const tThk = Math.max(0.3, Math.min(1, amp / ((H/2) * 0.6)));
+        : 1;                                             // line leads through the wave
+      const lineAmp = amp;                               // real amplitude, tapers to ~0
+      // draw the glowing waveform through the wave phase only; once the CRT pinch
+      // begins the flat bar below takes over.
+      if (lineAlpha > 0.02 && t < T_WAVE_END) {
+        // Thickness has its OWN arc, decoupled from amplitude (amplitude is ~0 at the
+        // start, which made the entry paper-thin). Curve is thick → thickest → thin:
+        //   entry (wp 0)     ≈ 0.95  already substantial as the line fades in
+        //   mid   (wp ~0.45) ≈ 1.40  thickest, where the wave is most alive
+        //   end   (wp 1)     → ~0.10 hard taper to nothing before the CRT bar
+        // wp = progress across the wave proper (gather end → wave end), clamped so the
+        // forming line during the gather already carries the entry thickness.
+        const wp = Math.max(0, Math.min(1, (t - T_GATHER) / (T_WAVE_END - T_GATHER)));
+        const RISE = 0.45;                                  // fraction spent climbing to thickest
+        let tThk;
+        if (wp < RISE) {
+          const e = _smoothstep(wp / RISE);                 // 0→1 eased
+          tThk = 0.95 + (1.40 - 0.95) * e;                  // entry → thickest
+        } else {
+          const d = (wp - RISE) / (1 - RISE);               // 0→1 over the back portion
+          const e = Math.pow(_smoothstep(d), 1.6);          // eased, powered for a hard late taper
+          tThk = 1.40 + (0.10 - 1.40) * e;                  // thickest → thin
+        }
+        // Brightness bloom: dim while the wave is still gathering/forming, blooming to
+        // full as it establishes. waveEst 0→1 over gather end → ~25% into the wave;
+        // bloom floors at 0.32 so the forming line is visible but clearly subdued, then
+        // opens to full. Squared for an ease-in feel (slow start, confident bloom).
+        const waveEst = _smoothstep(Math.min(1, Math.max(0, (t - T_GATHER * 0.6) / (T_GATHER * 0.6 + (T_WAVE_END - T_GATHER) * 0.25))));
+        const bloom = 0.32 + 0.68 * (waveEst * waveEst);
+        const la = lineAlpha * bloom;
+        // The CORE line stays near-full brightness from the entry so the thickness
+        // actually READS (a dim wide line looks thin). Only the outer glow halo carries
+        // the dim→bloom. laCore floors high; la (halo) keeps the full bloom range.
+        const laCore = lineAlpha * (0.72 + 0.28 * (bloom - 0.32) / 0.68);
         function buildPath() {
           ctx.beginPath();
           for (let x = 0; x <= W; x += 2) {
             const u = x / W;
-            const y = cy + waveShape(u) * amp;
+            const y = cy + waveShape(u) * lineAmp;
             x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
           }
         }
         // wide glow
-        ctx.save(); ctx.globalAlpha = 0.16 * lineAlpha; ctx.strokeStyle = col;
+        ctx.save(); ctx.globalAlpha = 0.16 * la; ctx.strokeStyle = col;
         ctx.lineWidth = 22 * tThk; ctx.shadowColor = col; ctx.shadowBlur = 48 * tThk;
         buildPath(); ctx.stroke(); ctx.restore();
         // mid glow
-        ctx.save(); ctx.globalAlpha = 0.26 * lineAlpha; ctx.strokeStyle = col;
+        ctx.save(); ctx.globalAlpha = 0.26 * la; ctx.strokeStyle = col;
         ctx.lineWidth = 10 * tThk; ctx.shadowColor = col; ctx.shadowBlur = 32 * tThk;
         buildPath(); ctx.stroke(); ctx.restore();
         // crisp core
-        ctx.save(); ctx.globalAlpha = lineAlpha; ctx.strokeStyle = col;
+        ctx.save(); ctx.globalAlpha = laCore; ctx.strokeStyle = col;
         ctx.lineWidth = Math.max(0.5, 2.2 * tThk); ctx.shadowColor = col; ctx.shadowBlur = 14;
         buildPath(); ctx.stroke(); ctx.restore();
         // white-hot centre
-        ctx.save(); ctx.globalAlpha = 0.7 * lineAlpha; ctx.strokeStyle = '#fff';
+        ctx.save(); ctx.globalAlpha = 0.7 * laCore; ctx.strokeStyle = '#fff';
         ctx.lineWidth = Math.max(0.3, 1.0 * tThk); ctx.shadowColor = '#fff'; ctx.shadowBlur = 6;
         buildPath(); ctx.stroke(); ctx.restore();
         ctx.shadowBlur = 0;
       }
 
-      // ── Particles: ride the wave during gather + wave phases (dimming as the
-      // line takes over), then re-emerge and explode outward during burst ──
+      // ── CRT power-off: flat line HOLDS, then snaps. (crt 0 → 1) ───────────────
+      //   hold  0   → 0.55 : full-width bright line sits steady (the wave is gone)
+      //   pinch 0.55→ 0.85 : line snaps inward to centre, fast
+      //   flare 0.85→ 1.00 : white dot swells and vanishes
+      if (crt > 0) {
+        const p2 = Math.max(0, Math.min(1, (crt - 0.55) / 0.30));  // pinch progress 0→1
+        const p3 = Math.max(0, Math.min(1, (crt - 0.85) / 0.15));  // flare progress 0→1
+        const cx = W / 2;
+        const half = (W / 2) * (1 - _smoothstep(p2));               // bar shrinks to centre
+        // bar eases IN over the first slice of the hold so it doesn't pop on as the
+        // thin wave finishes fading; then full bright; then fades out on the flare.
+        const barIn = _smoothstep(Math.min(1, crt / 0.12));
+        const fade = (p3 > 0 ? (1 - _smoothstep(p3)) : 1) * barIn;  // whole thing fades on flare
+        // bright collapsing bar (coloured glow + white core)
+        ctx.save();
+        ctx.globalAlpha = 0.5 * fade; ctx.strokeStyle = col;
+        ctx.lineWidth = 7; ctx.shadowColor = col; ctx.shadowBlur = 24;
+        ctx.beginPath(); ctx.moveTo(cx - half, cy); ctx.lineTo(cx + half, cy); ctx.stroke();
+        ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = fade; ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.8; ctx.shadowColor = '#fff'; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.moveTo(cx - half, cy); ctx.lineTo(cx + half, cy); ctx.stroke();
+        ctx.restore();
+        // dot flare — a quick swell then vanish as the bar reaches centre
+        if (p3 > 0) {
+          const flare = Math.sin(p3 * Math.PI) * 9 + 3;             // swell then back to ~3
+          const dotA  = 1 - _smoothstep(p3);
+          const grad  = ctx.createRadialGradient(cx, cy, 0, cx, cy, flare * 2);
+          grad.addColorStop(0,   `rgba(255,255,255,${dotA})`);
+          grad.addColorStop(0.4, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${dotA * 0.6})`);
+          grad.addColorStop(1,   'rgba(0,0,0,0)');
+          ctx.beginPath(); ctx.arc(cx, cy, flare * 2, 0, Math.PI * 2);
+          ctx.fillStyle = grad; ctx.fill();
+          ctx.beginPath(); ctx.arc(cx, cy, Math.max(0.5, flare * 0.3), 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${dotA})`; ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+      }
+
+      // ── Particles: ride the wave during gather + wave phases, dissolving into the
+      // forming line. They take no part in the CRT ending (the line/bar/dot lead). ──
       for (let i = 0; i < GP_COUNT; i++) {
         const p = gparts[i];
         const u = i / (GP_COUNT - 1);
         const tx = u * W;
         const ty = cy + waveShape(u) * amp + Math.sin(p.jitter + t * 3) * 2;
         // gather: lerp from scatter origin → wave slot
-        let px = p.sx + (tx - p.sx) * g;
-        let py = p.sy + (ty - p.sy) * g;
-        // burst: fly outward from the wave slot, decelerating (ease-out) so the
-        // scatter feels like it has weight rather than constant velocity.
-        const flyOut = (1 - Math.pow(1 - Math.min(1, scatter), 2)) * 110;
-        px += p.dx * flyOut;
-        py += p.dy * flyOut;
+        const px = p.sx + (tx - p.sx) * g;
+        const py = p.sy + (ty - p.sy) * g;
 
-        // alpha: dots are bright while flying in, then fade out as they merge into
-        // the line (invisible for the whole wave phase — line alone leads), then POP
-        // back bright the instant the burst starts and fade out as they scatter.
-        let alpha;
+        // alpha: bright while flying in, fade out as they merge into the forming
+        // line, then invisible for the whole wave + CRT phase (line alone leads).
+        let alpha = 0;
         if (t < T_GATHER) {
-          // bright on arrival, eased fade toward 0 over the last 25% of the gather so
-          // they dissolve into the forming line rather than snapping off.
           const fadeOut = 1 - _smoothstep(Math.min(1, Math.max(0, (g - 0.75) / 0.25)));
           alpha = (0.35 + 0.55 * g) * fadeOut;
-        }
-        else if (t < T_WAVE_END)   alpha = 0;                   // invisible — line alone leads
-        else {
-          const pop  = _smoothstep(Math.min(1, scatter / 0.18));     // eased pop-in
-          const fade = 1 - _smoothstep(Math.min(1, scatter));        // eased fade-out
-          alpha = (0.30 + 0.65 * pop) * fade;
         }
         if (alpha <= 0) continue;
 
@@ -14936,9 +15017,14 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // Uses the same wave-phase progress u (0 at surge start → 1 at burst).
       const span = T_WAVE_END - T_GATHER;
       const u = Math.min(1, Math.max(0, (gatherEl - T_GATHER) / span));
-      // raised-cosine from full speed → 0 across the wave phase (zero velocity at the end)
-      const speedEase = 0.5 + 0.5 * Math.cos(u * Math.PI);   // 1 → 0
-      const _spd = (0.03 + 0.20 * Math.exp(-Math.max(0, gatherEl - T_GATHER) / 0.7)) * speedEase;
+      // speedEase: hold speed through early/mid wave for more life, then glide to a
+      // complete stop only over the final ~22%. Later ease-point (0.78) + the wider
+      // raised-cosine span = the motion keeps rolling longer and arrives at rest
+      // gently rather than braking.
+      const speedEase = (u < 0.78) ? 1 : (0.5 + 0.5 * Math.cos(((u - 0.78) / 0.22) * Math.PI));
+      // base decay relaxed further (1.4 → 2.2 time-constant) so the travelling wave
+      // doesn't sag in the middle — it sustains visible motion deep into the phase.
+      const _spd = (0.03 + 0.20 * Math.exp(-Math.max(0, gatherEl - T_GATHER) / 2.2)) * speedEase;
       wavePhase += _spd;
       // Ease colour toward its scheduled target
       colorT     += (targetColorT - colorT)     * 0.012;
@@ -18668,7 +18754,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <button class="train-back" onclick="exitExercise()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <div class="train-title-block">
           <div class="train-title" data-i18n="ex_poly_title">POLYRHYTHM</div>
-          <div class="train-subtitle" data-i18n="ex_poly_sub">feel two rhythms at once</div>
+          <div class="train-subtitle"><span data-i18n="ex_poly_sub">feel two rhythms at once</span> <button class="help-btn" onclick="showHelp('poly')" style="margin-left:4px">?</button></div>
         </div>
         <div class="pr-stats-inline hidden" id="prGameStats">
           <span class="pr-stat-inline"><span class="pr-stat-inline-lbl" data-i18n="iv_streak">Streak</span> <span class="pr-stat-inline-val streak" id="prGameStreak">0</span></span>
@@ -18886,6 +18972,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
               <div class="pr-tap-icon">◯</div>
               <div class="pr-tap-label" id="prChZoneLabel">TAP</div>
             </div>
+            <div class="pr-attempt-pips" id="prAttemptPips"></div>
             <div class="pr-game-result" id="prChResult"></div>
           </div>
 
@@ -19958,6 +20045,16 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       </button>
     </div>
 
+    <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_splash_sound">Launch Sound</div>
+    <div class="sm-toggle-row sm-toggle-compact" id="smSplashSoundRow">
+      <button class="sm-toggle-chip" data-value="off" onclick="setSplashSound(false)">
+        <span class="sm-toggle-main" data-i18n="teach_off">OFF</span>
+      </button>
+      <button class="sm-toggle-chip active" data-value="on" onclick="setSplashSound(true)">
+        <span class="sm-toggle-main" data-i18n="teach_on">ON</span>
+      </button>
+    </div>
+
     <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_audio_cues">Audio Cues</div>
     <div style="font-size:10px;color:var(--muted);margin-bottom:10px" data-i18n="settings_audio_cues_hint">Tap cell to cycle · ▶ to replay</div>
     <div id="cuePickerWrap"></div>
@@ -20094,7 +20191,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.68.74';
+const INTONARE_VERSION = '0.68.91';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -33979,7 +34076,7 @@ HELP_CONTENT.tempoguess = {
 };
 HELP_CONTENT.poly = {
   title: 'Polyrhythm',
-  body: 'Two rhythms play at once — like 3 beats against 2, or 4 against 3 — and you learn to <strong>feel both layers</strong> simultaneously. The visual guide shows where the pulses line up and where they fall between each other. Start slow; polyrhythms click into place once your body finds the shared downbeat.'
+  body: 'Two rhythms play at once, like 3 beats against 2 or 4 against 3, and you learn to <strong>feel both layers</strong> at the same time. The two rings show the two layers: the outer ring is one rhythm, the inner ring the other, with dots marking where each pulse falls.<br><br><strong>LISTEN</strong> plays the polyrhythm so you can hear and watch how the layers interlock.<br><br><strong>PRACTICE</strong> is where you tap along. Choose which layer you tap: <em>TAP A</em> (outer), <em>TAP B</em> (inner), <em>TAP BOTH</em> (the combined pattern), or <em>2 HANDS</em> (one ring per hand). The layer you are not tapping plays underneath as a steady bed; you tap yours against it, and get a read on each beat plus a grade at the end of every cycle.<br><br><strong>CHALLENGE</strong> puts that to the test. In <em>Climb</em> you tap the cross-rhythm against the bed, and three clean cycles move you up a ladder of harder ratios. <em>Hardcore</em> takes away the moving guide so you have only the bed to follow, and striking out at the bottom ends the run. <em>Endless</em> keeps feeding you random ratios until you run out of strikes.<br><br>Start slow. A polyrhythm clicks into place once your body finds the shared downbeat.'
 };
 HELP_CONTENT.chordle = {
   title: 'Chordle',
@@ -43039,6 +43136,7 @@ const PR_CLIMB_ADVANCE = 3; // clean cycles to climb a rung
 const PR_CLIMB_STRIKES = 3; // misses before dropping a rung
 let prClimbBaseBpm = 90;    // restore BPM after a hardcore run
 const PR_HARDCORE_BPM = 132;   // fixed fast tempo for hardcore challenge
+const PR_CLIMB_BPM = 90;       // fixed tempo for climb/endless base
 // Passive XP throttle: 1 XP/cycle for just listening (BOTH/SOLO) is fine for a
 // few minutes of practice, but if you walk away with it playing it would grind
 // forever. Cap at 15 cycles per session; resets on prStart() (i.e. each time
@@ -48830,14 +48928,19 @@ function prScheduler() {
     const cycleStartTime = prCycleStart + nextCycle * cycleDur;
     // Layer A: N evenly spaced clicks across the cycle.
     for (let i = 0; i < prRatioA; i++) {
-      const t = cycleStartTime + (i / prRatioA) * cycleDur;
-      if (t < prCtx.currentTime + 0.005) continue;
+      let t = cycleStartTime + (i / prRatioA) * cycleDur;
+      // A click that's only marginally in the past (e.g. a downbeat caught right
+      // at the scheduling boundary) still fires — clamp it to now instead of
+      // dropping it, so the top-of-measure click never silently vanishes.
+      if (t < prCtx.currentTime - 0.02) continue;       // genuinely past: skip
+      if (t < prCtx.currentTime) t = prCtx.currentTime; // just-late: play now
       prPlayClick(t, 'a', i === 0);   // gain bus handles mute for soloed/tap modes
     }
     // Layer B: M evenly spaced clicks across the cycle.
     for (let i = 0; i < prRatioB; i++) {
-      const t = cycleStartTime + (i / prRatioB) * cycleDur;
-      if (t < prCtx.currentTime + 0.005) continue;
+      let t = cycleStartTime + (i / prRatioB) * cycleDur;
+      if (t < prCtx.currentTime - 0.02) continue;
+      if (t < prCtx.currentTime) t = prCtx.currentTime;
       prPlayClick(t, 'b', i === 0);
     }
     prLastScheduledCycle = nextCycle;
@@ -49071,16 +49174,7 @@ function prVisualLoop() {
     progUpdate('poly', { ratio: `${prRatioA}:${prRatioB}`, cycles: (progGet('poly').cycles || 0) + 1 });
     // Game-mode: evaluate previous cycle's taps as soon as the new cycle begins
     if (isGameMode) {
-      if (prChallengeCountIn) {
-        // First bar is a free count-in: don't grade it, just clear taps and
-        // let the player settle into the bed before scoring starts.
-        prChallengeCountIn = false;
-        prGameTaps = [];
-        const rEl = document.getElementById('prChResult');
-        if (rEl) rEl.innerHTML = `<span class="pr-game-good"><strong>${t('pr_go') || 'GO'}</strong></span>`;
-      } else {
-        prGameEvaluateCycle(cycleNum - 1, cycleDur);
-      }
+      prGameEvaluateCycle(cycleNum - 1, cycleDur);
     }
   }
   prVisualHandle = requestAnimationFrame(prVisualLoop);
@@ -49132,6 +49226,7 @@ function prTap() {
 
   // visual feedback — pulse the active zone (overlay zone in a challenge).
   const z = document.getElementById(inChallenge ? 'prChZone' : 'prTapZone');
+  if (inChallenge) prUpdateAttemptPips();
   if (!z) return;
   z.classList.remove('pulse');
   void z.offsetWidth;
@@ -49326,6 +49421,23 @@ function prPlayTapTickLayer(layer) {
 
 // Instant single-tap read. Lighter than the per-cycle grade: just how close
 // this one hit was, as a fraction of the beat, with early/late direction.
+// Live attempt indicator: filled pip per tap landed this cycle, hollow for the
+// beats still expected. Shows the attempt building; resets each cycle boundary.
+// It's a COUNT, not a timing cue, so it's safe to show even in hardcore.
+function prUpdateAttemptPips() {
+  const el = document.getElementById('prAttemptPips');
+  if (!el) return;
+  const total = prExpectedBeatFractions().length;
+  const done = Math.min(prGameTaps.length, total);
+  let s = '';
+  for (let i = 0; i < total; i++) s += (i < done) ? '●' : '○';
+  el.textContent = s;
+}
+function prResetAttemptPips() {
+  const el = document.getElementById('prAttemptPips');
+  if (el) prUpdateAttemptPips();   // redraw all-hollow for the new cycle
+}
+
 function prShowLiveTapFeedback(errMs, beatMs, targetEl) {
   const el = targetEl || document.getElementById('prGameResult');
   if (!el) return;
@@ -49374,27 +49486,37 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
   const tapsInCycle = prGameTaps.filter(t => t >= cycleStartTime - 0.1 && t < cycleStartTime + cycleDur + 0.1);
   // Reset tap buffer for the next cycle
   prGameTaps = [];
+  if (prChallengeType) prResetAttemptPips();
 
   const resultEl = document.getElementById('prGameResult');
   if (!resultEl) return;
 
   if (tapsInCycle.length === 0) {
-    resultEl.innerHTML = '<span class="pr-game-meh">no taps · keep going</span>';
+    // No taps at all — a pure skip (e.g. still finding the pulse). No penalty.
+    const el0 = prChallengeType ? document.getElementById('prChResult') : resultEl;
+    if (el0) el0.innerHTML = '<span class="pr-game-skip">skipped · keep going</span>';
     prGameStats.streak = 0;
     prGameUpdateUI();
     return;
   }
-  // Guard against passing a cycle by under-tapping. You must hit (nearly) all
-  // the expected beats; a single well-placed tap shouldn't grade the whole
-  // cycle clean. Small cycles (≤3 beats) need every tap; busier ones (4+) may
-  // miss one.
-  const needed = fracs.length <= 3 ? fracs.length : fracs.length - 1;
+  const needed = fracs.length;
   if (tapsInCycle.length < needed) {
-    resultEl.innerHTML = `<span class="pr-game-bad">${tapsInCycle.length}/${fracs.length} taps · <strong>OFF</strong></span>`;
+    const half = needed / 2;
+    if (tapsInCycle.length < half) {
+      // Under half the beats: treat as an exploratory skip — no advance, no
+      // strike. You're not committed to the cycle yet.
+      const skipEl = prChallengeType ? document.getElementById('prChResult') : resultEl;
+      if (skipEl) skipEl.innerHTML = `<span class="pr-game-skip">${tapsInCycle.length}/${fracs.length} · skipped</span>`;
+      prGameStats.streak = 0;
+      prGameUpdateUI();
+      return;
+    }
+    // Half or more but not all: you committed and fell short — a real miss.
+    const missEl = prChallengeType ? document.getElementById('prChResult') : resultEl;
+    if (missEl) missEl.innerHTML = `<span class="pr-game-bad">${tapsInCycle.length}/${fracs.length} · <strong>MISS</strong></span>`;
     prGameStats.streak = 0;
     prGameStats.rounds++;
     progAddXp(1);
-    // Counts as a failed cycle in the challenge state machines.
     if (prMode === 'climb') prClimbCycleResult(false, document.getElementById('prChResult'));
     prGameUpdateUI();
     return;
@@ -49431,9 +49553,9 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
   const reportMs = residualLean + (errsMs.reduce((a, b) => a + b, 0) / errsMs.length);
 
   let grade, gradeClass, xp;
-  if      (meanFrac <= 0.06) { grade = 'LOCKED IN';  gradeClass = 'great'; xp = 20; prGameStats.streak++; }
-  else if (meanFrac <= 0.12) { grade = 'CLOSE';      gradeClass = 'good';  xp = 10; prGameStats.streak++; }
-  else if (meanFrac <= 0.22) { grade = 'NEEDS WORK'; gradeClass = 'meh';   xp = 3;  prGameStats.streak = 0; }
+  if      (meanFrac <= 0.07) { grade = 'LOCKED IN';  gradeClass = 'great'; xp = 20; prGameStats.streak++; }
+  else if (meanFrac <= 0.15) { grade = 'CLOSE';      gradeClass = 'good';  xp = 10; prGameStats.streak++; }
+  else if (meanFrac <= 0.26) { grade = 'NEEDS WORK'; gradeClass = 'meh';   xp = 3;  prGameStats.streak = 0; }
   else                       { grade = 'OFF';        gradeClass = 'bad';   xp = 1;  prGameStats.streak = 0; }
   const sign = reportMs > 8 ? '+' : reportMs < -8 ? '−' : '±';
   const dir  = reportMs > 8 ? t('dir_late') : reportMs < -8 ? t('dir_early') : t('dir_on');
@@ -49453,9 +49575,9 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
     gameBestMs: prGameStats.bestMs,
     gameRounds: prGameStats.rounds,
   });
-  // Climb mode: a cycle that's CLOSE or better (meanFrac <= 0.12) counts as
+  // Climb mode: a cycle that's CLOSE or better (meanFrac <= 0.15) counts as
   // clean. Drive the rung state machine and override the result line.
-  if (prMode === 'climb') prClimbCycleResult(meanFrac <= 0.12, document.getElementById('prChResult'));
+  if (prMode === 'climb') prClimbCycleResult(meanFrac <= 0.15, document.getElementById('prChResult'));
   prGameUpdateUI();
 }
 
@@ -49464,7 +49586,6 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
 // ── Challenge surface (Climb / Endless / Hardcore) ──
 let prChallengeType = null;   // 'climb' | 'endless' | 'hardcore' | null
 let prChallengeStartTime = 0;
-let prChallengeCountIn = false;   // true during the free orientation bar at start
 // Two-step unlock chain: Climb summit → Hardcore, Hardcore summit → Endless.
 function prHardcoreUnlocked() {
   try { return localStorage.getItem('pr_hardcore_unlocked') === '1'; } catch(e) { return false; }
@@ -49514,6 +49635,8 @@ function prOpenChallenge(ev) {
 }
 function prCloseChallenge() {
   if (prPlaying) prStop();
+  prBpm = PR_CLIMB_BPM;   // undo any hardcore tempo bump on the way out
+  prUpdateBpmDisplay();
   prChallengeType = null;
   prMode = 'both';   // return main view to a safe non-tap mode
   // Move the rings hero back to the main view.
@@ -49535,7 +49658,6 @@ function prStartChallenge(type) {
   document.getElementById('prChallengeEnd').classList.add('hidden');
   document.getElementById('prChallengePlay').classList.remove('hidden');
   prChallengeStartTime = Date.now();
-  prChallengeCountIn = true;   // first bar is a free orientation count-in
   prMode = 'climb';   // all challenges tap ring A against a bed; reuse climb tap path
   // Bring the rings hero into the overlay so the player keeps the visual.
   const wrap = document.querySelector('.pr-svg-wrap');
@@ -49549,9 +49671,7 @@ function prStartChallenge(type) {
   } else {
     prEndlessStart();
   }
-  // Count-in cue: shown through the free first bar until the first rollover.
-  const rdy = document.getElementById('prChResult');
-  if (rdy) rdy.innerHTML = `<span class="pr-game-meh"><strong>${t('pr_get_ready') || 'GET READY…'}</strong></span>`;
+  prResetAttemptPips();
 }
 function prChallengeReplay() {
   if (prChallengeType) prStartChallenge(prChallengeType);
@@ -49562,8 +49682,8 @@ function prClimbStart(hardcore) {
   prClimbCleanRun = 0;
   prClimbStrikes = 0;
   prGameStats.streak = 0;
-  prClimbBaseBpm = prBpm;                       // remember so we can restore
-  if (hardcore) prBpm = PR_HARDCORE_BPM;        // fixed fast tempo, not relative
+  prClimbBaseBpm = PR_CLIMB_BPM;                // climb/hardcore restore target
+  prBpm = hardcore ? PR_HARDCORE_BPM : PR_CLIMB_BPM;   // fixed tempo per mode
   prClimbApplyLevel(false);
   if (typeof prUpdateBpmDisplay === 'function') prUpdateBpmDisplay();
   if (!prPlaying) prStart();
@@ -49618,11 +49738,22 @@ function prClimbCycleResult(clean, resultEl) {
   } else {
     prClimbCleanRun = 0;
     prClimbStrikes++;
-    if (prClimbStrikes >= PR_CLIMB_STRIKES && prClimbLevel > 0) {
-      prClimbLevel--;
-      prClimbStrikes = 0;
-      prClimbApplyLevel(true);
-      if (resultEl) resultEl.innerHTML = `<span class="pr-game-bad"><strong>${t('pr_climb_down')} ${PR_CLIMB_LADDER[prClimbLevel].a}:${PR_CLIMB_LADDER[prClimbLevel].b}</strong></span>`;
+    if (prClimbStrikes >= PR_CLIMB_STRIKES) {
+      if (prClimbLevel > 0) {
+        // Dropped a rung — same for both modes.
+        prClimbLevel--;
+        prClimbStrikes = 0;
+        prClimbApplyLevel(true);
+        if (resultEl) resultEl.innerHTML = `<span class="pr-game-bad"><strong>${t('pr_climb_down')} ${PR_CLIMB_LADDER[prClimbLevel].a}:${PR_CLIMB_LADDER[prClimbLevel].b}</strong></span>`;
+      } else if (prChallengeType === 'hardcore') {
+        // Hardcore: nowhere left to drop — you fall off the mountain. Run over.
+        prChallengeEnd(false);
+        return;
+      } else {
+        // Climb: no lose state — you stay at the bottom rung and keep trying.
+        prClimbStrikes = 0;
+        if (resultEl) resultEl.innerHTML = `<span class="pr-game-bad"><strong>${t('pr_climb_hold')}</strong></span>`;
+      }
     }
   }
   prClimbUpdateBanner();
@@ -49668,7 +49799,7 @@ function prEndlessStart() {
   prClimbStrikes = 0;
   prClimbCleanRun = 0;
   prGameStats.streak = 0;
-  prClimbBaseBpm = prBpm;
+  prClimbBaseBpm = PR_CLIMB_BPM;   // fixed base; endless ramps tempo from here
   prEndlessPickRatio(false);
   if (!prPlaying) prStart();
   prEndlessUpdateBanner();
@@ -49793,6 +49924,8 @@ function prChallengeEnd(success) {
       unlock.innerHTML = `<div class="pr-unlock-burst">★</div><div class="pr-unlock-head">${t('pr_new_best')}</div><div class="pr-unlock-modes">${prEndlessScore}</div>`;
       unlock.classList.remove('hidden');
     }
+    // Sound: a record run gets the correct chime; otherwise the wrong cue.
+    try { (isRecord && prEndlessScore > 0) ? playCueCorrect() : playCueWrong(); } catch(e) {}
   } else if (success) {
     if (badge) { badge.textContent = '▲'; badge.classList.add('celebrate'); }
     if (title) title.textContent = t('pr_climb_summit_short');
@@ -49807,6 +49940,15 @@ function prChallengeEnd(success) {
       unlock.innerHTML = `<div class="pr-unlock-burst">★</div><div class="pr-unlock-head">${t('pr_unlocked_head')}</div><div class="pr-unlock-modes">${modeName}</div>`;
       unlock.classList.remove('hidden');
     }
+    // Sound: reaching the summit is the big win — achievement chime.
+    try { playCueAchievement(); } catch(e) {}
+  } else {
+    // Hardcore fall — ran out of strikes at the bottom rung. Show how far you got.
+    if (badge) { badge.textContent = '✕'; badge.classList.add('celebrate'); }
+    if (title) title.textContent = t('pr_fell_title');
+    const reached = PR_CLIMB_LADDER[prClimbLevel];
+    if (stats) stats.innerHTML = `${t('pr_reached')}: <strong>${reached.a}:${reached.b}</strong><br>${t('pr_rung')}: ${prClimbLevel + 1}/${PR_CLIMB_LADDER.length}<br>${t('pr_time')}: ${mm}:${ss}`;
+    try { playCueWrong(); } catch(e) {}
   }
   document.getElementById('prChallengePlay').classList.add('hidden');
   document.getElementById('prChallengeEnd').classList.remove('hidden');
@@ -54961,6 +55103,7 @@ let progState = {
   teachingMode: false,
   helpTips: true,          // show/hide ? help buttons
   hapticsOn: false,
+  splashSoundOn: true,     // native launch sound on cold start (Android)
   mqMusicOn: true,         // music quiz ambient background music
   audioCues: { correct:'chime', wrong:'buzz', milestone:'fanfare', levelup:'chiptune', achievement:'chime',
                vols: { correct:100, wrong:100, milestone:100, levelup:100, achievement:100 } },
@@ -55117,7 +55260,7 @@ const STRINGS = {
     card_tguess_title:'TEMPO GUESS',
     card_tguess_sub:'Hear a mystery BPM · guess the tempo by ear',
     card_poly_title:'POLYRHYTHM',
-    card_poly_sub:'Two rhythms at once · feel cross-pulses lock in',
+    card_poly_sub:'Two rhythms at once · feel how the cross-pulses fit together',
     card_chord_title:'CHORD EAR TRAINING',
     card_chord_sub:'Hear a chord · identify the quality by ear',
     card_singsing_title:'SIGHT SINGING',
@@ -55432,6 +55575,7 @@ const STRINGS = {
     // Settings additions
     settings_help_tips:'Help Tips',
     settings_haptics:'Haptic Feedback',
+    settings_splash_sound:'Launch Sound',
     settings_audio_cues:'Audio Cues',
     settings_audio_cues_hint:'Tap cell to cycle · ▶ to replay',
     // Card labels
@@ -55510,11 +55654,11 @@ const STRINGS = {
     pr_challenge_start:'START CHALLENGE',
     pr_challenge_blurb:'Test yourself against the ratio ladder. Summit Climb to unlock Hardcore, then Endless.',
     pr_ch_climb:'CLIMB',
-    pr_ch_climb_desc:'Climb the ratio ladder, 2:1 to 11:8. Three clean cycles to advance.',
+    pr_ch_climb_desc:'Work your way up the ratio ladder from 2:1 to 11:8, clearing three clean cycles to move up each rung.',
     pr_ch_endless:'ENDLESS',
-    pr_ch_endless_desc:'Random ratios, getting harder. Three strikes ends the run.',
+    pr_ch_endless_desc:'Random ratios that keep getting harder, until three strikes end the run.',
     pr_ch_hardcore:'HARDCORE',
-    pr_ch_hardcore_desc:'No visuals, faster tempo. Play by ear alone.',
+    pr_ch_hardcore_desc:'A fast fixed tempo with only the bed to follow; fall off the bottom rung and the run is over.',
     pr_ch_unlock:'Summit Climb to unlock Hardcore, then summit Hardcore to unlock Endless.',
     pr_ch_again:'AGAIN',
     pr_ch_back:'BACK',
@@ -55523,8 +55667,6 @@ const STRINGS = {
     pr_endless_cleared:'Ratios cleared',
     pr_endless_best:'Best',
     pr_new_best:'NEW BEST!',
-    pr_get_ready:'GET READY…',
-    pr_go:'GO',
     pr_strike:'STRIKE',
     pr_climb_summit_short:'SUMMITED!',
     pr_end_run_over:'RUN OVER',
@@ -55538,6 +55680,10 @@ const STRINGS = {
     pr_hardcore_tap:'TAP BY EAR · A',
     pr_climb_up:'RUNG UP →',
     pr_climb_down:'RUNG DOWN →',
+    pr_climb_hold:'HELD AT THE BOTTOM',
+    pr_fell_title:'FELL OFF',
+    pr_reached:'Reached',
+    pr_rung:'Rung',
     pr_two_arm:'tap either pad to begin',
     pr_two_swap:'swap sides',
     pr_two_go:'keep both hands going',
@@ -55887,7 +56033,7 @@ const STRINGS = {
     card_tguess_title:'INDOVINA IL TEMPO',
     card_tguess_sub:'Ascolta un BPM sconosciuto · indovina il tempo',
     card_poly_title:'POLIRITMO',
-    card_poly_sub:'Due ritmi in contemporanea · senti la pulsazione incrociata',
+    card_poly_sub:'Due ritmi in contemporanea · senti come le pulsazioni si incastrano',
     card_chord_title:'RICONOSCIMENTO ACCORDI',
     card_chord_sub:'Ascolta un accordo · identifica la qualità',
     card_singsing_title:'SOLFEGGIO',
@@ -56202,6 +56348,7 @@ const STRINGS = {
     // Settings additions
     settings_help_tips:'Suggerimenti',
     settings_haptics:'Feedback Aptico',
+    settings_splash_sound:'Suono d\u2019Avvio',
     settings_audio_cues:'Segnali Audio',
     settings_audio_cues_hint:'Tocca per ciclare · ▶ per riascoltare',
     // Card labels
@@ -56280,11 +56427,11 @@ const STRINGS = {
     pr_challenge_start:'INIZIA SFIDA',
     pr_challenge_blurb:'Mettiti alla prova sulla scala dei rapporti. Conquista la Scalata per sbloccare Estremo, poi Infinito.',
     pr_ch_climb:'SCALATA',
-    pr_ch_climb_desc:'Scala i rapporti, da 2:1 a 11:8. Tre cicli puliti per salire.',
+    pr_ch_climb_desc:'Sali la scala dei rapporti da 2:1 a 11:8, superando tre cicli puliti per salire di un gradino.',
     pr_ch_endless:'INFINITO',
-    pr_ch_endless_desc:'Rapporti casuali, sempre più duri. Tre errori e finisce.',
+    pr_ch_endless_desc:'Rapporti casuali sempre più difficili, finché tre errori non chiudono la sfida.',
     pr_ch_hardcore:'ESTREMO',
-    pr_ch_hardcore_desc:'Niente visuali, tempo più veloce. Solo a orecchio.',
+    pr_ch_hardcore_desc:'Un tempo fisso e veloce con solo la base da seguire; cadi dal gradino più basso e la sfida è finita.',
     pr_ch_unlock:'Conquista la Scalata per sbloccare Estremo, poi conquista Estremo per sbloccare Infinito.',
     pr_ch_again:'ANCORA',
     pr_ch_back:'INDIETRO',
@@ -56293,8 +56440,6 @@ const STRINGS = {
     pr_endless_cleared:'Rapporti superati',
     pr_endless_best:'Record',
     pr_new_best:'NUOVO RECORD!',
-    pr_get_ready:'PRONTI…',
-    pr_go:'VIA',
     pr_strike:'ERRORE',
     pr_climb_summit_short:'IN VETTA!',
     pr_end_run_over:'FINITO',
@@ -56308,6 +56453,10 @@ const STRINGS = {
     pr_hardcore_tap:'BATTI A ORECCHIO · A',
     pr_climb_up:'SALITO →',
     pr_climb_down:'SCESO →',
+    pr_climb_hold:'FERMO IN FONDO',
+    pr_fell_title:'CADUTO',
+    pr_reached:'Raggiunto',
+    pr_rung:'Gradino',
     pr_two_arm:'tocca un pad per iniziare',
     pr_two_swap:'scambia lati',
     pr_two_go:'continua con entrambe le mani',
@@ -57186,6 +57335,10 @@ function syncSettingsUI() {
   const tips = progState.helpTips !== false; // default true
   document.querySelectorAll('#smHelpTipsRow .sm-toggle-chip').forEach(b =>
     b.classList.toggle('active', (b.dataset.value === 'on') === tips));
+  // Launch (splash) sound toggle — default ON
+  const splashOn = progState.splashSoundOn !== false;
+  document.querySelectorAll('#smSplashSoundRow .sm-toggle-chip').forEach(b =>
+    b.classList.toggle('active', (b.dataset.value === 'on') === splashOn));
   // Calibration slider
   const calSlider = document.getElementById('smCalibSlider');
   const calValue  = document.getElementById('smCalibValue');
@@ -57781,6 +57934,24 @@ function setHaptics(on) {
   if (on) hapticSuccess(); // test pulse so user knows it's working
   document.querySelectorAll('#smHapticsRow .sm-toggle-chip').forEach(b =>
     b.classList.toggle('active', (b.dataset.value === 'on') === !!on));
+  progSave();
+}
+
+// ─── LAUNCH (SPLASH) SOUND ───
+// Plays natively on cold start (MainActivity), so the choice must be written where
+// Java can read it: the IntonareNative bridge persists to Android SharedPreferences.
+// progState keeps the UI in sync; localStorage is the web/non-Capacitor fallback.
+function setSplashSound(on) {
+  progState.splashSoundOn = !!on;
+  document.querySelectorAll('#smSplashSoundRow .sm-toggle-chip').forEach(b =>
+    b.classList.toggle('active', (b.dataset.value === 'on') === !!on));
+  // Persist to the native layer (no-op on web — bridge only exists in the APK).
+  try {
+    if (window.IntonareNative && typeof window.IntonareNative.setSplashSound === 'function') {
+      window.IntonareNative.setSplashSound(!!on);
+    }
+  } catch (e) {}
+  try { localStorage.setItem('intonare_splash_sound', on ? '1' : '0'); } catch (e) {}
   progSave();
 }
 
