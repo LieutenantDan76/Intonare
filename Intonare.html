@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.68.95 -->
+<!-- INTONARE_VERSION: 0.68.96 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -15019,11 +15019,16 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // Uses the same wave-phase progress u (0 at surge start → 1 at burst).
       const span = T_WAVE_END - T_GATHER;
       const u = Math.min(1, Math.max(0, (gatherEl - T_GATHER) / span));
-      // speedEase: hold speed through early/mid wave for more life, then glide to a
-      // complete stop only over the final ~22%. Later ease-point (0.78) + the wider
-      // raised-cosine span = the motion keeps rolling longer and arrives at rest
-      // gently rather than braking.
-      const speedEase = (u < 0.78) ? 1 : (0.5 + 0.5 * Math.cos(((u - 0.78) / 0.22) * Math.PI));
+      // speedEase: hold speed through early/mid wave for life, then glide to a COMPLETE
+      // stop a touch BEFORE the CRT begins (zero by u≈0.90, ~0.2s before T_WAVE_END),
+      // so the line goes briefly still before it collapses — the motion settles, then
+      // the CRT snap reads as a deliberate beat rather than running straight out of the
+      // travel. Ramps down over 0.72→0.90, holds zero through to the burst.
+      const SPEED_STOP = 0.90;                                 // u where motion fully stops
+      const speedEase = (u < 0.72) ? 1
+                      : (u < SPEED_STOP)
+                        ? (0.5 + 0.5 * Math.cos(((u - 0.72) / (SPEED_STOP - 0.72)) * Math.PI))
+                        : 0;
       // base decay relaxed further (1.4 → 2.2 time-constant) so the travelling wave
       // doesn't sag in the middle — it sustains visible motion deep into the phase.
       const _spd = (0.03 + 0.20 * Math.exp(-Math.max(0, gatherEl - T_GATHER) / 2.2)) * speedEase;
@@ -20205,7 +20210,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.68.95';
+const INTONARE_VERSION = '0.68.96';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
