@@ -85,6 +85,9 @@ public class MainActivity extends BridgeActivity {
             );
             // Release as soon as it finishes so it never lingers.
             splashPlayer.setOnCompletionListener(mp -> releaseSplashPlayer());
+            // Prime: seek to 0 so the eventual start() resumes instantly with no
+            // first-frame buffering latency on top of the JS bridge hop.
+            try { splashPlayer.seekTo(0); } catch (Exception ignored) {}
         } catch (Exception e) {
             releaseSplashPlayer();
         }
