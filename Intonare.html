@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.68.91 -->
+<!-- INTONARE_VERSION: 0.68.92 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -15108,6 +15108,15 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     targetColorT = 0.18;
     running      = true;
     _waveT0      = performance.now();  // start the gather clock
+    // Fire the native launch sound at the SAME instant the animation clock starts,
+    // so the swell/ting stay locked to the visual regardless of how long the
+    // viewport took to stabilise. Native playback isn't gesture-gated, so this keeps
+    // true autoplay while syncing exactly. No-op on web (bridge only exists in APK).
+    try {
+      if (window.IntonareNative && typeof window.IntonareNative.playSplashSound === 'function') {
+        window.IntonareNative.playSplashSound();
+      }
+    } catch (e) {}
     requestAnimationFrame(loop);
 
     await af(40); // one tick so loop has drawn a frame before we show it
@@ -20191,7 +20200,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.68.91';
+const INTONARE_VERSION = '0.68.92';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)

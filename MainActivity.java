@@ -34,13 +34,15 @@ public class MainActivity extends BridgeActivity {
         // shows them transiently, then Android auto-hides again on its own.
         hideSystemBars();
 
-        // Expose a tiny JS bridge so the in-app settings toggle can persist the
-        // splash-sound preference where this native code can read it next launch.
+        // Expose a tiny JS bridge: the in-app settings toggle persists the mute
+        // preference, and the splash sequence calls playSplashSound() at the exact
+        // instant the animation clock starts (so audio + visual stay locked even
+        // though the WebView waits for viewport stabilisation before animating).
         getBridge().getWebView().addJavascriptInterface(new SplashSoundBridge(), "IntonareNative");
 
-        // Play the launch sound (unless muted). Fires immediately on cold start,
-        // no user gesture required — this is the whole point of doing it natively.
-        playSplashSound();
+        // Prepare the launch sound now (decodes ahead) so the JS trigger can start it
+        // with no prepare latency. Playback itself is fired by the bridge, not here.
+        prepareSplashSound();
 
         // Grant WebView mic requests
         getBridge().getWebView().setWebChromeClient(
@@ -62,7 +64,12 @@ public class MainActivity extends BridgeActivity {
     }
 
     // ── Splash sound ────────────────────────────────────────────────────────
-    private void playSplashSound() {
+    // prepareSplashSound() decodes the clip ahead of time in onCreate. The actual
+    // start is triggered from JS (window.IntonareNative.playSplashSound) at the exact
+    // frame the splash animation begins, so the sound lines up with the visual.
+    private boolean splashPlayed = false;
+
+    private void prepareSplashSound() {
         try {
             SharedPreferences prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             // Default ON: only skip if explicitly set to "0".
@@ -78,9 +85,19 @@ public class MainActivity extends BridgeActivity {
             );
             // Release as soon as it finishes so it never lingers.
             splashPlayer.setOnCompletionListener(mp -> releaseSplashPlayer());
+        } catch (Exception e) {
+            releaseSplashPlayer();
+        }
+    }
+
+    // JS-callable: window.IntonareNative.playSplashSound()
+    private void startSplashSound() {
+        if (splashPlayed) return;          // never fire twice (e.g. resume)
+        if (splashPlayer == null) return;  // muted or unprepared
+        splashPlayed = true;
+        try {
             splashPlayer.start();
         } catch (Exception e) {
-            // Never let a launch sound crash the app.
             releaseSplashPlayer();
         }
     }
@@ -105,7 +122,8 @@ public class MainActivity extends BridgeActivity {
         super.onDestroy();
     }
 
-    // JS-callable: window.IntonareNative.setSplashSound(true/false)
+    // JS-callable bridge: toggle persists the mute pref; playSplashSound() starts
+    // the prepared clip at the exact moment the splash animation begins.
     public class SplashSoundBridge {
         @JavascriptInterface
         public void setSplashSound(boolean on) {
@@ -113,6 +131,11 @@ public class MainActivity extends BridgeActivity {
                 .edit()
                 .putString(KEY_SPLASH_SOUND, on ? "1" : "0")
                 .apply();
+        }
+
+        @JavascriptInterface
+        public void playSplashSound() {
+            runOnUiThread(MainActivity.this::startSplashSound);
         }
     }
 
