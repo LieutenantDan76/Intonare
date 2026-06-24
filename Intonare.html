@@ -59105,6 +59105,33 @@ HELP_CONTENT.prmode = {
 function isCapacitor() {
   return typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
 }
+// ─── PHASE 5 PROBE (TEMPORARY — REMOVE AFTER WIRING) ───
+// One-time diagnostic: reports how @revenuecat/purchases-capacitor is exposed
+// in this non-bundled WebView. Fires once on first Capacitor launch.
+function __rcProbe() {
+  try {
+    if (!(typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform())) return;
+    var plugins = (window.Capacitor && window.Capacitor.Plugins) ? Object.keys(window.Capacitor.Plugins) : [];
+    var hasGlobalPurchases = (typeof window.Purchases !== 'undefined');
+    var rcCandidate = window.Capacitor.Plugins && (window.Capacitor.Plugins.Purchases || window.Capacitor.Plugins.PurchasesCapacitor || window.Capacitor.Plugins.RevenueCat || window.Capacitor.Plugins.CapacitorPurchases);
+    var methods = [];
+    var probeObj = rcCandidate || (hasGlobalPurchases ? window.Purchases : null);
+    if (probeObj) {
+      ['configure','getOfferings','purchasePackage','restorePurchases','getCustomerInfo'].forEach(function(m){
+        if (typeof probeObj[m] === 'function') methods.push(m);
+      });
+    }
+    var msg = 'RC PROBE\n'
+      + 'Plugins: ' + plugins.join(', ') + '\n'
+      + 'window.Purchases: ' + hasGlobalPurchases + '\n'
+      + 'RC candidate found: ' + (!!rcCandidate) + '\n'
+      + 'methods present: ' + (methods.length ? methods.join(', ') : 'NONE');
+    alert(msg);
+  } catch (e) {
+    alert('RC PROBE error: ' + (e && e.message ? e.message : e));
+  }
+}
+try { setTimeout(__rcProbe, 2500); } catch (e) {}
 function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
