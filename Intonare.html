@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.68.105 -->
+<!-- INTONARE_VERSION: 0.68.111 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -13798,6 +13798,7 @@ transition:transform 0.25s ease;
   .rr-tap-zone.rr-fy      { background: rgba(250,204,21,0.13) !important; border-color: #facc15 !important; }
   .rr-tap-zone.rr-fo      { background: rgba(251,146,60,0.13) !important; border-color: #fb923c !important; }
   .rr-tap-zone.rr-fr      { background: rgba(248,113,113,0.13) !important; border-color: #f87171 !important; }
+  .rr-tap-zone.rr-ftap    { background: var(--bg-2) !important; border-color: var(--accent) !important; }
   .rr-tap-inner  { display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
   .rr-tap-icon   { font-size: 40px; line-height: 1; color: var(--text-dim); }
   .rr-tap-lbl    { font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px; color: var(--muted); }
@@ -13819,6 +13820,19 @@ transition:transform 0.25s ease;
     font-family: 'Bebas Neue', sans-serif; font-size: 11px; letter-spacing: 2px;
     color: var(--muted); opacity: 0.6; flex-shrink: 0;
   }
+  .rr-tap-fb-actions {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    flex-shrink: 0; width: 100%; margin-bottom: 8px;
+  }
+  .rr-retry-btn {
+    pointer-events: auto;
+    font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 2px;
+    color: var(--accent); background: transparent;
+    border: 1.5px solid var(--accent); border-radius: 100px;
+    padding: 7px 22px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .rr-retry-btn:active { background: var(--accent); color: var(--bg-0); }
   .rr-mode-row  { display: flex; gap: 6px; flex: 1; }
   .rr-mode-btn  {
     flex: 1; padding: 8px 4px;
@@ -19131,7 +19145,11 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="rr-tap-feedback" id="rrTapFeedback" style="display:none;">
           <div class="rr-tap-fb-score" id="rrTapFbScore"></div>
           <div class="rr-tap-fb-text" id="rrFbText"></div>
-          <div class="rr-tap-fb-next">TAP FOR NEXT →</div>
+          <div class="rr-tap-fb-actions" id="rrTapFbActions">
+            <button type="button" class="rr-retry-btn" id="rrRetryBtn" data-i18n="rr_retry"
+              onpointerdown="event.stopPropagation()" onclick="event.stopPropagation(); rrRetry();">↺ RETRY</button>
+            <div class="rr-tap-fb-next" data-i18n="rr_tap_next">TAP FOR NEXT →</div>
+          </div>
         </div>
       </div>
 
@@ -20334,7 +20352,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.68.105';
+const INTONARE_VERSION = '0.68.111';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -46895,19 +46913,20 @@ function rrNoteSound(time) {
   } catch(e) {}
 }
 
-function rrTapSound(accuracyMs) {
+function rrTapSound() {
+  // Fixed pitch, no live verdict (the grade comes at results). Routed direct to
+  // the master out like rrNoteSound — NOT through the limiter/compressor chain,
+  // which adds lookahead latency and made taps feel a hair behind the click.
   try {
     var ctx = getAudio();
-    var chain = buildLimiterChain(ctx, rrVol * 0.45);
-    var freq = accuracyMs <= 60 ? 1050 : accuracyMs <= 150 ? 820 : accuracyMs <= 280 ? 600 : 380;
     var osc = ctx.createOscillator();
     var gain = ctx.createGain();
     var now = ctx.currentTime;
-    osc.frequency.value = freq;
+    osc.frequency.value = 880;
     osc.type = 'sine';
-    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.setValueAtTime(rrVol * 0.40, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-    osc.connect(gain); gain.connect(chain.gain);
+    osc.connect(gain); gain.connect(rrGetOut(ctx));
     osc.start(now); osc.stop(now + 0.1);
   } catch(e) {}
 }
@@ -47233,20 +47252,23 @@ function rrTap(evt) {
     if (dist < bestDist) { bestDist = dist; best = n; bestNi = ni; }
   });
   var accMs = Math.round(bestDist * 1000);
-  rrTapSound(accMs);
+  rrTapSound();
 
-  // Flash tap zone color
-  var cls = accMs <= 60 ? 'rr-fg' : accMs <= 150 ? 'rr-fy' : accMs <= 280 ? 'rr-fo' : 'rr-fr';
+  // Neutral "registered" flash — no live green/yellow verdict. The real grade
+  // needs the whole tap stream (bias correction), so a per-tap colour here would
+  // contradict the results screen. Just confirm the tap landed.
   var tz = document.getElementById('rrTapZone');
   if (tz) {
     tz.classList.remove('rr-fg','rr-fy','rr-fo','rr-fr');
-    tz.classList.add(cls);
-    rrScheduleTO(function(){ if (tz) tz.classList.remove('rr-fg','rr-fy','rr-fo','rr-fr'); }, 220);
+    tz.classList.add('rr-ftap');
+    rrScheduleTO(function(){ if (tz) tz.classList.remove('rr-ftap'); }, 200);
   }
 
-  // Flash matched note's duration bar
+  // Light up the matched note's duration bar — neutral accent, not a graded
+  // colour (the verdict comes at results, after bias correction). SVG fill
+  // needs a concrete value, so resolve the theme accent rather than var().
   if (bestNi >= 0 && bestDist < 0.5) {
-    var barFill = accMs <= 60 ? '#4ade80' : accMs <= 150 ? '#facc15' : accMs <= 280 ? '#fb923c' : '#f87171';
+    var barFill = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#5ee2ff').trim();
     var bar = document.getElementById('rr-nb-' + bestNi);
     if (bar) {
       bar.setAttribute('fill', barFill);
@@ -47343,25 +47365,46 @@ function rrShowResults() {
   // Greedy match: each note → nearest unused tap within 500ms
   var taps    = rrTaps.slice();
   var used    = new Array(taps.length).fill(false);
-  var matches = {};  // noteIndex (in full notes array) → {accMs, tapIdx}
+  var matches = {};  // noteIndex (in full notes array) → {accMs, signedMs, tapIdx}
 
   notes.forEach(function(n, ni) {
     // ni here is index into filtered notes array; need original index
     var origIdx = rrPattern.notes.indexOf(n);
     var noteTime = n.p * beatDur;
-    var best = null, bestDist = 0.5, bestTi = -1;
+    var best = null, bestDist = 0.5, bestTi = -1, bestSigned = 0;
     taps.forEach(function(tap, ti) {
       if (used[ti]) return;
-      var dist = Math.abs(tap.t - noteTime);
-      if (dist < bestDist) { bestDist = dist; best = tap; bestTi = ti; }
+      var signed = tap.t - noteTime;       // + = late, - = early
+      var dist = Math.abs(signed);
+      if (dist < bestDist) { bestDist = dist; best = tap; bestTi = ti; bestSigned = signed; }
     });
     if (bestTi >= 0) {
       used[bestTi] = true;
-      matches[origIdx] = { accMs: Math.round(bestDist * 1000), tap: best };
+      matches[origIdx] = { accMs: Math.round(bestDist * 1000), signedMs: bestSigned * 1000, tap: best };
     } else {
       matches[origIdx] = null;  // missed
     }
   });
+
+  // Per-attempt bias correction (mirrors the rhythm-challenge grader): a tap
+  // stream that leans consistently late or early is residual input/audio
+  // latency the calibrator didn't fully catch, not a rhythm error. Find the
+  // median lean across matched taps, cap it at 30% of a beat so it can't rescue
+  // a genuinely sloppy attempt, and grade each tap on its drift-corrected error.
+  var beatMs = beatDur * 1000;
+  var signedList = [];
+  rrPattern.notes.forEach(function(n, ni){ if (!n.r && matches[ni]) signedList.push(matches[ni].signedMs); });
+  var biasCap = beatMs * 0.30;
+  var rrBias = Math.max(-biasCap, Math.min(biasCap, rcMedian(signedList)));
+
+  // Beat-1 anticipation grace: the first sounding note has no prior note to
+  // absorb a lead-in tap, and players naturally anticipate the downbeat. Give
+  // an EARLY hit on the first note extra clearance so a musical lead-in isn't
+  // punished. Later notes are unaffected.
+  var rrFirstIdx = -1;
+  for (var _fi = 0; _fi < rrPattern.notes.length; _fi++) {
+    if (!rrPattern.notes[_fi].r) { rrFirstIdx = _fi; break; }
+  }
 
   // Build colorMap for staff
   var colorMap = {};
@@ -47375,7 +47418,14 @@ function rrShowResults() {
       colorMap[ni] = RED;
       miss++;
     } else {
-      var col = m.accMs <= 60 ? GREEN : m.accMs <= 150 ? YELLOW : m.accMs <= 280 ? ORANGE : RED;
+      // Grade on drift-corrected error, not raw offset. 70/160/300 ms tiers —
+      // a touch above the old 60/150/280 since touchscreen input latency varies
+      // shot to shot and a genuinely on-time tap can still land ~65 ms out.
+      var corrected = m.signedMs - rrBias;       // + late, - early (drift removed)
+      var gradeMs = Math.abs(corrected);
+      // First-note downbeat anticipation: soften an EARLY lead-in.
+      if (ni === rrFirstIdx && corrected < 0) gradeMs *= 0.65;
+      var col = gradeMs <= 70 ? GREEN : gradeMs <= 160 ? YELLOW : gradeMs <= 300 ? ORANGE : RED;
       colorMap[ni] = col;
       if (col === GREEN) perfect++;
       else if (col === YELLOW) good++;
@@ -47435,6 +47485,10 @@ function rrShowResults() {
   if (fbScore) fbScore.textContent = score + '%';
   if (fbText)  fbText.textContent  = fb;
 
+  // Retry is for free-practice only — survival is one-shot per pattern.
+  var retryBtn = document.getElementById('rrRetryBtn');
+  if (retryBtn) retryBtn.style.display = rrSurv.active ? 'none' : '';
+
   // Auto-start results playback — skip if noReplay option or survival mode
   if (!rrCurOpts().noReplay && !rrSurv.active) {
     rrScheduleTO(function(){ if (rrPhase === 'results') rrPlayback(); }, 1000);
@@ -47448,9 +47502,72 @@ function rrShowResults() {
 
 function rrRandPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+// Localized rhythm-reading feedback. EN and IT kept side by side so the twins
+// stay in sync. Headline/timing lines are arrays (rrRandPick adds variety);
+// the rest are picked structurally in rrBuildFeedback. {ms} is substituted.
+var RR_FB = {
+  en: {
+    head_perfect: ['Locked in.','Perfect.','Nothing to fix here.','A clean sweep.'],
+    head_great:   ['Solid round.','Tight and clean.','Right in the pocket.','Really nicely played.'],
+    head_good:    ['It is coming together.','The shape is there.','Almost there.','That is starting to click.'],
+    head_mid:     ['Rough in places, but the feel is there.','Better than it sounded.','The rhythm is in there, so keep at it.'],
+    head_low:     ['A tricky one; watch the playback below and go again.','Harder than it looks, and the playback will help.','This one takes a few goes.'],
+    head_poor:    ['Let the playback sink in, then come back to it.','Watch the noteheads light up, because that is the pattern.','If this feels out of reach, ease into it with Listen First.'],
+    miss_all:     'Nothing matched, so try Listen First or drop the tempo right down.',
+    miss_first:   'You missed the opening note; start with the playhead sitting on beat 1.',
+    miss_last:    'You missed the last note, so stay with it right to the end.',
+    miss_one:     'One missed note, and the red notehead shows exactly where.',
+    miss_half:    '{ms} notes missed; try halving the tempo first.',
+    miss_some:    '{ms} missed, so watch for the red noteheads in the playback.',
+    extra_one:    ['One ghost hit there; only tap on the noteheads, not the rests.','One extra tap crept in, so trust the silence.'],
+    extra_many:   ['{ms} extra taps; the white symbols are rests, not notes.','Too many hits, so count through the rests instead of filling them.'],
+    bias_scatter: ['Your timing is scattered, so tap the click beats first and add the notes once that feels steady.','Lock onto the metronome click before you start worrying about the notes.'],
+    bias_late:    ['Dragging about {ms}ms behind, so lean into each hit a touch earlier.','Running roughly {ms}ms late; anticipate the beat rather than chasing it.','A little behind by {ms}ms, so commit to each note just before it lands.'],
+    bias_early:   ['Rushing about {ms}ms ahead, so breathe and let the beat come to you.','Roughly {ms}ms early; let the click lead and follow it.','A touch fast by {ms}ms, so feel the beat before you tap it.'],
+    bias_tight:   ['Your timing is tight.','Nice pocket.','Solid, steady timing.'],
+    tip_34:       ['Waltz feel: beat 1 is strong while 2 and 3 stay light, so think ONE-two-three, ONE-two-three.','In 3/4 there are only three beats to a bar, so resist the pull to expect a fourth.','Count in threes and feel the downbeat as an arrival rather than a launch.'],
+    tip_triplet:  ['Triplets split one beat into three even parts, so count "trip-let" under each beat.','That "3" bracket means three notes sharing one beat evenly, each a third of it.','For triplets, tap your foot on the quarter pulse and fit three taps between each one.'],
+    tip_dotted_bars: 'A dot adds half the value back on, and the duration bar shows how far to stretch each dotted note.',
+    tip_dotted_nobars: 'A dot adds half the value back on, so a dotted note runs one and a half times its base length; count it carefully.',
+    tip_dotted_alt: 'Hold dotted notes a touch longer than feels natural, since the dot adds half the value again.',
+    tip_rests:    'Rests are deliberate silence, so count through them rather than filling them in.',
+    tip_2bar:     'For two-bar phrases, carry the pulse straight from bar 1 into bar 2 without resetting in between.',
+  },
+  it: {
+    head_perfect: ['A segno.','Perfetto.','Niente da correggere.','Tutto pulito.'],
+    head_great:   ['Bella prova.','Preciso e pulito.','In pieno ritmo.','Suonato davvero bene.'],
+    head_good:    ['Sta prendendo forma.','La struttura c\u2019è.','Ci sei quasi.','Comincia a tornare.'],
+    head_mid:     ['Qualche punto incerto, ma il feeling c\u2019è.','Meglio di come sembrava.','Il ritmo c\u2019è, quindi continua così.'],
+    head_low:     ['Una bella sfida; guarda la riproduzione qui sotto e riprova.','Più difficile di quanto sembri, e la riproduzione ti aiuterà.','Questo richiede qualche tentativo.'],
+    head_poor:    ['Lascia che la riproduzione entri in testa, poi riprova.','Guarda le note illuminarsi, perché quello è il pattern.','Se ti sembra fuori portata, inizia con Ascolta Prima.'],
+    miss_all:     'Niente ha combaciato, quindi prova Ascolta Prima o abbassa molto il tempo.',
+    miss_first:   'Hai mancato la prima nota; parti con il cursore sul primo movimento.',
+    miss_last:    'Hai mancato l\u2019ultima nota, quindi restaci fino in fondo.',
+    miss_one:     'Una nota mancata, e la testa di nota rossa mostra esattamente dove.',
+    miss_half:    '{ms} note mancate; prova prima a dimezzare il tempo.',
+    miss_some:    '{ms} mancate, quindi cerca le note rosse nella riproduzione.',
+    extra_one:    ['Un colpo di troppo; batti solo sulle note, non sulle pause.','Si è infilato un tocco in più, quindi fidati del silenzio.'],
+    extra_many:   ['{ms} tocchi di troppo; i simboli bianchi sono pause, non note.','Troppi colpi, quindi conta le pause invece di riempirle.'],
+    bias_scatter: ['Il tuo tempo è sparso, quindi batti prima sui click e aggiungi le note quando ti sembra stabile.','Aggancia il click del metronomo prima di pensare alle note.'],
+    bias_late:    ['Sei indietro di circa {ms}ms, quindi anticipa un po\u2019 ogni colpo.','Circa {ms}ms in ritardo; anticipa il movimento invece di rincorrerlo.','Un filo indietro di {ms}ms, quindi entra su ogni nota appena prima che arrivi.'],
+    bias_early:   ['Sei avanti di circa {ms}ms, quindi respira e lascia che il movimento ti raggiunga.','Circa {ms}ms in anticipo; lascia guidare il click e seguilo.','Un filo veloce di {ms}ms, quindi senti il movimento prima di battere.'],
+    bias_tight:   ['Tempo preciso.','Bel ritmo.','Tempo solido e regolare.'],
+    tip_34:       ['Senso di valzer: il primo movimento è forte mentre il secondo e il terzo restano leggeri, quindi pensa UNO-due-tre, UNO-due-tre.','In 3/4 ci sono solo tre movimenti per battuta, quindi resisti alla voglia di aspettarne un quarto.','Conta in tre e senti il primo movimento come un arrivo, non come una partenza.'],
+    tip_triplet:  ['Le terzine dividono un movimento in tre parti uguali, quindi conta "ter-zi-na" sotto ogni movimento.','Quel "3" indica tre note che condividono un movimento in parti uguali, ciascuna un terzo.','Per le terzine, batti il piede sulla pulsazione e infila tre tocchi tra un battito e l\u2019altro.'],
+    tip_dotted_bars: 'Il punto aggiunge metà del valore, e la barra di durata mostra quanto allungare ogni nota puntata.',
+    tip_dotted_nobars: 'Il punto aggiunge metà del valore, quindi una nota puntata dura una volta e mezzo la sua durata base; contala con cura.',
+    tip_dotted_alt: 'Tieni le note puntate un filo più del naturale, perché il punto aggiunge di nuovo metà del valore.',
+    tip_rests:    'Le pause sono silenzio voluto, quindi contale invece di riempirle.',
+    tip_2bar:     'Nelle frasi di due battute, porta la pulsazione dritta dalla prima alla seconda senza azzerarti nel mezzo.',
+  },
+};
+
 function rrBuildFeedback(notes, matches, beatDur, extraTaps, score) {
   var lines = [];
   var offsets = [], missPos = [];
+  var lang = (progState && progState.lang) || 'en';
+  var FB = RR_FB[lang] || RR_FB.en;
+  function sub(s, ms){ return s.replace('{ms}', ms); }
 
   notes.forEach(function(n, ni) {
     if (n.r) return;
@@ -47467,44 +47584,33 @@ function rrBuildFeedback(notes, matches, beatDur, extraTaps, score) {
   var totalBeats = rrTotalBeats();
 
   // ── Score headline ───────────────────────────────────────────────────────
-  if (score >= 98) {
-    lines.push(rrRandPick(['Locked in.','Perfect.','Nothing to add.','Clean sweep.']));
-  } else if (score >= 88) {
-    lines.push(rrRandPick(['Solid round.','Sharp.','That\'s the pocket.','Really clean.']));
-  } else if (score >= 75) {
-    lines.push(rrRandPick(['Coming together.','The shape is there.','Getting warmer.','That\'s starting to click.']));
-  } else if (score >= 58) {
-    lines.push(rrRandPick(['Some rough spots, but the feel is in there.','Closer than it sounds.','The rhythm is in there \u2014 keep digging.']));
-  } else if (score >= 40) {
-    lines.push(rrRandPick(['This one bites back a bit.','Harder than it looks \u2014 watch the playback below.','Takes a few tries. The playback will help.']));
-  } else {
-    lines.push(rrRandPick(['Let the playback sink in, then go again.','Watch the noteheads light up \u2014 that\'s the pattern.','Start in Listen First mode if this one feels out of reach.']));
-  }
+  if (score >= 98)      lines.push(rrRandPick(FB.head_perfect));
+  else if (score >= 88) lines.push(rrRandPick(FB.head_great));
+  else if (score >= 75) lines.push(rrRandPick(FB.head_good));
+  else if (score >= 58) lines.push(rrRandPick(FB.head_mid));
+  else if (score >= 40) lines.push(rrRandPick(FB.head_low));
+  else                  lines.push(rrRandPick(FB.head_poor));
 
   // ── Miss feedback ────────────────────────────────────────────────────────
   if (missCount > 0) {
     if (missCount === total) {
-      lines.push('No hits matched \u2014 try Listen First mode or slow the tempo right down.');
+      lines.push(FB.miss_all);
     } else if (missCount === 1) {
       var mp = missPos[0] / totalBeats;
-      if (mp < 0.25)       lines.push('Missed the opening note \u2014 start with the playhead on beat 1.');
-      else if (mp > 0.75)  lines.push('Missed the last note \u2014 stay focused right through the end.');
-      else                 lines.push('One missed note \u2014 the red notehead in the playback shows exactly where.');
+      if (mp < 0.25)       lines.push(FB.miss_first);
+      else if (mp > 0.75)  lines.push(FB.miss_last);
+      else                 lines.push(FB.miss_one);
     } else if (missCount >= total * 0.5) {
-      lines.push(missCount + ' notes missed \u2014 try halving the tempo first.');
+      lines.push(sub(FB.miss_half, missCount));
     } else {
-      lines.push(missCount + ' missed \u2014 watch the red noteheads glow in the playback.');
+      lines.push(sub(FB.miss_some, missCount));
     }
   }
 
   // ── Extra taps ───────────────────────────────────────────────────────────
   if (extraTaps > 0) {
-    if (extraTaps === 1) {
-      lines.push(rrRandPick(['One ghost hit \u2014 only tap on noteheads, not rests.','One extra tap in there \u2014 trust the silence.']));
-    } else {
-      lines.push(rrRandPick([extraTaps + ' extra taps \u2014 the white rest symbols mean silence.',
-        'Too many hits \u2014 count through the rests instead of filling them.']));
-    }
+    if (extraTaps === 1) lines.push(rrRandPick(FB.extra_one));
+    else                 lines.push(sub(rrRandPick(FB.extra_many), extraTaps));
   }
 
   // ── Timing bias ──────────────────────────────────────────────────────────
@@ -47515,16 +47621,13 @@ function rrBuildFeedback(notes, matches, beatDur, extraTaps, score) {
     var stdDev = Math.sqrt(variance);
 
     if (stdDev > 90 && missCount < total / 2) {
-      lines.push(rrRandPick(['Timing is scattered \u2014 tap along with the click beats first, then add the notes.','Inconsistent timing \u2014 try locking onto the metronome click before worrying about accuracy.']));
-    } else if (avg > 85) {
-      var ms = Math.round(avg);
-      lines.push(rrRandPick(['Dragging '+ms+'ms behind \u2014 lean into each hit a touch earlier.','You\'re '+ms+'ms late on average \u2014 anticipate the beat, don\'t chase it.','A bit behind ('+ms+'ms) \u2014 commit to each note before it arrives.']));
-    } else if (avg < -85) {
-      var ms = Math.round(-avg);
-      lines.push(rrRandPick(['Rushing '+ms+'ms ahead \u2014 breathe and let the beat come to you.','You\'re '+ms+'ms early on average \u2014 let the click lead.','Firing a touch fast ('+ms+'ms) \u2014 feel the beat before you tap it.']));
+      lines.push(rrRandPick(FB.bias_scatter));
+    } else if (avg > 120) {
+      lines.push(sub(rrRandPick(FB.bias_late), Math.round(avg)));
+    } else if (avg < -120) {
+      lines.push(sub(rrRandPick(FB.bias_early), Math.round(-avg)));
     } else if (score >= 85) {
-      var posMsg = rrRandPick(['Timing is tight.','Good pocket.','Solid timing.']);
-      lines.push(posMsg);
+      lines.push(rrRandPick(FB.bias_tight));
     }
   }
 
@@ -47537,26 +47640,18 @@ function rrBuildFeedback(notes, matches, beatDur, extraTaps, score) {
     var is2bar      = rrPattern.m === 2;
 
     if (is34 && score < 85) {
-      lines.push(rrRandPick([
-        'Waltz feel: beat 1 is strong, beats 2 and 3 are light. ONE-two-three, ONE-two-three.',
-        'In 3/4 there are only three beats per bar \u2014 resist the urge to expect a fourth.',
-        'Count in threes: feel the downbeat as an arrival, not a launch.',
-      ]));
+      lines.push(rrRandPick(FB.tip_34));
     } else if (hasTriplets && (missCount > 0 || score < 85)) {
-      lines.push(rrRandPick([
-        'Triplets split one beat into exactly three equal parts \u2014 count "trip-let" under each beat.',
-        'The "3" bracket means three notes share one beat equally. Each is 1/3 of a beat.',
-        'For triplets: tap your foot on the quarter pulse and fit three taps between each foot-tap.',
-      ]));
+      lines.push(rrRandPick(FB.tip_triplet));
     } else if (hasDotted && score < 80) {
       lines.push(rrRandPick([
-        rrCurOpts().hideBars ? 'Dotted notes last 1.5× their base value — count carefully.' : 'Dotted notes last 1.5× their base value — the duration bar shows how far to stretch.',
-        'Hold dotted notes a beat longer than you expect. The dot adds half again.',
+        rrCurOpts().hideBars ? FB.tip_dotted_nobars : FB.tip_dotted_bars,
+        FB.tip_dotted_alt,
       ]));
     } else if (hasRests && extraTaps > 0) {
-      lines.push('Rests are deliberate silence \u2014 count through them rather than filling them in.');
+      lines.push(FB.tip_rests);
     } else if (is2bar && score < 80) {
-      lines.push('Two-bar phrases: carry the pulse straight from bar 1 into bar 2 without mentally resetting.');
+      lines.push(FB.tip_2bar);
     } else if (rrPattern.hint && score < 85) {
       lines.push(rrPattern.hint);
     }
@@ -47568,6 +47663,22 @@ function rrBuildFeedback(notes, matches, beatDur, extraTaps, score) {
 // ─── Next pattern ────────────────────────────────────────────────────────────
 function rrNextPattern() {
   rrNew();
+}
+
+// Retry the SAME pattern (results screen only, never survival). Mirrors rrNew
+// but skips rrPickOrGen so rrPattern is preserved.
+function rrRetry() {
+  if (rrSurv.active || !rrPattern) return;
+  var keep = rrPattern;
+  rrStop();
+  rrPattern = keep;
+  rrPaused = false;
+  rrTaps = [];
+  var endEl = document.getElementById('rrSurvEnd');
+  if (endEl) endEl.classList.remove('active');
+  rrRenderStaff(null);
+  if (rrMode === 'listen') rrBeginPreview();
+  else rrBeginCountIn();
 }
 
 // ─── Timeout helpers ─────────────────────────────────────────────────────────
@@ -54429,13 +54540,22 @@ function diadleInit() {
 function diadleUpdateTagline() {
   var styleEl=document.getElementById('diadleStyleLabel');
   if (!styleEl) return;
-  var subKey = diadleDiff==='hard' ? 'diadle_pick_hard_s'
-             : diadleDiff==='medium' ? 'diadle_pick_med_s'
-             : 'diadle_pick_easy_s';
+  var subKey = diadleDiff==='hard' ? 'diadle_sub_hard'
+             : diadleDiff==='medium' ? 'diadle_sub_med'
+             : 'diadle_sub_easy';
   var sub = t(subKey) || '';
   styleEl.textContent = diadleIsDaily ? (t('chordle_daily')||'Daily') + ' · ' + sub : sub;
+  diadleSetTaglineText(sub);
+}
+// Drop a flavor string into the header tagline and size it via the shared
+// data-len buckets (same thresholds as setHeaderModule), so the longer Diadle
+// subtitles scale down to fit instead of clipping at the name's size bucket.
+function diadleSetTaglineText(text) {
   var tagline=document.getElementById('headerTagline');
-  if (tagline && currentExercise==='diadle') tagline.textContent = sub;
+  if (!tagline || currentExercise!=='diadle') return;
+  var L=text.length;
+  tagline.dataset.len = L>=14 ? 'long' : L>=9 ? 'medium' : 'short';
+  tagline.textContent = text;
 }
 function diadleStop() {
   diadlePlayTimers.forEach(clearTimeout); diadlePlayTimers=[];
@@ -54955,10 +55075,10 @@ function diadleStartDaily() {
   diadleRender();
   diadleUpdateDiffBtn(); diadleUpdateSpeedBtn(); diadleUpdatePlayBtn(); diadleUpdateRootBtn();
   var tag=document.getElementById('headerTagline');
-  if (tag&&currentExercise==='diadle') { tag.textContent=t('chordle_daily')+' · '+diadleDailyDate(); tag.style.color=''; }
+  if (tag&&currentExercise==='diadle') { var _dt=t('chordle_daily')+' · '+diadleDailyDate(); tag.dataset.len=_dt.length>=14?'long':_dt.length>=9?'medium':'short'; tag.textContent=_dt; tag.style.color=''; }
   var _sub=document.getElementById('diadleStyleLabel');
   if (_sub) {
-    var _sk = diadleDiff==='hard'?'diadle_pick_hard_s':diadleDiff==='medium'?'diadle_pick_med_s':'diadle_pick_easy_s';
+    var _sk = diadleDiff==='hard'?'diadle_sub_hard':diadleDiff==='medium'?'diadle_sub_med':'diadle_sub_easy';
     _sub.textContent=(t('chordle_daily')||'Daily')+' · '+(t(_sk)||'');
   }
   hapticLight();
@@ -55038,10 +55158,10 @@ function diadleShowDailyResult(st) {
   diadleRender();
   diadleUpdateDiffBtn(); diadleUpdateSpeedBtn(); diadleUpdatePlayBtn(); diadleUpdateRootBtn();
   var tag=document.getElementById('headerTagline');
-  if (tag&&currentExercise==='diadle') { tag.textContent=t('chordle_daily')+' · '+diadleDailyDate(); tag.style.color=''; }
+  if (tag&&currentExercise==='diadle') { var _dt=t('chordle_daily')+' · '+diadleDailyDate(); tag.dataset.len=_dt.length>=14?'long':_dt.length>=9?'medium':'short'; tag.textContent=_dt; tag.style.color=''; }
   var _sub=document.getElementById('diadleStyleLabel');
   if (_sub) {
-    var _sk = diadleDiff==='hard'?'diadle_pick_hard_s':diadleDiff==='medium'?'diadle_pick_med_s':'diadle_pick_easy_s';
+    var _sk = diadleDiff==='hard'?'diadle_sub_hard':diadleDiff==='medium'?'diadle_sub_med':'diadle_sub_easy';
     _sub.textContent=(t('chordle_daily')||'Daily')+' · '+(t(_sk)||'');
   }
 }
@@ -55618,6 +55738,15 @@ const STRINGS = {
     mq_no_connect:'Could not connect to opentdb.com. Check your connection.',
     mq_question:'QUESTION',
     mq_correct_out_of:'CORRECT OUT OF',
+    mq_grade_perfect:'PERFECT PITCH', mq_grade_perfect_sub:'Hard to fault.',
+    mq_grade_sharp:'SHARP EARS', mq_grade_sharp_sub:'Strong overall, with just a few gaps.',
+    mq_grade_there:'GETTING THERE', mq_grade_there_sub:'The basics are landing; this one is worth another pass.',
+    mq_grade_keep:'KEEP LISTENING', mq_grade_keep_sub:'A bit more practice and this will come.',
+    mq_fb_correct:['Correct!','Nice one!','Got it!','Right!'],
+    mq_fb_wrong:['Nope.','Not quite.','Wrong answer.','Not this time.'],
+    mq_fb_answer_was:'The correct answer was:',
+    mq_cleared:'CLEARED!', mq_game_over:'GAME OVER',
+    mq_fb_next:'NEXT \u2192', mq_fb_results:'RESULTS \u2192',
     metro_ramp_presets:'RAMP PRESETS',
     ramp_click_head:'CLICK', ramp_groove_head:'GROOVE',
     pm_day_streak:'day streak', pm_achievements:'Achievements',
@@ -56219,6 +56348,7 @@ const STRINGS = {
     rr_diff_hard_desc:'Sixteenth notes, syncopation, clave, shuffles, and complex patterns across all meters.',
     rr_status_idle:'SELECT DIFFICULTY · TAP NEW',
     rr_tap_lbl:'TAP', rr_next_btn:'NEXT PATTERN →',
+    rr_retry:'↺ RETRY', rr_tap_next:'TAP FOR NEXT →',
     rr_stat_score:'Score', rr_stat_streak:'Streak', rr_stat_rounds:'Rounds',
     rr_mode_listen:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>LISTEN FIRST', rr_mode_sight:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>SIGHT READ', rr_new_btn:'▶ NEW',
     rr_phase_listen_lbl:'LISTENING…', rr_phase_listen_status:'LISTEN TO THE PATTERN',
@@ -56395,6 +56525,7 @@ const STRINGS = {
     diadle_pick_easy_s:'Diatonic · root drone · 3 notes', diadle_pick_easy_d:'The root hums under everything. Name each note\u2019s scale degree. Major-scale degrees only.',
     diadle_pick_med_s:'Chromatic · root on tap · 4 notes', diadle_pick_med_d:'Rehear the root with the ROOT button. All twelve degrees in play.',
     diadle_pick_hard_s:'Chromatic · root once · 5 notes', diadle_pick_hard_d:'Root sounds once at the start, then it\u2019s gone. Hold the tonal centre from memory.',
+    diadle_sub_easy:'Diatonic · root drone', diadle_sub_med:'Chromatic · root on tap', diadle_sub_hard:'Chromatic · root once',
     chordle_speed_slow:'SLOW', chordle_speed_med:'MED',
     chordle_speed_fast:'FAST', chordle_speed_swift:'SWIFT',
     chordle_diff_easy:'EASY', chordle_diff_medium:'MEDIUM',
@@ -56409,6 +56540,15 @@ const STRINGS = {
     mq_no_connect:'Impossibile connettersi a opentdb.com. Controlla la connessione.',
     mq_question:'DOMANDA',
     mq_correct_out_of:'CORRETTE SU',
+    mq_grade_perfect:'ORECCHIO ASSOLUTO', mq_grade_perfect_sub:'Quasi impeccabile.',
+    mq_grade_sharp:'ORECCHIO FINE', mq_grade_sharp_sub:'Nel complesso solido, con qualche lacuna.',
+    mq_grade_there:'CI SEI QUASI', mq_grade_there_sub:'Le basi tengono; vale la pena ripassarlo.',
+    mq_grade_keep:'CONTINUA AD ASCOLTARE', mq_grade_keep_sub:'Ancora un po\u2019 di pratica e ci arrivi.',
+    mq_fb_correct:['Esatto!','Bravo!','Preso!','Giusto!'],
+    mq_fb_wrong:['No.','Non proprio.','Risposta sbagliata.','Non stavolta.'],
+    mq_fb_answer_was:'La risposta giusta era:',
+    mq_cleared:'SUPERATO!', mq_game_over:'GAME OVER',
+    mq_fb_next:'AVANTI \u2192', mq_fb_results:'RISULTATI \u2192',
     metro_ramp_presets:'PRESET RAMPA',
     ramp_click_head:'CLICK', ramp_groove_head:'GROOVE',
     pm_day_streak:'giorni consecutivi', pm_achievements:'Obiettivi',
@@ -57010,6 +57150,7 @@ const STRINGS = {
     rr_diff_hard_desc:'Sedicesimi, sincopi, clave, shuffle e pattern complessi su tutti i metri.',
     rr_status_idle:'SELEZIONA DIFFICOLTÀ · NUOVO',
     rr_tap_lbl:'BATTI', rr_next_btn:'PATTERN SUCCESSIVO →',
+    rr_retry:'↺ RIPROVA', rr_tap_next:'BATTI PER IL PROSSIMO →',
     rr_stat_score:'Punteggio', rr_stat_streak:'Serie', rr_stat_rounds:'Round',
     rr_mode_listen:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>ASCOLTA PRIMA', rr_mode_sight:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>LETTURA VISTA', rr_new_btn:'▶ NUOVO',
     rr_phase_listen_lbl:'ASCOLTO…', rr_phase_listen_status:'ASCOLTA IL PATTERN',
@@ -57181,6 +57322,7 @@ const STRINGS = {
     diadle_pick_easy_s:'Diatonico · bordone · 3 note', diadle_pick_easy_d:'La tonica ronza sotto a tutto. Nomina il grado di ogni nota. Solo gradi della scala maggiore.',
     diadle_pick_med_s:'Cromatico · tonica a richiesta · 4 note', diadle_pick_med_d:'Riascolta la tonica col tasto TONICA. Tutti e dodici i gradi in gioco.',
     diadle_pick_hard_s:'Cromatico · tonica una volta · 5 note', diadle_pick_hard_d:'La tonica suona una volta all’inizio, poi sparisce. Tieni il centro tonale a memoria.',
+    diadle_sub_easy:'Diatonico · bordone', diadle_sub_med:'Cromatico · tonica a tasto', diadle_sub_hard:'Cromatico · tonica una volta',
     chordle_speed_slow:'LENTO', chordle_speed_med:'MED',
     chordle_speed_fast:'VELOCE', chordle_speed_swift:'RAPIDO',
     chordle_diff_easy:'FACILE', chordle_diff_medium:'MEDIO',
@@ -90008,9 +90150,9 @@ function mqShowFeedback(correct, q, isLastLife) {
 
   sheet.className = 'mq-fb-sheet ' + (correct ? 'correct-fb' : 'wrong-fb');
   icon.textContent  = correct ? '\u2713' : '\u2717';
-  title.textContent = correct
-    ? ['Correct!','Nice one!','Got it!','Right!'][Math.floor(Math.random()*4)]
-    : ['Nope.','Not quite.','Wrong answer.','Not this time.'][Math.floor(Math.random()*4)];
+  var _fbTitles = correct ? t('mq_fb_correct') : t('mq_fb_wrong');
+  if (!Array.isArray(_fbTitles)) _fbTitles = [_fbTitles];
+  title.textContent = _fbTitles[Math.floor(Math.random()*_fbTitles.length)];
 
   // Correct answer block — only show on wrong answers
   var correctAnswerText = q.opts[q.ans] || '';
@@ -90020,7 +90162,7 @@ function mqShowFeedback(correct, q, isLastLife) {
     sub.textContent = '';
   } else {
     correctBlock.style.display = 'block';
-    sub.textContent = 'The correct answer was:';
+    sub.textContent = t('mq_fb_answer_was');
   }
 
   // Fact block — suppress for TDB questions (fact is just a source URL, not real content)
@@ -90035,10 +90177,10 @@ function mqShowFeedback(correct, q, isLastLife) {
 
   // Next button
   if (isLastLife) {
-    nextBtn.textContent = 'RESULTS \u2192';
+    nextBtn.textContent = t('mq_fb_results');
     nextBtn.onclick = function() { mqHideFeedbackSheet(); mqShowResults(); };
   } else {
-    nextBtn.textContent = 'NEXT \u2192';
+    nextBtn.textContent = t('mq_fb_next');
     nextBtn.onclick = mqNextQ;
   }
 
@@ -90118,7 +90260,7 @@ function mqShowResults() {
     var survived = MQ.lives > 0;
     var survTitle = document.getElementById('mqSurvivalTitle');
     var survLabel = document.getElementById('mqSurvivalLabel');
-    if (survTitle) survTitle.textContent = survived ? 'CLEARED!' : 'GAME OVER';
+    if (survTitle) survTitle.textContent = survived ? t('mq_cleared') : t('mq_game_over');
     if (survTitle) survTitle.style.color = survived ? 'var(--in-tune)' : 'var(--sharp)';
     if (survLabel) survLabel.textContent = t('mq_correct_out_of') + ' ' + MQ.qCount;
     document.getElementById('mqSurvivalCount').textContent=MQ.correct;
@@ -90129,7 +90271,7 @@ function mqShowResults() {
     var col=pct>=80?'var(--in-tune)':pct>=50?'var(--accent-warm)':'var(--sharp)';
     document.getElementById('mqRingFill').style.stroke=col;
     document.getElementById('mqRingScore').textContent=MQ.score;
-    var grades=[[90,'PERFECT PITCH','Hard to fault.'],[70,'SHARP EARS','Strong overall, a few gaps.'],[50,'GETTING THERE','Partial knowledge — worth revisiting.'],[0,'KEEP LISTENING','Some work to do.']];
+    var grades=[[90,t('mq_grade_perfect'),t('mq_grade_perfect_sub')],[70,t('mq_grade_sharp'),t('mq_grade_sharp_sub')],[50,t('mq_grade_there'),t('mq_grade_there_sub')],[0,t('mq_grade_keep'),t('mq_grade_keep_sub')]];
     var found=grades.find(function(g){return pct>=g[0];});
     document.getElementById('mqGradeTitle').textContent=found[1];
     document.getElementById('mqGradeTitle').style.color=col;
