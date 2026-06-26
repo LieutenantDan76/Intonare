@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.68.176 -->
+<!-- INTONARE_VERSION: 0.70.7 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -8054,61 +8054,59 @@
     font-variant-numeric: tabular-nums;
   }
   .tl-tap-zone {
-    width: 100%; max-width: 230px; aspect-ratio: 1;
-    margin: 0 auto;
-    background: radial-gradient(circle at center, var(--panel) 0%, var(--bg-1) 100%);
-    border: 2px solid var(--border);
+    width: 100%; max-width: 196px; aspect-ratio: 1;
+    margin: 10px auto 6px;
+    background: radial-gradient(circle at 50% 42%, var(--panel) 0%, var(--bg-1) 78%);
+    border: none;
     border-radius: 50%;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    position: relative; overflow: hidden;
+    position: relative; overflow: visible;
     user-select: none; -webkit-user-select: none;
-    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,0.04);
+    box-shadow: var(--shadow-soft), inset 0 0 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+    transition: transform 0.12s ease, box-shadow 0.2s ease;
   }
+  /* armed (silent phase): the whole pad glows so it reads as "tap me" */
+  .tl-tap-zone.armed {
+    box-shadow: var(--shadow-soft), inset 0 0 28px rgba(184,163,255,0.12), 0 0 26px rgba(184,163,255,0.28);
+  }
+  .tl-tap-zone:active { transform: scale(0.96); }
+  .tl-tap-zone.armed:active {
+    background: radial-gradient(circle at 50% 42%, rgba(184,163,255,0.22) 0%, var(--bg-1) 78%);
+  }
+  /* expanding ring on a real tap */
   .tl-tap-zone::after {
-    content: ''; position: absolute; inset: -4px;
-    border-radius: 50%;
-    border: 2px solid transparent;
+    content: ''; position: absolute; inset: 0;
+    border-radius: 50%; border: 2px solid transparent;
     pointer-events: none;
-    transition: all 0.15s ease;
-  }
-  .tl-tap-zone:active {
-    background: radial-gradient(circle at center, rgba(184,163,255,0.18) 0%, var(--bg-1) 100%);
-    transform: scale(0.98);
   }
   .tl-tap-zone.pulse::after {
     border-color: var(--accent-soft);
-    box-shadow: 0 0 24px rgba(184,163,255,0.5);
-    animation: tlTapRing 0.4s ease-out;
-  }
-  .tl-tap-zone.pulse-faint::after {
-    border-color: rgba(255,160,122,0.4);
-    animation: tlBeatRing 0.18s ease-out;
+    animation: tlTapRing 0.45s ease-out;
   }
   @keyframes tlTapRing {
-    0%   { transform: scale(1);    opacity: 1; }
-    100% { transform: scale(1.12); opacity: 0; }
+    0%   { transform: scale(0.92); opacity: 1; box-shadow: 0 0 18px rgba(184,163,255,0.6); }
+    100% { transform: scale(1.18); opacity: 0; box-shadow: 0 0 0 rgba(184,163,255,0); }
   }
-  @keyframes tlBeatRing {
-    0%   { transform: scale(1);    opacity: 0.7; }
-    100% { transform: scale(1.06); opacity: 0; }
+  /* faint per-beat breath while the click plays */
+  .tl-tap-zone.pulse-faint { animation: tlBeatBreath 0.2s ease-out; }
+  @keyframes tlBeatBreath {
+    0%   { transform: scale(1.015); }
+    100% { transform: scale(1); }
   }
   .tl-tap-inner {
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    display: flex; flex-direction: column; align-items: center;
     pointer-events: none;
   }
-  .tl-tap-icon {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 40px; line-height: 1;
-    color: var(--text-dim);
-    transition: color 0.3s;
-  }
-  .tl-tap-zone.armed .tl-tap-icon { color: var(--accent-soft); }
   .tl-tap-label {
-    font-size: 10px; letter-spacing: 2.5px; color: var(--muted);
-    text-transform: uppercase; font-weight: 600;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px; letter-spacing: 3px; line-height: 1;
+    color: var(--text-dim); text-transform: uppercase;
+    transition: color 0.25s, text-shadow 0.25s;
   }
-  .tl-tap-zone.armed .tl-tap-label { color: var(--accent-soft); }
+  .tl-tap-zone.armed .tl-tap-label {
+    color: var(--accent-soft); text-shadow: 0 0 18px rgba(184,163,255,0.45);
+  }
   .tl-result {
     margin-top: 10px; padding: 8px 12px;
     background: var(--panel); border-radius: var(--r-sm);
@@ -8157,14 +8155,13 @@
   }
   .tg-diff-cycle-btn:hover { background: rgba(184,163,255,0.22); }
   /* Random BPM toggle button */
-  .tl-random-btn {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
-    padding: 0 9px; width: auto; border-radius: 12px; flex-shrink: 0;
+  /* NEW button: one-shot tempo roll. Brief accent flash on tap. */
+  .tl-new-btn.flash {
+    animation: tlNewFlash 0.4s ease-out;
   }
-  .tl-random-btn.on {
-    background: rgba(184,163,255,0.15);
-    border-color: var(--accent-soft); color: var(--accent-soft);
+  @keyframes tlNewFlash {
+    0%   { background: rgba(184,163,255,0.28); border-color: var(--accent-soft); color: var(--accent-soft); }
+    100% { background: var(--panel); border-color: var(--border-soft); color: var(--muted); }
   }
   /* Random mode indicator in display card */
   .tl-random-indicator {
@@ -8214,56 +8211,85 @@
   .tg-phase-pill.revealed.bad   { background: rgba(255,138,101,0.12); border-color: rgba(255,138,101,0.4); color: var(--sharp); }
 
   .tg-pulse-circle {
-    width: 140px; height: 140px; border-radius: 50%;
-    margin: 2px auto 10px;
+    width: 180px; height: 180px; border-radius: 50%;
+    margin: 4px auto 8px;
     background: radial-gradient(circle at center, var(--panel) 30%, var(--bg-1) 100%);
-    border: 1px solid var(--border-soft);
+    border: 1px solid transparent;
     display: flex; align-items: center; justify-content: center;
-    position: relative;
+    position: relative; overflow: hidden;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
   }
-  .tg-pulse-circle::after {
-    content: ''; position: absolute; inset: -4px; border-radius: 50%;
-    border: 2px solid transparent; pointer-events: none;
+  /* Subtle core bloom — a soft warm glow rises from the centre on each beat */
+  .tg-pulse-bloom {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(255,160,122,0.5), transparent 55%);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
   }
-  .tg-pulse-circle.beating::after {
-    border-color: var(--accent-warm);
-    box-shadow: 0 0 22px rgba(255,160,122,0.55);
-    animation: tlBeatRing 0.22s ease-out;
-  }
+  .tg-pulse-bloom.go { opacity: 0.55; transition: opacity 0.05s ease; }
   /* SVG beat clock — sits full-size over the circle background */
   .tg-beat-clock {
     position: absolute; inset: 0; width: 100%; height: 100%;
     pointer-events: none;
   }
-  .tg-clock-track {
-    fill: none; stroke: var(--border-soft); stroke-width: 1;
+  /* Outer rim — faint track always visible, warm arc grows to fill it */
+  .tg-rim-track {
+    fill: none;
+    stroke: var(--border-soft);
+    stroke-width: 1.5;
   }
-  /* Tick marks drawn by JS — default dim state */
+  .tg-rim-fill {
+    fill: none;
+    stroke: var(--accent-warm);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    opacity: 0.85;
+    stroke-dasharray: 326.73;          /* 2 * PI * 52 */
+    stroke-dashoffset: 326.73;         /* empty until beats fill it */
+    transition: stroke-dashoffset 0.18s linear;
+  }
+  /* Tick marks drawn by JS — default dim (unplayed) state */
   .tg-tick {
     stroke: var(--border); stroke-width: 1.5;
     stroke-linecap: round;
-    transition: stroke 0.1s ease, stroke-width 0.1s ease, opacity 0.1s ease;
-    opacity: 0.35;
+    transition: stroke 0.25s ease, stroke-width 0.12s ease, opacity 0.2s ease;
+    opacity: 0.3;
   }
-  .tg-tick.beat { stroke-width: 2.5; opacity: 0.55; }
+  .tg-tick.beat { stroke-width: 2.5; opacity: 0.45; }
+  /* Filled: this beat has passed; stays coloured to build the gauge */
+  .tg-tick.filled {
+    stroke: var(--accent-warm);
+    opacity: 0.85;
+  }
+  .tg-tick.beat.filled { stroke-width: 3; }
+  /* Lit: the current beat, brightest, glows on the pulse */
   .tg-tick.lit {
     stroke: var(--accent-warm);
     stroke-width: 3;
     opacity: 1;
-    filter: drop-shadow(0 0 3px rgba(255,160,122,0.7));
+    filter: drop-shadow(0 0 4px rgba(255,160,122,0.85));
   }
   .tg-tick.beat.lit { stroke-width: 3.5; }
+  /* Tempo Lock tap-pad rim + brighter resting ticks so the beat ring reads */
+  .tl-tap-rim {
+    fill: none; stroke: var(--border-soft); stroke-width: 2;
+    opacity: 0.6;
+  }
+  #tlTapZone .tg-tick { opacity: 0.5; stroke: var(--text-dim); }
+  #tlTapZone .tg-tick.beat { opacity: 0.7; stroke-width: 3; }
+  #tlTapZone.armed .tg-tick { stroke: var(--accent-soft); opacity: 0.55; }
   .tg-pulse-dot {
     width: 14px; height: 14px; border-radius: 50%;
     background: var(--muted);
-    transition: all 0.12s ease;
-    position: relative; z-index: 1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    position: relative; z-index: 2;
   }
+  /* Subtle dot pulse: quick warm pop on the beat, gentle settle back */
   .tg-pulse-circle.beating .tg-pulse-dot {
     background: var(--accent-warm);
-    box-shadow: 0 0 18px var(--accent-warm);
-    transform: scale(1.5);
+    box-shadow: 0 0 12px var(--accent-warm);
+    transform: scale(1.4);
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease, background 0.08s ease;
   }
   .tg-guess-row {
     margin: 6px 0 10px;
@@ -8302,32 +8328,87 @@
     cursor: pointer; box-shadow: 0 0 14px rgba(184,163,255,0.5);
   }
   .tg-guess-slider:disabled::-webkit-slider-thumb { opacity: 0.3; }
-  .tg-reveal-row {
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
-    margin-top: 16px;
+  /* ── Persistent result box (holds guess, morphs into result in place) ── */
+  .tg-resultbox {
+    position: relative;
+    min-height: 92px;                 /* fixed so layout never shifts */
+    margin-top: 12px; margin-bottom: 16px; padding: 10px 12px;
+    border: 1px solid rgba(184,163,255,0.35);
+    border-radius: 14px;
+    background: rgba(184,163,255,0.06);
+    transition: border-color 0.35s ease, background 0.35s ease;
   }
-  .tg-reveal-col {
-    background: var(--panel);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--r-sm);
-    padding: 12px 6px;
-    text-align: center;
+  .tg-resultbox-guess, .tg-resultbox-reveal {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.3s ease;
   }
+  .tg-resultbox-reveal { flex-direction: row; gap: 16px; }
+  /* Default = guess shown, reveal hidden; .revealed flips them */
+  .tg-resultbox-reveal { opacity: 0; pointer-events: none; }
+  .tg-resultbox.revealed .tg-resultbox-guess { opacity: 0; pointer-events: none; }
+  .tg-resultbox.revealed .tg-resultbox-reveal { opacity: 1; pointer-events: auto; }
+  /* Tempo Lock reveal: three-slot hero (your tempo · drift · target) */
+  .tg-resultbox-reveal.tl-result-col { flex-direction: row; gap: 20px; align-items: flex-start; justify-content: center; padding: 0; padding-top: 8px; }
+  .tl-result-col .tg-reveal-side,
+  .tl-result-col .tg-reveal-center {
+    flex: 0 0 auto; min-width: 64px;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  }
+  /* line the three big numbers up on a shared band, labels hang beneath */
+  .tl-result-col .tg-reveal-num { display: flex; align-items: flex-end; height: 46px; }
+  .tl-result-col .tg-reveal-num.delta { font-size: 44px; justify-content: center; }
+  /* the number stays optically centred; the sign hangs to its left */
+  .tl-delta-wrap { position: relative; display: inline-block; }
+  .tl-delta-sign {
+    position: absolute; right: 100%; bottom: 0.04em;
+    font-size: 0.62em; margin-right: 0.04em;
+    opacity: 0.85;
+  }
+  .tg-resultbox:has(.tl-result-col.great) { border-color: rgba(182,242,91,0.45); background: rgba(182,242,91,0.07); }
+  .tg-resultbox:has(.tl-result-col.good)  { border-color: rgba(94,226,255,0.45);  background: rgba(94,226,255,0.07); }
+  .tg-resultbox:has(.tl-result-col.meh)   { border-color: rgba(255,209,102,0.45); background: rgba(255,209,102,0.06); }
+  .tg-resultbox:has(.tl-result-col.bad)   { border-color: rgba(255,138,101,0.45); background: rgba(255,138,101,0.06); }
+  /* Guess view */
+  .tg-guess-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 44px; line-height: 0.9; letter-spacing: 2px;
+    color: var(--accent-soft); text-align: center;
+    font-variant-numeric: tabular-nums;
+    filter: drop-shadow(0 0 14px rgba(184,163,255,0.22));
+  }
+  .tg-guess-cap {
+    text-align: center; font-size: 8px; letter-spacing: 3px;
+    color: var(--muted); text-transform: uppercase; margin-top: 3px;
+  }
+  /* Reveal view */
+  .tg-reveal-side { text-align: center; opacity: 0.9; }
+  .tg-reveal-center { text-align: center; }
   .tg-reveal-num {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px; line-height: 1; letter-spacing: 1px;
-    color: var(--text);
+    line-height: 1; letter-spacing: 1px; color: var(--text);
     font-variant-numeric: tabular-nums;
   }
+  .tg-reveal-side .tg-reveal-num { font-size: 26px; }
   .tg-reveal-num.you { color: var(--accent-soft); }
   .tg-reveal-num.actual { color: var(--accent-warm); }
+  .tg-reveal-num.delta { font-size: 44px; line-height: 0.85; }
   .tg-reveal-num.delta.great { color: var(--in-tune); }
   .tg-reveal-num.delta.good  { color: var(--accent); }
   .tg-reveal-num.delta.meh   { color: var(--metro); }
   .tg-reveal-num.delta.bad   { color: var(--sharp); }
+  .tg-reveal-grade {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+    margin-top: 4px; opacity: 0.85;
+  }
+  .tg-reveal-grade.great { color: var(--in-tune); }
+  .tg-reveal-grade.good  { color: var(--accent); }
+  .tg-reveal-grade.meh   { color: var(--metro); }
+  .tg-reveal-grade.bad   { color: var(--sharp); }
   .tg-reveal-lbl {
-    font-size: 8.5px; letter-spacing: 2px; color: var(--muted);
-    text-transform: uppercase; margin-top: 4px;
+    font-size: 7.5px; letter-spacing: 1.5px; color: var(--muted);
+    text-transform: uppercase; margin-top: 3px;
   }
   @keyframes tgNumReveal {
     0%   { opacity: 0.2; transform: scale(0.82) translateY(4px); }
@@ -8337,12 +8418,55 @@
   .tg-reveal-num.pop {
     animation: tgNumReveal 0.3s cubic-bezier(0.34, 1.4, 0.64, 1) both;
   }
-  /* Grade-colored accent on the delta column border */
-  .tg-reveal-delta-col { transition: border-color 0.3s ease, box-shadow 0.3s ease; }
-  .tg-reveal-delta-col.great { border-color: rgba(182,242,91,0.45); box-shadow: 0 0 12px rgba(182,242,91,0.15) inset; }
-  .tg-reveal-delta-col.good  { border-color: rgba(94,226,255,0.45); box-shadow: 0 0 12px rgba(94,226,255,0.15) inset; }
-  .tg-reveal-delta-col.meh   { border-color: rgba(255,209,102,0.45); box-shadow: 0 0 12px rgba(255,209,102,0.15) inset; }
-  .tg-reveal-delta-col.bad   { border-color: rgba(255,138,101,0.45); box-shadow: 0 0 12px rgba(255,138,101,0.15) inset; }
+  /* Grade-tinted box frame on reveal */
+  .tg-resultbox:has(.tg-reveal-delta-col.great) { border-color: rgba(182,242,91,0.45); background: rgba(182,242,91,0.07); }
+  .tg-resultbox:has(.tg-reveal-delta-col.good)  { border-color: rgba(94,226,255,0.45);  background: rgba(94,226,255,0.07); }
+  .tg-resultbox:has(.tg-reveal-delta-col.meh)   { border-color: rgba(255,209,102,0.45); background: rgba(255,209,102,0.06); }
+  .tg-resultbox:has(.tg-reveal-delta-col.bad)   { border-color: rgba(255,138,101,0.45); background: rgba(255,138,101,0.06); }
+  /* ── One-card layout + header strip ── */
+  .tg-card { background: var(--bg-1); border: 1px solid var(--border-soft); border-radius: 18px; padding: 16px 14px 14px; position: relative; }
+  .tg-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .tg-diff { cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+  .tg-stats { display: flex; gap: 14px; font-family: 'JetBrains Mono', monospace; }
+  .tg-stat-col { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+  .tg-stat-v { font-size: 13px; color: var(--text-dim); line-height: 1; }
+  .tg-stat-l { font-size: 7px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; opacity: 0.6; }
+  /* ── Click / Feel popup toolbar ── */
+  .tg-toolbar { display: flex; gap: 8px; position: relative; margin-top: 12px; }
+  .tg-toolbar-cell { position: relative; flex: 1; }
+  .tg-popup-btn {
+    width: 100%; min-height: 54px; padding: 8px 10px; border-radius: 10px; cursor: pointer;
+    border: 1px solid var(--border-soft); background: var(--panel);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-family: 'JetBrains Mono', monospace; transition: border-color 0.15s;
+  }
+  .tg-popup-btn:hover { border-color: var(--accent-soft); }
+  .tg-popup-label { font-size: 8px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+  .tg-popup-value { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; line-height: 1; color: var(--accent-soft); }
+  .tg-popup-sub { font-size: 7px; color: var(--muted); font-style: italic; font-family: 'Fraunces', serif; }
+  .tg-popup {
+    position: absolute; bottom: calc(100% + 6px);
+    background: var(--surface, #181826); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; z-index: 100;
+    box-shadow: 0 -20px 50px rgba(0,0,0,0.85); min-width: 200px;
+  }
+  .tg-popup-section { font-size: 8px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  .tg-popup-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; }
+  .tg-popup-grid.two { grid-template-columns: repeat(2,1fr); }
+  .tg-popup-chip {
+    padding: 9px 4px; border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--border-soft); background: transparent; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px; text-align: center;
+    transition: all 0.12s;
+  }
+  .tg-popup-chip.active { border-color: var(--accent-soft); background: rgba(184,163,255,0.12); color: var(--accent-soft); }
+  .tg-toolbar.locked .tg-popup-btn { opacity: 0.3; pointer-events: none; }
+  /* A round override (harder difficulties) greys the button and tints it warm */
+  .tg-popup-btn.round-override {
+    opacity: 0.55; border-color: rgba(255,160,122,0.4);
+    background: rgba(255,160,122,0.05);
+  }
+  .tg-popup-btn.round-override .tg-popup-value { color: var(--accent-warm); }
   /* ── Tempo Guess HUD ───────────────────── */
   .tg-hud {
     position: absolute; top: 10px;
@@ -8387,6 +8511,8 @@
     border-color: var(--accent-soft); color: var(--accent-soft);
     background: rgba(184,163,255,0.1);
   }
+  .tg-auto-dot { opacity: 0.3; transition: opacity 0.18s, color 0.18s; }
+  .tg-auto-pill.on .tg-auto-dot { opacity: 1; color: var(--accent-soft); }
   /* ── Pattern matrix ─────────────────────── */
   .tg-opts-card { padding: 10px 14px 12px; }
   /* Compact label-inline rows */
@@ -8412,9 +8538,11 @@
   .tg-hud-left[data-diff="easy"]   { border-left-color: rgba(126,242,160,0.55); }
   .tg-hud-left[data-diff="normal"] { border-left-color: rgba(255,209,102,0.55); }
   .tg-hud-left[data-diff="hard"]   { border-left-color: rgba(255,138,101,0.55); }
+  .tg-hud-left[data-diff="insane"] { border-left-color: rgba(255,82,82,0.7); }
   .tg-hud-left[data-diff="easy"]   .tg-hud-diff { color: #7ef2a0; }
   .tg-hud-left[data-diff="normal"] .tg-hud-diff { color: #ffd166; }
   .tg-hud-left[data-diff="hard"]   .tg-hud-diff { color: var(--accent-warm); }
+  .tg-hud-left[data-diff="insane"] .tg-hud-diff { color: var(--sharp); }
   .tg-diff-row {
     display: flex; gap: 6px; margin-top: 4px;
   }
@@ -18830,65 +18958,92 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
       </div>
 
-      <div class="tl-display">
-        <!-- Right HUD: stats -->
-        <div class="tg-hud tg-hud-right">
-          <div class="tg-hud-col"><span class="tg-hud-val" id="tlHudStreak">0</span><span class="tg-hud-lbl" data-i18n="xp_streak">streak</span></div>
-          <div class="tg-hud-col"><span class="tg-hud-val" id="tlHudBest">—</span><span class="tg-hud-lbl" data-i18n="xp_best_ms">best ms</span></div>
+      <div class="tl-display tg-card" onclick="tlCloseAllPopups()">
+        <!-- Header strip: title-side empty, stats right -->
+        <div class="tg-top">
+          <div class="tg-diff" style="cursor:default">
+            <span class="tg-hud-diff" id="tlTempoName">Andante</span>
+            <span class="tg-hud-lbl"><span data-i18n="tl_target">target tempo</span> <button class="help-btn" onclick="event.stopPropagation();showHelp('tllock')" style="margin:0;font-size:10px">?</button></span>
+          </div>
+          <div class="tg-stats">
+            <div class="tg-stat-col"><span class="tg-stat-v" id="tlHudStreak">0</span><span class="tg-stat-l" data-i18n="xp_streak">streak</span></div>
+            <div class="tg-stat-col"><span class="tg-stat-v" id="tlHudBest">—</span><span class="tg-stat-l" data-i18n="xp_best_ms">best ms</span></div>
+          </div>
         </div>
+
         <div class="tl-phase-pill" id="tlPhasePill" data-i18n="tl_ready">READY</div>
-        <div class="tl-bpm-big" id="tlBpmBig">100</div>
-        <div class="tl-bpm-name" id="tlBpmNameDisplay">Andante</div>
-        <div class="tl-random-indicator" id="tlRandomIndicator"><span data-i18n="tl_rnd">● RANDOM</span> <span id="tlRandomState" style="display:inline-block;width:2.2em;text-align:left">OFF</span></div>
-        <div class="tl-bar-row" id="tlBarRow"></div>
-        <div class="tl-bar-label" id="tlBarLabel" data-i18n="tl_ready">tap START to begin</div>
+
         <div class="tl-tap-zone" id="tlTapZone" onpointerdown="tlTap()">
           <svg class="tg-beat-clock" id="tlBeatClock" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <circle class="tg-clock-track" cx="100" cy="100" r="90"/>
+            <circle class="tl-tap-rim" cx="100" cy="100" r="94"/>
             <g id="tlTickGroup"></g>
           </svg>
           <div class="tl-tap-inner">
-            <div class="tl-tap-icon">◯</div>
-            <div class="tl-tap-label" data-i18n="tl_tap_label">TAP ON BEAT</div>
+            <div class="tl-tap-label" id="tlTapLabel" data-i18n="tl_tap_label">TAP</div>
           </div>
         </div>
-        <div class="tl-result" id="tlResult" data-i18n="tl_ready">start playing · result will appear here</div>
-        <div class="iv-controls" style="margin-top:12px">
+
+        <div class="tl-bar-row" id="tlBarRow"></div>
+        <div class="tl-bar-label" id="tlBarLabel" data-i18n="tl_ready">tap START to begin</div>
+
+        <!-- Persistent result box: live BPM, morphs into the ms result in place -->
+        <div class="tg-resultbox" id="tlResultBox" onclick="event.stopPropagation()">
+          <div class="tg-resultbox-guess" id="tlBpmView">
+            <div class="tg-guess-big" id="tlBpmBig">100</div>
+            <div class="tg-guess-cap" data-i18n="tl_bpm_cap">target · bpm</div>
+          </div>
+          <div class="tg-resultbox-reveal tl-result-col" id="tlResultRow">
+            <div class="tg-reveal-side you"><div class="tg-reveal-num you" id="tlResultYou">—</div><div class="tg-reveal-lbl" data-i18n="tl_you_tempo">your tempo</div></div>
+            <div class="tg-reveal-center">
+              <div class="tg-reveal-num delta" id="tlResultDelta">—</div>
+              <div class="tg-reveal-grade" id="tlResultGrade"></div>
+            </div>
+            <div class="tg-reveal-side act"><div class="tg-reveal-num actual" id="tlResultTarget">—</div><div class="tg-reveal-lbl" data-i18n="tl_target_short">target</div></div>
+          </div>
+        </div>
+
+        <div class="tl-bpm-row" onclick="event.stopPropagation()">
+          <button class="tl-bpm-adj" onclick="tlAdjBpm(-1)">−</button>
+          <input type="range" class="tg-guess-slider" id="tlBpmSlider" min="40" max="220" value="100" oninput="tlSetBpm(this.value)">
+          <button class="tl-bpm-adj" onclick="tlAdjBpm(1)">+</button>
+        </div>
+
+        <div class="iv-controls" style="margin-top:12px" onclick="event.stopPropagation()">
+          <button class="tg-auto-pill" id="tlAutoPill" onclick="tlToggleAuto()">AUTO <span class="tg-auto-dot">◆</span></button>
+          <button class="tg-auto-pill tl-new-btn" id="tlRandomBtn" onclick="tlNewTempo()" data-i18n="tl_new">↯ NEW</button>
           <button class="iv-btn primary" id="tlGoBtn" onclick="tlToggle()" style="background:linear-gradient(135deg,var(--accent-soft),var(--accent));box-shadow:0 4px 14px rgba(184,163,255,0.3)" data-i18n="btn_start">▶ START</button>
         </div>
-      </div>
 
-      <div class="card tl-opts-card">
-        <div class="tg-opt-row">
-          <span class="tg-opt-label">BPM</span>
-          <div class="tl-bpm-row">
-            <button class="tl-bpm-adj" onclick="tlAdjBpm(-1)">−</button>
-            <input type="range" class="tg-guess-slider" id="tlBpmSlider" min="40" max="220" value="100" oninput="tlSetBpm(this.value)">
-            <button class="tl-bpm-adj" onclick="tlAdjBpm(1)">+</button>
-            <button class="tl-bpm-adj tl-random-btn" id="tlRandomBtn" onclick="tlToggleRandom()" data-i18n="tg_rnd">RND</button>
+        <!-- Pattern / Meter popup buttons -->
+        <div class="tg-toolbar" onclick="event.stopPropagation()">
+          <div class="tg-toolbar-cell">
+            <button class="tg-popup-btn" id="tlPatternBtn" onclick="tlTogglePopup('pattern')">
+              <span class="tg-popup-label" data-i18n="tl_pattern">Pattern</span>
+              <span class="tg-popup-value" id="tlPatternValue">2·2</span>
+              <span class="tg-popup-sub" id="tlPatternSub">on · off ▾</span>
+            </button>
+            <div class="tg-popup" id="tlPatternPopup" style="display:none;left:0">
+              <div class="tg-popup-section" style="display:flex;align-items:center;gap:6px"><span data-i18n="tl_pattern">Pattern</span><button class="help-btn" onclick="showHelp('tllockpattern')" style="margin:0">?</button></div>
+              <div class="tg-popup-grid two" id="tlPatternRow"></div>
+            </div>
           </div>
-        </div>
-        <div class="tg-opt-row">
-          <span class="tg-opt-label" data-i18n="tl_pattern">Pattern</span>
-          <div class="tg-chip-group" id="tlPatternRow"></div>
-        </div>
-        <div class="tg-opt-row">
-          <span class="tg-opt-label" data-i18n="tl_meter">Meter</span>
-          <div class="tg-chip-group" id="tlMeterRow"></div>
-        </div>
-      </div>
-
-      <div class="card card-slim">
-        <div class="vol-slider-row">
-          <div class="vol-slider-label" data-i18n="vol_label">VOL</div>
-          <input type="range" class="vol-slider" id="tlVolSlider" min="0" max="100" value="100" oninput="setTlVolume(this.value)" style="--c:var(--accent-soft)">
-          <div class="vol-percent" id="tlVolPercent" style="color:var(--accent-soft)">100%</div>
+          <div class="tg-toolbar-cell">
+            <button class="tg-popup-btn" id="tlMeterBtn" onclick="tlTogglePopup('meter')">
+              <span class="tg-popup-label" data-i18n="tl_meter">Meter</span>
+              <span class="tg-popup-value" id="tlMeterValue">4/4</span>
+              <span class="tg-popup-sub" data-i18n="tl_beats_bar">beats/bar ▾</span>
+            </button>
+            <div class="tg-popup" id="tlMeterPopup" style="display:none;right:0">
+              <div class="tg-popup-section" data-i18n="tl_meter">Meter</div>
+              <div class="tg-popup-grid" id="tlMeterRow"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- TEMPO GUESS -->
-    <div id="exTempoGuess" class="hidden stack">
+    <div id="exTempoGuess" class="hidden stack" onclick="tgCloseAllPopups()">
       <div class="train-header">
         <button class="train-back" onclick="exitExercise()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <div class="train-title-block">
@@ -18897,31 +19052,49 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
       </div>
 
-      <div class="tg-display">
-        <!-- Left HUD: difficulty — tap to cycle -->
-        <div class="tg-hud tg-hud-left" onclick="tgCycleDiff()">
-          <span class="tg-hud-val tg-hud-diff" id="tgHudDiff" data-i18n="tg_normal">NORMAL</span>
-          <span class="tg-hud-lbl" id="tgHudRange">50–180 bpm</span>
+      <div class="tg-display tg-card">
+        <!-- Header strip: difficulty (tap to cycle) + stats -->
+        <div class="tg-top">
+          <div class="tg-diff tg-hud-left" onclick="tgCycleDiff()">
+            <span class="tg-hud-diff" id="tgHudDiff" data-i18n="tg_normal">NORMAL</span>
+            <span class="tg-hud-lbl" id="tgHudRange">50–180 bpm</span>
+          </div>
+          <div class="tg-stats">
+            <div class="tg-stat-col"><span class="tg-stat-v" id="tgHudStreak">0</span><span class="tg-stat-l" data-i18n="xp_streak">streak</span></div>
+            <div class="tg-stat-col"><span class="tg-stat-v" id="tgHudBest">—</span><span class="tg-stat-l" data-i18n="xp_best_delta">best Δ</span></div>
+          </div>
         </div>
-        <!-- Right HUD: stats stacked -->
-        <div class="tg-hud tg-hud-right">
-          <div class="tg-hud-col"><span class="tg-hud-val" id="tgHudStreak">0</span><span class="tg-hud-lbl" data-i18n="xp_streak">streak</span></div>
-          <div class="tg-hud-col"><span class="tg-hud-val" id="tgHudBest">—</span><span class="tg-hud-lbl" data-i18n="xp_best_delta">best Δ</span></div>
-        </div>
+
         <div class="tg-phase-pill" id="tgPhasePill" data-i18n="tl_ready">READY</div>
+
         <div class="tg-pulse-circle" id="tgPulseCircle">
+          <div class="tg-pulse-bloom" id="tgPulseBloom"></div>
           <svg class="tg-beat-clock" id="tgBeatClock" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
-            <circle class="tg-clock-track" cx="55" cy="55" r="44"/>
+            <circle class="tg-rim-track" cx="55" cy="55" r="52"/>
+            <circle class="tg-rim-fill" id="tgRimFill" cx="55" cy="55" r="52"
+                    transform="rotate(-90 55 55)"/>
             <g id="tgTickGroup"></g>
           </svg>
           <div class="tg-pulse-dot" id="tgPulseDot"></div>
         </div>
-        <div class="tg-reveal-row" id="tgRevealRow">
-          <div class="tg-reveal-col tg-reveal-you-col"><div class="tg-reveal-num you" id="tgRevealYou">100</div><div class="tg-reveal-lbl"><span data-i18n="tg_your_guess">Your guess</span></div></div>
-          <div class="tg-reveal-col"><div class="tg-reveal-num actual" id="tgRevealActual">—</div><div class="tg-reveal-lbl"><span data-i18n="tg_actual">Actual</span></div></div>
-          <div class="tg-reveal-col tg-reveal-delta-col"><div class="tg-reveal-num delta" id="tgRevealDelta">—</div><div class="tg-reveal-lbl"><span data-i18n="tg_off_by">Off by</span></div></div>
+
+        <!-- Persistent result box: holds the live guess, morphs into the result
+             in place on lock-in. Always present so the layout never shifts. -->
+        <div class="tg-resultbox" id="tgResultBox">
+          <div class="tg-resultbox-guess" id="tgGuessView">
+            <div class="tg-guess-big" id="tgGuessBig">100</div>
+            <div class="tg-guess-cap" data-i18n="tg_guess_cap">your guess · bpm</div>
+          </div>
+          <div class="tg-resultbox-reveal tg-reveal-delta-col" id="tgRevealRow">
+            <div class="tg-reveal-side you"><div class="tg-reveal-num you" id="tgRevealYou">100</div><div class="tg-reveal-lbl" data-i18n="tg_you_short">you</div></div>
+            <div class="tg-reveal-center">
+              <div class="tg-reveal-num delta" id="tgRevealDelta">—</div>
+              <div class="tg-reveal-grade" id="tgRevealGrade"></div>
+            </div>
+            <div class="tg-reveal-side act"><div class="tg-reveal-num actual" id="tgRevealActual">—</div><div class="tg-reveal-lbl" data-i18n="tg_actual">Actual</div></div>
+          </div>
         </div>
-        <div class="tl-bpm-row" style="margin-top:10px">
+        <div class="tl-bpm-row">
           <button class="tl-bpm-adj" onclick="tgAdjGuess(-1)">−</button>
           <input type="range" class="tg-guess-slider" id="tgGuessSlider" min="40" max="220" value="100" oninput="tgSetGuess(this.value)">
           <button class="tl-bpm-adj" onclick="tgAdjGuess(1)">+</button>
@@ -18930,20 +19103,35 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           <div class="ce-countdown-track"><div class="ce-countdown-bar" id="tgCountdownBar"></div></div>
         </div>
         <div class="iv-controls" style="margin-top:12px">
-          <button class="tg-auto-pill" id="tgAutoPill" onclick="tgToggleAuto()" data-i18n="tg_auto_label">AUTO</button>
+          <button class="tg-auto-pill" id="tgAutoPill" onclick="tgToggleAuto()">AUTO <span class="tg-auto-dot">◆</span></button>
           <button class="iv-btn" id="tgReplayBtn" onclick="tgReplay()" disabled data-i18n="tg_again">↻ AGAIN</button>
           <button class="iv-btn primary" id="tgGoBtn" onclick="tgGoOrLock()" style="background:linear-gradient(135deg,var(--accent-soft),var(--accent));box-shadow:0 4px 14px rgba(184,163,255,0.3)" data-i18n="tg_play_tempo">▶ PLAY TEMPO</button>
         </div>
-      </div>
 
-      <div class="card tg-opts-card">
-        <div class="tg-opt-row">
-          <span class="tg-opt-label" data-i18n="tg_click">Click</span>
-          <div class="tg-chip-group" id="tgSubdivRow"></div>
-        </div>
-        <div class="tg-opt-row">
-          <span class="tg-opt-label" data-i18n="tg_feel">Feel</span>
-          <div class="tg-chip-group" id="tgGrooveRow"></div>
+        <!-- Click / Feel popup buttons -->
+        <div class="tg-toolbar" onclick="event.stopPropagation()">
+          <div class="tg-toolbar-cell">
+            <button class="tg-popup-btn" id="tgClickBtn" onclick="tgTogglePopup('click')">
+              <span class="tg-popup-label" data-i18n="tg_click">Click</span>
+              <span class="tg-popup-value" id="tgClickValue">QTR</span>
+              <span class="tg-popup-sub" id="tgClickSub">quarter ▾</span>
+            </button>
+            <div class="tg-popup" id="tgClickPopup" style="display:none;left:0">
+              <div class="tg-popup-section" data-i18n="tg_subdiv">Subdivision</div>
+              <div class="tg-popup-grid" id="tgSubdivRow"></div>
+            </div>
+          </div>
+          <div class="tg-toolbar-cell">
+            <button class="tg-popup-btn" id="tgFeelBtn" onclick="tgTogglePopup('feel')">
+              <span class="tg-popup-label" data-i18n="tg_feel">Feel</span>
+              <span class="tg-popup-value" id="tgFeelValue">STRT</span>
+              <span class="tg-popup-sub" id="tgFeelSub">straight ▾</span>
+            </button>
+            <div class="tg-popup" id="tgFeelPopup" style="display:none;right:0">
+              <div class="tg-popup-section" data-i18n="tg_groove">Groove</div>
+              <div class="tg-popup-grid two" id="tgGrooveRow"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -20453,7 +20641,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.68.176';
+const INTONARE_VERSION = '0.70.7';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -42842,12 +43030,6 @@ function ivRenderBreakdown() {
 let TAP_LATENCY_OFFSET = 0.038;  // seconds; live-mutated by the calibration slider
 
 let tlCtx = null, tlMasterGain = null;
-let tlVolume = 1.0;
-function setTlVolume(v) {
-  tlVolume = v / 100;
-  if (tlMasterGain) tlMasterGain.gain.setTargetAtTime(0.85 * tlVolume, tlMasterGain.context.currentTime, 0.02);
-  document.getElementById('tlVolPercent').textContent = v + '%';
-}
 let tlBpm = 100;
 let tlTsTopVal = 4;
 let tlPattern = { active: 2, silent: 2 };  // bars on / bars off
@@ -42890,7 +43072,7 @@ function tlInit() {
   tlRenderBars();
   tlUpdateBpmDisplay();
   tlUpdateStatsHud();
-  tlSyncRandomIndicator();
+  tlInitAutoPill();
 }
 
 function tlBuildPatternChips() {
@@ -42900,16 +43082,19 @@ function tlBuildPatternChips() {
   TL_PATTERNS.forEach(p => {
     const btn = document.createElement('button');
     const isActive = p.active === tlPattern.active && p.silent === tlPattern.silent;
-    btn.className = 'tg-diff-chip' + (isActive ? ' active' : '');
-    btn.innerHTML = `${p.active}·${p.silent}<span class="tg-diff-chip-range">on · off</span>`;
+    btn.className = 'tg-popup-chip' + (isActive ? ' active' : '');
+    btn.innerHTML = `${p.active}·${p.silent}`;
     btn.onclick = () => {
       if (tlPlaying) tlStop();
       tlPattern = { active: p.active, silent: p.silent };
       tlBuildPatternChips();
       tlRenderBars();
+      tlCloseAllPopups();
     };
     row.appendChild(btn);
   });
+  const valEl = document.getElementById('tlPatternValue');
+  if (valEl) valEl.textContent = tlPattern.active + '·' + tlPattern.silent;
 }
 
 function tlBuildMeterChips() {
@@ -42918,10 +43103,28 @@ function tlBuildMeterChips() {
   row.innerHTML = '';
   TL_METERS.forEach(m => {
     const btn = document.createElement('button');
-    btn.className = 'tg-diff-chip' + (m === tlTsTopVal ? ' active' : '');
+    btn.className = 'tg-popup-chip' + (m === tlTsTopVal ? ' active' : '');
     btn.textContent = m + '/4';
-    btn.onclick = () => tlSelectMeter(m);
+    btn.onclick = () => { tlSelectMeter(m); tlCloseAllPopups(); };
     row.appendChild(btn);
+  });
+  const valEl = document.getElementById('tlMeterValue');
+  if (valEl) valEl.textContent = tlTsTopVal + '/4';
+}
+
+function tlCloseAllPopups() {
+  ['tlPatternPopup', 'tlMeterPopup'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+function tlTogglePopup(which) {
+  const map = { pattern: 'tlPatternPopup', meter: 'tlMeterPopup' };
+  Object.entries(map).forEach(([k, id]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = (k === which && el.style.display === 'none') ? 'block' : 'none';
   });
 }
 
@@ -42932,30 +43135,26 @@ function tlSelectMeter(m) {
   tlBuildMeterChips();
 }
 
-function tlCycleMeter() { // kept as stub — chips replace the cycle button
-  tlSelectMeter(TL_METERS[(tlMeterIdx + 1) % TL_METERS.length]);
+let tlAutoLoop = false;   // AUTO: keep looping; MANUAL (default): stop after each round to review
+
+function tlInitAutoPill() {
+  const pill = document.getElementById('tlAutoPill');
+  if (!pill) return;
+  pill.className = 'tg-auto-pill' + (tlAutoLoop ? ' on' : '');
+  pill.innerHTML = 'AUTO <span class="tg-auto-dot">\u25C6</span>';
 }
 
-let tlRandomMode = false;
-
-function tlSyncRandomIndicator() {
-  const btn = document.getElementById('tlRandomBtn');
-  const ind = document.getElementById('tlRandomIndicator');
-  const state = document.getElementById('tlRandomState');
-  if (btn) btn.classList.toggle('on', tlRandomMode);
-  if (ind) ind.classList.toggle('on', tlRandomMode);
-  if (state) state.textContent = tlRandomMode ? 'ON' : 'OFF';
+function tlToggleAuto() {
+  tlAutoLoop = !tlAutoLoop;
+  tlInitAutoPill();
 }
 
-function tlToggleRandom() {
-  tlRandomMode = !tlRandomMode;
-  tlSyncRandomIndicator();
-  if (tlRandomMode) tlPickRandomBpm();
-}
-
-function tlPickRandomBpm() {
+function tlNewTempo() {
+  // One-shot: roll a fresh random target tempo. Not a toggle, no persistent mode.
   const bpm = 60 + Math.floor(Math.random() * 121); // 60–180
   tlSetBpm(bpm);
+  const btn = document.getElementById('tlRandomBtn');
+  if (btn) { btn.classList.remove('flash'); void btn.offsetWidth; btn.classList.add('flash'); }
 }
 
 function tlUpdateStatsHud(prevStreak) {
@@ -42981,21 +43180,9 @@ function tlAdjBpm(d) { tlSetBpm(tlBpm + d); }
 function tlUpdateBpmDisplay() {
   const name = (typeof getTempoName === 'function') ? getTempoName(tlBpm) : '';
   const bigEl  = document.getElementById('tlBpmBig');
-  const nameEl = document.getElementById('tlBpmNameDisplay');
+  const nameEl = document.getElementById('tlTempoName');
   if (bigEl)  bigEl.textContent  = tlBpm;
   if (nameEl) nameEl.textContent = name;
-  // legacy refs (removed from DOM, guard safely)
-  const numEl  = document.getElementById('tlBpmNum');
-  const nameEl2 = document.getElementById('tlBpmName');
-  if (numEl)  numEl.textContent  = tlBpm;
-  if (nameEl2) nameEl2.textContent = name;
-}
-
-function tlSetTs(v) {
-  tlTsTopVal = Math.max(1, Math.min(12, parseInt(v) || 4));
-  const inp = document.getElementById('tlTsTop');
-  if (inp) inp.value = tlTsTopVal;
-  tlRenderBars();
 }
 
 function tlBuildClock() {
@@ -43050,7 +43237,6 @@ function tlToggle() {
 
 function tlStart() {
   tlEnsureCtx();
-  if (tlRandomMode) tlPickRandomBpm();
   tlPlaying = true;
   tlState = { totalBeats: 0, nextNoteTime: tlCtx.currentTime + 0.1 };
   tlEventQueue = [];
@@ -43059,7 +43245,8 @@ function tlStart() {
   document.getElementById('tlGoBtn').innerHTML = '■ STOP';
   document.getElementById('tlPhasePill').textContent = t('tl_listening');
   document.getElementById('tlPhasePill').className = 'tl-phase-pill listening';
-  document.getElementById('tlResult').textContent = t('tl_in_progress');
+  const box = document.getElementById('tlResultBox');
+  if (box) box.classList.remove('revealed');   // back to live BPM view
   tlSchedTimer = setInterval(tlScheduler, 25);
   requestAnimationFrame(tlDrawLoop);
 }
@@ -43109,10 +43296,18 @@ function tlScheduleBeat() {
   }
 
   if (isInActive) {
-    const isAccent = isFirstBeatOfBar && barInCycle === 0;
-    const sound = (typeof METRO_SOUNDS !== 'undefined' && METRO_SOUNDS[selectedMetroSound]) || METRO_SOUNDS.click;
-    const vol = isFirstBeatOfBar ? 0.7 : 0.3;
-    sound.play(tlCtx, time, isAccent, vol, tlMasterGain);
+    // In MANUAL mode the round ends at the silent phase; the very next active
+    // beat (the downbeat re-entering the click) would sound right as the result
+    // appears. Suppress that one click so there's no stray tick on results.
+    const reenteringActive = tlState.totalBeats > 0 &&
+      ((beatInCycle + totalBeatsPerCycle - 1) % totalBeatsPerCycle) >= activeBeats;
+    const suppress = !tlAutoLoop && reenteringActive;
+    if (!suppress) {
+      const isAccent = isFirstBeatOfBar && barInCycle === 0;
+      const sound = (typeof METRO_SOUNDS !== 'undefined' && METRO_SOUNDS[selectedMetroSound]) || METRO_SOUNDS.click;
+      const vol = isFirstBeatOfBar ? 0.7 : 0.3;
+      sound.play(tlCtx, time, isAccent, vol, tlMasterGain);
+    }
   } else {
     // silent phase — record expected beat time for tap evaluation
     tlSilentBeatTimes.push(time);
@@ -43146,9 +43341,13 @@ function tlDrawLoop() {
       document.querySelectorAll('#tlTickGroup .tg-tick').forEach(tick => tick.classList.remove('lit'));
     } else if (ev.type === 'enter-active') {
       tlEvaluateRound(ev.time);
-      if (tlRandomMode) tlPickRandomBpm();
+      if (!tlAutoLoop) {
+        // MANUAL: stop after the round so the result can be reviewed
+        tlStop();
+        return;
+      }
       const pill = document.getElementById('tlPhasePill');
-      pill.textContent = t('status_listening');
+      pill.textContent = t('tl_listening');
       pill.className = 'tl-phase-pill listening';
       const tap = document.getElementById('tlTapZone');
       tap.classList.remove('armed');
@@ -43185,6 +43384,7 @@ function tlTap() {
   tap.classList.remove('pulse');
   void tap.offsetWidth;
   tap.classList.add('pulse');
+  tlTapSound();
   // Get current phase from beat counter (more reliable than waiting for visual event)
   const totalBeatsPerCycle = (tlPattern.active + tlPattern.silent) * tlTsTopVal;
   const activeBeats = tlPattern.active * tlTsTopVal;
@@ -43198,14 +43398,43 @@ function tlTap() {
   }
 }
 
+// Soft reel-pawl tick on each tap — same physical, non-grating feel as the
+// rhythm-reading tap confirmation, routed through Tempo Lock's gain.
+function tlTapSound() {
+  try {
+    const ctx = tlCtx || getAudio();
+    const out = tlMasterGain || ctx.destination;
+    const t = ctx.currentTime + 0.0005;
+    [1500, 2050].forEach(function(f, i) {
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const og = ctx.createGain();
+      const peak = (i === 0 ? 0.06 : 0.03);
+      og.gain.setValueAtTime(0, t);
+      og.gain.linearRampToValueAtTime(peak, t + 0.0008);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.014);
+      o.connect(og); og.connect(out);
+      o.start(t); o.stop(t + 0.016);
+      o.onended = function(){ try { og.disconnect(); } catch(e){} };
+    });
+  } catch(e) {}
+}
+
 function tlEvaluateRound(_activePhaseStartTime) {
-  const result = document.getElementById('tlResult');
-  if (!result) return;
+  const box = document.getElementById('tlResultBox');
+  const deltaEl = document.getElementById('tlResultDelta');
+  const gradeEl = document.getElementById('tlResultGrade');
+  const row = document.getElementById('tlResultRow');
+  if (!box || !deltaEl) return;
   if (tlTaps.length === 0 || tlSilentBeatTimes.length === 0) {
-    result.innerHTML = '<span class="tl-result-meh">no taps recorded · play through</span>';
-    result.classList.remove('flash');
-    void result.offsetWidth;
-    result.classList.add('flash');
+    const youEl0 = document.getElementById('tlResultYou');
+    const tgtEl0 = document.getElementById('tlResultTarget');
+    if (youEl0) youEl0.textContent = '—';
+    if (tgtEl0) tgtEl0.textContent = tlBpm;
+    deltaEl.textContent = '—';
+    deltaEl.className = 'tg-reveal-num delta meh';
+    if (gradeEl) { gradeEl.textContent = t('tl_no_taps') || 'no taps'; gradeEl.className = 'tg-reveal-grade meh'; }
+    if (row) row.className = 'tg-resultbox-reveal tl-result-col meh';
+    box.classList.add('revealed');
     return;
   }
   // For each tap, find nearest expected beat (signed)
@@ -43230,13 +43459,30 @@ function tlEvaluateRound(_activePhaseStartTime) {
   else if (avgAbsMs < 100) { grade = t('tl_grade_needs_work'); gradeClass = 'meh';   tlStats.streak = 0; }
   else                     { grade = t('tl_grade_off');        gradeClass = 'bad';   tlStats.streak = 0; }
 
-  const sign = avgSignedMs > 5 ? '+' : avgSignedMs < -5 ? '−' : '±';
-  const direction = avgSignedMs > 5 ? t('dir_late') : avgSignedMs < -5 ? t('dir_early') : t('dir_on');
-  result.innerHTML =
-    `<span class="tl-result-${gradeClass}">${sign}${Math.round(Math.abs(avgSignedMs))}ms · ${direction} · <strong>${grade}</strong></span>`;
-  result.classList.remove('flash');
-  void result.offsetWidth;
-  result.classList.add('flash');
+  // Your tapped tempo: 60 / average interval between consecutive taps.
+  let tappedBpm = null;
+  if (tlTaps.length >= 2) {
+    let iv = 0;
+    for (let i = 1; i < tlTaps.length; i++) iv += (tlTaps[i] - tlTaps[i - 1]);
+    const avgIv = iv / (tlTaps.length - 1);
+    if (avgIv > 0) tappedBpm = Math.round(60 / avgIv);
+  }
+
+  // Three-slot hero: your tempo · BPM drift · target (all bpm, consistent units)
+  const youEl = document.getElementById('tlResultYou');
+  const tgtEl = document.getElementById('tlResultTarget');
+  if (youEl) youEl.textContent = tappedBpm !== null ? tappedBpm : '—';
+  if (tgtEl) tgtEl.textContent = tlBpm;
+  const bpmDelta = tappedBpm !== null ? tappedBpm - tlBpm : 0;
+  const dSign = bpmDelta > 0 ? '+' : bpmDelta < 0 ? '−' : '±';
+  // Center the number itself; the sign hangs to its left without shifting it.
+  deltaEl.innerHTML = '<span class="tl-delta-wrap"><span class="tl-delta-sign">' + dSign + '</span>' + Math.abs(bpmDelta) + '</span>';
+  deltaEl.className = 'tg-reveal-num delta ' + gradeClass;
+  deltaEl.classList.remove('pop'); void deltaEl.offsetWidth;
+  setTimeout(() => deltaEl.classList.add('pop'), 60);
+  if (gradeEl) { gradeEl.textContent = grade; gradeEl.className = 'tg-reveal-grade ' + gradeClass; }
+  if (row) row.className = 'tg-resultbox-reveal tl-result-col ' + gradeClass;
+  box.classList.add('revealed');
 
   tlStats.rounds++;
   if (tlStats.bestMs === null || avgAbsMs < tlStats.bestMs) tlStats.bestMs = avgAbsMs;
@@ -43248,13 +43494,17 @@ function tlEvaluateRound(_activePhaseStartTime) {
 }
 
 // Help content
+HELP_CONTENT.tllock = {
+  title: 'Tempo Lock',
+  body: 'Set a target tempo, hit START, and the click plays for a few bars then drops out. Keep tapping the pad on the beat through the silence; when the click returns you find out how close you held it. The result shows your tapped tempo against the target and the drift between them. AUTO loops straight into the next round; with it off, each round stops so you can read the result before going again. NEW rolls a random target.'
+};
 HELP_CONTENT.tllocktempo = {
-  title: 'Tempo Lock — BPM',
-  body: 'Set the practice tempo. Start slow (60-80) and work up. Slower tempos are harder to keep steady through silence — they\'re where shaky timing reveals itself.'
+  title: 'Target Tempo',
+  body: 'The tempo you are trying to hold. Start slow (60-80) and work up. Slower tempos are harder to keep steady through silence; that is where shaky timing shows itself.'
 };
 HELP_CONTENT.tllockpattern = {
-  title: 'Click Pattern',
-  body: 'How many bars the click plays before going silent, and how long the silence lasts. <strong>2/2</strong> is a good starting point. <strong>4/8</strong> is the hardest — long silence demands real internal tempo. Anything longer than 8 silent bars and most musicians drift.'
+  title: 'Pattern & Meter',
+  body: 'Pattern sets how many bars the click plays before going silent, and how long the silence lasts. <strong>2/2</strong> is a good starting point. <strong>4/8</strong> is the hardest: long silence demands a real internal pulse, and past eight silent bars most musicians drift. Meter sets the beats per bar.'
 };
 
 // ═══════════════════════════════════════════════
@@ -43274,18 +43524,28 @@ let tgSchedTimer = null;
 let tgEventQueue = [];
 let tgNextNoteTime = 0;
 let tgBeatsPlayed = 0;
-let tgListenBeats = 16;  // ~ 8 sec at 120bpm, 16 sec at 60bpm
+let tgListenBeats = 16;  // recomputed per round from TG_LISTEN_SECS
+const TG_LISTEN_SECS = 7.5;   // target listen window; snapped to whole measures
+const TG_EARLY_LOCK_BEATS = 4; // fallback; per-round value set in tgEarlyLockAt
+let tgEarlyLockAt = 4;         // clicks before LOCK IN unlocks (one measure)
+let tgCanLockEarly = false;    // true once enough beats have played to guess
 let tgDifficulty = 'normal';
 let tgStats = { streak: 0, rounds: 0, bestDelta: null };
 
 const TG_DIFFICULTIES = {
-  easy:   { labelKey: 'tg_grade_close', label: 'EASY',   range: 'common', min: 60,  max: 140, step: 5 },
-  normal: { label: 'NORMAL', range: 'wide',   min: 50,  max: 180, step: 1 },
-  hard:   { label: 'HARD',   labelIt: 'DIFFICILE',   range: 'full',   min: 40,  max: 220, step: 1 },
+  easy:   { label: 'EASY',     labelIt: 'FACILE',   min: 60, max: 140, step: 5, lockFeel: false },
+  normal: { label: 'NORMAL',   labelIt: 'NORMALE',  min: 50, max: 180, step: 1, lockFeel: false },
+  hard:   { label: 'HARD',     labelIt: 'DIFFICILE', min: 32, max: 240, step: 1, lockFeel: false },
+  insane: { label: 'INSANE',   labelIt: 'FOLLE',    min: 30, max: 250, step: 1, lockFeel: true },
 };
+// Feel/subdivision the round randomizes on INSANE
+const TG_FEEL_POOL = ['swing', 'shuffle', 'clave', 'dotted', 'waltz', 'bossa'];
+const TG_SUBDIV_POOL = ['whole', 'half', 'quarter', 'eighth', 'triplet', 'sixteenth'];
 
 let tgSubdiv = 'quarter';   // whole | half | quarter | eighth
-let tgGroove = 'straight';  // straight | swing | clave | dotted
+let tgGroove = 'straight';  // straight | swing | clave | dotted  (user's pick)
+let tgRoundGroove = null;   // this round's feel; null = use user's tgGroove
+let tgRoundSubdiv = null;   // this round's subdivision override; null = user's tgSubdiv
 let tgPatternPos = 0;
 let tgBarStartTime = 0;
 
@@ -43335,13 +43595,19 @@ function tgBuildSubdivChips() {
   const isGroove = tgGroove !== 'straight';
   Object.entries(TG_SUBDIVS).forEach(([key, d]) => {
     const chip = document.createElement('button');
-    chip.className = 'tg-diff-chip' + (key === tgSubdiv && !isGroove ? ' active' : '');
+    chip.className = 'tg-popup-chip' + (key === tgSubdiv && !isGroove ? ' active' : '');
     chip.style.opacity = isGroove ? '0.35' : '1';
     chip.style.pointerEvents = isGroove ? 'none' : '';
-    chip.textContent = ((progState.lang === 'it')&&d.labelIt)?d.labelIt:d.label;
-    chip.onclick = () => { tgSubdiv = key; tgBuildSubdivChips(); };
+    chip.textContent = ((progState.lang === 'it') && d.labelIt) ? d.labelIt : d.label;
+    chip.onclick = () => { tgSubdiv = key; tgBuildSubdivChips(); tgCloseAllPopups(); };
     row.appendChild(chip);
   });
+  // Reflect selection on the trigger button
+  const valEl = document.getElementById('tgClickValue');
+  const subEl = document.getElementById('tgClickSub');
+  const sd = TG_SUBDIVS[tgSubdiv];
+  if (valEl) valEl.textContent = isGroove ? '—' : (((progState.lang === 'it') && sd.labelIt) ? sd.labelIt : sd.label);
+  if (subEl) subEl.textContent = (isGroove ? t('tg_per_feel') || 'set by feel' : tgSubdiv) + ' ▾';
 }
 
 function tgBuildGrooveChips() {
@@ -43350,10 +43616,76 @@ function tgBuildGrooveChips() {
   row.innerHTML = '';
   Object.entries(TG_GROOVES).forEach(([key, d]) => {
     const chip = document.createElement('button');
-    chip.className = 'tg-diff-chip' + (key === tgGroove ? ' active' : '');
-    chip.textContent = ((progState.lang === 'it')&&d.labelIt)?d.labelIt:d.label;
-    chip.onclick = () => { tgGroove = key; tgBuildGrooveChips(); tgBuildSubdivChips(); };
+    chip.className = 'tg-popup-chip' + (key === tgGroove ? ' active' : '');
+    chip.textContent = ((progState.lang === 'it') && d.labelIt) ? d.labelIt : d.label;
+    chip.onclick = () => { tgGroove = key; tgBuildGrooveChips(); tgBuildSubdivChips(); tgCloseAllPopups(); };
     row.appendChild(chip);
+  });
+  const valEl = document.getElementById('tgFeelValue');
+  const subEl = document.getElementById('tgFeelSub');
+  const gr = TG_GROOVES[tgGroove];
+  if (valEl) valEl.textContent = ((progState.lang === 'it') && gr.labelIt) ? gr.labelIt : gr.label;
+  if (subEl) subEl.textContent = tgGroove + ' ▾';
+}
+
+function tgCloseAllPopups() {
+  ['tgClickPopup', 'tgFeelPopup'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+// On INSANE the round randomizes feel + subdivision and locks the Click/Feel
+// buttons: they grey out, show what's actually playing, and don't open. Other
+// tiers leave the buttons under full user control.
+function tgApplyRoundFeelDisplay() {
+  const feelBtn  = document.getElementById('tgFeelBtn');
+  const clickBtn = document.getElementById('tgClickBtn');
+  const locked = TG_DIFFICULTIES[tgDifficulty].lockFeel;
+  if (locked) {
+    const fv = document.getElementById('tgFeelValue');
+    const fs = document.getElementById('tgFeelSub');
+    const cv = document.getElementById('tgClickValue');
+    const cs = document.getElementById('tgClickSub');
+    const lockTxt = t('tg_locked') || 'locked';
+    if (!tgRoundGroove && !tgRoundSubdiv) {
+      // idle on INSANE: nothing rolled yet, show a random placeholder
+      if (fv) fv.textContent = '?';
+      if (fs) fs.textContent = lockTxt;
+      if (cv) cv.textContent = '?';
+      if (cs) cs.textContent = lockTxt;
+    } else if (tgRoundGroove && tgRoundGroove !== 'straight') {
+      const gr = TG_GROOVES[tgRoundGroove];
+      if (fv) fv.textContent = ((progState.lang === 'it') && gr.labelIt) ? gr.labelIt : gr.label;
+      if (fs) fs.textContent = lockTxt;
+      if (cv) cv.textContent = '—';
+      if (cs) cs.textContent = t('tg_per_feel') || 'set by feel';
+    } else {
+      const sd = TG_SUBDIVS[tgRoundSubdiv || 'quarter'];
+      if (fv) fv.textContent = TG_GROOVES.straight.label;
+      if (fs) fs.textContent = lockTxt;
+      if (cv) cv.textContent = ((progState.lang === 'it') && sd.labelIt) ? sd.labelIt : sd.label;
+      if (cs) cs.textContent = lockTxt;
+    }
+    feelBtn && feelBtn.classList.add('round-override');
+    clickBtn && clickBtn.classList.add('round-override');
+  } else {
+    feelBtn && feelBtn.classList.remove('round-override');
+    clickBtn && clickBtn.classList.remove('round-override');
+    // restore the user's actual pick on both buttons
+    tgBuildGrooveChips();
+    tgBuildSubdivChips();
+  }
+}
+
+function tgTogglePopup(which) {
+  // INSANE locks the feel/subdivision; the buttons don't open.
+  if (TG_DIFFICULTIES[tgDifficulty].lockFeel) return;
+  const map = { click: 'tgClickPopup', feel: 'tgFeelPopup' };
+  Object.entries(map).forEach(([k, id]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = (k === which && el.style.display === 'none') ? 'block' : 'none';
   });
 }
 
@@ -43363,7 +43695,8 @@ function tgInitAutoPill() {
   const pill = document.getElementById('tgAutoPill');
   if (!pill) return;
   pill.className = 'tg-auto-pill' + (tgAutoAdvance ? ' on' : '');
-  pill.textContent = tgAutoAdvance ? 'AUTO ◆' : 'AUTO';
+  // Dot is always present (so width never changes); its colour reflects state
+  pill.innerHTML = 'AUTO <span class="tg-auto-dot">\u25C6</span>';
 }
 
 function tgToggleAuto() {
@@ -43375,6 +43708,11 @@ function tgCycleDiff() {
   const keys = Object.keys(TG_DIFFICULTIES);
   tgDifficulty = keys[(keys.indexOf(tgDifficulty) + 1) % keys.length];
   tgUpdateDiffDisplay();
+  // Leaving INSANE clears any locked override; entering it greys the controls
+  tgRoundGroove = null;
+  tgRoundSubdiv = null;
+  tgApplyRoundFeelDisplay();
+  tgCloseAllPopups();
 }
 
 function tgUpdateDiffDisplay() {
@@ -43395,14 +43733,24 @@ function tgResetUI() {
   document.getElementById('tgGoBtn').innerHTML = t('tg_play_tempo');
   document.getElementById('tgGoBtn').disabled = false;
   document.getElementById('tgReplayBtn').disabled = true;
-  // Reset reveal to live guess + dashes
+  // Return the box to its guess view (no layout change; just unflip)
+  const box = document.getElementById('tgResultBox');
+  if (box) box.classList.remove('revealed');
   document.getElementById('tgRevealYou').textContent = tgGuess;
   document.getElementById('tgRevealActual').textContent = '—';
   const deltaEl = document.getElementById('tgRevealDelta');
   deltaEl.textContent = '—';
   deltaEl.className = 'tg-reveal-num delta';
-  const deltaCol = document.querySelector('.tg-reveal-delta-col');
-  if (deltaCol) deltaCol.className = 'tg-reveal-col tg-reveal-delta-col';
+  const gradeEl = document.getElementById('tgRevealGrade');
+  if (gradeEl) { gradeEl.textContent = ''; gradeEl.className = 'tg-reveal-grade'; }
+  const revealRow = document.getElementById('tgRevealRow');
+  if (revealRow) revealRow.className = 'tg-resultbox-reveal tg-reveal-delta-col';
+  const gb = document.getElementById('tgGuessBig');
+  if (gb) gb.textContent = tgGuess;
+  // Clear any round feel override and restore the user's own Click/Feel pick
+  tgRoundGroove = null;
+  tgRoundSubdiv = null;
+  tgApplyRoundFeelDisplay();
   tgLockControls(false);
 }
 
@@ -43410,6 +43758,8 @@ function tgSetGuess(v) {
   tgGuess = Math.max(40, Math.min(220, parseInt(v) || 100));
   const youEl = document.getElementById('tgRevealYou');
   if (youEl) youEl.textContent = tgGuess;
+  const gb = document.getElementById('tgGuessBig');
+  if (gb) gb.textContent = tgGuess;
   document.getElementById('tgGuessSlider').value = tgGuess;
 }
 function tgAdjGuess(d) { tgSetGuess(tgGuess + d); }
@@ -43438,17 +43788,40 @@ function tgUpdateHud(prevStreak) {
 }
 
 function tgLockControls(locked) {
-  const card = document.querySelector('.tg-opts-card');
-  if (card) card.classList.toggle('locked', locked);
+  const bar = document.querySelector('#exTempoGuess .tg-toolbar');
+  if (bar) bar.classList.toggle('locked', locked);
+  if (locked) tgCloseAllPopups();
 }
 
 function tgGoOrLock() {
   tgCancelCountdown();
   if (tgPhase === 'idle' || tgPhase === 'revealed') {
     tgNewRound();
+  } else if (tgPhase === 'listening' && tgCanLockEarly) {
+    // Eager lock: stop the clicks early, then reveal against the live guess.
+    tgEndListenEarly();
+    tgLockGuess();
   } else if (tgPhase === 'guessing') {
     tgLockGuess();
   }
+}
+
+// Halt the listen sequence immediately (used by early-lock).
+function tgEndListenEarly() {
+  if (tgSchedTimer) { clearInterval(tgSchedTimer); tgSchedTimer = null; }
+  tgEventQueue = [];
+  tgBeatsPlayed = tgListenBeats;   // mark sequence as finished
+  tgPhase = 'guessing';
+  // Early lock: settle the current lit tick into the filled ring. Leave the rim
+  // where it is — it honestly shows how far the player listened before locking.
+  document.querySelectorAll('#tgTickGroup .tg-tick.lit').forEach(t => {
+    t.classList.remove('lit');
+    t.classList.add('filled');
+  });
+  document.getElementById('tgPulseCircle')?.classList.remove('beating');
+  document.getElementById('tgPulseBloom')?.classList.remove('go');
+  document.getElementById('tgReplayBtn').disabled = false;
+  tgLockControls(false);
 }
 
 function tgNewRound() {
@@ -43456,26 +43829,64 @@ function tgNewRound() {
   const d = TG_DIFFICULTIES[tgDifficulty];
   const steps = Math.floor((d.max - d.min) / d.step) + 1;
   tgActualBpm = d.min + d.step * Math.floor(Math.random() * steps);
+
+  // INSANE takes over the feel: Click and Feel are locked and randomized each
+  // round, so you can't read the tempo off the UI. Other tiers honour the
+  // user's own Click/Feel pick.
+  tgRoundGroove = null;
+  tgRoundSubdiv = null;
+  if (d.lockFeel) {
+    // Coin flip: a random groove, or straight with a random subdivision
+    if (Math.random() < 0.5) {
+      tgRoundGroove = TG_FEEL_POOL[Math.floor(Math.random() * TG_FEEL_POOL.length)];
+    } else {
+      tgRoundGroove = 'straight';
+      tgRoundSubdiv = TG_SUBDIV_POOL[Math.floor(Math.random() * TG_SUBDIV_POOL.length)];
+    }
+  }
+  tgApplyRoundFeelDisplay();
+
   tgPhase = 'listening';
   document.getElementById('tgPhasePill').textContent = t('tg_listening');
   document.getElementById('tgPhasePill').className = 'tg-phase-pill listening';
-  // Reset reveal to dashes during listen
+  // Back to the guess view for the new round (box stays in place)
+  const box2 = document.getElementById('tgResultBox');
+  if (box2) box2.classList.remove('revealed');
+  const gb2 = document.getElementById('tgGuessBig');
+  if (gb2) gb2.textContent = tgGuess;
   document.getElementById('tgRevealActual').textContent = '—';
   const deltaEl2 = document.getElementById('tgRevealDelta');
   deltaEl2.textContent = '—';
   deltaEl2.className = 'tg-reveal-num delta';
-  const deltaCol2 = document.querySelector('.tg-reveal-delta-col');
-  if (deltaCol2) deltaCol2.className = 'tg-reveal-col tg-reveal-delta-col';
+  const revealRow2 = document.getElementById('tgRevealRow');
+  if (revealRow2) revealRow2.className = 'tg-resultbox-reveal tg-reveal-delta-col';
   document.getElementById('tgGoBtn').innerHTML = t('tg_lock_in');
+  document.getElementById('tgGoBtn').disabled = true;   // re-enabled once enough beats play
+  tgCanLockEarly = false;
   document.getElementById('tgReplayBtn').disabled = true;
-  // Compute listen beats from subdiv or groove
-  const groove = TG_GROOVES[tgGroove];
+  // Cap the listen near a target time, but snap to a whole number of MEASURES
+  // so the tick ring always divides evenly (no lopsided gap) and downbeats land
+  // symmetrically. Slow tempos still get at least one full bar.
+  const beatDur = 60 / tgActualBpm;            // seconds per quarter note
+  const groove = TG_GROOVES[tgRoundGroove || tgGroove];
   if (groove.hits) {
-    tgListenBeats = groove.hits.length * 2; // 2 bars of the groove pattern
+    // Groove: whole patterns (already even). Pick bars closest to the target.
+    const secsPerBar = groove.barBeats * beatDur;
+    const bars = Math.max(1, Math.round(TG_LISTEN_SECS / secsPerBar));
+    tgListenBeats = Math.min(bars, 4) * groove.hits.length;
   } else {
-    const mult = TG_SUBDIVS[tgSubdiv].mult;
-    tgListenBeats = Math.max(4, Math.round(16 / mult));
+    const mult = TG_SUBDIVS[tgRoundSubdiv || tgSubdiv].mult;
+    const clicksPerBar = Math.max(1, Math.round(4 / mult));   // 4-beat bar
+    const secsPerBar = 4 * beatDur;                            // bar length in time
+    const bars = Math.max(1, Math.round(TG_LISTEN_SECS / secsPerBar));
+    tgListenBeats = Math.min(bars * clicksPerBar, 48);
   }
+  // Early-lock unlocks after one full measure of clicks. For grooves that's the
+  // pattern length; for straight subdivisions it's the clicks-per-bar.
+  tgEarlyLockAt = groove.hits
+    ? groove.hits.length
+    : Math.max(1, Math.round(4 / TG_SUBDIVS[tgRoundSubdiv || tgSubdiv].mult));
+  tgEarlyLockAt = Math.min(tgEarlyLockAt, tgListenBeats);   // never beyond the window
   tgLockControls(true);
   tgStartClicks();
 }
@@ -43488,7 +43899,9 @@ function tgStartClicks() {
   tgNextNoteTime = tgBarStartTime;
   if (tgSchedTimer) clearInterval(tgSchedTimer);
   tgBuildClock(tgListenBeats);
-  document.querySelectorAll('#tgTickGroup .tg-tick').forEach(t => t.classList.remove('lit'));
+  document.querySelectorAll('#tgTickGroup .tg-tick').forEach(t => t.classList.remove('lit', 'filled'));
+  const rim0 = document.getElementById('tgRimFill');
+  if (rim0) rim0.style.strokeDashoffset = '326.73';   // empty rim at round start
   tgSchedTimer = setInterval(tgScheduler, 25);
   requestAnimationFrame(tgDrawLoop);
 }
@@ -43496,13 +43909,14 @@ function tgStartClicks() {
 function tgScheduler() {
   if (tgPhase !== 'listening' && tgPhase !== 'replaying') return;
   const beatDur = 60 / tgActualBpm;
-  const groove = TG_GROOVES[tgGroove];
+  const effSubdiv = tgRoundSubdiv || tgSubdiv;
+  const groove = TG_GROOVES[tgRoundGroove || tgGroove];
   while (tgNextNoteTime < tgCtx.currentTime + 0.12 && tgBeatsPlayed < tgListenBeats) {
     const time = tgNextNoteTime;
     const sound = (typeof METRO_SOUNDS !== 'undefined' && METRO_SOUNDS[selectedMetroSound]) || METRO_SOUNDS.click;
     // Accent on first beat of bar / pattern
     // Accent on first hit of each bar (every 4 quarter-note-equivalents)
-    const hitsPerBar = groove.hits ? groove.hits.length : Math.max(1, Math.round(4 / TG_SUBDIVS[tgSubdiv].mult));
+    const hitsPerBar = groove.hits ? groove.hits.length : Math.max(1, Math.round(4 / TG_SUBDIVS[effSubdiv].mult));
     const isAccent = groove.hits ? tgPatternPos === 0 : tgBeatsPlayed % hitsPerBar === 0;
     sound.play(tgCtx, time, isAccent, 0.55, tgMasterGain);
     tgEventQueue.push({ time, beat: tgBeatsPlayed });
@@ -43513,12 +43927,18 @@ function tgScheduler() {
       if (tgPatternPos === 0) tgBarStartTime += groove.barBeats * beatDur;
       tgNextNoteTime = tgBarStartTime + groove.hits[tgPatternPos] * beatDur;
     } else {
-      tgNextNoteTime += beatDur * TG_SUBDIVS[tgSubdiv].mult;
+      tgNextNoteTime += beatDur * TG_SUBDIVS[effSubdiv].mult;
     }
   }
   if (tgBeatsPlayed >= tgListenBeats) {
-    const lastTime = tgNextNoteTime;
-    setTimeout(() => tgOnListenComplete(), Math.max(0, (lastTime - tgCtx.currentTime) * 1000) + 100);
+    // The ring closes on the NEXT beat's grid position (one step past the last
+    // real click, in tempo) so the final fill stays musical, even though that
+    // beat makes no sound. Push a silent phantom event; the draw loop renders
+    // it as the closing step, and completion lands just after it.
+    const phantomTime = tgNextNoteTime;
+    tgEventQueue.push({ time: phantomTime, beat: tgBeatsPlayed, final: true });
+    setTimeout(() => tgOnListenComplete(),
+               Math.max(0, (phantomTime - tgCtx.currentTime) * 1000) + 60);
     clearInterval(tgSchedTimer);
     tgSchedTimer = null;
   }
@@ -43527,13 +43947,21 @@ function tgScheduler() {
 function tgOnListenComplete() {
   if (tgPhase !== 'listening' && tgPhase !== 'replaying') return;
   tgPhase = 'guessing';
+  document.getElementById('tgGoBtn').disabled = false;   // ensure LOCK IN usable
   document.getElementById('tgPhasePill').textContent = t('tg_your_guess');
   document.getElementById('tgPhasePill').className = 'tg-phase-pill guessing';
   document.getElementById('tgReplayBtn').disabled = false;
-  // Clear last lit tick
-  setTimeout(() => {
-    document.querySelectorAll('#tgTickGroup .tg-tick.lit').forEach(t => t.classList.remove('lit'));
-  }, 300);
+  // Settle the final beat: it makes one last move, dropping its bright pulse
+  // and easing into the already-done ring like every other tick handoff. Fill
+  // every tick and complete the rim so the gauge reads as finished, not stuck.
+  document.querySelectorAll('#tgTickGroup .tg-tick').forEach(t => {
+    t.classList.remove('lit');
+    t.classList.add('filled');
+  });
+  const rimDone = document.getElementById('tgRimFill');
+  if (rimDone) rimDone.style.strokeDashoffset = '0';   // rim closes the last slice
+  document.getElementById('tgPulseCircle')?.classList.remove('beating');
+  document.getElementById('tgPulseBloom')?.classList.remove('go');
   // Reveal row already visible — just update You col and unlock
   document.getElementById('tgRevealYou').textContent = tgGuess;
   document.getElementById('tgGuessSlider').value = tgGuess;
@@ -43567,16 +43995,49 @@ function tgDrawLoop() {
   const now = tgCtx.currentTime;
   while (tgEventQueue.length && tgEventQueue[0].time <= now + 0.005) {
     const ev = tgEventQueue.shift();
+    const ticksAll = document.querySelectorAll('#tgTickGroup .tg-tick');
+    // Phantom final beat: silent, in tempo. It closes the rim and eases the last
+    // lit tick into the done ring on the grid, so the gauge finishes musically.
+    if (ev.final) {
+      ticksAll.forEach(t => { t.classList.remove('lit'); t.classList.add('filled'); });
+      const rimF = document.getElementById('tgRimFill');
+      if (rimF) rimF.style.strokeDashoffset = '0';
+      continue;
+    }
+    // Once enough beats have actually sounded, let an eager player lock early
+    // (only during the first listen, not replays — replay is post-guess).
+    if (tgPhase === 'listening' && !tgCanLockEarly && ev.beat >= tgEarlyLockAt - 1) {
+      tgCanLockEarly = true;
+      const go = document.getElementById('tgGoBtn');
+      if (go) go.disabled = false;
+    }
     const circle = document.getElementById('tgPulseCircle');
+    const bloom = document.getElementById('tgPulseBloom');
+    // Subtle dot pop + soft core bloom on each beat. Downbeats (every 4th) hold
+    // a touch longer so the bar still reads; off-beats snap back quicker.
+    const beatDur = 60 / (tgActualBpm || 120);
+    const isDown = (ev.beat % 4 === 0);
+    const hold = isDown ? Math.min(beatDur * 600, 200) : Math.min(beatDur * 450, 150);
     circle.classList.remove('beating');
+    if (bloom) { bloom.classList.remove('go'); void bloom.offsetWidth; bloom.classList.add('go'); }
     void circle.offsetWidth;
     circle.classList.add('beating');
-    setTimeout(() => circle.classList.remove('beating'), 140);
-    // Light up the corresponding tick
-    const ticks = document.querySelectorAll('#tgTickGroup .tg-tick');
-    ticks.forEach(t => t.classList.remove('lit'));
-    if (ticks[ev.beat % ticks.length]) {
-      ticks[ev.beat % ticks.length].classList.add('lit');
+    setTimeout(() => { circle.classList.remove('beating'); if (bloom) bloom.classList.remove('go'); }, hold);
+    // Fill clock: the passing beat lights bright, and every tick up to it stays
+    // filled, so the ring accumulates like a gauge until the listen completes.
+    const ticks = ticksAll;
+    const here = ev.beat % ticks.length;
+    ticks.forEach((t, idx) => {
+      t.classList.toggle('filled', idx <= here);
+      t.classList.toggle('lit', idx === here);
+    });
+    // Grow the rim arc to trail the leading click: it covers only the slices
+    // BEHIND the current beat, so beat 0 is a sliver at 12 o'clock and the arc
+    // follows the dot around rather than running ahead of it.
+    const rim = document.getElementById('tgRimFill');
+    if (rim && ticks.length) {
+      const frac = here / ticks.length;
+      rim.style.strokeDashoffset = (326.73 * (1 - frac)).toFixed(2);
     }
   }
   requestAnimationFrame(tgDrawLoop);
@@ -43611,7 +44072,9 @@ function tgLockGuess() {
   pill.textContent = grade;
   pill.className = 'tg-phase-pill revealed ' + gradeClass;
 
-  // Reveal row — always visible, now pop in the actual values
+  // Morph the result box in place — no layout shift, just cross-fade
+  const box = document.getElementById('tgResultBox');
+  if (box) box.classList.add('revealed');
   document.getElementById('tgRevealYou').textContent = tgGuess;
   const actualEl = document.getElementById('tgRevealActual');
   actualEl.textContent = tgActualBpm;
@@ -43624,8 +44087,10 @@ function tgLockGuess() {
   deltaEl.classList.remove('pop');
   void deltaEl.offsetWidth;
   setTimeout(() => { deltaEl.classList.add('pop'); }, 90);
-  const deltaCol = document.querySelector('.tg-reveal-delta-col');
-  if (deltaCol) deltaCol.className = 'tg-reveal-col tg-reveal-delta-col ' + gradeClass;
+  const gradeEl = document.getElementById('tgRevealGrade');
+  if (gradeEl) { gradeEl.textContent = grade; gradeEl.className = 'tg-reveal-grade ' + gradeClass; }
+  const deltaCol = document.getElementById('tgRevealRow');
+  if (deltaCol) deltaCol.className = 'tg-resultbox-reveal tg-reveal-delta-col ' + gradeClass;
 
   document.getElementById('tgGoBtn').innerHTML = t('tg_next_round');
   document.getElementById('tgReplayBtn').disabled = false;
@@ -56462,8 +56927,8 @@ const STRINGS = {
     iv_breakdown_empty:'play a few rounds to see your stats',
     drone_start:'▶ START DRONE',
     drone_playing:'PLAYING', drone_stopped:'STOPPED',
-    tl_tap_label:'TAP ON BEAT', bpm_unit:'BPM',
-    tl_ready:'READY', tl_listening:'LISTENING',
+    tl_tap_label:'TAP', tl_you_tempo:'your tempo', tl_target_short:'target', bpm_unit:'BPM',
+    tl_ready:'READY', tl_listening:'WITH CLICK',
     settings_title:'SETTINGS', settings_sub:'app preferences',
     settings_lang:'Language', settings_note_naming:'Note Naming',
     settings_teaching:'Teaching Mode', settings_latency:'Latency Measurement',
@@ -56555,7 +57020,7 @@ const STRINGS = {
     // Polyrhythm
     ex_poly_title:'POLYRHYTHM', ex_poly_sub:'feel two rhythms at once',
     // Tempo Lock extra
-    tl_internal:'INTERNAL', tl_grade_locked:'LOCKED IN', tl_grade_close:'CLOSE',
+    tl_internal:'HOLD', tl_grade_locked:'LOCKED IN', tl_grade_close:'CLOSE',
     tl_grade_needs_work:'NEEDS WORK', tl_grade_off:'OFF',
     tl_in_progress:'in progress · tap each beat during the silent bars',
     // Live tempo verdicts
@@ -56985,10 +57450,13 @@ const STRINGS = {
     // Tempo Lock
     // Tempo Guess
     tg_click:'Click', tg_feel:'Feel',
+    tg_subdiv:'Subdivision', tg_groove:'Groove', tg_guess_cap:'your guess · bpm',
+    tg_you_short:'you', tg_per_feel:'set by feel',
     tl_pattern:'Pattern', tl_meter:'Meter',
+    tl_bpm_cap:'target · bpm', tl_beats_bar:'beats/bar ▾', tl_no_taps:'no taps', tl_new:'↯ NEW',
     vr_ex_1_title:'Exercise 1 of 3 — Gentle Hum',
     vr_ex_1_desc:'Closed-mouth hum on a comfortable note. Let the vibration sit in your face.',
-        tg_rnd:'RND', tg_easy:'EASY', tg_normal:'NORMAL', tg_hard:'HARD', tg_auto_label:'AUTO',
+        tg_rnd:'RND', tg_easy:'EASY', tg_normal:'NORMAL', tg_hard:'HARD', tg_insane:'INSANE', tg_locked:'locked', tg_auto_label:'AUTO',
     tg_again:'↻ AGAIN', tg_actual:'Actual', tg_off_by:'Off by',
     // Polyrhythm
     pr_outer_label:'A · OUTER', pr_inner_label:'B · INNER',
@@ -57272,8 +57740,8 @@ const STRINGS = {
     iv_breakdown_empty:'gioca qualche turno per vedere le statistiche',
     drone_start:'▶ AVVIA BORDONE',
     drone_playing:'IN RIPRODUZIONE', drone_stopped:'FERMO',
-    tl_tap_label:'BATTI IL TEMPO', bpm_unit:'BPM',
-    tl_ready:'PRONTO', tl_listening:'IN ASCOLTO',
+    tl_tap_label:'BATTI', tl_you_tempo:'il tuo tempo', tl_target_short:'target', bpm_unit:'BPM',
+    tl_ready:'PRONTO', tl_listening:'CON CLICK',
     settings_title:'IMPOSTAZIONI', settings_sub:"preferenze dell'app",
     settings_lang:'Lingua', settings_note_naming:'Notazione Note',
     settings_teaching:'Modalità Didattica', settings_latency:'Misura Latenza',
@@ -57365,7 +57833,7 @@ const STRINGS = {
     // Polyrhythm
     ex_poly_title:'POLIRITMO', ex_poly_sub:'senti due ritmi in contemporanea',
     // Tempo Lock extra
-    tl_internal:'INTERNO', tl_grade_locked:'BLOCCATO', tl_grade_close:'VICINO',
+    tl_internal:'TIENI', tl_grade_locked:'BLOCCATO', tl_grade_close:'VICINO',
     tl_grade_needs_work:'DA MIGLIORARE', tl_grade_off:'FUORI TEMPO',
     tl_in_progress:'in corso · batti ogni battito nei silenzi',
     // Live tempo verdicts
@@ -57795,10 +58263,13 @@ const STRINGS = {
     // Tempo Lock
     // Tempo Guess
     tg_click:'Click', tg_feel:'Feel',
+    tg_subdiv:'Suddivisione', tg_groove:'Groove', tg_guess_cap:'la tua stima · bpm',
+    tg_you_short:'tu', tg_per_feel:'dal feel',
     tl_pattern:'Schema', tl_meter:'Metro',
+    tl_bpm_cap:'target · bpm', tl_beats_bar:'battiti/bat ▾', tl_no_taps:'nessun tocco', tl_new:'↯ NUOVO',
     vr_ex_1_title:'Esercizio 1 di 3 — Canticchio Leggero',
     vr_ex_1_desc:"Ronza a bocca chiusa su una nota comoda. Lascia che la vibrazione si diffonda nel viso.",
-        tg_rnd:'RND', tg_easy:'FACILE', tg_normal:'NORMALE', tg_hard:'DIFFICILE', tg_auto_label:'AUTO',
+        tg_rnd:'RND', tg_easy:'FACILE', tg_normal:'NORMALE', tg_hard:'DIFFICILE', tg_insane:'FOLLE', tg_locked:'bloccato', tg_auto_label:'AUTO',
     tg_again:'↻ ANCORA', tg_actual:'Effettivo', tg_off_by:'Scarto',
     // Polyrhythm
     pr_outer_label:'A · ESTERNO', pr_inner_label:'B · INTERNO',
@@ -59321,7 +59792,7 @@ function buildAutoChips(rowId, flagGetter, flagSetter, labels) {
 
 let ceAutoAdvance = true;  let ceAutoTimer = null;
 let ivAutoAdvance = false;  let ivAutoTimer = null;
-let tgAutoAdvance = true;  let tgAutoTimer = null;
+let tgAutoAdvance = false;  let tgAutoTimer = null;
 let ssAutoAdvance = true;  let ssAutoTimer = null;
 
 const autoTimers = { ce: null, iv: null, tg: null, ss: null };
@@ -88007,7 +88478,7 @@ beatles: {
 {q:"What does the chord progression of 'Let It Be' most resemble?",opts:["I-IV-I-V","C-G-Am-F (I-V-vi-IV) — one of the most common progressions in music history","A 12-bar blues","A Baroque canon"],ans:1,fact:"The I-V-vi-IV progression appears in hundreds of songs, including 'No Woman No Cry' and 'Don't Stop Believin''. McCartney's version still lands as sincere."},
 {q:"What guitar did George Harrison use on Revolver and Sgt. Pepper?",opts:["Fender Stratocaster","Gibson Les Paul","Rickenbacker 360/12","Epiphone Casino"],ans:3,fact:"Harrison used an Epiphone Casino on both albums, and all four Beatles owned one. Its hollow body gave a slightly feedback-prone tone that suited the psychedelic period."},
 {q:"What was 'Helter Skelter' written as a response to?",opts:["A slow ballad experiment that evolved into a harder arrangement through overdubbing", "McCartney deliberately writing the loudest most chaotic rock track possible after reading a Pete Townshend claim", "A psychedelic studio experiment with no predetermined arrangement or lyrics", "A deliberate attempt to combine all four Beatles' preferred styles in one track"],ans:1,fact:"McCartney read an NME interview where Townshend described 'I Can See for Miles' as the most chaotic record. He set out to top it. 'Helter Skelter' was proto-metal from 1968."},
-{q:"What is unusual about Ringo Starr's drum fills?",opts:["A chord built by stacking two perfect fourths above the root note", "A chord where the bass note is not the root — e.g. C/E means C major with E in the bass", "A chord where the fifth is omitted and replaced with an added second", "A chord using only the root and fifth, commonly called a power chord"],ans:1,fact:"Ringo is left-handed but plays a right-handed kit without reversing it. His left-leading fills land in unexpected places, creating his distinctive style. John Lennon said 'Ringo's the best rock and roll drummer in the world.'"},
+{q:"What is unusual about Ringo Starr\'s drum fills?",opts:["He played a right-handed kit left-handed, so his fills move around the toms in an unusual order","He triggered the bass drum by hand on every fill instead of using a foot pedal","He played every fill identically because he could not vary his stick technique","He recorded all his fills separately and spliced them in afterwards"],ans:0,fact:"Ringo is naturally left-handed but learned on a right-handed kit, and leading with his left around the toms gave his fills their distinctive lurch, heard on \'A Day in the Life\' and \'Come Together\'."},
 {q:"What technique did 'Tomorrow Never Knows' pioneer?",opts:["It was the first Beatles song to use a synthesizer on the main musical arrangement", "Automatic double tracking (ADT) invented by Ken Townsend, plus tape loops played live", "It featured the first use of backward guitar on a commercially released pop record", "It was the first Beatles recording made using an 8-track tape machine at Abbey Road"],ans:1,fact:"ADT was invented by engineer Ken Townsend for Lennon. The tape loops were Lennon's home recordings played through Leslie cabinets live during the mix. Genuinely revolutionary in 1966."},
 {q:"What inspired the lyrics of 'Being for the Benefit of Mr. Kite'?",opts:["Lennon wrote the lyrics in a single sitting from his own imagination with no source", "Lyrics taken almost entirely from a Victorian circus poster Lennon bought at an antique shop", "George Martin adapted lyrics from a 19th-century music hall song with minor changes", "The lyrics were improvised in the studio during the Sgt. Pepper recording sessions"],ans:1,fact:"Lennon bought an 1843 circus poster advertising Pablo Fanques' Fair and essentially transcribed it into lyrics. The song's apparent surrealism is Victorian advertising copy."},
 {q:"What instrument does McCartney play on 'Blackbird'?",opts:["Electric guitar processed through a rotating Leslie speaker to create the tone", "Acoustic guitar (Martin D-28) using a classical fingerstyle pattern, recorded alone", "Acoustic bass guitar played with a pick, with McCartney overdubbing the melody", "Piano with the sustain pedal held throughout, processed to sound like guitar"],ans:1,fact:"McCartney plays his Martin D-28 with thumb-and-finger technique. The alternating bass notes were influenced by Bach's Bourree from Suite BWV 996."},
@@ -88034,7 +88505,7 @@ beatles: {
 {q:"What was the first Beatles single in the US to hit No.1?",opts:["Love Me Do","I Want to Hold Your Hand","She Loves You","Please Please Me"],ans:1,fact:"\'I Want to Hold Your Hand\' hit No.1 in the US on February 1, 1964, eight days before The Beatles appeared on Ed Sullivan. It had sold 1.5 million copies in three weeks."}
   
   ,
-    {q:"What unusual instrument appears on \'The Ballad of John and Yoko\'?",opts:["Only John and Paul played on it — George and Ringo were unavailable","All four Beatles played their usual instruments in a single live take","The track uses a string quartet arranged by George Martin instead of drums","John played all instruments himself on a four-track overdub session"],ans:0,fact:"The Ballad of John and Yoko was recorded on 14 April 1969 with only Lennon and McCartney; Harrison was on holiday and Starr was filming. McCartney played drums, bass, piano, and maracas while Lennon played lead and rhythm guitar and sang."}]
+    {q:"What was unusual about the recording of \'The Ballad of John and Yoko\'?",opts:["Only John and Paul played on it; George and Ringo were unavailable","All four Beatles played their usual instruments in a single live take","The track uses a string quartet arranged by George Martin instead of drums","John played all instruments himself on a four-track overdub session"],ans:0,fact:"The Ballad of John and Yoko was recorded on 14 April 1969 with only Lennon and McCartney; Harrison was on holiday and Starr was filming. McCartney played drums, bass, piano, and maracas while Lennon played lead and rhythm guitar and sang."}]
 },
 
 jazz_legends: {
@@ -88076,13 +88547,13 @@ jazz_legends: {
 {q:"What is the Newport Jazz Festival's significance?",opts:["It was the first jazz festival","An annual Rhode Island festival (founded 1954) producing crucial live recordings — Ellington's 1956 Newport concert revitalized his career","A New York jazz club","A radio program"],ans:1,fact:"George Wein founded the Newport Jazz Festival in 1954. Ellington's 1956 set revived his career, and Miles Davis and Coltrane recorded live there too."},
 {q:"What is 'post-bop'?",opts:["Any jazz recorded after 1965, used as a general periodisation term by critics", "Jazz that absorbed free jazz's harmonic freedom without abandoning structure entirely", "Jazz that incorporated hip-hop rhythms and samples into traditional improvisation", "A revival of traditional New Orleans jazz styles that emerged in the 1980s"],ans:1,fact:"Post-bop grew out of the late-1950s Miles Davis groups and Coltrane's later work. It stays harmonically complex without going fully free, and remains common today."},
 {q:"What made Billie Holiday's vocal style unique?",opts:["Her phrasing and emotional depth rather than range or power","Her three-octave range and operatic technique","Her wordless scat improvisation","Her ability to play trumpet while singing"],ans:0,fact:"Holiday's strength was interpretation rather than range or power. She delayed notes, bent pitches, and phrased like a horn. 'Strange Fruit' (1939) is a landmark protest song."},
-{q:"What is 'swing feel'?",opts:["A technique where the drummer plays a consistent snare backbeat on beats two and four", "A rhythm section pattern where the bassist plays a steady quarter-note pulse on each beat", "A comping pattern where the pianist places chords strictly on beats one and three", "A style where the bassist alternates between root and fifth on each beat of the bar"],ans:1,fact:"Swing feel is the fundamental rhythmic language of jazz. The ratio of long to short eighth notes varies by tempo and era. At fast tempos it approaches straight eighths; at medium tempos the lilt is most pronounced."},
+{q:"What is \'swing feel\'?",opts:["Playing eighth-note pairs with an uneven long-short lilt instead of evenly","Playing every eighth note exactly even so the pulse stays mechanical","Accenting only the downbeats while keeping all subdivisions silent","Speeding up gradually through each phrase to build excitement"],ans:0,fact:"Swing splits the beat unevenly, roughly two-thirds then one-third, giving jazz its lilt. The ratio loosens toward even eighths at faster tempos."},
 {q:"What is Herbie Hancock's 'Watermelon Man' significant for?",opts:["His first composition","His first hit (1962) that crossed over to R&B — Mongo Santamaria's cover was an even bigger pop hit the following year","His only funk composition","A free jazz piece"],ans:1,fact:"Hancock wrote 'Watermelon Man' for his debut album. Santamaria's 1963 R&B version was a top-10 pop hit. Hancock later recorded a radically different African-influenced version for Head Hunters (1973)."},
 {q:"What is 'soul jazz'?",opts:["Jazz defined by emotionally expressive playing regardless of harmonic or rhythmic style", "A 1950s-60s style fusing jazz harmony and technique with gospel and blues feeling", "A smooth jazz subgenre marketed by Motown Records in the late 1960s", "A term for slow, melancholy jazz ballads performed at a low dynamic level"],ans:1,fact:"Soul jazz prioritized groove, accessibility, and blues feeling. Jimmy Smith's Hammond organ, Horace Silver's funky piano, and Lou Donaldson's bluesy alto brought jazz closer to R&B."},
 {q:"What is Wes Montgomery's distinctive right-hand technique?",opts:["Using a flat pick for extra attack and brightness", "Playing with his thumb rather than a pick, producing a warm, round tone", "A two-finger hybrid picking style combining pick and middle finger", "Playing exclusively with the flesh of the index finger without a pick"],ans:1,fact:"Montgomery used his thumb, producing his warm, round tone. He also pioneered playing melodies in octaves and block chords as a jazz solo technique."},
 {q:"What is 'bebop melody writing' characterized by?",opts:["Simple singable tunes","Fast, angular, chromatic melodies that emphasize off-beats — deliberately non-singable and anti-commercial","Slow ballad melodies","Modal melodies with no chromaticism"],ans:1,fact:"Bebop tunes like 'Donna Lee' and 'Ornithology' are written over standard progressions but with deliberately complex melodies. The improvisation was the point, not the head."},
 {q:"What is special about Coltrane's 'My Favorite Things'?",opts:["He performs it as a straight reading with lush orchestral backing arranged by Gil Evans", "He transforms the Sound of Music waltz into an extended modal improvisation on soprano sax", "He plays it on bass clarinet at half the original tempo as a solo improvisation", "He performs it on piano rather than saxophone, stripping out the original melody"],ans:1,fact:"Coltrane's Eastern-influenced modal approach and cyclic improvisation turned a Broadway show tune into a jazz landmark. He performed it at almost every concert until his death in 1967."},
-{q:"What is the significance of 'Impulse! Records'?",opts:["A formally published lead sheet approved by a recognised jazz institution or publisher", "A jazz standard is a well-known composition regularly called at jam sessions and on recordings", "A composition that has been recorded by at least ten major jazz artists across three decades", "A melody with no original composer credit, passed down through the oral tradition"],ans:1,fact:"Impulse's distinctive orange and black label is synonymous with Coltrane. The label's policy of artistic freedom resulted in some of the most important recordings in jazz history."},
+{q:"What is the significance of \'Impulse! Records\'?",opts:["A jazz label that became the artistic home of John Coltrane in the 1960s","A bebop label founded by Charlie Parker to release his own recordings","A British label that first brought American jazz to Europe after the war","A reissue label that only repackaged older swing-era recordings"],ans:0,fact:"Impulse! signed Coltrane in 1961 and released \'A Love Supreme\'. Its orange-and-black gatefold sleeves made it one of jazz\'s most recognisable imprints."},
 {q:"What is Ahmad Jamal's significance in jazz piano history?",opts:["He invented bebop piano","His sparse, spacious style influenced Miles Davis profoundly — Davis cited Jamal constantly and recorded several Jamal arrangements","He invented stride piano","He was the first jazz pianist to use electronics"],ans:1,fact:"Miles Davis was obsessed with Jamal\'s Pershing Lounge recordings: the use of space, the dramatic pauses, and the trio interplay. Davis tried to get his own band to play with the same lightness."},
 {q:"What is 'bebop' as a political statement?",opts:["A deliberate assertion of Black artistry too complex to be co-opted as dance music","A government-funded programme to promote jazz abroad","A rejection of all political meaning in music","A commercial bid for mainstream radio play"],ans:0,fact:"Gillespie and Parker developed bebop deliberately. Ross Russell wrote: 'Bebop came to say to the world, we are not entertainers.' It was Black artistic self-determination during intense racial segregation."},
 {q:"What is Chet Baker most associated with besides his trumpet playing?",opts:["His drum solos","His singing — a soft, vulnerable vocal style making him as famous as vocalist as instrumentalist","His piano playing","His saxophone doubling"],ans:1,fact:"Baker's voice and trumpet share the same breathy, intimate, melancholy quality. 'My Funny Valentine' is well known in both forms."},
@@ -88133,7 +88604,7 @@ rock_metal: {
     {q:"Which rock drummer is cited as the single greatest influence on rock drumming?",opts:["Neil Peart","Keith Moon","John Bonham","Ginger Baker"],ans:2,fact:"John Bonham's combination of power, feel, and groove has been cited by virtually every rock drummer as the foundational influence. His right foot on 'Good Times Bad Times' remains technically staggering."},
     {q:"What is 'groove metal' and which band defined it?",opts:["A mid-paced, syncopated, heavy style — defined by Pantera","A grunge style pioneered by Nirvana","A shoegaze approach using layered guitars","A British metal movement of the late 1970s"],ans:0,fact:"Pantera\'s albums after Cowboys from Hell, including Vulgar Display of Power and Far Beyond Driven, shaped groove metal: mid-tempo, heavy, and locked into a syncopated groove."},
     {q:"What was Metallica's 'Black Album' production breakthrough?",opts:["First metal album with orchestra","Bob Rock's polished production making it massively more commercial — selling over 20 million US copies","First album recorded in 24-bit digital","First album without Lars Ulrich's double kick"],ans:1,fact:"The Black Album's clean, powerful production was a departure from their raw earlier sound. It remains one of the best-selling albums in American history and their commercial peak."},
-    {q:"What is a 'riff' in rock music?",opts:["A genre defined by chromatic riffing, odd time signatures, and studio-heavy production", "A style defined by loud-quiet-loud dynamics, emotional directness, and distorted guitar textures", "A post-hardcore style from Washington DC defined by angular rhythms and political lyrics", "A noise-rock style from New York combining feedback, dissonance, and spoken word"],ans:1,fact:"Riffs like \'Satisfaction\', \'Smoke on the Water\', \'Whole Lotta Love\', and \'Sweet Home Alabama\' are memorable enough to hum cold. In classic rock, the riff often carries the song."},
+    {q:"What is a \'riff\' in rock music?",opts:["A short, repeated melodic or rhythmic phrase, usually on guitar, that anchors a song","A lengthy improvised solo played over the final chorus of a song","A drum pattern that changes on every bar to avoid repetition","The spoken introduction a singer delivers before the first verse"],ans:0,fact:"Riffs like \'Smoke on the Water\' or \'Satisfaction\' are often a song\'s most memorable hook, built from just a few repeated notes."},
     {q:"What is a 'power chord'?",opts:["A chord using all six strings","A two or three-note chord using only the root and fifth — producing a powerful sound with minimal dissonance through any degree of distortion","A chord using only open strings","A type of barre chord"],ans:1,fact:"Power chords contain no third, so they\'re neither major nor minor. That keeps them clear through heavy distortion, where full chords turn muddy, which is why they anchor punk, rock, and metal rhythm playing."},
 {q:"What is 'shoegaze' and why is it called that?",opts:["Effects-drenched dream-pop, named for performers staring down at pedalboards","A blues-rooted vocal style pioneered by Robert Plant","A fast, minimal punk style","A jazz-influenced experimental rock"],ans:0,fact:"My Bloody Valentine, Slowdive, Ride, and Lush shaped shoegaze. The name comes from guitarists staring down at complex pedalboards. Loveless (1991) is the genre\'s landmark album."},
 {q:"What band pioneered post-punk with 'Unknown Pleasures' (1979)?",opts:["Sex Pistols","Joy Division — whose bleak, sparse sound influenced virtually all alternative music that followed","The Clash","Buzzcocks"],ans:1,fact:"Joy Division's Unknown Pleasures (1979) and Closer (1980) created a template for decades of post-punk and goth. Ian Curtis's death from epilepsy in 1980 turned them into legends."},
@@ -88145,7 +88616,7 @@ rock_metal: {
 {q:"What is The Velvet Underground's retroactive significance?",opts:["Their avant-garde, art-rock sound influenced generations despite low sales","James Hetfield's tight palm-muted rhythm style","Their pioneering of the gated-reverb drum sound","Their invention of the power chord"],ans:0,fact:"The Velvet Underground mixed avant-garde noise, pop songcraft, dark subject matter, and art-world ties, which made them hard to categorize in 1967 and widely influential afterward."},
 {q:"What is 'doom metal'?",opts:["A genre using highly distorted guitars in open tunings with blues-derived riff structures", "A downtuned, mid-heavy guitar tone characterised by slow tempos, minor keys, and dark themes", "A thrash metal subgenre defined by hyperfast tempos and chromatic atonal riffing", "A progressive rock style that fuses symphonic arrangements with distorted electric guitars"],ans:1,fact:"Black Sabbath's 'Black Sabbath', 'Into the Void', and 'Fairies Wear Boots' are proto-doom. Saint Vitus, Candlemass, and Cathedral formalized it. Electric Wizard and Sleep represent its peak heaviness."},
 {q:"What is 'stoner rock' or 'desert rock'?",opts:["Rock influenced by cannabis culture only","A heavy psychedelic rock style from the California desert — Kyuss, Queens of the Stone Age, Fu Manchu — fusing Sabbath heaviness with psychedelic haze","A laid-back reggae-influenced rock","A type of Southern rock"],ans:1,fact:"Kyuss's Josh Homme created the Palm Desert scene in the early 1990s. Their generator-powered desert jams gave way to Queens of the Stone Age."},
-{q:"What is Black Flag's significance?",opts:["The Velvet Underground and Television — art-influenced bands from the New York loft scene", "The Stooges, MC5, and the New York Dolls — loud, confrontational, and commercially ignored", "Magazine, Wire, and Gang of Four — British post-punk bands that developed from the punk moment", "Patti Smith and Richard Hell — poet-performers who shaped punk's literary and visual identity"],ans:1,fact:"Black Flag's endless touring in vans, self-releasing on SST Records, and confrontational approach created the blueprint for independent music. Their influence runs from Nirvana to Fugazi."},
+{q:"What is Black Flag\'s significance?",opts:["A foundational American hardcore punk band who built the DIY touring circuit","The first British punk band to sign to a major label in 1976","A glam-punk group from New York who influenced the Sex Pistols","A synth-driven new wave act that crossed punk with electronic pop"],ans:0,fact:"Formed in California in 1976, Black Flag toured the US relentlessly and ran their own label SST, creating the template for independent hardcore."},
 {q:"Who was Phil Lynott?",opts:["A session bassist","The Black Irish frontman of Thin Lizzy — one of rock's greatest lyricists and the creative force behind twin-guitar hard rock in the 1970s","The drummer of Black Sabbath","A producer"],ans:1,fact:"Lynott combined Irish mythology, street poetry, and romantic lyricism. 'The Boys Are Back in Town', 'Jailbreak', and 'Whiskey in the Jar' show remarkable range. His death in 1986 cut short one of rock's most distinctive voices."},
 {q:"What is 'noise rock'?",opts:["Rock with a lot of feedback only","A genre using extreme noise, feedback, and unconventional sounds as compositional elements — Sonic Youth, Big Black, Jesus Lizard","A type of industrial music","Rock played at very high volumes only"],ans:1,fact:"Sonic Youth prepared their guitars, used alternate tunings, and folded New York avant-garde ideas into rock. Daydream Nation (1988) is their best-known album."},
 {q:"What is 'math rock'?",opts:["Rock about mathematics","A genre characterized by complex, irregular rhythms and time signatures — Slint, Don Caballero, Battles","Very technically played rock","A sub-genre of progressive rock"],ans:1,fact:"Slint's Spiderland (1991) is widely considered the founding document of math rock. Battles and Don Caballero developed the genre's rhythmic sophistication further."},
@@ -88218,7 +88689,7 @@ theory_fundamentals: {
 {q:"What is 'voice leading' in four-part harmony?",opts:["Assigning musical lines to singers","Moving each of four voices as smoothly as possible between chords — minimizing large leaps and resolving tendency tones correctly","A type of musical texture","Harmonizing a melody"],ans:1,fact:"Bach's four-part chorales are the textbook. Rules: avoid parallel 5ths and octaves, resolve the leading tone upward, move voices by the smallest possible interval."},
 {q:"What is 'harmonic rhythm'?",opts:["The rhythm played by the rhythm section","The rate at which chords change — slow harmonic rhythm versus fast (changes on every beat)","A type of syncopation","The rhythmic feel of a chord voicing"],ans:1,fact:"Bach chorales have fast harmonic rhythm, changing on every quarter note, while modal jazz can hold one chord for 16 bars. The rate of change strongly affects tension and momentum."},
 {q:"What is 'quartal harmony'?",opts:["Chords built by stacking fourths rather than thirds","Chords built by stacking thirds in the usual way","Chords using only four notes maximum","Harmony divided into four equal voices"],ans:0,fact:"Traditional harmony stacks thirds; quartal harmony stacks fourths, which sounds more ambiguous without a clear major or minor quality. McCoy Tyner\'s left-hand voicings are the standard jazz example."},
-{q:"What is a 'Neapolitan sixth' chord?",opts:["The ability to identify intervals between two notes heard simultaneously", "The ability to identify or produce any pitch from memory without a reference note", "The ability to sing a notated melody accurately without prior hearing of it", "The ability to transcribe a chord progression by ear after one listening"],ans:1,fact:"In C minor, the Neapolitan is D♭ major in first inversion. Its dark, dramatic quality made it a Beethoven and Schubert favorite."},
+{q:"What is a \'Neapolitan sixth\' chord?",opts:["A major chord built on the flattened second degree, usually in first inversion","A minor chord built on the raised fourth degree of the scale","A seventh chord built by stacking three minor thirds evenly","A major chord borrowed from the relative minor key"],ans:0,fact:"Written bII6, the Neapolitan sixth (D-flat major in C minor) pulls hard toward the dominant and turns up often in Classical-era cadences."},
 {q:"What is 'modal interchange'?",opts:["Changing time signature","Borrowing chords from a parallel mode — e.g., the ♭VII from the parallel Mixolydian, or the iv from the parallel minor","A type of modulation to a new key","Playing in multiple modes simultaneously"],ans:1,fact:"Modal mixture is everywhere in rock and pop. The ♭VII (B♭ in C major) borrowed from C Mixolydian is a rock staple. The iv minor chord in a major-key song (e.g., 'Yesterday') creates poignant darkening."},
 {q:"What is a 'chromatic mediant' chord relationship?",opts:["A chord a semitone above or below the tonic, used as a colouristic substitution", "A chord a major or minor third away where one or both chords are chromatically altered", "A non-diatonic passing chord inserted between two diatonic chords a step apart", "A chord borrowed from the parallel minor key to introduce a chromatic note"],ans:1,fact:"Chromatic mediants give romantic film scores much of their sound, as in John Williams and Howard Shore. Moving from C to A♭ major (♭VI) is a classic example."},
 {q:"What does 'tessitura' mean?",opts:["The total range of notes a piece covers from its lowest to its highest pitch", "The range where a voice or instrument sits most comfortably and sounds most characteristic", "A type of Italian scale used in opera to indicate a specific dramatic vocal colour", "A dynamic marking indicating a medium-loud level, between forte and mezzo-forte"],ans:1,fact:"A soprano might have a range of two octaves but a comfortable tessitura of an octave in the upper middle register. Composers write for tessitura rather than extremes."},
@@ -88251,7 +88722,7 @@ studio_recording: {
     {q:"What is 'sidechain compression'?",opts:["Compressing only one side of stereo","Triggering a compressor with a separate 'key' signal — most famously ducking music under a kick drum","A type of parallel compression","Compressing mid and side independently"],ans:1,fact:"The classic pumping EDM sound comes from sidechain compression, where the kick triggers compression on the rest of the mix so everything ducks on each kick hit."},
     {q:"What is 'automation' in modern mixing?",opts:["Software that automatically corrects pitch and timing deviations in vocal tracks", "Recording parameter changes over time so they replay identically on every playback", "A mastering process that analyses and optimises a mix for streaming platforms", "A MIDI controller mode that records fader movements as a MIDI CC data stream"],ans:1,fact:"Before automation, engineers had to manually ride faders in real time. Automation allows complex, precise, repeatable dynamic changes across an entire mix."},
     {q:"What is 'tape saturation'?",opts:["Recording to old or misaligned tape equipment to produce deliberately degraded audio", "The gentle harmonic distortion and natural compression that analogue tape introduces", "A noise reduction system that compresses the signal before tape and expands after", "Over-recording onto a previously used tape so the previous content bleeds through"],ans:1,fact:"Analog tape saturates smoothly at high levels, adding even-order harmonics and gently compressing transients. The result sounds 'warmer' than unprocessed digital. Plugins simulate it extensively."},
-    {q:"What does 'gain staging' mean?",opts:["Recording multiple microphones and combining them at mixdown for more tonal options", "Using a stereo microphone technique to capture a source in a single pass", "Running a direct signal and a room mic simultaneously for depth", "Recording at different gain levels simultaneously to ensure one clean take"],ans:0,fact:"Good gain staging keeps each stage neither too hot (clipping) nor too low (noise). A bad level early in the chain carries problems all the way downstream."},
+    {q:"What does \'gain staging\' mean?",opts:["Setting levels at each point in the signal chain so nothing is too quiet or clipping","Recording several microphones at once and blending them at mixdown","Boosting the loudest parts of a mix to match commercial loudness targets","Splitting a signal across two channels to widen the stereo image"],ans:0,fact:"Good gain staging keeps every stage, from preamp to plugin to fader, in its healthy range, preserving headroom and keeping the noise floor low."},
     {q:"What is 'punching in'?",opts:["Re-recording a short section over an existing take to fix a mistake","Boosting the input gain sharply for a louder take","Adding a percussive accent to emphasise a beat","Switching microphones mid-performance"],ans:0,fact:"If a player nails 16 bars except bar 8, you punch in at bar 7, record bar 8 only, and punch out, fixing the mistake without redoing the whole take."},
     {q:"What is the 'loudness war'?",opts:["A rivalry between mixing engineers in the 1990s who competed on technical loudness tests", "The practice of mastering records at increasingly high average loudness at the cost of dynamics", "A compression technique that adds loudness by progressively saturating the signal chain", "An aggressive electronic music genre defined by extreme volume and minimal dynamics"],ans:1,fact:"From the 1990s, labels competed for louder-seeming masters. Dynamic range was sacrificed for perceived volume. Streaming services' loudness normalization has largely ended this practice."},
     {q:"What does 'LUFS' mean and why does it matter?",opts:["A loudness measurement standard used for streaming normalisation","A type of low-frequency filter applied to vocals","The maximum digital level before clipping occurs","A metering scale for stereo width"],ans:0,fact:"Spotify normalizes to approximately -14 LUFS. If your master is louder, it gets turned down. This ended the incentive for extreme loudness mastering."},
@@ -88268,7 +88739,7 @@ studio_recording: {
     {q:"What does 'room sound' mean in recording?",opts:["The natural ambience and reflections a recording space adds to a sound","The hum picked up from a room's electrical wiring","The level meter reading of the loudest part of a take","The frequency response of the monitor speakers"],ans:0,fact:"John Bonham's drum sound on 'When the Levee Breaks' was recorded in a stairwell at Headley Grange. The room was the sound. Many engineers specifically seek out interesting spaces."},
     {q:"What is a 'compander' in audio?",opts:["A combined compressor-expander used in noise reduction systems like Dolby A and B", "A type of graphic equaliser used in broadcast to maintain consistent programme level", "A vintage reel-to-reel tape machine known for its low noise floor and stable transport", "A high-ratio limiter used to catch transient peaks that a standard compressor misses"],ans:0,fact:"Dolby A, B, and dbx encode by compressing on the way in and decode by expanding on playback. The result reduces tape hiss. Mismatched encode/decode causes characteristic pumping artifacts."},
     {q:"What is the role of a music producer in a recording session?",opts:["The person who finances the record","The person responsible for overall creative and technical direction — from arrangement to final mix","The person who operates the equipment","The person who books the studio"],ans:1,fact:"Producers work in very different ways. Rick Rubin barely touches the equipment, while George Martin and Quincy Jones were deeply technical. The common thread is owning how the record sounds overall."},
-    {q:"What is 'impulse response' (IR) in audio?",opts:["Boosting the high-mid presence region of each source to increase forward projection", "High-pass filtering the low end of most non-bass sources to reduce buildup and improve clarity", "Applying gentle compression to every track to even out levels before balancing", "Setting all faders to unity gain and adjusting only the input gain of each channel"],ans:1,fact:"Convolving an IR with audio mathematically places the audio in that space or through that device. Used for speaker cabinet simulation, room reverb, and hardware emulation."},
+    {q:"What is \'impulse response\' (IR) in audio?",opts:["A recording of how a space or device reacts to a brief sound, used to recreate its character","A high-pass filter applied to remove low-end buildup from a source","The delay between pressing a key and hearing the note through a system","A burst of gain applied to emphasise the attack of a drum hit"],ans:0,fact:"IRs capture the acoustic fingerprint of a room, speaker cabinet, or reverb unit. Convolution loads that fingerprint so a dry signal sounds as if played through the original."},
     {q:"What is a VU meter measuring?",opts:["Average signal level, with a slow response that mirrors perceived loudness","The instantaneous peak level of the digital signal","The stereo balance between left and right channels","The total harmonic distortion in the signal"],ans:0,fact:"VU meters read average levels over about 300ms, which tracks perceived loudness but misses fast transients. Peak meters show what\'s actually hitting the converters, so you want both."},
     {q:"What is 'mic placement'?",opts:["Where a mic is positioned relative to the source — it shapes tone more than the mic model","The angle at which two mics face each other for stereo","The height of the mic stand above the floor","The distance between the mic and the mixing console"],ans:0,fact:"Moving a mic an inch changes the sound dramatically. Center of speaker cone = full and direct. Edge = bright and edgy. Six feet back = roomy. Moving is free. EQ later is a compromise."},
     {q:"What is 'bit depth' in digital audio and why does it matter?",opts:["The sample rate of the recording","The number of bits representing each sample's amplitude — determining dynamic range and noise floor","The file size","The number of audio channels"],ans:1,fact:"16-bit = 65,536 amplitude values, ~96dB dynamic range (CD quality). 24-bit = 16.7 million values, ~144dB range. More bits = lower noise floor = more dynamic range in recordings."},
@@ -88326,7 +88797,7 @@ gear_equipment: {
     {q:"What is 'fret buzz' and what causes it?",opts:["Electrical noise from pickups","A rattling sound when a string vibrates against a fret — due to low action, uneven frets, or insufficient neck relief","A type of feedback","The sound of a muted string"],ans:1,fact:"Fret buzz happens when a vibrating string hits a fret it shouldn\'t, usually from low string height, a high fret, or too little neck relief. Some players accept a little buzz for a more open tone."},
     {q:"What is a 'piezo pickup' on an acoustic guitar?",opts:["A magnetic pickup mounted under the soundhole that captures string vibration inductively", "A crystal sensor under the saddle that converts mechanical vibration to an electrical signal", "A small condenser microphone mounted inside the body cavity near the soundhole", "An active magnetic system using rare-earth magnets mounted on the guitar's bridge plate"],ans:1,fact:"Piezoelectric crystals generate voltage when compressed, so saddle-mounted piezos pick up string vibration directly with no magnetic field. They can sound quacky without a good preamp."},
     {q:"What is guitar 'action'?",opts:["The height of the strings above the fretboard","The responsiveness of the volume and tone controls","The speed at which the strings return to pitch after bending","The spacing between the strings at the nut"],ans:0,fact:"Low action: easier to play, more prone to fret buzz. High action: harder to play, more sustain. Most players set the lowest possible action without buzz."},
-    {q:"What is a 'floating bridge' (tremolo)?",opts:["A dynamic microphone uses a capacitor plate that changes capacitance with air pressure", "A dynamic microphone works by electromagnetic induction from a coil attached to a diaphragm", "A dynamic microphone uses a piezoelectric crystal that generates voltage under pressure", "A dynamic microphone uses a laser to measure membrane displacement optically"],ans:1,fact:"Floyd Rose and Ibanez Edge are common floating bridges. Springs in the back cavity balance string tension. This allows pitch-up and pitch-down on the whammy bar."},
+    {q:"What is a \'floating bridge\' (tremolo)?",opts:["A guitar bridge held in balance by spring tension so it can raise and lower pitch","A bridge glued to the body to maximise sustain and tuning stability","A loose bridge held in place only by downward string pressure","A bridge with built-in pickups that replaces the need for a pickguard"],ans:0,fact:"A floating tremolo like a Floyd Rose pivots both ways for dive bombs and pitch raises. The trade-off is that bends and broken strings can throw the whole system out of tune."},
     {q:"What is a 'multi-effects unit'?",opts:["A mixer with effects","A single device containing models of many different effects — replacing an entire pedalboard","A type of synthesizer","A device that creates multiple copies of a signal"],ans:1,fact:"Units like the Line 6 Helix and Boss GT series model hundreds of amps and effects. Popular for touring (one unit vs. 20 pedals) and home recording."},
     {q:"What is phantom power in a studio?",opts:["48V DC sent down the mic cable to power condenser microphones","A backup battery system that keeps the console running during outages","A noise-cancellation circuit that removes hum from long cable runs","The residual signal left on a cable after the source is disconnected"],ans:0,fact:"Condenser capsules require a charge across their diaphragm to function. Phantom power rides invisibly on the same cable as the audio signal. Don't apply it to vintage ribbon microphones."},
     {q:"What is a 'Leslie cabinet'?",opts:["A large guitar combo amplifier with a closed-back cabinet for tight, focused bass response", "A rotating speaker originally designed for Hammond organs, creating a Doppler modulation effect", "A type of studio monitor with a coaxial driver arrangement for accurate imaging", "A folded horn bass cabinet designed for maximum efficiency at low frequencies"],ans:1,fact:"The rotating drum and horn spin at different speeds for chorale (slow) and tremolo (fast) effects. Beatles, Hendrix, and Stevie Wonder all used the Leslie sound."},
@@ -88343,7 +88814,7 @@ gear_equipment: {
     {q:"What is the difference between passive and active DI boxes?",opts:["Passive are louder","Passive use transformers only; active have a preamp requiring power — better for low-output sources","Active use transformers; passive have a preamp","Passive are for low-impedance sources"],ans:1,fact:"Passive DIs are simple and transparent, which suits instruments with strong output. Active DIs work better for low-output sources like acoustic guitars with piezo pickups."},
     {q:"What is a speaker's 'sensitivity' rating?",opts:["How loud a speaker plays for a given input power (dB at 1W/1m)","The lowest frequency a speaker can reproduce","The maximum power a speaker can handle before damage","The impedance a speaker presents to the amplifier"],ans:0,fact:"A speaker rated 100dB/1W/1m is 3dB louder than one rated 97dB/1W/1m, roughly double the perceived loudness from the same amp. Sensitivity matters as much as amplifier wattage."},
     {q:"What is 'impedance bridging' in audio connections?",opts:["Using a transformer to match impedances","Connecting a low-impedance output to a high-impedance input — minimizing signal loss","Matching impedances exactly","Using a DI box"],ans:1,fact:"Modern pro audio uses impedance bridging, where the source impedance is much lower than the load impedance. That\'s why connecting almost any line out to most modern inputs works without matching impedances."},
-    {q:"What is the 'proximity effect' on a directional microphone?",opts:["Polar pattern — the directional sensitivity of the microphone to sound from different angles", "Frequency response — the range and evenness of frequencies a microphone or speaker reproduces", "Self-noise — the level of noise generated internally by the microphone's circuitry", "Sensitivity — the output voltage a microphone produces for a given sound pressure level"],ans:1,fact:"Directional mics show the proximity effect, boosting low frequencies as the source gets closer. Radio presenters use it for a warm, intimate sound. Omnidirectional mics don\'t have it."},
+    {q:"What is the \'proximity effect\' on a directional microphone?",opts:["A boost in bass response as the sound source moves closer to the mic","The directional sensitivity of the mic to sound from different angles","The internal noise the mic generates from its own circuitry","The output voltage the mic produces for a given sound pressure level"],ans:0,fact:"Proximity effect lets vocalists thicken their tone by moving in close, though it can muddy a mix if left unchecked, and omnidirectional mics avoid it entirely."},
     {q:"What is a Fender Stratocaster's 'in-between' pickup positions?",opts:["Between two pickups geographically","Positions 2 and 4 on a 5-way switch — combining adjacent pickups out of phase for a hollow, quacky tone","A setting between clean and crunch","The middle pickup alone"],ans:1,fact:"The 5-way switch on a Strat allows positions: bridge alone, bridge+middle, middle alone, middle+neck, neck alone. The in-between positions (2 and 4) create out-of-phase tones unique to Strat pickups."},
     {q:"What is an 'archtop' guitar?",opts:["A hollow-body guitar with a carved arched top and f-holes","A solid-body guitar with a contoured top for comfort","An acoustic guitar with a rounded back for projection","A flat-top guitar with a reinforced bridge plate"],ans:0,fact:"Lloyd Loar\'s 1922 Gibson L-5 set the template for the archtop. Its carved spruce top and f-holes project sound like a violin. Wes Montgomery, Joe Pass, and many other jazz players favoured archtops."},
     {q:"What makes a 'P-90' pickup different from a humbucker?",opts:["A P-90 is a wide single-coil — fatter than a Strat coil but brighter than a humbucker","A P-90 is a stacked humbucker that fits in a single-coil rout","A P-90 is an active pickup requiring a 9V battery","A P-90 is a piezo pickup mounted under the bridge saddle"],ans:0,fact:"P-90s bridge the gap between thin single-coil and thick humbucker tone. Gibson used them before humbuckers. Neil Young's 'Old Black' Les Paul with P-90s is famous. They have a raw, meaty quality."},
@@ -88689,7 +89160,7 @@ keys: {
     {q:"What is \'counterpoint\' in keyboard composition?",opts:["The art of combining two or more independent melodic lines that work harmonically when played together","Playing a counter-melody in the left hand that mirrors the right hand melody in contrary motion","A technique of playing the bass line against the melody with equal rhythmic weight","Writing secondary themes that contrast harmonically with the primary theme"],ans:0,fact:"Bach\'s two-part inventions are core study material for keyboard counterpoint. The two voices are melodically independent, each interesting on its own, yet combine into functional harmony. Working through them changes how a player thinks about the two hands together."},
     {q:"What is 'pianissimo' on piano?",opts:["Very quiet playing achieved by depressing keys slowly with minimal finger weight","A specific technique of using only the fingertip to depress keys at low velocity","Quiet playing achieved by pressing the una corda pedal throughout a passage","Very quiet playing requiring the player to use only the right hand throughout"],ans:0,fact:"Pianissimo is technically demanding. The key still has to travel all the way down for the hammer to strike, but with barely enough speed to make a sound. Too slow and nothing sounds; slightly too fast and it\'s louder than intended. Control at low volume reveals technique more honestly than loud playing."},
     {q:"What is 'organ registration'?",opts:["The specific combination of drawbar settings chosen to create a desired organ timbre","The practice of registering an organist with the concert hall management","The process of assigning different sounds to each manual of a two-manual organ","The matching of organ pitch to the tuning of surrounding instruments"],ans:0,fact:"Organ registration is both a compositional and improvisational tool, letting the organist shape timbre as directly as a synth programmer. Baroque organists treated it as basic to expression, and rock organists like Jon Lord and Keith Emerson combined full registration with amp overdrive for a thick, aggressive sound."},
-    {q:"What is \'touch\' on piano and can two pianists sound different on the same instrument?",opts:["Yes — the speed, weight, and manner of key depression affects the resulting tone","No — the piano is a mechanical instrument and the tone is fixed by the mechanism","Yes — but only due to psychological differences in how listeners perceive the same sound","No — tone is entirely determined by string tension and hammer felt condition"],ans:0,fact:"Two pianists on the same instrument in the same hall sound noticeably different. How they depress the keys, arm weight versus finger articulation, legato versus detaché, changes the hammer\'s speed and contact point and so the tone. Glenn Gould and Vladimir Horowitz sounded nothing alike on identical pianos."},
+    {q:"What is \'touch\' on piano and can two pianists sound different on the same instrument?",opts:["Yes, since key speed and weight change the hammer\'s tone","No, the action is mechanical so the tone is fixed","Only to listeners, the actual sound is identical","No, only string tension and hammer felt set the tone"],ans:0,fact:"Two pianists on the same instrument sound noticeably different. How they depress the keys, arm weight against finger articulation, legato against detache, changes the hammer\'s speed and contact point and so the tone. Glenn Gould and Vladimir Horowitz sounded nothing alike on identical pianos."},
     {q:"What is the \'una corda\' pedal?",opts:["The left pedal that shifts the hammer mechanism to strike fewer strings, softening the tone","The right pedal that lifts all dampers for a sustained, ringing effect","The middle pedal that sustains only notes held at the moment it is pressed","A practice pedal that reduces volume by inserting felt between hammers and strings"],ans:0,fact:"The una corda (\'one string\') pedal shifts the whole action sideways so the hammers strike only two strings, or one on the highest notes, instead of the usual three. That lowers the volume and also changes the colour, since the unstruck strings resonate sympathetically for a warmer tone."},
     {q:"What is \'polyphony\' on a synthesiser and why does it matter?",opts:["The number of simultaneous notes a synthesiser can produce — limited polyphony causes notes to cut off","The ability of a synthesiser to produce multiple timbres on different MIDI channels","The maximum number of preset patches a synthesiser can store in memory","The number of octaves a synthesiser\'s keyboard spans"],ans:0,fact:"Early synthesisers were monophonic, one note at a time, so the ARP Odyssey and Minimoog could only play single lines. Polyphony, introduced in instruments like the Prophet-5 with its five voices, allowed chords. Modern instruments have 64 or 128 voices, and running out cuts off the oldest notes."},
     {q:"What is \'weighted action\' on a keyboard?",opts:["Keys with a spring or hammer mechanism that adds resistance similar to an acoustic piano","A keyboard where key weight varies across the range from heavy to light as on acoustic piano","A keyboard mounted on a weighted stand to prevent movement during performance","A key mechanism using electromagnetic resistance to simulate acoustic piano feel"],ans:0,fact:"Weighted action tries to mimic the feel of a piano\'s hammer mechanism. Fully weighted actions use real hammers, semi-weighted uses spring tension, and the feel affects how expressively a player can control dynamics. Unweighted synth action responds very differently to touch."},
@@ -88930,7 +89401,7 @@ eighties: {
   desc:'Songs, artists, and moments that defined the 1980s',
   questions:[
     {q:"Which Michael Jackson album became the best-selling album of all time?",opts:["Thriller","Bad","Off the Wall","Dangerous"],ans:0,fact:"Thriller (1982) has sold between 66 and 70 million copies and produced seven top 10 singles. The 14-minute title-track video, directed by John Landis, helped push the music video from a promo clip toward a creative form in its own right."},
-    {q:"What was MTV and when did it launch?",opts:["Music Television — a cable channel launched in August 1981 that made the music video the primary promotional format","Music Television — a radio network broadcasting music videos as audio content from 1979","Music Television — a British network launched after Channel 4 in 1982","Music Television — an American public broadcasting service for music education launched in 1980"],ans:0,fact:"MTV launched August 1, 1981 with \'Video Killed the Radio Star\' by the Buggles. Michael Jackson\'s \'Billie Jean\' video broke the early whites-only programming in 1983, reportedly after CBS threatened to pull all their acts."},
+    {q:"What was MTV and when did it launch?",opts:["A US cable channel launched in 1981 for music videos","A radio network airing music-video audio from 1979","A British TV channel launched after Channel 4 in 1982","A US public-broadcasting music-education service from 1980"],ans:0,fact:"MTV launched August 1, 1981 with \'Video Killed the Radio Star\' by the Buggles. Michael Jackson\'s \'Billie Jean\' broke the early whites-only programming in 1983, reportedly after CBS threatened to pull all their acts."},
     {q:"Which band performed the most celebrated set at Live Aid (1985)?",opts:["Queen","U2","David Bowie","The Who"],ans:0,fact:"Queen\'s 20-minute Live Aid set at Wembley often tops polls of filmed live rock performances. Freddie Mercury held all 72,000 people, and Brian May said the band hadn\'t planned the set and played on instinct."},
     {q:"What was the name of the synthesiser that defined 1980s pop?",opts:["Yamaha DX7","Roland Juno-106","Minimoog","Roland Jupiter-8"],ans:0,fact:"The Yamaha DX7 (1983) was the first commercially successful FM synthesiser. Its Electric Piano 1 patch appeared on almost every pop record from 1983-1988. At $1,995, it was half the price of competing analogue synthesisers."},
     {q:"Which hip-hop trio released \'Walk This Way\' with Aerosmith in 1986?",opts:["Run-DMC","Beastie Boys","Public Enemy","LL Cool J"],ans:0,fact:"Run-DMC\'s collaboration with Aerosmith was the moment hip-hop became undeniable to mainstream rock audiences. The video showed the two genres literally breaking down a wall between them. It also revived Aerosmith\'s career."},
