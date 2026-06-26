@@ -90,9 +90,20 @@ public class MainActivity extends BridgeActivity {
             try { splashPlayer.setVolume(SPLASH_VOLUME, SPLASH_VOLUME); } catch (Exception ignored) {}
             // Release as soon as it finishes so it never lingers.
             splashPlayer.setOnCompletionListener(mp -> releaseSplashPlayer());
-            // Prime: seek to 0 so the eventual start() resumes instantly with no
-            // first-frame buffering latency on top of the JS bridge hop.
-            try { splashPlayer.seekTo(0); } catch (Exception ignored) {}
+            // Pre-warm the audio pipeline: a prepared MediaPlayer still spins up the
+            // underlying AudioTrack the first time start() is called, which adds a
+            // small variable delay. Briefly start at zero volume, immediately pause,
+            // then restore volume and seek to 0 — the pipeline is now hot so the real
+            // start() (fired from JS at the animation moment) plays with no spin-up.
+            try {
+                splashPlayer.setVolume(0f, 0f);
+                splashPlayer.start();
+                splashPlayer.pause();
+                splashPlayer.seekTo(0);
+                splashPlayer.setVolume(SPLASH_VOLUME, SPLASH_VOLUME);
+            } catch (Exception ignored) {
+                try { splashPlayer.seekTo(0); } catch (Exception ignored2) {}
+            }
         } catch (Exception e) {
             releaseSplashPlayer();
         }
@@ -146,7 +157,12 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public void playSplashSound() {
-            runOnUiThread(MainActivity.this::startSplashSound);
+            // Fire directly on the bridge's binder thread. MediaPlayer.start() is
+            // thread-safe and doesn't need the UI thread; queuing onto the UI thread
+            // (runOnUiThread) added several frames of latency at cold launch when that
+            // thread is congested with layout + the permission dialog, which is what
+            // made the sound start late and drift relative to the animation.
+            startSplashSound();
         }
     }
 
