@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.71.9 -->
+<!-- INTONARE_VERSION: 0.73.9 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -1553,6 +1553,37 @@
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+
+  /* ── Accessibility: app-wide UI scale (slider, 5 snap steps) ──
+     Bumps the size of everything — text, buttons, spacing, tap targets —
+     uniformly, so internal layouts stay proportional. zoom is well-supported in
+     the Android WebView/Chromium. Applied to body so portaled elements (modals,
+     dropdown lists) scale too. Steps: 0=1.0, 1=1.08, 2=1.15, 3=1.21, 4=1.26. */
+  html[data-uiscale="1"] body { zoom: 1.08; }
+  html[data-uiscale="2"] body { zoom: 1.15; }
+  html[data-uiscale="3"] body { zoom: 1.21; }
+  html[data-uiscale="4"] body { zoom: 1.26; }
+  /* The side padding zooms up too and pushes the content column past the viewport
+     at the bigger steps. Trim it progressively so everything still fits edge to
+     edge without horizontal scroll. */
+  html[data-uiscale="1"] .app { padding-left: 13px; padding-right: 13px; }
+  html[data-uiscale="2"] .app { padding-left: 11px; padding-right: 11px; }
+  html[data-uiscale="3"] .app { padding-left: 8px;  padding-right: 8px; gap: 5px; }
+  html[data-uiscale="4"] .app { padding-left: 6px;  padding-right: 6px; gap: 5px; }
+  /* Safety net at the upper steps: cap the column to the viewport so sub-pixel
+     rounding from `zoom` can never push content off the right edge on any device.
+     Vertical scroll is unaffected; family-tab strips still scroll in their row. */
+  html[data-uiscale="3"] .app { max-width: calc(100vw / 1.21); overflow-x: clip; }
+  html[data-uiscale="4"] .app { max-width: calc(100vw / 1.26); overflow-x: clip; }
+  /* The tour overlay is positioned with JS using real (unzoomed) viewport
+     coordinates, and it sits ON TOP of the app rather than inside its layout.
+     The body zoom would re-multiply those coordinates and inflate the card,
+     pushing buttons off-screen. Counter-zoom the overlay back to 1.0 at each step
+     so the tour always renders crisp and correctly placed, whatever the UI scale. */
+  html[data-uiscale="1"] .tour-overlay { zoom: calc(1 / 1.08); }
+  html[data-uiscale="2"] .tour-overlay { zoom: calc(1 / 1.15); }
+  html[data-uiscale="3"] .tour-overlay { zoom: calc(1 / 1.21); }
+  html[data-uiscale="4"] .tour-overlay { zoom: calc(1 / 1.26); }
 
   /* Surfaces — mid-tier shift */
   .card, .ref-controls, .live-tempo-card, .mode-toggle, .tooltip-bar, .inst-list,
@@ -4349,6 +4380,8 @@
   }
   .metro-panel { display: none; }
   .metro-panel.active { display: contents; }
+  /* A little breathing room between the tab strip and the card, transposer-only. */
+  #toolTranspose .metro-subnav { margin-bottom: 10px; }
 
   /* ─── GROOVE MODE ─── */
   .metro-mode-chips {
@@ -6159,19 +6192,21 @@
   /* Custom dropdown scoped to the transposer tool — only the button lives inside
      #toolTranspose; the open list is portaled to <body> as .tp-dd-portal (below). */
   #toolTranspose .sg-dd { position: relative; width: 100%; }
-  #toolTranspose .sg-dd-btn { display:flex; align-items:center; background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--r-sm); padding:10px 12px; cursor:pointer; gap:6px; transition:border-color .15s; }
-  #toolTranspose .sg-dd-btn:active { border-color: var(--accent-warm); }
+  #toolTranspose .sg-dd-btn { display:flex; align-items:center; background:linear-gradient(165deg, rgba(255,255,255,0.05), rgba(255,255,255,0.012)); border:1px solid var(--border-soft); border-radius:10px; padding:11px 13px; cursor:pointer; gap:8px; transition:border-color .15s, background .15s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+  #toolTranspose .sg-dd-btn:active { border-color: var(--accent-warm); background:linear-gradient(165deg, rgba(255,160,122,0.07), rgba(255,255,255,0.012)); }
+  #toolTranspose .sg-dd-btn.open { border-color: var(--accent-warm); }
   #toolTranspose .sg-dd-val { flex:1; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.5px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #toolTranspose .sg-dd-arrow { color:var(--muted); font-size:9px; flex-shrink:0; transition:transform .15s; }
-  #toolTranspose .sg-dd-btn.open .sg-dd-arrow { transform:rotate(180deg); }
+  #toolTranspose .sg-dd-arrow { color:var(--accent-warm); font-size:9px; flex-shrink:0; transition:transform .18s; opacity:0.7; }
+  #toolTranspose .sg-dd-btn.open .sg-dd-arrow { transform:rotate(180deg); opacity:1; }
   /* Portal list — appended to <body>, positioned with JS via getBoundingClientRect */
-  .tp-dd-portal { position:fixed; background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--r-sm); z-index:9999; display:none; max-height:240px; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y; box-shadow:0 8px 32px rgba(0,0,0,.6); }
+  .tp-dd-portal { position:fixed; background:var(--panel); border:1px solid var(--border-soft); border-radius:11px; z-index:9999; display:none; max-height:260px; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y; box-shadow:0 12px 40px rgba(0,0,0,.65); padding:3px; }
   .tp-dd-portal::-webkit-scrollbar { display:none; }
   .tp-dd-portal.open { display:block; animation:fadeUp .12s ease; }
-  .tp-dd-portal .sg-dd-item { padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.5px; color:var(--text-dim); cursor:pointer; transition:background .1s; }
-  .tp-dd-portal .sg-dd-item:active { background:var(--surface); }
-  .tp-dd-portal .sg-dd-item.active { color:var(--accent-warm); background:rgba(255,160,122,0.08); }
-  .tp-dd-portal .sg-dd-item.group-header { font-size:8px; letter-spacing:2px; color:var(--muted); padding:8px 12px 3px; pointer-events:none; text-transform:uppercase; }
+  .tp-dd-portal .sg-dd-item { padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.5px; color:var(--text-dim); cursor:pointer; transition:background .1s, color .1s; border-radius:7px; position:relative; }
+  .tp-dd-portal .sg-dd-item:active { background:var(--surface); color:var(--text); }
+  .tp-dd-portal .sg-dd-item.active { color:var(--accent-warm); background:rgba(255,160,122,0.1); padding-left:26px; }
+  .tp-dd-portal .sg-dd-item.active::before { content:'\2713'; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:10px; color:var(--accent-warm); }
+  .tp-dd-portal .sg-dd-item.group-header { font-size:8px; letter-spacing:2px; color:var(--accent); opacity:0.65; padding:9px 12px 3px; pointer-events:none; text-transform:uppercase; }
 
 
   /* Big token display */
@@ -6200,6 +6235,64 @@
     text-align: center; min-height: 14px; margin-bottom: 2px;
   }
 
+  /* ── Transposer staff display ── */
+  .tp-summary-line {
+    text-align: center; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.5px; color: var(--text-dim);
+    min-height: 15px; margin: 2px 0 2px;
+  }
+  .tp-summary-line b { color: var(--text); font-weight: 700; }
+  .tp-summary-line .c-concert { color: var(--accent); }
+  .tp-summary-line .c-written { color: var(--accent-warm); }
+  .tp-staff-block {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 0;
+    align-items: stretch; margin: 12px 0 10px;
+  }
+  .tp-staff-col {
+    background: linear-gradient(165deg, rgba(255,255,255,0.055), rgba(255,255,255,0.015));
+    border: 1px solid var(--border-soft); border-radius: 12px;
+    padding: 9px 6px 7px; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 8px rgba(0,0,0,0.25);
+    position: relative;
+  }
+  .tp-staff-col:first-child  { border-top-color: rgba(255,160,122,0.28); }
+  .tp-staff-col:last-child   { border-top-color: rgba(94,226,255,0.28); }
+  .tp-staff-cap {
+    font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1.8px;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .tp-staff-col:first-child .tp-staff-cap { color: var(--accent-warm); }
+  .tp-staff-col:last-child  .tp-staff-cap { color: var(--accent); }
+  .tp-staff-wrap { width: 100%; }
+  .tp-staff-svg { display: block; width: 100%; height: 84px; }
+  /* Interval bracket between the two staves */
+  .tp-staff-bridge {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 0 7px; gap: 3px; min-width: 46px;
+  }
+  .tp-bridge-arrow {
+    font-size: 16px; line-height: 1; color: var(--text-dim);
+  }
+  .tp-bridge-int {
+    font-family: 'Bebas Neue', sans-serif; font-size: 17px; line-height: 1;
+    color: var(--text); letter-spacing: 0.5px;
+  }
+  .tp-bridge-dir {
+    font-family: 'JetBrains Mono', monospace; font-size: 7px; letter-spacing: 1px;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .tp-hear-btn {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--panel); border: 1px solid var(--accent);
+    color: var(--accent); border-radius: var(--r-sm);
+    padding: 10px 0; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 2px; cursor: pointer; transition: background .12s, transform .08s;
+    margin-bottom: 4px;
+  }
+  .tp-hear-btn:active { transform: scale(0.98); background: rgba(94,226,255,0.1); }
+  .tp-hear-btn.playing { background: rgba(94,226,255,0.14); }
+  .tp-hear-ico { font-size: 9px; }
+
   .tp-key-row {
     display: flex; align-items: flex-start; gap: 10px;
     margin: 8px 0;
@@ -6220,7 +6313,10 @@
     font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(9px, 2.8vw, 12px);
     cursor: pointer; overflow: hidden;
+    transition: border-color .12s, background .12s, transform .08s;
   }
+  .tp-key-btn:hover:not(.active):not(.result) { border-color: var(--text-dim); }
+  .tp-key-btn:active { transform: scale(0.94); }
   .tp-key-btn.active {
     background: rgba(94,226,255,0.12);
     border-color: var(--accent); color: var(--accent);
@@ -6233,6 +6329,44 @@
     font-size: 18px; color: var(--text-dim); flex-shrink: 0;
     align-self: center;
   }
+  .tp-mode-toggle {
+    display: flex; gap: 4px; background: rgba(0,0,0,0.18);
+    border: 1px solid var(--border-soft); border-radius: 9px; padding: 3px; margin-bottom: 12px;
+  }
+  .tp-mode-btn {
+    flex: 1; padding: 7px 0; font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;
+    background: transparent; border: none; border-radius: 6px;
+    color: var(--text-dim); cursor: pointer; transition: all .15s;
+  }
+  .tp-mode-btn.active { background: var(--panel); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .tp-semi-stepper {
+    display: flex; align-items: stretch; gap: 8px; margin-bottom: 12px;
+  }
+  .tp-semi-btn {
+    width: 52px; font-family: 'Bebas Neue', sans-serif; font-size: 24px; line-height: 1;
+    background: var(--panel); border: 1px solid var(--border-soft); border-radius: 10px;
+    color: var(--accent); cursor: pointer; transition: all .12s;
+  }
+  .tp-semi-btn:active { transform: scale(0.94); background: rgba(94,226,255,0.1); }
+  .tp-semi-read {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(165deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+    border: 1px solid var(--border-soft); border-radius: 10px; padding: 6px 0; gap: 2px;
+  }
+  .tp-semi-val { font-family: 'Bebas Neue', sans-serif; font-size: 26px; line-height: 1; color: var(--text); letter-spacing: 1px; }
+  .tp-semi-name { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+  .tp-chord-actions { display: flex; gap: 8px; margin: 10px 0 6px; }
+  .tp-chord-act {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 0; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 1.5px; background: var(--panel); border: 1px solid var(--border-soft);
+    border-radius: 8px; color: var(--text-dim); cursor: pointer; transition: all .12s;
+  }
+  .tp-chord-act:active { transform: scale(0.98); }
+  #tpChordPlayBtn { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, var(--border-soft)); }
+  #tpChordPlayBtn.playing { background: rgba(94,226,255,0.12); }
+  #tpChordCopyBtn.copied { color: var(--in-tune, #54d18a); border-color: color-mix(in srgb, #54d18a 40%, transparent); }
   .tp-chord-input {
     width: 100%; padding: 12px;
     background: var(--panel); border: 1px solid var(--border-soft);
@@ -9417,6 +9551,24 @@
     font-weight: 600; line-height: 1.3; padding-right: 28px; margin-bottom: 2px;
   }
   .pm-ach-card.unlocked .pm-ach-name { color: rgba(255,255,255,0.95); }
+  /* Progress bar on locked incremental achievements */
+  .pm-ach-prog { margin-top: auto; padding-top: 6px; }
+  .pm-ach-prog-track {
+    height: 4px; border-radius: 3px; overflow: hidden;
+    background: color-mix(in srgb, var(--cat-c, var(--accent)) 12%, rgba(255,255,255,0.06));
+  }
+  .pm-ach-prog-fill {
+    height: 100%; border-radius: 3px;
+    background: color-mix(in srgb, var(--cat-c, var(--accent)) 65%, transparent);
+    transition: width 0.4s ease;
+  }
+  .pm-ach-prog-lbl {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'JetBrains Mono', monospace; font-size: 6.5px; letter-spacing: 0.4px;
+    color: var(--text-dim); margin-top: 3px;
+  }
+  .pm-ach-prog-lbl b { color: var(--cat-c, var(--accent)); font-weight: 700; }
+  .pm-ach-prog-pct { opacity: 0.7; }
   .pm-ach-locked-label { font-size: 6.5px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; opacity: 0.6; }
   .pm-ach-desc {
     font-family: 'Fraunces', serif; font-style: italic;
@@ -9732,6 +9884,45 @@
     width: 20px; height: 20px; border-radius: 50%; border: none;
     background: linear-gradient(135deg, #b8a3ff, #5ee2ff);
     cursor: pointer; box-shadow: 0 0 10px rgba(184,163,255,0.5);
+  }
+  /* ── Accessibility size slider (hybrid: free slide, labeled snap points) ── */
+  .uiscale-slider-wrap { padding: 4px 4px 0; }
+  .uiscale-slider {
+    width: 100%; height: 8px; -webkit-appearance: none; appearance: none;
+    background: var(--bg-1); border-radius: 4px; outline: none;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); margin: 4px 0 0;
+  }
+  /* Bigger thumb than the calibration slider — easier to grab for the user this
+     control is for. */
+  .uiscale-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-soft, #b8a3ff), var(--accent));
+    cursor: pointer; box-shadow: 0 0 10px rgba(94,226,255,0.5);
+  }
+  .uiscale-slider::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, #b8a3ff, #5ee2ff);
+    cursor: pointer; box-shadow: 0 0 10px rgba(94,226,255,0.5);
+  }
+  .uiscale-ticks {
+    position: relative; height: 8px; margin: 2px 12px 0;
+  }
+  .uiscale-tick {
+    position: absolute; top: 0; width: 2px; height: 6px; border-radius: 1px;
+    background: var(--border-soft); transform: translateX(-50%);
+  }
+  .uiscale-tick[data-step="0"] { left: 0%; }
+  .uiscale-tick[data-step="1"] { left: 25%; }
+  .uiscale-tick[data-step="2"] { left: 50%; background: var(--muted); }
+  .uiscale-tick[data-step="3"] { left: 75%; }
+  .uiscale-tick[data-step="4"] { left: 100%; }
+  .uiscale-labels {
+    display: flex; justify-content: space-between; margin: 3px 2px 0;
+  }
+  .uiscale-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 8px;
+    letter-spacing: 1px; color: var(--muted); text-transform: uppercase;
   }
   .sm-calib-hint {
     font-size: 10px; line-height: 1.4;
@@ -16692,19 +16883,29 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           <!-- Custom dropdown injected here by tpInit -->
           <div id="tpInstDropWrap" style="margin-bottom:10px"></div>
 
-          <!-- Big token info box -->
-          <div class="tp-info-tokens" id="tpInfoTokens">
-            <div class="tp-token">
-              <div class="tp-token-label" data-i18n="tp_token_concert">CONCERT</div>
-              <div class="tp-token-value" id="tpTokenConcert">—</div>
+          <!-- Slim interval summary (replaces the bulky token box) -->
+          <div class="tp-summary-line" id="tpSummaryLine"></div>
+
+          <!-- Staff display: same pitch shown as WRITTEN (what the player reads)
+               and as it SOUNDS (concert), with the interval bracketed between. -->
+          <div class="tp-staff-block">
+            <div class="tp-staff-col">
+              <div class="tp-staff-cap" data-i18n="tp_staff_written">YOU READ</div>
+              <div class="tp-staff-wrap"><svg id="tpStaffWritten" class="tp-staff-svg" preserveAspectRatio="xMidYMid meet"></svg></div>
             </div>
-            <div class="tp-token-sep">→</div>
-            <div class="tp-token">
-              <div class="tp-token-label" data-i18n="tp_token_iplay">I PLAY</div>
-              <div class="tp-token-value tp-token-warm" id="tpTokenWritten">—</div>
+            <div class="tp-staff-bridge">
+              <div class="tp-bridge-int" id="tpBridgeInt">—</div>
+              <div class="tp-bridge-arrow" id="tpBridgeArrow">→</div>
+              <div class="tp-bridge-dir" id="tpBridgeDir"></div>
+            </div>
+            <div class="tp-staff-col">
+              <div class="tp-staff-cap" data-i18n="tp_staff_sounds">IT SOUNDS</div>
+              <div class="tp-staff-wrap"><svg id="tpStaffSounds" class="tp-staff-svg" preserveAspectRatio="xMidYMid meet"></svg></div>
             </div>
           </div>
-          <div class="tp-interval-line" id="tpIntervalLine"></div>
+          <button class="tp-hear-btn" id="tpHearBtn" onclick="tpHearTransposition()">
+            <span class="tp-hear-ico">&#9658;</span> <span data-i18n="tp_hear">HEAR IT</span>
+          </button>
 
           <div class="card-label" style="margin-top:14px" data-i18n="label_concert_key">Concert Key → My Key</div>
           <div class="tp-key-row">
@@ -16715,7 +16916,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             <div class="tp-key-label" data-i18n="tp_i_play">I PLAY</div>
             <div class="tp-key-grid" id="tpMyKeyGrid"></div>
           </div>
-          <div class="teach-hint" data-i18n-html="hint_transpose_keys">Tap any concert key above to see what key you play in. Blue = concert pitch, amber = your written key.</div>
+          <div class="teach-hint" data-i18n-html="hint_transpose_keys">Tap either row: tap a concert key to see what you play, or tap your written key to find the concert pitch. Blue = concert, amber = written.</div>
         </div>
       </div>
 
@@ -16723,15 +16924,48 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       <div class="metro-panel" id="tpPanelChord">
         <div class="card">
           <div class="card-label"><span data-i18n="tool_transpose_title">TRANSPOSER</span><button class="help-btn" onclick="showHelp('transpose_chords')">?</button></div>
-          <div class="tp-from-to">
-            <div id="tpFromInstWrap" style="flex:1;min-width:0;position:relative"></div>
-            <div class="tp-arrow">→</div>
-            <div id="tpToInstWrap" style="flex:1;min-width:0;position:relative"></div>
+
+          <!-- Mode toggle: transpose between instruments, or by a raw interval -->
+          <div class="tp-mode-toggle">
+            <button class="tp-mode-btn active" id="tpModeInst" onclick="tpSetChordMode('inst')" data-i18n="tp_mode_inst">BY INSTRUMENT</button>
+            <button class="tp-mode-btn" id="tpModeSemi" onclick="tpSetChordMode('semi')" data-i18n="tp_mode_semi">BY INTERVAL</button>
           </div>
+
+          <!-- Instrument mode -->
+          <div id="tpChordInstMode">
+            <div class="tp-from-to">
+              <div id="tpFromInstWrap" style="flex:1;min-width:0;position:relative"></div>
+              <div class="tp-arrow">→</div>
+              <div id="tpToInstWrap" style="flex:1;min-width:0;position:relative"></div>
+            </div>
+          </div>
+
+          <!-- Semitone/interval mode -->
+          <div id="tpChordSemiMode" style="display:none">
+            <div class="tp-semi-stepper">
+              <button class="tp-semi-btn" onclick="tpSemiStep(-1)" aria-label="down a semitone">&#8211;</button>
+              <div class="tp-semi-read">
+                <div class="tp-semi-val" id="tpSemiVal">+0</div>
+                <div class="tp-semi-name" id="tpSemiName" data-i18n="tp_semi_none">no shift</div>
+              </div>
+              <button class="tp-semi-btn" onclick="tpSemiStep(1)" aria-label="up a semitone">+</button>
+            </div>
+          </div>
+
           <textarea class="tp-chord-input" id="tpChordsIn"
             placeholder="Type chords: Cmaj7  Am7  Dm7  G7"
             oninput="tpTransposeChords()"></textarea>
           <div class="tp-chord-output empty" id="tpChordsOut" data-i18n="tp_chords_here">transposed chords appear here</div>
+
+          <div class="tp-chord-actions">
+            <button class="tp-chord-act" id="tpChordPlayBtn" onclick="tpPlayChords()">
+              <span>&#9658;</span> <span data-i18n="tp_play_chords">PLAY</span>
+            </button>
+            <button class="tp-chord-act" id="tpChordCopyBtn" onclick="tpCopyChords()">
+              <span data-i18n="tp_copy">COPY</span>
+            </button>
+          </div>
+
           <div class="teach-hint" data-i18n-html="hint_chord_paste">Paste any chord names separated by spaces or lines. It transposes the roots only; qualities (maj7, m7, dim…) stay as written.</div>
         </div>
       </div>
@@ -20523,6 +20757,26 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       </button>
     </div>
 
+    <div class="sm-section-title sm-section-sub" data-i18n="settings_textsize">Text &amp; Button Size</div>
+    <div class="uiscale-slider-wrap">
+      <input type="range" class="uiscale-slider" id="smUiScaleSlider"
+             min="0" max="4" step="1" value="0"
+             oninput="setUiScaleStep(this.value)">
+      <div class="uiscale-ticks">
+        <span class="uiscale-tick" data-step="0"></span>
+        <span class="uiscale-tick" data-step="1"></span>
+        <span class="uiscale-tick" data-step="2"></span>
+        <span class="uiscale-tick" data-step="3"></span>
+        <span class="uiscale-tick" data-step="4"></span>
+      </div>
+      <div class="uiscale-labels">
+        <span class="uiscale-label" data-i18n="uiscale_normal">NORMAL</span>
+        <span class="uiscale-label" data-i18n="uiscale_large">LARGE</span>
+        <span class="uiscale-label" data-i18n="uiscale_larger">LARGER</span>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin:8px 0 10px" data-i18n="uiscale_hint">Makes everything bigger and easier to tap.</div>
+
     <!-- ── FEEDBACK ── -->
     <div class="sm-section-title" style="margin-top:18px" data-i18n="settings_feedback">Feedback</div>
 
@@ -20630,13 +20884,15 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       </button>
     </div>
 
-    <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_help_tips">Help Tips</div>
+    <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_help_tips">Help Buttons</div>
     <div class="sm-toggle-row sm-toggle-compact" id="smHelpTipsRow">
       <button class="sm-toggle-chip" data-value="off" onclick="setHelpTips(false)">
         <span class="sm-toggle-main" data-i18n="teach_off">OFF</span>
+        <span class="sm-toggle-sub" data-i18n="settings_help_tips_off">Hidden</span>
       </button>
       <button class="sm-toggle-chip active" data-value="on" onclick="setHelpTips(true)">
         <span class="sm-toggle-main" data-i18n="teach_on">ON</span>
+        <span class="sm-toggle-sub" data-i18n="settings_help_tips_on">Show ? buttons</span>
       </button>
     </div>
 
@@ -20686,7 +20942,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <script>
 'use strict';
-const INTONARE_VERSION = '0.71.9';
+const INTONARE_VERSION = '0.73.9';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -20813,6 +21069,10 @@ let analyser = null, micStream = null, micSource = null, animFrame = null;
 let isListening = false;
 let smoothedFreq = 0;
 let smoothedCents = 0;          // EMA-smoothed cents for needle — kills bounce
+let _micAGCOn = false;          // true if the device forced auto-gain on (see startMic)
+let _micHP = null, _micLP = null; // bandpass filter nodes on the mic input
+let _pitchMissFrames = 0;      // consecutive no-pitch frames; small grace before going silent
+const PITCH_MISS_TOLERANCE = 4; // frames of silence allowed before the display drops out
 let _noteCandidate = null, _noteCandidateFrames = 0;
 let _detectCandidate = null, _detectCandidateFrames = 0;
 const NOTE_LOCK_FRAMES = 8; // frames a note must hold before display switches
@@ -24286,7 +24546,11 @@ function detectPitch(buf, sr) {
   let rms = 0;
   for (let i = 0; i < N; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / N);
-  if (rms < 0.001) return -1;
+  // Lower silence floor — quieter acoustic notes and softer playing still register.
+  // If the device forced auto-gain on, the absolute level is unreliable (AGC pumps
+  // quiet signals up), so drop the floor further and trust the clarity gate below.
+  const _floor = _micAGCOn ? 0.00015 : 0.0004;
+  if (rms < _floor) return -1;
   const yin = new Float32Array(H);
   for (let tau = 0; tau < H; tau++) {
     let sum = 0;
@@ -24297,10 +24561,13 @@ function detectPitch(buf, sr) {
   for (let tau = 1; tau < H; tau++) { running += yin[tau]; yin[tau] *= tau / running; }
   let tau = 2;
   while (tau < H) {
-    if (yin[tau] < 0.08) { while (tau + 1 < H && yin[tau + 1] < yin[tau]) tau++; break; }
+    // Slightly higher dip threshold accepts real instruments whose overtones
+    // make the autocorrelation dip shallower than a pure tone.
+    if (yin[tau] < 0.10) { while (tau + 1 < H && yin[tau + 1] < yin[tau]) tau++; break; }
     tau++;
   }
-  if (tau === H || yin[tau] >= 0.12) return -1;
+  // Relaxed clarity reject (was 0.12) — fewer dropouts on harmonically rich signals.
+  if (tau === H || yin[tau] >= 0.18) return -1;
   if (tau > 0 && tau < H - 1) {
     const s0 = yin[tau-1], s1 = yin[tau], s2 = yin[tau+1];
     tau += (s2 - s0) / (2 * (2*s1 - s2 - s0));
@@ -24447,6 +24714,7 @@ function processAudio() {
   } else {
     const freq = detectPitch(buf, audioCtx.sampleRate);
     if (freq > 20 && freq < 4500) {
+      _pitchMissFrames = 0;   // got a valid pitch — reset the silence grace counter
       // Outlier-resistant EMA: if new reading is >800¢ from current (overtone territory),
       // apply minimal weight so it can't snap-jump the display
       let alpha = 0.12;
@@ -24519,6 +24787,15 @@ function processAudio() {
       const _sp = document.getElementById('statusPill');
       if (_sp) _sp.classList.add('live');
     } else {
+      // Brief grace period: a single dropped frame shouldn't blank the tuner.
+      // Only go silent after several consecutive misses.
+      _pitchMissFrames++;
+      if (_pitchMissFrames < PITCH_MISS_TOLERANCE) {
+        // Keep the last live reading on screen; just feed the strobe a neutral frame.
+        if (strobeMode) drawStrobe(smoothedCents || 0, false, true);
+        animFrame = requestAnimationFrame(processAudio);
+        return;
+      }
       smoothedFreq = 0;
       smoothedCents = 0;
       document.getElementById('statusDot').className = 'status-dot';
@@ -24781,6 +25058,33 @@ async function toggleMic() {
     await startMic();
   }
 }
+// ── Screen wake lock: keep the display on while tuning ──
+// Uses the Web Wake Lock API (works in the Android WebView and PWAs). Wake locks
+// are released automatically when the page is hidden, so we re-acquire on return.
+// ── Screen wake lock: keep the display on the whole time the app is open ──
+// Uses the Web Wake Lock API (works in the Android WebView and PWAs). The lock is
+// released automatically when the app is backgrounded, so it never drains battery
+// while Intonare isn't in front of the user; we re-acquire on return to foreground.
+let _wakeLock = null;
+async function acquireWakeLock() {
+  try {
+    if ('wakeLock' in navigator && navigator.wakeLock && !_wakeLock && document.visibilityState === 'visible') {
+      _wakeLock = await navigator.wakeLock.request('screen');
+      _wakeLock.addEventListener('release', () => { _wakeLock = null; });
+    }
+  } catch(e) { _wakeLock = null; }
+}
+async function releaseWakeLock() {
+  try { if (_wakeLock) { await _wakeLock.release(); } } catch(e) {}
+  _wakeLock = null;
+}
+// Keep the screen awake app-wide: acquire on load and re-acquire every time the
+// app returns to the foreground.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') acquireWakeLock();
+});
+acquireWakeLock();
+
 async function startMic() {
   try {
     // On Capacitor/Android use the built-in Permissions plugin to trigger
@@ -24799,24 +25103,58 @@ async function startMic() {
       }
     }
 
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: { ideal: false },
-          noiseSuppression: { ideal: false },
-          autoGainControl: { ideal: false }
-        }
-      });
-    } catch(constraintErr) {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // Acquire the mic with a tiered fallback. Voice-processing (echo cancel /
+    // noise suppression / auto-gain) defaults to ON and actively fights sustained
+    // musical tones — auto-gain pumps the level, noise-suppression chews on held
+    // notes. We try hardest to keep all three OFF, and only fall back to a raw
+    // `audio:true` (fully processed) request as a last resort so the tuner still
+    // works on devices that reject the constraints outright.
+    const _MUSIC_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+    let stream = null;
+    const _tiers = [
+      // Tier 1: ask for processing OFF as a hard preference.
+      { audio: { echoCancellation: { ideal: false }, noiseSuppression: { ideal: false }, autoGainControl: { ideal: false } } },
+      // Tier 2: plain booleans (some WebViews honor these but not the {ideal} form).
+      { audio: _MUSIC_AUDIO },
+      // Tier 3: last resort — whatever the device gives, processing likely ON.
+      { audio: true }
+    ];
+    for (const c of _tiers) {
+      try { stream = await navigator.mediaDevices.getUserMedia(c); break; }
+      catch(e) { /* try the next, less-strict tier */ }
     }
+    if (!stream) throw new Error('No microphone stream');
     micStream = stream;
+    // Read back what we ACTUALLY got — phones often ignore the constraints. If
+    // auto-gain ended up stuck on, the volume-based gates are unreliable, so we
+    // note it and lean on the clarity gate instead of the loudness gate.
+    try {
+      const tr = micStream.getAudioTracks()[0];
+      const s = (tr && tr.getSettings) ? tr.getSettings() : {};
+      _micAGCOn = (s.autoGainControl === true);
+    } catch(e) { _micAGCOn = false; }
+
     audioCtx = getAudio();
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = 4096; analyser.smoothingTimeConstant = 0;
     micSource = audioCtx.createMediaStreamSource(micStream);
-    micSource.connect(analyser);
+    // Bandpass the input to the musical range before detection: a highpass at
+    // ~25Hz kills sub-bass rumble/handling noise, a lowpass at ~4.5kHz trims hiss
+    // above the highest note we tune. Cleaner signal in → fewer dropouts, without
+    // having to loosen the detector thresholds further. (chordbook does the same.)
+    try {
+      _micHP = audioCtx.createBiquadFilter();
+      _micHP.type = 'highpass'; _micHP.frequency.value = 25; _micHP.Q.value = 0.707;
+      _micLP = audioCtx.createBiquadFilter();
+      _micLP.type = 'lowpass';  _micLP.frequency.value = 4500; _micLP.Q.value = 0.707;
+      micSource.connect(_micHP);
+      _micHP.connect(_micLP);
+      _micLP.connect(analyser);
+    } catch(e) {
+      // If filters fail for any reason, fall back to the direct connection.
+      _micHP = _micLP = null;
+      micSource.connect(analyser);
+    }
     isListening = true;
     // 'listening' already added in toggleMic for immediate feedback
     const hvw = document.getElementById('headerVolWrap');
@@ -24839,9 +25177,11 @@ function stopMic() {
   if (animFrame) cancelAnimationFrame(animFrame);
   // Disconnect graph but DON'T close the shared context — other modules need it.
   if (micSource) { try { micSource.disconnect(); } catch(e) {} }
+  if (_micHP) { try { _micHP.disconnect(); } catch(e) {} }
+  if (_micLP) { try { _micLP.disconnect(); } catch(e) {} }
   if (analyser) { try { analyser.disconnect(); } catch(e) {} }
   if (micStream) micStream.getTracks().forEach(track => track.stop());
-  micSource = analyser = micStream = null;
+  micSource = analyser = micStream = _micHP = _micLP = null;
   audioCtx = null;  // local alias; shared context keeps running
   smoothedFreq = 0;
   smoothedCents = 0;
@@ -27370,15 +27710,15 @@ function thmnCloseDemoPopup() {
 var RIFF_ERAS = ['Baroque','Classical','Romantic','Ragtime','Other'];
 var RIFF_META = {
   piano: {
-    twinkle_stride: { composer:'Crazystride', year:'2025', style:'Stride', note:'Twinkle Twinkle Little Star as a stride piano romp — honky-tonk voice, bouncy LH, melodic flourishes. Arr. Crazystride, CC BY 4.0.' },
+    twinkle_stride: { composer:'Crazystride', year:'2025', style:'Stride', note:'Twinkle Twinkle Little Star as a stride piano romp — bouncy LH, melodic flourishes. Recommended voice: Honky-Tonk. Arr. Crazystride, CC BY 4.0.' },
     arabesque_1: { composer:'Claude Debussy', year:'1888', era:'Romantic', note:'Debussy\u2019s First Arabesque \u2014 flowing cross-rhythms and gentle cascading lines. Impressionism at its most graceful.' },
     liebestraum: { composer:'Franz Liszt', year:'1850', era:'Romantic', note:'Liszt\u2019s Liebestraum No. 3 (Dream of Love) \u2014 one of the most beloved Romantic pieces, with its soaring central melody.' },
     hungarian_5: { composer:'Johannes Brahms', year:'1879', era:'Romantic', note:'Brahms\u2019 Hungarian Dance No. 5 \u2014 fiery csardas rhythms with dramatic tempo swings. Instantly recognizable.' },
     st_louis_blues: { composer:'W. C. Handy', year:'1914', style:'Blues', note:'W.C. Handy’s 1914 classic — the tango intro, slow blues, and main theme. Three distinct sections with a dramatic tempo ritardando into the slow blues.' },
     prelude_c:   { composer:'J. S. Bach',        year:'1722', era:'Baroque',
-      note:'Opening of the Well-Tempered Clavier — a flowing chord study, played here on harpsichord as Bach would have heard it.' },
+      note:'Opening of the Well-Tempered Clavier — a flowing chord study. Recommended voice: Harpsichord, as Bach would have heard it.' },
     minuet_g:    { composer:'Petzold',           year:'c.1725', era:'Baroque',
-      note:'Long credited to Bach (it sat in his wife\u2019s notebook), now attributed to Christian Petzold. A graceful dance in binary form.' },
+      note:'Long credited to Bach (it sat in his wife\u2019s notebook), now attributed to Christian Petzold. A graceful dance in binary form. Recommended voice: Harpsichord.' },
     fuer_elise:  { composer:'L. van Beethoven',  year:'1810', era:'Classical',
       note:'Bagatelle in A minor, WoO 59. The famous rondo theme (section A), with its rolling left-hand broken chords.' },
     ode_to_joy:  { composer:'L. van Beethoven',  year:'1824', era:'Classical',
@@ -27388,7 +27728,7 @@ var RIFF_META = {
     moonlight_3: { composer:'L. van Beethoven',  year:'1801', era:'Classical',
       note:'Piano Sonata No. 14, third movement (Presto agitato) \u2014 the stormy opening arpeggio surge, ending at the first dramatic pause.' },
     maple_rag:   { composer:'Scott Joplin',      year:'1899', era:'Ragtime',
-      note:'The rag that made Joplin famous. Syncopated right hand over a steady stride bass \u2014 honky-tonk voiced.' },
+      note:'The rag that made Joplin famous. Syncopated right hand over a steady stride bass. Recommended voice: Honky-Tonk.' },
     clair_de_lune:{ composer:'Claude Debussy',    year:'1905', era:'Romantic',
       note:'The luminous third movement of Suite bergamasque \u2014 one of the most beloved pieces in the repertoire. Pedal-soaked and impressionistic.' },
     nocturne:    { composer:'Fr\u00e9d\u00e9ric Chopin',  year:'1832', era:'Romantic',
@@ -27396,7 +27736,7 @@ var RIFF_META = {
     gymnopedie:  { composer:'Erik Satie',         year:'1888', era:'Romantic',
       note:'Gymnop\u00e9die No. 1, complete \u2014 slow, spare, and hypnotic. An early ancestor of ambient music.' },
     canon_d:     { composer:'Johann Pachelbel',   year:'c.1690', era:'Baroque',
-      note:'Canon in D \u2014 the famous ground bass and its cascading variations, voiced on harpsichord. Endlessly borrowed ever since.' },
+      note:'Canon in D \u2014 the famous ground bass and its cascading variations. Recommended voice: Harpsichord. Endlessly borrowed ever since.' },
     bella_ciao:  { composer:'Traditional',        year:'19th c.', era:'Other',
       note:'Italian folk song turned resistance anthem, complete \u2014 a defiant, instantly singable melody.' },
     greensleeves:{ composer:'Traditional',        year:'16th c.', era:'Other',
@@ -27414,7 +27754,7 @@ var RIFF_META = {
     standchen:   { composer:'Franz Schubert',     year:'1828', era:'Romantic',
       note:'St\u00e4ndchen (Serenade), from Schwanengesang \u2014 one of his most beloved songs, complete.' },
     entertainer: { composer:'Scott Joplin',      year:'1902', era:'Ragtime',
-      note:'A classic piano rag \u2014 the cascading intro and syncopated A-strain that defined the genre.' },
+      note:'A classic piano rag \u2014 the cascading intro and syncopated A-strain that defined the genre. Recommended voice: Honky-Tonk.' },
     blues:       { composer:'Traditional',       year:'\u2014', era:'Other',
       note:'A short 12-bar-style blues lick with tritone shells and a walking turnaround.' }
   },
@@ -27508,7 +27848,7 @@ var RIFFS = {
         {b:30,d:0.25,m:45}, {b:30.25,d:0.25,m:52}, {b:30.5,d:0.25,m:57}, {b:31.5,d:0.25,m:40}, {b:31.75,d:0.25,m:52}, {b:32,d:0.25,m:56},
         {b:33,d:1.6,m:45}, {b:33.25,d:1.6,m:52}
       ] },
-    maple_rag: { label:'Maple Leaf Rag', tempo:1.0, bpm:88, tone:'honky_tonk',
+    maple_rag: { label:'Maple Leaf Rag', tempo:1.0, bpm:88,
       // Joplin, PD — MusicXML. First strain (A) from pickup, honky-tonk, no pedal, ties merged. Constructed Ab tonic ending.
       ctls:[
         {b:0, ctl:()=>{_riffPiano('lid','open');_riffPiano('pedal',0);}}
@@ -28010,7 +28350,7 @@ var RIFFS = {
         {b:49,d:0.5,m:[56,60],man:'lower'}, {b:49.5,d:0.5,m:[56,61],man:'lower'}, {b:50,d:0.5,m:[56,60],man:'lower'}, {b:50.5,d:0.5,m:[56,61],man:'lower'},
         {b:51,d:0.5,m:[56,60],man:'lower'}, {b:51.5,d:0.5,m:[56,61],man:'lower'}, {b:52,d:1,m:[56,60],man:'lower'}, {b:53,d:3,m:[32,44],man:'lower'}
       ] },
-    prelude_c: { label:'Prelude in C', tempo:1.0, bpm:72, tone:'harpsichord',
+    prelude_c: { label:'Prelude in C', tempo:1.0, bpm:72,
       // Bach WTC I BWV 846, PD — MusicXML. Complete prelude, harpsichord, no pedal, ties merged.
       ctls:[
         {b:0, ctl:()=>{_riffPiano('lid','open');_riffPiano('pedal',0);}}
@@ -28132,7 +28472,7 @@ var RIFFS = {
         {b:36,d:2,m:38}, {b:38,d:2,m:[50,55,59]}, {b:40,d:2,m:38}, {b:42,d:2,m:[50,55,59]}, {b:44,d:2,m:49}, {b:46,d:2,m:[50,54,57]},
         {b:48,d:4,m:[55,59,62]}, {b:52,d:4,m:[54,57,62]}, {b:56,d:4,m:[55,59,62]}, {b:60,d:2,m:[54,57,62]}, {b:62,d:2,m:[55,59,62]}
       ] },
-    entertainer: { label:'The Entertainer', tempo:1.0, bpm:104, tone:'honky_tonk',
+    entertainer: { label:'The Entertainer', tempo:1.0, bpm:104,
       // Joplin, PD — MusicXML (MuseScore, two-part). Full intro cascade through the A
       // strain. Honky-tonk, straight-time ragtime (no swing), no pedal. Tied notes are
       // merged (held once, not re-struck). Constructed C-major ending.
@@ -28173,7 +28513,7 @@ var RIFFS = {
     minuet_g: { label:'Minuet in G', tempo:1.0, bpm:96,
       // Petzold (Notebook for A.M. Bach), PD. First section, harpsichord. Grace notes included.
       ctls:[
-        {b:0, ctl:()=>{_riffPiano('lid','open');_riffPiano('pedal',0);_syncToneUI('harpsichord');}}
+        {b:0, ctl:()=>{_riffPiano('lid','open');_riffPiano('pedal',0);}}
       ],
       rh:[
         {b:0,d:1,m:74,man:'upper'}, {b:1,d:0.5,m:67,man:'upper'}, {b:1.5,d:0.5,m:69,man:'upper'}, {b:2,d:0.5,m:71,man:'upper'},
@@ -28574,7 +28914,7 @@ var RIFFS = {
         {b:206,d:0.5,m:46,man:'lower'}, {b:206.5,d:1.5,m:51,man:'lower'}, {b:208,d:1.5,m:[58,63],man:'lower'}, {b:209.5,d:3,m:[39,70],man:'lower'},
         {b:212.5,d:3,m:46,man:'lower'}
       ] },
-    canon_d: { label:'Canon in D', tempo:1.0, bpm:64, tone:'harpsichord',
+    canon_d: { label:'Canon in D', tempo:1.0, bpm:64,
       // Pachelbel, PD — MusicXML. The ground bass through the first variations to a D-major cadence. Harpsichord, ties merged.
       ctls:[
         {b:0, ctl:()=>{_riffPiano('lid','open');_riffPiano('pedal',0);_riffPiano('soft',1);}}
@@ -29567,7 +29907,7 @@ var RIFFS = {
         {b:117.25,d:0.5,m:[50,55],man:'lower'}, {b:120.25,d:1,m:43,man:'lower'}, {b:121.25,d:0.5,m:50,man:'lower'}, {b:121.75,d:0.5,m:47,man:'lower'},
         {b:122.25,d:0.5,m:43,man:'lower'}, {b:122.75,d:0.5,m:[50,55],man:'lower'}, {b:123.25,d:0.5,m:43,man:'lower'}, {b:123.75,d:2,m:[50,55],man:'lower'}
       ] },
-    twinkle_stride: { label:'Twinkle Twinkle (Stride)', tempo:1.0, bpm:200, tone:'honky_tonk',
+    twinkle_stride: { label:'Twinkle Twinkle (Stride)', tempo:1.0, bpm:200,
       // Arr. Crazystride, CC BY 4.0 — musescore.com/user/52788523. Honky-tonk stride.
       // Voice 1=RH, voice 5=LH. Swing feel. Grace notes included.
       ctls:[
@@ -39363,21 +39703,27 @@ const TP_INSTRUMENTS = [
   ['0',  'Concert Pitch (piano, flute, oboe, bassoon, violin\u2026)'],
   [null, 'Bb Instruments \u2014 sounds a M2 lower'],
   ['-2', 'Bb (trumpet, clarinet, soprano/tenor sax, cornet, flugelhorn, euphonium\u2026)'],
+  [null, 'Bass Clarinet (Bb) \u2014 sounds an octave + M2 lower'],
+  ['-14', 'Bass clarinet (Bb, written treble)'],
   [null, 'Eb Instruments \u2014 sounds a M6 lower'],
   ['-9', 'Eb (alto/bari sax, alto horn, soprano cornet, Eb trumpet\u2026)'],
   [null, 'F Instruments \u2014 sounds a P5 lower'],
   ['-7', 'F (French horn, English horn, alto flute)'],
   [null, 'A Instruments \u2014 sounds a m3 lower'],
   ['-3', 'A (A clarinet)'],
+  [null, 'D Trumpet \u2014 sounds a M2 higher'],
+  ['2',  'D trumpet (sounds higher than written)'],
   [null, 'Eb Clarinet \u2014 sounds a m3 higher'],
   ['3',  'Eb clarinet (sounds higher than written)'],
 ];
 const TP_CHORD_INSTRUMENTS = [
   ['0',  'Concert'],
   ['-2', 'Bb \u2014 trumpet, clarinet, tenor sax\u2026'],
+  ['-14','Bass clarinet (Bb)'],
   ['-9', 'Eb \u2014 alto sax, alto horn\u2026'],
   ['-7', 'F \u2014 horn, English horn, alto flute'],
   ['-3', 'A \u2014 A clarinet'],
+  ['2',  'D trumpet (sounds higher)'],
   ['3',  'Eb clarinet (sounds higher)'],
 ];
 
@@ -39520,6 +39866,8 @@ function tpBuildGrids() {
   if (!concertGrid || !myGrid) return;
   concertGrid.innerHTML = '';
   myGrid.innerHTML = '';
+  const interval = tpGetInterval();
+  // Concert grid — tap a concert key to set it directly.
   for (let i = 0; i < 12; i++) {
     const btn = document.createElement('button');
     btn.className = 'tp-key-btn' + (i === tpSelectedConcert ? ' active' : '');
@@ -39527,41 +39875,147 @@ function tpBuildGrids() {
     btn.onclick = () => { tpSelectedConcert = i; tpUpdate(); };
     concertGrid.appendChild(btn);
   }
-  const interval = tpGetInterval();
+  // My-key grid — tap a written key to back-solve the concert key it implies.
+  // (concert = written + interval). Now both rows are interactive.
   for (let i = 0; i < 12; i++) {
     const btn = document.createElement('button');
     const writtenSemi = ((i - interval) % 12 + 12) % 12;
     btn.className = 'tp-key-btn' + (i === tpSelectedConcert ? ' result' : '');
     btn.textContent = getDisplayNote(TP_DISPLAY[writtenSemi]).replace('#','\u266f');
+    btn.onclick = () => { tpSelectedConcert = i; tpUpdate(); };
     myGrid.appendChild(btn);
   }
 }
 
+// Instrument transposition value → reading clef. Most transposing winds read
+// treble; horn (F) and the low concert instruments conventionally read bass.
+const TP_CLEF = {
+  '0':  'treble',  // concert default (piano/flute/violin) — treble for display
+  '-2': 'treble',  // Bb
+  '-14':'treble',  // bass clarinet (Bb, written treble)
+  '-9': 'treble',  // Eb
+  '-7': 'treble',  // F horn — reads treble in modern parts
+  '-3': 'treble',  // A
+  '2':  'treble',  // D trumpet
+  '3':  'treble',  // Eb clarinet
+};
+// Concert-pitch low instruments that a user might pick as "concert" but read bass
+// aren't separately listed here; treble is the safe, most-common default. The map
+// is kept simple and overridable per value.
+
+let _tpAudioCtx = null;
+let _tpActiveNodes = [];   // playing/scheduled notes, so a swap can cancel them
+function tpStopAudio() {
+  _tpActiveNodes.forEach(n => { try { if (n && n.stop) n.stop(); } catch(e) {} });
+  _tpActiveNodes = [];
+}
+function tpPlayNote(midi, when, dur) {
+  try {
+    const ctx = getAudio();
+    const toneId = (typeof selectedRefTone !== 'undefined' && selectedRefTone) ? selectedRefTone : 'grand_piano';
+    const chain = buildLimiterChain(ctx, 0.9);
+    const node = _chartPlay(toneId, midiToFreq(midi), ctx, chain.gain, 0.5, dur || 1.6, when || ctx.currentTime);
+    if (node) _tpActiveNodes.push(node);
+  } catch(e) {}
+}
+
+// Render the WRITTEN and SOUNDS staves for the current selection.
+// Written note is placed in a readable octave; sounding note sits at written+interval
+// so the visual vertical offset honestly shows the transposition direction.
+function tpRenderStaves() {
+  const wSvg = document.getElementById('tpStaffWritten');
+  const sSvg = document.getElementById('tpStaffSounds');
+  if (!wSvg || !sSvg || typeof pitchedStaffSvg !== 'function') return;
+  const interval    = tpGetInterval();
+  const concertSemi = tpSelectedConcert;
+  const writtenSemi = ((concertSemi - interval) % 12 + 12) % 12;
+  const clef = TP_CLEF[_tpInstVal] || 'treble';
+  // Anchor the written note in a comfortable octave for the clef, then derive
+  // the sounding pitch as written + interval (concert sounds = written + interval).
+  const baseOct = clef === 'bass' ? 3 : 4;
+  const writtenMidi  = (baseOct + 1) * 12 + writtenSemi;        // MIDI for written note
+  const soundingMidi = writtenMidi + interval;                  // where it actually sounds
+  const concertName = getDisplayNote(TP_DISPLAY[concertSemi]).replace('#','\u266f');
+  const writtenName = getDisplayNote(TP_DISPLAY[writtenSemi]).replace('#','\u266f');
+  const VBW = 150;
+  // Written staff uses the instrument's reading clef. The SOUNDS staff shows the
+  // concert pitch — pick the clef that best fits it (low notes → bass clef) so a
+  // big downward transposition like bass clarinet doesn't pile up ledger lines.
+  const soundClef = soundingMidi < 57 ? 'bass' : (soundingMidi > 81 ? 'treble' : clef);
+  const TOP_Y = 34;     // y of the top staff line — leaves headroom for high notes
+  const VBH   = 96;     // tall enough for ledger lines above/below + label
+  const shared = { width: VBW, topY: TOP_Y, height: VBH };
+  const wRes = pitchedStaffSvg([[writtenMidi]],  clef,      Object.assign({}, shared, { labels: [writtenName], labelColor: 'rgba(255,160,122,0.95)' }));
+  const sRes = pitchedStaffSvg([[soundingMidi]], soundClef, Object.assign({}, shared, { labels: [concertName], labelColor: 'rgba(94,226,255,0.95)' }));
+  wSvg.setAttribute('viewBox', '0 0 ' + VBW + ' ' + VBH);
+  sSvg.setAttribute('viewBox', '0 0 ' + VBW + ' ' + VBH);
+  wSvg.innerHTML = (wRes && wRes.svg) || '';
+  sSvg.innerHTML = (sRes && sRes.svg) || '';
+  // stash current pitches for the Hear button
+  wSvg.dataset.midi = writtenMidi;
+  sSvg.dataset.midi = soundingMidi;
+}
+
+// Hear it: play the written note, then the sounding note, so the interval is audible.
+function tpHearTransposition() {
+  const sSvg = document.getElementById('tpStaffSounds');
+  if (!sSvg) return;
+  tpStopAudio();   // cancel any still-pending note from a previous press
+  // Only the concert (sounding) pitch is a real sound. The "you read" note is a
+  // notation convention for the player, not a separate pitch — so play it once.
+  const sMidi = parseInt(sSvg.dataset.midi || '60');
+  tpPlayNote(sMidi, undefined, 1.6);
+  const btn = document.getElementById('tpHearBtn');
+  if (btn) { btn.classList.add('playing'); setTimeout(() => btn.classList.remove('playing'), 1700); }
+  if (typeof hapticLight === 'function') hapticLight();
+}
+
 function tpUpdate() {
+  tpStopAudio();   // a swap/tap cancels any in-flight HEAR IT sequence
   tpBuildGrids();
+  tpRenderStaves();
   const interval    = tpGetInterval();
   const concertSemi = tpSelectedConcert;
   const writtenSemi = ((concertSemi - interval) % 12 + 12) % 12;
   const concertName = getDisplayNote(TP_DISPLAY[concertSemi]).replace('#','\u266f');
   const writtenName = getDisplayNote(TP_DISPLAY[writtenSemi]).replace('#','\u266f');
-  const cSounds     = getDisplayNote(TP_DISPLAY[((0 + interval) % 12 + 12) % 12]).replace('#','\u266f');
-  const tokConcert  = document.getElementById('tpTokenConcert');
-  const tokWritten  = document.getElementById('tpTokenWritten');
-  const intervalLine = document.getElementById('tpIntervalLine');
+  const bridgeInt   = document.getElementById('tpBridgeInt');
+  const bridgeArrow = document.getElementById('tpBridgeArrow');
+  const bridgeDir   = document.getElementById('tpBridgeDir');
+  const summary     = document.getElementById('tpSummaryLine');
+  try { localStorage.setItem('intonare_tp_inst', _tpInstVal); } catch(e) {}
+
+  const INTERVAL_NAMES = {0:'P1',1:'m2',2:'M2',3:'m3',4:'M3',5:'P4',6:'TT',7:'P5',8:'m6',9:'M6',10:'m7',11:'M7'};
+  const absInterval = Math.abs(interval);
+  // Name compound intervals as "<simple> + N 8ve" (e.g. 14 = M2 + 8ve).
+  function tpIntervalName(semis) {
+    const oct = Math.floor(semis / 12);
+    const simple = semis % 12;
+    const base = INTERVAL_NAMES[simple] != null ? INTERVAL_NAMES[simple] : simple + 'st';
+    if (oct === 0) return base;
+    if (simple === 0) return oct === 1 ? '8ve' : oct + ' 8ve';
+    return base + ' + ' + (oct === 1 ? '8ve' : oct + ' 8ve');
+  }
+  const intervalName = tpIntervalName(absInterval);
+
   if (interval === 0) {
-    if (tokConcert)   tokConcert.textContent  = concertName;
-    if (tokWritten)   tokWritten.textContent  = concertName;
-    if (intervalLine) intervalLine.textContent = 'concert pitch \u2014 no transposition';
+    if (bridgeInt)   bridgeInt.textContent   = 'P1';
+    if (bridgeArrow) bridgeArrow.textContent = '=';
+    if (bridgeDir)   bridgeDir.textContent   = '';
+    if (summary)     summary.innerHTML = '<span class="c-concert">concert pitch</span> \u00b7 no transposition';
     return;
   }
-  const absInterval = Math.abs(interval);
-  const INTERVAL_NAMES = {1:'m2',2:'M2',3:'m3',4:'M3',5:'P4',6:'TT',7:'P5',8:'m6',9:'M6',10:'m7',11:'M7'};
-  const direction    = interval < 0 ? 'below' : 'above';
-  const intervalName = INTERVAL_NAMES[absInterval] || absInterval + ' semitones';
-  if (tokConcert)   tokConcert.textContent  = concertName;
-  if (tokWritten)   tokWritten.textContent  = writtenName;
-  if (intervalLine) intervalLine.textContent = `written C sounds ${cSounds} \u00b7 ${intervalName} ${direction}`;
-  try { localStorage.setItem('intonare_tp_inst', _tpInstVal); } catch(e) {}
+  // interval is the concert-minus-written shift; a negative value means the
+  // instrument sounds LOWER than written (e.g. Bb), so the arrow points down.
+  const down = interval < 0;
+  if (bridgeInt)   bridgeInt.textContent   = intervalName;
+  if (bridgeArrow) bridgeArrow.textContent = down ? '\u2193' : '\u2191';
+  if (bridgeDir)   bridgeDir.textContent   = down ? 'lower' : 'higher';
+  if (summary) {
+    summary.innerHTML = 'You read <b class="c-written">' + writtenName +
+      '</b> \u2192 sounds <b class="c-concert">' + concertName +
+      '</b> \u00b7 ' + intervalName + ' ' + (down ? 'lower' : 'higher');
+  }
 }
 
 function tpInit() {
@@ -39573,6 +40027,8 @@ function tpInit() {
     const si = localStorage.getItem('intonare_tp_inst');  if (si !== null) _tpInstVal = si;
     const sf = localStorage.getItem('intonare_tp_from');  if (sf !== null) _tpFromVal = sf;
     const st = localStorage.getItem('intonare_tp_to');    if (st !== null) _tpToVal   = st;
+    const scm = localStorage.getItem('intonare_tp_chordmode'); if (scm) _tpChordMode = scm;
+    const ssh = localStorage.getItem('intonare_tp_semi'); if (ssh !== null) _tpSemiShift = parseInt(ssh) || 0;
     const sc = localStorage.getItem('intonare_tp_chords');
     if (sc) { const ta = document.getElementById('tpChordsIn'); if (ta) ta.value = sc; }
   } catch(e) {}
@@ -39592,6 +40048,9 @@ function tpInit() {
   tpSetTab('key');
   tpBuildGrids();
   tpUpdate();
+  // Apply restored chord-transposer mode + semitone display, then transpose.
+  if (typeof tpSemiStep === 'function') { _tpSemiShift -= 0; tpSemiStep(0); }
+  tpSetChordMode(_tpChordMode || 'inst');
   tpTransposeChords();
 }
 
@@ -39610,10 +40069,36 @@ function tpParseAndTranspose(text, fromInterval, toInterval) {
   });
 }
 
+let _tpChordMode = 'inst';   // 'inst' | 'semi'
+let _tpSemiShift = 0;        // semitones, used in 'semi' mode
+
+function tpSetChordMode(mode) {
+  _tpChordMode = mode;
+  document.getElementById('tpModeInst')?.classList.toggle('active', mode === 'inst');
+  document.getElementById('tpModeSemi')?.classList.toggle('active', mode === 'semi');
+  const im = document.getElementById('tpChordInstMode');
+  const sm = document.getElementById('tpChordSemiMode');
+  if (im) im.style.display = mode === 'inst' ? '' : 'none';
+  if (sm) sm.style.display = mode === 'semi' ? '' : 'none';
+  try { localStorage.setItem('intonare_tp_chordmode', mode); } catch(e) {}
+  tpTransposeChords();
+}
+
+const TP_SEMI_NAMES = {0:'no shift',1:'up m2',2:'up M2',3:'up m3',4:'up M3',5:'up P4',6:'up TT',7:'up P5',8:'up m6',9:'up M6',10:'up m7',11:'up M7',12:'up 8ve',
+  '-1':'down m2','-2':'down M2','-3':'down m3','-4':'down M3','-5':'down P4','-6':'down TT','-7':'down P5','-8':'down m6','-9':'down M6','-10':'down m7','-11':'down M7','-12':'down 8ve'};
+function tpSemiStep(delta) {
+  _tpSemiShift = Math.max(-12, Math.min(12, _tpSemiShift + delta));
+  const valEl = document.getElementById('tpSemiVal');
+  const nameEl = document.getElementById('tpSemiName');
+  if (valEl)  valEl.textContent  = (_tpSemiShift > 0 ? '+' : '') + _tpSemiShift;
+  if (nameEl) nameEl.textContent = TP_SEMI_NAMES[_tpSemiShift] || '';
+  try { localStorage.setItem('intonare_tp_semi', String(_tpSemiShift)); } catch(e) {}
+  if (typeof hapticLight === 'function') hapticLight();
+  tpTransposeChords();
+}
+
 function tpTransposeChords() {
   const input   = document.getElementById('tpChordsIn')?.value || '';
-  const fromInt = parseInt(_tpFromVal || '0');
-  const toInt   = parseInt(_tpToVal   || '0');
   const outEl   = document.getElementById('tpChordsOut');
   if (!outEl) return;
   try { if (input) localStorage.setItem('intonare_tp_chords', input); } catch(e) {}
@@ -39622,10 +40107,87 @@ function tpTransposeChords() {
     outEl.className   = 'tp-chord-output empty';
     return;
   }
-  const result = tpParseAndTranspose(input, fromInt, toInt);
+  let result;
+  if (_tpChordMode === 'semi') {
+    // Pure interval shift: treat as fromInterval = shift, toInterval = 0.
+    result = tpParseAndTranspose(input, _tpSemiShift, 0);
+  } else {
+    const fromInt = parseInt(_tpFromVal || '0');
+    const toInt   = parseInt(_tpToVal   || '0');
+    result = tpParseAndTranspose(input, fromInt, toInt);
+  }
   outEl.textContent = result;
   outEl.className   = 'tp-chord-output';
 }
+
+// Copy the transposed output to the clipboard.
+function tpCopyChords() {
+  const outEl = document.getElementById('tpChordsOut');
+  const btn = document.getElementById('tpChordCopyBtn');
+  if (!outEl || outEl.classList.contains('empty')) return;
+  const text = outEl.textContent || '';
+  const done = () => {
+    if (!btn) return;
+    btn.classList.add('copied');
+    const lbl = btn.querySelector('span');
+    const orig = lbl ? lbl.textContent : '';
+    if (lbl) lbl.textContent = t('tp_copied') || 'COPIED';
+    setTimeout(() => { btn.classList.remove('copied'); if (lbl) lbl.textContent = orig; }, 1600);
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => _tpCopyFallback(text, done));
+    } else _tpCopyFallback(text, done);
+  } catch(e) { _tpCopyFallback(text, done); }
+}
+function _tpCopyFallback(text, done) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    done();
+  } catch(e) {}
+}
+
+// Resolve a chord name's root to a MIDI note (root-position triad-ish) for playback.
+const _TP_NOTE_SEMI = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function tpChordRootMidi(token) {
+  const m = token.match(/^([A-G])([#b♯♭]?)/);
+  if (!m) return null;
+  let semi = _TP_NOTE_SEMI[m[1]];
+  if (m[2] === '#' || m[2] === '♯') semi += 1;
+  if (m[2] === 'b' || m[2] === '♭') semi -= 1;
+  semi = ((semi % 12) + 12) % 12;
+  const minor = /m(?!aj)/.test(token.slice(m[0].length));
+  return { root: 48 + semi, minor }; // root in C3 octave
+}
+// Play the transposed output as a simple progression.
+function tpPlayChords() {
+  const outEl = document.getElementById('tpChordsOut');
+  if (!outEl || outEl.classList.contains('empty')) return;
+  tpStopAudio();
+  const tokens = (outEl.textContent || '').split(/[\s]+/).filter(Boolean);
+  if (!tokens.length) return;
+  try {
+    const ctx = getAudio();
+    let t = ctx.currentTime + 0.04;
+    const step = 0.62;
+    tokens.slice(0, 16).forEach(tok => {
+      const c = tpChordRootMidi(tok);
+      if (c) {
+        const third = c.root + (c.minor ? 3 : 4);
+        const fifth = c.root + 7;
+        [c.root, third, fifth].forEach(mi => tpPlayNote(mi, t, step * 0.92));
+      }
+      t += step;
+    });
+  } catch(e) {}
+  const btn = document.getElementById('tpChordPlayBtn');
+  if (btn) { btn.classList.add('playing'); setTimeout(() => btn.classList.remove('playing'), Math.min(tokens.length, 16) * 620 + 200); }
+  if (typeof hapticLight === 'function') hapticLight();
+}
+
 
 
 const PITCH_HISTORY_SECS = 5;
@@ -51483,6 +52045,11 @@ function prChallengeEnd(success) {
     // Sound: a record run gets the correct chime; otherwise the wrong cue.
     try { (isRecord && prEndlessScore > 0) ? playCueCorrect() : playCueWrong(); } catch(e) {}
   } else if (success) {
+    // Polyrhythm summit reached (Climb or Hardcore) — durable flag for the
+    // 'The Climb' achievement (held the ratio ladder by feel).
+    if (!progState.summitReached) { progState.summitReached = true; progSave(); try { checkAchievements(); } catch(e){} }
+    // Hardcore-specific summit → 'The Summit' achievement.
+    if (prChallengeType === 'hardcore' && !progState.hardcoreSummit) { progState.hardcoreSummit = true; progSave(); try { checkAchievements(); } catch(e){} }
     if (badge) { badge.textContent = '▲'; badge.classList.add('celebrate'); }
     if (title) title.textContent = t('pr_climb_summit_short');
     if (stats) stats.innerHTML = `${t('pr_summit_held')} <strong>11:8</strong><br>${t('pr_time')}: ${mm}:${ss}<br>${t('pr_best_evenness')}: ${prGameStats.bestMs === null ? '—' : Math.round(prGameStats.bestMs)}ms`;
@@ -53978,6 +54545,12 @@ function tonaleFinish() {
     best: Math.max(ts.best||0, rounded),
     lastScore: rounded,
   });
+  // Golden Ear: perfect 50/50 at normal difficulty or higher (not easy).
+  if (rounded >= 50 && tonaleMode && tonaleMode.key !== 'easy' && !progState.tonalePerfect) {
+    progState.tonalePerfect = true;
+    progSave();
+    try { checkAchievements(); } catch(e){}
+  }
   // record daily completion (one-shot)
   if (tonaleIsDaily) {
     var st = tonaleLoad();
@@ -53988,6 +54561,7 @@ function tonaleFinish() {
     st.lastDailyTargets = tonaleTargets.slice();
     st.dailyInProgress = null;  // completed — clear resume state
     tonaleSaveState(st);
+    try { markDailyChallengeDone(); } catch(e) {}
   }
   tonaleShowFinal(rounded);
   try { checkAchievements(); } catch(e){}
@@ -54759,6 +55333,7 @@ function chordleRenderEndState() {
   // ── Daily: record one-shot result, show Share, hide replay ──
   if (chordleIsDaily) {
     chordleRecordDaily();
+    try { markDailyChallengeDone(); } catch(e) {}
     if (titleEl) titleEl.textContent = t('chordle_daily')+' · '+(won?('✓ '+chordleGuesses.length+'/'+(CHORDLE_DIFF[chordleDiff]||CHORDLE_DIFF.medium).maxGuesses):'✕');
     chordleDailyEnsureShareBtn(true);
   } else {
@@ -54924,7 +55499,7 @@ function chordlePlay() {
 var CHORDLE_ROOT_ST = {
   'I':0,'II':2,'III':4,'IV':5,'V':7,'VI':9,'VII':11,
   'ii':2,'iii':4,'iv':5,'v':7,'vi':9,'vii°':11,'vii':11,
-  '♭II':1,'♭III':3,'♭IV':5,'♭V':6,'♭VI':8,'♭VII':10,
+  '♭II':1,'♭III':3,'♭IV':4,'♭V':6,'♭VI':8,'♭VII':10,
   '♭I':-1,'i':0,'im':0,'♭IIm':1,'IV7':5
 };
 // Quality → interval pattern (semitones above root)
@@ -55088,11 +55663,13 @@ function chordleRenderPickerHeader() {
 
 function chordleRenderCard1() {
   var card=document.getElementById('chordleCard1'); if (!card) return;
+  var _deadDeg=chordleRuledOut().deadDeg;  // degrees only ever scored grey -> root absent
   var nb='display:flex;align-items:center;justify-content:center;flex:1;min-width:34px;padding:9px 0;font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:13px;letter-spacing:-.3px;border-radius:9px;cursor:pointer;transition:all .1s;';
   var tb='width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:14px;border-radius:9px;cursor:pointer;transition:all .1s;flex-shrink:0;';
   function numBt(n) {
     var on=chordlePNum===n;
-    return '<button onclick="chordlePickNum(\''+n+'\')" style="'+nb+'background:'+(on?'color-mix(in srgb,var(--accent) 20%,var(--surface))':'var(--surface-2)')+';border:1.5px solid '+(on?'var(--accent)':'var(--border-soft)')+';color:'+(on?'var(--accent)':'var(--text)')+'">'+n+'</button>';
+    var dead=!on && _deadDeg[chordleGetDegree(n)];  // this degree proven absent (every guess grey)
+    return '<button onclick="chordlePickNum(\''+n+'\')" style="'+nb+(dead?'opacity:.32;text-decoration:line-through;':'')+'background:'+(on?'color-mix(in srgb,var(--accent) 20%,var(--surface))':'var(--surface-2)')+';border:1.5px solid '+(on?'var(--accent)':'var(--border-soft)')+';color:'+(on?'var(--accent)':(dead?'var(--muted)':'var(--text)'))+'"'+(dead?' title="ruled out"':'')+'>'+n+'</button>';
   }
   function modBt(m,lbl) {
     var on=chordlePMod===m;
@@ -56518,6 +57095,8 @@ function checkDailyStreak() {
 
   progSave();
   progRefreshChip();
+  // Streak just changed — re-check streak-based achievements immediately.
+  try { checkAchievements(); } catch(e) {}
   // Reschedule streak notification with updated count
   if (typeof scheduleNotifications === 'function') scheduleNotifications();
 
@@ -56527,6 +57106,27 @@ function checkDailyStreak() {
   } else if (wasReset && last) {
     setTimeout(() => dtFireDailyReset(), 3200);
   }
+}
+
+// Daily-challenge streak: consecutive days the user completes ANY daily challenge
+// (Chordle / Tónale / Quiz). Distinct from progState.streak (app-open streak).
+// Called once per daily completion; first completion of a given day advances the
+// streak, later completions that same day are no-ops. A skipped day resets it.
+function markDailyChallengeDone() {
+  if (!progState.dailyChallengeStreak) progState.dailyChallengeStreak = { count: 0, lastDate: null, longest: 0 };
+  const dc = progState.dailyChallengeStreak;
+  const today = todayStr();
+  if (dc.lastDate === today) return; // already counted a daily today
+  if (!dc.lastDate) {
+    dc.count = 1;
+  } else {
+    const diffDays = Math.round((new Date(today + 'T00:00:00') - new Date(dc.lastDate + 'T00:00:00')) / 86400000);
+    dc.count = (diffDays === 1) ? (dc.count || 0) + 1 : 1; // consecutive advances, gap resets
+  }
+  dc.lastDate = today;
+  if (dc.count > (dc.longest || 0)) dc.longest = dc.count;
+  progSave();
+  try { checkAchievements(); } catch(e) {}
 }
 
 function _dailyStreakMsg(count) {
@@ -56921,6 +57521,7 @@ let progState = {
   masterVolume: 100,      // global volume scale 50-200 (%)
   tapOffsetMs: 38,        // user-tunable tap calibration; see TAP_LATENCY_OFFSET
   noteNaming: 'english',  // 'english' (C,D,E) or 'solfege' (Do,Re,Mi - fixed Do)
+  uiScale: 0,              // accessibility size: step 0 (normal) .. 4 (largest)
   lang: 'en',              // 'en' or 'it'
   teachingMode: false,
   helpTips: true,          // show/hide ? help buttons
@@ -56931,6 +57532,7 @@ let progState = {
   audioCues: { correct:'chime', wrong:'buzz', milestone:'fanfare', levelup:'chiptune', achievement:'chime', gameover:'synthcollapse', win:'euphoria',
                vols: { correct:100, wrong:100, milestone:100, levelup:100, achievement:100, gameover:100, win:100 } },
   streak: { count: 0, lastDate: null, longest: 0 },
+  dailyChallengeStreak: { count: 0, lastDate: null, longest: 0 },
   notifications: { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00', timeFormat: '24' },
   history: {},  // { 'YYYY-MM-DD': { interval: sec, chords: sec, ... } }
   secret_chime_unlocked: false,   // unlocked at 100-day streak
@@ -57134,6 +57736,7 @@ const STRINGS = {
     tl_ready:'READY', tl_listening:'WITH CLICK',
     settings_title:'SETTINGS', settings_sub:'app preferences',
     settings_lang:'Language', settings_note_naming:'Note Naming',
+    settings_textsize:'Text & Button Size', uiscale_normal:'NORMAL', uiscale_large:'LARGE', uiscale_larger:'LARGER', uiscale_hint:'Makes everything bigger and easier to tap.',
     settings_teaching:'Teaching Mode', settings_latency:'Latency Measurement',
     settings_calib:'Tap Calibration', settings_more:'More',
     settings_calib_btn:'⚙ Calibration',
@@ -57243,6 +57846,8 @@ const STRINGS = {
     tp_chords_here:'transposed chords appear here',
     tp_tab_key:'KEY CHART', tp_tab_chord:'CHORD TRANSPOSER',
     tp_token_concert:'CONCERT', tp_token_iplay:'I PLAY',
+    tp_staff_written:'YOU READ', tp_staff_sounds:'IT SOUNDS', tp_hear:'HEAR IT',
+    tp_mode_inst:'BY INSTRUMENT', tp_mode_semi:'BY INTERVAL', tp_semi_none:'no shift', tp_play_chords:'PLAY', tp_copy:'COPY', tp_copied:'COPIED',
     // Piano
     piano_octave:'OCTAVE ',
     // Scale / drone (tc = transposer chord section)
@@ -57408,7 +58013,9 @@ const STRINGS = {
     label_octave_uc:'OCTAVE', label_inversion:'INVERSION',
     prog_auto_voice:'↺ AUTO VOICE LEAD', prog_presets_title:'PRESETS',
     // Settings additions
-    settings_help_tips:'Help Tips',
+    settings_help_tips:'Help Buttons',
+    settings_help_tips_off:'Hidden',
+    settings_help_tips_on:'Show ? buttons',
     settings_haptics:'Haptic Feedback',
     settings_splash_sound:'Launch Sound',
     pw_title:'INTONARE PRO',
@@ -57556,7 +58163,7 @@ const STRINGS = {
     hint_tonal_drone:'Start the drone, turn on the mic, then sing or play. Shows your note, the interval above/below the root, and how in-tune you are.',
     hint_db_meter:'Turn on the mic and make some noise, and watch how quickly loud sounds reach the danger zone.',
     tuner_key_label:'KEY',
-    hint_transpose_keys:'Tap any concert key above to see what key you play in. Blue = concert pitch, amber = your written key.',
+    hint_transpose_keys:'Tap either row: tap a concert key to see what you play, or tap your written key to find the concert pitch. Blue = concert, amber = written.',
     hint_chord_paste:'Paste any chord names separated by spaces or lines. It transposes the roots only; qualities (maj7, m7, dim…) stay as written.',
     hint_chord_player_s:'Select a root and quality to hear the chord. ARP plays notes one at a time ascending.',
     hint_chord_builder_s:'Tap any notes and the app names the most likely chord, with alternates listed below. Handy for putting a name to a chord you already know by ear.',
@@ -57947,6 +58554,7 @@ const STRINGS = {
     tl_ready:'PRONTO', tl_listening:'CON CLICK',
     settings_title:'IMPOSTAZIONI', settings_sub:"preferenze dell'app",
     settings_lang:'Lingua', settings_note_naming:'Notazione Note',
+    settings_textsize:'Dimensione Testo e Pulsanti', uiscale_normal:'NORMALE', uiscale_large:'GRANDE', uiscale_larger:'PIÙ GRANDE', uiscale_hint:'Rende tutto più grande e facile da toccare.',
     settings_teaching:'Modalità Didattica', settings_latency:'Misura Latenza',
     settings_calib:'Calibrazione Tocco', settings_more:'Altro',
     settings_calib_btn:'⚙ Calibrazione',
@@ -58056,6 +58664,8 @@ const STRINGS = {
     tp_chords_here:'gli accordi trasposti appaiono qui',
     tp_tab_key:'TONALITÀ', tp_tab_chord:'TRASPOSITORE ACCORDI',
     tp_token_concert:'CONCERTO', tp_token_iplay:'SUONO',
+    tp_staff_written:'TU LEGGI', tp_staff_sounds:'SUONA', tp_hear:'ASCOLTA',
+    tp_mode_inst:'PER STRUMENTO', tp_mode_semi:'PER INTERVALLO', tp_semi_none:'nessuno', tp_play_chords:'SUONA', tp_copy:'COPIA', tp_copied:'COPIATO',
     // Piano
     piano_octave:'OTTAVA ',
     // Scale / drone (tc)
@@ -58221,7 +58831,9 @@ const STRINGS = {
     label_octave_uc:'OTTAVA', label_inversion:'RIVOLTO',
     prog_auto_voice:'↺ CONDUZIONE AUTOMATICA', prog_presets_title:'PRESET',
     // Settings additions
-    settings_help_tips:'Suggerimenti',
+    settings_help_tips:'Pulsanti Aiuto',
+    settings_help_tips_off:'Nascosti',
+    settings_help_tips_on:'Mostra pulsanti ?',
     settings_haptics:'Feedback Aptico',
     settings_splash_sound:'Suono d\u2019Avvio',
     pw_title:'INTONARE PRO',
@@ -58369,7 +58981,7 @@ const STRINGS = {
     hint_tonal_drone:'Avvia il bordone, attiva il microfono e canta o suona. Mostra nota, intervallo dalla tonica e intonazione.',
     hint_db_meter:'Attiva il microfono e fai un po’ di rumore: osserva quanto velocemente i suoni forti raggiungono la zona di pericolo.',
     tuner_key_label:'TONO',
-    hint_transpose_keys:'Tocca una tonalità di concerto per vedere la tua tonalità di lettura. Blu = concerto, ambra = scritta.',
+    hint_transpose_keys:'Tocca una delle due righe: tocca una tonalità di concerto per vedere cosa suoni, o la tua tonalità scritta per trovare il concerto. Blu = concerto, ambra = scritta.',
     hint_chord_paste:'Incolla i nomi degli accordi separati da spazi o righe. Traspone solo le toniche; le qualità (maj7, m7, dim…) rimangono invariate.',
     hint_chord_player_s:"Seleziona tonica e qualità per ascoltare l'accordo. ARPEGGIO suona le note una per una in senso ascendente.",
     hint_chord_builder_s:"Tocca qualsiasi nota e l'app nomina l'accordo più probabile, con le alternative elencate sotto. Comodo per dare un nome a un accordo che già conosci a orecchio.",
@@ -59230,6 +59842,10 @@ function syncSettingsUI() {
   const naming = progState.noteNaming || 'english';
   document.querySelectorAll('#smNoteNamingRow .sm-toggle-chip').forEach(b =>
     b.classList.toggle('active', b.dataset.value === naming));
+  // UI scale (accessibility) slider — normalize legacy string values to a step
+  applyUiScale();
+  const uiScaleSlider = document.getElementById('smUiScaleSlider');
+  if (uiScaleSlider) uiScaleSlider.value = parseInt(progState.uiScale, 10) || 0;
   // Teaching mode toggle
   const teach = !!progState.teachingMode;
   document.querySelectorAll('#smTeachingRow .sm-toggle-chip').forEach(b =>
@@ -59939,7 +60555,35 @@ function setHaptics(on) {
   progSave();
 }
 
-// ─── LAUNCH (SPLASH) SOUND ───
+// ─── ACCESSIBILITY: UI SCALE (slider, 5 snap steps) ───
+// Bumps the size of the whole interface for easier reading and tapping. Stored as
+// a step 0–4 in progState.uiScale; applied as a `data-uiscale` attribute on <html>
+// (the CSS does the zooming). Step 0 = normal (no zoom).
+function setUiScaleStep(step) {
+  step = parseInt(step, 10);
+  if (isNaN(step) || step < 0) step = 0;
+  if (step > 4) step = 4;
+  progState.uiScale = step;
+  applyUiScale();
+  const sl = document.getElementById('smUiScaleSlider');
+  if (sl && parseInt(sl.value, 10) !== step) sl.value = step;
+  if (typeof hapticLight === 'function') hapticLight();
+  progSave();
+}
+function applyUiScale() {
+  // Back-compat: older saves stored 'normal'/'large'/'larger' strings.
+  let step = (progState && progState.uiScale);
+  if (step === 'normal' || step === undefined || step === null) step = 0;
+  else if (step === 'large') step = 2;
+  else if (step === 'larger') step = 4;
+  step = parseInt(step, 10); if (isNaN(step)) step = 0;
+  progState.uiScale = step; // normalize stored value
+  const html = document.documentElement;
+  if (step === 0) html.removeAttribute('data-uiscale');
+  else html.setAttribute('data-uiscale', String(step));
+}
+
+
 // Plays natively on cold start (MainActivity), so the choice must be written where
 // Java can read it: the IntonareNative bridge persists to Android SharedPreferences.
 // progState keeps the UI in sync; localStorage is the web/non-Capacitor fallback.
@@ -60133,8 +60777,11 @@ function progLoad() {
       // Migrate: default notifications on for existing users
       if (!progState.notifications) progState.notifications = { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00' };
       if (progState.hapticsOn === undefined) progState.hapticsOn = true;
+      if (progState.uiScale === undefined) progState.uiScale = 0;
     }
   } catch(e) {}
+  // Apply the saved accessibility UI scale as early as possible.
+  try { applyUiScale(); } catch(e) {}
   // Silently check achievements against existing data on load (no toasts on startup)
   try {
     if (!progState.achievements) progState.achievements = {};
@@ -60222,19 +60869,19 @@ const ACHIEVEMENTS = [
   { id:'three_days', cond_it:'serie di pratica di 3 giorni', cond:'3-day practice streak', rarity:'common',        cat:'consistency', name:'Three Days',
     desc:"Every habit starts with three days",
     desc_it:"Ogni abitudine inizia con tre giorni",
-    check: s => (s.streak?.count||0) >= 3 },
+    check: s => (s.streak?.count||0) >= 3, prog: s => ({cur:(s.streak?.count||0), target:3}) },
   { id:'week_strong', cond_it:'serie di pratica di 7 giorni', cond:'7-day practice streak', rarity:'rare',       cat:'consistency', name:'Week Strong',
     desc:"A day may come when your strength would fail, but it is not this day",
     desc_it:"Potrebbe venire il giorno in cui le forze ti manchino, ma non è oggi",
-    check: s => (s.streak?.count||0) >= 7 },
+    check: s => (s.streak?.count||0) >= 7, prog: s => ({cur:(s.streak?.count||0), target:7}) },
   { id:'creature_of_habit', cond_it:'serie di pratica di 21 giorni', cond:'21-day practice streak', rarity:'rare', cat:'consistency', name:'Creature of Habit',
     desc:"Science says it's official now!",
     desc_it:"La scienza lo conferma: è ufficiale!",
-    check: s => (s.streak?.count||0) >= 21 },
+    check: s => (s.streak?.count||0) >= 21, prog: s => ({cur:(s.streak?.count||0), target:21}) },
   { id:'committed', cond_it:'serie di pratica di 50 giorni', cond:'50-day practice streak', rarity:'legendary',         cat:'consistency', name:'Committed',
     desc:"After all this time? Always",
     desc_it:"Dopo tutto questo tempo? Sempre",
-    check: s => (s.streak?.count||0) >= 50 },
+    check: s => (s.streak?.count||0) >= 50, prog: s => ({cur:(s.streak?.count||0), target:50}) },
 
   // ACCURACY
   { id:'great_ears', cond_it:'100% di precisione nel training degli intervalli', cond:'100% accuracy in an interval session', rarity:'rare',    cat:'accuracy', name:"Great Ears Kid, Don't Get Cocky!",
@@ -60248,28 +60895,22 @@ const ACHIEVEMENTS = [
   { id:'chord_scholar', cond_it:'serie di 30 nell\u2019ear training degli accordi', cond:'chord ear training streak of 30', rarity:'rare', cat:'accuracy', name:'Chord Scholar',
     desc:"Harmony is starting to make sense",
     desc_it:"L'armonia sta cominciando ad avere senso",
-    check: s => Math.max(s.stats?.chords?.bestStreak||0, s.stats?.chords?.streak||0) >= 30 },
+    check: s => Math.max(s.stats?.chords?.bestStreak||0, s.stats?.chords?.streak||0) >= 30, prog: s => ({cur:Math.max(s.stats?.chords?.bestStreak||0, s.stats?.chords?.streak||0), target:30}) },
   { id:'perfect_pitch', cond_it:'serie di 30 nella lettura a prima vista', cond:'sight singing streak of 30', rarity:'rare', cat:'accuracy', name:'Perfect Pitch',
     desc:"You must believe in the heart of the pitch",
     desc_it:"Devi credere nel cuore dell'intonazione",
-    check: s => Math.max(s.stats?.singsing?.bestStreak||0, s.stats?.singsing?.streak||0) >= 30 },
+    check: s => Math.max(s.stats?.singsing?.bestStreak||0, s.stats?.singsing?.streak||0) >= 30, prog: s => ({cur:Math.max(s.stats?.singsing?.bestStreak||0, s.stats?.singsing?.streak||0), target:30}) },
   { id:'flawless', cond_it:'punteggio perfetto in qualsiasi esercizio', cond:'perfect score in any exercise', rarity:'legendary',      cat:'accuracy', name:'Flawless Victory',
     desc:"Inconceivable!",
     desc_it:"Inconcepibile!",
     check: s => !!(s.stats?.anyPerfect) },
 
   // EXPLORATION
-  { id:'curious', cond_it:'usa 3 tipi diversi di esercizi', cond:'use 3 different exercise types', rarity:'common',        cat:'exploration', name:'Curious',
+  { id:'curious', cond_it:'usa 10 strumenti o esercizi diversi', cond:'use 10 different tools or exercises', rarity:'rare',        cat:'exploration', name:'Curious',
     desc:"Not all those who wander are lost",
     desc_it:"Non tutti coloro che vagano sono perduti",
-    check: s => {
-      const used = new Set();
-      Object.values(s.history||{}).forEach(day => Object.keys(day).forEach(k => used.add(k)));
-      ['interval','chords','singsing','tempo','tempoguess','poly','chordle'].forEach(k => {
-        if (Object.keys((s.stats||{})[k]||{}).length > 0) used.add(k);
-      });
-      return used.size >= 3;
-    }},
+    check: s => _achModuleCount(s) >= 10,
+    prog: s => ({cur:_achModuleCount(s), target:10}) },
   { id:'explorer', cond_it:'completa una sessione in tutti e 6 gli esercizi', cond:'complete a session in all 6 exercises', rarity:'rare',       cat:'exploration', name:'Explorer',
     desc:"Where we're going, we don't need roads",
     desc_it:"Dove stiamo andando, non abbiamo bisogno di strade",
@@ -60281,38 +60922,38 @@ const ACHIEVEMENTS = [
       });
       return ['interval','chords','singsing','tempo','tempoguess','poly','chordle'].every(k => used.has(k));
     }},
-  { id:'rhythm_curious', cond_it:'apri la drum machine', cond:'open the drum machine', rarity:'common', cat:'exploration', name:'Rhythm Curious',
-    desc:"Feel, don't think. Use your instincts.",
-    desc_it:"Senti, non pensare. Usa l'istinto.",
-    check: s => !!(s.drumkitVisited) },
+  { id:'rhythm_curious', cond_it:'raggiungi la vetta in Poliritmia', cond:'reach the summit in Polyrhythm', rarity:'rare', cat:'exploration', name:'The Climb',
+    desc:"I will find my way, I can go the distance.",
+    desc_it:"Troverò la mia strada, posso arrivare lontano.",
+    check: s => !!(s.summitReached) },
 
   // MILESTONES (sorted by level)
   { id:'apprentice', cond_it:'raggiungi il livello 5', cond:'reach level 5', rarity:'common',  cat:'milestones', name:'Apprentice',
     desc:"You have taken your first step into a larger world",
     desc_it:"Hai fatto il tuo primo passo verso un mondo più grande",
-    check: s => (s.level||0) >= 5 },
+    check: s => (s.level||0) >= 5, prog: s => ({cur:(s.level||0), target:5}) },
   { id:'practitioner', cond_it:'raggiungi il livello 10', cond:'reach level 10', rarity:'common',cat:'milestones', name:'Practitioner',
     desc:"You know what you're doing now",
     desc_it:"Ora sai quello che fai",
-    check: s => (s.level||0) >= 10 },
+    check: s => (s.level||0) >= 10, prog: s => ({cur:(s.level||0), target:10}) },
   { id:'musician', cond_it:'raggiungi il livello 20', cond:'reach level 20', rarity:'rare',    cat:'milestones', name:'Musician',
     desc:"That word means something now",
     desc_it:"Quella parola adesso ha un significato",
-    check: s => (s.level||0) >= 20 },
+    check: s => (s.level||0) >= 20, prog: s => ({cur:(s.level||0), target:20}) },
   { id:'master', cond_it:'raggiungi il livello 30', cond:'reach level 30', rarity:'legendary',      cat:'milestones', name:'Master',
     desc:"The student has now become the teacher",
     desc_it:"Lo studente è diventato il maestro",
-    check: s => (s.level||0) >= 30 },
+    check: s => (s.level||0) >= 30, prog: s => ({cur:(s.level||0), target:30}) },
   { id:'maestro', cond_it:'raggiungi il livello 50', cond:'reach level 50', rarity:'legendary',     cat:'milestones', name:'Maestro',
     desc:"When 900 years old you reach, look as good you will not!",
     desc_it:"Quando 900 anni avrai, bello così non sembrerai!",
-    check: s => (s.level||0) >= 50 },
+    check: s => (s.level||0) >= 50, prog: s => ({cur:(s.level||0), target:50}) },
 
   // SECRETS
   { id:'zelda', cond_it:'serie di pratica di 100 giorni', cond:'100-day practice streak', rarity:'secret',       cat:'secrets', name:"It's Dangerous to Go Alone",
     desc:"Take this!",
     desc_it:"Prendi questo!",
-    check: s => (s.streak?.count||0) >= 100 },
+    check: s => (s.streak?.count||0) >= 100, prog: s => ({cur:(s.streak?.count||0), target:100}) },
   { id:'night_owl', cond_it:'pratica tra mezzanotte e le 4 di mattina', cond:'practice between midnight and 4am', rarity:'secret',   cat:'secrets', name:'Night Owl',
     desc:"Moonlight drowns out all but the brightest stars",
     desc_it:"La luce della luna oscura tutto tranne le stelle più brillanti",
@@ -60324,7 +60965,7 @@ const ACHIEVEMENTS = [
   { id:'dedicated', cond_it:'10 ore totali di pratica', cond:'10 hours total practice time', rarity:'secret',   cat:'secrets', name:'Dedicated',
     desc:"Get busy living, or get busy dying",
     desc_it:"Datti da fare per vivere, o datti da fare per morire",
-    check: s => _achTotalTime(s) >= 36000 },
+    check: s => _achTotalTime(s) >= 36000, prog: s => ({cur:Math.floor(_achTotalTime(s)/3600), target:10}) },
   // SPECIAL TRIGGERS
   { id:'more_cowbell',   cond_it:'modalità groove con groove E pulse impostati su cowbell',
     cond:'use groove mode with both groove and pulse set to cowbell', rarity:'secret', cat:'secrets',
@@ -60357,7 +60998,7 @@ const ACHIEVEMENTS = [
   { id:'giant_steps',  cond_it:'risolvi 5 Chordle in V.Hard', cond:'solve 5 V.Hard Chordles', rarity:'legendary', cat:'accuracy',
     name:'Giant Steps',  desc:"If you're not living on the edge, you're taking up space",
     desc_it:"Se non vivi sul filo del rasoio, stai solo occupando spazio",
-    check: s => (s.stats?.chordle?.vhardSolved||0) >= 5 },
+    check: s => (s.stats?.chordle?.vhardSolved||0) >= 5, prog: s => ({cur:(s.stats?.chordle?.vhardSolved||0), target:5}) },
   { id:'deaf_composer', cond_it:'risolvi un Chordle senza mai premere play', cond:'solve a Chordle without pressing play', rarity:'secret', cat:'secrets',
     name:'Dead Composer', desc:"Music is like a dream... one that I cannot hear",
     desc_it:"La musica è come un sogno... che non riesco a sentire",
@@ -60372,6 +61013,35 @@ const ACHIEVEMENTS = [
     desc:"It's not the days, it's the mileage",
     desc_it:"Non contano i giorni, contano i chilometri",
     check: s => _achMaxDayTime(s) >= 21600 },
+  { id:'the_summit', cond_it:'raggiungi la vetta nella scalata Hardcore', cond:'summit the Hardcore climb in Polyrhythm', rarity:'legendary', cat:'milestones', name:'The Summit',
+    desc:"Well you're not hardcore, unless you live hardcore",
+    desc_it:"Non sei hardcore, a meno che tu non viva hardcore",
+    check: s => !!(s.hardcoreSummit) },
+  { id:'know_it_all', cond_it:'punteggio perfetto in una Sfida Quiz Giornaliera', cond:'perfect score in a Music Quiz Daily run', rarity:'rare', cat:'accuracy', name:'Know-It-All',
+    desc:"It's leviOsa, not levioSA",
+    desc_it:"È leviOsa, non levioSA",
+    check: s => !!(s.mqDailyPerfect) },
+  { id:'last_standing', cond_it:'raggiungi una serie di 20+ in Sopravvivenza Quiz', cond:'reach a Survival run of 20+ in Music Quiz', rarity:'legendary', cat:'milestones', name:'Last One Standing',
+    desc:"Are you not entertained?",
+    desc_it:"Non siete forse divertiti?",
+    check: s => (s.mqBestSurvival||0) >= 20, prog: s => ({cur:(s.mqBestSurvival||0), target:20}) },
+  { id:'trivia_night', cond_it:'rispondi correttamente a 500 domande del quiz', cond:'answer 500 quiz questions correctly', rarity:'legendary', cat:'milestones', name:'Trivia Night',
+    desc:"Phone a friend? I AM the friend. I am the one who answers",
+    desc_it:"Telefonata a un amico? L'amico sono IO. Sono io quello che risponde",
+    check: s => (s.mqTotalCorrect||0) >= 500, prog: s => ({cur:(s.mqTotalCorrect||0), target:500}) },
+  { id:'golden_ear', cond_it:'punteggio perfetto 50/50 in Tónale a difficoltà normale o superiore', cond:'score a perfect 50/50 in Tónale at normal difficulty or higher', rarity:'secret', cat:'secrets', name:'Golden Ear',
+    desc:"Feel, don't think. Use your instincts",
+    desc_it:"Senti, non pensare. Usa l'istinto",
+    check: s => !!(s.tonalePerfect) },
+  { id:'completionist', cond_it:'sblocca ogni achievement non segreto', cond:'unlock every non-secret achievement', rarity:'legendary', cat:'milestones', name:'Completionist',
+    desc:"Gotta catch 'em all!",
+    desc_it:"Acchiappali tutti!",
+    check: s => _achCompletionist(s), prog: s => _achCompletionistProg(s) },
+  { id:'daily_grind', cond_it:'completa una sfida giornaliera per 7 giorni di fila', cond:'complete a daily challenge 7 days in a row', rarity:'rare', cat:'consistency', name:'Daily Grind',
+    desc:"Same time tomorrow?",
+    desc_it:"Stessa ora domani?",
+    check: s => (s.dailyChallengeStreak?.count||0) >= 7,
+    prog: s => ({cur:(s.dailyChallengeStreak?.count||0), target:7}) },
 ];
 
 function _achTotalTime(s) {
@@ -60388,6 +61058,29 @@ function _achMaxDayTime(s) {
   return max;
 }
 
+// Distinct modules/exercises used — shared by Curious check + progress bar.
+function _achModuleCount(s) {
+  const used = new Set();
+  Object.values(s.history||{}).forEach(day => Object.keys(day).forEach(k => used.add(k)));
+  Object.keys(s.stats||{}).forEach(k => { if (Object.keys((s.stats||{})[k]||{}).length > 0) used.add(k); });
+  return used.size;
+}
+
+// Completionist: every non-secret achievement unlocked (excludes secrets + itself).
+function _achCompletionist(s) {
+  const unlocked = s.achievements || {};
+  return ACHIEVEMENTS.every(a =>
+    a.id === 'completionist' || a.cat === 'secrets' || !!unlocked[a.id]
+  );
+}
+// Completionist progress: how many of the required (non-secret, non-self) are unlocked.
+function _achCompletionistProg(s) {
+  const unlocked = s.achievements || {};
+  const required = ACHIEVEMENTS.filter(a => a.id !== 'completionist' && a.cat !== 'secrets');
+  const done = required.filter(a => !!unlocked[a.id]).length;
+  return { cur: done, target: required.length };
+}
+
 // SVG icons per category (24x24 viewBox)
 const ACH_ICONS = {
   first_light:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="3.5" fill="currentColor" opacity="0.25"/><circle cx="12" cy="12" r="3.5"/><line x1="12" y1="1.5" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22.5" y2="12"/><line x1="4.4" y1="4.4" x2="6.5" y2="6.5"/><line x1="17.5" y1="17.5" x2="19.6" y2="19.6"/><line x1="4.4" y1="19.6" x2="6.5" y2="17.5"/><line x1="17.5" y1="6.5" x2="19.6" y2="4.4"/></svg>`,
@@ -60402,7 +61095,7 @@ const ACH_ICONS = {
   flawless:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.5 7.5H22l-6.5 4.7 2.5 7.5L12 17.2l-6 4.5 2.5-7.5L2 9.5h7.5z" fill="currentColor" opacity="0.25"/><path d="M12 2l2.5 7.5H22l-6.5 4.7 2.5 7.5L12 17.2l-6 4.5 2.5-7.5L2 9.5h7.5z"/></svg>`,
   curious:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" fill="currentColor" opacity="0.1"/><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/><line x1="11" y1="8" x2="11" y2="12" stroke-width="2"/><circle cx="11" cy="14.5" r="1" fill="currentColor" stroke="none"/></svg>`,
   explorer:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.08"/><circle cx="12" cy="12" r="10"/><polygon points="16.5,7.5 14,14 7.5,16.5 10,10" fill="currentColor" opacity="0.3"/><polygon points="16.5,7.5 14,14 7.5,16.5 10,10"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>`,
-  rhythm_curious:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="14" rx="9" ry="4.5" fill="currentColor" opacity="0.15"/><ellipse cx="12" cy="14" rx="9" ry="4.5"/><path d="M3 14c0-2.5 4-4.5 9-4.5s9 2 9 4.5"/><line x1="8" y1="9.5" x2="7" y2="4"/><line x1="16" y1="9.5" x2="17" y2="4"/><line x1="12" y1="9.5" x2="12" y2="4"/><circle cx="7" cy="3.5" r="1" fill="currentColor"/><circle cx="17" cy="3.5" r="1" fill="currentColor"/><circle cx="12" cy="3.5" r="1" fill="currentColor"/></svg>`,
+  rhythm_curious:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20L9.5 8l3.5 6 2-3.5L21 20z" fill="currentColor" opacity="0.15"/><path d="M3 20L9.5 8l3.5 6 2-3.5L21 20z"/><path d="M9.5 8l1.8 3.2-1.5 2.3-1.6-2z" fill="currentColor" opacity="0.35"/><line x1="15" y1="10.5" x2="15" y2="3"/><path d="M15 3l4 1.3L15 6z" fill="currentColor" stroke="none"/></svg>`,
   apprentice:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5v5c0 5-4 9-10 10C6 21 2 17 2 12V7z" fill="currentColor" opacity="0.18"/><path d="M12 2l10 5v5c0 5-4 9-10 10C6 21 2 17 2 12V7z"/><polyline points="8.5,12.5 11,15 15.5,10"/></svg>`,
   practitioner:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" fill="currentColor" opacity="0.15"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><circle cx="12" cy="12" r="3.5" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="3.5"/></svg>`,
   musician:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6" fill="currentColor" opacity="0.1"/><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z" fill="currentColor" opacity="0.3"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" fill="currentColor" opacity="0.3"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>`,
@@ -60417,6 +61110,13 @@ const ACH_ICONS = {
   dedicated:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="9.5" fill="currentColor" opacity="0.1"/><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3.5 3.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><path d="M5.6 5.6l.7.7M17.7 5.6l-.7.7" opacity="0.5"/></svg>`,
   addicted:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V2" opacity="0.3"/><path d="M2 7l10 5L2 17"/><path d="M22 7L12 12l10 5"/><circle cx="12" cy="12" r="2.5" fill="currentColor" opacity="0.4"/><circle cx="12" cy="12" r="2.5"/></svg>`,
   crikey:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M18 8c0-3.3-2.7-6-6-6S6 4.7 6 8v8l-2 4h16l-2-4V8z" fill="currentColor" opacity="0.15"/><path d="M18 8c0-3.3-2.7-6-6-6S6 4.7 6 8v8l-2 4h16l-2-4V8z"/><path d="M9 10c1 2 5 2 6 0" opacity="0.5"/><path d="M8 14c1.5 3 7 3 8 0" opacity="0.7"/><path d="M7 18h10"/></svg>`,
+  the_summit:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21h20" opacity="0.3"/><path d="M2 21l5-9 3 4 4-11 8 16z" fill="currentColor" opacity="0.18"/><path d="M2 21l5-9 3 4 4-11 8 16z"/><line x1="14" y1="5" x2="14" y2="2"/><path d="M14 2l4 1.2L14 4.4z" fill="currentColor" stroke="none"/></svg>`,
+  know_it_all:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 016 6c0 2-1 3-2 4-1 .8-1 1.5-1 3H9c0-1.5 0-2.2-1-3-1-1-2-2-2-4a6 6 0 016-6z" fill="currentColor" opacity="0.15"/><path d="M12 3a6 6 0 016 6c0 2-1 3-2 4-1 .8-1 1.5-1 3H9c0-1.5 0-2.2-1-3-1-1-2-2-2-4a6 6 0 016-6z"/><line x1="9.5" y1="21" x2="14.5" y2="21"/><line x1="10.5" y1="18" x2="13.5" y2="18"/></svg>`,
+  last_standing:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12a7 7 0 0114 0v3a4 4 0 01-4 4h-1v-4H9v4H8a3 3 0 01-3-3z" fill="currentColor" opacity="0.15"/><path d="M5 12a7 7 0 0114 0v3a4 4 0 01-4 4h-1v-4H9v4H8a3 3 0 01-3-3z"/><path d="M12 5V2"/><path d="M12 2c2 0 3 1.5 3 3" opacity="0.6"/><line x1="12" y1="8" x2="12" y2="15" opacity="0.5"/></svg>`,
+  trivia_night:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2.5" fill="currentColor" opacity="0.15"/><rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M10 8c0-1.5 1-2.5 2-2.5s2 .8 2 2c0 1.5-2 1.5-2 3"/><circle cx="12" cy="16" r="0.8" fill="currentColor" stroke="none"/></svg>`,
+  golden_ear:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18c-2-1-3-4-3-7a7 7 0 0114 0c0 2-1 3-3 3-1.5 0-2 1-2 2.5S12.5 21 11 21s-2-1.5-3-3z" fill="currentColor" opacity="0.15"/><path d="M8 18c-2-1-3-4-3-7a7 7 0 0114 0c0 2-1 3-3 3-1.5 0-2 1-2 2.5S12.5 21 11 21s-2-1.5-3-3z"/><path d="M9 11a3 3 0 015 0" opacity="0.6"/></svg>`,
+  completionist:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.3"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5l2 2 4-4"/></svg>`,
+  daily_grind:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5" fill="currentColor" opacity="0.15"/><rect x="3" y="5" width="18" height="16" rx="2.5"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="3" x2="8" y2="6"/><line x1="16" y1="3" x2="16" y2="6"/><path d="M8.5 15l2.5 2.5 4.5-4.5"/></svg>`,
   locked:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="11" width="12" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/><circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none" opacity="0.5"/></svg>`,
 };
 
@@ -60501,6 +61201,9 @@ function renderAchievements() {
   const wrap = document.getElementById('pmAchievements');
   if (!wrap) return;
   if (!progState.achievements) progState.achievements = {};
+  // Reconcile on open: unlock anything whose condition is already met, so a card
+  // never shows a full progress bar while still reading as locked.
+  try { checkAchievements(); } catch(e) {}
   wrap.innerHTML = '';
 
   const hasAny = ACHIEVEMENTS.some(a => progState.achievements[a.id]);
@@ -60554,10 +61257,28 @@ function renderAchievements() {
           <div class="pm-ach-date">${t('ach_unlocked_label')} · <b>${dateStr}</b></div>
           <div class="pm-ach-rarity">${a.rarity ? t('ach_rarity_' + a.rarity) : ''}</div>`;
       } else {
+        // Progress bar for incremental achievements (not on secrets — keep them mysterious).
+        let progHtml = '';
+        if (a.prog && a.rarity !== 'secret') {
+          try {
+            const p = a.prog(progState);
+            if (p && p.target > 0) {
+              const cur = Math.max(0, Math.min(p.cur, p.target));
+              const pct = Math.round((cur / p.target) * 100);
+              progHtml = `
+          <div class="pm-ach-prog">
+            <div class="pm-ach-prog-track"><div class="pm-ach-prog-fill" style="width:${pct}%"></div></div>
+            <div class="pm-ach-prog-lbl"><span><b>${cur}</b> / ${p.target}</span><span class="pm-ach-prog-pct">${pct}%</span></div>
+          </div>`;
+            }
+          } catch(e) {}
+        }
         card.innerHTML = `
           <div class="pm-ach-icon" style="color:${iconColor}">${lockedIcon}</div>
           <div class="pm-ach-name">${a.rarity === 'secret' ? '???' : a.name}</div>
-          <div class="pm-ach-rarity">${a.rarity ? t('ach_rarity_' + a.rarity) : ''}</div>`;
+          ${a.rarity === 'secret' ? '' : `<div class="pm-ach-cond">${(progState.lang === 'it' && a.cond_it) ? a.cond_it : (a.cond || '')}</div>`}
+          <div class="pm-ach-rarity">${a.rarity ? t('ach_rarity_' + a.rarity) : ''}</div>
+          ${progHtml}`;
       }
       grid.appendChild(card);
     });
@@ -60727,6 +61448,7 @@ function resetProgress() {
     hapticsOn: progState.hapticsOn !== false,
     audioCues: progState.audioCues || { correct:'chime', wrong:'buzz', milestone:'fanfare', levelup:'chiptune', achievement:'chime', vols:{correct:100,wrong:100,milestone:100,levelup:100,achievement:100} },
     streak: { count: 0, lastDate: null, longest: 0 },
+    dailyChallengeStreak: { count: 0, lastDate: null, longest: 0 },
     history: {}, secret_chime_unlocked: false, beethoven_unlocked: false, mythic_unlocked: false,
     stats: { tempo:{}, interval:{}, tempoguess:{}, poly:{}, drone:{}, scale:{}, chords:{}, singsing:{}, chordle:{}, diadle:{} },
   };
@@ -75992,10 +76714,10 @@ function gssPlay() {
   const chain = buildLimiterChain(ctx, 0.9);
   const toneId = _frettedToneId();
   const now   = ctx.currentTime;
-  const noteDur = gssStepDelay * 0.82; // end just before next note starts
+  const noteDur = gssStepDelay * 0.92; // end just before next note starts
 
   steps.forEach((step, i) => {
-    const node = _chartPlay(toneId, midiToFreq(step.midi), ctx, chain.gain, 0.30, noteDur, now + i * gssStepDelay);
+    const node = _chartPlay(toneId, midiToFreq(step.midi), ctx, chain.gain, 0.42, noteDur, now + i * gssStepDelay);
     if (node) gssNodes.push(node);
     const flashDelay = i * gssStepDelay * 1000;
     const flashDur   = Math.min(gssStepDelay * 900, 350);
@@ -76305,6 +77027,17 @@ function switchChordScaleInstrument(inst) {
   document.getElementById('csDidiWrap')?.classList.toggle('hidden', !isDidi);
   document.getElementById('csBowedWrap')?.classList.toggle('hidden', !isBowed);
   document.getElementById('csTrumpetWrap')?.classList.add('hidden'); // trumpet UI is inside csGuitarWrap now
+
+  // Wind note-card rows (octave pills, pitch toggle) live inside the shared
+  // csGuitarWrap. Switching to a non-wind instrument leaves them populated with
+  // stale pills (e.g. sax octave/pitch rows lingering on guitar) because the
+  // fretted init path never touches them. Empty + hide them on any non-wind switch.
+  if (!isTrumpet) {
+    ['trpOctRow','trpPitchToggleRow','trpScalePitchToggleRow','trpNoteGrid'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.innerHTML = ''; if (id !== 'trpNoteGrid') el.style.display = 'none'; }
+    });
+  }
 
   // Rebuild sub-type row
   _buildSubRow(inst, meta.subs);
@@ -76730,6 +77463,7 @@ function trpInitNoteMode() {
   const octRow = document.getElementById('trpOctRow');
   if (octRow) {
     octRow.innerHTML = '';
+    octRow.style.display = '';  // clear any inline hide left by a prior non-wind switch
     let octOptions = (windActiveRange()?.octaves ?? [3,4,5]).filter(oct => {
       const base = (oct + 1) * 12;            // MIDI of C in that octave
       // keep the octave if any of its 12 pitch classes falls within [rLo, rHi]
@@ -76803,13 +77537,19 @@ function trpInitNoteMode() {
     else if (isHarmonicaInst()) legendEl.innerHTML = '↑ = blow (exhale) &nbsp; ↓ = draw (inhale)';
     else legendEl.innerHTML = '● = down &nbsp; ○ = up';
   }
-  // If the currently-selected note is out of range at this octave, snap to the
-  // lowest in-range note so the card never shows an unplayable note.
+  // If the currently-selected note is out of range at this octave, snap to an
+  // in-range note so the card never shows an unplayable note. Prefer a note in
+  // the octave the user just selected; only fall back to other octaves if the
+  // chosen octave has nothing playable. (Previously always fell back to the
+  // lowest octave, so tapping a high octave bounced the user to the bottom.)
   {
     const curMidi = (trpCurrentOctave + 1) * 12 + GCC_ROOTS.indexOf(trpCurrentNote);
     if (curMidi < rLo || curMidi > rHi) {
+      const allOcts = windActiveRange()?.octaves ?? [trpCurrentOctave];
+      // Selected octave first, then the rest in their natural order.
+      const octSearch = [trpCurrentOctave].concat(allOcts.filter(o => o !== trpCurrentOctave));
       let snapped = false;
-      for (let oct of (windActiveRange()?.octaves ?? [trpCurrentOctave])) {
+      for (let oct of octSearch) {
         for (let pc = 0; pc < 12; pc++) {
           const m = (oct + 1) * 12 + pc;
           if (m >= rLo && m <= rHi) { trpCurrentOctave = oct; trpCurrentNote = GCC_ROOTS[pc]; snapped = true; break; }
@@ -82299,8 +83039,8 @@ function bowedScalePlay() {
   const seen=new Set(); notes=notes.filter(n=>seen.has(n.midi)?false:seen.add(n.midi));
   if(bowedScaleDir==='desc') notes=[...notes].reverse();
 
-  const ctx=getAudio(), chain=buildLimiterChain(ctx,0.5), now=ctx.currentTime;
-  const noteDur=bowedScaleDelay*0.82;
+  const ctx=getAudio(), chain=buildLimiterChain(ctx,0.9), now=ctx.currentTime;
+  const noteDur=bowedScaleDelay*0.92;
   const toneId = INST_TONE_MAP[chordScaleInstrument] || 'bowed_violin';
   document.getElementById('bowedScaleDiagramContainer')?.classList.add('playing');
   const btn=document.getElementById('bowedScalePlayBtn');
@@ -82310,7 +83050,7 @@ function bowedScalePlay() {
   notes.forEach((step,i)=>{
     const when=now+i*bowedScaleDelay;
     // Sampled bowed instrument (matches NOTES / DOUBLE STOPS) — not the synth fallback.
-    const node=_chartPlay(toneId,midiToFreq(step.midi),ctx,chain.gain,0.32,noteDur,when);
+    const node=_chartPlay(toneId,midiToFreq(step.midi),ctx,chain.gain,0.42,noteDur,when);
     if(node) bowedScaleNodes.push(node);
     bowedScaleTimers.push(setTimeout(()=>{
       if(!svg) return;
@@ -90858,6 +91598,17 @@ function mqCommitSessionStats() {
     s.packTotal[k]   = (s.packTotal[k]   || 0) + (ps[1] || 0);
   });
   mqSaveStats(s);
+  // Bridge MQ stats (localStorage) into progState so achievements can read them.
+  try {
+    let dirty = false;
+    if ((s.totalCorrect||0) !== progState.mqTotalCorrect) { progState.mqTotalCorrect = s.totalCorrect||0; dirty = true; }
+    if ((s.bestSurvival||0) > (progState.mqBestSurvival||0)) { progState.mqBestSurvival = s.bestSurvival||0; dirty = true; }
+    // Perfect daily run: every question in a daily quiz answered correctly.
+    if (MQ.mode === 'daily' && (MQ.current||0) > 0 && (MQ.correct||0) === (MQ.current||0) && !progState.mqDailyPerfect) {
+      progState.mqDailyPerfect = true; dirty = true;
+    }
+    if (dirty) { progSave(); checkAchievements(); }
+  } catch(e) {}
 }
 function mqShowStats() {
   var s = mqGetStats();
@@ -92032,6 +92783,7 @@ function mqMaybeSaveDaily() {
   if (st && st.status === 'done') return;   // idempotent
   mqDailyPersist('done');
   mqSyncDailyCard();
+  try { markDailyChallengeDone(); } catch(e) {}
 }
 
 function mqShowDailyResult(data) {
