@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.31 -->
+<!-- INTONARE_VERSION: 0.73.32 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20956,7 +20956,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.73.31';
+const INTONARE_VERSION = '0.73.32';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -24772,6 +24772,20 @@ function processAudio() {
     }
     const freq = detectPitch(buf, _sr);
     if (freq > 20 && freq < 4500) {
+      // Drone-context octave guard: when a reference drone is playing and the new
+      // reading is a near-CLEAN octave from the current smoothed pitch (≈1200¢ ±
+      // a semitone), it's almost certainly the detector grabbing a harmonic/sub-
+      // harmonic rather than a real octave leap by the singer. Drop the frame so
+      // the readout holds the note the user is actually singing. Only active with
+      // a drone (tonal-centre) — the plain tuner keeps its original behavior.
+      if (typeof droneActive !== 'undefined' && droneActive && activeRefFreq > 0 && smoothedFreq > 0) {
+        const dCents = Math.abs(1200 * Math.log2(freq / smoothedFreq));
+        if (dCents > 1100 && dCents < 1300) {
+          _pitchMissFrames = 0;          // treat as held, not silence
+          animFrame = requestAnimationFrame(processAudio);
+          return;
+        }
+      }
       _pitchMissFrames = 0;   // got a valid pitch — reset the silence grace counter
       // Outlier-resistant EMA: if new reading is >800¢ from current (overtone territory),
       // apply minimal weight so it can't snap-jump the display
@@ -25172,10 +25186,6 @@ async function startMic(_opts) {
       const hvw = document.getElementById('headerVolWrap');
       if (hvw) hvw.classList.add('active');
       if (mode === 'tuner') pitchHistStart();
-      // ░░ TEMP DIAGNOSTIC: badge shows path + whether AEC actually applied on
-      //    this device (requested vs applied can differ — some devices lack it). ░░
-      _setMicPathBadge('NATIVE aec=' + (_lastNativeStart && _lastNativeStart.aecApplied)
-        + ' [' + (_lastNativeStart && _lastNativeStart.aecNote || '?') + ']', '#2a7');
       console.log('[IntonareMic] NATIVE path active; start result:', JSON.stringify(_lastNativeStart));
       updateDetectedBPMDisplay();
       processAudio();
@@ -25286,10 +25296,6 @@ async function startMic(_opts) {
     const hvw = document.getElementById('headerVolWrap');
     if (hvw) hvw.classList.add('active');
     if (mode === 'tuner') pitchHistStart();
-    // ░░ TEMP DIAGNOSTIC: show a badge only when a native-capable surface fell
-    //    back to WebView, so normal WebView surfaces stay clean. Remove after
-    //    full native migration. ░░
-    if (_nativeFellBack) _setMicPathBadge('WEB (fallback)', '#a63');
     updateDetectedBPMDisplay();
     processAudio();
   } catch(e) {
@@ -25301,7 +25307,6 @@ async function startMic(_opts) {
 }
 function stopMic() {
   isListening = false;
-  if (typeof _clearMicPathBadge === 'function') _clearMicPathBadge();
   if (_nativeMicActive) _nativeMicStop();
   pitchHistStop();
   if (animFrame) cancelAnimationFrame(animFrame);
@@ -25340,28 +25345,6 @@ function stopMic() {
 // / per-surface logic runs unchanged on native audio. Per-surface AEC/NS/AGC
 // comes from intonareMicAudioConfig(). Opt-in: only surfaces that pass
 // { native:true } to startMic use this; everything else keeps the WebView path.
-// ░░ TEMP DIAGNOSTIC (remove after full native migration): a fixed badge that
-//    shows which mic path is live. Created on first use, processAudio never
-//    touches it, so it can't be overwritten by the per-frame status updates. ░░
-function _setMicPathBadge(text, color) {
-  let b = document.getElementById('_micPathBadge');
-  if (!b) {
-    b = document.createElement('div');
-    b.id = '_micPathBadge';
-    b.style.cssText = 'position:fixed;top:6px;left:50%;transform:translateX(-50%);'
-      + 'z-index:99999;font:600 11px/1 monospace;letter-spacing:1px;padding:4px 10px;'
-      + 'border-radius:10px;color:#fff;pointer-events:none;opacity:.92';
-    document.body.appendChild(b);
-  }
-  b.textContent = 'MIC: ' + text;
-  b.style.background = color || '#444';
-  b.style.display = 'block';
-}
-function _clearMicPathBadge() {
-  const b = document.getElementById('_micPathBadge');
-  if (b) b.style.display = 'none';
-}
-
 function _getNativeMicPlugin() {
   if (_nativeMicPlugin) return _nativeMicPlugin;
   let p = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IntonareMic;
@@ -25434,7 +25417,7 @@ const _DRONE_NOTCH_Q = 18;    // high Q → narrow (~a few cents); tune by ear/t
 // out as a P4 (the singer's note neared an un-notched drone harmonic). Notching
 // the first few harmonics rejects the drone's real spectral footprint while
 // leaving the gaps between harmonics (where the voice usually sits) untouched.
-const _DRONE_NOTCH_HARMONICS = 3;
+const _DRONE_NOTCH_HARMONICS = 2;
 // Build/refresh the notch bank for a target fundamental; null/0 clears it.
 function _setDroneNotch(freq, sr) {
   if (!freq || freq <= 0) { _droneNotch = null; _droneNotchFreq = 0; return; }
@@ -26900,6 +26883,7 @@ function tcDroneStart() {
   // "every note sounds the same." Sync them before starting the oscillators.
   droneRoot = tcRoot;
   droneOctaveIdx = tcOctaveIdx;
+  _dronePureSine = true;   // tonal-centre: pure sine so the detection notch nukes it cleanly
   droneActive = false; // let droneStart think it's a fresh start
   droneStart();        // starts audio, sets droneActive = true
   // Override the DOM updates droneStart() made to the TRAIN elements — update tc ones instead
@@ -41707,6 +41691,7 @@ let droneOctaveIdx = 1;    // 0=low, 1=mid, 2=high
 let droneFreq = 220;
 let droneVolume = 1.00;
 let droneNodes = null;
+let _dronePureSine = false;   // tonal-centre sets true: single sine = trivially notch-able
 let droneScaleType = 'major';
 
 // Help content for Scale Improv
@@ -41734,7 +41719,7 @@ function droneInit() {
         droneOctaveIdx = i;
         document.querySelectorAll('.drone-oct-btn').forEach(b => b.classList.toggle('active', b.textContent === label));
         updateDroneDisplay();
-        if (droneActive) { droneStop(true); droneStart(); }
+        if (droneActive) { droneStop(true); _dronePureSine = false; droneStart(); }
       };
       octRow.appendChild(btn);
     });
@@ -41796,30 +41781,36 @@ function droneUpdateScale() {
 }
 
 function toggleDronePlay() {
-  if (droneActive) droneStop(); else droneStart();
+  if (droneActive) droneStop(); else { _dronePureSine = false; droneStart(); }
 }
 
 function droneStart() {
   updateDroneDisplay();
   const ctx = ensurePracticeCtx();
   const now = ctx.currentTime;
-  // Pitch-UNAMBIGUOUS drone: this is an intonation/pitch-matching tool, so the
-  // root must be the one obvious pitch centre. A root+fifth+octave stack (the old
-  // build) gave the ear AND the detector three pitches to chase — the fifth in
-  // particular pulls a singer off the root. So: fundamental carries the pitch,
-  // a QUIET octave adds a little body, and NO fifth. A touch of triangle on the
-  // fundamental keeps it from sounding sterile without introducing a new pitch.
-  const fund = ctx.createOscillator(); fund.type = 'triangle'; fund.frequency.value = droneFreq;
-  const oct  = ctx.createOscillator(); oct.type  = 'sine';     oct.frequency.value  = droneFreq * 2;
-  const g1 = ctx.createGain(); g1.gain.value = 0.85;   // fundamental dominant
-  const g2 = ctx.createGain(); g2.gain.value = 0.07;   // octave: body only, well below fund
+  // Two drone flavors:
+  //  • Pure sine (tonal-centre): ALL energy at one frequency, so the detection
+  //    notch kills essentially the whole drone with a single band — the cleanest
+  //    possible reference to detect a voice against. A triangle has many harmonics
+  //    (3rd, 5th, 7th...) that bleed past the notch; a sine has none. Slightly
+  //    more sterile to the ear, but this tool is about pitch accuracy, not warmth.
+  //  • Rich (Scale Improv etc.): triangle fundamental + quiet octave for body,
+  //    where there's no live detection fighting the drone.
+  let fund, oct = null;
+  if (_dronePureSine) {
+    fund = ctx.createOscillator(); fund.type = 'sine'; fund.frequency.value = droneFreq;
+  } else {
+    fund = ctx.createOscillator(); fund.type = 'triangle'; fund.frequency.value = droneFreq;
+    oct  = ctx.createOscillator(); oct.type  = 'sine';     oct.frequency.value  = droneFreq * 2;
+  }
+  const g1 = ctx.createGain(); g1.gain.value = _dronePureSine ? 0.9 : 0.85;
   const master = ctx.createGain();
   master.gain.setValueAtTime(0, now);
   master.gain.linearRampToValueAtTime(droneVolume, now + 0.3);
   fund.connect(g1); g1.connect(master);
-  oct.connect(g2);  g2.connect(master);
+  if (oct) { const g2 = ctx.createGain(); g2.gain.value = 0.07; oct.connect(g2); g2.connect(master); }
   master.connect(practiceMasterGain);
-  fund.start(now); oct.start(now);
+  fund.start(now); if (oct) oct.start(now);
   droneNodes = { fund, oct, master };
   droneActive = true;
   document.getElementById('droneToggleBtn').innerHTML = '■ STOP DRONE';
@@ -41843,7 +41834,7 @@ function droneStop(silent) {
     n.master.gain.setValueAtTime(n.master.gain.value, now);
     n.master.gain.linearRampToValueAtTime(0, now + 0.06);
     n.fund.stop(now + 0.07);
-    n.oct.stop(now + 0.07);
+    if (n.oct) n.oct.stop(now + 0.07);
   } catch(e) {}
   if (!silent) {
     document.getElementById('droneToggleBtn').innerHTML = '▶ START DRONE';
