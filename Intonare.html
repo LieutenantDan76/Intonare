@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.23 -->
+<!-- INTONARE_VERSION: 0.73.24 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20943,7 +20943,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.73.23';
+const INTONARE_VERSION = '0.73.24';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -25137,10 +25137,10 @@ async function startMic(_opts) {
       const hvw = document.getElementById('headerVolWrap');
       if (hvw) hvw.classList.add('active');
       if (mode === 'tuner') pitchHistStart();
-      const micLbl = document.getElementById('micLabel');
-      // ░░ TEMP DIAGNOSTIC (remove after full native migration): show which mic
-      //    path is live so "is this native or fallback?" is never a mystery. ░░
-      if (micLbl) micLbl.textContent = (mode === 'metronome' ? t('status_analyzing') : t('status_listening')) + ' · NATIVE';
+      // ░░ TEMP DIAGNOSTIC (remove after full native migration): a fixed on-screen
+      //    badge showing which mic path is live, so "native or fallback?" is never
+      //    a mystery. Written to a dedicated element processAudio never touches. ░░
+      _setMicPathBadge('NATIVE', '#2a7');
       console.log('[IntonareMic] NATIVE path active');
       updateDetectedBPMDisplay();
       processAudio();
@@ -25251,11 +25251,10 @@ async function startMic(_opts) {
     const hvw = document.getElementById('headerVolWrap');
     if (hvw) hvw.classList.add('active');
     if (mode === 'tuner') pitchHistStart();
-    const micLbl = document.getElementById('micLabel');
-    // ░░ TEMP DIAGNOSTIC: mark WEB only when a native-capable surface fell back,
-    //    so normal WebView surfaces stay clean. Remove after full migration. ░░
-    if (micLbl) micLbl.textContent = (mode === 'metronome' ? t('status_analyzing') : t('status_listening'))
-      + (_nativeFellBack ? ' · WEB (fallback)' : '');
+    // ░░ TEMP DIAGNOSTIC: show a badge only when a native-capable surface fell
+    //    back to WebView, so normal WebView surfaces stay clean. Remove after
+    //    full native migration. ░░
+    if (_nativeFellBack) _setMicPathBadge('WEB (fallback)', '#a63');
     updateDetectedBPMDisplay();
     processAudio();
   } catch(e) {
@@ -25267,6 +25266,7 @@ async function startMic(_opts) {
 }
 function stopMic() {
   isListening = false;
+  if (typeof _clearMicPathBadge === 'function') _clearMicPathBadge();
   if (_nativeMicActive) _nativeMicStop();
   pitchHistStop();
   if (animFrame) cancelAnimationFrame(animFrame);
@@ -25305,6 +25305,28 @@ function stopMic() {
 // / per-surface logic runs unchanged on native audio. Per-surface AEC/NS/AGC
 // comes from intonareMicAudioConfig(). Opt-in: only surfaces that pass
 // { native:true } to startMic use this; everything else keeps the WebView path.
+// ░░ TEMP DIAGNOSTIC (remove after full native migration): a fixed badge that
+//    shows which mic path is live. Created on first use, processAudio never
+//    touches it, so it can't be overwritten by the per-frame status updates. ░░
+function _setMicPathBadge(text, color) {
+  let b = document.getElementById('_micPathBadge');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = '_micPathBadge';
+    b.style.cssText = 'position:fixed;top:6px;left:50%;transform:translateX(-50%);'
+      + 'z-index:99999;font:600 11px/1 monospace;letter-spacing:1px;padding:4px 10px;'
+      + 'border-radius:10px;color:#fff;pointer-events:none;opacity:.92';
+    document.body.appendChild(b);
+  }
+  b.textContent = 'MIC: ' + text;
+  b.style.background = color || '#444';
+  b.style.display = 'block';
+}
+function _clearMicPathBadge() {
+  const b = document.getElementById('_micPathBadge');
+  if (b) b.style.display = 'none';
+}
+
 function _getNativeMicPlugin() {
   if (_nativeMicPlugin) return _nativeMicPlugin;
   let p = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IntonareMic;
