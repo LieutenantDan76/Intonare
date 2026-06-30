@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.20 -->
+<!-- INTONARE_VERSION: 0.73.21 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -19210,12 +19210,6 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="iv-controls">
           <button class="iv-btn primary" id="droneToggleBtn" onclick="toggleDronePlay()" style="background:var(--grad-warm);box-shadow:0 4px 14px rgba(255,160,122,0.3)" data-i18n="drone_start">▶ START DRONE</button>
         </div>
-        <!-- ░░ PHASE 1c NATIVE AEC TEST — remove once native mic is the default path ░░ -->
-        <div class="iv-controls" style="margin-top:6px">
-          <button class="iv-btn" id="ntNativeTestBtn" onclick="window.__intonareTonalNativeToggle&&window.__intonareTonalNativeToggle()" style="font-size:11px;border:1px solid #6a8">NATIVE MIC TEST (AEC)</button>
-        </div>
-        <div id="ntNativeTestOut" style="font-size:11px;opacity:.8;text-align:center;margin-top:4px">native test off</div>
-        <!-- ░░ end Phase 1c test block ░░ -->
         <div class="ref-controls">
           <div class="vol-slider-row">
             <div class="vol-slider-label" data-i18n="vol_label">VOL</div>
@@ -21103,100 +21097,7 @@ function intonareMicAudioConfig() {
 })();
 /* ░░ end Phase 1a handlers ░░ */
 
-/* ░░ PHASE 1c NATIVE AEC TEST (tonal-centre) — remove once native mic is the
-   default detection path. Proves: native capture + AcousticEchoCanceler can
-   detect the USER singing while the drone plays on the speaker, instead of
-   locking onto the drone. Runs the EXISTING detectPitch on native PCM frames. ░░ */
-(function () {
-  let P = null, frameListener = null, active = false;
-
-  function plugin() {
-    if (P) return P;
-    let p = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IntonareMic;
-    if (!p && window.Capacitor && typeof window.Capacitor.registerPlugin === 'function') {
-      p = window.Capacitor.registerPlugin('IntonareMic');
-    }
-    P = p || null;
-    return P;
-  }
-
-  // Decode base64 int16 little-endian PCM -> Float32 in -1..1.
-  function b64ToFloat32(b64) {
-    const bin = atob(b64);
-    const len = bin.length >> 1; // 2 bytes per sample
-    const out = new Float32Array(len);
-    for (let i = 0; i < len; i++) {
-      const lo = bin.charCodeAt(i * 2);
-      const hi = bin.charCodeAt(i * 2 + 1);
-      let v = (hi << 8) | lo;
-      if (v >= 0x8000) v -= 0x10000; // sign-extend
-      out[i] = v / 32768;
-    }
-    return out;
-  }
-
-  window.__intonareTonalNativeToggle = async function () {
-    const out = document.getElementById('ntNativeTestOut');
-    const btn = document.getElementById('ntNativeTestBtn');
-    const p = plugin();
-    if (!p) { if (out) out.textContent = 'native plugin not found'; return; }
-
-    if (active) {
-      // ── stop ──
-      try { await p.stop({}); } catch (e) {}
-      if (frameListener) { try { await frameListener.remove(); } catch (e) {} frameListener = null; }
-      active = false;
-      if (btn) btn.classList.remove('primary');
-      if (out) out.textContent = 'native test off (tap mic button for normal mode)';
-      return;
-    }
-
-    // ── start: native mic with AEC + PCM streaming ──
-    // The WebView mic and native AudioRecord can't both hold the device. The
-    // tonal tool turns the WebView mic on (it's a MIC_TOOL), so release it first
-    // or native start() fails with "mic in use by another app".
-    try {
-      if (typeof isListening !== 'undefined' && isListening && typeof stopMic === 'function') {
-        stopMic();
-        // give the OS a beat to fully release the capture session before re-grabbing
-        await new Promise(function (r) { setTimeout(r, 250); });
-      }
-    } catch (e) {}
-    try {
-      if (!frameListener && typeof p.addListener === 'function') {
-        frameListener = await p.addListener('micFrame', function (fr) {
-          if (!fr || !fr.pcm) return;
-          let buf;
-          try { buf = b64ToFloat32(fr.pcm); } catch (e) { return; }
-          const sr = fr.sampleRate || 44100;
-          // Run the EXISTING detector on the native frame.
-          const freq = (typeof detectPitch === 'function') ? detectPitch(buf, sr) : -1;
-          if (freq > 20 && freq < 4500) {
-            const ni = (typeof freqToNote === 'function') ? freqToNote(freq) : null;
-            // Drive the tonal-centre interval display against the live drone ref.
-            if (typeof updateIntervalDisplay === 'function') updateIntervalDisplay(freq);
-            if (out) out.textContent = 'NATIVE: ' + freq.toFixed(1) + ' Hz'
-              + (ni ? ' · ' + ni.name + ni.oct + ' ' + (ni.cents >= 0 ? '+' : '') + ni.cents.toFixed(0) + '\u00a2' : '');
-          } else {
-            if (out) out.textContent = 'NATIVE: (no pitch \u2014 sing against the drone)';
-          }
-        });
-      }
-      const cfg = (typeof intonareMicAudioConfig === 'function')
-        ? intonareMicAudioConfig() : { aec: true, ns: false, agc: false };
-      cfg.sendPcm = true;            // need raw frames for detection
-      cfg.aec = true;                // force AEC on for this test regardless of surface
-      const r = await p.start(cfg);
-      active = true;
-      if (btn) btn.classList.add('primary');
-      if (out) out.textContent = 'NATIVE ON (aecApplied=' + r.aecApplied + ') \u2014 start the drone, then sing';
-    } catch (e) {
-      if (out) out.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
-    }
-  };
-})();
-/* ░░ end Phase 1c test ░░ */
-const INTONARE_VERSION = '0.73.20';
+const INTONARE_VERSION = '0.73.21';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -21320,6 +21221,19 @@ function getAudio() {
 
 let audioCtx = null;      // alias to shared context while mic is active
 let analyser = null, micStream = null, micSource = null, animFrame = null;
+// ── Native mic bridge (Phase 1 integration) ──────────────────────────────────
+// When _nativeMicActive is true, processAudio reads audio from _nativeRing
+// (filled by the native plugin's micFrame events) instead of the WebView
+// analyser. Opt-in per surface via startMic({ native:true }); defaults off so
+// every not-yet-migrated surface keeps the proven WebView path untouched.
+let _nativeMicActive = false;
+let _nativeMicPlugin = null;
+let _nativeFrameListener = null;
+let _nativeLevelListener = null;
+const _NATIVE_RING_SIZE = 4096;               // matches processAudio's read size
+const _nativeRing = new Float32Array(_NATIVE_RING_SIZE);
+let _nativeRingFilled = 0;                     // samples written so far (caps at SIZE)
+let _nativeSampleRate = 44100;
 let isListening = false;
 let smoothedFreq = 0;
 let smoothedCents = 0;          // EMA-smoothed cents for needle — kills bounce
@@ -24946,7 +24860,16 @@ function _clearHold() {
 function processAudio() {
   if (!isListening) return;
   const buf = new Float32Array(4096);
-  analyser.getFloatTimeDomainData(buf);
+  // Native path: copy the latest 4096 samples the native mic has delivered.
+  // WebView path (default): pull from the analyser exactly as before.
+  let _sr;
+  if (_nativeMicActive) {
+    buf.set(_nativeRing);            // ring is kept as a rolling 4096 window
+    _sr = _nativeSampleRate;
+  } else {
+    analyser.getFloatTimeDomainData(buf);
+    _sr = audioCtx.sampleRate;
+  }
 
   let rms = 0;
   for (let i = 0; i < 4096; i++) rms += buf[i] * buf[i];
@@ -24966,7 +24889,7 @@ function processAudio() {
     detectOnset(buf);
     updateDetectedBPMDisplay();
   } else {
-    const freq = detectPitch(buf, audioCtx.sampleRate);
+    const freq = detectPitch(buf, _sr);
     if (freq > 20 && freq < 4500) {
       _pitchMissFrames = 0;   // got a valid pitch — reset the silence grace counter
       // Outlier-resistant EMA: if new reading is >800¢ from current (overtone territory),
@@ -25339,7 +25262,46 @@ document.addEventListener('visibilitychange', () => {
 });
 acquireWakeLock();
 
-async function startMic() {
+async function startMic(_opts) {
+  // Native path opt-in: a surface can request the native mic engine by passing
+  // { native:true }, or by being in the migrated-surfaces set below. Migrated
+  // surfaces use native; everything else keeps the proven WebView path until
+  // it's individually flipped over.
+  const _NATIVE_SURFACES_TOOLS = ['tonal'];   // grows as each surface is migrated
+  const _surfaceWantsNative =
+    ((typeof currentTool !== 'undefined') && _NATIVE_SURFACES_TOOLS.indexOf(currentTool) !== -1);
+  const _useNative = !!(_opts && _opts.native) || _surfaceWantsNative;
+
+  if (_useNative) {
+    try {
+      // Permission still flows through the Capacitor Permissions plugin / native
+      // request in MainActivity; AudioRecord just needs RECORD_AUDIO granted.
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Permissions) {
+        try {
+          const result = await window.Capacitor.Plugins.Permissions.request({ permissions: ['microphone'] });
+          if (result && result.microphone === 'denied') throw new Error('Microphone permission denied by user');
+        } catch (permErr) {
+          if (permErr.message && permErr.message.includes('denied')) throw permErr;
+        }
+      }
+      await _nativeMicStart();
+      _micAGCOn = false;        // native path keeps AGC off (per config); loudness gates valid
+      isListening = true;
+      const hvw = document.getElementById('headerVolWrap');
+      if (hvw) hvw.classList.add('active');
+      if (mode === 'tuner') pitchHistStart();
+      const micLbl = document.getElementById('micLabel');
+      if (micLbl) micLbl.textContent = mode === 'metronome' ? t('status_analyzing') : t('status_listening');
+      updateDetectedBPMDisplay();
+      processAudio();
+      return;
+    } catch (e) {
+      // Native failed — fall through to the WebView path so the surface still works.
+      _nativeMicActive = false;
+      try { _nativeMicStop(); } catch (e2) {}
+    }
+  }
+
   try {
     // On Capacitor/Android use the built-in Permissions plugin to trigger
     // the native OS permission dialog — this works without any extra packages
@@ -25450,6 +25412,7 @@ async function startMic() {
 }
 function stopMic() {
   isListening = false;
+  if (_nativeMicActive) _nativeMicStop();
   pitchHistStop();
   if (animFrame) cancelAnimationFrame(animFrame);
   // Disconnect graph but DON'T close the shared context — other modules need it.
@@ -25478,6 +25441,88 @@ function stopMic() {
   setNoteSilent(); _clearHold(); updateChromaStrip(-1); updateTooltip(0, false);
   if (mode === 'tools') updateIntervalDisplay(null);
   updateDetectedBPMDisplay();
+}
+
+// ── Native mic integration (Phase 1, Option A) ───────────────────────────────
+// These start/stop the native AudioRecord plugin and route its PCM frames into
+// _nativeRing as a rolling 4096-sample window. processAudio reads that window
+// when _nativeMicActive — so ALL existing smoothing / note-hold / miss-tolerance
+// / per-surface logic runs unchanged on native audio. Per-surface AEC/NS/AGC
+// comes from intonareMicAudioConfig(). Opt-in: only surfaces that pass
+// { native:true } to startMic use this; everything else keeps the WebView path.
+function _getNativeMicPlugin() {
+  if (_nativeMicPlugin) return _nativeMicPlugin;
+  let p = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IntonareMic;
+  if (!p && window.Capacitor && typeof window.Capacitor.registerPlugin === 'function') {
+    p = window.Capacitor.registerPlugin('IntonareMic');
+  }
+  _nativeMicPlugin = p || null;
+  return _nativeMicPlugin;
+}
+
+// Decode base64 int16 LE PCM -> Float32 (-1..1).
+function _nativeB64ToFloat32(b64) {
+  const bin = atob(b64);
+  const len = bin.length >> 1;
+  const out = new Float32Array(len);
+  for (let i = 0; i < len; i++) {
+    const lo = bin.charCodeAt(i * 2);
+    const hi = bin.charCodeAt(i * 2 + 1);
+    let v = (hi << 8) | lo;
+    if (v >= 0x8000) v -= 0x10000;
+    out[i] = v / 32768;
+  }
+  return out;
+}
+
+// Append a frame into the rolling window: shift old samples left, copy new in.
+function _nativeRingPush(frame) {
+  const n = frame.length;
+  if (n >= _NATIVE_RING_SIZE) {
+    _nativeRing.set(frame.subarray(n - _NATIVE_RING_SIZE));
+    _nativeRingFilled = _NATIVE_RING_SIZE;
+    return;
+  }
+  // shift left by n, then write frame at the tail
+  _nativeRing.copyWithin(0, n);
+  _nativeRing.set(frame, _NATIVE_RING_SIZE - n);
+  _nativeRingFilled = Math.min(_NATIVE_RING_SIZE, _nativeRingFilled + n);
+}
+
+async function _nativeMicStart() {
+  const p = _getNativeMicPlugin();
+  if (!p) throw new Error('IntonareMic plugin not found');
+  // Reset the ring so stale audio from a prior session can't leak in.
+  _nativeRing.fill(0);
+  _nativeRingFilled = 0;
+  // Subscribe to PCM frames.
+  if (!_nativeFrameListener && typeof p.addListener === 'function') {
+    _nativeFrameListener = await p.addListener('micFrame', function (fr) {
+      if (!fr || !fr.pcm) return;
+      let frame;
+      try { frame = _nativeB64ToFloat32(fr.pcm); } catch (e) { return; }
+      if (fr.sampleRate) _nativeSampleRate = fr.sampleRate;
+      _nativeRingPush(frame);
+    });
+  }
+  // Per-surface processing config (AEC/NS/AGC) + PCM streaming for detection.
+  const cfg = (typeof intonareMicAudioConfig === 'function')
+    ? intonareMicAudioConfig() : { aec: false, ns: false, agc: false };
+  cfg.sendPcm = true;
+  const r = await p.start(cfg);
+  if (r && r.sampleRate) _nativeSampleRate = r.sampleRate;
+  _nativeMicActive = true;
+  return r;
+}
+
+function _nativeMicStop() {
+  _nativeMicActive = false;
+  const p = _nativeMicPlugin;
+  if (_nativeFrameListener) { try { _nativeFrameListener.remove(); } catch (e) {} _nativeFrameListener = null; }
+  if (_nativeLevelListener) { try { _nativeLevelListener.remove(); } catch (e) {} _nativeLevelListener = null; }
+  if (p) { try { p.stop({}); } catch (e) {} }
+  _nativeRing.fill(0);
+  _nativeRingFilled = 0;
 }
 
 // ── Resume mic + active mic-tool after returning from background ──
