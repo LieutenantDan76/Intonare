@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.24 -->
+<!-- INTONARE_VERSION: 0.73.25 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20943,7 +20943,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.73.24';
+const INTONARE_VERSION = '0.73.25';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -25337,6 +25337,45 @@ function _getNativeMicPlugin() {
   return _nativeMicPlugin;
 }
 
+// ── Native bandpass (match the WebView pre-filter before detection) ──────────
+// The WebView mic path runs every signal through HP 25Hz + LP 4500Hz before the
+// analyser, and the YIN thresholds were tuned on that band-limited signal. The
+// native path delivers raw audio, so sub-bass rumble and HF hiss reach detect-
+// Pitch and shallow out the autocorrelation dips → dropouts ("hit or miss").
+// We replicate the same two filters in JS as stateful biquads (Direct Form I,
+// RBJ cookbook) so native detection sees the same clean band the tuner expects.
+// State persists across frames (filters have memory) and resets on (re)start.
+const _NF_SR = 44100;
+function _biquadHP(fc, sr, Q) {
+  const w0 = 2 * Math.PI * fc / sr, c = Math.cos(w0), s = Math.sin(w0), al = s / (2 * Q);
+  const b0 = (1 + c) / 2, b1 = -(1 + c), b2 = (1 + c) / 2, a0 = 1 + al, a1 = -2 * c, a2 = 1 - al;
+  return { b0: b0/a0, b1: b1/a0, b2: b2/a0, a1: a1/a0, a2: a2/a0, x1:0, x2:0, y1:0, y2:0 };
+}
+function _biquadLP(fc, sr, Q) {
+  const w0 = 2 * Math.PI * fc / sr, c = Math.cos(w0), s = Math.sin(w0), al = s / (2 * Q);
+  const b0 = (1 - c) / 2, b1 = 1 - c, b2 = (1 - c) / 2, a0 = 1 + al, a1 = -2 * c, a2 = 1 - al;
+  return { b0: b0/a0, b1: b1/a0, b2: b2/a0, a1: a1/a0, a2: a2/a0, x1:0, x2:0, y1:0, y2:0 };
+}
+let _nfHP = _biquadHP(25, _NF_SR, 0.707);
+let _nfLP = _biquadLP(4500, _NF_SR, 0.707);
+function _nfReset() {
+  _nfHP.x1 = _nfHP.x2 = _nfHP.y1 = _nfHP.y2 = 0;
+  _nfLP.x1 = _nfLP.x2 = _nfLP.y1 = _nfLP.y2 = 0;
+}
+function _nfApply(frame) {
+  const hp = _nfHP, lp = _nfLP;
+  for (let i = 0; i < frame.length; i++) {
+    const x = frame[i];
+    let y = hp.b0*x + hp.b1*hp.x1 + hp.b2*hp.x2 - hp.a1*hp.y1 - hp.a2*hp.y2;
+    hp.x2 = hp.x1; hp.x1 = x; hp.y2 = hp.y1; hp.y1 = y;
+    const x2 = y;
+    y = lp.b0*x2 + lp.b1*lp.x1 + lp.b2*lp.x2 - lp.a1*lp.y1 - lp.a2*lp.y2;
+    lp.x2 = lp.x1; lp.x1 = x2; lp.y2 = lp.y1; lp.y1 = y;
+    frame[i] = y;
+  }
+  return frame;
+}
+
 // Decode base64 int16 LE PCM -> Float32 (-1..1).
 function _nativeB64ToFloat32(b64) {
   const bin = atob(b64);
@@ -25369,9 +25408,10 @@ function _nativeRingPush(frame) {
 async function _nativeMicStart() {
   const p = _getNativeMicPlugin();
   if (!p) throw new Error('IntonareMic plugin not found');
-  // Reset the ring so stale audio from a prior session can't leak in.
+  // Reset the ring + filter state so stale audio/filter memory can't leak in.
   _nativeRing.fill(0);
   _nativeRingFilled = 0;
+  _nfReset();
   // Subscribe to PCM frames.
   if (!_nativeFrameListener && typeof p.addListener === 'function') {
     _nativeFrameListener = await p.addListener('micFrame', function (fr) {
@@ -25379,6 +25419,7 @@ async function _nativeMicStart() {
       let frame;
       try { frame = _nativeB64ToFloat32(fr.pcm); } catch (e) { return; }
       if (fr.sampleRate) _nativeSampleRate = fr.sampleRate;
+      _nfApply(frame);           // bandpass to match the WebView pre-filter
       _nativeRingPush(frame);
     });
   }
@@ -41646,22 +41687,24 @@ function droneStart() {
   updateDroneDisplay();
   const ctx = ensurePracticeCtx();
   const now = ctx.currentTime;
-  // Build a richer drone using fundamental + octave + fifth
-  const fund = ctx.createOscillator(); fund.type = 'sine'; fund.frequency.value = droneFreq;
-  const oct = ctx.createOscillator(); oct.type = 'sine'; oct.frequency.value = droneFreq * 2;
-  const fifth = ctx.createOscillator(); fifth.type = 'triangle'; fifth.frequency.value = droneFreq * 1.5;
-  const g1 = ctx.createGain(); g1.gain.value = 0.7;
-  const g2 = ctx.createGain(); g2.gain.value = 0.15;
-  const g3 = ctx.createGain(); g3.gain.value = 0.10;
+  // Pitch-UNAMBIGUOUS drone: this is an intonation/pitch-matching tool, so the
+  // root must be the one obvious pitch centre. A root+fifth+octave stack (the old
+  // build) gave the ear AND the detector three pitches to chase — the fifth in
+  // particular pulls a singer off the root. So: fundamental carries the pitch,
+  // a QUIET octave adds a little body, and NO fifth. A touch of triangle on the
+  // fundamental keeps it from sounding sterile without introducing a new pitch.
+  const fund = ctx.createOscillator(); fund.type = 'triangle'; fund.frequency.value = droneFreq;
+  const oct  = ctx.createOscillator(); oct.type  = 'sine';     oct.frequency.value  = droneFreq * 2;
+  const g1 = ctx.createGain(); g1.gain.value = 0.85;   // fundamental dominant
+  const g2 = ctx.createGain(); g2.gain.value = 0.07;   // octave: body only, well below fund
   const master = ctx.createGain();
   master.gain.setValueAtTime(0, now);
   master.gain.linearRampToValueAtTime(droneVolume, now + 0.3);
   fund.connect(g1); g1.connect(master);
-  oct.connect(g2); g2.connect(master);
-  fifth.connect(g3); g3.connect(master);
+  oct.connect(g2);  g2.connect(master);
   master.connect(practiceMasterGain);
-  fund.start(now); oct.start(now); fifth.start(now);
-  droneNodes = { fund, oct, fifth, master };
+  fund.start(now); oct.start(now);
+  droneNodes = { fund, oct, master };
   droneActive = true;
   document.getElementById('droneToggleBtn').innerHTML = '■ STOP DRONE';
   document.getElementById('droneState').textContent = t('drone_playing');
@@ -41671,16 +41714,21 @@ function droneStart() {
 function droneStop(silent) {
   if (!droneNodes) { droneActive = false; return; }
   const ctx = practiceCtx; const now = ctx.currentTime;
-  try {
-    droneNodes.master.gain.cancelScheduledValues(now);
-    droneNodes.master.gain.setValueAtTime(droneNodes.master.gain.value, now);
-    droneNodes.master.gain.linearRampToValueAtTime(0, now + 0.2);
-    droneNodes.fund.stop(now + 0.25);
-    droneNodes.oct.stop(now + 0.25);
-    droneNodes.fifth.stop(now + 0.25);
-  } catch(e) {}
+  // Fast clean stop. The OLD code stopped oscillators at now+0.25 while nulling
+  // droneNodes immediately — so a root change (stop-then-start) overlapped old
+  // and new oscillators for 250ms, burying the new root under the old one. Here
+  // the fade is short (60ms — enough to avoid a click) and oscillators stop right
+  // after it, so a restart can't stack two roots.
+  const n = droneNodes;
   droneNodes = null;
   droneActive = false;
+  try {
+    n.master.gain.cancelScheduledValues(now);
+    n.master.gain.setValueAtTime(n.master.gain.value, now);
+    n.master.gain.linearRampToValueAtTime(0, now + 0.06);
+    n.fund.stop(now + 0.07);
+    n.oct.stop(now + 0.07);
+  } catch(e) {}
   if (!silent) {
     document.getElementById('droneToggleBtn').innerHTML = '▶ START DRONE';
     document.getElementById('droneState').textContent = t('drone_stopped');
