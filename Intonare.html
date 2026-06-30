@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.14 -->
+<!-- INTONARE_VERSION: 0.73.15 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20953,8 +20953,13 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 window.__intonarePing = async function () {
   const out = document.getElementById('nativePingResult');
   try {
-    const P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IntonareMic;
-    if (!P) { out.textContent = 'FAIL: IntonareMic plugin not found (not registered / not on native build)'; out.style.color='#e66'; return; }
+    // Cap 8: a BARE custom plugin needs an explicit JS-side proxy via
+    // registerPlugin(). npm plugins self-register; ours doesn't, so do it here.
+    let P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IntonareMic;
+    if (!P && window.Capacitor && typeof window.Capacitor.registerPlugin === 'function') {
+      P = window.Capacitor.registerPlugin('IntonareMic');
+    }
+    if (!P) { out.textContent = 'FAIL: IntonareMic not found. registerPlugin unavailable or not a native build.'; out.style.color='#e66'; return; }
     const r = await P.ping({ from: 'webview' });
     out.textContent = 'OK: ' + JSON.stringify(r);
     out.style.color = '#6e6';
@@ -20964,7 +20969,7 @@ window.__intonarePing = async function () {
   }
 };
 /* ░░ end Phase 0 handler ░░ */
-const INTONARE_VERSION = '0.73.14';
+const INTONARE_VERSION = '0.73.15';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
