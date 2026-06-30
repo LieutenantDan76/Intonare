@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.19 -->
+<!-- INTONARE_VERSION: 0.73.20 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -21147,11 +21147,21 @@ function intonareMicAudioConfig() {
       if (frameListener) { try { await frameListener.remove(); } catch (e) {} frameListener = null; }
       active = false;
       if (btn) btn.classList.remove('primary');
-      if (out) out.textContent = 'native test off';
+      if (out) out.textContent = 'native test off (tap mic button for normal mode)';
       return;
     }
 
     // ── start: native mic with AEC + PCM streaming ──
+    // The WebView mic and native AudioRecord can't both hold the device. The
+    // tonal tool turns the WebView mic on (it's a MIC_TOOL), so release it first
+    // or native start() fails with "mic in use by another app".
+    try {
+      if (typeof isListening !== 'undefined' && isListening && typeof stopMic === 'function') {
+        stopMic();
+        // give the OS a beat to fully release the capture session before re-grabbing
+        await new Promise(function (r) { setTimeout(r, 250); });
+      }
+    } catch (e) {}
     try {
       if (!frameListener && typeof p.addListener === 'function') {
         frameListener = await p.addListener('micFrame', function (fr) {
@@ -21186,7 +21196,7 @@ function intonareMicAudioConfig() {
   };
 })();
 /* ░░ end Phase 1c test ░░ */
-const INTONARE_VERSION = '0.73.19';
+const INTONARE_VERSION = '0.73.20';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
