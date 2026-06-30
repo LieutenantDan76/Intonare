@@ -134,12 +134,18 @@ public class IntonareMicPlugin extends Plugin {
         // or creation may fail; we record what ACTUALLY applied and report it.
         int sessionId = recorder.getAudioSessionId();
         boolean aecApplied = false, nsApplied = false, agcApplied = false;
+        // Diagnostics: distinguish "device reports no AEC" from "create/enable failed".
+        boolean aecAvailable = AcousticEchoCanceler.isAvailable();
+        String aecNote = "";
 
-        if (wantAec && AcousticEchoCanceler.isAvailable()) {
+        if (wantAec && aecAvailable) {
             try {
                 aec = AcousticEchoCanceler.create(sessionId);
-                if (aec != null) { aec.setEnabled(true); aecApplied = aec.getEnabled(); }
-            } catch (Exception e) { aec = null; }
+                if (aec != null) { aec.setEnabled(true); aecApplied = aec.getEnabled(); aecNote = "created+enabled=" + aecApplied; }
+                else { aecNote = "create() returned null"; }
+            } catch (Exception e) { aec = null; aecNote = "exception: " + e.getMessage(); }
+        } else if (wantAec) {
+            aecNote = "isAvailable()=false on this device";
         }
         if (wantNs && NoiseSuppressor.isAvailable()) {
             try {
@@ -220,6 +226,7 @@ public class IntonareMicPlugin extends Plugin {
         // requested vs. actually-applied, so JS can tell when a device silently
         // lacks an effect (e.g. AEC requested but unavailable on this hardware).
         ret.put("aecRequested", wantAec); ret.put("aecApplied", aecApplied);
+        ret.put("aecAvailable", aecAvailable); ret.put("aecNote", aecNote);
         ret.put("nsRequested", wantNs);   ret.put("nsApplied", nsApplied);
         ret.put("agcRequested", wantAgc); ret.put("agcApplied", agcApplied);
         call.resolve(ret);

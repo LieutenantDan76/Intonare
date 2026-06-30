@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.27 -->
+<!-- INTONARE_VERSION: 0.73.28 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20943,7 +20943,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.73.27';
+const INTONARE_VERSION = '0.73.28';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -25140,7 +25140,8 @@ async function startMic(_opts) {
       if (mode === 'tuner') pitchHistStart();
       // ░░ TEMP DIAGNOSTIC: badge shows path + whether AEC actually applied on
       //    this device (requested vs applied can differ — some devices lack it). ░░
-      _setMicPathBadge('NATIVE aec=' + (_lastNativeStart && _lastNativeStart.aecApplied), '#2a7');
+      _setMicPathBadge('NATIVE aec=' + (_lastNativeStart && _lastNativeStart.aecApplied)
+        + ' [' + (_lastNativeStart && _lastNativeStart.aecNote || '?') + ']', '#2a7');
       console.log('[IntonareMic] NATIVE path active; start result:', JSON.stringify(_lastNativeStart));
       updateDetectedBPMDisplay();
       processAudio();
