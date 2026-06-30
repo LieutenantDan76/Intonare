@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.16 -->
+<!-- INTONARE_VERSION: 0.73.17 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20936,13 +20936,30 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
       <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.39.67</span>
-      <!-- ░░ PHASE 0 NATIVE PIPELINE TEST — remove this whole block once it passes ░░ -->
-      <button id="nativePingBtn" onclick="window.__intonarePing&&window.__intonarePing()"
-        style="margin-top:10px;font-size:11px;padding:6px 12px;border:1px solid #888;border-radius:6px;background:#222;color:#ddd">
-        Test native plugin
-      </button>
-      <span id="nativePingResult" style="display:block;font-size:11px;margin-top:6px;opacity:.8">not run yet</span>
-      <!-- ░░ end Phase 0 test block ░░ -->
+      <!-- ░░ PHASE 1a NATIVE MIC CAPTURE TEST — remove this whole block once the
+           native mic engine is wired into the real tools ░░ -->
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;align-items:center">
+        <button id="nativePingBtn" onclick="window.__intonarePing&&window.__intonarePing()"
+          style="font-size:11px;padding:6px 12px;border:1px solid #888;border-radius:6px;background:#222;color:#ddd">
+          Test native plugin (ping)
+        </button>
+        <div style="display:flex;gap:8px">
+          <button id="nativeMicStartBtn" onclick="window.__intonareMicStart&&window.__intonareMicStart()"
+            style="font-size:11px;padding:6px 12px;border:1px solid #6a6;border-radius:6px;background:#1a2a1a;color:#bdb">
+            Start native mic
+          </button>
+          <button id="nativeMicStopBtn" onclick="window.__intonareMicStop&&window.__intonareMicStop()"
+            style="font-size:11px;padding:6px 12px;border:1px solid #a66;border-radius:6px;background:#2a1a1a;color:#dbb">
+            Stop
+          </button>
+        </div>
+        <!-- live level bar fed by the native micLevel event -->
+        <div style="width:160px;height:10px;border:1px solid #555;border-radius:5px;overflow:hidden;background:#111">
+          <div id="nativeMicLevelFill" style="height:100%;width:0%;background:linear-gradient(90deg,#6e6,#ee6,#e66);transition:width .05s linear"></div>
+        </div>
+        <span id="nativePingResult" style="display:block;font-size:11px;opacity:.8">not run yet</span>
+      </div>
+      <!-- ░░ end Phase 1a test block ░░ -->
     </div>
   </div>
 </div>
@@ -20980,7 +20997,65 @@ window.__intonarePing = async function () {
   }
 };
 /* ░░ end Phase 0 handler ░░ */
-const INTONARE_VERSION = '0.73.16';
+
+/* ░░ PHASE 1a NATIVE MIC CAPTURE handlers — remove once native mic is wired
+   into the real tools ░░ */
+(function () {
+  let micPlugin = null;
+  let levelListener = null;
+
+  function getMicPlugin() {
+    if (micPlugin) return micPlugin;
+    let P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IntonareMic;
+    if (!P && window.Capacitor && typeof window.Capacitor.registerPlugin === 'function') {
+      P = window.Capacitor.registerPlugin('IntonareMic');
+    }
+    micPlugin = P || null;
+    return micPlugin;
+  }
+
+  window.__intonareMicStart = async function () {
+    const out = document.getElementById('nativePingResult');
+    const fill = document.getElementById('nativeMicLevelFill');
+    const P = getMicPlugin();
+    if (!P) { out.textContent = 'FAIL: IntonareMic not found.'; out.style.color = '#e66'; return; }
+    try {
+      // Subscribe to the continuous micLevel event before starting capture.
+      if (!levelListener && typeof P.addListener === 'function') {
+        levelListener = await P.addListener('micLevel', function (ev) {
+          // rms is 0..1; scale for visibility (speech/instrument rarely exceeds ~0.3).
+          const pct = Math.min(100, (ev && ev.rms ? ev.rms : 0) * 300);
+          if (fill) fill.style.width = pct.toFixed(1) + '%';
+        });
+      }
+      const r = await P.start({});
+      out.textContent = 'CAPTURING: ' + JSON.stringify(r);
+      out.style.color = '#6e6';
+    } catch (e) {
+      out.textContent = 'ERROR start(): ' + (e && e.message ? e.message : e);
+      out.style.color = '#e66';
+    }
+  };
+
+  window.__intonareMicStop = async function () {
+    const out = document.getElementById('nativePingResult');
+    const fill = document.getElementById('nativeMicLevelFill');
+    const P = getMicPlugin();
+    if (!P) return;
+    try {
+      const r = await P.stop({});
+      if (levelListener) { try { await levelListener.remove(); } catch (e) {} levelListener = null; }
+      if (fill) fill.style.width = '0%';
+      out.textContent = 'STOPPED: ' + JSON.stringify(r);
+      out.style.color = '#aaa';
+    } catch (e) {
+      out.textContent = 'ERROR stop(): ' + (e && e.message ? e.message : e);
+      out.style.color = '#e66';
+    }
+  };
+})();
+/* ░░ end Phase 1a handlers ░░ */
+const INTONARE_VERSION = '0.73.17';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
