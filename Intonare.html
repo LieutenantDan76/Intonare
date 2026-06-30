@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.32 -->
+<!-- INTONARE_VERSION: 0.73.33 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20956,7 +20956,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.73.32';
+const INTONARE_VERSION = '0.73.33';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -24292,8 +24292,11 @@ function updateRefDisplay() {
 // ═══════════════════════════════════════════════
 // INTERVAL COMPUTATION (Reference mode)
 // ═══════════════════════════════════════════════
+let _lastRms = 0;                  // latest mic RMS, updated each processAudio frame
 let _ivalLastShown = 0;            // timestamp of last real interval render
-const _IVAL_HOLD_MS = 650;         // hold readout through dropouts up to this long
+const _IVAL_HOLD_MS = 650;         // baseline hold even if mic goes quiet briefly
+const _IVAL_HOLD_RMS = 0.006;      // mic energy above this = "still singing" → keep holding
+const _IVAL_HOLD_CEIL_MS = 8000;   // safety ceiling: never hold a stale reading past this
 function updateIntervalDisplay(detectedFreq) {
   const nameEl  = document.getElementById('pianoIntervalName');
   const plainEl = document.getElementById('pianoPlainText');
@@ -24310,17 +24313,23 @@ function updateIntervalDisplay(detectedFreq) {
   }
 
   if (!detectedFreq) {
-    // Hold the last valid reading through brief dropouts instead of flashing
-    // "— —". Near unison the notch can momentarily drop the voice; without this
-    // the readout flickers. If we showed a real interval within the hold window,
-    // keep it; only blank once the silence is genuinely sustained.
-    if (_ivalLastShown && (performance.now() - _ivalLastShown) < _IVAL_HOLD_MS) {
-      return; // keep whatever is on screen
+    // Hold the last valid reading while you're still making sound. Detection can
+    // briefly drop near unison (notch) or on a noisy frame, but if the mic still
+    // has energy you're clearly still singing — so keep the readout up instead of
+    // flashing "— —". Only blank once it's both been a while AND the mic has gone
+    // quiet (you actually stopped), or the long ceiling is hit as a safety net.
+    if (_ivalLastShown) {
+      const since = performance.now() - _ivalLastShown;
+      const stillSounding = (typeof _lastRms !== 'undefined') && _lastRms > _IVAL_HOLD_RMS;
+      if (since < _IVAL_HOLD_CEIL_MS && (stillSounding || since < _IVAL_HOLD_MS)) {
+        return; // keep whatever is on screen
+      }
     }
     nameEl.className = 'piano-interval-name idle';
     nameEl.textContent = '— —';
     plainEl.textContent = t('piano_ref_prompt').replace('{name}', activeRefName);
     centsEl.className = 'piano-cents-badge reserved-hidden';
+    _ivalLastShown = 0;
     highlightPiano(activeRefMidi, null);
     return;
   }
@@ -24745,6 +24754,7 @@ function processAudio() {
   let rms = 0;
   for (let i = 0; i < 4096; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / 4096);
+  _lastRms = rms;   // exposed so the interval readout can hold while sound is present
   const vf = document.getElementById('volFill');
   if (vf) vf.style.width = Math.min(100, rms * 600) + '%';
   // Reactive mic glow — skip during turn-on animation so it doesn't stomp the keyframes
@@ -25410,14 +25420,14 @@ function _biquadNotch(fc, sr, Q) {
 }
 let _droneNotch = null;       // array of notch biquads (null = none active)
 let _droneNotchFreq = 0;      // fundamental the current bank is tuned to
-const _DRONE_NOTCH_Q = 18;    // high Q → narrow (~a few cents); tune by ear/test
-// Number of harmonics to notch (1=fundamental only). The drone is a triangle
-// fundamental + quiet octave, so its energy sits at f, 2f, 3f... A single notch
-// at f leaves the harmonics to bleed in — that's why detection wobbled as far
-// out as a P4 (the singer's note neared an un-notched drone harmonic). Notching
-// the first few harmonics rejects the drone's real spectral footprint while
-// leaving the gaps between harmonics (where the voice usually sits) untouched.
-const _DRONE_NOTCH_HARMONICS = 2;
+const _DRONE_NOTCH_Q = 40;    // very narrow (~a couple cents). The tonal drone is
+                              // a rock-stable pure sine, so a hair-thin notch kills
+                              // it while leaving even slightly-detuned unison intact.
+// The tonal drone is a single pure sine — all energy at the fundamental — so ONE
+// notch removes essentially the whole thing. (Was 2/3 for the old triangle drone,
+// whose harmonics bled past a single notch.) Fewer, narrower notches = maximum
+// sensitivity to every other pitch, including near-unison.
+const _DRONE_NOTCH_HARMONICS = 1;
 // Build/refresh the notch bank for a target fundamental; null/0 clears it.
 function _setDroneNotch(freq, sr) {
   if (!freq || freq <= 0) { _droneNotch = null; _droneNotchFreq = 0; return; }
