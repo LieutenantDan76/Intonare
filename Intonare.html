@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.25 -->
+<!-- INTONARE_VERSION: 0.73.27 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20943,7 +20943,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.73.25';
+const INTONARE_VERSION = '0.73.27';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -21080,6 +21080,7 @@ const _NATIVE_RING_SIZE = 4096;               // matches processAudio's read siz
 const _nativeRing = new Float32Array(_NATIVE_RING_SIZE);
 let _nativeRingFilled = 0;                     // samples written so far (caps at SIZE)
 let _nativeSampleRate = 44100;
+let _lastNativeStart = null;   // diagnostic: last native start() result (aecApplied etc.)
 let isListening = false;
 let smoothedFreq = 0;
 let smoothedCents = 0;          // EMA-smoothed cents for needle — kills bounce
@@ -25137,11 +25138,10 @@ async function startMic(_opts) {
       const hvw = document.getElementById('headerVolWrap');
       if (hvw) hvw.classList.add('active');
       if (mode === 'tuner') pitchHistStart();
-      // ░░ TEMP DIAGNOSTIC (remove after full native migration): a fixed on-screen
-      //    badge showing which mic path is live, so "native or fallback?" is never
-      //    a mystery. Written to a dedicated element processAudio never touches. ░░
-      _setMicPathBadge('NATIVE', '#2a7');
-      console.log('[IntonareMic] NATIVE path active');
+      // ░░ TEMP DIAGNOSTIC: badge shows path + whether AEC actually applied on
+      //    this device (requested vs applied can differ — some devices lack it). ░░
+      _setMicPathBadge('NATIVE aec=' + (_lastNativeStart && _lastNativeStart.aecApplied), '#2a7');
+      console.log('[IntonareMic] NATIVE path active; start result:', JSON.stringify(_lastNativeStart));
       updateDetectedBPMDisplay();
       processAudio();
       return;
@@ -25428,6 +25428,7 @@ async function _nativeMicStart() {
     ? intonareMicAudioConfig() : { aec: false, ns: false, agc: false };
   cfg.sendPcm = true;
   const r = await p.start(cfg);
+  _lastNativeStart = r || null;
   if (r && r.sampleRate) _nativeSampleRate = r.sampleRate;
   _nativeMicActive = true;
   return r;
@@ -26783,7 +26784,14 @@ function tcToggleDrone() {
 }
 
 function tcDroneStart() {
-  // Use shared drone audio engine but update tc DOM elements
+  // Use shared drone audio engine but update tc DOM elements.
+  // CRITICAL: droneStart() -> updateDroneDisplay() recomputes droneFreq from the
+  // Train-tab vars droneRoot/droneOctaveIdx. The tonal tool tracks its own root
+  // in tcRoot/tcOctaveIdx, so without syncing them first the audio always played
+  // the Train-tab root (default 'A') regardless of the tonal-tool selection —
+  // "every note sounds the same." Sync them before starting the oscillators.
+  droneRoot = tcRoot;
+  droneOctaveIdx = tcOctaveIdx;
   droneActive = false; // let droneStart think it's a fresh start
   droneStart();        // starts audio, sets droneActive = true
   // Override the DOM updates droneStart() made to the TRAIN elements — update tc ones instead
