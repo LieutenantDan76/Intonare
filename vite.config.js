@@ -7,7 +7,7 @@ export default defineConfig({
     emptyOutDir: false,
     lib: {
       entry: resolve(__dirname, 'main.js'),
-      name: 'SonoroNative',
+      name: 'IntonareNative',
       fileName: 'main',
       formats: ['iife']
     }

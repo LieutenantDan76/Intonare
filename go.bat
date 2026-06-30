@@ -1,16 +1,21 @@
 @echo off
 setlocal enabledelayedexpansion
 REM ============================================================
-REM  Intonare — one-shot deploy
+REM  Intonare -- one-shot deploy
 REM  Downloads -> GitHub -> Capacitor -> Android assets
 REM ============================================================
+REM
+REM  NATIVE MASTERS now live under native_src\, mirroring the Android
+REM  tree (native_src\java\... , native_src\res\... , etc). Run
+REM  reorg_native.bat ONCE before the first run with this version.
+REM  icon_res\ and audio_assets\ stayed in root (already folders).
 REM
 REM  NATIVE_CHANGED tracks whether any native source (.java / manifest /
 REM  gradle-affecting file) actually changed bytes this run. If it did, we
 REM  force `gradlew clean` at the end so the next Android Studio build can't
 REM  ship stale native code. `cap sync` does NOT force a recompile, and
 REM  Gradle's up-to-date cache will happily reuse old .class files + a stale
-REM  plugin registry — that's the trap that burned a whole Phase 0 session.
+REM  plugin registry -- that's the trap that burned a whole Phase 0 session.
 REM  Web-only deploys leave this flag at 0 and stay fast (no clean).
 set NATIVE_CHANGED=0
 
@@ -34,27 +39,27 @@ echo [4/6] Installing packages and syncing Capacitor...
 call npm install
 call npx cap sync
 
-REM Restore files that cap sync overwrites
+REM Restore files that cap sync overwrites -- sources now under native_src\
 echo [4b] Restoring AndroidManifest.xml...
-fc /b AndroidManifest.xml android\app\src\main\AndroidManifest.xml >nul 2>&1
+fc /b native_src\AndroidManifest.xml android\app\src\main\AndroidManifest.xml >nul 2>&1
 if errorlevel 1 set NATIVE_CHANGED=1
-copy /Y AndroidManifest.xml android\app\src\main\AndroidManifest.xml
+copy /Y native_src\AndroidManifest.xml android\app\src\main\AndroidManifest.xml
 
 echo [4c] Restoring MainActivity.java...
-fc /b MainActivity.java android\app\src\main\java\com\lieutenantdan\intonare\MainActivity.java >nul 2>&1
+fc /b native_src\java\com\lieutenantdan\intonare\MainActivity.java android\app\src\main\java\com\lieutenantdan\intonare\MainActivity.java >nul 2>&1
 if errorlevel 1 set NATIVE_CHANGED=1
-copy /Y MainActivity.java android\app\src\main\java\com\lieutenantdan\intonare\MainActivity.java
+copy /Y native_src\java\com\lieutenantdan\intonare\MainActivity.java android\app\src\main\java\com\lieutenantdan\intonare\MainActivity.java
 
 echo [4c2] Restoring IntonareMicPlugin.java...
-fc /b IntonareMicPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\IntonareMicPlugin.java >nul 2>&1
+fc /b native_src\java\com\lieutenantdan\intonare\IntonareMicPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\IntonareMicPlugin.java >nul 2>&1
 if errorlevel 1 set NATIVE_CHANGED=1
-copy /Y IntonareMicPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\IntonareMicPlugin.java
+copy /Y native_src\java\com\lieutenantdan\intonare\IntonareMicPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\IntonareMicPlugin.java
 
 echo [4d] Restoring styles.xml...
-copy /Y styles.xml android\app\src\main\res\values\styles.xml
+copy /Y native_src\res\values\styles.xml android\app\src\main\res\values\styles.xml
 
 echo [4e] Restoring colors.xml...
-copy /Y colors.xml android\app\src\main\res\values\colors.xml
+copy /Y native_src\res\values\colors.xml android\app\src\main\res\values\colors.xml
 
 echo [4f] Restoring app icons...
 xcopy /E /Y /I icon_res android\app\src\main\res
@@ -79,7 +84,7 @@ if exist audio_assets (
 
 echo [4i] Restoring splash launch sound...
 if not exist android\app\src\main\res\raw mkdir android\app\src\main\res\raw
-copy /Y intonare_splash.ogg android\app\src\main\res\raw\intonare_splash.ogg
+copy /Y native_src\res\raw\intonare_splash.ogg android\app\src\main\res\raw\intonare_splash.ogg
 
 echo [4h] Patching build.gradle proguard reference...
 powershell -Command "(Get-Content android\app\build.gradle) -replace 'proguard-android\.txt', 'proguard-android-optimize.txt' | Set-Content android\app\build.gradle"
