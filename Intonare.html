@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.29 -->
+<!-- INTONARE_VERSION: 0.73.30 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20943,7 +20943,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.73.29';
+const INTONARE_VERSION = '0.73.30';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -24736,6 +24736,16 @@ function processAudio() {
     detectOnset(buf);
     updateDetectedBPMDisplay();
   } else {
+    // Strategy C: if a reference drone is playing, notch its known frequency out
+    // of the buffer so detection locks onto the user's voice, not the drone.
+    // Gated on droneActive so it only engages for reference-tone surfaces and
+    // never touches the plain tuner. Cleared automatically when the drone stops.
+    if (typeof droneActive !== 'undefined' && droneActive && activeRefFreq > 0) {
+      _setDroneNotch(activeRefFreq, _sr);
+      _applyDroneNotch(buf);
+    } else if (_droneNotch) {
+      _setDroneNotch(0);   // drone stopped — clear the notch
+    }
     const freq = detectPitch(buf, _sr);
     if (freq > 20 && freq < 4500) {
       _pitchMissFrames = 0;   // got a valid pitch — reset the silence grace counter
@@ -25375,6 +25385,43 @@ function _nfApply(frame) {
     frame[i] = y;
   }
   return frame;
+}
+
+// ── Drone notch (Strategy C: reject the KNOWN reference frequency) ───────────
+// When a reference tone (drone) is playing, we know its exact frequency, so
+// instead of acoustically cancelling it we notch it out of the mic buffer right
+// before detection. The detector then locks onto the next-strongest periodicity
+// — the user's voice. A narrow notch (high Q) only bites a few cents wide, so it
+// barely touches a sung note unless it's almost exactly on the drone (the dead-
+// unison zone, which no method can separate anyway). Keeps the drone full and
+// loud on the normal media path — no AEC, no routing tradeoff, no native
+// playback needed. Recomputed only when the target frequency changes.
+function _biquadNotch(fc, sr, Q) {
+  const w0 = 2 * Math.PI * fc / sr, c = Math.cos(w0), s = Math.sin(w0), al = s / (2 * Q);
+  const b0 = 1, b1 = -2 * c, b2 = 1, a0 = 1 + al, a1 = -2 * c, a2 = 1 - al;
+  return { b0: b0/a0, b1: b1/a0, b2: b2/a0, a1: a1/a0, a2: a2/a0, x1:0, x2:0, y1:0, y2:0, fc: fc };
+}
+let _droneNotch = null;       // current notch biquad (null = none active)
+let _droneNotchFreq = 0;      // freq the current notch is tuned to
+const _DRONE_NOTCH_Q = 18;    // high Q → narrow (~a few cents); tune by ear/test
+// Build/refresh the notch for a target frequency; null/0 clears it.
+function _setDroneNotch(freq, sr) {
+  if (!freq || freq <= 0) { _droneNotch = null; _droneNotchFreq = 0; return; }
+  // Only rebuild when the frequency actually changes (root/octave change).
+  if (_droneNotch && Math.abs(freq - _droneNotchFreq) < 0.5) return;
+  _droneNotch = _biquadNotch(freq, sr || _NF_SR, _DRONE_NOTCH_Q);
+  _droneNotchFreq = freq;
+}
+function _applyDroneNotch(buf) {
+  const f = _droneNotch;
+  if (!f) return buf;
+  for (let i = 0; i < buf.length; i++) {
+    const x = buf[i];
+    const y = f.b0*x + f.b1*f.x1 + f.b2*f.x2 - f.a1*f.y1 - f.a2*f.y2;
+    f.x2 = f.x1; f.x1 = x; f.y2 = f.y1; f.y1 = y;
+    buf[i] = y;
+  }
+  return buf;
 }
 
 // Decode base64 int16 LE PCM -> Float32 (-1..1).
