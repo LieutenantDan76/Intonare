@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.30 -->
+<!-- INTONARE_VERSION: 0.73.31 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -2792,14 +2792,23 @@
     background: var(--panel);
     border-radius: var(--r-md);
     border: 1px solid var(--border-soft);
+    /* Rigid: reserve enough height for name + text + badge so the layout never
+       shifts as the readout flips between states (a flickering detector near
+       unison used to reflow the whole panel). */
+    min-height: 104px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
   }
   .piano-interval-name {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 38px; line-height: 1; letter-spacing: 2px;
     background: linear-gradient(135deg, var(--accent-soft), var(--accent));
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    margin-bottom: 4px;
-    transition: all 0.3s ease;
+    margin-bottom: 0;
+    /* Reserve the name line's height so an empty/short value can't change it.
+       Only fade color, not 'all' — animating layout props caused jitter. */
+    min-height: 38px;
+    transition: color 0.2s ease, filter 0.2s ease, -webkit-text-fill-color 0.2s ease;
   }
   .piano-interval-name.idle { background: none; -webkit-text-fill-color: var(--muted); color: var(--muted); }
   .piano-interval-name.pure {
@@ -2810,7 +2819,8 @@
   .piano-plain-text {
     font-family: 'Fraunces', serif; font-style: italic;
     font-size: 13px; color: var(--text-dim); letter-spacing: 0.5px;
-    margin-bottom: 6px;
+    margin-bottom: 0;
+    min-height: 16px;
   }
   .piano-cents-badge {
     display: inline-block;
@@ -2821,6 +2831,9 @@
     font-size: 10px; color: var(--text);
     font-variant-numeric: tabular-nums; letter-spacing: 1px;
   }
+  /* Hidden state reserves its space (visibility, not display) so toggling the
+     badge on/off never changes the readout height. JS sets visibility now. */
+  .piano-cents-badge.reserved-hidden { visibility: hidden; }
   .piano-cents-badge.in    { color: var(--in-tune); border-color: rgba(182,242,91,0.3); background: rgba(182,242,91,0.05); }
   .piano-cents-badge.sharp { color: var(--sharp);   border-color: rgba(255,138,101,0.3); }
   .piano-cents-badge.flat  { color: var(--flat);    border-color: rgba(122,175,255,0.3); }
@@ -16483,7 +16496,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="piano-readout">
           <div class="piano-interval-name idle" id="pianoIntervalName">—</div>
           <div class="piano-plain-text" id="pianoPlainText" data-i18n="tc_set_root_hint">set a root and start the drone below</div>
-          <div class="piano-cents-badge" id="pianoCentsBadge" style="display:none">0¢</div>
+          <div class="piano-cents-badge reserved-hidden" id="pianoCentsBadge">0¢</div>
         </div>
         <div class="teach-hint" data-i18n-html="hint_tonal_drone">Start the drone, turn on the mic, then sing or play. Shows your note, the interval above/below the root, and how in-tune you are.</div>
       </div>
@@ -20943,7 +20956,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.73.30';
+const INTONARE_VERSION = '0.73.31';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -24279,6 +24292,8 @@ function updateRefDisplay() {
 // ═══════════════════════════════════════════════
 // INTERVAL COMPUTATION (Reference mode)
 // ═══════════════════════════════════════════════
+let _ivalLastShown = 0;            // timestamp of last real interval render
+const _IVAL_HOLD_MS = 650;         // hold readout through dropouts up to this long
 function updateIntervalDisplay(detectedFreq) {
   const nameEl  = document.getElementById('pianoIntervalName');
   const plainEl = document.getElementById('pianoPlainText');
@@ -24288,20 +24303,29 @@ function updateIntervalDisplay(detectedFreq) {
     nameEl.className = 'piano-interval-name idle';
     nameEl.textContent = '—';
     plainEl.textContent = t('piano_tap_ref');
-    centsEl.style.display = 'none';
+    centsEl.className = 'piano-cents-badge reserved-hidden';
+    _ivalLastShown = 0;
     highlightPiano(null, null);
+    return;
+  }
+
+  if (!detectedFreq) {
+    // Hold the last valid reading through brief dropouts instead of flashing
+    // "— —". Near unison the notch can momentarily drop the voice; without this
+    // the readout flickers. If we showed a real interval within the hold window,
+    // keep it; only blank once the silence is genuinely sustained.
+    if (_ivalLastShown && (performance.now() - _ivalLastShown) < _IVAL_HOLD_MS) {
+      return; // keep whatever is on screen
+    }
+    nameEl.className = 'piano-interval-name idle';
+    nameEl.textContent = '— —';
+    plainEl.textContent = t('piano_ref_prompt').replace('{name}', activeRefName);
+    centsEl.className = 'piano-cents-badge reserved-hidden';
+    highlightPiano(activeRefMidi, null);
     return;
   }
   const userMidi = freqToMidi(detectedFreq);
   highlightPiano(activeRefMidi, userMidi);
-
-  if (!detectedFreq) {
-    nameEl.className = 'piano-interval-name idle';
-    nameEl.textContent = '— —';
-    plainEl.textContent = t('piano_ref_prompt').replace('{name}', activeRefName);
-    centsEl.style.display = 'none';
-    return;
-  }
 
   const semis = 12 * Math.log2(detectedFreq / activeRefFreq);
   const rounded = Math.round(semis);
@@ -24334,9 +24358,9 @@ function updateIntervalDisplay(detectedFreq) {
   }
   plainEl.textContent = plain;
 
-  centsEl.style.display = 'inline-block';
   centsEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '¢ ' + (temperament === 'just' ? 'just' : 'equal');
   centsEl.className = 'piano-cents-badge ' + (Math.abs(diff) < 8 ? 'in' : diff > 0 ? 'sharp' : 'flat');
+  _ivalLastShown = performance.now();   // for dropout hold
 }
 
 // ═══════════════════════════════════════════════
@@ -25401,25 +25425,40 @@ function _biquadNotch(fc, sr, Q) {
   const b0 = 1, b1 = -2 * c, b2 = 1, a0 = 1 + al, a1 = -2 * c, a2 = 1 - al;
   return { b0: b0/a0, b1: b1/a0, b2: b2/a0, a1: a1/a0, a2: a2/a0, x1:0, x2:0, y1:0, y2:0, fc: fc };
 }
-let _droneNotch = null;       // current notch biquad (null = none active)
-let _droneNotchFreq = 0;      // freq the current notch is tuned to
+let _droneNotch = null;       // array of notch biquads (null = none active)
+let _droneNotchFreq = 0;      // fundamental the current bank is tuned to
 const _DRONE_NOTCH_Q = 18;    // high Q → narrow (~a few cents); tune by ear/test
-// Build/refresh the notch for a target frequency; null/0 clears it.
+// Number of harmonics to notch (1=fundamental only). The drone is a triangle
+// fundamental + quiet octave, so its energy sits at f, 2f, 3f... A single notch
+// at f leaves the harmonics to bleed in — that's why detection wobbled as far
+// out as a P4 (the singer's note neared an un-notched drone harmonic). Notching
+// the first few harmonics rejects the drone's real spectral footprint while
+// leaving the gaps between harmonics (where the voice usually sits) untouched.
+const _DRONE_NOTCH_HARMONICS = 3;
+// Build/refresh the notch bank for a target fundamental; null/0 clears it.
 function _setDroneNotch(freq, sr) {
   if (!freq || freq <= 0) { _droneNotch = null; _droneNotchFreq = 0; return; }
-  // Only rebuild when the frequency actually changes (root/octave change).
   if (_droneNotch && Math.abs(freq - _droneNotchFreq) < 0.5) return;
-  _droneNotch = _biquadNotch(freq, sr || _NF_SR, _DRONE_NOTCH_Q);
+  const rate = sr || _NF_SR;
+  const bank = [];
+  for (let h = 1; h <= _DRONE_NOTCH_HARMONICS; h++) {
+    const hf = freq * h;
+    if (hf < rate / 2 - 100) bank.push(_biquadNotch(hf, rate, _DRONE_NOTCH_Q));
+  }
+  _droneNotch = bank.length ? bank : null;
   _droneNotchFreq = freq;
 }
 function _applyDroneNotch(buf) {
-  const f = _droneNotch;
-  if (!f) return buf;
-  for (let i = 0; i < buf.length; i++) {
-    const x = buf[i];
-    const y = f.b0*x + f.b1*f.x1 + f.b2*f.x2 - f.a1*f.y1 - f.a2*f.y2;
-    f.x2 = f.x1; f.x1 = x; f.y2 = f.y1; f.y1 = y;
-    buf[i] = y;
+  const bank = _droneNotch;
+  if (!bank) return buf;
+  for (let b = 0; b < bank.length; b++) {
+    const f = bank[b];
+    for (let i = 0; i < buf.length; i++) {
+      const x = buf[i];
+      const y = f.b0*x + f.b1*f.x1 + f.b2*f.x2 - f.a1*f.y1 - f.a2*f.y2;
+      f.x2 = f.x1; f.x1 = x; f.y2 = f.y1; f.y1 = y;
+      buf[i] = y;
+    }
   }
   return buf;
 }
