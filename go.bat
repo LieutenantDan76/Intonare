@@ -31,6 +31,9 @@ copy /Y AndroidManifest.xml android\app\src\main\AndroidManifest.xml
 echo [4c] Restoring MainActivity.java...
 copy /Y MainActivity.java android\app\src\main\java\com\lieutenantdan\intonare\MainActivity.java
 
+echo [4c2] Restoring IntonareMicPlugin.java...
+copy /Y IntonareMicPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\IntonareMicPlugin.java
+
 echo [4d] Restoring styles.xml...
 copy /Y styles.xml android\app\src\main\res\values\styles.xml
 
