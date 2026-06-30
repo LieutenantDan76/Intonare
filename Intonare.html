@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.21 -->
+<!-- INTONARE_VERSION: 0.73.22 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -21097,7 +21097,7 @@ function intonareMicAudioConfig() {
 })();
 /* ░░ end Phase 1a handlers ░░ */
 
-const INTONARE_VERSION = '0.73.21';
+const INTONARE_VERSION = '0.73.22';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -25271,6 +25271,7 @@ async function startMic(_opts) {
   const _surfaceWantsNative =
     ((typeof currentTool !== 'undefined') && _NATIVE_SURFACES_TOOLS.indexOf(currentTool) !== -1);
   const _useNative = !!(_opts && _opts.native) || _surfaceWantsNative;
+  let _nativeFellBack = false;
 
   if (_useNative) {
     try {
@@ -25291,13 +25292,18 @@ async function startMic(_opts) {
       if (hvw) hvw.classList.add('active');
       if (mode === 'tuner') pitchHistStart();
       const micLbl = document.getElementById('micLabel');
-      if (micLbl) micLbl.textContent = mode === 'metronome' ? t('status_analyzing') : t('status_listening');
+      // ░░ TEMP DIAGNOSTIC (remove after full native migration): show which mic
+      //    path is live so "is this native or fallback?" is never a mystery. ░░
+      if (micLbl) micLbl.textContent = (mode === 'metronome' ? t('status_analyzing') : t('status_listening')) + ' · NATIVE';
+      console.log('[IntonareMic] NATIVE path active');
       updateDetectedBPMDisplay();
       processAudio();
       return;
     } catch (e) {
       // Native failed — fall through to the WebView path so the surface still works.
+      console.warn('[IntonareMic] native start FAILED, falling back to WebView:', (e && e.message) ? e.message : e);
       _nativeMicActive = false;
+      _nativeFellBack = true;
       try { _nativeMicStop(); } catch (e2) {}
     }
   }
@@ -25400,7 +25406,10 @@ async function startMic(_opts) {
     if (hvw) hvw.classList.add('active');
     if (mode === 'tuner') pitchHistStart();
     const micLbl = document.getElementById('micLabel');
-    if (micLbl) micLbl.textContent = mode === 'metronome' ? t('status_analyzing') : t('status_listening');
+    // ░░ TEMP DIAGNOSTIC: mark WEB only when a native-capable surface fell back,
+    //    so normal WebView surfaces stay clean. Remove after full migration. ░░
+    if (micLbl) micLbl.textContent = (mode === 'metronome' ? t('status_analyzing') : t('status_listening'))
+      + (_nativeFellBack ? ' · WEB (fallback)' : '');
     updateDetectedBPMDisplay();
     processAudio();
   } catch(e) {
