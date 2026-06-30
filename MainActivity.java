@@ -29,6 +29,11 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Register our app-embedded native plugin(s). Capacitor 8 auto-discovers
+        // plugins that ship as npm packages, but a plugin class living inside the
+        // app module must be registered here BEFORE super.onCreate, or the bridge
+        // never binds its methods and JS calls throw "not implemented on android".
+        registerPlugin(IntonareMicPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Sticky immersive: hide status + nav bars. "Sticky" = a reveal swipe
