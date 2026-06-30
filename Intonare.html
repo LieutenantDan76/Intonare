@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.15 -->
+<!-- INTONARE_VERSION: 0.73.16 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20953,14 +20953,25 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 window.__intonarePing = async function () {
   const out = document.getElementById('nativePingResult');
   try {
-    // Cap 8: a BARE custom plugin needs an explicit JS-side proxy via
-    // registerPlugin(). npm plugins self-register; ours doesn't, so do it here.
+    // Prefer the plugin Capacitor already registered natively (it auto-discovers
+    // our @CapacitorPlugin class). Only fall back to registerPlugin() if for some
+    // reason it's absent. Using registerPlugin() FIRST creates a proxy with no
+    // link to the native impl and throws \"not implemented on android\".
     let P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IntonareMic;
     if (!P && window.Capacitor && typeof window.Capacitor.registerPlugin === 'function') {
       P = window.Capacitor.registerPlugin('IntonareMic');
     }
-    if (!P) { out.textContent = 'FAIL: IntonareMic not found. registerPlugin unavailable or not a native build.'; out.style.color='#e66'; return; }
-    const r = await P.ping({ from: 'webview' });
+    if (!P) { out.textContent = 'FAIL: IntonareMic not found at all (Plugins + registerPlugin both empty).'; out.style.color='#e66'; return; }
+    let r;
+    try {
+      r = await P.ping({ from: 'webview' });
+    } catch (inner) {
+      // If the Plugins.* proxy somehow lacks the method, try a fresh native proxy once.
+      if (window.Capacitor && typeof window.Capacitor.registerPlugin === 'function') {
+        const P2 = window.Capacitor.registerPlugin('IntonareMic');
+        r = await P2.ping({ from: 'webview-retry' });
+      } else { throw inner; }
+    }
     out.textContent = 'OK: ' + JSON.stringify(r);
     out.style.color = '#6e6';
   } catch (e) {
@@ -20969,7 +20980,7 @@ window.__intonarePing = async function () {
   }
 };
 /* ░░ end Phase 0 handler ░░ */
-const INTONARE_VERSION = '0.73.15';
+const INTONARE_VERSION = '0.73.16';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
