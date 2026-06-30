@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.17 -->
+<!-- INTONARE_VERSION: 0.73.18 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20998,7 +20998,43 @@ window.__intonarePing = async function () {
 };
 /* ░░ end Phase 0 handler ░░ */
 
-/* ░░ PHASE 1a NATIVE MIC CAPTURE handlers — remove once native mic is wired
+/* ── Native mic audio-processing map (permanent — survives the test block) ──
+   Single source of truth for which audio effects each mic surface needs, from
+   the full per-surface audit. Returns {aec, ns, agc} for the native plugin.
+
+   AEC ON  = app plays a sound the user responds to; the mic must hear the USER,
+             not the app's own output. (Replaces the old _ECHO_TOOLS/_ECHO_
+             EXERCISES stopgap — and fixes the two surfaces it missed: piano
+             reference-match and the metronome click self-trigger.)
+   AEC OFF = raw signal wanted; app is silent or its sound isn't bleeding in.
+   NS      = OFF everywhere (speech-tuned; eats sustained musical tones). Left
+             as a flag only so the metronome can be A/B tested in a noisy room.
+   AGC     = OFF everywhere (pumps level; defeats the RMS silence gate + volume
+             meter). No surface benefits; flag exists for completeness only.
+
+   `mode`, `currentTool`, `currentExercise` are the existing global state vars. */
+function intonareMicAudioConfig() {
+  var m  = (typeof mode !== 'undefined') ? mode : null;
+  var tool = (typeof currentTool !== 'undefined') ? currentTool : null;
+  var ex   = (typeof currentExercise !== 'undefined') ? currentExercise : null;
+
+  // Reference-and-match surfaces → AEC ON.
+  var aec =
+    (tool === 'tonal') ||           // tonal-centre drone you tune against
+    (tool === 'piano') ||           // tap a reference note, match it by ear/voice
+    (ex === 'interval') ||          // interval sing-back
+    (ex === 'singsing') ||          // sing-the-note target match
+    (m === 'metronome');            // cancel the click so it can't self-trigger onset detect
+
+  // NS/AGC: off everywhere by default (see header). Kept as explicit false so
+  // the shape is obvious and a future per-surface override has a clear home.
+  var ns = false;
+  var agc = false;
+
+  return { aec: aec, ns: ns, agc: agc };
+}
+
+/* ░░ PHASE 1a/1b NATIVE MIC CAPTURE handlers — remove once native mic is wired
    into the real tools ░░ */
 (function () {
   let micPlugin = null;
@@ -21028,8 +21064,13 @@ window.__intonarePing = async function () {
           if (fill) fill.style.width = pct.toFixed(1) + '%';
         });
       }
-      const r = await P.start({});
-      out.textContent = 'CAPTURING: ' + JSON.stringify(r);
+      // Use the real per-surface audio config so the test exercises the same
+      // path the tools will. From Settings, mode/tool are whatever's active —
+      // usually the raw (all-off) config, which is the right default to prove.
+      const cfg = (typeof intonareMicAudioConfig === 'function')
+        ? intonareMicAudioConfig() : { aec: false, ns: false, agc: false };
+      const r = await P.start(cfg);
+      out.textContent = 'CAPTURING (req ' + JSON.stringify(cfg) + ') → ' + JSON.stringify(r);
       out.style.color = '#6e6';
     } catch (e) {
       out.textContent = 'ERROR start(): ' + (e && e.message ? e.message : e);
@@ -21055,7 +21096,7 @@ window.__intonarePing = async function () {
   };
 })();
 /* ░░ end Phase 1a handlers ░░ */
-const INTONARE_VERSION = '0.73.17';
+const INTONARE_VERSION = '0.73.18';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
