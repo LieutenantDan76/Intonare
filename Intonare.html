@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.28 -->
+<!-- INTONARE_VERSION: 0.73.29 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -20943,7 +20943,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.73.28';
+const INTONARE_VERSION = '0.73.29';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -25404,6 +25404,27 @@ function _nativeRingPush(frame) {
   _nativeRing.copyWithin(0, n);
   _nativeRing.set(frame, _NATIVE_RING_SIZE - n);
   _nativeRingFilled = Math.min(_NATIVE_RING_SIZE, _nativeRingFilled + n);
+}
+
+// ── Per-surface audio-processing config (restored; do not place near removable
+//    test scaffolding again). Single source of truth for which effects each mic
+//    surface needs, from the full per-surface audit. Returns {aec, ns, agc}.
+//    AEC ON  = app plays a sound the user responds to → mic must hear the USER,
+//              not the app's output (tonal drone, interval/singsing sing-back,
+//              piano reference-match, metronome click self-trigger).
+//    AEC OFF = raw signal wanted (tuner, tools readout, volume meter, vocalrange).
+//    NS/AGC  = off everywhere (speech-tuned; hurt sustained-tone detection). ──
+function intonareMicAudioConfig() {
+  var m    = (typeof mode !== 'undefined') ? mode : null;
+  var tool = (typeof currentTool !== 'undefined') ? currentTool : null;
+  var ex   = (typeof currentExercise !== 'undefined') ? currentExercise : null;
+  var aec =
+    (tool === 'tonal') ||
+    (tool === 'piano') ||
+    (ex === 'interval') ||
+    (ex === 'singsing') ||
+    (m === 'metronome');
+  return { aec: aec, ns: false, agc: false };
 }
 
 async function _nativeMicStart() {
