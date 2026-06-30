@@ -12,6 +12,7 @@ import android.media.MediaRecorder;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.NoiseSuppressor;
 import android.media.audiofx.AutomaticGainControl;
+import android.util.Base64;
 
 /**
  * IntonareMic — native microphone capture + per-mode audio processing.
@@ -97,6 +98,11 @@ public class IntonareMicPlugin extends Plugin {
         boolean wantAec = Boolean.TRUE.equals(call.getBoolean("aec", false));
         boolean wantNs  = Boolean.TRUE.equals(call.getBoolean("ns", false));
         boolean wantAgc = Boolean.TRUE.equals(call.getBoolean("agc", false));
+        // When true, each captured frame is also emitted as base64 int16 PCM via
+        // the "micFrame" event, so JS can run the existing detector on the NATIVE
+        // audio (the real test of capture + AEC). Off by default so the cheap
+        // level-meter path doesn't ship frames it doesn't need.
+        boolean sendPcm = Boolean.TRUE.equals(call.getBoolean("sendPcm", false));
 
         int source = wantAec ? SOURCE_AEC : SOURCE_RAW;
 
@@ -161,9 +167,11 @@ public class IntonareMicPlugin extends Plugin {
         }
 
         final int readSamples = frameSamples;
+        final boolean emitPcm = sendPcm;
         captureThread = new Thread(new Runnable() {
             @Override public void run() {
                 short[] buf = new short[readSamples];
+                byte[] bytes = emitPcm ? new byte[readSamples * 2] : null;
                 while (capturing) {
                     int n = recorder.read(buf, 0, readSamples);
                     if (n <= 0) {
@@ -181,6 +189,23 @@ public class IntonareMicPlugin extends Plugin {
                     ev.put("rms", rms);
                     ev.put("samples", n);
                     notifyListeners("micLevel", ev);
+
+                    if (emitPcm) {
+                        // Little-endian int16 -> bytes -> base64. The bridge can't
+                        // carry a Float array cleanly; base64 int16 is compact and
+                        // JS decodes it back to Float32 for the detector.
+                        for (int i = 0; i < n; i++) {
+                            short s = buf[i];
+                            bytes[i * 2]     = (byte) (s & 0xff);
+                            bytes[i * 2 + 1] = (byte) ((s >> 8) & 0xff);
+                        }
+                        String b64 = Base64.encodeToString(bytes, 0, n * 2, Base64.NO_WRAP);
+                        JSObject fr = new JSObject();
+                        fr.put("pcm", b64);
+                        fr.put("samples", n);
+                        fr.put("sampleRate", SAMPLE_RATE);
+                        notifyListeners("micFrame", fr);
+                    }
                 }
             }
         }, "IntonareMicCapture");
@@ -191,6 +216,7 @@ public class IntonareMicPlugin extends Plugin {
         ret.put("sampleRate", SAMPLE_RATE);
         ret.put("frameSamples", frameSamples);
         ret.put("source", wantAec ? "voice_communication" : "voice_recognition");
+        ret.put("sendPcm", sendPcm);
         // requested vs. actually-applied, so JS can tell when a device silently
         // lacks an effect (e.g. AEC requested but unavailable on this hardware).
         ret.put("aecRequested", wantAec); ret.put("aecApplied", aecApplied);

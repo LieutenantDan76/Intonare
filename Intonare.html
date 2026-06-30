@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.73.18 -->
+<!-- INTONARE_VERSION: 0.73.19 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -19210,6 +19210,12 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="iv-controls">
           <button class="iv-btn primary" id="droneToggleBtn" onclick="toggleDronePlay()" style="background:var(--grad-warm);box-shadow:0 4px 14px rgba(255,160,122,0.3)" data-i18n="drone_start">▶ START DRONE</button>
         </div>
+        <!-- ░░ PHASE 1c NATIVE AEC TEST — remove once native mic is the default path ░░ -->
+        <div class="iv-controls" style="margin-top:6px">
+          <button class="iv-btn" id="ntNativeTestBtn" onclick="window.__intonareTonalNativeToggle&&window.__intonareTonalNativeToggle()" style="font-size:11px;border:1px solid #6a8">NATIVE MIC TEST (AEC)</button>
+        </div>
+        <div id="ntNativeTestOut" style="font-size:11px;opacity:.8;text-align:center;margin-top:4px">native test off</div>
+        <!-- ░░ end Phase 1c test block ░░ -->
         <div class="ref-controls">
           <div class="vol-slider-row">
             <div class="vol-slider-label" data-i18n="vol_label">VOL</div>
@@ -21096,7 +21102,91 @@ function intonareMicAudioConfig() {
   };
 })();
 /* ░░ end Phase 1a handlers ░░ */
-const INTONARE_VERSION = '0.73.18';
+
+/* ░░ PHASE 1c NATIVE AEC TEST (tonal-centre) — remove once native mic is the
+   default detection path. Proves: native capture + AcousticEchoCanceler can
+   detect the USER singing while the drone plays on the speaker, instead of
+   locking onto the drone. Runs the EXISTING detectPitch on native PCM frames. ░░ */
+(function () {
+  let P = null, frameListener = null, active = false;
+
+  function plugin() {
+    if (P) return P;
+    let p = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IntonareMic;
+    if (!p && window.Capacitor && typeof window.Capacitor.registerPlugin === 'function') {
+      p = window.Capacitor.registerPlugin('IntonareMic');
+    }
+    P = p || null;
+    return P;
+  }
+
+  // Decode base64 int16 little-endian PCM -> Float32 in -1..1.
+  function b64ToFloat32(b64) {
+    const bin = atob(b64);
+    const len = bin.length >> 1; // 2 bytes per sample
+    const out = new Float32Array(len);
+    for (let i = 0; i < len; i++) {
+      const lo = bin.charCodeAt(i * 2);
+      const hi = bin.charCodeAt(i * 2 + 1);
+      let v = (hi << 8) | lo;
+      if (v >= 0x8000) v -= 0x10000; // sign-extend
+      out[i] = v / 32768;
+    }
+    return out;
+  }
+
+  window.__intonareTonalNativeToggle = async function () {
+    const out = document.getElementById('ntNativeTestOut');
+    const btn = document.getElementById('ntNativeTestBtn');
+    const p = plugin();
+    if (!p) { if (out) out.textContent = 'native plugin not found'; return; }
+
+    if (active) {
+      // ── stop ──
+      try { await p.stop({}); } catch (e) {}
+      if (frameListener) { try { await frameListener.remove(); } catch (e) {} frameListener = null; }
+      active = false;
+      if (btn) btn.classList.remove('primary');
+      if (out) out.textContent = 'native test off';
+      return;
+    }
+
+    // ── start: native mic with AEC + PCM streaming ──
+    try {
+      if (!frameListener && typeof p.addListener === 'function') {
+        frameListener = await p.addListener('micFrame', function (fr) {
+          if (!fr || !fr.pcm) return;
+          let buf;
+          try { buf = b64ToFloat32(fr.pcm); } catch (e) { return; }
+          const sr = fr.sampleRate || 44100;
+          // Run the EXISTING detector on the native frame.
+          const freq = (typeof detectPitch === 'function') ? detectPitch(buf, sr) : -1;
+          if (freq > 20 && freq < 4500) {
+            const ni = (typeof freqToNote === 'function') ? freqToNote(freq) : null;
+            // Drive the tonal-centre interval display against the live drone ref.
+            if (typeof updateIntervalDisplay === 'function') updateIntervalDisplay(freq);
+            if (out) out.textContent = 'NATIVE: ' + freq.toFixed(1) + ' Hz'
+              + (ni ? ' · ' + ni.name + ni.oct + ' ' + (ni.cents >= 0 ? '+' : '') + ni.cents.toFixed(0) + '\u00a2' : '');
+          } else {
+            if (out) out.textContent = 'NATIVE: (no pitch \u2014 sing against the drone)';
+          }
+        });
+      }
+      const cfg = (typeof intonareMicAudioConfig === 'function')
+        ? intonareMicAudioConfig() : { aec: true, ns: false, agc: false };
+      cfg.sendPcm = true;            // need raw frames for detection
+      cfg.aec = true;                // force AEC on for this test regardless of surface
+      const r = await p.start(cfg);
+      active = true;
+      if (btn) btn.classList.add('primary');
+      if (out) out.textContent = 'NATIVE ON (aecApplied=' + r.aecApplied + ') \u2014 start the drone, then sing';
+    } catch (e) {
+      if (out) out.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
+    }
+  };
+})();
+/* ░░ end Phase 1c test ░░ */
+const INTONARE_VERSION = '0.73.19';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
