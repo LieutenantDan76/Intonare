@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.75.10 -->
+<!-- INTONARE_VERSION: 0.75.13 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -7580,12 +7580,12 @@
   .iv-test-overlay {
     position: fixed; inset: 0; z-index: 620;
     background: rgba(5,5,12,0.92); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    display: none; align-items: flex-start; justify-content: center;
+    display: none; align-items: center; justify-content: center;
     padding: 16px; overflow-y: auto;
   }
   .iv-test-overlay.active { display: flex; }
   .iv-test-inner {
-    width: 100%; max-width: 420px; margin-top: max(20px, env(safe-area-inset-top));
+    width: 100%; max-width: 420px; margin: auto;
     background: linear-gradient(180deg, var(--surface) 0%, var(--bg-1) 100%);
     border: 1px solid var(--accent-soft); border-radius: var(--r-lg);
     padding: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.7);
@@ -14784,6 +14784,7 @@ body.ov-portrait-rotate .pto-organ-overlay.active {
   /* ── Consistent top spacing using dynamic --header-h ── */
   /* Chordle: eliminate any residual gap above the first visible control row */
   body.in-module #exChordle { margin-top: 0 !important; padding-top: 0 !important; }
+
   body.in-module #exChordle > .train-header + * { margin-top: 0 !important; }
 
 
@@ -21522,7 +21523,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.75.10';
+const INTONARE_VERSION = '0.75.13';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -53717,7 +53718,6 @@ function ssNext() {
               : 'listen, then sing the phrase';
   ssFbText(label);
   document.getElementById('ssFeedback').className = 'iv-feedback';
-  document.getElementById('ssHoldWrap').style.display = 'none';
   document.getElementById('ssHoldBar').style.width = '0%';
   document.getElementById('ssReplayBtn').disabled = false;
 
@@ -53867,7 +53867,6 @@ function ssAdvanceSequence() {
     ssLastHitTime = 0;
     ssSmoothCents = 0;
     ssPaintStrip();   // slides current note to center, marks prior as done
-    document.getElementById('ssHoldWrap').style.display = 'none';
     document.getElementById('ssHoldBar').style.width = '0%';
     ssResetNeedle();
     // Play the next note as a cue
@@ -53942,10 +53941,6 @@ function ssCheckPitch(freq) {
   }
 
   if (hb) hb.style.width = Math.min(100, (ssHoldMs / hold) * 100) + '%';
-  // Reveal the hold bar the moment the singer starts banking hold time; it's the
-  // core "am I locking this in" feedback, so it should be visible while singing.
-  var hw = document.getElementById('ssHoldWrap');
-  if (hw && ssHoldMs > 0 && hw.style.display === 'none') hw.style.display = '';
   ssArcUpdate(cents, ssHoldMs, graceActive);
 }
 
@@ -54265,6 +54260,7 @@ function ceEnterNeutral() {
   ceAnswered = false;
   ceRetryCount = 0;
   ceCancelCountdown();
+  if (typeof chordStop === 'function') chordStop();  // silence any ringing chord on reset/diff-swap
   // root placeholder
   const scr = document.getElementById('ceRootDisplay');
   if (scr) { scr.textContent = '\u2014'; scr.classList.remove('hidden-root', 'playing'); }
@@ -54643,7 +54639,7 @@ function ceCloseStats() {
 
 function ceStop() {
   ceCancelCountdown();
-  // chord audio auto-stops; nothing else to clean up
+  if (typeof chordStop === 'function') chordStop();  // kill any ringing chord
 }
 
 // ═══════════════════════════════════════════════
