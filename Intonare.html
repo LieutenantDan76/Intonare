@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.75.5 -->
+<!-- INTONARE_VERSION: 0.75.6 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -21521,7 +21521,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.75.5';
+const INTONARE_VERSION = '0.75.6';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -54133,6 +54133,248 @@ function ceFbText(text) {
   if (s) s.textContent = text;
 }
 
+// ── Chord Ear Training: difficulty config + core functions (restored from 0.74.2) ──
+const CE_DIFFICULTIES = {
+  // Easy: basic triads, root shown, slow, 2 retries, lights shown on retry
+  easy:   { label: 'EASY',   labelIt: 'FACILE',
+    syms: new Set(['','m','dim','aug']),
+    retries: 3, retryLights: true, root: 'show', speed: 'slow', inv: 'root' },
+  // Medium: adds 7ths + sus, root shown, normal, 1 retry, lights hidden until final
+  medium: { label: 'MEDIUM', labelIt: 'MEDIO',
+    syms: new Set(['','m','dim','aug','maj7','m7','7','sus4','sus2']),
+    retries: 2, retryLights: false, root: 'show', speed: 'normal', inv: 'root' },
+  // Hard: adds 6ths/9ths, root can hide, fast, one-shot
+  hard:   { label: 'HARD',   labelIt: 'DIFFICILE',
+    syms: new Set(['','m','dim','aug','maj7','m7','7','sus4','sus2',
+                   '6','m6','maj9','m9','9']),
+    retries: 1, retryLights: false, root: 'show', speed: 'fast', inv: 'include' },
+  // All: full library minus pure interval dyads (those live in custom only)
+  all:    { label: 'INSANE', labelIt: 'FOLLE',
+    syms: new Set(CHORD_DICT.filter(d => !['5','m2','M2','tt'].includes(d.symbol)).map(d => d.symbol)),
+    retries: 1, retryLights: false, root: 'show', speed: 'fast', inv: 'include' },
+  // Custom: entered automatically when the user overrides any granular setting
+  custom: { label: 'CUSTOM', labelIt: 'PERSON.',
+    syms: new Set(['','m','dim','aug']),
+    retries: 1, retryLights: true, root: 'show', speed: 'normal', inv: 'root' },
+};
+
+function ceInit() {
+  // root mode chips
+  const rootRow = document.getElementById('ceRootModeRow');
+  if (rootRow) rootRow.innerHTML = '';
+  [['show', 'ce_root_shown'], ['hide', 'ce_root_hidden']].forEach(([key, label]) => {
+    const btn = document.createElement('button');
+    btn.className = 'iv-filter' + (key === ceRootMode ? ' active' : '');
+    btn.textContent = t(label);
+    btn.onclick = () => { ceRootMode = key; ceMarkCustom(); ceInit(); if (ceRound) ceUpdateRootDisplay(); };
+    if (rootRow) rootRow.appendChild(btn);
+  });
+
+  buildChordToneBank('ceToneBank');
+
+  // arp toggle
+  const arpRow = document.getElementById('ceArpRow');
+  arpRow.innerHTML = '';
+  [['block', 'ce_block_chord'], ['arp', 'ce_arpeggiate']].forEach(([key, label]) => {
+    const btn = document.createElement('button');
+    btn.className = 'iv-filter' + ((key === 'arp') === ceArp ? ' active' : '');
+    btn.textContent = t(label);
+    btn.onclick = () => { ceArp = (key === 'arp'); ceInit(); };
+    arpRow.appendChild(btn);
+  });
+
+  // speed chips (main options row)
+  const speedRow = document.getElementById('ceSpeedRow');
+  if (speedRow) {
+    speedRow.innerHTML = '';
+    [['slow','speed_slow'],['normal','speed_normal'],['fast','speed_fast']].forEach(([key, label]) => {
+      const btn = document.createElement('button');
+      btn.className = 'iv-filter' + (key === ceArpSpeed ? ' active' : '');
+      btn.textContent = t(label);
+      btn.onclick = () => {
+        ceArpSpeed = key;
+        speedRow.querySelectorAll('.iv-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+      speedRow.appendChild(btn);
+    });
+  }
+
+  // auto-advance toggle
+  buildAutoChips('ceAutoRow', () => ceAutoAdvance, v => { ceAutoAdvance = v; });
+
+  // inversions row (root position vs random inversions)
+  const invRow = document.getElementById('ceInvRow');
+  if (invRow) {
+    invRow.innerHTML = '';
+    [['root','ce_inv_root'],['include','ce_inv_include']].forEach(([key, label]) => {
+      const btn = document.createElement('button');
+      btn.className = 'iv-filter' + (key === ceInversions ? ' active' : '');
+      btn.textContent = t(label);
+      btn.onclick = () => { ceInversions = key; ceMarkCustom(); invRow.querySelectorAll('.iv-filter').forEach(b => b.classList.remove('active')); btn.classList.add('active'); };
+      invRow.appendChild(btn);
+    });
+  }
+
+  // retries row (difficulty setting: overriding fires CUSTOM; resets on tier swap)
+  const retryRow = document.getElementById('ceRetryRow');
+  if (retryRow) {
+    retryRow.innerHTML = '';
+    [0,1,2,3].forEach(n => {
+      const btn = document.createElement('button');
+      btn.className = 'iv-filter' + (n === ceRetries ? ' active' : '');
+      btn.textContent = n === 0 ? t('ce_retries_off') : String(n);
+      btn.onclick = () => {
+        ceRetries = n; ceMarkCustom();
+        retryRow.querySelectorAll('.iv-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (ceNeutral) ceRenderHearts();
+      };
+      retryRow.appendChild(btn);
+    });
+  }
+
+  if (!ceCustomPool && ceDifficulty !== 'custom') ceCustomPool = new Set(CE_DIFFICULTIES[ceDifficulty].syms);
+  ceRenderAnswerGrid();
+  ceUpdateStats();
+  ceUpdateDiffHud();
+  if (ceNeutral) ceEnterNeutral();   // paint idle start view on open (no round, no audio)
+}
+
+function ceEnterNeutral() {
+  ceNeutral = true;
+  ceRound = null;
+  ceAnswered = false;
+  ceRetryCount = 0;
+  ceCancelCountdown();
+  // root placeholder
+  const scr = document.getElementById('ceRootDisplay');
+  if (scr) { scr.textContent = '\u2014'; scr.classList.remove('hidden-root', 'playing'); }
+  // empty diff row
+  const row = document.getElementById('ceDiffRow'); if (row) row.innerHTML = '';
+  // button reads START
+  const nextBtn = document.getElementById('ceNextBtn');
+  if (nextBtn) nextBtn.textContent = '\u25b6 ' + t('ce_start_word');
+  // replay disabled in neutral (nothing to replay)
+  const rep = document.getElementById('ceReplayBtn'); if (rep) rep.disabled = true;
+  // feedback shows the current tier's blurb
+  const fb = document.getElementById('ceFeedback');
+  ceFbText(t('ce_blurb_' + ceDifficulty) || '');
+  if (fb) fb.className = 'iv-feedback';
+  // hearts / oneshot for this tier
+  ceRenderHearts();
+  ceUpdateFlame();
+  ceUpdateDiffHud();
+}
+
+function ceCycleDiff() {
+  let idx = CE_DIFF_CYCLE.indexOf(ceDifficulty);
+  if (idx < 0) idx = -1; // was custom → next tap starts at easy
+  const nextKey = CE_DIFF_CYCLE[(idx + 1) % CE_DIFF_CYCLE.length];
+  ceApplyPreset(nextKey);
+  ceInit();
+  // return to the neutral start state for the new tier; wait for START tap (no auto-play)
+  ceEnterNeutral();
+}
+
+function ceToggleChord(symbol) {
+  ceMarkCustom();
+  if (!ceCustomPool) {
+    ceCustomPool = new Set(CE_DIFFICULTIES[ceDifficulty].syms);
+  }
+  if (ceCustomPool.has(symbol)) {
+    if (ceCustomPool.size <= 2) return; // need at least 2 chords
+    ceCustomPool.delete(symbol);
+  } else {
+    ceCustomPool.add(symbol);
+  }
+  ceBuildPool();
+  ceRenderAnswerGrid();
+}
+
+function ceRenderAnswerGrid() {
+  const pool = ceGetPool();
+  const grid = document.getElementById('ceAnswerGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  pool.forEach(def => {
+    const btn = document.createElement('button');
+    btn.className = 'ce-answer-btn';
+    btn.id = 'ceAns_' + (def.symbol === '' ? '__maj' : def.symbol);
+    btn.innerHTML =
+      '<span class="ce-btn-name">' + def.name + '</span>' +
+      '<span class="ce-btn-formula">' + ceChordFormula(def) + '</span>';
+    btn.onclick = () => ceAnswer(def.symbol);
+    grid.appendChild(btn);
+  });
+}
+
+function ceApplyPreset(key) {
+  const d = CE_DIFFICULTIES[key];
+  if (!d) return;
+  ceApplyingPreset = true;
+  ceDifficulty = key;
+  if (key !== 'custom') {
+    ceCustomPool = new Set(d.syms);
+    ceRootMode   = d.root;
+    ceArpSpeed   = d.speed;
+    ceInversions = d.inv;
+    ceRetries    = d.retries;
+  }
+  ceApplyingPreset = false;
+  ceUpdateDiffHud();
+}
+
+function ceSetPreset(key) {
+  ceApplyPreset(key);
+  ceBuildPool();
+  ceRenderAnswerGrid();
+}
+
+function ceGetPool() {
+  const syms = ceCustomPool || CE_DIFFICULTIES[ceDifficulty].syms;
+  return CHORD_DICT.filter(d => syms.has(d.symbol));
+}
+
+function ceMarkCustom() {
+  if (ceApplyingPreset) return;
+  if (ceDifficulty !== 'custom') { ceDifficulty = 'custom'; ceUpdateDiffHud(); }
+}
+
+function ceChordFormula(def) {
+  const DEG_NUMS = [1,2,3,4,5,6,7];
+  const parts = def.deg.map((d, i) => {
+    const num = DEG_NUMS[d] || (d + 1);
+    const acc = def.sp[i] === 'f' ? '\u266d' : def.sp[i] === 's' ? '\u266f' : '';
+    return acc + num;
+  });
+  return parts.join(' \u00b7 ');
+}
+
+function ceUpdateDiffHud() {
+  const lbl = document.getElementById('ceHudDiff');
+  const sub = document.getElementById('ceHudDiffSub');
+  const chip = document.querySelector('.ce-hud-diff');
+  if (lbl) lbl.textContent = t('ce_diff_' + ceDifficulty) || CE_DIFFICULTIES[ceDifficulty].label;
+  if (sub) {
+    const n = ceGetPool().length;
+    sub.textContent = n + ' ' + t('ce_diff_chords_word');
+  }
+  if (chip) chip.dataset.tier = ceDifficulty;   // CSS colors by tier
+}
+
+function ceUpdateRootDisplay() {
+  const el = document.getElementById('ceRootDisplay');
+  if (!el || !ceRound) return;
+  if (ceRootMode === 'show') {
+    el.textContent = getDisplayNote(CHORD_ROOTS[ceRound.rootIdx]).replace('#','♯');
+    el.classList.remove('hidden-root');
+  } else {
+    el.textContent = '?';
+    el.classList.add('hidden-root');
+  }
+}
+
 function ceAnswer(symbol) {
   if (!ceRound || ceAnswered) return;
 
@@ -62055,6 +62297,24 @@ function buildAutoChips(rowId, flagGetter, flagSetter, labels) {
   });
 }
 
+// ── Chord Ear Training state (restored from 0.74.2) ──
+let ceApplyingPreset = false;
+let ceDifficulty  = 'easy';
+let ceRootMode    = 'show';
+let ceInversions  = 'root';
+let ceRetries     = 3;
+let ceRound       = null;
+let ceNeutral     = true;
+let ceAnswered    = false;
+let ceRetryCount  = 0;
+let ceStreakCount  = 0;
+let ceCorrectCount = 0;
+let ceTotalCount   = 0;
+let ceArp          = false;
+let ceArpSpeed     = 'normal';
+let ceCustomPool   = null;
+let ceChordLog     = {};
+const CE_DIFF_CYCLE = ['easy','medium','hard','all'];
 let ceAutoAdvance = true;
 let ivAutoAdvance = false;  let ivAutoTimer = null;
 let tgAutoAdvance = false;
