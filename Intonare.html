@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.75.7 -->
+<!-- INTONARE_VERSION: 0.75.8 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -21521,7 +21521,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.75.7';
+const INTONARE_VERSION = '0.75.8';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -25355,7 +25355,7 @@ function _clearHold() {
 }
 
 function processAudio() {
-  if (!isListening) return;
+  if (!isListening) { animFrame = null; return; }
   const buf = new Float32Array(4096);
   // Native path: copy the latest 4096 samples the native mic has delivered.
   // WebView path (default): pull from the analyser exactly as before.
@@ -25928,6 +25928,14 @@ async function startMic(_opts) {
     const micLbl = document.getElementById('micLabel');
     if (micLbl) micLbl.textContent = t('mic_denied');
     document.getElementById('statusText').textContent = t('mic_no_mic');
+  }
+}
+// Safety net: the processAudio RAF loop dies if it ever takes the `!isListening`
+// early-return, or if a frame throws. If the mic is meant to be live but the loop
+// isn't running, kick it back to life. Cheap no-op when the loop is already going.
+function micReviveLoop() {
+  if (isListening && micStream && !animFrame) {
+    animFrame = requestAnimationFrame(processAudio);
   }
 }
 function stopMic() {
@@ -37946,6 +37954,7 @@ function ivrInit() {
 }
 
 function ivNext() {
+  micReviveLoop();
   ivCancelCountdown();
   ivStop();
   ivGotIt = false;
@@ -53684,6 +53693,7 @@ function ssPlaySequence() {
 }
 
 function ssNext() {
+  micReviveLoop();
   ssCancelCountdown();
   ssStop();
   ssSequence  = ssBuildSequence();
@@ -53828,6 +53838,7 @@ function ssResetNeedle() {
 }
 
 function ssAdvanceSequence() {
+  micReviveLoop();
   ssSeqScores[ssSeqIdx] = 'got';
   ssSeqIdx++;
   if (ssSeqIdx >= ssSequence.length) {
@@ -54004,6 +54015,7 @@ function ceApplyInversion(midi, inv) {
 }
 
 function ceStartRound() {
+  micReviveLoop();
   ceNeutral = false;
   const _rep = document.getElementById('ceReplayBtn'); if (_rep) _rep.disabled = false;
   const _nb = document.getElementById('ceNextBtn'); if (_nb) _nb.textContent = t('iv_new_round');
@@ -54057,6 +54069,7 @@ function ceReplay() {
 }
 
 function ceNext() {
+  micReviveLoop();
   ceCancelCountdown();
   ceStartRound();
 }
