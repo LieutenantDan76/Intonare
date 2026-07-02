@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.75.6 -->
+<!-- INTONARE_VERSION: 0.75.7 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -21521,7 +21521,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.75.6';
+const INTONARE_VERSION = '0.75.7';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -62297,6 +62297,52 @@ function buildAutoChips(rowId, flagGetter, flagSetter, labels) {
   });
 }
 
+// ── Streak milestone system (restored from 0.74.2; shared by all ear-training modules) ──
+const STREAK_MILESTONES = [5, 10, 15, 20, 25, 30, 35, 40];
+let _lastMilestone = 0;
+const _MS_DATA = {
+  5:  { quip:'KILLING SPREE',  color:'#5ee2ff', bg:'rgba(94,226,255,.14)',  glow:'rgba(94,226,255,.3)' },
+  10: { quip:'KILLING FRENZY', color:'#4dffc4', bg:'rgba(77,255,196,.14)',  glow:'rgba(77,255,196,.3)' },
+  15: { quip:'RUNNING RIOT',   color:'#b6f25b', bg:'rgba(182,242,91,.14)',  glow:'rgba(182,242,91,.3)' },
+  20: { quip:'RAMPAGE',        color:'#ffe566', bg:'rgba(255,229,102,.14)', glow:'rgba(255,229,102,.3)' },
+  25: { quip:'NIGHTMARE',      color:'#ffa07a', bg:'rgba(255,160,122,.14)', glow:'rgba(255,160,122,.3)' },
+  30: { quip:'BOOGEYMAN',      color:'#ff6633', bg:'rgba(255,102,51,.14)',  glow:'rgba(255,102,51,.3)' },
+  35: { quip:'GRIM REAPER',    color:'#ff8aae', bg:'rgba(255,138,174,.14)', glow:'rgba(255,138,174,.3)' },
+  40: { quip:'MYTHIC',         color:'#ffd700', bg:'rgba(255,215,0,.16)',   glow:'rgba(255,215,0,.38)' },
+};
+
+function checkStreakMilestone(streak) {
+  var hit = null;
+  for (var i = 0; i < STREAK_MILESTONES.length; i++) {
+    if (STREAK_MILESTONES[i] === streak && STREAK_MILESTONES[i] > _lastMilestone) { hit = STREAK_MILESTONES[i]; break; }
+  }
+  if (!hit) return;
+  _lastMilestone = hit;
+
+  // Mythic (×40) gets the special card + fanfare
+  if (hit === 40) { dtFireMythicCard(); return; }
+
+  hapticMilestone(); playCueMilestone();
+  var m = _MS_DATA[hit] || { color:'#5ee2ff', bg:'rgba(94,226,255,.1)', glow:'rgba(94,226,255,.25)' };
+  var toast = document.getElementById('streakMilestoneToast');
+  var inner = document.getElementById('streakMilestoneInner');
+  var label = document.getElementById('streakMilestoneText');
+  var quip  = document.getElementById('streakMilestoneQuip');
+  if (!toast || !inner) return;
+  inner.style.cssText = 'background:linear-gradient(135deg,' + m.bg + ',var(--panel));border-color:' + m.color + 'aa;box-shadow:0 6px 28px rgba(0,0,0,.5),0 0 20px ' + m.glow + ';color:' + m.color;
+  if (label) { label.textContent = (t('iv_streak')||'STREAK').toUpperCase() + ' ' + hit + '!'; label.style.color = m.color; }
+  if (quip)  { quip.textContent = m.quip; quip.style.color = m.color; }
+  toast.style.display = 'block';
+  inner.style.animation = 'none';
+  void inner.offsetWidth;
+  inner.style.animation = 'dtToastInTop 0.32s cubic-bezier(.34,1.56,.64,1) both';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(function() {
+    inner.style.animation = 'toastOut 0.25s ease both';
+    setTimeout(function() { toast.style.display = 'none'; }, 260);
+  }, 2200);
+}
+
 // ── Chord Ear Training state (restored from 0.74.2) ──
 let ceApplyingPreset = false;
 let ceDifficulty  = 'easy';
@@ -62315,6 +62361,7 @@ let ceArpSpeed     = 'normal';
 let ceCustomPool   = null;
 let ceChordLog     = {};
 const CE_DIFF_CYCLE = ['easy','medium','hard','all'];
+const CE_ARP_SPEEDS = { slow: 0.28, normal: 0.13, fast: 0.07 };
 let ceAutoAdvance = true;
 let ivAutoAdvance = false;  let ivAutoTimer = null;
 let tgAutoAdvance = false;
