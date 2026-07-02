@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.75.8 -->
+<!-- INTONARE_VERSION: 0.75.9 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -21521,7 +21521,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.75.8';
+const INTONARE_VERSION = '0.75.9';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -53941,6 +53941,10 @@ function ssCheckPitch(freq) {
   }
 
   if (hb) hb.style.width = Math.min(100, (ssHoldMs / hold) * 100) + '%';
+  // Reveal the hold bar the moment the singer starts banking hold time; it's the
+  // core "am I locking this in" feedback, so it should be visible while singing.
+  var hw = document.getElementById('ssHoldWrap');
+  if (hw && ssHoldMs > 0 && hw.style.display === 'none') hw.style.display = '';
   ssArcUpdate(cents, ssHoldMs, graceActive);
 }
 
