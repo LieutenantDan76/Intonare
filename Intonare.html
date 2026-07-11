@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.80.25 -->
+<!-- INTONARE_VERSION: 0.80.26 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -22512,7 +22512,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.80.25';
+const INTONARE_VERSION = '0.80.26';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -26607,7 +26607,8 @@ function processAudio() {
     // Reading pitch through a half-settled notch is how phantom octaves and harmonies
     // on the old root get in. Reset the smoothing state too, so when the gauge does
     // come back it recentres on clean data instead of averaging in the garbage.
-    if (_notchSettleUntil && _nowMs < _notchSettleUntil) {
+    const _settleNow = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    if (_notchSettleUntil && _settleNow < _notchSettleUntil) {
       smoothedFreq = 0;
       smoothedCents = 0;
       _pitchHistIdx = 0;
