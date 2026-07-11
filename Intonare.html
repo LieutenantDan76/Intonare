@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.80.24 -->
+<!-- INTONARE_VERSION: 0.80.25 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -22512,7 +22512,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.80.24';
+const INTONARE_VERSION = '0.80.25';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -26603,6 +26603,18 @@ function processAudio() {
     // Applying the same notch ONCE to the continuous incoming stream instead measures
     // -38 dB on the drone with the voice untouched at -0.1 dB. Same coefficients, same
     // Q — the constants were never wrong, the application point was.
+    // Notch still converging after a drone start / root change? Throw the frame away.
+    // Reading pitch through a half-settled notch is how phantom octaves and harmonies
+    // on the old root get in. Reset the smoothing state too, so when the gauge does
+    // come back it recentres on clean data instead of averaging in the garbage.
+    if (_notchSettleUntil && _nowMs < _notchSettleUntil) {
+      smoothedFreq = 0;
+      smoothedCents = 0;
+      _pitchHistIdx = 0;
+      setNoteSilent();
+      animFrame = requestAnimationFrame(processAudio);
+      return;
+    }
     const freq = detectPitch(buf, _sr);
     if (freq > 20 && freq < 4500) {
       // Drone-context octave guard: when a reference drone is playing and the new
@@ -26635,7 +26647,15 @@ function processAudio() {
       if (_pitchHistIdx >= _PITCH_HIST_N) {
         _pitchSort[0]=_pitchHist[0]; _pitchSort[1]=_pitchHist[1]; _pitchSort[2]=_pitchHist[2];
         _pitchSort.sort((a,b)=>a-b);
-        medFreq = _pitchSort[1];               // middle of 3
+        // ADAPTIVE: the median costs ~70 ms of lag (half its 139 ms window at the true
+        // ~21.6 Hz frame rate) and that was the single biggest contributor to the tuner
+        // feeling slow — bigger than the EMA. But it's only EARNING that lag when the
+        // readings actually disagree. When the last 3 frames are tight (the normal case
+        // now that the FFT detector is accurate and every frame is genuinely new audio),
+        // the median is just delay for nothing, so take the newest reading instead.
+        // Spread > 40¢ means something is genuinely unstable → use the median, pay the lag.
+        const _spreadCents = 1200 * Math.log2(_pitchSort[2] / _pitchSort[0]);
+        medFreq = (_spreadCents > 40) ? _pitchSort[1] : freq;
       }
 
       // Outlier-resistant EMA. The alphas below are expressed at the ORIGINAL 60 Hz
@@ -27297,8 +27317,21 @@ function _nfApply(frame) {
   // re-read. (The old call site, inside processAudio, filtered a sliding window that
   // overlapped ~82% with the previous read, so the biquad never settled: -6 dB
   // instead of -38 dB, plus a ring-in transient every frame = the crackling.)
-  if (typeof droneActive !== 'undefined' && droneActive && activeRefFreq > 0) {
-    _setDroneNotch(activeRefFreq, _nativeSampleRate || _NF_SR);
+  // Notch whatever is AUDIBLE, which is not the same as whatever is "active".
+  // droneStop() sets droneActive=false IMMEDIATELY but the oscillator keeps sounding
+  // through a 60ms fade and stops at 70ms. Gating the notch on droneActive therefore
+  // dropped the filter while the old root was still ringing out — so on a root change
+  // the dying old drone poured into the detector unfiltered, AND the new notch had to
+  // re-converge from cold (~230ms). That is exactly the "harmony on the old root".
+  // _droneAudibleUntil keeps the old notch alive across the fade.
+  const _nowMs = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const _droneSounding = (typeof droneActive !== 'undefined' && droneActive)
+                      || (_nowMs < _droneAudibleUntil);
+  const _notchFreq = (typeof droneActive !== 'undefined' && droneActive && activeRefFreq > 0)
+                   ? activeRefFreq
+                   : _droneFadingFreq;
+  if (_droneSounding && _notchFreq > 0) {
+    _setDroneNotch(_notchFreq, _nativeSampleRate || _NF_SR);
     if (_droneNotch) {
       const bank = _droneNotch;
       for (let b = 0; b < bank.length; b++) {
@@ -27333,6 +27366,9 @@ function _biquadNotch(fc, sr, Q) {
 }
 let _droneNotch = null;       // array of notch biquads (null = none active)
 let _droneNotchFreq = 0;      // fundamental the current bank is tuned to
+let _notchSettleUntil  = 0;   // gauge stays blank until the notch has converged
+let _droneAudibleUntil = 0;   // wall-clock ms until the stopping drone is truly silent
+let _droneFadingFreq   = 0;   // the root that is still ringing out during that fade
 let _droneNotchSr   = 0;      // sample rate the current bank was BUILT at. Biquad
                               // coefficients are normalised to fc/sr, so a bank built
                               // at 48k (WebView AudioContext) sits ~9% off when fed
@@ -44126,6 +44162,13 @@ function toggleDronePlay() {
 
 function droneStart() {
   updateDroneDisplay();
+  // ── Notch settle window ──────────────────────────────────────────────────
+  // A Q=40 notch needs roughly 5 native frames (~230ms) to converge — measured:
+  // -3 dB, -10, -17, -26, -33, then -41 dB steady. Until it converges the drone is
+  // still leaking into the detector, so any pitch read in that window is garbage
+  // (this is what produced phantom octaves and harmonies right after a root change).
+  // Hold the gauge back until the filter has actually settled, then start clean.
+  _notchSettleUntil = (typeof performance !== 'undefined' ? performance.now() : Date.now()) + 320;
   const ctx = ensurePracticeCtx();
   const now = ctx.currentTime;
   // Two drone flavors:
@@ -44169,6 +44212,12 @@ function droneStop(silent) {
   const n = droneNodes;
   droneNodes = null;
   droneActive = false;
+  // Tell the detection notch that this root is STILL AUDIBLE for the length of the
+  // fade (+ a little margin). Without this the notch is dropped the instant
+  // droneActive goes false, and the dying drone bleeds into the detector unfiltered
+  // — heard as a phantom harmony on the old root when switching roots.
+  _droneFadingFreq   = activeRefFreq || _droneFadingFreq;
+  _droneAudibleUntil = (typeof performance !== 'undefined' ? performance.now() : Date.now()) + 140;
   try {
     n.master.gain.cancelScheduledValues(now);
     n.master.gain.setValueAtTime(n.master.gain.value, now);
