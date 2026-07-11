@@ -37,6 +37,16 @@ copy /Y Intonare.html www\index.html
 
 echo [4/6] Installing packages and syncing Capacitor...
 call npm install
+
+REM Build main.iife.js (the Capacitor haptics bridge, compiled from main.js by Vite).
+REM Previously this was NEVER run by any script -- haptics only worked because an old
+REM main.iife.js was still sitting in the local www\ folder from a manual build long ago.
+REM Nothing rebuilt it, it wasn't in git, and www\ is gitignored: delete that folder or
+REM build on a fresh machine and haptics would silently die with no error. Vite's
+REM emptyOutDir is false, so this does NOT wipe the index.html copied in step 3.
+echo [4a] Building main.iife.js (haptics bridge)...
+call npm run build
+
 call npx cap sync
 
 REM Restore files that cap sync overwrites -- sources now under native_src\

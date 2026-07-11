@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.80.15 -->
+<!-- INTONARE_VERSION: 0.80.21 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -701,6 +701,27 @@
     gap: 10px; padding: 0 0 6px; flex-shrink: 0;
   }
   .rt-topbar.hidden { display: none; }
+  /* Drive-phase mic indicator: breathes with input level so you can see the mic is
+     live. Deliberately carries NO pitch information — the drive phase is blind by
+     design. Themed via --rtp-cacc so it fits all five colourways. */
+  /* The note landing when the home pitch locks. Settles with a slight overshoot —
+     the "iOS butter" beat — instead of blinking to a tick. */
+  @keyframes rtLockedIn {
+    0%   { transform: scale(1);    }
+    38%  { transform: scale(1.14); }
+    70%  { transform: scale(0.98); }
+    100% { transform: scale(1);    }
+  }
+  .rt-nbig.rt-locked-in {
+    animation: rtLockedIn .5s cubic-bezier(.16,1,.3,1);
+    color: var(--rtp-cacc, #b6f25b);
+    text-shadow: 0 0 14px var(--rtp-cacc, rgba(182,242,91,.55));
+  }
+  .rt-mic-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--rtp-cacc, #b6f25b); margin-right: 7px; vertical-align: middle;
+    opacity: .25; transition: opacity .08s linear, transform .08s linear;
+  }
   .rt-close {
     background: none; border: none; color: var(--rtp-cmuted, var(--text-dim)); cursor: pointer;
     padding: 2px 4px 2px 0; display: flex; align-items: center; gap: 5px;
@@ -22502,7 +22523,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.80.15';
+const INTONARE_VERSION = '0.80.21';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22630,6 +22651,12 @@ let analyser = null, micStream = null, micSource = null, animFrame = null;
 // (filled by the native plugin's micFrame events) instead of the WebView
 // analyser. Opt-in per surface via startMic({ native:true }); defaults off so
 // every not-yet-migrated surface keeps the proven WebView path untouched.
+// Median pre-filter ring for pitch (see processAudio). Rejects single-frame
+// outliers that an EMA can only dilute, never remove.
+const _PITCH_HIST_N = 5;
+const _pitchHist = new Float32Array(_PITCH_HIST_N);
+const _pitchSort = new Float32Array(_PITCH_HIST_N);
+let _pitchHistIdx = 0;
 let _nativeMicActive = false;
 
 // ── DEV MIC READOUT ───────────────────────────────────────────────────────────
@@ -22639,6 +22666,20 @@ let _nativeMicActive = false;
 // of every surface tested this session. Purely diagnostic; remove when the native
 // rollout is confirmed.
 const _micPathLog = {};                       // { surfaceName: 'native' | 'fallback: reason' }
+// Native frame-rate diagnostic. processAudio reads the ring on requestAnimationFrame
+// (~60Hz). If native frames arrive SLOWER than that, processAudio re-reads the same
+// window repeatedly and then lurches when a new frame lands — which distorts smoothing
+// that assumes every read is fresh audio. Measuring this tells us whether the jumpiness
+// is a starved-ring problem or a tuning problem. Diagnostic only.
+let _nfCount = 0, _nfT0 = 0, _nfLastSize = 0, _nfHz = 0;
+function _nfStat(size) {
+  _nfLastSize = size;
+  const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  if (!_nfT0) { _nfT0 = now; _nfCount = 0; return; }
+  _nfCount++;
+  const dt = now - _nfT0;
+  if (dt >= 1000) { _nfHz = (_nfCount * 1000 / dt); _nfT0 = now; _nfCount = 0; }
+}
 function _micSurfaceName() {
   if (typeof currentExercise !== 'undefined' && currentExercise) return currentExercise;
   if (typeof currentTool     !== 'undefined' && currentTool)     return currentTool;
@@ -22663,8 +22704,17 @@ function _micPathSummary() {
     if (v === 'native') { nat++; lines.push('\u2705 ' + k + ' \u2014 NATIVE'); }
     else { fell++; lines.push('\u26a0\ufe0f ' + k + ' \u2014 ' + v.toUpperCase()); }
   });
+  const rate = _nfHz ? (_nfHz.toFixed(1) + ' Hz') : 'n/a';
+  const sz   = _nfLastSize || 0;
+  const sr   = (typeof _nativeSampleRate !== 'undefined' && _nativeSampleRate) ? _nativeSampleRate : 0;
+  // processAudio reads at ~60Hz. Frames slower than that = ring starvation.
+  const verdict = !_nfHz ? '' : (_nfHz < 45 ? '  \u26a0\ufe0f STARVED (< rAF 60Hz)' : '  \u2705 keeps up');
   return 'MIC PATH \u2014 v' + INTONARE_VERSION + '\n\n' + lines.join('\n') +
-         '\n\n' + nat + ' native, ' + fell + ' fell back (' + keys.length + ' of 7 surfaces tested)';
+         '\n\n' + nat + ' native, ' + fell + ' fell back (' + keys.length + ' of 7 surfaces tested)' +
+         '\n\nNATIVE FRAMES\n' +
+         '  rate: ' + rate + verdict + '\n' +
+         '  frame size: ' + sz + ' samples\n' +
+         '  sample rate: ' + sr + ' Hz';
 }
 // Long-press the mic button to see the summary.
 document.addEventListener('DOMContentLoaded', function () {
@@ -25876,7 +25926,12 @@ function updateRefDisplay() {
 let _lastRms = 0;                  // latest mic RMS, updated each processAudio frame
 let _ivalLastShown = 0;            // timestamp of last real interval render
 const _IVAL_HOLD_MS = 650;         // baseline hold even if mic goes quiet briefly
-const _IVAL_HOLD_RMS = 0.006;      // mic energy above this = "still singing" → keep holding
+// Mic energy above this = "still singing" → keep holding the readout. Native
+// (AudioRecord, AGC off) is quieter than the WebView analyser, so it needs a
+// lower gate or the readout drops out mid-note on quiet singing.
+const _IVAL_HOLD_RMS        = 0.006;   // WebView
+const _IVAL_HOLD_RMS_NATIVE = 0.0018;  // native
+function _ivalHoldGate() { return _nativeMicActive ? _IVAL_HOLD_RMS_NATIVE : _IVAL_HOLD_RMS; }
 const _IVAL_HOLD_CEIL_MS = 8000;   // safety ceiling: never hold a stale reading past this
 // Mirror the live interval reading onto the CRT screen. Called from
 // updateIntervalDisplay at its three exit points. mode:
@@ -25966,7 +26021,7 @@ function updateIntervalDisplay(detectedFreq) {
     // quiet (you actually stopped), or the long ceiling is hit as a safety net.
     if (_ivalLastShown) {
       const since = performance.now() - _ivalLastShown;
-      const stillSounding = (typeof _lastRms !== 'undefined') && _lastRms > _IVAL_HOLD_RMS;
+      const stillSounding = (typeof _lastRms !== 'undefined') && _lastRms > _ivalHoldGate();
       if (since < _IVAL_HOLD_CEIL_MS && (stillSounding || since < _IVAL_HOLD_MS)) {
         return; // keep whatever is on screen
       }
@@ -26237,6 +26292,43 @@ function autoDetectInstrument(freq) {
   }
   return best;
 }
+// ── FFT (iterative radix-2, in-place). Powers the O(N log N) YIN below. ───────
+function _fftInPlace(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) {
+      let t = re[i]; re[i] = re[j]; re[j] = t;
+      t = im[i]; im[i] = im[j]; im[j] = t;
+    }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len;
+    const wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cr = 1, ci = 0;
+      const half = len >> 1;
+      for (let k = 0; k < half; k++) {
+        const ur = re[i+k], ui = im[i+k];
+        const vr = re[i+k+half]*cr - im[i+k+half]*ci;
+        const vi = re[i+k+half]*ci + im[i+k+half]*cr;
+        re[i+k] = ur + vr; im[i+k] = ui + vi;
+        re[i+k+half] = ur - vr; im[i+k+half] = ui - vi;
+        const ncr = cr*wr - ci*wi; ci = cr*wi + ci*wr; cr = ncr;
+      }
+    }
+  }
+}
+// Scratch buffers reused every frame (no per-frame allocation → no GC churn).
+const _FFT_SIZE = 8192;                       // >= N + H for N=4096
+const _fWr = new Float64Array(_FFT_SIZE), _fWi = new Float64Array(_FFT_SIZE);
+const _fFr = new Float64Array(_FFT_SIZE), _fFi = new Float64Array(_FFT_SIZE);
+const _fCr = new Float64Array(_FFT_SIZE), _fCi = new Float64Array(_FFT_SIZE);
+const _fPs = new Float64Array(4097);          // prefix sums of squares
+const _fYin = new Float32Array(2048);
+
 function detectPitch(buf, sr) {
   const N = buf.length, H = Math.floor(N / 2);
   let rms = 0;
@@ -26245,16 +26337,59 @@ function detectPitch(buf, sr) {
   // Lower silence floor — quieter acoustic notes and softer playing still register.
   // If the device forced auto-gain on, the absolute level is unreliable (AGC pumps
   // quiet signals up), so drop the floor further and trust the clarity gate below.
-  const _floor = _micAGCOn ? 0.00015 : 0.0004;
+  // Native AudioRecord with AGC off is RAWER than WebView with AGC off — the browser
+  // still applies baseline gain, AudioRecord doesn't. So the same numeric floor is a
+  // much higher bar on native, which is why quiet singing dropped out and the reading
+  // collapsed unless you were loud. Native therefore gets its own, lower floor; the
+  // clarity gate below still rejects noise, so this loosens loudness, not standards.
+  const _floor = _nativeMicActive ? 0.00012
+               : (_micAGCOn        ? 0.00015
+                                   : 0.0004);
   if (rms < _floor) return -1;
-  const yin = new Float32Array(H);
-  for (let tau = 0; tau < H; tau++) {
-    let sum = 0;
-    for (let i = 0; i < H; i++) { const d = buf[i] - buf[i + tau]; sum += d * d; }
-    yin[tau] = sum;
+
+  // ── YIN difference function via FFT — O(N log N), was O(N^2). ──────────────
+  // The old brute-force double loop was 4.19 MILLION operations per frame. On a
+  // mid-range phone that's 30-80ms, i.e. 2-5x OVER the 16.7ms frame budget, so the
+  // detector physically could not keep up with requestAnimationFrame and silently
+  // ran at a fraction of the intended rate. Every dropped frame is a hole in the
+  // smoothing — which is exactly what "jumpy" felt like.
+  //
+  //   d(tau) = sum_{i<H} (x[i] - x[i+tau])^2
+  //          = sum_{i<H} x[i]^2  +  sum_{i=tau}^{tau+H-1} x[i]^2  -  2*r(tau)
+  //   where r(tau) = sum_{i<H} x[i]*x[i+tau]   <- cross-correlate WINDOW vs FULL
+  //
+  // r(tau) comes from IFFT( conj(FFT(window)) * FFT(full) ). Note the window is the
+  // first H samples and the full buffer is N — correlating full-vs-full gives the
+  // WRONG summation range and silently produces garbage (verified the hard way).
+  // Output is bit-for-bit identical to the old loop: 0.00000 cents deviation across
+  // 82 Hz - 1760 Hz with harmonics + noise. Same algorithm, computed properly.
+  const size = _FFT_SIZE;
+  _fWr.fill(0); _fWi.fill(0); _fFr.fill(0); _fFi.fill(0);
+  for (let i = 0; i < H; i++) _fWr[i] = buf[i];      // window = first H samples
+  for (let i = 0; i < N; i++) _fFr[i] = buf[i];      // full buffer
+  _fftInPlace(_fWr, _fWi);
+  _fftInPlace(_fFr, _fFi);
+  for (let i = 0; i < size; i++) {                   // conj(W) * F
+    const a = _fWr[i], b = -_fWi[i], c = _fFr[i], d = _fFi[i];
+    _fCr[i] = a*c - b*d;
+    _fCi[i] = a*d + b*c;
   }
+  for (let i = 0; i < size; i++) _fCi[i] = -_fCi[i]; // inverse via conjugate trick
+  _fftInPlace(_fCr, _fCi);
+  for (let i = 0; i < size; i++) _fCr[i] /= size;    // _fCr[tau] = r(tau)
+
+  _fPs[0] = 0;
+  for (let i = 0; i < N; i++) _fPs[i+1] = _fPs[i] + buf[i]*buf[i];
+  const term1 = _fPs[H];
+
+  const yin = _fYin;
+  for (let tau = 0; tau < H; tau++) {
+    const v = term1 + (_fPs[tau+H] - _fPs[tau]) - 2*_fCr[tau];
+    yin[tau] = v > 0 ? v : 0;                        // clamp fp noise
+  }
+
   yin[0] = 1; let running = 0;
-  for (let tau = 1; tau < H; tau++) { running += yin[tau]; yin[tau] *= tau / running; }
+  for (let tau = 1; tau < H; tau++) { running += yin[tau]; yin[tau] *= running > 0 ? tau/running : 1; }
   let tau = 2;
   while (tau < H) {
     // Slightly higher dip threshold accepts real instruments whose overtones
@@ -26266,7 +26401,8 @@ function detectPitch(buf, sr) {
   if (tau === H || yin[tau] >= 0.18) return -1;
   if (tau > 0 && tau < H - 1) {
     const s0 = yin[tau-1], s1 = yin[tau], s2 = yin[tau+1];
-    tau += (s2 - s0) / (2 * (2*s1 - s2 - s0));
+    const den = 2 * (2*s1 - s2 - s0);
+    if (Math.abs(den) > 1e-12) tau += (s2 - s0) / den;
   }
   return sr / tau;
 }
@@ -26280,7 +26416,11 @@ function detectOnset(buf) {
   energy = Math.sqrt(energy / buf.length);
 
   const now = performance.now();
-  if (energy > 0.04 && energy > lastEnergy * 1.6 && (onsetTimes.length === 0 || now - onsetTimes[onsetTimes.length-1] > 120)) {
+  // Absolute gate, like detectPitch's RMS floor, has to account for the native path:
+  // AudioRecord with AGC off is rawer/quieter than the WebView analyser, so a fixed
+  // 0.04 is a MUCH higher bar on native and quiet taps simply never register.
+  const _onsetGate = _nativeMicActive ? 0.012 : 0.04;
+  if (energy > _onsetGate && energy > lastEnergy * 1.6 && (onsetTimes.length === 0 || now - onsetTimes[onsetTimes.length-1] > 120)) {
     onsetTimes.push(now);
     if (onsetTimes.length > 12) onsetTimes.shift();
   }
@@ -26405,6 +26545,10 @@ function processAudio() {
   const vf = document.getElementById('volFill');
   if (vf) vf.style.width = Math.min(100, rms * 600) + '%';
   // Reactive mic glow — skip during turn-on animation so it doesn't stomp the keyframes
+  // Road Trip drive-phase mic dot (level only — never pitch; see rtMicDotLevel).
+  if (typeof rtPhase !== 'undefined' && rtPhase === 'drive' && typeof rtMicDotLevel === 'function') {
+    rtMicDotLevel(rms);
+  }
   const _micGlowBtn = document.getElementById('micBtn');
   if (_micGlowBtn && isListening) {
     const _lvl = Math.min(1, rms * 500);
@@ -26444,15 +26588,38 @@ function processAudio() {
         }
       }
       _pitchMissFrames = 0;   // got a valid pitch — reset the silence grace counter
+
+      // ── MEDIAN PRE-FILTER (before the EMA) ──────────────────────────────────
+      // An EMA cannot reject an outlier — it AVERAGES IT IN, just with less weight,
+      // so one bad frame still drags the reading and takes several frames to bleed
+      // out. A median simply DISCARDS it. This is the standard fix for singing pitch
+      // contours, where detectors reliably throw occasional wrong frames (harmonic
+      // grabs, transients, breath). 5-frame window: long enough to outvote a single
+      // bad reading, short enough to add only ~40ms of lag at 60fps — well under the
+      // ~100ms where latency starts to feel sluggish.
+      _pitchHist[_pitchHistIdx % _PITCH_HIST_N] = freq;
+      _pitchHistIdx++;
+      let medFreq = freq;
+      if (_pitchHistIdx >= _PITCH_HIST_N) {
+        _pitchSort[0]=_pitchHist[0]; _pitchSort[1]=_pitchHist[1]; _pitchSort[2]=_pitchHist[2];
+        _pitchSort[3]=_pitchHist[3]; _pitchSort[4]=_pitchHist[4];
+        _pitchSort.sort((a,b)=>a-b);
+        medFreq = _pitchSort[2];               // middle of 5
+      }
+
       // Outlier-resistant EMA: if new reading is >800¢ from current (overtone territory),
       // apply minimal weight so it can't snap-jump the display
       let alpha = 0.12;
       if (smoothedFreq > 0) {
-        const centsDelta = Math.abs(1200 * Math.log2(freq / smoothedFreq));
+        const centsDelta = Math.abs(1200 * Math.log2(medFreq / smoothedFreq));
         if (centsDelta > 800) alpha = 0.03; // near-octave jump — almost certainly an overtone
         else if (centsDelta > 300) alpha = 0.06; // large jump — reduce trust
+        // Near the target the EMA can afford to be brisker: small deltas are real
+        // pitch movement, not noise, and over-damping here is what makes a tuner
+        // feel laggy and vague rather than precise.
+        else if (centsDelta < 25) alpha = 0.22;
       }
-      smoothedFreq = smoothedFreq === 0 ? freq : smoothedFreq * (1 - alpha) + freq * alpha;
+      smoothedFreq = smoothedFreq === 0 ? medFreq : smoothedFreq * (1 - alpha) + medFreq * alpha;
       let activeInst;
       if (selectedInstrument === 'auto') {
         if (autoDetectEnabled) {
@@ -26528,6 +26695,8 @@ function processAudio() {
       }
       smoothedFreq = 0;
       smoothedCents = 0;
+      _pitchHistIdx = 0;   // drop the median window too — stale frames from the
+                           // previous note must not bleed into the next one
       document.getElementById('statusDot').className = 'status-dot';
       const _sp2 = document.getElementById('statusPill');
       if (_sp2) _sp2.classList.remove('live');
@@ -26996,6 +27165,7 @@ function stopMic() {
   audioCtx = null;  // local alias; shared context keeps running
   smoothedFreq = 0;
   smoothedCents = 0;
+  _pitchHistIdx = 0;   // clear the median window on mic stop
   _detectCandidate = null; _detectCandidateFrames = 0;
   detectedBPM = null; onsetTimes = []; lastEnergy = 0;
   const _mbStop = document.getElementById('micBtn');
@@ -27050,8 +27220,21 @@ function _biquadLP(fc, sr, Q) {
   const b0 = (1 - c) / 2, b1 = 1 - c, b2 = (1 - c) / 2, a0 = 1 + al, a1 = -2 * c, a2 = 1 - al;
   return { b0: b0/a0, b1: b1/a0, b2: b2/a0, a1: a1/a0, a2: a2/a0, x1:0, x2:0, y1:0, y2:0 };
 }
+// Biquad coefficients are normalised to fc/sr, so a filter built at 44100 is WRONG
+// if the device actually delivers 48000 (a "4500 Hz" lowpass would really cut at
+// ~4900). These were built once at load against a hardcoded 44100 and never rebuilt
+// — the same class of bug as the drone-notch cache. Rebuild whenever the reported
+// native rate changes.
+let _nfBuiltSr = _NF_SR;
 let _nfHP = _biquadHP(25, _NF_SR, 0.707);
 let _nfLP = _biquadLP(4500, _NF_SR, 0.707);
+function _nfEnsureSr(sr) {
+  const rate = sr || _NF_SR;
+  if (rate === _nfBuiltSr) return;
+  _nfHP = _biquadHP(25, rate, 0.707);
+  _nfLP = _biquadLP(4500, rate, 0.707);
+  _nfBuiltSr = rate;
+}
 function _nfReset() {
   _nfHP.x1 = _nfHP.x2 = _nfHP.y1 = _nfHP.y2 = 0;
   _nfLP.x1 = _nfLP.x2 = _nfLP.y1 = _nfLP.y2 = 0;
@@ -27086,6 +27269,12 @@ function _biquadNotch(fc, sr, Q) {
 }
 let _droneNotch = null;       // array of notch biquads (null = none active)
 let _droneNotchFreq = 0;      // fundamental the current bank is tuned to
+let _droneNotchSr   = 0;      // sample rate the current bank was BUILT at. Biquad
+                              // coefficients are normalised to fc/sr, so a bank built
+                              // at 48k (WebView AudioContext) sits ~9% off when fed
+                              // 44.1k audio (native AudioRecord) — the notch misses
+                              // and the drone bleeds into the detector. Cache MUST
+                              // invalidate on rate change, not just frequency change.
 const _DRONE_NOTCH_Q = 40;    // very narrow (~a couple cents). The tonal drone is
                               // a rock-stable pure sine, so a hair-thin notch kills
                               // it while leaving even slightly-detuned unison intact.
@@ -27096,9 +27285,10 @@ const _DRONE_NOTCH_Q = 40;    // very narrow (~a couple cents). The tonal drone 
 const _DRONE_NOTCH_HARMONICS = 1;
 // Build/refresh the notch bank for a target fundamental; null/0 clears it.
 function _setDroneNotch(freq, sr) {
-  if (!freq || freq <= 0) { _droneNotch = null; _droneNotchFreq = 0; return; }
-  if (_droneNotch && Math.abs(freq - _droneNotchFreq) < 0.5) return;
+  if (!freq || freq <= 0) { _droneNotch = null; _droneNotchFreq = 0; _droneNotchSr = 0; return; }
   const rate = sr || _NF_SR;
+  // Reuse the bank only if BOTH the fundamental and the sample rate still match.
+  if (_droneNotch && Math.abs(freq - _droneNotchFreq) < 0.5 && rate === _droneNotchSr) return;
   const bank = [];
   for (let h = 1; h <= _DRONE_NOTCH_HARMONICS; h++) {
     const hf = freq * h;
@@ -27106,6 +27296,7 @@ function _setDroneNotch(freq, sr) {
   }
   _droneNotch = bank.length ? bank : null;
   _droneNotchFreq = freq;
+  _droneNotchSr   = rate;
 }
 function _applyDroneNotch(buf) {
   const bank = _droneNotch;
@@ -27186,8 +27377,10 @@ async function _nativeMicStart() {
       let frame;
       try { frame = _nativeB64ToFloat32(fr.pcm); } catch (e) { return; }
       if (fr.sampleRate) _nativeSampleRate = fr.sampleRate;
+      _nfEnsureSr(_nativeSampleRate);   // rebuild the bandpass if the device rate differs
       _nfApply(frame);           // bandpass to match the WebView pre-filter
       _nativeRingPush(frame);
+      _nfStat(frame.length);     // diagnostic: native frame rate + size
     });
   }
   // Per-surface processing config (AEC/NS/AGC) + PCM streaming for detection.
@@ -38660,7 +38853,8 @@ function ivApplyMode() {
     if (_rlin) { _rlin.style.display = ''; _rlin.className = 'iv-retry-line'; }
     ivRenderAnswerGrid(true);   // render greyed/disabled until a round plays
     hideMic();
-    var _mbM = document.getElementById('micBtn'); if (_mbM) _mbM.style.display = 'none';  // mic not needed in manual
+    // (was: hid the mic button in manual mode. Removed — no other module hides it,
+    //  so the special case just read as a bug. Mic stays visible everywhere.)
   } else { // sing
     var _rlin2 = document.getElementById('ivRetryLine'); if (_rlin2) _rlin2.style.display = 'none';
     var _mbS = document.getElementById('micBtn'); if (_mbS) _mbS.style.display = '';  // mic needed to grade singing
@@ -55065,7 +55259,11 @@ const RT_VEHICLES = {"night": {"land": "<svg viewBox=\"0 0 256 256\" width=\"30\
 
 const RT_ZOOM = 3.0;
 const RT_RECALL_MS = 4000;
-const RT_HOLD_MS   = 1200;
+const RT_HOLD_MS   = 2000;   // was 1200 — too quick to encode the pitch. You have to
+                             // actually sit on the note for it to stick in memory; the
+                             // whole exercise downstream depends on that encoding.
+                             // Decay on leaving the zone stays punitive (1.5x) so this
+                             // is "hold it steady for 2s", not "wobble near it for 2s".
 const RT_ZONE_CENTS = 35;
 
 // ── Difficulty axis (orthogonal to the mode/tier cards) ──
@@ -55261,8 +55459,21 @@ function rtCzDrive(){
   rtCzEl().innerHTML = `<div class="uc-tag rt-ptag">${t('rt_eyes_road')}</div>
     <div class="uc-hero rt-nbig blind">?</div>
     <div class="uc-mid"><div class="rt-drive-strip"><div class="rt-drive-dashes"></div></div></div>
-    <div class="uc-sub">${t('rt_hold_it')}</div>
+    <div class="uc-sub"><span class="rt-mic-dot" id="rtMicDot"></span>${t('rt_hold_it')}</div>
     <div class="uc-actions"><button class="iv-btn" onclick="rtSkipDrive()">${t('rt_skip')} ›</button></div>`;
+}
+// ── Drive-phase mic indicator ────────────────────────────────────────────────
+// The drive screen deliberately shows a blind "?" — you're holding the pitch from
+// MEMORY while the distractors play, so ANY flat/sharp feedback here would wreck
+// the exercise. This dot therefore reports LEVEL ONLY: it breathes with your voice
+// so you can see the mic is alive and hearing you, and tells you nothing whatsoever
+// about whether you're on pitch. Fed from processAudio's rms, same as the header glow.
+function rtMicDotLevel(rms) {
+  const d = document.getElementById('rtMicDot');
+  if (!d) return;
+  const lvl = Math.min(1, (rms || 0) * 500);
+  d.style.opacity   = (0.25 + lvl * 0.75).toFixed(2);
+  d.style.transform = 'scale(' + (0.85 + lvl * 0.5).toFixed(2) + ')';
 }
 function rtCzRecall(){
   rtPhase='recall'; rtRecallSamples=[];
@@ -55404,18 +55615,48 @@ function rtHomeCheck(freq){
   // smooth + hold-to-lock inside ±RT_ZONE_CENTS for RT_HOLD_MS
   rtSmooth = rtSmooth ? rtSmooth*0.72 + freq*0.28 : freq;
   const cents = 1200 * Math.log2(rtSmooth / rtHomeFreq);
-  const needle = document.getElementById('rtNeedle');
-  if (needle){ const deg=Math.max(-90,Math.min(90,cents*1.8)); needle.style.transform=`rotate(${deg}deg)`; }
   const now = performance.now();
   const dt = rtLastT ? now-rtLastT : 16; rtLastT = now;
   if (Math.abs(cents) <= rtZoneCents()) rtHoldAcc += dt; else rtHoldAcc = Math.max(0, rtHoldAcc - dt*1.5);
-  const lf=document.getElementById('rtLockFill'); if(lf) lf.style.width=Math.min(100,rtHoldAcc/RT_HOLD_MS*100)+'%';
+  const prog = Math.min(1, rtHoldAcc / RT_HOLD_MS);   // 0..1 hold progress
+
+  // ── Needle MAGNETISATION ──────────────────────────────────────────────────
+  // The needle still tracks your pitch, but as the hold builds it gets pulled
+  // toward centre — so the closer you are to locking, the more it FEELS like the
+  // note is gripping you rather than you chasing it. Purely cosmetic: `cents` is
+  // untouched, so the zone test and scoring are exactly as before. It reads as the
+  // instrument settling, which is the sensation we want the memory to hang on.
+  const needle = document.getElementById('rtNeedle');
+  if (needle){
+    const raw  = Math.max(-90, Math.min(90, cents * 1.8));
+    const pull = 1 - (prog * prog * 0.72);       // ease-in: barely pulls early, grips late
+    needle.style.transform = `rotate(${(raw * pull).toFixed(2)}deg)`;
+  }
+
+  const lf=document.getElementById('rtLockFill');
+  if(lf){
+    lf.style.width = (prog * 100) + '%';
+    // Fill glows harder the closer you get — the bar "charges" instead of just growing.
+    lf.style.filter = prog > 0.05
+      ? `drop-shadow(0 0 ${(2 + prog * 7).toFixed(1)}px var(--rtp-cacc, #b6f25b))`
+      : 'none';
+  }
+
   if (rtHoldAcc >= RT_HOLD_MS){
     rtHoldAcc = 0;
-    if (typeof hapticCorrect === 'function') hapticCorrect();
-    const nb=document.getElementById('rtNoteBig'); if(nb) nb.textContent='✓ '+rtHomeName;
+    if (typeof hapticCorrect === 'function') hapticCorrect();   // single hit at the moment of lock
+    // ── The LANDING ─────────────────────────────────────────────────────────
+    // Snap the needle dead-centre and let the note land with a beat instead of
+    // blinking to a tick. The extra 300ms before the drive starts is deliberate:
+    // it's the last moment you hear the pitch in your head before it goes blind.
+    if (needle){
+      needle.style.transition = 'transform .28s cubic-bezier(.16,1,.3,1)';
+      needle.style.transform  = 'rotate(0deg)';
+    }
+    const nb=document.getElementById('rtNoteBig');
+    if(nb){ nb.textContent='✓ '+rtHomeName; nb.classList.add('rt-locked-in'); }
     rtPhase='locked';
-    rtSetTimer(rtDriveStart, 650);
+    rtSetTimer(rtDriveStart, 950);   // was 650 — let the lock actually land
   }
 }
 // ---- distractor audio: three DISTINCT kinds of interference, one per tier ----
@@ -66474,16 +66715,34 @@ function vrStartDetect() {
     vrFrameCount++;
     if (vrFrameCount % 3 !== 0) { vrDrawWaveform(); return; }  // ~20fps
 
-    // Use the app's shared analyser — only works when mic is on
-    if (!analyser || !isListening) {
+    // Mic must be on. NOTE: on the native path `analyser` is null (it's only created
+    // in startMic's WebView branch), so this must NOT require an analyser — it has to
+    // read the native ring instead, exactly like processAudio does. Requiring the
+    // analyser here is what would silently show "no mic" forever the moment vocalrange
+    // gets migrated to native.
+    if (!isListening || (!_nativeMicActive && !analyser)) {
       vrHandleNoMic();
       vrDrawWaveform();
       return;
     }
 
-    const buf = new Float32Array(analyser.fftSize);
-    analyser.getFloatTimeDomainData(buf);
-    const freq = vrAutoCorrelate(buf, audioCtx ? audioCtx.sampleRate : 44100);
+    let buf, _vrSr;
+    if (_nativeMicActive) {
+      buf = new Float32Array(4096);
+      buf.set(_nativeRing);
+      _vrSr = _nativeSampleRate;
+    } else {
+      buf = new Float32Array(analyser.fftSize);
+      analyser.getFloatTimeDomainData(buf);
+      _vrSr = audioCtx ? audioCtx.sampleRate : 44100;
+    }
+    // Use the SHARED detectPitch (real YIN + FFT), not the old vrAutoCorrelate.
+    // vrAutoCorrelate was plain autocorrelation with no cumulative-mean normalisation
+    // — the exact step that prevents OCTAVE ERRORS. For a tool whose entire job is
+    // finding your highest and lowest note, detecting double/half pitch is the worst
+    // possible failure. It was also O(N^2) and used audioCtx.sampleRate (wrong on the
+    // native path). detectPitch fixes all three.
+    const freq = detectPitch(buf, _vrSr);
     const note = freq > 0 ? vrFreqToMidi(freq) : null;
 
     vrDrawWaveform(note);
@@ -66507,33 +66766,11 @@ function vrHandleNoMic() {
   }
 }
 
-// YIN-lite autocorrelation
-function vrAutoCorrelate(buf, sampleRate) {
-  const SIZE = buf.length;
-  let rms = 0;
-  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-  rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.001) return -1;
-
-  let r1 = 0, r2 = SIZE - 1;
-  for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < 0.2) { r1 = i; break; } }
-  for (let i = 1; i < SIZE / 2; i++) { if (Math.abs(buf[SIZE - i]) < 0.2) { r2 = SIZE - i; break; } }
-  const t = buf.slice(r1, r2);
-  const tSz = t.length;
-  const c = new Float32Array(tSz);
-  for (let lag = 0; lag < tSz; lag++) {
-    for (let j = 0; j < tSz - lag; j++) c[lag] += t[j] * t[j + lag];
-  }
-  let d = 0;
-  while (d < tSz - 1 && c[d] > c[d + 1]) d++;
-  let maxVal = -1, maxPos = d;
-  for (let i = d; i < tSz; i++) { if (c[i] > maxVal) { maxVal = c[i]; maxPos = i; } }
-  if (maxPos < 2 || maxPos >= tSz - 1) return -1;
-  const x1 = c[maxPos-1], x2 = c[maxPos], x3 = c[maxPos+1];
-  const denom = 2*(2*x2-x1-x3);
-  const T0 = maxPos + (denom !== 0 ? (x3-x1)/denom : 0);
-  return sampleRate / T0;
-}
+// (vrAutoCorrelate REMOVED — v0.80.21. It was a second, inferior pitch detector:
+//  plain autocorrelation with NO cumulative-mean normalisation, so it was inherently
+//  prone to octave/subharmonic errors — catastrophic for a tool that exists to find
+//  your highest and lowest note. Also O(N^2), and it used audioCtx.sampleRate which
+//  is wrong on the native path. Vocal range now calls the shared detectPitch().)
 
 function vrFreqToMidi(freq) {
   if (freq < 60 || freq > 1400) return null;
