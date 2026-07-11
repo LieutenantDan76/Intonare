@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.80.26 -->
+<!-- INTONARE_VERSION: 0.80.28 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -11499,11 +11499,7 @@
   /* Mic button in header — listening state (glow driven by JS) */
   .mic-head-btn { transform: scale(1); transition: transform 0.35s ease-out; position: relative; z-index: 2; }
   .mic-head-btn.listening { z-index: 10; }
-  /* DEV: which audio path the mic took. Green = native capture engaged.
-     Amber = fell back to the WebView path. Diagnostic only — remove once the
-     native rollout is confirmed on-device. Long-press the mic for a summary. */
-  .mic-head-btn.mic-path-native   { color: #4ade80 !important; }
-  .mic-head-btn.mic-path-fallback { color: #fbbf24 !important; }
+
   .mic-head-btn.listening {
     color: var(--green); border-color: rgba(182,242,91,0.6);
     background: rgba(182,242,91,0.08);
@@ -22512,7 +22508,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.80.26';
+const INTONARE_VERSION = '0.80.28';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22664,13 +22660,10 @@ function _rateAlpha(alpha60) {
 }
 let _nativeMicActive = false;
 
-// ── DEV MIC READOUT ───────────────────────────────────────────────────────────
-// Logcat is a pain on a phone, so surface which audio path each mic surface took
-// right in the UI: the mic icon tints GREEN when native capture engaged, AMBER
-// when it fell back to the WebView path. Long-press the mic button for a summary
-// of every surface tested this session. Purely diagnostic; remove when the native
-// rollout is confirmed.
-const _micPathLog = {};                       // { surfaceName: 'native' | 'fallback: reason' }
+// (DEV MIC READOUT removed for the closed-testing ship — v0.80.28. The mic-icon
+//  tint, long-press popup and per-surface path log were scaffolding for the native
+//  rollout, now confirmed on-device: 7/7 surfaces native, zero fallbacks. The
+//  frame-rate COLLECTION below stays — _nfHz feeds the rate-aware smoothing.)
 // Native frame-rate diagnostic. processAudio reads the ring on requestAnimationFrame
 // (~60Hz). If native frames arrive SLOWER than that, processAudio re-reads the same
 // window repeatedly and then lurches when a new frame lands — which distorts smoothing
@@ -22685,56 +22678,6 @@ function _nfStat(size) {
   const dt = now - _nfT0;
   if (dt >= 1000) { _nfHz = (_nfCount * 1000 / dt); _nfT0 = now; _nfCount = 0; }
 }
-function _micSurfaceName() {
-  if (typeof currentExercise !== 'undefined' && currentExercise) return currentExercise;
-  if (typeof currentTool     !== 'undefined' && currentTool)     return currentTool;
-  if (typeof mode            !== 'undefined' && mode)            return mode;
-  return 'unknown';
-}
-function _micPathNote(path, reason) {
-  const surface = _micSurfaceName();
-  _micPathLog[surface] = (path === 'native') ? 'native' : ('fallback: ' + (reason || 'unknown'));
-  const btn = document.getElementById('micBtn');
-  if (btn) {
-    btn.classList.remove('mic-path-native', 'mic-path-fallback');
-    btn.classList.add(path === 'native' ? 'mic-path-native' : 'mic-path-fallback');
-  }
-}
-function _micPathSummary() {
-  const keys = Object.keys(_micPathLog);
-  if (!keys.length) return 'No mic surfaces opened yet this session.';
-  let nat = 0, fell = 0, lines = [];
-  keys.sort().forEach(k => {
-    const v = _micPathLog[k];
-    if (v === 'native') { nat++; lines.push('\u2705 ' + k + ' \u2014 NATIVE'); }
-    else { fell++; lines.push('\u26a0\ufe0f ' + k + ' \u2014 ' + v.toUpperCase()); }
-  });
-  const rate = _nfHz ? (_nfHz.toFixed(1) + ' Hz') : 'n/a';
-  const sz   = _nfLastSize || 0;
-  const sr   = (typeof _nativeSampleRate !== 'undefined' && _nativeSampleRate) ? _nativeSampleRate : 0;
-  // processAudio reads at ~60Hz. Frames slower than that = ring starvation.
-  const verdict = !_nfHz ? '' : (_nfHz < 45 ? '  \u26a0\ufe0f STARVED (< rAF 60Hz)' : '  \u2705 keeps up');
-  return 'MIC PATH \u2014 v' + INTONARE_VERSION + '\n\n' + lines.join('\n') +
-         '\n\n' + nat + ' native, ' + fell + ' fell back (' + keys.length + ' of 7 surfaces tested)' +
-         '\n\nNATIVE FRAMES\n' +
-         '  rate: ' + rate + verdict + '\n' +
-         '  frame size: ' + sz + ' samples\n' +
-         '  sample rate: ' + sr + ' Hz';
-}
-// Long-press the mic button to see the summary.
-document.addEventListener('DOMContentLoaded', function () {
-  const btn = document.getElementById('micBtn');
-  if (!btn) return;
-  let lp = null;
-  const start = () => { lp = setTimeout(() => { lp = null; alert(_micPathSummary()); }, 650); };
-  const cancel = () => { if (lp) { clearTimeout(lp); lp = null; } };
-  btn.addEventListener('touchstart', start, { passive: true });
-  btn.addEventListener('touchend', cancel);
-  btn.addEventListener('touchmove', cancel);
-  btn.addEventListener('mousedown', start);
-  btn.addEventListener('mouseup', cancel);
-  btn.addEventListener('mouseleave', cancel);
-});
 let _nativeMicPlugin = null;
 let _nativeFrameListener = null;
 let _nativeLevelListener = null;
@@ -22746,6 +22689,43 @@ let _lastNativeStart = null;   // diagnostic: last native start() result (aecApp
 let isListening = false;
 let smoothedFreq = 0;
 let smoothedCents = 0;          // EMA-smoothed cents for needle — kills bounce
+
+// ── PERCEPTUAL TOLERANCE ─────────────────────────────────────────────────────
+// Grounded in the psychoacoustic literature, not vibes:
+//    1-2c   trained musicians, isolated lab tones
+//    5-6c   just-noticeable difference, complex tones, TRAINED ear
+//   10-15c  JND for UNTRAINED listeners
+//   20-30c  the error range TRAINED SINGERS actually achieve with normal feedback
+//   25-50c  vibrato excursion EACH WAY in classical singing
+//     50c   quarter tone — clearly audible to nearly everyone
+//
+// A +/-5c "in tune" band is right for a GUITAR: a string holds a steady pitch and a
+// trained ear can hear 5c. Applying the same band to a VOICE demands better accuracy
+// than trained professionals achieve, and is narrower than a SINGLE VIBRATO CYCLE —
+// so the note can never sit still inside it and nothing ever feels locked in. That's
+// not rigour, it's an unwinnable game.
+//
+// So the band depends on what's making the sound. Instruments keep the tight band.
+// Voice gets a band that reflects how humans actually hear and sing.
+const TOL_INSTRUMENT = 5;    // steady string/pipe — trained-ear JND, unchanged
+const TOL_VOICE      = 18;   // inside untrained JND (10-15c) but under the 20-30c
+                             // range where trained singers actually land: still
+                             // demanding, but physically achievable and stable.
+function _isVoiceSource() {
+  const inst = (typeof selectedInstrument !== 'undefined') ? selectedInstrument : 'auto';
+  if (inst === 'voice') return true;
+  // Voice tolerance applies ONLY where singing is the DESIGNED activity: the
+  // tonal-centre tool. It must never be inferred from "a drone is playing" alone —
+  // drones can be started from the practice section and persist, and a guitarist
+  // tuning against a reference drone is a normal professional workflow that must
+  // keep the full ±5c instrument band. (The first version of this check keyed on
+  // droneActive and would have quietly degraded exactly that case.)
+  if (inst === 'auto'
+      && typeof currentTool !== 'undefined' && currentTool === 'tonal'
+      && typeof droneActive !== 'undefined' && droneActive) return true;
+  return false;
+}
+function tuneTolerance() { return _isVoiceSource() ? TOL_VOICE : TOL_INSTRUMENT; }
 let _micAGCOn = false;          // true if the device forced auto-gain on (see startMic)
 let _micHP = null, _micLP = null; // bandpass filter nodes on the mic input
 let _pitchMissFrames = 0;      // consecutive no-pitch frames; small grace before going silent
@@ -25969,7 +25949,9 @@ function tcRenderCRT(mode, data) {
   }
   // mode === 'live'
   const { diff, rounded, detectedFreq } = data;
-  const pure = Math.abs(diff) < 8;
+  // Was a flat 8c. A voice cannot hold 8c — that's inside the untrained JND and
+  // narrower than one vibrato cycle. Use the perceptual band (18c when singing).
+  const pure = Math.abs(diff) < tuneTolerance();
   const dir = pure ? 'in' : diff > 0 ? 'sharp' : 'flat';
   // interval name (use semitone distance; localized)
   const wrapAbs = ((rounded % 12) + 12) % 12;
@@ -26705,8 +26687,14 @@ function processAudio() {
       const noteInfo = freqToNote(smoothedFreq);
       if (noteInfo) {
         // Smooth the cents value — matches needle alpha so they track together
+        // The needle EMA was the ONE piece of smoothing left running a fixed alpha
+        // (0.18, tuned for 60 Hz rAF). Detection now runs at the true native frame
+        // rate (~21.6 Hz), so each frame was landing with ~3x too much weight — the
+        // needle jerked to every individual reading. That is the shaky gauge.
+        // Re-solve it for the real rate, exactly like the frequency EMA.
+        const _cAlpha = _rateAlpha(0.18);
         smoothedCents = smoothedCents === null ? noteInfo.cents
-          : smoothedCents * 0.82 + noteInfo.cents * 0.18;
+          : smoothedCents * (1 - _cAlpha) + noteInfo.cents * _cAlpha;
         const displayNote = { ...noteInfo, cents: smoothedCents };
 
         // Candidate lock: only switch displayed note after NOTE_LOCK_FRAMES consecutive agreement
@@ -26901,7 +26889,7 @@ function getTransposedNote(noteName, oct) {
 }
 
 function updateNoteDisplay(note, freq) {
-  const c = note.cents, abs = Math.abs(c), inTune = abs < 5;
+  const c = note.cents, abs = Math.abs(c), inTune = abs < tuneTolerance();
 
   // Cancel any in-progress silent fade and restore readout
   if (_silentFadeTimer) { clearTimeout(_silentFadeTimer); _silentFadeTimer = null; }
@@ -27093,7 +27081,6 @@ async function startMic(_opts) {
       if (hvw) hvw.classList.add('active');
       if (mode === 'tuner') pitchHistStart();
       console.log('[IntonareMic] NATIVE path active; start result:', JSON.stringify(_lastNativeStart));
-      _micPathNote('native');   // dev readout: tint the mic icon + log the surface
       updateDetectedBPMDisplay();
       processAudio();
       return;
@@ -27102,7 +27089,6 @@ async function startMic(_opts) {
       console.warn('[IntonareMic] native start FAILED, falling back to WebView:', (e && e.message) ? e.message : e);
       _nativeMicActive = false;
       _nativeFellBack = true;
-      _micPathNote('fallback', (e && e.message) ? e.message : String(e));
       try { _nativeMicStop(); } catch (e2) {}
     }
   }
@@ -29386,18 +29372,7 @@ function dbTick() {
     const el  = document.getElementById('dbReadout');
     const lbl = document.getElementById('dbZoneLabel');
     if (el)  { el.textContent = '—'; el.className = 'db-number'; }
-    if (lbl) {
-      // DIAGNOSTIC: say WHY there's no reading instead of a blanket "mic off".
-      // The meter dying silently is exactly what we're chasing; a generic label
-      // hides whether the mic is off, the analyser is missing, or the ring is empty.
-      let why = t('mic_off');
-      if (!isListening) why = 'MIC OFF — TAP MIC';
-      else if (_nativeMicActive && !_nativeRingFilled) why = 'NATIVE: RING EMPTY';
-      else if (!_nativeMicActive && !analyser) why = 'NO ANALYSER (webview)';
-      else why = 'READING NULL (?)';
-      lbl.textContent = why;
-      lbl.className = 'db-zone-badge muted';
-    }
+    if (lbl) { lbl.textContent = t('mic_off'); lbl.className = 'db-zone-badge muted'; }
     dbSmoothed = null;
     dbNeedle = null;
   }
@@ -54885,7 +54860,11 @@ let ssGotIt       = false;
 let ssHoldMs      = 0;
 // Sing-grading tuning. Built tolerance-driven so a difficulty tier can scale these later
 // by swapping ssTune. Zone geometry (the arc's green segment) is derived from ssTune.zone.
-const SS_TUNE = { zone: 10, hold: 1500, grace: 300, graceDrain: 0.6 };  // ¢, ms, ms, multiplier
+// zone was 10¢ — the untrained-listener JND floor, tighter than Road Trip HARD (22¢)
+// and tighter than trained singers actually hold (20-30¢). The grace window softened
+// it but the core ask was physically unwinnable for a voice. 16¢ keeps SingSing the
+// most demanding voice surface in the app while being achievable by a careful singer.
+const SS_TUNE = { zone: 16, hold: 1500, grace: 300, graceDrain: 0.6 };  // ¢, ms, ms, multiplier
 let ssTune = SS_TUNE;
 let ssOutMs       = 0;   // ms spent just outside the zone (forgiveness window)
 let ssLastHitTime = 0;
@@ -55789,7 +55768,13 @@ function rtHomeCheck(freq){
   const cents = 1200 * Math.log2(rtSmooth / rtHomeFreq);
   const now = performance.now();
   const dt = rtLastT ? now-rtLastT : 16; rtLastT = now;
-  if (Math.abs(cents) <= rtZoneCents()) rtHoldAcc += dt; else rtHoldAcc = Math.max(0, rtHoldAcc - dt*1.5);
+  // Decay was dt*1.5 — you LOST progress 1.5x faster than you gained it, so a single
+  // natural wobble could wipe out a second of good singing. No human ear grades that
+  // way: it hears "mostly on pitch, with a wobble" and calls it fine. A voice is not a
+  // held string; it breathes, it has vibrato. Decay at 0.6x lets a brief slip cost
+  // something (so you can't just wander) without erasing genuine progress.
+  if (Math.abs(cents) <= rtZoneCents()) rtHoldAcc += dt;
+  else rtHoldAcc = Math.max(0, rtHoldAcc - dt * 0.6);
   const prog = Math.min(1, rtHoldAcc / RT_HOLD_MS);   // 0..1 hold progress
 
   // ── Needle MAGNETISATION ──────────────────────────────────────────────────
