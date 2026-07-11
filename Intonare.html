@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.80.22 -->
+<!-- INTONARE_VERSION: 0.80.24 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -22512,7 +22512,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.80.22';
+const INTONARE_VERSION = '0.80.24';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22642,10 +22642,26 @@ let analyser = null, micStream = null, micSource = null, animFrame = null;
 // every not-yet-migrated surface keeps the proven WebView path untouched.
 // Median pre-filter ring for pitch (see processAudio). Rejects single-frame
 // outliers that an EMA can only dilute, never remove.
-const _PITCH_HIST_N = 5;
+// 3, not 5. The window is in FRAMES, and native detection now runs at the true frame
+// rate (~21.6 Hz), not rAF's 60 Hz — so 5 frames is a 231 ms window (laggy), while 3
+// is 139 ms and still outvotes any single bad reading, which is the whole job.
+const _PITCH_HIST_N = 3;
 const _pitchHist = new Float32Array(_PITCH_HIST_N);
 const _pitchSort = new Float32Array(_PITCH_HIST_N);
 let _pitchHistIdx = 0;
+
+// Re-solve an alpha tuned at 60 Hz for the rate detection is ACTUALLY running at, so
+// the smoothing feel is constant across the WebView (60 Hz) and native (~21.6 Hz)
+// paths. Without this, every time constant on native is ~2.8x too long.
+function _rateAlpha(alpha60) {
+  if (!_nativeMicActive) return alpha60;                 // WebView really is ~60 Hz
+  const rate = (_nfHz && _nfHz > 1) ? _nfHz              // measured, once it settles
+             : ((_nativeSampleRate || 44100) / (_nfLastSize || 2048));  // else derive it
+  if (!(rate > 1) || rate >= 60) return alpha60;
+  const tau = -1 / (60 * Math.log(1 - alpha60));         // time constant at the 60 Hz tuning
+  const a   = 1 - Math.exp(-1 / (rate * tau));           // alpha preserving that tau here
+  return Math.max(alpha60, Math.min(0.85, a));
+}
 let _nativeMicActive = false;
 
 // ── DEV MIC READOUT ───────────────────────────────────────────────────────────
@@ -26546,6 +26562,29 @@ function processAudio() {
     _micGlowBtn.style.boxShadow = `0 0 ${_sz}px rgba(182,242,91,${_op.toFixed(2)}), inset 0 0 ${_sz * 0.4}px rgba(182,242,91,${(_op * 0.3).toFixed(2)})`;
   }
 
+  // ── NEW-AUDIO GATE ────────────────────────────────────────────────────────
+  // processAudio runs on requestAnimationFrame (~60 Hz), but native frames arrive at
+  // frameSize/sampleRate — with 2048 samples at 44.1 kHz that's 21.5 Hz, MEASURED at
+  // 21.6 Hz on-device. So ~64% of rAF ticks were re-analysing audio already analysed:
+  //   - the 5-frame median filled with DUPLICATES of the same 2 readings, which
+  //     destroys the whole point of a median (it can't outvote an outlier if most of
+  //     the window is the same frame repeated)
+  //   - the EMA advanced 3x per real frame, so its time constant meant nothing
+  //   - and ~64% of detection CPU was spent recomputing an identical answer
+  // Detection now runs ONCE PER GENUINELY NEW FRAME. ~46 ms latency, well inside the
+  // ~100 ms where it would start to feel sluggish. Everything above this gate (RMS,
+  // mic glow, the Road Trip level dot) still runs every rAF so the UI stays at 60fps.
+  // WebView is unaffected: its analyser is re-read every tick by design, so _fresh is
+  // always true there.
+  const _fresh = !_nativeMicActive || (_nativeRingSeq !== _lastDetectSeq);
+  if (_fresh) _lastDetectSeq = _nativeRingSeq;
+
+  if (!_fresh) {
+    // No new audio — skip detection entirely, keep the loop alive.
+    animFrame = requestAnimationFrame(processAudio);
+    return;
+  }
+
   if (mode === 'metronome') {
     detectOnset(buf);
     updateDetectedBPMDisplay();
@@ -26595,23 +26634,31 @@ function processAudio() {
       let medFreq = freq;
       if (_pitchHistIdx >= _PITCH_HIST_N) {
         _pitchSort[0]=_pitchHist[0]; _pitchSort[1]=_pitchHist[1]; _pitchSort[2]=_pitchHist[2];
-        _pitchSort[3]=_pitchHist[3]; _pitchSort[4]=_pitchHist[4];
         _pitchSort.sort((a,b)=>a-b);
-        medFreq = _pitchSort[2];               // middle of 5
+        medFreq = _pitchSort[1];               // middle of 3
       }
 
-      // Outlier-resistant EMA: if new reading is >800¢ from current (overtone territory),
-      // apply minimal weight so it can't snap-jump the display
-      let alpha = 0.12;
+      // Outlier-resistant EMA. The alphas below are expressed at the ORIGINAL 60 Hz
+      // tuning and then RE-SOLVED for whatever rate detection is actually running at,
+      // so the *feel* is identical on both paths. This matters enormously: native
+      // detection runs at frameSize/sampleRate (2048/44100 = 21.5 Hz, measured 21.6),
+      // not 60 Hz, and a fixed alpha at 21.6 Hz has a time constant 2.8x LONGER than
+      // intended — the octave-jump damping alone became a 1.5-SECOND lag. That isn't
+      // smoothing, it's paralysis, and it's a large part of why the readout felt both
+      // sluggish and jumpy at once.
+      //   tau  = -1 / (rate * ln(1 - alpha))          [time constant at a given rate]
+      //   a'   = 1 - exp(-1 / (rate' * tau))          [alpha preserving tau at rate']
+      let alpha60 = 0.12;
       if (smoothedFreq > 0) {
         const centsDelta = Math.abs(1200 * Math.log2(medFreq / smoothedFreq));
-        if (centsDelta > 800) alpha = 0.03; // near-octave jump — almost certainly an overtone
-        else if (centsDelta > 300) alpha = 0.06; // large jump — reduce trust
+        if (centsDelta > 800) alpha60 = 0.03; // near-octave jump — almost certainly an overtone
+        else if (centsDelta > 300) alpha60 = 0.06; // large jump — reduce trust
         // Near the target the EMA can afford to be brisker: small deltas are real
         // pitch movement, not noise, and over-damping here is what makes a tuner
         // feel laggy and vague rather than precise.
-        else if (centsDelta < 25) alpha = 0.22;
+        else if (centsDelta < 25) alpha60 = 0.22;
       }
+      const alpha = _rateAlpha(alpha60);
       smoothedFreq = smoothedFreq === 0 ? medFreq : smoothedFreq * (1 - alpha) + medFreq * alpha;
       let activeInst;
       if (selectedInstrument === 'auto') {
@@ -27346,7 +27393,13 @@ function _nativeB64ToFloat32(b64) {
 }
 
 // Append a frame into the rolling window: shift old samples left, copy new in.
+// Incremented on every genuinely NEW native frame. processAudio compares against it
+// so detection runs once per real frame instead of once per rAF tick — see the gate
+// in processAudio for why that matters.
+let _nativeRingSeq = 0;
+let _lastDetectSeq = -1;   // last ring sequence processAudio actually ran detection on
 function _nativeRingPush(frame) {
+  _nativeRingSeq++;
   const n = frame.length;
   if (n >= _NATIVE_RING_SIZE) {
     _nativeRing.set(frame.subarray(n - _NATIVE_RING_SIZE));
@@ -29296,7 +29349,18 @@ function dbTick() {
     const el  = document.getElementById('dbReadout');
     const lbl = document.getElementById('dbZoneLabel');
     if (el)  { el.textContent = '—'; el.className = 'db-number'; }
-    if (lbl) { lbl.textContent = t('mic_off'); lbl.className = 'db-zone-badge muted'; }
+    if (lbl) {
+      // DIAGNOSTIC: say WHY there's no reading instead of a blanket "mic off".
+      // The meter dying silently is exactly what we're chasing; a generic label
+      // hides whether the mic is off, the analyser is missing, or the ring is empty.
+      let why = t('mic_off');
+      if (!isListening) why = 'MIC OFF — TAP MIC';
+      else if (_nativeMicActive && !_nativeRingFilled) why = 'NATIVE: RING EMPTY';
+      else if (!_nativeMicActive && !analyser) why = 'NO ANALYSER (webview)';
+      else why = 'READING NULL (?)';
+      lbl.textContent = why;
+      lbl.className = 'db-zone-badge muted';
+    }
     dbSmoothed = null;
     dbNeedle = null;
   }
@@ -29311,7 +29375,11 @@ function dbTick() {
 }
 
 function dbStart() {
-  if (dbAnimFrame) return;
+  // Always tear down any previous loop first. The old guard (`if (dbAnimFrame) return;`)
+  // silently bailed whenever a stale timer was still pending — e.g. re-entering the tool
+  // without a clean exit — leaving dbCanvas/dbCtx2d null and the meter permanently dead
+  // with no error. Restarting is cheap; a silent no-op is not.
+  if (dbAnimFrame) { clearTimeout(dbAnimFrame); dbAnimFrame = null; }
   dbCanvas = document.getElementById('dbCanvas');
   if (!dbCanvas) return;
   const rect = dbCanvas.getBoundingClientRect();
