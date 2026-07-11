@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.80.21 -->
+<!-- INTONARE_VERSION: 0.80.22 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16398,32 +16398,21 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
     document.addEventListener('touchend', function _preloadSamples() {
       document.removeEventListener('touchend', _preloadSamples);
-      const PRIORITY = ['grand_piano','guitar','nylon_guitar','bass','harp','electric_piano'];
-      const all = Object.keys(SampleEngine._instruments);
-      const ordered = [...PRIORITY.filter(id => all.includes(id)),
-                       ...all.filter(id => !PRIORITY.includes(id))];
-      // Load in batches that RAMP UP (1 → 2 → 3 → 3 …) so the first hit right after
-      // the touch is light — three simultaneous fetch+decode jobs landing on the main
-      // thread at the same moment as the touch handler is what caused the lag spike.
-      // Each batch waits for an idle window (requestIdleCallback) so decoding slots
-      // into gaps rather than competing with UI work; falls back to a timer where rIC
-      // isn't available (older WebViews).
-      let idx = 0, batch = 1;
-      const idle = window.requestIdleCallback
-        ? (fn) => window.requestIdleCallback(fn, { timeout: 400 })
-        : (fn) => setTimeout(fn, 150);
-      function loadBatch() {
-        const slice = ordered.slice(idx, idx + batch);
-        if (!slice.length) return;
-        idx += batch;
-        batch = Math.min(3, batch + 1);   // ramp 1 → 2 → 3, then hold
-        Promise.allSettled(slice.map(id => SampleEngine.load(id))).then(() => {
-          idle(loadBatch);
-        });
-      }
-      // Hold the first batch back ~450ms so it doesn't collide with the touch the
-      // user just made (UI response + audio context resume happen on that same gesture).
-      setTimeout(() => idle(loadBatch), 450);
+      // Preload ONLY the grand piano. Everything else loads on demand.
+      //
+      // This used to eagerly fetch+decode EVERY registered instrument (batched and
+      // idle-scheduled, but still all of them). That work competes with the audio
+      // thread, which is why opening the tuner and immediately using it felt laggy —
+      // you were fighting a queue of sample decodes you hadn't asked for.
+      //
+      // It's also redundant: SampleEngine.load() deduplicates and every consumer
+      // already calls it on demand (instrument pickers, the piano tool, etc. all
+      // check isReady/isFailed and load if needed). So the eager pass bought nothing
+      // except contention. The piano is the one worth warming, because it's the
+      // default voice for reference tones across several surfaces.
+      setTimeout(() => {
+        try { SampleEngine.load('grand_piano'); } catch (e) {}
+      }, 450);   // let the touch's UI response + audio-context resume land first
     }, { once: true });
 
     if (window.Capacitor) {
@@ -22523,7 +22512,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.80.21';
+const INTONARE_VERSION = '0.80.22';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -26561,16 +26550,20 @@ function processAudio() {
     detectOnset(buf);
     updateDetectedBPMDisplay();
   } else {
-    // Strategy C: if a reference drone is playing, notch its known frequency out
-    // of the buffer so detection locks onto the user's voice, not the drone.
-    // Gated on droneActive so it only engages for reference-tone surfaces and
-    // never touches the plain tuner. Cleared automatically when the drone stops.
-    if (typeof droneActive !== 'undefined' && droneActive && activeRefFreq > 0) {
-      _setDroneNotch(activeRefFreq, _sr);
-      _applyDroneNotch(buf);
-    } else if (_droneNotch) {
-      _setDroneNotch(0);   // drone stopped — clear the notch
-    }
+    // Strategy C (drone notch) is NOT applied here any more — see _nfApply().
+    //
+    // It used to run right here, on `buf`. That was fundamentally broken: `buf` is a
+    // 4096-sample SLIDING WINDOW re-read every rAF, overlapping the previous read by
+    // ~82%. A stateful IIR biquad carried its state across frames while the audio
+    // jumped BACKWARDS over samples it had already filtered, so the filter never
+    // settled. Measured result: a Q=40 notch achieved only -6 dB, decaying to -3.6 dB
+    // across frames — i.e. the drone survived at ~65% amplitude and the detector
+    // happily locked onto it. The per-frame ring-in transient is also exactly what the
+    // periodic CRACKLING was.
+    //
+    // Applying the same notch ONCE to the continuous incoming stream instead measures
+    // -38 dB on the drone with the voice untouched at -0.1 dB. Same coefficients, same
+    // Q — the constants were never wrong, the application point was.
     const freq = detectPitch(buf, _sr);
     if (freq > 20 && freq < 4500) {
       // Drone-context octave guard: when a reference drone is playing and the new
@@ -27249,6 +27242,30 @@ function _nfApply(frame) {
     y = lp.b0*x2 + lp.b1*lp.x1 + lp.b2*lp.x2 - lp.a1*lp.y1 - lp.a2*lp.y2;
     lp.x2 = lp.x1; lp.x1 = x2; lp.y2 = lp.y1; lp.y1 = y;
     frame[i] = y;
+  }
+
+  // ── Drone notch, applied HERE — on the continuous, non-overlapping frame ──
+  // This is the only place it can work. A stateful IIR needs its state to line up
+  // with a forward-moving stream; frames arrive here exactly once, in order, never
+  // re-read. (The old call site, inside processAudio, filtered a sliding window that
+  // overlapped ~82% with the previous read, so the biquad never settled: -6 dB
+  // instead of -38 dB, plus a ring-in transient every frame = the crackling.)
+  if (typeof droneActive !== 'undefined' && droneActive && activeRefFreq > 0) {
+    _setDroneNotch(activeRefFreq, _nativeSampleRate || _NF_SR);
+    if (_droneNotch) {
+      const bank = _droneNotch;
+      for (let b = 0; b < bank.length; b++) {
+        const f = bank[b];
+        for (let i = 0; i < frame.length; i++) {
+          const x = frame[i];
+          const y = f.b0*x + f.b1*f.x1 + f.b2*f.x2 - f.a1*f.y1 - f.a2*f.y2;
+          f.x2 = f.x1; f.x1 = x; f.y2 = f.y1; f.y1 = y;
+          frame[i] = y;
+        }
+      }
+    }
+  } else if (_droneNotch) {
+    _setDroneNotch(0);   // drone stopped — clear the bank
   }
   return frame;
 }
@@ -28998,33 +29015,70 @@ function _aWeight(f) { const f2=f*f; return (12194**2*f2**2)/((f2+20.6**2)*Math.
 //   - Time-domain RMS gives the stable absolute level (anchored to our +94 SPL offset)
 //   - FFT ratio gives the A-weighting spectral correction in dB
 //   Combining both avoids FFT normalisation headaches while still weighting by hearing sensitivity.
-function dbReadRMS() {
-  if (!analyser || !isListening) return null;
+// Scratch for the native spectrum (A-weighting needs frequency-domain data, and the
+// native path has no AnalyserNode to ask). Reused every tick — no per-frame alloc.
+const _DB_FFT_N = 4096;
+const _dbFr = new Float64Array(_DB_FFT_N), _dbFi = new Float64Array(_DB_FFT_N);
 
-  // 1. Flat RMS from time domain — use pre-allocated buffer
-  if (!_dbTimeBuf || _dbTimeBuf.length !== analyser.fftSize) {
-    _dbTimeBuf = new Float32Array(analyser.fftSize);
-    _dbFreqBuf = new Float32Array(analyser.frequencyBinCount);
+function dbReadRMS() {
+  // The meter used to require `analyser`. On the native path `analyser` is NULL — it's
+  // only created in startMic's WebView branch — so this returned null forever and the
+  // meter simply never moved. (Same class of bug as the old vocal-range detector.)
+  // Read the native ring instead when native is active.
+  if (!isListening) return null;
+  if (!_nativeMicActive && !analyser) return null;
+
+  let timeBuf, sr, fftN;
+  if (_nativeMicActive) {
+    if (!_dbTimeBuf || _dbTimeBuf.length !== _DB_FFT_N) _dbTimeBuf = new Float32Array(_DB_FFT_N);
+    _dbTimeBuf.set(_nativeRing);
+    timeBuf = _dbTimeBuf;
+    sr      = _nativeSampleRate || _NF_SR;
+    fftN    = _DB_FFT_N;
+  } else {
+    if (!_dbTimeBuf || _dbTimeBuf.length !== analyser.fftSize) {
+      _dbTimeBuf = new Float32Array(analyser.fftSize);
+      _dbFreqBuf = new Float32Array(analyser.frequencyBinCount);
+    }
+    analyser.getFloatTimeDomainData(_dbTimeBuf);
+    timeBuf = _dbTimeBuf;
+    sr      = audioCtx ? audioCtx.sampleRate : _NF_SR;
+    fftN    = analyser.fftSize;
   }
-  analyser.getFloatTimeDomainData(_dbTimeBuf);
+
+  // 1. Flat RMS from the time domain
   let rmsSum = 0;
-  for (let i = 0; i < _dbTimeBuf.length; i++) rmsSum += _dbTimeBuf[i] * _dbTimeBuf[i];
-  const rms = Math.sqrt(rmsSum / _dbTimeBuf.length);
+  for (let i = 0; i < timeBuf.length; i++) rmsSum += timeBuf[i] * timeBuf[i];
+  const rms = Math.sqrt(rmsSum / timeBuf.length);
   if (rms < 1e-9) return DB_MIN;
   const dbFlat = 20 * Math.log10(rms);
 
-  // 2. A-weighting correction from FFT (ratio of weighted to flat power)
-  // getFloatFrequencyData is not bounded by minDecibels/maxDecibels — values are true dBFS
-  analyser.getFloatFrequencyData(_dbFreqBuf);
-  const sr = audioCtx.sampleRate, fftSize = analyser.fftSize;
+  // 2. A-weighting correction (ratio of weighted to flat power) from the spectrum.
   let flatPow = 0, weightedPow = 0;
-  for (let i = 1; i < analyser.frequencyBinCount; i++) {
-    const freq = i * sr / fftSize;
-    if (freq < 20 || freq > 20000) continue;
-    const p = Math.pow(10, _dbFreqBuf[i] / 10);
-    const w = _aWeight(freq) / _AW_1K;
-    flatPow     += p;
-    weightedPow += p * w * w;
+  if (_nativeMicActive) {
+    // No AnalyserNode on native — compute the spectrum ourselves with the same FFT
+    // the pitch detector uses.
+    for (let i = 0; i < _DB_FFT_N; i++) { _dbFr[i] = timeBuf[i]; _dbFi[i] = 0; }
+    _fftInPlace(_dbFr, _dbFi);
+    const bins = _DB_FFT_N >> 1;
+    for (let i = 1; i < bins; i++) {
+      const freq = i * sr / _DB_FFT_N;
+      if (freq < 20 || freq > 20000) continue;
+      const p = (_dbFr[i]*_dbFr[i] + _dbFi[i]*_dbFi[i]);   // power, linear
+      const w = _aWeight(freq) / _AW_1K;
+      flatPow     += p;
+      weightedPow += p * w * w;
+    }
+  } else {
+    analyser.getFloatFrequencyData(_dbFreqBuf);
+    for (let i = 1; i < analyser.frequencyBinCount; i++) {
+      const freq = i * sr / fftN;
+      if (freq < 20 || freq > 20000) continue;
+      const p = Math.pow(10, _dbFreqBuf[i] / 10);
+      const w = _aWeight(freq) / _AW_1K;
+      flatPow     += p;
+      weightedPow += p * w * w;
+    }
   }
   const aCorr = (flatPow > 0 && weightedPow > 0)
     ? 10 * Math.log10(weightedPow / flatPow) : 0;
