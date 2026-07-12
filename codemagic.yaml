@@ -10,12 +10,11 @@ workflows:
     environment:
       vars:
         BUNDLE_ID: "com.lieutenantdan.intonare"
-        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         APP_STORE_APPLE_ID: 6790028334
       node: 22
       xcode: latest
-      cocoapods: default
 
     triggering:
       events:
@@ -49,28 +48,12 @@ workflows:
           # ios/ is NOT committed. Regenerated every build.
           # All customisation happens in the patch step below.
           rm -rf ios
-
-          echo "=== capacitor doctor ==="
-          npx cap doctor || true
-
-          echo "=== node / npx versions ==="
-          node -v
-          npx --version
-
-          echo "=== @capacitor/ios present? ==="
-          ls -la node_modules/@capacitor/ || true
-
-          echo "=== running cap add ios ==="
           npx cap add ios
 
-          echo "=== what did it produce? ==="
-          ls -la ios/ || true
-          ls -la ios/App/ || true
-
-          # cap add ios can exit 0 while producing nothing. Guard against that
-          # so the failure surfaces here rather than three steps later.
-          if [ ! -f "ios/App/Podfile" ]; then
-            echo "FATAL: cap add ios did not generate ios/App/Podfile"
+          # Capacitor 8 uses Swift Package Manager, not CocoaPods. There is no
+          # Podfile and no .xcworkspace; the .xcodeproj is built directly.
+          if [ ! -d "ios/App/App.xcodeproj" ]; then
+            echo "FATAL: cap add ios did not generate ios/App/App.xcodeproj"
             exit 1
           fi
 
@@ -107,11 +90,6 @@ workflows:
           LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
           agvtool new-version -all $(($LATEST + 1))
 
-      - name: Install CocoaPods
-        script: |
-          cd ios/App
-          pod install
-
       - name: Set up code signing
         script: |
           # Create the keychain the certificate will live in.
@@ -134,7 +112,7 @@ workflows:
       - name: Build ipa
         script: |
           xcode-project build-ipa \
-            --workspace "$CM_BUILD_DIR/$XCODE_WORKSPACE" \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
 
     artifacts:
