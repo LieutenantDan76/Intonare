@@ -161,6 +161,15 @@ workflows:
           ls -la "$ICONSET"
           cat "$ICONSET/Contents.json"
 
+      - name: Patch AppDelegate for audio session
+        script: |
+          set -e
+          # Routes audio to the loudspeaker instead of the earpiece. Without
+          # this, everything the app plays goes quiet the moment getUserMedia
+          # flips iOS into the playAndRecord category. See the script header
+          # and native_src/ios/IntonareAudioSession.swift for the full why.
+          python3 patch_ios_appdelegate.py
+
       - name: Sync Capacitor
         script: |
           npx cap sync ios
