@@ -5,49 +5,75 @@
 //
 //  WHY THIS EXISTS
 //  ---------------
-//  The moment WKWebView calls getUserMedia, iOS switches the app's audio
-//  session to AVAudioSessionCategoryPlayAndRecord. That category defaults to
-//  routing output through the RECEIVER — the earpiece speaker you hold to your
-//  face on a call — not the loudspeaker. The OS assumes that an app which
-//  records and plays simultaneously is a phone call.
+//  The moment WKWebView calls getUserMedia, iOS switches the app's audio session
+//  to playAndRecord. That category routes output through the RECEIVER — the
+//  earpiece you hold to your face on a call — not the loudspeaker. The OS assumes
+//  an app that records and plays at the same time is a phone call.
 //
-//  The result is that every sound Intonare makes is dramatically quieter than
-//  it should be, the moment the microphone is touched.
+//  So every sound Intonare makes goes quiet the moment the microphone is touched.
+//  WebKit exposes no way to change this: no JS API, no AudioContext property.
+//  AVAudioSession is the only lever, and it is native-only.
 //
-//  WebKit exposes no way to change this. There is no JS API, no AudioContext
-//  property, nothing. It cannot be fixed in the web layer at any price. The
-//  only lever is AVAudioSession, and that is native-only.
+//  `.defaultToSpeaker` is the single option that overrides the receiver routing.
+//  That is the entire fix. One flag on one call.
 //
-//  WHY .defaultToSpeaker
-//  ---------------------
-//  This is the single option that overrides the receiver routing and sends
-//  output to the loudspeaker while recording is active.
+//
+//  WHAT THIS FILE DELIBERATELY DOES NOT DO — READ THIS BEFORE ADDING ANYTHING
+//  -------------------------------------------------------------------------
+//  An earlier version made the app unusable and left the microphone reading pure
+//  silence. Every item below was in it. None come back without a measurement on a
+//  real device.
+//
+//  1. NO OBSERVER ON routeChangeNotification.
+//     This is the one that broke the app. The observer called a helper that called
+//     setCategory() — but setCategory() can ITSELF post a route change. So:
+//     observer → setCategory → route change → observer → forever. An infinite loop
+//     on the main thread, running from launch. The app was unusably laggy and the
+//     mic read zeroes, because the session was thrashing its own category
+//     thousands of times a second.
+//
+//     If route changes ever genuinely need handling, the handler must not call
+//     setCategory, or must guard against re-entry. Better still: handle it from JS
+//     on an explicit user action, where it can be seen.
+//
+//  2. NO setPreferredIOBufferDuration.
+//     A 5 ms buffer asks iOS to wake the audio thread 200 times a second and cross
+//     into WKWebView's Web Audio graph on every callback. It buys nothing here:
+//     detection latency is bounded by rAF and the FFT window, not the hardware
+//     buffer.
+//
+//  3. NO setPreferredSampleRate.
+//     iOS picks a rate per route. Nothing downstream should assume one, and the
+//     AudioContext reports the real value anyway.
+//
+//  4. NO setActive(true).
+//     Configuring the category at launch is correct. Making the session ACTIVE at
+//     launch is not — it claims the audio hardware the moment the app opens,
+//     whether the mic is ever used or not. WKWebView activates the session itself
+//     when Web Audio or getUserMedia needs it, and inherits the category set here.
+//
+//  What remains is one setCategory call, once, at launch. That is the whole job.
+//
 //
 //  WHY .allowBluetoothA2DP AND NOT .allowBluetooth
 //  -----------------------------------------------
-//  Bluetooth audio has two profiles and they are not a spectrum:
+//  Bluetooth audio has two profiles, and they are not a spectrum:
 //
-//    A2DP  — stereo, high bitrate, OUTPUT ONLY. No microphone exists in this
-//            profile. This is what AirPods use for music.
+//    A2DP — stereo, high bitrate, OUTPUT ONLY. No microphone in this profile.
+//           What AirPods use for music.
 //
-//    HFP   — the headset profile. It has a microphone, but to carry a
-//            bidirectional link it collapses the ENTIRE session, both
-//            directions, to 8 or 16 kHz mono. Telephone quality.
+//    HFP  — the headset profile. It has a mic, but carrying a bidirectional link
+//           collapses the ENTIRE session, both directions, to 8 or 16 kHz mono.
+//           Telephone quality.
 //
-//  .allowBluetooth enables HFP. If a user has AirPods connected, the tuner
-//  would silently start reading an 8 kHz mic feed: Nyquist caps that at 4 kHz,
-//  which guts the harmonic content the FFT pitch detector depends on. It would
-//  degrade every one of the seven mic surfaces, with no error and no warning.
+//  .allowBluetooth enables HFP. With AirPods connected, the tuner would silently
+//  start reading an 8 kHz mic feed — Nyquist caps that at 4 kHz, gutting the
+//  harmonic content the FFT pitch detector needs. All seven mic surfaces would
+//  degrade, with no error and no warning.
 //
-//  .allowBluetoothA2DP gives users what they actually want — game and playback
-//  audio through their headphones, in full quality — while the microphone stays
-//  on the phone's own hardware at the full sample rate.
-//
-//  WHY 48 kHz
-//  ----------
-//  iOS picks a sample rate based on device and route, and it varies. Pinning it
-//  removes a whole class of bug: code that assumes a rate and gets another one
-//  produces detection errors that look like tuning errors.
+//  .allowBluetoothA2DP gives users what they actually want — playback through
+//  their headphones at full quality — while the mic stays on the phone's own
+//  hardware at the full rate.
 //
 
 import Foundation
@@ -68,69 +94,14 @@ enum IntonareAudioSession {
                     .mixWithOthers
                 ]
             )
-
-            // Ask for 48 kHz. iOS may not honour this on every route, so nothing
-            // downstream should assume it succeeded; read the actual rate from
-            // the AudioContext rather than hardcoding one.
-            try session.setPreferredSampleRate(48000.0)
-
-            // A short IO buffer keeps the tuner responsive. iOS treats this as a
-            // hint and may round it to whatever the hardware supports.
-            try session.setPreferredIOBufferDuration(0.005)
-
-            try session.setActive(true)
-
+            print("[Intonare] AVAudioSession category set — defaultToSpeaker.")
         } catch {
             // A failure here means the app is quiet, not broken. Every surface
-            // still functions; do not take the app down over it.
+            // still works. Do not take the app down over it.
             print("[Intonare] AVAudioSession configuration failed: \(error)")
         }
 
-        // The route can change under us at any time: headphones plugged in or
-        // pulled out, a Bluetooth device connecting, a call arriving. iOS may
-        // reset the category when that happens, so reassert it.
-        NotificationCenter.default.addObserver(
-            forName: AVAudioSession.routeChangeNotification,
-            object: nil,
-            queue: .main
-        ) { _ in
-            reassert()
-        }
-
-        // An interruption (a phone call, Siri) deactivates the session. When it
-        // ends, the category has to be set up again or the app comes back quiet.
-        NotificationCenter.default.addObserver(
-            forName: AVAudioSession.interruptionNotification,
-            object: nil,
-            queue: .main
-        ) { note in
-            guard
-                let info = note.userInfo,
-                let raw = info[AVAudioSessionInterruptionTypeKey] as? UInt,
-                let type = AVAudioSession.InterruptionType(rawValue: raw)
-            else { return }
-
-            if type == .ended {
-                reassert()
-            }
-        }
-    }
-
-    private static func reassert() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(
-                .playAndRecord,
-                mode: .default,
-                options: [
-                    .defaultToSpeaker,
-                    .allowBluetoothA2DP,
-                    .mixWithOthers
-                ]
-            )
-            try session.setActive(true)
-        } catch {
-            print("[Intonare] AVAudioSession reassert failed: \(error)")
-        }
+        // Nothing else. No observers, no activation, no buffer or rate hints.
+        // See the header for why each was removed.
     }
 }

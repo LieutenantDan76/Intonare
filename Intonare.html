@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.2 -->
+<!-- INTONARE_VERSION: 0.81.3 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -22515,7 +22515,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.2';
+const INTONARE_VERSION = '0.81.3';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -70847,6 +70847,121 @@ function _updatePrecCursor(step) {
   if (el) el.classList.add('cursor');
 }
 
+
+// ── Audio diagnostics panel ───────────────────────────────────────────────────
+// Opened by seven rapid taps on the version stamp. Invisible and inert otherwise:
+// no DOM, no listeners, no polling until it is opened.
+//
+// WHY THIS EXISTS
+// ---------------
+// iOS audio failures are silent. WKWebView refuses getUserMedia without telling
+// you; the AudioContext can report 'running' while producing nothing; a broken
+// AVAudioSession leaves the microphone reading pure zeroes with no error anywhere.
+// Without a Mac there is no console to read. So the app has to report on itself.
+//
+// This panel shows, live: the AudioContext state and real sample rate, whether a
+// mic stream exists and what the OS says its track settings are, the raw peak
+// amplitude off the analyser (the number that tells you whether the mic is dead
+// or merely quiet), and the audio route where the OS will tell us.
+function _openAudioDiag() {
+  if (document.getElementById('audioDiag')) return;   // already open
+
+  const box = document.createElement('div');
+  box.id = 'audioDiag';
+  box.style.cssText =
+    'position:fixed;inset:auto 8px 8px 8px;z-index:99999;' +
+    'background:#0b0f14;color:#7dd3a0;border:1px solid #1f2d3a;border-radius:10px;' +
+    'font:11px/1.5 ui-monospace,Menlo,monospace;padding:10px 12px;' +
+    'max-height:46vh;overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.6)';
+
+  const close = document.createElement('button');
+  close.textContent = 'CLOSE';
+  close.style.cssText =
+    'float:right;background:#1f2d3a;color:#9fb3c8;border:0;border-radius:6px;' +
+    'padding:3px 8px;font:11px ui-monospace,monospace;cursor:pointer';
+  close.onclick = () => { clearInterval(box._t); box.remove(); };
+  box.appendChild(close);
+
+  const pre = document.createElement('pre');
+  pre.style.cssText = 'margin:0;white-space:pre-wrap;word-break:break-all';
+  box.appendChild(pre);
+  document.body.appendChild(box);
+
+  // Peak amplitude off the live analyser. This is the number that separates
+  // "microphone is dead" from "microphone is quiet" — a dead mic reads exactly 0.
+  let peak = 0, buf = null;
+  function readPeak() {
+    if (!analyser) return null;
+    if (!buf || buf.length !== analyser.fftSize) buf = new Float32Array(analyser.fftSize);
+    try { analyser.getFloatTimeDomainData(buf); } catch (e) { return null; }
+    let m = 0;
+    for (let i = 0; i < buf.length; i++) { const a = Math.abs(buf[i]); if (a > m) m = a; }
+    peak = Math.max(peak * 0.92, m);   // slow decay so a transient stays readable
+    return m;
+  }
+
+  function render() {
+    const ctx  = (typeof audioCtx !== 'undefined' && audioCtx) ? audioCtx : null;
+    const inst = readPeak();
+
+    const L = [];
+    L.push('INTONARE ' + (typeof INTONARE_VERSION !== 'undefined' ? 'v' + INTONARE_VERSION : ''));
+    L.push('platform  ' + ((window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || 'web'));
+    L.push('');
+
+    L.push('— AudioContext —');
+    if (!ctx) {
+      L.push('  NOT CREATED');
+    } else {
+      L.push('  state       ' + ctx.state + (ctx.state !== 'running' ? '   <<< NOT RUNNING' : ''));
+      L.push('  sampleRate  ' + ctx.sampleRate);
+      L.push('  baseLatency ' + (ctx.baseLatency != null ? (ctx.baseLatency * 1000).toFixed(1) + ' ms' : 'n/a'));
+      L.push('  outLatency  ' + (ctx.outputLatency != null ? (ctx.outputLatency * 1000).toFixed(1) + ' ms' : 'n/a'));
+    }
+    L.push('');
+
+    L.push('— Microphone —');
+    if (!micStream) {
+      L.push('  NO STREAM   (mic not started, or getUserMedia failed)');
+    } else {
+      const tr = micStream.getAudioTracks && micStream.getAudioTracks()[0];
+      if (!tr) {
+        L.push('  stream exists but has NO AUDIO TRACK');
+      } else {
+        L.push('  track       ' + tr.readyState + (tr.muted ? '  MUTED' : '') + (tr.enabled ? '' : '  DISABLED'));
+        L.push('  label       ' + (tr.label || '(none)'));
+        let st = {};
+        try { st = tr.getSettings ? tr.getSettings() : {}; } catch (e) {}
+        if (st.sampleRate)       L.push('  hw rate     ' + st.sampleRate);
+        if (st.channelCount)     L.push('  channels    ' + st.channelCount);
+        if (st.echoCancellation != null) L.push('  aec         ' + st.echoCancellation);
+        if (st.autoGainControl  != null) L.push('  agc         ' + st.autoGainControl);
+        if (st.noiseSuppression != null) L.push('  ns          ' + st.noiseSuppression);
+      }
+    }
+
+    if (!analyser) {
+      L.push('  NO ANALYSER');
+    } else if (inst === null) {
+      L.push('  analyser read FAILED');
+    } else {
+      const bar = '#'.repeat(Math.round(Math.min(1, peak) * 28));
+      L.push('  peak        ' + peak.toFixed(4) + (peak < 0.0001 ? '   <<< SILENT' : ''));
+      L.push('  ' + (bar || '(silence)'));
+    }
+    L.push('');
+
+    L.push('— Native —');
+    L.push('  IntonareMic     ' + (window.IntonareMic ? 'present' : 'absent'));
+    L.push('  IntonareNative  ' + (window.IntonareNative ? 'present' : 'absent'));
+
+    pre.textContent = L.join('\n');
+  }
+
+  render();
+  box._t = setInterval(render, 120);
+}
+
 // Wire up precision overlay controls (runs after DOM ready)
 document.addEventListener('DOMContentLoaded', () => {
   // Keep the visible version stamp in sync with the single source of truth
@@ -70868,6 +70983,23 @@ document.addEventListener('DOMContentLoaded', () => {
     _vs.addEventListener('mousedown', _lpStart);
     _vs.addEventListener('mouseup', _lpCancel);
     _vs.addEventListener('mouseleave', _lpCancel);
+
+    // Hidden affordance #2: SEVEN rapid taps on the version stamp opens the audio
+    // diagnostics panel. Separate gesture from the long-press above (which opens
+    // the unlock-code entry) so the two can't collide. Nothing is drawn until it
+    // is opened, and nothing is measured until then either — the panel costs
+    // exactly zero when closed.
+    //
+    // Exists because iOS audio bugs are invisible: WKWebView fails silently, the
+    // AudioContext reports 'running' while producing nothing, and there is no
+    // console to read without a Mac. This shows the state directly.
+    let _diagTaps = 0, _diagTimer = null;
+    _vs.addEventListener('click', () => {
+      _diagTaps++;
+      clearTimeout(_diagTimer);
+      _diagTimer = setTimeout(() => { _diagTaps = 0; }, 600);
+      if (_diagTaps >= 7) { _diagTaps = 0; _openAudioDiag(); }
+    });
   }
   document.getElementById('dk-prec-close')?.addEventListener('click', closePrecision);
   document.getElementById('dk-prec-prev')?.addEventListener('click', () => _precNavigate(-1));

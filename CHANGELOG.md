@@ -16,6 +16,52 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.3 — the audio session was looping on itself
+
+**The iOS lag was mine.** `IntonareAudioSession.swift` registered an observer on
+`routeChangeNotification` whose handler called `setCategory()`. But `setCategory()`
+can itself post a route change. Observer → setCategory → route change → observer,
+on the main thread, from launch, forever.
+
+That explains both symptoms together, which no other theory did: the app was
+unusably laggy **from the splash screen**, before any user action; and the volume
+meter read **silence**, because the session was thrashing its own category
+thousands of times a second and the microphone never got a stable configuration.
+
+### Fixed
+- **Observer removed.** `IntonareAudioSession` is now one `setCategory` call, once,
+  at launch. `.defaultToSpeaker` — the actual volume fix — is kept, because it is a
+  flag on a category, not a thread or a callback, and it costs nothing.
+- Also gone (all shipped in the same bad version, all removed):
+  `setPreferredIOBufferDuration(0.005)` — asked iOS to wake the audio thread 200×/s
+  and cross into WKWebView on each callback, for no gain, since detection latency
+  is bounded by rAF and the FFT window. `setPreferredSampleRate(48000)` — iOS picks
+  per route and the AudioContext reports the real value anyway. `setActive(true)` at
+  launch — claimed the audio hardware from app open whether the mic was used or not;
+  WKWebView activates the session itself when it needs one.
+- The file now carries a header listing each of these and why it must not come back.
+
+### Added
+- **Audio diagnostics panel.** Seven rapid taps on the version stamp. (The
+  long-press on the same element still opens the unlock-code entry; separate
+  gestures, no collision.) Shows live: AudioContext state and real sample rate,
+  whether a mic stream and track exist and what the OS reports for them, and the
+  **raw peak amplitude off the analyser** — the number that distinguishes a dead
+  microphone from a quiet one. Inert until opened: no DOM, no listeners, no polling.
+
+  It exists because iOS audio fails silently. WKWebView refuses `getUserMedia`
+  without saying so, an AudioContext can report `running` while producing nothing,
+  and a broken `AVAudioSession` yields zeroes with no error. Without a Mac there is
+  no console to read, so the app has to report on itself. Three wrong diagnoses
+  tonight came from guessing at state we could simply have measured.
+
+### Note on v0.81.2
+The piano sample conversion (51 MB of WAV → 10.8 MB of mp3) was shipped as a fix
+for this lag. It was not the cause — the app lagged before any sample loaded. The
+conversion was worth doing anyway: 40 MB off the Android download, and no reason to
+ship uncompressed PCM in a mobile bundle. But it did not fix what it was shipped to
+fix, and that should be recorded honestly.
+
 ## v0.81.2 — piano samples were 51 MB of uncompressed WAV
 
 **The app became unusable on iOS.** Cause: `grand_piano` shipped as **29.8 MB in
