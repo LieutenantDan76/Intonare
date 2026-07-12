@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.5 -->
+<!-- INTONARE_VERSION: 0.81.7 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -22515,7 +22515,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.5';
+const INTONARE_VERSION = '0.81.7';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -44541,26 +44541,75 @@ const SampleEngine = (function() {
   }
 
   // Fetch and decode a single audio file → AudioBuffer
+  // XHR fallback for schemes fetch() refuses.
+  //
+  // On iOS, Capacitor serves www/ from capacitor://localhost. WKWebView loads
+  // that scheme for <script>, <img> and normal resource loading — but fetch()
+  // against it returns status 0. The request never happens: a custom scheme is
+  // not a real HTTP origin as far as fetch is concerned.
+  //
+  // XMLHttpRequest, however, goes through WKWebView's ordinary resource-loading
+  // path — the same one <script> tags use — so it CAN read the custom scheme.
+  // Old API, boring, works. Local file responses report status 0 on success,
+  // so success here is "we got bytes", not "status was 2xx".
+  function _xhrArrayBuffer(url) {
+    return new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open('GET', url, true);
+      x.responseType = 'arraybuffer';
+      x.onload = () => {
+        const ok = (x.status >= 200 && x.status < 300) ||
+                   (x.status === 0 && x.response && x.response.byteLength > 0);
+        if (ok) resolve(x.response);
+        else reject(new Error('XHR HTTP ' + x.status + ' ' + url));
+      };
+      x.onerror = () => reject(new Error('XHR failed ' + url));
+      x.send();
+    });
+  }
+
   async function _fetchBuffer(url, ctx) {
     // Record what actually happened so the audio diagnostics panel can show it.
     // On iOS these failures are otherwise invisible: the warn goes to a console
     // nobody can read without a Mac, and the app silently falls back to synth.
-    window._sampleDiag = window._sampleDiag || { lastUrl: '', lastErr: '', ok: 0, fail: 0 };
+    window._sampleDiag = window._sampleDiag || { lastUrl: '', lastErr: '', ok: 0, fail: 0, via: '' };
     window._sampleDiag.lastUrl = url;
-    let resp;
+
+    let arrayBuf = null;
+
     try {
-      resp = await fetch(url);
+      const resp = await fetch(url);
+      if (resp.ok) {
+        arrayBuf = await resp.arrayBuffer();
+        window._sampleDiag.via = 'fetch';
+      } else if (resp.status === 0) {
+        // fetch refused the scheme (capacitor:// on iOS). Fall through to XHR.
+        window._sampleDiag.lastErr = 'fetch HTTP 0 → trying XHR';
+      } else {
+        window._sampleDiag.fail++;
+        window._sampleDiag.lastErr = 'HTTP ' + resp.status;
+        throw new Error('HTTP ' + resp.status + ' ' + url);
+      }
     } catch (e) {
-      window._sampleDiag.fail++;
-      window._sampleDiag.lastErr = 'fetch threw: ' + e.message;
-      throw e;
+      if (arrayBuf === null && !String(e.message).startsWith('HTTP ')) {
+        // fetch threw outright (also happens for refused schemes) — try XHR.
+        window._sampleDiag.lastErr = 'fetch threw → trying XHR';
+      } else {
+        throw e;
+      }
     }
-    if (!resp.ok) {
-      window._sampleDiag.fail++;
-      window._sampleDiag.lastErr = 'HTTP ' + resp.status;
-      throw new Error('HTTP ' + resp.status + ' ' + url);
+
+    if (arrayBuf === null) {
+      try {
+        arrayBuf = await _xhrArrayBuffer(url);
+        window._sampleDiag.via = 'xhr';
+      } catch (e) {
+        window._sampleDiag.fail++;
+        window._sampleDiag.lastErr = e.message;
+        throw e;
+      }
     }
-    const arrayBuf = await resp.arrayBuffer();
+
     try {
       const b = await ctx.decodeAudioData(arrayBuf);
       window._sampleDiag.ok++;
@@ -70992,7 +71041,7 @@ function _openAudioDiag() {
     if (!sd) {
       L.push('  no fetch attempted yet');
     } else {
-      L.push('  ok / fail    ' + sd.ok + ' / ' + sd.fail);
+      L.push('  ok / fail    ' + sd.ok + ' / ' + sd.fail + (sd.via ? '   via ' + sd.via : ''));
       L.push('  last url     ' + sd.lastUrl);
       if (sd.lastErr) L.push('  last error   ' + sd.lastErr);
     }

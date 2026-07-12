@@ -16,6 +16,33 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.7 — XHR fallback; the fetch scheme problem, actually fixed this time
+
+Two prior attempts at the sample-loading bug did not survive contact:
+
+- **v0.81.5** set `server.iosScheme: "https"`. Invalid — Capacitor's docs on
+  `iosScheme`: *"Can't be set to schemes that the WKWebView already handles, such
+  as http or https."* Silently ignored; origin stayed `capacitor://localhost`.
+- **v0.81.6** enabled `CapacitorHttp` to patch `fetch` through native HTTP. On
+  double-checking before shipping: native HTTP is URLSession, and **URLSession has
+  no idea what `capacitor://` is** — it is a WKWebView scheme, registered inside
+  the WebView. Whether the patched fetch handles local asset URLs is stated
+  nowhere. It also has documented fallthrough cases (Request-object calls silently
+  revert to browser fetch). A global fetch patch on both platforms for an
+  unverified maybe is risk without proven reward. **Not shipped.**
+
+### Fixed
+- **`_fetchBuffer` now falls back to `XMLHttpRequest`** when `fetch` returns
+  status 0 or throws. XHR goes through WKWebView's ordinary resource-loading path —
+  the same one `<script>` tags and images use — which **can** read the
+  `capacitor://` scheme. Old API, boring, works. Note: local-scheme XHR responses
+  report status 0 *on success*, so the success test is "got bytes", not "2xx".
+- Normal platforms are untouched: fetch succeeds, XHR never runs.
+- The diagnostics panel now shows which transport loaded the samples
+  (`via fetch` / `via xhr`).
+- CI cleans any lingering invalid `iosScheme` from `capacitor.config.json` so it
+  does not sit there looking intentional.
+
 ## v0.81.5 — fetch() cannot read the capacitor:// scheme
 
 **Every sample on iOS was failing. All of them.** The diagnostics panel from
