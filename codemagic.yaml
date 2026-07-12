@@ -174,11 +174,79 @@ workflows:
         script: |
           npx cap sync ios
 
-      - name: Set build number
+      - name: Set version and build number
         script: |
+          set -e
+
+          # MARKETING_VERSION is what TestFlight and the App Store display. The
+          # Xcode project is regenerated every build, so it always comes back as
+          # "1.0". The real version lives in Intonare.html; read it from there so
+          # the two cannot drift.
+          APP_VERSION=$(grep -m1 "INTONARE_VERSION:" Intonare.html \
+            | sed -E 's/.*INTONARE_VERSION: *([0-9.]+).*/\1/')
+
+          if [ -z "$APP_VERSION" ]; then
+            echo "FATAL: could not read INTONARE_VERSION from Intonare.html"
+            exit 1
+          fi
+
+          echo "Version from Intonare.html:  $APP_VERSION"
+
+          # The version is DECLARED in exactly two places: the HTML comment near
+          # the top and the JS const. (It is also USED once, to render the version
+          # on screen; that line carries no literal and must not be checked.)
+          # Confirm the two declarations agree, since a half-applied bump is easy
+          # to do and invisible until someone reports the wrong version.
+          COMMENT_VER=$(grep -m1 -oE "INTONARE_VERSION: *[0-9.]+" Intonare.html \
+            | grep -oE "[0-9.]+$")
+          CONST_VER=$(grep -m1 -oE "const INTONARE_VERSION *= *'[0-9.]+'" Intonare.html \
+            | grep -oE "[0-9.]+")
+
+          if [ "$COMMENT_VER" != "$CONST_VER" ]; then
+            echo "FATAL: the two version declarations in Intonare.html disagree."
+            echo "  HTML comment: $COMMENT_VER"
+            echo "  JS const:     $CONST_VER"
+            echo "A version bump was only half applied."
+            exit 1
+          fi
+
+          # The newest CHANGELOG.md entry must be for this version. If it is not,
+          # either the changelog was not written or the version was not bumped;
+          # either way something shipped without a record.
+          if [ -f CHANGELOG.md ]; then
+            CHANGELOG_VERSION=$(grep -m1 -E "^## v[0-9]" CHANGELOG.md \
+              | sed -E 's/^## v([0-9.]+).*/\1/')
+            echo "Version from CHANGELOG.md:   $CHANGELOG_VERSION"
+
+            if [ "$APP_VERSION" != "$CHANGELOG_VERSION" ]; then
+              echo ""
+              echo "FATAL: version drift."
+              echo "  Intonare.html says: $APP_VERSION"
+              echo "  CHANGELOG.md says:  $CHANGELOG_VERSION"
+              echo ""
+              echo "Either the changelog entry for $APP_VERSION was never written,"
+              echo "or the version in Intonare.html was never bumped. Fix whichever"
+              echo "it is; do not ship a build with no record of what changed."
+              exit 1
+            fi
+          else
+            echo "WARNING: no CHANGELOG.md; skipping the version drift check."
+          fi
+
           cd ios/App
+
+          # CFBundleShortVersionString - the human-facing version.
+          agvtool new-marketing-version "$APP_VERSION"
+
+          # CFBundleVersion - must increase with every upload or App Store Connect
+          # rejects the binary. Derived from what is already on TestFlight rather
+          # than from anything in the repo, so it cannot collide.
           LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
           agvtool new-version -all $(($LATEST + 1))
+
+          echo "--- versions set ---"
+          agvtool what-marketing-version
+          agvtool what-version
 
       - name: Set up code signing
         script: |
