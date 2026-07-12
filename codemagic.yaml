@@ -1,0 +1,118 @@
+workflows:
+  ios-testflight:
+    name: Intonare iOS - TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    integrations:
+      app_store_connect: Intonare ASC Key
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.lieutenantdan.intonare
+      vars:
+        BUNDLE_ID: "com.lieutenantdan.intonare"
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        APP_STORE_APPLE_ID: 6790028334
+      node: 20
+      xcode: latest
+      cocoapods: default
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+
+    scripts:
+
+      - name: Install npm dependencies
+        script: |
+          npm install
+
+      - name: Build www from single-file source
+        script: |
+          rm -rf www
+          mkdir -p www
+          cp Intonare.html www/index.html
+          [ -f manifest.json ] && cp manifest.json www/ || true
+          [ -d assets ] && cp -r assets www/ || true
+          [ -d icons ]  && cp -r icons  www/ || true
+          echo "--- www contents ---"
+          ls -la www/
+
+      - name: Generate iOS platform
+        script: |
+          # ios/ is NOT committed. Regenerated every build.
+          # All customisation happens in the patch step below.
+          rm -rf ios
+          npx cap add ios
+
+      - name: Patch Info.plist
+        script: |
+          PLIST="ios/App/App/Info.plist"
+          PB="/usr/libexec/PlistBuddy"
+
+          # Microphone permission. Without this, iOS terminates the app the
+          # instant getUserMedia fires. Not a denial; an immediate crash.
+          $PB -c "Delete :NSMicrophoneUsageDescription" "$PLIST" 2>/dev/null || true
+          $PB -c "Add :NSMicrophoneUsageDescription string 'Intonare uses the microphone to detect the pitch of your instrument or voice for tuning and ear-training exercises. Audio is processed on your device and never recorded or transmitted.'" "$PLIST"
+
+          # Background audio, so the metronome and drones survive a screen lock.
+          $PB -c "Delete :UIBackgroundModes" "$PLIST" 2>/dev/null || true
+          $PB -c "Add :UIBackgroundModes array" "$PLIST"
+          $PB -c "Add :UIBackgroundModes:0 string audio" "$PLIST"
+
+          # Portrait only, matching the Android build.
+          $PB -c "Delete :UISupportedInterfaceOrientations" "$PLIST" 2>/dev/null || true
+          $PB -c "Add :UISupportedInterfaceOrientations array" "$PLIST"
+          $PB -c "Add :UISupportedInterfaceOrientations:0 string UIInterfaceOrientationPortrait" "$PLIST"
+
+          echo "--- Info.plist after patch ---"
+          $PB -c "Print" "$PLIST"
+
+      - name: Sync Capacitor
+        script: |
+          npx cap sync ios
+
+      - name: Set build number
+        script: |
+          cd ios/App
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
+          agvtool new-version -all $(($LATEST + 1))
+
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+
+      - name: Build ipa
+        script: |
+          xcode-project build-ipa \
+            --workspace "$CM_BUILD_DIR/$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # No beta_groups listed = internal testers only, no Beta App Review
+
+      email:
+        recipients:
+          - intonare.dev@gmail.com
+        notify:
+          success: true
+          failure: true
