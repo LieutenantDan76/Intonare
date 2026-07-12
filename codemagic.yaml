@@ -78,6 +78,47 @@ workflows:
             exit 1
           fi
 
+      - name: Force https scheme in capacitor.config.json
+        script: |
+          set -e
+
+          # THE BUG THIS FIXES
+          # ------------------
+          # By default, iOS Capacitor serves www/ from the custom scheme
+          # capacitor://localhost. WKWebView will load that scheme for <script>,
+          # <img> and so on — but fetch() against it returns a response with
+          # status 0. It is not treated as a normal HTTP origin.
+          #
+          # Every audio sample is loaded with fetch(). So on iOS, 0 of 294 sample
+          # fetches succeeded and every instrument fell back to synth. The
+          # diagnostics panel showed exactly this: origin capacitor://localhost,
+          # last error HTTP 0.
+          #
+          # Setting server.iosScheme to "https" makes Capacitor serve from
+          # https://localhost instead, which IS a normal origin, and fetch works.
+          #
+          # Patched here rather than relying on the file in the repo, so it cannot
+          # be lost: `npx cap add ios` regenerates platform config, and a value
+          # this load-bearing should not depend on someone remembering it.
+
+          if [ ! -f capacitor.config.json ]; then
+            echo "FATAL: capacitor.config.json not found at repo root."
+            exit 1
+          fi
+
+          python3 -c "
+          import json
+          cfg = json.load(open('capacitor.config.json'))
+          server = cfg.setdefault('server', {})
+          before = server.get('iosScheme')
+          server['iosScheme'] = 'https'
+          json.dump(cfg, open('capacitor.config.json', 'w'), indent=2)
+          print('server.iosScheme: %r -> \"https\"' % before)
+          "
+
+          echo "--- capacitor.config.json ---"
+          cat capacitor.config.json
+
       - name: Generate iOS platform
         script: |
           set -e

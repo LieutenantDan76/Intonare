@@ -16,6 +16,48 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.5 — fetch() cannot read the capacitor:// scheme
+
+**Every sample on iOS was failing. All of them.** The diagnostics panel from
+v0.81.4 gave the answer in two lines:
+
+    origin       capacitor://localhost
+    last error   HTTP 0
+    ok / fail    0 / 294
+
+**294 fetches, zero successes.** Not the piano — *everything*.
+
+iOS Capacitor serves `www/` from the custom scheme `capacitor://localhost` by
+default. WKWebView will load that scheme for `<script>`, `<img>`, `<link>` — but
+**`fetch()` against it returns a response with status 0.** A custom scheme is not
+treated as a normal HTTP origin, so the request never really happens.
+
+Every audio sample is loaded with `fetch()`. Hence: synth, everywhere, silently.
+
+### Fixed
+- **`server.iosScheme` is now forced to `"https"` by CI**, before `cap add ios`
+  runs. Capacitor then serves from `https://localhost`, which *is* a normal origin,
+  and `fetch()` works.
+
+  Patched in the pipeline rather than trusted to the file in the repo: `cap add
+  ios` regenerates platform config every build, and a value this load-bearing
+  should not depend on anyone remembering it. The step fails the build if
+  `capacitor.config.json` is missing.
+
+### Note on v0.81.4
+The `document.baseURI` fix from v0.81.4 was correct and stays. It just resolved to
+an origin that `fetch()` refuses — right instinct, wrong layer. The URI-encoding fix
+(for filenames with spaces, like `Rdcus 024 060.mp3`) also stays; that bug is real
+and would have surfaced the moment the scheme was fixed.
+
+### Still open
+- **Volume lower than Android**, though audio now comes from both speakers, so the
+  routing fix worked. Next suspect is `.mixWithOthers`, which asks iOS to duck the
+  app so it can share the output with other apps.
+- **Haptics and splash audio**: `IntonareNative` reports absent. The bridge was
+  never written for iOS. Both need real Capacitor plugins.
+- **Top padding** still feels heavy under the notch.
+
 ## v0.81.4 — samples were never loading on iOS
 
 The piano was still playing synth on iOS. The files are correct (30 mp3s, tracked
