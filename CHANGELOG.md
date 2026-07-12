@@ -16,6 +16,49 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.2 — piano samples were 51 MB of uncompressed WAV
+
+**The app became unusable on iOS.** Cause: `grand_piano` shipped as **29.8 MB in
+30 uncompressed WAVs**; `electric_piano` as **21.5 MB in 13**. Every other
+instrument in the library is mp3 at 15–25 KB per note. These two were outliers by
+roughly a factor of eighty.
+
+`SampleEngine.load('grand_piano')` fires shortly after launch and fetches all 30
+notes with `Promise.all` — thirty simultaneous requests, then thirty
+`decodeAudioData` calls on raw PCM. Android serves those from the APK's local
+assets and absorbs it. **iOS serves `www/` over a localhost HTTP server inside the
+app**, so the same load is thirty HTTP round trips plus thirty decodes on a phone.
+
+Before v0.81.1 the files were not bundled at all, every fetch 404'd instantly, and
+the synth fallback ran. Bundling them is what exposed the weight.
+
+### Fixed
+- **`grand_piano`: 29.8 MB → 7.9 MB.** Source is already mono 16-bit/44.1k, so
+  transcoding to 192 kbps mp3 loses nothing.
+- **`electric_piano`: 21.5 MB → 2.9 MB.** Source is **stereo**; kept stereo at
+  192 kbps. (An earlier pass folded it to mono to save 0.5 MB. Reverted — a Rhodes
+  has real stereo width and a musician on headphones would hear it flatten. Not
+  worth half a megabyte.)
+- **Net: 51 MB → 10.8 MB.** The Android download shrinks by the same 40 MB.
+- Both `noteToFile` maps repointed `.wav` → `.mp3` (59 references), plus the
+  shared `_salamanderNoteToFile` helper. No other instrument touched: the other
+  36 route through `_gleitzNoteToFile` and were always mp3.
+
+### Note
+This is the second time this bug has been fixed. The comment above the preload
+(`removeSplash`) records the first: eager-loading *every* registered instrument at
+launch made the tuner feel laggy, and the fix was to warm only the grand piano.
+Correct as far as it went — but the grand piano was itself 15× heavier than any
+other instrument, and that part survived. Android tolerated it. iOS did not.
+
+### Known open
+- **`audio_assets/mandolin/` is empty.** Zero files. It has been failing to load
+  and falling back to synth silently. Unrelated to the above; needs sourcing.
+- **The iOS audio session (`IntonareAudioSession.swift`) is still untested.** It
+  shipped in a build that TestFlight buried below the old `1.0` version group, so
+  no tester has ever run it. Whether `.defaultToSpeaker` actually fixes the
+  earpiece-routing problem is still unknown.
+
 ## v0.81.1 — iOS build pipeline
 
 > **Changelog gap:** entries between v0.73.37 and v0.81.1 (the audio detection

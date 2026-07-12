@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.1 -->
+<!-- INTONARE_VERSION: 0.81.2 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -22515,7 +22515,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.1';
+const INTONARE_VERSION = '0.81.2';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -44734,18 +44734,18 @@ SampleEngine.register({
   noteToFile(midi) {
     // Exact filename map — closest velocity to 100 per sampled note
     const map = {
-      21:'piano021v100.wav', 24:'piano024v096.wav', 27:'piano027v104.wav',
-      30:'piano030v085.wav', 33:'piano033v100.wav', 36:'piano036v096.wav',
-      39:'piano039v105.wav', 42:'piano042v095.wav', 45:'piano045v100.wav',
-      48:'piano048v105.wav', 51:'piano051v095.wav', 54:'piano054v100.wav',
-      57:'piano057v095.wav', 60:'piano060v100.wav', 63:'piano063v095.wav',
-      66:'piano066v105.wav', 69:'piano069v105.wav', 72:'piano072v100.wav',
-      75:'piano075v103.wav', 78:'piano078v100.wav', 81:'piano081v105.wav',
-      84:'piano084v100.wav', 87:'piano087v100.wav', 90:'piano090v100.wav',
-      93:'piano093v100.wav', 96:'piano096v100.wav', 99:'piano099v100.wav',
-      102:'piano102v100.wav',105:'piano105v112.wav',108:'piano108v100.wav',
+      21:'piano021v100.mp3', 24:'piano024v096.mp3', 27:'piano027v104.mp3',
+      30:'piano030v085.mp3', 33:'piano033v100.mp3', 36:'piano036v096.mp3',
+      39:'piano039v105.mp3', 42:'piano042v095.mp3', 45:'piano045v100.mp3',
+      48:'piano048v105.mp3', 51:'piano051v095.mp3', 54:'piano054v100.mp3',
+      57:'piano057v095.mp3', 60:'piano060v100.mp3', 63:'piano063v095.mp3',
+      66:'piano066v105.mp3', 69:'piano069v105.mp3', 72:'piano072v100.mp3',
+      75:'piano075v103.mp3', 78:'piano078v100.mp3', 81:'piano081v105.mp3',
+      84:'piano084v100.mp3', 87:'piano087v100.mp3', 90:'piano090v100.mp3',
+      93:'piano093v100.mp3', 96:'piano096v100.mp3', 99:'piano099v100.mp3',
+      102:'piano102v100.mp3',105:'piano105v112.mp3',108:'piano108v100.mp3',
     };
-    return map[midi] || ('piano' + String(midi).padStart(3,'0') + 'v100.wav');
+    return map[midi] || ('piano' + String(midi).padStart(3,'0') + 'v100.mp3');
   },
   sampledNotes: (function() {
     const n = []; for (let m = 21; m <= 108; m += 3) n.push(m);
@@ -44763,8 +44763,11 @@ SampleEngine.register({
 
 // Helper shared by all Salamander-convention soundfonts (sampled every 3 semitones A0–C8)
 function _salamanderNoteToFile(midi) {
-  // Naming convention: piano021v100.wav (MIDI number zero-padded to 3 digits, velocity 100)
-  return 'piano' + String(midi).padStart(3, '0') + 'v100.wav';
+  // Naming convention: piano021v100.mp3 (MIDI number zero-padded to 3 digits, velocity 100)
+  // Sources ship as WAV; they are transcoded to mp3 before bundling. 50 MB of
+  // uncompressed PCM in the app bundle meant 30 parallel fetch+decodeAudioData
+  // calls at launch, which iOS could not absorb.
+  return 'piano' + String(midi).padStart(3, '0') + 'v100.mp3';
 }
 function _capacitorAssetUrl(folder, fname) {
   // Android assets under public/ are served directly from localhost/
@@ -44800,17 +44803,17 @@ SampleEngine.register({
   assetUrl: (fname) => _capacitorAssetUrl('electric_piano', fname),
   noteToFile(midi) {
     const map = {
-      24:'Rdcus 024 060.wav', 28:'Rdcus 028 060.wav', 32:'Rdcus 032 060.wav',
-      36:'Rdcus 036 060.wav', 40:'Rdcus 040 060.wav', 44:'Rdcus 044 060.wav',
-      48:'Rdcus 048 060.wav', 52:'Rdcus 052 060.wav', 56:'Rdcus 056 060.wav',
-      60:'Rdcus 060 060.wav', 63:'Rdcus 063 060.wav', 66:'Rdcus 066 060.wav',
-      69:'Rdcus 069 060.wav', 72:'Rdcus 072 060.wav', 75:'Rdcus 075 060.wav',
-      78:'Rdcus 078 060.wav', 81:'Rdcus 081 060.wav', 84:'Rdcus 084 060.wav',
-      87:'Rdcus 087 060.wav', 90:'Rdcus 090 060.wav', 93:'Rdcus 093 060.wav',
-      96:'Rdcus 096 060.wav', 99:'Rdcus 099 060.wav', 102:'Rdcus 102 060.wav',
-      105:'Rdcus 105 060.wav', 108:'Rdcus 108 060.wav',
+      24:'Rdcus 024 060.mp3', 28:'Rdcus 028 060.mp3', 32:'Rdcus 032 060.mp3',
+      36:'Rdcus 036 060.mp3', 40:'Rdcus 040 060.mp3', 44:'Rdcus 044 060.mp3',
+      48:'Rdcus 048 060.mp3', 52:'Rdcus 052 060.mp3', 56:'Rdcus 056 060.mp3',
+      60:'Rdcus 060 060.mp3', 63:'Rdcus 063 060.mp3', 66:'Rdcus 066 060.mp3',
+      69:'Rdcus 069 060.mp3', 72:'Rdcus 072 060.mp3', 75:'Rdcus 075 060.mp3',
+      78:'Rdcus 078 060.mp3', 81:'Rdcus 081 060.mp3', 84:'Rdcus 084 060.mp3',
+      87:'Rdcus 087 060.mp3', 90:'Rdcus 090 060.mp3', 93:'Rdcus 093 060.mp3',
+      96:'Rdcus 096 060.mp3', 99:'Rdcus 099 060.mp3', 102:'Rdcus 102 060.mp3',
+      105:'Rdcus 105 060.mp3', 108:'Rdcus 108 060.mp3',
     };
-    return map[midi] || ('Rdcus ' + String(midi).padStart(3,'0') + ' 060.wav');
+    return map[midi] || ('Rdcus ' + String(midi).padStart(3,'0') + ' 060.mp3');
   },
   sampledNotes: [24,32,40,48,56,63,69,75,81,87,93,99,105],
   onFailed() { console.warn('[SampleEngine] Rhodes samples unavailable'); },
