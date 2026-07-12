@@ -92,22 +92,30 @@ workflows:
 
       - name: Set up code signing
         script: |
+          set -e
+
+          echo "=== BUNDLE_ID is: $BUNDLE_ID ==="
+
           # Create the keychain the certificate will live in.
           keychain initialize
 
           # Fetch the distribution certificate and provisioning profile from
           # Apple. --create makes them if they do not exist yet, which is the
-          # case on a first-ever iOS build. Without it, this step just fails
-          # with "no matching profiles found".
+          # case on a first-ever iOS build.
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
+
+          echo "=== fetched profiles ==="
+          ls -la $HOME/Library/MobileDevice/Provisioning\ Profiles/ || true
+          echo "=== fetched certificates ==="
+          ls -la $HOME/Library/MobileDevice/Certificates/ || true
 
           # Import the fetched certificate into the keychain.
           keychain add-certificates
 
           # Point the Xcode project at the fetched profile.
-          xcode-project use-profiles
+          xcode-project use-profiles --project "$CM_BUILD_DIR/$XCODE_PROJECT"
 
       - name: Build ipa
         script: |
