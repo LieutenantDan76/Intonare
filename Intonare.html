@@ -1,11 +1,22 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.14 -->
+<!-- INTONARE_VERSION: 0.81.19 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
-<style>html,body{background:#000000!important;transition:none!important}
+<style>
+/* iOS renders U+25B6 (the play triangle in every START / PLAY button) as a COLOR
+   EMOJI; Android renders it as a plain text glyph. Same character, wildly
+   different button. font-variant-emoji: text asks for the text presentation
+   explicitly. Safari only honours it from 17.4, so the font-family fallback does
+   the same job on older WebKit: name a font that has the glyph but no emoji
+   table, and the emoji font never gets a chance to claim it. */
+button, .metro-play, .tc-start-btn, .rc-play-btn, .chord-play-btn,
+.prog-play-btn, .pto-riff-trigger, .rc-test-btn, .prog-metro-play-btn {
+  font-variant-emoji: text;
+}
+html,body{background:#000000!important;transition:none!important}
   /* ─── PM STREAK BLOCK ─── */
   .pm-streak-block {
     display: flex; align-items: baseline; justify-content: center;
@@ -10994,6 +11005,18 @@
     padding: 12px;
   }
   .settings-modal.active { display: flex; }
+  /* See openSettings(). A module whose ROOT container is a full-viewport
+     overflow:hidden box (currently only #toolSurvivalGuide — every other
+     overflow:hidden in the file is a small inner element like a progress bar or a
+     dropdown, which cannot swallow the modal's touch) will fight the Settings
+     modal for scroll on iOS. Taking it out of the layout while Settings is open
+     ends the argument; it sits behind an opaque blurred overlay, so there is
+     nothing to see anyway.
+
+     Listed by id rather than by a class, deliberately: if a future module needs
+     this, adding it here should be a conscious decision with this comment in front
+     of you, not something inherited by accident. */
+  body.settings-open #toolSurvivalGuide { display: none; }
   /* Code-entry and unlock-confirmation modals open FROM Settings, so they must stack
      above it (all share .settings-modal z-index 2000; DOM order alone puts them
      behind). Bump them above. */
@@ -16941,6 +16964,19 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // doesn't sag in the middle — it sustains visible motion deep into the phase.
       const _spd = (0.03 + 0.20 * Math.exp(-Math.max(0, gatherEl - T_GATHER) / 2.2)) * speedEase;
       wavePhase += _spd * dt60;
+
+      // Record the wave's total travel. "The iPhone wave just expands then dies
+      // out" says the horizontal motion is not happening, but 58.7 fps says it is
+      // not a frame-rate problem — so measure the thing itself. wavePhase IS the
+      // travel. Compare the final value against Android's and the question becomes
+      // arithmetic rather than another theory.
+      //
+      // This lives HERE, after _spd is assigned, and not up with the fps counter:
+      // _spd is a const declared below that point, so reading it earlier is a
+      // temporal-dead-zone throw on the very first frame — which killed the splash
+      // outright. (node --check does not catch it: TDZ is a runtime error.)
+      window._splashPhase = wavePhase;
+      window._splashSpd   = _spd;
       // Ease colour toward its scheduled target. These were all per-frame too, so
       // they inherit the same normalisation — otherwise the colour and glow would
       // settle at different rates on different devices, and the palette would
@@ -19162,6 +19198,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             </div>
             <div id="trpPitchToggleRow" style="display:none"></div>
             <div class="cs-trumpet-fingering-text" id="trpCardFingering" style="font-size:13px;letter-spacing:2px"></div>
+            <button class="gss-play-btn" id="trpPlayBtn" style="width:100%;margin-top:4px" onclick="trpPlayCardNote()" data-i18n="trp_play_note">▶ PLAY NOTE</button>
             <div id="wwAltNav" style="display:none"></div>
             <div id="tbnAltNav" style="display:none"></div>
             <div id="trpCardEmbouchure" style="font-family:'Fraunces',serif;font-style:italic;font-size:11px;color:var(--text-dim);text-align:center;max-width:220px;line-height:1.4;min-height:78px;display:flex;align-items:center;justify-content:center"></div>
@@ -22562,7 +22599,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.14';
+const INTONARE_VERSION = '0.81.19';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -26067,7 +26104,8 @@ function playRef(key, freq, noteName) {
   // Voice Processing IO even after the mic-start nudge; each new source may need
   // its own snap-back ("repeat step 9", Apple forums 721535). Throttled, no-op
   // when the mic is off or the plugin is absent.
-  _iosSyncAudioMode('playRef');
+  // No session call here either; see startMetro(). Changing the category while a
+  // note is being scheduled is what caused the metronome to fire once and die.
   const ctx = ensureRefCtx();
   const now = ctx.currentTime;
   const isDrone = droneMode;
@@ -28345,8 +28383,17 @@ function toggleMetro() {
 }
 
 async function startMetro() {
-  // iOS: see playRef — new audio source during a live mic session may re-duck.
-  _iosSyncAudioMode('metro');
+  // NOTE: deliberately does NOT touch the iOS audio session.
+  //
+  // It used to. The theory was that a new audio source started while the mic is
+  // live can be re-ducked by Voice Processing IO and needs a nudge. But changing
+  // the session category WHILE the metronome is spinning up disrupts the audio
+  // graph mid-schedule: the click would fire once and stop, and you had to
+  // start/stop again to get it going.
+  //
+  // The session only ever needs changing when the MIC state changes, and those
+  // transitions already call _iosSyncAudioMode. By the time any audio starts, the
+  // session is already correct — so this call was pure downside.
   const ctx = ensureMetroCtx();
   if (ctx.state === 'suspended') {
     await ctx.resume();
@@ -28987,6 +29034,19 @@ function enterTool(name, restoreState) {
 }
 
 function exitTool(resetToHub) {
+  // Silence everything on the way out.
+  //
+  // The per-tool calls further down (dbStop, droneStop, chordStop...) are a
+  // hand-maintained list: one line per tool, and any tool missing from it leaks
+  // its audio into the next screen. stopAllAudio() already exists and already
+  // knows about every stop function in the app — it runs on backgrounding and on
+  // pagehide — it simply was never called on tool exit.
+  //
+  // The per-tool calls below STAY. Several of them do UI cleanup as well as
+  // audio (closing panels, clearing active-note state), so they are not
+  // redundant. This is the audio safety net underneath them.
+  try { stopAllAudio(); } catch(e) {}
+
   // Stop any running instrument riff
   try { if (typeof riffStop === 'function') riffStop(); } catch(e) {}
   try { if (typeof riffClosePopup === 'function') riffClosePopup(); } catch(e) {}
@@ -38469,6 +38529,11 @@ function enterExercise(name) {
 }
 
 function exitExercise() {
+  // Silence everything on the way out — same safety net as exitTool(). The
+  // explicit per-exercise stops further down stay: several also reset UI state,
+  // so they are not redundant. This just means nothing can leak because a module
+  // was forgotten on a hand-maintained list.
+  try { stopAllAudio(); } catch(e) {}
   moduleExit(); // flush time tracker before stopping
   // Remove in-module BEFORE sesLeave so allowGreen evaluates against the restored state
   setHeaderModule(null);
@@ -62880,6 +62945,7 @@ const STRINGS = {
     settings_help_tips:'Help Buttons',
     settings_help_tips_off:'Hidden',
     settings_help_tips_on:'Show ? buttons',
+    trp_play_note:'▶ PLAY NOTE',
     settings_haptics:'Haptic Feedback',
     settings_splash_sound:'Launch Sound',
     pw_title:'INTONARE PRO',
@@ -63763,6 +63829,7 @@ const STRINGS = {
     settings_help_tips:'Pulsanti Aiuto',
     settings_help_tips_off:'Nascosti',
     settings_help_tips_on:'Mostra pulsanti ?',
+    trp_play_note:'▶ SUONA NOTA',
     settings_haptics:'Feedback Aptico',
     settings_splash_sound:'Suono d\u2019Avvio',
     pw_title:'INTONARE PRO',
@@ -64550,6 +64617,7 @@ function latDrawIdle() {
 function closeSettings() {
   if (latRunning) latStop();
   document.getElementById('settingsModal').classList.remove('active');
+  document.body.classList.remove('settings-open');
 }
 
 // ═══════════════════════════════════════════════
@@ -64584,6 +64652,25 @@ function _notifTimeToDate(timeStr) {
   return d;
 }
 
+// "19:00" → { hour: 19, minute: 0 }, the calendar matcher the plugin wants.
+//
+// WHY NOT at + every
+// The reminders used to be scheduled with `{ at, repeats: true, every: 'day' }`,
+// which produced DUPLICATE notifications — more than one of each per day. The
+// Capacitor docs are explicit: "Use EITHER at, on, or every to schedule
+// notifications." Passing `at` (a concrete datetime) alongside `every: 'day'` (an
+// interval) can register both, and you get two.
+//
+// `on` is a calendar matcher, not a one-shot date: { hour: 19, minute: 0 } means
+// "at 19:00, every day" by definition. Nothing to repeat, nothing to double up,
+// and no need to roll the date forward to tomorrow when the time has already
+// passed — which _notifTimeToDate had to do, and which was its own way of ending
+// up with a stale pending notification.
+function _notifTimeToOn(hhmm) {
+  const [h, m] = String(hhmm || '19:00').split(':');
+  return { hour: parseInt(h, 10) || 0, minute: parseInt(m, 10) || 0 };
+}
+
 async function scheduleNotifications() {
   const plugin = _getNotifPlugin();
   if (!plugin) return;
@@ -64601,12 +64688,11 @@ async function scheduleNotifications() {
 
   // Practice reminder
   if (ns.practiceOn) {
-    const at = _notifTimeToDate(ns.practiceTime || '19:00');
     toSchedule.push({
       id: NOTIF_ID_PRACTICE,
       title: t('notif_practice_toast_title'),
       body: t('notif_practice_toast_body'),
-      schedule: { at, repeats: true, every: 'day' },
+      schedule: { on: _notifTimeToOn(ns.practiceTime || '19:00'), allowWhileIdle: true },
       sound: null,
       smallIcon: 'ic_stat_intonare',
       actionTypeId: '',
@@ -64616,13 +64702,12 @@ async function scheduleNotifications() {
 
   // Streak reminder — only if user has an active streak
   if (ns.streakOn && progState.streak && progState.streak.count > 0) {
-    const at = _notifTimeToDate(ns.streakTime || '20:00');
     const count = progState.streak.count;
     toSchedule.push({
       id: NOTIF_ID_STREAK,
       title: t('notif_streak_toast_title').replace('{n}', count),
       body: t('notif_streak_toast_body'),
-      schedule: { at, repeats: true, every: 'day' },
+      schedule: { on: _notifTimeToOn(ns.streakTime || '20:00'), allowWhileIdle: true },
       sound: null,
       smallIcon: 'ic_stat_intonare',
       actionTypeId: '',
@@ -64768,6 +64853,19 @@ function setMasterVolume(pct) {
 
 // ─── Settings modal ───
 function openSettings() {
+  // Settings could not be SCROLLED when opened from inside the Survival Guide.
+  //
+  // The guide's container is a full-viewport flex column with overflow:hidden and
+  // a fixed height (it owns the whole screen while open). On iOS that starves the
+  // fixed-position modal layered above it of touch scrolling — the gesture is
+  // swallowed by the guide's own non-scrolling box before the modal ever sees it.
+  //
+  // The modal is a top-level sibling with its own overflow-y:auto, so it is not a
+  // clipping or nesting problem; it is the guide competing for the touch. Marking
+  // the body lets CSS take the guide out of the layout entirely while Settings is
+  // up — it is behind a full-screen blurred overlay anyway, so nothing is lost.
+  document.body.classList.add('settings-open');
+
   // Safety: clear any stuck module-header state (shouldn't normally be needed)
   if (document.body.classList.contains('in-module') && !currentTool && !currentExercise) {
     try { setHeaderModule(null); } catch(e) {}
@@ -71246,17 +71344,19 @@ function _openAudioDiag() {
 
   const box = document.createElement('div');
   box.id = 'audioDiag';
+  // Near-fullscreen and opaque: the whole readout should fit in ONE screenshot,
+  // and be legible over whatever happens to be behind it.
   box.style.cssText =
-    'position:fixed;inset:auto 8px 8px 8px;z-index:99999;' +
-    'background:#0b0f14;color:#7dd3a0;border:1px solid #1f2d3a;border-radius:10px;' +
-    'font:11px/1.5 ui-monospace,Menlo,monospace;padding:10px 12px;' +
-    'max-height:46vh;overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.6)';
+    'position:fixed;inset:6px;z-index:99999;' +
+    'background:#05080b;color:#7dd3a0;border:1px solid #1f2d3a;border-radius:10px;' +
+    'font:10px/1.35 ui-monospace,Menlo,monospace;padding:10px 12px;' +
+    'overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.85)';
 
   const close = document.createElement('button');
   close.textContent = 'CLOSE';
   close.style.cssText =
     'float:right;background:#1f2d3a;color:#9fb3c8;border:0;border-radius:6px;' +
-    'padding:3px 8px;font:11px ui-monospace,monospace;cursor:pointer';
+    'padding:6px 12px;font:12px ui-monospace,monospace;cursor:pointer';
   close.onclick = () => { clearInterval(box._t); box.remove(); };
   box.appendChild(close);
 
@@ -71349,6 +71449,8 @@ function _openAudioDiag() {
     L.push('  audioMode       ' + ((window._sampleDiag && window._sampleDiag.audioMode) || 'not attempted'));
     L.push('  Haptics bridge  ' + (window.Haptics ? 'present' : 'absent'));
     L.push('  splash fps      ' + (window._splashFps ? window._splashFps.toFixed(1) + ' fps  (' + window._splashFrames + ' frames)' : 'not measured'));
+    L.push('  splash phase    ' + (window._splashPhase != null ? window._splashPhase.toFixed(2) + ' rad total travel' : 'not measured'));
+    L.push('  splash dpr      ' + (window.devicePixelRatio || '?'));
 
     pre.textContent = L.join('\n');
   }
@@ -81680,6 +81782,15 @@ function euphoniumSynth(ctx, freq, when, dur, master, vol, tonguing) {
 }
 
 let trpLastTapNode = null; // track most recent single-note tap for trumpet
+let trpCardMidi    = null; // midi of the note the wind card is currently showing
+
+// Play the note the wind note-card is showing. gccPlayString already knows how to
+// voice a wind instrument (it stops the previous note and uses windSynth), so this
+// is only about giving that capability a button.
+function trpPlayCardNote() {
+  if (trpCardMidi == null) return;
+  gccPlayString(trpCardMidi);
+}
 
 function gccPlayString(midi) {
   if (typeof hapticLight === 'function') hapticLight();
@@ -83088,6 +83199,11 @@ function _wwTrillTouchEnd(e) {
 function trpDrawNoteCard(noteIdx) {
   const pc     = noteIdx % 12;
   const midi   = (trpCurrentOctave + 1) * 12 + pc;
+  // Stash it so the PLAY button has something to sound. The fretted instruments
+  // hear their chord by tapping a dot on the diagram; wind instruments have no
+  // diagram to tap, so until now there was no way to hear the note at all — the
+  // card showed you the fingering and left you to imagine the pitch.
+  trpCardMidi = midi;
 
   // Apply written/concert offset to display name
   const offset     = windDisplayOffset();
@@ -89251,12 +89367,22 @@ function sesRefreshGoalChips() {
 // Each call is guarded so it never throws if a module hasn\'t loaded yet.
 function stopAllAudio() {
   try { if (typeof stopMetro === 'function') stopMetro(); } catch(e) {}
+  // Every stop function in the app. This list is the single source of truth for
+  // "make it quiet", and it had drifted: exitExercise() knew about diadleStop,
+  // tonaleStop and roadtripStop and this did not, while exitTool() knew about
+  // thmnStop and rcStop and this did not. Two hand-maintained lists, each with
+  // holes the other filled, and audio leaking through whichever gap you happened
+  // to walk out of. Both exits now call THIS, and this knows about everything.
   const fns = [
-    'dbStop','ivStop','chordStop','progStop','pitchHistStop',
-    'droneStop','scaleStop','tlStop','tgStop','prStop','rrStop',
-    'ssStop','ceStop','chordleStop','latStop','vrStop',
-    'gccStop','gssStop','pssStop','pccStop','trpStop','chordScaleStopAllAudio',
-    'cofStopScale',
+    // tools
+    'dbStop','chordStop','progStop','droneStop','scaleStop','cofStopScale',
+    'chordScaleStopAllAudio','thmnStop','rcStop','rctStop','ivrStop',
+    'gccStop','gssStop','pssStop','pccStop','trpStop',
+    // exercises
+    'ivStop','tlStop','tgStop','prStop','rrStop','ssStop','ceStop',
+    'chordleStop','diadleStop','tonaleStop','roadtripStop','latStop','vrStop',
+    // shared
+    'pitchHistStop',
   ];
   fns.forEach(fn => { try { if (typeof window[fn] === 'function') window[fn](); } catch(e){} });
   if (typeof banjoStopRoll === 'function') banjoStopRoll();

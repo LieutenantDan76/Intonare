@@ -16,6 +16,140 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.19 — hotfix: the splash diagnostic killed the splash
+
+    Uncaught ReferenceError: Cannot access '_spd' before initialization
+
+The wave-travel measurement added in v0.81.15 read `_spd` twenty-three lines above
+where `_spd` is declared. `const` in a temporal dead zone throws on access, so the
+splash loop died on its first frame.
+
+Moved below the declaration. The splash-loop scope is now verified clean of any
+read-before-declare.
+
+**Both ship gates missed it.** `node --check` passes — a TDZ violation is a *runtime*
+error, not a syntax error — and the sentinel does not model scope. Same class as the
+`_PITCH_HIST_N` deletion in v0.81.13: code introduced that references something not
+present at that point. The discipline that catches it is manual and simple: **when
+inserting code that reads a variable, confirm the variable exists there.** Both of
+tonight's incidents would have been caught by that one check.
+
+## v0.81.18 — duplicate notifications
+
+More than one of each reminder per day. Not a cadence choice; a bug.
+
+The reminders were scheduled with:
+
+    schedule: { at, repeats: true, every: 'day' }
+
+The Capacitor docs are explicit about this: **"Use EITHER `at`, `on`, or `every` to
+schedule notifications."** Passing `at` — a concrete datetime — alongside
+`every: 'day'` — an interval — can register **both**, and you get two notifications.
+
+### Fixed
+- Both reminders now use **`on`**, the calendar matcher: `{ hour: 19, minute: 0 }`
+  means "at 19:00, every day" by definition. Nothing to repeat, nothing to double
+  up.
+- This also removes the need to roll the date forward to tomorrow when the chosen
+  time has already passed today — which `_notifTimeToDate` had to do, and which was
+  its own route to a stale pending notification sitting alongside the new one.
+- `allowWhileIdle: true` so the reminder still fires if the device is in Doze.
+
+The cancel-then-schedule logic and the fixed IDs were already correct; the schedule
+object was the whole problem.
+
+## v0.81.17 — no way to repeat a wind note; Settings would not scroll in the guide
+
+### Wind instruments had no way to repeat a note
+Selecting a note on a wind instrument (trumpet, flute, clarinet, the rest) plays it
+— but there was no way to hear it **again** without navigating away and back.
+Fretted instruments can just re-tap a dot on the diagram; wind instruments have no
+diagram, so once the note had sounded, that was that.
+
+- **PLAY NOTE button** on the wind note card, replaying whichever note is showing.
+  `gccPlayString()` already knew how to voice a wind instrument — it stops the
+  previous note and uses `windSynth` — so this is only about giving that a button.
+  EN and IT twins.
+
+### Settings would not scroll inside the Survival Guide
+Open the app's Settings while the Survival Guide is up, and the modal would not
+scroll on iOS.
+
+The guide's container is a full-viewport flex column with `overflow:hidden` and a
+fixed height — it owns the entire screen while open. That starves the fixed-position
+modal layered above it of touch scrolling: the gesture is swallowed by the guide's
+non-scrolling box before the modal ever sees it. (Not a nesting or clipping problem
+— the modal is a top-level sibling with its own `overflow-y:auto`. The guide was
+simply competing for the touch and winning.)
+
+- `body.settings-open` takes the guide out of the layout while Settings is up. It is
+  behind a full-screen blurred overlay anyway, so there is nothing to see.
+
+**Checked: it is the only module with this shape.** Every other `overflow:hidden` in
+the file is a small inner element — a progress bar, a dropdown panel, a photo frame —
+none of which own the viewport or can swallow the modal's touch. The guard is listed
+by id rather than by a class, deliberately, so that if a future full-screen module
+needs it, adding it is a conscious decision rather than something inherited by
+accident.
+
+## v0.81.16 — audio leaked out of modules through whichever gap you left by
+
+Backing out of a tool or an exercise could leave its sound still playing.
+
+Both exits stopped audio via a **hand-maintained list**: `exitTool()` had one line
+per tool, `exitExercise()` had one line per exercise. And `stopAllAudio()` — which
+already existed, already ran on backgrounding and pagehide, and was supposed to be
+the complete list — was called by neither.
+
+All three lists had drifted apart. `exitExercise()` knew about `diadleStop`,
+`tonaleStop` and `roadtripStop`; `stopAllAudio()` did not. `exitTool()` knew about
+`thmnStop`, `rcStop` and `ivrStop`; `stopAllAudio()` did not. Three lists, each with
+holes the others filled, and sound leaking through whichever gap you happened to
+walk out of.
+
+### Fixed
+- **`stopAllAudio()` completed** — all 30 stop functions, grouped and verified to
+  exist. It is now genuinely the single source of truth for "make it quiet".
+- **Both exits call it.** The per-module stops stay, because several also reset UI
+  state (closing panels, clearing active notes) and are not redundant. This is the
+  audio safety net underneath them, so nothing can leak because a module was
+  forgotten on a list.
+
+## v0.81.15 — metronome one-tap-and-stop, and the emoji triangle
+
+### The metronome fired once and died
+Toggling the mic and then starting the metronome would produce a single click and
+stop; you had to start/stop again to get it going.
+
+`startMetro()` and `playRef()` were both calling `_iosSyncAudioMode()` — a leftover
+from the theory that a new audio source started while the mic is live can be
+re-ducked and needs a nudge. But **changing the audio session category while the
+metronome is spinning up disrupts the graph mid-schedule.** The click fires once and
+the scheduler is left in pieces.
+
+The session only ever needs changing when the **mic state** changes, and those
+transitions already call it. By the time any audio starts, the session is already
+correct — so both calls were pure downside. Removed. Three call sites remain: first
+audio, mic start, mic stop.
+
+### The start button had an emoji triangle
+`▶` (U+25B6) appears in 164 buttons. **iOS renders it as a colour emoji; Android
+renders it as a plain text glyph.** Same character, completely different button.
+
+Fixed in CSS rather than editing 164 strings: `font-variant-emoji: text` asks for
+the text presentation explicitly.
+
+### Splash: the frame-rate theory is dead
+The panel measured **58.7 fps**. It is not a frame-rate problem, so the `dt60`
+normalisation from v0.81.13 — while correct, and worth keeping for future 120 Hz
+devices — was not the fix.
+
+"The iPhone wave just expands then dies out" says the horizontal *travel* is not
+happening at all, which is a different bug from "slow". The panel now reports the
+wave's **total accumulated phase** (which is literally the travel) and the device
+pixel ratio. Compare the number against Android and this becomes arithmetic instead
+of a fourth theory.
+
 ## v0.81.14 — the launch-quiet was the cache, not the category
 
 Three volume levels, not two: launch audio was quieter than **either** the normal
