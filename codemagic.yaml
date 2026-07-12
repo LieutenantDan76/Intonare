@@ -8,9 +8,6 @@ workflows:
       app_store_connect: Intonare ASC Key
 
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.lieutenantdan.intonare
       vars:
         BUNDLE_ID: "com.lieutenantdan.intonare"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
@@ -92,6 +89,21 @@ workflows:
 
       - name: Set up code signing
         script: |
+          # Create the keychain the certificate will live in.
+          keychain initialize
+
+          # Fetch the distribution certificate and provisioning profile from
+          # Apple. --create makes them if they do not exist yet, which is the
+          # case on a first-ever iOS build. Without it, this step just fails
+          # with "no matching profiles found".
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+          # Import the fetched certificate into the keychain.
+          keychain add-certificates
+
+          # Point the Xcode project at the fetched profile.
           xcode-project use-profiles
 
       - name: Build ipa
