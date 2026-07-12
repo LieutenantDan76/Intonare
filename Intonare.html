@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.80.28 -->
+<!-- INTONARE_VERSION: 0.81.1 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -1666,6 +1666,13 @@
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+  }
+  /* iOS has a real notch / Dynamic Island and reports a real inset (47-59px).
+     The min(8px, ...) cap above exists for Android sticky-immersive, which
+     zeroes the inset; applying it on iPhone throws the notch clearance away
+     and buries the header under the island. Take the full inset here. */
+  html.ios body {
+    padding-top: env(safe-area-inset-top);
   }
 
   /* ── Accessibility: app-wide UI scale (slider, 5 snap steps) ──
@@ -22508,7 +22515,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.80.28';
+const INTONARE_VERSION = '0.81.1';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -89306,6 +89313,15 @@ function _favBindCardGestures(card, onLaunch, onRemove) {
 
 // Init on load
 document.addEventListener('DOMContentLoaded', () => {
+  // Tag <html> with the platform so CSS can branch on it. Capacitor may do
+  // this itself; doing it here too is harmless and means the iOS safe-area
+  // rule (html.ios body) does not depend on that behaviour holding.
+  try {
+    if (window.Capacitor && typeof window.Capacitor.getPlatform === 'function') {
+      document.documentElement.classList.add(window.Capacitor.getPlatform());
+    }
+  } catch (e) {}
+
   // Structural fix: re-attach modals to body root. The original HTML has unclosed
   // tags upstream that cause some modals to end up nested 5+ levels deep inside
   // hidden containers. Moving them to body root (or just re-appending them, which
