@@ -80,6 +80,12 @@ workflows:
           $PB -c "Add :UISupportedInterfaceOrientations array" "$PLIST"
           $PB -c "Add :UISupportedInterfaceOrientations:0 string UIInterfaceOrientationPortrait" "$PLIST"
 
+          # Export compliance. Intonare implements no encryption of its own;
+          # HTTPS via the system stack is exempt. Declaring this here stops
+          # App Store Connect asking on every single upload.
+          $PB -c "Delete :ITSAppUsesNonExemptEncryption" "$PLIST" 2>/dev/null || true
+          $PB -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
+
           echo "--- Info.plist after patch ---"
           $PB -c "Print" "$PLIST"
 
@@ -120,8 +126,12 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
-        # No beta_groups listed = internal testers only, no Beta App Review
+        # submit_to_testflight is deliberately NOT set. It submits the build to
+        # Apple's Beta App Review queue, which is only needed for external
+        # testers. The build still uploads and appears in TestFlight for
+        # internal testers without it, and internal testing needs no review.
+        # Turn it on only once _iosBetaUnlock() is gone and StoreKit IAP is
+        # wired, since a Pro unlock with no purchase path fails Guideline 3.1.1.
 
       email:
         recipients:
