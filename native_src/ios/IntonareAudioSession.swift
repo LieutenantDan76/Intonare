@@ -85,16 +85,27 @@ enum IntonareAudioSession {
         let session = AVAudioSession.sharedInstance()
 
         do {
+            // LAUNCH STATE: plain playback, full volume.
+            //
+            // This used to be playAndRecord (so WebKit would inherit
+            // .defaultToSpeaker when getUserMedia fired). But playAndRecord runs
+            // output through a voice-processing-flavoured path that attenuates it
+            // — the whole app sat in the quiet state even before the mic was ever
+            // touched. Playback has no mic claim and no attenuation.
+            //
+            // The mic transition is handled by IntonarePlugin.assertAudioMode(),
+            // called from JS when getUserMedia completes: it re-sets playAndRecord
+            // with .defaultToSpeaker + mode .default AFTER WebKit's own
+            // reconfiguration, and overrides the output port to snap the level
+            // back. releaseAudioMode() returns here when the mic stops.
             try session.setCategory(
-                .playAndRecord,
+                .playback,
                 mode: .default,
                 options: [
-                    .defaultToSpeaker,
-                    .allowBluetoothA2DP,
                     .mixWithOthers
                 ]
             )
-            print("[Intonare] AVAudioSession category set — defaultToSpeaker.")
+            print("[Intonare] AVAudioSession: playback/.default at launch.")
         } catch {
             // A failure here means the app is quiet, not broken. Every surface
             // still works. Do not take the app down over it.

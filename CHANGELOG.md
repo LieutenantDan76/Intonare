@@ -16,6 +16,89 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.9 — the volume design: full loudness except while the mic is live
+
+**Why iOS is quieter than Android even with routing fixed:** the `playAndRecord`
+category runs output through a voice-processing chain that attenuates it — the
+category is built for phone calls, where a loud speaker feeds back into the mic.
+Apple's developer forums confirm it plainly ("when using .playAndRecord, all
+sounds will be played with a low volume"), and WKWebView makes it worse: when
+`getUserMedia` starts, WebKit reconfigures the session itself, flipping the mode
+toward voice chat, which engages **Voice Processing IO**. Output ducks. No JS API
+can undo it.
+
+Note what this rules out: removing `.mixWithOthers` — the prior suspect — would
+NOT have fixed this (multiple reports confirm `.defaultToSpeaker` +
+`overrideOutputAudioPort(.speaker)` still cannot reach 100% on this category).
+It would only have made Intonare pause everyone's Spotify for nothing.
+
+### The design
+Can the ducking be bypassed outright? Almost. The literal off-switch exists —
+`kAUVoiceIOProperty_BypassVoiceProcessing` — but it lives on the VoiceProcessingIO
+audio unit, and on iOS that unit belongs to **WKWebView's internal audio engine**,
+which no API lets us touch. What IS available, per the Apple dev forums thread on
+VPIO volume (721535): once VPIO has ducked the output, **re-calling `setCategory`
+or `overrideOutputAudioPort(.speaker)` restores the level** — and any audio source
+started afterwards may duck again and need another nudge. So:
+
+- **Launch / mic off: `.playback`, mode `.default`.** No mic claim, no voice
+  processing anywhere near the output, full volume. This is the app's resting
+  state. (Previously `playAndRecord` was set at launch, which parked the whole app
+  in the attenuated state before the mic was ever touched.)
+- **Mic starts: `assertAudioMode()`** — `playAndRecord`, `.defaultToSpeaker`, mode
+  `.default`, then `overrideOutputAudioPort(.speaker)` — the snap-back call.
+- **New audio source while mic is live** (reference tone, drone, metronome):
+  throttled re-nudge, max one per second, gated on `isListening`.
+- **Mic stops: `releaseAudioMode()`** — back to `.playback`. Full volume returns.
+
+The residual truth: while actually recording, iOS never grants quite the full
+playback level on this category. Everything outside mic-time is now full volume,
+and mic-time is as loud as the platform allows.
+
+### Added
+- **`IntonarePlugin.swift`** — Intonare's first real iOS Capacitor plugin. Two
+  methods, `assertAudioMode()` / `releaseAudioMode()`, both one-shot,
+  JS-triggered, **zero observers** (the observer-based ancestor of this idea
+  looped `setCategory` against its own route-change notification and hung the
+  app; the design constraint is written into the file header). Failure resolves
+  `ok:false` rather than rejecting — a volume nudge must never break mic setup.
+- **JS call site** right after `micStream` is set, iOS-gated, wrapped so no
+  failure can propagate. Silently a no-op on Android/web/older builds.
+- **Registration via `bridge.registerPluginInstance()`** from an
+  `IntonareViewController: CAPBridgeViewController` subclass. Capacitor 8's
+  config-based discovery (`packageClassList`) does not see local app plugins
+  (capacitor#7409); instance registration from `capacitorDidLoad()` is the
+  documented route. `patch_ios_appdelegate.py` now appends the plugin + subclass
+  to AppDelegate.swift (same no-pbxproj-surgery reasoning as ever) and repoints
+  `Main.storyboard` at the subclass, with hard verification and a printout of the
+  storyboard if the anchor is missing. Dry-run tested against a faithful mock of
+  the Capacitor 8 template, including idempotency on re-run.
+- Panel now shows `audioMode: asserted / assert failed / plugin absent / not
+  attempted`.
+
+### Also fixed: haptics — and no Swift was needed
+The plan was to add a haptic method to the new plugin. Reading the code first
+made that unnecessary. The haptic functions call `window.Haptics` — the official
+`@capacitor/haptics` plugin, which is installed, has an iOS implementation, and
+is exposed by `main.iife.js`. The chain was correct end to end. Except:
+
+    if (/^https?:/.test(location.protocol)) { ...load main.iife.js... }
+
+**The loader's protocol guard only allowed http/https.** On iOS the protocol is
+`capacitor:`, so the regex failed, `main.iife.js` never loaded, `window.Haptics`
+never existed — and since every haptic function is try/catch'd by design, there
+was no error anywhere. The buttons just didn't buzz. (The guard exists so nothing
+is fetched when the raw HTML is opened from `file://` on desktop; it accidentally
+excluded iOS.)
+
+Fix: allow `capacitor:` in the guard. One regex. The panel now also reports
+`Haptics bridge present/absent`.
+
+### Why the plugin still matters
+`IntonarePlugin` is the registration scaffolding the splash sound (and any future
+native work) was waiting for. Adding a method to a registered plugin is trivial;
+registering the first one was the wall.
+
 ## v0.81.7 — XHR fallback; the fetch scheme problem, actually fixed this time
 
 Two prior attempts at the sample-loading bug did not survive contact:

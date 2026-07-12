@@ -32,6 +32,21 @@ registered there to compile, and editing pbxproj with a script is exactly the
 kind of thing that breaks silently six months later. AppDelegate.swift is
 already in the project, so appending to it needs no pbxproj surgery.
 
+THE PLUGIN AND VIEWCONTROLLER (added later)
+-------------------------------------------
+IntonarePlugin.swift provides assertAudioMode(), callable from JS, which
+re-sets the session category with mode .default after WKWebView's getUserMedia
+has flipped the mode toward voice chat (which engages Voice Processing IO and
+ducks output — the "iOS is quieter than Android" bug).
+
+Capacitor 8's config-based plugin discovery (packageClassList) does not pick up
+local app plugins (capacitor#7409). The supported route for in-app custom code
+is bridge.registerPluginInstance() from a CAPBridgeViewController subclass's
+capacitorDidLoad() override. So this patcher also:
+  - appends the plugin class and an IntonareViewController subclass to
+    AppDelegate.swift (same no-pbxproj reasoning as above), and
+  - points Main.storyboard's view controller at IntonareViewController.
+
 Run from the repo root, after `npx cap add ios` and before `npx cap sync ios`.
 """
 
@@ -39,9 +54,25 @@ import re
 import sys
 import os
 
-APPDELEGATE = "ios/App/App/AppDelegate.swift"
-AUDIO_SWIFT = "native_src/ios/IntonareAudioSession.swift"
-MARKER = "IntonareAudioSession.configure()"
+APPDELEGATE  = "ios/App/App/AppDelegate.swift"
+AUDIO_SWIFT  = "native_src/ios/IntonareAudioSession.swift"
+PLUGIN_SWIFT = "native_src/ios/IntonarePlugin.swift"
+STORYBOARD   = "ios/App/App/Base.lproj/Main.storyboard"
+MARKER       = "IntonareAudioSession.configure()"
+VC_MARKER    = "class IntonareViewController"
+
+VIEWCONTROLLER = """
+// Registers Intonare's in-app plugin. Capacitor 8's config-based discovery
+// (packageClassList) does not see local plugins, so instance registration from
+// capacitorDidLoad() is the supported route. Main.storyboard is pointed at this
+// class by patch_ios_appdelegate.py.
+class IntonareViewController: CAPBridgeViewController {
+    override open func capacitorDidLoad() {
+        bridge?.registerPluginInstance(IntonarePlugin())
+        print("[Intonare] IntonarePlugin registered.")
+    }
+}
+"""
 
 
 def fail(msg):
@@ -121,16 +152,81 @@ def main():
     print(src)
     print("-------------------------------------")
 
-    # 4. Verify. A silent no-op here would ship a quiet app with a green build.
+    # 4. Append the plugin and the ViewController that registers it.
+    if not os.path.isfile(PLUGIN_SWIFT):
+        fail(f"{PLUGIN_SWIFT} not found.")
+
+    plugin = open(PLUGIN_SWIFT).read()
+    plugin = re.sub(r'^import\s+\w+\s*$', '', plugin, flags=re.M)
+
+    src = open(APPDELEGATE).read()
+
+    # The plugin needs Capacitor; AppDelegate does not import it by default.
+    if not re.search(r'^import Capacitor\s*$', src, re.M):
+        src, n = re.subn(
+            r'^(import UIKit\s*)$',
+            r'\1\nimport Capacitor',
+            src,
+            count=1,
+            flags=re.M,
+        )
+        if n == 0:
+            fail("could not find `import UIKit` to anchor the Capacitor import")
+
+    src = src.rstrip() + "\n\n" + plugin.strip() + "\n\n" + VIEWCONTROLLER.strip() + "\n"
+    open(APPDELEGATE, 'w').write(src)
+
+    # 5. Point the storyboard at IntonareViewController. The generated
+    #    Main.storyboard declares CAPBridgeViewController with a customModule
+    #    of Capacitor; ours lives in the app module, so the module attributes
+    #    must go or the class will not be found at runtime.
+    if not os.path.isfile(STORYBOARD):
+        fail(f"{STORYBOARD} not found. cap add ios may have changed its layout.")
+
+    sb = open(STORYBOARD).read()
+    sb_before = sb
+
+    sb = sb.replace(
+        'customClass="CAPBridgeViewController" customModule="Capacitor" customModuleProvider="target"',
+        'customClass="IntonareViewController"',
+    )
+    # Some Capacitor versions emit the attributes without customModuleProvider.
+    sb = sb.replace(
+        'customClass="CAPBridgeViewController" customModule="Capacitor"',
+        'customClass="IntonareViewController"',
+    )
+    sb = sb.replace(
+        'customClass="CAPBridgeViewController"',
+        'customClass="IntonareViewController"',
+    )
+
+    if sb == sb_before:
+        print("--- Main.storyboard as generated ---")
+        print(sb)
+        fail("could not find CAPBridgeViewController in Main.storyboard; "
+             "the storyboard printed above shows what cap add ios wrote.")
+
+    open(STORYBOARD, 'w').write(sb)
+
+    # 6. Verify. A silent no-op here would ship a green build with the bug intact.
     check = open(APPDELEGATE).read()
     if MARKER not in check:
         fail("configure() call was not injected")
     if 'import AVFoundation' not in check:
         fail("AVFoundation import was not added")
+    if 'import Capacitor' not in check:
+        fail("Capacitor import was not added")
     if 'enum IntonareAudioSession' not in check:
         fail("IntonareAudioSession was not appended")
+    if 'class IntonarePlugin' not in check:
+        fail("IntonarePlugin was not appended")
+    if VC_MARKER not in check:
+        fail("IntonareViewController was not appended")
+    sb_check = open(STORYBOARD).read()
+    if 'IntonareViewController' not in sb_check:
+        fail("storyboard does not reference IntonareViewController")
 
-    print("OK: AppDelegate patched.")
+    print("OK: AppDelegate + plugin + ViewController patched; storyboard repointed.")
 
 
 if __name__ == "__main__":

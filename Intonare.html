@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.7 -->
+<!-- INTONARE_VERSION: 0.81.9 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -22515,7 +22515,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.7';
+const INTONARE_VERSION = '0.81.9';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22638,6 +22638,48 @@ function getAudio() {
 
 let audioCtx = null;      // alias to shared context while mic is active
 let analyser = null, micStream = null, micSource = null, animFrame = null;
+
+// ── iOS audio session nudges ─────────────────────────────────────────────────
+// See the comment at the mic-start call site for the full story. Short version:
+// WebKit's getUserMedia engages Voice Processing IO which ducks output; a native
+// re-assert of category+mode+port snaps the level back; sources started later
+// can duck again and need another (throttled) nudge; and when the mic is fully
+// off we drop to plain .playback, which has no attenuation at all.
+let _iosPlugin = null, _iosNudgeLast = 0;
+function _iosPluginHandle() {
+  if (_iosPlugin) return _iosPlugin;
+  try {
+    if (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios') {
+      _iosPlugin = window.Capacitor.registerPlugin('IntonareIOS');
+    }
+  } catch (e) {}
+  return _iosPlugin;
+}
+function _iosAudioNudge(why) {
+  const p = _iosPluginHandle();
+  if (!p) return;
+  // Throttle: starting a drone triggers a nudge; so would every metronome tick
+  // if someone wired this carelessly later. One nudge per second is plenty.
+  const now = Date.now();
+  if (now - _iosNudgeLast < 1000) return;
+  _iosNudgeLast = now;
+  try {
+    p.assertAudioMode().then(r => {
+      if (window._sampleDiag) window._sampleDiag.audioMode = ((r && r.ok) ? 'asserted' : 'assert failed') + ' (' + why + ')';
+    }).catch(() => {
+      if (window._sampleDiag) window._sampleDiag.audioMode = 'plugin absent';
+    });
+  } catch (e) {}
+}
+function _iosAudioRelease() {
+  const p = _iosPluginHandle();
+  if (!p) return;
+  try {
+    p.releaseAudioMode().then(r => {
+      if (window._sampleDiag) window._sampleDiag.audioMode = (r && r.ok) ? 'released (playback)' : 'release failed';
+    }).catch(() => {});
+  } catch (e) {}
+}
 // ── Native mic bridge (Phase 1 integration) ──────────────────────────────────
 // When _nativeMicActive is true, processAudio reads audio from _nativeRing
 // (filled by the native plugin's micFrame events) instead of the WebView
@@ -25808,6 +25850,11 @@ function _chartPlay(toneId, freq, ctx, dest, vol, dur, when) {
 }
 
 function playRef(key, freq, noteName) {
+  // iOS: an audio source started while the mic session is live can be ducked by
+  // Voice Processing IO even after the mic-start nudge; each new source may need
+  // its own snap-back ("repeat step 9", Apple forums 721535). Throttled, no-op
+  // when the mic is off or the plugin is absent.
+  if (typeof isListening !== 'undefined' && isListening) _iosAudioNudge('playRef');
   const ctx = ensureRefCtx();
   const now = ctx.currentTime;
   const isDrone = droneMode;
@@ -27152,6 +27199,17 @@ async function startMic(_opts) {
     }
     if (!stream) throw new Error('No microphone stream');
     micStream = stream;
+
+    // iOS: when getUserMedia starts, WebKit reconfigures the audio session and
+    // engages Voice Processing IO, which attenuates all output — the "iOS is
+    // quieter than Android" bug. _iosAudioNudge() re-sets the category with mode
+    // .default AFTER WebKit's change, and overrides the output port, which is
+    // the call that snaps the LEVEL back once VPIO has ducked it (Apple dev
+    // forums thread 721535). One-shot native calls, no observers (an
+    // observer-based version once looped setCategory against its own
+    // route-change notification and hung the app; never again). All of it is
+    // silently a no-op anywhere the plugin is absent: Android, web, old builds.
+    _iosAudioNudge('mic start');
     // Read back what we ACTUALLY got — phones often ignore the constraints. If
     // auto-gain ended up stuck on, the volume-based gates are unreliable, so we
     // note it and lean on the clarity gate instead of the loudness gate.
@@ -27206,6 +27264,7 @@ function micReviveLoop() {
 }
 function stopMic() {
   isListening = false;
+  _iosAudioRelease();   // iOS: back to plain .playback — full volume, no mic claim
   if (_nativeMicActive) _nativeMicStop();
   pitchHistStop();
   if (animFrame) cancelAnimationFrame(animFrame);
@@ -28067,6 +28126,8 @@ function toggleMetro() {
 }
 
 async function startMetro() {
+  // iOS: see playRef — new audio source during a live mic session may re-duck.
+  if (typeof isListening !== 'undefined' && isListening) _iosAudioNudge('metro');
   const ctx = ensureMetroCtx();
   if (ctx.state === 'suspended') {
     await ctx.resume();
@@ -71051,6 +71112,8 @@ function _openAudioDiag() {
     L.push('— Native —');
     L.push('  IntonareMic     ' + (window.IntonareMic ? 'present' : 'absent'));
     L.push('  IntonareNative  ' + (window.IntonareNative ? 'present' : 'absent'));
+    L.push('  audioMode       ' + ((window._sampleDiag && window._sampleDiag.audioMode) || 'not attempted'));
+    L.push('  Haptics bridge  ' + (window.Haptics ? 'present' : 'absent'));
 
     pre.textContent = L.join('\n');
   }
@@ -93573,7 +93636,15 @@ window.sgExit = function() {
 })();
 
 </script>
-<script>if (/^https?:/.test(location.protocol)) { const s = document.createElement('script'); s.src = './main.iife.js'; document.currentScript.replaceWith(s); }</script>
+<script>
+// Load the Capacitor bridge (window.Haptics etc, built from main.js by Vite).
+// The protocol guard exists so nothing is fetched when the raw HTML is opened
+// from file:// on a desktop. It originally allowed only http/https — which
+// silently excluded iOS, where Capacitor serves from capacitor://localhost.
+// Result: window.Haptics was never defined on iOS and every haptic call ate its
+// exception. All haptic functions are try/catch'd BY DESIGN, so there was no
+// error anywhere; the buttons just didn't buzz.
+if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createElement('script'); s.src = './main.iife.js'; document.currentScript.replaceWith(s); }</script>
 
   <!-- ═══════════════ QUICK ACCESS SHEET ═══════════════ -->
   <div class="fav-overlay" id="favOverlay" onclick="closeFavSheet()"></div>
