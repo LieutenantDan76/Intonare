@@ -16,8 +16,8 @@
 //  session itself, typically flipping the MODE toward voice chat, which engages
 //  Voice Processing IO. Output ducks. There is no JS API to undo it.
 //
-//  assertAudioMode() re-sets the category with mode .default AFTER the WebView
-//  has done its thing. Called from JS, once, when mic setup completes.
+//  setAudioMode(micLive:) re-sets the category AFTER the WebView has done its
+//  thing. JS reports what the app IS; native decides what the session should BE.
 //
 //  DESIGN CONSTRAINTS — LEARNED THE HARD WAY
 //  -----------------------------------------
@@ -52,8 +52,7 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "IntonarePlugin"
     public let jsName = "IntonareIOS"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "assertAudioMode", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "releaseAudioMode", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setAudioMode", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "playSplashSound", returnType: CAPPluginReturnPromise)
     ]
 
@@ -62,39 +61,84 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
     // a classic, and a silent one.
     private var splashPlayer: AVAudioPlayer?
 
-    // Mic is (or is about to be) live: playAndRecord with the least-attenuating
-    // mode, then snap the output level back.
+    // ── The audio session, single owner ──────────────────────────────────────
     //
-    // The snap-back matters. Per the Apple Developer Forums thread on Voice
-    // Processing volume (thread 721535): once VPIO has ducked the output,
-    // re-calling setCategory or overrideOutputAudioPort(.speaker) RESTORES the
-    // volume — and any audio source started after that may duck again and need
-    // another nudge. So JS calls this not only at mic start, but (throttled)
-    // after starting a drone / reference tone / metronome while the mic is live.
-    @objc func assertAudioMode(_ call: CAPPluginCall) {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(
-                .playAndRecord,
-                mode: .default,
-                options: [
-                    .defaultToSpeaker,
-                    .allowBluetoothA2DP,
-                    .mixWithOthers
-                ]
-            )
-            // The snap-back. Redundant with .defaultToSpeaker for ROUTING, but it
-            // is the call the forum thread confirms restores LEVEL after VPIO has
-            // ducked it. Best-effort: failure is not worth reporting.
-            try? session.overrideOutputAudioPort(.speaker)
-            // Same reasoning as releaseAudioMode: a configured session that is not
-            // active has not actually taken effect.
-            try? session.setActive(true)
-            print("[Intonare] assertAudioMode: playAndRecord/.default + speaker, active")
-            call.resolve(["ok": true])
-        } catch {
-            print("[Intonare] assertAudioMode failed: \(error)")
-            call.resolve(["ok": false, "error": String(describing: error)])
+    // THE BUG THIS REPLACES
+    // There used to be two methods — assertAudioMode() and releaseAudioMode() —
+    // called from three places: first audio, mic start, mic stop. Each is an async
+    // bridge round-trip, and nothing sequenced them. Start and stop the metronome
+    // quickly and you would get:
+    //
+    //     call A fires  → sets .playback
+    //     call B fires  → sets .playAndRecord   (before A has landed)
+    //     A resolves    → .playback wins, wrongly, because it finished last
+    //     throttle      → blocks the corrective call
+    //     result        → stuck quiet until something else happened to nudge it
+    //
+    // Symptom: "sometimes it works, sometimes it takes a second, sometimes I have
+    // to hit the mic." A race, and an unreproducible one.
+    //
+    // THE FIX
+    // One method. JS says what the app IS ("mic live" or not); native decides what
+    // the session should therefore BE. All work runs on a serial queue, so two
+    // calls can never interleave. And the last-applied state is remembered, so a
+    // redundant call — which rapid start/stop produces constantly — costs nothing
+    // and touches no hardware.
+    //
+    // Ordering is now deterministic by construction, not by timing.
+
+    private static let sessionQueue = DispatchQueue(label: "com.lieutenantdan.intonare.audiosession")
+    private static var lastMicLive: Bool?     // nil = nothing applied yet
+
+    @objc func setAudioMode(_ call: CAPPluginCall) {
+        let micLive = call.getBool("micLive") ?? false
+
+        IntonarePlugin.sessionQueue.async {
+            // Idempotent. Rapid start/stop hits this constantly; make it free.
+            if IntonarePlugin.lastMicLive == micLive {
+                call.resolve(["ok": true, "changed": false,
+                              "mode": micLive ? "playAndRecord" : "playback"])
+                return
+            }
+
+            let session = AVAudioSession.sharedInstance()
+            do {
+                if micLive {
+                    // iOS requires playAndRecord to record. It is inherently
+                    // quieter — output runs through a voice-processing path built
+                    // for phone calls. mode .default keeps that as light as it
+                    // goes; the port override snaps the level back after WebKit's
+                    // getUserMedia has engaged Voice Processing IO.
+                    try session.setCategory(
+                        .playAndRecord,
+                        mode: .default,
+                        options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers]
+                    )
+                    try session.setActive(true)
+                    try? session.overrideOutputAudioPort(.speaker)
+                } else {
+                    // No mic: plain playback. No voice processing anywhere near the
+                    // output, full volume. This is the app's normal state, and it
+                    // is where it should sit whenever the mic is not in use.
+                    try session.setCategory(
+                        .playback,
+                        mode: .default,
+                        options: [.mixWithOthers]
+                    )
+                    try session.setActive(true)
+                }
+
+                IntonarePlugin.lastMicLive = micLive
+                print("[Intonare] session → \(micLive ? "playAndRecord" : "playback")")
+                call.resolve(["ok": true, "changed": true,
+                              "mode": micLive ? "playAndRecord" : "playback"])
+            } catch {
+                // A failure here means the app is quieter than ideal, not broken.
+                // Do not poison lastMicLive: leaving it unchanged means the next
+                // call will retry rather than assume this state was reached.
+                print("[Intonare] session change failed: \(error)")
+                call.resolve(["ok": false, "error": String(describing: error)])
+            }
         }
     }
 
@@ -141,38 +185,4 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
-    // Mic fully stopped: drop back to plain playback. No mic claim, no voice
-    // processing chain anywhere near the output, full volume. This is the app's
-    // resting state; the launch-time AppDelegate configuration matches it.
-    @objc func releaseAudioMode(_ call: CAPPluginCall) {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(
-                .playback,
-                mode: .default,
-                options: [
-                    .mixWithOthers
-                ]
-            )
-            // ACTIVATE. This is the difference between configuring a session and
-            // having one.
-            //
-            // iOS does not apply a category until the session is active, and it
-            // does not activate one until something needs audio. WKWebView gets
-            // there first and activates with ITS defaults — which is why the first
-            // sounds of a session came out quiet even though .playback had been
-            // set at launch, and only corrected once the mic was touched.
-            //
-            // This is NOT the launch-time setActive(true) that was removed
-            // earlier. That one claimed the audio hardware from app open, before
-            // any user action, for a session nobody was using. This runs on demand
-            // — first audio, or mic stop — after the user has already gestured.
-            try? session.setActive(true)
-            print("[Intonare] releaseAudioMode: playback/.default, session active")
-            call.resolve(["ok": true])
-        } catch {
-            print("[Intonare] releaseAudioMode failed: \(error)")
-            call.resolve(["ok": false, "error": String(describing: error)])
-        }
-    }
 }

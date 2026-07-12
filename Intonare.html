@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.12 -->
+<!-- INTONARE_VERSION: 0.81.13 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16879,9 +16879,39 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     }
 
     // secondary phase for the organic rolling layer
+    let _lastFrameT = 0;
     function loop() {
       if (!running) return;
-      gatherEl = (performance.now() - _waveT0) / 1000;
+      const _now = performance.now();
+      gatherEl = (_now - _waveT0) / 1000;
+
+      // Frame-rate normalisation.
+      //
+      // Everything driven by gatherEl (the gather, the easing curves, the timing
+      // of every beat) is already time-based and correct on any device. But the
+      // wave's HORIZONTAL travel and the colour/pulse eases below advanced by a
+      // FIXED AMOUNT PER FRAME:
+      //
+      //     wavePhase += _spd;
+      //
+      // which makes their speed directly proportional to frame rate. Every
+      // constant here was tuned by eye on Android; on a device rendering at a
+      // different rate the wave covers less horizontal distance per second and
+      // the whole thing reads as sluggish without ever dropping a frame. Which is
+      // exactly how it looked on iOS: smooth, but with the travel drained out of
+      // it.
+      //
+      // dt60 is "how many 60fps frames did this frame take". At a true 60fps it
+      // is 1.0 and every constant below behaves EXACTLY as tuned. At 30fps it is
+      // 2.0 and each frame advances twice as far, so the motion covers the same
+      // ground per second.
+      //
+      // Clamped to 3 frames: a long stall (tab backgrounded, GC pause) would
+      // otherwise produce one enormous jump and visibly tear the wave.
+      const _dtMs = _lastFrameT ? (_now - _lastFrameT) : 16.667;
+      _lastFrameT = _now;
+      const dt60 = Math.min(3, _dtMs / 16.667);
+
       const rgb = paletteRGB(colorT);
       // Travelling-wave phase advance — fast during gather/early wave, easing toward
       // near-still as the line settles (the "slows to a line" feel). Speed wander
@@ -16904,12 +16934,15 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // base decay relaxed further (1.4 → 2.2 time-constant) so the travelling wave
       // doesn't sag in the middle — it sustains visible motion deep into the phase.
       const _spd = (0.03 + 0.20 * Math.exp(-Math.max(0, gatherEl - T_GATHER) / 2.2)) * speedEase;
-      wavePhase += _spd;
-      // Ease colour toward its scheduled target
-      colorT     += (targetColorT - colorT)     * 0.012;
-      bgPulse    += 0.012;
-      logoPulse  += 0.008;
-      logoGlow   += (targetLogoGlow - logoGlow) * 0.025;
+      wavePhase += _spd * dt60;
+      // Ease colour toward its scheduled target. These were all per-frame too, so
+      // they inherit the same normalisation — otherwise the colour and glow would
+      // settle at different rates on different devices, and the palette would
+      // arrive out of step with the motion it is supposed to be lit by.
+      colorT     += (targetColorT - colorT)     * 0.012 * dt60;
+      bgPulse    += 0.012 * dt60;
+      logoPulse  += 0.008 * dt60;
+      logoGlow   += (targetLogoGlow - logoGlow) * 0.025 * dt60;
       // Animate logo gradient in sync with palette
       if (logo && logoGlow > 0.01) {
         const lrgb  = paletteRGB(colorT);
@@ -16987,6 +17020,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     targetColorT = 0.18;
     running      = true;
     _waveT0      = performance.now();  // start the gather clock
+    _lastFrameT  = 0;                  // and the frame clock; a stale timestamp from
+                                       // a previous run would give frame 1 a huge dt
     // Fire the native launch sound at the SAME instant the animation clock starts,
     // so the swell/ting stay locked to the visual regardless of how long the
     // viewport took to stabilise. Native playback isn't gesture-gated, so this keeps
@@ -22521,7 +22556,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.12';
+const INTONARE_VERSION = '0.81.13';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22652,8 +22687,7 @@ function getAudio() {
     // declarations, and getAudio() only ever RUNS on a user gesture, long after
     // parse.
     try {
-      if (typeof isListening !== 'undefined' && isListening) _iosAudioNudge('first audio, mic live');
-      else _iosAudioRelease();
+      _iosSyncAudioMode('first audio');
     } catch (e) {}
   }
   if (_sharedAudio.state === 'suspended') {
@@ -22666,13 +22700,23 @@ function getAudio() {
 let audioCtx = null;      // alias to shared context while mic is active
 let analyser = null, micStream = null, micSource = null, animFrame = null;
 
-// ── iOS audio session nudges ─────────────────────────────────────────────────
-// See the comment at the mic-start call site for the full story. Short version:
-// WebKit's getUserMedia engages Voice Processing IO which ducks output; a native
-// re-assert of category+mode+port snaps the level back; sources started later
-// can duck again and need another (throttled) nudge; and when the mic is fully
-// off we drop to plain .playback, which has no attenuation at all.
-let _iosPlugin = null, _iosNudgeLast = 0;
+// ── iOS audio session ────────────────────────────────────────────────────────
+// ONE caller, driven by state, not by events.
+//
+// This used to be two functions (nudge / release) called from three places, each
+// an async bridge round-trip, with a throttle on top. Rapid start/stop of the
+// metronome would interleave them: a .playback call and a .playAndRecord call in
+// flight at once, and whichever resolved LAST won — sometimes the wrong one. The
+// throttle then blocked the corrective call. Symptom: "sometimes it works,
+// sometimes it takes a second, sometimes I have to hit the mic."
+//
+// Now: JS reports what the app IS (is the mic live?), native decides what the
+// session should BE, and native serialises the work on its own queue. Calling this
+// twice with the same state is free — native remembers what it last applied and
+// returns immediately. So rapid start/stop produces no session work at all.
+//
+// No throttle. No ordering luck. No-op wherever the plugin is absent.
+let _iosPlugin = null;
 function _iosPluginHandle() {
   if (_iosPlugin) return _iosPlugin;
   try {
@@ -22682,45 +22726,32 @@ function _iosPluginHandle() {
   } catch (e) {}
   return _iosPlugin;
 }
-function _iosAudioNudge(why) {
+
+// Call after ANY change to whether the mic is live, and before starting audio.
+// Cheap and idempotent; call it freely.
+function _iosSyncAudioMode(why) {
   const p = _iosPluginHandle();
   if (!p) return;
-  // Throttle: starting a drone triggers a nudge; so would every metronome tick
-  // if someone wired this carelessly later. One nudge per second is plenty.
-  const now = Date.now();
-  if (now - _iosNudgeLast < 1000) return;
-  _iosNudgeLast = now;
+  const micLive = (typeof isListening !== 'undefined' && !!isListening);
   try {
-    p.assertAudioMode().then(r => {
-      if (window._sampleDiag) window._sampleDiag.audioMode = ((r && r.ok) ? 'asserted' : 'assert failed') + ' (' + why + ')';
+    p.setAudioMode({ micLive }).then(r => {
+      if (window._sampleDiag) {
+        window._sampleDiag.audioMode =
+          (r && r.ok ? (r.mode || '?') : 'failed') +
+          (r && r.changed === false ? ' (cached)' : '') +
+          ' · ' + why;
+      }
     }).catch(() => {
       if (window._sampleDiag) window._sampleDiag.audioMode = 'plugin absent';
     });
   } catch (e) {}
 }
-function _iosAudioRelease() {
-  const p = _iosPluginHandle();
-  if (!p) return;
-  try {
-    p.releaseAudioMode().then(r => {
-      if (window._sampleDiag) window._sampleDiag.audioMode = (r && r.ok) ? 'released (playback)' : 'release failed';
-    }).catch(() => {});
-  } catch (e) {}
-}
-// ── Native mic bridge (Phase 1 integration) ──────────────────────────────────
-// When _nativeMicActive is true, processAudio reads audio from _nativeRing
-// (filled by the native plugin's micFrame events) instead of the WebView
-// analyser. Opt-in per surface via startMic({ native:true }); defaults off so
-// every not-yet-migrated surface keeps the proven WebView path untouched.
-// Median pre-filter ring for pitch (see processAudio). Rejects single-frame
-// outliers that an EMA can only dilute, never remove.
-// 3, not 5. The window is in FRAMES, and native detection now runs at the true frame
-// rate (~21.6 Hz), not rAF's 60 Hz — so 5 frames is a 231 ms window (laggy), while 3
-// is 139 ms and still outvotes any single bad reading, which is the whole job.
+
 const _PITCH_HIST_N = 3;
 const _pitchHist = new Float32Array(_PITCH_HIST_N);
 const _pitchSort = new Float32Array(_PITCH_HIST_N);
 let _pitchHistIdx = 0;
+
 
 // Re-solve an alpha tuned at 60 Hz for the rate detection is ACTUALLY running at, so
 // the smoothing feel is constant across the WebView (60 Hz) and native (~21.6 Hz)
@@ -26012,7 +26043,7 @@ function playRef(key, freq, noteName) {
   // Voice Processing IO even after the mic-start nudge; each new source may need
   // its own snap-back ("repeat step 9", Apple forums 721535). Throttled, no-op
   // when the mic is off or the plugin is absent.
-  if (typeof isListening !== 'undefined' && isListening) _iosAudioNudge('playRef');
+  _iosSyncAudioMode('playRef');
   const ctx = ensureRefCtx();
   const now = ctx.currentTime;
   const isDrone = droneMode;
@@ -27360,14 +27391,17 @@ async function startMic(_opts) {
 
     // iOS: when getUserMedia starts, WebKit reconfigures the audio session and
     // engages Voice Processing IO, which attenuates all output — the "iOS is
-    // quieter than Android" bug. _iosAudioNudge() re-sets the category with mode
+    // quieter than Android" bug. _iosSyncAudioMode() re-sets the category with mode
     // .default AFTER WebKit's change, and overrides the output port, which is
     // the call that snaps the LEVEL back once VPIO has ducked it (Apple dev
     // forums thread 721535). One-shot native calls, no observers (an
     // observer-based version once looped setCategory against its own
     // route-change notification and hung the app; never again). All of it is
     // silently a no-op anywhere the plugin is absent: Android, web, old builds.
-    _iosAudioNudge('mic start');
+    //
+    // The call itself is made AFTER `isListening = true` below, not here — the
+    // function reads that flag to decide the session state, so calling it now
+    // would ask for .playback at the exact moment the mic is coming up.
     // Read back what we ACTUALLY got — phones often ignore the constraints. If
     // auto-gain ended up stuck on, the volume-based gates are unreliable, so we
     // note it and lean on the clarity gate instead of the loudness gate.
@@ -27399,6 +27433,8 @@ async function startMic(_opts) {
       micSource.connect(analyser);
     }
     isListening = true;
+    _iosSyncAudioMode('mic start');   // now that the flag is true, this resolves
+                                      // to .playAndRecord + speaker snap-back
     // 'listening' already added in toggleMic for immediate feedback
     const hvw = document.getElementById('headerVolWrap');
     if (hvw) hvw.classList.add('active');
@@ -27422,7 +27458,8 @@ function micReviveLoop() {
 }
 function stopMic() {
   isListening = false;
-  _iosAudioRelease();   // iOS: back to plain .playback — full volume, no mic claim
+  _iosSyncAudioMode('mic stop');   // isListening is already false above, so this
+                                  // resolves to .playback: full volume, no mic claim
   if (_nativeMicActive) _nativeMicStop();
   pitchHistStop();
   if (animFrame) cancelAnimationFrame(animFrame);
@@ -28285,7 +28322,7 @@ function toggleMetro() {
 
 async function startMetro() {
   // iOS: see playRef — new audio source during a live mic session may re-duck.
-  if (typeof isListening !== 'undefined' && isListening) _iosAudioNudge('metro');
+  _iosSyncAudioMode('metro');
   const ctx = ensureMetroCtx();
   if (ctx.state === 'suspended') {
     await ctx.resume();

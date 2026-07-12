@@ -16,6 +16,75 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.13 — the volume race, and the splash was frame-rate coupled
+
+### The splash animation had less travel on iOS
+Not lag — the frames were smooth. The wave simply covered less horizontal ground.
+
+Everything driven by `gatherEl` (the gather, the easing curves, the timing of every
+beat) reads `performance.now()` and was already correct on any device. But the
+wave's horizontal travel advanced by a **fixed amount per frame**:
+
+    wavePhase += _spd;
+
+which makes its speed directly proportional to frame rate. Every constant was tuned
+by eye on Android; on a device rendering at a different rate the wave covers less
+distance per second and the whole thing reads as sluggish **without ever dropping a
+frame**. Which is exactly what it looked like. The colour, glow and pulse eases had
+the same bug, so on iOS the palette was also arriving out of step with the motion it
+is meant to be lighting.
+
+- Now normalised by `dt60` — how many 60 fps frames this frame actually took. **At a
+  true 60 fps `dt60` is 1.0 and every constant behaves exactly as tuned**, so Android
+  is unchanged; at 30 fps it is 2.0 and each frame advances twice as far, covering
+  the same ground per second.
+- Clamped to 3 frames, so a stall (backgrounded tab, GC pause) cannot produce one
+  enormous jump and tear the wave.
+- The frame clock resets when the animation starts, or a stale timestamp from a
+  previous run would hand frame 1 an enormous `dt`.
+
+### The volume race
+
+"Sometimes it works, sometimes it takes a second, sometimes I have to hit the mic,
+and start/stopping the metronome sometimes gets stuck." Unreproducible, because it
+was a **race**.
+
+Three call sites (first audio, mic start, mic stop) each fired an async bridge call
+that set the audio session, with a one-second throttle on top and no sequencing
+between them. Start and stop the metronome quickly and:
+
+    call A fires  → sets .playback
+    call B fires  → sets .playAndRecord   (before A has landed)
+    A resolves    → .playback wins, wrongly, because it finished last
+    throttle      → blocks the corrective call
+    result        → stuck quiet until something else happened to nudge it
+
+### Fixed
+- **One method, one owner.** `assertAudioMode()` / `releaseAudioMode()` are gone,
+  replaced by `setAudioMode(micLive:)`. JS reports what the app **is**; native
+  decides what the session should therefore **be**.
+- **Serialised natively.** All session work runs on a dedicated serial
+  `DispatchQueue`, so two calls cannot interleave. Ordering is deterministic by
+  construction rather than by timing.
+- **Idempotent.** Native remembers the last state it applied; a redundant call —
+  which rapid start/stop produces constantly — returns immediately and touches no
+  hardware. **The throttle is gone**, because it is no longer needed: repeat calls
+  are already free.
+- On failure the remembered state is deliberately *not* updated, so the next call
+  retries rather than assuming a state that was never reached.
+- All five JS call sites now use the one function, with no guards (the call is free
+  when nothing changed). The mic-start call was also **moved to after
+  `isListening = true`** — it had been firing while the flag was still false, which
+  asked for `.playback` at the exact moment the mic was coming up.
+
+### Caught by the sentinel, not by me
+The JS rework accidentally deleted `_PITCH_HIST_N`, `_pitchHist`, `_pitchSort` and
+`_pitchHistIdx` — a slice-based edit whose end index overshot into the pitch-median
+declarations sitting just past it. `node --check` passed cleanly, because a missing
+`const` is a runtime `ReferenceError`, not a syntax error; the tuner would have
+thrown on every detected pitch. The regression sentinel flagged the drifted pin.
+Restored, verified, and a good argument for the ship gate existing.
+
 ## v0.81.12 — Italian permission prompt, and the launch sound on iOS
 
 ### The iOS launch sound
