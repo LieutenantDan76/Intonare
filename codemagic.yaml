@@ -35,14 +35,48 @@ workflows:
 
       - name: Build www from single-file source
         script: |
+          set -e
+
+          # Mirrors go.bat steps 3, 4a and 4g. Any change to how go.bat
+          # assembles the web root must be reflected here, or the iOS build
+          # silently ships a different app to the Android one.
+
           rm -rf www
           mkdir -p www
+
+          # go.bat [3] - the single-file app becomes the web root index.
           cp Intonare.html www/index.html
+
+          # go.bat [4a] - Vite compiles main.js into www/main.iife.js, the
+          # Capacitor haptics bridge. Without it haptics die silently, with no
+          # error anywhere. vite.config.js sets emptyOutDir:false, so this does
+          # not wipe the index.html copied above.
+          npm run build
+
+          # go.bat [4g] - audio samples. The app fetches from /audio/<name>/
+          # but they live in audio_assets/<name>/ in the repo, so the folder is
+          # renamed on the way in. Without this, every sampled instrument
+          # falls back to synth.
+          if [ -d audio_assets ]; then
+            mkdir -p www/audio
+            cp -r audio_assets/* www/audio/
+          else
+            echo "FATAL: audio_assets/ not found; samples would fall back to synth"
+            exit 1
+          fi
+
           [ -f manifest.json ] && cp manifest.json www/ || true
-          [ -d assets ] && cp -r assets www/ || true
-          [ -d icons ]  && cp -r icons  www/ || true
+
           echo "--- www contents ---"
           ls -la www/
+          echo "--- audio folders ---"
+          ls -la www/audio/ || true
+
+          # main.iife.js fails silently when missing. Fail loudly instead.
+          if [ ! -f www/main.iife.js ]; then
+            echo "FATAL: npm run build did not produce www/main.iife.js"
+            exit 1
+          fi
 
       - name: Generate iOS platform
         script: |
@@ -88,6 +122,44 @@ workflows:
 
           echo "--- Info.plist after patch ---"
           $PB -c "Print" "$PLIST"
+
+      - name: Set iOS app icon
+        script: |
+          set -e
+
+          # cap add ios writes a placeholder AppIcon.appiconset fresh every
+          # build, so the icon is injected here rather than committed. Xcode
+          # takes a single 1024x1024 and derives every other size.
+          #
+          # Apple rejects any alpha channel in an app icon at UPLOAD time, not
+          # at review. ios_icon/AppIcon-1024.png must be flat RGB.
+          ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
+
+          if [ ! -f ios_icon/AppIcon-1024.png ]; then
+            echo "FATAL: ios_icon/AppIcon-1024.png not found"
+            exit 1
+          fi
+
+          rm -rf "$ICONSET"
+          mkdir -p "$ICONSET"
+          cp ios_icon/AppIcon-1024.png "$ICONSET/AppIcon-1024.png"
+
+          printf '%s\n' \
+            '{' \
+            '  "images" : [' \
+            '    {' \
+            '      "filename" : "AppIcon-1024.png",' \
+            '      "idiom" : "universal",' \
+            '      "platform" : "ios",' \
+            '      "size" : "1024x1024"' \
+            '    }' \
+            '  ],' \
+            '  "info" : { "author" : "xcode", "version" : 1 }' \
+            '}' > "$ICONSET/Contents.json"
+
+          echo "--- appiconset ---"
+          ls -la "$ICONSET"
+          cat "$ICONSET/Contents.json"
 
       - name: Sync Capacitor
         script: |
