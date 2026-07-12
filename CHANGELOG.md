@@ -16,6 +16,38 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.14 — the launch-quiet was the cache, not the category
+
+Three volume levels, not two: launch audio was quieter than **either** the normal
+mic-on or mic-off level, and only a mic toggle knocked it loose. That rules out
+`playAndRecord` attenuation — that would land you at the mic-on level, not below it.
+
+The panel showed the mechanism:
+
+    audioMode   playAndRecord (cached) · metro
+
+**The cache is right in principle and wrong at startup.** The app auto-starts the
+mic at launch (deliberately — it is a quick-access tuner, and having to enable it
+every time would be worse). That fires a session change **before WKWebView has
+built its audio engine**. So we configure a session nothing is attached to yet;
+WebKit then comes up with its own defaults; and because native cached the state as
+applied, no later call ever re-applies it. The audio sits in WebKit's own
+configuration, quieter than anything we chose, until a mic toggle changes `micLive`
+and happens to bypass the cache.
+
+### Fixed
+- `setAudioMode` now takes a **`force`** flag. JS passes it until the first apply
+  that lands with a live `AudioContext`; after that the cache is trustworthy and
+  rapid start/stop stays free.
+- The auto-start stays. It is the right product call; it was just exposing a race
+  with WebKit's engine setup.
+
+### Added
+- **Splash frame rate in the diagnostics panel.** "The splash feels slower on iOS"
+  has now had three theories and zero measurements. The panel reports the actual
+  fps and frame count, so the next round starts from a number rather than another
+  guess.
+
 ## v0.81.13 — the volume race, and the splash was frame-rate coupled
 
 ### The splash animation had less travel on iOS

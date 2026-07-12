@@ -92,10 +92,24 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func setAudioMode(_ call: CAPPluginCall) {
         let micLive = call.getBool("micLive") ?? false
+        // force: apply even if the state matches what we last set.
+        //
+        // The cache is right in principle and wrong at startup. The app auto-starts
+        // the mic at launch (deliberately — quick-access tuner), which fires a
+        // session change BEFORE WKWebView has built its audio engine. We configure
+        // a session nothing is attached to; WebKit then comes up with its own
+        // defaults; and because the state was cached as applied, no later call ever
+        // re-applies it. The audio sits quieter than either normal level until a
+        // mic toggle changes micLive and happens to bypass the cache.
+        //
+        // JS passes force=true until it has applied at least once with a live
+        // AudioContext. After that the cache is trustworthy and rapid start/stop
+        // stays free.
+        let force = call.getBool("force") ?? false
 
         IntonarePlugin.sessionQueue.async {
             // Idempotent. Rapid start/stop hits this constantly; make it free.
-            if IntonarePlugin.lastMicLive == micLive {
+            if !force && IntonarePlugin.lastMicLive == micLive {
                 call.resolve(["ok": true, "changed": false,
                               "mode": micLive ? "playAndRecord" : "playback"])
                 return

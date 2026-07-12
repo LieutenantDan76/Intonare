@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.13 -->
+<!-- INTONARE_VERSION: 0.81.14 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16912,6 +16912,12 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       _lastFrameT = _now;
       const dt60 = Math.min(3, _dtMs / 16.667);
 
+      // Record the real frame rate so the diagnostics panel can show it. The
+      // splash "feels slower on iOS" question has had three theories and no
+      // measurement; this ends that.
+      window._splashFrames = (window._splashFrames || 0) + 1;
+      window._splashFps = window._splashFrames / Math.max(0.001, (_now - _waveT0) / 1000);
+
       const rgb = paletteRGB(colorT);
       // Travelling-wave phase advance — fast during gather/early wave, easing toward
       // near-still as the line settles (the "slows to a line" feel). Speed wander
@@ -22556,7 +22562,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.13';
+const INTONARE_VERSION = '0.81.14';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22729,12 +22735,30 @@ function _iosPluginHandle() {
 
 // Call after ANY change to whether the mic is live, and before starting audio.
 // Cheap and idempotent; call it freely.
+// Set once the FIRST session change lands on a WebKit engine that actually exists.
+//
+// THE BUG THIS EXISTS FOR
+// The app auto-starts the mic at launch (deliberately — it is a quick-access
+// tuner). That fires a session change BEFORE WKWebView has built its audio
+// engine. We configure a session nothing is attached to yet; WebKit then comes up
+// with its own defaults; and because native has CACHED the state as applied, no
+// later call ever re-applies it. Result: audio quieter than either normal level,
+// stuck there, until a mic toggle changes micLive and bypasses the cache.
+//
+// So: until the AudioContext exists, force the apply through rather than trusting
+// the cache. After that, caching is correct and rapid start/stop stays free.
+let _iosAudioEverApplied = false;
+
 function _iosSyncAudioMode(why) {
   const p = _iosPluginHandle();
   if (!p) return;
   const micLive = (typeof isListening !== 'undefined' && !!isListening);
+  // force=true until we have applied at least once WITH an AudioContext up.
+  const haveCtx = !!(typeof _sharedAudio !== 'undefined' && _sharedAudio);
+  const force   = !_iosAudioEverApplied;
+  if (haveCtx) _iosAudioEverApplied = true;
   try {
-    p.setAudioMode({ micLive }).then(r => {
+    p.setAudioMode({ micLive, force }).then(r => {
       if (window._sampleDiag) {
         window._sampleDiag.audioMode =
           (r && r.ok ? (r.mode || '?') : 'failed') +
@@ -71324,6 +71348,7 @@ function _openAudioDiag() {
     L.push('  IntonareNative  ' + (window.IntonareNative ? 'present' : 'absent'));
     L.push('  audioMode       ' + ((window._sampleDiag && window._sampleDiag.audioMode) || 'not attempted'));
     L.push('  Haptics bridge  ' + (window.Haptics ? 'present' : 'absent'));
+    L.push('  splash fps      ' + (window._splashFps ? window._splashFps.toFixed(1) + ' fps  (' + window._splashFrames + ' frames)' : 'not measured'));
 
     pre.textContent = L.join('\n');
   }
