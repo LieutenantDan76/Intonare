@@ -16,6 +16,34 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.10 — black screen: the storyboard needs the module
+
+v0.81.9 built green and launched to a **black screen**. Nothing loaded.
+
+`Main.storyboard` names the root view controller by class. The patcher swapped
+`CAPBridgeViewController` for `IntonareViewController` — and **stripped the
+`customModule` / `customModuleProvider` attributes** along with it, on the theory
+that a class in the app target needs no module qualifier.
+
+Wrong. UIKit resolves a storyboard's `customClass` **through its module**. With
+the attributes gone it could not find the class, instantiated nothing, and the app
+came up black. It compiled; the build was green; the failure is entirely at
+runtime. (Xcode's own message for this is "Unknown class X in Interface Builder
+file" — invisible without a Mac to read the device console.)
+
+### Fixed
+- The storyboard now reads
+  `customClass="IntonareViewController" customModule="App" customModuleProvider="target"`.
+  `CAPBridgeViewController` lives in the Capacitor module; ours lives in the app
+  target, whose module is `App`. **Both** attributes had to change, not just the
+  class.
+- `@objc(IntonareViewController)` on the class, so the Objective-C runtime that
+  storyboards actually use can see it.
+- The patcher now **fails the build** if `customModule="App"` is absent after
+  patching, or if any `CAPBridgeViewController` reference survives — and prints
+  the resulting `viewController` line to the log. This class of bug will not ship
+  green twice.
+
 ## v0.81.9 — the volume design: full loudness except while the mic is live
 
 **Why iOS is quieter than Android even with routing fixed:** the `playAndRecord`
