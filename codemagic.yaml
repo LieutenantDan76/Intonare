@@ -238,12 +238,19 @@ workflows:
           # CFBundleShortVersionString - the human-facing version.
           agvtool new-marketing-version "$APP_VERSION"
 
-          # CFBundleVersion - must increase with every upload or App Store Connect
-          # rejects the binary. Derived from what is already on TestFlight rather
-          # than from anything in the repo, so it cannot collide.
-          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
-          agvtool new-version -all $(($LATEST + 1))
-
+          # CFBundleVersion - what TestFlight shows in parentheses. Must be unique
+          # per marketing version.
+          #
+          # This used to read the latest build number back from TestFlight and add
+          # one. That query is scoped PER MARKETING VERSION, so every time the
+          # version string changed the count restarted and every build came out as
+          # (4): 0.81.1 (4), 0.81.2 (4), 0.81.3 (4). Legal, since Apple only needs
+          # uniqueness within a version, but useless for telling builds apart.
+          #
+          # $BUILD_NUMBER is Codemagic's own counter for this workflow. It only
+          # ever increases, it does not care about the marketing version, and it
+          # needs no API call that can fail quietly and fall back to a constant.
+          agvtool new-version -all "$BUILD_NUMBER"
           echo "--- versions set ---"
           agvtool what-marketing-version
           agvtool what-version

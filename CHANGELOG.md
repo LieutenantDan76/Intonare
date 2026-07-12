@@ -16,6 +16,43 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.4 — samples were never loading on iOS
+
+The piano was still playing synth on iOS. The files are correct (30 mp3s, tracked
+in git, copied into `www/audio/` by CI, no FATAL from the guard), so the failure is
+between the file and the fetch.
+
+### Fixed
+- **`_capacitorAssetUrl` built a root-relative path.** It returned `/audio/<folder>/
+  <file>`, and its own comment said why: *"Android assets under public/ are served
+  directly from localhost/"*. That is an Android assumption, written when Android
+  was the only target. iOS serves `www/` through a local server on a different
+  scheme (`iosScheme: "https"`), so a root-relative path is not guaranteed to
+  resolve the same way. Now built from `document.baseURI`, which is correct on
+  every platform by construction and assumes nothing.
+- **Filenames are now URI-encoded.** Some sample sets have **spaces** in their
+  names — `Rdcus 024 060.mp3`. An unencoded space in a fetch URL is a silent
+  failure, and it would have hit the Rhodes while sparing the piano, which is
+  exactly the kind of half-working bug that wastes a day.
+- **`grand_piano` had its own inline `assetUrl`** duplicating the shared helper.
+  Routed through `_capacitorAssetUrl` so there is one implementation to fix.
+
+### Added
+- **Sample diagnostics in the audio panel** (seven taps on the version stamp):
+  load state, ok/fail counts, the last URL actually fetched, the specific error
+  (HTTP status, fetch throw, or decode failure with byte count), and
+  `location.origin`. `_fetchBuffer` already threw a precise error; it was being
+  swallowed into a `console.warn` that nobody can read on iOS without a Mac.
+
+### Confirmed working (from the v0.81.3 panel)
+AudioContext `running` at 48 kHz; mic track `live`, hardware rate 48 kHz matching;
+`aec false`; peak reading real room noise. **The iOS audio path is healthy.**
+
+`IntonareMic` and `IntonareNative` both report **absent** — neither native bridge
+was ever written for iOS. So haptics and the splash sound are not broken; they were
+never implemented on this platform. Both need real Capacitor plugins. The mic does
+not: WebView capture at 48 kHz is working.
+
 ## v0.81.3 — the audio session was looping on itself
 
 **The iOS lag was mine.** `IntonareAudioSession.swift` registered an observer on

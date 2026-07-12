@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.3 -->
+<!-- INTONARE_VERSION: 0.81.4 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -22515,7 +22515,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.3';
+const INTONARE_VERSION = '0.81.4';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -44542,10 +44542,34 @@ const SampleEngine = (function() {
 
   // Fetch and decode a single audio file → AudioBuffer
   async function _fetchBuffer(url, ctx) {
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + url);
+    // Record what actually happened so the audio diagnostics panel can show it.
+    // On iOS these failures are otherwise invisible: the warn goes to a console
+    // nobody can read without a Mac, and the app silently falls back to synth.
+    window._sampleDiag = window._sampleDiag || { lastUrl: '', lastErr: '', ok: 0, fail: 0 };
+    window._sampleDiag.lastUrl = url;
+    let resp;
+    try {
+      resp = await fetch(url);
+    } catch (e) {
+      window._sampleDiag.fail++;
+      window._sampleDiag.lastErr = 'fetch threw: ' + e.message;
+      throw e;
+    }
+    if (!resp.ok) {
+      window._sampleDiag.fail++;
+      window._sampleDiag.lastErr = 'HTTP ' + resp.status;
+      throw new Error('HTTP ' + resp.status + ' ' + url);
+    }
     const arrayBuf = await resp.arrayBuffer();
-    return await ctx.decodeAudioData(arrayBuf);
+    try {
+      const b = await ctx.decodeAudioData(arrayBuf);
+      window._sampleDiag.ok++;
+      return b;
+    } catch (e) {
+      window._sampleDiag.fail++;
+      window._sampleDiag.lastErr = 'decode failed (' + arrayBuf.byteLength + ' bytes)';
+      throw e;
+    }
   }
 
   return {
@@ -44728,9 +44752,7 @@ SampleEngine.register({
   // ride the ceiling and chords/swipes sum past it → digital clipping. Pull the
   // level down so there's headroom for stacked notes.
   gain: 0.5,
-  assetUrl(fname) {
-    return '/audio/grand_piano/' + fname;
-  },
+  assetUrl: (fname) => _capacitorAssetUrl('grand_piano', fname),
   noteToFile(midi) {
     // Exact filename map — closest velocity to 100 per sampled note
     const map = {
@@ -44770,9 +44792,21 @@ function _salamanderNoteToFile(midi) {
   return 'piano' + String(midi).padStart(3, '0') + 'v100.mp3';
 }
 function _capacitorAssetUrl(folder, fname) {
-  // Android assets under public/ are served directly from localhost/
-  // No convertFileSrc needed — that's for filesystem paths, not bundled assets
-  return '/audio/' + folder + '/' + fname;
+  // Resolve against the document's own base URL rather than assuming a root path.
+  //
+  // The original returned a root-relative '/audio/...', which is correct on
+  // Android — the WebView serves bundled assets from the origin root. iOS serves
+  // www/ through a local server on a different scheme, so the assumption is not
+  // guaranteed to hold there. Building the URL from location.href is right on
+  // every platform by construction, with nothing to assume.
+  //
+  // encodeURIComponent on the filename because some sample sets have SPACES in
+  // their names ('Rdcus 024 060.mp3'). An unencoded space in a fetch URL is a
+  // silent failure that would hit the Rhodes and not the piano.
+  return new URL(
+    'audio/' + folder + '/' + encodeURIComponent(fname),
+    document.baseURI
+  ).href;
 }
 function _salamanderNotes() {
   const n = []; for (let m = 21; m <= 108; m += 3) n.push(m);
@@ -70949,6 +70983,20 @@ function _openAudioDiag() {
       L.push('  peak        ' + peak.toFixed(4) + (peak < 0.0001 ? '   <<< SILENT' : ''));
       L.push('  ' + (bar || '(silence)'));
     }
+    L.push('');
+
+    L.push('— Samples —');
+    const sd = window._sampleDiag;
+    const gp = (typeof SampleEngine !== 'undefined') ? SampleEngine._state['grand_piano'] : undefined;
+    L.push('  grand_piano  ' + (gp || 'not started'));
+    if (!sd) {
+      L.push('  no fetch attempted yet');
+    } else {
+      L.push('  ok / fail    ' + sd.ok + ' / ' + sd.fail);
+      L.push('  last url     ' + sd.lastUrl);
+      if (sd.lastErr) L.push('  last error   ' + sd.lastErr);
+    }
+    L.push('  origin       ' + location.origin);
     L.push('');
 
     L.push('— Native —');
