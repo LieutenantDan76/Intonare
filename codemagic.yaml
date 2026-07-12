@@ -72,6 +72,31 @@ workflows:
           echo "--- audio folders ---"
           ls -la www/audio/ || true
 
+          # The launch sound, for iOS.
+          #
+          # The Android source is Vorbis (.ogg), which iOS cannot decode at all.
+          # Transcode to AAC and drop it in www/audio/, which Capacitor copies into
+          # the bundle as public/audio/ — a folder that is ALREADY a registered
+          # Xcode resource (it is how the whole app loads). So the sound ships with
+          # no pbxproj surgery, which matters because `cap add ios` regenerates the
+          # project file every build.
+          SPLASH_SRC="native_src/res/raw/intonare_splash.ogg"
+          if [ ! -f "$SPLASH_SRC" ]; then
+            echo "FATAL: $SPLASH_SRC not found; the iOS launch sound would be silent."
+            exit 1
+          fi
+
+          # ffmpeg is usually present on Codemagic's macOS images, but "usually" is
+          # not a build guarantee. Install it if it is missing rather than failing.
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            echo "ffmpeg not found; installing via Homebrew."
+            brew install ffmpeg
+          fi
+
+          ffmpeg -v error -y -i "$SPLASH_SRC" -c:a aac -b:a 128k www/audio/intonare_splash.m4a
+          echo "splash sound transcoded:"
+          ls -la www/audio/intonare_splash.m4a
+
           # main.iife.js fails silently when missing. Fail loudly instead.
           if [ ! -f www/main.iife.js ]; then
             echo "FATAL: npm run build did not produce www/main.iife.js"
@@ -147,6 +172,54 @@ workflows:
           $PB -c "Delete :UISupportedInterfaceOrientations" "$PLIST" 2>/dev/null || true
           $PB -c "Add :UISupportedInterfaceOrientations array" "$PLIST"
           $PB -c "Add :UISupportedInterfaceOrientations:0 string UIInterfaceOrientationPortrait" "$PLIST"
+
+          # Declared localizations. Without this, iOS will not even look for a
+          # localized string file — the plist value is used verbatim regardless of
+          # device language.
+          $PB -c "Delete :CFBundleLocalizations" "$PLIST" 2>/dev/null || true
+          $PB -c "Add :CFBundleLocalizations array" "$PLIST"
+          $PB -c "Add :CFBundleLocalizations:0 string en" "$PLIST"
+          $PB -c "Add :CFBundleLocalizations:1 string it" "$PLIST"
+          $PB -c "Delete :CFBundleDevelopmentRegion" "$PLIST" 2>/dev/null || true
+          $PB -c "Add :CFBundleDevelopmentRegion string en" "$PLIST"
+
+          # Localized permission strings.
+          #
+          # The plist value above is the FALLBACK, used when the device language
+          # has no .lproj. The Italian one lives in it.lproj/InfoPlist.strings.
+          #
+          # THE OPEN QUESTION: strictly, a .lproj must be registered in the Xcode
+          # project as a resource to be copied into the bundle, and editing
+          # project.pbxproj from a script is exactly the fragile nonsense this
+          # pipeline has avoided all along. The bet here is that `cap add ios`
+          # registers the App/App folder's contents, so a .lproj dropped inside it
+          # gets copied without any pbxproj surgery.
+          #
+          # If the Italian prompt does not appear on an Italian device, that bet
+          # was wrong and the .lproj is not reaching the bundle. The fix would then
+          # be a pbxproj patch, or moving to an InfoPlist.xcstrings catalogue.
+          for LANG in en it; do
+            mkdir -p "ios/App/App/$LANG.lproj"
+          done
+
+          # Written by python, not shell: the Italian string needs a real 'ne'
+          # with an acute accent, and getting a UTF-8 accented character through
+          # bash quoting inside an indented YAML block is a fight not worth having.
+          python3 -c "
+          import io
+          EN = 'Intonare uses the microphone to detect the pitch of your instrument or voice for tuning and ear-training exercises. Audio is processed on your device and never recorded or transmitted.'
+          IT = 'Intonare usa il microfono per riconoscere l\u2019intonazione del tuo strumento o della tua voce, per accordare e per gli esercizi di orecchio musicale. L\u2019audio viene elaborato sul dispositivo: non viene mai registrato n\u00e9 inviato altrove.'
+          for lang, txt in (('en', EN), ('it', IT)):
+              path = 'ios/App/App/%s.lproj/InfoPlist.strings' % lang
+              with io.open(path, 'w', encoding='utf-8') as f:
+                  f.write('\"NSMicrophoneUsageDescription\" = \"%s\";\n' % txt)
+              print('wrote %s' % path)
+          "
+
+          echo "--- en.lproj/InfoPlist.strings ---"
+          cat "ios/App/App/en.lproj/InfoPlist.strings"
+          echo "--- it.lproj/InfoPlist.strings ---"
+          cat "ios/App/App/it.lproj/InfoPlist.strings"
 
           # Export compliance. Intonare implements no encryption of its own;
           # HTTPS via the system stack is exempt. Declaring this here stops

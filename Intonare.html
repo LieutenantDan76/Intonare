@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.10 -->
+<!-- INTONARE_VERSION: 0.81.12 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16993,7 +16993,13 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     // true autoplay while syncing exactly. No-op on web (bridge only exists in APK).
     try {
       if (window.IntonareNative && typeof window.IntonareNative.playSplashSound === 'function') {
+        // Android: the @JavascriptInterface bridge in MainActivity.
         window.IntonareNative.playSplashSound();
+      } else if (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios') {
+        // iOS: the same job through IntonarePlugin. Native for the same reason it
+        // is native on Android — this fires before any user gesture, and WebKit
+        // will not autoplay Web Audio without one.
+        window.Capacitor.registerPlugin('IntonareIOS').playSplashSound().catch(() => {});
       }
     } catch (e) {}
     requestAnimationFrame(loop);
@@ -22515,7 +22521,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.10';
+const INTONARE_VERSION = '0.81.12';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22626,8 +22632,29 @@ let mode = 'tuner';
 // destination. Created lazily on first use after a user gesture.
 let _sharedAudio = null;
 function getAudio() {
-  if (!_sharedAudio || _sharedAudio.state === 'closed') {
+  const _fresh = (!_sharedAudio || _sharedAudio.state === 'closed');
+  if (_fresh) {
     _sharedAudio = new (window.AudioContext || window.webkitAudioContext)();
+    // iOS: the .playback category is CONFIGURED at launch but not ACTIVE — iOS
+    // does not activate a session until something needs audio, and WKWebView
+    // activates it with ITS defaults, not ours. So the first sounds of a session
+    // came out quiet, and only became correct once the mic was touched and the
+    // plugin reasserted. Assert here instead, when the shared context is first
+    // created, so the session is right before the first note.
+    //
+    // NOTE the choice of call. assertAudioMode() sets .playAndRecord — correct
+    // when the mic is live, WRONG here: it would claim the microphone for nothing
+    // and drag the app back into the attenuated category we are trying to escape.
+    // releaseAudioMode() sets .playback: no mic, no voice processing, full volume.
+    // That is the right state for "audio is starting and the mic is off".
+    //
+    // Safe to call from a function defined above the helpers: they are hoisted
+    // declarations, and getAudio() only ever RUNS on a user gesture, long after
+    // parse.
+    try {
+      if (typeof isListening !== 'undefined' && isListening) _iosAudioNudge('first audio, mic live');
+      else _iosAudioRelease();
+    } catch (e) {}
   }
   if (_sharedAudio.state === 'suspended') {
     // resume() may reject if not called from a user gesture; swallow it
@@ -22799,9 +22826,125 @@ function _getMasterScale() {
   return Math.max(0.1, Math.min(3.0, (progState?.masterVolume ?? 100) / 100));
 }
 
+// Limiter threshold in dB, as a function of the master volume.
+//
+// THE PROBLEM THIS SOLVES
+// At 100% a typical chain computes 0.8 * 0.9 = 0.72, and the limiter threshold
+// is -3 dB (~0.708). So the signal already SITS on the threshold at normal
+// volume — which is exactly where it should sit, and is what all the clipping
+// and chord-pumping work converged on.
+//
+// But it means the fader's whole upper half is dead. At 200% the gain becomes
+// 1.44, about 6 dB over the threshold, into a 20:1 ratio: the limiter hands back
+// roughly a third of a decibel. The fader raises the gain and the limiter
+// immediately takes it away, so "louder" just means "more compressed".
+//
+// THE FIX, AND WHAT IT DELIBERATELY DOES NOT TOUCH
+// Above 100%, lift the ceiling along WITH the gain, so the extra actually gets
+// through. At and below 100% the threshold is EXACTLY the -3 dB it has always
+// been: identical maths, identical sound, none of the existing tuning disturbed.
+// Only the currently-dead range changes.
+//
+// The user who cranks to 200% accepts some clipping risk on dense chords. That
+// is a deliberate choice they can undo, and it is the price of a metronome loud
+// enough to hear across a room.
+const LIMITER_BASE_THRESHOLD = -3;   // dB, at and below 100%
+const LIMITER_BASE_RATIO     = 20;   // :1, at and below 100% — a true limiter
+
+// Above 100%, the compressor morphs from LIMITER into LOUDNESS processor.
+//
+// WHY GAIN ALONE CANNOT WORK
+// Digital audio stops at 1.0. There is no 1.1. At 100% a typical chain sits at
+// 0.72; a gain of 1.0 — reached around 139% — is the format's hard ceiling, and
+// 200% asks for 1.44, which is 44% more than exists. No threshold, no fader and
+// no code can produce it. Ask anyway and the peaks get sliced flat, which the ear
+// hears as buzz, not volume.
+//
+// WHAT ACTUALLY MAKES THINGS LOUDER
+// The ear judges loudness by AVERAGE energy, not peak. A signal that touches 1.0
+// once and sits at 0.2 sounds quiet; one that never exceeds 0.9 but LIVES at 0.7
+// sounds far louder. So instead of pushing the peaks up (impossible), pull the
+// quiet parts up: compress harder, then make up the gain. Average level rises
+// toward the ceiling without ever crossing it. This is what mastering does, and
+// it is why modern records sound loud on phone speakers.
+//
+// THE PRICE, AND WHO PAYS IT
+// Dynamic range. A piano's natural decay flattens; attack and tail move closer
+// together. For a metronome click that is ideal — punchy and loud is the entire
+// job. For a sampled instrument you are listening to musically, it costs life.
+//
+// So it is TIED TO THE FADER, and it is off by default:
+//
+//   <=100%  threshold -3 dB, ratio 20:1   — pure limiter. Byte-for-byte the
+//                                           chain that all the clipping and
+//                                           chord-pumping work converged on.
+//                                           Untouched. Nobody pays anything.
+//    150%   threshold ~-10 dB, ratio ~12:1 — noticeably louder, dynamics intact
+//                                            enough for music.
+//    200%   threshold -18 dB, ratio 4:1    — full loudness mode. Much louder,
+//                                            audibly squashed. The metronome
+//                                            across a room; not the recital.
+//
+// The user chooses. Leave the fader alone and none of this exists.
+const LOUDNESS_MAX_THRESHOLD = -18;  // dB, at 200%
+const LOUDNESS_MAX_RATIO     = 4;    // :1, at 200%
+
+// 0 at <=100%, ramping to 1 at 200%. The single knob everything below turns.
+function _getLoudnessAmount() {
+  const scale = _getMasterScale();
+  if (scale <= 1.0) return 0;
+  return Math.min(1, (scale - 1.0) / 1.0);
+}
+
+function _getLimiterThreshold() {
+  const k = _getLoudnessAmount();
+  if (k === 0) return LIMITER_BASE_THRESHOLD;   // unchanged, by design
+  return LIMITER_BASE_THRESHOLD + k * (LOUDNESS_MAX_THRESHOLD - LIMITER_BASE_THRESHOLD);
+}
+
+function _getLimiterRatio() {
+  const k = _getLoudnessAmount();
+  if (k === 0) return LIMITER_BASE_RATIO;
+  return LIMITER_BASE_RATIO + k * (LOUDNESS_MAX_RATIO - LIMITER_BASE_RATIO);
+}
+
+// Makeup gain. Compressing pulls the whole signal DOWN; without makeup, loudness
+// mode would be quieter than limiter mode, which is the opposite of the point.
+//
+// Approximate the gain reduction the compressor applies to a signal sitting near
+// 0 dBFS, and give it back. Capped so the post-compressor peak lands just under
+// full scale — the compressor is holding the ceiling, so this can push hard
+// without clipping, which is exactly how a mastering chain works.
+function _getMakeupGain() {
+  const k = _getLoudnessAmount();
+  if (k === 0) return 1.0;
+  const thr   = _getLimiterThreshold();
+  const ratio = _getLimiterRatio();
+  // A 0 dBFS peak gets pulled to: thr + (0 - thr)/ratio.
+  const outDb = thr + (0 - thr) / ratio;
+  // Give back most of the difference, leaving ~1 dB of headroom under full scale.
+  const makeupDb = Math.max(0, -outDb - 1);
+  return Math.pow(10, makeupDb / 20);
+}
+
+// The gain node's own scale. Above 100% the raw fader value would demand more
+// than 1.0, so cap the pre-compressor gain at the point where it hits full scale
+// and let the LOUDNESS processing carry everything above that. This is the whole
+// trick: past ~139% the fader stops asking for impossible peaks and starts
+// asking for a denser average instead.
+function _getEffectiveScale() {
+  const scale = _getMasterScale();
+  return Math.min(scale, 1.0 / (0.8 * BASE_GAIN_BOOST));   // ~1.39
+}
+
 // Registry of every gain node created by buildLimiterChain, keyed by node → base gain value.
 // setMasterVolume iterates this to update all of them at once.
 const _masterGainRegistry = new Map();
+// Every limiter built by buildLimiterChain. Chains are cached and reused, so the
+// threshold has to be updated in place when the master volume moves; rebuilding
+// them would defeat the caching that stopped the compressor leak.
+const _masterLimiterRegistry = new Set();
+const _masterMakeupRegistry  = new Set();
 
 // Blanket boost applied to every buildLimiterChain call site.
 // Value of 0.9 pushes the loudest call sites (base 0.8) to just under the
@@ -22840,7 +22983,10 @@ function buildLimiterChain(ctx, gainValue) {
 
   const gain = ctx.createGain();
   const base = gv * BASE_GAIN_BOOST;
-  gain.gain.value = base * cueScale * _getMasterScale();
+  // _getEffectiveScale, not _getMasterScale: above ~139% the raw fader would
+  // demand a gain over 1.0, which does not exist. Cap it there and let the
+  // loudness processing (below) carry the rest.
+  gain.gain.value = base * cueScale * _getEffectiveScale();
   // Low shelf: boost bass frequencies to compensate for phone speaker rolloff.
   // +5 dB below 300 Hz — phone-speaker bass lift, kept modest so dense chords
   // don't get bass-boosted into the limiter (that was the chord-pumping cause).
@@ -22849,15 +22995,27 @@ function buildLimiterChain(ctx, gainValue) {
   bass.frequency.value = 300;
   bass.gain.value = 5;
   const lim = ctx.createDynamicsCompressor();
-  lim.threshold.value = -3;  // only clamps genuine peaks
+  lim.threshold.value = _getLimiterThreshold();  // -3 dB at <=100%; drops above it
   lim.knee.value = 6;        // soft knee → gradual catch, no audible "grab"/pumping
-  lim.ratio.value = 20;
+  lim.ratio.value = _getLimiterRatio();          // 20:1 at <=100%; softens above it
   lim.attack.value = 0.001;
   lim.release.value = 0.25;  // slower release → smoother, perceptually louder
+
+  // Makeup gain, AFTER the compressor. Unity at <=100%, so the chain is
+  // electrically identical to what it always was. Above 100% it gives back the
+  // level the compression took, which is what turns "squashed" into "loud".
+  const makeup = ctx.createGain();
+  makeup.gain.value = _getMakeupGain();
+
   gain.connect(bass);
   bass.connect(lim);
-  lim.connect(ctx.destination);
-  _masterGainRegistry.set(gain, base); // register for live master-volume updates
+  lim.connect(makeup);
+  makeup.connect(ctx.destination);
+  _masterGainRegistry.set(gain, base);  // register for live master-volume updates
+  _masterLimiterRegistry.add(lim);      // ditto for threshold + ratio; chains are
+                                        // cached, so without this a limiter built
+                                        // at 100% would keep its settings forever.
+  _masterMakeupRegistry.add(makeup);
   const chain = { gain, limiter: lim };
   if (cacheable) {
     if (!perCtx) { perCtx = new Map(); _limiterChainCache.set(ctx, perCtx); }
@@ -42257,7 +42415,7 @@ function progDkAdjBpm(delta) { progDkSetBpm(bpm + delta); }
 
 function progDkSetVolume(v) {
   progDrumVolume = v / 100;
-  if (dk_masterGain) dk_masterGain.gain.value = progDrumVolume * BASE_GAIN_BOOST * _getMasterScale();
+  if (dk_masterGain) dk_masterGain.gain.value = progDrumVolume * BASE_GAIN_BOOST * _getEffectiveScale();
   const dkSlider = document.getElementById('progDkVolSlider');
   const dkLabel  = document.getElementById('progDkVolLabel');
   const mSlider  = document.getElementById('progMetroVolSlider');
@@ -46694,7 +46852,7 @@ function tlEnsureCtx() {
   tlCtx = getAudio();
   if (!tlMasterGain || tlMasterGain.context !== tlCtx) {
     tlMasterGain = tlCtx.createGain();
-    tlMasterGain.gain.value = 0.85 * BASE_GAIN_BOOST * _getMasterScale();
+    tlMasterGain.gain.value = 0.85 * BASE_GAIN_BOOST * _getEffectiveScale();
     var tlBass = tlCtx.createBiquadFilter();
     tlBass.type = 'lowshelf'; tlBass.frequency.value = 300; tlBass.gain.value = 5;
     tlMasterGain.connect(tlBass); tlBass.connect(tlCtx.destination);
@@ -47202,7 +47360,7 @@ function tgEnsureCtx() {
   tgCtx = getAudio();
   if (!tgMasterGain || tgMasterGain.context !== tgCtx) {
     tgMasterGain = tgCtx.createGain();
-    tgMasterGain.gain.value = 0.85 * BASE_GAIN_BOOST * _getMasterScale();
+    tgMasterGain.gain.value = 0.85 * BASE_GAIN_BOOST * _getEffectiveScale();
     var tgBass = tgCtx.createBiquadFilter();
     tgBass.type = 'lowshelf'; tgBass.frequency.value = 300; tgBass.gain.value = 5;
     tgMasterGain.connect(tgBass); tgBass.connect(tgCtx.destination);
@@ -47853,7 +48011,7 @@ function prEnsureCtx() {
   prCtx = getAudio();
   if (!prMasterGain || prMasterGain.context !== prCtx) {
     prMasterGain = prCtx.createGain();
-    prMasterGain.gain.value = 0.85 * BASE_GAIN_BOOST * _getMasterScale();
+    prMasterGain.gain.value = 0.85 * BASE_GAIN_BOOST * _getEffectiveScale();
     // Per-layer gain buses for instant mode mute/unmute
     prGainA = prCtx.createGain(); prGainA.gain.value = 1;
     prGainB = prCtx.createGain(); prGainB.gain.value = 1;
@@ -51184,7 +51342,7 @@ function rrActivateBar(idx, durBeats) {
 function rrGetOut(ctx) {
   if (!rrMasterGain) {
     rrMasterGain = ctx.createGain();
-    rrMasterGain.gain.value = BASE_GAIN_BOOST * _getMasterScale();
+    rrMasterGain.gain.value = BASE_GAIN_BOOST * _getEffectiveScale();
     var lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -6;  lim.knee.value = 0;
     lim.ratio.value = 20;      lim.attack.value = 0.001;
@@ -52521,7 +52679,7 @@ function rcClearTimers() { rcTimers.forEach(clearTimeout); rcTimers = []; }
 function rcGetOut(ctx) {
   if (!rcMasterGain) {
     rcMasterGain = ctx.createGain();
-    rcMasterGain.gain.value = BASE_GAIN_BOOST * _getMasterScale();
+    rcMasterGain.gain.value = BASE_GAIN_BOOST * _getEffectiveScale();
     var lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -6;  lim.knee.value = 0;
     lim.ratio.value = 20;      lim.attack.value = 0.001;  lim.release.value = 0.1;
@@ -52886,7 +53044,7 @@ function rcPlay() {
   var ctx = getAudio();
   if (ctx.state === 'suspended') ctx.resume();
   rcGetOut(ctx);
-  rcMasterGain.gain.value = BASE_GAIN_BOOST * _getMasterScale();
+  rcMasterGain.gain.value = BASE_GAIN_BOOST * _getEffectiveScale();
 
   rcSetPlayBtn(true);
   rcPhase = 'preview';
@@ -52971,7 +53129,7 @@ function rcStartTap() {
   if (ctx.state === 'suspended') ctx.resume();
   rcStopTapTimers();
   rcGetOut(ctx);
-  rcMasterGain.gain.value = BASE_GAIN_BOOST * _getMasterScale();
+  rcMasterGain.gain.value = BASE_GAIN_BOOST * _getEffectiveScale();
 
   rcQuizTaps = [];
   rcQuizDone = false;
@@ -53282,7 +53440,7 @@ function rctStop() {
 function rctGetOut(ctx) {
   if (!rctMaster) {
     rctMaster = ctx.createGain();
-    rctMaster.gain.value = BASE_GAIN_BOOST * _getMasterScale();
+    rctMaster.gain.value = BASE_GAIN_BOOST * _getEffectiveScale();
     var lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -6; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.1;
     rctMaster.connect(lim); lim.connect(ctx.destination);
@@ -53316,7 +53474,7 @@ function rctRunCard(barStart) {
   var ctx = getAudio();
   if (ctx.state === 'suspended') ctx.resume();
   rctGetOut(ctx);
-  rctMaster.gain.value = BASE_GAIN_BOOST * _getMasterScale();
+  rctMaster.gain.value = BASE_GAIN_BOOST * _getEffectiveScale();
 
   var beatDur = rcBeatDur();
   var beatsPerBar = card.sig[0];   // 2
@@ -53632,7 +53790,7 @@ function rcdClearTimers(){ rcdTimers.forEach(clearTimeout); rcdTimers = []; }
 function rcdGetOut(ctx) {
   if (!rcdMaster) {
     rcdMaster = ctx.createGain();
-    rcdMaster.gain.value = BASE_GAIN_BOOST * _getMasterScale();
+    rcdMaster.gain.value = BASE_GAIN_BOOST * _getEffectiveScale();
     var lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -6; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.1;
     rcdMaster.connect(lim); lim.connect(ctx.destination);
@@ -53705,7 +53863,7 @@ function rcdRunRep() {
   var ctx = getAudio();
   if (ctx.state === 'suspended') ctx.resume();
   rcdGetOut(ctx);
-  rcdMaster.gain.value = BASE_GAIN_BOOST * _getMasterScale();
+  rcdMaster.gain.value = BASE_GAIN_BOOST * _getEffectiveScale();
 
   var beatDur = rcBeatDur();
   var beatsPerBar = card.sig[0];   // 2
@@ -56183,7 +56341,7 @@ function rtFadeInDistract(){
   if (!g || !g.gain || !g.context) return;
   const ctx = g.context, t0 = ctx.currentTime;
   const base = (typeof _masterGainRegistry !== 'undefined' && _masterGainRegistry.get(g));
-  const target = (base != null && typeof _getMasterScale === 'function') ? base * _getMasterScale() : g.gain.value;
+  const target = (base != null && typeof _getEffectiveScale === 'function') ? base * _getEffectiveScale() : g.gain.value;
   try {
     g.gain.cancelScheduledValues(t0);
     g.gain.setValueAtTime(0.0001, t0);
@@ -56207,7 +56365,7 @@ function rtFadeOutDistract(ms){
     rtDistractSong = false;
     try {
       const base = (typeof _masterGainRegistry !== 'undefined' && _masterGainRegistry.get(g));
-      const restore = (base != null && typeof _getMasterScale === 'function') ? base * _getMasterScale() : g0;
+      const restore = (base != null && typeof _getEffectiveScale === 'function') ? base * _getEffectiveScale() : g0;
       g.gain.cancelScheduledValues(g.context.currentTime);
       g.gain.setValueAtTime(restore, g.context.currentTime);
     } catch(e){}
@@ -64518,10 +64676,25 @@ function setMasterVolume(pct) {
   const display = document.getElementById('smMasterVolValue');
   if (slider && slider.value != v) slider.value = v;
   if (display) display.textContent = v + '%';
-  const scale = _getMasterScale();
+  const scale  = _getEffectiveScale();   // capped at full scale; see the function
+  const thr    = _getLimiterThreshold();
+  const ratio  = _getLimiterRatio();
+  const makeup = _getMakeupGain();
+
   // Update every gain node registered via buildLimiterChain
   _masterGainRegistry.forEach((base, node) => {
     try { node.gain.value = base * scale; } catch(e) {}
+  });
+  // Morph the compressor. At <=100% these are the -3 dB / 20:1 limiter that all
+  // the clipping work converged on; above it they slide toward a loudness
+  // processor, which is the only thing that can actually sound louder once the
+  // gain has hit digital full scale.
+  _masterLimiterRegistry.forEach(lim => {
+    try { lim.threshold.value = thr; lim.ratio.value = ratio; } catch(e) {}
+  });
+  // And give back what the compression took.
+  _masterMakeupRegistry.forEach(m => {
+    try { m.gain.value = makeup; } catch(e) {}
   });
   // Update manually-created cached gain nodes (not via buildLimiterChain)
   try { if (tlMasterGain)  tlMasterGain.gain.value  = 0.85 * BASE_GAIN_BOOST * scale; } catch(e) {}
@@ -68473,7 +68646,7 @@ function getCtx() {
   if (!dk_audioCtx || dk_audioCtx !== shared) {
     dk_audioCtx = shared;
     dk_masterGain = dk_audioCtx.createGain();
-    dk_masterGain.gain.value = progDrumVolume * BASE_GAIN_BOOST * _getMasterScale();
+    dk_masterGain.gain.value = progDrumVolume * BASE_GAIN_BOOST * _getEffectiveScale();
     dk_masterGain.connect(dk_audioCtx.destination);
   }
   if (dk_audioCtx.state === 'suspended') dk_audioCtx.resume();
@@ -84299,7 +84472,7 @@ function _getOrganChain(ctx) {
   sat.oversample = '4x';                 // avoids aliasing on the curve
 
   const makeup = ctx.createGain();
-  makeup.gain.value = 4.0 * BASE_GAIN_BOOST * _getMasterScale(); // restore level post-saturation
+  makeup.gain.value = 4.0 * BASE_GAIN_BOOST * _getEffectiveScale(); // restore level post-saturation
 
   // Final safety limiter — soft knee, only catches genuine overshoot.
   const lim = ctx.createDynamicsCompressor();

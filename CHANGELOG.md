@@ -16,6 +16,137 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.12 — Italian permission prompt, and the launch sound on iOS
+
+### The iOS launch sound
+It never played on iOS, and it was never going to: the JS called
+`window.IntonareNative` — the Android `@JavascriptInterface` bridge, which does not
+exist on iOS. Absence by construction, and completely silent about it.
+
+The obvious shortcut (just play it from Web Audio) is dead on arrival, and the
+comment at the call site has said why all along: *"Native playback isn't
+gesture-gated, so this keeps true autoplay while syncing exactly."* The splash
+fires at cold launch, before any user gesture, and **WebKit will not autoplay Web
+Audio without one**. Native or nothing.
+
+- **`IntonarePlugin.playSplashSound()`** — `AVAudioPlayer`, holding a reference for
+  the lifetime of playback (a local player is deallocated the instant the method
+  returns, and you hear nothing; a classic, and a silent one).
+- **The file ships in `www/audio/`**, which Capacitor copies into the bundle as
+  `public/audio/`. That folder is *already* a registered Xcode resource — it is how
+  the entire app loads — so the sound needs **no `project.pbxproj` surgery**, which
+  matters because `cap add ios` regenerates the project file every build.
+- **CI transcodes it.** The Android source is Vorbis (`.ogg`); iOS cannot decode
+  Vorbis at all. Now converted to AAC alongside the original, with ffmpeg installed
+  on the fly if the build image lacks it.
+- JS falls through: Android bridge if present, else the iOS plugin.
+
+### The Italian microphone prompt
+The permission dialog was English-only, on an app whose primary market is Italy.
+
+- `en.lproj` / `it.lproj` `InfoPlist.strings`, plus `CFBundleLocalizations` in the
+  plist (without which iOS does not even look for a localized string and uses the
+  plist value verbatim regardless of device language).
+- Written by Python rather than shell, because the Italian needs a real **né** and
+  typographic apostrophes, and pushing UTF-8 accents through bash quoting inside an
+  indented YAML block is a fight not worth having. (An earlier pass wrote "ne" to
+  dodge the escaping. Not shipping that.)
+
+**One open bet.** Strictly, a `.lproj` must be registered in the Xcode project to
+be copied into the bundle. The bet is that `cap add ios` registers the contents of
+`App/App/`, so a `.lproj` dropped inside gets copied for free. **If the Italian
+prompt does not appear on an Italian device, that bet was wrong** and the fix is a
+pbxproj patch or an `InfoPlist.xcstrings` catalogue. Flagged rather than assumed.
+
+## v0.81.11 — quiet until the mic was touched; and the fader's dead top half
+
+Two separate volume bugs, both now fixed. Neither was iOS-only in cause, though
+only one showed up on iOS.
+
+### Fixed: the app was quiet until you touched the mic
+v0.81.10 set `.playback` at launch, which is the right category — but **iOS does
+not apply a category until the session is ACTIVE**, and it does not activate one
+until something needs audio. WKWebView gets there first and activates the session
+with *its* defaults. So the first sounds of a session played under WebKit's
+config, not ours; only touching the mic ran the plugin and made it stick.
+
+- Both plugin methods now call `setActive(true)`.
+- `getAudio()` asserts the session when the shared AudioContext is first created —
+  before the first note, rather than after the first mic tap.
+- It asserts the category matching the **current mic state**: `releaseAudioMode()`
+  (`.playback`) when the mic is off, `assertAudioMode()` (`.playAndRecord`) when
+  it is live. Calling the latter unconditionally would have claimed the microphone
+  for nothing and dragged the app back into the attenuated category it is trying
+  to escape.
+
+This is **not** the launch-time `setActive(true)` removed in v0.81.3. That one
+claimed the audio hardware from app open, before any user action, for a session
+nobody was using. This runs on demand, after a gesture.
+
+### Fixed: the master fader's top half did nothing
+At 100% a typical chain computes `0.8 × 0.9 = 0.72`, and the limiter threshold is
+`-3 dB` (≈0.708) — the signal **sits on the threshold at normal volume**. That is
+where it should sit; it is what all the clipping and chord-pumping work converged
+on, and it is not being touched.
+
+But it means the fader's upper half was dead. At 200% the gain becomes 1.44 —
+about 6 dB over the threshold, into a 20:1 ratio. The limiter handed back roughly
+**a third of a decibel**. The fader raised the gain and the limiter immediately
+took it away, so "louder" only ever meant "more compressed".
+
+- **Above 100%, the limiter ceiling now rises with the gain**
+  (`threshold = -3 + 20·log₁₀(scale)`, capped at 0 dBFS), so the added gain passes
+  instead of being squashed.
+- **At and below 100% the threshold is exactly the -3 dB it has always been.**
+  Identical maths, identical sound, none of the existing tuning disturbed. Only
+  the currently-dead range changes.
+- Limiters are now registered alongside their gain nodes, because chains are
+  cached and reused — without this, a limiter built at 100% would keep its old
+  ceiling forever and the fader would move the gain into a fixed wall.
+
+### And then: gain alone cannot reach 200%
+Raising the ceiling helped, but exposed the real wall. **Digital audio stops at
+1.0.** At 100% a chain sits at 0.72; a gain of 1.0 — reached around **139%** — is
+the format's hard maximum. 200% asks for 1.44, which is 44% more than exists. No
+threshold, no fader, no code can produce it; ask anyway and the peaks get sliced
+flat, which the ear hears as buzz rather than volume.
+
+So above 100%, the compressor **morphs from limiter into loudness processor.**
+
+The ear judges loudness by *average* energy, not peak. A signal that touches 1.0
+once and sits at 0.2 sounds quiet; one that never exceeds 0.9 but *lives* at 0.7
+sounds far louder. So rather than push the peaks up (impossible), pull the quiet
+parts up: compress harder, then make up the gain. Average level climbs toward the
+ceiling without crossing it. This is what mastering does, and it is why modern
+records sound loud on phone speakers.
+
+| fader | gain | threshold | ratio | makeup | |
+|---|---|---|---|---|---|
+| **≤100%** | 0.72 | **-3 dB** | **20:1** | **1.00×** | **pure limiter — untouched** |
+| 120% | 0.86 | -6 dB | 16.8:1 | 1.71× | loudness 19% |
+| 139% | **1.00** | -8.8 dB | 13.8:1 | 2.29× | gain hits full scale |
+| 175% | 1.00 | -14.2 dB | 8:1 | 3.74× | loudness 75% |
+| 200% | 1.00 | **-18 dB** | **4:1** | **4.22×** | full loudness mode |
+
+**At and below 100% the chain is electrically identical to what it always was.**
+Same gain, same threshold, same ratio, unity makeup. Every hour of clipping and
+chord-pumping work is untouched, and anyone who never moves the fader never
+encounters any of this.
+
+The price above 100% is dynamic range: a piano's decay flattens, attack and tail
+move closer. For a metronome click that is ideal. For a sampled instrument you are
+listening to musically, it costs life. **The user chooses** — which is the point.
+
+All sixteen manually-created master gains (drums, theremin, Road Trip) were also
+switched to the capped scale, so they cannot be driven past full scale either.
+
+### Known gap
+Five hand-rolled limiter chains (Road Trip, drum kit) build their own compressors
+outside `buildLimiterChain` and connect straight to the destination. Their gains
+are now capped so they will not clip, but they receive **no loudness processing** —
+at 200% they will be full-scale-but-not-louder while the main surfaces get the
+boost. Scoped follow-up, not a mystery.
+
 ## v0.81.10 — black screen: the storyboard needs the module
 
 v0.81.9 built green and launched to a **black screen**. Nothing loaded.
