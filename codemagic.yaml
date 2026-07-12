@@ -8,6 +8,9 @@ workflows:
       app_store_connect: Intonare ASC Key
 
     environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.lieutenantdan.intonare
       vars:
         BUNDLE_ID: "com.lieutenantdan.intonare"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
@@ -93,29 +96,16 @@ workflows:
       - name: Set up code signing
         script: |
           set -e
-
-          echo "=== BUNDLE_ID is: $BUNDLE_ID ==="
-
-          # Create the keychain the certificate will live in.
-          keychain initialize
-
-          # Fetch the distribution certificate and provisioning profile from
-          # Apple. --create makes them if they do not exist yet, which is the
-          # case on a first-ever iOS build.
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
-
-          echo "=== fetched profiles ==="
-          ls -la $HOME/Library/MobileDevice/Provisioning\ Profiles/ || true
-          echo "=== fetched certificates ==="
-          ls -la $HOME/Library/MobileDevice/Certificates/ || true
-
-          # Import the fetched certificate into the keychain.
-          keychain add-certificates
-
-          # Point the Xcode project at the fetched profile.
-          xcode-project use-profiles --project "$CM_BUILD_DIR/$XCODE_PROJECT"
+          # The ios_signing block has already fetched the certificate and
+          # provisioning profile into the keychain. This just writes the
+          # signing settings into the Xcode project.
+          # testFlightInternalTestingOnly keeps this build out of Apple's Beta
+          # App Review queue. Internal testers only; cannot be promoted to
+          # external testing later. That is what we want while _iosBetaUnlock()
+          # is still granting Pro without StoreKit.
+          xcode-project use-profiles \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --custom-export-options='{"testFlightInternalTestingOnly": true}'
 
       - name: Build ipa
         script: |
