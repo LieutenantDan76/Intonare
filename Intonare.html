@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.19 -->
+<!-- INTONARE_VERSION: 0.81.20 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -12,9 +12,21 @@
    explicitly. Safari only honours it from 17.4, so the font-family fallback does
    the same job on older WebKit: name a font that has the glyph but no emoji
    table, and the emoji font never gets a chance to claim it. */
+/* U+25B6 renders as a COLOUR EMOJI on iOS and a plain glyph on Android.
+   font-variant-emoji:text is the correct modern answer, but Safari only honours it
+   from 17.4 — so on anything older it does nothing at all, which is what happened.
+   The variation selector is the fix that actually works everywhere: appending
+   U+FE0E to the character explicitly requests TEXT presentation, and it has been
+   honoured since forever. Applied via ::before so no button markup changes and the
+   i18n strings stay clean. */
 button, .metro-play, .tc-start-btn, .rc-play-btn, .chord-play-btn,
-.prog-play-btn, .pto-riff-trigger, .rc-test-btn, .prog-metro-play-btn {
+.prog-play-btn, .pto-riff-trigger, .rc-test-btn, .prog-metro-play-btn,
+.gss-play-btn, .gcc-play-btn {
   font-variant-emoji: text;
+  /* Name a font stack that HAS the glyph but no emoji table, so the system emoji
+     font never gets a chance to claim it. The app's own faces come first, so
+     nothing else about the button's type changes. */
+  font-family: 'JetBrains Mono', 'Fraunces', -apple-system, 'Helvetica Neue', Arial, sans-serif;
 }
 html,body{background:#000000!important;transition:none!important}
   /* ─── PM STREAK BLOCK ─── */
@@ -17722,7 +17734,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
                 <span class="np-title"></span>
               </div>
             </div>
-            <button class="pto-riff-trigger" onclick="riffOpenPopup('organ')" data-i18n="riff_songs">▶ SONGS</button>
+            <button class="pto-riff-trigger" onclick="riffOpenPopup('organ')" data-i18n="riff_songs">▶︎ SONGS</button>
           </div>
         </div>
       </div>
@@ -17774,7 +17786,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             <div class="piano-oct-label" id="pianoOctLabel">OCT 4–5</div>
             <div class="piano-oct-range" id="pianoOctRange">C4 — B5</div>
           </div>
-          <button class="piano-oct-btn" id="pianoOctUp" onclick="shiftPianoOctave(1)">▶</button>
+          <button class="piano-oct-btn" id="pianoOctUp" onclick="shiftPianoOctave(1)">▶︎</button>
         </div>
         <div class="pss-keyboard-wrap">
           <svg class="pss-keyboard-svg" id="pianoCardSvg" style="max-width:100%"></svg>
@@ -17800,7 +17812,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
               <span class="np-title"></span>
             </div>
           </div>
-          <button class="pto-riff-trigger" onclick="riffOpenPopup('piano')" data-i18n="riff_songs">▶ SONGS</button>
+          <button class="pto-riff-trigger" onclick="riffOpenPopup('piano')" data-i18n="riff_songs">▶︎ SONGS</button>
         </div>
 
         <!-- Tone picker (now below the now-playing bar to match organ/rhodes) -->
@@ -17861,7 +17873,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
                 <div class="piano-oct-label" id="rhodesOctLabel">OCT 4–5</div>
                 <div class="piano-oct-range" id="rhodesOctRange">C4 — B5</div>
               </div>
-              <button class="piano-oct-btn" id="rhodesOctUp" onclick="shiftRhodesOctave(1)">▶</button>
+              <button class="piano-oct-btn" id="rhodesOctUp" onclick="shiftRhodesOctave(1)">▶︎</button>
             </div>
             <!-- Red felt sits flush directly above keys -->
             <div class="rhodes-felt-bar"></div>
@@ -17884,7 +17896,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
                   <span class="np-title"></span>
                 </div>
               </div>
-              <button class="pto-riff-trigger" onclick="riffOpenPopup('rhodes')" data-i18n="riff_songs">▶ SONGS</button>
+              <button class="pto-riff-trigger" onclick="riffOpenPopup('rhodes')" data-i18n="riff_songs">▶︎ SONGS</button>
             </div>
             <div class="teach-hint" data-i18n-html="hint_rhodes_keys">Tap keys to play. SOFT tremolo is classic Stage Rhodes. DEEP adds heavy wobble. BRIGHT adds tine clang.</div>
           </div>
@@ -17939,7 +17951,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div id="tcScaleChrome"></div>
         <div id="tcNoteGrid"></div>
         <div id="tcOctRow"></div>
-        <button id="tcToggleBtn" onclick="tcToggleDrone()">▶ START DRONE</button>
+        <button id="tcToggleBtn" onclick="tcToggleDrone()">▶︎ START DRONE</button>
       </div>
 
       <!-- Main CRT screen -->
@@ -18019,7 +18031,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
       </div>
 
-      <button class="tc-start-btn" id="tcStartBtn" onclick="tcToggleDrone()" data-i18n="drone_start">▶ START DRONE</button>
+      <button class="tc-start-btn" id="tcStartBtn" onclick="tcToggleDrone()" data-i18n="drone_start">▶︎ START DRONE</button>
 
       <div class="tc-temp-strip">
         <div class="tc-strip-lab-row">
@@ -18202,7 +18214,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           <span class="rc-cat-btn-lbl" id="rcCatBtnLbl">ALL</span>
           <span class="rc-cat-btn-caret">▾</span>
         </button>
-        <button class="rc-test-btn" onclick="rctStart()" data-i18n="rc_test_btn">▶ TEST</button>
+        <button class="rc-test-btn" onclick="rctStart()" data-i18n="rc_test_btn">▶︎ TEST</button>
       </div>
       <!-- category popover -->
       <div class="rc-cat-sheet hidden" id="rcCatSheet">
@@ -18225,7 +18237,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       <!-- transport -->
       <div class="rc-transport">
         <button class="rc-nav-btn" onclick="rcPrev()" aria-label="Previous card">‹</button>
-        <button class="rc-play-btn" id="rcPlayBtn" onclick="rcPlay()">▶ PLAY</button>
+        <button class="rc-play-btn" id="rcPlayBtn" onclick="rcPlay()">▶︎ PLAY</button>
         <button class="rc-nav-btn" onclick="rcNext()" aria-label="Next card">›</button>
       </div>
       <div class="rc-pos" id="rcPos">0 / 0</div>
@@ -18289,7 +18301,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           </div>
           <div class="rct-breakdown" id="rctBreakdown"></div>
           <div class="rct-results-actions">
-            <button class="rc-test-btn" onclick="rctRetry()" data-i18n="rc_test_retry">▶ AGAIN</button>
+            <button class="rc-test-btn" onclick="rctRetry()" data-i18n="rc_test_retry">▶︎ AGAIN</button>
             <button class="rc-toggle" onclick="rctExit()" data-i18n="rc_test_exit">DONE</button>
           </div>
           <button class="rcd-drill-btn" id="rcdDrillBtn" onclick="rcdStart()" data-i18n="rcd_drill_btn">◎ DRILL YOUR MISSES</button>
@@ -18463,7 +18475,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           <div id="chordQualityGroups"></div>
         </div>
         <div class="chord-actions">
-          <button class="chord-play-btn" id="cpPlayBtn" onclick="chordPlayerPlay()" data-i18n="btn_play">▶ PLAY</button>
+          <button class="chord-play-btn" id="cpPlayBtn" onclick="chordPlayerPlay()" data-i18n="btn_play">▶︎ PLAY</button>
           <button class="chord-arp-btn"  id="cpArpBtn"  onclick="chordToggleArp()" data-i18n="btn_arp">ARP</button>
         </div>
         <div class="chord-display">
@@ -18492,7 +18504,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           <div class="chord-builder-grid" id="chordBuilderGrid"></div>
         </div>
         <div class="chord-actions">
-          <button class="chord-play-btn" id="cbPlayBtn" onclick="chordBuilderPlay()" data-i18n="btn_play">▶ PLAY</button>
+          <button class="chord-play-btn" id="cbPlayBtn" onclick="chordBuilderPlay()" data-i18n="btn_play">▶︎ PLAY</button>
           <button class="chord-arp-btn"  id="cbArpBtn"  onclick="chordToggleArp()" data-i18n="btn_arp">ARP</button>
           <button class="chord-arp-btn"  onclick="chordBuilderUndo()">⌫</button>
           <button class="chord-arp-btn"  onclick="chordBuilderClear()" data-i18n="btn_clr">CLR</button>
@@ -18545,7 +18557,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
       <!-- Transport strip -->
       <div class="prog-transport-strip">
-        <button class="prog-play-btn" id="progPlayBtn" onclick="progTogglePlay()" data-i18n="btn_play">▶ PLAY</button>
+        <button class="prog-play-btn" id="progPlayBtn" onclick="progTogglePlay()" data-i18n="btn_play">▶︎ PLAY</button>
         <button class="prog-loop-btn active" id="progLoopBtn" onclick="progToggleLoop()">⟳</button>
         <button class="prog-timesig-btn" id="progTimeSigBtn" onclick="progCycleTimeSig()">4/4</button>
         <div class="prog-bpm-pill" id="progBpmDisplay" onclick="progOpenSyncTray()">
@@ -18654,7 +18666,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
               <div class="prog-metro-bpm-name" id="progDrawerBpmName">Allegro</div>
             </div>
             <button class="prog-metro-bpm-adj" onclick="adjBPM(1)">+</button>
-            <button class="prog-metro-play-btn" id="progMetroPlayBtn" onclick="progDrawerMetroToggle()" data-i18n="btn_play_metro">▶ METRO</button>
+            <button class="prog-metro-play-btn" id="progMetroPlayBtn" onclick="progDrawerMetroToggle()" data-i18n="btn_play_metro">▶︎ METRO</button>
           </div>
           <div class="bpm-slider-row" data-no-toggle style="margin-bottom:14px">
             <span style="font-size:9px;color:var(--muted);min-width:24px">30</span>
@@ -18683,7 +18695,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
               <div class="prog-metro-bpm-name" id="progDkDrawerBpmName">Allegro</div>
             </div>
             <button class="prog-metro-bpm-adj" onclick="progDkAdjBpm(1)">+</button>
-            <button class="prog-metro-play-btn" id="progDkPlayBtn" onclick="progDkToggle()" data-i18n="btn_play_kit">▶ KIT</button>
+            <button class="prog-metro-play-btn" id="progDkPlayBtn" onclick="progDkToggle()" data-i18n="btn_play_kit">▶︎ KIT</button>
           </div>
           <div class="bpm-slider-row" data-no-toggle style="margin-bottom:14px">
             <span style="font-size:9px;color:var(--muted);min-width:24px">30</span>
@@ -18719,7 +18731,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="cof-scale-row" id="cofScaleRow" style="display:none">
           <div class="cof-scale-pills" id="cofScalePills"></div>
           <button class="cof-scale-play" id="cofScalePlayBtn" onclick="cofPlayScale()">
-            <span id="cofScalePlayIcon">▶</span> <span data-i18n="cof_play_scale">PLAY SCALE</span>
+            <span id="cofScalePlayIcon">▶︎</span> <span data-i18n="cof_play_scale">PLAY SCALE</span>
           </button>
         </div>
         <div class="teach-hint" data-i18n-html="hint_cof_outer">Outer ring is the major keys, inner ring the relative minors. Adjacent keys share 6 of their 7 notes, so the closer two keys sit, the more related they are.</div>
@@ -18748,7 +18760,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
         <div class="ivr-controls">
           <button class="ivr-nav" id="ivrPrev" onclick="ivrFlip(-1)" aria-label="Previous interval">‹</button>
-          <button class="ivr-play" id="ivrPlay" onclick="ivrPlay()"><span id="ivrPlayIcon">▶</span> <span data-i18n="ivref_hear">HEAR IT</span></button>
+          <button class="ivr-play" id="ivrPlay" onclick="ivrPlay()"><span id="ivrPlayIcon">▶︎</span> <span data-i18n="ivref_hear">HEAR IT</span></button>
           <button class="ivr-nav" id="ivrNext" onclick="ivrFlip(1)" aria-label="Next interval">›</button>
         </div>
         <div class="ivr-pos" id="ivrPos"></div>
@@ -18883,7 +18895,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
         <div style="display:flex;gap:8px;">
           <button class="iv-btn" onclick="vrSkipWarmup()" style="flex:1" data-i18n="vr_skip_all">Skip All</button>
-          <button class="iv-btn primary" onclick="vrBeginWarmup()" style="flex:2;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3);" data-i18n="vr_start_warmup">▶ Start Warmup</button>
+          <button class="iv-btn primary" onclick="vrBeginWarmup()" style="flex:2;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3);" data-i18n="vr_start_warmup">▶︎ Start Warmup</button>
         </div>
       </div>
 
@@ -19198,7 +19210,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             </div>
             <div id="trpPitchToggleRow" style="display:none"></div>
             <div class="cs-trumpet-fingering-text" id="trpCardFingering" style="font-size:13px;letter-spacing:2px"></div>
-            <button class="gss-play-btn" id="trpPlayBtn" style="width:100%;margin-top:4px" onclick="trpPlayCardNote()" data-i18n="trp_play_note">▶ PLAY NOTE</button>
+            <button class="gss-play-btn" id="trpPlayBtn" style="width:100%;margin-top:4px" onclick="trpPlayCardNote()" data-i18n="trp_play_note">▶︎ PLAY NOTE</button>
             <div id="wwAltNav" style="display:none"></div>
             <div id="tbnAltNav" style="display:none"></div>
             <div id="trpCardEmbouchure" style="font-family:'Fraunces',serif;font-style:italic;font-size:11px;color:var(--text-dim);text-align:center;max-width:220px;line-height:1.4;min-height:78px;display:flex;align-items:center;justify-content:center"></div>
@@ -19236,7 +19248,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
                 <div class="gcc-voicing-counter" id="fluteTrillCounter"></div>
                 <div class="gcc-voicing-dots" id="fluteTrillDots"></div>
               </div>
-              <button class="gss-play-btn" id="fluteTrillPlayBtn" style="width:100%" onclick="fluteTrillTogglePlay()" data-i18n="ww_trill_play">▶ PLAY TRILL</button>
+              <button class="gss-play-btn" id="fluteTrillPlayBtn" style="width:100%" onclick="fluteTrillTogglePlay()" data-i18n="ww_trill_play">▶︎ PLAY TRILL</button>
               <div class="gss-speed-row" style="width:100%">
                 <span class="gss-speed-label" data-i18n="gtool_slow">SLOW</span>
                 <input type="range" class="gss-speed-slider" id="fluteTrillSpeed" min="1" max="10" value="6" oninput="fluteTrillSetSpeed(this.value)">
@@ -19296,7 +19308,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           </div>
         </div>
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
-        <button class="gss-play-btn" id="gccStrumBtn" style="width:100%" onclick="gccPlayChord()" data-i18n="gcc_strum">▶ STRUM CHORD</button>
+        <button class="gss-play-btn" id="gccStrumBtn" style="width:100%" onclick="gccPlayChord()" data-i18n="gcc_strum">▶︎ STRUM CHORD</button>
         <!-- Banjo roll section — compact, shown only when banjo active -->
         <div id="banjoSection" class="hidden">
           <div style="height:1px;background:var(--border-soft);margin:10px -14px 10px"></div>
@@ -19381,15 +19393,15 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             <div class="cs-trumpet-nav">
               <button class="cs-trumpet-nav-btn" onclick="trpNav(-1)">◀</button>
               <div class="cs-trumpet-pos" id="trpPos">1 / 8</div>
-              <button class="cs-trumpet-nav-btn" onclick="trpNav(1)">▶</button>
+              <button class="cs-trumpet-nav-btn" onclick="trpNav(1)">▶︎</button>
             </div>
             <div class="cs-trumpet-strip" id="trpStrip"></div>
           </div>
           <!-- Shared play controls (both views) -->
           <div style="height:1px;background:var(--border-soft);margin:12px -14px 10px"></div>
           <div style="display:flex;gap:6px;margin-bottom:8px">
-            <button class="pss-interval-btn" id="trpDirBtn" onclick="trpToggleDirection()" style="min-width:44px;font-size:16px" title="Toggle ascending/descending">▶</button>
-            <button class="gss-play-btn" id="trpPlayBtn" style="flex:1" onclick="trpPlay()" data-i18n="gtool_play_asc">▶ PLAY ASCENDING</button>
+            <button class="pss-interval-btn" id="trpDirBtn" onclick="trpToggleDirection()" style="min-width:44px;font-size:16px" title="Toggle ascending/descending">▶︎</button>
+            <button class="gss-play-btn" id="trpPlayBtn" style="flex:1" onclick="trpPlay()" data-i18n="gtool_play_asc">▶︎ PLAY ASCENDING</button>
           </div>
           <div class="gss-speed-row">
             <span class="gss-speed-label" data-i18n="cs_speed_slow">SLOW</span>
@@ -19419,7 +19431,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             <div class="gcc-voicing-dots" id="gssDots"></div>
           </div>
           <div class="gss-notes-row" id="gssNotesPills" style="margin-top:6px"></div>
-          <div class="gcc-play-hint" id="gssPlayHint" data-i18n="gss_play_hint">▶ toggles ascending / descending · tap a dot to hear</div>
+          <div class="gcc-play-hint" id="gssPlayHint" data-i18n="gss_play_hint">▶︎ toggles ascending / descending · tap a dot to hear</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px">
             <button class="pss-interval-btn" id="gssOctBtn" onclick="gssToggleOctaves()" data-i18n="gtool_2oct">2 OCT</button>
             <button class="pss-interval-btn" id="gssNoteNamesBtn" onclick="gssToggleNoteNames()" data-i18n="gtool_fingering">FINGERING</button>
@@ -19427,8 +19439,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
-          <button class="pss-interval-btn" id="gssDirBtn" onclick="gssToggleDirection()" style="min-width:44px;font-size:16px" title="Toggle ascending/descending">▶</button>
-          <button class="gss-play-btn" id="gssPlayBtn" style="flex:1" onclick="gssPlay()" data-i18n="gtool_play_asc">▶ PLAY ASCENDING</button>
+          <button class="pss-interval-btn" id="gssDirBtn" onclick="gssToggleDirection()" style="min-width:44px;font-size:16px" title="Toggle ascending/descending">▶︎</button>
+          <button class="gss-play-btn" id="gssPlayBtn" style="flex:1" onclick="gssPlay()" data-i18n="gtool_play_asc">▶︎ PLAY ASCENDING</button>
         </div>
         <div class="gss-speed-row">
           <span class="gss-speed-label" data-i18n="gtool_slow">SLOW</span>
@@ -19486,7 +19498,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           <button class="pss-interval-btn" id="pccOctBtn" onclick="pccToggleOctaves()" data-i18n="gtool_2oct">2 OCT</button>
         </div>
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
-        <button class="gss-play-btn" style="width:100%" onclick="pccPlay()" data-i18n="gcc_play_chord">▶ PLAY CHORD</button>
+        <button class="gss-play-btn" style="width:100%" onclick="pccPlay()" data-i18n="gcc_play_chord">▶︎ PLAY CHORD</button>
       </div>
       <div class="card warm">
         <div class="card-glow"></div>
@@ -19517,7 +19529,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           <div class="kbd-range-note hidden" id="pssRangeNote"></div>
         </div>
         <div class="gss-notes-row" id="pssNotesPills" style="margin-top:10px;width:100%;max-width:none"></div>
-        <div class="gcc-play-hint" id="pssPlayHint" style="margin-top:6px" data-i18n="pss_play_hint">▶ toggles ascending / descending · tap keys to hear</div>
+        <div class="gcc-play-hint" id="pssPlayHint" style="margin-top:6px" data-i18n="pss_play_hint">▶︎ toggles ascending / descending · tap keys to hear</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px">
           <button class="pss-interval-btn" id="pssIntBtn" onclick="pssToggleIntervals()" data-i18n="gtool_intervals">INTERVALS</button>
           <button class="pss-interval-btn" id="pssFingBtn" onclick="pssToggleFingering()" data-i18n="gtool_fingering">FINGERING</button>
@@ -19525,9 +19537,9 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
-          <button class="pss-interval-btn" id="pssDirBtn" onclick="pssToggleDirection()" style="min-width:44px;font-size:16px" title="Toggle ascending/descending">▶</button>
+          <button class="pss-interval-btn" id="pssDirBtn" onclick="pssToggleDirection()" style="min-width:44px;font-size:16px" title="Toggle ascending/descending">▶︎</button>
           <button class="pss-interval-btn" id="pssHandBtn" onclick="pssToggleHand()" style="min-width:44px" title="Toggle left/right hand fingering" data-i18n="gtool_rh">RH</button>
-          <button class="gss-play-btn" id="pssPlayBtn" style="flex:1" onclick="pssPlay()" data-i18n="gtool_play_asc">▶ PLAY ASCENDING</button>
+          <button class="gss-play-btn" id="pssPlayBtn" style="flex:1" onclick="pssPlay()" data-i18n="gtool_play_asc">▶︎ PLAY ASCENDING</button>
         </div>
         <div class="gss-speed-row">
           <span class="gss-speed-label" data-i18n="gtool_slow">SLOW</span>
@@ -19577,7 +19589,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="gss-notes-row" id="hpChordPills" style="margin-top:10px;width:100%;max-width:none"></div>
         <div class="gcc-play-hint" style="margin-top:6px" data-i18n="gcc_fret_hint">Root orange · chord tones lit · tap strings to hear</div>
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
-        <button class="gss-play-btn" id="hpPlayChordBtn" style="width:100%" onclick="hpPlayChord()" data-i18n="gcc_play_chord">▶ PLAY CHORD</button>
+        <button class="gss-play-btn" id="hpPlayChordBtn" style="width:100%" onclick="hpPlayChord()" data-i18n="gcc_play_chord">▶︎ PLAY CHORD</button>
       </div>
       <div class="card warm">
         <div class="card-glow"></div>
@@ -19613,11 +19625,11 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           </div>
         </div>
         <div class="gss-notes-row" id="hpScalePills" style="margin-top:10px;width:100%;max-width:none"></div>
-        <div class="gcc-play-hint" style="margin-top:6px" data-i18n="gss_fret_hint">▶ toggles ascending / descending · tap strings to hear</div>
+        <div class="gcc-play-hint" style="margin-top:6px" data-i18n="gss_fret_hint">▶︎ toggles ascending / descending · tap strings to hear</div>
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
-          <button class="pss-interval-btn" id="hpDirBtn" onclick="hpToggleDirection()" style="min-width:44px;font-size:16px" title="Toggle ascending/descending">▶</button>
-          <button class="gss-play-btn" id="hpPlayBtn" style="flex:1" onclick="hpPlayScale()">▶ PLAY ASCENDING</button>
+          <button class="pss-interval-btn" id="hpDirBtn" onclick="hpToggleDirection()" style="min-width:44px;font-size:16px" title="Toggle ascending/descending">▶︎</button>
+          <button class="gss-play-btn" id="hpPlayBtn" style="flex:1" onclick="hpPlayScale()">▶︎ PLAY ASCENDING</button>
         </div>
         <div class="gss-speed-row">
           <span class="gss-speed-label" data-i18n="gtool_slow">SLOW</span>
@@ -19720,8 +19732,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
         <!-- Play buttons: notes plays single, dstops plays simultaneous -->
-        <button class="gss-play-btn" id="bowedNotePlayBtn" style="width:100%;display:none" onclick="bowedNotePlayCurrent()">▶ PLAY NOTE</button>
-        <button class="gss-play-btn" id="bowedDsPlayBtn"   style="width:100%;display:none" onclick="bowedDsPlayCurrent()">▶ PLAY DOUBLE STOP</button>
+        <button class="gss-play-btn" id="bowedNotePlayBtn" style="width:100%;display:none" onclick="bowedNotePlayCurrent()">▶︎ PLAY NOTE</button>
+        <button class="gss-play-btn" id="bowedDsPlayBtn"   style="width:100%;display:none" onclick="bowedDsPlayCurrent()">▶︎ PLAY DOUBLE STOP</button>
       </div>
       <!-- Picker card -->
       <div class="card warm">
@@ -19766,8 +19778,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
-          <button class="pss-interval-btn" id="bowedScaleDirBtn" onclick="bowedScaleToggleDir()" style="min-width:44px;font-size:16px">▶</button>
-          <button class="gss-play-btn" id="bowedScalePlayBtn" style="flex:1" onclick="bowedScalePlay()">▶ PLAY ASCENDING</button>
+          <button class="pss-interval-btn" id="bowedScaleDirBtn" onclick="bowedScaleToggleDir()" style="min-width:44px;font-size:16px">▶︎</button>
+          <button class="gss-play-btn" id="bowedScalePlayBtn" style="flex:1" onclick="bowedScalePlay()">▶︎ PLAY ASCENDING</button>
         </div>
         <div class="gss-speed-row">
           <span class="gss-speed-label" data-i18n="gtool_slow">SLOW</span>
@@ -19801,7 +19813,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       <div class="cs-trumpet-nav">
         <button class="cs-trumpet-nav-btn" onclick="trpNav(-1)">◀</button>
         <div class="cs-trumpet-pos" id="trpPos">1 / 8</div>
-        <button class="cs-trumpet-nav-btn" onclick="trpNav(1)">▶</button>
+        <button class="cs-trumpet-nav-btn" onclick="trpNav(1)">▶︎</button>
       </div>
       <!-- Scale degree strip -->
       <div class="cs-trumpet-strip" id="trpStrip"></div>
@@ -19976,7 +19988,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       <!-- Slider hidden — wheel replaces it; element kept for setBPM references -->
       <input type="range" class="bpm-slider" id="bpmSlider" min="30" max="300" value="120" oninput="setBPM(this.value)" style="display:none">
       <div class="metro-actions">
-        <button class="metro-play" id="metroPlay" onclick="toggleMetroOrRamp()" data-i18n="btn_start">▶ START</button>
+        <button class="metro-play" id="metroPlay" onclick="toggleMetroOrRamp()" data-i18n="btn_start">▶︎ START</button>
 
         <button class="tap-btn" id="tapBtn" onclick="tapTempo()">
           <div data-i18n="metro_tap">TAP</div>
@@ -20118,7 +20130,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             <div class="ramp-bpm-label" data-i18n="metro_ramp_from">FROM</div>
             <div class="ramp-bpm-val-row">
               <div class="ramp-bpm-val" id="rampFromVal">80</div>
-              <button class="ramp-preview-btn" id="rampPreviewFrom" onclick="previewRampBpm('from')" title="Preview">▶</button>
+              <button class="ramp-preview-btn" id="rampPreviewFrom" onclick="previewRampBpm('from')" title="Preview">▶︎</button>
             </div>
             <div class="ramp-adj-row">
               <button class="ramp-adj" onclick="adjRampFrom(-5)">−5</button>
@@ -20132,7 +20144,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             <div class="ramp-bpm-label" data-i18n="metro_ramp_to">TO</div>
             <div class="ramp-bpm-val-row">
               <div class="ramp-bpm-val" id="rampToVal">120</div>
-              <button class="ramp-preview-btn" id="rampPreviewTo" onclick="previewRampBpm('to')" title="Preview">▶</button>
+              <button class="ramp-preview-btn" id="rampPreviewTo" onclick="previewRampBpm('to')" title="Preview">▶︎</button>
             </div>
             <div class="ramp-adj-row">
               <button class="ramp-adj" onclick="adjRampTo(-5)">−5</button>
@@ -20509,7 +20521,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
 
         <div class="iv-controls">
-          <button class="iv-btn primary" id="ivNextBtn" onclick="ivNext()" data-i18n="iv_play">▶ PLAY</button>
+          <button class="iv-btn primary" id="ivNextBtn" onclick="ivNext()" data-i18n="iv_play">▶︎ PLAY</button>
           <button class="iv-btn" id="ivReplayBtn" onclick="ivReplay()" data-i18n="iv_hear_again">↻ HEAR AGAIN</button>
         </div>
 
@@ -20711,7 +20723,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           <div class="drone-oct-row" id="droneOctRow"></div>
         </div>
         <div class="iv-controls">
-          <button class="iv-btn primary" id="droneToggleBtn" onclick="toggleDronePlay()" style="background:var(--grad-warm);box-shadow:0 4px 14px rgba(255,160,122,0.3)" data-i18n="drone_start">▶ START DRONE</button>
+          <button class="iv-btn primary" id="droneToggleBtn" onclick="toggleDronePlay()" style="background:var(--grad-warm);box-shadow:0 4px 14px rgba(255,160,122,0.3)" data-i18n="drone_start">▶︎ START DRONE</button>
         </div>
         <div class="ref-controls">
           <div class="vol-slider-row">
@@ -20787,7 +20799,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="iv-controls" style="margin-top:12px" onclick="event.stopPropagation()">
           <button class="tg-auto-pill" id="tlAutoPill" onclick="tlToggleAuto()">AUTO <span class="tg-auto-dot">◆</span></button>
           <button class="tg-auto-pill tl-new-btn" id="tlRandomBtn" onclick="tlNewTempo()" data-i18n="tl_new">↯ NEW</button>
-          <button class="iv-btn primary" id="tlGoBtn" onclick="tlToggle()" style="background:linear-gradient(135deg,var(--accent-soft),var(--accent));box-shadow:0 4px 14px rgba(184,163,255,0.3)" data-i18n="btn_start">▶ START</button>
+          <button class="iv-btn primary" id="tlGoBtn" onclick="tlToggle()" style="background:linear-gradient(135deg,var(--accent-soft),var(--accent));box-shadow:0 4px 14px rgba(184,163,255,0.3)" data-i18n="btn_start">▶︎ START</button>
         </div>
 
         <!-- Pattern / Meter popup buttons -->
@@ -20881,7 +20893,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="iv-controls" style="margin-top:12px">
           <button class="tg-auto-pill" id="tgAutoPill" onclick="tgToggleAuto()">AUTO <span class="tg-auto-dot">◆</span></button>
           <button class="iv-btn" id="tgReplayBtn" onclick="tgReplay()" disabled data-i18n="tg_again">↻ AGAIN</button>
-          <button class="iv-btn primary" id="tgGoBtn" onclick="tgGoOrLock()" style="background:linear-gradient(135deg,var(--accent-soft),var(--accent));box-shadow:0 4px 14px rgba(184,163,255,0.3)" data-i18n="tg_play_tempo">▶ PLAY TEMPO</button>
+          <button class="iv-btn primary" id="tgGoBtn" onclick="tgGoOrLock()" style="background:linear-gradient(135deg,var(--accent-soft),var(--accent));box-shadow:0 4px 14px rgba(184,163,255,0.3)" data-i18n="tg_play_tempo">▶︎ PLAY TEMPO</button>
         </div>
 
         <!-- Click / Feel popup buttons -->
@@ -20961,7 +20973,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       </div>
 
       <!-- Shared START (listen + single-layer tap modes) -->
-      <button id="prGoBtn" onclick="prToggle()" class="pr-go-btn">▶ START</button>
+      <button id="prGoBtn" onclick="prToggle()" class="pr-go-btn">▶︎ START</button>
 
       <!-- LISTEN view -->
       <div class="pr-tab-view" id="prViewListen">
@@ -21249,7 +21261,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             <button class="rr-mode-btn active" id="rrModeListenBtn" onclick="rrSetMode('listen')" data-i18n-html="rr_mode_listen"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>LISTEN FIRST</button>
             <button class="rr-mode-btn" id="rrModeSightBtn" onclick="rrSetMode('sight')" data-i18n-html="rr_mode_sight"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>SIGHT READ</button>
           </div>
-          <button id="rrGoBtn" onclick="rrNew()" style="padding:9px 16px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent-soft),var(--accent));color:var(--bg-0);font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;flex-shrink:0;box-shadow:0 0 14px rgba(184,163,255,0.44);" data-i18n="rr_new_btn">▶ NEW</button>
+          <button id="rrGoBtn" onclick="rrNew()" style="padding:9px 16px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent-soft),var(--accent));color:var(--bg-0);font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;flex-shrink:0;box-shadow:0 0 14px rgba(184,163,255,0.44);" data-i18n="rr_new_btn">▶︎ NEW</button>
         </div>
 
         <!-- Stats — low priority, last before toolbar -->
@@ -21322,7 +21334,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
         <div class="iv-controls">
           <button class="iv-btn" id="ceReplayBtn" onclick="ceReplay()" data-i18n="iv_hear_again">↻ HEAR AGAIN</button>
-          <button class="iv-btn primary" id="ceNextBtn" onclick="ceNext()" data-i18n="iv_new_round">▶ NEW ROUND</button>
+          <button class="iv-btn primary" id="ceNextBtn" onclick="ceNext()" data-i18n="iv_new_round">▶︎ NEW ROUND</button>
         </div>
 
         <div class="ce-answer-grid-wrap" id="ceAnswerGridWrap">
@@ -21399,7 +21411,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
         <div class="iv-controls">
           <button class="iv-btn" id="ssReplayBtn" onclick="ssReplay()" disabled data-i18n="iv_hear_again">↻ HEAR AGAIN</button>
-          <button class="iv-btn primary" id="ssNextBtn" onclick="ssNext()" data-i18n="iv_new_round">▶ NEW ROUND</button>
+          <button class="iv-btn primary" id="ssNextBtn" onclick="ssNext()" data-i18n="iv_new_round">▶︎ NEW ROUND</button>
         </div>
 
         <div class="ss-mode-tabs" id="ssModeTabs"></div>
@@ -21474,7 +21486,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     <div class="piano-overlay-oct-nav" id="pianoFullOctNav">
       <button class="piano-oct-nav-btn" id="pianoFullOctDown" onclick="shiftPianoFullOctave(-1)">◀</button>
       <div class="piano-overlay-oct-label" id="pianoFullOctLabel">C3 — B4</div>
-      <button class="piano-oct-nav-btn" id="pianoFullOctUp" onclick="shiftPianoFullOctave(1)">▶</button>
+      <button class="piano-oct-nav-btn" id="pianoFullOctUp" onclick="shiftPianoFullOctave(1)">▶︎</button>
     </div>
   </div>
 
@@ -21507,7 +21519,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <span class="np-title"></span>
       </div>
     </div>
-    <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('piano')" title="Song bank" data-i18n="riff_songs">▶ SONGS</button>
+    <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('piano')" title="Song bank" data-i18n="riff_songs">▶︎ SONGS</button>
   </div>
 </div>
 
@@ -21710,7 +21722,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       </button>
       <button onclick="chordleNewGame(chordleDiff,chordleCustom)" title="New progression" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:transparent;border:1.5px solid var(--border);color:var(--text-dim);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1" onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">↺</button>
       <div style="flex:1"></div>
-      <button id="chordlePlayBtn" onclick="chordlePlay()" style="border-radius:100px;padding:0;font-size:17px;cursor:pointer;width:56px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;border-width:1.5px;border-style:solid;background:transparent">▶</button>
+      <button id="chordlePlayBtn" onclick="chordlePlay()" style="border-radius:100px;padding:0;font-size:17px;cursor:pointer;width:56px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;border-width:1.5px;border-style:solid;background:transparent">▶︎</button>
       <button id="chordleSubmitBtn" onclick="chordleSubmit()" style="width:88px;height:46px;border:none;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:2px;cursor:default;font-family:inherit;transition:all .2s;opacity:.35;background:var(--surface);color:var(--muted);flex-shrink:0" data-i18n="chordle_submit">SUBMIT</button>
     </div>
 
@@ -21797,7 +21809,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <span data-i18n="diadle_new">NEW</span>
       </button>
       <button id="diadlePlayBtn" onclick="diadlePlay()" title="replay melody" style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;height:46px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit;transition:all .2s;border-width:1.5px;border-style:solid;background:transparent">
-        <span id="diadlePlayIcon" style="font-size:13px;line-height:1">▶</span>
+        <span id="diadlePlayIcon" style="font-size:13px;line-height:1">▶︎</span>
         <span id="diadlePlayLabel" data-i18n="diadle_replay">REPLAY</span>
       </button>
     </div>
@@ -22234,7 +22246,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     <div class="ivpeek-name" id="ivPeekName">PERFECT 5TH</div>
     <div class="ivpeek-semi" id="ivPeekSemi"></div>
     <div class="ivpeek-blurb" id="ivPeekBlurb"></div>
-    <button class="ivr-play ivpeek-play" id="ivPeekPlay" onclick="ivPeekPlay()"><span id="ivPeekPlayIcon">▶</span> <span data-i18n="ivref_hear">HEAR IT</span></button>
+    <button class="ivr-play ivpeek-play" id="ivPeekPlay" onclick="ivPeekPlay()"><span id="ivPeekPlayIcon">▶︎</span> <span data-i18n="ivref_hear">HEAR IT</span></button>
     <button class="ivpeek-full" onclick="ivPeekOpenFull()" data-i18n="ivpeek_full">OPEN FULL REFERENCE →</button>
   </div>
 </div>
@@ -22457,7 +22469,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     </div>
 
     <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_audio_cues">Audio Cues</div>
-    <div style="font-size:10px;color:var(--muted);margin-bottom:10px" data-i18n="settings_audio_cues_hint">Tap cell to cycle · ▶ to replay</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:10px" data-i18n="settings_audio_cues_hint">Tap cell to cycle · ▶︎ to replay</div>
     <div id="cuePickerWrap"></div>
 
     <div class="sm-section-title sm-section-sub" style="margin-top:14px">Master Volume</div>
@@ -22599,7 +22611,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.19';
+const INTONARE_VERSION = '0.81.20';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22988,10 +23000,14 @@ function _getLoudnessAmount() {
   return Math.min(1, (scale - 1.0) / 1.0);
 }
 
-function _getLimiterThreshold() {
+// `base` lets the hand-rolled chains (Road Trip, drum kit, rhythm cards) keep their
+// own starting threshold of -6 dB rather than being flattened onto the shared -3.
+// At and below 100% every chain returns exactly the value it has always had.
+function _getLimiterThreshold(base) {
+  const b = (base == null) ? LIMITER_BASE_THRESHOLD : base;
   const k = _getLoudnessAmount();
-  if (k === 0) return LIMITER_BASE_THRESHOLD;   // unchanged, by design
-  return LIMITER_BASE_THRESHOLD + k * (LOUDNESS_MAX_THRESHOLD - LIMITER_BASE_THRESHOLD);
+  if (k === 0) return b;                        // unchanged, by design
+  return b + k * (LOUDNESS_MAX_THRESHOLD - b);
 }
 
 function _getLimiterRatio() {
@@ -23035,7 +23051,12 @@ const _masterGainRegistry = new Map();
 // Every limiter built by buildLimiterChain. Chains are cached and reused, so the
 // threshold has to be updated in place when the master volume moves; rebuilding
 // them would defeat the caching that stopped the compressor leak.
-const _masterLimiterRegistry = new Set();
+// limiter node → its OWN base threshold in dB. A Map, not a Set, because the chains
+// do not share a starting point: buildLimiterChain's limiters sit at -3 dB, while
+// the hand-rolled ones (Road Trip, drum kit, rhythm cards) sit at -6. Updating them
+// all to one shared value would retune the -6 chains at 100%, which is exactly the
+// clipping work we are not allowed to disturb.
+const _masterLimiterRegistry = new Map();
 const _masterMakeupRegistry  = new Set();
 
 // Blanket boost applied to every buildLimiterChain call site.
@@ -23104,9 +23125,10 @@ function buildLimiterChain(ctx, gainValue) {
   lim.connect(makeup);
   makeup.connect(ctx.destination);
   _masterGainRegistry.set(gain, base);  // register for live master-volume updates
-  _masterLimiterRegistry.add(lim);      // ditto for threshold + ratio; chains are
-                                        // cached, so without this a limiter built
-                                        // at 100% would keep its settings forever.
+  _masterLimiterRegistry.set(lim, LIMITER_BASE_THRESHOLD);  // ditto for threshold +
+                                        // ratio; chains are cached, so without this
+                                        // a limiter built at 100% keeps its settings
+                                        // forever.
   _masterMakeupRegistry.add(makeup);
   const chain = { gain, limiter: lim };
   if (cacheable) {
@@ -24627,7 +24649,7 @@ function buildStringGrid(instrument) {
       `<div class="string-note">${noteDisplay}</div>` +
       `<div class="string-info"><div class="string-freq">${shiftedF.toFixed(2)} Hz</div><div class="string-name-sub">${fullDisplay}</div></div>` +
       `<div class="string-diff" id="sd-${i}">—</div>` +
-      `<div class="string-play-icon">▶</div>`;
+      `<div class="string-play-icon">▶︎</div>`;
     row.onclick = () => playStringNote(i, shiftedF, shiftedN, instrument);
     grid.appendChild(row);
   });
@@ -25447,7 +25469,7 @@ function _initRhodesPedal() {
 }
 
 // Long-press the octave label to toggle a 1-octave (easier reach) vs 2-octave view.
-// Quick tap does nothing — the ◀/▶ arrows handle octave shifting.
+// Quick tap does nothing — the ◀/▶︎ arrows handle octave shifting.
 function initOctLongPress(indicatorId, getSingle, setSingleAndRebuild) {
   const el = document.getElementById(indicatorId);
   if (!el || el._octLpInit) return;
@@ -27520,8 +27542,11 @@ function micReviveLoop() {
 }
 function stopMic() {
   isListening = false;
-  _iosSyncAudioMode('mic stop');   // isListening is already false above, so this
-                                  // resolves to .playback: full volume, no mic claim
+  // The iOS session change happens AFTER the tracks are stopped, further down —
+  // not here. Asking iOS for .playback while the microphone track is still live
+  // means the category change is fighting an active capture: the record path is
+  // not released until the track actually stops, so the switch is slow and the
+  // app stays quiet for a beat. Waiting a moment "fixed" it, which was the clue.
   if (_nativeMicActive) _nativeMicStop();
   pitchHistStop();
   if (animFrame) cancelAnimationFrame(animFrame);
@@ -27532,6 +27557,9 @@ function stopMic() {
   if (analyser) { try { analyser.disconnect(); } catch(e) {} }
   if (micStream) micStream.getTracks().forEach(track => track.stop());
   micSource = analyser = micStream = _micHP = _micLP = null;
+  // NOW the capture is genuinely released, so iOS can hand the session back to
+  // .playback immediately instead of waiting for the track to let go.
+  _iosSyncAudioMode('mic stop');
   audioCtx = null;  // local alias; shared context keeps running
   smoothedFreq = 0;
   smoothedCents = 0;
@@ -28334,13 +28362,13 @@ function previewRampBpm(which) {
   // Toggle off if already previewing this BPM
   if (metroPlaying && bpm === previewBpm) {
     stopMetro();
-    if (btn) { btn.classList.remove('previewing'); btn.textContent = '▶'; }
+    if (btn) { btn.classList.remove('previewing'); btn.textContent = '▶︎'; }
     _updateRampPlayBtn(); return;
   }
   // Cancel any other previewing button
   ['rampPreviewFrom','rampPreviewTo'].forEach(id => {
     const b = document.getElementById(id);
-    if (b && b.id !== btnId) { b.classList.remove('previewing'); b.textContent = '▶'; }
+    if (b && b.id !== btnId) { b.classList.remove('previewing'); b.textContent = '▶︎'; }
   });
   setBPM(previewBpm);
   if (!metroPlaying) startMetro();
@@ -28348,7 +28376,7 @@ function previewRampBpm(which) {
   const ts = typeof tsTop !== 'undefined' ? tsTop : 4;
   _rampPreviewTimer = setTimeout(() => {
     stopMetro();
-    if (btn) { btn.classList.remove('previewing'); btn.textContent = '▶'; }
+    if (btn) { btn.classList.remove('previewing'); btn.textContent = '▶︎'; }
     _updateRampPlayBtn();
     _rampPreviewTimer = null;
   }, (60000 / previewBpm) * ts * 4);
@@ -28363,7 +28391,7 @@ function _updateRampPlayBtn() {
       btn.innerHTML = t('btn_stop') || '■ STOP';
       btn.classList.add('playing');
     } else {
-      btn.innerHTML = t('ramp_play_btn') || '▶ START RAMP';
+      btn.innerHTML = t('ramp_play_btn') || '▶︎ START RAMP';
       btn.classList.remove('playing');
     }
   } else {
@@ -28372,7 +28400,7 @@ function _updateRampPlayBtn() {
       btn.innerHTML = t('btn_stop') || '■ STOP';
       btn.classList.add('playing');
     } else {
-      btn.innerHTML = t('btn_start') || '▶ START';
+      btn.innerHTML = t('btn_start') || '▶︎ START';
       btn.classList.remove('playing');
     }
   }
@@ -28439,7 +28467,7 @@ function stopMetro() {
     clearTimeout(_rampPreviewTimer); _rampPreviewTimer = null;
     ['rampPreviewFrom','rampPreviewTo'].forEach(id => {
       const b = document.getElementById(id);
-      if (b) { b.classList.remove('previewing'); b.textContent = '▶'; }
+      if (b) { b.classList.remove('previewing'); b.textContent = '▶︎'; }
     });
   }
   // cancel any active ramp
@@ -36683,7 +36711,7 @@ function _riffUpdateTransport() {
         }
       }
       var pp = document.getElementById(inst + 'NpPlayPause' + suf);
-      if (pp) pp.textContent = paused ? '▶' : '❚❚';
+      if (pp) pp.textContent = paused ? '▶︎' : '❚❚';
     });
   });
 }
@@ -38706,7 +38734,7 @@ function ivEnterNeutral() {
   var name = document.getElementById('ivTargetName'); if (name) { name.textContent = ''; name.className = 'iv-hero-name'; }
   ivBuildGauge();
   var fb = document.getElementById('ivFeedback'); if (fb) { fb.style.display = 'none'; }
-  var nb = document.getElementById('ivNextBtn'); if (nb) nb.textContent = t('iv_play') || '▶ PLAY';
+  var nb = document.getElementById('ivNextBtn'); if (nb) nb.textContent = t('iv_play') || '▶︎ PLAY';
   ivRenderAnswerGrid(true);   // greyed until first play
 }
 function ivUpdateDiffPill() {
@@ -39332,7 +39360,7 @@ function ivApplyMode() {
     // Grid is always present (greyed until first play). No reference row, no feedback bar.
     if (refRow) refRow.style.display = 'none';
     if (fb) fb.style.display = 'none';
-    if (nextBtn) { nextBtn.style.display = ''; nextBtn.textContent = t('iv_play') || '▶ PLAY'; }
+    if (nextBtn) { nextBtn.style.display = ''; nextBtn.textContent = t('iv_play') || '▶︎ PLAY'; }
     if (replayBtn) replayBtn.style.display = '';
     var _rlab = document.getElementById('ivRetryLabel'); var _rlin = document.getElementById('ivRetryLine');
     if (_rlab) _rlab.textContent = '1 ' + (t('iv_retry_word') || 'retry');
@@ -39348,7 +39376,7 @@ function ivApplyMode() {
     if (refRow) refRow.style.display = '';
     if (fb) { fb.style.display = ''; }
     if (detailEl) { detailEl.style.display = ''; detailEl.textContent = t('iv_tap_new_round') || 'tap PLAY to start'; }
-    if (nextBtn) { nextBtn.style.display = ''; nextBtn.textContent = t('iv_play') || '▶ PLAY'; }
+    if (nextBtn) { nextBtn.style.display = ''; nextBtn.textContent = t('iv_play') || '▶︎ PLAY'; }
     if (replayBtn) replayBtn.style.display = '';
   }
 }
@@ -39526,7 +39554,7 @@ function ivrStop() {
   ivrTimers.forEach(t => clearTimeout(t));
   ivrTimers = [];
   var ic = document.getElementById('ivrPlayIcon');
-  if (ic) ic.textContent = '▶';
+  if (ic) ic.textContent = '▶︎';
 }
 
 function ivrPlay() {
@@ -39540,7 +39568,7 @@ function ivrPlay() {
   var ic = document.getElementById('ivrPlayIcon');
   if (ic) ic.textContent = '◼';
 
-  function done() { if (ivrSession === myToken) { var i = document.getElementById('ivrPlayIcon'); if (i) i.textContent = '▶'; } }
+  function done() { if (ivrSession === myToken) { var i = document.getElementById('ivrPlayIcon'); if (i) i.textContent = '▶︎'; } }
 
   if (ivrDir === 'harm') {
     var ctx = ensurePracticeCtx();
@@ -39777,7 +39805,7 @@ function ivNext() {
     }, 1200);
     // The round is live; the button advances to the NEXT one.
     var _nbS = document.getElementById('ivNextBtn');
-    if (_nbS) _nbS.textContent = t('iv_next') || '▶ NEXT';
+    if (_nbS) _nbS.textContent = t('iv_next') || '▶︎ NEXT';
   } else {
     // Manual / Test: hide the answer — the user identifies it from the grid.
     // Manual is trimmed (no tooltip/ref); test keeps a short prompt.
@@ -39796,7 +39824,7 @@ function ivNext() {
     ivRenderAnswerGrid();
     // The interval just played; the button now advances to the NEXT one.
     var _nb2 = document.getElementById('ivNextBtn');
-    if (_nb2) _nb2.textContent = t('iv_next') || '▶ NEXT';
+    if (_nb2) _nb2.textContent = t('iv_next') || '▶︎ NEXT';
     var _rl2 = document.getElementById('ivRefLink');
     if (_rl2) _rl2.disabled = true;
   }
@@ -44353,7 +44381,7 @@ function cofStopScale() {
   const btn = document.getElementById('cofScalePlayBtn');
   const ico = document.getElementById('cofScalePlayIcon');
   if (btn) btn.classList.remove('playing');
-  if (ico) ico.textContent = '▶';
+  if (ico) ico.textContent = '▶︎';
   document.querySelectorAll('#cofScalePills .cof-scale-pill').forEach(p => p.classList.remove('playing'));
 }
 
@@ -44554,7 +44582,7 @@ function droneStop(silent) {
     if (n.oct) n.oct.stop(now + 0.07);
   } catch(e) {}
   if (!silent) {
-    document.getElementById('droneToggleBtn').innerHTML = '▶ START DRONE';
+    document.getElementById('droneToggleBtn').innerHTML = '▶︎ START DRONE';
     document.getElementById('droneState').textContent = t('drone_stopped');
     document.getElementById('droneNoteBig').classList.remove('playing');
   }
@@ -53127,7 +53155,7 @@ function rcStopPlayback() {
 function rcSetPlayBtn(playing) {
   var b = document.getElementById('rcPlayBtn');
   if (!b) return;
-  b.textContent = playing ? '■ STOP' : '▶ PLAY';
+  b.textContent = playing ? '■ STOP' : '▶︎ PLAY';
   b.classList.toggle('rc-playing', !!playing);
 }
 
@@ -57062,7 +57090,7 @@ function rtTuner(){
       +bb('tunSLbar','⟨⟨','start -1 bar (grow front)')
       +bb('tunSRbar','⟩⟩','start +1 bar (trim front)')
       +bb('tunSRbeat','⟩','start +1 beat (trim front)')
-      +'<button class="tunPlay" style="'+btn()+'padding:3px 10px;margin:0 4px">▶</button>'
+      +'<button class="tunPlay" style="'+btn()+'padding:3px 10px;margin:0 4px">▶︎</button>'
       +'<span style="opacity:.5;font-size:11px">end</span>'
       +bb('tunELbeat','⟨','end -1 beat (trim back)')
       +bb('tunELbar','⟨⟨','end -1 bar (trim back)')
@@ -57228,7 +57256,7 @@ function rtTuner(){
     for(const cls in map){ if(e.target.classList.contains(cls)){ hit=map[cls]; break; } }
     if(hit){ const h=edgeEdit(id,li,hit[0],hit[1]); refreshRow(row); playLeg(id,h.b,h.s); }
   });
-  console.log('[rtTuner] open. Enter Road Trip first to warm audio, then ▶ any leg.');
+  console.log('[rtTuner] open. Enter Road Trip first to warm audio, then ▶︎ any leg.');
 }
 window.rtTuner = rtTuner;
 
@@ -59972,7 +60000,7 @@ function chordleUpdatePlayBtn() {
     btn.style.color = 'var(--accent)';
     btn.style.borderColor = 'color-mix(in srgb, var(--accent) 50%, transparent)';
     btn.style.boxShadow = '0 0 6px color-mix(in srgb, var(--accent) 15%, transparent)';
-    btn.textContent = '▶';
+    btn.textContent = '▶︎';
   }
 }
 function chordleApplyRootHint() {
@@ -61319,7 +61347,7 @@ function diadleUpdatePlayBtn() {
     btn.style.color='var(--accent)';
     btn.style.borderColor='color-mix(in srgb,var(--accent) 50%,transparent)';
     btn.style.boxShadow='inset 0 1px 0 rgba(255,255,255,.18),0 2px 5px rgba(0,0,0,.3)';
-    if (icon) { icon.textContent='▶'; icon.style.fontSize='13px'; }
+    if (icon) { icon.textContent='▶︎'; icon.style.fontSize='13px'; }
     if (label) { label.textContent=t('diadle_replay'); label.style.display=''; }
   }
 }
@@ -61485,7 +61513,7 @@ function diadleRenderSheet() {
   if (hdr) {
     hdr.innerHTML='<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text);flex:1">'
       +t('diadle_pick_degree')+' · '+(diadleSelSlot+1)+'/'+diadlePuzzle.notes.length+'</div>'
-      +'<button onclick="diadlePlaySlot('+diadleSelSlot+')" title="hear note" style="background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:100px;width:36px;height:30px;font-size:13px;cursor:pointer;font-family:inherit">▶</button>'
+      +'<button onclick="diadlePlaySlot('+diadleSelSlot+')" title="hear note" style="background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:100px;width:36px;height:30px;font-size:13px;cursor:pointer;font-family:inherit">▶︎</button>'
       +'<button onclick="diadleRootBtnTap()" title="hear root" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:100px;padding:0 10px;height:30px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit">'+t('diadle_root')+'</button>'
       +'<button onclick="diadleCloseSheet()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:100px;width:30px;height:30px;font-size:14px;cursor:pointer;font-family:inherit">✕</button>';
   }
@@ -62503,12 +62531,12 @@ const STRINGS = {
     rt_tier_song:'SCENIC ROUTE', rt_tier_song_d:'real music from the song bank competes for your ear',
     rt_city_start:'San Francisco', rt_city_end:'Lucca',
     rt_stop:'STOP',
-    rt_learn_home:'LEARN YOUR PITCH', rt_hear_pitch:'▶ HEAR YOUR PITCH', rt_sing_lock:'SING IT · HOLD TO LOCK',
+    rt_learn_home:'LEARN YOUR PITCH', rt_hear_pitch:'▶︎ HEAR YOUR PITCH', rt_sing_lock:'SING IT · HOLD TO LOCK',
     rt_locked:'LOCKED IN', rt_eyes_road:'EYES ON THE ROAD', rt_sing_home:'SING HOME',
     rt_home_was:'HOME WAS', rt_drift:'drift',
     rt_nailed:'RIGHT ON', rt_close:'CLOSE', rt_lost:'WRONG TURN',
-    rt_next_stop:'▶ NEXT STOP', rt_see_trip:'▶ TRIP RESULTS',
-    rt_avg_drift:'AVG DRIFT', rt_again:'▶ NEW TRIP',
+    rt_next_stop:'▶︎ NEXT STOP', rt_see_trip:'▶︎ TRIP RESULTS',
+    rt_avg_drift:'AVG DRIFT', rt_again:'▶︎ NEW TRIP',
     rt_back:'‹ BACK', rt_hold_it:'hold it…', rt_voyage:'VOYAGE COMPLETE',
     rt_lock_now:'lock it in', rt_skip:'skip ahead', rt_done_singing:'done singing',
     rt_view_map:'VIEW MAP', rt_change_trip:'change trip', rt_replay_btn:'replay', rt_try_again:'sing it again', rt_tap_close:'tap anywhere to close',
@@ -62562,7 +62590,7 @@ const STRINGS = {
     chord_tab_player:'PLAYER', chord_tab_builder:'BUILDER',
     scale_subtitle:'hear it · play it · improvise over it',
     now_playing:'NOW PLAYING',
-    riff_songs:'▶ SONGS',
+    riff_songs:'▶︎ SONGS',
     samples_loading:'loading samples…',
     samples_synth:'using synth voice',
     credits_title:'Credits & Thanks',
@@ -62603,18 +62631,18 @@ const STRINGS = {
     ex_scales_title:'SCALES', ex_tempo_title:'TEMPO LOCK',
     ex_tempo_sub:'stay in time through the silence',
     iv_sing_or_play:'SING OR PLAY', iv_reference:'REFERENCE',
-    iv_hear_again:'↻ HEAR AGAIN', iv_new_round:'▶ NEW ROUND',
+    iv_hear_again:'↻ HEAR AGAIN', iv_new_round:'▶︎ NEW ROUND',
     iv_see_reference:'\u2197 SEE THIS INTERVAL IN THE REFERENCE',
     iv_mode_manual:'MANUAL', iv_mode_sing:'SING / PLAY', iv_mode_test:'TEST',
     iv_identify_prompt:'listen, then tap the interval you heard',
     iv_manual_start:'tap NEW ROUND, then identify what you hear',
     iv_test_start:'a 10-question scored run, weighted to your weak spots',
-    iv_start_test:'▶ START TEST',
+    iv_start_test:'▶︎ START TEST',
     iv_correct_fb:'Correct', iv_wrong_fb:'It was',
-    iv_play:'▶ PLAY', iv_settings_title:'SETTINGS', iv_edit_open:'CHOOSE',
-    ss_start:'▶ START',
+    iv_play:'▶︎ PLAY', iv_settings_title:'SETTINGS', iv_edit_open:'CHOOSE',
+    ss_start:'▶︎ START',
     ss_phrase_nailed:'PHRASE NAILED', ss_in_tune:'IN TUNE', ss_keep_at_it:'KEEP AT IT', ss_almost_there:'ALMOST THERE', ss_in_tune_count:'in tune',
-    iv_next:'▶ NEXT', iv_auto_on:'On', iv_auto_off:'Off',
+    iv_next:'▶︎ NEXT', iv_auto_on:'On', iv_auto_off:'Off',
     iv_singdir_label:'SING DIRECTION', iv_sing_above:'sing it ABOVE the reference', iv_sing_below:'sing it BELOW the reference', iv_listen_first:'listen…', iv_now_sing:'now sing', iv_hold_it:'hold it…',
     iv_test:'TEST', iv_test_sing_hint:'sing the interval into the mic', iv_test_sing_prompt:'sing it', iv_test_mic:'TAP TO ENABLE MIC',
     iv_test_drill:'DRILL MISSES', iv_test_done:'DONE', iv_test_drill_label:'DRILL YOUR MISSES',
@@ -62625,7 +62653,7 @@ const STRINGS = {
     iv_streak:'Streak', iv_correct_label:'Correct', iv_rounds:'Rounds',
     iv_breakdown_title:'Accuracy by Interval',
     iv_breakdown_empty:'play a few rounds to see your stats',
-    drone_start:'▶ START DRONE',
+    drone_start:'▶︎ START DRONE',
     drone_stop:'■ STOP DRONE',
     tc_drone_off:'DRONE OFF', tc_listening:'● LISTENING',
     tc_drone_lab:'DRONE', tc_you_lab:'YOU', tc_scale_map:'SCALE MAP',
@@ -62659,7 +62687,7 @@ const STRINGS = {
     lat_start:'START', calib_unit:'ms offset',
     sm_footer_tag:'play in tune',
     metro_tab_ramp:'RAMP', metro_ramp_from:'FROM', metro_ramp_to:'TO',
-    metro_ramp_start:'START RAMP', metro_ramp_stop:'STOP RAMP', ramp_play_btn:'▶ START RAMP', ramp_presets_title:'Ramp Presets',
+    metro_ramp_start:'START RAMP', metro_ramp_stop:'STOP RAMP', ramp_play_btn:'▶︎ START RAMP', ramp_presets_title:'Ramp Presets',
     metro_ramp_complete:'RAMP COMPLETE',
     metro_setlist:'SETLIST', metro_setlist_empty:'No presets saved',
     metro_setlist_save:'Save current BPM', metro_setlist_name_ph:'Song or tempo name...',
@@ -62720,7 +62748,7 @@ const STRINGS = {
     train_sub:'ear training · rhythm · exercises',
     // Tempo Guess
     ex_tguess_title:'TEMPO GUESS', ex_tguess_sub:'name the BPM by ear',
-    tg_play_tempo:'▶ PLAY TEMPO', tg_lock_in:'✓ LOCK IN', tg_next_round:'▶ NEXT ROUND',
+    tg_play_tempo:'▶︎ PLAY TEMPO', tg_lock_in:'✓ LOCK IN', tg_next_round:'▶︎ NEXT ROUND',
     tg_your_guess:'YOUR GUESS', tg_listening:'LISTENING',
     tg_grade_perfect:'PERFECT', tg_grade_great:'GREAT', tg_grade_good:'GOOD',
     tg_grade_close:'CLOSE', tg_grade_off:'OFF',
@@ -62784,7 +62812,7 @@ const STRINGS = {
     ce_got_it:'✓ Got it!',
     ce_it_was:'It was ',
     ce_listen_pick:'listen, then pick the chord quality',
-    ce_built_on:'BUILT ON', ce_hud_listening:'♪ LISTENING', ce_hud_reveal:'▶ REVEAL',
+    ce_built_on:'BUILT ON', ce_hud_listening:'♪ LISTENING', ce_hud_reveal:'▶︎ REVEAL',
     ce_correct_word:'CORRECT', ce_inversions_label:'INVERSIONS',
     ce_inv_root:'ROOT ONLY', ce_inv_include:'INCLUDE',
     ce_inv_1st:'1st inversion', ce_inv_2nd:'2nd inversion', ce_inv_3rd:'3rd inversion',
@@ -62874,7 +62902,7 @@ const STRINGS = {
     rc_late:'late', rc_early:'early', rc_hit:'hit',
     rc_diff_easy:'easy', rc_diff_med:'medium', rc_diff_hard:'hard',
     rc_tap_zone_hint:'TAP HERE',
-    rc_test_btn:'▶ TEST', rc_test_done:'TEST COMPLETE', rc_test_retry:'▶ AGAIN', rc_test_exit:'DONE',
+    rc_test_btn:'▶︎ TEST', rc_test_done:'TEST COMPLETE', rc_test_retry:'▶︎ AGAIN', rc_test_exit:'DONE',
     rc_tl_target:'TARGET', rc_tl_yours:'YOURS',
     rc_practice:'practice', rc_back_results:'BACK TO RESULTS',
     rcd_drill_btn:'◎ DRILL YOUR MISSES', rcd_skip:'SKIP ›', rcd_right:'RIGHT', rcd_wrong:'WRONG',
@@ -62921,22 +62949,22 @@ const STRINGS = {
     gtool_root:'Root', cb_tap_label:'Tap notes to build',
     gtool_fingering:'FINGERING', gtool_notes:'NOTES', gtool_intervals:'INTERVALS',
     gtool_expand:'EXPAND', gtool_slow:'SLOW', gtool_fast:'FAST', gtool_rh:'RH',
-    gtool_play_asc:'▶ PLAY ASCENDING', gtool_play_desc:'◀ PLAY DESCENDING',
+    gtool_play_asc:'▶︎ PLAY ASCENDING', gtool_play_desc:'◀ PLAY DESCENDING',
     harp_tap_hint:'TAP A HOLE TO PLAY',
-    gcc_strum:'▶ STRUM CHORD', gcc_play_chord:'▶ PLAY CHORD',
+    gcc_strum:'▶︎ STRUM CHORD', gcc_play_chord:'▶︎ PLAY CHORD',
     gcc_tap_dot:'Tap a dot to hear that string',
     gcc_swipe_hint:'← swipe for more voicings →',
-    gss_dot_hint_asc:'▶ toggles ascending / descending · tap a dot to hear',
+    gss_dot_hint_asc:'▶︎ toggles ascending / descending · tap a dot to hear',
     gss_dot_hint_desc:'◀ toggles descending / ascending · tap a dot to hear',
-    gss_play_hint:'▶ toggles ascending / descending · tap a dot to hear',
+    gss_play_hint:'▶︎ toggles ascending / descending · tap a dot to hear',
     gss_play_hint_desc:'◀ toggles descending / ascending · tap a dot to hear',
     pcc_keys_hint:'Root orange · chord tones green · tap keys to hear',
-    pss_play_hint:'▶ toggles ascending / descending · tap keys to hear',
+    pss_play_hint:'▶︎ toggles ascending / descending · tap keys to hear',
     // Chord tool buttons
-    btn_play:'▶ PLAY', btn_stop:'■ STOP', btn_start:'▶ START',
+    btn_play:'▶︎ PLAY', btn_stop:'■ STOP', btn_start:'▶︎ START',
     btn_arp:'ARP', btn_clr:'CLR',
-    btn_play_metro:'▶ METRO', btn_stop_metro:'■ METRO',
-    btn_play_kit:'▶ KIT', btn_stop_kit:'■ KIT',
+    btn_play_metro:'▶︎ METRO', btn_stop_metro:'■ METRO',
+    btn_play_kit:'▶︎ KIT', btn_stop_kit:'■ KIT',
     manual_locked_hint:'Stop the progression to play this on its own',
     // Progression labels
     label_octave_uc:'OCTAVE', label_inversion:'INVERSION',
@@ -62945,7 +62973,7 @@ const STRINGS = {
     settings_help_tips:'Help Buttons',
     settings_help_tips_off:'Hidden',
     settings_help_tips_on:'Show ? buttons',
-    trp_play_note:'▶ PLAY NOTE',
+    trp_play_note:'▶︎ PLAY NOTE',
     settings_haptics:'Haptic Feedback',
     settings_splash_sound:'Launch Sound',
     pw_title:'INTONARE PRO',
@@ -62968,7 +62996,7 @@ const STRINGS = {
     pw_restore_none:'No previous purchase was found on this account.',
     pw_restore_failed:'Restore could not be completed. Please try again.',
     settings_audio_cues:'Audio Cues',
-    settings_audio_cues_hint:'Tap cell to cycle · ▶ to replay',
+    settings_audio_cues_hint:'Tap cell to cycle · ▶︎ to replay',
     // Card labels
     label_root_note:'Root Note',
     label_live_volume:'Live Volume · dB Meter',
@@ -63008,7 +63036,7 @@ const STRINGS = {
     vr_siren_desc:'Slide slowly from your lowest comfortable note up to your highest, then back down — like a siren. Keeps it easy and connected, no pushing. This stretches the full working range gently.',
     vr_safety_hint:'Stop any exercise if something feels uncomfortable. A brief warmup is better than none at all.',
     vr_skip_all:'Skip All',
-    vr_start_warmup:'▶ Start Warmup',
+    vr_start_warmup:'▶︎ Start Warmup',
     // VR JS dynamic strings
     vr_tap_mic:'Tap the mic button to activate',
     vr_sing_hold:"Sing and hold — we'll catch it…",
@@ -63130,7 +63158,7 @@ const STRINGS = {
     rr_tap_lbl:'TAP', rr_next_btn:'NEXT PATTERN →',
     rr_retry:'↺ RETRY', rr_tap_next:'TAP FOR NEXT →',
     rr_stat_score:'Score', rr_stat_streak:'Streak', rr_stat_rounds:'Rounds',
-    rr_mode_listen:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>LISTEN FIRST', rr_mode_sight:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>SIGHT READ', rr_new_btn:'▶ NEW',
+    rr_mode_listen:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>LISTEN FIRST', rr_mode_sight:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>SIGHT READ', rr_new_btn:'▶︎ NEW',
     rr_phase_listen_lbl:'LISTENING…', rr_phase_listen_status:'LISTEN TO THE PATTERN',
     rr_phase_countin_lbl:'COUNTING IN…', rr_phase_countin_status:'COUNT IN',
     rr_phase_tap_lbl:'TAP!', rr_phase_tap_status:'TAP NOW!', rr_phase_done_lbl:'DONE',
@@ -63279,14 +63307,14 @@ const STRINGS = {
     // Chord/scale tool UI
     cs_note_sel:'Note Selection', cs_capo_label:'CAPO',
     ww_sub_notes:'NOTES', ww_sub_trills:'TRILLS', ww_trill_select:'Trill Selection',
-    ww_trill_play:'▶ PLAY TRILL', ww_leg_closed:'closed', ww_leg_open:'open', ww_leg_trill:'the alternating key is the trill',
+    ww_trill_play:'▶︎ PLAY TRILL', ww_leg_closed:'closed', ww_leg_open:'open', ww_leg_trill:'the alternating key is the trill',
     cs_rolls_label:'ROLLS', cs_roll_hint:'tap to play · tap again to stop',
     cs_speed_slow:'SLOW', cs_speed_fast:'FAST',
     cs_tab_detail:'DETAIL', cs_tab_expand:'EXPAND',
     cs_open_fing:'Open',
     hp_c_string:'C string', hp_f_string:'F string',
     gcc_fret_hint:'Root orange · chord tones lit · tap strings to hear',
-    gss_fret_hint:'▶ toggles ascending / descending · tap strings to hear',
+    gss_fret_hint:'▶︎ toggles ascending / descending · tap strings to hear',
     harmonica_tagline:'THE WORLD\'S MOST HONEST INSTRUMENT',
     nav_dynamics:'DYNAMICS', sg_pedals_title:'PEDALS',
     // Ramp labels
@@ -63387,12 +63415,12 @@ const STRINGS = {
     rt_tier_song:'STRADA PANORAMICA', rt_tier_song_d:'musica vera dal repertorio compete col tuo orecchio',
     rt_city_start:'San Francisco', rt_city_end:'Lucca',
     rt_stop:'TAPPA',
-    rt_learn_home:'IMPARA LA NOTA', rt_hear_pitch:'▶ ASCOLTA LA NOTA', rt_sing_lock:'CANTALA · TIENI PER AGGANCIARE',
+    rt_learn_home:'IMPARA LA NOTA', rt_hear_pitch:'▶︎ ASCOLTA LA NOTA', rt_sing_lock:'CANTALA · TIENI PER AGGANCIARE',
     rt_locked:'AGGANCIATA', rt_eyes_road:'OCCHI SULLA STRADA', rt_sing_home:'CANTA LA NOTA',
     rt_home_was:'LA NOTA ERA', rt_drift:'scarto',
     rt_nailed:'PERFETTO', rt_close:'QUASI', rt_lost:'FUORI STRADA',
-    rt_next_stop:'▶ PROSSIMA TAPPA', rt_see_trip:'▶ RISULTATI',
-    rt_avg_drift:'SCARTO MEDIO', rt_again:'▶ NUOVO VIAGGIO',
+    rt_next_stop:'▶︎ PROSSIMA TAPPA', rt_see_trip:'▶︎ RISULTATI',
+    rt_avg_drift:'SCARTO MEDIO', rt_again:'▶︎ NUOVO VIAGGIO',
     rt_back:'‹ INDIETRO', rt_hold_it:'tienila…', rt_voyage:'VIAGGIO COMPLETATO',
     rt_lock_now:'aggancia', rt_skip:'salta', rt_done_singing:'fatto',
     rt_view_map:'VEDI MAPPA', rt_change_trip:'cambia viaggio', rt_replay_btn:'riascolta', rt_try_again:'canta di nuovo', rt_tap_close:'tocca per chiudere',
@@ -63446,7 +63474,7 @@ const STRINGS = {
     chord_tab_player:'SUONA', chord_tab_builder:'COSTRUISCI',
     scale_subtitle:'ascoltala · suonala · improvvisaci',
     now_playing:'IN RIPRODUZIONE',
-    riff_songs:'▶ BRANI',
+    riff_songs:'▶︎ BRANI',
     samples_loading:'caricamento campioni…',
     samples_synth:'voce sintetizzata',
     credits_title:'Crediti e ringraziamenti',
@@ -63487,18 +63515,18 @@ const STRINGS = {
     ex_scales_title:'SCALE', ex_tempo_title:'STABILITÀ RITMO',
     ex_tempo_sub:'rimani in tempo attraverso il silenzio',
     iv_sing_or_play:'CANTA O SUONA', iv_reference:'RIFERIMENTO',
-    iv_hear_again:'↻ RIASCOLTA', iv_new_round:'▶ NUOVO GIRO',
+    iv_hear_again:'↻ RIASCOLTA', iv_new_round:'▶︎ NUOVO GIRO',
     iv_see_reference:'\u2197 VEDI QUESTO INTERVALLO NEL RIFERIMENTO',
     iv_mode_manual:'MANUALE', iv_mode_sing:'CANTA / SUONA', iv_mode_test:'TEST',
     iv_identify_prompt:'ascolta, poi tocca l’intervallo che hai sentito',
     iv_manual_start:'tocca NUOVO GIRO, poi identifica ciò che senti',
     iv_test_start:'una prova di 10 domande, pesata sui tuoi punti deboli',
-    iv_start_test:'▶ INIZIA TEST',
+    iv_start_test:'▶︎ INIZIA TEST',
     iv_correct_fb:'Esatto', iv_wrong_fb:'Era',
-    iv_play:'▶ SUONA', iv_settings_title:'IMPOSTAZIONI', iv_edit_open:'SCEGLI',
-    ss_start:'▶ INIZIA',
+    iv_play:'▶︎ SUONA', iv_settings_title:'IMPOSTAZIONI', iv_edit_open:'SCEGLI',
+    ss_start:'▶︎ INIZIA',
     ss_phrase_nailed:'FRASE CENTRATA', ss_in_tune:'INTONATO', ss_keep_at_it:'CONTINUA COSÌ', ss_almost_there:'CI SEI QUASI', ss_in_tune_count:'intonate',
-    iv_next:'▶ AVANTI', iv_auto_on:'Sì', iv_auto_off:'No',
+    iv_next:'▶︎ AVANTI', iv_auto_on:'Sì', iv_auto_off:'No',
     iv_singdir_label:'DIREZIONE CANTO', iv_sing_above:'cantalo SOPRA il riferimento', iv_sing_below:'cantalo SOTTO il riferimento', iv_listen_first:'ascolta…', iv_now_sing:'ora canta', iv_hold_it:'tienila…',
     iv_test:'TEST', iv_test_sing_hint:'canta l’intervallo nel microfono', iv_test_sing_prompt:'cantalo', iv_test_mic:'TOCCA PER ATTIVARE IL MICROFONO',
     iv_test_drill:'RIPASSA ERRORI', iv_test_done:'FATTO', iv_test_drill_label:'RIPASSA I TUOI ERRORI',
@@ -63509,7 +63537,7 @@ const STRINGS = {
     iv_streak:'Serie', iv_correct_label:'Corretti', iv_rounds:'Turni',
     iv_breakdown_title:'Precisione per Intervallo',
     iv_breakdown_empty:'gioca qualche turno per vedere le statistiche',
-    drone_start:'▶ AVVIA BORDONE',
+    drone_start:'▶︎ AVVIA BORDONE',
     drone_stop:'■ FERMA BORDONE',
     tc_drone_off:'BORDONE OFF', tc_listening:'● IN ASCOLTO',
     tc_drone_lab:'BORDONE', tc_you_lab:'TU', tc_scale_map:'MAPPA SCALA',
@@ -63543,7 +63571,7 @@ const STRINGS = {
     lat_start:'INIZIA', calib_unit:'ms ritardo',
     sm_footer_tag:'suona in sintonia',
     metro_tab_ramp:'RAMP', metro_ramp_from:'DA', metro_ramp_to:'A',
-    metro_ramp_start:'AVVIA RAMP', metro_ramp_stop:'FERMA RAMP', ramp_play_btn:'▶ AVVIA RAMP', ramp_presets_title:'Preset Ramp',
+    metro_ramp_start:'AVVIA RAMP', metro_ramp_stop:'FERMA RAMP', ramp_play_btn:'▶︎ AVVIA RAMP', ramp_presets_title:'Preset Ramp',
     metro_ramp_complete:'RAMP COMPLETATA',
     metro_setlist:'SETLIST', metro_setlist_empty:'Nessun preset salvato',
     metro_setlist_save:'Salva BPM corrente', metro_setlist_name_ph:'Nome brano o tempo...',
@@ -63604,7 +63632,7 @@ const STRINGS = {
     train_sub:'allenamento orecchio · ritmo · esercizi',
     // Tempo Guess
     ex_tguess_title:'INDOVINA IL TEMPO', ex_tguess_sub:'indovina il BPM',
-    tg_play_tempo:'▶ ASCOLTA IL TEMPO', tg_lock_in:'✓ INSERISCI', tg_next_round:'▶ PROSSIMO GIRO',
+    tg_play_tempo:'▶︎ ASCOLTA IL TEMPO', tg_lock_in:'✓ INSERISCI', tg_next_round:'▶︎ PROSSIMO GIRO',
     tg_your_guess:'LA TUA RISPOSTA', tg_listening:'IN ASCOLTO',
     tg_grade_perfect:'PERFETTO', tg_grade_great:'OTTIMO', tg_grade_good:'BUONO',
     tg_grade_close:'VICINO', tg_grade_off:'LONTANO',
@@ -63668,7 +63696,7 @@ const STRINGS = {
     ce_got_it:'✓ Ci sei!',
     ce_it_was:'Era ',
     ce_listen_pick:'ascolta, poi scegli la qualità dell\'accordo',
-    ce_built_on:'COSTRUITO SU', ce_hud_listening:'♪ IN ASCOLTO', ce_hud_reveal:'▶ RIVELA',
+    ce_built_on:'COSTRUITO SU', ce_hud_listening:'♪ IN ASCOLTO', ce_hud_reveal:'▶︎ RIVELA',
     ce_correct_word:'CORRETTO', ce_inversions_label:'RIVOLTI',
     ce_inv_root:'SOLO FOND.', ce_inv_include:'INCLUDI',
     ce_inv_1st:'1º rivolto', ce_inv_2nd:'2º rivolto', ce_inv_3rd:'3º rivolto',
@@ -63758,7 +63786,7 @@ const STRINGS = {
     rc_late:'in ritardo', rc_early:'in anticipo', rc_hit:'colpo',
     rc_diff_easy:'facile', rc_diff_med:'medio', rc_diff_hard:'difficile',
     rc_tap_zone_hint:'TOCCA QUI',
-    rc_test_btn:'▶ TEST', rc_test_done:'TEST COMPLETATO', rc_test_retry:'▶ ANCORA', rc_test_exit:'FATTO',
+    rc_test_btn:'▶︎ TEST', rc_test_done:'TEST COMPLETATO', rc_test_retry:'▶︎ ANCORA', rc_test_exit:'FATTO',
     rc_tl_target:'OBIETTIVO', rc_tl_yours:'TUOI',
     rc_practice:'esercitati', rc_back_results:'TORNA AI RISULTATI',
     rcd_drill_btn:'◎ ALLENA I TUOI ERRORI', rcd_skip:'SALTA ›', rcd_right:'GIUSTO', rcd_wrong:'SBAGLIATO',
@@ -63805,22 +63833,22 @@ const STRINGS = {
     gtool_root:'Tonica', cb_tap_label:'Tocca le note per costruire',
     gtool_fingering:'DITEGGIATURA', gtool_notes:'NOTE', gtool_intervals:'INTERVALLI',
     gtool_expand:'ESPANDI', gtool_slow:'LENTO', gtool_fast:'VELOCE', gtool_rh:'MD',
-    gtool_play_asc:'▶ SUONA ASCENDENTE', gtool_play_desc:'◀ SUONA DISCENDENTE',
+    gtool_play_asc:'▶︎ SUONA ASCENDENTE', gtool_play_desc:'◀ SUONA DISCENDENTE',
     harp_tap_hint:'TOCCA UN FORO PER SUONARE',
-    gcc_strum:'▶ RASCHIA ACCORDO', gcc_play_chord:'▶ SUONA ACCORDO',
+    gcc_strum:'▶︎ RASCHIA ACCORDO', gcc_play_chord:'▶︎ SUONA ACCORDO',
     gcc_tap_dot:'Tocca un punto per sentire quella corda',
     gcc_swipe_hint:'← scorri per altri voicing →',
-    gss_dot_hint_asc:'▶ alterna ascendente / discendente · tocca un punto per sentire',
+    gss_dot_hint_asc:'▶︎ alterna ascendente / discendente · tocca un punto per sentire',
     gss_dot_hint_desc:'◀ alterna discendente / ascendente · tocca un punto per sentire',
-    gss_play_hint:'▶ alterna ascendente / discendente · tocca un punto per sentire',
+    gss_play_hint:'▶︎ alterna ascendente / discendente · tocca un punto per sentire',
     gss_play_hint_desc:'◀ alterna discendente / ascendente · tocca un punto per sentire',
     pcc_keys_hint:'Tonica arancione · note verde · tocca i tasti per sentire',
-    pss_play_hint:'▶ alterna ascendente / discendente · tocca i tasti per sentire',
+    pss_play_hint:'▶︎ alterna ascendente / discendente · tocca i tasti per sentire',
     // Chord tool buttons
-    btn_play:'▶ SUONA', btn_stop:'■ FERMA', btn_start:'▶ AVVIA',
+    btn_play:'▶︎ SUONA', btn_stop:'■ FERMA', btn_start:'▶︎ AVVIA',
     btn_arp:'ARPEGGIO', btn_clr:'CANCELLA',
-    btn_play_metro:'▶ METRO', btn_stop_metro:'■ METRO',
-    btn_play_kit:'▶ KIT', btn_stop_kit:'■ KIT',
+    btn_play_metro:'▶︎ METRO', btn_stop_metro:'■ METRO',
+    btn_play_kit:'▶︎ KIT', btn_stop_kit:'■ KIT',
     manual_locked_hint:'Ferma la progressione per riprodurlo da solo',
     // Progression labels
     label_octave_uc:'OTTAVA', label_inversion:'RIVOLTO',
@@ -63829,7 +63857,7 @@ const STRINGS = {
     settings_help_tips:'Pulsanti Aiuto',
     settings_help_tips_off:'Nascosti',
     settings_help_tips_on:'Mostra pulsanti ?',
-    trp_play_note:'▶ SUONA NOTA',
+    trp_play_note:'▶︎ SUONA NOTA',
     settings_haptics:'Feedback Aptico',
     settings_splash_sound:'Suono d\u2019Avvio',
     pw_title:'INTONARE PRO',
@@ -63852,7 +63880,7 @@ const STRINGS = {
     pw_restore_none:'Nessun acquisto precedente trovato su questo account.',
     pw_restore_failed:'Non \u00e8 stato possibile completare il ripristino. Riprova.',
     settings_audio_cues:'Segnali Audio',
-    settings_audio_cues_hint:'Tocca per ciclare · ▶ per riascoltare',
+    settings_audio_cues_hint:'Tocca per ciclare · ▶︎ per riascoltare',
     // Card labels
     label_root_note:'Nota Fondamentale',
     label_live_volume:'Volume Live · Misuratore dB',
@@ -63892,7 +63920,7 @@ const STRINGS = {
     vr_siren_desc:"Scivola lentamente dalla nota più bassa alla più alta e poi verso il basso — come una sirena. Mantienila facile, senza spingere. Distende delicatamente l'intera estensione.",
     vr_safety_hint:"Interrompi l'esercizio se qualcosa ti causa disagio. Un breve riscaldamento è comunque meglio di nessuno.",
     vr_skip_all:'Salta Tutto',
-    vr_start_warmup:'▶ Inizia Riscaldamento',
+    vr_start_warmup:'▶︎ Inizia Riscaldamento',
     // VR JS dynamic strings
     vr_tap_mic:'Tocca il pulsante microfono per attivare',
     vr_sing_hold:'Canta e tieni — lo catturiamo…',
@@ -64014,7 +64042,7 @@ const STRINGS = {
     rr_tap_lbl:'BATTI', rr_next_btn:'PATTERN SUCCESSIVO →',
     rr_retry:'↺ RIPROVA', rr_tap_next:'BATTI PER IL PROSSIMO →',
     rr_stat_score:'Punteggio', rr_stat_streak:'Serie', rr_stat_rounds:'Round',
-    rr_mode_listen:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>ASCOLTA PRIMA', rr_mode_sight:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>LETTURA VISTA', rr_new_btn:'▶ NUOVO',
+    rr_mode_listen:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></svg>ASCOLTA PRIMA', rr_mode_sight:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" /></svg>LETTURA VISTA', rr_new_btn:'▶︎ NUOVO',
     rr_phase_listen_lbl:'ASCOLTO…', rr_phase_listen_status:'ASCOLTA IL PATTERN',
     rr_phase_countin_lbl:'CONTO…', rr_phase_countin_status:'CONTO',
     rr_phase_tap_lbl:'BATTI!', rr_phase_tap_status:'BATTI ORA!', rr_phase_done_lbl:'FATTO',
@@ -64163,14 +64191,14 @@ const STRINGS = {
     // Chord/scale tool UI
     cs_note_sel:'Selezione Nota', cs_capo_label:'CAPO',
     ww_sub_notes:'NOTE', ww_sub_trills:'TRILLI', ww_trill_select:'Selezione Trillo',
-    ww_trill_play:'▶ SUONA TRILLO', ww_leg_closed:'chiusa', ww_leg_open:'aperta', ww_leg_trill:'la chiave che alterna è il trillo',
+    ww_trill_play:'▶︎ SUONA TRILLO', ww_leg_closed:'chiusa', ww_leg_open:'aperta', ww_leg_trill:'la chiave che alterna è il trillo',
     cs_rolls_label:'ARPEGGI', cs_roll_hint:'tocca per suonare · tocca di nuovo per fermare',
     cs_speed_slow:'LENTO', cs_speed_fast:'VELOCE',
     cs_tab_detail:'DETTAGLIO', cs_tab_expand:'ESPANDI',
     cs_open_fing:'Aperto',
     hp_c_string:'Corda Do', hp_f_string:'Corda Fa',
     gcc_fret_hint:'Radice arancio · toni accordo illuminati · tocca le corde',
-    gss_fret_hint:'▶ alterna asc / disc · tocca le corde per ascoltare',
+    gss_fret_hint:'▶︎ alterna asc / disc · tocca le corde per ascoltare',
     harmonica_tagline:'LO STRUMENTO PIÙ ONESTO DEL MONDO',
     nav_dynamics:'DINAMICA', sg_pedals_title:'PEDALE',
     // Ramp labels
@@ -64823,20 +64851,31 @@ function setMasterVolume(pct) {
   if (slider && slider.value != v) slider.value = v;
   if (display) display.textContent = v + '%';
   const scale  = _getEffectiveScale();   // capped at full scale; see the function
-  const thr    = _getLimiterThreshold();
   const ratio  = _getLimiterRatio();
   const makeup = _getMakeupGain();
+  // No shared `thr` here: each limiter is scaled from its OWN base (-3 for the
+  // buildLimiterChain ones, -6 for the hand-rolled percussive chains), which the
+  // registry remembers per node.
 
   // Update every gain node registered via buildLimiterChain
   _masterGainRegistry.forEach((base, node) => {
-    try { node.gain.value = base * scale; } catch(e) {}
+    try {
+      // Respect pocket mode: if the metronome is muted, moving the master fader
+      // must not un-mute it.
+      if (typeof metroMasterGain !== 'undefined' && node === metroMasterGain &&
+          typeof metroAudioOn !== 'undefined' && !metroAudioOn) return;
+      node.gain.value = base * scale;
+    } catch(e) {}
   });
   // Morph the compressor. At <=100% these are the -3 dB / 20:1 limiter that all
   // the clipping work converged on; above it they slide toward a loudness
   // processor, which is the only thing that can actually sound louder once the
   // gain has hit digital full scale.
-  _masterLimiterRegistry.forEach(lim => {
-    try { lim.threshold.value = thr; lim.ratio.value = ratio; } catch(e) {}
+  _masterLimiterRegistry.forEach((base, lim) => {
+    try {
+      lim.threshold.value = _getLimiterThreshold(base);   // each from ITS own base
+      lim.ratio.value     = ratio;
+    } catch(e) {}
   });
   // And give back what the compression took.
   _masterMakeupRegistry.forEach(m => {
@@ -65460,7 +65499,7 @@ function renderCueDropdowns() {
 
     const play = document.createElement('button');
     play.style.cssText = 'background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;padding:3px 5px;line-height:1;border-radius:4px;';
-    play.textContent = '▶';
+    play.textContent = '▶︎';
     play.title = 'Preview';
     play.onclick = (e) => { e.stopPropagation(); _cuePreview(event); };
 
@@ -65653,7 +65692,20 @@ let metroAudioOn = true;
 function setMetroAudio(on) {
   metroAudioOn = !!on;
   if (typeof metroMasterGain !== 'undefined' && metroMasterGain) {
-    metroMasterGain.gain.setTargetAtTime(on ? 1 : 0, metroMasterGain.context.currentTime, 0.02);
+    // Unmute restores the gain to whatever the MASTER FADER says it should be —
+    // not to a hardcoded 1.
+    //
+    // It used to set 1, which silently threw the master volume away: every time
+    // pocket mode was toggled off, the metronome's gain was clobbered back to
+    // unity and stayed there. That is why the fader appeared to do nothing for the
+    // metronome specifically while working elsewhere.
+    //
+    // The registry already holds this chain's base gain (0.8 * BASE_GAIN_BOOST),
+    // so read it from there rather than restating the number and letting the two
+    // drift apart.
+    const base = _masterGainRegistry.get(metroMasterGain);
+    const level = (base != null) ? base * _getEffectiveScale() : 1;
+    metroMasterGain.gain.setTargetAtTime(on ? level : 0, metroMasterGain.context.currentTime, 0.02);
   }
   // Sync inline metro button (both standard and groove screens)
   const btn = document.getElementById('metroMuteBtn');
@@ -67991,7 +68043,7 @@ function vrRenderSingingStep(stepId) {
           <div style="font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);" id="vrTessStatus">Sing freely in your comfortable range…</div>
         </div>
       </div>
-      <button class="iv-btn primary" id="vrBtnTessStart" onclick="vrStartTessitura()" style="width:100%;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3)">▶ Start 15-Second Scan</button>`;
+      <button class="iv-btn primary" id="vrBtnTessStart" onclick="vrStartTessitura()" style="width:100%;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3)">▶︎ Start 15-Second Scan</button>`;
     return;
   }
 
@@ -79034,7 +79086,7 @@ function wwCycleAlt(concertPc, dir) {
   trpRedrawGridCard(concertPc, midi);
 }
 
-// Alt fingering navigator UI — guitar-voicing style: ◀ label 1/N ▶
+// Alt fingering navigator UI — guitar-voicing style: ◀ label 1/N ▶︎
 // Also sets up swipe on the note card container.
 function wwDrawAltNav(containerEl, concertPc, onChangeCb) {
   if (!containerEl) return;
@@ -79048,7 +79100,7 @@ function wwDrawAltNav(containerEl, concertPc, onChangeCb) {
     <div class="ww-alt-nav">
       <button class="ww-alt-btn" onclick="wwCycleAlt(${concertPc},-1)">◀</button>
       <div class="ww-alt-label">${label} <span class="ww-alt-counter">${cur}/${total}</span></div>
-      <button class="ww-alt-btn" onclick="wwCycleAlt(${concertPc},1)">▶</button>
+      <button class="ww-alt-btn" onclick="wwCycleAlt(${concertPc},1)">▶︎</button>
     </div>`;
 
   // Set up swipe on the note card valve area
@@ -80194,7 +80246,7 @@ function gccStop() {
   const cont = document.getElementById('gccDiagramContainer');
   if (cont) cont.classList.remove('playing');
   const _gsb = document.getElementById('gccStrumBtn');
-  if (_gsb && _gsb.textContent === '■ STOP') _gsb.textContent = (typeof t === 'function') ? (t('gcc_strum') || '▶ STRUM CHORD') : '▶ STRUM CHORD';
+  if (_gsb && _gsb.textContent === '■ STOP') _gsb.textContent = (typeof t === 'function') ? (t('gcc_strum') || '▶︎ STRUM CHORD') : '▶︎ STRUM CHORD';
 }
 
 function gccPlayChord() {
@@ -80382,7 +80434,7 @@ function gssInit() {
   const gssPlayBtn = document.getElementById('gssPlayBtn');
   if (gssPlayBtn) gssPlayBtn.textContent = t('gtool_play_asc');
   const gssDirBtn = document.getElementById('gssDirBtn');
-  if (gssDirBtn) gssDirBtn.textContent = '▶';
+  if (gssDirBtn) gssDirBtn.textContent = '▶︎';
   gssRebuildRootGrid();
   gssRebuildTypeRow();
   if (isTrumpet) { trumpetRender(); return; }
@@ -81823,7 +81875,7 @@ function gssStop() {
   const cont = document.getElementById('gssDiagramContainer');
   if (cont) cont.classList.remove('playing');
   const _gsb = document.getElementById('gssPlayBtn');
-  if (_gsb && _gsb.textContent === '■ STOP') _gsb.textContent = (typeof t === 'function') ? (t('gtool_play_asc') || '▶ PLAY ASCENDING') : '▶ PLAY ASCENDING';
+  if (_gsb && _gsb.textContent === '■ STOP') _gsb.textContent = (typeof t === 'function') ? (t('gtool_play_asc') || '▶︎ PLAY ASCENDING') : '▶︎ PLAY ASCENDING';
 }
 
 // Play a single note (called when tapping a dot)
@@ -81853,7 +81905,7 @@ function gssToggleDirection() {
   const hintEl  = document.getElementById('gssPlayHint');
   const asc = gssDirection === 'asc';
   if (playBtn) playBtn.textContent = asc ? t('gtool_play_asc') : t('gtool_play_desc');
-  if (dirBtn)  dirBtn.textContent  = asc ? '▶' : '◀';
+  if (dirBtn)  dirBtn.textContent  = asc ? '▶︎' : '◀';
   if (hintEl)  hintEl.textContent  = asc ? t('gss_dot_hint_asc') : t('gss_dot_hint_desc');
 }
 
@@ -82451,7 +82503,7 @@ function tromboneDrawAltNav(containerEl, pc, midi) {
     <div class="ww-alt-nav">
       <button class="ww-alt-btn" onclick="tromboneCycleAlt(${pc},-1,${midi ?? 'undefined'})">◀</button>
       <div class="ww-alt-label">${label} <span class="ww-alt-counter">${cur}/${total}</span></div>
-      <button class="ww-alt-btn" onclick="tromboneCycleAlt(${pc},1,${midi ?? 'undefined'})">▶</button>
+      <button class="ww-alt-btn" onclick="tromboneCycleAlt(${pc},1,${midi ?? 'undefined'})">▶︎</button>
     </div>`;
   tromboneSetupAltSwipe(pc, midi);
 }
@@ -83154,7 +83206,7 @@ function fluteTrillStop() {
   fluteTrillTimer = null;
   fluteTrillAudioStop();
   const btn = document.getElementById('fluteTrillPlayBtn');
-  if (btn) btn.textContent = (typeof t === 'function' ? (t('ww_trill_play') || '▶ PLAY TRILL') : '▶ PLAY TRILL');
+  if (btn) btn.textContent = (typeof t === 'function' ? (t('ww_trill_play') || '▶︎ PLAY TRILL') : '▶︎ PLAY TRILL');
   const _trStop = wwTrillSet()[wwTrillIdx()];
   const cont = document.getElementById('fluteTrillDiagram');
   if (_trStop && cont) {
@@ -83728,7 +83780,7 @@ function trpStop() {
   if (typeof fluteTrillTimer !== 'undefined' && fluteTrillTimer) {
     clearInterval(fluteTrillTimer); fluteTrillTimer = null;
     const _ftb = document.getElementById('fluteTrillPlayBtn');
-    if (_ftb) _ftb.textContent = (typeof t === 'function' ? (t('ww_trill_play') || '▶ PLAY TRILL') : '▶ PLAY TRILL');
+    if (_ftb) _ftb.textContent = (typeof t === 'function' ? (t('ww_trill_play') || '▶︎ PLAY TRILL') : '▶︎ PLAY TRILL');
   }
   if (typeof fluteTrillPulseTimer !== 'undefined' && fluteTrillPulseTimer) {
     clearInterval(fluteTrillPulseTimer); fluteTrillPulseTimer = null;
@@ -83852,8 +83904,8 @@ function trpToggleDirection() {
   trpDirection = trpDirection === 'asc' ? 'desc' : 'asc';
   const dirBtn  = document.getElementById('trpDirBtn');
   const playBtn = document.getElementById('trpPlayBtn');
-  if (dirBtn)  dirBtn.textContent  = trpDirection === 'asc' ? '▶' : '◀';
-  if (playBtn) playBtn.textContent = trpDirection === 'asc' ? '▶ PLAY ASCENDING' : '◀ PLAY DESCENDING';
+  if (dirBtn)  dirBtn.textContent  = trpDirection === 'asc' ? '▶︎' : '◀';
+  if (playBtn) playBtn.textContent = trpDirection === 'asc' ? '▶︎ PLAY ASCENDING' : '◀ PLAY DESCENDING';
 }
 
 function trpUpdateSpeed(val) {
@@ -85064,7 +85116,7 @@ function renderKbdControls(prefix) {
   let oct = '<div class="kbd-oct-row">'
     + '<button class="kbd-oct-btn" ' + (chromBaseOct <= _ob.min ? 'disabled' : '') + ' onclick="chromOctShift(-1)">◀</button>'
     + '<span class="kbd-oct-label"><span class="kbd-oct-word">OCTAVE </span><b>' + octLbl + '</b></span>'
-    + '<button class="kbd-oct-btn" ' + (chromBaseOct >= _ob.max ? 'disabled' : '') + ' onclick="chromOctShift(1)">▶</button>'
+    + '<button class="kbd-oct-btn" ' + (chromBaseOct >= _ob.max ? 'disabled' : '') + ' onclick="chromOctShift(1)">▶︎</button>'
     + '</div>';
 
   if (inst === 'organ') {
@@ -85455,7 +85507,7 @@ function pssInit() {
   const dirBtn  = document.getElementById('pssDirBtn');
   const handBtn = document.getElementById('pssHandBtn');
   if (playBtn) playBtn.textContent = t('gtool_play_asc');
-  if (dirBtn)  dirBtn.textContent  = '▶';
+  if (dirBtn)  dirBtn.textContent  = '▶︎';
   if (handBtn) { handBtn.textContent = 'RH'; handBtn.classList.remove('active'); }
   // Mallets: no fingering (you use mallets, not fingers)
   const _malletNow = isMalletInst();
@@ -85635,9 +85687,9 @@ function pssToggleDirection() {
   const hintEl  = document.getElementById('pssPlayHint');
   const asc = pssDirection === 'asc';
   if (playBtn) playBtn.textContent = asc ? t('gtool_play_asc') : t('gtool_play_desc');
-  if (dirBtn)  dirBtn.textContent  = asc ? '▶' : '◀';
+  if (dirBtn)  dirBtn.textContent  = asc ? '▶︎' : '◀';
   if (hintEl)  hintEl.textContent  = asc
-    ? '▶ toggles ascending / descending · tap keys to hear'
+    ? '▶︎ toggles ascending / descending · tap keys to hear'
     : '◀ toggles descending / ascending · tap keys to hear';
   pssRender();
 }
@@ -85653,7 +85705,7 @@ function pssStop() {
     if (s.getAttribute('fill') === 'rgba(52,211,153,0.85)') s.removeAttribute('fill');
   });
   const _psb = document.getElementById('pssPlayBtn');
-  if (_psb && _psb.textContent === '■ STOP') _psb.textContent = (typeof t === 'function') ? (t('gtool_play_asc') || '▶ PLAY ASCENDING') : '▶ PLAY ASCENDING';
+  if (_psb && _psb.textContent === '■ STOP') _psb.textContent = (typeof t === 'function') ? (t('gtool_play_asc') || '▶︎ PLAY ASCENDING') : '▶︎ PLAY ASCENDING';
 }
 
 
@@ -86370,7 +86422,7 @@ function pccPlay() {
       </div>
       <div class="gcc-zoom-counter" id="gccZoomCounter"></div>
       <div class="gcc-zoom-notes" id="gccZoomNotes"></div>
-      <button class="gss-play-btn" style="width:100%;margin-top:8px" onclick="gccPlayChord()" data-i18n="gcc_strum">▶ STRUM</button>
+      <button class="gss-play-btn" style="width:100%;margin-top:8px" onclick="gccPlayChord()" data-i18n="gcc_strum">▶︎ STRUM</button>
     </div>
   </div>
 
@@ -88193,7 +88245,7 @@ function bowedScaleStop() {
   bowedScaleTimers.forEach(clearTimeout); bowedScaleTimers=[];
   if(bowedScaleAuto){clearTimeout(bowedScaleAuto);bowedScaleAuto=null;}
   const btn=document.getElementById('bowedScalePlayBtn');
-  if(btn) btn.textContent=bowedScaleDir==='asc'?'▶ PLAY ASCENDING':'▶ PLAY DESCENDING';
+  if(btn) btn.textContent=bowedScaleDir==='asc'?'▶︎ PLAY ASCENDING':'▶︎ PLAY DESCENDING';
   document.getElementById('bowedScaleDiagramContainer')?.classList.remove('playing');
 }
 
@@ -88201,8 +88253,8 @@ function bowedScaleToggleDir() {
   bowedScaleDir=bowedScaleDir==='asc'?'desc':'asc';
   const btn=document.getElementById('bowedScalePlayBtn');
   const dBtn=document.getElementById('bowedScaleDirBtn');
-  if(btn)  btn.textContent =bowedScaleDir==='asc'?'▶ PLAY ASCENDING':'▶ PLAY DESCENDING';
-  if(dBtn) dBtn.textContent=bowedScaleDir==='asc'?'▶':'◀';
+  if(btn)  btn.textContent =bowedScaleDir==='asc'?'▶︎ PLAY ASCENDING':'▶︎ PLAY DESCENDING';
+  if(dBtn) dBtn.textContent=bowedScaleDir==='asc'?'▶︎':'◀';
 }
 
 function bowedScalePlay() {
@@ -88267,7 +88319,7 @@ function didiStop() {
   }, 120);
   didiNode = null; didiGain = null;
   const btn = document.querySelector('#csDidiWrap .gss-play-btn');
-  if (btn) btn.textContent = '▶ DRONE';
+  if (btn) btn.textContent = '▶︎ DRONE';
   const waves = document.getElementById('didiWaves');
   if (waves) waves.style.opacity = '0';
 }
@@ -88361,7 +88413,7 @@ function didiPlay() {
       else { try { didiNode?.stop(); } catch(e){} }
       didiNode = null; didiGain = null;
     }, 800);
-    if (btn) btn.textContent = '▶ DRONE';
+    if (btn) btn.textContent = '▶︎ DRONE';
     const waves = document.getElementById('didiWaves');
     if (waves) waves.style.opacity = '0';
     return;
@@ -88712,7 +88764,7 @@ function hpUpdatePlayBtn() {
 function hpToggleDirection() {
   hpScaleDir = hpScaleDir === 'asc' ? 'desc' : 'asc';
   const dirBtn = document.getElementById('hpDirBtn');
-  if (dirBtn) dirBtn.textContent = hpScaleDir === 'asc' ? '▶' : '◀';
+  if (dirBtn) dirBtn.textContent = hpScaleDir === 'asc' ? '▶︎' : '◀';
   const playBtn = document.getElementById('hpPlayBtn');
   if (playBtn) playBtn.textContent = hpScaleDir === 'asc' ? t('gtool_play_asc') : t('gtool_play_desc');
 }
@@ -89669,7 +89721,7 @@ function startRamp() {
   if (_rampPreviewTimer) { clearTimeout(_rampPreviewTimer); _rampPreviewTimer = null; }
   ['rampPreviewFrom','rampPreviewTo'].forEach(id => {
     const b = document.getElementById(id);
-    if (b) { b.classList.remove('previewing'); b.textContent = '▶'; }
+    if (b) { b.classList.remove('previewing'); b.textContent = '▶︎'; }
   });
   _rampActive = true;
   // Apply ramp sound/groove setting
@@ -93867,7 +93919,7 @@ window.sgInit = function() {
           dotsEl.appendChild(d);
         });
         var chevron=document.createElement('span');chevron.className='toc-item-chevron';
-        chevron.textContent='▶';
+        chevron.textContent='▶︎';
         row.appendChild(nameEl);row.appendChild(dotsEl);row.appendChild(chevron);
         item.appendChild(row);
 
@@ -98024,7 +98076,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
           </div>
           <div class="np-marquee"><span class="np-title"></span></div>
         </div>
-        <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('organ')" title="Riffs" data-i18n="riff_songs">▶ SONGS</button>
+        <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('organ')" title="Riffs" data-i18n="riff_songs">▶︎ SONGS</button>
       </div>
       <button class="pto-organ-overlay-close" onclick="closePtoOrganOverlay()">✕</button>
     </div>
@@ -98056,7 +98108,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
           </div>
           <div class="np-marquee"><span class="np-title"></span></div>
         </div>
-        <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('rhodes')" title="Riffs" data-i18n="riff_songs">▶ SONGS</button>
+        <button class="piano-overlay-songs-btn" onclick="riffOpenPopup('rhodes')" title="Riffs" data-i18n="riff_songs">▶︎ SONGS</button>
       </div>
       <button class="pto-rhodes-overlay-close" onclick="closeRhodesOverlay()">✕</button>
     </div>
@@ -98075,7 +98127,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       <div style="flex:1"></div>
       <button class="piano-oct-btn" onclick="shiftRhodesOctave(-1)" style="width:30px;height:26px">◀</button>
       <span id="rhodesFullOctLabel" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#999;min-width:62px;text-align:center">OCT 3–5</span>
-      <button class="piano-oct-btn" onclick="shiftRhodesOctave(1)" style="width:30px;height:26px">▶</button>
+      <button class="piano-oct-btn" onclick="shiftRhodesOctave(1)" style="width:30px;height:26px">▶︎</button>
     </div>
     <div class="pto-rhodes-overlay-body">
       <div class="rhodes-overlay-shell"></div>

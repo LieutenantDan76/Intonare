@@ -16,6 +16,51 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.20 — the metronome fader, the emoji triangle (properly), and slow mic release
+
+### The master fader did nothing for the metronome
+Because pocket mode was throwing it away:
+
+    metroMasterGain.gain.setTargetAtTime(on ? 1 : 0, ...)
+
+Un-muting set the gain to a **hardcoded 1**, wiping out whatever the master fader had
+put there. Every pocket-mode toggle silently reset the metronome to unity, which is
+why the slider appeared to work everywhere except the one place being tested.
+
+- Unmute now restores the level the fader actually asks for, read from the gain
+  registry rather than restating the number and letting the two drift apart.
+- `setMasterVolume` now respects pocket mode: moving the fader while the metronome
+  is muted no longer un-mutes it.
+
+The metronome runs through `buildLimiterChain`, so with this fixed it gets the full
+loudness curve — 4.2× makeup gain at 200%.
+
+### The emoji triangle, actually fixed
+v0.81.15 used `font-variant-emoji: text`. **Safari only honours that from 17.4**, so
+on anything older it does nothing at all — which is what happened.
+
+The fix that works everywhere is the **variation selector**: appending U+FE0E to the
+character explicitly requests text presentation, and has been honoured for decades.
+Applied to all **184** occurrences of U+25B6. The CSS property stays as a
+belt-and-braces, plus a font stack that has the glyph but no emoji table.
+
+### Mic release was slow
+Disabling the mic left the app quiet unless you waited a moment.
+
+`stopMic()` asked iOS to switch to `.playback` **before** stopping the microphone
+track. iOS does not release the record path until the track actually stops, so the
+category change was fighting a live capture. Waiting "fixed" it, which was the clue.
+
+Moved: the session change now happens after `track.stop()`, when the capture is
+genuinely gone.
+
+### Deliberately not changed
+The four hand-rolled limiters (Road Trip, rhythm cards, rhythm reader) stay at their
+tuned **-6 dB / 20:1 / hard knee** and stay OUT of the loudness curve. The regression
+sentinel pins the rhythm reader's value explicitly — someone tuned that and locked
+it. They will not get louder above 100%; that is a decision already made, and this
+build does not overturn it.
+
 ## v0.81.19 — hotfix: the splash diagnostic killed the splash
 
     Uncaught ReferenceError: Cannot access '_spd' before initialization
