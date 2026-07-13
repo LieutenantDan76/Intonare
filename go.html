@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Intonare</title>
+<!--
+  Intonare deep-link bounce page.
+
+  Shared results (Chordle, Tonale, Diadle) end with a link here. This page decides
+  what to do with the person who tapped it:
+
+    - has the app  -> open it, straight to the right module
+    - has not      -> send them to the store for their platform
+
+  The app is opened by navigating to the custom scheme (intonare://). If the app is
+  installed the OS intercepts that and the page is left behind. If it is not, the
+  navigation quietly fails and nothing happens -- so the trick is to set a timer
+  BEFORE trying, and if the timer still fires, we know we are still here, and we
+  redirect to the store.
+
+  Why a page at all, rather than putting intonare:// straight in the share text: a
+  custom scheme in a message sent to someone WITHOUT the app does nothing at all. It
+  is dead text, and it makes the app look broken to exactly the person you are trying
+  to reach. An https link always does something.
+
+  This page is also the reason Universal Links / App Links can be added later without
+  touching the app or the shared text. The URL stays the same; the OS just starts
+  intercepting it directly instead of bouncing through here.
+-->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    background: #0b0f14;
+    color: #e8eef5;
+    font: 400 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 24px;
+    text-align: center;
+  }
+  .card { max-width: 340px; }
+  .mark {
+    width: 64px; height: 64px; margin: 0 auto 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #b8a3ff, #7dd3a0);
+    display: flex; align-items: center; justify-content: center;
+    font: 700 30px/1 -apple-system, sans-serif; color: #0b0f14;
+  }
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 8px; }
+  p  { color: #9fb3c8; font-size: 15px; margin-bottom: 22px; }
+  .btn {
+    display: block; width: 100%;
+    padding: 13px 20px; margin-bottom: 10px;
+    border-radius: 10px; border: 1px solid #24384a;
+    background: #12202c; color: #e8eef5;
+    font-size: 15px; font-weight: 500;
+    text-decoration: none;
+  }
+  .btn.primary { background: #b8a3ff; border-color: #b8a3ff; color: #0b0f14; font-weight: 600; }
+  .soon { font-size: 13px; color: #64778a; margin-top: 16px; }
+  .hide { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="mark">I</div>
+  <h1 id="h">Opening Intonare…</h1>
+  <p id="p">If nothing happens, the app may not be installed.</p>
+
+  <div id="stores" class="hide">
+    <a class="btn primary" id="ios"     href="#">Get it on the App Store</a>
+    <a class="btn"         id="android" href="#">Get it on Google Play</a>
+    <div class="soon" id="soon"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ── Store links ───────────────────────────────────────────────────────────
+  // Android's is deterministic from the package name and works the moment the app
+  // reaches production. iOS needs a numeric ID that only exists after the first
+  // submission, so it stays null until then. Neither of these requires an app
+  // update to change -- that is the whole point of bouncing through a page.
+  var PLAY_URL = 'https://play.google.com/store/apps/details?id=com.lieutenantdan.intonare';
+  var IOS_URL  = null;   // e.g. 'https://apps.apple.com/app/id0000000000'
+
+  // ── Which module? ─────────────────────────────────────────────────────────
+  // ?m=chordle | tonale | diadle. Anything unrecognised just opens the app.
+  var VALID = { chordle: 1, tonale: 1, diadle: 1, musicquiz: 1 };
+  var q = new URLSearchParams(location.search);
+  var m = (q.get('m') || '').toLowerCase();
+  if (!VALID[m]) m = '';
+
+  var ua  = navigator.userAgent || '';
+  var iOS = /iPad|iPhone|iPod/.test(ua) || (/Mac/.test(ua) && 'ontouchend' in document);
+  var and = /Android/.test(ua);
+
+  var el = function (id) { return document.getElementById(id); };
+
+  function showStores(reason) {
+    el('h').textContent = m ? 'Intonare' : 'Intonare';
+    el('p').textContent = reason;
+    el('stores').classList.remove('hide');
+
+    // Lead with the platform they are actually on.
+    var iosBtn = el('ios'), andBtn = el('android');
+    if (IOS_URL) { iosBtn.href = IOS_URL; } else { iosBtn.classList.add('hide'); }
+    if (PLAY_URL) { andBtn.href = PLAY_URL; } else { andBtn.classList.add('hide'); }
+
+    if (iOS && IOS_URL)  iosBtn.parentNode.insertBefore(iosBtn, andBtn);
+    if (and && PLAY_URL) andBtn.parentNode.insertBefore(andBtn, iosBtn);
+
+    // Be honest when a store is not live yet rather than showing a dead button.
+    var missing = [];
+    if (!IOS_URL)  missing.push('iOS');
+    if (!PLAY_URL) missing.push('Android');
+    el('soon').textContent = missing.length
+      ? missing.join(' and ') + ' coming soon.'
+      : '';
+  }
+
+  // Desktop: no app to open, so do not bother trying.
+  if (!iOS && !and) {
+    showStores('Intonare is a mobile app for practising music.');
+    return;
+  }
+
+  // ── Try the app ───────────────────────────────────────────────────────────
+  // Set the fallback timer FIRST. If the app opens, the page is backgrounded and
+  // the timer never gets to run -- which is exactly how we detect success. If the
+  // app is absent, the scheme navigation does nothing, we are still here when the
+  // timer fires, and we show the stores.
+  var bailed = false;
+
+  function bail() {
+    if (bailed || document.hidden) return;   // document.hidden => the app took over
+    bailed = true;
+    showStores('The app does not seem to be installed.');
+  }
+
+  // Backgrounding is the signal that the app opened. Cancel the fallback.
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) bailed = true;
+  });
+  window.addEventListener('pagehide', function () { bailed = true; });
+
+  setTimeout(bail, 1600);
+
+  // And go. iframe on Android (avoids a visible error page in some browsers);
+  // direct navigation on iOS, which handles an unknown scheme silently.
+  var target = 'intonare://' + (m || 'open');
+  if (and) {
+    var f = document.createElement('iframe');
+    f.style.display = 'none';
+    f.src = target;
+    document.body.appendChild(f);
+  } else {
+    location.href = target;
+  }
+})();
+</script>
+</body>
+</html>

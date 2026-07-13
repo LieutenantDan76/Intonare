@@ -16,6 +16,103 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.28 — deep links: shared dailies open the app
+
+Chordle, Tonale and Diadle results ended with the bare word "intonare". They now end
+with a link that actually goes somewhere.
+
+### Why an https link and not `intonare://`
+A custom scheme in a message sent to someone **who does not have the app** does
+nothing at all. It is dead text, and it makes the app look broken to precisely the
+person you were hoping to reach.
+
+So the shared link is https, pointing at a small bounce page:
+
+    .../Intonare/go.html?m=chordle
+
+The page tries `intonare://chordle`. If the app is installed the OS intercepts it and
+they land in the right module. If not, the navigation quietly fails, a timer fires,
+and they get the store instead.
+
+**All four dailies** carry it: Chordle, Tonale, Diadle, and Music Quiz. (Music Quiz
+was nearly missed — it is the fourth share in the app and it opens via its own
+`mqOpen()` rather than `enterExercise()`, so the handler special-cases it.)
+
+### The pieces
+- **iOS** — `CFBundleURLTypes` written into Info.plist by CI.
+- **Android** — a `VIEW` / `BROWSABLE` intent-filter in the manifest. `launchMode`
+  was already `singleTop`, so a link arriving while the app is open goes to
+  `onNewIntent` rather than starting a second activity.
+- **JS** — handles **both** arrival paths: `getLaunchUrl()` for a cold start, and the
+  `appUrlOpen` event for an app already running. Handle only one and half your links
+  silently do nothing.
+- **The page** — detects the platform, leads with the right store, and is honest
+  about the ones that are not live yet rather than showing a dead button.
+
+### And this is the foundation for Universal Links, not a detour from them
+Universal Links (iOS) and App Links (Android) need an Apple Team ID and the release
+keystore's SHA-256, published in verification files served from the domain — none of
+which exist until the app is actually on the stores. But **the shared URL is https
+either way.** Adding them later changes nothing about the app, this code, or any link
+already sent; the OS simply begins intercepting the URL directly instead of routing
+through the page.
+
+The store links live on the page, not in the app, so they can be filled in the moment
+each store goes live — without an app update, and without breaking links already
+shared.
+
+## v0.81.27 — Adventurer sound settled; chart samples; Pitch Match listens properly
+
+### The Adventurer's sound
+Settled on the brass fanfare with the real whip cracking just past the arrival note.
+The five other variants and the on-device picker are gone — they were scaffolding.
+
+**On how close the homage gets:** copyright protects the MELODY, and it follows that
+melody through transposition. So this does not use the Raiders figure. The leap is a
+perfect **fourth**, not the original's minor third, and that is the distinction doing
+the legal work. What it borrows is style — brass, march-rhythm pickup, a heroic leap
+— which is not protectable. Everyone hears "adventure"; nobody is quoting.
+
+The whip is a real recording, played at 0.42 against the brass (0.9 buried the very
+thing it was meant to punctuate).
+
+### Chart notes played the synth voice on the first visit
+`_chartPlay()` checks `SampleEngine.isReady()` and falls back to the synth if not —
+but it never *triggers* a load. The eager loader lived inside
+`switchChordScaleInstrument()`, which only runs when you actively pick an instrument
+from the sheet. **Open the charts tool normally and it inherits the default
+instrument without ever calling it.** So the samples were never requested and every
+note came out synthesised, until you happened to switch instrument and switch back.
+
+- The loader is now callable on its own and runs **on tool open** as well as on
+  switch. First note you tap is the real instrument.
+- Kept its original name (`_loadInstSamples`) because the regression sentinel pins
+  it; renaming would have quietly retired a guard for no benefit.
+
+### Pitch Match was listening to itself
+The reference tone played for 0.5 s **with the mic live and detection running**. The
+reference is a clean sustained tone — precisely what the detector is best at — so it
+would lock onto the app's own speaker and report a perfect match before the singer
+had made a sound.
+
+- **Detection is suppressed while the reference sounds**, and for a short tail after.
+- **Reference is now 1.0 s**, up from 0.5. Half a second is enough to identify a
+  pitch and not enough to internalise one.
+- "your turn" appears when it starts listening. EN + IT.
+- `ssStop()` clears the flag and its timer — without that, stopping a round *while*
+  the reference was sounding would have left the detector permanently deaf.
+
+### Not done, deliberately
+- **Splash at 120 fps** — impossible in a WebView. Apple caps `requestAnimationFrame`
+  at 60 inside WKWebView by design; there is no public API, and the private one is an
+  App Store rejection. The only legitimate route is rebuilding the splash as
+  GPU-composited CSS, which cannot preserve the particle gather and burst. Not worth
+  losing the animation to gain frames on one platform. The plist key from v0.81.22 is
+  removed; it did nothing.
+- **Deep links for daily shares** — needs a URL scheme on both platforms, an
+  `appUrlOpen` handler, and a web landing page to catch people without the app
+  installed. Half-done deep links are worse than none. Its own piece of work.
+
 ## v0.81.25 — a real whip
 
 Variant E's crack was synthesised from filtered noise. It read as **static, not

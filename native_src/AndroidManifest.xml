@@ -18,6 +18,29 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+              Deep links. Shared daily results (Chordle, Tonale, Diadle) carry an
+              https link to a bounce page, which tries intonare://MODULE and falls
+              back to the Play listing if nothing intercepts it. This is the half
+              that intercepts.
+
+              A custom scheme, not App Links, for now. App Links need the release
+              keystore's SHA-256 in an assetlinks.json served from the domain, and
+              the app verified against it. The shared URL is https either way, so
+              adding App Links later is purely additive; no change to the app's
+              behaviour, and no change to any link already sent.
+
+              launchMode="singleTop" above means a link arriving while the app is
+              already open is delivered to onNewIntent rather than starting a second
+              activity. Capacitor forwards that to the appUrlOpen listener.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="intonare" />
+            </intent-filter>
         </activity>
         <provider
             android:name="androidx.core.content.FileProvider"

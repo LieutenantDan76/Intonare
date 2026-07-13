@@ -227,23 +227,38 @@ workflows:
           $PB -c "Delete :ITSAppUsesNonExemptEncryption" "$PLIST" 2>/dev/null || true
           $PB -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
 
-          # High refresh rate. WITHOUT THIS, iOS CAPS requestAnimationFrame AT 60 fps
-          # even on a 120 Hz ProMotion display — Apple's opt-in, so that apps written
-          # for 60 are not silently handed a doubled frame budget.
+          # ── Deep links: register the intonare:// scheme ────────────────────
+          # Shared daily results (Chordle, Tonale, Diadle) carry an https link to a
+          # bounce page, which tries intonare://<module> and falls back to the store
+          # if nothing intercepts it. This is the half that does the intercepting.
           #
-          # The splash measured 59.2 fps on iPhone against 116.3 on Android, both
-          # covering the same total wave travel (26.8 rad). Same distance, same
-          # duration, half the frames: iOS was advancing the wave in ~0.23 rad steps
-          # where Android used ~0.09. Not slower — COARSER, and a coarsely-stepped
-          # travelling wave reads to the eye as sluggish. Three earlier theories
-          # (frame-rate scaling, canvas DPR, easing curves) all died against the
-          # measurements; this is what the numbers actually said.
+          # Custom scheme rather than Universal Links, for now: Universal Links need
+          # the Apple Team ID and a verified apple-app-site-association file served
+          # from the domain, which needs the app to exist on the App Store first.
+          # The shared URL is https either way, so switching to Universal Links later
+          # is purely additive -- no app change, no change to any link already sent.
+          $PB -c "Delete :CFBundleURLTypes" "$PLIST" 2>/dev/null || true
+          $PB -c "Add :CFBundleURLTypes array" "$PLIST"
+          $PB -c "Add :CFBundleURLTypes:0 dict" "$PLIST"
+          $PB -c "Add :CFBundleURLTypes:0:CFBundleURLName string com.lieutenantdan.intonare" "$PLIST"
+          $PB -c "Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor" "$PLIST"
+          $PB -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST"
+          $PB -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string intonare" "$PLIST"
+          echo "  URL scheme registered: intonare://" 
+
+          # NOTE: CADisableMinimumFrameDurationOnPhone is deliberately NOT set.
           #
-          # App-wide, not splash-only: everything else is static UI or canvas that
-          # benefits equally. Costs a little battery. Android has been doing it all
-          # along.
-          $PB -c "Delete :CADisableMinimumFrameDurationOnPhone" "$PLIST" 2>/dev/null || true
-          $PB -c "Add :CADisableMinimumFrameDurationOnPhone bool true" "$PLIST"
+          # It unlocks 120 Hz for NATIVE Core Animation and has ZERO effect on
+          # WKWebView's rendering. Apple caps requestAnimationFrame at 60 fps inside
+          # WKWebView by design, for power reasons, and there is no public API to
+          # change it. The splash is a canvas rAF loop, so it runs at 60 on iOS and
+          # 120 on Android, and no plist key will fix that. Verified against the
+          # WebKit bug tracker and Apple's own forums after shipping the key and
+          # measuring no change (still 59.4 fps).
+          #
+          # The only real routes to 120 in a WebView are CSS/WAAPI composited
+          # animations (which are not rAF-bound) or WebKit private APIs (App Store
+          # rejection). Both are out of scope here.
 
           echo "--- Info.plist after patch ---"
           $PB -c "Print" "$PLIST"

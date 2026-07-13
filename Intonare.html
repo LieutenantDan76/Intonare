@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.25 -->
+<!-- INTONARE_VERSION: 0.81.28 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16459,6 +16459,61 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       }, 450);   // let the touch's UI response + audio-context resume land first
     }, { once: true });
 
+    // ── Deep links ────────────────────────────────────────────────────────
+    // Shared daily results carry an https link to a bounce page, which fires
+    // intonare://chordle (or tonale / diadle). The OS hands that URL to us here.
+    //
+    // Two arrival paths, and both matter:
+    //   - app not running  -> getLaunchUrl() has it, once, at startup
+    //   - app already open -> the appUrlOpen event fires (Android's singleTop
+    //                         launchMode routes it to onNewIntent, which Capacitor
+    //                         forwards)
+    // Handle only one and half your links silently do nothing.
+    (function () {
+      if (!window.Capacitor || !window.Capacitor.Plugins) return;
+      var App = window.Capacitor.Plugins.App;
+      if (!App) return;
+
+      function openFromUrl(url) {
+        if (!url) return;
+        // intonare://chordle  ->  'chordle'. Tolerate a trailing slash and any
+        // query string; take the first path-ish token after the scheme.
+        var m = String(url).match(/^intonare:\/\/([a-z_]+)/i);
+        var target = m ? m[1].toLowerCase() : '';
+        // Every daily that has a share button. musicquiz is the odd one out: it does
+        // not open via enterExercise() like the others, it has its own mqOpen().
+        var DAILIES = { chordle: 1, tonale: 1, diadle: 1, musicquiz: 1 };
+        if (!DAILIES[target]) return;   // 'open' or anything unknown: just launch
+
+        // Defer a beat. A cold start is still assembling the UI when the launch URL
+        // arrives, and the open functions expect the shell to exist.
+        setTimeout(function () {
+          try {
+            if (target === 'musicquiz') {
+              if (typeof mqOpen === 'function') mqOpen();
+              return;
+            }
+            if (typeof setMode === 'function') setMode('practice');
+            if (typeof enterExercise === 'function') enterExercise(target);
+          } catch (e) {}
+        }, 400);
+      }
+
+      // Already open.
+      try {
+        App.addListener('appUrlOpen', function (data) {
+          openFromUrl(data && data.url);
+        });
+      } catch (e) {}
+
+      // Cold start.
+      try {
+        App.getLaunchUrl().then(function (res) {
+          openFromUrl(res && res.url);
+        }).catch(function () {});
+      } catch (e) {}
+    })();
+
     if (window.Capacitor) {
       // Status bar — immersive: hide it and let the app draw edge-to-edge.
       // Android keeps the swipe-down-to-reveal gesture by default, so the bar
@@ -22617,7 +22672,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.25';
+const INTONARE_VERSION = '0.81.28';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -27106,7 +27161,11 @@ function processAudio() {
           if (typeof ivtActive !== 'undefined' && ivtActive) ivtCheckPitch(smoothedFreq);
           else ivCheckPitch(smoothedFreq);
         }
-        if (mode === 'practice' && currentExercise === 'singsing') ssCheckPitch(smoothedFreq);
+        // Not while the reference tone is sounding: the mic is live throughout and
+        // would otherwise hear the app's own speaker. The reference is a clean
+        // sustained tone — exactly what the detector is best at — so it locks onto
+        // it and reports a perfect match before the singer has made a sound.
+        if (mode === 'practice' && currentExercise === 'singsing' && !ssPlayingRef) ssCheckPitch(smoothedFreq);
         if (mode === 'practice' && currentExercise === 'roadtrip' && typeof rtOnPitch === 'function') rtOnPitch(smoothedFreq);
         window.lastCents = smoothedCents;
       }
@@ -55660,13 +55719,35 @@ function ssPlayNoteEnhanced(ctx, freq, when, dur, vol) {
   addLowFreqHarmonics(ctx, freq, when, dur, practiceMasterGain, vol);
 }
 
+// True while the reference tone is sounding. Pitch detection is suppressed for its
+// duration, because otherwise the app listens to ITS OWN SPEAKER: the mic is live
+// throughout, the reference is a clean sustained tone, and the detector will happily
+// lock onto it and report a perfect match before the singer has opened their mouth.
+let ssPlayingRef = false;
+let _ssRefTimer  = null;
+
+// 1.0 s, up from 0.5. Half a second is enough to identify a pitch and not enough to
+// internalise one — you need to hear it settle before you can match it.
+const SS_REF_DUR = 1.0;
+
 function ssPlaySequence() {
   const ctx = ensurePracticeCtx();
   const now = ctx.currentTime + 0.05;
-  const gap = ssPlayMode === 'single' ? 0 : 0.6;
+  const gap = ssPlayMode === 'single' ? 0 : (SS_REF_DUR + 0.15);
   ssSequence.forEach((note, i) => {
-    ssPlayNoteEnhanced(ctx, note.freq, now + i * gap, 0.5, 0.4 * ssVolume);
+    ssPlayNoteEnhanced(ctx, note.freq, now + i * gap, SS_REF_DUR, 0.4 * ssVolume);
   });
+
+  // Deafen the detector until the last note has finished (plus a short tail for the
+  // room and the release).
+  const total = 0.05 + (ssSequence.length - 1) * gap + SS_REF_DUR + 0.25;
+  ssPlayingRef = true;
+  if (_ssRefTimer) clearTimeout(_ssRefTimer);
+  _ssRefTimer = setTimeout(() => {
+    ssPlayingRef = false;
+    _ssRefTimer  = null;
+    ssFbText(t('ss_your_turn') || 'your turn');
+  }, total * 1000);
 }
 
 function ssNext() {
@@ -55947,6 +56028,11 @@ function ssUpdateStats() {
 
 function ssStop() {
   ssCancelCountdown();
+  // Clear the reference-playing flag and its timer. Without this, stopping a round
+  // WHILE the reference tone is sounding leaves the flag stuck true — and the pitch
+  // detector stays permanently deaf until some later round happens to reset it.
+  if (_ssRefTimer) { clearTimeout(_ssRefTimer); _ssRefTimer = null; }
+  ssPlayingRef = false;
   ssLastHitTime = 0;
   ssHoldMs = 0;
   ssGotIt  = false;
@@ -58540,13 +58626,30 @@ function chordleDailySquares() {
     }).join('');
   }).join('\n');
 }
+// Link that goes in a shared daily result.
+//
+// https, deliberately, NOT the intonare:// scheme. A custom scheme in a message sent
+// to someone who does not have the app does nothing whatsoever -- it is dead text,
+// and it makes the app look broken to precisely the person you are hoping to reach.
+// The https link always does something: the bounce page tries the scheme (so people
+// WITH the app land straight in the right module) and falls back to the store for
+// everyone else.
+//
+// It also means Universal Links / App Links can be added later without changing the
+// app, this function, or any link already sent. The URL stays identical; the OS just
+// begins intercepting it directly instead of going via the page.
+const INTONARE_SHARE_BASE = 'https://lieutenantdan76.github.io/Intonare/go.html';
+function intonareShareLink(module) {
+  return INTONARE_SHARE_BASE + (module ? '?m=' + module : '');
+}
+
 function chordleDailyShareText() {
   var won = chordleGameState==='won';
   var guesses = chordleGuesses.length;
   var maxG = (CHORDLE_DIFF[chordleDiff]||CHORDLE_DIFF.medium).maxGuesses;
   var head = t('chordle_title')+' '+t('chordle_daily')+' — '+chordleDailyDate();
   var line = won ? (guesses+'/'+maxG) : ('X/'+maxG);
-  return head+'  '+line+'\n'+chordleDailySquares()+'\nintonare';
+  return head+'  '+line+'\n'+chordleDailySquares()+'\n'+intonareShareLink('chordle');
 }
 function chordleDailyShare() {
   intonareNativeShare(chordleDailyShareText(), chordleDailyCopy, 'Chordle');
@@ -59682,7 +59785,7 @@ function tonaleShareText() {
     ? t('tonale_title')+' '+t('tonale_daily')+' — '+tonaleDateLabel()
     : t('tonale_title')+' · '+t(tonaleMode.nameKey);
   var total = Math.round(tonaleScores.reduce(function(a,b){return a+b;},0)*10)/10;
-  return head+'\n'+tonaleSquares()+'  '+total.toFixed(0)+'/50\nintonare';
+  return head+'\n'+tonaleSquares()+'  '+total.toFixed(0)+'/50\n'+intonareShareLink('tonale');
 }
 function tonaleDateLabel() {
   var d = new Date();
@@ -61902,7 +62005,7 @@ function diadleDailyShareText() {
   var maxG=(DIADLE_DIFF[diadleDiff]||DIADLE_DIFF.easy).maxGuesses;
   var head=t('diadle_title')+' '+t('chordle_daily')+' — '+diadleDailyDate();
   var line=won?(guesses+'/'+maxG):('X/'+maxG);
-  return head+'  '+line+'\n'+diadleDailySquares()+'\nintonare';
+  return head+'  '+line+'\n'+diadleDailySquares()+'\n'+intonareShareLink('diadle');
 }
 function diadleDailyShare() {
   intonareNativeShare(diadleDailyShareText(), diadleDailyCopy, 'Diadle');
@@ -62328,145 +62431,21 @@ function playSecretChime(volScale) {
 }
 
 /* ── BEETHOVEN'S FIFTH — unlocked by Dead Composer achievement ── */
-// The Adventurer's unlock — Indiana Jones homage, six takes.
+// The Adventurer's unlock: a brass fanfare, punctuated by a real whip crack.
 //
 // WHAT IS AND IS NOT BORROWED
-// Copyright in music protects the MELODY: the specific sequence of pitches and
-// rhythms. It does not protect intervals, instrumentation, key, tempo, or style.
-// You cannot own "brass playing a rising fourth" any more than you can own a
-// I-V-vi-IV.
+// Copyright in music protects the MELODY — the specific sequence of intervals and
+// rhythms — and it follows that melody through transposition. So this does not use
+// the Raiders figure. What it borrows is the STYLE: brass, a march-rhythm pickup,
+// and a heroic leap. The leap is a perfect FOURTH, not the minor third of the
+// original, which is the distinction doing the actual legal work. Style is not
+// protectable; the tune is. Everyone still hears "adventure"; nobody is quoting.
 //
-// So none of these quote the Raiders March. What they borrow is the GESTURE
-// everyone actually recognises — a march-rhythm pickup, then a heroic leap up a
-// perfect FOURTH, played brassy and loud. That shape is the fingerprint of
-// adventure scoring in general and long predates the film. After the opening leap
-// every variant goes somewhere the original does not.
-//
-// Pick one on-device (diagnostics panel → ADVENTURER SOUND), then the rest get
-// deleted and the winner becomes playAdventurerChime.
+// The whip is a real recording (Pixabay: free commercial use, no attribution,
+// modification permitted), trimmed to its transient. It cracks a beat after the
+// fanfare's arrival note — punctuation, not accompaniment.
+var WHIP_GAIN = 0.42;   // well under the brass; at 0.9 it buried the thing it punctuates
 
-// Shared voice: brass-ish stack (saw + square an octave down), lowpassed so the
-// saw does not spit, with a short convolved tail so a fanfare lands in a room
-// rather than in a vacuum.
-function _advRig(vs, cut, tail) {
-  var ctx = getAudio();
-  var m   = ctx.createGain(); m.gain.value = 0.13 * (vs != null ? vs : 1.0);
-  var lpf = ctx.createBiquadFilter();
-  lpf.type = 'lowpass'; lpf.frequency.value = cut || 2600; lpf.Q.value = 0.7;
-  var cv  = ctx.createConvolver();
-  var len = Math.floor(ctx.sampleRate * (tail || 0.9));
-  var buf = ctx.createBuffer(2, len, ctx.sampleRate);
-  for (var ch = 0; ch < 2; ch++) {
-    var d = buf.getChannelData(ch);
-    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
-  }
-  cv.buffer = buf;
-  var wet = ctx.createGain(); wet.gain.value = 0.22;
-  lpf.connect(m); lpf.connect(cv); cv.connect(wet); wet.connect(m);
-  m.connect(ctx.destination);
-  return { ctx: ctx, out: lpf };
-}
-
-function _advBrass(rig, f, t, d, v) {
-  var ctx = rig.ctx;
-  t += ctx.currentTime;
-  var g = ctx.createGain();
-  g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(v, t + 0.02);
-  g.gain.setValueAtTime(v, t + d * 0.6);
-  g.gain.exponentialRampToValueAtTime(0.001, t + d);
-  g.connect(rig.out);
-  var o1 = ctx.createOscillator();
-  o1.type = 'sawtooth'; o1.frequency.value = f;
-  o1.connect(g); o1.start(t); o1.stop(t + d + 0.03);
-  var o2 = ctx.createOscillator(), g2 = ctx.createGain();
-  o2.type = 'square'; o2.frequency.value = f * 0.5;
-  g2.gain.value = 0.45;
-  o2.connect(g2); g2.connect(g);
-  o2.start(t); o2.stop(t + d + 0.03);
-}
-
-function _advLow(rig, f, t, d, v) {
-  var ctx = rig.ctx;
-  t += ctx.currentTime;
-  var o = ctx.createOscillator(), g = ctx.createGain();
-  o.type = 'triangle'; o.frequency.value = f;
-  g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(v, t + 0.03);
-  g.gain.exponentialRampToValueAtTime(0.001, t + d);
-  o.connect(g); g.connect(rig.out);
-  o.start(t); o.stop(t + d + 0.05);
-}
-
-// ── A · FANFARE ──────────────────────────────────────────────────────────────
-// Triplet pickup, leap up a fourth, then away upward. Mid-register, bright.
-function _advA(vs) {
-  try {
-    var r = _advRig(vs, 2600, 0.9), T = 0.085;
-    _advBrass(r, 330, T*0, 0.09, 0.16);   // E4 pickup
-    _advBrass(r, 330, T*1, 0.09, 0.16);
-    _advBrass(r, 330, T*2, 0.09, 0.16);
-    _advBrass(r, 440, T*3, 0.42, 0.22);   // A4 — the fourth
-    _advBrass(r, 494, T*3 + 0.34, 0.12, 0.17);
-    _advBrass(r, 523, T*3 + 0.46, 0.55, 0.21);
-    _advLow(r, 110, T*3, 1.0, 0.10);
-  } catch(e) {}
-}
-
-// ── B · HORN SECTION ─────────────────────────────────────────────────────────
-// Same gesture an octave down, slower, fatter. Less fanfare, more swagger.
-function _advB(vs) {
-  try {
-    var r = _advRig(vs, 1900, 1.2), T = 0.115;
-    _advBrass(r, 165, T*0, 0.11, 0.19);   // E3 pickup, heavier
-    _advBrass(r, 165, T*1, 0.11, 0.19);
-    _advBrass(r, 165, T*2, 0.11, 0.19);
-    _advBrass(r, 220, T*3, 0.60, 0.26);   // A3 — the fourth, held
-    _advBrass(r, 262, T*3 + 0.50, 0.70, 0.22);   // C4, a lift not a run
-    _advLow(r, 110, T*3, 1.4, 0.13);
-    _advLow(r, 82,  T*3, 1.4, 0.09);      // octave below — weight
-  } catch(e) {}
-}
-
-// ── C · THE MARCH ────────────────────────────────────────────────────────────
-// Pickup, the fourth, then a full answering phrase. The longest, most tune-like.
-// The answer deliberately does NOT follow the original's contour.
-function _advC(vs) {
-  try {
-    var r = _advRig(vs, 2600, 1.0), T = 0.095;
-    _advBrass(r, 330, T*0, 0.09, 0.16);
-    _advBrass(r, 330, T*1, 0.09, 0.16);
-    _advBrass(r, 330, T*2, 0.09, 0.16);
-    _advBrass(r, 440, T*3, 0.34, 0.23);   // A4 — the fourth
-    _advBrass(r, 392, T*3 + 0.30, 0.16, 0.18);   // G4
-    _advBrass(r, 440, T*3 + 0.44, 0.16, 0.19);   // A4
-    _advBrass(r, 523, T*3 + 0.58, 0.20, 0.21);   // C5
-    _advBrass(r, 587, T*3 + 0.76, 0.62, 0.23);   // D5 — arrival
-    _advLow(r, 110, T*3, 0.6, 0.10);
-    _advLow(r, 147, T*3 + 0.76, 0.9, 0.11);
-  } catch(e) {}
-}
-
-// ── D · SINGLE GESTURE ───────────────────────────────────────────────────────
-// No pickup. Just the leap, once, with weight under it. Confident, not showy.
-function _advD(vs) {
-  try {
-    var r = _advRig(vs, 2400, 1.3);
-    _advBrass(r, 330, 0,    0.20, 0.20);  // E4
-    _advBrass(r, 440, 0.17, 0.95, 0.26);  // A4 — the fourth, and that is all
-    _advLow(r, 110, 0.17, 1.5, 0.13);
-    _advLow(r, 165, 0.17, 1.5, 0.07);     // fifth above the root
-  } catch(e) {}
-}
-
-// ── E · WHIP-CRACK ───────────────────────────────────────────────────────────
-// A REAL whip (Pixabay, free for commercial use, no attribution required, modified
-// — trimmed to the transient and normalised), then the brass answers it. The sound
-// effect and the theme arriving together, as they do in the films.
-//
-// The earlier version synthesised the crack from filtered noise. It read as static,
-// not leather: a whip's transient has a very specific shape that a noise burst
-// cannot fake. The sample is 13 KB and lives in www/audio/ alongside the splash.
 var _whipBuf = null, _whipLoading = false;
 function _loadWhip() {
   if (_whipBuf || _whipLoading) return;
@@ -62494,77 +62473,94 @@ function _loadWhip() {
   x.send();
 }
 
-function _advE(vs) {
+function playAdventurerChime(volScale) {
   try {
-    var r = _advRig(vs, 3000, 1.0), ctx = r.ctx;
+    var vs  = (volScale != null ? volScale : 1.0);
+    var ctx = getAudio();
+
+    var m   = ctx.createGain(); m.gain.value = 0.13 * vs;
+    var lpf = ctx.createBiquadFilter();
+    lpf.type = 'lowpass'; lpf.frequency.value = 2600; lpf.Q.value = 0.7;
+
+    // A short room. A fanfare with no tail sounds like a doorbell.
+    var cv  = ctx.createConvolver();
+    var len = Math.floor(ctx.sampleRate * 0.9);
+    var buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var d = buf.getChannelData(ch);
+      for (var i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.6);
+    }
+    cv.buffer = buf;
+    var wet = ctx.createGain(); wet.gain.value = 0.22;
+    lpf.connect(m); lpf.connect(cv); cv.connect(wet); wet.connect(m);
+    m.connect(ctx.destination);
+
+    // One brass voice: saw for edge, square an octave down for weight.
+    function brass(f, t, d, v) {
+      t += ctx.currentTime;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(v, t + 0.02);
+      g.gain.setValueAtTime(v, t + d * 0.6);
+      g.gain.exponentialRampToValueAtTime(0.001, t + d);
+      g.connect(lpf);
+      var o1 = ctx.createOscillator();
+      o1.type = 'sawtooth'; o1.frequency.value = f;
+      o1.connect(g); o1.start(t); o1.stop(t + d + 0.03);
+      var o2 = ctx.createOscillator(), g2 = ctx.createGain();
+      o2.type = 'square'; o2.frequency.value = f * 0.5;
+      g2.gain.value = 0.45;
+      o2.connect(g2); g2.connect(g);
+      o2.start(t); o2.stop(t + d + 0.03);
+    }
+
+    // E4 pickup ×3, then up a FOURTH to A4, then away: B4, C5.
+    var T = 0.085;
+    brass(330, T*0, 0.09, 0.16);
+    brass(330, T*1, 0.09, 0.16);
+    brass(330, T*2, 0.09, 0.16);
+    brass(440, T*3, 0.42, 0.22);           // the fourth
+    brass(494, T*3 + 0.34, 0.12, 0.17);
+    brass(523, T*3 + 0.46, 0.55, 0.21);    // arrival
+
+    // Low fifth under the landing, so the leap reads as an arrival.
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = 110;
+    var t0 = ctx.currentTime + T*3;
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(0.10, t0 + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 1.0);
+    o.connect(g); g.connect(lpf);
+    o.start(t0); o.stop(t0 + 1.05);
+
+    // The whip. Its own snap peaks ~250 ms into the sample, so this start time is
+    // set so the CRACK lands just past the arrival note — overlapping its tail,
+    // not its attack. Played dry: the crack wants no reverb, and the brass already
+    // has one.
+    var WHIP_AT = 1.045;   // seconds from the top; tuned by ear (H2)
     function crack(at) {
       var src = ctx.createBufferSource();
       src.buffer = _whipBuf;
-      var g = ctx.createGain();
-      g.gain.value = 0.9 * (vs != null ? vs : 1.0);
-      src.connect(g); g.connect(ctx.destination);   // dry — the crack wants no reverb
+      var wg = ctx.createGain();
+      wg.gain.value = WHIP_GAIN * vs;
+      src.connect(wg); wg.connect(ctx.destination);
       src.start(at);
     }
     if (_whipBuf) {
-      crack(ctx.currentTime);
+      crack(ctx.currentTime + WHIP_AT);
     } else {
-      // Not warmed yet (achievement earned before the first gesture warm-up, or the
-      // load failed). Kick it off and fire the crack as soon as it lands — late is
-      // far better than absent on the one play that matters. The brass below runs
-      // regardless, so the fanfare is never silent.
+      // Not warmed (achievement earned before the first-gesture warm-up, or the load
+      // failed). Kick it off and fire as soon as it lands — late beats absent on the
+      // one play that matters. The fanfare runs regardless, so it is never silent.
       _loadWhip();
       var waited = 0;
       var iv = setInterval(function() {
         waited += 60;
         if (_whipBuf) { clearInterval(iv); try { crack(getAudio().currentTime); } catch(e) {} }
-        else if (waited > 1500) clearInterval(iv);   // give up; brass alone is fine
+        else if (waited > 1500) clearInterval(iv);
       }, 60);
     }
-    // The brass answers the crack. Timed so it lands just after the snap.
-    _advBrass(r, 330, 0.30, 0.10, 0.17);
-    _advBrass(r, 440, 0.42, 0.75, 0.25);   // the fourth
-    _advBrass(r, 523, 0.86, 0.55, 0.19);
-    _advLow(r, 110, 0.42, 1.2, 0.12);
   } catch(e) {}
-}
-
-// ── F · DISCOVERY ────────────────────────────────────────────────────────────
-// The quiet one. A held open fifth, then the fourth rises out of it — the cue
-// for finding the thing rather than escaping with it. Strings-ish, no march.
-function _advF(vs) {
-  try {
-    var r = _advRig(vs, 1600, 1.8), ctx = r.ctx;
-    // Soft sustained bed.
-    function bed(f, t, d, v) {
-      t += ctx.currentTime;
-      var o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = 'sawtooth'; o.frequency.value = f;
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(v, t + 0.35);   // slow swell — no attack
-      g.gain.setValueAtTime(v, t + d * 0.6);
-      g.gain.exponentialRampToValueAtTime(0.001, t + d);
-      o.connect(g); g.connect(r.out);
-      o.start(t); o.stop(t + d + 0.05);
-    }
-    bed(110, 0,    1.9, 0.09);   // A2
-    bed(165, 0,    1.9, 0.07);   // E3 — open fifth
-    bed(330, 0.45, 1.5, 0.09);   // E4
-    bed(440, 0.95, 1.3, 0.13);   // A4 — the fourth, rising out of the bed
-    bed(659, 1.25, 1.1, 0.06);   // E5 shimmer above
-  } catch(e) {}
-}
-
-// The live pick. Change with _advSet(n) from the diagnostics panel.
-var ADVENTURER_VARIANT = 'A';
-try { window.ADVENTURER_VARIANT = ADVENTURER_VARIANT; } catch(e) {}
-function playAdventurerChime(volScale) {
-  var v = (typeof window !== 'undefined' && window.ADVENTURER_VARIANT) || ADVENTURER_VARIANT;
-  if      (v === 'B') _advB(volScale);
-  else if (v === 'C') _advC(volScale);
-  else if (v === 'D') _advD(volScale);
-  else if (v === 'E') _advE(volScale);
-  else if (v === 'F') _advF(volScale);
-  else                _advA(volScale);
 }
 
 function playBeethovenChime(volScale) {
@@ -63585,7 +63581,7 @@ const STRINGS = {
     ce_speed_label:'SPEED', ce_play_label:'PLAY', ce_auto_label:'AUTO',
     // Sight singing
     ss_subtitle:'hear it · match it · hold it',
-    ss_sing_this:'SING THIS NOTE', ss_settings_title:'SETTINGS', ss_stats_title:'SESSION',
+    ss_your_turn:'your turn', ss_sing_this:'SING THIS NOTE', ss_settings_title:'SETTINGS', ss_stats_title:'SESSION',
     ss_v_hold:'HOLD IT', ss_v_almost:'ALMOST — HOLD', ss_v_easeup:'EASE UP', ss_v_easedown:'EASE DOWN',
     ss_v_higher:'SING HIGHER', ss_v_lower:'SING LOWER', iv_accuracy:'Accuracy',
     ss_voice_label:'VOICE', ss_note_label:'NOTE', ss_mode_label:'MODE', ss_auto_label:'AUTO',
@@ -64469,7 +64465,7 @@ const STRINGS = {
     ce_speed_label:'VELOCITÀ', ce_play_label:'SUONA', ce_auto_label:'AUTO',
     // Sight singing
     ss_subtitle:'ascolta · intonala · tienila',
-    ss_sing_this:'CANTA QUESTA NOTA', ss_settings_title:'IMPOSTAZIONI', ss_stats_title:'SESSIONE',
+    ss_your_turn:'tocca a te', ss_sing_this:'CANTA QUESTA NOTA', ss_settings_title:'IMPOSTAZIONI', ss_stats_title:'SESSIONE',
     ss_v_hold:'TIENILA', ss_v_almost:'QUASI — TIENILA', ss_v_easeup:'ALZA POCO', ss_v_easedown:'ABBASSA POCO',
     ss_v_higher:'CANTA PIÙ ACUTO', ss_v_lower:'CANTA PIÙ GRAVE', iv_accuracy:'Precisione',
     ss_voice_label:'VOCE', ss_note_label:'NOTA', ss_mode_label:'MODALITÀ', ss_auto_label:'AUTO',
@@ -71784,54 +71780,9 @@ function _openAudioDiag() {
   pre.style.cssText = 'margin:0;white-space:pre-wrap;word-break:break-all';
   box.appendChild(pre);
 
-  // ── Adventurer sound picker ────────────────────────────────────────────────
-  // Six takes on the Raiders gesture. Tap to hear each; whichever wins becomes
-  // playAdventurerChime and the rest get deleted. Here rather than in Settings
-  // because it is a temporary A/B, not a feature.
-  const advWrap = document.createElement('div');
-  advWrap.style.cssText = 'margin-top:12px;padding-top:10px;border-top:1px solid #1f2d3a';
-  const advTitle = document.createElement('div');
-  advTitle.textContent = 'ADVENTURER SOUND  (tap to hear)';
-  advTitle.style.cssText = 'color:#9fb3c8;font-size:10px;letter-spacing:.08em;margin-bottom:6px';
-  advWrap.appendChild(advTitle);
-
-  // Warm the whip sample now, so variant E cracks on its first tap rather than
-  // its second.
-  try { if (typeof _loadWhip === 'function') _loadWhip(); } catch (e) {}
-
-  const advRow = document.createElement('div');
-  advRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px';
-  const VARIANTS = [
-    ['A', 'fanfare'],
-    ['B', 'horns'],
-    ['C', 'march'],
-    ['D', 'single'],
-    ['E', 'whip'],
-    ['F', 'discovery'],
-  ];
-  VARIANTS.forEach(([k, label]) => {
-    const b = document.createElement('button');
-    b.textContent = k + ' · ' + label;
-    b.style.cssText =
-      'background:#12202c;color:#7dd3a0;border:1px solid #24384a;border-radius:6px;' +
-      'padding:6px 9px;font:10px ui-monospace,monospace;cursor:pointer';
-    b.onclick = () => {
-      try {
-        window.ADVENTURER_VARIANT = k;
-        ADVENTURER_VARIANT = k;
-        playAdventurerChime(1.0);
-      } catch (e) {}
-      // Mark the current pick so you can see which you last heard.
-      advRow.querySelectorAll('button').forEach(x => {
-        x.style.borderColor = '#24384a'; x.style.color = '#7dd3a0';
-      });
-      b.style.borderColor = '#7dd3a0';
-      b.style.color = '#b6f25b';
-    };
-    advRow.appendChild(b);
-  });
-  advWrap.appendChild(advRow);
-  box.appendChild(advWrap);
+  // (The Adventurer sound picker lived here while six variants were being A/B'd
+  // on-device. The winner is folded into playAdventurerChime and the picker is
+  // gone; it was scaffolding, not a feature.)
 
   document.body.appendChild(box);
 
@@ -71914,8 +71865,19 @@ function _openAudioDiag() {
     L.push('');
 
     L.push('— Native —');
-    L.push('  IntonareMic     ' + (window.IntonareMic ? 'present' : 'absent'));
-    L.push('  IntonareNative  ' + (window.IntonareNative ? 'present' : 'absent'));
+    // These two probe window globals that the plugin never sets — it is reached via
+    // Capacitor.registerPlugin('IntonareIOS'), not a global. So they always said
+    // "absent" and always meant nothing. Report the handle that actually gates
+    // _iosSyncAudioMode instead: if THIS is absent, the session never gets set and
+    // the app opens quiet.
+    L.push('  IntonareIOS     ' + (function() {
+      try {
+        const p = _iosPluginHandle();
+        if (!p) return 'ABSENT — session will never be set';
+        return 'present' + (typeof p.setAudioMode === 'function' ? ' · setAudioMode ok' : ' · NO setAudioMode');
+      } catch (e) { return 'threw: ' + e.message; }
+    })());
+    L.push('  Capacitor       ' + (window.Capacitor ? ('present · ' + (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : '?')) : 'ABSENT'));
     L.push('  audioMode       ' + ((window._sampleDiag && window._sampleDiag.audioMode) || 'not attempted'));
     L.push('  Haptics bridge  ' + (window.Haptics ? 'present' : 'absent'));
     L.push('  splash fps      ' + (window._splashFps ? window._splashFps.toFixed(1) + ' fps  (' + window._splashFrames + ' frames)' : 'not measured'));
@@ -82600,6 +82562,32 @@ function isTromboneFamily(i){ return (i ?? chordScaleInstrument) === 'trombone';
 // Brass sub-type state (trumpet piccolo, trombone soprano/bass, tuba contrabass)
 let brassSubType = 'standard';
 
+// Warm the sample set for a chart instrument.
+//
+// THE BUG THIS FIXES
+// This used to live INSIDE switchChordScaleInstrument(), which only runs when the
+// user actively picks an instrument from the sheet. Open the charts tool normally
+// and it inherits the default instrument WITHOUT ever running — so the samples were
+// never requested, _chartPlay() found isReady() false, and every note fell back to
+// the synth voice. It only started sounding right once you had switched instrument
+// and switched back.
+//
+// Now it runs on tool open as well, so the first note you tap is the real
+// instrument.
+function _loadInstSamples(inst) {
+  try {
+    const ids = new Set();
+    if (typeof _frettedToneId === 'function' && CS_INST_FAMILY_MAP[inst] === 'fretted') ids.add(_frettedToneId());
+    if (inst === 'ww_sax') ids.add(saxToneFor());
+    if (inst === 'ww_flute') { ids.add('flute'); if (INST_TONE_MAP['ww_piccolo']) ids.add(INST_TONE_MAP['ww_piccolo']); }
+    const mapped = INST_TONE_MAP[inst];
+    if (mapped) ids.add(mapped);
+    ids.forEach(id => {
+      if (SampleEngine._instruments[id] && !SampleEngine.isReady(id) && !SampleEngine.isFailed(id)) SampleEngine.load(id);
+    });
+  } catch (e) {}
+}
+
 function switchChordScaleInstrument(inst) {
   chordScaleStopAllAudio(); // kill ALL chart voices (incl. didgeridoo drone + bowed) before swapping
   gccCapo = 0; // reset capo on instrument change
@@ -82625,18 +82613,7 @@ function switchChordScaleInstrument(inst) {
   if (typeof fluteTrillStopPulse === 'function') fluteTrillStopPulse();
   if (!hasTrillView(inst)) { wwSubTab = 'notes'; }
   chordScaleInstrument = inst;
-  // Eagerly load samples for the instrument we just switched to (fretted/bowed/wind tones)
-  (function _loadInstSamples() {
-    const ids = new Set();
-    if (typeof _frettedToneId === 'function' && CS_INST_FAMILY_MAP[inst] === 'fretted') ids.add(_frettedToneId());
-    if (inst === 'ww_sax') ids.add(saxToneFor());
-    if (inst === 'ww_flute') { ids.add('flute'); if (INST_TONE_MAP['ww_piccolo']) ids.add(INST_TONE_MAP['ww_piccolo']); }
-    const mapped = INST_TONE_MAP[inst];
-    if (mapped) ids.add(mapped);
-    ids.forEach(id => {
-      if (SampleEngine._instruments[id] && !SampleEngine.isReady(id) && !SampleEngine.isFailed(id)) SampleEngine.load(id);
-    });
-  })();
+  _loadInstSamples(inst);
   // Organ defaults to a 2-octave view (keys auto-shrink to fit width, like a real B-3 manual)
   if (inst === 'organ') { pssOctaves = 2; pccOctaves = 2; }
   const meta = CS_INSTRUMENTS[inst] || {};
@@ -94226,6 +94203,13 @@ function _sgLaunch(kind, target, opts) {
         switchChordScaleInstrument(opts.inst);
       }
       enterTool(target);
+      // Warm the CURRENT instrument's samples on open, not just when one is picked.
+      // Without this the first visit plays the synth fallback: switchChordScale-
+      // Instrument() is the only thing that warmed them, and opening the tool with
+      // the default instrument never calls it.
+      if (target === 'guitarchords' && typeof _loadInstSamples === 'function') {
+        _loadInstSamples(chordScaleInstrument);
+      }
       // Progression tool can open directly onto a named preset (e.g. a cadence
       // launched from the theory guide).
       if (target === 'progression' && opts.preset && typeof progLoadPreset === 'function') {
@@ -98427,7 +98411,7 @@ function mqDailyShareText() {
   return 'Intonare Daily Quiz \u2014 ' + mqDailyDate() + '\n' +
          (pack.emoji || '') + ' ' + (pack.name || 'Daily Quiz') + '\n' +
          (data.correct || 0) + '/10 correct\n' +
-         emoji + '\nintonare';
+         emoji + '\n' + intonareShareLink('musicquiz');
 }
 function mqDailyShare() {
   var txt = mqDailyShareText();
