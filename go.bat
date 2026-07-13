@@ -92,6 +92,25 @@ if exist audio_assets (
     )
 )
 
+REM [4g2] LOOSE FILES in audio_assets root.
+REM
+REM Step 4g uses `for /D`, which iterates DIRECTORIES ONLY. Every sample set is a
+REM folder (grand_piano\, violin\...) so that worked fine -- right up until the first
+REM loose file landed there. intonare_whip.mp3 sits at audio_assets\ root, so `for /D`
+REM skipped straight past it, it never reached the Android assets, and The Adventurer's
+REM fanfare played with no whip crack on Android while working perfectly on iOS (where
+REM Codemagic does `cp -r audio_assets/*`, which takes files as well as folders).
+REM
+REM Copy them every run, not "if not exist": a loose file is small, and one that has
+REM been REPLACED needs to actually make it across.
+if exist audio_assets (
+    if not exist android\app\src\main\assets\public\audio mkdir android\app\src\main\assets\public\audio
+    for %%f in (audio_assets\*.*) do (
+        echo   Copying loose file %%~nxf...
+        copy /Y "%%f" "android\app\src\main\assets\public\audio\%%~nxf" >nul
+    )
+)
+
 echo [4i] Restoring splash launch sound...
 if not exist android\app\src\main\res\raw mkdir android\app\src\main\res\raw
 copy /Y native_src\res\raw\intonare_splash.ogg android\app\src\main\res\raw\intonare_splash.ogg
@@ -127,7 +146,15 @@ if "!NATIVE_CHANGED!"=="1" (
 
 echo.
 echo ============================================================
-echo  DONE. Hit Run in Android Studio, then clear cache on phone.
+echo  DONE.
+echo.
+echo  This script does NOT build the APK. Hit Run in Android Studio,
+echo  then clear cache on the phone.
+echo.
+echo  Native changes (manifest, .java) only reach the phone via that
+echo  Run -- testing against the APK already installed will show the
+echo  OLD native behaviour with the NEW web code, which looks like a
+echo  half-broken feature rather than an unbuilt one.
 echo ============================================================
 
 endlocal

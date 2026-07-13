@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.29 -->
+<!-- INTONARE_VERSION: 0.81.31 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16484,10 +16484,32 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
       function openFromUrl(url) {
         if (!url) return;
-        // intonare://chordle  ->  'chordle'. Tolerate a trailing slash and any
-        // query string; take the first path-ish token after the scheme.
-        var m = String(url).match(/^intonare:\/\/([a-z_]+)/i);
-        var target = m ? m[1].toLowerCase() : '';
+        url = String(url);
+
+        // TWO URL SHAPES arrive here, and both must work.
+        //
+        //   intonare://chordle
+        //       the custom scheme, fired by the bounce page (and, on Android, only
+        //       ever by a human tapping the button — Chrome will not launch an app
+        //       from a script without a user gesture).
+        //
+        //   https://lieutenantdan76.github.io/Intonare/go.html?m=chordle
+        //       an App Link / Universal Link. The OS verified the domain against
+        //       .well-known at install time, so it hands us the https URL DIRECTLY
+        //       and the browser is never involved. This is the path that opens the
+        //       app with no page and no tap, and it is why the shared link is https
+        //       and not a custom scheme.
+        //
+        // Matching only the first shape (as this did) meant every verified App Link
+        // arrived and was silently ignored.
+        var target = '';
+        var m = url.match(/^intonare:\/\/([a-z_]+)/i);
+        if (m) {
+          target = m[1].toLowerCase();
+        } else if (/^https?:\/\//i.test(url)) {
+          var q = url.match(/[?&]m=([a-z_]+)/i);
+          if (q) target = q[1].toLowerCase();
+        }
         // Every daily that has a share button. musicquiz is the odd one out: it does
         // not open via enterExercise() like the others, it has its own mqOpen().
         var DAILIES = { chordle: 1, tonale: 1, diadle: 1, musicquiz: 1 };
@@ -17080,7 +17102,22 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // otherwise produce one enormous jump and visibly tear the wave.
       const _dtMs = _lastFrameT ? (_now - _lastFrameT) : 16.667;
       _lastFrameT = _now;
-      const dt60 = Math.min(3, _dtMs / 16.667);
+      // Frame-independence, normalised to the rate the wave was actually TUNED at.
+      //
+      // This used to divide by 16.667 (a 60 fps reference). That is the obvious
+      // choice and it was wrong: the original code was `wavePhase += _spd`, with
+      // _spd tuned BY EYE on a 120 Hz Android. So the speed everyone signed off on
+      // was ~116 * _spd per second, not 60 * _spd.
+      //
+      // Normalising to 60 therefore did not preserve the design — it HALVED it, on
+      // every device. iOS had been running at half speed since v0.81.13 (which is
+      // the real reason the splash "looked weird" there), and Android inherited the
+      // same slowdown the moment it was next built.
+      //
+      // Dividing by the tuned frame time instead keeps the speed the wave was
+      // designed with, and keeps it identical on 60 Hz and 120 Hz alike.
+      const SPLASH_REF_MS = 8.62;   // ~116 fps: the rate the wave was tuned on
+      const dt60 = Math.min(3, _dtMs / SPLASH_REF_MS);
 
       // Record the real frame rate so the diagnostics panel can show it. The
       // splash "feels slower on iOS" question has had three theories and no
@@ -22765,7 +22802,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.29';
+const INTONARE_VERSION = '0.81.31';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -29265,7 +29302,16 @@ function enterTool(name, restoreState) {
   if (name === 'vocalrange') vrInit();
   if (name === 'drumkit') dkInit();
   if (name === 'rhythmcards') rcInit();
-  if (name === 'guitarchords') { if (!svcApplyRestore()) gccInit(); }
+  if (name === 'guitarchords') {
+    if (!svcApplyRestore()) gccInit();
+    // Warm the CURRENT instrument's samples. The previous fix hooked the navigation
+    // wrapper, which only the deep-link path and the tool-with-preset path go
+    // through — the actual card button calls enterTool() directly and sailed right
+    // past it. So the tool still opened on guitar with nothing loaded, and the first
+    // notes came out as the synth fallback until you switched instrument and back.
+    // enterTool IS the path everything uses; the warm belongs here.
+    if (typeof _loadInstSamples === 'function') _loadInstSamples(chordScaleInstrument);
+  }
   if (name === 'progression') progInit();
 
   maybeAutoTour(name);   // first-open tour for tools that have one
@@ -62651,12 +62697,21 @@ function _loadWhip() {
   x.onload = function() {
     var ok = (x.status >= 200 && x.status < 300) ||
              (x.status === 0 && x.response && x.response.byteLength > 0);
-    if (!ok) { _whipLoading = false; return; }
+    if (!ok) {
+      window._whipErr = 'HTTP ' + x.status + ' @ ' + url;
+      _whipLoading = false; return;
+    }
     ctx.decodeAudioData(x.response, function(b) {
       _whipBuf = b; _whipLoading = false;
-    }, function() { _whipLoading = false; });
+    }, function(e) {
+      window._whipErr = 'decode failed (' + (x.response ? x.response.byteLength : 0) + 'b)';
+      _whipLoading = false;
+    });
   };
-  x.onerror = function() { _whipLoading = false; };
+  x.onerror = function() {
+    window._whipErr = 'network error @ ' + url;
+    _whipLoading = false;
+  };
   x.send();
 }
 
@@ -72067,6 +72122,14 @@ function _openAudioDiag() {
     L.push('  Capacitor       ' + (window.Capacitor ? ('present · ' + (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : '?')) : 'ABSENT'));
     L.push('  audioMode       ' + ((window._sampleDiag && window._sampleDiag.audioMode) || 'not attempted'));
     L.push('  Haptics bridge  ' + (window.Haptics ? 'present' : 'absent'));
+    L.push('  whip sample     ' + (function () {
+      try {
+        if (typeof _whipBuf === 'undefined') return 'no loader';
+        if (_whipBuf) return 'READY (' + _whipBuf.duration.toFixed(2) + 's)';
+        if (typeof _whipLoading !== 'undefined' && _whipLoading) return 'loading…';
+        return 'NOT LOADED' + (window._whipErr ? ' — ' + window._whipErr : '');
+      } catch (e) { return 'threw'; }
+    })());
     L.push('  splash fps      ' + (window._splashFps ? window._splashFps.toFixed(1) + ' fps  (' + window._splashFrames + ' frames)' : 'not measured'));
     L.push('  splash phase    ' + (window._splashPhase != null ? window._splashPhase.toFixed(2) + ' rad total travel' : 'not measured'));
     L.push('  splash dpr      ' + (window.devicePixelRatio || '?'));

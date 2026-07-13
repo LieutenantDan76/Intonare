@@ -41,6 +41,29 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="intonare" />
             </intent-filter>
+
+            <!--
+              App Links: the https URL opens the app DIRECTLY, with no browser and no
+              tap. autoVerify makes Android fetch
+              https://lieutenantdan76.github.io/.well-known/assetlinks.json on install
+              and check this app's signing certificate against it. Once verified, the
+              OS owns the URL and the browser never sees it.
+
+              This is the whole point. Chrome refuses to launch an app from a page
+              without a user gesture, so the bounce page can only ever be a
+              tap-to-open. App Links sidestep that entirely: there is no page, no
+              script, and therefore no gesture rule.
+
+              go.html stays, and stays useful: it is what people WITHOUT the app get.
+            -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="lieutenantdan76.github.io"
+                      android:pathPrefix="/Intonare/go.html" />
+            </intent-filter>
         </activity>
         <provider
             android:name="androidx.core.content.FileProvider"

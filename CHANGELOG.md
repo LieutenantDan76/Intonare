@@ -16,6 +16,109 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.31 — App Links and Universal Links: the link just opens the app
+
+The bounce page can never open the app on Android without a tap. That is not a bug to
+work around; it is Chrome's rule, and it applies to any page. **The way out is to have
+no page at all.**
+
+App Links (Android) and Universal Links (iOS) let the **OS** own the URL. It verifies
+the domain against a file you publish, and from then on the https link is intercepted
+before any browser sees it. No page, no script, and therefore no user-gesture rule.
+Tap a shared result in a chat, the app opens on today's puzzle.
+
+**This is why the shared link was https from the start.** Nothing about it changes;
+the OS simply starts intercepting it.
+
+### The pieces
+- **`.well-known/assetlinks.json`** — names the package and the app-signing SHA-256
+  (the Play-managed key, not the upload key; verifying against the upload key fails
+  silently on every real install).
+- **`.well-known/apple-app-site-association`** — no file extension, which is required
+  — names `HAS2KCH36U.com.lieutenantdan.intonare` and the `/Intonare/go.html*` path.
+- **Manifest** — a second intent-filter with `android:autoVerify="true"` for the https
+  host. The custom-scheme filter stays as a fallback.
+- **CI** — writes the Associated Domains entitlement.
+- **The handler learned to read https.** App Links deliver the *https* URL, not
+  `intonare://`. The regex only matched the custom scheme, so a verified App Link
+  would have arrived and been **silently ignored** — the feature would have looked
+  like it simply did not work.
+
+### go.html does not go away
+It is what people **without** the app get: the store, and an honest explanation. The
+OS only intercepts the URL for devices where the app is installed and verified;
+everyone else still lands on the page. One link, both audiences.
+
+### Two things must be done by hand
+1. **A second GitHub repo, named exactly `LieutenantDan76.github.io`**, holding only
+   the `.well-known/` folder. The verification files must be served from the **domain
+   root** — `lieutenantdan76.github.io/.well-known/…` — and a *project* Pages site
+   (which is what `Intonare` is) can only serve under `/Intonare/`. The root file
+   authorises the app for the whole domain, so the links themselves do not move.
+2. **Apple Developer portal → Identifiers → com.lieutenantdan.intonare → tick
+   Associated Domains.** Without it the capability is absent from the provisioning
+   profile and the iOS build fails to sign.
+
+## v0.81.30 — the splash was running at half speed, and it was my fault
+
+### dt60 normalised to the wrong reference
+`wavePhase += _spd * dt60`, where `dt60 = dtMs / 16.667` — a **60 fps** reference.
+That is the obvious choice and it was wrong.
+
+The original code was `wavePhase += _spd`, frame-coupled, with `_spd` tuned **by eye
+on a 120 Hz Android**. So the speed the wave was actually designed at is
+~116 × `_spd` per second, not 60 × `_spd`. Normalising to 60 did not preserve the
+design — **it halved it, everywhere.**
+
+- **iOS has been running the splash at half speed since v0.81.13.** That is the real
+  reason it "looked weird" there, and it is why three rounds of theorising about
+  stepping and DPR and frame caps never landed: the wave was not stepping oddly, it
+  was crawling.
+- **Android inherited the same slowdown the moment it was next built** — it had been
+  on v0.81.2, from before `dt60` existed.
+
+Fixed by normalising to the frame time it was tuned at (~8.62 ms) rather than to 60
+fps. Frame-independence is kept; the speed is the one the wave was designed with, and
+it is now identical on 60 Hz and 120 Hz alike.
+
+### Chart samples: the fix hooked the wrong function
+v0.81.27 warmed the instrument's samples when the charts tool opened — except it
+hooked the **navigation wrapper**, which only the deep-link and open-with-preset paths
+go through. **The actual card button calls `enterTool()` directly** and sailed straight
+past it. So the tool still opened on guitar with nothing loaded and played the synth
+fallback until you switched instrument and back — exactly the bug it was meant to fix.
+
+Moved into `enterTool()`, which is the path everything uses.
+
+### The whip never reached Android — `go.bat` skipped it
+The Adventurer's fanfare played with no crack. The app code was fine; the file simply
+was not there.
+
+`go.bat` step 4g copies the audio assets with:
+
+    for /D %%i in (audio_assets\*) do ...
+
+**`for /D` iterates directories only.** Every sample set is a folder — `grand_piano\`,
+`violin\` — so this worked perfectly, right up until the first *loose file* landed in
+`audio_assets\`. `intonare_whip.mp3` sits at the root, so the loop stepped straight
+over it and it never reached the Android assets. iOS was unaffected: Codemagic does
+`cp -r audio_assets/*`, which takes files as well as folders. A platform-specific
+absence with no error anywhere.
+
+- **`go.bat` now copies loose files too**, every run rather than "if not exist" — a
+  replaced file has to actually make it across.
+- The diagnostics panel also reports the sample's state now (**READY** with duration,
+  **loading**, or **NOT LOADED** with the specific HTTP/decode/network failure), so
+  the next audio-file mystery is one screenshot rather than three theories.
+
+### And `go.bat` does not build the APK
+Worth stating plainly, because it is how a fixed native feature looks broken: the
+script preps everything and then says "hit Run in Android Studio". **Native changes —
+the manifest, the .java files — only reach the phone through that Run.** Testing
+against the APK already installed gives you the new web code with the old native
+behaviour, which reads as a half-broken feature rather than an unbuilt one. The
+script's closing message now says so.
+
 ## v0.81.29 — deep links actually land
 
 Two bugs, one per platform, both of which made the link look like it did nothing.
@@ -98,7 +201,32 @@ Review also caught the overlay's digits using `inherit` inside the `font` shorth
 invalid CSS, silently dropped wholesale, which would have cost the weight and
 line-height. Set as individual properties instead.
 
-### Android: the scheme never fired at all
+### Android needs a tap, and that is the rule — not a workaround
+The page fired the app launch automatically on load. **Chrome blocks that, by design:**
+
+> "Chrome won't launch an external app for a given Intent URI if the Intent URI is
+> initiated without user gesture." — *Chrome for Developers*
+
+and Chromium's own `external_intents` documentation lists *"launching an app without
+user activation"* among the things it refuses outright.
+
+The tap that opened the link was consumed by the navigation to the page. The page's
+own script has no user activation left, so an automatic `intent://` fires into a wall
+— **every time**, regardless of the manifest, the build, or anything else. (The
+earlier iframe version failed for exactly the same reason, one layer down. Two
+attempts, one root cause.)
+
+Chrome's guidance is explicit: *"Construct an intent anchor and embed it within a
+page, so the user can choose to launch the app."*
+
+- **On Android the page is now the button.** A real `<a href="intent://…">` anchor,
+  tapped by a human. No timers, no guessing whether it worked.
+- The intent carries `browser_fallback_url`, so **Chrome sends people without the app
+  to the Play listing itself** — one tap covers both cases.
+- **iOS keeps the automatic path**, because navigating to a custom scheme from script
+  does work there and the app opens immediately.
+
+### Android: the earlier iframe attempt
 The bounce page tried to launch the app by pointing a hidden iframe at
 `intonare://…`. **Chrome has blocked custom-scheme navigation from iframes for
 years**, as a security measure. So nothing happened, the fallback timer ran, and the

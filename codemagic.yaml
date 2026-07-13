@@ -244,7 +244,34 @@ workflows:
           $PB -c "Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor" "$PLIST"
           $PB -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST"
           $PB -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string intonare" "$PLIST"
-          echo "  URL scheme registered: intonare://" 
+          echo "  URL scheme registered: intonare://"
+
+          # ── Universal Links: Associated Domains entitlement ─────────────────
+          # iOS fetches
+          #   https://lieutenantdan76.github.io/.well-known/apple-app-site-association
+          # on install, sees this app listed, and thereafter OWNS the URL: a shared
+          # link opens the app directly. No Safari, no bounce page, no tap.
+          #
+          # REQUIRES a one-off in the Apple Developer portal: Identifiers →
+          # com.lieutenantdan.intonare → tick Associated Domains. Without it the
+          # capability is missing from the provisioning profile and signing FAILS.
+          #
+          # printf, not a heredoc: heredoc body sits at column 0, which terminates the
+          # YAML block scalar this script lives in and breaks the whole file.
+          ENT="ios/App/App/App.entitlements"
+          if [ ! -f "$ENT" ]; then
+            printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' '<plist version="1.0">' '<dict>' '</dict>' '</plist>' > "$ENT"
+          fi
+          $PB -c "Delete :com.apple.developer.associated-domains" "$ENT" 2>/dev/null || true
+          $PB -c "Add :com.apple.developer.associated-domains array" "$ENT"
+          $PB -c "Add :com.apple.developer.associated-domains:0 string applinks:lieutenantdan76.github.io" "$ENT"
+          echo "  Associated Domains entitlement:"
+          cat "$ENT"
+
+          # Xcode must be told the entitlements file exists.
+          if ! grep -q "CODE_SIGN_ENTITLEMENTS" ios/App/App.xcodeproj/project.pbxproj; then
+            echo "  NOTE: CODE_SIGN_ENTITLEMENTS not in pbxproj — Capacitor 8 templates include it by default; if signing fails, that is the first thing to check."
+          fi
 
           # NOTE: CADisableMinimumFrameDurationOnPhone is deliberately NOT set.
           #
