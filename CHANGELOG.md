@@ -16,6 +16,101 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.29 — deep links actually land
+
+Two bugs, one per platform, both of which made the link look like it did nothing.
+
+### iOS: the module opened behind the splash — and the splash is now skipped
+The app opened, but on the home screen rather than the shared module. The handler
+waited a fixed 400 ms and then called `enterExercise()` — but on a cold start the
+splash owns the screen for about **three and a half seconds**, and its own handoff to
+the home screen then wiped out the module that had quietly opened behind it.
+
+Waiting for the splash fixes that, and leaves a toll: three and a half seconds of
+branding on **every** shared link, paid by someone who tapped it specifically to see a
+puzzle. **The splash is for people opening the app; it is an obstacle for people
+opening a link.**
+
+- The deep-link handler now **skips the splash** outright. It calls the splash's own
+  `removeSplash()` — not a bare element delete — because that function also performs
+  the iOS first-gesture audio unlock and starts sample preloading, and any other
+  teardown would silently skip both.
+- `getLaunchUrl()` is async and has not resolved when the splash starts, so the
+  splash does begin: it is cut off a frame or two in rather than never started. A
+  brief flash of the first frame, which beats delaying every launch to wait on a
+  plugin call that usually comes back empty.
+- If the skip is somehow unavailable, it falls back to **waiting** for the new
+  `intonare:splash-done` event rather than opening the module behind the splash.
+
+### And they land on the daily, not the module's front door
+Opening the module was not what the link promised. Someone tapping a shared Chordle
+result tapped a link **about today's puzzle**; dropping them on a difficulty picker
+makes them go and find it themselves.
+
+Each daily already had a proper stateful entry point, and they behave correctly for
+someone arriving from a link:
+
+| | |
+|---|---|
+| already played today | shows the result |
+| mid-game | resumes where they left off |
+| fresh | starts today's puzzle |
+
+`chordleStartDaily`, `tonaleStartDaily`, `diadleStartDaily`, and — for Music Quiz —
+`mqOpenDailyPopup`, which shows its "play the daily?" card rather than launching
+straight in. That is its own established behaviour and is left alone.
+
+### All three dailies now count you in
+Chordle and Diadle fired their progression **350 ms after entry**. Fine if you had
+deliberately tapped "Daily" and were braced for it. Startling if you had just arrived
+from a chat, phone still face-down, no idea yet which app you were looking at.
+
+The first instinct was to suppress the auto-play for deep-link arrivals only. That is
+a patch, and it leaves someone staring at a puzzle wondering what to do next.
+
+**Tónale already had the right answer** and has had all along — `tonaleReadyIntro()`:
+a brief **READY? → 3 → 2 → 1** before the first tone, with a haptic tick on each
+digit. So Chordle and Diadle now do exactly the same thing.
+
+- One shared `intonareReadyCountdown()`, used by both.
+- The count runs **in the play button** — no new markup, no layout shift, and it is
+  where the eye already is.
+- Abandons cleanly if the player backs out mid-count.
+- Identical behaviour whether you tapped "Daily" yourself or arrived from a shared
+  link. **The entry path no longer changes what happens.**
+
+The deep-link special case is gone; it is not needed when the behaviour is right for
+everyone. (`READY?` / `PRONTO?` already existed in both languages.)
+
+**Where the count shows:** the first version ran it inside the play button — 13 px of
+text in a 56 px control, unreadable. It is now a **module overlay**: the game dims
+(55% + blur), and the count sits front and centre at 56 px with Tonale's scale-pop on
+each digit and a haptic tick. Covering the controls also says "not yet" more clearly
+than any wording could. Mounted in the module's own root (`#exChordle` / `#exDiadle`),
+so the app header stays live — backing out mid-count bails cleanly.
+
+**Scope, deliberately narrow:** the countdown fires on a **fresh daily start only**.
+Replays are user-initiated (they pressed the button; they are ready), resume means
+they know what they are doing, and free play has never auto-played. Only the fresh
+daily fires audio at someone, so only the fresh daily counts them in.
+
+Review also caught the overlay's digits using `inherit` inside the `font` shorthand —
+invalid CSS, silently dropped wholesale, which would have cost the weight and
+line-height. Set as individual properties instead.
+
+### Android: the scheme never fired at all
+The bounce page tried to launch the app by pointing a hidden iframe at
+`intonare://…`. **Chrome has blocked custom-scheme navigation from iframes for
+years**, as a security measure. So nothing happened, the fallback timer ran, and the
+page showed the stores — to someone who had the app installed.
+
+- Replaced with an **`intent://` URL**, which is Android's own supported mechanism:
+  it names the scheme, the package, and a browser fallback, and Chrome makes the
+  decision itself.
+- The fallback screen also gets a manual **"Open in Intonare"** button, and no longer
+  claims the app is missing — the navigation may simply have been blocked (in-app
+  browsers do this too), and a tap always works.
+
 ## v0.81.28 — deep links: shared dailies open the app
 
 Chordle, Tonale and Diadle results ended with the bare word "intonare". They now end

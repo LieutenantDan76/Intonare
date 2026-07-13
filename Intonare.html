@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.28 -->
+<!-- INTONARE_VERSION: 0.81.29 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16402,6 +16402,14 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     if (el) el.remove();
     document.body.style.overflow = '';  // restore scroll
 
+    // Tell anyone waiting that the shell is now the real UI. The deep-link handler
+    // needs this: a cold start from a shared link would otherwise open the module
+    // BEHIND the splash, and the splash's own handoff to the home screen would then
+    // wipe it out. Guessing at a delay does not work — the splash runs about three
+    // and a half seconds, and a fixed timeout is a race either way.
+    window._splashGone = true;
+    try { window.dispatchEvent(new Event('intonare:splash-done')); } catch (e) {}
+
     // Preload registered sample instruments on first touch. Staggered in priority
     // order so common instruments are ready first and we don't saturate the
     // connection with thousands of simultaneous fetches (which made loads slow).
@@ -16485,18 +16493,84 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         var DAILIES = { chordle: 1, tonale: 1, diadle: 1, musicquiz: 1 };
         if (!DAILIES[target]) return;   // 'open' or anything unknown: just launch
 
-        // Defer a beat. A cold start is still assembling the UI when the launch URL
-        // arrives, and the open functions expect the shell to exist.
-        setTimeout(function () {
+        // Open the module, then go STRAIGHT TO THE DAILY.
+        //
+        // Landing on the module's front screen is not what the link promised. Someone
+        // tapping a shared Chordle result tapped a link about TODAY'S PUZZLE; dropping
+        // them on a difficulty picker makes them go and find it themselves.
+        //
+        // Each daily has a proper stateful entry point, and they all behave correctly
+        // for a visitor arriving from a link:
+        //   already played today -> shows their result (or, if they have not played,
+        //                           starts it)
+        //   mid-game             -> resumes where they left off
+        //   fresh                -> starts today's puzzle
+        // Music Quiz shows its "play the daily?" card rather than launching straight
+        // in, which is its own established behaviour and is left alone.
+        var DAILY_ENTRY = {
+          chordle:   'chordleStartDaily',
+          tonale:    'tonaleStartDaily',
+          diadle:    'diadleStartDaily',
+          musicquiz: 'mqOpenDailyPopup',
+        };
+
+
+        function go() {
           try {
             if (target === 'musicquiz') {
               if (typeof mqOpen === 'function') mqOpen();
+              // The quiz needs its shell up before the daily card can sit on top.
+              setTimeout(function () {
+                try {
+                  if (typeof mqOpenDailyPopup === 'function') mqOpenDailyPopup();
+                } catch (e) {}
+              }, 250);
               return;
             }
+
             if (typeof setMode === 'function') setMode('practice');
             if (typeof enterExercise === 'function') enterExercise(target);
+
+            // Then the daily itself, once the exercise shell exists.
+            var fn = DAILY_ENTRY[target];
+            setTimeout(function () {
+              try {
+                if (fn && typeof window[fn] === 'function') window[fn]();
+              } catch (e) {}
+            }, 250);
           } catch (e) {}
-        }, 400);
+        }
+
+        // SKIP THE SPLASH — do not wait for it.
+        //
+        // Someone who tapped a shared Chordle result wants Chordle. Three and a half
+        // seconds of branding is a toll on a link they clicked specifically to see a
+        // puzzle, and it would be paid on every single shared link. The splash is for
+        // people opening the APP; it is an obstacle for people opening a LINK.
+        //
+        // (The first version WAITED for the splash, because opening the module behind
+        // it meant the splash's handoff to the home screen wiped the module out —
+        // which looked exactly like the deep link doing nothing. Waiting fixed the
+        // bug and left the toll. Skipping fixes both.)
+        //
+        // _intonareSkipSplash() calls the splash's own removeSplash(), not a bare
+        // element delete: that function also performs the iOS first-gesture audio
+        // unlock and starts sample preloading, and tearing the splash down any other
+        // way would silently skip both.
+        if (!window._splashGone && typeof window._intonareSkipSplash === 'function') {
+          try { window._intonareSkipSplash(); } catch (e) {}
+        }
+
+        // A frame for the shell to settle, then go. If the splash somehow could not
+        // be skipped, fall back to waiting for it rather than opening behind it.
+        if (window._splashGone) {
+          setTimeout(go, 80);
+        } else {
+          var fired = false;
+          var once  = function () { if (fired) return; fired = true; setTimeout(go, 120); };
+          window.addEventListener('intonare:splash-done', once, { once: true });
+          setTimeout(once, 8000);
+        }
       }
 
       // Already open.
@@ -17203,8 +17277,27 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     removeSplash();
   }
 
-  // Show splash on every launch (sessionStorage is unreliable in Capacitor WebView —
-  // the process often survives app backgrounding, keeping the flag set).
+  // Skip the splash entirely. Used when the app was opened from a shared link:
+  // someone who tapped a Chordle result wants Chordle, and three and a half seconds
+  // of branding is a toll on a link they clicked specifically to see a puzzle. The
+  // splash is for people opening the APP; it is an obstacle for people opening a
+  // LINK.
+  //
+  // This calls removeSplash() rather than just deleting the element, because that
+  // function also does the iOS first-gesture audio unlock and kicks off sample
+  // preloading. Tearing the splash down any other way would silently skip both.
+  window._intonareSkipSplash = function () {
+    running = false;
+    try { removeSplash(); } catch (e) {}
+  };
+
+  // NOTE: the splash starts normally even on a deep link. getLaunchUrl() is async and
+  // has not resolved this early, so there is nothing to check yet. The deep-link
+  // handler calls _intonareSkipSplash() the moment it learns there is a URL — which
+  // is a frame or two in, so the splash is cut off almost immediately rather than
+  // never started. Visually that is a brief flash of the first frame, which is
+  // acceptable; the alternative is delaying app start for every launch to wait on a
+  // plugin call that is usually going to come back empty.
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(() => runSplash().catch(removeSplash)));
   } else {
@@ -22672,7 +22765,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.28';
+const INTONARE_VERSION = '0.81.29';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -58556,8 +58649,9 @@ function chordleStartDaily() {
   var tag=document.getElementById('headerTagline');
   if (tag && currentExercise==='chordle') { tag.textContent = t('chordle_daily')+' · '+chordleDailyDate(); tag.style.color=''; }
   hapticLight();
-  // play the progression on entry so the player hears it right away
-  setTimeout(function(){ chordlePlay(); }, 350);
+  // Ready? 3 2 1, then the progression. Same as Tonale, and the same whether you
+  // tapped "Daily" yourself or arrived from a shared link.
+  intonareReadyCountdown('exChordle', chordlePlay, function(){ return currentExercise === 'chordle'; });
 }
 
 // Resume an in-progress daily: rebuild the same seeded progression, replay saved guesses.
@@ -60197,6 +60291,98 @@ function chordleUpdateArpBtn() {
   btn.style.borderColor = chordleArp?'var(--accent)':'var(--border)';
   btn.style.background = chordleArp?'color-mix(in srgb, var(--accent) 15%, transparent)':'transparent';
 }
+// "Ready? 3 2 1" before the first tone.
+//
+// Tonale has always done this (tonaleReadyIntro) and it is plainly the right idea:
+// a beat to settle, get the phone to your ear, and stop talking. Chordle and Diadle
+// instead fired their progression 350 ms after entry — fine if you had deliberately
+// tapped "Daily" and were braced for it, startling if you had just arrived from a
+// shared link with the phone still face-down.
+//
+// WHY AN OVERLAY AND NOT THE PLAY BUTTON
+// The first version counted down inside the play button. It was unreadable: 13 px of
+// text in a 56 px control, tucked in among other controls. Tonale's works because the
+// digit is 34 px, weight 800, and pops in scale on every change — it is the main
+// event on the screen, not a label on a widget.
+//
+// So both games get the same treatment, via a shared overlay: it dims the module,
+// puts the count front and centre, and — usefully — covers the controls, which says
+// "not yet" far more clearly than any wording could.
+// hostId  the module's own root (#exChordle, #exDiadle) — NOT the body, so the dim
+//         covers the game and leaves the app header alone
+function intonareReadyCountdown(hostId, playFn, stateFn) {
+  // Never two at once (rapid re-entry, or a resume racing a fresh start).
+  var stale = document.getElementById('intonareReadyOverlay');
+  if (stale && stale.parentNode) stale.parentNode.removeChild(stale);
+
+  var host = document.createElement('div');
+  host.id = 'intonareReadyOverlay';
+  host.style.cssText =
+    'position:absolute;inset:0;z-index:60;display:flex;align-items:center;' +
+    'justify-content:center;background:rgba(8,11,16,.55);' +
+    'backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);' +
+    'transition:opacity .3s ease;opacity:0';
+
+  var num = document.createElement('div');
+  // Individual properties, not the `font` shorthand: `inherit` is not a valid
+  // font-family component INSIDE the shorthand, and an invalid shorthand is dropped
+  // wholesale — silently taking the weight and line-height with it. (Caught in
+  // review; the digits would have rendered at default weight.)
+  num.style.cssText =
+    'font-weight:800;font-size:56px;line-height:1;font-family:inherit;' +
+    'letter-spacing:2px;color:var(--accent);' +
+    'text-shadow:0 0 24px color-mix(in srgb, var(--accent) 55%, transparent);' +
+    'will-change:transform,opacity';
+  host.appendChild(num);
+
+  // Sit inside the module so it dims the game and not the whole app chrome.
+  var mod = document.getElementById(hostId);
+  if (!mod) { try { playFn(); } catch (e) {} return; }   // no host: just play, do not hang
+  if (getComputedStyle(mod).position === 'static') mod.style.position = 'relative';
+  mod.appendChild(host);
+  requestAnimationFrame(function () { host.style.opacity = '1'; });
+
+  var steps = [
+    { txt: t('tonale_ready') || 'READY?', ms: 800, size: '30px' },
+    { txt: '3', ms: 520, size: '56px' },
+    { txt: '2', ms: 520, size: '56px' },
+    { txt: '1', ms: 520, size: '56px' },
+  ];
+  var i = 0;
+
+  function done() {
+    host.style.opacity = '0';
+    setTimeout(function () { if (host.parentNode) host.parentNode.removeChild(host); }, 320);
+  }
+
+  function tick() {
+    // Bail cleanly if they backed out mid-count.
+    if (stateFn && !stateFn()) { done(); return; }
+    if (i >= steps.length) {
+      done();
+      setTimeout(function () { try { playFn(); } catch (e) {} }, 180);
+      return;
+    }
+    var st = steps[i++];
+    num.textContent  = st.txt;
+    num.style.fontSize = st.size;
+
+    // The pop, straight from Tonale's book: overshoot then settle.
+    num.style.transition = 'none';
+    num.style.transform  = 'scale(1.3)';
+    num.style.opacity    = '0.35';
+    requestAnimationFrame(function () {
+      num.style.transition = 'transform .26s ease, opacity .26s ease';
+      num.style.transform  = 'scale(1)';
+      num.style.opacity    = '1';
+    });
+
+    if (i > 1 && typeof hapticLight === 'function') hapticLight();
+    setTimeout(tick, st.ms);
+  }
+  tick();
+}
+
 function chordleUpdatePlayBtn() {
   var btn = document.getElementById('chordlePlayBtn');
   if (!btn) return;
@@ -61939,7 +62125,8 @@ function diadleStartDaily() {
     _sub.textContent=(t('chordle_daily')||'Daily')+' · '+(t(_sk)||'');
   }
   hapticLight();
-  diadleAutoPlayTO=setTimeout(function(){ diadleAutoPlayTO=null; if(currentExercise==='diadle') diadlePlay(); },350);
+  // Ready? 3 2 1, then the melody. Same as Tonale and Chordle.
+  intonareReadyCountdown('exDiadle', diadlePlay, function(){ return currentExercise === 'diadle'; });
 }
 
 // Resume an in-progress daily: re-seed the identical puzzle, restore saved guesses, brief replay.

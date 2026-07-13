@@ -128,37 +128,62 @@
   }
 
   // ── Try the app ───────────────────────────────────────────────────────────
-  // Set the fallback timer FIRST. If the app opens, the page is backgrounded and
-  // the timer never gets to run -- which is exactly how we detect success. If the
-  // app is absent, the scheme navigation does nothing, we are still here when the
-  // timer fires, and we show the stores.
-  var bailed = false;
+  // Two ways in, because the two platforms need different tricks.
+  //
+  // ANDROID: an intent:// URL, NOT an iframe. The old iframe-with-a-custom-scheme
+  // trick is dead — Chrome has blocked custom-scheme navigation from iframes for
+  // years as a security measure, so the scheme simply never fired and the page just
+  // sat there until the fallback timer showed the stores. An intent:// URL is
+  // Android's own supported mechanism: it names the scheme, the package, and a
+  // browser fallback URL, and Chrome handles the whole decision itself.
+  //
+  // iOS: direct navigation to the custom scheme. Safari handles an unknown scheme
+  // silently, and if the app IS installed it takes over immediately.
+  var mod = m || 'open';
 
-  function bail() {
-    if (bailed || document.hidden) return;   // document.hidden => the app took over
-    bailed = true;
-    showStores('The app does not seem to be installed.');
+  function openApp() {
+    if (and) {
+      // scheme;package;fallback — Chrome opens the app, or goes to the fallback URL
+      // if it is not installed. S.browser_fallback_url must be encoded.
+      var fb = encodeURIComponent(PLAY_URL || location.href);
+      location.href = 'intent://' + mod +
+        '#Intent;scheme=intonare;package=com.lieutenantdan.intonare;' +
+        'S.browser_fallback_url=' + fb + ';end';
+    } else {
+      location.href = 'intonare://' + mod;
+    }
   }
 
-  // Backgrounding is the signal that the app opened. Cancel the fallback.
+  // Fire it immediately. A page opened by tapping a link usually carries enough of
+  // a user-gesture context for this to be allowed.
+  var bailed = false;
+  function bail() {
+    if (bailed || document.hidden) return;   // hidden => the app took over
+    bailed = true;
+    // Do not claim the app is missing: the navigation may simply have been blocked.
+    // Offer a manual button as well as the stores, because a tap definitely works.
+    el('h').textContent = 'Intonare';
+    el('p').textContent = 'Tap to open, or install the app.';
+    var open = document.createElement('a');
+    open.className = 'btn primary';
+    open.textContent = 'Open in Intonare';
+    open.href = '#';
+    open.onclick = function (e) { e.preventDefault(); openApp(); };
+    el('stores').parentNode.insertBefore(open, el('stores'));
+    showStores('Tap to open, or install the app.');
+    // The manual button is the primary action; the store buttons drop to secondary.
+    var ios = el('ios'), andb = el('android');
+    if (ios)  ios.className  = 'btn';
+    if (andb) andb.className = 'btn';
+  }
+
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) bailed = true;
   });
   window.addEventListener('pagehide', function () { bailed = true; });
 
-  setTimeout(bail, 1600);
-
-  // And go. iframe on Android (avoids a visible error page in some browsers);
-  // direct navigation on iOS, which handles an unknown scheme silently.
-  var target = 'intonare://' + (m || 'open');
-  if (and) {
-    var f = document.createElement('iframe');
-    f.style.display = 'none';
-    f.src = target;
-    document.body.appendChild(f);
-  } else {
-    location.href = target;
-  }
+  setTimeout(bail, 1800);
+  openApp();
 })();
 </script>
 </body>
