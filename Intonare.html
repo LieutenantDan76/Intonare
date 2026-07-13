@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.20 -->
+<!-- INTONARE_VERSION: 0.81.25 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16450,6 +16450,12 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       // default voice for reference tones across several surfaces.
       setTimeout(() => {
         try { SampleEngine.load('grand_piano'); } catch (e) {}
+        // The whip, for The Adventurer's unlock fanfare. 13 KB, so it rides along
+        // free. It MUST be warmed here rather than lazily on first play: the
+        // achievement fires once, at a moment that matters, and a buffer that is
+        // still loading would drop the crack and play brass only — silently, and
+        // exactly once, on the one occasion anyone would notice.
+        try { if (typeof _loadWhip === 'function') _loadWhip(); } catch (e) {}
       }, 450);   // let the touch's UI response + audio-context resume land first
     }, { once: true });
 
@@ -22611,7 +22617,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.20';
+const INTONARE_VERSION = '0.81.25';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -22798,10 +22804,51 @@ function _iosPluginHandle() {
 // the cache. After that, caching is correct and rapid start/stop stays free.
 let _iosAudioEverApplied = false;
 
+// Is anything audibly playing right now that a session-category change would
+// disrupt? The change tears WebKit's output down and rebuilds it: everything
+// scheduled ahead of the current moment is dropped. The metronome schedules
+// clicks ahead on a 25 ms interval, so it loses its queue and dies; a sustained
+// drone glitches audibly.
+function _iosAudioBusy() {
+  if (typeof metroPlaying !== 'undefined' && metroPlaying) return true;
+  if (typeof refOscs !== 'undefined' && refOscs && Object.keys(refOscs).length > 0) return true;
+  return false;
+}
+
+// Set when a mic-stop wanted to return the session to .playback but audio was
+// playing. Applied by _iosFlushPendingModeSync() the moment the coast is clear.
+let _iosPendingModeSync = false;
+function _iosFlushPendingModeSync() {
+  if (!_iosPendingModeSync) return;
+  if (_iosAudioBusy()) return;          // still not safe; stay pending
+  _iosPendingModeSync = false;
+  _iosSyncAudioMode('deferred mic stop');
+}
+
 function _iosSyncAudioMode(why) {
   const p = _iosPluginHandle();
   if (!p) return;
   const micLive = (typeof isListening !== 'undefined' && !!isListening);
+
+  // THE METRONOME-KILLER, FIXED
+  // Turning the mic OFF while the metronome (or a drone) was playing stopped it
+  // dead: the switch back to .playback rebuilt WebKit's audio output mid-schedule
+  // and the click queue was gone. Enabling the mic mid-playback also stutters,
+  // but that one is WebKit's own getUserMedia reconfiguration and not ours to
+  // prevent — and recording genuinely requires the category change, immediately.
+  //
+  // Going the OTHER way is discretionary. .playback is only about volume, and a
+  // slightly-quieter metronome that KEEPS PLAYING beats a full-volume one that
+  // died. So: if audio is busy, defer the switch. stopMetro(), the last
+  // stopRef(), and the ref natural-expiry timeout flush it the moment the coast
+  // is clear.
+  if (!micLive && _iosAudioBusy()) {
+    _iosPendingModeSync = true;
+    if (window._sampleDiag) window._sampleDiag.audioMode = 'playback DEFERRED (audio busy) · ' + why;
+    return;
+  }
+  if (micLive) _iosPendingModeSync = false;   // mic coming up supersedes any pending release
+
   // force=true until we have applied at least once WITH an AudioContext up.
   const haveCtx = !!(typeof _sharedAudio !== 'undefined' && _sharedAudio);
   const force   = !_iosAudioEverApplied;
@@ -24537,6 +24584,9 @@ function playStringNote(i, freq, noteName, instrument) {
     delete refOscs[key];
     if (sr) sr.classList.remove('playing');
     if (_playingStringKey === key) _playingStringKey = null;
+    // A ref tone ending naturally can be the last busy audio; apply any deferred
+    // session release now rather than waiting for the next explicit stop.
+    if (Object.keys(refOscs).length === 0 && typeof _iosFlushPendingModeSync === 'function') _iosFlushPendingModeSync();
   }, 2900);
   refOscs[key] = { sound, timeoutId, freq };
 }
@@ -25736,6 +25786,7 @@ function pianoPlayNote(key, freq, noteName) {
       delete refOscs[key];
       if (activeRefFreq === freq) { activeRefFreq = null; activeRefName = null; activeRefMidi = null; }
       updateRefDisplay();
+      if (Object.keys(refOscs).length === 0 && typeof _iosFlushPendingModeSync === 'function') _iosFlushPendingModeSync();
     }, ms);
     refOscs[key] = { sound, timeoutId, freq, _finger: true };
   } else {
@@ -25754,6 +25805,7 @@ function pianoPlayNote(key, freq, noteName) {
       delete refOscs[key];
       if (activeRefFreq === freq) { activeRefFreq = null; activeRefName = null; activeRefMidi = null; }
       updateRefDisplay();
+      if (Object.keys(refOscs).length === 0 && typeof _iosFlushPendingModeSync === 'function') _iosFlushPendingModeSync();
     }, ms);
     refOscs[key] = { sound, timeoutId, freq, gated: true, _finger: true };
   }
@@ -26142,6 +26194,7 @@ function playRef(key, freq, noteName) {
       delete refOscs[key];
       const btn = document.getElementById(`pb-${key}`);
       if (btn) btn.classList.remove('playing');
+      if (Object.keys(refOscs).length === 0 && typeof _iosFlushPendingModeSync === 'function') _iosFlushPendingModeSync();
       if (activeRefFreq === freq) { activeRefFreq = null; activeRefName = null; activeRefMidi = null; }
       updateRefDisplay();
     }, 2900);
@@ -26169,6 +26222,7 @@ function stopRef(key) {
   if (btn) btn.classList.remove('playing');
   if (Object.keys(refOscs).length === 0) {
     activeRefFreq = null; activeRefName = null; activeRefMidi = null; updateRefDisplay();
+    if (typeof _iosFlushPendingModeSync === 'function') _iosFlushPendingModeSync();
   }
 }
 
@@ -26571,6 +26625,7 @@ function playTunerFork() {
     timeoutId = setTimeout(() => {
       delete refOscs[key];
       if (btn) btn.classList.remove('playing');
+      if (Object.keys(refOscs).length === 0 && typeof _iosFlushPendingModeSync === 'function') _iosFlushPendingModeSync();
     }, 2900);
   }
   refOscs[key] = { sound, timeoutId, freq: refPitch };
@@ -28455,6 +28510,9 @@ function stopMetro() {
   metroPlaying = false;
   if (metroTimer) clearInterval(metroTimer);
   metroTimer = null;
+  // If a mic-stop wanted the session back at full-volume .playback while we were
+  // playing, now is the safe moment. No-op otherwise.
+  if (typeof _iosFlushPendingModeSync === 'function') _iosFlushPendingModeSync();
   // reset visuals
   const _bn = document.getElementById('beatNum'); if(_bn) { _bn.className = 'bpm-beat-num'; _bn.textContent = '1'; }
   document.querySelectorAll('.beat-dot').forEach(d => d.classList.remove('active'));
@@ -30569,6 +30627,8 @@ var RIFF_META = {
       note:'The rag that made Joplin\u2019s name: a syncopated right hand over a steady stride bass. Best on Honky-Tonk.' },
     clair_de_lune:{ composer:'Claude Debussy',    year:'1905', era:'Romantic',
       note:'The luminous third movement of Suite bergamasque: pedal-soaked, impressionistic, and a fixture of the repertoire.' },
+    clair_de_lune_famous:{ composer:'Claude Debussy', year:'1905', era:'Romantic',
+      note:'The main theme of Clair de Lune, from the un poco mosso. The singing line over a rolling left hand \u2014 the passage the piece is famous for. The complete movement, opening thirds and all, is the other entry.' },
     nocturne:    { composer:'Fr\u00e9d\u00e9ric Chopin',  year:'1832', era:'Romantic',
       note:'Nocturne in E\u266d, Op. 9 No. 2, complete. An ornamented song line over a gently rocking left hand, and the piece most people picture when they hear \u201cnocturne.\u201d' },
     gymnopedie:  { composer:'Erik Satie',         year:'1888', era:'Romantic',
@@ -31487,6 +31547,42 @@ var RIFFS = {
         {b:86,d:0.5,m:54,man:'lower'}, {b:86.5,d:0.5,m:[54,60,63],man:'lower'}, {b:87,d:0.5,m:[54,60,63],man:'lower'}, {b:87.5,d:0.5,m:[54,60,63],man:'lower'},
         {b:88,d:0.5,m:[56,60,63],man:'lower'}, {b:88.5,d:3,m:[45,54,60,63],man:'lower'}, {b:90,d:3,m:[34,60,63],man:'lower'}, {b:90.75,d:2.25,m:[54,58],man:'lower'},
         {b:91.5,d:0.75,m:56,man:'lower'}, {b:92.25,d:0.75,m:61,man:'lower'}, {b:93,d:3,m:[46,58,61],man:'lower'}
+      ] },
+    clair_de_lune_famous: { label:'Clair de Lune (main theme)', tempo:1.0, bpm:46,
+      // Debussy, PD. Suite bergamasque 3rd mvt, from the *un poco mosso* — the
+      // section everyone actually knows: the singing right hand over a rolling
+      // left. In the full transcription this arrives at beat 65, which at 46 bpm
+      // is roughly 85 SECONDS of quiet parallel thirds first. Correct, and nobody
+      // waits that long; the piece is famous for this bit, so this starts here.
+      // Same notes, rebased to beat 1. The complete version remains as `clair_de_lune`.
+      ctls:[
+        {b:0, ctl:()=>{_riffPiano('lid','open');_riffPiano('pedal',1);_riffPiano('soft',0);}},
+      ],
+      rh:[
+        {b:1,d:0.5,m:75,man:'upper'}, {b:1.5,d:0.5,m:[75,82,87],man:'upper'}, {b:2,d:0.5,m:[75,82,87],man:'upper'}, {b:2.5,d:0.5,m:[73,82,87],man:'upper'},
+        {b:3,d:0.5,m:[73,82,85],man:'upper'}, {b:3.5,d:0.5,m:[73,82,85],man:'upper'}, {b:4,d:0.5,m:[72,82,85],man:'upper'}, {b:4.5,d:0.5,m:[72,78,82,84],man:'upper'},
+        {b:5,d:0.75,m:[72,78,82,84],man:'upper'}, {b:5.75,d:0.75,m:[73,78,82,84],man:'upper'}, {b:6.5,d:1.5,m:[70,82,85],man:'upper'}, {b:8,d:1.5,m:[78,82],man:'upper'},
+        {b:8.75,d:1.25,m:77,man:'upper'}, {b:9.5,d:1.25,m:[82,89],man:'upper'}, {b:10,d:0.5,m:78,man:'upper'}, {b:10.5,d:0.5,m:[77,82,90],man:'upper'},
+        {b:11,d:0.5,m:[75,82,89],man:'upper'}, {b:11.5,d:0.5,m:[77,82,87],man:'upper'}, {b:12,d:0.5,m:[75,82,89],man:'upper'}, {b:12.5,d:0.5,m:[73,82,87],man:'upper'},
+        {b:13,d:0.5,m:[75,82,85],man:'upper'}, {b:13.5,d:0.5,m:[73,82,87],man:'upper'}, {b:14,d:0.75,m:[82,85],man:'upper'}, {b:14.75,d:0.75,m:[73,84],man:'upper'},
+        {b:15.5,d:2.25,m:[70,82,85],man:'upper'}, {b:17,d:2.25,m:[78,82],man:'upper'}, {b:17.75,d:0.75,m:66,man:'upper'}, {b:18.5,d:0.75,m:[68,78],man:'upper'},
+        {b:19.25,d:0.75,m:[72,75,80],man:'upper'}, {b:20,d:0.75,m:[70,84],man:'upper'}, {b:20.75,d:0.75,m:[66,78,82],man:'upper'}, {b:21.5,d:0.75,m:78,man:'upper'},
+        {b:22,d:0.5,m:66,man:'upper'}, {b:22.5,d:0.5,m:[66,72,75,78],man:'upper'}, {b:23,d:0.5,m:[66,72,75,78],man:'upper'}, {b:23.5,d:0.5,m:[66,72,75,78],man:'upper'},
+        {b:24,d:0.5,m:[68,72,75,78],man:'upper'}, {b:24.5,d:1.5,m:[66,72,75,80],man:'upper'}, {b:26,d:1.5,m:[72,75,78],man:'upper'}, {b:26.75,d:2.25,m:[66,73],man:'upper'},
+        {b:27.5,d:0.75,m:[68,78],man:'upper'}, {b:28.25,d:0.75,m:[73,80],man:'upper'}, {b:29,d:1.5,m:[70,78,85],man:'upper'}
+      ],
+      lh:[
+        {b:1,d:0.5,m:63,man:'lower'}, {b:1.5,d:0.5,m:[63,66,70],man:'lower'}, {b:2,d:3,m:[39,63,66,70],man:'lower'}, {b:2.5,d:0.5,m:[61,66,70],man:'lower'},
+        {b:3,d:0.5,m:[61,66,70],man:'lower'}, {b:3.5,d:0.5,m:[61,66,70],man:'lower'}, {b:4,d:0.5,m:[60,66,70],man:'lower'}, {b:4.5,d:0.5,m:[60,66,70],man:'lower'},
+        {b:5,d:0.75,m:[60,66,70],man:'lower'}, {b:5.75,d:0.75,m:[61,66,70],man:'lower'}, {b:6.5,d:1.5,m:[58,66,70],man:'lower'}, {b:8,d:3,m:[27,46,61,66],man:'lower'},
+        {b:8.75,d:1.25,m:65,man:'lower'}, {b:9.5,d:1.25,m:[66,70],man:'lower'}, {b:10,d:0.5,m:66,man:'lower'}, {b:10.5,d:0.5,m:[65,70,75],man:'lower'},
+        {b:11,d:3,m:[39,63,66,70],man:'lower'}, {b:11.5,d:0.5,m:[65,66,70],man:'lower'}, {b:12,d:0.5,m:[63,66,70],man:'lower'}, {b:12.5,d:0.5,m:[61,66,70],man:'lower'},
+        {b:13,d:0.5,m:[63,66,70],man:'lower'}, {b:13.5,d:0.5,m:[61,66,70],man:'lower'}, {b:14,d:0.75,m:[60,66,70],man:'lower'}, {b:14.75,d:0.75,m:[61,66,70],man:'lower'},
+        {b:15.5,d:1.5,m:[58,66,70],man:'lower'}, {b:17,d:3,m:[32,63,66],man:'lower'}, {b:17.75,d:0.75,m:54,man:'lower'}, {b:18.5,d:1.5,m:[56,60],man:'lower'},
+        {b:19.25,d:0.75,m:60,man:'lower'}, {b:20,d:3,m:[44,58,63],man:'lower'}, {b:20.75,d:0.75,m:54,man:'lower'}, {b:21.5,d:3,m:[33,66],man:'lower'},
+        {b:22,d:0.5,m:54,man:'lower'}, {b:22.5,d:0.5,m:[54,60,63],man:'lower'}, {b:23,d:0.5,m:[54,60,63],man:'lower'}, {b:23.5,d:0.5,m:[54,60,63],man:'lower'},
+        {b:24,d:0.5,m:[56,60,63],man:'lower'}, {b:24.5,d:3,m:[45,54,60,63],man:'lower'}, {b:26,d:3,m:[34,60,63],man:'lower'}, {b:26.75,d:2.25,m:[54,58],man:'lower'},
+        {b:27.5,d:0.75,m:56,man:'lower'}, {b:28.25,d:0.75,m:61,man:'lower'}, {b:29,d:3,m:[46,58,61],man:'lower'}
       ] },
     gymnopedie: { label:'Gymnopédie No. 1', tempo:1.0, bpm:76,
       // Satie, PD — MusicXML. The complete piece. Grand piano, ties merged. Sparse, hypnotic, an ancestor of ambient music.
@@ -56776,11 +56872,23 @@ function rtCloseMapPopup(){
   const wrap=document.querySelector('#exRoadTrip .rt-stage-wrap');
   if (wrap){ wrap.classList.remove('rt-lifted'); if(rtPhase==='done') wrap.classList.add('map-hidden'); }
 }
+// The Adventurer — finish a trip on the parchment map.
+//
+// This used to be a bespoke thing bolted onto the side of the achievement system:
+// a localStorage key, its own toast markup, no icon, no rarity, and — because it
+// had no entry in ACHIEVEMENTS — a BLANK SLOT in the achievements list. It looked
+// broken because it was: the list renders from ACHIEVEMENTS, and it was not in it.
+//
+// Now it is a real achievement like every other. All this has to do is record the
+// fact in progState; checkAchievements() sees it, unlocks it, queues the standard
+// toast with the compass icon and the secret rarity, and plays its unlock sound.
+//
+// The old localStorage key is migrated, so anyone who already earned it keeps it.
 function rtFireAchievement(){
-  try { if (localStorage.getItem('rt_ach_adventurer')) return; localStorage.setItem('rt_ach_adventurer','1'); } catch(e) {}
-  const tst=document.getElementById('rtAchToast'); if(!tst) return;
-  tst.classList.add('show');
-  rtSetTimer(()=>tst.classList.remove('show'), 4200);
+  if (progState.rt_parchment_done) return;
+  progState.rt_parchment_done = true;
+  progSave();
+  try { checkAchievements(); } catch(e) {}
 }
 function rtBackToMenu(){
   rtClearTimers(); rtPhase='menu'; rtLeg=0; rtResults=[];
@@ -62220,6 +62328,245 @@ function playSecretChime(volScale) {
 }
 
 /* ── BEETHOVEN'S FIFTH — unlocked by Dead Composer achievement ── */
+// The Adventurer's unlock — Indiana Jones homage, six takes.
+//
+// WHAT IS AND IS NOT BORROWED
+// Copyright in music protects the MELODY: the specific sequence of pitches and
+// rhythms. It does not protect intervals, instrumentation, key, tempo, or style.
+// You cannot own "brass playing a rising fourth" any more than you can own a
+// I-V-vi-IV.
+//
+// So none of these quote the Raiders March. What they borrow is the GESTURE
+// everyone actually recognises — a march-rhythm pickup, then a heroic leap up a
+// perfect FOURTH, played brassy and loud. That shape is the fingerprint of
+// adventure scoring in general and long predates the film. After the opening leap
+// every variant goes somewhere the original does not.
+//
+// Pick one on-device (diagnostics panel → ADVENTURER SOUND), then the rest get
+// deleted and the winner becomes playAdventurerChime.
+
+// Shared voice: brass-ish stack (saw + square an octave down), lowpassed so the
+// saw does not spit, with a short convolved tail so a fanfare lands in a room
+// rather than in a vacuum.
+function _advRig(vs, cut, tail) {
+  var ctx = getAudio();
+  var m   = ctx.createGain(); m.gain.value = 0.13 * (vs != null ? vs : 1.0);
+  var lpf = ctx.createBiquadFilter();
+  lpf.type = 'lowpass'; lpf.frequency.value = cut || 2600; lpf.Q.value = 0.7;
+  var cv  = ctx.createConvolver();
+  var len = Math.floor(ctx.sampleRate * (tail || 0.9));
+  var buf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (var ch = 0; ch < 2; ch++) {
+    var d = buf.getChannelData(ch);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+  }
+  cv.buffer = buf;
+  var wet = ctx.createGain(); wet.gain.value = 0.22;
+  lpf.connect(m); lpf.connect(cv); cv.connect(wet); wet.connect(m);
+  m.connect(ctx.destination);
+  return { ctx: ctx, out: lpf };
+}
+
+function _advBrass(rig, f, t, d, v) {
+  var ctx = rig.ctx;
+  t += ctx.currentTime;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(v, t + 0.02);
+  g.gain.setValueAtTime(v, t + d * 0.6);
+  g.gain.exponentialRampToValueAtTime(0.001, t + d);
+  g.connect(rig.out);
+  var o1 = ctx.createOscillator();
+  o1.type = 'sawtooth'; o1.frequency.value = f;
+  o1.connect(g); o1.start(t); o1.stop(t + d + 0.03);
+  var o2 = ctx.createOscillator(), g2 = ctx.createGain();
+  o2.type = 'square'; o2.frequency.value = f * 0.5;
+  g2.gain.value = 0.45;
+  o2.connect(g2); g2.connect(g);
+  o2.start(t); o2.stop(t + d + 0.03);
+}
+
+function _advLow(rig, f, t, d, v) {
+  var ctx = rig.ctx;
+  t += ctx.currentTime;
+  var o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'triangle'; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(v, t + 0.03);
+  g.gain.exponentialRampToValueAtTime(0.001, t + d);
+  o.connect(g); g.connect(rig.out);
+  o.start(t); o.stop(t + d + 0.05);
+}
+
+// ── A · FANFARE ──────────────────────────────────────────────────────────────
+// Triplet pickup, leap up a fourth, then away upward. Mid-register, bright.
+function _advA(vs) {
+  try {
+    var r = _advRig(vs, 2600, 0.9), T = 0.085;
+    _advBrass(r, 330, T*0, 0.09, 0.16);   // E4 pickup
+    _advBrass(r, 330, T*1, 0.09, 0.16);
+    _advBrass(r, 330, T*2, 0.09, 0.16);
+    _advBrass(r, 440, T*3, 0.42, 0.22);   // A4 — the fourth
+    _advBrass(r, 494, T*3 + 0.34, 0.12, 0.17);
+    _advBrass(r, 523, T*3 + 0.46, 0.55, 0.21);
+    _advLow(r, 110, T*3, 1.0, 0.10);
+  } catch(e) {}
+}
+
+// ── B · HORN SECTION ─────────────────────────────────────────────────────────
+// Same gesture an octave down, slower, fatter. Less fanfare, more swagger.
+function _advB(vs) {
+  try {
+    var r = _advRig(vs, 1900, 1.2), T = 0.115;
+    _advBrass(r, 165, T*0, 0.11, 0.19);   // E3 pickup, heavier
+    _advBrass(r, 165, T*1, 0.11, 0.19);
+    _advBrass(r, 165, T*2, 0.11, 0.19);
+    _advBrass(r, 220, T*3, 0.60, 0.26);   // A3 — the fourth, held
+    _advBrass(r, 262, T*3 + 0.50, 0.70, 0.22);   // C4, a lift not a run
+    _advLow(r, 110, T*3, 1.4, 0.13);
+    _advLow(r, 82,  T*3, 1.4, 0.09);      // octave below — weight
+  } catch(e) {}
+}
+
+// ── C · THE MARCH ────────────────────────────────────────────────────────────
+// Pickup, the fourth, then a full answering phrase. The longest, most tune-like.
+// The answer deliberately does NOT follow the original's contour.
+function _advC(vs) {
+  try {
+    var r = _advRig(vs, 2600, 1.0), T = 0.095;
+    _advBrass(r, 330, T*0, 0.09, 0.16);
+    _advBrass(r, 330, T*1, 0.09, 0.16);
+    _advBrass(r, 330, T*2, 0.09, 0.16);
+    _advBrass(r, 440, T*3, 0.34, 0.23);   // A4 — the fourth
+    _advBrass(r, 392, T*3 + 0.30, 0.16, 0.18);   // G4
+    _advBrass(r, 440, T*3 + 0.44, 0.16, 0.19);   // A4
+    _advBrass(r, 523, T*3 + 0.58, 0.20, 0.21);   // C5
+    _advBrass(r, 587, T*3 + 0.76, 0.62, 0.23);   // D5 — arrival
+    _advLow(r, 110, T*3, 0.6, 0.10);
+    _advLow(r, 147, T*3 + 0.76, 0.9, 0.11);
+  } catch(e) {}
+}
+
+// ── D · SINGLE GESTURE ───────────────────────────────────────────────────────
+// No pickup. Just the leap, once, with weight under it. Confident, not showy.
+function _advD(vs) {
+  try {
+    var r = _advRig(vs, 2400, 1.3);
+    _advBrass(r, 330, 0,    0.20, 0.20);  // E4
+    _advBrass(r, 440, 0.17, 0.95, 0.26);  // A4 — the fourth, and that is all
+    _advLow(r, 110, 0.17, 1.5, 0.13);
+    _advLow(r, 165, 0.17, 1.5, 0.07);     // fifth above the root
+  } catch(e) {}
+}
+
+// ── E · WHIP-CRACK ───────────────────────────────────────────────────────────
+// A REAL whip (Pixabay, free for commercial use, no attribution required, modified
+// — trimmed to the transient and normalised), then the brass answers it. The sound
+// effect and the theme arriving together, as they do in the films.
+//
+// The earlier version synthesised the crack from filtered noise. It read as static,
+// not leather: a whip's transient has a very specific shape that a noise burst
+// cannot fake. The sample is 13 KB and lives in www/audio/ alongside the splash.
+var _whipBuf = null, _whipLoading = false;
+function _loadWhip() {
+  if (_whipBuf || _whipLoading) return;
+  _whipLoading = true;
+  var ctx = getAudio();
+  var url = new URL('audio/intonare_whip.mp3', document.baseURI).href;
+
+  // XHR, not fetch. Same reason the piano samples need it: on iOS, Capacitor serves
+  // www/ from capacitor://localhost, and fetch() against a custom scheme returns
+  // status 0 — the request never happens. XHR goes through WKWebView's ordinary
+  // resource-loading path and reads it fine. Local-scheme XHR reports status 0 on
+  // SUCCESS, so the test is "did we get bytes", not "was it 2xx".
+  var x = new XMLHttpRequest();
+  x.open('GET', url, true);
+  x.responseType = 'arraybuffer';
+  x.onload = function() {
+    var ok = (x.status >= 200 && x.status < 300) ||
+             (x.status === 0 && x.response && x.response.byteLength > 0);
+    if (!ok) { _whipLoading = false; return; }
+    ctx.decodeAudioData(x.response, function(b) {
+      _whipBuf = b; _whipLoading = false;
+    }, function() { _whipLoading = false; });
+  };
+  x.onerror = function() { _whipLoading = false; };
+  x.send();
+}
+
+function _advE(vs) {
+  try {
+    var r = _advRig(vs, 3000, 1.0), ctx = r.ctx;
+    function crack(at) {
+      var src = ctx.createBufferSource();
+      src.buffer = _whipBuf;
+      var g = ctx.createGain();
+      g.gain.value = 0.9 * (vs != null ? vs : 1.0);
+      src.connect(g); g.connect(ctx.destination);   // dry — the crack wants no reverb
+      src.start(at);
+    }
+    if (_whipBuf) {
+      crack(ctx.currentTime);
+    } else {
+      // Not warmed yet (achievement earned before the first gesture warm-up, or the
+      // load failed). Kick it off and fire the crack as soon as it lands — late is
+      // far better than absent on the one play that matters. The brass below runs
+      // regardless, so the fanfare is never silent.
+      _loadWhip();
+      var waited = 0;
+      var iv = setInterval(function() {
+        waited += 60;
+        if (_whipBuf) { clearInterval(iv); try { crack(getAudio().currentTime); } catch(e) {} }
+        else if (waited > 1500) clearInterval(iv);   // give up; brass alone is fine
+      }, 60);
+    }
+    // The brass answers the crack. Timed so it lands just after the snap.
+    _advBrass(r, 330, 0.30, 0.10, 0.17);
+    _advBrass(r, 440, 0.42, 0.75, 0.25);   // the fourth
+    _advBrass(r, 523, 0.86, 0.55, 0.19);
+    _advLow(r, 110, 0.42, 1.2, 0.12);
+  } catch(e) {}
+}
+
+// ── F · DISCOVERY ────────────────────────────────────────────────────────────
+// The quiet one. A held open fifth, then the fourth rises out of it — the cue
+// for finding the thing rather than escaping with it. Strings-ish, no march.
+function _advF(vs) {
+  try {
+    var r = _advRig(vs, 1600, 1.8), ctx = r.ctx;
+    // Soft sustained bed.
+    function bed(f, t, d, v) {
+      t += ctx.currentTime;
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sawtooth'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(v, t + 0.35);   // slow swell — no attack
+      g.gain.setValueAtTime(v, t + d * 0.6);
+      g.gain.exponentialRampToValueAtTime(0.001, t + d);
+      o.connect(g); g.connect(r.out);
+      o.start(t); o.stop(t + d + 0.05);
+    }
+    bed(110, 0,    1.9, 0.09);   // A2
+    bed(165, 0,    1.9, 0.07);   // E3 — open fifth
+    bed(330, 0.45, 1.5, 0.09);   // E4
+    bed(440, 0.95, 1.3, 0.13);   // A4 — the fourth, rising out of the bed
+    bed(659, 1.25, 1.1, 0.06);   // E5 shimmer above
+  } catch(e) {}
+}
+
+// The live pick. Change with _advSet(n) from the diagnostics panel.
+var ADVENTURER_VARIANT = 'A';
+try { window.ADVENTURER_VARIANT = ADVENTURER_VARIANT; } catch(e) {}
+function playAdventurerChime(volScale) {
+  var v = (typeof window !== 'undefined' && window.ADVENTURER_VARIANT) || ADVENTURER_VARIANT;
+  if      (v === 'B') _advB(volScale);
+  else if (v === 'C') _advC(volScale);
+  else if (v === 'D') _advD(volScale);
+  else if (v === 'E') _advE(volScale);
+  else if (v === 'F') _advF(volScale);
+  else                _advA(volScale);
+}
+
 function playBeethovenChime(volScale) {
   try {
     var vs=(volScale!=null?volScale:1.0);
@@ -63271,7 +63618,7 @@ const STRINGS = {
     dt_streak_40:'now this is crazy', dt_streak_50:'should I be concerned?',
     dt_streak_75:'go touch grass!', dt_streak_100:'secret found',
     dt_streak_generic:'days. keep going.',
-    snd_secret_chime:'Secret Found', snd_beethoven_chime:"Beethoven's Fifth", snd_mythic_fanfare:'Mythic Fanfare',
+    snd_secret_chime:'Secret Found', snd_adventurer_chime:'Adventurer', snd_beethoven_chime:"Beethoven's Fifth", snd_mythic_fanfare:'Mythic Fanfare',
     xp_streak:'streak', xp_best_ms:'best ms', xp_best_delta:'best Δ',
     // COF
     // VR warmup active state
@@ -64155,7 +64502,7 @@ const STRINGS = {
     dt_streak_40:'ora è una cosa seria', dt_streak_50:'devo preoccuparmi?',
     dt_streak_75:'esci a prendere aria!', dt_streak_100:'segreto trovato',
     dt_streak_generic:'giorni. continua così.',
-    snd_secret_chime:'Segreto Trovato', snd_beethoven_chime:'Quinta di Beethoven', snd_mythic_fanfare:'Fanfara Mitica',
+    snd_secret_chime:'Segreto Trovato', snd_adventurer_chime:'Avventuriero', snd_beethoven_chime:'Quinta di Beethoven', snd_mythic_fanfare:'Fanfara Mitica',
     xp_streak:'serie', xp_best_ms:'miglior ms', xp_best_delta:'miglior Δ',
     // COF
     // VR warmup active state
@@ -65306,7 +65653,7 @@ function _cueLevelUpTreasure() {
 function _cueAchPing()   { const n=getAudio().currentTime; _cueNote(1319,'sine',n,0.10,0.48); _cueNote(1047,'sine',n,0.08,0.22); _cueNote(1976,'sine',n+0.01,0.06,0.24); }
 function _cueAchChime()  { const n=getAudio().currentTime; _cueNote(784,'triangle',n,0.07,0.44); _cueNote(1047,'sine',n+0.09,0.28,0.52); _cueNote(1319,'sine',n+0.10,0.22,0.22); }
 function _cueAchTrophy() { const n=getAudio().currentTime; _cueNote(392,'square',n+0.00,0.07,0.30); _cueNote(494,'square',n+0.08,0.07,0.33); _cueNote(587,'square',n+0.16,0.07,0.36); _cueNote(698,'square',n+0.24,0.07,0.39); _cueNote(784,'sine',n+0.34,0.42,0.48); _cueNote(988,'sine',n+0.35,0.32,0.22); }
-function playCueAchievement() { const k=progState.audioCues?.achievement; _cueVolScale=getCueVol('achievement'); _applyingCueVol=true; if(k==='ping')_cueAchPing(); else if(k==='chime')_cueAchChime(); else if(k==='trophy')_cueAchTrophy(); else if(k==='secret_chime')playSecretChime(_cueVolScale); else if(k==='beethoven_chime')playBeethovenChime(_cueVolScale); _applyingCueVol=false; }
+function playCueAchievement() { const k=progState.audioCues?.achievement; _cueVolScale=getCueVol('achievement'); _applyingCueVol=true; if(k==='ping')_cueAchPing(); else if(k==='chime')_cueAchChime(); else if(k==='trophy')_cueAchTrophy(); else if(k==='secret_chime')playSecretChime(_cueVolScale); else if(k==='beethoven_chime')playBeethovenChime(_cueVolScale); else if(k==='adventurer_chime')playAdventurerChime(_cueVolScale); _applyingCueVol=false; }
 function playCueCorrect()   { const k=progState.audioCues?.correct;   _cueVolScale=getCueVol('correct');   _applyingCueVol=true; if(k==='chime')_cueCorrectChime(); else if(k==='blip')_cueCorrectBlip(); else if(k==='piano')_cueCorrectPiano(); else if(k==='marimba')_cueCorrectMarimba(); else if(k==='harp')_cueCorrectHarp(); _applyingCueVol=false; }
 function playCueWrong()     { const k=progState.audioCues?.wrong;     _cueVolScale=getCueVol('wrong');     _applyingCueVol=true; if(k==='buzz')_cueWrongBuzz(); else if(k==='doubledrop')_cueWrongDoubledrop(); else if(k==='clunk')_cueWrongClunk(); else if(k==='trombone')_cueWrongTrombone(); else if(k==='warphole')_cueWrongWarphole(); else if(k==='stepdown')_cueWrongStepdown(); else if(k!=='silent')_cueWrongBuzz(); _applyingCueVol=false; }
 // ?? END-STATE SOUND BANKS ?? game-over + win stings for survival runs. All route
@@ -65411,7 +65758,7 @@ const _CUE_DEFS = {
   wrong:       { label:'WRONG',       labelIt:'SBAGLIATO',  def:'buzz',    opts:[{k:'buzz',l:'Buzz Buzz'},{k:'doubledrop',l:'Double Drop'},{k:'clunk',l:'Dissonant Clunk'},{k:'trombone',l:'Trombone Wah'},{k:'warphole',l:'Warp Hole'},{k:'stepdown',l:'Step Down'},{k:'silent',l:'Silent'}] },
   milestone:   { label:'STREAK',      labelIt:'SERIE',      def:'fanfare', opts:[{k:'fanfare',l:'Fanfare'},{k:'coin',l:'Coin Shimmer'},{k:'brass',l:'Brass Stab'},{k:'bell',l:'Bell Chord'},{k:'drumroll',l:t('snd_drumroll')||'Drum Roll'},{k:'mythic_fanfare',l:t('snd_mythic_fanfare')||'Mythic Fanfare'},{k:'silent',l:'Silent'}] },
   levelup:     { label:'LEVEL UP',    labelIt:'LIVELLO SU', def:'chiptune', opts:[{k:'chiptune',l:'Chiptune'},{k:'orchestral',l:'Orchestral'},{k:'swell',l:t('snd_swell')||'Chime Swell'},{k:'powerup',l:'Power Up'},{k:'harp',l:'Harp Cascade'},{k:'treasure',l:"Treasure!"},{k:'silent',l:'Silent'}] },
-  achievement: { label:'ACHIEVEMENT', labelIt:'TRAGUARDO',  def:'ping',    opts:[{k:'ping',l:'Ping'},{k:'chime',l:'Chime'},{k:'trophy',l:'Trophy'},{k:'secret_chime',l:t('snd_secret_chime')||'Secret Found'},{k:'beethoven_chime',l:t('snd_beethoven_chime')||"Beethoven's Fifth"},{k:'silent',l:'Silent'}] },
+  achievement: { label:'ACHIEVEMENT', labelIt:'TRAGUARDO',  def:'ping',    opts:[{k:'ping',l:'Ping'},{k:'chime',l:'Chime'},{k:'trophy',l:'Trophy'},{k:'secret_chime',l:t('snd_secret_chime')||'Secret Found'},{k:'beethoven_chime',l:t('snd_beethoven_chime')||"Beethoven's Fifth"},{k:'adventurer_chime',l:t('snd_adventurer_chime')||'Adventurer'},{k:'silent',l:'Silent'}] },
   gameover:    { label:'GAME OVER',   labelIt:'GAME OVER',  def:'synthcollapse', opts:[{k:'synthcollapse',l:'Synth Collapse'},{k:'belltoll',l:'Bell Toll'},{k:'glitch',l:'Glitch Out'},{k:'dissonant',l:'Dissonant Cluster'},{k:'ghostwail',l:'Ghost Wail'},{k:'silent',l:'Silent'}] },
   win:         { label:'NEW RECORD',  labelIt:'RECORD',     def:'euphoria',      opts:[{k:'euphoria',l:'Euphoria'},{k:'musicbox',l:'Music Box'},{k:'triumph',l:'Triumph Chord'},{k:'choir',l:'Choir Aah'},{k:'jackpot',l:'Arcade Jackpot'},{k:'silent',l:'Silent'}] },
 };
@@ -65459,7 +65806,8 @@ function renderCueDropdowns() {
     bell:'snd_bell_chord',drumroll:'snd_drumroll',chiptune:'snd_chiptune',
     orchestral:'snd_orchestral',swell:'snd_swell',powerup:'snd_powerup',
     harp_cascade:'snd_harp_cascade',treasure:'snd_treasure',
-    secret_chime:'snd_secret_chime',beethoven_chime:'snd_beethoven_chime',mythic_fanfare:'snd_mythic_fanfare' };
+    secret_chime:'snd_secret_chime',beethoven_chime:'snd_beethoven_chime',mythic_fanfare:'snd_mythic_fanfare',
+    adventurer_chime:'snd_adventurer_chime' };
 
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;';
@@ -65529,6 +65877,9 @@ function renderCueDropdowns() {
         if (opt.k === 'secret_chime'  && !progState.secret_chime_unlocked)  return false;
         if (opt.k === 'beethoven_chime' && !progState.beethoven_unlocked) return false;
         if (opt.k === 'mythic_fanfare' && !progState.mythic_unlocked) return false;
+        // Earned by finishing a Road Trip on the parchment map — the same flag the
+        // Adventurer achievement checks. Hidden until then, like the others.
+        if (opt.k === 'adventurer_chime' && !progState.rt_parchment_done) return false;
         return true;
       }).forEach(opt => {
         const isActive = opt.k === current;
@@ -66057,8 +66408,8 @@ const ACHIEVEMENTS = [
     desc_it:"Impressionante. Davvero impressionante.",
     check: s => s.stats?.tempo?.bestMs !== undefined && s.stats.tempo.bestMs === 0 },
   { id:'chord_scholar', cond_it:'serie di 30 nell\u2019ear training degli accordi', cond:'chord ear training streak of 30', rarity:'rare', cat:'accuracy', name:'Chord Scholar',
-    desc:"Harmony is starting to make sense",
-    desc_it:"L'armonia sta cominciando ad avere senso",
+    desc:"Chords are words, and now you're learning to read",
+    desc_it:"Gli accordi sono parole, e ora stai imparando a leggerle",
     check: s => Math.max(s.stats?.chords?.bestStreak||0, s.stats?.chords?.streak||0) >= 30, prog: s => ({cur:Math.max(s.stats?.chords?.bestStreak||0, s.stats?.chords?.streak||0), target:30}) },
   { id:'perfect_pitch', cond_it:'serie di 30 in intonazione', cond:'pitch match streak of 30', rarity:'rare', cat:'accuracy', name:'Perfect Pitch',
     desc:"You must believe in the heart of the pitch",
@@ -66097,12 +66448,12 @@ const ACHIEVEMENTS = [
     desc_it:"Hai fatto il tuo primo passo verso un mondo più grande",
     check: s => (s.level||0) >= 5, prog: s => ({cur:(s.level||0), target:5}) },
   { id:'practitioner', cond_it:'raggiungi il livello 10', cond:'reach level 10', rarity:'common',cat:'milestones', name:'Practitioner',
-    desc:"You know what you're doing now",
-    desc_it:"Ora sai quello che fai",
+    desc:"Wax on, wax off",
+    desc_it:"Dai la cera, togli la cera",
     check: s => (s.level||0) >= 10, prog: s => ({cur:(s.level||0), target:10}) },
   { id:'musician', cond_it:'raggiungi il livello 20', cond:'reach level 20', rarity:'rare',    cat:'milestones', name:'Musician',
-    desc:"That word means something now",
-    desc_it:"Quella parola adesso ha un significato",
+    desc:"I pledge allegiance, to the band",
+    desc_it:"Giuro fedelt\u00e0, alla band",
     check: s => (s.level||0) >= 20, prog: s => ({cur:(s.level||0), target:20}) },
   { id:'master', cond_it:'raggiungi il livello 30', cond:'reach level 30', rarity:'legendary',      cat:'milestones', name:'Master',
     desc:"The student has now become the teacher",
@@ -66118,6 +66469,10 @@ const ACHIEVEMENTS = [
     desc:"Take this!",
     desc_it:"Prendi questo!",
     check: s => (s.streak?.count||0) >= 100, prog: s => ({cur:(s.streak?.count||0), target:100}) },
+  { id:'adventurer', cond_it:'completa un viaggio sulla vecchia mappa in pergamena', cond:'finish a trip on the old parchment map', rarity:'secret', cat:'secrets', name:'The Adventurer',
+    desc:"You chose... wisely",
+    desc_it:"Hai scelto... saggiamente",
+    check: s => !!s.rt_parchment_done },
   { id:'night_owl', cond_it:'pratica tra mezzanotte e le 4 di mattina', cond:'practice between midnight and 4am', rarity:'secret',   cat:'secrets', name:'Night Owl',
     desc:"Moonlight drowns out all but the brightest stars",
     desc_it:"La luce della luna oscura tutto tranne le stelle più brillanti",
@@ -66268,6 +66623,7 @@ const ACH_ICONS = {
   more_cowbell:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M18 8c0-3.3-2.7-6-6-6S6 4.7 6 8v8l-2 4h16l-2-4V8z"/><line x1="12" y1="2" x2="12" y2="8"/><circle cx="12" cy="11" r="2" fill="currentColor" stroke="none"/></svg>`,
   hard_days_night:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
   everything_right_place:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+  adventurer:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.15"/><circle cx="12" cy="12" r="9"/><polygon points="12,4.5 13.6,10.4 19.5,12 13.6,13.6 12,19.5 10.4,13.6 4.5,12 10.4,10.4" fill="currentColor" opacity="0.55" stroke="none"/><polygon points="12,4.5 13.6,10.4 12,12 10.4,10.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>`,
   zelda:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L21 19H3L12 3z" fill="currentColor" opacity="0.2"/><path d="M12 3L21 19H3L12 3z"/><line x1="12" y1="9" x2="12" y2="17"/><line x1="10" y1="11" x2="14" y2="11"/><polygon points="11,9 13,9 12,7" fill="currentColor" stroke="none"/></svg>`,
   night_owl:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" fill="currentColor" opacity="0.2"/><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/><circle cx="8.5" cy="9.5" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="8.5" r="1" fill="currentColor" stroke="none"/><path d="M9 14s1 2 3 2 3-2 3-2" opacity="0.6"/></svg>`,
   full_house:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2.5" y="2.5" width="8" height="8" rx="1" fill="currentColor" opacity="0.3"/><rect x="13.5" y="2.5" width="8" height="8" rx="1" fill="currentColor" opacity="0.3"/><rect x="2.5" y="13.5" width="8" height="8" rx="1" fill="currentColor" opacity="0.3"/><rect x="13.5" y="13.5" width="8" height="8" rx="1" fill="currentColor" opacity="0.3"/><rect x="2.5" y="2.5" width="8" height="8" rx="1"/><rect x="13.5" y="2.5" width="8" height="8" rx="1"/><rect x="2.5" y="13.5" width="8" height="8" rx="1"/><rect x="13.5" y="13.5" width="8" height="8" rx="1"/></svg>`,
@@ -66306,6 +66662,17 @@ function devUnlockAll() {
 
 function checkAchievements() {
   if (!progState.achievements) progState.achievements = {};
+  // Migrate the old bolted-on Adventurer flag. It used to live in localStorage,
+  // outside progState and outside ACHIEVEMENTS entirely — which is why it rendered
+  // as a blank slot in the list. Anyone who earned it then keeps it now.
+  if (!progState.rt_parchment_done) {
+    try {
+      if (localStorage.getItem('rt_ach_adventurer')) {
+        progState.rt_parchment_done = true;
+        localStorage.removeItem('rt_ach_adventurer');
+      }
+    } catch(e) {}
+  }
   const newUnlocks = [];
   ACHIEVEMENTS.forEach(a => {
     try {
@@ -66353,6 +66720,7 @@ function _achShowNextToast() {
     const _achVol = getCueVol('achievement');
     if      (a.id === 'zelda')           { playSecretChime(_achVol); }
     else if (a.id === 'deaf_composer')   { playBeethovenChime(_achVol); }
+    else if (a.id === 'adventurer')      { playAdventurerChime(_achVol); }
     else                                 { playCueAchievement(); }
   } catch(e) {}
   setTimeout(() => {
@@ -71415,6 +71783,56 @@ function _openAudioDiag() {
   const pre = document.createElement('pre');
   pre.style.cssText = 'margin:0;white-space:pre-wrap;word-break:break-all';
   box.appendChild(pre);
+
+  // ── Adventurer sound picker ────────────────────────────────────────────────
+  // Six takes on the Raiders gesture. Tap to hear each; whichever wins becomes
+  // playAdventurerChime and the rest get deleted. Here rather than in Settings
+  // because it is a temporary A/B, not a feature.
+  const advWrap = document.createElement('div');
+  advWrap.style.cssText = 'margin-top:12px;padding-top:10px;border-top:1px solid #1f2d3a';
+  const advTitle = document.createElement('div');
+  advTitle.textContent = 'ADVENTURER SOUND  (tap to hear)';
+  advTitle.style.cssText = 'color:#9fb3c8;font-size:10px;letter-spacing:.08em;margin-bottom:6px';
+  advWrap.appendChild(advTitle);
+
+  // Warm the whip sample now, so variant E cracks on its first tap rather than
+  // its second.
+  try { if (typeof _loadWhip === 'function') _loadWhip(); } catch (e) {}
+
+  const advRow = document.createElement('div');
+  advRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px';
+  const VARIANTS = [
+    ['A', 'fanfare'],
+    ['B', 'horns'],
+    ['C', 'march'],
+    ['D', 'single'],
+    ['E', 'whip'],
+    ['F', 'discovery'],
+  ];
+  VARIANTS.forEach(([k, label]) => {
+    const b = document.createElement('button');
+    b.textContent = k + ' · ' + label;
+    b.style.cssText =
+      'background:#12202c;color:#7dd3a0;border:1px solid #24384a;border-radius:6px;' +
+      'padding:6px 9px;font:10px ui-monospace,monospace;cursor:pointer';
+    b.onclick = () => {
+      try {
+        window.ADVENTURER_VARIANT = k;
+        ADVENTURER_VARIANT = k;
+        playAdventurerChime(1.0);
+      } catch (e) {}
+      // Mark the current pick so you can see which you last heard.
+      advRow.querySelectorAll('button').forEach(x => {
+        x.style.borderColor = '#24384a'; x.style.color = '#7dd3a0';
+      });
+      b.style.borderColor = '#7dd3a0';
+      b.style.color = '#b6f25b';
+    };
+    advRow.appendChild(b);
+  });
+  advWrap.appendChild(advRow);
+  box.appendChild(advWrap);
+
   document.body.appendChild(box);
 
   // Peak amplitude off the live analyser. This is the number that separates

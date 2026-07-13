@@ -16,6 +16,221 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.25 — a real whip
+
+Variant E's crack was synthesised from filtered noise. It read as **static, not
+leather** — a whip's transient has a very specific shape that a noise burst cannot
+fake.
+
+Replaced with a real recording (Pixabay: free for commercial use, **no attribution
+required**, modification permitted). Trimmed to the transient, normalised, mono,
+96 kbps: **13 KB**. The sample keeps the authentic two-part gesture — the swish of
+the wind-up at ~60 ms, then the crack peaking at ~250 ms — with the dead air before
+it cut so the sound is instant.
+
+- Played **dry**, straight to the destination: the crack wants no reverb, and the
+  brass that answers it already has a tail.
+- Loaded by **XHR, not fetch** — the same reason the piano samples need it. On iOS,
+  Capacitor serves `www/` from `capacitor://localhost`, and `fetch()` against a
+  custom scheme returns status 0. XHR goes through WKWebView's ordinary
+  resource-loading path and reads it. (Local-scheme XHR reports status 0 *on
+  success*, so the test is "did we get bytes".)
+- **Warmed on the first user gesture**, alongside the piano. This matters more than
+  it looks: the achievement fires **once**, at a moment that matters, and a buffer
+  still loading would have dropped the crack and played brass only — silently, and
+  exactly once, on the one occasion anyone would notice. Lazy-loading was not good
+  enough here.
+- Also preloaded when the diagnostics panel opens, so E cracks on its first tap.
+- And if it is *still* not ready when the fanfare fires, the load is kicked off and
+  the crack fires **as soon as it lands** (up to 1.5 s) rather than being dropped.
+  Late beats absent. The brass runs regardless, so the fanfare is never silent.
+
+Covers every path: the unlock itself, the achievement cue afterwards, the picker,
+and a cold start where the sample has not been touched.
+
+## v0.81.24 — four achievement quotes, and six Adventurer sounds to choose from
+
+### Quotes
+Four descriptions were generic self-help — "You know what you're doing now" says
+nothing. The good ones in this app are twisted pop-culture misquotes; these now match.
+
+| | |
+|---|---|
+| **Chord Scholar** | "Chords are words, and now you're learning to read" |
+| **Practitioner** | "Wax on, wax off" |
+| **Musician** | "I pledge allegiance, to the band" |
+| **The Adventurer** | "You chose... wisely" |
+
+EN and IT twins. The Italian for Karate Kid is the actual dub line — *"dai la cera,
+togli la cera"* — which is the version Italians know.
+
+### Six Adventurer sounds, pickable on-device
+**On the copyright line:** music copyright protects the *melody* — the specific
+sequence of pitches and rhythms. It does **not** protect intervals, instrumentation,
+key, tempo, or style. Nobody owns "brass playing a rising fourth."
+
+So none of these quote the Raiders March. What they borrow is the **gesture**
+everyone actually recognises: a march-rhythm pickup, then a heroic leap up a perfect
+**fourth**, played brassy and loud. That shape is the fingerprint of adventure
+scoring generally and long predates the film. After the leap, every variant goes
+somewhere the original does not.
+
+| | |
+|---|---|
+| **A · fanfare** | Triplet pickup, the fourth, then away upward. Bright, mid-register. |
+| **B · horns** | Same gesture an octave down, slower, fatter. Less fanfare, more swagger. |
+| **C · march** | Pickup, the fourth, then a full answering phrase. The most tune-like. |
+| **D · single** | No pickup. Just the leap, once, with weight under it. Confident, not showy. |
+| **E · whip** | A snapped noise transient, then the fourth answers it. The effect and the theme arriving together. |
+| **F · discovery** | The quiet one. A held open fifth, the fourth rising out of it. Finding the thing, not escaping with it. |
+
+**Diagnostics panel → ADVENTURER SOUND.** Tap to hear each, back to back, no rebuild.
+Whichever wins becomes `playAdventurerChime` and the other five get deleted.
+
+## v0.81.23 — The Adventurer is a real achievement; Clair de Lune's famous bit
+
+### The Adventurer rendered as a blank slot
+Because it was not an achievement. It was a `localStorage` key with its own bespoke
+toast, bolted onto the side of the system: no entry in `ACHIEVEMENTS`, no icon, no
+rarity, no `check()` predicate. The achievements list renders **from** `ACHIEVEMENTS`
+— so it drew an empty slot, exactly as it should have.
+
+- Now a real secret achievement: proper entry, `check: s => !!s.rt_parchment_done`,
+  a **compass-rose icon**, secret rarity, the standard toast with its ring burst.
+- Finishing a parchment trip records the fact in `progState`; the normal engine does
+  the rest.
+- The old `localStorage` flag is **migrated**, so anyone who already earned it keeps
+  it.
+
+### It has its own sound now, and it is an Indiana Jones homage
+Not a quote — the Raiders March is under copyright and this reproduces none of it.
+What it borrows is the **gesture** everyone recognises: a triplet pickup, then a bold
+leap up a **perfect fourth**, brass and swaggering. That interval-and-rhythm shape is
+the fingerprint of adventure scoring generally and long predates the film. Voiced
+with stacked saw + square for brass edge, a low fifth under the landing so the fourth
+reads as an arrival, and a short convolved tail so it lands like a fanfare.
+
+**And it unlocks as a selectable achievement cue** — "Adventurer", alongside "Secret
+Found" and "Beethoven's Fifth", hidden until earned, using the same lock pattern as
+the others. EN + IT.
+
+### Clair de Lune was not broken; you were waiting for bar 27
+The transcription is correct and complete — 93 beats, opening thirds through to the
+main theme. The tune everyone knows is the *un poco mosso*, where the left hand
+breaks from held chords into rolling quavers. Measured: that happens at **beat 65**,
+which at 46 bpm is **~85 seconds** of quiet parallel thirds first.
+
+Correct, authentic, and nobody waits that long. (Road Trip already knew: its entry
+for the piece carries `hook:4` — "past the hushed open into the phrase.")
+
+- **`clair_de_lune_famous`** — "Clair de Lune (main theme)". The same notes from beat
+  65, rebased to start at beat 1: 43 RH, 43 LH, about 38 seconds of the passage the
+  piece is actually famous for. Pedal down from the first note.
+- The complete movement stays as `clair_de_lune`. **Both ship; keep whichever sounds
+  right and the other can go.**
+
+## v0.81.22 — the splash: iOS was rendering at half Android's frame rate
+
+Same version on both phones, panels side by side, and the numbers ended four
+theories at once:
+
+|            | iPhone | Android |
+|------------|--------|---------|
+| splash fps | 59.2   | **116.3** |
+| frames     | 231    | **454** |
+| phase      | 26.82  | 26.74   |
+
+**Identical total travel. Half the frames.** iOS advanced the wave in ~0.23 rad
+steps where Android used ~0.09. Not slower — **coarser**. A coarsely-stepped
+travelling wave reads to the eye as sluggish and lifeless, which is exactly what
+"the iPhone wave just expands then dies out" describes.
+
+And iOS was not struggling: 59.2 fps is a clean, capped 60. **WKWebView caps
+`requestAnimationFrame` at 60 fps even on a 120 Hz ProMotion display** unless the
+app opts in — Apple's default, so that apps written for 60 are not silently handed
+a doubled frame budget. The iPhone had the same 120 Hz panel as the Android and was
+using half of it.
+
+### Fixed
+- **`CADisableMinimumFrameDurationOnPhone`** added to Info.plist by CI. iOS now
+  renders at the display's real rate.
+
+### Why this is safe
+120 Hz doubles the frame count, so any animation advancing by a **fixed amount per
+frame** would run at double speed. Swept every `requestAnimationFrame` loop in the
+file — **106 of them** — for that pattern: all are either time-based
+(`performance.now()`, `ctx.currentTime`) or do not accumulate a fixed step. **Zero
+at risk.**
+
+The splash was the sole exception, and it was already normalised in v0.81.13 by
+`dt60`. That fix was written under a wrong theory and dismissed as pointless when
+the frame rate came back healthy. It turns out to be the thing that makes *this*
+fix possible: without it, unlocking 120 Hz would have doubled the wave's speed.
+
+### For the record, the theories this killed
+Frame-rate scaling (v0.81.13 — right fix, wrong reason), canvas DPR (the geometry
+is normalised; the wave spans 2.2 cycles of the width on any device), and the easing
+curves (all clock-driven). Each was plausible and each was wrong. **The panel
+measured its way to the answer**; none of the four rounds of reasoning got there.
+
+## v0.81.21 — full review: mic-stop no longer kills live audio; two diagnoses corrected
+
+A top-to-bottom read of the master-volume system and the iOS session handling,
+prompted by the last builds' fixes wounding adjacent code. One real fix, two
+corrections of the record, one theory formally killed.
+
+### Fixed: turning the mic off stopped the metronome dead
+The mic-stop path switched the session back to `.playback` immediately. That
+switch rebuilds WebKit's audio output; everything scheduled ahead of "now" is
+dropped, and the metronome — which schedules clicks ahead on a 25 ms interval —
+lost its queue and died. A sustained drone glitched the same way.
+
+The switch is only about **volume**, and a slightly-quieter metronome that keeps
+playing beats a full-volume one that died. So it is now **deferred while audio is
+busy**: if the metronome is running or any ref tone / drone is sounding, the
+mic-stop marks the release as pending, and it fires the moment the coast is clear
+— `stopMetro()`, the last `stopRef()`, and every natural-expiry timeout all flush
+it. The panel shows `playback DEFERRED (audio busy)` when this happens.
+
+Enabling the mic mid-playback still stutters briefly. That one is WebKit's own
+`getUserMedia` reconfiguration, recording genuinely requires it, and it is not
+ours to prevent. Likewise the short wait after mic-off before starting new audio:
+that is the route change itself settling, and deferral cannot help when nothing
+was playing to defer for.
+
+### Correction: the makeup-gain loop was never missing
+The previous diagnosis — "`setMasterVolume` computes `makeup` and never applies
+it" — was wrong. The `_masterMakeupRegistry.forEach` is present and correct; the
+diagnosis came from a read window that stopped one screen short of it. No fix was
+needed, and none was applied.
+
+### Which means: "slightly louder at 200%" is the system working
+With the loop confirmed present, the on-device result is the honest output of the
+design. The arithmetic for a metronome click: its peak rides ~-6 dBFS at 100%; at
+200% the gain cap, compression and makeup net out to roughly **+4 dB of peak** —
+audible, not dramatic. A click is a sparse transient: there are no quiet parts
+*within it* to pull up, so loudness processing (which raises average energy) buys
+little beyond the peak gain. Sustained material — chords, drones, samples — gets
+substantially more from the same curve.
+
+The remaining lever for percussive material is saturation (soft-clipping adds
+harmonics the ear reads as loudness). That is new audio design, it colours the
+click, and it is not shipping uninvited. Pinned as an option.
+
+### The splash: renderer proven identical; the comparison itself is suspect
+The wave geometry is normalized — `sin(u · 2.2 · 2π + phase)` where `u` spans the
+width — so the wave has 2.2 cycles across the screen on **any** device, and the
+canvas is DPR-corrected (`setTransform(dpr,…)`). Resolution cannot change its
+apparent speed; the DPR theory is dead alongside the frame-rate theory. The
+measured travel (26.82 rad ≈ 1.9 screen-widths at 59.2 fps) is healthy.
+
+What remains: **the Android being compared against has not been rebuilt since
+v0.81.2** — every push since has been iOS-only. If the splash was touched in any
+intervening version, the two phones are running different animations. Verdict:
+re-compare after the next `go.bat`, same version on both, panel numbers side by
+side. If the numbers match and it still looks different, it is display physics,
+not code.
+
 ## v0.81.20 — the metronome fader, the emoji triangle (properly), and slow mic release
 
 ### The master fader did nothing for the metronome
