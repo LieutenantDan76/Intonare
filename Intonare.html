@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.31 -->
+<!-- INTONARE_VERSION: 0.81.38 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -717,6 +717,25 @@ html,body{background:#000000!important;transition:none!important}
   }
   /* Kill the grid layout the .stack class applies once inside the modal */
   #rtModal #exRoadTrip.stack { display: flex; grid-template-columns: none; gap: 0; align-items: stretch; }
+
+  /* FILL THE SCREEN.
+     .rt-cz is the last child of the column and had no flex growth, so it sat at its
+     natural content height and left dead space below it — the module stopped short of
+     the bottom of the phone and the theme stopped with it. Growing it makes the panel
+     reach the bottom edge, and centring its contents means the start button, the
+     recall meter and the result all sit in the middle of the space they are given
+     rather than hugging the top of it. */
+  #rtModal #exRoadTrip .rt-cz:not(:empty) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+  }
+  /* The passport (final results) centres in the full height too, rather than sitting
+     high with a gap under it. */
+  #rtModal #exRoadTrip .rt-cz .rt-passport,
+  #rtModal #exRoadTrip .rt-cz .uc-actions { flex-shrink: 0; }
   /* Floating top bar — mirrors .mq-topbar. Distinct class so the
      `body.in-module [id^="ex"] > .train-header` hide rule can't collapse it. */
   .rt-topbar {
@@ -16579,12 +16598,28 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         // element delete: that function also performs the iOS first-gesture audio
         // unlock and starts sample preloading, and tearing the splash down any other
         // way would silently skip both.
+        // ORDERING TRAP, and it silently ate this feature:
+        //
+        // _intonareSkipSplash is DEFINED inside the splash IIFE, ~700 lines further
+        // down this file. This handler runs first on a cold start, so the function
+        // does not exist yet — the `typeof === 'function'` guard failed quietly and
+        // we fell straight through to WAITING for the splash. Which is exactly the
+        // behaviour the skip was written to replace: the app opened, the splash ran
+        // its full three and a half seconds, and only then did the daily appear.
+        //
+        // So: raise a flag instead of calling a function. The splash IIFE checks the
+        // flag when it starts and skips itself. No ordering dependency, because a
+        // flag does not care who wrote it or when.
+        window._intonareWantSkipSplash = true;
+
+        // If the splash has already STARTED (warm app, or the URL arrived a beat
+        // late), the flag alone is too late — call the skip directly if it is there.
         if (!window._splashGone && typeof window._intonareSkipSplash === 'function') {
           try { window._intonareSkipSplash(); } catch (e) {}
         }
 
-        // A frame for the shell to settle, then go. If the splash somehow could not
-        // be skipped, fall back to waiting for it rather than opening behind it.
+        // A frame for the shell to settle, then go. If the splash could not be
+        // skipped for any reason, wait for it rather than open the module behind it.
         if (window._splashGone) {
           setTimeout(go, 80);
         } else {
@@ -17328,14 +17363,16 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     try { removeSplash(); } catch (e) {}
   };
 
-  // NOTE: the splash starts normally even on a deep link. getLaunchUrl() is async and
-  // has not resolved this early, so there is nothing to check yet. The deep-link
-  // handler calls _intonareSkipSplash() the moment it learns there is a URL — which
-  // is a frame or two in, so the splash is cut off almost immediately rather than
-  // never started. Visually that is a brief flash of the first frame, which is
-  // acceptable; the alternative is delaying app start for every launch to wait on a
-  // plugin call that is usually going to come back empty.
-  if (document.readyState === 'loading') {
+  // Deep link? Do not run at all.
+  //
+  // The handler sets _intonareWantSkipSplash as soon as it sees a launch URL. It runs
+  // BEFORE this IIFE on a cold start, so it cannot call a function defined down here
+  // — it raises a flag, and this is where the flag gets read. (It used to call
+  // _intonareSkipSplash() directly, which did not exist yet, failed the typeof guard
+  // silently, and left the splash running its full 3.5 s on every shared link.)
+  if (window._intonareWantSkipSplash) {
+    removeSplash();
+  } else if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(() => runSplash().catch(removeSplash)));
   } else {
     runSplash().catch(removeSplash);
@@ -21628,6 +21665,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="ce-stats-title" data-i18n="ss_settings_title">SETTINGS</div>
         <div class="iv-settings-list">
           <div class="iv-set-row"><div class="iv-set-label" data-i18n="ss_note_label">NOTE NAME</div><div class="iv-filter-row" id="ssNoteRow"></div></div>
+          <div class="iv-set-row" id="ssDiffSetRow" style="display:none"><div class="iv-set-label" data-i18n="ss_diff_label">SEQUENCE</div><div class="iv-filter-row" id="ssDiffRow"></div></div>
           <div class="iv-set-row"><div class="iv-set-label" data-i18n="ss_auto_label">AUTO ADVANCE</div><div class="iv-filter-row" id="ssAutoRow"></div></div>
           <div class="iv-set-row"><div class="iv-set-label" data-i18n="tone_label">TONE</div><div class="tone-bank-row" id="ssToneBank"></div></div>
         </div>
@@ -22802,7 +22840,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.31';
+const INTONARE_VERSION = '0.81.38';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -23407,7 +23445,36 @@ let bpm = 120;
 let swing = 0;
 let tsTop = 4, tsBottom = 4;
 let subdivision = 1;
-let metroVolume = 0.5;
+// ── Sticky settings ───────────────────────────────────────────────────────────
+//
+// A sweep found TWELVE module settings that were never persisted. Your instrument, your
+// vocal range, your difficulty, whether the metronome is muted — all reset to the
+// factory default on every single launch. A trumpet player re-picked trumpet every time
+// they opened the app; a bass singer re-picked bass.
+//
+// These are not session state. They are facts about the person and their instrument,
+// and the app was throwing them away every night.
+//
+// prefGet/prefSet are deliberately tiny and total: no schema, no migration, and a bad
+// or missing value falls back to the default rather than throwing. localStorage can be
+// unavailable (private mode, storage pressure), so every access is wrapped — a setting
+// that fails to save is an annoyance, not a crash.
+function prefGet(key, dflt, valid) {
+  try {
+    const raw = localStorage.getItem('pref_' + key);
+    if (raw === null) return dflt;
+    let v;
+    try { v = JSON.parse(raw); } catch (e) { v = raw; }
+    if (valid && !valid(v)) return dflt;    // stale value from an older build
+    return v;
+  } catch (e) { return dflt; }
+}
+function prefSet(key, val) {
+  try { localStorage.setItem('pref_' + key, JSON.stringify(val)); } catch (e) {}
+}
+const _inList = list => v => list.includes(v);
+
+let metroVolume = prefGet('metroVolume', 0.5, v => typeof v === 'number' && v >= 0 && v <= 1);
 let nextNoteTime = 0;
 let currentBeat = 0;
 let notesInQueue = [];
@@ -28579,6 +28646,7 @@ function setSwing(v) {
 
 function setMetroVolume(v) {
   metroVolume = v / 100;
+  prefSet('metroVolume', metroVolume);
 }
 
 function toggleMetroOrRamp() {
@@ -38927,13 +38995,13 @@ const IV_DIFFICULTIES = {
   hard:   { name: 'HARD',   intervals: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12] }, // + m3, M3, m6, M6
   all:    { name: 'ALL',    intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] }, // + tritone, m9, M9
 };
-let ivDifficulty  = 'easy';
+let ivDifficulty  = 'easy';   // restored by ivLoadPrefs() from progState.ivPrefs
 let ivCustomPool  = null;   // null = use difficulty, Set<semitones> = custom
 // Play modes (multi-select, musictheory.net style). Each round picks one enabled mode.
 // Keys: asc, desc, tog (harmonic), asc_tog (↑ then together), desc_tog (↓ then together), rand.
 let ivPlayModes   = new Set(['asc_tog']); // default: ascending + together
-let ivRange       = 'tenor'; // 'bass' | 'tenor' | 'alto' | 'soprano'
-let ivSingDir     = 'up';    // sing mode interval direction: 'up' | 'down' | 'both'
+let ivRange       = 'tenor';  // restored by ivLoadPrefs() from progState.ivPrefs
+let ivSingDir     = 'up';     // restored by ivLoadPrefs() from progState.ivPrefs
 
 // Resolve a chosen play-mode key into { dir: 1|-1, style: 'mel'|'harm'|'mel_harm' }.
 function ivResolvePlayMode(key) {
@@ -55590,10 +55658,19 @@ const SS_PLAY_MODES = {
   arpeggio:{ label: 'ARPEGGIO',labelIt: 'ARPEGGIO', count: 0 },  // count set dynamically from chord
 };
 
-let ssVoice     = 'tenor';
-let ssNoteMode  = 'shown';
+// Vocal range. Restored, because it is a property of the SINGER, not of the session —
+// it was resetting to tenor on every app launch, in both Pitch Match and Road Trip, so
+// a bass or a soprano had to re-pick it every single time they opened the app.
+let ssVoice = (function(){
+  try {
+    const v = localStorage.getItem('ss_voice');
+    return (v && typeof SS_VOICES !== 'undefined' && SS_VOICES[v]) ? v : 'tenor';
+  } catch(e){ return 'tenor'; }
+})();
+function ssSaveVoice(){ try { localStorage.setItem('ss_voice', ssVoice); } catch(e){} }
+let ssNoteMode  = prefGet('ssNoteMode', 'shown', _inList(['shown','hidden']));
 let ssVolume    = 1.0;
-let ssPlayMode  = 'single';
+let ssPlayMode  = prefGet('ssPlayMode', 'single', _inList(['single','string','arpeggio']));
 
 // Difficulty drives melody generation (and could gate arpeggio qualities later).
 // scale: allowed scale degrees as semitone offsets from a root pitch-class.
@@ -55608,7 +55685,12 @@ const SS_DIFFICULTIES = {
   medium: { name: 'MEDIUM', scale: [0,2,4,5,7,9,11],       stepRatio: 0.70, maxLeap: 3, len: 4 },  // major
   hard:   { name: 'HARD',   scale: [0,1,2,3,4,5,6,7,8,9,10,11], stepRatio: 0.55, maxLeap: 5, len: 5 }, // chromatic
 };
-let ssDifficulty = 'easy';
+// Sequence difficulty for STRING mode. SS_DIFFICULTIES was fully implemented — a real
+// curve from major pentatonic (no semitones, easy to sing) through major to full
+// chromatic, with step-vs-leap ratios and sequence lengths to match — and then NOTHING
+// EVER ASSIGNED THIS VARIABLE. No picker existed anywhere, so every player was locked
+// to EASY forever and two thirds of the content was unreachable. There is a picker now.
+let ssDifficulty = prefGet('ssDifficulty', 'easy', _inList(['easy','medium','hard']));
 
 // Sequence state
 let ssSequence    = [];   // array of { midi, freq, name, oct }
@@ -55664,7 +55746,7 @@ function ssInit() {
       const btn = document.createElement('button');
       btn.className = 'iv-filter' + (key === ssVoice ? ' active' : '');
       btn.textContent = ((progState.lang === 'it')&&d.labelIt)?d.labelIt:d.label;
-      btn.onclick = () => { ssVoice = key; ssInit(); };
+      btn.onclick = () => { ssVoice = key; ssSaveVoice(); ssInit(); };
       diffRow.appendChild(btn);
     });
   }
@@ -55676,7 +55758,7 @@ function ssInit() {
     const btn = document.createElement('button');
     btn.className = 'iv-filter' + (key === ssNoteMode ? ' active' : '');
     btn.textContent = ((progState.lang === 'it')&&d.labelIt)?d.labelIt:d.label;
-    btn.onclick = () => { ssNoteMode = key; ssInit(); if (ssRound) ssRenderCurrent(); };
+    btn.onclick = () => { ssNoteMode = key; prefSet('ssNoteMode', key); ssInit(); if (ssRound) ssRenderCurrent(); };
     noteRow.appendChild(btn);
   });
 
@@ -55688,12 +55770,33 @@ function ssInit() {
       const btn = document.createElement('button');
       btn.className = 'iv-filter' + (key === ssPlayMode ? ' active' : '');
       btn.textContent = ((progState.lang === 'it')&&d.labelIt)?d.labelIt:d.label;
-      btn.onclick = () => { ssPlayMode = key; ssInit(); };
+      btn.onclick = () => { ssPlayMode = key; prefSet('ssPlayMode', key); ssInit(); };
       modeRow.appendChild(btn);
     });
   }
 
-  buildAutoChips('ssAutoRow', () => ssAutoAdvance, v => { ssAutoAdvance = v; });
+  // SEQUENCE difficulty. Only string mode reads it (single and arpeggio pick their own
+  // notes), so the row is hidden otherwise rather than offering a control that does
+  // nothing.
+  const ssDiffRowEl  = document.getElementById('ssDiffRow');
+  const ssDiffWrapEl = document.getElementById('ssDiffSetRow');
+  if (ssDiffWrapEl) ssDiffWrapEl.style.display = (ssPlayMode === 'string') ? '' : 'none';
+  if (ssDiffRowEl) {
+    ssDiffRowEl.innerHTML = '';
+    Object.entries(SS_DIFFICULTIES).forEach(([key, d]) => {
+      const b2 = document.createElement('button');
+      b2.className = 'iv-filter' + (key === ssDifficulty ? ' active' : '');
+      b2.textContent = t('ss_diff_' + key) || d.name;
+      b2.onclick = () => {
+        ssDifficulty = key;
+        prefSet('ssDifficulty', key);
+        ssInit();
+      };
+      ssDiffRowEl.appendChild(b2);
+    });
+  }
+
+  buildAutoChips('ssAutoRow', () => ssAutoAdvance, v => { ssAutoAdvance = v; prefSet('ssAutoAdvance', v); });
   ssUpdateStats();
   ssUpdateVoicePill();
   ssBuildModeTabs();
@@ -56016,7 +56119,14 @@ function ssBuildModeTabs() {
     return '<div class="ss-mode-tab' + (key === ssPlayMode ? ' on' : '') + '" data-m="' + key + '">' + lbl + '</div>';
   }).join('');
   [].forEach.call(el.children, function(tab) {
-    tab.onclick = function() { ssPlayMode = tab.dataset.m; if (typeof ssSavePrefs === 'function') ssSavePrefs(); ssEnterNeutral(); ssBuildModeTabs(); ssUpdateVoicePill(); };
+    tab.onclick = function() {
+      ssPlayMode = tab.dataset.m;
+      // This used to call ssSavePrefs(), guarded by a typeof check — and that function
+      // was never written. The guard swallowed it, so the play mode silently failed to
+      // persist and nobody found out.
+      prefSet('ssPlayMode', ssPlayMode);
+      ssEnterNeutral(); ssBuildModeTabs(); ssUpdateVoicePill();
+    };
   });
 }
 
@@ -56213,13 +56323,26 @@ const RT_DIFF = {
   medium: { label:'MED',  proxLo:5, proxHi:8,  density:1.0,  replays:1, zone:35 },
   hard:   { label:'HARD', proxLo:3, proxHi:5,  density:0.7,  replays:0, zone:22 },
 };
-let rtDiff = 'medium';
+let rtDiff = prefGet('rtDiff', 'medium', _inList(['easy','medium','hard']));
 function rtDiffCfg(){ return RT_DIFF[rtDiff] || RT_DIFF.medium; }
 // Live scoring band: MED matches the historical RT_ZONE_CENTS (35) exactly.
 function rtZoneCents(){ return rtDiffCfg().zone; }
 
 let rtPhase = 'menu';          // menu | home | drive | recall | result | done
-let rtLeg = 0, rtTier = 'melody', rtDesign = 'night';
+let rtLeg = 0, rtTier = 'melody';
+// Theme, restored. Falls back to Night if nothing is stored, or if the stored value
+// names a theme from an older build that no longer exists.
+//
+// The key list is inlined rather than reading RT_DESIGNS: that is declared ~1100 lines
+// BELOW this point, so referencing it here is a temporal dead zone — and it is a const,
+// so it throws rather than coming back undefined. (Caught by the syntax gate, which is
+// exactly what it is for.)
+let rtDesign = (function(){
+  try {
+    const d = localStorage.getItem('rt_design');
+    return ['parch','blueprint','night','nautical','ink'].includes(d) ? d : 'night';
+  } catch(e){ return 'night'; }
+})();
 let rtHomeMidi = null, rtHomeFreq = null, rtHomeName = '';
 let rtResults = [], rtReplayLeft = 1;
 let rtAnimId = null, rtTimers = [];
@@ -56418,33 +56541,88 @@ function rtCzRecall(){
   if (typeof rtUpdateTripMeter==='function') rtUpdateTripMeter();
   if (typeof isListening !== 'undefined' && !isListening && typeof startMic === 'function') startMic().catch(()=>{});
   if (typeof micReviveLoop === 'function') micReviveLoop();
+  // The recall screen used to be a question mark and a progress bar: you sang into
+  // nothing and found out afterwards whether it had counted. Nothing on screen moved
+  // in response to your voice, so there was no way to tell "I am being heard" from
+  // "the mic is dead" — which is most of why the legs felt flat and arbitrary.
+  //
+  // The bar below fills with your VOICE rather than the clock, and carries no pitch
+  // information at all. It proves you are being heard; it says nothing about whether
+  // you are right.
   rtCzEl().innerHTML = `<div class="uc-tag rt-ptag">${t('rt_sing_home')}</div>
     <div class="uc-hero rt-nbig blind">?</div>
-    <div class="uc-mid"><div class="rt-hold-bar"><div class="rt-hold-fill" id="rtHoldFill"></div></div></div>
+    <div class="uc-mid">
+      <div class="rt-hold-bar"><div class="rt-hold-fill" id="rtHoldFill" style="opacity:.35;transition:opacity .18s ease"></div></div>
+      <div id="rtSingHint" style="font-size:11px;letter-spacing:1px;opacity:.55;margin-top:6px;text-align:center;color:var(--rtp-ctext,var(--text))">${t('rt_listening')}</div>
+    </div>
     <div class="uc-sub">&nbsp;</div>
     <div class="uc-actions">
       ${rtReplayLeft>0 ? `<button class="rt-replay" id="rtReplayBtn" onclick="rtUseReplay()">↺ ${t('rt_replay_btn')} (${rtReplayLeft})</button>` : ``}
       <button class="iv-btn" onclick="rtFinishStop()">${t('rt_done_singing')} ›</button>
     </div>`;
-  const t0=performance.now();
+  // The bar fills with SUNG TIME, not elapsed time.
+  //
+  // It used to be a clock: it filled at the same rate whether you were singing your
+  // heart out or holding your breath, and finished on schedule regardless. Nothing you
+  // did changed anything on screen, so the whole leg felt like something happening TO
+  // you. Now it only advances while the detector is actually hearing a voice, so the
+  // bar IS your singing, and stopping stops it.
+  //
+  // It still carries no pitch information. Right note, wrong note, the bar does not
+  // care and does not tell you. The recall stays blind; you only find out at the end.
+  //
+  // A grace window keeps it moving through the natural gaps between phrases — a breath
+  // should not look like failure.
+  let sung = 0;
+  let last = performance.now();
+  rtLastHeardT = 0;
   function tick(){
     if (rtPhase!=='recall') return;
-    const p=Math.min(100,(performance.now()-t0)/RT_RECALL_MS*100);
-    const f=document.getElementById('rtHoldFill'); if(f) f.style.width=p+'%';
+    const now = performance.now();
+    const dt  = Math.min(60, now - last);
+    last = now;
+
+    const heard = rtLastHeardT && (now - rtLastHeardT) < 260;   // grace for breaths
+    if (heard) sung += dt;
+
+    const p = Math.min(100, sung / RT_RECALL_MS * 100);
+    const f = document.getElementById('rtHoldFill');
+    if (f) { f.style.width = p + '%'; f.style.opacity = heard ? '1' : '.4'; }
+    const h = document.getElementById('rtSingHint');
+    if (h) h.textContent = heard ? t('rt_hearing_you') : t('rt_listening');
+
     if (p>=100){ rtFinishStop(); return; }
+
+    // Hard ceiling on wall-clock time, so a silent room cannot hang the leg forever.
+    if (now - t0 > RT_RECALL_MS * 3) { rtFinishStop(); return; }
     rtAnimId=requestAnimationFrame(tick);
   }
+  const t0=performance.now();
   rtAnimId=requestAnimationFrame(tick);
 }
 function rtCzResult(drift){
   rtPhase='result';
   if (typeof rtUpdateTripMeter==='function') rtUpdateTripMeter();
-  const band = drift<15?'#b6f25b':drift<35?'#ffd166':'#e0563b';
-  const word = drift<15?t('rt_nailed'):drift<35?t('rt_close'):t('rt_lost');
+  // Bands moved with the grade. They used to be 15/35, which meant a leg could be
+  // graded a B and still be told you had "lost it" — the words and the letter
+  // disagreed, which is a large part of why the legs felt arbitrary.
+  const band = drift<25?'#b6f25b':drift<60?'#ffd166':'#e0563b';
+  const word = drift<25?t('rt_nailed'):drift<60?t('rt_close'):t('rt_lost');
   const last = rtLeg>=RT_CITIES.length-1;
+
+  // Sharp or flat. The absolute error told you that you missed, never which way, so
+  // there was nothing to do differently next leg except try harder. Direction is
+  // actionable. Shown only AFTER grading, so it teaches without giving the answer.
+  const dirTxt = rtLastDir > 0 ? t('rt_sharp')
+               : rtLastDir < 0 ? t('rt_flat')
+               : '';
+  const dirLine = dirTxt
+    ? `<div style="font-size:13px;color:var(--rtp-ctext,var(--text));opacity:.75;margin-top:3px">${dirTxt}</div>`
+    : '';
+
   rtCzEl().innerHTML = `<div class="uc-tag rt-ptag">${t('rt_stop')} ${rtLeg} / ${RT_CITIES.length-1}</div>
     <div class="uc-hero rt-nbig" style="color:${band}">${word}</div>
-    <div class="uc-mid"><div style="font-size:14px;color:var(--rtp-ctext,var(--text));font-family:'JetBrains Mono',monospace">±${Math.round(drift)}¢ ${t('rt_drift')}</div></div>
+    <div class="uc-mid"><div style="font-size:14px;color:var(--rtp-ctext,var(--text));font-family:'JetBrains Mono',monospace">±${Math.round(drift)}¢ ${t('rt_drift')}</div>${dirLine}</div>
     <div class="uc-sub">&nbsp;</div>
     <div class="uc-actions">
       ${rtReplayLeft>0 ? `<button class="rt-replay" onclick="rtRetryStop()">↺ ${t('rt_try_again')} (${rtReplayLeft})</button>` : ``}
@@ -56514,10 +56692,29 @@ function rtStartTrip(tier){
   if (typeof isListening !== 'undefined' && !isListening && typeof startMic === 'function') startMic().catch(()=>{});
   rtSetTimer(()=>{ rtCzHome(); if (typeof micReviveLoop==='function') micReviveLoop(); },1700);
 }
+// True while the app is sounding the reference. Pitch detection is deaf for the
+// duration, because otherwise Road Trip listens to ITS OWN SPEAKER: the mic is live
+// through the whole home phase, the reference is a clean sustained tone, and
+// rtHomeCheck will happily lock onto it and fill the hold meter before the singer has
+// opened their mouth. (Pitch Match had exactly this bug.)
+let rtPlayingRef = false;
+let _rtRefTimer  = null;
+const RT_REF_DUR = 1.2;
+
 function rtPlayHome(){
   try {
     const ctx = ensurePracticeCtx();
-    ssPlayNoteEnhanced(ctx, rtHomeFreq, ctx.currentTime + 0.05, 1.2, 0.5);
+    ssPlayNoteEnhanced(ctx, rtHomeFreq, ctx.currentTime + 0.05, RT_REF_DUR, 0.5);
+
+    rtPlayingRef = true;
+    // Wipe any lock progress the tone itself might have started before the gate.
+    rtSmooth = 0; rtHoldAcc = 0; rtLastT = 0;
+    if (_rtRefTimer) clearTimeout(_rtRefTimer);
+    _rtRefTimer = setTimeout(function(){
+      rtPlayingRef = false;
+      _rtRefTimer  = null;
+      rtSmooth = 0; rtHoldAcc = 0; rtLastT = 0;   // start the human's turn clean
+    }, (0.05 + RT_REF_DUR + 0.25) * 1000);        // + a tail for the room and release
   } catch(e) {}
 }
 function rtRetryStop(){
@@ -56546,9 +56743,29 @@ function rtUseReplay(){
 // live mic dispatch (called from processAudio hook)
 function rtOnPitch(freq){
   if (!freq || !rtHomeFreq) return;
+  if (rtPlayingRef) return;   // that is our own speaker, not the singer
   if (rtPhase==='home') rtHomeCheck(freq);
-  else if (rtPhase==='recall') rtRecallSamples.push(freq);
+  else if (rtPhase==='recall') { rtRecallSamples.push(freq); rtVoiceHeard(freq); }
 }
+
+// NO NEEDLE. A first version put a dot on a line, positioned by cents error, and
+// claimed it "did not show the target". It absolutely did: dead centre WAS the target,
+// and one leg in you would have worked out you could simply tune to it. That kills the
+// blind recall, which is the entire exercise. Deleted.
+//
+// What the screen needed was not pitch information; it was PRESENCE. The old bar
+// filled on elapsed time whether you sang, hit the note, or said nothing — a clock,
+// counting down at you, indifferent to what you did. That is the flatness.
+//
+// So the bar now fills WITH YOUR VOICE, and only while you are actually singing. It
+// says "you are being heard, keep going" and nothing whatsoever about whether you are
+// right. You still find that out at the end, blind, as designed.
+function rtVoiceHeard(freq){
+  const f = document.getElementById('rtHoldFill');
+  if (f) f.style.opacity = '1';
+  rtLastHeardT = performance.now();
+}
+let rtLastHeardT = 0;
 function rtHomeCheck(freq){
   // smooth + hold-to-lock inside ±RT_ZONE_CENTS for RT_HOLD_MS
   rtSmooth = rtSmooth ? rtSmooth*0.72 + freq*0.28 : freq;
@@ -56967,19 +57184,77 @@ function rtSkipDrive(){
   rtLeg=to; rtPaintPins(); rtCzRecall();
 }
 function rtFinishStop(){
-  // grade: median cents error of the back half of the recall window
+  // Grade on the median cents error of the back half of the recall window.
   rtPhase='grading';
-  const s=rtRecallSamples.slice(Math.floor(rtRecallSamples.length/2));
+  // ── Clean the samples before grading ──────────────────────────────────────
+  //
+  // The median already kills ISOLATED junk: one voice crack, one bad frame, sorted to
+  // the edge and ignored. That is why it beats a mean. But two things get through it,
+  // and both cost you grades you earned.
+  //
+  // 1. OCTAVE ERRORS. Pitch detectors mis-report 2x or 0.5x the true frequency, and
+  //    they do it in RUNS, not single frames. A couple of seconds of octave-doubled
+  //    samples drags the median into the wrong octave, and you get an F for singing
+  //    the note perfectly. Folding every sample into the octave nearest home fixes it:
+  //    if you actually sang an octave out, the fold makes it look correct — but you
+  //    DID sing the right pitch class, and grading that as a miss was never useful.
+  //
+  // 2. SCOOPING. Sliding up into the note is how most people sing. Taking the back
+  //    half is meant to skip it, but a slow scoop is still climbing at the halfway
+  //    mark, so the median lands mid-slide and marks you down for a note you found.
+  //    Dropping the samples that are still MOVING (large frame-to-frame change) leaves
+  //    only the part you actually held, which is what the exercise is about.
+  //
+  // Neither of these makes the grade softer. They stop it grading the wrong thing.
+  const _raw = rtRecallSamples;
+
+  // Fold into the octave nearest home.
+  const _folded = _raw.map(f => {
+    if (!(f > 0)) return f;
+    let c = 1200 * Math.log2(f / rtHomeFreq);
+    while (c >  600) { f /= 2; c -= 1200; }
+    while (c < -600) { f *= 2; c += 1200; }
+    return f;
+  });
+
+  // Drop frames that are still travelling — a scoop, not a held note. 35 cents per
+  // frame is a rapid slide; a held note (even with vibrato) moves far less than that.
+  const _held = _folded.filter((f, i) => {
+    if (i === 0) return false;
+    const prev = _folded[i-1];
+    if (!(f > 0) || !(prev > 0)) return false;
+    return Math.abs(1200 * Math.log2(f / prev)) < 35;
+  });
+
+  // Back half of whatever survived. If the cleaning left too little to trust, fall
+  // back to the back half of the raw samples rather than grading on three frames.
+  const _pool = _held.length >= 8 ? _held : _folded;
+  const s=_pool.slice(Math.floor(_pool.length/2));
   let drift;
   if (!s.length) drift=99;
   else {
     const errs=s.map(f=>Math.abs(1200*Math.log2(f/rtHomeFreq))).sort((a,b)=>a-b);
     drift=errs[Math.floor(errs.length/2)];
     if (!isFinite(drift)) drift=99;
+
+    // ALSO keep the DIRECTION. The grade is an absolute error, which tells you that
+    // you missed and not which way — so there was nothing to correct on the next leg
+    // except "try harder", and that is why the legs felt nebulous. Sharp or flat is
+    // actionable; a number alone is not.
+    //
+    // This is not giving the answer away: you are told which way you drifted AFTER
+    // the leg is scored, not while you sing. It is the difference between a game that
+    // marks you and a game that teaches you.
+    // From the CLEANED pool (s), not the raw samples — otherwise an octave error would
+    // report you as wildly sharp when you sang the note correctly an octave up.
+    const signed = s.map(f=>1200*Math.log2(f/rtHomeFreq)).sort((a,b)=>a-b);
+    const med = signed[Math.floor(signed.length/2)];
+    rtLastDir = !isFinite(med) ? 0 : (med > 8 ? 1 : (med < -8 ? -1 : 0));
   }
   drift=Math.min(99,drift);
   rtResults[rtLeg-1]=drift; rtPaintPins(); if(typeof rtUpdateTripMeter==='function') rtUpdateTripMeter(); rtCzResult(drift);
 }
+let rtLastDir = 0;   // +1 sharp, -1 flat, 0 dead on (last graded leg)
 function rtNextStop(){
   if (rtLeg >= RT_CITIES.length-1){ rtShowPassport(); return; }
   rtDriveStart();
@@ -57001,7 +57276,28 @@ function rtGetStats(){
 }
 function rtSaveStats(s){ try { localStorage.setItem('rt_stats', JSON.stringify(s)); } catch(e){} }
 const RT_GRADE_LETTERS = ['A','B','C','D','F'];
-function rtGradeIdx(avg){ return avg<=12?0 : avg<=20?1 : avg<=30?2 : avg<=45?3 : 4; }
+
+// GRADING, LOOSENED — and here is the reasoning, because it is not just "make it
+// easier".
+//
+// The old thresholds were 12 / 20 / 30 / 45 cents. Twelve cents for an A is a
+// professional standard: trained singers drift more than that on a held note, and a
+// semitone is only 100 cents, so this was asking you to land inside an eighth of the
+// smallest interval in the system — from memory, after a distraction, with no
+// reference. Almost everything came back C or D, and a game where good play looks
+// like failure is not a hard game, it is a discouraging one.
+//
+// The new bands: 25 / 40 / 60 / 85.
+//   A  under 25c  — genuinely on the note. A quarter of a semitone.
+//   B  under 40c  — clearly the right note, imperfectly held.
+//   C  under 60c  — recognisably it, but drifting.
+//   D  under 85c  — nearly a semitone out; you have lost it but not the plot.
+//   F  beyond     — a different note.
+//
+// These still discriminate. You cannot get an A by being vaguely near — 25 cents is
+// audible and you have to actually hold it. But a decent attempt now LOOKS like a
+// decent attempt, which is what the scoring is for.
+function rtGradeIdx(avg){ return avg<=25?0 : avg<=40?1 : avg<=60?2 : avg<=85?3 : 4; }
 function rtRecordTrip(avg, gradeIdx){
   if (!isFinite(avg)) return;   // never let a NaN/∞ avg corrupt the lifetime record
   const s = rtGetStats();
@@ -57138,6 +57434,9 @@ function rtBackToMenu(){
 }
 function rtSetDesign(d, btn){
   rtDesign=d;
+  // Persist. This was never saved, so every launch dropped you back to Night whatever
+  // you had picked. A theme is a preference, not a per-session decision.
+  try { localStorage.setItem('rt_design', d); } catch(e){}
   { const rr=document.getElementById('exRoadTrip'); if(rr){ rr.classList.toggle('rt-dsn-parch', d==='parch'); rr.classList.toggle('rt-dsn-blueprint', d==='blueprint'); rr.classList.toggle('rt-dsn-night', d==='night'); rr.classList.toggle('rt-dsn-nautical', d==='nautical'); rr.classList.toggle('rt-dsn-ink', d==='ink'); } }
   document.querySelectorAll('#exRoadTrip .rt-sw').forEach(b=>b.classList.remove('on'));
   if (btn) btn.classList.add('on');
@@ -57224,6 +57523,7 @@ function rtCycleVoice(){
 function rtPickDiff(d){
   if (!RT_DIFF[d]) return;
   rtDiff = d;
+  prefSet('rtDiff', d);
   ['easy','medium','hard'].forEach(k=>{
     const el = document.getElementById('rtdiff-'+k);
     if (el) el.classList.toggle('selected', k===d);
@@ -57241,6 +57541,7 @@ function rtPickTier(tier){
 function rtCycleRange(dir){
   const idx = SS_VOICE_CYCLE.indexOf(ssVoice);
   ssVoice = SS_VOICE_CYCLE[(idx + dir + SS_VOICE_CYCLE.length) % SS_VOICE_CYCLE.length];
+  if (typeof ssSaveVoice === 'function') ssSaveVoice();
   rtUpdateRangeCard();
   rtSyncGoBtn();
   // keep the in-trip header pill in sync too
@@ -57600,6 +57901,11 @@ function rtOpen(){
   const m=document.getElementById('rtModal'); if(m) m.classList.add('active');
   document.body.classList.add('rt-open');
   document.body.style.overflow='hidden';
+  // Apply the SAVED theme. rtDesign is restored from localStorage at declaration, but
+  // nothing was ever applying it — the class was only set by rtSetDesign(), i.e. only
+  // when you actively tapped a swatch. So the variable remembered your choice and the
+  // screen ignored it.
+  if (typeof rtSetDesign === 'function') rtSetDesign(rtDesign);
 }
 function rtClose(){
   const m=document.getElementById('rtModal'); if(m) m.classList.remove('active');
@@ -62677,7 +62983,11 @@ function playSecretChime(volScale) {
 // The whip is a real recording (Pixabay: free commercial use, no attribution,
 // modification permitted), trimmed to its transient. It cracks a beat after the
 // fanfare's arrival note — punctuation, not accompaniment.
-var WHIP_GAIN = 0.42;   // well under the brass; at 0.9 it buried the thing it punctuates
+var WHIP_GAIN = 0.26;   // Under the brass, not level with it. 0.9 buried the fanfare
+                       // outright; 0.42 still read as louder than the thing it was
+                       // meant to punctuate. The sample is a sharp transient and the
+                       // brass is sustained, so it wins the ear at equal gain — it has
+                       // to sit lower than the numbers suggest.
 
 var _whipBuf = null, _whipLoading = false;
 function _loadWhip() {
@@ -63118,7 +63428,7 @@ const STRINGS = {
     rt_stop:'STOP',
     rt_learn_home:'LEARN YOUR PITCH', rt_hear_pitch:'▶︎ HEAR YOUR PITCH', rt_sing_lock:'SING IT · HOLD TO LOCK',
     rt_locked:'LOCKED IN', rt_eyes_road:'EYES ON THE ROAD', rt_sing_home:'SING HOME',
-    rt_home_was:'HOME WAS', rt_drift:'drift',
+    rt_home_was:'HOME WAS', rt_drift:'drift', rt_sharp:'you were sharp', rt_flat:'you were flat', rt_listening:'LISTENING…', rt_hearing_you:'KEEP GOING',
     rt_nailed:'RIGHT ON', rt_close:'CLOSE', rt_lost:'WRONG TURN',
     rt_next_stop:'▶︎ NEXT STOP', rt_see_trip:'▶︎ TRIP RESULTS',
     rt_avg_drift:'AVG DRIFT', rt_again:'▶︎ NEW TRIP',
@@ -63823,7 +64133,8 @@ const STRINGS = {
     ce_speed_label:'SPEED', ce_play_label:'PLAY', ce_auto_label:'AUTO',
     // Sight singing
     ss_subtitle:'hear it · match it · hold it',
-    ss_your_turn:'your turn', ss_sing_this:'SING THIS NOTE', ss_settings_title:'SETTINGS', ss_stats_title:'SESSION',
+    ss_your_turn:'your turn', ss_sing_this:'SING THIS NOTE',
+    ss_diff_label:'SEQUENCE', ss_diff_easy:'PENTATONIC', ss_diff_medium:'MAJOR', ss_diff_hard:'CHROMATIC', ss_settings_title:'SETTINGS', ss_stats_title:'SESSION',
     ss_v_hold:'HOLD IT', ss_v_almost:'ALMOST — HOLD', ss_v_easeup:'EASE UP', ss_v_easedown:'EASE DOWN',
     ss_v_higher:'SING HIGHER', ss_v_lower:'SING LOWER', iv_accuracy:'Accuracy',
     ss_voice_label:'VOICE', ss_note_label:'NOTE', ss_mode_label:'MODE', ss_auto_label:'AUTO',
@@ -64002,7 +64313,7 @@ const STRINGS = {
     rt_stop:'TAPPA',
     rt_learn_home:'IMPARA LA NOTA', rt_hear_pitch:'▶︎ ASCOLTA LA NOTA', rt_sing_lock:'CANTALA · TIENI PER AGGANCIARE',
     rt_locked:'AGGANCIATA', rt_eyes_road:'OCCHI SULLA STRADA', rt_sing_home:'CANTA LA NOTA',
-    rt_home_was:'LA NOTA ERA', rt_drift:'scarto',
+    rt_home_was:'LA NOTA ERA', rt_drift:'scarto', rt_sharp:'eri crescente', rt_flat:'eri calante', rt_listening:'IN ASCOLTO…', rt_hearing_you:'CONTINUA',
     rt_nailed:'PERFETTO', rt_close:'QUASI', rt_lost:'FUORI STRADA',
     rt_next_stop:'▶︎ PROSSIMA TAPPA', rt_see_trip:'▶︎ RISULTATI',
     rt_avg_drift:'SCARTO MEDIO', rt_again:'▶︎ NUOVO VIAGGIO',
@@ -64707,7 +65018,8 @@ const STRINGS = {
     ce_speed_label:'VELOCITÀ', ce_play_label:'SUONA', ce_auto_label:'AUTO',
     // Sight singing
     ss_subtitle:'ascolta · intonala · tienila',
-    ss_your_turn:'tocca a te', ss_sing_this:'CANTA QUESTA NOTA', ss_settings_title:'IMPOSTAZIONI', ss_stats_title:'SESSIONE',
+    ss_your_turn:'tocca a te', ss_sing_this:'CANTA QUESTA NOTA',
+    ss_diff_label:'SEQUENZA', ss_diff_easy:'PENTATONICA', ss_diff_medium:'MAGGIORE', ss_diff_hard:'CROMATICA', ss_settings_title:'IMPOSTAZIONI', ss_stats_title:'SESSIONE',
     ss_v_hold:'TIENILA', ss_v_almost:'QUASI — TIENILA', ss_v_easeup:'ALZA POCO', ss_v_easedown:'ABBASSA POCO',
     ss_v_higher:'CANTA PIÙ ACUTO', ss_v_lower:'CANTA PIÙ GRAVE', iv_accuracy:'Precisione',
     ss_voice_label:'VOCE', ss_note_label:'NOTA', ss_mode_label:'MODALITÀ', ss_auto_label:'AUTO',
@@ -66277,9 +66589,10 @@ function setSplashSound(on) {
 }
 
 // ─── METRO AUDIO MUTE (pocket mode) ───
-let metroAudioOn = true;
+let metroAudioOn = prefGet('metroAudioOn', true, v => typeof v === 'boolean');
 function setMetroAudio(on) {
   metroAudioOn = !!on;
+  prefSet('metroAudioOn', metroAudioOn);
   if (typeof metroMasterGain !== 'undefined' && metroMasterGain) {
     // Unmute restores the gain to whatever the MASTER FADER says it should be —
     // not to a hardcoded 1.
@@ -66393,7 +66706,7 @@ const CE_ARP_SPEEDS = { slow: 0.28, normal: 0.13, fast: 0.07 };
 let ceAutoAdvance = true;
 let ivAutoAdvance = false;  let ivAutoTimer = null;
 let tgAutoAdvance = false;
-let ssAutoAdvance = true;
+let ssAutoAdvance = prefGet('ssAutoAdvance', true, v => typeof v === 'boolean');
 
 const autoTimers = { ce: null, iv: null, tg: null, ss: null };
 
@@ -75948,7 +76261,7 @@ const UKE_VOICINGS = {
 
 // ── State ─────────────────────────────────────
 let gccRoot = 'C';
-let gccQuality = 'maj';
+let gccQuality = prefGet('gccQuality', 'maj');
 let gccVoicingIdx = 0;
 let gccNodes = [];
 let gccAutoStopTimer = null;
@@ -80336,7 +80649,7 @@ function gccBuildQualityRow() {
   }));
   csRebuildGrouped(
     document.getElementById('gccQualRow'), groups, gccQuality, 'gcc-qual-btn',
-    (sym) => { gccQuality = sym; gccVoicingIdx = 0; gccRender(); }
+    (sym) => { gccQuality = sym; prefSet('gccQuality', sym); gccVoicingIdx = 0; gccRender(); }
   );
   if (['uke','bass','mandolin','banjo','lute','bouzouki'].includes(chordScaleInstrument) || isTenorGuitar() || isBaritoneGuitar()) gccMarkUnavailableQualities();
 }
@@ -80963,7 +81276,7 @@ const GSS_SCALE_TYPES = [
   { id:'wholetone',  name:'Whole Tone',        nameIt:'Esatonale',        intervals:[0,2,4,6,8,10]     },
 ];
 
-let gccToolMode  = 'chords';
+let gccToolMode  = 'chords'; // every assignment is a temporary internal swap that restores itself; no user setter, so nothing to persist
 let gssRoot      = 'C';
 
 let gssScaleType = 'major';
@@ -82641,7 +82954,7 @@ function _gssTouchEnd(e) {
 // ═══════════════════════════════════════════════════════════════
 
 // ── Shared instrument state ────────────────────────────────────
-let chordScaleInstrument = 'guitar'; // 'guitar' | 'piano'
+let chordScaleInstrument = prefGet('chordScaleInstrument', 'guitar'); // your instrument — the most personal setting in the app, and it was resetting nightly
 
 // ── Instrument family navigation ─────────────────────────────────────────────
 
@@ -82863,6 +83176,7 @@ function switchChordScaleInstrument(inst) {
   if (typeof fluteTrillStopPulse === 'function') fluteTrillStopPulse();
   if (!hasTrillView(inst)) { wwSubTab = 'notes'; }
   chordScaleInstrument = inst;
+  prefSet('chordScaleInstrument', inst);   // your instrument. Not a session choice.
   _loadInstSamples(inst);
   // Organ defaults to a 2-octave view (keys auto-shrink to fit width, like a real B-3 manual)
   if (inst === 'organ') { pssOctaves = 2; pccOctaves = 2; }
