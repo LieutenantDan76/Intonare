@@ -16,6 +16,164 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.38 — settings that would not stick, and a feature nobody could reach
+
+A sweep of every module-level setting in the app, after the Road Trip theme turned out
+never to have been saved. It was not an isolated bug.
+
+### Nine settings reset to factory on every single launch
+- **`chordScaleInstrument`** — *your instrument*. Arguably the most personal setting in
+  the app, and a trumpet player was re-picking trumpet every time they opened it.
+- **`metroAudioOn`**, **`metroVolume`** — the metronome came back unmuted at 50% no
+  matter what you had set.
+- **`rtDiff`** — Road Trip difficulty.
+- **`ssNoteMode`**, **`ssAutoAdvance`** — Pitch Match's shown/hidden and auto-advance.
+- **`gccQuality`** — chord chart quality.
+
+All now persist, via a small `prefGet`/`prefSet` pair. Every access is wrapped:
+localStorage can be unavailable (private mode, storage pressure), and a setting that
+fails to save should be an annoyance, not a crash. Values are validated on read, so a
+stale entry from an older build falls back to the default rather than poisoning the
+module.
+
+### What the sweep also found — and deliberately did NOT change
+- **Interval Training was never broken.** It already persists range, difficulty, sing
+  direction and the rest through `progState.ivPrefs`. The first pass "fixed" it anyway;
+  that was reverted, because a second restore path would have fought `ivLoadPrefs()` and
+  won or lost depending on load order.
+- **`chordScaleInstrument` is reassigned temporarily** in a few places — opening a
+  Rhodes card swaps it to `piano` and swaps it back two lines later. Saving on bare
+  assignment would have persisted `piano` for anyone who so much as looked at a Rhodes.
+  The save is wired to `switchChordScaleInstrument()`, the actual user-facing setter,
+  and nowhere else.
+- **`gccToolMode`**: every assignment is an internal swap that restores itself. No user
+  setter, so nothing to persist.
+
+### And `ssDifficulty` turned out to be a whole feature nobody could reach
+It was read but never written — permanently `easy`. Digging in, `SS_DIFFICULTIES` is
+**fully implemented**: a real curve for Pitch Match's string mode, from major pentatonic
+(no semitones, easy to sing) through major to full chromatic, with step-versus-leap
+ratios and sequence lengths tuned to match.
+
+| | scale | notes | max leap |
+|---|---|---|---|
+| PENTATONIC | major pentatonic | 3 | 2 |
+| MAJOR | major | 4 | 3 |
+| CHROMATIC | all twelve | 5 | 5 |
+
+**No picker existed anywhere.** String mode is a live tab, so people could play it — and
+every one of them was locked to the easiest tier forever, with two thirds of the content
+unreachable. There is a picker now, in the settings sheet, shown only for string mode
+since nothing else reads the setting. Named by the scale rather than easy/medium/hard,
+because that is what it actually changes.
+
+### `ssPlayMode` never persisted either, and the reason is grim
+The tab handler called `ssSavePrefs()`, guarded by `typeof ssSavePrefs === 'function'`.
+**That function was never written.** The guard swallowed the call, nothing threw, and the
+play mode silently failed to persist — for however long that has been there. A defensive
+`typeof` check around a function that does not exist is indistinguishable from one around
+a function that does.
+
+Restores and saves are symmetric: nine settings restored on boot, the same nine saved
+on change. Nothing restored that is never written; nothing written that is never read.
+
+## v0.81.36 — Road Trip: the legs were flat, and the grading was grading the wrong thing
+
+### It was listening to itself
+`rtPlayHome()` sounds a 1.2 s reference while `rtPhase` is still `'home'`, so the hold
+meter filled from the app's own speaker before the singer opened their mouth. Same bug
+Pitch Match had. Detection is now deaf while the reference sounds, and the lock
+progress resets so your turn starts clean.
+
+### An A needed 12 cents
+A semitone is 100 cents. Twelve cents is a professional standard — trained singers
+drift more than that on a held note — and this was asking for it **from memory, after a
+distraction, with no reference**. Almost everything came back C or D. A game where good
+play looks like failure is not hard, it is discouraging.
+
+Now **25 / 40 / 60 / 85**. Still discriminating: 25 cents is audible and you have to
+actually hold it. But a decent attempt now looks like one.
+
+(The result *words* were on different thresholds than the *letters*, so a leg could be
+graded B and told you had "lost it". Aligned.)
+
+### It never said which way you missed
+The grade is an absolute error, so there was nothing to do differently on the next leg
+except try harder. **Sharp or flat is actionable.** Shown after grading, never during —
+it teaches without giving the answer away.
+
+### The bar was a clock
+It filled on elapsed time whether you sang your heart out or held your breath, and
+finished on schedule regardless. Nothing you did changed anything on screen, so the leg
+was something happening *to* you. That is the flatness.
+
+**The bar now fills with sung time** — it only advances while a voice is actually being
+heard, so the bar *is* your singing, and stopping stops it. It still carries no pitch
+information whatsoever: right note or wrong, it does not care and will not tell you.
+The recall stays blind. A 260 ms grace window keeps it moving through breaths, and a
+wall-clock ceiling stops a silent room hanging the leg.
+
+(A first attempt put a live *needle* on screen. It positioned a dot by cents error and
+claimed not to show the target — but dead centre **was** the target, and one leg in you
+would have simply tuned to it. That kills blind recall, which is the whole exercise.
+Deleted before it shipped.)
+
+### The grading was grading the wrong thing
+The median already killed isolated junk — one voice crack, one bad frame. Two things
+got through it, and both cost grades that had been earned:
+
+- **Octave errors.** Detectors mis-report 2x or 0.5x the true frequency, and they do it
+  in *runs*, not single frames — so the median moves to the wrong octave and you get an
+  **F for singing the note perfectly**. Samples are now folded into the octave nearest
+  home.
+- **Scooping.** Sliding up into a note is how most people sing. Taking the back half was
+  meant to skip it, but a slow scoop is still climbing at the halfway mark, so the
+  median landed mid-slide. Frames that are still *travelling* (>35 cents of movement
+  between frames) are dropped, leaving only the part you actually held.
+
+Neither makes the grade softer. They stop it measuring the wrong thing.
+
+### Your theme and your voice were not being saved
+`rtSetDesign()` set the variable and toggled the class but **never persisted** — so
+every launch dropped you back to Night whatever you had picked. Worse, nothing applied
+the saved value on open either, so even once stored it was ignored until you actively
+tapped a swatch.
+
+**And the vocal range was not saved anywhere**, in Pitch Match *or* Road Trip. It reset
+to tenor on every app launch. That is not a session preference; it is a fact about the
+singer's body, and a bass or a soprano had to re-pick it every single time they opened
+the app.
+
+Both now persist and restore.
+
+### "Lock it in" is not scaffolding
+It skips the sing-and-hold step of the home phase and starts the drive. A reasonable
+valve if the mic is misbehaving — though worth knowing it means recalling a note you
+never actually established.
+
+### Layout
+`.rt-cz` had no flex growth, so it sat at its natural height and the module — and the
+theme with it — stopped short of the bottom of the phone. It now fills and centres, so
+the start button, the recall bar and the final passport sit in the middle of the space
+rather than hugging the top of it.
+
+## v0.81.32 — the splash skip never ran
+
+App Links work: the link opens the app directly, no browser. But the splash still ran
+its full three and a half seconds and the daily did not open — the two things the skip
+was written to prevent.
+
+**An ordering trap.** `_intonareSkipSplash` is defined inside the splash IIFE, ~700
+lines below the deep-link handler that calls it. On a cold start the handler runs
+first, so the function **does not exist yet**. The `typeof === 'function'` guard failed
+quietly, and the code fell straight through to *waiting* for the splash — precisely the
+behaviour the skip replaced. No error, no symptom except the feature not happening.
+
+- The handler now **raises a flag** (`_intonareWantSkipSplash`) rather than calling a
+  function. The splash reads it when it starts and skips itself. **A flag does not care
+  who wrote it or when**, so there is no ordering dependency left to get wrong.
+- The direct call is kept for the warm case, where the splash has already started.
+
 ## v0.81.31 — App Links and Universal Links: the link just opens the app
 
 The bounce page can never open the app on Android without a tap. That is not a bug to
