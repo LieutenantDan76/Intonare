@@ -2044,3 +2044,400 @@ the same pattern as `go.bat [4b]–[4c2]` restoring `MainActivity.java` after
   `--header-h` from live DOM; tools tab exits folder.
 - Version lives in 3 synced spots (top comment, JS const, `#smVersionStamp`).
 - Renamed Sonoro → Intonare; appId `com.lieutenantdan.intonare`.
+
+## v0.82.0
+
+**Clair de Lune: opening thirds restored (real bug fix)**
+
+The transcription was keeping only the **top note of every parallel third**. Beat 1 was
+`m:77` (F5 alone) where the score has `[77,80]` (F5+Ab5). Same for the left hand and for
+most of the piece. That is why it sounded hollow and unrecognisable; the opening of Clair
+de Lune *is* parallel thirds, and half the notes were missing.
+
+Notes re-derived from a LilyPond-engraved score MIDI (score-exact, no rubato, hands
+pre-split as `upper`/`lower`). The new beat grid matches the old one exactly, so the
+rhythm was already right; only the voicing was broken.
+
+- `clair_de_lune`: rh 118 events, lh 81 events, runs to beat 93 (B-major arrival)
+- Hand-authored pedal `ctls` (22 changes, 0-85.5) kept verbatim; they were correct
+- Final chord duration extended to `d:3` so it rings out instead of clipping
+
+**`clair_de_lune_famous` removed**
+
+It only ever existed as a workaround for the broken opening. With the thirds restored the
+opening *is* the main theme, so a separate "skip to the good bit" entry is redundant.
+Removed its `PIECE_META` entry and its riff entry. No other references existed.
+
+**Not done / open**
+
+- The full movement runs to **beat 319.5** (~6:56 at bpm 46). Only beats 0-93 ship.
+  The remainder is withheld because **its pedalling has not been authored**. Three
+  algorithmic derivations were tried against the 22 known-good hand-authored pedal points
+  and all failed: min-gap bass-change (degenerates to a metronomic 1.5-beat pulse),
+  pitch-class-change (500 points, fires on arpeggio figuration), and plain bass-change
+  (520 points). The harmony is defined by the full vertical, not the LH bass line, and the
+  arpeggiation deliberately obscures it. **Back-half pedal must be hand-authored.**
+  Parsed full-length note data is reproducible from the source MIDI.
+- `RT_JOURNEY.clair_de_lune` hooks (`b:1,18,36,48,81`) are **untouched and still valid** --
+  same beat grid, all within the 93-beat range. But they were only ever spread across the
+  truncated piece. If/when the full movement ships, re-tune the five legs with the Leg
+  Tuner (cf. gnossienne reaching b:301, arabesque_1 b:386).
+- `RT_SONGS` entry for `clair_de_lune` is `hook:4` ("past the hushed open into the
+  phrase"). That rationale is now questionable -- the hushed open is the good part.
+  Revisit in the same tuning pass.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.82.1
+
+**iOS: long-press magnifier loupe suppressed app-wide**
+
+Tap-and-hold on iOS was popping the text-selection magnifier over interactive elements.
+
+Root cause: the global selection-deny rule enumerated element types --
+`html, body, button, .practice-card-btn, [onclick]` -- which covers the 820 inline
+`onclick` attributes but **misses every element bound via `addEventListener`**. There are
+~147 of those (82 `click`, 19 `touchstart`, 46 `pointerdown`), and the `pointerdown` /
+`touchstart` ones are exactly the drag-and-hold surfaces where a long press is expected,
+so they were the worst offenders.
+
+Fix: inverted the rule. Blanket `*` deny, opt back IN for `input, textarea, select,
+[contenteditable], .selectable`. Selection is now opt-in rather than opt-out, so new
+interactive elements can't silently regress this.
+
+Note for future reference: the loupe and the callout are **two different iOS behaviours**.
+`-webkit-touch-callout: none` kills the Copy/Look-Up context menu; the magnifier glass is
+part of text *selection* and is only suppressed by `user-select: none` on the element
+actually being pressed. The old rule had `-webkit-touch-callout` in only 2 places against
+68 `user-select` declarations. Both properties are needed, together, on everything.
+
+Verified safe: all three clipboard paths (`_tpCopyFallback`, `chordleDailyExecCopy`,
+`tonaleExecCopy`) use `navigator.clipboard.writeText()` with a temp-`<textarea>` +
+`execCommand('copy')` fallback. None depend on user-initiated text selection, and
+`textarea` is re-enabled by the opt-in rule, so the fallback still works.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.82.2
+
+**Scale system unified: SCALE_DEFS is now the single source of truth**
+
+The app had two hand-maintained scale tables that had drifted: `SCALE_DEFS`
+(degrees format; Scales tool + Tonal Centre; 16 scales) and `GSS_SCALE_TYPES`
+(semitone intervals; all instrument scale views; 18 scales). Different ids for the
+same scales (`aeolian`/`natminor`, `harmmin`/`harmminor`, `melmin`/`melminor`) and
+four scales (phrygdom, hungmin, hungmaj, hirajoshi) existed only on the GSS side --
+the Scales tool literally could not see Phrygian Dominant even though the app knew it.
+
+Changes:
+- `SCALE_DEFS` extended with `phrygdom`, `hungmin`, `hungmaj`, `hirajoshi` (degrees
+  format, derived from the GSS intervals, verified by construction and by test)
+- New `scaleDefIntervals(key)` derives semitone intervals from degrees;
+  `SCALE_DEGREE_SEMIS` is the degree->semitone map
+- `GSS_SCALE_TYPES` is now **generated** from SCALE_DEFS via `scaleDefIntervals()`.
+  It keeps its own ids and short display names (instrument UIs and saved state
+  reference them); `GSS_SCALE_ALIAS` bridges the id mismatches. Intervals are never
+  hand-written there again -- a scale added to SCALE_DEFS is automatically
+  consistent everywhere.
+- All four scale pickers extended with the new scales: EN `scale_opts`, IT
+  `scale_opts`, the Scales tool chip picker (`SHORT` map + groups), the TC dropdown
+  groups, and `TC_SCALE_GROUPS`
+
+Verification:
+- Baseline captured BEFORE any edit (`scale_baseline.json`): all 18 GSS scales'
+  ids, names, nameIt, intervals
+- Derived table proven equal to baseline **18/18, byte-identical** (node harness
+  running the real extracted code)
+- Functional smoke through the real `getScaleData`: E phrygdom = E F G# A B C D
+  (correct Hijaz spelling -- G# not Ab, because degrees carry alteration), C hungmin,
+  C hungmaj, A hirajoshi all correct; existing scales unchanged
+- Cross-check of the 14 previously-overlapping scales: degrees-derived intervals
+  matched GSS hand-written intervals exactly even before the change (zero drift in
+  content, only in coverage/ids)
+
+NOT a shipped build yet by agreement -- scale tool display redesign still to come
+in this same effort. Instrument scale views should be eyeballed on-device (any
+instrument, any scale, especially the four new ones and natural minor) since the
+sentinel cannot see rendering.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.83.0
+
+**Scales tool rebuilt: TAPE**
+
+The Scales tool was the last module still on its original design: a text strip of
+note names, three transport buttons, and an IMPROV sub-tab. Rebuilt as an
+instrument-agnostic scale browser.
+
+**The view.** The scale is drawn on a chromatic ruler: twelve semitone ticks, scale
+degrees as pips. The EMPTY ticks are the intervals, so the shape of the gaps IS the
+scale formula; no second diagram needed. Gap sizes are printed underneath, and any
+gap >= 3 semitones renders in gold (harmonic minor's augmented 2nd flags itself).
+Degree labels (1, 2, b3, 4, 5, b6, 7) come from `SCALE_DEFS.degrees` -- the payoff
+of the v0.82.2 unification, since a bare interval list cannot tell you a b3 is a
+FLAT THIRD rather than "3 semitones".
+
+Positions derive straight from `getScaleData()` semitones, so pentatonics thin out,
+chromatic fills every tick and whole-tone spaces evenly, with no special-casing.
+Switching scales morphs (FLIP): the pips slide to their new positions rather than
+redrawing, so harmonic minor -> melodic minor visibly raises the b6.
+
+**New capability: DRONE mode.** Holds the tonic; tap any degree to hear it against
+the root. Exclusive latch (a second tap replaces the first, never stacks). The tool
+visibly shifts register in drone mode -- green rail, dimmed ticks and gap numbers,
+tempo disabled. Transport (UP/DOWN/LOOP) exits it.
+
+This is NOT a Tonal Centre duplicate: TC listens to YOU (mic + detection + interval
+readout). This plays intervals AT you. Nothing else in the app did that.
+
+**Drone honours a real engine constraint.** REF_TONES entries now carry a `sustain`
+flag (4 of 46: sine, organ, pad, flute). A synth voice called with dur=0 leaves its
+oscillators running and can hold indefinitely. A SAMPLE-backed voice is a recording
+of a note decaying -- there is nothing to hold. So in drone mode the sampled voices
+dim to 20% and go inert, whole tab groups with no sustaining voice dim out, and
+selecting drone from e.g. grand piano hops you to sine and hands the piano back on
+exit. The constraint is legible instead of mysterious.
+
+**Tone bank upgraded.** The Scales tool was using `buildExerciseToneBank` -- a flat,
+ungrouped row -- while the Reference tool used the good tabbed `TONE_GROUPS_DEF`
+picker (KEYBOARD / WAVES / PLUCKED / BRASS / WOODWIND, ~26 instruments incl.
+grand piano, harpsichord, trombone, harmonica). Third instance of the
+"two parallel implementations, Scales reads the worse one" pattern. Now uses the
+tabbed picker. Audio routes through `practicePlayNote()` / `practiceMasterGain`, so
+it inherits the +5 dB low shelf @300 Hz, the limiter, makeup gain, sample playback
+and `addLowFreqHarmonics()`.
+
+**Also added:** octave stepper (OCT 2-6), dice (random root+scale, with a tumbling
+roll animation), GHOST overlay (compares against natural minor if the scale has a
+b3, else major; overrides for blues->minpent, major<->natminor, chromatic->none).
+
+**IMPROV sub-tab removed.** It was a drone plus a scale strip -- Tonal Centre with
+the detection removed -- and everything it did, TC does better. Sub-tab nav removed;
+`scalesTab()` kept as a no-op shim since external callers reference it.
+
+**The dangerous part, and how it was handled.** The drone AUDIO ENGINE is shared:
+`tcDroneStart()` (Tonal Centre) calls `droneStart()`, and Diadle uses it too. But
+`droneStart`/`droneStop`/`updateDroneDisplay`/`setDroneVolume` wrote to the improv
+tab's DOM **unguarded** -- `document.getElementById('droneToggleBtn').innerHTML = ...`.
+Deleting the markup would have thrown a TypeError and killed Tonal Centre's drone.
+Added a `_dq(id, fn)` null-safe helper and routed every drone DOM write through it.
+`updateDroneDisplay()` still computes `droneFreq` unconditionally -- TC and the
+detection notch consume it.
+
+**Bugs caught by the port's own smoke tests (would have shipped broken):**
+- markup called `scalePlay()`, function was named `playScale()` -> three dead
+  transport buttons. Alias added.
+- `setScaleVolume()` wrote to `scaleVolPercent`, an element removed with the old
+  layout, unguarded -> would throw. Guarded.
+- the module tour had a step anchored to `#sst-improv` describing the removed
+  sub-tab -> replaced with steps for DRONE and the dice.
+- `scaleSustain()` called a `getPracticeMaster()` that does not exist (invented);
+  rewritten against the real `practiceMasterGain` pattern.
+- `scaleTapeData()` assumed `getScaleData()` returned a `degree` field; it does not
+  (returns `{midi, name, semitones}`). Degree labels now built from SCALE_DEFS.
+
+**Layout stability** (the tonal-centre lesson, applied): hero-top is a fixed 3-column
+grid, not flex -- the GHOST button's label changes width when it toggles and would
+otherwise shove the centred prompt off-centre. The title box is pinned to two lines
+(75px) so the card does not resize when "C# PHRYGIAN DOMINANT" wraps.
+
+Verification: 6/6 script blocks pass `node --check`; sentinel all 97 fixes + 39 pins;
+scale audit all scales correct (pcs + spelling); every onclick handler, DOM id and
+i18n key in the new markup resolves; EN + IT twins for all 11 new strings.
+
+NOT yet verified on-device. Check: the tape renders for pentatonic/chromatic/whole
+tone; drone latching; the tone tabs; and that Tonal Centre's drone still works
+(that is the shared-engine risk).
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.83.1
+
+**Scales tool: tone tabs unstyled, ghost button overflowing** (on-device fixes)
+
+Two bugs visible on the first device build of TAPE.
+
+**Tone group tabs rendered as bare grey blocks.** The JS gave them
+`class="tgt"` — a class I invented. The app's real class is `.tone-group-tab`
+(defined at line ~7320, with the gradient fill, active state and hover already
+written). They were matching no rule at all. Same failure mode as the
+`scalePlay`/`playScale` name mismatch caught during the port: inventing a name
+instead of reading the existing one.
+
+Also: the tile row now sets `data-count` / `data-cols`, which the existing
+`.tone-tile-row` CSS keys off for orphan-row centring and for its reserved
+2-row height (so switching families never resizes the card). Those attributes
+were missing, so those rules never fired either.
+
+**GHOST button spilled out of its column.** The hero-top side columns were both
+76px, but the left one holds a scale NAME and the right holds only a dice icon.
+"NATURAL MINOR" ran straight out of the box. Fixed three ways:
+- side columns are now asymmetric (`--hero-l: 104px`, `--hero-r: 40px`); still
+  FIXED, so the centred prompt cannot be pushed off-centre
+- the label ellipsises rather than clipping
+- the button uses the abbreviated scale name ("NATURAL", not "NATURAL MINOR")
+
+`SHORT` was a local const inside `buildScaleTypePicker`, so the ghost could not
+reach it. Hoisted to module scope as `SCALE_SHORT_NAMES` — one source, shared by
+the type chips and the ghost button, so adding a scale updates both.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.83.2
+
+**Scales tool: CSS and layout fixes from the second device build**
+
+**NOW PLAYING off-centre (again).** v0.83.1 made the hero side columns FIXED but
+UNEQUAL (104px / 40px). Fixed is not the same as symmetric: unequal columns keep the
+centre column from *moving*, but put its midpoint off the card's midpoint. Now
+equal (88px / 88px); the dice is `justify-self: end` inside its column and the ghost
+`justify-self: start` inside its own, so neither can disturb the centre.
+
+**GHOST button was permanently wide.** It now sizes to its content — a small pill
+when off, growing only as far as its 88px column allows when a reference name
+appears.
+
+**Tone picker was a black hole.** The shared `.tone-tile` / `.tone-group-tab`
+components carry a near-black gradient (#1c1c20 -> #111114) tuned for the card they
+normally live in; inside the purple Scales card it read as a black rectangle.
+Re-skinned to the panel/border tokens, scoped to `#exScales` so no other tone bank
+is affected.
+
+**SLOW / FAST / tempo value rendered at default body size.** `.speed-label` and
+`.tempo-val` do not exist in the app — they were mockup class names I carried over.
+Defined them, scoped to `.scale-speed-row`.
+
+**Tone bank rows were ragged.** 6 KEYBOARD tones in 4 columns gives 4+2 with the
+orphan row jammed left. Column count now prefers an even divisor (6 -> 3 columns,
+two full rows of 3), and where none exists (5, 7) the final row is centred by CSS
+rather than left-aligned.
+
+**GHOST now rings only the DIFFERING notes.** It was drawing a ring on every note of
+the reference scale, including the ones both scales share, which buried the signal.
+The point of the overlay is "what makes this scale different", so it now rings only
+what the reference has that the current scale does not. C harmonic minor against
+natural minor is now exactly ONE ring — the b7 that harmonic minor raises. That is
+the whole difference between the two scales, in one mark.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.83.3
+
+**Tone bank overlap, and the GHOST overlay rethought**
+
+**Tone tiles were overlapping.** I had set explicit `grid-column` on the trailing
+tiles to centre a ragged last row. Two problems: explicit `grid-column` without an
+explicit `grid-row` lets the browser auto-place the row, and it collided with the
+shared stylesheet's own orphan rule (`grid-column: 1 / -1` on a lone last child).
+The tiles stacked.
+
+Dropped the grid gymnastics entirely. `#exScales .tone-tile-row` is now
+`flex-wrap` + `justify-content: center` with a `calc(25% - 5px)` basis, so every
+row — full or ragged — centres itself with no positional maths. The JS column
+calculation went with it.
+
+**GHOST now shows the whole reference scale, not just the deltas.**
+
+v0.83.2 rang only the notes that differ. Denser, but a puzzle: three rings on
+empty ticks mean nothing to someone who has not been told the rule, and this is a
+tool a beginner opens to find out what a scale IS.
+
+Now the overlay draws the entire reference scale, with two weights:
+- notes both scales SHARE get a faint ring (opacity .22) — you can see the
+  reference passes through here too, so the overlay reads as "the other scale,
+  laid over this one"
+- notes ONLY the reference has get a bright ring, a solid dot and their note name
+  above the tape — because those ARE the difference
+
+C major with the NATURAL MINOR ghost: faint rings on C D F G, bright named rings on
+Eb Ab Bb. It reads as "minor lowers these three" without a legend.
+C harmonic minor with the same ghost: exactly one bright ring, on Bb — the note
+harmonic minor raises. The whole distinction between the two scales, in one mark.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.84.0
+
+**GHOST rethought as COMPARE; tone bank rebuilt properly**
+
+Both of these had been patched three times without being reconsidered. Backed up.
+
+**TONE BANK — spacer-padded grid.**
+Centring a ragged last row is WORSE than left-aligning it: a floating 2-tile row with
+dead space either side reads as a bug. And the flex/grid hybrid kept fighting the
+shared stylesheet.
+
+Now a plain 4-column grid, with the final row padded out by invisible spacer tiles
+from the JS. Every row is always full. No orphan rules, no explicit grid-column
+placement, nothing to collide with.
+
+Also: icons are now uniformly desaturated including the active one. Letting only the
+selected tile's emoji go full-colour (grand piano's bright keyboard against seven
+grey neighbours) read as a broken tile rather than a selected one. Selection is
+carried by border, background and label colour.
+
+**GHOST -> COMPARE. The concept was wrong, not the rendering.**
+
+Three versions of the overlay all failed the same way: they asked you to mentally
+subtract one scale from another. That is a puzzle, and this is a tool people open
+BECAUSE they do not know the answer yet.
+
+The teaching frame is the fix. Nearly every scale in the picker is its parent scale
+with one or two degrees moved:
+  DORIAN         = NATURAL MINOR with a natural 6
+  HARMONIC MINOR = NATURAL MINOR with a natural 7
+  LYDIAN         = MAJOR with a sharp 4
+  MIXOLYDIAN     = MAJOR with a flat 7
+That sentence IS the lesson. So the tool now says it, and shows it:
+
+- the button reads `VS NATURAL MINOR` (explicit about what it is comparing against)
+- a caption under the scale name states the difference in words:
+  "NATURAL MINOR WITH natural-6"
+- on the tape, only the degrees that MOVED are drawn, and they are drawn as MOTION:
+  a dashed marker where the parent puts the note, an arc arrow, and the current pip
+  glowing gold at the end of it. Dorian against natural minor is ONE arrow, Ab -> A.
+
+Nothing to decode. Parent scales are assigned by rule (b3 -> natural minor, else
+major) with overrides where a different parent is the honest one: phrygian dominant
+and hungarian minor reference HARMONIC minor (phrygdom is its 5th mode), blues
+references minor pentatonic. Symmetric/exotic scales with no meaningful parent
+(chromatic, whole tone, hirajoshi, double harmonic, hungarian major) return none and
+the button reads NO PARENT.
+
+Caption height is RESERVED, not animated -- growing it 0 -> 16px would push the tape
+and everything below it down, which is the card-jank this layout was built to avoid.
+
+EN + IT twins for the new strings; the caption generator is language-aware
+("MINORE NATURALE con natural-6").
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.84.1
+
+**Tone bank: stopped fighting the shared component, gave it its own classes**
+
+Four attempts at aligning this produced four different wrong layouts, which is the
+tell that the approach was wrong rather than the values.
+
+The shared `.tone-tile` is a `<button>` carrying a base rule (display:flex, its own
+padding, min-height, background gradient) plus SIX more rules keyed on
+`data-count` / `data-cols` / `:nth-child(4n+1)` / `:last-child`, all written for the
+OTHER tone banks in the app. Every override from `#exScales` was landing in a
+different fight: one attempt collided with the orphan `grid-column: 1 / -1` rule and
+stacked the tiles, one produced uneven widths, one centred a ragged row into a
+floating island. I could not reason about the cascade from here, and could not
+measure it either (Chromium is not installable in this container).
+
+So: the Scales tone bank now has its OWN class namespace (`stb-tabs`, `stb-tab`,
+`stb-grid`, `stb-tile`, `stb-ico`, `stb-name`). Nothing inherited, nothing to
+override, nothing to collide with.
+
+`.stb-grid` is a plain 4-column grid with `grid-auto-rows: 54px` and a reserved
+`min-height: 114px` (two rows), so every tile is exactly one column wide and one row
+tall, a short final row simply ends flush-left, and switching families never resizes
+the card. No spacer tiles, no data attributes, no nth-child arithmetic.
+
+Less clever than reusing the shared component. It works.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.

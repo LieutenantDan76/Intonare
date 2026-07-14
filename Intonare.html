@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.58 -->
+<!-- INTONARE_VERSION: 0.84.1 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -1675,18 +1675,241 @@ html,body{background:#000000!important;transition:none!important}
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  /* Prevent touch-and-hold from selecting text / popping the iOS·Android selection
-     callout across the app. Re-enabled below for genuine text-input elements so
-     typing, paste and caret placement still work. */
-  html, body, button, .practice-card-btn, [onclick] {
+  /* Prevent touch-and-hold from selecting text / popping the iOS selection callout
+     and magnifier loupe across the app. Re-enabled below for genuine text-input
+     elements so typing, paste and caret placement still work.
+
+     This is a blanket `*` deny, not an element list. The previous rule enumerated
+     `button, [onclick]`, which missed the ~147 interactive elements bound via
+     addEventListener (click/touchstart/pointerdown) rather than an inline onclick
+     attribute; those still popped the loupe on iOS. Selection is opt-IN now.
+
+     The loupe and the callout are two separate iOS behaviours: `-webkit-touch-callout`
+     kills the Copy/Look-Up context menu, while the magnifier glass is part of text
+     *selection* and is only suppressed by `user-select: none` on the element actually
+     being pressed. Both are needed. */
+  * {
     -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
     -webkit-touch-callout: none;
   }
-  input, textarea, select, [contenteditable="true"] {
+  /* Opt back IN for real text entry and anything explicitly marked selectable. */
+  input, textarea, select, [contenteditable="true"], .selectable {
     -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text;
     -webkit-touch-callout: default;
   }
   button:focus, button:active { outline: none; }
+  /* ═══ SCALES · TAPE ═══
+     Layout stability is deliberate: the hero-top is a fixed 3-column grid (not
+     flex/space-between) so the centred prompt cannot be shoved off-centre by the
+     GHOST button, whose label changes width when it toggles. The title box is
+     pinned to two lines so the card does not resize when a long scale name wraps. */
+  .scale-hero-top {
+    /* EQUAL fixed side columns. Fixed alone is not enough: unequal columns keep the
+       centre column from moving but put its midpoint off the card's midpoint, which
+       is what shoved NOW PLAYING sideways. Equal + fixed = truly centred, and the
+       GHOST label can change width without disturbing anything. */
+    display: grid; grid-template-columns: 88px 1fr 88px;
+    align-items: center; gap: 6px; margin-bottom: 10px;
+  }
+  .scale-hero-top .scale-dice-btn { justify-self: end; }
+  .scale-hero-top .iv-prompt { text-align: center; min-width: 0; white-space: nowrap; }
+  .scale-ghost-btn {
+    /* Sized to CONTENT, not to the column: when off it is a small "GHOST" pill, and
+       it grows only as far as its 88px column allows when a reference name appears.
+       justify-self:start keeps it left-anchored so growing it cannot push anything. */
+    justify-self: start; max-width: 100%; height: 28px;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 0 7px; background: var(--panel); border: 1px solid var(--border-soft); border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: .5px; color: var(--muted);
+    overflow: hidden; white-space: nowrap; min-width: 0;
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1), border-color .15s, color .15s;
+  }
+  #scaleGhostLbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .scale-ghost-btn:active { transform: scale(.92); }
+  .scale-ghost-btn.on { border-color: var(--metro); color: var(--metro); background: rgba(255,209,102,.07); }
+  .sgb-ring { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid currentColor; flex: 0 0 auto; }
+  .scale-dice-btn {
+    width: 34px; height: 28px; margin-left: auto; display: flex; align-items: center; justify-content: center;
+    background: var(--panel); border: 1px solid var(--border-soft); border-radius: 6px;
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1);
+  }
+  .scale-dice-btn:active { transform: scale(.9); }
+  .scale-dice-btn svg { width: 16px; height: 16px; }
+  .sd-frame { fill: none; stroke: var(--metro); stroke-width: 1.5; }
+  .sd-pip { fill: var(--metro); }
+  .scale-dice-btn.rolling svg { animation: scaleDiceRoll .55s cubic-bezier(.3,.9,.4,1.1); }
+  @keyframes scaleDiceRoll {
+    0%   { transform: rotate(0)      scale(1); }
+    30%  { transform: rotate(140deg) scale(.75); }
+    60%  { transform: rotate(260deg) scale(1.15); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  /* pinned two-line box: "C" and "C# PHRYGIAN DOMINANT" occupy the same height */
+  .scale-name-big {
+    font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 2px; line-height: 1.04;
+    text-align: center; margin-top: 10px; padding: 0 4px;
+    height: 75px; display: flex; align-items: center; justify-content: center;
+    background: var(--grad-cyan); -webkit-background-clip: text; background-clip: text; color: transparent;
+    transition: opacity .16s;
+  }
+  .scale-name-big.swap { opacity: 0; }
+  .scale-divider { height: 1px; background: var(--border-soft); margin: 12px -14px; }
+
+  .scale-tape { width: 100%; height: auto; display: block; overflow: visible; margin-top: 8px; }
+  .stp-rail { stroke: var(--border); stroke-width: 2; transition: stroke .5s, filter .5s; }
+  .stp-tick { stroke: var(--border); stroke-width: 1; transition: opacity .5s; }
+  .stp-note { transition: transform .42s cubic-bezier(.34,1.56,.64,1); }
+  .stp-hit { fill: transparent; }
+  .stp-dot { fill: var(--flat); transform-box: fill-box; transform-origin: center;
+             transition: fill .2s, transform .25s cubic-bezier(.34,1.56,.64,1); }
+  .stp-name { fill: var(--text); font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 1px;
+              transition: fill .2s; }
+  .stp-deg { fill: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 9px; transition: fill .2s; }
+  .stp-note.hit .stp-dot { animation: stpPop .34s cubic-bezier(.34,1.56,.64,1); fill: #eaf6ff; }
+  .stp-note.hit .stp-name { fill: #ffffff; }
+  @keyframes stpPop { 0% { transform: scale(1); } 35% { transform: scale(1.6); } 100% { transform: scale(1); } }
+  .stp-bloom { fill: none; stroke: var(--accent); stroke-width: 1.5; opacity: 0; pointer-events: none;
+               transform-box: fill-box; transform-origin: center; }
+  .stp-note.hit .stp-bloom { animation: stpBloom .45s ease-out; }
+  @keyframes stpBloom { 0% { opacity: .8; transform: scale(1); } 100% { opacity: 0; transform: scale(2.4); } }
+  .stp-playhead { fill: var(--accent); opacity: 0; transition: opacity .2s;
+                  filter: drop-shadow(0 0 6px rgba(94,226,255,.9)); }
+  .stp-playhead.show { opacity: 1; }
+  .stp-playhead.moving { transition: transform var(--ph-dur, 180ms) cubic-bezier(.3,.7,.3,1), opacity .2s; }
+  .stp-gap { fill: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 8.5px; transition: opacity .5s; }
+  .stp-gap.big { fill: var(--metro); }
+  /* COMPARE overlay. Only the degrees that MOVED are drawn, and they are drawn as
+     motion: a hollow marker where the parent scale puts the note, an arc arrow, and
+     the current pip glowing gold at the end of it. Dorian against natural minor is
+     one arrow, Ab -> A. Nothing to decode. */
+  .stp-gfrom { fill: none; stroke: var(--metro); stroke-width: 1.4; opacity: .45;
+               stroke-dasharray: 2 2; pointer-events: none; }
+  .stp-garrow { fill: none; stroke: var(--metro); stroke-width: 1.4; opacity: .85; pointer-events: none; }
+  .stp-note.moved .stp-dot { fill: var(--metro); filter: drop-shadow(0 0 6px rgba(255,209,102,.75)); }
+  .stp-note.moved .stp-name { fill: var(--metro); }
+  .stp-note.moved .stp-deg  { fill: var(--metro); }
+
+  /* The sentence a teacher would say: "NATURAL MINOR with a natural-6". */
+  .scale-ghost-caption {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--metro); text-align: center;
+    /* Height is RESERVED, not animated. Growing 0 -> 16px would push the tape and
+       everything under it down; the card must not resize. Fade only. */
+    height: 16px; line-height: 16px; opacity: 0; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; transition: opacity .25s;
+  }
+  .scale-ghost-caption.show { opacity: .9; }
+
+  .scale-util-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .scale-oct-ctl { display: flex; align-items: center; justify-content: space-between;
+                   background: var(--panel); border: 1px solid var(--border-soft);
+                   border-radius: var(--r-sm); padding: 6px 8px; }
+  .scale-oct-btn { width: 34px; height: 30px; border-radius: 6px; background: var(--surface);
+                   border: 1px solid var(--border-soft); color: var(--accent); font-size: 16px;
+                   display: flex; align-items: center; justify-content: center;
+                   transition: transform .18s cubic-bezier(.34,1.56,.64,1); }
+  .scale-oct-btn:active { transform: scale(.88); }
+  .scale-oct-val { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--text-dim); }
+  .scale-speed-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; transition: opacity .4s; }
+  .scale-speed-row input[type=range] { flex: 1; accent-color: var(--accent); }
+
+  .scale-tone-hdr { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 2px;
+                    color: var(--muted); margin: 14px 0 8px; display: flex;
+                    justify-content: space-between; align-items: center; }
+
+  /* ── Scales tone bank: its OWN classes, deliberately ──
+     The shared .tone-tile / .tone-group-tab components are <button>s carrying a base
+     rule plus six more keyed on data-count / data-cols / nth-child, written for the
+     other tone banks. Overriding that from here produced a different wrong layout
+     four times running. These are separate class names: nothing to inherit, nothing
+     to collide with. Less clever, and it works. */
+  .stb-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 8px; }
+  .stb-tab {
+    display: block; width: 100%; box-sizing: border-box;
+    padding: 6px 2px; text-align: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 7px; font-weight: 700;
+    letter-spacing: .5px; text-transform: uppercase;
+    color: var(--muted); background: var(--panel);
+    border: 1px solid var(--border-soft); border-radius: 6px;
+    transition: color .15s, border-color .15s, background .15s, opacity .3s;
+  }
+  .stb-tab.active { color: var(--accent); border-color: var(--accent); background: rgba(94,226,255,.08); }
+
+  .stb-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    grid-auto-rows: 54px;                 /* every tile the same height */
+    min-height: 114px;                    /* 2 rows reserved: card never resizes */
+    align-content: start;
+  }
+  .stb-tile {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    width: 100%; box-sizing: border-box; padding: 6px 2px;   /* width comes from the column */
+    background: var(--panel); border: 1px solid var(--border-soft); border-radius: 8px;
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1), border-color .15s, background .15s, opacity .3s;
+  }
+  .stb-tile:active { transform: scale(.94); }
+  .stb-tile.active { border-color: var(--accent); background: rgba(94,226,255,.08); }
+  .stb-ico { font-size: 15px; line-height: 1; filter: grayscale(1); opacity: .45; transition: opacity .15s; }
+  .stb-tile.active .stb-ico { opacity: .9; }
+  .stb-name {
+    font-family: 'JetBrains Mono', monospace; font-size: 7px; letter-spacing: .4px;
+    text-transform: uppercase; color: var(--muted); text-align: center; line-height: 1.15;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+  }
+  .stb-tile.active .stb-name { color: var(--accent); }
+
+  /* drone mode: only sustaining voices are reachable */
+  #exScales.drone-mode .stb-tile.nosus { opacity: .18; pointer-events: none; }
+  #exScales.drone-mode .stb-tab.nosus  { opacity: .22; pointer-events: none; }
+  #exScales.drone-mode .stb-tile.active { border-color: var(--green); background: rgba(182,242,91,.08); }
+  #exScales.drone-mode .stb-tile.active .stb-name { color: var(--green); }
+  #exScales.drone-mode .stb-tab.active {
+    color: var(--green); border-color: var(--green); background: rgba(182,242,91,.08);
+  }
+
+  /* SLOW / FAST / value: .speed-label and .tempo-val do not exist in the app (they
+     were mockup class names), so this text was rendering at default body size. */
+  .scale-speed-row .speed-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 8.5px; letter-spacing: 1.5px;
+    color: var(--muted); flex: 0 0 auto;
+  }
+  .scale-speed-row .tempo-val {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim);
+    min-width: 30px; text-align: right; flex: 0 0 auto;
+  }
+  .scale-tone-note { font-size: 7.5px; color: var(--green); opacity: 0; transition: opacity .4s; }
+  .scale-drone-btn.live { border-color: var(--green) !important; color: var(--green) !important;
+                          background: rgba(182,242,91,.09) !important;
+                          box-shadow: 0 0 14px rgba(182,242,91,.18) inset; }
+  .scale-drone-btn.live .scale-action-icon { color: var(--green); }
+
+  /* ── DRONE MODE: the tool visibly shifts register ── */
+  #exScales.drone-mode .card.warm { border-color: #2a3d22; box-shadow: 0 0 34px rgba(182,242,91,.05) inset; }
+  #exScales.drone-mode .iv-prompt { color: var(--green); }
+  #exScales.drone-mode .scale-name-big { background: var(--grad-tune); -webkit-background-clip: text; background-clip: text; }
+  #exScales.drone-mode .stp-rail { stroke: #3a5230; filter: drop-shadow(0 0 4px rgba(182,242,91,.35)); }
+  #exScales.drone-mode .stp-tick { opacity: .35; }
+  #exScales.drone-mode .stp-gap { opacity: 0; }
+  #exScales.drone-mode .scale-speed-row { opacity: .3; pointer-events: none; }
+  #exScales.drone-mode .scale-tone-note { opacity: .8; }
+  #exScales.drone-mode .stp-note .stp-dot { fill: #5a7a4a; }
+  #exScales.drone-mode .stp-note.root .stp-dot { fill: var(--green); opacity: .9; }
+  .stp-note.latched .stp-dot { fill: var(--green); transform: scale(1.5);
+                               filter: drop-shadow(0 0 7px rgba(182,242,91,.8)); }
+  .stp-note.latched .stp-name { fill: #eaffd0; }
+  .stp-note.latched .stp-deg { fill: var(--green); }
+  /* sample-backed voices cannot hold a note; only synth voices can drone */
+  #exScales.drone-mode .tone-tile.nosus { opacity: .2; pointer-events: none; }
+  #exScales.drone-mode .tone-group-tabs .tone-group-tab.nosus { opacity: .25; pointer-events: none; }
+  #exScales.drone-mode .tone-tile.active { border-color: var(--green); background: rgba(182,242,91,.08); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stp-note, .stp-playhead.moving, .scale-name-big, .scale-dice-btn.rolling svg {
+      transition: none !important; animation: none !important;
+    }
+  }
+
   /* ─── THEME TRANSITION SYSTEM ───
      Layered easing: atmosphere shifts slowly (1.3s), surfaces in the middle (1.0s),
      accents and small details quicker (0.7s). Creates a "scene wipe" feel rather
@@ -21286,87 +21509,92 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         </div>
       </div>
 
-      <!-- Sub-tabs -->
-      <div class="metro-subnav">
-        <button class="metro-subtab active" id="sst-reference" onclick="scalesTab('reference')" data-i18n="scale_tab_reference">REFERENCE</button>
-        <button class="metro-subtab" id="sst-improv" onclick="scalesTab('improv')" data-i18n="scale_tab_improv">IMPROV</button>
-      </div>
-
-      <!-- REFERENCE TAB -->
+      <!-- ─── SCALES · TAPE ───
+           Instrument-agnostic scale browser. The scale is drawn on a chromatic
+           ruler: 12 semitone ticks, scale degrees as pips. The EMPTY ticks are the
+           intervals, so the shape of the gaps is the scale formula — no separate
+           diagram needed. Per-instrument fingerings live in the Instruments tab;
+           this is for looking a scale up, hearing it, and playing along.
+           Layout is pinned (fixed hero-top columns, fixed-height title box) so
+           nothing reflows when a long name like "C# PHRYGIAN DOMINANT" wraps. -->
       <div id="sp-reference">
 
-        <!-- Card 1: Display + playback controls (matches guitar/piano scale card 1) -->
         <div class="card warm" style="padding:16px 14px 14px">
-          <div class="card-glow"></div>
-          <div class="iv-prompt" data-i18n="now_playing" style="text-align:center">NOW PLAYING</div>
-          <div class="scale-name-big" id="scaleNameBig" style="text-align:center;margin-top:4px">C MAJOR</div>
-          <div class="scale-notes" id="scaleNotes" style="text-align:center;margin-top:6px">— — — — — — —</div>
-          <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
+          <div class="scale-hero-top">
+            <button class="scale-ghost-btn" id="scaleGhostBtn" onclick="scaleToggleGhost()">
+              <span class="sgb-ring"></span><span id="scaleGhostLbl" data-i18n="scale_ghost">COMPARE</span>
+            </button>
+            <div class="iv-prompt" id="scalePrompt" data-i18n="scale_now_playing">NOW PLAYING</div>
+            <button class="scale-dice-btn" id="scaleDiceBtn" onclick="scaleRollDice()" aria-label="Random scale">
+              <svg viewBox="0 0 16 16"><rect class="sd-frame" x="1.5" y="1.5" width="13" height="13" rx="3"/><g id="scaleDicePips"></g></svg>
+            </button>
+          </div>
+
+          <div class="scale-name-big" id="scaleNameBig">C MAJOR</div>
+          <div class="scale-ghost-caption" id="scaleGhostCaption"></div>
+
+          <svg class="scale-tape" id="scaleTape" viewBox="0 0 400 122">
+            <defs>
+              <marker id="stpArrow" viewBox="0 0 8 8" refX="6" refY="4"
+                      markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path d="M 0 1 L 7 4 L 0 7 z" fill="var(--metro)"/>
+              </marker>
+            </defs>
+            <line class="stp-rail" x1="20" y1="58" x2="380" y2="58"/>
+            <g id="scaleTapeTicks"></g>
+            <g id="scaleTapeGhosts"></g>
+            <g id="scaleTapeNotes"></g>
+            <circle class="stp-playhead" id="scalePlayhead" cx="0" cy="58" r="4"/>
+            <g id="scaleTapeGaps"></g>
+          </svg>
+
+          <div class="scale-divider"></div>
+
           <div class="scale-actions">
-            <button class="scale-action-btn" id="scaleUpBtn" onclick="playScale('up')"><div class="scale-action-icon">↑</div><div data-i18n="scale_up">UP</div></button>
-            <button class="scale-action-btn" id="scaleDownBtn" onclick="playScale('down')"><div class="scale-action-icon">↓</div><div data-i18n="scale_down">DOWN</div></button>
-            <button class="scale-action-btn" id="scaleLoopBtn" onclick="playScale('loop')"><div class="scale-action-icon">↻</div><div data-i18n="scale_loop">LOOP</div></button>
+            <button class="scale-action-btn" id="scaleUpBtn" onclick="scalePlay('up')">
+              <div class="scale-action-icon">↑</div><span data-i18n="scale_up">UP</span></button>
+            <button class="scale-action-btn" id="scaleDownBtn" onclick="scalePlay('down')">
+              <div class="scale-action-icon">↓</div><span data-i18n="scale_down">DOWN</span></button>
+            <button class="scale-action-btn" id="scaleLoopBtn" onclick="scalePlay('loop')">
+              <div class="scale-action-icon">↻</div><span data-i18n="scale_loop">LOOP</span></button>
           </div>
-          <div class="gss-speed-row" style="margin-top:12px;max-width:none">
-            <span class="gss-speed-label" data-i18n="gtool_slow">SLOW</span>
-            <input type="range" class="gss-speed-slider" id="scaleSpeed" min="40" max="200" value="100" oninput="setScaleSpeed(this.value)">
-            <span class="gss-speed-label" data-i18n="gtool_fast">FAST</span>
-            <span class="scale-tempo-value" id="scaleSpeedVal" style="min-width:28px;text-align:right">100</span>
+
+          <div class="scale-util-row">
+            <button class="scale-action-btn scale-drone-btn" id="scaleDroneBtn" onclick="scaleToggleDrone()">
+              <div class="scale-action-icon">◉</div><span data-i18n="scale_drone">DRONE</span></button>
+            <div class="scale-oct-ctl">
+              <button class="scale-oct-btn" onclick="scaleSetOct(-1)">−</button>
+              <div class="scale-oct-val" id="scaleOctVal">OCT 4</div>
+              <button class="scale-oct-btn" onclick="scaleSetOct(1)">+</button>
+            </div>
           </div>
-          <div class="tone-bank-row" id="scaleToneBank" style="margin-top:12px"></div>
-          <div class="vol-slider-row" style="margin-top:8px">
-            <div class="vol-slider-label" data-i18n="vol_label">VOL</div>
-            <input type="range" class="vol-slider" id="scaleVolSlider" min="0" max="100" value="100" oninput="setScaleVolume(this.value)">
-            <div class="vol-percent" id="scaleVolPercent">100%</div>
+
+          <div class="scale-speed-row" id="scaleSpeedRow">
+            <span class="speed-label" data-i18n="slow">SLOW</span>
+            <input type="range" id="scaleSpeed" min="40" max="200" value="100" oninput="scaleSetTempo(this.value)">
+            <span class="speed-label" data-i18n="fast">FAST</span>
+            <span class="tempo-val" id="scaleSpeedVal">100</span>
           </div>
+
+          <div class="scale-tone-hdr">
+            <span data-i18n="tone_label">TONE</span>
+            <span class="scale-tone-note" data-i18n="scale_sustain_only">SUSTAINING VOICES ONLY</span>
+          </div>
+          <div class="stb-tabs" id="scaleToneTabs"></div>
+          <div class="stb-grid" id="scaleToneBank"></div>
         </div>
 
-        <!-- Card 2: Root + Scale selector (matches guitar/piano scale card 2) -->
-        <div class="card warm">
-          <div class="card-glow"></div>
-          <div class="card-label"><span data-i18n="gtool_root_scale">Root · Scale</span><button class="help-btn" onclick="showHelp('scales')">?</button></div>
+        <div class="card warm" style="padding:16px 14px 14px">
+          <div class="card-label" data-i18n="scale_root_scale">ROOT · SCALE</div>
           <div class="sc-root-grid" id="scaleRootPicker"></div>
-          <div style="height:1px;background:var(--border-soft);margin:10px 0 8px"></div>
           <div id="scaleTypePicker"></div>
-          <!-- hidden selects kept for legacy code references -->
+          <!-- hidden selects kept for legacy code references (droneInit reads
+               scaleRoot/scaleType; do not remove) -->
           <select id="scaleRoot" style="display:none"></select>
           <select id="scaleType" style="display:none"></select>
         </div>
 
       </div><!-- /sp-reference -->
-
-      <!-- IMPROV TAB -->
-      <div id="sp-improv" class="hidden">
-        <div class="drone-display">
-          <div class="drone-state" id="droneState" data-i18n="drone_stopped">STOPPED</div>
-          <div class="drone-note-big" id="droneNoteBig">—</div>
-          <div class="drone-octave" id="droneOctave">·</div>
-          <div id="droneScaleName" style="font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--text-dim);margin-top:6px;letter-spacing:0.5px"></div>
-        </div>
-        <div class="card">
-          <div class="card-label"><span data-i18n="label_scale_tones">Scale Tones</span><button class="help-btn" onclick="showHelp('scaledrone')">?</button></div>
-          <div class="scale-chrome-row" id="droneScaleChrome"></div>
-          <div class="scale-chrome-legend">
-            <span><span class="scale-chrome-dot root"></span><span data-i18n="chrome_root">ROOT</span></span>
-            <span><span class="scale-chrome-dot in"></span><span data-i18n="chrome_in">IN SCALE</span></span>
-          </div>
-          <div class="teach-hint" data-i18n-html="hint_scale_drone">The drone holds the root while the strip shows which notes belong to the scale. Sing or play over it to hear how each degree feels.</div>
-        </div>
-        <div class="card">
-          <div class="card-label"><span data-i18n="label_octave">Octave</span></div>
-          <div class="drone-oct-row" id="droneOctRow"></div>
-        </div>
-        <div class="iv-controls">
-          <button class="iv-btn primary" id="droneToggleBtn" onclick="toggleDronePlay()" style="background:var(--grad-warm);box-shadow:0 4px 14px rgba(255,160,122,0.3)" data-i18n="drone_start">▶︎ START DRONE</button>
-        </div>
-        <div class="ref-controls">
-          <div class="vol-slider-row">
-            <div class="vol-slider-label" data-i18n="vol_label">VOL</div>
-            <input type="range" class="vol-slider" id="droneVolSlider" min="0" max="100" value="100" oninput="setDroneVolume(this.value)">
-            <div class="vol-percent" id="droneVolPercent">100%</div>
-          </div>
-        </div>
-      </div><!-- /sp-improv -->
 
     </div><!-- /exScales -->
 
@@ -23250,7 +23478,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.58';
+const INTONARE_VERSION = '0.84.1';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -29883,7 +30111,7 @@ const TC_SCALE_GROUPS = [
   { g:'MAJOR FAMILY', items:[['major','Major (Ionian)'],['lydian','Lydian'],['mixolydian','Mixolydian'],['harmmaj','Harmonic Major']] },
   { g:'MINOR FAMILY', items:[['natminor','Natural Minor'],['dorian','Dorian'],['phrygian','Phrygian'],['locrian','Locrian'],['harmminor','Harmonic Minor'],['melminor','Melodic Minor']] },
   { g:'PENTATONIC & BLUES', items:[['majpent','Major Pentatonic'],['minpent','Minor Pentatonic'],['blues','Blues']] },
-  { g:'EXOTIC · SYMMETRIC', items:[['dblharm','Double Harmonic'],['wholetone','Whole Tone'],['chromatic','Chromatic']] },
+  { g:'EXOTIC · SYMMETRIC', items:[['dblharm','Double Harmonic'],['phrygdom','Phrygian Dominant'],['hungmin','Hungarian Minor'],['hungmaj','Hungarian Major'],['hirajoshi','Hirajoshi'],['wholetone','Whole Tone'],['chromatic','Chromatic']] },
 ];
 
 function tcScaleShortName() {
@@ -31303,8 +31531,6 @@ var RIFF_META = {
       note:'The rag that made Joplin\u2019s name: a syncopated right hand over a steady stride bass. Best on Honky-Tonk.' },
     clair_de_lune:{ composer:'Claude Debussy',    year:'1905', era:'Romantic',
       note:'The luminous third movement of Suite bergamasque: pedal-soaked, impressionistic, and a fixture of the repertoire.' },
-    clair_de_lune_famous:{ composer:'Claude Debussy', year:'1905', era:'Romantic',
-      note:'The main theme of Clair de Lune, from the un poco mosso. The singing line over a rolling left hand \u2014 the passage the piece is famous for. The complete movement, opening thirds and all, is the other entry.' },
     nocturne:    { composer:'Fr\u00e9d\u00e9ric Chopin',  year:'1832', era:'Romantic',
       note:'Nocturne in E\u266d, Op. 9 No. 2, complete. An ornamented song line over a gently rocking left hand, and the piece most people picture when they hear \u201cnocturne.\u201d' },
     gymnopedie:  { composer:'Erik Satie',         year:'1888', era:'Romantic',
@@ -32120,7 +32346,12 @@ var RIFFS = {
         {b:44,d:1,m:50,man:'lower'}, {b:45,d:2,m:55,man:'lower'}, {b:47,d:1,m:43,man:'lower'}, {b:48,d:3,m:55,man:'lower'}
       ] },
     clair_de_lune: { label:'Clair de Lune', tempo:1.0, bpm:46,
-      // Debussy, PD. Opening of Suite bergamasque 3rd mvt. Grace notes included.
+      // Debussy, PD. Suite bergamasque 3rd mvt, opening through the B-major arrival (beat 93).
+      // Notes derived from a LilyPond-engraved score MIDI: score-exact, no rubato, hands pre-split.
+      // Both voices of every parallel third are present; an earlier transcription kept only the
+      // top note of each third, which is why the opening sounded hollow. Pedal ctls are
+      // hand-authored and change on the harmony. The full movement runs to beat 319.5; the
+      // remainder is not shipped because its pedalling has not been authored yet.
       ctls:[
         {b:0, ctl:()=>{_riffPiano('lid','open');_riffPiano('pedal',0);_riffPiano('soft',1);}},
         {b:4.5, ctl:()=>_riffPiano('pedal',0)},
@@ -32169,96 +32400,59 @@ var RIFFS = {
         {b:85.57, ctl:()=>_riffPiano('pedal',1)}
       ],
       rh:[
-        {b:1,d:2,m:77,man:'upper'}, {b:1.5,d:2,m:80,man:'upper'}, {b:3,d:2,m:73,man:'upper'}, {b:4.5,d:2,m:77,man:'upper'},
-        {b:5,d:0.5,m:72,man:'upper'}, {b:5.5,d:0.5,m:[73,75],man:'upper'}, {b:6,d:3.5,m:[72,77],man:'upper'}, {b:9,d:3.5,m:75,man:'upper'},
-        {b:9.5,d:0.5,m:70,man:'upper'}, {b:10,d:0.5,m:[72,73],man:'upper'}, {b:10.5,d:3.5,m:[70,73,75],man:'upper'}, {b:11.25,d:1.5,m:77,man:'upper'},
-        {b:12.75,d:1.25,m:73,man:'upper'}, {b:14,d:0.5,m:68,man:'upper'}, {b:14.5,d:0.5,m:[70,72],man:'upper'}, {b:15,d:3,m:[68,73],man:'upper'},
-        {b:18,d:3.5,m:[66,72],man:'upper'}, {b:18.5,d:0.5,m:70,man:'upper'}, {b:19,d:0.5,m:72,man:'upper'}, {b:19.5,d:0.5,m:70,man:'upper'},
-        {b:20,d:0.5,m:75,man:'upper'}, {b:20.5,d:0.5,m:70,man:'upper'}, {b:21,d:1.5,m:[66,68],man:'upper'}, {b:21.5,d:0.5,m:70,man:'upper'},
+        {b:1,d:2,m:[77,80],man:'upper'}, {b:3,d:2,m:[73,77],man:'upper'}, {b:5,d:0.5,m:[72,75],man:'upper'}, {b:5.5,d:0.5,m:[73,77],man:'upper'},
+        {b:6,d:3.5,m:[72,75],man:'upper'}, {b:9.5,d:0.5,m:[70,73],man:'upper'}, {b:10,d:0.5,m:[72,75],man:'upper'}, {b:10.5,d:3.5,m:70,man:'upper'},
+        {b:10.5,d:0.75,m:73,man:'upper'}, {b:11.25,d:1.5,m:77,man:'upper'}, {b:12.75,d:1.25,m:73,man:'upper'}, {b:14,d:0.5,m:[68,72],man:'upper'},
+        {b:14.5,d:0.5,m:[70,73],man:'upper'}, {b:15,d:3.5,m:72,man:'upper'}, {b:15,d:3,m:68,man:'upper'}, {b:18,d:3,m:66,man:'upper'},
+        {b:18.5,d:0.5,m:70,man:'upper'}, {b:19,d:0.5,m:72,man:'upper'}, {b:19.5,d:0.5,m:70,man:'upper'}, {b:20,d:0.5,m:75,man:'upper'},
+        {b:20.5,d:0.5,m:70,man:'upper'}, {b:21,d:1.5,m:66,man:'upper'}, {b:21,d:0.5,m:68,man:'upper'}, {b:21.5,d:0.5,m:70,man:'upper'},
         {b:22,d:1,m:68,man:'upper'}, {b:22.5,d:3,m:63,man:'upper'}, {b:23,d:0.5,m:66,man:'upper'}, {b:23.5,d:0.5,m:68,man:'upper'},
-        {b:24,d:1.5,m:66,man:'upper'}, {b:25.5,d:2,m:[63,65],man:'upper'}, {b:27,d:4.5,m:61,man:'upper'}, {b:27.5,d:0.5,m:65,man:'upper'},
-        {b:28,d:0.5,m:66,man:'upper'}, {b:28.5,d:0.5,m:65,man:'upper'}, {b:29,d:0.5,m:70,man:'upper'}, {b:29.5,d:0.5,m:65,man:'upper'},
-        {b:30,d:0.5,m:63,man:'upper'}, {b:30.5,d:0.5,m:65,man:'upper'}, {b:31,d:1,m:63,man:'upper'}, {b:31.5,d:3,m:58,man:'upper'},
-        {b:32,d:0.5,m:61,man:'upper'}, {b:32.5,d:0.5,m:63,man:'upper'}, {b:33,d:1.5,m:61,man:'upper'}, {b:34.5,d:1.5,m:[56,60],man:'upper'},
-        {b:36.5,d:0.5,m:53,man:'upper'}, {b:37,d:0.5,m:56,man:'upper'}, {b:37.5,d:1.5,m:77,man:'upper'}, {b:39,d:2,m:[73,80],man:'upper'},
-        {b:40.5,d:2,m:77,man:'upper'}, {b:41,d:4,m:[66,75],man:'upper'}, {b:41.5,d:0.5,m:77,man:'upper'}, {b:42,d:4,m:[70,75],man:'upper'},
-        {b:45.5,d:1,m:[61,68],man:'upper'}, {b:46,d:0.5,m:[63,73],man:'upper'}, {b:46.5,d:1.5,m:[68,75],man:'upper'}, {b:48,d:1.5,m:[65,73,80],man:'upper'},
-        {b:49.5,d:2,m:[73,77],man:'upper'}, {b:50,d:4,m:[66,75],man:'upper'}, {b:50.5,d:0.5,m:77,man:'upper'}, {b:51,d:4,m:[70,75],man:'upper'},
-        {b:52.5,d:2,m:73,man:'upper'}, {b:54.5,d:1,m:[61,68],man:'upper'}, {b:55,d:0.5,m:[63,73],man:'upper'}, {b:55.5,d:3,m:[70,75,77],man:'upper'},
-        {b:56.25,d:1.5,m:[68,82],man:'upper'}, {b:57,d:1.5,m:80,man:'upper'}, {b:57.75,d:0.75,m:65,man:'upper'}, {b:58.5,d:1.25,m:77,man:'upper'},
-        {b:59,d:4,m:[65,75],man:'upper'}, {b:59.5,d:0.5,m:77,man:'upper'}, {b:60,d:1.75,m:[70,75],man:'upper'}, {b:60.75,d:1.5,m:73,man:'upper'},
-        {b:63,d:3,m:70,man:'upper'}, {b:63.75,d:1.25,m:77,man:'upper'}, {b:64.5,d:1.25,m:[82,89],man:'upper'}, {b:65,d:0.5,m:75,man:'upper'},
-        {b:65.5,d:0.5,m:[75,82,87],man:'upper'}, {b:66,d:0.5,m:[75,82,87],man:'upper'}, {b:66.5,d:0.5,m:[73,82,87],man:'upper'}, {b:67,d:0.5,m:[73,82,85],man:'upper'},
-        {b:67.5,d:0.5,m:[73,82,85],man:'upper'}, {b:68,d:0.5,m:[72,82,85],man:'upper'}, {b:68.5,d:0.5,m:[72,78,82,84],man:'upper'}, {b:69,d:0.75,m:[72,78,82,84],man:'upper'},
-        {b:69.75,d:0.75,m:[73,78,82,84],man:'upper'}, {b:70.5,d:1.5,m:[70,82,85],man:'upper'}, {b:72,d:1.5,m:[78,82],man:'upper'}, {b:72.75,d:1.25,m:77,man:'upper'},
-        {b:73.5,d:1.25,m:[82,89],man:'upper'}, {b:74,d:0.5,m:78,man:'upper'}, {b:74.5,d:0.5,m:[77,82,90],man:'upper'}, {b:75,d:0.5,m:[75,82,89],man:'upper'},
-        {b:75.5,d:0.5,m:[77,82,87],man:'upper'}, {b:76,d:0.5,m:[75,82,89],man:'upper'}, {b:76.5,d:0.5,m:[73,82,87],man:'upper'}, {b:77,d:0.5,m:[75,82,85],man:'upper'},
-        {b:77.5,d:0.5,m:[73,82,87],man:'upper'}, {b:78,d:0.75,m:[82,85],man:'upper'}, {grace:1,b:78.6875,d:0.0625,m:87,man:'upper'}, {b:78.75,d:0.75,m:[73,84],man:'upper'},
-        {b:79.5,d:2.25,m:[70,82,85],man:'upper'}, {b:81,d:2.25,m:[78,82],man:'upper'}, {b:81.75,d:0.75,m:66,man:'upper'}, {b:82.5,d:0.75,m:[68,78],man:'upper'},
-        {b:83.25,d:0.75,m:[72,75,80],man:'upper'}, {b:84,d:0.75,m:[70,84],man:'upper'}, {b:84.75,d:0.75,m:[66,78,82],man:'upper'}, {b:85.5,d:0.75,m:78,man:'upper'},
-        {b:86,d:0.5,m:66,man:'upper'}, {b:86.5,d:0.5,m:[66,72,75,78],man:'upper'}, {b:87,d:0.5,m:[66,72,75,78],man:'upper'}, {b:87.5,d:0.5,m:[66,72,75,78],man:'upper'},
-        {b:88,d:0.5,m:[68,72,75,78],man:'upper'}, {b:88.5,d:1.5,m:[66,72,75,80],man:'upper'}, {b:90,d:1.5,m:[72,75,78],man:'upper'}, {b:90.75,d:2.25,m:[66,73],man:'upper'},
-        {b:91.5,d:0.75,m:[68,78],man:'upper'}, {b:92.25,d:0.75,m:[73,80],man:'upper'}, {b:93,d:1.5,m:[70,78,85],man:'upper'}
+        {b:24,d:1.5,m:66,man:'upper'}, {b:25.5,d:2,m:65,man:'upper'}, {b:25.5,d:1.5,m:63,man:'upper'}, {b:27,d:4.5,m:61,man:'upper'},
+        {b:27.5,d:0.5,m:65,man:'upper'}, {b:28,d:0.5,m:66,man:'upper'}, {b:28.5,d:0.5,m:65,man:'upper'}, {b:29,d:0.5,m:70,man:'upper'},
+        {b:29.5,d:0.5,m:65,man:'upper'}, {b:30,d:0.5,m:63,man:'upper'}, {b:30.5,d:0.5,m:65,man:'upper'}, {b:31,d:1,m:63,man:'upper'},
+        {b:31.5,d:3,m:58,man:'upper'}, {b:32,d:0.5,m:61,man:'upper'}, {b:32.5,d:0.5,m:63,man:'upper'}, {b:33,d:1.5,m:61,man:'upper'},
+        {b:34.5,d:1.5,m:[56,60],man:'upper'}, {b:36.5,d:1,m:[53,56],man:'upper'}, {b:37.5,d:1.5,m:[77,80],man:'upper'}, {b:39,d:2,m:[73,77],man:'upper'},
+        {b:41,d:4,m:[66,70],man:'upper'}, {b:41,d:0.5,m:75,man:'upper'}, {b:41.5,d:0.5,m:77,man:'upper'}, {b:42,d:3.5,m:75,man:'upper'},
+        {b:45.5,d:1,m:68,man:'upper'}, {b:45.5,d:0.5,m:[61,73],man:'upper'}, {b:46,d:0.5,m:[63,75],man:'upper'}, {b:46.5,d:1.5,m:[68,73,80],man:'upper'},
+        {b:48,d:2,m:77,man:'upper'}, {b:48,d:1.5,m:[65,73],man:'upper'}, {b:50,d:4,m:[66,70],man:'upper'}, {b:50,d:0.5,m:75,man:'upper'},
+        {b:50.5,d:0.5,m:77,man:'upper'}, {b:51,d:1.5,m:75,man:'upper'}, {b:52.5,d:2,m:73,man:'upper'}, {b:54.5,d:1,m:68,man:'upper'},
+        {b:54.5,d:0.5,m:[61,73],man:'upper'}, {b:55,d:0.5,m:[63,75],man:'upper'}, {b:55.5,d:3,m:77,man:'upper'}, {b:55.5,d:0.75,m:[70,82],man:'upper'},
+        {b:56.25,d:1.5,m:[68,80],man:'upper'}, {b:57.75,d:0.75,m:65,man:'upper'}, {b:58.5,d:0.5,m:77,man:'upper'}, {b:59,d:4,m:[65,70],man:'upper'},
+        {b:59,d:0.5,m:75,man:'upper'}, {b:59.5,d:0.5,m:77,man:'upper'}, {b:60,d:0.75,m:75,man:'upper'}, {b:60.75,d:1.5,m:73,man:'upper'},
+        {b:63.75,d:1.25,m:[77,82,89],man:'upper'}, {b:65,d:0.5,m:[75,82,87],man:'upper'}, {b:65.5,d:0.5,m:[75,82,87],man:'upper'}, {b:66,d:0.5,m:[75,82,87],man:'upper'},
+        {b:66.5,d:0.5,m:[73,82,85],man:'upper'}, {b:67,d:0.5,m:[73,82,85],man:'upper'}, {b:67.5,d:0.5,m:[73,82,85],man:'upper'}, {b:68,d:0.5,m:[72,78,82,84],man:'upper'},
+        {b:68.5,d:0.5,m:[72,78,82,84],man:'upper'}, {b:69,d:0.75,m:[72,78,82,84],man:'upper'}, {b:69.75,d:0.75,m:[73,82,85],man:'upper'}, {b:70.5,d:1.5,m:[70,78,82],man:'upper'},
+        {b:72.75,d:1.25,m:[77,82,89],man:'upper'}, {b:74,d:0.5,m:[78,82,90],man:'upper'}, {b:74.5,d:0.5,m:[77,82,89],man:'upper'}, {b:75,d:0.5,m:[75,82,87],man:'upper'},
+        {b:75.5,d:0.5,m:[77,82,89],man:'upper'}, {b:76,d:0.5,m:[75,82,87],man:'upper'}, {b:76.5,d:0.5,m:[73,82,85],man:'upper'}, {b:77,d:0.5,m:[75,82,87],man:'upper'},
+        {b:77.5,d:0.5,m:[73,82,85],man:'upper'}, {b:78,d:0.5781,m:[82,84],man:'upper'}, {grace:1,b:78.5781,d:0.1719,m:87,man:'upper'}, {b:78.75,d:0.75,m:[73,82,85],man:'upper'},
+        {b:79.5,d:2.25,m:[70,78,82],man:'upper'}, {b:81.75,d:0.75,m:[66,78],man:'upper'}, {b:82.5,d:0.75,m:[68,75,80],man:'upper'}, {b:83.25,d:0.75,m:[72,84],man:'upper'},
+        {b:84,d:0.75,m:[70,78,82],man:'upper'}, {b:84.75,d:0.75,m:[66,78],man:'upper'}, {b:86,d:0.5,m:[66,72,75,78],man:'upper'}, {b:86.5,d:0.5,m:[66,72,75,78],man:'upper'},
+        {b:87,d:0.5,m:[66,72,75,78],man:'upper'}, {b:87.5,d:0.5,m:[66,72,75,78],man:'upper'}, {b:88,d:0.5,m:[68,72,75,80],man:'upper'}, {b:88.5,d:1.5,m:[66,72,75,78],man:'upper'},
+        {b:90.75,d:1.5,m:73,man:'upper'}, {b:90.75,d:0.75,m:[66,78],man:'upper'}, {b:91.5,d:0.75,m:[68,80],man:'upper'}, {b:92.25,d:0.75,m:[73,85],man:'upper'},
+        {b:93,d:3,m:78,man:'upper'}, {b:93,d:3,m:[70,82],man:'upper'}
       ],
       lh:[
-        {b:0.5,d:4,m:65,man:'lower'}, {b:1,d:0.5,m:68,man:'lower'}, {b:1.5,d:4,m:68,man:'lower'}, {b:4.5,d:4.5,m:66,man:'lower'},
-        {b:7.5,d:4.5,m:69,man:'lower'}, {b:9,d:4.5,m:65,man:'lower'}, {b:12,d:4.5,m:68,man:'lower'}, {b:13.5,d:4.5,m:63,man:'lower'},
-        {b:16.5,d:4.5,m:66,man:'lower'}, {b:18,d:3,m:[61,63],man:'lower'}, {b:21,d:1.5,m:[60,63],man:'lower'}, {b:22.5,d:3,m:[58,61],man:'lower'},
-        {b:25.5,d:1.5,m:[57,60],man:'lower'}, {b:27,d:4.5,m:[56,58],man:'lower'}, {b:30,d:1.5,m:54,man:'lower'}, {b:31.5,d:3,m:[53,56],man:'lower'},
-        {b:34.5,d:1.5,m:[51,54],man:'lower'}, {b:35.25,d:1.25,m:44,man:'lower'}, {b:36,d:0.5,m:37,man:'lower'}, {b:37,d:3.5,m:65,man:'lower'},
-        {b:37.5,d:3.5,m:68,man:'lower'}, {b:40.5,d:3,m:42,man:'lower'}, {b:41,d:4,m:49,man:'lower'}, {b:42,d:4,m:[54,58,61],man:'lower'},
-        {b:43.5,d:3,m:49,man:'lower'}, {b:45,d:3,m:41,man:'lower'}, {b:45.5,d:1,m:53,man:'lower'}, {b:46.5,d:1.5,m:[56,61],man:'lower'},
-        {b:48,d:3,m:[49,56,65],man:'lower'}, {b:49.5,d:3,m:[42,61],man:'lower'}, {b:50,d:4,m:49,man:'lower'}, {b:51,d:4,m:[54,58,61],man:'lower'},
-        {b:52.5,d:3,m:49,man:'lower'}, {b:54,d:4.5,m:44,man:'lower'}, {b:54.5,d:1,m:53,man:'lower'}, {b:55.5,d:2,m:59,man:'lower'},
-        {b:57,d:2,m:[61,65],man:'lower'}, {b:58.5,d:3,m:46,man:'lower'}, {b:59,d:4,m:[53,63],man:'lower'}, {b:60,d:4,m:58,man:'lower'},
-        {b:60.75,d:2.25,m:61,man:'lower'}, {b:63,d:3,m:27,man:'lower'}, {b:63.75,d:1.25,m:65,man:'lower'}, {b:64.5,d:1.25,m:[66,70],man:'lower'},
-        {b:65,d:0.5,m:63,man:'lower'}, {b:65.5,d:0.5,m:[63,66,70],man:'lower'}, {b:66,d:3,m:[39,63,66,70],man:'lower'}, {b:66.5,d:0.5,m:[61,66,70],man:'lower'},
+        {b:0.5,d:4,m:[65,68],man:'lower'}, {b:4.5,d:4.5,m:[66,69],man:'lower'}, {b:9,d:4.5,m:[65,68],man:'lower'}, {b:13.5,d:4.5,m:[63,66],man:'lower'},
+        {b:18,d:3,m:[61,63],man:'lower'}, {b:21,d:1.5,m:[60,63],man:'lower'}, {b:22.5,d:3,m:[58,61],man:'lower'}, {b:25.5,d:1.5,m:[57,60],man:'lower'},
+        {b:27,d:4.5,m:58,man:'lower'}, {b:27,d:3,m:56,man:'lower'}, {b:30,d:1.5,m:54,man:'lower'}, {b:31.5,d:3,m:[53,56],man:'lower'},
+        {b:34.5,d:1.5,m:54,man:'lower'}, {b:34.5,d:0.75,m:51,man:'lower'}, {b:35.25,d:1.25,m:44,man:'lower'}, {b:36,d:0.5,m:37,man:'lower'},
+        {b:37,d:3.5,m:[65,68],man:'lower'}, {b:40.5,d:4.5,m:49,man:'lower'}, {b:40.5,d:3,m:42,man:'lower'}, {b:41,d:4,m:[54,58,61],man:'lower'},
+        {b:45,d:3,m:[41,49],man:'lower'}, {b:45.5,d:1,m:[53,56],man:'lower'}, {b:46.5,d:1.5,m:[61,65],man:'lower'}, {b:48,d:1.5,m:[56,61],man:'lower'},
+        {b:49.5,d:4.5,m:49,man:'lower'}, {b:49.5,d:3,m:42,man:'lower'}, {b:50,d:4,m:[54,58,61],man:'lower'}, {b:54,d:4.5,m:44,man:'lower'},
+        {b:54.5,d:1,m:[53,59],man:'lower'}, {b:55.5,d:2,m:[59,61,65],man:'lower'}, {b:58.5,d:3,m:46,man:'lower'}, {b:59,d:4,m:[53,58],man:'lower'},
+        {b:59,d:1.75,m:63,man:'lower'}, {b:60.75,d:2.25,m:61,man:'lower'}, {b:63,d:3,m:[27,39],man:'lower'}, {b:63.75,d:1.25,m:[65,66,70],man:'lower'},
+        {b:65,d:0.5,m:[63,66,70],man:'lower'}, {b:65.5,d:0.5,m:[63,66,70],man:'lower'}, {b:66,d:0.5,m:[63,66,70],man:'lower'}, {b:66.5,d:0.5,m:[61,66,70],man:'lower'},
         {b:67,d:0.5,m:[61,66,70],man:'lower'}, {b:67.5,d:0.5,m:[61,66,70],man:'lower'}, {b:68,d:0.5,m:[60,66,70],man:'lower'}, {b:68.5,d:0.5,m:[60,66,70],man:'lower'},
-        {b:69,d:0.75,m:[60,66,70],man:'lower'}, {b:69.75,d:0.75,m:[61,66,70],man:'lower'}, {b:70.5,d:1.5,m:[58,66,70],man:'lower'}, {b:72,d:3,m:[27,46,61,66],man:'lower'},
-        {b:72.75,d:1.25,m:65,man:'lower'}, {b:73.5,d:1.25,m:[66,70],man:'lower'}, {b:74,d:0.5,m:66,man:'lower'}, {b:74.5,d:0.5,m:[65,70,75],man:'lower'},
-        {b:75,d:3,m:[39,63,66,70],man:'lower'}, {b:75.5,d:0.5,m:[65,66,70],man:'lower'}, {b:76,d:0.5,m:[63,66,70],man:'lower'}, {b:76.5,d:0.5,m:[61,66,70],man:'lower'},
-        {b:77,d:0.5,m:[63,66,70],man:'lower'}, {b:77.5,d:0.5,m:[61,66,70],man:'lower'}, {b:78,d:0.75,m:[60,66,70],man:'lower'}, {b:78.75,d:0.75,m:[61,66,70],man:'lower'},
-        {b:79.5,d:1.5,m:[58,66,70],man:'lower'}, {b:81,d:3,m:[32,63,66],man:'lower'}, {b:81.75,d:0.75,m:54,man:'lower'}, {b:82.5,d:1.5,m:[56,60],man:'lower'},
-        {b:83.25,d:0.75,m:60,man:'lower'}, {b:84,d:3,m:[44,58,63],man:'lower'}, {b:84.75,d:0.75,m:54,man:'lower'}, {b:85.5,d:3,m:[33,66],man:'lower'},
-        {b:86,d:0.5,m:54,man:'lower'}, {b:86.5,d:0.5,m:[54,60,63],man:'lower'}, {b:87,d:0.5,m:[54,60,63],man:'lower'}, {b:87.5,d:0.5,m:[54,60,63],man:'lower'},
-        {b:88,d:0.5,m:[56,60,63],man:'lower'}, {b:88.5,d:3,m:[45,54,60,63],man:'lower'}, {b:90,d:3,m:[34,60,63],man:'lower'}, {b:90.75,d:2.25,m:[54,58],man:'lower'},
-        {b:91.5,d:0.75,m:56,man:'lower'}, {b:92.25,d:0.75,m:61,man:'lower'}, {b:93,d:3,m:[46,58,61],man:'lower'}
-      ] },
-    clair_de_lune_famous: { label:'Clair de Lune (main theme)', tempo:1.0, bpm:46,
-      // Debussy, PD. Suite bergamasque 3rd mvt, from the *un poco mosso* — the
-      // section everyone actually knows: the singing right hand over a rolling
-      // left. In the full transcription this arrives at beat 65, which at 46 bpm
-      // is roughly 85 SECONDS of quiet parallel thirds first. Correct, and nobody
-      // waits that long; the piece is famous for this bit, so this starts here.
-      // Same notes, rebased to beat 1. The complete version remains as `clair_de_lune`.
-      ctls:[
-        {b:0, ctl:()=>{_riffPiano('lid','open');_riffPiano('pedal',1);_riffPiano('soft',0);}},
-      ],
-      rh:[
-        {b:1,d:0.5,m:75,man:'upper'}, {b:1.5,d:0.5,m:[75,82,87],man:'upper'}, {b:2,d:0.5,m:[75,82,87],man:'upper'}, {b:2.5,d:0.5,m:[73,82,87],man:'upper'},
-        {b:3,d:0.5,m:[73,82,85],man:'upper'}, {b:3.5,d:0.5,m:[73,82,85],man:'upper'}, {b:4,d:0.5,m:[72,82,85],man:'upper'}, {b:4.5,d:0.5,m:[72,78,82,84],man:'upper'},
-        {b:5,d:0.75,m:[72,78,82,84],man:'upper'}, {b:5.75,d:0.75,m:[73,78,82,84],man:'upper'}, {b:6.5,d:1.5,m:[70,82,85],man:'upper'}, {b:8,d:1.5,m:[78,82],man:'upper'},
-        {b:8.75,d:1.25,m:77,man:'upper'}, {b:9.5,d:1.25,m:[82,89],man:'upper'}, {b:10,d:0.5,m:78,man:'upper'}, {b:10.5,d:0.5,m:[77,82,90],man:'upper'},
-        {b:11,d:0.5,m:[75,82,89],man:'upper'}, {b:11.5,d:0.5,m:[77,82,87],man:'upper'}, {b:12,d:0.5,m:[75,82,89],man:'upper'}, {b:12.5,d:0.5,m:[73,82,87],man:'upper'},
-        {b:13,d:0.5,m:[75,82,85],man:'upper'}, {b:13.5,d:0.5,m:[73,82,87],man:'upper'}, {b:14,d:0.75,m:[82,85],man:'upper'}, {b:14.75,d:0.75,m:[73,84],man:'upper'},
-        {b:15.5,d:2.25,m:[70,82,85],man:'upper'}, {b:17,d:2.25,m:[78,82],man:'upper'}, {b:17.75,d:0.75,m:66,man:'upper'}, {b:18.5,d:0.75,m:[68,78],man:'upper'},
-        {b:19.25,d:0.75,m:[72,75,80],man:'upper'}, {b:20,d:0.75,m:[70,84],man:'upper'}, {b:20.75,d:0.75,m:[66,78,82],man:'upper'}, {b:21.5,d:0.75,m:78,man:'upper'},
-        {b:22,d:0.5,m:66,man:'upper'}, {b:22.5,d:0.5,m:[66,72,75,78],man:'upper'}, {b:23,d:0.5,m:[66,72,75,78],man:'upper'}, {b:23.5,d:0.5,m:[66,72,75,78],man:'upper'},
-        {b:24,d:0.5,m:[68,72,75,78],man:'upper'}, {b:24.5,d:1.5,m:[66,72,75,80],man:'upper'}, {b:26,d:1.5,m:[72,75,78],man:'upper'}, {b:26.75,d:2.25,m:[66,73],man:'upper'},
-        {b:27.5,d:0.75,m:[68,78],man:'upper'}, {b:28.25,d:0.75,m:[73,80],man:'upper'}, {b:29,d:1.5,m:[70,78,85],man:'upper'}
-      ],
-      lh:[
-        {b:1,d:0.5,m:63,man:'lower'}, {b:1.5,d:0.5,m:[63,66,70],man:'lower'}, {b:2,d:3,m:[39,63,66,70],man:'lower'}, {b:2.5,d:0.5,m:[61,66,70],man:'lower'},
-        {b:3,d:0.5,m:[61,66,70],man:'lower'}, {b:3.5,d:0.5,m:[61,66,70],man:'lower'}, {b:4,d:0.5,m:[60,66,70],man:'lower'}, {b:4.5,d:0.5,m:[60,66,70],man:'lower'},
-        {b:5,d:0.75,m:[60,66,70],man:'lower'}, {b:5.75,d:0.75,m:[61,66,70],man:'lower'}, {b:6.5,d:1.5,m:[58,66,70],man:'lower'}, {b:8,d:3,m:[27,46,61,66],man:'lower'},
-        {b:8.75,d:1.25,m:65,man:'lower'}, {b:9.5,d:1.25,m:[66,70],man:'lower'}, {b:10,d:0.5,m:66,man:'lower'}, {b:10.5,d:0.5,m:[65,70,75],man:'lower'},
-        {b:11,d:3,m:[39,63,66,70],man:'lower'}, {b:11.5,d:0.5,m:[65,66,70],man:'lower'}, {b:12,d:0.5,m:[63,66,70],man:'lower'}, {b:12.5,d:0.5,m:[61,66,70],man:'lower'},
-        {b:13,d:0.5,m:[63,66,70],man:'lower'}, {b:13.5,d:0.5,m:[61,66,70],man:'lower'}, {b:14,d:0.75,m:[60,66,70],man:'lower'}, {b:14.75,d:0.75,m:[61,66,70],man:'lower'},
-        {b:15.5,d:1.5,m:[58,66,70],man:'lower'}, {b:17,d:3,m:[32,63,66],man:'lower'}, {b:17.75,d:0.75,m:54,man:'lower'}, {b:18.5,d:1.5,m:[56,60],man:'lower'},
-        {b:19.25,d:0.75,m:60,man:'lower'}, {b:20,d:3,m:[44,58,63],man:'lower'}, {b:20.75,d:0.75,m:54,man:'lower'}, {b:21.5,d:3,m:[33,66],man:'lower'},
-        {b:22,d:0.5,m:54,man:'lower'}, {b:22.5,d:0.5,m:[54,60,63],man:'lower'}, {b:23,d:0.5,m:[54,60,63],man:'lower'}, {b:23.5,d:0.5,m:[54,60,63],man:'lower'},
-        {b:24,d:0.5,m:[56,60,63],man:'lower'}, {b:24.5,d:3,m:[45,54,60,63],man:'lower'}, {b:26,d:3,m:[34,60,63],man:'lower'}, {b:26.75,d:2.25,m:[54,58],man:'lower'},
-        {b:27.5,d:0.75,m:56,man:'lower'}, {b:28.25,d:0.75,m:61,man:'lower'}, {b:29,d:3,m:[46,58,61],man:'lower'}
+        {b:69,d:0.75,m:[60,66,70],man:'lower'}, {b:69.75,d:0.75,m:[61,66,70],man:'lower'}, {b:70.5,d:1.5,m:[58,61,66],man:'lower'}, {b:72,d:3,m:[27,39,46],man:'lower'},
+        {b:72.75,d:1.25,m:[65,66,70],man:'lower'}, {b:74,d:0.5,m:[66,70,75],man:'lower'}, {b:74.5,d:0.5,m:[65,66,70],man:'lower'}, {b:75,d:0.5,m:[63,66,70],man:'lower'},
+        {b:75.5,d:0.5,m:[65,66,70],man:'lower'}, {b:76,d:0.5,m:[63,66,70],man:'lower'}, {b:76.5,d:0.5,m:[61,66,70],man:'lower'}, {b:77,d:0.5,m:[63,66,70],man:'lower'},
+        {b:77.5,d:0.5,m:[61,66,70],man:'lower'}, {b:78,d:0.75,m:[60,66,70],man:'lower'}, {b:78.75,d:0.75,m:[61,66,70],man:'lower'}, {b:79.5,d:1.5,m:[58,63,66],man:'lower'},
+        {b:81,d:3,m:[32,44],man:'lower'}, {b:81.75,d:0.75,m:54,man:'lower'}, {b:82.5,d:1.5,m:[60,63],man:'lower'}, {b:82.5,d:0.75,m:56,man:'lower'},
+        {b:84,d:1.5,m:[63,66],man:'lower'}, {b:84,d:0.75,m:58,man:'lower'}, {b:84.75,d:0.75,m:54,man:'lower'}, {b:85.5,d:3,m:[33,45],man:'lower'},
+        {b:86,d:0.5,m:[54,60,63],man:'lower'}, {b:86.5,d:0.5,m:[54,60,63],man:'lower'}, {b:87,d:0.5,m:[54,60,63],man:'lower'}, {b:87.5,d:0.5,m:[54,60,63],man:'lower'},
+        {b:88,d:0.5,m:[56,60,63],man:'lower'}, {b:88.5,d:1.5,m:[54,60,63],man:'lower'}, {b:90,d:3,m:[34,46],man:'lower'}, {b:90.75,d:1.5,m:[58,61],man:'lower'},
+        {b:90.75,d:0.75,m:54,man:'lower'}, {b:91.5,d:0.75,m:56,man:'lower'}, {b:92.25,d:0.75,m:61,man:'lower'}, {b:93,d:3,m:[61,66],man:'lower'},
+        {b:93,d:3,m:58,man:'lower'}
       ] },
     gymnopedie: { label:'Gymnopédie No. 1', tempo:1.0, bpm:76,
       // Satie, PD — MusicXML. The complete piece. Grand piano, ties merged. Sparse, hypnotic, an ancestor of ambient music.
@@ -38067,10 +38261,14 @@ Object.assign(TOURS, {
       title:'Loop', titleIt:'Loop',
       body:'<strong>Loop</strong> plays the scale continuously so you can sing along or practice over it without tapping replay.',
       bodyIt:'<strong>Loop</strong> suona la scala in continuazione cos&igrave; puoi cantare o esercitarti senza toccare riproduci.' },
-    { selector:'#sst-improv', previewSelector:'.metro-subnav',
-      title:'Modes', titleIt:'Modi',
-      body:'Switch between <strong>Listen</strong> (identify the scale by ear), <strong>Sing</strong> (match it with your voice), and <strong>Improv</strong> (jam over a looping root chord).',
-      bodyIt:'Passa tra <strong>Ascolta</strong> (identifica la scala a orecchio), <strong>Canta</strong> (intonala con la voce) e <strong>Improvvisa</strong> (suona su un accordo di tonica in loop).' },
+    { selector:'#scaleDroneBtn', previewSelector:'.scale-util-row',
+      title:'Drone', titleIt:'Bordone',
+      body:'<strong>Drone</strong> holds the root note. Tap any degree on the tape to hear how it sits against it &mdash; the quickest way to learn what a scale actually sounds like.',
+      bodyIt:'Il <strong>bordone</strong> tiene la tonica. Tocca un grado sul nastro per sentire come ci suona sopra: il modo pi&ugrave; rapido per capire davvero il suono di una scala.' },
+    { selector:'#scaleDiceBtn', previewSelector:'.scale-hero-top',
+      title:'Explore', titleIt:'Esplora',
+      body:'Roll the <strong>dice</strong> for a random root and scale. Good for stumbling into something you would never have picked.',
+      bodyIt:'Tira il <strong>dado</strong> per una tonica e una scala a caso. Utile per imbattersi in qualcosa che non avresti mai scelto.' },
   ],
   tempo: [
     { selector:'#tlBpmBig', previewSelector:'#tlBpmBig',
@@ -45232,13 +45430,20 @@ function droneInit() {
   droneUpdateScale();
 }
 
+// Null-safe DOM helper for the drone engine. The engine outlived the improv tab
+// that used to own its readouts; every write goes through here so a missing
+// element is a no-op instead of a TypeError.
+function _dq(id, fn) { const el = document.getElementById(id); if (el) fn(el); }
+
 function updateDroneDisplay() {
   const midiBase = { A: 57, 'A#': 58, B: 59, C: 60, 'C#': 61, D: 62, 'D#': 63, E: 64, F: 65, 'F#': 66, G: 67, 'G#': 68 }[droneRoot];
   const midi = midiBase + (droneOctaveIdx - 1) * 12;
+  // CRITICAL: droneFreq is consumed by Tonal Centre (tcDroneStart) and by the
+  // detection notch. It must be computed whether or not any DOM exists.
   droneFreq = midiToFreq(midi);
   const oct = Math.floor(midi / 12) - 1;
-  document.getElementById('droneNoteBig').textContent = getDisplayNote(droneRoot).replace('#', '♯');
-  document.getElementById('droneOctave').textContent = ((progState.lang === 'it')?'OTTAVA ':'OCTAVE ') + oct + ' · ' + droneFreq.toFixed(1) + ' Hz';
+  _dq('droneNoteBig', el => el.textContent = getDisplayNote(droneRoot).replace('#', '♯'));
+  _dq('droneOctave',  el => el.textContent = ((progState.lang === 'it')?'OTTAVA ':'OCTAVE ') + oct + ' · ' + droneFreq.toFixed(1) + ' Hz');
 }
 
 // Convenience: alias for the note-naming refresher
@@ -45324,9 +45529,14 @@ function droneStart() {
   fund.start(now); if (oct) oct.start(now);
   droneNodes = { fund, oct, master };
   droneActive = true;
-  document.getElementById('droneToggleBtn').innerHTML = '■ STOP DRONE';
-  document.getElementById('droneState').textContent = t('drone_playing');
-  document.getElementById('droneNoteBig').classList.add('playing');
+  // These elements belonged to the Scales tool's old improv tab, which no longer
+  // exists. The drone AUDIO ENGINE is still shared (Tonal Centre calls droneStart()
+  // via tcDroneStart(), and Diadle uses it too), so the engine must survive without
+  // that markup. Guarded, not deleted: an unguarded getElementById().innerHTML here
+  // would throw and kill Tonal Centre's drone outright.
+  _dq('droneToggleBtn', el => el.innerHTML = '■ STOP DRONE');
+  _dq('droneState',     el => el.textContent = t('drone_playing'));
+  _dq('droneNoteBig',   el => el.classList.add('playing'));
 }
 
 function droneStop(silent) {
@@ -45354,15 +45564,15 @@ function droneStop(silent) {
     if (n.oct) n.oct.stop(now + 0.07);
   } catch(e) {}
   if (!silent) {
-    document.getElementById('droneToggleBtn').innerHTML = '▶︎ START DRONE';
-    document.getElementById('droneState').textContent = t('drone_stopped');
-    document.getElementById('droneNoteBig').classList.remove('playing');
+    _dq('droneToggleBtn', el => el.innerHTML = '▶︎ START DRONE');
+    _dq('droneState',     el => el.textContent = t('drone_stopped'));
+    _dq('droneNoteBig',   el => el.classList.remove('playing'));
   }
 }
 
 function setDroneVolume(v) {
   droneVolume = v / 100;
-  document.getElementById('droneVolPercent').textContent = v + '%';
+  _dq('droneVolPercent', el => el.textContent = v + '%');
   if (droneNodes && practiceCtx) {
     const now = practiceCtx.currentTime;
     droneNodes.master.gain.cancelScheduledValues(now);
@@ -45447,10 +45657,29 @@ const SCALE_DEFS = {
   // ─── Exotic / Symmetric ───
   dblharm:    { name: 'DOUBLE HARMONIC MAJOR',  it: 'DOPPIO ARMONICO MAGGIORE', cat: 'exotic',
                 degrees: [[1,0],[2,-1],[3,0],[4,0],[5,0],[6,-1],[7,0]] },
+  phrygdom:   { name: 'PHRYGIAN DOMINANT',      it: 'FRIGIO DOMINANTE',         cat: 'exotic',
+                degrees: [[1,0],[2,-1],[3,0],[4,0],[5,0],[6,-1],[7,-1]] },   // Hijaz/Freygish; 5th mode of harmonic minor
+  hungmin:    { name: 'HUNGARIAN MINOR',        it: 'MINORE UNGHERESE',         cat: 'exotic',
+                degrees: [[1,0],[2,0],[3,-1],[4,1],[5,0],[6,-1],[7,0]] },    // double harmonic minor
+  hungmaj:    { name: 'HUNGARIAN MAJOR',        it: 'MAGGIORE UNGHERESE',       cat: 'exotic',
+                degrees: [[1,0],[2,1],[3,0],[4,1],[5,0],[6,0],[7,-1]] },
+  hirajoshi:  { name: 'HIRAJOSHI',              it: 'HIRAJOSHI',                cat: 'exotic',
+                degrees: [[1,0],[2,0],[3,-1],[5,0],[6,-1]] },                // Japanese koto pentatonic
   wholetone:  { name: 'WHOLE TONE',             it: 'PER TONI INTERI',          cat: 'exotic',
                 degrees: [[1,0],[2,0],[3,0],[4,1],[5,1],[6,1]] },
   chromatic:  { name: 'CHROMATIC',              it: 'CROMATICA',                cat: 'exotic', chromatic: true }
 };
+
+// Derive semitone intervals from a SCALE_DEFS degrees array. Degrees carry
+// spelling information ([3,-1] = flat third) that a bare semitone list loses,
+// which is why degrees are the stored form and intervals the derived one.
+const SCALE_DEGREE_SEMIS = { 1:0, 2:2, 3:4, 4:5, 5:7, 6:9, 7:11 };
+function scaleDefIntervals(key) {
+  const def = SCALE_DEFS[key];
+  if (!def) return null;
+  if (def.chromatic) return [0,1,2,3,4,5,6,7,8,9,10,11];
+  return def.degrees.map(([d,a]) => SCALE_DEGREE_SEMIS[d] + a);
+}
 
 let scaleRoot = 'C', scaleType = 'major', scaleSpeed = 100, scaleVolume = 0.30;
 let scalePlaying = false, scaleMode = null, scaleTimers = [];
@@ -45516,6 +45745,447 @@ function getScaleSemitones() {
 // Rebuild the scaleRoot dropdown labels to match current note-naming mode.
 // Values stay as letter names (C, C#, Db…) so internal logic is unaffected;
 // only the visible text changes when solfège mode is active.
+/* ═══════════════════ SCALES · TAPE ENGINE ═══════════════════
+   Renders the scale on a chromatic ruler and drives playback, drone mode and
+   the ghost overlay. Positions come straight from getScaleData() semitones, so
+   pentatonics thin out, chromatic fills every tick and whole-tone spaces evenly
+   with no special-casing.
+
+   Audio goes through practicePlayNote()/ensurePracticeCtx(), i.e. the shared
+   master chain (low shelf, limiter, makeup) and SampleEngine — NOT raw
+   oscillators. Do not shortcut that.                                          */
+
+// Abbreviated scale names. Hoisted out of buildScaleTypePicker so the GHOST
+// button and the type chips share one source — add a scale, both update.
+const SCALE_SHORT_NAMES = {
+  major:'MAJOR', lydian:'LYDIAN', mixolydian:'MIXOLYD.', harmmaj:'HARM. MAJ',
+  natminor:'NATURAL', dorian:'DORIAN', phrygian:'PHRYGIAN', locrian:'LOCRIAN',
+  harmminor:'HARM. MIN', melminor:'MELODIC',
+  majpent:'MAJ PENT', minpent:'MIN PENT', blues:'BLUES',
+  dblharm:'DBL HARM', phrygdom:'PHRYG DOM', hungmin:'HUNG. MIN', hungmaj:'HUNG. MAJ',
+  hirajoshi:'HIRAJOSHI', wholetone:'WHOLE TONE', chromatic:'CHROMATIC'
+};
+
+const STP_X0 = 20, STP_XU = 28;
+const stpX = semi => STP_X0 + semi * STP_XU;
+
+let scaleOct        = 4;
+let scaleDroneMode  = false;
+let scaleDroneNode  = null;   // sustained tonic
+let scaleLatchIdx   = null;   // exclusive latched degree
+let scaleLatchNode  = null;
+let scaleGhostOn    = false;
+let scaleTonePrev   = null;   // tone to restore when leaving drone mode
+let scaleToneGroup  = 1;      // WAVES (sine default)
+let stpGroups       = [];     // persistent <g> per pip, so FLIP transforms animate
+let scalePhTimers   = [];
+
+/* ─── GHOST: compare this scale against its PARENT ───
+   The teaching frame, not a puzzle: almost every scale in the picker is its parent
+   scale with one or two degrees moved. Dorian is natural minor with a raised 6.
+   Harmonic minor is natural minor with a raised 7. Lydian is major with a raised 4.
+   That sentence IS the lesson, so the tool says it in words and shows the moved
+   note sliding from where the parent put it.
+
+   Parent = natural minor for anything with a b3, major otherwise, with overrides
+   where a different parent is the honest one (phrygian dominant is the 5th mode of
+   HARMONIC minor, not a bent major). */
+const SCALE_GHOST_OVERRIDE = {
+  natminor:'major', major:'natminor',
+  blues:'minpent', minpent:'natminor', majpent:'major',
+  phrygdom:'harmminor',      // 5th mode of harmonic minor
+  hungmin:'harmminor',
+  melminor:'natminor',
+  chromatic:null, wholetone:null, hirajoshi:null, dblharm:null, hungmaj:null
+};
+function scaleGhostKey(k) {
+  if (k in SCALE_GHOST_OVERRIDE) return SCALE_GHOST_OVERRIDE[k];
+  const def = SCALE_DEFS[k];
+  if (!def || !def.degrees) return null;
+  return def.degrees.some(([d,a]) => d === 3 && a === -1) ? 'natminor' : 'major';
+}
+
+/* Degree-level diff between the current scale and its parent. Returns entries of
+   { deg, fromSemi, toSemi, dir } — the note MOVED, which is what gets drawn. */
+function scaleGhostDiff(k, gk) {
+  const a = SCALE_DEFS[k], b = SCALE_DEFS[gk];
+  if (!a || !b || !a.degrees || !b.degrees) return [];
+  const semi = (dg, al) => SCALE_DEGREE_SEMIS[dg] + al;
+  const mine = new Map(a.degrees.map(([d, al]) => [d, al]));
+  const ref  = new Map(b.degrees.map(([d, al]) => [d, al]));
+  const out = [];
+  [...new Set([...mine.keys(), ...ref.keys()])].sort((x, y) => x - y).forEach(dg => {
+    if (!mine.has(dg) || !ref.has(dg)) return;      // degree absent from one side
+    const ma = mine.get(dg), ra = ref.get(dg);
+    if (ma === ra) return;
+    out.push({ deg: dg, fromSemi: semi(dg, ra), toSemi: semi(dg, ma), dir: ma > ra ? 1 : -1 });
+  });
+  return out;
+}
+
+/* The sentence a teacher would say. "DORIAN = NATURAL MINOR with a natural 6". */
+function scaleGhostCaption(k, gk, diffs) {
+  if (!diffs.length) return '';
+  const it = (progState.lang === 'it');
+  const pdef = SCALE_DEFS[gk];
+  // Full name, minus any "· AEOLIAN"/"· IONIAN" mode suffix — that reads as noise
+  // mid-sentence ("NATURAL MINOR with a natural 6", not "NATURAL MINOR · AEOLIAN with…").
+  const parent = ((it && pdef.it) ? pdef.it : pdef.name).split('·')[0].trim();
+  const parts = diffs.map(d => {
+    const sign = d.dir > 0 ? '♯' : '♭';
+    // a degree moved back to its major-scale position reads as "natural"
+    const natural = (SCALE_DEGREE_SEMIS[d.deg] === d.toSemi);
+    const mark = natural ? '♮' : sign;
+    return mark + d.deg;
+  });
+  const join = it ? ' e ' : ' and ';
+  const list = parts.length > 1
+    ? parts.slice(0, -1).join(', ') + join + parts[parts.length - 1]
+    : parts[0];
+  return (it ? parent + ' con ' : parent + ' with ') + list;
+}
+
+function scaleTonicMidi() { const r = parseRoot(scaleRoot); return 12 * (scaleOct + 1) + r.pc; }
+
+function scaleBuildTicks() {
+  const g = document.getElementById('scaleTapeTicks');
+  if (!g) return;
+  let h = '';
+  for (let i = 0; i <= 12; i++) {
+    const x = stpX(i), major = (i === 0 || i === 12);
+    h += `<line class="stp-tick" x1="${x}" y1="${major?50:53}" x2="${x}" y2="${major?66:63}"/>`;
+  }
+  g.innerHTML = h;
+}
+
+function scaleTapeData() {
+  const data = getScaleData(scaleRoot, scaleType);
+  if (!data.length) return [];
+  const def = SCALE_DEFS[scaleType];
+  // getScaleData returns { midi, name, semitones } — semitones is ALREADY relative
+  // to the root, and there is no degree label. Degree labels come from the degrees
+  // array (this is exactly the information the degrees format carries and a bare
+  // interval list cannot: [3,-1] is a FLAT THIRD, not just "3 semitones").
+  const degs = (def && def.degrees) ? def.degrees : null;
+  const out = data.map((n, i) => {
+    let deg = '·';
+    if (degs && degs[i]) { const [d, a] = degs[i]; deg = (a > 0 ? '♯' : a < 0 ? '♭' : '') + d; }
+    else if (def && def.chromatic) deg = (i === 0) ? '1' : (i === 12 ? '8' : '·');
+    return { semi: n.semitones, name: n.name, deg };
+  });
+  if (!out.length || out[out.length-1].semi !== 12)
+    out.push({ semi: 12, name: out[0].name, deg: '8' });
+  return out;
+}
+
+function scaleRenderTape(animate) {
+  if (animate === undefined) animate = true;
+  const host = document.getElementById('scaleTapeNotes');
+  if (!host) return;
+  scaleClearLatch();
+  scaleClearHits();
+  const data = scaleTapeData();
+
+  while (stpGroups.length < data.length) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'stp-note');
+    g.innerHTML = '<circle class="stp-hit" cx="0" cy="58" r="17"/>' +
+                  '<circle class="stp-bloom" cx="0" cy="58" r="7"/>' +
+                  '<circle class="stp-dot" cx="0" cy="58" r="5.5"/>' +
+                  '<text class="stp-name" x="0" y="40" text-anchor="middle"></text>' +
+                  '<text class="stp-deg" x="0" y="82" text-anchor="middle"></text>';
+    const idx = stpGroups.length;
+    g.addEventListener('click', () => scalePipTap(idx));
+    host.appendChild(g);
+    stpGroups.push(g);
+  }
+
+  stpGroups.forEach((g, i) => {
+    const d = data[i];
+    g.classList.remove('latched', 'root');
+    if (!d) { g.style.display = 'none'; return; }
+    g.style.display = '';
+    if (i === 0) g.classList.add('root');
+    if (!animate) g.style.transition = 'none';
+    g.style.transform = 'translateX(' + stpX(d.semi) + 'px)';
+    if (!animate) requestAnimationFrame(() => { g.style.transition = ''; });
+    g.querySelector('.stp-name').textContent = d.name;
+    g.querySelector('.stp-deg').textContent  = d.deg;
+  });
+
+  // gap numbers = the interval formula, for free
+  let gh = '';
+  for (let i = 0; i < data.length - 1; i++) {
+    const a = data[i].semi, b = data[i+1].semi, gap = b - a;
+    gh += `<text class="stp-gap${gap>=3?' big':''}" x="${(stpX(a)+stpX(b))/2}" y="104" text-anchor="middle">${gap}</text>`;
+  }
+  const gapsEl = document.getElementById('scaleTapeGaps');
+  if (gapsEl) gapsEl.innerHTML = gh;
+
+  scaleRenderGhost();
+  scaleRenderName();
+  if (scaleDroneMode) scaleRestartDrone();
+}
+
+function scaleRenderName() {
+  const el = document.getElementById('scaleNameBig');
+  if (!el) return;
+  const def = SCALE_DEFS[scaleType];
+  const r = parseRoot(scaleRoot);
+  const rootRaw = LETTERS[r.letterIdx] + accSymbol(r.acc);
+  const txt = getDisplayNote(rootRaw) + ' ' + ((progState.lang === 'it' && def.it) ? def.it : def.name);
+  el.classList.add('swap');
+  setTimeout(() => { el.textContent = txt; el.classList.remove('swap'); }, 160);
+}
+
+function scaleRenderGhost() {
+  const host = document.getElementById('scaleTapeGhosts');
+  const lbl  = document.getElementById('scaleGhostLbl');
+  const cap  = document.getElementById('scaleGhostCaption');
+  if (!host) return;
+
+  const gk = scaleGhostOn ? scaleGhostKey(scaleType) : null;
+  if (!gk) {
+    host.innerHTML = '';
+    if (cap) { cap.textContent = ''; cap.classList.remove('show'); }
+    if (lbl) lbl.textContent = scaleGhostOn ? t('scale_ghost_none') : t('scale_ghost');
+    stpGroups.forEach(g => g.classList.remove('moved'));
+    return;
+  }
+
+  /* Draw ONLY the degrees that moved, and draw them as MOTION: a hollow marker at
+     the parent's position, an arrow, and the current pip glowing gold at the end of
+     it. Dorian vs natural minor is a single arrow, Ab -> A: "the 6th lifts".
+     No decoding, no layered second scale to mentally subtract. */
+  const diffs = scaleGhostDiff(scaleType, gk);
+  const data  = scaleTapeData();
+  let h = '';
+  diffs.forEach(d => {
+    const x0 = stpX(d.fromSemi), x1 = stpX(d.toSemi);
+    const mid = (x0 + x1) / 2;
+    const lift = 20;                                   // arc height above the rail
+    h += `<circle class="stp-gfrom" cx="${x0}" cy="58" r="5"/>`;
+    // arc from the parent's note to this scale's note
+    h += `<path class="stp-garrow" d="M ${x0} 50 Q ${mid} ${58 - lift} ${x1} 50" marker-end="url(#stpArrow)"/>`;
+  });
+  host.innerHTML = h;
+
+  // glow the pips that moved
+  const movedSemis = new Set(diffs.map(d => d.toSemi));
+  stpGroups.forEach((g, i) => {
+    const n = data[i];
+    g.classList.toggle('moved', !!(n && movedSemis.has(n.semi)));
+  });
+
+  if (cap) {
+    cap.textContent = scaleGhostCaption(scaleType, gk, diffs);
+    cap.classList.toggle('show', !!cap.textContent);
+  }
+  if (lbl) lbl.textContent = (progState.lang === 'it' ? 'VS ' : 'VS ') + (SCALE_SHORT_NAMES[gk] || '');
+}
+
+function scaleToggleGhost() {
+  scaleGhostOn = !scaleGhostOn;
+  const b = document.getElementById('scaleGhostBtn');
+  if (b) b.classList.toggle('on', scaleGhostOn);
+  scaleRenderGhost();
+}
+
+function scaleClearHits() { stpGroups.forEach(g => g.classList.remove('hit')); }
+function scaleHit(i) {
+  const g = stpGroups[i];
+  if (!g) return;
+  g.classList.remove('hit'); void g.offsetWidth; g.classList.add('hit');
+  clearTimeout(g._hitT);
+  g._hitT = setTimeout(() => g.classList.remove('hit'), 460);   // never leave a pip stranded lit
+}
+
+/* ── pips ── */
+function scaleClearLatch() {
+  if (scaleLatchNode) { try { scaleLatchNode.stop(); } catch(e){} scaleLatchNode = null; }
+  if (scaleLatchIdx != null && stpGroups[scaleLatchIdx]) stpGroups[scaleLatchIdx].classList.remove('latched');
+  scaleLatchIdx = null;
+}
+function scalePipTap(idx) {
+  const data = scaleTapeData();
+  const d = data[idx];
+  if (!d) return;
+  if (!scaleDroneMode) {
+    if (scalePlaying) return;
+    const ctx = ensurePracticeCtx();
+    practicePlayNote(midiToFreq(scaleTonicMidi() + d.semi), ctx.currentTime + 0.01, 0.55, scaleVolume);
+    scaleHit(idx);
+    return;
+  }
+  if (scaleLatchIdx === idx) { scaleClearLatch(); return; }   // tap again to release
+  scaleClearLatch();                                          // exclusive: replaces, never stacks
+  scaleLatchIdx = idx;
+  scaleLatchNode = scaleSustain(scaleTonicMidi() + d.semi, 0.55);
+  stpGroups[idx].classList.add('latched');
+}
+
+/* Sustained note using the SELECTED tone, through the shared practice master
+   chain (low shelf + limiter + makeup), same as practicePlayNote().
+
+   Only reachable for tones flagged sustain:true. A REF_TONES synth called with
+   dur = 0 leaves its oscillators running and returns a handle with .stop(); a
+   SAMPLE-backed tone cannot do this at all — it is a recording of a note
+   decaying, so there is nothing to hold. That is the real constraint behind
+   drone mode dimming the sampled voices, not a cosmetic choice. */
+function scaleSustain(midi, vol) {
+  try {
+    const ctx  = ensurePracticeCtx();
+    const tone = REF_TONES[selectedRefTone] || REF_TONES.sine;
+    if (!tone.sustain) return { stop(){} };          // sampled voice: cannot hold
+    const node = tone.synth(ctx, midiToFreq(midi), ctx.currentTime, 0,
+                            practiceMasterGain, vol * scaleVolume);
+    return { stop() { try { node && node.stop && node.stop(); } catch(e){} } };
+  } catch(e) { return { stop(){} }; }
+}
+
+/* ── drone mode ── */
+function scaleRestartDrone() {
+  if (scaleDroneNode) { try { scaleDroneNode.stop(); } catch(e){} }
+  scaleDroneNode = scaleSustain(scaleTonicMidi(), 0.34);   // the root itself, at the chosen octave
+}
+function scaleSetDroneMode(on) {
+  if (scaleDroneMode === on) return;
+  scaleDroneMode = on;
+  const host = document.getElementById('exScales');
+  if (host) host.classList.toggle('drone-mode', on);
+  const btn = document.getElementById('scaleDroneBtn');
+  if (btn) btn.classList.toggle('live', on);
+  const p = document.getElementById('scalePrompt');
+  if (p) p.textContent = on ? t('scale_drone_prompt') : t('scale_now_playing');
+  if (on) {
+    scaleStop();
+    const tn = REF_TONES[selectedRefTone];
+    if (!tn || !tn.sustain) { scaleTonePrev = selectedRefTone; scaleSetTone('sine'); }
+    else scaleTonePrev = null;
+    scaleRestartDrone();
+  } else {
+    scaleClearLatch();
+    if (scaleDroneNode) { try { scaleDroneNode.stop(); } catch(e){} scaleDroneNode = null; }
+    if (scaleTonePrev) { scaleSetTone(scaleTonePrev); scaleTonePrev = null; }
+  }
+  scaleBuildToneBank();
+}
+function scaleToggleDrone() { scaleSetDroneMode(!scaleDroneMode); }
+
+/* ── octave ── */
+function scaleSetOct(delta) {
+  scaleOct = Math.max(2, Math.min(6, scaleOct + delta));
+  const el = document.getElementById('scaleOctVal');
+  if (el) el.textContent = 'OCT ' + scaleOct;
+  if (scaleDroneMode) {
+    scaleRestartDrone();
+    if (scaleLatchIdx != null) { const i = scaleLatchIdx; scaleClearLatch(); scalePipTap(i); }
+  }
+}
+
+/* ── tempo (live during playback) ── */
+function scaleSetTempo(v) {
+  scaleSpeed = +v;
+  const el = document.getElementById('scaleSpeedVal');
+  if (el) el.textContent = scaleSpeed;
+  setScaleSpeed(scaleSpeed);
+}
+
+/* ── tone bank: the app's real tabbed picker (same pattern as buildRefToneBank) ── */
+function scaleSetTone(id) {
+  selectedRefTone = id;
+  const gi = TONE_GROUPS_DEF.findIndex(g => g.keys.includes(id));
+  if (gi >= 0) scaleToneGroup = gi;
+  if (SampleEngine._instruments[id] && !SampleEngine.isReady(id) && !SampleEngine.isFailed(id))
+    SampleEngine.load(id);
+  scaleBuildToneBank();
+}
+function scaleBuildToneBank() {
+  const tabs  = document.getElementById('scaleToneTabs');
+  const tiles = document.getElementById('scaleToneBank');
+  if (!tabs || !tiles) return;
+  const groupSustains = g => g.keys.some(k => REF_TONES[k] && REF_TONES[k].sustain);
+
+  tabs.className = 'stb-tabs';
+  tabs.innerHTML = '';
+  TONE_GROUPS_DEF.forEach((g, i) => {
+    const b = document.createElement('button');
+    b.className = 'stb-tab' + (i === scaleToneGroup ? ' active' : '') + (groupSustains(g) ? '' : ' nosus');
+    b.textContent = g.label;
+    b.onclick = () => { scaleToneGroup = i; scaleBuildToneBank(); };
+    tabs.appendChild(b);
+  });
+
+  const grp  = TONE_GROUPS_DEF[scaleToneGroup] || TONE_GROUPS_DEF[0];
+  const keys = grp.keys.filter(k => REF_TONES[k] && !TONE_EXCLUDED.has(k));
+
+  /* Fixed 4-column grid, fixed row height. Every tile is exactly one column wide and
+     one row tall, so a short final row simply ends flush-left — no spacers, no
+     data-cols, no orphan rules, no nth-child arithmetic.
+
+     These use their OWN class names (stb-*). The shared .tone-tile component is a
+     <button> carrying a base rule plus six more keyed on data-count / data-cols /
+     nth-child, written for the other tone banks; overriding it from here produced a
+     different wrong layout four times running. Separate classes inherit nothing and
+     collide with nothing. */
+  tiles.className = 'stb-grid';
+  tiles.innerHTML = '';
+  keys.forEach(k => {
+    const tn = REF_TONES[k];
+    const el = document.createElement('button');
+    el.className = 'stb-tile' + (k === selectedRefTone ? ' active' : '') + (tn.sustain ? '' : ' nosus');
+    el.dataset.tone = k;
+    const nm = (progState.lang === 'it' && tn.it) ? tn.it : tn.name;
+    el.innerHTML = '<span class="stb-ico">' + tn.icon + '</span>' +
+                   '<span class="stb-name">' + nm + '</span>';
+    el.onclick = () => {
+      scaleSetTone(k);
+      if (!scaleDroneMode) {
+        const ctx = ensurePracticeCtx();
+        practicePlayNote(midiToFreq(scaleTonicMidi()), ctx.currentTime + 0.01, 0.5, scaleVolume);
+      } else {
+        scaleRestartDrone();
+        if (scaleLatchIdx != null) { const i = scaleLatchIdx; scaleClearLatch(); scalePipTap(i); }
+      }
+    };
+    tiles.appendChild(el);
+  });
+}
+
+/* ── dice ── */
+const SCALE_DICE_FACES = [
+  [[8,8]], [[5,5],[11,11]], [[5,5],[8,8],[11,11]], [[5,5],[11,5],[5,11],[11,11]],
+  [[5,5],[11,5],[8,8],[5,11],[11,11]], [[5,4.6],[11,4.6],[5,8],[11,8],[5,11.4],[11,11.4]]
+];
+function scaleDrawDice(n) {
+  const el = document.getElementById('scaleDicePips');
+  if (!el) return;
+  el.innerHTML = SCALE_DICE_FACES[n-1].map(([x,y]) => `<circle class="sd-pip" cx="${x}" cy="${y}" r="1.3"/>`).join('');
+}
+let _scaleDiceTimer = null;
+function scaleRollDice() {
+  const btn = document.getElementById('scaleDiceBtn');
+  if (btn) { btn.classList.remove('rolling'); void btn.offsetWidth; btn.classList.add('rolling'); }
+  if (_scaleDiceTimer) clearInterval(_scaleDiceTimer);
+  let flips = 0;
+  _scaleDiceTimer = setInterval(() => {
+    scaleDrawDice(1 + Math.floor(Math.random() * 6));
+    if (++flips >= 6) { clearInterval(_scaleDiceTimer); _scaleDiceTimer = null; }
+  }, 80);
+
+  scaleStop();
+  scaleSetDroneMode(false);
+  const roots = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+  const keys  = Object.keys(SCALE_DEFS);
+  let nr = scaleRoot, nk = scaleType;
+  while (nr === scaleRoot) nr = roots[Math.floor(Math.random() * roots.length)];
+  while (nk === scaleType) nk = keys[Math.floor(Math.random() * keys.length)];
+  scaleRoot = nr; scaleType = nk;
+  buildScaleRootPicker();
+  buildScaleTypePicker();
+  updateScale();
+}
+
 function rebuildScaleSelect() {
   // Refresh pickers (handles solfège label updates)
   buildScaleRootPicker();
@@ -45523,46 +46193,29 @@ function rebuildScaleSelect() {
 }
 
 function scalesInit() {
-  // Shared init: set up both reference and improv from current selector state
   scaleInit();
-  buildExerciseToneBank('scaleToneBank');
-  droneInit();
-  // Default to reference tab
-  scalesTab('reference');
-  // Sync speed slider gradient to current value
+  scaleBuildToneBank();
+  scaleBuildTicks();
+  scaleDrawDice(5);
+  droneInit();            // drone ENGINE still shared with Tonal Centre / Diadle
   setScaleSpeed(scaleSpeed);
+  scaleRenderTape(false);
 }
 
-function scalesTab(tab) {
-  // Stop whichever mode was running
-  if (tab === 'reference') { droneStop(); }
-  if (tab === 'improv')    { scaleStop(); }
-  document.getElementById('sp-reference').classList.toggle('hidden', tab !== 'reference');
-  document.getElementById('sp-improv').classList.toggle('hidden', tab !== 'improv');
-  document.getElementById('sst-reference').classList.toggle('active', tab === 'reference');
-  document.getElementById('sst-improv').classList.toggle('active', tab === 'improv');
-}
+// The Scales tool no longer has sub-tabs (the old IMPROV tab was a drone + a
+// scale strip, i.e. Tonal Centre with the detection removed; Tonal Centre does
+// that job properly). Kept as a no-op shim because external callers still
+// reference it and a missing global would throw.
+function scalesTab(tab) { /* sub-tabs removed; single-view tool */ }
 
 function updateScale() {
-  // scaleRoot and scaleType set directly by picker buttons
-  const def = SCALE_DEFS[scaleType];
+  // Sync the drone ENGINE vars (Tonal Centre / Diadle share them) then redraw.
   const root = parseRoot(scaleRoot);
-  const rootRaw = LETTERS[root.letterIdx] + accSymbol(root.acc);
-  document.getElementById('scaleNameBig').textContent = getDisplayNote(rootRaw) + ' ' + ((progState.lang === 'it' && def.it) ? def.it : def.name);
-  const data = getScaleData(scaleRoot, scaleType);
-  document.getElementById('scaleNotes').innerHTML =
-    data.map((n, i) => `<span id="sn-${i}">${n.name}</span>`).join('  ');
-  // Sync drone to same root/scale
   droneRoot = NOTE_NAMES[root.pc] || 'A';
   droneScaleType = scaleType;
-  droneUpdateScale();
-  updateDroneDisplay();
-  // If scale is currently playing, restart with new scale
-  if (scalePlaying) {
-    const mode = scaleMode;
-    scaleStop();
-    playScale(mode);
-  }
+  try { updateDroneDisplay(); } catch(e) {}
+  try { droneUpdateScale(); } catch(e) {}
+  scaleRenderTape(true);
 }
 
 function setScaleSpeed(v) {
@@ -45576,74 +46229,100 @@ function setScaleSpeed(v) {
 }
 function setScaleVolume(v) {
   scaleVolume = v / 100;
-  document.getElementById('scaleVolPercent').textContent = v + '%';
+  // scaleVolPercent belonged to the old two-card layout and is gone; guard the write.
+  _dq('scaleVolPercent', el => el.textContent = v + '%');
 }
 
+/* Playhead ARRIVES on the beat (it is launched late, travelling for at most
+   200ms), so the ball lands as the note sounds rather than departing on it.
+   The tempo is re-read every step, so dragging the slider mid-loop takes effect
+   on the next note instead of only after a restart. */
+// The tape markup calls scalePlay(); playScale() is the long-standing name with
+// other callers. Alias rather than rename.
+function scalePlay(direction) { return playScale(direction); }
+
 function playScale(direction) {
+  scaleSetDroneMode(false);
   if (scalePlaying && scaleMode === direction) { scaleStop(); return; }
   scaleStop();
   scalePlaying = true;
   scaleMode = direction;
-  ['scaleUpBtn','scaleDownBtn','scaleLoopBtn'].forEach(id => document.getElementById(id).classList.remove('playing'));
-  document.getElementById(`scale${direction.charAt(0).toUpperCase() + direction.slice(1)}Btn`).classList.add('playing');
-  const noteSeq = getScaleNotes();
-  const seq = direction === 'down' ? [...noteSeq].reverse()
-            : direction === 'loop' ? [...noteSeq, ...[...noteSeq].reverse()]
-            : noteSeq;
-  const noteDur = 60 / scaleSpeed; // seconds per note (treating 100 = quarter notes at 100bpm-ish)
-  playScaleSequence(seq, noteDur, direction === 'loop');
-}
+  ['scaleUpBtn','scaleDownBtn','scaleLoopBtn'].forEach(id => {
+    const b = document.getElementById(id); if (b) b.classList.remove('playing');
+  });
+  const btn = document.getElementById('scale' + direction.charAt(0).toUpperCase() + direction.slice(1) + 'Btn');
+  if (btn) btn.classList.add('playing');
 
-function playScaleSequence(seq, _noteDur, isLoop) {
-  scaleTimers.forEach(t => clearTimeout(t));
-  scaleTimers = [];
-  const noteSeq = getScaleNotes();
+  const data = scaleTapeData();
+  const seq = direction === 'down' ? [...data].reverse()
+            : direction === 'loop' ? [...data, ...[...data].reverse().slice(1)]
+            : data;
 
-  function scheduleNote(i) {
-    if (!scalePlaying) return;
-    const noteDurMs = (30 / scaleSpeed) * 1000;
-    const midi = seq[i];
-
-    const ctx = ensurePracticeCtx();
-    practicePlayNote(midiToFreq(midi), ctx.currentTime + 0.01, (30 / scaleSpeed) * 0.88, scaleVolume);
-
-    document.querySelectorAll('#scaleNotes span').forEach(s => s.classList.remove('current'));
-    const visualIdx = noteSeq.indexOf(midi);
-    if (visualIdx >= 0) {
-      const el = document.getElementById(`sn-${visualIdx}`);
-      if (el) el.classList.add('current');
-    }
-
-    const next = i + 1;
-    if (next < seq.length) {
-      const id = setTimeout(() => scheduleNote(next), noteDurMs);
-      scaleTimers.push(id);
-    } else if (isLoop) {
-      const id = setTimeout(() => { if (scalePlaying) scheduleNote(0); }, noteDurMs);
-      scaleTimers.push(id);
-    } else {
-      const id = setTimeout(() => {
-        scalePlaying = false; scaleMode = null;
-        ['scaleUpBtn','scaleDownBtn','scaleLoopBtn'].forEach(id =>
-          document.getElementById(id)?.classList.remove('playing'));
-        document.querySelectorAll('#scaleNotes span').forEach(s => s.classList.remove('current'));
-      }, noteDurMs);
-      scaleTimers.push(id);
-    }
+  const ph = document.getElementById('scalePlayhead');
+  const beat0 = 60000 / scaleSpeed, travel0 = Math.min(200, beat0 * 0.4);
+  if (ph) {
+    // Hard-place the ball on the FIRST note of this direction: transition off,
+    // set transform, force a commit, then arm the transition. Without the commit
+    // the browser coalesces "jump there" + "animate to next" into one slide from
+    // wherever the ball was left, which reads as the ball creeping in.
+    ph.classList.remove('show', 'moving');
+    ph.style.transition = 'none';
+    ph.style.transform = 'translateX(' + stpX(seq[0].semi) + 'px)';
+    void ph.getBoundingClientRect();
+    ph.style.transition = '';
+    ph.style.setProperty('--ph-dur', travel0 + 'ms');
+    ph.classList.add('show', 'moving');
   }
 
-  scheduleNote(0);
+  const step = (i) => {
+    if (!scalePlaying) return;
+    const beat = 60000 / scaleSpeed;              // LIVE tempo
+    const travel = Math.min(200, beat * 0.4);
+    if (ph) ph.style.setProperty('--ph-dur', travel + 'ms');
+
+    const d = seq[i];
+    const ctx = ensurePracticeCtx();
+    practicePlayNote(midiToFreq(scaleTonicMidi() + d.semi), ctx.currentTime + 0.01,
+                     Math.min(0.5, (beat / 1000) * 0.9), scaleVolume);
+    const gi = data.findIndex(n => n.semi === d.semi && n.deg === d.deg);
+    scaleHit(gi >= 0 ? gi : 0);
+
+    let next = i + 1, wrap = false;
+    if (next >= seq.length) {
+      if (direction !== 'loop') { scalePhTimers.push(setTimeout(scaleStop, beat)); return; }
+      next = 0; wrap = true;
+    }
+    scalePhTimers.push(setTimeout(() => {
+      if (!scalePlaying || !ph) return;
+      if (wrap) {                                  // snap home, no long reverse sweep
+        ph.classList.remove('moving');
+        ph.style.transition = 'none';
+        ph.style.transform = 'translateX(' + stpX(seq[0].semi) + 'px)';
+        void ph.getBoundingClientRect();
+        ph.style.transition = '';
+        ph.classList.add('moving');
+      } else {
+        ph.style.transform = 'translateX(' + stpX(seq[next].semi) + 'px)';
+      }
+    }, wrap ? Math.max(20, beat - 40) : Math.max(20, beat - travel)));
+    scalePhTimers.push(setTimeout(() => step(next), beat));
+  };
+  step(0);
 }
 
 function scaleStop() {
-  scalePlaying = false; scaleMode = null;
-  scaleTimers.forEach(t => clearTimeout(t));
-  scaleTimers = [];
+  scalePlaying = false;
+  scaleMode = null;
+  scaleTimers.forEach(t => clearTimeout(t)); scaleTimers = [];
+  scalePhTimers.forEach(t => clearTimeout(t)); scalePhTimers = [];
   ['scaleUpBtn','scaleDownBtn','scaleLoopBtn'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('playing');
+    const b = document.getElementById(id); if (b) b.classList.remove('playing');
   });
-  document.querySelectorAll('#scaleNotes span').forEach(s => s.classList.remove('current'));
+  // Reset the ball fully. Hiding it (opacity) alone leaves the stale transform on
+  // the element, and the next play() then animates FROM that position.
+  const ph = document.getElementById('scalePlayhead');
+  if (ph) { ph.classList.remove('show', 'moving'); ph.style.transition = 'none'; ph.style.transform = ''; }
+  scaleClearHits();   // .hit is added per note and never removed otherwise
 }
 
 
@@ -46362,6 +47041,7 @@ const TONE_EXCLUDED = new Set(['piano','brass','mandocello','electric_piano']);
 
 const REF_TONES = {
   sine: {
+    sustain: true,
     name: 'SINE',   it: 'SINUSOIDE',  icon: '∿',
     synth(ctx, freq, when, dur, master, vol) {
       const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = freq;
@@ -46391,6 +47071,7 @@ const REF_TONES = {
     }
   },
   piano: {
+    sustain: false,
     name: 'PIANO',  it: 'PIANOFORTE', icon: '♬',
     synth(ctx, freq, when, dur, master, vol) {
       // Register-scaled decay: bass strings ring long, treble dies fast
@@ -46452,6 +47133,7 @@ const REF_TONES = {
     }
   },
   organ: {
+    sustain: true,
     name: 'ORGAN',  it: 'ORGANO',     icon: '⛪',
     synth(ctx, freq, when, dur, master, vol) {
       const _useLower = (typeof _organActiveManual !== 'undefined') && _organActiveManual === 'lower';
@@ -46649,6 +47331,7 @@ const REF_TONES = {
   },
 
   flute: {
+    sustain: true,
     name: 'FLUTE',  it: 'FLAUTO',     icon: '🪈',
     synth(ctx, freq, when, dur, master, vol) {
       const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
@@ -46689,6 +47372,7 @@ const REF_TONES = {
     }
   },
   bell: {
+    sustain: false,
     name: 'BELL', icon: '✦',
     synth(ctx, freq, when, dur, master, vol) {
       const partials = [
@@ -46722,6 +47406,7 @@ const REF_TONES = {
     }
   },
   marimba: {
+    sustain: false,
     name: 'MARIMBA', it: 'MARIMBA', icon: '🪵',
     synth(ctx, freq, when, dur, master, vol) {
       // Warm wooden mallet: strong fundamental + slightly inharmonic overtones, resonant decay
@@ -46755,6 +47440,7 @@ const REF_TONES = {
     }
   },
   xylophone: {
+    sustain: false,
     name: 'XYLOPHONE', it: 'XILOFONO', icon: '🎼',
     synth(ctx, freq, when, dur, master, vol) {
       // Bright, hard wooden bars: prominent high inharmonic partial, short bright decay
@@ -46788,6 +47474,7 @@ const REF_TONES = {
     }
   },
   vibraphone: {
+    sustain: false,
     name: 'VIBRAPHONE', it: 'VIBRAFONO', icon: '🎶',
     synth(ctx, freq, when, dur, master, vol) {
       // Metallic bars with long sustain + characteristic amplitude tremolo (vibrato motor)
@@ -46829,6 +47516,7 @@ const REF_TONES = {
     }
   },
   pad: {
+    sustain: true,
     name: 'PAD', icon: '⌇',
     synth(ctx, freq, when, dur, master, vol) {
       const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = freq; o1.detune.value = -7;
@@ -46862,6 +47550,7 @@ const REF_TONES = {
     }
   },
   guitar: {
+    sustain: false,
     name: 'GUITAR', it: 'CHITARRA',   icon: '🎸',
     synth(ctx, freq, when, dur, master, vol) {
       // Plucked string: very sharp attack, harmonic decay scaled with register
@@ -46899,6 +47588,7 @@ const REF_TONES = {
     }
   },
   brass: {
+    sustain: false,
     name: 'BRASS',  it: 'OTTONI',     icon: '🎺',
     synth(ctx, freq, when, dur, master, vol) {
       // Sawtooth + square with swell attack and lowpass warmth — horn character
@@ -46930,6 +47620,7 @@ const REF_TONES = {
     }
   },
   trumpet: {
+    sustain: false,
     name: 'TRUMPET', it: 'TROMBA', icon: '🎺',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof trpSynth === 'function'
@@ -46938,6 +47629,7 @@ const REF_TONES = {
     }
   },
   frenchhorn: {
+    sustain: false,
     name: 'FR HORN', it: 'CORNO', icon: '🎺',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof hornSynth === 'function'
@@ -46946,6 +47638,7 @@ const REF_TONES = {
     }
   },
   tuba: {
+    sustain: false,
     name: 'TUBA', it: 'TUBA', icon: '🎺',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof tubaSynth === 'function'
@@ -46954,6 +47647,7 @@ const REF_TONES = {
     }
   },
   mandolin: {
+    sustain: false,
     name: 'MANDOLIN', it: 'MANDOLINO', icon: '🪕',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof mandoSynth === 'function'
@@ -46962,6 +47656,7 @@ const REF_TONES = {
     }
   },
   banjo: {
+    sustain: false,
     name: 'BANJO', it: 'BANJO', icon: '🪕',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof banjoSynth === 'function'
@@ -46970,6 +47665,7 @@ const REF_TONES = {
     }
   },
   harp: {
+    sustain: false,
     name: 'HARP', it: 'ARPA', icon: '🪕',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof harpSynth === 'function'
@@ -46978,6 +47674,7 @@ const REF_TONES = {
     }
   },
   mandocello: {
+    sustain: false,
     name: 'MANDOCELLO', it: 'MANDOCELLO', icon: '🎻',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof mandoSynth === 'function'
@@ -46986,6 +47683,7 @@ const REF_TONES = {
     }
   },
   ukebass: {
+    sustain: false,
     name: 'UKE BASS', it: 'UKE BASS', icon: '🎸',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof bassSynth === 'function'
@@ -46994,6 +47692,7 @@ const REF_TONES = {
     }
   },
   bass: {
+    sustain: false,
     name: 'BASS', it: 'BASSO', icon: '🎸',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof bassSynth === 'function'
@@ -47002,6 +47701,7 @@ const REF_TONES = {
     }
   },
   trombone: {
+    sustain: false,
     name: 'TROMBONE', it: 'TROMBONE', icon: '📯',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof tromboneSynth === 'function'
@@ -47010,6 +47710,7 @@ const REF_TONES = {
     }
   },
   reed: {
+    sustain: false,
     name: 'REED', it: 'ANCIA', icon: '♩',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof reedSynth === 'function'
@@ -47018,6 +47719,7 @@ const REF_TONES = {
     }
   },
   reed_conical: {
+    sustain: false,
     name: 'SAX', it: 'SAX', icon: '🎷',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof reedConicalSynth === 'function'
@@ -47026,6 +47728,7 @@ const REF_TONES = {
     }
   },
   melodica: {
+    sustain: false,
     name: 'MELODICA', it: 'MELODICA', icon: '🎹',
     // Free-reed with a breath swell: gentle attack, a slight swell up to sustain,
     // a touch of breath waver (LFO), brighter/buzzier than a plain reed.
@@ -47077,6 +47780,7 @@ const REF_TONES = {
     }
   },
   harmonica: {
+    sustain: false,
     name: 'HARMONICA', it: 'ARMONICA', icon: '♫',
     synth(ctx, freq, when, dur, master, vol) {
       return typeof harmonicaSynth === 'function'
@@ -47088,36 +47792,42 @@ const REF_TONES = {
   // ── Sample-backed instruments ─────────────────────────────────────────────
   // These use SampleEngine for playback; synth() is a fallback while loading.
   grand_piano: {
+    sustain: false,
     name: 'GRAND PIANO', it: 'GRAN PIANOFORTE', icon: '🎹',
     synth(ctx, freq, when, dur, master, vol) {
       return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
     }
   },
   honky_tonk: {
+    sustain: false,
     name: 'HONKY TONK', it: 'HONKY TONK', icon: '🤠',
     synth(ctx, freq, when, dur, master, vol) {
       return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
     }
   },
   electric_piano: {
+    sustain: false,
     name: 'RHODES', it: 'RHODES', icon: '🎹',
     synth(ctx, freq, when, dur, master, vol) {
       return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
     }
   },
   harpsichord: {
+    sustain: false,
     name: 'HARPSICHORD', it: 'CLAVICEMBALO', icon: '🎼',
     synth(ctx, freq, when, dur, master, vol) {
       return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
     }
   },
   vibraphone: {
+    sustain: false,
     name: 'VIBRAPHONE', it: 'VIBRAFONO', icon: '✨',
     synth(ctx, freq, when, dur, master, vol) {
       return REF_TONES.bell.synth(ctx, freq, when, dur, master, vol);
     }
   },
   nylon_guitar: {
+    sustain: false,
     name: 'NYLON GTR', it: 'CHITARRA CLASSICA', icon: '🎸',
     synth(ctx, freq, when, dur, master, vol) {
       return REF_TONES.guitar.synth(ctx, freq, when, dur, master, vol);
@@ -47126,70 +47836,85 @@ const REF_TONES = {
 
   // ── Bowed strings ──────────────────────────────────────────────────────────
   bowed_violin: {
+    sustain: false,
     name: 'VIOLIN', it: 'VIOLINO', icon: '🎻',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.pad.synth(ctx, freq, when, dur, master, vol); }
   },
   bowed_viola: {
+    sustain: false,
     name: 'VIOLA', it: 'VIOLA', icon: '🎻',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.pad.synth(ctx, freq, when, dur, master, vol); }
   },
   bowed_cello: {
+    sustain: false,
     name: 'CELLO', it: 'VIOLONCELLO', icon: '🎻',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.pad.synth(ctx, freq, when, dur, master, vol); }
   },
   bowed_doublebass: {
+    sustain: false,
     name: 'DBL BASS', it: 'CONTRABBASSO', icon: '🎻',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.pad.synth(ctx, freq, when, dur, master, vol); }
   },
 
   // ── New woodwind tones ──────────────────────────────────────────────────────
   piccolo: {
+    sustain: false,
     name: 'PICCOLO', it: 'OTTAVINO', icon: '🪈',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.flute.synth(ctx, freq, when, dur, master, vol); }
   },
   recorder: {
+    sustain: false,
     name: 'RECORDER', it: 'FLAUTO DOLCE', icon: '🪈',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.flute.synth(ctx, freq, when, dur, master, vol); }
   },
   ocarina: {
+    sustain: false,
     name: 'OCARINA', it: 'OCARINA', icon: '🎵',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.flute.synth(ctx, freq, when, dur, master, vol); }
   },
   oboe: {
+    sustain: false,
     name: 'OBOE', it: 'OBOE', icon: '🪈',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed.synth(ctx, freq, when, dur, master, vol); }
   },
   bassoon: {
+    sustain: false,
     name: 'BASSOON', it: 'FAGOTTO', icon: '🪈',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed.synth(ctx, freq, when, dur, master, vol); }
   },
 
   // ── Sax subtypes ───────────────────────────────────────────────────────────
   alto_sax: {
+    sustain: false,
     name: 'ALTO SAX', it: 'SAX CONTRALTO', icon: '🎷',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed_conical.synth(ctx, freq, when, dur, master, vol); }
   },
   tenor_sax: {
+    sustain: false,
     name: 'TENOR SAX', it: 'SAX TENORE', icon: '🎷',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed_conical.synth(ctx, freq, when, dur, master, vol); }
   },
   soprano_sax: {
+    sustain: false,
     name: 'SOPR SAX', it: 'SAX SOPRANO', icon: '🎷',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed_conical.synth(ctx, freq, when, dur, master, vol); }
   },
   bari_sax: {
+    sustain: false,
     name: 'BARI SAX', it: 'SAX BARITONO', icon: '🎷',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed_conical.synth(ctx, freq, when, dur, master, vol); }
   },
 
   // ── Uke bass ───────────────────────────────────────────────────────────────
   ukebass: {
+    sustain: false,
     name: 'UKE BASS', it: 'UKE BASS', icon: '🎸',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.bass.synth(ctx, freq, when, dur, master, vol); }
   },
 
   // ── Melodica ───────────────────────────────────────────────────────────────
   melodica_samp: {
+    sustain: false,
     name: 'MELODICA', it: 'MELODICA', icon: '🎹',
     synth(ctx, freq, when, dur, master, vol) { return REF_TONES.reed.synth(ctx, freq, when, dur, master, vol); }
   },
@@ -64006,9 +64731,13 @@ const STRINGS = {
     label_octave:'Octave',
     cents_flat:'♭ Flat', cents_sharp:'Sharp ♯',
     scale_tab_reference:'REFERENCE', scale_tab_improv:'IMPROV',
+    scale_now_playing:'NOW PLAYING', scale_drone_prompt:'DRONE · TAP A DEGREE',
+    scale_ghost:'COMPARE', scale_ghost_none:'NO PARENT', scale_drone:'DRONE',
+    scale_up:'UP', scale_down:'DOWN', scale_loop:'LOOP',
+    scale_root_scale:'ROOT · SCALE', scale_sustain_only:'SUSTAINING VOICES ONLY',
     metro_tab_click:'CLICK', metro_tab_analyse:'ANALYSE',
     chord_tab_player:'PLAYER', chord_tab_builder:'BUILDER',
-    scale_subtitle:'hear it · play it · improvise over it',
+    scale_subtitle:'look it up · hear it · play along',
     now_playing:'NOW PLAYING',
     riff_songs:'▶︎ SONGS',
     samples_loading:'loading samples…',
@@ -64151,7 +64880,8 @@ const STRINGS = {
       natminor:'Natural Minor (Aeolian)', dorian:'Dorian', phrygian:'Phrygian', locrian:'Locrian',
       harmminor:'Harmonic Minor', melminor:'Melodic Minor',
       majpent:'Major Pentatonic', minpent:'Minor Pentatonic', blues:'Blues',
-      dblharm:'Double Harmonic Major', wholetone:'Whole Tone', chromatic:'Chromatic'
+      dblharm:'Double Harmonic Major', phrygdom:'Phrygian Dominant', hungmin:'Hungarian Minor',
+      hungmaj:'Hungarian Major', hirajoshi:'Hirajoshi', wholetone:'Whole Tone', chromatic:'Chromatic'
     },
     root_names:[
       ['C','C'],['C#','C♯'],['Db','D♭'],['D','D'],['D#','D♯'],['Eb','E♭'],
@@ -64891,9 +65621,13 @@ const STRINGS = {
     label_octave:'Ottava',
     cents_flat:'♭ Bemolle', cents_sharp:'Diesis ♯',
     scale_tab_reference:'RIFERIMENTO', scale_tab_improv:'IMPROVVISA',
+    scale_now_playing:'IN RIPRODUZIONE', scale_drone_prompt:'BORDONE · TOCCA UN GRADO',
+    scale_ghost:'CONFRONTA', scale_ghost_none:'NESSUN PARENTE', scale_drone:'BORDONE',
+    scale_up:'SU', scale_down:'GIÙ', scale_loop:'CICLO',
+    scale_root_scale:'TONICA · SCALA', scale_sustain_only:'SOLO VOCI CONTINUE',
     metro_tab_click:'CLICK', metro_tab_analyse:'ANALISI',
     chord_tab_player:'SUONA', chord_tab_builder:'COSTRUISCI',
-    scale_subtitle:'ascoltala · suonala · improvvisaci',
+    scale_subtitle:'cercala · ascoltala · suonaci sopra',
     now_playing:'IN RIPRODUZIONE',
     riff_songs:'▶︎ BRANI',
     samples_loading:'caricamento campioni…',
@@ -65036,7 +65770,8 @@ const STRINGS = {
       natminor:'Minore Naturale (Eolio)', dorian:'Dorico', phrygian:'Frigio', locrian:'Locrio',
       harmminor:'Minore Armonica', melminor:'Minore Melodica',
       majpent:'Pentatonica Maggiore', minpent:'Pentatonica Minore', blues:'Blues',
-      dblharm:'Doppio Armonico Maggiore', wholetone:'Per Toni Interi', chromatic:'Cromatica'
+      dblharm:'Doppio Armonico Maggiore', phrygdom:'Frigio Dominante', hungmin:'Minore Ungherese',
+      hungmaj:'Maggiore Ungherese', hirajoshi:'Hirajoshi', wholetone:'Per Toni Interi', chromatic:'Cromatica'
     },
     root_names:[
       ['C','Do'],['C#','Do♯'],['Db','Re♭'],['D','Re'],['D#','Re♯'],['Eb','Mi♭'],
@@ -65703,18 +66438,12 @@ function buildScaleTypePicker() {
   const wrap = document.getElementById('scaleTypePicker');
   if (!wrap) return;
   const s = STRINGS[(progState && progState.lang) || 'en'] || STRINGS.en;
-  const SHORT = {
-    major:'MAJOR', lydian:'LYDIAN', mixolydian:'MIXOLYD.', harmmaj:'HARM. MAJ',
-    natminor:'NATURAL', dorian:'DORIAN', phrygian:'PHRYGIAN', locrian:'LOCRIAN',
-    harmminor:'HARM. MIN', melminor:'MELODIC',
-    majpent:'MAJ PENT', minpent:'MIN PENT', blues:'BLUES',
-    dblharm:'DBL HARM', wholetone:'WHOLE TONE', chromatic:'CHROMATIC'
-  };
+  const SHORT = SCALE_SHORT_NAMES;
   const groups = [
     { label: s.scale_grp_major, keys: ['major','lydian','mixolydian','harmmaj'] },
     { label: s.scale_grp_minor, keys: ['natminor','dorian','phrygian','locrian','harmminor','melminor'] },
     { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues'] },
-    { label: s.scale_grp_exotic,keys: ['dblharm','wholetone','chromatic'] },
+    { label: s.scale_grp_exotic,keys: ['dblharm','phrygdom','hungmin','hungmaj','hirajoshi','wholetone','chromatic'] },
   ];
   wrap.innerHTML = '';
   groups.forEach(g => {
@@ -65749,7 +66478,7 @@ function buildTcScaleDropdown() {
     { label: s.scale_grp_major, keys: ['major','lydian','mixolydian','harmmaj'] },
     { label: s.scale_grp_minor, keys: ['natminor','dorian','phrygian','locrian','harmminor','melminor'] },
     { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues'] },
-    { label: s.scale_grp_exotic,keys: ['dblharm','wholetone','chromatic'] },
+    { label: s.scale_grp_exotic,keys: ['dblharm','phrygdom','hungmin','hungmaj','hirajoshi','wholetone','chromatic'] },
   ];
   sel.innerHTML = '';
   groups.forEach(g => {
@@ -65820,7 +66549,7 @@ function setLang(lang) {
   try { pssInit && pssInit(); } catch(e) {}
   try { dkBuildPresetCategoryTabs && dkBuildPresetCategoryTabs(); } catch(e) {}
   try { progRenderModal && progRenderModal(); } catch(e) {}
-  try { scaleRenderNotes && scaleRenderNotes(); } catch(e) {}
+  try { scaleRenderTape && scaleRenderTape(false); } catch(e) {}
   try { buildTcScaleDropdown && buildTcScaleDropdown(); } catch(e) {}
   try { tcInit && tcInit(); } catch(e) {}
   try { chordInit && chordInit(); } catch(e) {}
@@ -67310,7 +68039,7 @@ function refreshAllNoteDisplays() {
   try { buildPiano && buildPiano(); } catch(e) {}
   try { rebuildScaleSelect && rebuildScaleSelect(); } catch(e) {}
   try { droneRenderTonic && droneRenderTonic(); } catch(e) {}
-  try { scaleRenderNotes && scaleRenderNotes(); } catch(e) {}
+  try { scaleRenderTape && scaleRenderTape(false); } catch(e) {}
   try { ivRenderTarget && ivRenderTarget(); } catch(e) {}
   // Transposer: re-render key grids if currently open
   try { if (currentTool === 'transpose') tpBuildGrids(); } catch(e) {}
@@ -81780,27 +82509,34 @@ function gccPlayChord() {
 
 const GSS_STRING_MIDI = [40, 45, 50, 55, 59, 64]; // low E → high e
 
+// GSS scale table — DERIVED from SCALE_DEFS (single source of truth for scale
+// content). GSS keeps its own ids and short display names because instrument
+// UIs and saved state reference them; the ALIAS map bridges to SCALE_DEFS keys.
+// Intervals are computed via scaleDefIntervals(), never hand-written here, so a
+// scale added to SCALE_DEFS is automatically consistent everywhere.
+// (Previously this was a second hand-maintained interval table; the two had
+// drifted: different ids for the same scales, four scales missing from one side.)
+const GSS_SCALE_ALIAS = { aeolian:'natminor', harmmin:'harmminor', melmin:'melminor' };
 const GSS_SCALE_TYPES = [
-  { id:'major',      name:'Major',  nameIt:'Maggiore', intervals:[0,2,4,5,7,9,11]  },
-  { id:'dorian',     name:'Dorian',          nameIt:'Dorico',          intervals:[0,2,3,5,7,9,10]  },
-  { id:'phrygian',   name:'Phrygian',        nameIt:'Frigio',        intervals:[0,1,3,5,7,8,10]  },
-  { id:'lydian',     name:'Lydian',          nameIt:'Lidio',          intervals:[0,2,4,6,7,9,11]  },
-  { id:'mixolydian', name:'Mixolydian',      nameIt:'Misolidio',      intervals:[0,2,4,5,7,9,10]  },
-  { id:'aeolian',    name:'Natural Minor',   nameIt:'Minore Naturale',   intervals:[0,2,3,5,7,8,10]  },
-  { id:'locrian',    name:'Locrian',         nameIt:'Locrio',         intervals:[0,1,3,5,6,8,10]  },
-  { id:'harmmin',    name:'Harmonic Minor',  nameIt:'Minore Armonica',  intervals:[0,2,3,5,7,8,11]  },
-  { id:'melmin',     name:'Melodic Minor',   nameIt:'Minore Melodica',   intervals:[0,2,3,5,7,9,11]  },
-  { id:'majpent',    name:'Maj Pentatonic',  nameIt:'Pentafonica Magg.',  intervals:[0,2,4,7,9]        },
-  { id:'minpent',    name:'Min Pentatonic',  nameIt:'Pentafonica Min.',  intervals:[0,3,5,7,10]       },
-  { id:'blues',      name:'Blues',           nameIt:'Blues',           intervals:[0,3,5,6,7,10]    },
-  // ── World scales (all expressible in 12-tone equal temperament) ──
-  { id:'phrygdom',   name:'Phrygian Dominant', nameIt:'Frigio Dominante', intervals:[0,1,4,5,7,8,10]  }, // Hijaz/Freygish; 5th mode harmonic minor
-  { id:'dblharm',    name:'Double Harmonic',   nameIt:'Doppia Armonica',  intervals:[0,1,4,5,7,8,11]  }, // Byzantine/Arabic/Bhairav
-  { id:'hungmin',    name:'Hungarian Minor',   nameIt:'Minore Ungherese', intervals:[0,2,3,6,7,8,11]  }, // double harmonic minor
-  { id:'hungmaj',    name:'Hungarian Major',   nameIt:'Maggiore Ungherese', intervals:[0,3,4,6,7,9,10]  },
-  { id:'hirajoshi',  name:'Hirajoshi',         nameIt:'Hirajoshi',        intervals:[0,2,3,7,8]        }, // Japanese koto pentatonic
-  { id:'wholetone',  name:'Whole Tone',        nameIt:'Esatonale',        intervals:[0,2,4,6,8,10]     },
-];
+  { id:'major',      name:'Major',             nameIt:'Maggiore' },
+  { id:'dorian',     name:'Dorian',            nameIt:'Dorico' },
+  { id:'phrygian',   name:'Phrygian',          nameIt:'Frigio' },
+  { id:'lydian',     name:'Lydian',            nameIt:'Lidio' },
+  { id:'mixolydian', name:'Mixolydian',        nameIt:'Misolidio' },
+  { id:'aeolian',    name:'Natural Minor',     nameIt:'Minore Naturale' },
+  { id:'locrian',    name:'Locrian',           nameIt:'Locrio' },
+  { id:'harmmin',    name:'Harmonic Minor',    nameIt:'Minore Armonica' },
+  { id:'melmin',     name:'Melodic Minor',     nameIt:'Minore Melodica' },
+  { id:'majpent',    name:'Maj Pentatonic',    nameIt:'Pentafonica Magg.' },
+  { id:'minpent',    name:'Min Pentatonic',    nameIt:'Pentafonica Min.' },
+  { id:'blues',      name:'Blues',             nameIt:'Blues' },
+  { id:'phrygdom',   name:'Phrygian Dominant', nameIt:'Frigio Dominante' },
+  { id:'dblharm',    name:'Double Harmonic',   nameIt:'Doppia Armonica' },
+  { id:'hungmin',    name:'Hungarian Minor',   nameIt:'Minore Ungherese' },
+  { id:'hungmaj',    name:'Hungarian Major',   nameIt:'Maggiore Ungherese' },
+  { id:'hirajoshi',  name:'Hirajoshi',         nameIt:'Hirajoshi' },
+  { id:'wholetone',  name:'Whole Tone',        nameIt:'Esatonale' },
+].map(s => ({ ...s, intervals: scaleDefIntervals(GSS_SCALE_ALIAS[s.id] || s.id) }));
 
 let gccToolMode  = 'chords'; // every assignment is a temporary internal swap that restores itself; no user setter, so nothing to persist
 let gssRoot      = 'C';
