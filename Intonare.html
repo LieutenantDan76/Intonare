@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.57 -->
+<!-- INTONARE_VERSION: 0.81.58 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16900,7 +16900,21 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
                && window.Capacitor.Plugins
                && window.Capacitor.Plugins.App;
         if (App) { wire(App); return; }
-        if (++tries > 100) return;            // ~10s; not a native shell, give up quietly
+        if (++tries > 100) {
+          // TRIPWIRE. If we are on a native shell and the App plugin never showed up,
+          // it is NOT INSTALLED — and that is precisely how every deep link silently
+          // failed for weeks: @capacitor/app is a separate npm package from core, it
+          // was never in package.json, so Capacitor.Plugins.App was undefined on every
+          // device while share/haptics/status-bar all worked. Nothing anywhere said so.
+          // Now something says so.
+          try {
+            if (window.Capacitor && window.Capacitor.isNativePlatform
+                && window.Capacitor.isNativePlatform()) {
+              window._intonareDiagAppPlugin = 'MISSING — npm install @capacitor/app';
+            }
+          } catch (e) {}
+          return;
+        }
         setTimeout(waitForCapacitor, 100);
       })();
 
@@ -23236,7 +23250,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.57';
+const INTONARE_VERSION = '0.81.58';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -72944,6 +72958,7 @@ function _openAudioDiag() {
       } catch (e) { return 'threw: ' + e.message; }
     })());
     L.push('  Capacitor       ' + (window.Capacitor ? ('present · ' + (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : '?')) : 'ABSENT'));
+    L.push('  App plugin      ' + ((window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) ? 'present' : (window._intonareDiagAppPlugin || 'absent (web is fine; native means deep links are dead)')));
     L.push('  audioMode       ' + ((window._sampleDiag && window._sampleDiag.audioMode) || 'not attempted'));
     L.push('  Haptics bridge  ' + (window.Haptics ? 'present' : 'absent'));
     L.push('  whip sample     ' + (function () {

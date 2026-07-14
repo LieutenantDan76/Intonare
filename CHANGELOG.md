@@ -16,6 +16,40 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.58 — @capacitor/app was never installed
+
+**The deep links never had a chance.** Not the original handler, not the flag fix,
+not the three-bug autopsy in v0.81.57. All of it was downstream of a plugin that was
+never in the build.
+
+`getLaunchUrl()` and the `appUrlOpen` event come from **`@capacitor/app`** — a separate
+npm package from `@capacitor/core`. It was never in `package.json`. Share, haptics,
+status-bar, notifications, screen-orientation, RevenueCat: all installed. The App
+plugin: not. So `window.Capacitor.Plugins.App` was `undefined` on every device, always,
+and every deep-link handler ever written waited politely on a plugin that did not exist.
+
+Found because the failure shape finally isolated it: Play-installed v0.81.57, link opens
+the app directly (so App Links ARE verified, manifest and assetlinks are right), but the
+app opens plain. The URL was reaching the app and dying at the missing plugin.
+
+Fix, on the dev machine:
+
+    npm install @capacitor/app
+    npx cap sync
+
+Also added a **tripwire**: if the app is on a native shell and the App plugin never
+appears within the poll window, `_intonareDiagAppPlugin` records it, and the 7-tap
+diagnostics panel now has an `App plugin` line right under `Capacitor`. This failed
+silently for weeks because nothing anywhere was responsible for saying so. Now
+something is.
+
+**The v0.81.57 fixes stand** — they were verified against a mocked App plugin and the
+logic is right. They simply could not run until the plugin existed. This is the same
+lesson as the whip-on-Android copy step, one layer up: the code being correct means
+nothing if the artefact never ships with its dependencies.
+
+---
+
 ## v0.81.57 — the deep links: three bugs, stacked, and the first one made the other two unfixable
 
 **The links had never worked.** Not since they were written. Every fix before this
