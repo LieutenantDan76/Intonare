@@ -19,13 +19,28 @@ workflows:
       node: 22
       xcode: latest
 
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
-          source: true
+    # AUTOMATIC BUILDS ARE OFF.
+    #
+    # There is no `triggering:` block, so a git push does NOT start a build. Use "Start
+    # new build" in Codemagic when you actually want an IPA.
+    #
+    # Why: most pushes are web-code changes to Intonare.html, which are tested on
+    # Android (or the browser) without needing a native iOS build at all. Building an
+    # IPA for each of those burns credits for nothing.
+    #
+    # TO TURN AUTOMATIC BUILDS BACK ON, put this back above `scripts:`:
+    #
+    #   triggering:
+    #     events:
+    #       - push
+    #     branch_patterns:
+    #       - pattern: main
+    #         include: true
+    #         source: true
+    #
+    # Note that NATIVE changes still need a build to reach a device: anything touching
+    # the entitlements, Info.plist, the Swift plugin, or the URL scheme only takes
+    # effect in a fresh IPA. Push alone will not do it.
 
     scripts:
 

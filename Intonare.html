@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.81.38 -->
+<!-- INTONARE_VERSION: 0.81.57 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -8303,7 +8303,34 @@ html,body{background:#000000!important;transition:none!important}
   #exRoadTrip .rt-stage-wrap { position:relative; width:100%; margin:0 auto; border-radius:14px; }
   /* Road Trip screen is a .stack (auto-fit grid) inside a flex parent; without an explicit width it shrinks to per-theme content min-width, making some themes' panels narrower than others. Pin to full width so all five themes render identical-width panels. */
   #exRoadTrip.stack { width:100%; }
-  #exRoadTrip .rt-stage-wrap.menu-mode { }
+  /* MENU MODE FILLS THE SCREEN.
+     Measured at 412x915: the module reached the bottom but the menu stopped 250px short,
+     leaving a dead strip with no theme on it. The menu is a CHILD of this wrapper (not a
+     sibling), and this wrapper was flex-grow:0 — so growing the menu itself achieved
+     nothing, because a child cannot outgrow its parent. This is the element that has to
+     take the space. Centring pushes the START button and the cards into the middle of it
+     rather than leaving them pinned to the top. */
+  #exRoadTrip .rt-stage-wrap.menu-mode {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  /* The menu STRETCHES to fill the wrapper, and its two children — the card stack and the
+     START button — push apart. Cards read from the top, where you start reading; START
+     sits on the bottom edge, in the thumb zone, where you finish. All the slack falls
+     between them, so the theme covers the whole screen and nothing floats.
+     (Centring was tried first: it just split the gap evenly and left the button stranded
+     mid-screen, which is neither a poster nor a list.) */
+  #exRoadTrip .rt-stage-wrap.menu-mode .rt-menu {
+    width: 100%; flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    gap: 14px;
+  }
+  /* The card stack keeps its natural height at the top; it must not stretch into the gap. */
+  #exRoadTrip .rt-stage-wrap.menu-mode .rt-menu-scroll { flex: 0 0 auto; }
+  /* And START holds its size on the bottom edge rather than being stretched by the flex. */
+  #exRoadTrip .rt-stage-wrap.menu-mode .rt-go { flex: 0 0 auto; margin-top: 0; }
+  /* Fading out, it goes position:absolute — it must not fight the flex column then. */
+  #exRoadTrip .rt-stage-wrap.menu-mode .rt-menu.gone { flex: none; }
   /* During the DRIVE (no menu-mode), cap the square map so it doesn't eat the screen and
      crowd/cut-off the control zone. Height-driven so short screens shrink the map first.
      Stays a perfect square (width follows via aspect-ratio) → map/vehicle math untouched. */
@@ -8354,6 +8381,189 @@ html,body{background:#000000!important;transition:none!important}
     filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)); }
   #exRoadTrip .rt-vehicle svg { width:34px; height:34px; }
   #exRoadTrip .rt-vehicle.hop { animation:rtHop .5s ease; }
+  /* ═══════════════════════ PER-THEME DRESSING ═══════════════════════
+     The menu is a big empty canvas now that it fills the screen, and the themes were
+     carrying colour but no CHARACTER — five palettes, one layout. This layer gives each
+     of them a few objects of their own.
+
+     All of it is pure CSS: gradients, blend modes and a little SVG turbulence, in the
+     same idiom as the existing grain and vignette. No image assets, nothing to load, and
+     it sits behind the content with pointer-events off so it can never eat a tap. */
+  /* Inside .rt-menu, which is itself z-index 12 with an opaque themed background. The
+     dressing sits ABOVE that background (z-index 1 within the menu's stacking context)
+     and BELOW the menu's content, which is z-index 2+.
+     It was previously a sibling of the menu at z-index 1 — underneath the menu's opaque
+     background — so every stain and star rendered perfectly and was completely hidden.
+     Strengthening the colours did nothing, because the problem was never the colours. */
+  #exRoadTrip .rt-dressing {
+    position:absolute; inset:0; pointer-events:none; z-index:1; overflow:hidden;
+    display:none;
+  }
+  #exRoadTrip .rt-menu { position:relative; }
+
+  /* EVERY theme carries `#exRoadTrip.rt-dsn-X .rt-menu > * { position:relative; }` — a
+     wildcard that catches every direct child of the menu, including this layer. It forced
+     the dressing back to `position:relative`, which made `inset:0` meaningless and left it
+     a zero-height flex item in the column. Invisible, and no amount of stronger colour was
+     ever going to fix that.
+     This selector is more specific than the wildcard, so it wins. */
+  /* The theme wildcards are `#exRoadTrip.rt-dsn-X .rt-menu > *` — TWO classes on the id,
+     which outranks `#exRoadTrip .rt-menu > .rt-dressing`. Rather than write the rule five
+     times (once per theme) and have the sixth theme silently break the day someone adds
+     one, force it. This is the rare case !important is actually right: a blanket wildcard
+     is reaching past its business, and the fix should not depend on remembering to update
+     it in five places. */
+  #exRoadTrip .rt-dressing {
+    position:absolute !important;
+    inset:0 !important;
+    z-index:1 !important;
+  }
+  #exRoadTrip .rt-stage-wrap.menu-mode .rt-menu > .rt-dressing { display:block; }
+  /* The menu's own content must sit above the dressing. */
+  #exRoadTrip .rt-menu-scroll,
+  #exRoadTrip .rt-go { position:relative; z-index:2; }
+  #exRoadTrip .rt-dressing::before,
+  #exRoadTrip .rt-dressing::after { content:''; position:absolute; pointer-events:none; }
+  /* Default: nothing. A theme opts in. */
+  #exRoadTrip .rt-dressing::before,
+  #exRoadTrip .rt-dressing::after { display:none; }
+
+  /* ── PARCHMENT: coffee rings and a foxed corner ───────────────────────────────
+     Two rings, different sizes, offset — one heavier where the cup sat longest. The
+     multiply blend lets the paper texture show through them, which is what stops it
+     looking like a sticker. */
+  /* PARCHMENT — an old map, aged at the EDGES.
+     What was tried and cut:
+       - Fold creases: rendered as huge diagonal light streaks across the whole panel.
+         A crease needs to be a hairline; at this scale it just looked like glare.
+       - "Punch out the middle" of the coffee ring with a white radial: rendered as a SUN
+         sitting in the middle of the map. A white gradient under multiply is not a hole,
+         it is a lamp.
+     What is left is the thing that actually reads as age: dark, uneven edges, heaviest in
+     the corners, fading inward. Nothing in the middle of the sheet, because the middle of
+     the sheet is where the content lives. */
+  #exRoadTrip.rt-dsn-parch .rt-dressing::before {
+    display:block; inset:0;
+    background:
+      /* Edge darkening — the map has been handled, and the edges took it. Four different
+         ellipses so the border is uneven; one even inset shadow reads as a vignette, which
+         is a photographic effect, not a paper one. */
+      radial-gradient(ellipse 78% 20% at 50% 0%,   rgba(96,58,20,.40), transparent 76%),
+      radial-gradient(ellipse 20% 60% at 100% 55%, rgba(96,58,20,.34), transparent 74%),
+      radial-gradient(ellipse 70% 18% at 42% 100%, rgba(96,58,20,.32), transparent 78%),
+      radial-gradient(ellipse 18% 52% at 0% 42%,   rgba(96,58,20,.30), transparent 74%);
+    mix-blend-mode:multiply;
+  }
+  /* Corner burn + foxing. The corners of a carried map go first. */
+  #exRoadTrip.rt-dsn-parch .rt-dressing::after {
+    display:block; inset:0;
+    background:
+      radial-gradient(ellipse 26% 14% at 100% 0%,   rgba(78,44,14,.44), transparent 70%),
+      radial-gradient(ellipse 22% 12% at 0% 100%,   rgba(78,44,14,.38), transparent 70%),
+      radial-gradient(ellipse 18% 10% at 0% 0%,     rgba(78,44,14,.30), transparent 70%),
+      radial-gradient(ellipse 20% 11% at 100% 100%, rgba(78,44,14,.34), transparent 70%),
+      /* age spotting, scattered, small */
+      radial-gradient(circle 3px at 22% 28%, rgba(104,64,24,.30), transparent),
+      radial-gradient(circle 5px at 84% 41%, rgba(104,64,24,.24), transparent),
+      radial-gradient(circle 4px at 13% 62%, rgba(104,64,24,.26), transparent),
+      radial-gradient(circle 3px at 68% 77%, rgba(104,64,24,.22), transparent),
+      radial-gradient(circle 6px at 47% 19%, rgba(104,64,24,.18), transparent),
+      radial-gradient(circle 4px at 91% 68%, rgba(104,64,24,.20), transparent);
+    mix-blend-mode:multiply;
+  }
+
+  /* ── BLUEPRINT: the grid, and a drafting-table glow ───────────────────────────
+     A real blueprint is drawn ON a grid. The fine grid is the sheet; the heavy grid
+     every fifth line is the measure. */
+  #exRoadTrip.rt-dsn-blueprint .rt-dressing::before {
+    display:block; inset:0;
+    background:
+      repeating-linear-gradient(0deg,  rgba(150,200,255,.13) 0 1px, transparent 1px 26px),
+      repeating-linear-gradient(90deg, rgba(150,200,255,.13) 0 1px, transparent 1px 26px),
+      repeating-linear-gradient(0deg,  rgba(150,200,255,.26) 0 1px, transparent 1px 130px),
+      repeating-linear-gradient(90deg, rgba(150,200,255,.26) 0 1px, transparent 1px 130px);
+  }
+  /* The cyanotype wash: uneven exposure, brighter where the lamp sat. */
+  /* Drafting furniture. The grid alone is wallpaper; what makes a blueprint read as a
+     blueprint is the stuff a draughtsman actually puts on the sheet. Three objects, all in
+     the margins where they cannot fight the content:
+
+     - a TITLE BLOCK boxed into the bottom-right corner, as on every real drawing
+     - a DIMENSION LINE down the left margin, with its end ticks
+     - the cyanotype exposure wash, uneven, brighter where the lamp sat
+
+     Deliberately no more than that. A busy blueprint is just a mess with a blue tint. */
+  #exRoadTrip.rt-dsn-blueprint .rt-dressing::after {
+    display:block; inset:0;
+    background:
+      /* title block: two nested rectangles, bottom right */
+      linear-gradient(0deg,   rgba(150,200,255,.30) 0 1px, transparent 1px) 0 100% / 100% 92px no-repeat,
+      linear-gradient(0deg,   rgba(150,200,255,.20) 0 1px, transparent 1px) 0 calc(100% - 34px) / 100% 1px no-repeat,
+      linear-gradient(90deg,  rgba(150,200,255,.30) 0 1px, transparent 1px) 62% 100% / 1px 92px no-repeat,
+      linear-gradient(90deg,  rgba(150,200,255,.20) 0 1px, transparent 1px) 82% 100% / 1px 92px no-repeat,
+      /* dimension line, left margin, with ticks top and bottom */
+      linear-gradient(90deg,  rgba(150,200,255,.26) 0 1px, transparent 1px) 9px 0 / 1px 100% no-repeat,
+      linear-gradient(0deg,   rgba(150,200,255,.26) 0 1px, transparent 1px) 3px 14% / 13px 1px no-repeat,
+      linear-gradient(0deg,   rgba(150,200,255,.26) 0 1px, transparent 1px) 3px 86% / 13px 1px no-repeat,
+      /* exposure wash */
+      radial-gradient(ellipse at 30% 8%, rgba(120,190,255,.20), transparent 58%);
+  }
+
+  /* ── NIGHT: headlight wash and a scatter of stars ─────────────────────────────
+     Two cones from the bottom, as if the car is below the frame pointing up the road. */
+  #exRoadTrip.rt-dsn-night .rt-dressing::before {
+    display:block; inset:0;
+    background:
+      radial-gradient(ellipse 55% 40% at 50% 108%, rgba(255,214,140,.20), transparent 70%),
+      radial-gradient(ellipse 20% 55% at 50% 112%, rgba(255,232,190,.15), transparent 60%);
+  }
+  /* Stars. Three sizes, irregular — a regular grid of dots reads as a texture, not a sky. */
+  #exRoadTrip.rt-dsn-night .rt-dressing::after {
+    display:block; inset:0 0 55% 0;
+    background-image:
+      radial-gradient(1.6px 1.6px at 12% 18%, rgba(255,255,255,.95), transparent),
+      radial-gradient(1.1px 1.1px at 31% 9%,  rgba(255,255,255,.70), transparent),
+      radial-gradient(2.2px 2.2px at 47% 24%, rgba(255,255,255,1),   transparent),
+      radial-gradient(1px 1px   at 63% 12%,   rgba(255,255,255,.62), transparent),
+      radial-gradient(1.6px 1.6px at 79% 21%, rgba(255,255,255,.88), transparent),
+      radial-gradient(1.1px 1.1px at 88% 7%,  rgba(255,255,255,.72), transparent),
+      radial-gradient(1px 1px   at 22% 31%,   rgba(255,255,255,.55), transparent),
+      radial-gradient(1.6px 1.6px at 55% 4%,  rgba(255,255,255,.80), transparent),
+      radial-gradient(1.2px 1.2px at 38% 15%, rgba(255,255,255,.65), transparent),
+      radial-gradient(1px 1px   at 70% 30%,   rgba(255,255,255,.50), transparent),
+      radial-gradient(1.4px 1.4px at 6% 8%,   rgba(255,255,255,.75), transparent),
+      radial-gradient(1px 1px   at 94% 27%,   rgba(255,255,255,.58), transparent);
+  }
+
+  /* ── NAUTICAL: compass rose and a rhumb-line web ──────────────────────────────
+     The lines radiating from a point are how sea charts were actually drawn. */
+  /* NAUTICAL — no dressing.
+     Two things were tried and both cut:
+       - A rhumb-line web: a full-screen fan of lines behind the content. That is texture,
+         not decoration, and it fought the cards for attention.
+       - A compass rose in the corner: the map already has one. A second rose is just a
+         second rose.
+     The theme carries itself on its own grid and palette. Nothing here on purpose. */
+
+  /* ── INK: bleed, and the ghost of the facing page ─────────────────────────────
+     Ink on absorbent paper spreads. Two soft blooms, off-centre, as if the pen rested. */
+  #exRoadTrip.rt-dsn-ink .rt-dressing::before {
+    display:block; inset:0;
+    background:
+      radial-gradient(ellipse 34% 20% at 88% 90%, rgba(40,44,52,.14), transparent 70%),
+      radial-gradient(ellipse 26% 14% at 8% 12%,  rgba(40,44,52,.10), transparent 70%);
+    mix-blend-mode:multiply;
+  }
+  /* Show-through: the faint impression of writing on the other side of the sheet. Kept
+     very low — the point is that you half-notice it. */
+  #exRoadTrip.rt-dsn-ink .rt-dressing::after {
+    display:block; inset:0;
+    background:repeating-linear-gradient(94deg,
+      rgba(40,44,52,.06) 0 1px, transparent 1px 3px,
+      rgba(40,44,52,.04) 3px 4px, transparent 4px 19px);
+    mix-blend-mode:multiply;
+  }
+
   /* ═══════════════ PARCHMENT — Cartographer's Journal identity ═══════════════
      Scoped to #exRoadTrip.rt-dsn-parch so the other four themes are untouched. */
   #exRoadTrip.rt-dsn-parch {
@@ -8534,12 +8744,17 @@ html,body{background:#000000!important;transition:none!important}
   #exRoadTrip.rt-dsn-blueprint .rt-pill .vn { font-family:'Rajdhani',sans-serif; font-weight:700; color:var(--bp-amber); font-size:15px; letter-spacing:.02em; overflow:hidden; text-overflow:ellipsis; }
   #exRoadTrip.rt-dsn-blueprint .rt-pill .vr, #exRoadTrip.rt-dsn-blueprint .rt-pill .cyc { color:var(--bp-paper); }
   /* START = approval stamp */
+  /* START was `background: rgba(255,210,63,.1)` — ten percent. The single most important
+     control on the screen was a ghost, and read as disabled. It is the amber that carries
+     this theme; let it be amber. Dark text on it, because amber-on-amber is not a button. */
   #exRoadTrip.rt-dsn-blueprint .rt-go {
-    border-radius:12px; border:none;
-    font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:.18em; color:var(--bp-amber); text-transform:uppercase;
-    background:rgba(255,210,63,.1);
-    box-shadow:none; }
-  #exRoadTrip.rt-dsn-blueprint .rt-go .sub { font-family:'JBMono','JetBrains Mono',monospace; color:rgba(255,210,63,.7); }
+    border-radius:12px; border:1px solid rgba(255,210,63,.55);
+    font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+    color:#0d1b2a;
+    background:linear-gradient(180deg, rgba(255,214,74,.95), rgba(232,180,40,.92));
+    box-shadow:0 0 22px -6px rgba(255,210,63,.55), inset 0 1px 0 rgba(255,255,255,.35); }
+  #exRoadTrip.rt-dsn-blueprint .rt-go:active { background:linear-gradient(180deg, rgba(232,180,40,.95), rgba(210,160,30,.92)); }
+  #exRoadTrip.rt-dsn-blueprint .rt-go .sub { font-family:'JBMono','JetBrains Mono',monospace; color:rgba(13,27,42,.72); }
   /* inked amber route + crosshair pins on the map */
   #exRoadTrip.rt-dsn-blueprint .rt-pin { fill:var(--bp-amber); stroke:var(--bp-navy); stroke-width:0.8; }
   #exRoadTrip.rt-dsn-blueprint .rt-pin.g { fill:#4a90c4; } #exRoadTrip.rt-dsn-blueprint .rt-pin.a { fill:var(--bp-amber); } #exRoadTrip.rt-dsn-blueprint .rt-pin.r { fill:var(--bp-amber); }
@@ -16122,6 +16337,16 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 }
 
 .rc-transport { display: flex; align-items: center; justify-content: center; gap: 12px; }
+/* The tap row mirrors the transport row: arrow, control, arrow. The pad simply takes
+   PLAY's place in the middle. They are their OWN buttons living inside the tap wrapper —
+   not the transport's, moved by CSS — because hiding the transport row to reuse them is
+   exactly what killed deck navigation last time. Browse mode's row is untouched.
+
+   Nothing else about the card changes when tap mode turns on. */
+.rc-tapzone-wrap { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.rc-tapzone-wrap .rc-tapzone { flex: 1; min-width: 0; }
+/* Browse mode keeps its own transport; tap mode hides only the PLAY button (handled in
+   rcToggleTapMode), so the row stays and its arrows stay with it. */
 .rc-nav-btn {
   width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
   border: 1px solid var(--border-soft); background: var(--panel); color: var(--text-dim);
@@ -16171,21 +16396,75 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
-.rc-tapzone-wrap { margin-top: 2px; }
+/* THE TAP PAD.
+   It was 120px tall, dashed grey, and gave no feedback whatsoever when a tap landed —
+   rc-armed marks the zone as live, but an individual tap did nothing at all. So you
+   were aiming at a smallish target, in time, while concentrating on a rhythm, with no
+   confirmation the app had heard you until the grade came back afterwards. For a
+   rhythm exercise that is the wrong way round: the tap is the whole interaction.
+
+   Three changes:
+   - BIGGER. 120px is about a thumb's width of margin. A rhythm pad wants a target you
+     can hit without looking, because you are looking at the notation.
+   - INSTANT feedback. The old transition was .12s, which is slower than a semiquaver
+     at 120bpm — the flash would still be fading in as the next tap arrived. The hit
+     state now applies with no transition at all and fades out after; it confirms the
+     tap AT the moment of the tap, which is the only moment that matters.
+   - IT LOOKS LIKE A BUTTON. Dashed-grey reads as an inactive placeholder. */
+/* The pad now replaces the transport row rather than sitting under it, so it moves UP
+   the screen by the height of everything it displaced — which is the actual fix for
+   "it's below things". It can also afford to be a little shorter, because it is no
+   longer competing for space with a play button doing the same job. */
+.rc-tapzone-wrap { margin-top: 10px; }
 .rc-tapzone {
-  border: 2px dashed var(--border-soft); border-radius: 14px;
-  min-height: 120px; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation;
-  transition: background .12s, border-color .12s;
-  background: color-mix(in srgb, var(--text) 3%, transparent);
+  border: 2px solid var(--border-soft); border-radius: 18px;
+  min-height: 170px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  position: relative; overflow: hidden;
 }
-.rc-tapzone.rc-armed { border-style: solid; border-color: var(--accent); }
-.rc-tap-inner { display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
-.rc-tap-icon { font-size: 30px; color: var(--text-dim); line-height: 1; }
+/* Armed: this is live, hit it. */
+.rc-tapzone.rc-armed {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+/* A tap landed. No transition IN — the flash must be simultaneous with the finger, not
+   a beat behind it. The fade OUT is what carries the animation. */
+.rc-tapzone.rc-hit {
+  background: color-mix(in srgb, var(--accent) 34%, transparent);
+  border-color: var(--accent);
+  transition: none;
+}
+.rc-tapzone:not(.rc-hit) {
+  transition: background .16s ease-out, border-color .16s ease-out;
+}
+/* The ring: expands from where the finger actually landed, so the feedback is tied to
+   the touch rather than to the middle of the box. */
+.rc-tap-ring {
+  position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px;
+  border-radius: 50%; background: var(--accent);
+  pointer-events: none; opacity: .55;
+  animation: rcRing .42s cubic-bezier(.22,.61,.36,1) forwards;
+}
+@keyframes rcRing {
+  to { transform: scale(11); opacity: 0; }
+}
+.rc-tap-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
+.rc-tap-icon {
+  font-size: 34px; color: var(--text-dim); line-height: 1;
+  font-variant-numeric: tabular-nums;   /* count-in digits must not jitter the layout */
+  transition: color .15s ease;
+}
+.rc-tapzone.rc-armed .rc-tap-icon { color: var(--accent); }
 .rc-tap-hint {
-  font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .18em;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .2em;
   color: var(--muted); text-transform: uppercase;
+  transition: color .15s ease;
 }
+.rc-tapzone.rc-armed .rc-tap-hint { color: color-mix(in srgb, var(--accent) 85%, var(--text)); }
 .rc-tap-feedback {
   font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: .12em;
   font-weight: 700; min-height: 16px; color: var(--text-dim); text-align: center;
@@ -16196,10 +16475,14 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   color: var(--text-dim); text-align: center; min-height: 0; opacity: .85;
 }
 .rc-diag:empty { display: none; }
-/* In tap mode the feedback + diagnostic lines always reserve space so the card
-   never resizes as verdicts appear and clear. */
-.rc-card.rc-tapmode .rc-tap-feedback { display: block; min-height: 18px; }
-.rc-card.rc-tapmode .rc-diag { display: block; min-height: 14px; }
+/* These used to force the feedback and diagnostic rows to display:block with reserved
+   min-heights the moment tap mode turned on. The intent was to stop the card resizing as
+   verdicts appear and clear — but the cure was the disease: 32px of empty rows arrived
+   with tap mode itself, so THE CARD EXPANDED the instant you switched, before you had
+   played a note.
+   Both rows keep their :empty { display:none } and simply appear when they have something
+   to say. The card sits still when you enter tap mode, which is what matters; a verdict
+   arriving is a moment you are looking at anyway. */
 .rc-tapzone.rc-fg { background: color-mix(in srgb, #38d39f 22%, transparent); border-color: #38d39f; }
 .rc-tapzone.rc-fy { background: color-mix(in srgb, #d3c838 20%, transparent); border-color: #d3c838; }
 .rc-tapzone.rc-fo { background: color-mix(in srgb, #d38f38 20%, transparent); border-color: #d38f38; }
@@ -16260,12 +16543,30 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 }
 .rct-name { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .04em; color: var(--text); }
 .rct-count-pip { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: .15em; color: var(--accent); opacity: .18; min-height: 18px; }
+/* TEST MODE's pad. Same treatment as the practice one, and it needed it more: padding
+   rather than a min-height meant it sized to its CONTENT, so it was smaller still — and
+   test mode is the timed run, where a missed tap costs you a score. */
 .rct-tapzone {
-  flex-shrink: 0; border: 2px dashed var(--border, rgba(255,255,255,0.18)); border-radius: 14px;
-  padding: 30px 22px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; border: 2px solid var(--border, rgba(255,255,255,0.18)); border-radius: 18px;
+  min-height: 190px; padding: 22px;
+  display: flex; align-items: center; justify-content: center;
   user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  position: relative; overflow: hidden;
 }
-.rct-tapzone.rc-armed { border-style: solid; border-color: var(--accent); }
+.rct-tapzone.rc-armed {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.rct-tapzone.rc-hit {
+  background: color-mix(in srgb, var(--accent) 34%, transparent);
+  border-color: var(--accent);
+  transition: none;
+}
+.rct-tapzone:not(.rc-hit) {
+  transition: background .16s ease-out, border-color .16s ease-out;
+}
 
 /* ── Results ── */
 .rct-results { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
@@ -16486,6 +16787,92 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       }, 450);   // let the touch's UI response + audio-context resume land first
     }, { once: true });
 
+
+    if (window.Capacitor) {
+      // Status bar — immersive: hide it and let the app draw edge-to-edge.
+      // Android keeps the swipe-down-to-reveal gesture by default, so the bar
+      // (clock/battery) is reachable but stays out of the way during play.
+      // Exposed globally so we can re-assert it whenever the bar sneaks back
+      // (after a permission dialog, app resume, or a reveal swipe) — calling
+      // hide() only once at launch leaves it stuck visible otherwise.
+      window._enforceImmersive = function() {
+        const sb = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar;
+        if (!sb) return;
+        try { sb.setOverlaysWebView({ overlay: true }); } catch (e) {}
+        try { sb.hide(); } catch (e) {}
+      };
+      window._enforceImmersive();
+
+      // Re-assert immersive whenever the page regains focus/visibility — a reveal
+      // swipe or transient system UI doesn't fire appStateChange, so without this
+      // the bar can stay up once it's been pulled down.
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && window._enforceImmersive) window._enforceImmersive();
+      });
+      window.addEventListener('focus', function() {
+        if (window._enforceImmersive) window._enforceImmersive();
+      });
+
+      // Notification permission — doesn't need user gesture, fire immediately
+      const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+      if (notifPlugin) notifPlugin.requestPermissions().catch(() => {});
+
+      // RevenueCat (Pro purchases) — configure the SDK and silently sync any
+      // existing entitlement. No user gesture needed; safe if it fails.
+      try { configureRevenueCat(); } catch (e) {}
+
+      // Check mic permission state. If already granted, start immediately.
+      // If not yet granted, wait for first touch (which satisfies the user-gesture
+      // requirement for the OS permission dialog) then start.
+      const permPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.Permissions;
+      if (permPlugin) {
+        permPlugin.query({ name: 'microphone' }).then(result => {
+          if (result && result.state === 'granted') {
+            // Permission already granted — start mic directly, no gesture needed
+            if (!isListening) startMic().catch(() => {});
+          } else {
+            // Not yet granted — wait for first touch then request + start
+            document.addEventListener('touchend', function _reqMicPerm() {
+              document.removeEventListener('touchend', _reqMicPerm);
+              if (!isListening) startMic().catch(() => {});
+            }, { once: true });
+          }
+        }).catch(() => {
+          // Can't query — fall back to first-touch approach
+          document.addEventListener('touchend', function _reqMicPerm() {
+            document.removeEventListener('touchend', _reqMicPerm);
+            if (!isListening) startMic().catch(() => {});
+          }, { once: true });
+        });
+      } else {
+        // No Permissions plugin — first touch fallback
+        document.addEventListener('touchend', function _reqMicPerm() {
+          document.removeEventListener('touchend', _reqMicPerm);
+          if (!isListening) startMic().catch(() => {});
+        }, { once: true });
+      }
+    }
+
+  }
+
+  // ── Deep links ──────────────────────────────────────────────────────────
+  // THIS USED TO LIVE INSIDE removeSplash(), AND THAT WAS THE WHOLE BUG.
+  //
+  // removeSplash() runs when the splash ENDS. So the deep-link handler was only
+  // registered once the splash had already finished — which made it structurally
+  // incapable of doing the one thing it exists to do. It could not skip a splash
+  // that had to finish before the handler existed. A circular dependency, and it
+  // explained both symptoms at once:
+  //
+  //   - the splash never skipped, because nothing asked it to until it was over;
+  //   - the module never opened, because getLaunchUrl() only resolved ~3.5s in, by
+  //     which point the splash's handoff to the home screen had already wiped out
+  //     whatever the link tried to open.
+  //
+  // Every other fix in this area (the flag, the promise ordering, the Capacitor
+  // poll) was real, but none of them could ever have worked from in there. It
+  // belongs at the top level, running at parse time, so the handler is listening
+  // before the splash even starts.
     // ── Deep links ────────────────────────────────────────────────────────
     // Shared daily results carry an https link to a bounce page, which fires
     // intonare://chordle (or tonale / diadle). The OS hands that URL to us here.
@@ -16497,9 +16884,27 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     //                         forwards)
     // Handle only one and half your links silently do nothing.
     (function () {
-      if (!window.Capacitor || !window.Capacitor.Plugins) return;
-      var App = window.Capacitor.Plugins.App;
-      if (!App) return;
+      // DO NOT GIVE UP IF CAPACITOR IS NOT HERE YET.
+      //
+      // This was `if (!window.Capacitor) return;` — a single check, at the earliest
+      // moment in the file, with no retry. Capacitor's bridge is injected by the native
+      // shell and is NOT guaranteed to exist while this inline script is still being
+      // parsed. When it lost that race the listener was never registered, getLaunchUrl
+      // was never called, and every deep link silently did nothing. Forever. There was
+      // no error, because there was no code left to run.
+      //
+      // So poll for it instead. Cheap, bounded, and it cannot lose the race.
+      var tries = 0;
+      (function waitForCapacitor() {
+        var App = window.Capacitor
+               && window.Capacitor.Plugins
+               && window.Capacitor.Plugins.App;
+        if (App) { wire(App); return; }
+        if (++tries > 100) return;            // ~10s; not a native shell, give up quietly
+        setTimeout(waitForCapacitor, 100);
+      })();
+
+      function wire(App) {
 
       function openFromUrl(url) {
         if (!url) return;
@@ -16612,22 +17017,56 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         // flag does not care who wrote it or when.
         window._intonareWantSkipSplash = true;
 
-        // If the splash has already STARTED (warm app, or the URL arrived a beat
-        // late), the flag alone is too late — call the skip directly if it is there.
+        // AND CALL IT. The flag alone is not enough and never was: this code path runs
+        // from getLaunchUrl().then(), so by the time we get here the splash IIFE has
+        // already read the flag (as false) and started its 3.5s run. The flag only helps
+        // in the impossible case where we somehow beat the splash to it.
+        //
+        // So skip the splash directly, right now, whatever state it is in. removeSplash()
+        // is idempotent and _intonareSkipSplash is defined before the splash starts, so
+        // this is safe whether the splash is running, finished, or never began.
         if (!window._splashGone && typeof window._intonareSkipSplash === 'function') {
           try { window._intonareSkipSplash(); } catch (e) {}
         }
 
-        // A frame for the shell to settle, then go. If the splash could not be
-        // skipped for any reason, wait for it rather than open the module behind it.
-        if (window._splashGone) {
-          setTimeout(go, 80);
-        } else {
-          var fired = false;
-          var once  = function () { if (fired) return; fired = true; setTimeout(go, 120); };
-          window.addEventListener('intonare:splash-done', once, { once: true });
-          setTimeout(once, 8000);
+        // WAIT FOR THE APP TO EXIST, NOT FOR A GUESSED DELAY.
+        //
+        // This used to be `setTimeout(go, 80)`. The numbers, measured:
+        //
+        //   getLaunchUrl() resolves      ~77ms
+        //   go() therefore fires        ~157ms
+        //   enterExercise() is defined  ~410ms   <-- defined in a LATER script block
+        //
+        // So go() called enterExercise 250ms before it existed, threw
+        // "enterExercise is not a function" straight into the bare catch(e){} inside
+        // go(), and the link silently did nothing. Every single time. The catch is why
+        // this never showed up as an error; it swallowed the only evidence.
+        //
+        // The functions go() needs live ~40,000 lines further down the file, in script
+        // blocks the parser has not reached yet. No fixed delay can be correct here,
+        // because the delay needed depends on how fast the device parses the rest of
+        // the document. So poll for the actual dependency and go the moment it lands.
+        // Waiting for enterExercise to EXIST is not the same as waiting for the app to
+        // be READY, and the difference is the whole bug. The functions appear at ~410ms,
+        // but the app is still booting: there are DOMContentLoaded handlers as far down
+        // as line ~99500 and a window 'load' handler too, and they set up the home
+        // screen. Open a module before those run and the boot sequence calmly resets the
+        // view on top of it. That is why this behaved like a coin flip across runs —
+        // sometimes go() landed after the last handler, sometimes before, and the module
+        // vanished with no error.
+        //
+        // So wait for the document to actually finish loading, THEN go. window 'load'
+        // fires after every deferred handler has run, which is precisely the guarantee
+        // needed: nothing else is going to redraw the shell after this point.
+        function whenLoaded(fn) {
+          if (document.readyState === 'complete') { fn(); return; }
+          window.addEventListener('load', fn, { once: true });
         }
+        whenLoaded(function () {
+          // Everything has booted and the home screen has settled. Now take the screen.
+          // A frame of margin so the last layout pass lands before we replace it.
+          setTimeout(go, 120);
+        });
       }
 
       // Already open.
@@ -16643,74 +17082,9 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           openFromUrl(res && res.url);
         }).catch(function () {});
       } catch (e) {}
+
+      }   // end wire()
     })();
-
-    if (window.Capacitor) {
-      // Status bar — immersive: hide it and let the app draw edge-to-edge.
-      // Android keeps the swipe-down-to-reveal gesture by default, so the bar
-      // (clock/battery) is reachable but stays out of the way during play.
-      // Exposed globally so we can re-assert it whenever the bar sneaks back
-      // (after a permission dialog, app resume, or a reveal swipe) — calling
-      // hide() only once at launch leaves it stuck visible otherwise.
-      window._enforceImmersive = function() {
-        const sb = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar;
-        if (!sb) return;
-        try { sb.setOverlaysWebView({ overlay: true }); } catch (e) {}
-        try { sb.hide(); } catch (e) {}
-      };
-      window._enforceImmersive();
-
-      // Re-assert immersive whenever the page regains focus/visibility — a reveal
-      // swipe or transient system UI doesn't fire appStateChange, so without this
-      // the bar can stay up once it's been pulled down.
-      document.addEventListener('visibilitychange', function() {
-        if (!document.hidden && window._enforceImmersive) window._enforceImmersive();
-      });
-      window.addEventListener('focus', function() {
-        if (window._enforceImmersive) window._enforceImmersive();
-      });
-
-      // Notification permission — doesn't need user gesture, fire immediately
-      const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
-      if (notifPlugin) notifPlugin.requestPermissions().catch(() => {});
-
-      // RevenueCat (Pro purchases) — configure the SDK and silently sync any
-      // existing entitlement. No user gesture needed; safe if it fails.
-      try { configureRevenueCat(); } catch (e) {}
-
-      // Check mic permission state. If already granted, start immediately.
-      // If not yet granted, wait for first touch (which satisfies the user-gesture
-      // requirement for the OS permission dialog) then start.
-      const permPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.Permissions;
-      if (permPlugin) {
-        permPlugin.query({ name: 'microphone' }).then(result => {
-          if (result && result.state === 'granted') {
-            // Permission already granted — start mic directly, no gesture needed
-            if (!isListening) startMic().catch(() => {});
-          } else {
-            // Not yet granted — wait for first touch then request + start
-            document.addEventListener('touchend', function _reqMicPerm() {
-              document.removeEventListener('touchend', _reqMicPerm);
-              if (!isListening) startMic().catch(() => {});
-            }, { once: true });
-          }
-        }).catch(() => {
-          // Can't query — fall back to first-touch approach
-          document.addEventListener('touchend', function _reqMicPerm() {
-            document.removeEventListener('touchend', _reqMicPerm);
-            if (!isListening) startMic().catch(() => {});
-          }, { once: true });
-        });
-      } else {
-        // No Permissions plugin — first touch fallback
-        document.addEventListener('touchend', function _reqMicPerm() {
-          document.removeEventListener('touchend', _reqMicPerm);
-          if (!isListening) startMic().catch(() => {});
-        }, { once: true });
-      }
-    }
-
-  }
 
   async function runSplash() {
     document.body.style.overflow = 'hidden';  // prevent ghost scrolling during splash
@@ -17365,11 +17739,23 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
   // Deep link? Do not run at all.
   //
-  // The handler sets _intonareWantSkipSplash as soon as it sees a launch URL. It runs
-  // BEFORE this IIFE on a cold start, so it cannot call a function defined down here
-  // — it raises a flag, and this is where the flag gets read. (It used to call
-  // _intonareSkipSplash() directly, which did not exist yet, failed the typeof guard
-  // silently, and left the splash running its full 3.5 s on every shared link.)
+  // TWO BUGS LIVED HERE, ONE BEHIND THE OTHER.
+  //
+  // 1. The handler used to CALL _intonareSkipSplash() directly. That function is defined
+  //    in this IIFE, ~800 lines below the handler, so on a cold start it did not exist
+  //    yet; the typeof guard failed silently and the splash ran its full 3.5s. The fix
+  //    was to raise a flag here instead of calling a function.
+  //
+  // 2. But the flag is READ SYNCHRONOUSLY, right here, and it is SET from
+  //    getLaunchUrl().then() — a promise. A promise resolves after the current stack
+  //    unwinds, by definition. So on a cold start this line ALWAYS sees `false`, the
+  //    splash always starts, and the flag arrives a tick later with nobody listening.
+  //    The flag fixed the ordering bug and walked straight into an async one.
+  //
+  // The real fix is to stop depending on WHEN the URL arrives. _intonareSkipSplash is
+  // defined above this line, so it always exists by the time the promise resolves, and
+  // removeSplash() is idempotent — the handler can call it at any moment, whether the
+  // splash has started or not, and it just stops. No race left to lose.
   if (window._intonareWantSkipSplash) {
     removeSplash();
   } else if (document.readyState === 'loading') {
@@ -18462,6 +18848,22 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <div class="rc-diag" id="rcDiag"></div>
       </div>
 
+      <!-- Tap zone. Sits ABOVE the transport and the tempo slider, not at the bottom of
+           the tool: it is the thing you look at and the thing you hit, so it belongs
+           next to the notation it is asking you to play. In tap mode it also replaces
+           the PLAY button (the pad starts the run and counts you in), but the prev/next
+           arrows stay — you still need to move through the deck. -->
+      <div class="rc-tapzone-wrap" id="rcTapZoneWrap" style="display:none">
+        <button class="rc-nav-btn" onclick="rcPrev()" aria-label="Previous card">‹</button>
+        <div class="rc-tapzone" id="rcTapZone" onpointerdown="rcOnTap(event)">
+          <div class="rc-tap-inner">
+            <div class="rc-tap-icon">◉</div>
+            <div class="rc-tap-hint" data-i18n="rc_tap_zone_hint">TAP THE RHYTHM</div>
+          </div>
+        </div>
+        <button class="rc-nav-btn" onclick="rcNext()" aria-label="Next card">›</button>
+      </div>
+
       <!-- transport -->
       <div class="rc-transport">
         <button class="rc-nav-btn" onclick="rcPrev()" aria-label="Previous card">‹</button>
@@ -18486,17 +18888,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
         <button class="rc-toggle" id="rcTapModeToggle" onclick="rcToggleTapMode()">TAP MODE: OFF</button>
       </div>
 
-      <!-- tap zone (hidden unless tap mode) — lives low, in the thumb zone -->
-      <div class="rc-tapzone-wrap" id="rcTapZoneWrap" style="display:none">
-        <div class="rc-tapzone" id="rcTapZone" onpointerdown="rcOnTap()">
-          <div class="rc-tap-inner">
-            <div class="rc-tap-icon">◉</div>
-            <div class="rc-tap-hint" data-i18n="rc_tap_zone_hint">TAP HERE</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="teach-hint" data-i18n-html="hint_rhythmcards"><strong>RHYTHM FLASH CARDS</strong> — a shuffled deck of common rhythmic figures, each a single 2/4 bar. Tap <strong>PLAY</strong> to hear it, or turn <strong>CLICK</strong> off to hear it dry and fire instantly for quick flipping. Move through them with the arrows. The button up top-left filters by category, and tapping more than one blends them (it reads <strong>CUSTOM</strong>). Switch on <strong>TAP MODE</strong>, hit <strong>PLAY</strong> for a count-in, then tap the figure on the pad along with the click; the card grades your timing and points out what to fix. Hit <strong>TEST</strong> (top-right) for a rapid run of eight cards over a steady pulse, which scores you and targets the figures you struggle with most. <strong>BPM</strong> doubles as a difficulty dial: slow is forgiving, fast is unforgiving.</div>
+      <div class="teach-hint" data-i18n-html="hint_rhythmcards"><strong>RHYTHM FLASH CARDS</strong> — a shuffled deck of common rhythmic figures, each a single 2/4 bar. Tap <strong>PLAY</strong> to hear it, or turn <strong>CLICK</strong> off to hear it dry and fire instantly for quick flipping. Move through them with the arrows. The button up top-left filters by category, and tapping more than one blends them (it reads <strong>CUSTOM</strong>). Switch on <strong>TAP MODE</strong> and the pad takes over: tap it once to start, it counts you in, then tap the figure along with the click. The card grades your timing and points out what to fix. Hit <strong>TEST</strong> (top-right) for a rapid run of eight cards over a steady pulse, which scores you and targets the figures you struggle with most. <strong>BPM</strong> doubles as a difficulty dial: slow is forgiving, fast is unforgiving.</div>
 
       <!-- ═══ TEST MODE OVERLAY ═══ -->
       <div class="rct-overlay" id="rctOverlay">
@@ -18513,7 +18905,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
             </div>
             <div class="rct-count-pip" id="rctCountPip"></div>
           </div>
-          <div class="rct-tapzone" id="rctTapZone" onpointerdown="rctOnTap()">
+          <div class="rct-tapzone" id="rctTapZone" onpointerdown="rctOnTap(event)">
             <div class="rc-tap-inner">
               <div class="rc-tap-icon">◉</div>
               <div class="rc-tap-hint" data-i18n="rc_tap_zone_hint">TAP HERE</div>
@@ -22205,6 +22597,10 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     </div>
     <div class="rt-tape tl"></div><div class="rt-tape br"></div>
     <div class="rt-menu" id="rtMenu">
+      <!-- Per-theme dressing. Lives INSIDE the menu: the menu paints an opaque themed
+           background at z-index 12, so anything behind it is invisible no matter how
+           strong. Sits above that background, below the content, pointer-events off. -->
+      <div class="rt-dressing" aria-hidden="true"></div>
       <div class="rt-menu-scroll">
         <div class="rt-topbar" id="rtTopbar">
           <button class="rt-close" id="rtCloseBtn" onclick="rtBack()">
@@ -22840,7 +23236,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.81.38';
+const INTONARE_VERSION = '0.81.57';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -37883,8 +38279,8 @@ Object.assign(TOURS, {
       bodyIt:'Filtra il mazzo per categoria. <strong>Toccane pi&ugrave; di una per mescolarle</strong>, e il pulsante mostra CUSTOM, cos&igrave; puoi allenare, ad esempio, solo terzine e sincopi insieme. Tocca ALL per azzerare.' },
     { selector:'#rcTapModeToggle', previewSelector:'#rcTapModeToggle',
       title:'Tap It Back', titleIt:'Battila',
-      body:'Switch on <strong>TAP MODE</strong>, hit PLAY for a count-in, then tap the figure on the pad along with the click. The card <strong>grades your timing</strong> and tells you exactly what to fix: rushing, dragging, or a missed hit.',
-      bodyIt:'Attiva la <strong>MODALIT&Agrave; TAP</strong>, premi PLAY per il conteggio, poi batti la figura sul pad seguendo il click. La carta <strong>valuta il tuo tempismo</strong> e ti dice cosa correggere: se acceleri, rallenti o sbagli un colpo.' },
+      body:'Switch on <strong>TAP MODE</strong> and a pad appears. Tap it to start, it counts you in, then tap the figure along with the click. The card <strong>grades your timing</strong> and tells you exactly what to fix: rushing, dragging, or a missed hit.',
+      bodyIt:'Attiva la <strong>MODALIT&Agrave; TAP</strong> e compare un pad. Toccalo per iniziare, ti conta l&rsquo;entrata, poi batti la figura seguendo il click. La carta <strong>valuta il tuo tempismo</strong> e ti dice cosa correggere: se acceleri, rallenti o sbagli un colpo.' },
     { selector:'.rc-test-btn', previewSelector:'.rc-test-btn',
       title:'Test, Then Drill', titleIt:'Test, Poi Allenamento',
       body:'<strong>TEST</strong> runs eight cards over a steady pulse and scores you, homing in on your weak spots. Miss a few? Hit <strong>DRILL YOUR MISSES</strong>, which loops each one with instant feedback until you nail it <strong>three times in a row</strong>.',
@@ -53532,13 +53928,36 @@ function rcToggleTapMode() {
   rcTapMode = !rcTapMode;
   var b = document.getElementById('rcTapModeToggle');
   if (b) { b.classList.toggle('active', rcTapMode); b.textContent = rcTapMode ? 'TAP MODE: ON' : 'TAP MODE: OFF'; }
-  // PLAY button stays in both modes: in tap mode it starts the count-in.
+  // In tap mode the PAD IS THE TRANSPORT.
+  //
+  // rcOnTap() already routed an idle tap to rcStartTap(), so the pad has always been
+  // able to start the run — it just never said so, and the PLAY button sat between the
+  // notation and the pad doing the same job from a second location. Meanwhile the
+  // count-in appeared as a small "1 / 4" pip somewhere else entirely, while your eyes
+  // were on the pad you were about to hit.
+  //
+  // One target. The pad starts it, the pad counts you in, the pad takes the taps. The
+  // transport row and the pip are for the listen-only mode, where there is nothing to
+  // tap and PLAY is the only control.
   var tzw = document.getElementById('rcTapZoneWrap');
   if (tzw) tzw.style.display = rcTapMode ? '' : 'none';
+  // The whole transport row hides in tap mode — and this is safe NOW, because the tap
+  // row carries its own prev/next arrows either side of the pad. (An earlier version
+  // hid this row while the arrows still lived in it, and took deck navigation with it.
+  // The fix is not to hide less; it is to give the tap row the arrows it needs.)
+  var trans = document.querySelector('#toolRhythmCards .rc-transport');
+  if (trans) trans.style.display = rcTapMode ? 'none' : '';
+  // The count pip is redundant in tap mode: the count-in lands on the pad, big, where
+  // you are already looking. Two counters on one beat is one too many.
+  var pip = document.getElementById('rcCountPip');
+  if (pip) pip.style.visibility = rcTapMode ? 'hidden' : '';
   var cardEl = document.querySelector('#toolRhythmCards .rc-card');
   if (cardEl) cardEl.classList.toggle('rc-tapmode', rcTapMode);
   rcResetCardFeedback();
   if (rcTapMode) rcArmTap(); else rcSetPlayBtn(false);
+  // rcArmTap() calls rcSetPadState('idle'), which is where the pad's label comes from —
+  // so turning tap mode on paints the label, and a language switch repaints it via the
+  // same path. Nothing else needs to know about it.
 }
 
 function rcSetBpm(v) {
@@ -53595,6 +54014,19 @@ function rcPlay() {
 }
 
 function rcFlashCount(beat, total) {
+  // The pip stays (listen-only mode still uses it), but in tap mode the count also
+  // lands ON THE PAD — big, where your eyes and your thumb already are. Counting you in
+  // somewhere else on the screen, while you stare at the thing you are about to hit, was
+  // asking you to watch two places at once on the one beat that matters.
+  if (rcTapMode) {
+    rcSetPadState('countin', String(beat));
+    const z = document.getElementById('rcTapZone');
+    if (z) {
+      z.classList.add('rc-hit');
+      requestAnimationFrame(() => requestAnimationFrame(() => z.classList.remove('rc-hit')));
+    }
+  }
+  if (rcTapMode) return;   // the pad is the counter now; the pip is hidden
   var el = document.getElementById('rcCountPip');
   if (!el) return;
   el.textContent = beat + ' / ' + total;
@@ -53615,6 +54047,32 @@ function rcResetCardFeedback() {
 // ── Tap mode: count-in, continuing click, tap against the grid ────────────────
 // Idle/armed: waiting for PLAY. PLAY → count-in bar → tap window (click continues).
 // Grading is by absolute timing error per hit against the real grid.
+// The pad's own label. It has three jobs now and has to say which one it is doing.
+function rcSetPadState(state, big) {
+  const icon = document.querySelector('#rcTapZone .rc-tap-icon');
+  const hint = document.querySelector('#rcTapZone .rc-tap-hint');
+  const zone = document.getElementById('rcTapZone');
+  if (!icon || !hint || !zone) return;
+
+  if (state === 'countin') {
+    // The count-in lands HERE, where you are looking, not in a pip elsewhere.
+    icon.textContent = big;
+    icon.style.fontSize = '54px';
+    hint.textContent = t('rc_get_ready') || 'GET READY';
+    zone.classList.remove('rc-armed');
+  } else if (state === 'tapping') {
+    icon.textContent = '◉';
+    icon.style.fontSize = '';
+    hint.textContent = t('rc_tap_zone_hint') || 'TAP THE RHYTHM';
+    zone.classList.add('rc-armed');
+  } else {
+    icon.textContent = '▶︎';
+    icon.style.fontSize = '';
+    hint.textContent = t('rc_tap_to_start') || 'TAP TO START';
+    zone.classList.remove('rc-armed');
+  }
+}
+
 function rcArmTap() {
   rcStopTapTimers();
   rcPhase = 'idle';
@@ -53623,10 +54081,19 @@ function rcArmTap() {
   rcQuizTaps = [];
   var tz = document.getElementById('rcTapZone');
   if (tz) { tz.classList.remove('rc-armed','rc-fg','rc-fy','rc-fo','rc-fr'); }
+  rcSetPadState('idle');
   rcSetPlayBtn(false);
   rcResetCardFeedback();
+  // THIS is what made the card grow on entering tap mode. Writing "ready" into the
+  // feedback row made it non-empty, which defeated its own `:empty { display:none }`,
+  // which added a row AND one of the card's 12px flex gaps — so the card visibly
+  // expanded the moment you flicked the toggle, before you had played anything.
+  //
+  // The line is redundant now regardless: the pad says TAP TO START, in the place you
+  // are actually looking. The feedback row goes back to what it is for — verdicts,
+  // after you have played — and stays collapsed until there is one.
   var fb = document.getElementById('rcTapFeedback');
-  if (fb) { fb.textContent = t('rc_tap_ready'); fb.className = 'rc-tap-feedback'; }
+  if (fb) { fb.textContent = ''; fb.className = 'rc-tap-feedback'; }
   rcMovePlayhead(0);
 }
 
@@ -53687,6 +54154,7 @@ function rcStartTap() {
   // Enter tapping phase at cellStart (drives the playhead + visual arm).
   rcScheduleTO(function(){
     rcPhase = 'tapping';
+    rcSetPadState('tapping');   // count-in over: the pad is now the target
     var tz = document.getElementById('rcTapZone'); if (tz) tz.classList.add('rc-armed');
     var fb = document.getElementById('rcTapFeedback'); if (fb) { fb.textContent = ''; fb.className = 'rc-tap-feedback'; }
   }, Math.max(0,(cellStart - ctx.currentTime)*1000));
@@ -53697,8 +54165,46 @@ function rcStartTap() {
   rcScheduleTO(function(){ rcCaptureOpen = false; rcScoreTap(); }, (cellStart - ctx.currentTime + cellDur + 0.45)*1000);
 }
 
-function rcOnTap() {
+// Instant visual confirmation that a tap landed.
+//
+// There was NONE. rc-armed says "the zone is live", but an individual tap did nothing
+// at all — you tapped into a static box and found out afterwards, from the grade,
+// whether the app had heard you. In a rhythm exercise the tap IS the interaction, so it
+// has to answer immediately, at the moment your finger lands, or you cannot tell a
+// missed tap from a mistimed one.
+//
+// Deliberately NOT a transition-in: at 120bpm a semiquaver is 125ms, so a .12s fade
+// would still be arriving as the next tap does. The class goes on with no transition and
+// comes off with one; the flash is simultaneous with the finger.
+function rcTapFlash(ev, zoneId) {
+  const z = document.getElementById(zoneId || 'rcTapZone');
+  if (!z) return;
+
+  z.classList.add('rc-hit');
+  // Two frames, not a timeout: long enough to paint, short enough to be gone before a
+  // fast passage's next tap. A setTimeout here would queue behind the audio work.
+  requestAnimationFrame(() => requestAnimationFrame(() => z.classList.remove('rc-hit')));
+
+  // Ripple from the actual touch point, so the feedback belongs to the finger rather
+  // than to the middle of the box.
+  try {
+    const r = z.getBoundingClientRect();
+    const ring = document.createElement('div');
+    ring.className = 'rc-tap-ring';
+    const x = ev && ev.clientX ? ev.clientX - r.left : r.width / 2;
+    const y = ev && ev.clientY ? ev.clientY - r.top  : r.height / 2;
+    ring.style.left = x + 'px';
+    ring.style.top  = y + 'px';
+    z.appendChild(ring);
+    setTimeout(() => { if (ring.parentNode) ring.parentNode.removeChild(ring); }, 460);
+  } catch (e) {}
+
+  if (typeof hapticLight === 'function') hapticLight();
+}
+
+function rcOnTap(ev) {
   if (!rcTapMode) return;
+  rcTapFlash(ev);   // before anything else: the confirmation must not wait on grading
   if (rcPhase === 'idle') {
     // tapping the box before starting just kicks off the run
     rcStartTap();
@@ -54069,8 +54575,13 @@ function rctRunCard(barStart) {
   }, Math.max(0,(cellEnd - ctx.currentTime + 0.005)*1000));
 }
 
-function rctOnTap() {
+function rctOnTap(ev) {
   if (!rctActive || rctPhase !== 'running') return;
+  // Flash BEFORE the capture check. A tap outside the capture window is still a tap the
+  // person made, and showing nothing for it looks like the pad is broken — worse, it
+  // reads as "my finger didn't register" when what actually happened is "you were early".
+  // The grading still ignores it; the pad still acknowledges it.
+  rcTapFlash(ev, 'rctTapZone');
   if (!rctCaptureOpen) return;
   rctTapSound();
   try { if (typeof hapticLight === 'function') hapticLight(); } catch(e) {}
@@ -63796,13 +64307,13 @@ const STRINGS = {
     rc_rush:'rushing — a touch ahead', rc_drag:'dragging — a touch behind',
     rc_late:'late', rc_early:'early', rc_hit:'hit',
     rc_diff_easy:'easy', rc_diff_med:'medium', rc_diff_hard:'hard',
-    rc_tap_zone_hint:'TAP HERE',
+    rc_tap_zone_hint:'TAP THE RHYTHM', rc_tap_to_start:'TAP TO START', rc_get_ready:'GET READY',
     rc_test_btn:'▶︎ TEST', rc_test_done:'TEST COMPLETE', rc_test_retry:'▶︎ AGAIN', rc_test_exit:'DONE',
     rc_tl_target:'TARGET', rc_tl_yours:'YOURS',
     rc_practice:'practice', rc_back_results:'BACK TO RESULTS',
     rcd_drill_btn:'◎ DRILL YOUR MISSES', rcd_skip:'SKIP ›', rcd_right:'RIGHT', rcd_wrong:'WRONG',
     rcd_done_title:'DRILL COMPLETE', rcd_mastered:'mastered', rcd_skipped:'skipped', rcd_back:'BACK TO RESULTS',
-    hint_rhythmcards:'<strong>RHYTHM FLASH CARDS</strong> — a shuffled deck of common rhythmic figures, each a single 2/4 bar. Tap <strong>PLAY</strong> to hear it, or turn <strong>CLICK</strong> off to hear it dry and fire instantly for quick flipping. Move through them with the arrows. The button up top-left filters by category, and tapping more than one blends them (it reads <strong>CUSTOM</strong>). Switch on <strong>TAP MODE</strong>, hit <strong>PLAY</strong> for a count-in, then tap the figure on the pad along with the click; the card grades your timing and points out what to fix. Hit <strong>TEST</strong> (top-right) for a rapid run of eight cards over a steady pulse, which scores you and targets the figures you struggle with most. <strong>BPM</strong> doubles as a difficulty dial: slow is forgiving, fast is unforgiving.',
+    hint_rhythmcards:'<strong>RHYTHM FLASH CARDS</strong> — a shuffled deck of common rhythmic figures, each a single 2/4 bar. Tap <strong>PLAY</strong> to hear it, or turn <strong>CLICK</strong> off to hear it dry and fire instantly for quick flipping. Move through them with the arrows. The button up top-left filters by category, and tapping more than one blends them (it reads <strong>CUSTOM</strong>). Switch on <strong>TAP MODE</strong> and the pad takes over: tap it once to start, it counts you in, then tap the figure along with the click. The card grades your timing and points out what to fix. Hit <strong>TEST</strong> (top-right) for a rapid run of eight cards over a steady pulse, which scores you and targets the figures you struggle with most. <strong>BPM</strong> doubles as a difficulty dial: slow is forgiving, fast is unforgiving.',
     thmn_sub_brand:'ETHERWAVE STYLE',
     thmn_hint_touch:'DRAG TO PLAY · → PITCH · ↑ VOLUME',
     thmn_ov_hint:'RIGHT HAND → PITCH  ·  LEFT BAR ↕ VOLUME',
@@ -64681,13 +65192,13 @@ const STRINGS = {
     rc_rush:'corri — un po\u2019 avanti', rc_drag:'rallenti — un po\u2019 indietro',
     rc_late:'in ritardo', rc_early:'in anticipo', rc_hit:'colpo',
     rc_diff_easy:'facile', rc_diff_med:'medio', rc_diff_hard:'difficile',
-    rc_tap_zone_hint:'TOCCA QUI',
+    rc_tap_zone_hint:'TOCCA IL RITMO', rc_tap_to_start:'TOCCA PER INIZIARE', rc_get_ready:'PRONTO',
     rc_test_btn:'▶︎ TEST', rc_test_done:'TEST COMPLETATO', rc_test_retry:'▶︎ ANCORA', rc_test_exit:'FATTO',
     rc_tl_target:'OBIETTIVO', rc_tl_yours:'TUOI',
     rc_practice:'esercitati', rc_back_results:'TORNA AI RISULTATI',
     rcd_drill_btn:'◎ ALLENA I TUOI ERRORI', rcd_skip:'SALTA ›', rcd_right:'GIUSTO', rcd_wrong:'SBAGLIATO',
     rcd_done_title:'ALLENAMENTO COMPLETATO', rcd_mastered:'padroneggiate', rcd_skipped:'saltate', rcd_back:'TORNA AI RISULTATI',
-    hint_rhythmcards:'<strong>FLASH CARD RITMICHE</strong> — un mazzo mescolato di figure ritmiche comuni, ognuna una battuta di 2/4. Tocca <strong>PLAY</strong> per ascoltarla, o disattiva il <strong>CLICK</strong> per sentirla da sola e farla partire subito. Sfoglia con le frecce. Il pulsante in alto a sinistra filtra per categoria, e toccandone più di una le mescoli (mostra <strong>CUSTOM</strong>). Attiva la <strong>MODALITÀ TAP</strong>, premi <strong>PLAY</strong> per il conteggio, poi batti la figura sul pad seguendo il click; la carta valuta il tuo tempismo e segnala cosa correggere. Premi <strong>TEST</strong> (in alto a destra) per una sequenza rapida di otto carte su una pulsazione costante, che ti dà un punteggio e si concentra sulle figure più difficili. Il <strong>BPM</strong> funziona da regolatore di difficoltà: lento perdona, veloce no.',
+    hint_rhythmcards:'<strong>FLASH CARD RITMICHE</strong> — un mazzo mescolato di figure ritmiche comuni, ognuna una battuta di 2/4. Tocca <strong>PLAY</strong> per ascoltarla, o disattiva il <strong>CLICK</strong> per sentirla da sola e farla partire subito. Sfoglia con le frecce. Il pulsante in alto a sinistra filtra per categoria, e toccandone più di una le mescoli (mostra <strong>CUSTOM</strong>). Attiva la <strong>MODALITÀ TAP</strong> e il pad prende il comando: toccalo una volta per iniziare, ti conta l\'entrata, poi batti la figura seguendo il click. La carta valuta il tuo tempismo e segnala cosa correggere. Premi <strong>TEST</strong> (in alto a destra) per una sequenza rapida di otto carte su una pulsazione costante, che ti dà un punteggio e si concentra sulle figure più difficili. Il <strong>BPM</strong> funziona da regolatore di difficoltà: lento perdona, veloce no.',
     thmn_sub_brand:'STILE ETHERWAVE',
     thmn_hint_touch:'TRASCINA PER SUONARE · → INTONAZIONE · ↑ VOLUME',
     thmn_ov_hint:'MANO DESTRA → INTONAZIONE  ·  BARRA SX ↕ VOLUME',

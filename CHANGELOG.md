@@ -16,6 +16,152 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.81.57 — the deep links: three bugs, stacked, and the first one made the other two unfixable
+
+**The links had never worked.** Not since they were written. Every fix before this
+one was correct and none of them could possibly have run.
+
+### 1. The handler lived inside `removeSplash()`
+
+This is the whole thing. The deep-link handler — the `getLaunchUrl()` call, the
+`appUrlOpen` listener, all of it — was nested inside `removeSplash()`, which runs
+when the splash **ends**.
+
+So the handler that exists to skip the splash was only registered *after the splash
+had already finished*. It was structurally incapable of doing its only job. A brace-depth
+walk settled it: `removeSplash()` spans lines 16720–17040, and the handler sat at 16800.
+
+It explains both symptoms at once, which is how you know it is the real one:
+
+- **the splash never skipped**, because nothing asked it to until it was over;
+- **the module never opened**, because `getLaunchUrl()` only resolved ~3.5 s in, by
+  which point the splash's handoff to the home screen had wiped out whatever the
+  link tried to open.
+
+Moved to the top level of the script block, so it is listening before the splash starts.
+
+### 2. `go()` fired 250 ms before its dependencies existed
+
+Measured, not guessed:
+
+    getLaunchUrl() resolves      ~77ms
+    go() therefore fires        ~157ms   (setTimeout(go, 80))
+    enterExercise() is defined  ~410ms   ← a script block ~40,000 lines further down
+
+`go()` called `enterExercise` a quarter-second before it existed, threw
+`enterExercise is not a function` straight into a bare `catch (e) {}`, and the link
+silently did nothing. **That catch is why this never surfaced as an error: it swallowed
+the only evidence.**
+
+### 3. Waiting for `enterExercise` to *exist* is not waiting for the app to be *ready*
+
+The first attempt at (2) polled for the function. That turned the bug into a coin flip —
+one run gave chordle ✓ tonale ✗ diadle ✗, the next gave the opposite. Same code, same
+build.
+
+The functions appear at ~410 ms, but the app is still booting: there are
+`DOMContentLoaded` handlers as far down as line ~99500, plus a `window` `load` handler,
+and they set up the home screen. Open a module before those run and the boot sequence
+calmly resets the view on top of it.
+
+Now it waits for `window` `load`, which fires after every deferred handler — the exact
+guarantee needed: nothing else is going to redraw the shell after that point.
+
+### Also: don't give up if Capacitor isn't there yet
+
+`if (!window.Capacitor) return;` — one check, at the earliest moment in the file, no
+retry. The bridge is injected by the native shell and is not guaranteed to exist while
+this inline script is still parsing. Lose that race and the listener is never registered.
+Now polls (100 × 100 ms, bounded, stops cleanly on web).
+
+**Verified 20/20:** all four dailies × both URL shapes × bridge speeds 0/250/700 ms, plus
+warm-app (`appUrlOpen`), a second link over an already-open module, and garbage input
+(empty/unknown/no `?m=`/wrong domain) falling through to a normal launch.
+
+> **Note for testers:** the dailies are Pro-gated. A non-Pro tester tapping a shared link
+> gets the paywall, not the puzzle. Correct behaviour, but it looks exactly like a broken
+> link. If links still fail on a Play build, check
+> `adb shell pm get-app-links com.lieutenantdan.intonare` first — if App Links are not
+> `verified`, Android opens Chrome and none of this code ever runs (that is an
+> assetlinks/signing problem, not a JS one).
+
+---
+
+## v0.81.49–56 — Road Trip: per-theme dressing
+
+A `.rt-dressing` layer per theme. Pure CSS gradients, no assets.
+
+**It rendered perfectly and was completely invisible, for two reasons:**
+
+1. It was a **sibling** of `.rt-menu` at `z-index: 1`. But `.rt-menu` is `z-index: 12`
+   with a full-height opaque themed background, so it painted straight over the top.
+   Moved the layer *inside* the menu.
+2. Every theme carries `#exRoadTrip.rt-dsn-X .rt-menu > * { position: relative; }` — a
+   wildcard that catches **every** direct child, including the dressing. It forced
+   `position: relative`, which made `inset: 0` meaningless and collapsed the layer to
+   **zero height** as a flex item. Two classes on the id outranks anything reasonable,
+   so: `!important`. Rare, and correct here — a blanket wildcard reaching past its
+   business, and a five-place fix would rot the day someone adds a sixth theme.
+
+**Which means the earlier "strengthen the colours" pass was pure theatre** — doubling
+alphas on a layer that was zero pixels tall.
+
+Once visible, the design work (all Dan's calls, on-device):
+
+- **Parchment** (v0.81.52–53): coffee rings didn't read — a perfect circle reads as a
+  circle, not a stain. Tried fold creases (rendered as huge diagonal light streaks) and a
+  white radial to punch a hole in the ring — **under `mix-blend-mode: multiply` white is
+  not a hole, it's a lamp**, and it rendered as a sun in the middle of the map. Both cut.
+  Now: edge-aging only. Four irregular ellipses so the border isn't symmetric (one even
+  inset shadow reads as a photographic vignette, wrong century), corners going first,
+  scattered age spots. **Nothing in the middle, because that's where the content lives.**
+- **Blueprint** (v0.81.52): the grid alone is wallpaper. Added drafting furniture — a
+  title block in the bottom-right corner, a dimension line down the left margin with end
+  ticks, an uneven cyanotype exposure wash. Three objects, all in the margins.
+- **Blueprint START** (v0.81.54): was `rgba(255,210,63,.1)` — **ten percent**. The most
+  important control on the screen was a ghost and read as disabled. Now solid amber,
+  dark text (amber-on-amber is not a button).
+- **Nautical** (v0.81.54–56): rhumb-line web was a full-screen fan of lines behind the
+  content — texture, not decoration, and it fought the cards. Replaced with a compass
+  rose; the map already has one, so that was just a second rose. **Cut entirely.** The
+  theme carries itself on its grid and palette. Deliberately bare.
+- **Night / Ink:** stars, headlight glow, ink bleed. Unchanged.
+
+---
+
+## v0.81.47–48 — Road Trip start screen stopped short of the bottom
+
+The first fix (flex on `.rt-menu`) did **nothing**, and Playwright measured 250 px of
+dead space to prove it. `#rtMenu` is a **child** of `.rt-stage-wrap`, not a sibling, and
+`.rt-stage-wrap` is `flex-grow: 0`.
+
+**A child cannot outgrow a `flex-grow: 0` parent.** Grow the container, not the leaf.
+
+Then `justify-content: space-between` on the menu: cards read from the top, START sits in
+the thumb zone, 264 px of slack between. Measured 0 px dead. In-trip map still a perfect
+square (aspect 1.000 — the vehicle/pin maths depends on it).
+
+---
+
+## v0.81.39–46 — rhythm flash cards: the tap zone, and the card that kept growing
+
+Many rejected iterations (pad-as-transport, dome/glow, moved feedback rows, arrows
+re-homed) before Dan called it: *"tap area was good two builds ago, just do that."*
+Reverted. Arrows now flank the pad inside the tap-zone wrapper; transport hides wholesale.
+
+**The card kept expanding on entry to tap mode, and it took three attempts to find why.**
+Not the layout, not the CSS I'd added — `rcArmTap()` was writing `t('rc_tap_ready')` into
+`#rcTapFeedback` on mode-entry. Non-empty text defeated its own `:empty { display: none }`,
+which added a row *and* a 12 px flex gap. **Don't write text into a feedback row on
+mode-entry.** (`rc_tap_ready` is now an unused i18n key. Harmless.)
+
+Also fixed en route: hiding `.rc-transport` had killed the prev/next arrows (siblings of
+PLAY); a third stale copy of the tour text at L37989 said "hit PLAY" with no `<strong>`,
+so grep had missed it. **Italian apostrophes (`l'entrata`) break single-quoted JS i18n
+strings** — escaped; the syntax gate caught it.
+
+---
+
 ## v0.81.38 — settings that would not stick, and a feature nobody could reach
 
 A sweep of every module-level setting in the app, after the Road Trip theme turned out
