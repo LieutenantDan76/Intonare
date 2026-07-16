@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.94.3 -->
+<!-- INTONARE_VERSION: 0.94.4 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -24831,7 +24831,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.94.3</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.94.4</span>
     </div>
   </div>
 </div>
@@ -24839,7 +24839,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.94.3';
+const INTONARE_VERSION = '0.94.4';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -68526,7 +68526,7 @@ async function scheduleNotifications() {
       id: NOTIF_ID_PRACTICE,
       title: t('notif_practice_toast_title'),
       body: t('notif_practice_toast_body'),
-      schedule: { on: _notifTimeToOn(ns.practiceTime || '19:00'), allowWhileIdle: true },
+      schedule: { on: _notifTimeToOn(ns.practiceTime || '19:00') },
       sound: null,
       smallIcon: 'ic_stat_intonare',
       actionTypeId: '',
@@ -68541,7 +68541,7 @@ async function scheduleNotifications() {
       id: NOTIF_ID_STREAK,
       title: t('notif_streak_toast_title').replace('{n}', count),
       body: t('notif_streak_toast_body'),
-      schedule: { on: _notifTimeToOn(ns.streakTime || '20:00'), allowWhileIdle: true },
+      schedule: { on: _notifTimeToOn(ns.streakTime || '20:00') },
       sound: null,
       smallIcon: 'ic_stat_intonare',
       actionTypeId: '',

@@ -16,6 +16,27 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.94.4
+
+**Drop exact-alarm dependency from reminders (Play review risk reduction)**
+
+Removed `allowWhileIdle: true` from both LocalNotifications schedule blocks (practice + streak
+reminders). allowWhileIdle is what pulls Android's SCHEDULE_EXACT_ALARM permission into the
+build; that permission is on Google Play's restricted list (meant for alarm-clock / calendar
+apps) and is an avoidable question on a first production review. Daily practice/streak nudges
+don't need to-the-second timing — without it they're inexact, so on a phone in deep Doze they
+may arrive a few minutes late; in normal use they're on time. No feature loss for a reminder.
+
+COMPANION EDIT (manual, on the build machine — NOT in the HTML): delete this line from
+native_src/AndroidManifest.xml:
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+Then verify the MERGED manifest (android/app/build/intermediates/merged_manifests/) no longer
+contains SCHEDULE_EXACT_ALARM — the local-notifications plugin can re-inject it. If it does,
+add a tools:node="remove" override in the source manifest.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+
 ## v0.94.3
 
 **Organ + Rhodes now-playing / SONGS / song-bank all match their instrument motif**
