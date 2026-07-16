@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.84.1 -->
+<!-- INTONARE_VERSION: 0.92.4 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -1614,6 +1614,74 @@ html,body{background:#000000!important;transition:none!important}
     --theme-grad: linear-gradient(135deg, #5ee2ff 0%, #7aafff 100%);
   }
 
+  /* ═══════════ LIGHT MODE ═══════════
+     Soft off-white base (research: never pure white), elevation via surfaces
+     stepping TOWARD white, dark-slate text (never pure black), accents deepened
+     to hold WCAG AA (>=4.5:1) on the light base — same hues, darker values.
+     Signature surfaces (tuner glass, CRT, theremin, Road Trip, premium streak
+     cards) re-declare the dark palette locally via .keep-dark and are untouched. */
+  body.light {
+    /* A LIGHTENED version of the app's own navy palette (hue 240, not neutral
+       stone/white) — so light mode reads as "Intonare, brighter", keeping identity.
+       Soft lavender-blue surfaces, deepened accents that hold WCAG AA. */
+    --bg-0: #bdbddb;
+    --bg-1: #c4c4de;
+    --surface: #cfcfe3;
+    --surface-2: #d7d7e7;
+    --panel: #d7d7e7;
+    --border: #8a8ab0;
+    --border-soft: #a3a3c4;
+    --text: #1e2030;
+    --text-dim: #4a4d62;
+    --muted: #585b70;
+
+    --accent: #006f8f;
+    --accent-warm: #b34a18;
+    --accent-rose: #a3284d;
+    --accent-soft: #5238a5;
+    --in-tune: #3a7000;
+    --green: #3a7000;
+    --sharp: #a32718;
+    --flat: #2358c8;
+    --metro: #875d00;
+
+    --theme-a: #006f8f;
+    --theme-b: #2563cc;
+
+    --grad-cyan: linear-gradient(135deg, #006f8f 0%, #2563cc 100%);
+    --grad-warm: linear-gradient(135deg, #b34a18 0%, #a3284d 100%);
+    --grad-tune: linear-gradient(135deg, #3a7000 0%, #006f8f 100%);
+    --grad-metro: linear-gradient(135deg, #6f4d00 0%, #b34a18 55%, #a3284d 100%);
+
+    --shadow-card: inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 2px rgba(40,40,70,0.04), 0 2px 4px rgba(40,40,70,0.04), 0 4px 8px rgba(40,40,70,0.05), 0 8px 16px rgba(40,40,70,0.05);
+    --shadow-soft: 0 1px 2px rgba(40,40,70,0.05), 0 3px 8px rgba(40,40,70,0.06);
+
+    --theme: #006f8f;
+    --theme-rgb: 0, 111, 143;
+    --theme-grad: linear-gradient(135deg, #006f8f 0%, #2563cc 100%);
+  }
+
+  /* Signature surfaces keep their dark identity in BOTH modes. A .keep-dark wrapper
+     re-declares the dark palette for its subtree — the tuner glass stays glass, the
+     CRT stays a CRT, framed inside the light chrome like a video player on a light
+     page. Applies: tuner screen, tonal-centre CRT, theremin, Road Trip, premium
+     streak reward cards. */
+  body.light .keep-dark {
+    --bg-0: #262636; --bg-1: #2c2c3e;
+    --surface: #313146; --surface-2: #383850; --panel: #3d3d56;
+    --border: #4a4a64; --border-soft: #42425a;
+    --text: #eef0f7; --text-dim: #a3a5b8; --muted: #6a6c85;
+    --accent: #5ee2ff; --accent-warm: #ffa07a; --accent-rose: #ff8aae; --accent-soft: #b8a3ff;
+    --in-tune: #b6f25b; --green: #b6f25b; --sharp: #ff5252; --flat: #7aafff; --metro: #ffd166;
+    --theme-a: #5ee2ff; --theme-b: #7aafff;
+    --grad-cyan: linear-gradient(135deg, #5ee2ff 0%, #7aafff 100%);
+    --grad-warm: linear-gradient(135deg, #ffa07a 0%, #ff8aae 100%);
+    --grad-tune: linear-gradient(135deg, #b6f25b 0%, #5ee2ff 100%);
+    --grad-metro: linear-gradient(135deg, #ffd166 0%, #ffa07a 55%, #ff8aae 100%);
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 30px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.3);
+    --shadow-soft: 0 4px 14px rgba(0,0,0,0.3);
+  }
+
   /* Per-mode theme overrides — re-maps --accent and tints the whole atmosphere */
   body.theme-tuner {
     --bg-0: #07080f;
@@ -1673,6 +1741,623 @@ html,body{background:#000000!important;transition:none!important}
     --border: #322d4e;
     --border-soft: #28253c;
   }
+
+  /* ── LIGHT MODE × TAB THEMES ──
+     The theme blocks above re-declare dark surfaces and come after body.light, so
+     without these they win and light mode never reaches a themed tab. These
+     compound selectors (higher specificity, later source) restore the light chrome.
+     Personality survives: each tab keeps its hue as a DEEPENED accent (WCAG AA on
+     the light base) and a barely-there 2-3% tint of that hue in the backdrop. */
+  body.light.theme-tuner, body.light.theme-metro, body.light.theme-tools, body.light.theme-train {
+    --text: #1e2030;
+    --text-dim: #4a4d62;
+    --muted: #585b70;
+    --in-tune: #3a7000; --green: #3a7000; --sharp: #a32718; --flat: #2358c8; --metro: #875d00;
+    --shadow-card: inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 2px rgba(40,40,70,0.04), 0 2px 4px rgba(40,40,70,0.04), 0 4px 8px rgba(40,40,70,0.05), 0 8px 16px rgba(40,40,70,0.05);
+    --shadow-soft: 0 1px 2px rgba(40,40,70,0.05), 0 3px 8px rgba(40,40,70,0.06);
+  }
+  body.light.theme-tuner {
+    --bg-0: #bdc1db; --bg-1: #c4c8de;
+    --surface: #cfd1e3; --surface-2: #d7dae7; --panel: #d7dae7;
+    --border: #8a8eb0; --border-soft: #a3a7c4;
+    --accent: #006f8f; --accent-warm: #b34a18;
+    --theme: #006f8f; --theme-a: #006f8f; --theme-b: #2358c8; --theme-rgb: 0, 111, 143;
+    --grad-cyan: linear-gradient(135deg, #006f8f 0%, #2358c8 100%);
+    --theme-grad: linear-gradient(135deg, #006f8f 0%, #2358c8 100%);
+  }
+  body.light.theme-metro {
+    --bg-0: #dbd4bd; --bg-1: #ded8c4;
+    --surface: #e3decf; --surface-2: #e7e3d7; --panel: #e7e3d7;
+    --border: #b0a884; --border-soft: #c4bd9f;
+    --accent: #875d00; --accent-warm: #b34a18;
+    --theme: #875d00; --theme-a: #875d00; --theme-b: #b34a18; --theme-rgb: 135, 93, 0;
+    --grad-cyan: linear-gradient(135deg, #875d00 0%, #b34a18 100%);
+    --theme-grad: linear-gradient(135deg, #875d00 0%, #b34a18 100%);
+  }
+  body.light.theme-tools {
+    --bg-0: #bddbd5; --bg-1: #c4ded9;
+    --surface: #cfe3df; --surface-2: #d7e7e4; --panel: #d7e7e4;
+    --border: #84b0a8; --border-soft: #9fc4bd;
+    --accent: #095c3a; --accent-warm: #095c3a;
+    --theme: #095c3a; --theme-a: #095c3a; --theme-b: #006f8f; --theme-rgb: 11, 112, 72;
+    --grad-cyan: linear-gradient(135deg, #095c3a 0%, #006f8f 100%);
+    --theme-grad: linear-gradient(135deg, #095c3a 0%, #006f8f 100%);
+  }
+  body.light.theme-train {
+    --bg-0: #c0bddb; --bg-1: #c7c4de;
+    --surface: #d1cfe3; --surface-2: #d9d7e7; --panel: #d9d7e7;
+    --border: #8c8ab0; --border-soft: #a5a3c4;
+    --accent: #5238a5; --accent-warm: #b34a18;
+    --theme: #5238a5; --theme-a: #5238a5; --theme-b: #006f8f; --theme-rgb: 98, 72, 191;
+    --grad-cyan: linear-gradient(135deg, #5238a5 0%, #006f8f 100%);
+    --theme-grad: linear-gradient(135deg, #5238a5 0%, #006f8f 100%);
+  }
+
+  /* ── DIRECT-PAINT FALLBACK (in-app HTML preview) ──
+     The palette tokens above are @property-registered (so the theme crossfade can
+     animate them). Some embedded HTML-preview engines only partially support
+     @property: a registered custom property resolves to its dark INITIAL-VALUE
+     instead of the cascaded light value, so backgrounds stayed dark while
+     unregistered vars like --text went light. Fix: in light mode, paint the page
+     chrome from LITERAL light values, not via the registered tokens. Registered
+     tokens still drive the animated crossfade in engines that support it; these
+     just guarantee a correct static paint everywhere. .keep-dark subtrees are
+     unaffected (they re-declare their own dark values and are not touched here). */
+  /* Paint the backdrop from the token (proven to paint). It resolves per-tab, so
+     each tab shows a lightened version of ITS OWN hue instead of one flat colour. */
+  html.light-root { background: #bdbddb !important; }
+  body.light { background: var(--bg-0, #bdbddb) !important; }
+  body.light .app,
+  body.light .practice-hub,
+  body.light .stack { background: transparent; }
+  /* ambient glow: a soft tint wash of the tab hue on light, not the dark halo */
+  body.light::before {
+    background:
+      radial-gradient(ellipse 90% 60% at 50% -5%,  color-mix(in srgb, var(--theme) 22%, transparent) 0%, transparent 62%),
+      radial-gradient(ellipse 55% 45% at 95% 108%, color-mix(in srgb, var(--theme) 13%, transparent) 0%, transparent 58%),
+      radial-gradient(ellipse 50% 40% at  5% 72%,  color-mix(in srgb, var(--theme) 9%, transparent) 0%, transparent 58%) !important;
+  }
+  /* structural surfaces from the token so per-tab tint carries through */
+  body.light .card,
+  body.light .panel,
+  body.light .practice-card-btn,
+  body.light .teach-hint,
+  body.light .sm-section,
+  body.light .folder-card,
+  body.light .practice-folder-btn {
+    background: var(--surface-2, #d7d7e7) !important;
+    border-color: var(--border, #a3a3c4) !important;
+  }
+  body.light .practice-card-btn {
+    background: linear-gradient(180deg, var(--surface-2, #d7d7e7) 0%, var(--surface, #cfcfe3) 100%) !important;
+  }
+  body.light .practice-card-sub { color: var(--text-dim, #4a4d62) !important; }
+
+
+  /* ── SIGNATURE SCREENS IN LIGHT MODE ──
+     Guarded surfaces stay dark (that's their identity). Pure black on a light page
+     is a jarring slab, so we soften the TRANSITION: the warm stone base already
+     narrows the gap, and a soft warm frame + light-side glow around each screen
+     eases the edge — "dark instrument in a lit room", not "black hole on paper".
+     Lifting the screens' own dark backgrounds to charcoal is a per-screen job
+     (each paints its own hardcoded near-black) — deferred to Phase 2. */
+  body.light .tuner-screen.keep-dark,
+  body.light #toolTonal.keep-dark,
+  body.light #toolTheremin.keep-dark {
+    box-shadow: 0 4px 16px rgba(40,40,70,0.12),
+                0 0 0 1px rgba(180,180,205,0.5);
+  }
+
+  /* ── FLATTEN CHILD 3D IN LIGHT MODE ──
+     Nested controls (instrument pills, toggle chips, tab buttons, steppers) carry
+     their own inset-bevel + drop shadows tuned for dark surfaces; on light they read
+     puffy/embossed. Neutralize to a single soft flat shadow app-wide in light mode
+     (guarded dark subtrees keep theirs). */
+  body.light:not(.keep-dark) .practice-folder-btn,
+  body.light .tone-tile, body.light .stb-tile,
+  body.light .gss-inst-btn, body.light .iv-mode-chip,
+  body.light .sm-toggle-chip, body.light .lang-chip,
+  body.light .tg-seg, body.light .ts-chip,
+  body.light .metro-sound-btn, body.light .ce-inv-btn {
+    box-shadow: 0 1px 2px rgba(40,40,70,0.06) !important;
+  }
+  /* PREMIUM: layered shadow (smooth falloff, not one muddy drop) + a 1px top edge-
+     light so cards catch light from above. Research: the stacked-shadow "$10K UI"
+     technique + glassmorphism edge-light. Consistent light source (down + top sheen). */
+  body.light .card, body.light .panel {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.55),
+      0 1px 2px rgba(40,40,70,0.04),
+      0 2px 4px rgba(40,40,70,0.04),
+      0 4px 8px rgba(40,40,70,0.05),
+      0 8px 16px rgba(40,40,70,0.05) !important;
+    border: 1px solid var(--border, #a3a3c4) !important;
+  }
+  /* Guarded-screen frames (tuner/metro housing): drop the heavy dark bezel, give a
+     soft flat lift so the dark screen sits in a clean light frame, not a puffy slab. */
+  body.light .tuner-bpm-card,
+  body.light .metro-bpm-card {
+    box-shadow: 0 2px 10px rgba(40,40,70,0.10) !important;
+    border-color: var(--border, #b4b4cd) !important;
+  }
+  /* Folder / group cards got over-flattened — restore GENTLE elevation (soft, no
+     bevel) so they lift off the tinted backdrop instead of reading as flat blocks. */
+  body.light .practice-card-btn,
+  body.light .practice-folder-btn {
+    background: linear-gradient(180deg, var(--surface-2, #d7d7e7) 0%, var(--surface, #cfcfe3) 22%) !important;
+    border: 1px solid var(--border, #a3a3c4) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.55),
+      0 1px 2px rgba(40,40,70,0.04),
+      0 2px 4px rgba(40,40,70,0.04),
+      0 4px 8px rgba(40,40,70,0.05),
+      0 8px 16px rgba(40,40,70,0.05) !important;
+  }
+  /* Inner dark screens (metro display, theremin console) carry heavy dark drop
+     shadows + coloured glows that halo onto the light page. In light mode soften the
+     OUTER drop to a clean soft lift; the internal recessed look is unaffected. */
+
+  body.light .thmn-console {
+    box-shadow: inset 0 2px 0 rgba(255,246,222,.55),
+                inset 0 -3px 8px rgba(90,60,20,.5),
+                0 2px 8px rgba(40,40,70,0.14) !important;
+  }
+
+  /* ── SCREEN LIGHTENING (light mode) — tuner LCD proof ──
+     Lift the near-black LCD layers to warm CHARCOAL so the screen reads as a dark
+     instrument panel in a lit room, not a black slab. Keep housing>bezel>inner
+     darkness order so the recessed depth survives. */
+  /* TRUE LIGHT TUNER SCREEN (C2 dusty blue-grey) — a recessed light display, not a
+     dark slab. Content re-themed to deep-on-light. */
+  body.light .tuner-screen {
+    background: linear-gradient(180deg,#b6bdd3,#a6afc8) !important;
+    box-shadow: inset 0 2px 8px rgba(22,38,72,.16), inset 0 1px 0 rgba(255,255,255,.32), 0 2px 8px rgba(40,40,70,.09) !important;
+    border-color: #929cc0 !important;
+  }
+  body.light .tuner-screen-bezel{ background: transparent !important; box-shadow:none !important; }
+  body.light .tuner-screen-inner{ background: transparent !important; }
+  /* content: deep-on-light instead of glow-on-dark */
+  body.light .tuner-screen .tuner-screen-freq { color: #004a60 !important; }
+  body.light .tuner-screen .tuner-screen-freq span { color: #004a60 !important; }
+  body.light .tuner-screen .tuner-screen-note {
+    background: linear-gradient(135deg,#004a60,#264c00) !important;
+    -webkit-background-clip: text !important; background-clip: text !important;
+    filter: none !important;
+  }
+  body.light .tuner-screen .tuner-screen-cents-badge { color: #3d4a70 !important; }
+  body.light .tuner-screen .tuner-screen-cents-badge.in-tune { color: #264c00 !important; }
+  body.light .tuner-screen .tuner-screen-cents-badge.sharp   { color: #8f2416 !important; }
+  body.light .tuner-screen .tuner-screen-cents-badge.flat    { color: #163b8f !important; }
+  /* meter: track, center, ticks, needle, FLAT/SHARP head — dark-on-light for C2 */
+  body.light .tuner-screen .tuner-screen-meter-head { color: #4a5578 !important; }
+  body.light .tuner-screen .meter-track { background: #9ba5c1 !important; box-shadow: inset 0 1px 3px rgba(22,38,72,.31) !important; }
+  body.light .tuner-screen .meter-center { background: rgba(25,40,75,.35) !important; }
+  body.light .tuner-screen .tick-label { color: rgba(40,55,95,.55) !important; }
+  body.light .tuner-screen .meter-needle { background: #264c00 !important; box-shadow: 0 0 6px rgba(38,76,0,.45) !important; }
+  body.light .tuner-screen .meter-needle.in-tune { background: #2f5c00 !important; }
+  body.light .tuner-screen .meter-needle.sharp { background: #8f2416 !important; }
+  body.light .tuner-screen .meter-needle.flat { background: #163b8f !important; }
+  /* STROBE button + OCT label — deep on light C2 */
+  body.light .tuner-screen .tuner-strobe-btn {
+    background: rgba(0,92,120,.10) !important;
+    border-color: rgba(0,92,120,.35) !important;
+    color: #005c78 !important;
+  }
+  body.light .tuner-screen .tuner-screen-octave { color: rgba(0,92,120,.6) !important; }
+  body.light .tuner-screen .tuner-screen-freq-unit,
+  body.light .tuner-screen .tuner-screen-freq-val { color: #005c78 !important; }
+  /* remaining screen elements + glow softening for light */
+  body.light .tuner-screen .tuner-screen-label { color: rgba(0,74,96,.7) !important; }
+  body.light .tuner-screen .tuner-screen-side { color: rgba(40,55,95,.55) !important; }
+  body.light .tuner-screen .tuner-screen-unit { color: #004a60 !important; }
+  body.light .tuner-screen .meter-fill { box-shadow: 0 0 8px currentColor !important; }
+  body.light .tuner-screen .tuner-screen-verdict.perfect { color: #264c00 !important; text-shadow: 0 1px 2px rgba(38,76,0,.2) !important; }
+  body.light .tuner-screen .tuner-screen-verdict.close   { color: #004a60 !important; text-shadow: 0 1px 2px rgba(0,74,96,.2) !important; }
+  body.light .tuner-screen .tuner-screen-verdict.off     { color: #8f2416 !important; text-shadow: 0 1px 2px rgba(143,36,22,.2) !important; }
+  body.light .tuner-screen .tuner-screen-note { text-shadow: none !important; }
+  /* metro LCD — charcoal (housing>bezel>inner) */
+  body.light .metro-screen {
+    background: linear-gradient(180deg,#d4d2cc,#c8c5bd) !important;
+    box-shadow: inset 0 2px 8px rgba(50,45,30,.15), inset 0 1px 0 rgba(255,255,255,.32), 0 2px 8px rgba(40,40,70,.09) !important;
+    border-color: #a8a498 !important;
+  }
+  body.light .metro-screen-bezel { background: transparent !important; box-shadow:none !important; }
+  body.light .metro-screen-inner { background: transparent !important; }
+  /* metro content: deep warm-brown on the neutral-warm screen (high contrast) */
+  body.light .metro-screen .bpm-number { color: #7a5410 !important; }
+  body.light .metro-screen .bpm-unit { color: rgba(122,84,16,.7) !important; }
+  body.light .metro-screen .metro-screen-label { color: rgba(70,55,20,.75) !important; }
+  body.light .metro-screen .bpm-name,
+  body.light .metro-screen .metro-bpm-name { color: #8a5e10 !important; }
+  /* sound buttons ON the LCD — deepen so they're not ghosts */
+  body.light .metro-screen .metro-sound-btn {
+    color: rgba(70,55,20,.8) !important;
+    border-color: rgba(90,70,20,.35) !important;
+  }
+  body.light .metro-screen .metro-sound-btn.active {
+    color: #5a3d00 !important;
+    border-color: rgba(90,70,20,.6) !important;
+    background: rgba(111,77,0,.14) !important;
+  }
+
+  /* ── FULL METRO SCREEN CONTENT PASS (light) — every element deep-on-light ── */
+  /* drum sound buttons (CLICK/WOOD/COWBELL/etc) — were faint gold, invisible */
+  body.light .metro-screen .screen-sound-btn {
+    background: rgba(111,77,0,.06) !important;
+    border-color: rgba(90,70,20,.35) !important;
+    color: #6f4d00 !important;
+  }
+  body.light .metro-screen .screen-sound-btn.active {
+    background: rgba(111,77,0,.16) !important;
+    border-color: rgba(90,70,20,.6) !important;
+    color: #5a3d00 !important;
+  }
+  /* beat number (the rose "1") + beat dots */
+  body.light .metro-screen .bpm-beat-num { color: #96214a !important; }
+  /* GROOVE mode: label / name / origin / beat cells */
+  body.light .metro-screen .groove-screen-label { color: rgba(111,77,0,.55) !important; }
+  body.light .metro-screen .groove-screen-name {
+    background: linear-gradient(135deg,#7a5410,#b0492a) !important;
+    -webkit-background-clip: text !important; background-clip: text !important;
+  }
+  body.light .metro-screen .groove-screen-origin { color: rgba(140,52,30,.85) !important; }
+  body.light .metro-screen .groove-screen-beats,
+  body.light .metro-screen .groove-screen-bpm { color: #6f4d00 !important; }
+  body.light .metro-screen .groove-screen-grid { border-color: rgba(90,70,20,.25) !important; }
+  /* groove beat pips (.gs-step) — were faint white/gold, near-invisible on light */
+  body.light .metro-screen .gs-step {
+    background: rgba(90,70,20,.06) !important;
+    border-color: rgba(90,70,20,.22) !important;
+  }
+  body.light .metro-screen .gs-step.gs-beat-marker { border-left-color: rgba(111,77,0,.4) !important; }
+  body.light .metro-screen .gs-step.gs-soft {
+    background: rgba(111,77,0,.20) !important;
+    border-color: rgba(111,77,0,.4) !important;
+  }
+  body.light .metro-screen .gs-step.gs-accent {
+    background: rgba(111,77,0,.42) !important;
+    border-color: rgba(90,61,0,.7) !important;
+  }
+  body.light .metro-screen .gs-step.gs-cursor {
+    box-shadow: 0 0 0 1.5px rgba(176,53,90,.85), 0 0 6px rgba(176,53,90,.35) !important;
+  }
+  body.light .metro-screen .gs-step.gs-beat-pulse {
+    box-shadow: 0 0 0 1.5px rgba(111,77,0,.9), 0 0 6px rgba(111,77,0,.4) !important;
+  }
+  /* pulse toggle + dots */
+  body.light .metro-screen .gs-pulse-toggle,
+  body.light .metro-screen .gs-pulse-pick { color: rgba(111,77,0,.7) !important; border-color: rgba(90,70,20,.3) !important; }
+  body.light .metro-screen .pulse-off { color: rgba(90,70,20,.4) !important; }
+  /* top row icons (vol / menu) — were faint */
+  body.light .metro-screen .screen-bpm-row { color: rgba(111,77,0,.6) !important; }
+  body.light .metro-screen .metro-screen-top svg,
+  body.light .metro-screen .screen-bpm-row svg { color: rgba(111,77,0,.6) !important; fill: currentColor !important; }
+  /* theremin pad + console — cool green-charcoal, keep the radial highlight */
+  body.light .thmn-pad-wrap {
+    background: radial-gradient(150% 130% at 100% 50%, rgba(127,231,196,.16), transparent 60%),
+                linear-gradient(180deg, #3a4a44, #303e38) !important;
+  }
+  /* tonal-centre CRT — green-charcoal glass */
+  body.light .tc-crt {
+    background: radial-gradient(120% 130% at 50% 30%, #35473d 0%, #2c3d34 65%, #26352c 100%) !important;
+  }
+  /* tuner chroma strip — match the tuner LCD charcoal (3-layer) */
+  /* chroma strip: C2 light screen matching the tuner LCD */
+  body.light .tuner-chroma-screen {
+    background: linear-gradient(180deg,#b6bdd3,#a6afc8) !important;
+    box-shadow: inset 0 2px 8px rgba(22,38,72,.16), inset 0 1px 0 rgba(255,255,255,.32), 0 2px 8px rgba(40,40,70,.09) !important;
+    border-color: #929cc0 !important;
+  }
+  body.light .tuner-chroma-bezel        { background: transparent !important; box-shadow:none !important; }
+  body.light .tuner-chroma-screen-inner { background: transparent !important; }
+  body.light .tuner-chroma-label { color: #005c78 !important; }
+  body.light .chroma-note { color: rgba(32,48,88,.35) !important; }
+  body.light .chroma-note.active { color: #005c78 !important; }
+
+  /* ── FULL LIGHT-MODE POLISH SWEEP ── */
+  /* chroma strip: kill the heavy dark drop halo, keep the recessed inset */
+  body.light .tuner-chroma-screen {
+    box-shadow: 0 2px 8px rgba(40,40,70,0.12),
+                0 1px 0 rgba(255,255,255,0.12) inset,
+                0 -2px 4px rgba(0,0,0,0.5) inset !important;
+  }
+  /* header buttons (mic / fav) were stark white — tint + define */
+  body.light .head-btn {
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface-2, #d7d7e7)) !important;
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border, #8a8ab0)) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 3px rgba(40,40,70,0.08) !important;
+  }
+  body.light .mic-btn {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 18%, var(--surface-2, #d7d7e7)), color-mix(in srgb, var(--accent) 11%, var(--surface, #cfcfe3))) !important;
+    border: 2px solid color-mix(in srgb, var(--accent) 34%, var(--border, #8a8ab0)) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 2px 5px rgba(40,40,70,0.09) !important;
+  }
+  /* level chip pill */
+  body.light .level-chip {
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface-2, #d7d7e7)) !important;
+    border-color: color-mix(in srgb, var(--accent) 34%, var(--border, #8a8ab0)) !important;
+  }
+  /* any remaining big-shadow cards on light chrome: soften (not guarded screens) */
+  body.light .fork-btn, body.light .metro-subtab, body.light .tuner-subtab,
+  body.light .metro-mode-chip, body.light .metro-sound-btn {
+    box-shadow: 0 1px 3px rgba(40,40,70,0.07) !important;
+  }
+  /* Accent-FILLED buttons use color:var(--bg-0) as contrast text; in light that's a
+     light grey on a mid-tone accent (~4:1, marginal). Force white text = 5.7-6.6:1. */
+  body.light .iv-btn.primary,
+  body.light .mq-ans-btn.correct .mq-ans-letter,
+  body.light .mq-ans-btn.wrong .mq-ans-letter,
+  body.light .groove-sort-done:active,
+  body.light .pr-go-btn,
+  body.light .pr-ch-end-again,
+  body.light .metro-sound-btn.active,
+  body.light .rr-retry-btn.primary,
+  body.light .cs-picker-fam-tab.active,
+  body.light .setlist-item.active {
+    color: #ffffff !important;
+  }
+  /* generic: any button filled with the accent that uses bg-0 text -> white in light */
+  body.light .iv-diff-pill.active,
+  body.light .ce-diff-cell.hit {
+    color: #ffffff !important;
+  }
+
+  /* COHESION: cards use a top->bottom gradient + a corner radial glow tuned for dark.
+     On light both read as a muddy bloom. Flatten to a solid surface, kill the glow. */
+  body.light .card {
+    background: linear-gradient(180deg, var(--surface-2, #d7d7e7) 0%, var(--surface, #cfcfe3) 22%) !important;
+  }
+
+  /* Title presence in light mode: .logo is weight-300 relying on a glow that doesn't
+     register on a light page, so it reads thin. Nudge to 400 + a faint shadow for
+     body. Scoped to the title only — tabs and text keep their weights (no cascade). */
+  body.light .logo {
+    font-weight: 400;
+    filter: none;
+  }
+
+  /* BUTTON CONSISTENCY: equivalent controls across modules used different surface
+     tokens (surface-2 vs panel vs surface) — the gaps show on light. Pin the common
+     interactive buttons to one surface + border so every module matches. */
+  /* Tonale wave screen: pure #000 is harsher than the charcoal screen family; match. */
+  body.light .tonale-wave-wrap { background: #2a2640 !important; border-color: #423a5a !important; }
+  body.light .tonale-slider { background: linear-gradient(180deg,#332d4c,#2a2640) !important; border-color: #423a5a !important; }
+
+  /* ── MODULE SWEEP: bright dark-mode colors on light-following surfaces ── */
+  /* Survival Guide (not guarded — follows light) */
+  body.light #toolSurvivalGuide .sg-mode-char b { color:#006f8f; }
+  body.light #toolSurvivalGuide .sg-mode-basis.major { background:rgba(138,95,0,0.14); color:#7a5300; }
+  body.light #toolSurvivalGuide .sg-mode-basis.minor { background:rgba(98,72,160,0.14); color:#523aa0; }
+  body.light #toolSurvivalGuide .sg-mode-rung.active { border-color:#006f8f; background:rgba(0,111,143,0.08); }
+  body.light #toolSurvivalGuide .sg-mode-char b,
+  body.light #toolSurvivalGuide .sg-md-real { }
+  /* white-overlay backgrounds (rgba 255,255,255,.03) vanish on light -> subtle dark tint */
+  body.light #toolSurvivalGuide .sg-md-real,
+  body.light #toolSurvivalGuide .sg-mode-rung,
+  body.light #toolSurvivalGuide .sg-cad-staff-wrap { background:rgba(40,40,70,0.04) !important; }
+  body.light #toolSurvivalGuide .sg-mode-rung { border-color:rgba(40,40,70,0.10); }
+  /* scattered bright note-reveal / interval colors */
+  body.light .iv-knote.n2.reveal { color:#006f8f; text-shadow:none; }
+  body.light #toolSurvivalGuide .sg-cad-chip,
+  body.light #toolSurvivalGuide .sg-vl-prog,
+  body.light #toolSurvivalGuide .sg-vl-toggle {
+    background:rgba(40,40,70,0.04) !important; border-color:rgba(40,40,70,0.12) !important;
+  }
+  body.light .mq-np-btn { background:rgba(40,40,70,0.04) !important; }
+
+  /* metro START button: grad-metro (gold->coral->pink) + big glow reads aggressive on
+     light. Calmer amber gradient + softer shadow, still clearly the primary action. */
+  body.light .metro-play {
+    background: linear-gradient(135deg, #f0b93d 0%, #e89b52 100%) !important;
+    color: #2a1e08 !important;
+    box-shadow: 0 3px 12px rgba(180,120,40,0.28), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  }
+  body.light .metro-play:hover {
+    box-shadow: 0 5px 16px rgba(180,120,40,0.35), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  }
+
+  /* ── Faint accent-fill states read too dim on the richer light base. Boost them so
+     "active/listening/selected" is clearly filled. Uses the tab --theme for tint. ── */
+  body.light .panel-badge {
+    background: color-mix(in srgb, var(--accent-warm) 20%, transparent) !important;
+    border-color: color-mix(in srgb, var(--accent-warm) 40%, transparent) !important;
+  }
+  body.light .stb-tab.active,
+  body.light .stb-tile.active,
+  body.light .tone-tile.active,
+  body.light .capo-btn:hover,
+  body.light .metro-mode-chip.active,
+  body.light .subdiv-btn.active,
+  body.light .ts-opt.active {
+    background: color-mix(in srgb, var(--accent) 18%, transparent) !important;
+  }
+  body.light #exScales.drone-mode .stb-tile.active,
+  body.light #exScales.drone-mode .tone-tile.active {
+    background: color-mix(in srgb, var(--green) 20%, transparent) !important;
+  }
+  /* generic accent-tinted CTAs (auto-detect, fork playing, etc.) */
+  body.light .fork-btn.playing,
+  body.light .tuner-fork-btn.playing,
+  body.light .voice-fork-btn.playing {
+    background: color-mix(in srgb, var(--accent) 16%, transparent) !important;
+  }
+  body.light .tuner-fork-btn,
+  body.light .voice-fork-btn,
+  body.light .fork-btn {
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface-2, #d7d7e7)) !important;
+    border-color: color-mix(in srgb, var(--accent) 34%, var(--border, #8a8ab0)) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 3px rgba(40,40,70,0.08) !important;
+  }
+  /* auto-detect CTA container + its ready/off states */
+  body.light .gss-detect-toggle,
+  body.light .instrument-detect-cta {
+    background: color-mix(in srgb, var(--green) 12%, var(--surface-2, #d7d7e7)) !important;
+  }
+
+  /* AUTO DETECT banner (the big green CTA) — 4-6% fill was invisible on light */
+  body.light .auto-banner {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--green) 16%, var(--surface-2, #d7d7e7)), color-mix(in srgb, var(--accent) 10%, var(--surface-2, #d7d7e7))) !important;
+    border-color: color-mix(in srgb, var(--green) 38%, transparent) !important;
+  }
+  body.light .auto-banner:not(.disabled):hover {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--green) 22%, var(--surface-2, #d7d7e7)), color-mix(in srgb, var(--accent) 14%, var(--surface-2, #d7d7e7))) !important;
+  }
+  /* broader state-button sweep (resting/active fills that read too dim on light) */
+  body.light .tg-phase-pill.active,
+  body.light .pr-mode-chip.active,
+  body.light .cs-family-btn.active,
+  body.light .groove-cat-tab.active,
+  body.light .prog-sync-seg-btn.active,
+  body.light .prog-loop-btn.active,
+  body.light .ts-preset.active,
+  body.light .vibrato-toggle.active,
+  body.light .scale-ghost-btn.active,
+  body.light .kbd-oct-btn:active,
+  body.light .cs-picker-inst.active {
+    background: color-mix(in srgb, var(--accent) 18%, transparent) !important;
+  }
+  body.light .tempo-verdict,
+  body.light .tg-resultbox {
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface-2, #d7d7e7)) !important;
+  }
+  body.light .cs-trumpet-strip-pill.active,
+  body.light .pr-bpm-preset-chip.active,
+  body.light .prog-groove-off-btn.active,
+  body.light .prog-metro-play-btn.playing,
+  body.light .rs-chip.active,
+  body.light .tg-popup-chip.active,
+  body.light .trp-full-note.active {
+    background: color-mix(in srgb, var(--accent) 18%, transparent) !important;
+  }
+
+  /* chord-ear + interval trainer bright labels/indicators on light surfaces */
+  body.light .iv-test-dot.hit,
+  body.light .ce-diff-cell.hit .ce-diff-lbl { color:#095c3a !important; }
+  body.light .ce-hud-diff-lbl,
+  body.light .iv-diff-pill-lbl { color:#523aa0 !important; }
+  body.light .iv-knote.reveal,
+  body.light .n2.reveal { color:#005570 !important; }
+  body.light .octave-badge,
+  body.light .groove-countin-btn,
+  body.light .gs-pulse-toggle,
+  body.light .gs-pulse-chip,
+  body.light .gs-step,
+  body.light .sm-notif-row,
+  body.light .sm-notif-fmt-btn,
+  body.light .sm-notif-time-disp,
+  body.light .sm-notif-time,
+  body.light .tuner-refpitch-pill {
+    background: rgba(40,40,70,0.05) !important;
+  }
+
+  body.light .subdiv-btn,
+  body.light .ts-opt,
+  body.light .metro-mode-chip,
+  body.light .metro-sound-btn,
+  body.light .sm-toggle-chip,
+  body.light .iv-mode-chip,
+  body.light .tg-seg {
+    background: var(--surface-2, #d7d7e7) !important;
+    border: 1px solid var(--border, #b4b4cd) !important;
+  }
+  body.light .card-glow { opacity: 0 !important; }
+
+  /* ── INTERVAL TRAINER (iv-) bright colors -> deep on light ── */
+  body.light .iv-test-dot.hit { background:#095c3a !important; border-color:#095c3a !important; }
+  body.light .iv-test-dot.miss { background:#a32718 !important; border-color:#a32718 !important; }
+  body.light .iv-test-perfect { color:#095c3a !important; }
+  body.light .iv-answer-btn.correct .iv-ans-sym,
+  body.light .iv-answer-btn.correct .iv-ans-name { color:#095c3a !important; }
+  body.light .iv-answer-btn.wrong .iv-ans-sym,
+  body.light .iv-answer-btn.wrong .iv-ans-name { color:#a32718 !important; }
+  body.light .iv-target-miss { color:#a32718 !important; }
+  body.light .iv-diff-chip.active[data-diff="medium"] { border-color:#5238a5 !important; color:#5238a5 !important; }
+  body.light .iv-diff-chip.active[data-diff="hard"]   { border-color:#6f4d00 !important; color:#6f4d00 !important; }
+  body.light .iv-diff-chip.active[data-diff="all"]    { border-color:#a3284d !important; color:#a3284d !important; }
+  body.light .iv-diff-pill[data-diff="custom"] .iv-diff-pill-lbl { color:#005570 !important; }
+  body.light .iv-diff-pill[data-diff="medium"] .iv-diff-pill-lbl { color:#5238a5 !important; }
+  body.light .iv-diff-pill[data-diff="hard"]   .iv-diff-pill-lbl { color:#6f4d00 !important; }
+  body.light .iv-diff-pill[data-diff="all"]    .iv-diff-pill-lbl { color:#a3284d !important; }
+  body.light .iv-knote.n2.reveal { color:#005570 !important; }
+
+  /* ── RHYTHM READING (rr-) survival text on light page ── */
+  body.light .rr-surv-streak { color:#a32718 !important; }
+  body.light .rr-surv-end-stats b { color:#a32718 !important; }
+  body.light .rr-surv-diff { color:rgba(192,51,31,.85) !important; }
+  body.light .rr-surv-best { color:rgba(192,51,31,.55) !important; }
+  body.light .rr-surv-bar { background:rgba(192,51,31,.08) !important; border-color:rgba(192,51,31,.25) !important; }
+
+  /* ── TEMPO GAME (tg-) difficulty label ── */
+  body.light .tg-hud-left[data-diff="normal"] .tg-hud-diff { color:#6f4d00 !important; }
+
+  /* ── ORPHAN GAME SCREENS (hardcoded dark, no light path) — lift to charcoal that
+     reads as an immersive game display, not a black hole. ── */
+  body.light .ce-screen {
+    background:
+      radial-gradient(120% 90% at 50% 12%, rgba(120,90,200,.14), transparent 62%),
+      linear-gradient(180deg, #2a2540 0%, #221d38 100%) !important;
+    border-color: #423a5a !important;
+    box-shadow: inset 0 0 30px rgba(20,12,40,.5), inset 0 1px 0 rgba(184,163,255,.08), 0 4px 16px rgba(40,40,70,.12) !important;
+  }
+  body.light .np-screen { background: #262636 !important; border-color:#42425a !important; }
+  body.light .rr-tap-zone { background: #262636 !important; }
+  body.light .rr-tap-zone.rr-next { background: #2c2c3e !important; }
+  /* String Guide bloom (safe version): radial tint baked into the card background over
+     the base surface — no pseudo-element, no child positioning, can't affect layout. */
+  body.light #stringGuideCard {
+    background:
+      radial-gradient(130% 55% at 50% 0%, color-mix(in srgb, var(--theme) 11%, transparent), transparent 65%),
+      var(--surface, #cfcfe3) !important;
+  }
+  body.light .tuner-bpm-card {
+    background:
+      radial-gradient(130% 55% at 50% 0%, color-mix(in srgb, var(--theme) 11%, transparent), transparent 65%),
+      var(--surface, #cfcfe3) !important;
+  }
+  /* Volume-meter plot: a pale plot washes out the colored dB zones. Charcoal plot in
+     light mode so the meter reads like an instrument display (matches the screens). */
+  body.light .db-canvas-wrap {
+    background: var(--surface, #cfcfe3) !important;
+    border-color: var(--border, #b4b4cd) !important;
+  }
+
+  /* Difficulty-pill labels use bright DARK-mode colours (hardcoded) that vanish on
+     the pale light pill (~1.2:1). Deepen to readable AA in light mode. */
+  body.light .iv-diff-pill[data-diff="easy"]   .iv-diff-pill-lbl { color:#2e7d4f; }
+  body.light .iv-diff-pill[data-diff="medium"] .iv-diff-pill-lbl { color:#5238a5; }
+  body.light .iv-diff-pill[data-diff="hard"]   .iv-diff-pill-lbl { color:#6f4d00; }
+  body.light .iv-diff-pill[data-diff="all"]    .iv-diff-pill-lbl { color:#a3284d; }
+  body.light #exIntervals .iv-diff-pill[data-diff="custom"] .iv-diff-pill-lbl { color:#006f8f; }
+  /* chord-ear HUD difficulty + interval active chips (all hardcoded brights) */
+  body.light .ce-hud-diff[data-tier="easy"]   .ce-hud-diff-lbl { color:#2e7d4f; }
+  body.light .ce-hud-diff[data-tier="medium"] .ce-hud-diff-lbl { color:#5238a5; }
+  body.light .ce-hud-diff[data-tier="hard"]   .ce-hud-diff-lbl { color:#6f4d00; }
+  body.light .ce-hud-diff[data-tier="all"]    .ce-hud-diff-lbl { color:#a3284d; }
+  body.light .ce-hud-diff[data-tier="custom"] .ce-hud-diff-lbl { color:#006f8f; }
+  body.light .iv-diff-chip.active[data-diff="easy"]   { border-color:#2e7d4f; color:#2e7d4f; }
+  body.light .iv-diff-chip.active[data-diff="medium"] { border-color:#5238a5; color:#5238a5; }
+  body.light .iv-diff-chip.active[data-diff="hard"]   { border-color:#6f4d00; color:#6f4d00; }
+  body.light .iv-diff-chip.active[data-diff="all"]    { border-color:#a3284d; color:#a3284d; }
+
+  /* Legend swatches are inline-styled hex dots; remap the bright feedback hexes to
+     the deepened light-mode equivalents via attribute-substring match. */
+  body.light #chordleLegend div[style*="#22c55e"],
+  body.light #diadleLegend  div[style*="#22c55e"] { background:#095c3a !important; }
+  body.light #chordleLegend div[style*="#eab308"],
+  body.light #diadleLegend  div[style*="#eab308"] { background:#6f4d00 !important; }
+  body.light #chordleLegend div[style*="#a855f7"] { background:#5238a5 !important; }
+  body.light #chordleLegend div[style*="#3b82f6"],
+  body.light #diadleLegend  div[style*="#3b82f6"] { background:#2358c8 !important; }
+  body.light #chordleLegend div[style*="#ef4444"],
+  body.light #diadleLegend  div[style*="#ef4444"] { background:#a32718 !important; }
+
+  /* Interval-trainer + tempo-game feedback greens/golds (CSS hardcoded brights) */
+  body.light .iv-test-dot.hit { background:#095c3a !important; border-color:#095c3a !important; }
+  body.light .iv-test-perfect { color:#095c3a !important; }
+  body.light .iv-answer-btn.correct { border-color:#095c3a !important; }
+  body.light .iv-answer-btn.correct .iv-ans-sym,
+  body.light .iv-answer-btn.correct .iv-ans-name { color:#095c3a !important; }
+  body.light .tg-hud-left[data-diff="normal"] .tg-hud-diff { color:#6f4d00 !important; }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   /* Prevent touch-and-hold from selecting text / popping the iOS selection callout
@@ -1761,6 +2446,15 @@ html,body{background:#000000!important;transition:none!important}
   .stp-tick { stroke: var(--border); stroke-width: 1; transition: opacity .5s; }
   .stp-note { transition: transform .42s cubic-bezier(.34,1.56,.64,1); }
   .stp-hit { fill: transparent; }
+  /* Anchor = octave frame (root + octave). Explicit BRIGHT CYAN, not var(--accent):
+     under the TRAIN tab --accent is remapped to purple (body.theme-train), which is
+     what turned the anchors purple. A literal keeps them cyan everywhere, and reads
+     as a deliberate "these are the boundaries" colour distinct from the blue notes.
+     Slightly larger too. Drone-mode green rules come later and override correctly. */
+  .stp-note.anchor .stp-dot  { fill: #6ef0ff; }
+  .stp-note.anchor .stp-name { fill: #6ef0ff; }
+  .stp-note.anchor .stp-deg  { fill: #6ef0ff; opacity: .8; }
+  .stp-tick.end { stroke: #6ef0ff; opacity: .5; }
   .stp-dot { fill: var(--flat); transform-box: fill-box; transform-origin: center;
              transition: fill .2s, transform .25s cubic-bezier(.34,1.56,.64,1); }
   .stp-name { fill: var(--text); font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 1px;
@@ -1776,7 +2470,12 @@ html,body{background:#000000!important;transition:none!important}
   .stp-playhead { fill: var(--accent); opacity: 0; transition: opacity .2s;
                   filter: drop-shadow(0 0 6px rgba(94,226,255,.9)); }
   .stp-playhead.show { opacity: 1; }
-  .stp-playhead.moving { transition: transform var(--ph-dur, 180ms) cubic-bezier(.3,.7,.3,1), opacity .2s; }
+  .stp-playhead.moving { transition: transform var(--ph-dur, 180ms) cubic-bezier(.3,.7,.3,1); }
+  /* Hard kill: when placing the dot (start, loop-restart, stop) we add this, force a
+     reflow, set the position, force another reflow, then remove it. Because the
+     transform CHANGES while transitions are off, the browser has nothing to animate
+     — the dot teleports. This is synchronous, so rapid taps cannot race it. */
+  .stp-playhead.snap { transition: none !important; }
   .stp-gap { fill: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 8.5px; transition: opacity .5s; }
   .stp-gap.big { fill: var(--metro); }
   /* COMPARE overlay. Only the degrees that MOVED are drawn, and they are drawn as
@@ -1786,6 +2485,21 @@ html,body{background:#000000!important;transition:none!important}
   .stp-gfrom { fill: none; stroke: var(--metro); stroke-width: 1.4; opacity: .45;
                stroke-dasharray: 2 2; pointer-events: none; }
   .stp-garrow { fill: none; stroke: var(--metro); stroke-width: 1.4; opacity: .85; pointer-events: none; }
+  /* On an animated scale change the notes morph for .42s; the arrows connect to
+     their FINAL positions, so hold the arrows invisible through the morph and ease
+     them in as the notes land — no pop, no dead pause (the fixed-position markers
+     are already showing the whole time). */
+  /* Arrow entrance: hold briefly while the notes are still travelling fastest, then
+     DRAW ON quickly (stroke wipes from parent to current note) with a snappy ease.
+     Shorter hold and a draw-on read far faster than the old slow opacity ramp. */
+  /* The whole ghost overlay fades in as ONE unit, on its own timing — it does not
+     try to track the note morph. Markers and arrows appear together, cleanly. */
+  #scaleTapeGhosts.fade { animation: stpGhostIn .28s ease-out both; }
+  @keyframes stpGhostIn { from { opacity: 0; } to { opacity: 1; } }
+  .stp-gadd { fill: none; stroke: var(--metro); stroke-width: 1.6; opacity: .9; pointer-events: none; }
+  .stp-gsign { fill: var(--metro); font-family: 'Bebas Neue', sans-serif; font-size: 13px;
+               opacity: .9; pointer-events: none; }
+  .stp-gdrop { fill: none; stroke: var(--metro); stroke-width: 1.2; opacity: .32; pointer-events: none; }
   .stp-note.moved .stp-dot { fill: var(--metro); filter: drop-shadow(0 0 6px rgba(255,209,102,.75)); }
   .stp-note.moved .stp-name { fill: var(--metro); }
   .stp-note.moved .stp-deg  { fill: var(--metro); }
@@ -1894,7 +2608,7 @@ html,body{background:#000000!important;transition:none!important}
   #exScales.drone-mode .scale-speed-row { opacity: .3; pointer-events: none; }
   #exScales.drone-mode .scale-tone-note { opacity: .8; }
   #exScales.drone-mode .stp-note .stp-dot { fill: #5a7a4a; }
-  #exScales.drone-mode .stp-note.root .stp-dot { fill: var(--green); opacity: .9; }
+  #exScales.drone-mode .stp-note.anchor .stp-dot { fill: var(--green); opacity: .9; }
   .stp-note.latched .stp-dot { fill: var(--green); transform: scale(1.5);
                                filter: drop-shadow(0 0 7px rgba(182,242,91,.8)); }
   .stp-note.latched .stp-name { fill: #eaffd0; }
@@ -7299,7 +8013,8 @@ html,body{background:#000000!important;transition:none!important}
   #exChordle button:active { opacity: 0.75; transform: scale(0.97); }
 
   /* ── Tónale ── */
-  #exTonale > * { grid-column: 1 / -1; }
+  #exTonale > * { grid-column: 1 / -1; min-width: 0; }
+  #exTonale, #exTonale #tonaleGame, #exTonale .tonale-wave-wrap, #exTonale .tonale-slider { max-width: 100%; box-sizing: border-box; }
   #exTonale { gap: 0; }
   #exTonale .train-back { margin-bottom: 0; }
   #exTonale .train-header { padding-top: 2px; padding-bottom: 2px; }
@@ -11641,6 +12356,27 @@ html,body{background:#000000!important;transition:none!important}
     font-size: 9px; opacity: 0.7; letter-spacing: 1px;
   }
   /* ─── LANGUAGE CHIPS ─── */
+  /* Compact appearance toggle — one subtle line at the top of Settings */
+  .sm-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px; padding-right:34px; }
+  .sm-appearance-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; flex:none; }
+  .sm-appearance-lbl { font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); font-family:'JetBrains Mono',monospace; text-align:center; width:100%; }
+  .sm-title-block { min-width:0; }
+  .sm-title-block .sm-title { margin-bottom:2px; }
+  .sm-title-block .sm-sub { margin-bottom:0; }
+  .app-seg-compact { margin:2px 0 0 !important; flex:none; }
+  .app-seg-compact .app-seg-btn { padding:7px 10px; }
+  .app-seg-compact .app-seg-ic { font-size:12px; }
+    .app-seg { display:inline-flex; gap:0; margin:10px 0 4px; border:1px solid var(--border-soft);
+             border-radius:20px; overflow:hidden; background:var(--surface-2); }
+  .app-seg-btn { display:flex; align-items:center; gap:5px; padding:6px 12px; background:none;
+                 border:none; color:var(--muted); font-family:'JetBrains Mono',monospace;
+                 font-size:8.5px; letter-spacing:.14em; cursor:pointer;
+                 transition:background .15s, color .15s; }
+  .app-seg-btn + .app-seg-btn { border-left:1px solid var(--border-soft); }
+  .app-seg-btn.active { background:color-mix(in srgb, var(--accent) 14%, transparent);
+                        color:var(--accent); }
+  .app-seg-ic { font-size:9px; line-height:1; }
+
   .lang-chip-row {
     display: flex; flex-wrap: wrap; gap: 6px;
     margin-bottom: 2px;
@@ -16857,6 +17593,17 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 </style>
 </head>
 <body>
+<script>
+/* Apply appearance BEFORE first paint — the main script block is megabytes away,
+   and without this a light-mode user gets a dark flash on every boot. */
+try {
+  var _ap = localStorage.getItem('intonare_appearance') || 'auto';
+  if (_ap === 'light' || (_ap === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches)) {
+    document.body.classList.add('light');
+    document.documentElement.classList.add('light-root');
+  }
+} catch(e) {}
+</script>
 <!-- ── SPLASH SCREEN ─────────────────────────────────────────────────────────
      Self-contained overlay. Runs on load, removes itself when done.
      Palette follows app tab order: Tuner (cyan) → Metro (yellow) → Tools (emerald) → Train (purple)
@@ -16865,6 +17612,14 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   #splash-logo, #splash-sub, #splash-tag {
     transition: opacity 0.4s ease !important;
   }
+  /* Light-mode splash: a dark splash before a light app is jarring. Soft light bg. */
+  html.light-root #intonare-splash {
+    background: linear-gradient(165deg, #c4c8de 0%, #bdc1db 50%, #cfd1e3 100%) !important;
+  }
+  html.light-root #splash-bg { opacity:0.35; }
+  html.light-root #splash-sub { color:#585b70 !important; }
+  html.light-root #splash-tag { color:rgba(0,111,143,.8) !important; }
+  html.light-root #splash-logo { filter:none !important; background-image:linear-gradient(135deg,#006f8f,#2358c8) !important; }
 </style>
 <div id="intonare-splash" style="
   position:fixed;inset:0;z-index:99999;
@@ -18088,7 +18843,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     <div class="tuner-bpm-card" style="margin-top:0">
 
       <!-- Physical display screen -->
-      <div class="tuner-screen">
+      <div class="tuner-screen keep-dark">
         <div class="tuner-screen-bezel">
           <div class="tuner-screen-inner">
 
@@ -18239,7 +18994,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   <!-- ═══════════════ TUNER ONLY ═══════════════ -->
   <div class="tuner-only stack">
     <div class="teach-hint" data-i18n-html="hint_tuner_main"><strong>TUNER</strong> — chromatic pitch detection via microphone. Play any note to see its name, octave, and how sharp or flat it is. Tap the mic button to start.</div>
-    <div class="card">
+    <div class="card" id="stringGuideCard">
       <div class="card-glow"></div>
       <div class="panel-head">
         <div class="panel-head-left">
@@ -18415,7 +19170,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
           <div class="practice-card-title" data-i18n="tool_chords_title">CHORDS</div>
           <div class="practice-card-sub" data-i18n="tool_chords_sub">Play any chord · build from notes · dynamic name detection</div>
         </button>
-        <button class="practice-card-btn full-width" onclick="enterTool('progression')" data-fav-id="tool:progression" class="practice-card-btn full-width">
+        <button class="practice-card-btn full-width" onclick="enterTool('progression')" data-fav-id="tool:progression">
           <div class="practice-icon"><svg viewBox="0 0 36 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:45px;height:30px">
             <!-- 4 chord blocks in a row, like a chart -->
             <rect x="1"  y="6" width="7" height="12" rx="1.5"/>
@@ -18758,7 +19513,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     </div><!-- /toolPiano -->
 
     <!-- ── TONAL CENTER tool ── -->
-    <div id="toolTonal" class="hidden">
+    <div id="toolTonal" class="hidden keep-dark">
       <button class="train-back" onclick="exitTool()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
       <!-- ══ CRT INSTRUMENT — tonal centre ══ -->
@@ -18953,7 +19708,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     </div><!-- /toolVolume -->
 
     <!-- ── THEREMIN tool ── -->
-    <div id="toolTheremin" class="hidden">
+    <div id="toolTheremin" class="hidden keep-dark">
       <button class="train-back" onclick="exitTool()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
       <!-- WOOD BODY: looks like the right half of a real Etherwave sitting there -->
@@ -21079,7 +21834,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
   <!-- ═══════════════ PRACTICE / TRAIN ═══════════════ -->
   <div class="train-only hidden stack">
-    <div class="teach-hint" data-i18n-html="hint_train_main"><strong>TRAIN</strong> — practice exercises that earn XP. Ear Training covers interval recognition, chord identification, and pitch matching (all use the mic). Rhythm covers tempo lock, tempo guess, and polyrhythm (tap-based, no mic). Scales lets you hear or improvise over any scale.</div>
+    <div class="teach-hint" data-i18n-html="hint_train_main"><strong>TRAIN</strong> — practice exercises that earn XP. Ear Training covers interval recognition, chord identification, and pitch matching (all use the mic). Rhythm covers tempo lock, tempo guess, and polyrhythm (tap-based, no mic). Scales is the scale reference: hear any scale, drone on its root, compare it to its parent.</div>
 
     <!-- HUB -->
     <div id="practiceHub">
@@ -21132,7 +21887,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   <circle cx="18" cy="16" r="3" fill="currentColor" stroke="none"/>
 </svg></div>
           <div class="practice-card-title" data-i18n="card_scales_title">SCALES</div>
-          <div class="practice-card-sub" data-i18n="card_scales_sub">Hear any scale · loop it · improvise over a drone</div>
+          <div class="practice-card-sub" data-i18n="card_scales_sub">Hear any scale · drone on the root · compare</div>
         </button>
 
         <!-- ── Coming Soon ── -->
@@ -21499,13 +22254,13 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
       </div>
     </div>
 
-    <!-- SCALES (combined Reference + Improv) -->
+    <!-- SCALES · TAPE (scale reference; drone + compare built in) -->
     <div id="exScales" class="hidden stack">
       <div class="train-header">
         <button class="train-back" onclick="exitExercise()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <div class="train-title-block">
           <div class="train-title" data-i18n="ex_scales_title">SCALES</div>
-          <div class="train-subtitle" data-i18n="scale_subtitle">hear it · play it · improvise over it</div>
+          <div class="train-subtitle" data-i18n="scale_subtitle">look it up · hear it · play along</div>
         </div>
       </div>
 
@@ -21571,7 +22326,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
           <div class="scale-speed-row" id="scaleSpeedRow">
             <span class="speed-label" data-i18n="slow">SLOW</span>
-            <input type="range" id="scaleSpeed" min="40" max="200" value="100" oninput="scaleSetTempo(this.value)">
+            <input type="range" id="scaleSpeed" min="60" max="260" value="120" oninput="scaleSetTempo(this.value)">
             <span class="speed-label" data-i18n="fast">FAST</span>
             <span class="tempo-val" id="scaleSpeedVal">100</span>
           </div>
@@ -22323,7 +23078,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
   </div><!-- /train-only -->
 
 <!-- FULLSCREEN PIANO OVERLAY -->
-<div class="piano-overlay" id="pianoOverlay">
+<div class="piano-overlay keep-dark" id="pianoOverlay">
   <!-- Sheen line -->
   <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 0%,rgba(255,200,120,0.18) 30%,rgba(255,220,160,0.28) 50%,rgba(255,200,120,0.18) 70%,transparent 100%);pointer-events:none;z-index:1"></div>
 
@@ -22387,7 +23142,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 </div>
 
 <!-- ══ THEREMIN EXPAND OVERLAY (landscape, two-handed multi-touch) ══ -->
-<div class="thmn-overlay" id="thereminOverlay">
+<div class="thmn-overlay keep-dark" id="thereminOverlay">
   <button class="piano-overlay-close thmn-ov-close" onclick="closeThereminOverlay()">✕</button>
 
   <!-- TOP: left volume bar · pitch surface · right pitch antenna -->
@@ -22769,7 +23524,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     </div>
 
     <!-- Sine-wave visualiser -->
-    <div id="tonaleWaveWrap" style="position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#000;margin-bottom:12px;height:150px">
+    <div id="tonaleWaveWrap" class="tonale-wave-wrap" style="position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#000;margin-bottom:12px;height:150px">
       <canvas id="tonaleWave" style="display:block;width:100%;height:100%"></canvas>
       <!-- Listen-window countdown bar -->
       <div id="tonaleListenBar" style="position:absolute;left:0;bottom:0;height:4px;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(0);transition:none;opacity:0"></div>
@@ -22780,7 +23535,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
     <!-- Slider + replay — grows to fill available height on taller screens -->
     <div style="display:flex;gap:14px;align-items:stretch;flex:1 1 auto;min-height:300px;margin-bottom:14px">
       <!-- Vertical scrubber -->
-      <div id="tonaleSlider" style="position:relative;flex:1;border-radius:16px;border:1px solid var(--border);background:linear-gradient(180deg,#0e0e15,#0a0a0f);overflow:hidden;touch-action:none;cursor:ns-resize;user-select:none">
+      <div id="tonaleSlider" class="tonale-slider" style="position:relative;flex:1;border-radius:16px;border:1px solid var(--border);background:linear-gradient(180deg,#0e0e15,#0a0a0f);overflow:hidden;touch-action:none;cursor:ns-resize;user-select:none">
         <!-- always-on frequency ladder down both edges (decorative reference) -->
         <div id="tonaleLadder" style="position:absolute;inset:0;pointer-events:none"></div>
         <!-- semitone lock-point ticks (easy mode) -->
@@ -22815,8 +23570,8 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 </div>
 
 <!-- ROAD TRIP — full-screen modal shell (Option A). #exRoadTrip + its popups live inside so they share one stacking context above the app. -->
-<div id="rtModal" role="dialog" aria-modal="true" aria-label="Road Trip">
-<div id="exRoadTrip" class="hidden stack">
+<div id="rtModal" class="keep-dark" role="dialog" aria-modal="true" aria-label="Road Trip">
+<div id="exRoadTrip" class="hidden stack keep-dark">
   <!-- (BACK moved inside .rt-menu-scroll so it sits ON the decorated panel like MQ, not stranded above it) -->
 
   <div class="rt-tripmeter" id="rtTripMeter" style="display:none">
@@ -23193,7 +23948,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <!-- LEGENDARY CARD (100-day streak) -->
 <div id="dtLegendaryCard">
-  <div class="dt-leg-inner" id="dtLegInner">
+  <div class="dt-leg-inner keep-dark" id="dtLegInner">
     <span class="dt-leg-icon">&#11088;</span>
     <div class="dt-leg-count">100</div>
     <div class="dt-leg-days" data-i18n="dt_day_streak">DAY STREAK</div>
@@ -23205,7 +23960,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 
 <!-- MYTHIC CARD (exercise streak ×40) -->
 <div id="dtMythicCard">
-  <div class="dt-mythic-inner" id="dtMythicInner">
+  <div class="dt-mythic-inner keep-dark" id="dtMythicInner">
     <span class="dt-mythic-icon">&#9876;</span>
     <div class="dt-mythic-title" data-i18n="dt_mythic_title">MYTHIC</div>
     <div class="dt-mythic-sub" data-i18n="dt_mythic_streak_label">STREAK 40</div>
@@ -23266,8 +24021,20 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <div class="settings-modal" id="settingsModal" onclick="if(event.target===this)closeSettings()">
   <div class="settings-modal-content">
     <button class="settings-modal-close" onclick="closeSettings()">×</button>
-    <div class="sm-title" data-i18n="settings_title">SETTINGS</div>
-    <div class="sm-sub" data-i18n="settings_sub">app preferences</div>
+    <div class="sm-title-row">
+      <div class="sm-title-block">
+        <div class="sm-title" data-i18n="settings_title">SETTINGS</div>
+        <div class="sm-sub" data-i18n="settings_sub">app preferences</div>
+      </div>
+      <div class="sm-appearance-wrap">
+        <div class="sm-appearance-lbl" data-i18n="settings_appearance">Appearance</div>
+        <div class="app-seg app-seg-compact" id="smAppearanceRow" role="radiogroup" aria-label="Appearance">
+          <button class="app-seg-btn" data-value="auto"  onclick="setAppearance('auto')" title="Auto"><span class="app-seg-ic">&#9681;</span></button>
+          <button class="app-seg-btn" data-value="dark"  onclick="setAppearance('dark')" title="Dark"><span class="app-seg-ic">&#9679;</span></button>
+          <button class="app-seg-btn" data-value="light" onclick="setAppearance('light')" title="Light"><span class="app-seg-ic">&#9675;</span></button>
+        </div>
+      </div>
+    </div>
 
     <!-- ── DISPLAY ── -->
     <div class="sm-section-title" data-i18n="settings_lang">Language</div>
@@ -23478,7 +24245,7 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.84.1';
+const INTONARE_VERSION = '0.92.4';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -28897,6 +29664,8 @@ function adjBPM(delta) {
 
   function _drawWheelToCanvas(canvas) {
     if (!canvas) return;
+    var _wLight = document.body.classList.contains('light');
+    var _wg = _wLight ? '90,61,0' : '255,209,102';
     const W = canvas.dataset.w ? parseInt(canvas.dataset.w) : WHEEL_W;
     const H = canvas.height;
     if (canvas.width !== W) canvas.width = W;
@@ -28905,29 +29674,29 @@ function adjBPM(delta) {
 
     // Body gradient — cylinder lit from top
     const bodyGrad = ctx.createLinearGradient(0, 0, 0, H);
-    bodyGrad.addColorStop(0,   'rgba(255,209,102,0.06)');
-    bodyGrad.addColorStop(0.3, 'rgba(255,209,102,0.14)');
-    bodyGrad.addColorStop(0.7, 'rgba(255,209,102,0.14)');
-    bodyGrad.addColorStop(1,   'rgba(255,209,102,0.05)');
+    bodyGrad.addColorStop(0,   `rgba(${_wg},${_wLight?0.14:0.06})`);
+    bodyGrad.addColorStop(0.3, `rgba(${_wg},${_wLight?0.30:0.14})`);
+    bodyGrad.addColorStop(0.7, `rgba(${_wg},${_wLight?0.30:0.14})`);
+    bodyGrad.addColorStop(1,   `rgba(${_wg},${_wLight?0.12:0.05})`);
     ctx.fillStyle = bodyGrad;
     ctx.beginPath(); ctx.roundRect(0, 0, W, H, 5); ctx.fill();
 
     // Top edge highlight
     const hlGrad = ctx.createLinearGradient(0, 0, W, 0);
-    hlGrad.addColorStop(0,   'rgba(255,209,102,0)');
-    hlGrad.addColorStop(0.2, 'rgba(255,209,102,0.22)');
-    hlGrad.addColorStop(0.5, 'rgba(255,209,102,0.32)');
-    hlGrad.addColorStop(0.8, 'rgba(255,209,102,0.22)');
-    hlGrad.addColorStop(1,   'rgba(255,209,102,0)');
+    hlGrad.addColorStop(0,   `rgba(${_wg},0)`);
+    hlGrad.addColorStop(0.2, `rgba(${_wg},${_wLight?0.42:0.22})`);
+    hlGrad.addColorStop(0.5, `rgba(${_wg},${_wLight?0.55:0.32})`);
+    hlGrad.addColorStop(0.8, `rgba(${_wg},${_wLight?0.42:0.22})`);
+    hlGrad.addColorStop(1,   `rgba(${_wg},0)`);
     ctx.fillStyle = hlGrad; ctx.fillRect(0, 0, W, 1.5);
 
     // Bottom edge highlight (dimmer — underside catch-light)
     const blGrad = ctx.createLinearGradient(0, 0, W, 0);
-    blGrad.addColorStop(0,   'rgba(255,209,102,0)');
+    blGrad.addColorStop(0,   `rgba(${_wg},0)`);
     blGrad.addColorStop(0.2, 'rgba(255,209,102,0.10)');
     blGrad.addColorStop(0.5, 'rgba(255,209,102,0.15)');
     blGrad.addColorStop(0.8, 'rgba(255,209,102,0.10)');
-    blGrad.addColorStop(1,   'rgba(255,209,102,0)');
+    blGrad.addColorStop(1,   `rgba(${_wg},0)`);
     ctx.fillStyle = blGrad; ctx.fillRect(0, H - 1.5, W, 1.5);
 
     // Bottom shadow
@@ -30110,8 +30879,10 @@ const TC_IV_IT = ['Unisono','2ª minore','2ª maggiore','3ª minore','3ª maggio
 const TC_SCALE_GROUPS = [
   { g:'MAJOR FAMILY', items:[['major','Major (Ionian)'],['lydian','Lydian'],['mixolydian','Mixolydian'],['harmmaj','Harmonic Major']] },
   { g:'MINOR FAMILY', items:[['natminor','Natural Minor'],['dorian','Dorian'],['phrygian','Phrygian'],['locrian','Locrian'],['harmminor','Harmonic Minor'],['melminor','Melodic Minor']] },
-  { g:'PENTATONIC & BLUES', items:[['majpent','Major Pentatonic'],['minpent','Minor Pentatonic'],['blues','Blues']] },
-  { g:'EXOTIC · SYMMETRIC', items:[['dblharm','Double Harmonic'],['phrygdom','Phrygian Dominant'],['hungmin','Hungarian Minor'],['hungmaj','Hungarian Major'],['hirajoshi','Hirajoshi'],['wholetone','Whole Tone'],['chromatic','Chromatic']] },
+  { g:'PENTATONIC & BLUES', items:[['majpent','Major Pentatonic'],['minpent','Minor Pentatonic'],['blues','Blues'],['inscale','In'],['egyptian','Egyptian']] },
+  { g:'JAZZ · MELODIC MODES', items:[['lyddom','Lydian Dominant'],['altered','Altered'],['locrian2','Locrian nat2']] },
+  { g:'WORLD & EXOTIC', items:[['dblharm','Double Harmonic'],['phrygdom','Phrygian Dominant'],['hungmin','Hungarian Minor'],['hungmaj','Hungarian Major'],['hirajoshi','Hirajoshi']] },
+  { g:'SYMMETRIC', items:[['dimwh','Diminished W-H'],['dimhw','Diminished H-W'],['augmented','Augmented'],['wholetone','Whole Tone'],['chromatic','Chromatic']] },
 ];
 
 function tcScaleShortName() {
@@ -30565,6 +31336,7 @@ function dbDrawPeakMarker() {
 }
 
 function dbDraw() {
+  var _dbLight = document.body.classList.contains('light');
   if (!dbCanvas || !dbCtx2d) return;
   const c = dbCtx2d, W = dbCanvas.width, H = dbCanvas.height;
   c.clearRect(0, 0, W, H);
@@ -30585,11 +31357,11 @@ function dbDraw() {
   // Threshold lines + labels — on SPL scale
   [{ spl:70, label:'70' }, { spl:85, label:'85' }, { spl:91, label:'91 dB' }].forEach(({ spl, label }) => {
     const y = H - ((spl - SPL_G_MIN) / (SPL_G_MAX - SPL_G_MIN)) * H;
-    c.strokeStyle = 'rgba(255,255,255,0.10)';
+    c.strokeStyle = _dbLight ? 'rgba(30,30,50,0.12)' : 'rgba(255,255,255,0.10)';
     c.lineWidth = 1; c.setLineDash([4, 4]);
     c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
     c.setLineDash([]);
-    c.fillStyle = 'rgba(255,255,255,0.25)';
+    c.fillStyle = _dbLight ? 'rgba(30,30,50,0.35)' : 'rgba(255,255,255,0.25)';
     c.font = '9px monospace';
     c.fillText(label, 4, y - 3);
   });
@@ -38185,8 +38957,8 @@ const TOURS = {
       body: '<strong>Ear Training</strong>: Interval, Chord ear training, Pitch Match. <strong>Rhythm</strong>: Tempo Lock, Tempo Guess, Polyrhythm, Rhythm Reading. <strong>Games</strong>: Chordle, Tónale, Diadle, Music Quiz.',
       bodyIt: '<strong>Ear Training</strong>: Intervalli, Accordi a orecchio, Intonazione. <strong>Ritmo</strong>: Tempo Lock, Tempo Guess, Poliritmia, Lettura Ritmica. <strong>Giochi</strong>: Chordle, T&oacute;nale, Diadle, Quiz Musicale.' },
     { selector: '#practiceHub .practice-card-btn.full-width', title: 'Scales', titleIt: 'Scale',
-      body: 'Opens directly: choose any root and scale type, then use <strong>Listen</strong>, <strong>Sing</strong>, or <strong>Improv</strong> mode to drill it.',
-      bodyIt: 'Si apre direttamente: scegli qualsiasi fondamentale e tipo di scala, poi usa la modalit&agrave; <strong>Ascolta</strong>, <strong>Canta</strong> o <strong>Improvvisa</strong> per esercitarti.' },
+      body: 'Opens directly: choose any root and scale type, hear it on the tape, drone on the root, or COMPARE it to its parent scale.',
+      bodyIt: 'Si apre direttamente: scegli fondamentale e tipo di scala, ascoltala sul nastro, tieni il bordone sulla tonica o CONFRONTALA con la scala madre.' },
     { selector: '.practice-card-btn.wip', title: 'Coming Soon', titleIt: 'Prossimamente',
       body: '<strong>Melody Dictation</strong> and <strong>Relative Pitch</strong> are in development; tap for a preview of what&rsquo;s coming.',
       bodyIt: '<strong>Dettato Melodico</strong> e <strong>Intonazione Relativa</strong> sono in sviluppo; tocca per un&rsquo;anteprima di ci&ograve; che arriver&agrave;.' },
@@ -38194,8 +38966,8 @@ const TOURS = {
       body: 'Every exercise earns XP based on performance. Better grades pay more. Tap this chip to see your level, XP toward the next, and your streaks.',
       bodyIt: 'Ogni esercizio guadagna XP in base alle prestazioni. Voti migliori pagano di pi&ugrave;. Tocca questo chip per vedere il tuo livello, XP verso il successivo e le serie.' },
     { selector: '#micBtn', title: 'Mic for Ear Training', titleIt: 'Mic per l&rsquo;Ear Training',
-      body: 'Interval Training, Chord Ear Training, Pitch Match, and Scales Improv all use the mic to verify your pitch in real time. Tap it on when prompted.',
-      bodyIt: 'Intervalli, Accordi a orecchio, Intonazione e Improvvisazione sulle Scale usano il mic per verificare la tua intonazione in tempo reale. Attivalo quando richiesto.' },
+      body: 'Interval Training, Chord Ear Training, and Pitch Match use the mic to verify your pitch in real time. Tap it on when prompted.',
+      bodyIt: 'Intervalli, Accordi a orecchio e Intonazione usano il mic per verificare la tua intonazione in tempo reale. Attivalo quando richiesto.' },
   ],
 };
 
@@ -38203,11 +38975,11 @@ const TOURS = {
 // Selectors are elements within each module's own screen, verified present.
 Object.assign(TOURS, {
   interval: [
-    { selector:'#ivTargetName', previewSelector:'.iv-target-card',
+    { selector:'#ivTargetName', previewSelector:'#ivTargetZone',
       title:'The Target', titleIt:'Il Bersaglio',
       body:'This is the <strong>interval you&rsquo;re trying to identify</strong>: the distance between two notes. It plays automatically each round.',
       bodyIt:'Questo &egrave; <strong>l&rsquo;intervallo da identificare</strong>: la distanza tra due note. Viene suonato automaticamente ogni round.' },
-    { selector:'#ivReplayBtn', previewSelector:'.iv-target-card',
+    { selector:'#ivReplayBtn', previewSelector:'#ivTargetZone',
       title:'Hear It Again', titleIt:'Riascolta',
       body:'Replays the interval as many times as you need. Listen as often as you like; that builds your ear rather than your memory.',
       bodyIt:'Riproduce l&rsquo;intervallo quante volte vuoi, senza penalit&agrave;; cos&igrave; alleni l&rsquo;orecchio, non la memoria.' },
@@ -38279,7 +39051,7 @@ Object.assign(TOURS, {
       title:'Tap Zone', titleIt:'Zona Tap',
       body:'<strong>Tap here</strong> in tempo. After enough taps the app measures your average BPM and shows how close you are.',
       bodyIt:'<strong>Tocca qui</strong> a tempo. Dopo abbastanza tocchi l&rsquo;app misura il tuo BPM medio e mostra quanto sei vicino.' },
-    { selector:'#tlResult', previewSelector:'#tlResult',
+    { selector:'#tlHudBest', previewSelector:'#tlBarRow',
       title:'Your Score', titleIt:'Il Tuo Punteggio',
       body:'Shows your measured BPM and how far off you landed. Within &plusmn;2 BPM is excellent; that&rsquo;s a tight internal clock.',
       bodyIt:'Mostra il tuo BPM misurato e di quanto hai sbagliato. Entro &plusmn;2 BPM &egrave; eccellente; un orologio interno ben saldo.' },
@@ -39159,8 +39931,8 @@ HELP_CONTENT.ivpool = {
   body: 'Choose which intervals appear in random rounds. <strong>EASY</strong> sticks to consonant intervals (3rds, 5ths, octave), best for beginners. <strong>MEDIUM</strong> adds 4ths, 6ths, 7ths. <strong>ALL</strong> includes every interval up to an octave including dissonant ones.'
 };
 HELP_CONTENT.scales = {
-  title: 'Scale Reference',
-  body: 'Pick a key and a scale type. Tap <strong>UP</strong> to hear/see the scale ascending, <strong>DOWN</strong> for descending, or <strong>LOOP</strong> to repeat up-and-down continuously. The current note glows green so students can connect the sound with the visual.'
+  title: 'Scales',
+  body: 'Pick a root and a scale. The tape draws the scale on a chromatic ruler: the gaps between the dots ARE the interval pattern, and the numbers underneath count the semitones. <strong>UP / DOWN / LOOP</strong> play it; tap any dot to hear that degree alone. <strong>DRONE</strong> holds the root so you can tap degrees against it — the fastest way to learn what each one sounds like. <strong>COMPARE</strong> shows how the scale differs from its parent (Dorian is natural minor with a raised 6th), stated in words and drawn as motion. The <strong>dice</strong> picks a random root and scale.'
 };
 HELP_CONTENT.ce_play = {
   title: 'Chord Voicing',
@@ -44343,16 +45115,24 @@ function drawStrobe(cents, inTune, hasSignal) {
 
   // ── Colour palette ──────────────────────────────────────────
   let r, g, b;
-  if (!hasSignal)     { r=80;  g=82;  b=100; }
-  else if (inTune)    { r=182; g=242; b=91;  }
-  else if (cents > 0) { r=255; g=138; b=101; }
-  else                { r=122; g=175; b=255; }
+  var _stLight = document.body.classList.contains('light');
+  if (_stLight) {
+    if (!hasSignal)     { r=90;  g=100; b=130; }
+    else if (inTune)    { r=38;  g=76;  b=0;   }
+    else if (cents > 0) { r=143; g=36;  b=22;  }
+    else                { r=22;  g=59;  b=143; }
+  } else {
+    if (!hasSignal)     { r=80;  g=82;  b=100; }
+    else if (inTune)    { r=182; g=242; b=91;  }
+    else if (cents > 0) { r=255; g=138; b=101; }
+    else                { r=122; g=175; b=255; }
+  }
 
   ctx.clearRect(0, 0, W, H);
 
   // ── Ambient background glow ─────────────────────────────────
   if (hasSignal) {
-    const gAlpha = inTune ? 0.12 : 0.06;
+    const gAlpha = _stLight ? (inTune ? 0.22 : 0.13) : (inTune ? 0.12 : 0.06);
     const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.15);
     grd.addColorStop(0, `rgba(${r},${g},${b},${gAlpha})`);
     grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
@@ -44570,6 +45350,7 @@ function pitchHistTick() {
 }
 
 function pitchHistDraw() {
+  var _phLight = document.body.classList.contains('light');
   if (!pitchHistCtx || !pitchHistCanvas) return;
   const c = pitchHistCtx, W = pitchHistCanvas.width, H = pitchHistCanvas.height;
   c.clearRect(0, 0, W, H);
@@ -44579,17 +45360,17 @@ function pitchHistDraw() {
   const scale = (H / 2) / 50; // pixels per cent
 
   // In-tune zone (±10¢)
-  c.fillStyle = 'rgba(182,242,91,0.07)';
+  c.fillStyle = _phLight ? 'rgba(58,112,0,0.10)' : 'rgba(182,242,91,0.07)';
   c.fillRect(0, midY - 10 * scale, W, 20 * scale);
 
   // Centre line
-  c.strokeStyle = 'rgba(255,255,255,0.08)';
+  c.strokeStyle = _phLight ? 'rgba(30,30,50,0.10)' : 'rgba(255,255,255,0.08)';
   c.lineWidth = 1; c.setLineDash([4,4]);
   c.beginPath(); c.moveTo(0, midY); c.lineTo(W, midY); c.stroke();
   c.setLineDash([]);
 
   // ±50¢ labels
-  c.fillStyle = 'rgba(255,255,255,0.2)';
+  c.fillStyle = _phLight ? 'rgba(30,30,50,0.3)' : 'rgba(255,255,255,0.2)';
   c.font = '8px monospace';
   c.fillText('+50¢', 2, 10);
   c.fillText('0¢',   2, midY - 3);
@@ -44617,8 +45398,9 @@ function pitchHistDraw() {
   });
   // Color by current deviation
   const latest = pitchHistory.filter(v => v !== null).slice(-1)[0] ?? 0;
-  c.strokeStyle = Math.abs(latest) <= 10 ? '#b6f25b' :
-                  Math.abs(latest) <= 25 ? '#ffd166' : '#ff8a65';
+  c.strokeStyle = _phLight
+    ? (Math.abs(latest) <= 10 ? '#3a7000' : Math.abs(latest) <= 25 ? '#875d00' : '#a32718')
+    : (Math.abs(latest) <= 10 ? '#b6f25b' : Math.abs(latest) <= 25 ? '#ffd166' : '#ff8a65');
   c.globalAlpha = 0.85;
   c.stroke();
   c.globalAlpha = 1;
@@ -44758,6 +45540,7 @@ function cofInit() {
 }
 
 function cofDraw() {
+  var _cofLight = document.body.classList.contains('light');
   const canvas = document.getElementById('cofCanvas');
   if (!canvas) return;
   const dpr  = Math.max(1, window.devicePixelRatio || 1);
@@ -44799,11 +45582,11 @@ function cofDraw() {
     else if (fInfo && fInfo.active) { col = FL; depth = fInfo.count  / 7; }
     else {
       const s = COF_SHARPS[i];
-      if (s === 0) return `rgba(255,255,255,${baseA * 0.5})`;
+      if (s === 0) return _cofLight ? `rgba(30,30,50,${baseA * 0.6})` : `rgba(255,255,255,${baseA * 0.5})`;
       col = s > 0 ? SH : FL; depth = Math.abs(s) / 6;
     }
-    if (depth === 0) return `rgba(255,255,255,${baseA * 0.5})`;
-    return rgba(col, baseA * (0.25 + 0.75 * depth));
+    if (depth === 0) return _cofLight ? `rgba(30,30,50,${baseA * 0.6})` : `rgba(255,255,255,${baseA * 0.5})`;
+    return rgba(col, baseA * (0.25 + 0.75 * depth) * (_cofLight ? 1.7 : 1));
   };
   // Which accent THIS wedge should display right now (declared early so the label
   // helpers below can use it). Follows the ripple so colour/respell sweeps in with
@@ -44949,13 +45732,15 @@ function cofDraw() {
       if (isMinor) {
         const fs = size * (0.038 + 0.007 * outerness);   // 0.038 inner → 0.045 outer
         c.font = `500 ${Math.round(fs)}px 'JetBrains Mono', monospace`;
-        c.fillStyle = bright ? 'rgba(255,255,255,1)'
-                    : `rgba(255,255,255,${0.62 + 0.33 * outerness})`;
+        c.fillStyle = _cofLight
+                    ? (bright ? 'rgba(25,25,45,1)' : `rgba(25,25,45,${0.62 + 0.33 * outerness})`)
+                    : (bright ? 'rgba(255,255,255,1)' : `rgba(255,255,255,${0.62 + 0.33 * outerness})`);
       } else {
         const fs = size * (0.046 + 0.010 * outerness);   // 0.046 inner → 0.056 outer
         c.font = `${Math.round(fs)}px 'Bebas Neue', sans-serif`;
-        c.fillStyle = bright ? 'rgba(255,255,255,0.96)'
-                    : `rgba(255,255,255,${0.55 + 0.30 * outerness})`;
+        c.fillStyle = _cofLight
+                    ? (bright ? 'rgba(25,25,45,0.96)' : `rgba(25,25,45,${0.55 + 0.30 * outerness})`)
+                    : (bright ? 'rgba(255,255,255,0.96)' : `rgba(255,255,255,${0.55 + 0.30 * outerness})`);
       }
       c.fillText(txt, x, y);
     };
@@ -44975,8 +45760,8 @@ function cofDraw() {
 
   // ── Centre circle ── (not rotated — stays readable through the spin)
   c.beginPath(); c.arc(cx, cy, r3, 0, Math.PI * 2);
-  c.fillStyle = cofRGBcss('--bg-1', '#10101c'); c.fill();
-  c.strokeStyle = 'rgba(255,255,255,0.1)'; c.stroke();
+  c.fillStyle = _cofLight ? '#d7d7e7' : cofRGBcss('--bg-1', '#10101c'); c.fill();
+  c.strokeStyle = _cofLight ? 'rgba(30,30,50,0.15)' : 'rgba(255,255,255,0.1)'; c.stroke();
   if (cofSelected >= 0) {
     const primaryLabel = cofMode === 'minor' ? minLabel(cofSelected) : majLabel(cofSelected);
     const subLabel     = cofMode === 'minor' ? majLabel(cofSelected) : minLabel(cofSelected);
@@ -44986,11 +45771,11 @@ function cofDraw() {
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(primaryLabel, cx, cy - size * 0.04);
     c.font      = `${Math.round(size * 0.042)}px monospace`;
-    c.fillStyle = 'rgba(255,255,255,0.4)';
+    c.fillStyle = _cofLight ? 'rgba(30,30,50,0.5)' : 'rgba(255,255,255,0.4)';
     c.fillText(subLabel, cx, cy + size * 0.05);
   } else {
     c.font      = `${Math.round(size * 0.045)}px 'Bebas Neue', sans-serif`;
-    c.fillStyle = 'rgba(255,255,255,0.15)';
+    c.fillStyle = _cofLight ? 'rgba(30,30,50,0.3)' : 'rgba(255,255,255,0.15)';
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText('TAP', cx, cy);
   }
@@ -45396,10 +46181,11 @@ let droneNodes = null;
 let _dronePureSine = false;   // tonal-centre sets true: single sine = trivially notch-able
 let droneScaleType = 'major';
 
-// Help content for Scale Improv
+// Help content for drone mode (formerly the separate Scale Improv tab; the drone
+// now lives inside the Scales tool). Key kept because lookups may still pass it.
 HELP_CONTENT.scaledrone = {
-  title: 'Scale Improv',
-  body: 'Pick a root and scale, then hit START. The app holds a rich drone on the root note while the chromatic strip highlights which notes belong to the scale. <strong>ROOT</strong> glows brightest, <strong>IN SCALE</strong> notes are tinted. Sing or play scale degrees over the drone to internalize how each one sounds against the tonic — a foundational ear training technique.'
+  title: 'Drone Mode',
+  body: 'Inside the Scales tool, tap <strong>DRONE</strong>: the app holds the root note, and tapping any degree on the tape sounds it against the drone. Tap the same degree again to release it, or another to switch. Singing or playing degrees over a drone is a foundational ear-training technique — this is the same idea, with the tape showing you where each degree lives.'
 };
 
 function droneInit() {
@@ -45667,6 +46453,25 @@ const SCALE_DEFS = {
                 degrees: [[1,0],[2,0],[3,-1],[5,0],[6,-1]] },                // Japanese koto pentatonic
   wholetone:  { name: 'WHOLE TONE',             it: 'PER TONI INTERI',          cat: 'exotic',
                 degrees: [[1,0],[2,0],[3,0],[4,1],[5,1],[6,1]] },
+  // ─── Melodic-minor modes (jazz) ───
+  lyddom:     { name: 'LYDIAN DOMINANT',        it: 'LIDIO DOMINANTE',          cat: 'exotic',
+                degrees: [[1,0],[2,0],[3,0],[4,1],[5,0],[6,0],[7,-1]] },   // 4th mode of melodic minor (acoustic scale)
+  altered:    { name: 'ALTERED',                it: 'ALTERATA',                 cat: 'exotic',
+                degrees: [[1,0],[2,-1],[3,-1],[4,-1],[5,-1],[6,-1],[7,-1]] }, // super-locrian, 7th mode of melodic minor
+  locrian2:   { name: 'LOCRIAN NAT 2',          it: 'LOCRIO NAT 2',             cat: 'exotic',
+                degrees: [[1,0],[2,0],[3,-1],[4,0],[5,-1],[6,-1],[7,-1]] }, // half-diminished, 6th mode of melodic minor
+  // ─── Symmetric ───
+  dimwh:      { name: 'DIMINISHED W-H',         it: 'DIMINUITA T-S',            cat: 'exotic',
+                degrees: [[1,0],[2,0],[3,-1],[4,0],[4,1],[6,-1],[6,0],[7,0]] }, // octatonic, whole-half
+  dimhw:      { name: 'DIMINISHED H-W',         it: 'DIMINUITA S-T',            cat: 'exotic',
+                degrees: [[1,0],[2,-1],[3,-1],[3,0],[4,1],[5,0],[6,0],[7,-1]] }, // octatonic, half-whole (dominant dim)
+  augmented:  { name: 'AUGMENTED',              it: 'AUMENTATA',                cat: 'exotic',
+                degrees: [[1,0],[2,1],[3,0],[5,0],[5,1],[7,0]] },          // C Eb E G Ab B
+  // ─── World pentatonic ───
+  inscale:    { name: 'IN',                     it: 'IN (GIAPPONESE)',          cat: 'pent',
+                degrees: [[1,0],[2,-1],[4,0],[5,0],[6,-1]] },              // Japanese, C Db F G Ab
+  egyptian:   { name: 'EGYPTIAN',               it: 'EGIZIA',                   cat: 'pent',
+                degrees: [[1,0],[2,0],[4,0],[5,0],[7,-1]] },               // suspended pentatonic, C D F G Bb
   chromatic:  { name: 'CHROMATIC',              it: 'CROMATICA',                cat: 'exotic', chromatic: true }
 };
 
@@ -45681,7 +46486,7 @@ function scaleDefIntervals(key) {
   return def.degrees.map(([d,a]) => SCALE_DEGREE_SEMIS[d] + a);
 }
 
-let scaleRoot = 'C', scaleType = 'major', scaleSpeed = 100, scaleVolume = 0.30;
+let scaleRoot = 'C', scaleType = 'major', scaleSpeed = 120, scaleVolume = 0.30;
 let scalePlaying = false, scaleMode = null, scaleTimers = [];
 
 function scaleInit() {
@@ -45763,7 +46568,9 @@ const SCALE_SHORT_NAMES = {
   harmminor:'HARM. MIN', melminor:'MELODIC',
   majpent:'MAJ PENT', minpent:'MIN PENT', blues:'BLUES',
   dblharm:'DBL HARM', phrygdom:'PHRYG DOM', hungmin:'HUNG. MIN', hungmaj:'HUNG. MAJ',
-  hirajoshi:'HIRAJOSHI', wholetone:'WHOLE TONE', chromatic:'CHROMATIC'
+  hirajoshi:'HIRAJOSHI', lyddom:'LYD DOM', altered:'ALTERED', locrian2:'LOC ♮2',
+  dimwh:'DIM W-H', dimhw:'DIM H-W', augmented:'AUGMENT', inscale:'IN', egyptian:'EGYPTIAN',
+  wholetone:'WHOLE TONE', chromatic:'CHROMATIC'
 };
 
 const STP_X0 = 20, STP_XU = 28;
@@ -45790,13 +46597,33 @@ let scalePhTimers   = [];
    Parent = natural minor for anything with a b3, major otherwise, with overrides
    where a different parent is the honest one (phrygian dominant is the 5th mode of
    HARMONIC minor, not a bent major). */
+/* Parent scales are chosen from THE THEORY, not from what the diff finds easy.
+   The diff now expresses added and dropped notes, so a 5-note scale compared to
+   its 7-note parent is a real lesson ("minor pentatonic is natural minor without
+   the 2nd and the b6"), not a note-count error. */
 const SCALE_GHOST_OVERRIDE = {
   natminor:'major', major:'natminor',
-  blues:'minpent', minpent:'natminor', majpent:'major',
-  phrygdom:'harmminor',      // 5th mode of harmonic minor
+  // Modes vs their parent.
+  phrygdom:'phrygian',       // phrygian with a MAJOR 3rd (one move) — the Spanish
+                             // scale as usually taught. (Mode theory says 5th mode of
+                             // harmonic minor, but that comparison is 3 moves; this is 1.)
   hungmin:'harmminor',
   melminor:'natminor',
-  chromatic:null, wholetone:null, hirajoshi:null, dblharm:null, hungmaj:null
+  lyddom:'lydian',           // lydian with a b7
+  altered:'locrian',         // locrian with a b4
+  locrian2:'locrian',        // locrian with a natural 2
+  // Pentatonics vs the heptatonic scale they are drawn from — the pentatonic as
+  // the subset, shown by the notes it leaves out.
+  minpent:'natminor',        // natural minor without the 2 and b6
+  majpent:'major',           // major without the 4 and 7 (the half-step tendency tones)
+  blues:'minpent',           // minor pentatonic PLUS the b5 blue note
+  hirajoshi:'natminor',      // natural minor without the 4 and b7
+  inscale:'phrygian',        // in/Japanese vs phrygian (shares the b2 colour)
+  egyptian:'minpent',        // suspended pentatonic: minor pent with the 2 for the b3
+  dblharm:'harmmaj',         // harmonic major with a b2 — one move
+  hungmaj:'lyddom',          // lydian dominant with a #2 — one move
+  // Truly symmetric: no tonal parent exists.
+  chromatic:null, wholetone:null, augmented:null, dimwh:null, dimhw:null
 };
 function scaleGhostKey(k) {
   if (k in SCALE_GHOST_OVERRIDE) return SCALE_GHOST_OVERRIDE[k];
@@ -45807,19 +46634,72 @@ function scaleGhostKey(k) {
 
 /* Degree-level diff between the current scale and its parent. Returns entries of
    { deg, fromSemi, toSemi, dir } — the note MOVED, which is what gets drawn. */
+/* Diff this scale against its parent, in PITCH CLASSES, classified as one of:
+     move   — a degree is present in both but at a different pitch (Dorian's 6th)
+     add    — a note this scale has that the parent does not (blues' b5)
+     drop   — a note the parent has that this scale does not (the 2nd that minor
+              pentatonic leaves out of natural minor)
+   Working in degree NUMBERS alone could not express add/drop, which is why
+   pentatonics used to be skipped. But dropping the 2nd of natural minor to make
+   minor pentatonic IS the lesson, so the diff has to carry it. */
 function scaleGhostDiff(k, gk) {
   const a = SCALE_DEFS[k], b = SCALE_DEFS[gk];
   if (!a || !b || !a.degrees || !b.degrees) return [];
-  const semi = (dg, al) => SCALE_DEGREE_SEMIS[dg] + al;
-  const mine = new Map(a.degrees.map(([d, al]) => [d, al]));
-  const ref  = new Map(b.degrees.map(([d, al]) => [d, al]));
+  const semiOf = (dg, al) => (SCALE_DEGREE_SEMIS[dg] + al + 12) % 12;
+  const label  = (dg, al) => (al > 0 ? '♯' : al < 0 ? '♭' : '') + dg;
+
+  // map semitone -> {deg, alt, label} for each scale
+  const mine = new Map(a.degrees.map(([d, al]) => [semiOf(d, al), { deg: d, alt: al, label: label(d, al) }]));
+  const ref  = new Map(b.degrees.map(([d, al]) => [semiOf(d, al), { deg: d, alt: al, label: label(d, al) }]));
+
+  // A note is "moved" (not add+drop) when the same DEGREE NUMBER appears in both
+  // scales at different pitches. Pair those up first; whatever pitch classes are
+  // left unmatched are genuine adds or drops.
   const out = [];
-  [...new Set([...mine.keys(), ...ref.keys()])].sort((x, y) => x - y).forEach(dg => {
-    if (!mine.has(dg) || !ref.has(dg)) return;      // degree absent from one side
-    const ma = mine.get(dg), ra = ref.get(dg);
-    if (ma === ra) return;
-    out.push({ deg: dg, fromSemi: semi(dg, ra), toSemi: semi(dg, ma), dir: ma > ra ? 1 : -1 });
+  const mineByDeg = new Map(a.degrees.map(([d, al]) => [d, al]));
+  const refByDeg  = new Map(b.degrees.map(([d, al]) => [d, al]));
+  const consumedMine = new Set(), consumedRef = new Set();
+
+  [...new Set([...mineByDeg.keys(), ...refByDeg.keys()])].sort((x, y) => x - y).forEach(dg => {
+    if (mineByDeg.has(dg) && refByDeg.has(dg) && mineByDeg.get(dg) !== refByDeg.get(dg)) {
+      const rSemi = semiOf(dg, refByDeg.get(dg)), mSemi = semiOf(dg, mineByDeg.get(dg));
+      out.push({ type: 'move', deg: dg, fromSemi: rSemi, toSemi: mSemi,
+                 dir: mineByDeg.get(dg) > refByDeg.get(dg) ? 1 : -1,
+                 label: label(dg, mineByDeg.get(dg)) });
+      consumedMine.add(mSemi); consumedRef.add(rSemi);
+    }
   });
+
+  // Leftover unmatched notes: this scale's are potential adds, the parent's are
+  // potential drops.
+  const adds = [], drops = [];
+  mine.forEach((info, semi) => { if (!ref.has(semi) && !consumedMine.has(semi)) adds.push({ semi, info }); });
+  ref.forEach((info, semi)  => { if (!mine.has(semi) && !consumedRef.has(semi)) drops.push({ semi, info }); });
+
+  // Second pass: a note that moved ACROSS a degree boundary (minor pentatonic's b3
+  // becoming Egyptian's 2 — a semitone down, but a different degree NUMBER) shows up
+  // here as an unrelated add + drop. If an add and a drop sit ONE semitone apart,
+  // that is really one note sliding, so pair them into a move (and an arrow). Uses
+  // circular distance so an octave wrap (12<->0) still counts as adjacent.
+  const circDist = (x, y) => { const d = Math.abs(x - y) % 12; return Math.min(d, 12 - d); };
+  const usedAdd = new Set(), usedDrop = new Set();
+  adds.forEach((a, ai) => {
+    let best = -1, bestD = 99;
+    drops.forEach((dp, di) => {
+      if (usedDrop.has(di)) return;
+      const d = circDist(a.semi, dp.semi);
+      if (d === 1 && d < bestD) { bestD = d; best = di; }
+    });
+    if (best >= 0) {
+      const dp = drops[best];
+      usedAdd.add(ai); usedDrop.add(best);
+      out.push({ type: 'move', deg: a.info.deg, fromSemi: dp.semi, toSemi: a.semi,
+                 dir: a.semi > dp.semi ? 1 : -1, label: a.info.label });
+    }
+  });
+
+  adds.forEach((a, ai)   => { if (!usedAdd.has(ai))  out.push({ type: 'add',  semi: a.semi,  label: a.info.label }); });
+  drops.forEach((dp, di) => { if (!usedDrop.has(di)) out.push({ type: 'drop', semi: dp.semi, label: dp.info.label }); });
   return out;
 }
 
@@ -45828,21 +46708,32 @@ function scaleGhostCaption(k, gk, diffs) {
   if (!diffs.length) return '';
   const it = (progState.lang === 'it');
   const pdef = SCALE_DEFS[gk];
-  // Full name, minus any "· AEOLIAN"/"· IONIAN" mode suffix — that reads as noise
-  // mid-sentence ("NATURAL MINOR with a natural 6", not "NATURAL MINOR · AEOLIAN with…").
   const parent = ((it && pdef.it) ? pdef.it : pdef.name).split('·')[0].trim();
-  const parts = diffs.map(d => {
-    const sign = d.dir > 0 ? '♯' : '♭';
-    // a degree moved back to its major-scale position reads as "natural"
-    const natural = (SCALE_DEGREE_SEMIS[d.deg] === d.toSemi);
-    const mark = natural ? '♮' : sign;
-    return mark + d.deg;
-  });
-  const join = it ? ' e ' : ' and ';
-  const list = parts.length > 1
-    ? parts.slice(0, -1).join(', ') + join + parts[parts.length - 1]
-    : parts[0];
-  return (it ? parent + ' con ' : parent + ' with ') + list;
+
+  const moveLbl = d => {
+    const natural = (SCALE_DEGREE_SEMIS[d.deg] === d.toSemi);   // moved to its major position
+    return (natural ? '♮' : (d.dir > 0 ? '♯' : '♭')) + d.deg;
+  };
+  // Group by kind so the sentence reads naturally: a scale can move some notes,
+  // add others and drop others (though most pairs do just one).
+  const moves = diffs.filter(d => d.type === 'move').map(moveLbl);
+  const adds  = diffs.filter(d => d.type === 'add').map(d => d.label);
+  const drops = diffs.filter(d => d.type === 'drop').map(d => d.label);
+
+  const nat = it
+    ? { withw:' con ', add:' aggiungendo ', drop:' senza ' }
+    : { withw:' with ', add:' adding ', drop:' without ' };
+  const listOf = arr => {
+    if (arr.length <= 1) return arr[0] || '';
+    const j = it ? ' e ' : ' and ';
+    return arr.slice(0, -1).join(', ') + j + arr[arr.length - 1];
+  };
+
+  let s = parent;
+  if (moves.length) s += nat.withw + listOf(moves);
+  if (adds.length)  s += nat.add  + listOf(adds);
+  if (drops.length) s += nat.drop + listOf(drops);
+  return s;
 }
 
 function scaleTonicMidi() { const r = parseRoot(scaleRoot); return 12 * (scaleOct + 1) + r.pc; }
@@ -45853,7 +46744,7 @@ function scaleBuildTicks() {
   let h = '';
   for (let i = 0; i <= 12; i++) {
     const x = stpX(i), major = (i === 0 || i === 12);
-    h += `<line class="stp-tick" x1="${x}" y1="${major?50:53}" x2="${x}" y2="${major?66:63}"/>`;
+    h += `<line class="stp-tick${major ? ' end' : ''}" x1="${x}" y1="${major?50:53}" x2="${x}" y2="${major?66:63}"/>`;
   }
   g.innerHTML = h;
 }
@@ -45869,13 +46760,30 @@ function scaleTapeData() {
   const degs = (def && def.degrees) ? def.degrees : null;
   const out = data.map((n, i) => {
     let deg = '·';
-    if (degs && degs[i]) { const [d, a] = degs[i]; deg = (a > 0 ? '♯' : a < 0 ? '♭' : '') + d; }
-    else if (def && def.chromatic) deg = (i === 0) ? '1' : (i === 12 ? '8' : '·');
+    if (n.semitones === 12) deg = '8';                       // octave, however it arrived
+    else if (degs && degs[i]) { const [d, a] = degs[i]; deg = (a > 0 ? '♯' : a < 0 ? '♭' : '') + d; }
+    else if (def && def.chromatic) deg = (i === 0) ? '1' : '·';
     return { semi: n.semitones, name: n.name, deg };
   });
   if (!out.length || out[out.length-1].semi !== 12)
     out.push({ semi: 12, name: out[0].name, deg: '8' });
   return out;
+}
+
+/* Teleport the playhead to an x with NO animation, whatever state it was in.
+   Synchronous reflows on either side of the transform change guarantee the browser
+   sees "position A with transitions off" then "position B with transitions off",
+   so there is nothing to tween. Immune to rapid taps because it does not defer. */
+function scalePlaceDot(x, show) {
+  const ph = document.getElementById('scalePlayhead');
+  if (!ph) return;
+  ph.classList.add('snap');           // transitions hard-off
+  ph.classList.remove('moving');
+  void ph.getBoundingClientRect();    // flush the "off" state
+  ph.style.transform = 'translateX(' + x + 'px)';
+  ph.classList.toggle('show', !!show);
+  void ph.getBoundingClientRect();    // flush the new position while still off
+  ph.classList.remove('snap');        // transitions back on for the NEXT move
 }
 
 function scaleRenderTape(animate) {
@@ -45902,10 +46810,18 @@ function scaleRenderTape(animate) {
 
   stpGroups.forEach((g, i) => {
     const d = data[i];
-    g.classList.remove('latched', 'root');
+    g.classList.remove('latched', 'root', 'anchor');
     if (!d) { g.style.display = 'none'; return; }
     g.style.display = '';
     if (i === 0) g.classList.add('root');
+    // Anchor = the octave frame: the root (1) and its octave (8). Bright cyan and a
+    // touch larger so "home" reads at a glance on any scale, sparse or full. Size is
+    // set via the radius (not a CSS transform, which would collide with the hit and
+    // latched scale animations).
+    const isAnchor = (i === 0 || d.semi === 12);   // root (semi 0) and octave (semi 12)
+    g.classList.toggle('anchor', isAnchor);
+    const dot = g.querySelector('.stp-dot');
+    if (dot) dot.setAttribute('r', isAnchor ? '6.7' : '5.5');
     if (!animate) g.style.transition = 'none';
     g.style.transform = 'translateX(' + stpX(d.semi) + 'px)';
     if (!animate) requestAnimationFrame(() => { g.style.transition = ''; });
@@ -45922,7 +46838,15 @@ function scaleRenderTape(animate) {
   const gapsEl = document.getElementById('scaleTapeGaps');
   if (gapsEl) gapsEl.innerHTML = gh;
 
-  scaleRenderGhost();
+  // The ghost overlay (COMPARE arrows) is positioned against the notes' FINAL spots.
+  // During an animated change the notes are still morphing (.42s), so drawing the
+  // arrows now would peg them to the old positions and then slide. Wait for the
+  // morph to settle. A token bumped per render cancels a stale pending draw if the
+  // user changes scale again mid-morph.
+  // Draw the ghost immediately. Its markers (dashed parent-note, add ring, drop X)
+  // sit at FIXED tick positions and can appear at once; only the ARROWS connect to
+  // the notes' final spots, so those fade in over the morph (see scaleRenderGhost).
+  scaleRenderGhost(animate);
   scaleRenderName();
   if (scaleDroneMode) scaleRestartDrone();
 }
@@ -45938,7 +46862,7 @@ function scaleRenderName() {
   setTimeout(() => { el.textContent = txt; el.classList.remove('swap'); }, 160);
 }
 
-function scaleRenderGhost() {
+function scaleRenderGhost(animate) {
   const host = document.getElementById('scaleTapeGhosts');
   const lbl  = document.getElementById('scaleGhostLbl');
   const cap  = document.getElementById('scaleGhostCaption');
@@ -45950,6 +46874,7 @@ function scaleRenderGhost() {
     if (cap) { cap.textContent = ''; cap.classList.remove('show'); }
     if (lbl) lbl.textContent = scaleGhostOn ? t('scale_ghost_none') : t('scale_ghost');
     stpGroups.forEach(g => g.classList.remove('moved'));
+    scaleMaybeNote();
     return;
   }
 
@@ -45961,17 +46886,40 @@ function scaleRenderGhost() {
   const data  = scaleTapeData();
   let h = '';
   diffs.forEach(d => {
-    const x0 = stpX(d.fromSemi), x1 = stpX(d.toSemi);
-    const mid = (x0 + x1) / 2;
-    const lift = 20;                                   // arc height above the rail
-    h += `<circle class="stp-gfrom" cx="${x0}" cy="58" r="5"/>`;
-    // arc from the parent's note to this scale's note
-    h += `<path class="stp-garrow" d="M ${x0} 50 Q ${mid} ${58 - lift} ${x1} 50" marker-end="url(#stpArrow)"/>`;
+    if (d.type === 'move') {
+      const x0 = stpX(d.fromSemi), x1 = stpX(d.toSemi), mid = (x0 + x1) / 2, lift = 20;
+      h += `<circle class="stp-gfrom" cx="${x0}" cy="58" r="5"/>`;
+      h += `<path class="stp-garrow" d="M ${x0} 50 Q ${mid} ${58 - lift} ${x1} 50" marker-end="url(#stpArrow)"/>`;
+    } else if (d.type === 'add') {
+      // a note this scale has that the parent does not: a bright ring + a small
+      // "+" so it reads as "this scale adds a note here" (blues' b5)
+      const x = stpX(d.semi);
+      h += `<circle class="stp-gadd" cx="${x}" cy="58" r="9"/>`;
+      h += `<text class="stp-gsign" x="${x}" y="41" text-anchor="middle">+</text>`;
+    } else if (d.type === 'drop') {
+      // a note the PARENT has that this scale leaves out: a faded hollow marker
+      // where the parent's note would sit, so you see what the scale omits (the
+      // 2nd and b6 that minor pentatonic drops from natural minor)
+      const x = stpX(d.semi);
+      h += `<circle class="stp-gdrop" cx="${x}" cy="58" r="7"/>`;
+      h += `<line class="stp-gdrop" x1="${x-4}" y1="54" x2="${x+4}" y2="62"/>`;
+      h += `<line class="stp-gdrop" x1="${x-4}" y1="62" x2="${x+4}" y2="54"/>`;
+    }
   });
   host.innerHTML = h;
+  // Fade the whole overlay in as one unit on an animated change. Retrigger by
+  // removing then re-adding the class with a reflow between.
+  if (animate && h) {
+    host.classList.remove('fade');
+    void host.getBoundingClientRect();
+    host.classList.add('fade');
+  } else {
+    host.classList.remove('fade');
+  }
 
-  // glow the pips that moved
-  const movedSemis = new Set(diffs.map(d => d.toSemi));
+  // glow the pips that moved or were added
+  const movedSemis = new Set(diffs.filter(d => d.type === 'move').map(d => d.toSemi)
+                             .concat(diffs.filter(d => d.type === 'add').map(d => d.semi)));
   stpGroups.forEach((g, i) => {
     const n = data[i];
     g.classList.toggle('moved', !!(n && movedSemis.has(n.semi)));
@@ -45981,7 +46929,63 @@ function scaleRenderGhost() {
     cap.textContent = scaleGhostCaption(scaleType, gk, diffs);
     cap.classList.toggle('show', !!cap.textContent);
   }
+  scaleMaybeNote();
   if (lbl) lbl.textContent = (progState.lang === 'it' ? 'VS ' : 'VS ') + (SCALE_SHORT_NAMES[gk] || '');
+}
+
+/* Some scales carry a practice note (melodic minor's descending form). Shown in
+   the caption strip when COMPARE isn't using it — information, not behaviour: the
+   player should know the convention, not have the tool silently change notes on
+   the way down. */
+const SCALE_NOTES_EN = { melminor: 'CLASSICAL PRACTICE DESCENDS AS NATURAL MINOR' };
+const SCALE_NOTES_IT = { melminor: 'NELLA PRASSI CLASSICA DISCENDE COME MINORE NATURALE' };
+
+/* Alternative names. Many scales carry two or three depending on the tradition —
+   jazz, classical, klezmer, surf. Shown in the caption strip when nothing more
+   important is using it, prefixed "AKA". Only well-attested names; no folklore. */
+const SCALE_AKA = {
+  mixolydian: ['dominant scale'],
+  harmminor:  ['Aeolian ♯7'],
+  melminor:   ['jazz minor'],
+  // major -> Ionian and natminor -> Aeolian are omitted here on purpose: the mode
+  // name is already in the title ("MAJOR · IONIAN"), so an AKA line would just
+  // repeat it. Every remaining AKA adds a name the title does not carry.
+  dblharm:    ['Byzantine', 'Arabic', 'surf scale'],
+  phrygdom:   ['Spanish Phrygian', 'Freygish'],
+  hungmin:    ['Gypsy minor'],
+  lyddom:     ['acoustic scale', 'Lydian ♭7'],
+  altered:    ['super Locrian', 'diminished whole-tone'],
+  locrian2:   ['half-diminished'],
+  dimwh:      ['octatonic'],
+  dimhw:      ['dominant diminished'],
+  augmented:  ['symmetrical augmented'],
+  inscale:    ['Sakura'],
+  egyptian:   ['suspended pentatonic']
+};
+
+/* Caption-strip precedence (it can only show one thing):
+     1. COMPARE sentence  — set by scaleRenderGhost when COMPARE is on
+     2. practice note     — melodic minor's descending form
+     3. AKA names         — alternative names for this scale
+   Only reached when 1 hasn't already filled the strip. */
+function scaleMaybeNote() {
+  const cap = document.getElementById('scaleGhostCaption');
+  if (!cap || cap.textContent) return;             // COMPARE owns the strip when on
+  const note = (progState.lang === 'it' ? SCALE_NOTES_IT : SCALE_NOTES_EN)[scaleType];
+  if (note) { cap.textContent = note; cap.classList.add('show'); return; }
+  let aka = SCALE_AKA[scaleType];
+  if (aka && aka.length) {
+    // Never repeat a name the title already shows. The title can carry a mode suffix
+    // ("MAJOR · IONIAN"); drop any AKA entry that already appears in it.
+    const def = SCALE_DEFS[scaleType];
+    const title = ((progState.lang === 'it' && def.it) ? def.it : def.name).toUpperCase();
+    aka = aka.filter(n => !title.includes(n.toUpperCase()));
+    if (aka.length) {
+      const prefix = (progState.lang === 'it') ? 'DETTA ANCHE ' : 'AKA ';
+      cap.textContent = prefix + aka.join(' · ');
+      cap.classList.add('show');
+    }
+  }
 }
 
 function scaleToggleGhost() {
@@ -46223,7 +47227,10 @@ function setScaleSpeed(v) {
   document.getElementById('scaleSpeedVal').textContent = v;
   const slider = document.getElementById('scaleSpeed');
   if (slider) {
-    const pct = ((v - 40) / (200 - 40)) * 100;
+    // read the slider's own min/max so the fill tracks the actual range, not a
+    // hardcoded 40-200 that goes stale the moment the range changes
+    const lo = +slider.min || 0, hi = +slider.max || 100;
+    const pct = ((v - lo) / (hi - lo)) * 100;
     slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--border) ${pct}%, var(--border) 100%)`;
   }
 }
@@ -46261,17 +47268,9 @@ function playScale(direction) {
   const ph = document.getElementById('scalePlayhead');
   const beat0 = 60000 / scaleSpeed, travel0 = Math.min(200, beat0 * 0.4);
   if (ph) {
-    // Hard-place the ball on the FIRST note of this direction: transition off,
-    // set transform, force a commit, then arm the transition. Without the commit
-    // the browser coalesces "jump there" + "animate to next" into one slide from
-    // wherever the ball was left, which reads as the ball creeping in.
-    ph.classList.remove('show', 'moving');
-    ph.style.transition = 'none';
-    ph.style.transform = 'translateX(' + stpX(seq[0].semi) + 'px)';
-    void ph.getBoundingClientRect();
-    ph.style.transition = '';
     ph.style.setProperty('--ph-dur', travel0 + 'ms');
-    ph.classList.add('show', 'moving');
+    scalePlaceDot(stpX(seq[0].semi), true);   // teleport onto note 1, visible, no slide
+    ph.classList.add('moving');               // arm transform anim for the steps that follow
   }
 
   const step = (i) => {
@@ -46294,13 +47293,9 @@ function playScale(direction) {
     }
     scalePhTimers.push(setTimeout(() => {
       if (!scalePlaying || !ph) return;
-      if (wrap) {                                  // snap home, no long reverse sweep
-        ph.classList.remove('moving');
-        ph.style.transition = 'none';
-        ph.style.transform = 'translateX(' + stpX(seq[0].semi) + 'px)';
-        void ph.getBoundingClientRect();
-        ph.style.transition = '';
-        ph.classList.add('moving');
+      if (wrap) {
+        scalePlaceDot(stpX(seq[0].semi), true);  // teleport home, no reverse sweep
+        ph.classList.add('moving');              // re-arm for the next pass up
       } else {
         ph.style.transform = 'translateX(' + stpX(seq[next].semi) + 'px)';
       }
@@ -46318,10 +47313,16 @@ function scaleStop() {
   ['scaleUpBtn','scaleDownBtn','scaleLoopBtn'].forEach(id => {
     const b = document.getElementById(id); if (b) b.classList.remove('playing');
   });
-  // Reset the ball fully. Hiding it (opacity) alone leaves the stale transform on
-  // the element, and the next play() then animates FROM that position.
+  // Hide the dot with NO animation. .snap kills the transition, .show drops the
+  // opacity, .moving is cleared so a later play() starts clean. The transform is
+  // left where it is (harmless while invisible); the next play() teleports it.
   const ph = document.getElementById('scalePlayhead');
-  if (ph) { ph.classList.remove('show', 'moving'); ph.style.transition = 'none'; ph.style.transform = ''; }
+  if (ph) {
+    ph.classList.add('snap');
+    ph.classList.remove('show', 'moving');
+    void ph.getBoundingClientRect();
+    ph.classList.remove('snap');
+  }
   scaleClearHits();   // .hit is added per note and never removed otherwise
 }
 
@@ -51893,7 +52894,7 @@ function rrRenderRow(svg, colorMap, barStart, barEnd) {
   var NOTE_XE = W - 10;
   var NW = NOTE_XE - NOTE_X0;
 
-  var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  var isDark = !document.body.classList.contains('light');
   var staffColor  = isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)';
   var noteColor   = isDark ? 'rgba(255,255,255,0.90)' : 'rgba(0,0,0,0.90)';
   var bg0         = isDark ? '#141414' : '#f8f8f8';
@@ -52207,8 +53208,9 @@ function rrDiatonic(letter, oct) { return oct * 7 + RR_DIA[letter]; }
 // Returns { svg: '<g>...', width, height }.
 function pitchedStaffSvg(chords, clef, opts) {
   opts = opts || {};
-  var col = opts.color || 'rgba(255,255,255,0.92)';
-  var lineCol = opts.lineColor || 'rgba(255,255,255,0.45)';
+  var _lt = document.body.classList.contains('light');
+  var col = opts.color || (_lt ? 'rgba(20,20,20,0.92)' : 'rgba(255,255,255,0.92)');
+  var lineCol = opts.lineColor || (_lt ? 'rgba(20,20,20,0.45)' : 'rgba(255,255,255,0.45)');
   var labelCol = opts.labelColor || col;
   var labels = opts.labels || null;     // array of chord-name strings, one per chord
   var sp = RR_SPACE;
@@ -52569,7 +53571,7 @@ function sgRenderCadenceStaff(chords, labels, svgId) {
   if (!svg || !chords || !chords.length) return;
   var disp = chords.map(function(c){ return c.slice().sort(function(a,b){return a-b;}); });
 
-  var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  var isDark = !document.body.classList.contains('light');
   var noteColor = isDark ? 'rgba(255,255,255,0.92)' : 'rgba(20,20,20,0.92)';
   var lineColor = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(20,20,20,0.42)';
   var labelColor = isDark ? 'rgba(255,255,255,0.78)' : 'rgba(20,20,20,0.78)';
@@ -52600,7 +53602,7 @@ var SG_VL_COLORS = ['#ff8d6b', '#ffd166', '#5ee2ff']; // bottom, middle, top voi
 function sgRenderVoiceLeadingStaff(chords, labels, svgId) {
   var svg = document.getElementById(svgId);
   if (!svg || !chords || !chords.length) return;
-  var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  var isDark = !document.body.classList.contains('light');
   var noteColor = isDark ? 'rgba(255,255,255,0.92)' : 'rgba(20,20,20,0.92)';
   var lineColor = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(20,20,20,0.42)';
   var labelColor = isDark ? 'rgba(255,255,255,0.78)' : 'rgba(20,20,20,0.78)';
@@ -52855,7 +53857,7 @@ function sgDrawModeStaff(svgEl, spelled){
 function sgRenderModulationStaff(chords, labels, markIdx, caption, svgId) {
   var svg = document.getElementById(svgId);
   if (!svg || !chords || !chords.length) return;
-  var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  var isDark = !document.body.classList.contains('light');
   var noteColor = isDark ? 'rgba(255,255,255,0.92)' : 'rgba(20,20,20,0.92)';
   var lineColor = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(20,20,20,0.42)';
   var labelColor = isDark ? 'rgba(255,255,255,0.78)' : 'rgba(20,20,20,0.78)';
@@ -54384,7 +55386,7 @@ function rcRenderStaffInto(svgId, card, colorMap, playheadId) {
 
   var beats = card ? card.beats : 2;
 
-  var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  var isDark = !document.body.classList.contains('light');
   var noteColor  = isDark ? 'rgba(255,255,255,0.92)' : 'rgba(0,0,0,0.90)';
 
   // No staff furniture — these are floating rhythmic cells, not bars.
@@ -60472,7 +61474,7 @@ function chordleShowDailyResult(st) {
   var nameEl=document.getElementById('chordleEndName');
   var revEl=document.getElementById('chordleAnswerReveal');
   if (titleEl){
-    titleEl.style.color = st.lastDailyWon ? '#22c55e' : '#ef4444';
+    titleEl.style.color = st.lastDailyWon ? diffColorFor('#22c55e') : diffColorFor('#ef4444');
     titleEl.textContent = t('chordle_daily')+' · '+chordleDailyDate()+'  '+
       (st.lastDailyWon ? ('✓ '+st.lastDailyGuesses+'/'+st.lastDailyMaxG) : '✕ X/'+st.lastDailyMaxG);
   }
@@ -61873,13 +62875,30 @@ function chordlePickDiff(diff) {
   chordleUpdateTagline();
 }
 // ── UI Updates ───────────────────────────────────
+/* Difficulty colors are bright for dark mode; on the light theme they wash out on
+   the pale pill. Map each to a deepened AA-legible equivalent when light is active. */
+const DIFF_COLOR_LIGHT = {
+  '#34d399':'#095c3a', '#22c55e':'#095c3a', '#2ec78f':'#095c3a',
+  '#f59e0b':'#6f4d00', '#eab308':'#6f4d00', '#facc15':'#6f4d00', '#fbbf24':'#6f4d00',
+  '#f97316':'#b34a18', '#ef4444':'#a32718',
+  '#a855f7':'#5238a5', '#c084fc':'#5238a5', '#3b82f6':'#2358c8', '#60a5fa':'#2358c8',
+  '#7be0a4':'#2e7d4f', '#b8a3ff':'#5238a5', '#ffd166':'#6f4d00', '#ff8aae':'#a3284d',
+  '#5ee2ff':'#006f8f'
+};
+function diffColorFor(c) {
+  if (document.body.classList.contains('light')) {
+    var k = (c||'').toLowerCase();
+    return DIFF_COLOR_LIGHT[k] || c;
+  }
+  return c;
+}
 function chordleUpdateDiffBtn() {
   var btn = document.getElementById('chordleDiffBtn');
   var lbl = document.getElementById('chordleDiffLabel');
   if (!btn||!lbl) return;
   var isCustom = chordleDiff==='custom';
   var conf = CHORDLE_DIFF[chordleDiff]||{color:'#a855f7'};
-  var color = isCustom?'#a855f7':conf.color;
+  var color = diffColorFor(isCustom?'#a855f7':conf.color);
   var label = isCustom?(t('chordle_diff_custom')||'CUSTOM'):(conf.labelKey?t(conf.labelKey):conf.label)||'MEDIUM';
   lbl.textContent = label;
   btn.style.color = color;
@@ -62030,10 +63049,10 @@ function chordleSlotEl(chord, sc, selected, isRoot, pulse, size) {
   var bdr,bg,col,shadow;
   if (pulse)         { bdr='var(--accent)'; bg='color-mix(in srgb,var(--accent) 18%,transparent)'; col='var(--accent)'; shadow='0 0 12px color-mix(in srgb,var(--accent) 40%,transparent)'; }
   else if (selected) { bdr='var(--accent)'; bg='color-mix(in srgb,var(--accent) 12%,var(--surface))'; col='var(--accent)'; shadow='0 0 10px color-mix(in srgb,var(--accent) 30%,transparent)'; }
-  else if (sc==='correct')   { bdr='#22c55e99'; bg='color-mix(in srgb,#22c55e 12%,var(--bg-0))'; col='#22c55e'; shadow='0 0 12px #22c55e22'; }
-  else if (sc==='present')   { bdr='#eab30899'; bg='color-mix(in srgb,#eab308 14%,var(--bg-0))'; col='#eab308'; shadow='0 0 10px #eab30822'; }
-  else if (sc==='inversion') { bdr='#a855f788'; bg='color-mix(in srgb,#a855f7 12%,var(--bg-0))'; col='#c084fc'; shadow='0 0 8px #a855f711'; }
-  else if (sc==='rootonly')  { bdr='#3b82f688'; bg='color-mix(in srgb,#3b82f6 12%,var(--bg-0))'; col='#60a5fa'; shadow='0 0 8px #3b82f611'; }
+  else if (sc==='correct')   { bdr=diffColorFor('#22c55e')+'99'; bg='color-mix(in srgb,'+diffColorFor('#22c55e')+' 12%,var(--bg-0))'; col=diffColorFor('#22c55e'); shadow='0 0 12px #22c55e22'; }
+  else if (sc==='present')   { bdr=diffColorFor('#eab308')+'99'; bg='color-mix(in srgb,'+diffColorFor('#eab308')+' 14%,var(--bg-0))'; col=diffColorFor('#eab308'); shadow='0 0 10px #eab30822'; }
+  else if (sc==='inversion') { bdr=diffColorFor('#a855f7')+'88'; bg='color-mix(in srgb,'+diffColorFor('#a855f7')+' 12%,var(--bg-0))'; col=diffColorFor('#c084fc'); shadow='0 0 8px #a855f711'; }
+  else if (sc==='rootonly')  { bdr=diffColorFor('#3b82f6')+'88'; bg='color-mix(in srgb,'+diffColorFor('#3b82f6')+' 12%,var(--bg-0))'; col=diffColorFor('#60a5fa'); shadow='0 0 8px #3b82f611'; }
   else if (sc==='wrong')     { bdr='#47556966'; bg='color-mix(in srgb,#475569 12%,var(--bg-0))'; col='var(--muted)'; shadow='none'; }
   else if (chord)         { bdr='var(--border)'; bg='var(--surface)'; col='var(--text)'; shadow='none'; }
   else                    { bdr='var(--border-soft)'; bg='transparent'; col='transparent'; shadow='none'; }
@@ -62058,7 +63077,7 @@ function chordleActiveRowEl(chords, n, selSlot, pulseIdx, rootPos) {
     var fs=l>6?7:l>4?9:l>3?11:13;
     var bdr,bg,col,shadow;
     var locked=chordleLockedSlots.includes(i);
-    if (locked)        {bdr='#22c55e99';bg='color-mix(in srgb,#22c55e 12%,var(--bg-0))';col='#22c55e';shadow='0 0 12px #22c55e22';}
+    if (locked)        {bdr=diffColorFor('#22c55e')+'99';bg='color-mix(in srgb,'+diffColorFor('#22c55e')+' 12%,var(--bg-0))';col=diffColorFor('#22c55e');shadow='0 0 12px #22c55e22';}
     else if (pulse)    {bdr='var(--accent)';bg='color-mix(in srgb,var(--accent) 18%,transparent)';col='var(--accent)';shadow='0 0 12px color-mix(in srgb,var(--accent) 40%,transparent)';}
     else if (selected) {bdr='var(--accent)';bg='color-mix(in srgb,var(--accent) 12%,var(--surface))';col='var(--accent)';shadow='0 0 10px color-mix(in srgb,var(--accent) 30%,transparent)';}
     else if (chord)    {bdr='var(--border)';bg='var(--surface)';col='var(--text)';shadow='none';}
@@ -62236,7 +63255,7 @@ function chordleRenderEndState() {
   if (!titleEl||!chordleProg) return;
   var won=chordleGameState==='won';
   var perfect=won&&chordleGuesses.length===1;
-  titleEl.style.color=won?'#22c55e':'#ef4444';
+  titleEl.style.color=won?diffColorFor('#22c55e'):diffColorFor('#ef4444');
   titleEl.textContent=perfect?'✦ FIRST TRY!':won?('✓ SOLVED IN '+chordleGuesses.length+(chordleGuesses.length===1?' GUESS':' GUESSES')):'✕ OUT OF GUESSES';
   nameEl.style.color=won?'#22c55e99':'#ef444488'; nameEl.textContent=chordleProg.name;
   if (endEl){
@@ -63284,11 +64303,12 @@ function diadleUpdateDiffBtn() {
   var lbl=document.getElementById('diadleDiffLabel');
   if (!btn||!lbl) return;
   var conf=DIADLE_DIFF[diadleDiff]||DIADLE_DIFF.easy;
+  var dcol=diffColorFor(conf.color);
   lbl.textContent=t(conf.labelKey)||diadleDiff.toUpperCase();
-  btn.style.color=conf.color;
-  btn.style.borderColor=conf.color+'88';
+  btn.style.color=dcol;
+  btn.style.borderColor=dcol+'88';
   // raised: tinted gradient body, top highlight, drop shadow
-  btn.style.background='linear-gradient(180deg,'+conf.color+'2e,'+conf.color+'14)';
+  btn.style.background='linear-gradient(180deg,'+dcol+'2e,'+dcol+'14)';
   btn.style.boxShadow='inset 0 1px 0 rgba(255,255,255,.18),0 2px 5px rgba(0,0,0,.35)';
 }
 function diadleCycleDiff() {
@@ -63637,7 +64657,7 @@ function diadleRenderEndState() {
   if (!titleEl||!diadlePuzzle) return;
   var won=diadleGameState==='won';
   var perfect=won&&diadleGuesses.length===1;
-  titleEl.style.color=won?'#22c55e':'#ef4444';
+  titleEl.style.color=won?diffColorFor('#22c55e'):diffColorFor('#ef4444');
   titleEl.textContent=perfect?'✦ FIRST TRY!':won?('✓ SOLVED IN '+diadleGuesses.length+(diadleGuesses.length===1?' GUESS':' GUESSES')):'✕ OUT OF GUESSES';
   nameEl.style.color=won?'#22c55e99':'#ef444488';
   nameEl.textContent=diadlePuzzle.name;
@@ -64656,7 +65676,7 @@ const STRINGS = {
     hsub_transpose:'shift any note or key', hsub_vocal:'find your range',
     hsub_sg:'theory & instruments',
     hsub_interval:'name it by ear', hsub_ex_chords:'quality by ear',
-    hsub_singsing:'see it, sing it', hsub_scales:'hear · play · improvise',
+    hsub_singsing:'see it, sing it', hsub_scales:'hear · drone · compare',
     hsub_tempo:'keep time, no click', hsub_tempoguess:'name the bpm',
     hsub_poly:'feel two pulses at once', hsub_chordle:'pick a difficulty',
     hsub_rhythmread:'see · feel · tap',
@@ -64730,8 +65750,7 @@ const STRINGS = {
     label_scale_tones:'Scale Tones',
     label_octave:'Octave',
     cents_flat:'♭ Flat', cents_sharp:'Sharp ♯',
-    scale_tab_reference:'REFERENCE', scale_tab_improv:'IMPROV',
-    scale_now_playing:'NOW PLAYING', scale_drone_prompt:'DRONE · TAP A DEGREE',
+        scale_now_playing:'NOW PLAYING', scale_drone_prompt:'DRONE · TAP A DEGREE',
     scale_ghost:'COMPARE', scale_ghost_none:'NO PARENT', scale_drone:'DRONE',
     scale_up:'UP', scale_down:'DOWN', scale_loop:'LOOP',
     scale_root_scale:'ROOT · SCALE', scale_sustain_only:'SUSTAINING VOICES ONLY',
@@ -64761,7 +65780,7 @@ const STRINGS = {
     card_interval_title:'INTERVAL TRAINING',
     card_interval_sub:'Ear training · sing or play a target interval from a reference',
     card_scales_title:'SCALES',
-    card_scales_sub:'Hear any scale · loop it · improvise over a drone',
+    card_scales_sub:'Hear any scale · drone on the root · compare',
     card_tempo_title:'TEMPO LOCK',
     card_tempo_sub:'Internalize tempo · click drops out, you stay locked in',
     card_tguess_title:'TEMPO GUESS',
@@ -64814,6 +65833,10 @@ const STRINGS = {
     tl_ready:'READY', tl_listening:'WITH CLICK',
     settings_title:'SETTINGS', settings_sub:'app preferences',
     settings_lang:'Language', settings_note_naming:'Note Naming',
+    settings_appearance:'Appearance',
+    appearance_auto:'AUTO',
+    appearance_dark:'DARK',
+    appearance_light:'LIGHT',
     settings_textsize:'Text & Button Size', uiscale_normal:'NORMAL', uiscale_large:'LARGE', uiscale_larger:'LARGER', uiscale_hint:'Makes everything bigger and easier to tap.',
     settings_teaching:'Teaching Mode', settings_latency:'Latency Measurement',
     settings_calib:'Tap Calibration', settings_more:'More',
@@ -64874,14 +65897,16 @@ const STRINGS = {
       "An octave plus a whole step. It takes the openness of the major second and gives it room to breathe, which makes it sound lush and modern. It is common in jazz and film color chords. It is easiest to hear it as an octave with one bright step added above."
     ],
     scale_grp_major:'Major Family · Bright', scale_grp_minor:'Minor Family · Dark',
-    scale_grp_pent:'Pentatonic & Blues', scale_grp_exotic:'Exotic · Symmetric',
+    scale_grp_pent:'Pentatonic & Blues', scale_grp_jazz:'Jazz · Melodic Modes', scale_grp_world:'World & Exotic', scale_grp_sym:'Symmetric',
     scale_opts:{
       major:'Major (Ionian)', lydian:'Lydian', mixolydian:'Mixolydian', harmmaj:'Harmonic Major',
       natminor:'Natural Minor (Aeolian)', dorian:'Dorian', phrygian:'Phrygian', locrian:'Locrian',
       harmminor:'Harmonic Minor', melminor:'Melodic Minor',
       majpent:'Major Pentatonic', minpent:'Minor Pentatonic', blues:'Blues',
       dblharm:'Double Harmonic Major', phrygdom:'Phrygian Dominant', hungmin:'Hungarian Minor',
-      hungmaj:'Hungarian Major', hirajoshi:'Hirajoshi', wholetone:'Whole Tone', chromatic:'Chromatic'
+      hungmaj:'Hungarian Major', hirajoshi:'Hirajoshi', lyddom:'Lydian Dominant', altered:'Altered',
+      locrian2:'Locrian ♮2', dimwh:'Diminished (W-H)', dimhw:'Diminished (H-W)', augmented:'Augmented',
+      inscale:'In', egyptian:'Egyptian', wholetone:'Whole Tone', chromatic:'Chromatic'
     },
     root_names:[
       ['C','C'],['C#','C♯'],['Db','D♭'],['D','D'],['D#','D♯'],['Eb','E♭'],
@@ -65287,7 +66312,7 @@ const STRINGS = {
     hint_tap_tempo:'Use <strong>TAP</strong> to set the tempo by feel: tap at least 4 times and it works out the BPM. The Italian name beneath the number (Andante, Allegro, and so on) is the traditional marking for that speed.',
     hint_groove_steps:'Each square is one 16th-note step. Tap once for a <strong>soft</strong> hit, tap again for an <strong>accent</strong>, tap a third time to <strong>clear</strong> it. Beat 1 starts at the left, and the vertical lines mark each quarter-note beat.',
     hint_live_tempo:"Turn on the mic and play rhythmically. The app reads your tempo and tells you whether you're rushing, dragging, or locking in.",
-    hint_train_main:'<strong>TRAIN</strong> — practice exercises that earn XP. Ear Training covers interval recognition, chord identification, and pitch matching (all use the mic). Rhythm covers tempo lock, tempo guess, and polyrhythm (tap-based, no mic). Scales lets you hear or improvise over any scale.',
+    hint_train_main:'<strong>TRAIN</strong> — practice exercises that earn XP. Ear Training covers interval recognition, chord identification, and pitch matching (all use the mic). Rhythm covers tempo lock, tempo guess, and polyrhythm (tap-based, no mic). Scales is the scale reference: hear any scale, drone on its root, compare it to its parent.',
     card_rhythmread_title:'RHYTHM READING',
     card_rhythmread_sub:'Read notation · feel the beat · tap it back',
     ex_rhythmread_title:'RHYTHM READING',
@@ -65423,7 +66448,7 @@ const STRINGS = {
     dt_streak_75:'go touch grass!', dt_streak_100:'secret found',
     dt_streak_generic:'days. keep going.',
     snd_secret_chime:'Secret Found', snd_adventurer_chime:'Adventurer', snd_beethoven_chime:"Beethoven's Fifth", snd_mythic_fanfare:'Mythic Fanfare',
-    xp_streak:'streak', xp_best_ms:'best ms', xp_best_delta:'best Δ',
+    xp_streak:'streak', xp_best_ms:'best ms', tl_target:'target tempo', xp_best_delta:'best Δ',
     // COF
     // VR warmup active state
     vr_inhale:'Inhale', vr_breathe_deep:'Breathe in deeply through your nose…',
@@ -65546,7 +66571,7 @@ const STRINGS = {
     hsub_transpose:'trasponi note o tonalità', hsub_vocal:'la tua estensione',
     hsub_sg:'teoria e strumenti',
     hsub_interval:'a orecchio', hsub_ex_chords:'a orecchio',
-    hsub_singsing:'canta a vista', hsub_scales:'ascolta · suona · improvvisa',
+    hsub_singsing:'canta a vista', hsub_scales:'ascolta · bordone · confronta',
     hsub_tempo:'tempo senza click', hsub_tempoguess:'indovina il bpm',
     hsub_poly:'senti due pulsazioni insieme', hsub_chordle:'scegli una difficoltà',
     hsub_rhythmread:'leggi · senti · tocca',
@@ -65620,8 +66645,7 @@ const STRINGS = {
     label_scale_tones:'Note della Scala',
     label_octave:'Ottava',
     cents_flat:'♭ Bemolle', cents_sharp:'Diesis ♯',
-    scale_tab_reference:'RIFERIMENTO', scale_tab_improv:'IMPROVVISA',
-    scale_now_playing:'IN RIPRODUZIONE', scale_drone_prompt:'BORDONE · TOCCA UN GRADO',
+        scale_now_playing:'IN RIPRODUZIONE', scale_drone_prompt:'BORDONE · TOCCA UN GRADO',
     scale_ghost:'CONFRONTA', scale_ghost_none:'NESSUN PARENTE', scale_drone:'BORDONE',
     scale_up:'SU', scale_down:'GIÙ', scale_loop:'CICLO',
     scale_root_scale:'TONICA · SCALA', scale_sustain_only:'SOLO VOCI CONTINUE',
@@ -65651,7 +66675,7 @@ const STRINGS = {
     card_interval_title:'INTERVALLI',
     card_interval_sub:"Allenamento all'ascolto · canta o suona un intervallo bersaglio",
     card_scales_title:'SCALE',
-    card_scales_sub:'Ascolta qualsiasi scala · ripetila · improvvisaci sopra',
+    card_scales_sub:'Ascolta qualsiasi scala · bordone sulla tonica · confronta',
     card_tempo_title:'STABILITÀ RITMO',
     card_tempo_sub:'Interiorizza il tempo · il click scompare, tu rimani in tempo',
     card_tguess_title:'INDOVINA IL TEMPO',
@@ -65704,6 +66728,10 @@ const STRINGS = {
     tl_ready:'PRONTO', tl_listening:'CON CLICK',
     settings_title:'IMPOSTAZIONI', settings_sub:"preferenze dell'app",
     settings_lang:'Lingua', settings_note_naming:'Notazione Note',
+    settings_appearance:'Aspetto',
+    appearance_auto:'AUTO',
+    appearance_dark:'SCURO',
+    appearance_light:'CHIARO',
     settings_textsize:'Dimensione Testo e Pulsanti', uiscale_normal:'NORMALE', uiscale_large:'GRANDE', uiscale_larger:'PIÙ GRANDE', uiscale_hint:'Rende tutto più grande e facile da toccare.',
     settings_teaching:'Modalità Didattica', settings_latency:'Misura Latenza',
     settings_calib:'Calibrazione Tocco', settings_more:'Altro',
@@ -65764,14 +66792,16 @@ const STRINGS = {
       "Un\u2019ottava pi\u00f9 un tono intero. Prende l\u2019apertura della seconda maggiore e le d\u00e0 respiro, e questo la fa suonare ricca e moderna. \u00c8 comune nel jazz e negli accordi colorati delle colonne sonore. Conviene riconoscerla come un\u2019ottava con un passo luminoso aggiunto sopra."
     ],
     scale_grp_major:'Famiglia Maggiore · Brillanti', scale_grp_minor:'Famiglia Minore · Scure',
-    scale_grp_pent:'Pentatonica & Blues', scale_grp_exotic:'Esotica · Simmetriche',
+    scale_grp_pent:'Pentatonica & Blues', scale_grp_jazz:'Jazz · Modi Melodici', scale_grp_world:'Mondo & Esotiche', scale_grp_sym:'Simmetriche',
     scale_opts:{
       major:'Maggiore (Ionico)', lydian:'Lidio', mixolydian:'Misolidio', harmmaj:'Maggiore Armonica',
       natminor:'Minore Naturale (Eolio)', dorian:'Dorico', phrygian:'Frigio', locrian:'Locrio',
       harmminor:'Minore Armonica', melminor:'Minore Melodica',
       majpent:'Pentatonica Maggiore', minpent:'Pentatonica Minore', blues:'Blues',
       dblharm:'Doppio Armonico Maggiore', phrygdom:'Frigio Dominante', hungmin:'Minore Ungherese',
-      hungmaj:'Maggiore Ungherese', hirajoshi:'Hirajoshi', wholetone:'Per Toni Interi', chromatic:'Cromatica'
+      hungmaj:'Maggiore Ungherese', hirajoshi:'Hirajoshi', lyddom:'Lidio Dominante', altered:'Alterata',
+      locrian2:'Locrio ♮2', dimwh:'Diminuita (T-S)', dimhw:'Diminuita (S-T)', augmented:'Aumentata',
+      inscale:'In', egyptian:'Egizia', wholetone:'Per Toni Interi', chromatic:'Cromatica'
     },
     root_names:[
       ['C','Do'],['C#','Do♯'],['Db','Re♭'],['D','Re'],['D#','Re♯'],['Eb','Mi♭'],
@@ -66177,7 +67207,7 @@ const STRINGS = {
     hint_tap_tempo:"Usa <strong>TAP</strong> per impostare il tempo a orecchio: tocca il pulsante insieme a un brano almeno 4 volte. Il nome italiano sotto il numero (Andante, Allegro, ecc.) è l'indicazione tradizionale del tempo.",
     hint_groove_steps:'Ogni quadrato è uno step di sedicesimo. Tocca per un colpo <strong>leggero</strong>, di nuovo per un <strong>accento</strong>, una terza volta per <strong>cancellare</strong>. Il battito 1 inizia a sinistra, e le linee verticali segnano i quarti.',
     hint_live_tempo:"Attiva il microfono e suona ritmicamente. L'app rileva il tuo tempo e dice se stai accelerando, rallentando o mantenendo.",
-    hint_train_main:'<strong>ESERCIZI</strong> — esercizi pratici che guadagnano XP. Orecchio: intervalli, accordi, intonazione (con mic) e Chordle (senza mic). Ritmo: stabilità, indovina il tempo, poliritmo, lettura ritmica (tutti a tocco, senza mic). Scale: ascolta o improvvisa.',
+    hint_train_main:'<strong>ESERCIZI</strong> — esercizi pratici che guadagnano XP. Orecchio: intervalli, accordi, intonazione (con mic) e Chordle (senza mic). Ritmo: stabilità, indovina il tempo, poliritmo, lettura ritmica (tutti a tocco, senza mic). Scale: ascolta, tieni il bordone sulla tonica, confronta con la scala madre.',
     card_rhythmread_title:'LETTURA RITMICA',
     card_rhythmread_sub:'Leggi la notazione · senti il beat · battilo',
     ex_rhythmread_title:'LETTURA RITMICA',
@@ -66313,7 +67343,7 @@ const STRINGS = {
     dt_streak_75:'esci a prendere aria!', dt_streak_100:'segreto trovato',
     dt_streak_generic:'giorni. continua così.',
     snd_secret_chime:'Segreto Trovato', snd_adventurer_chime:'Avventuriero', snd_beethoven_chime:'Quinta di Beethoven', snd_mythic_fanfare:'Fanfara Mitica',
-    xp_streak:'serie', xp_best_ms:'miglior ms', xp_best_delta:'miglior Δ',
+    xp_streak:'serie', xp_best_ms:'miglior ms', tl_target:'tempo obiettivo', xp_best_delta:'miglior Δ',
     // COF
     // VR warmup active state
     vr_inhale:'Inspira', vr_breathe_deep:'Inspira profondamente dal naso…',
@@ -66442,8 +67472,10 @@ function buildScaleTypePicker() {
   const groups = [
     { label: s.scale_grp_major, keys: ['major','lydian','mixolydian','harmmaj'] },
     { label: s.scale_grp_minor, keys: ['natminor','dorian','phrygian','locrian','harmminor','melminor'] },
-    { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues'] },
-    { label: s.scale_grp_exotic,keys: ['dblharm','phrygdom','hungmin','hungmaj','hirajoshi','wholetone','chromatic'] },
+    { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues','inscale','egyptian'] },
+    { label: s.scale_grp_jazz,  keys: ['lyddom','altered','locrian2'] },
+    { label: s.scale_grp_world, keys: ['dblharm','phrygdom','hungmin','hungmaj','hirajoshi'] },
+    { label: s.scale_grp_sym,   keys: ['dimwh','dimhw','augmented','wholetone','chromatic'] },
   ];
   wrap.innerHTML = '';
   groups.forEach(g => {
@@ -66477,8 +67509,10 @@ function buildTcScaleDropdown() {
   const groups = [
     { label: s.scale_grp_major, keys: ['major','lydian','mixolydian','harmmaj'] },
     { label: s.scale_grp_minor, keys: ['natminor','dorian','phrygian','locrian','harmminor','melminor'] },
-    { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues'] },
-    { label: s.scale_grp_exotic,keys: ['dblharm','phrygdom','hungmin','hungmaj','hirajoshi','wholetone','chromatic'] },
+    { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues','inscale','egyptian'] },
+    { label: s.scale_grp_jazz,  keys: ['lyddom','altered','locrian2'] },
+    { label: s.scale_grp_world, keys: ['dblharm','phrygdom','hungmin','hungmaj','hirajoshi'] },
+    { label: s.scale_grp_sym,   keys: ['dimwh','dimhw','augmented','wholetone','chromatic'] },
   ];
   sel.innerHTML = '';
   groups.forEach(g => {
@@ -67112,6 +68146,36 @@ function syncSettingsUI() {
   if (mvSlider)  mvSlider.value = mvPct;
   if (mvDisplay) mvDisplay.textContent = mvPct + '%';
 }
+/* ── APPEARANCE (light / dark / auto) ──
+   'auto' follows the device via prefers-color-scheme, live (listener re-applies on
+   system change). Stored in localStorage so it applies before first paint on boot.
+   Signature surfaces are protected by .keep-dark and never change. */
+const APPEARANCE_KEY = 'intonare_appearance';
+const _lightMQ = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+function appearanceSetting() { try { return localStorage.getItem(APPEARANCE_KEY) || 'auto'; } catch(e) { return 'auto'; } }
+function applyAppearance() {
+  const mode = appearanceSetting();
+  const light = mode === 'light' || (mode === 'auto' && _lightMQ && _lightMQ.matches);
+  document.body.classList.toggle('light', light);
+  document.documentElement.classList.toggle('light-root', light);
+  document.querySelectorAll('#smAppearanceRow .app-seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.value === mode));
+}
+function setAppearance(mode) {
+  if (mode !== 'light' && mode !== 'dark') mode = 'auto';
+  try { localStorage.setItem(APPEARANCE_KEY, mode); } catch(e) {}
+  applyAppearance();
+  // refresh JS-colored difficulty buttons so their inline colors re-map to the mode
+  try { if (typeof chordleUpdateDiffBtn === 'function') chordleUpdateDiffBtn(); } catch(e) {}
+  try { if (typeof diadleUpdateDiffBtn === 'function') diadleUpdateDiffBtn(); } catch(e) {}
+}
+if (_lightMQ) {
+  const _mqHandler = () => { if (appearanceSetting() === 'auto') applyAppearance(); };
+  if (_lightMQ.addEventListener) _lightMQ.addEventListener('change', _mqHandler);
+  else if (_lightMQ.addListener) _lightMQ.addListener(_mqHandler);  // older WebView
+}
+applyAppearance();
+
 function setNoteNaming(mode) {
   if (mode !== 'english' && mode !== 'solfege') mode = 'english';
   progState.noteNaming = mode;
@@ -68764,7 +69828,7 @@ function resetProgress() {
   if (!_resetArmed) {
     _resetArmed = true;
     const btn = document.querySelector('.pm-reset');
-    if (btn) { btn.textContent = t('confirm_tap_warn'); btn.style.color = '#ef4444'; btn.style.borderColor = '#ef4444'; }
+    if (btn) { btn.textContent = t('confirm_tap_warn'); btn.style.color = diffColorFor('#ef4444'); btn.style.borderColor = diffColorFor('#ef4444'); }
     _resetTimer = setTimeout(function() {
       _resetArmed = false;
       const b = document.querySelector('.pm-reset');
@@ -81698,10 +82762,12 @@ const GCC_QUALITY_GROUPS = [
 
 const GSS_SCALE_GROUPS = [
   { id:'majmodes', label: 'Major modes',  labelIt: 'Modi Maggiori', ids: ['major','dorian','phrygian','lydian','mixolydian','aeolian','locrian'] },
-  { id:'minor',    label: 'Minor',        labelIt: 'Minore',         ids: ['harmmin','melmin'] },
-  { id:'pent',     label: 'Pentatonic',   labelIt: 'Pentafonica',    ids: ['majpent','minpent'] },
+  { id:'minor',    label: 'Minor',        labelIt: 'Minore',         ids: ['harmmin','melmin','harmmaj'] },
+  { id:'pent',     label: 'Pentatonic',   labelIt: 'Pentafonica',    ids: ['majpent','minpent','inscale','egyptian'] },
   { id:'blues',    label: 'Blues',        labelIt: 'Blues',          ids: ['blues'] },
-  { id:'world',    label: 'World',        labelIt: 'Mondo',          ids: ['phrygdom','dblharm','hungmin','hungmaj','hirajoshi','wholetone'] },
+  { id:'meldom',   label: 'Melodic/Dom.', labelIt: 'Mel./Dom.',      ids: ['lyddom','altered','locrian2'] },
+  { id:'sym',      label: 'Symmetric',    labelIt: 'Simmetriche',    ids: ['dimwh','dimhw','augmented','wholetone'] },
+  { id:'world',    label: 'World',        labelIt: 'Mondo',          ids: ['phrygdom','dblharm','hungmin','hungmaj','hirajoshi'] },
 ];
 
 // Per-instrument scale-group ordering. Each instrument (or family) can promote a
@@ -82527,6 +83593,7 @@ const GSS_SCALE_TYPES = [
   { id:'locrian',    name:'Locrian',           nameIt:'Locrio' },
   { id:'harmmin',    name:'Harmonic Minor',    nameIt:'Minore Armonica' },
   { id:'melmin',     name:'Melodic Minor',     nameIt:'Minore Melodica' },
+  { id:'harmmaj',    name:'Harmonic Major',    nameIt:'Maggiore Armonica' },
   { id:'majpent',    name:'Maj Pentatonic',    nameIt:'Pentafonica Magg.' },
   { id:'minpent',    name:'Min Pentatonic',    nameIt:'Pentafonica Min.' },
   { id:'blues',      name:'Blues',             nameIt:'Blues' },
@@ -82535,6 +83602,14 @@ const GSS_SCALE_TYPES = [
   { id:'hungmin',    name:'Hungarian Minor',   nameIt:'Minore Ungherese' },
   { id:'hungmaj',    name:'Hungarian Major',   nameIt:'Maggiore Ungherese' },
   { id:'hirajoshi',  name:'Hirajoshi',         nameIt:'Hirajoshi' },
+  { id:'lyddom',     name:'Lydian Dominant',   nameIt:'Lidio Dominante' },
+  { id:'altered',    name:'Altered',           nameIt:'Alterata' },
+  { id:'locrian2',   name:'Locrian ♮2',        nameIt:'Locrio ♮2' },
+  { id:'dimwh',      name:'Diminished W-H',    nameIt:'Diminuita T-S' },
+  { id:'dimhw',      name:'Diminished H-W',    nameIt:'Diminuita S-T' },
+  { id:'augmented',  name:'Augmented',         nameIt:'Aumentata' },
+  { id:'inscale',    name:'In',                nameIt:'In' },
+  { id:'egyptian',   name:'Egyptian',          nameIt:'Egizia' },
   { id:'wholetone',  name:'Whole Tone',        nameIt:'Esatonale' },
 ].map(s => ({ ...s, intervals: scaleDefIntervals(GSS_SCALE_ALIAS[s.id] || s.id) }));
 

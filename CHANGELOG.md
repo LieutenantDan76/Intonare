@@ -16,6 +16,1470 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## v0.92.4
+
+**Programmatic contrast audit — stop eyeballing, start measuring**
+
+Instead of Dan spotting faint text one screenshot at a time, built a contrast audit that
+measures every light-mode text/background pair and flags failures. Found the real answer
+to "hard to see": ~41 accent text colors that PASS AA-large (3:1) but sit at 3.0-3.5 —
+technically legible but marginal, especially for smaller text / older eyes (Linda).
+
+Deepened the whole borderline accent family by one step to ~4-4.8:1 (comfortable, not
+barely-passing): all/rose #c0335f->#a3284d, red #c0331f->#a32718, gold #8a5f00->#6f4d00,
+green #0b7048->#095c3a, purple #6248bf->#5238a5, and game-label cyan #006f8f->#005570
+(scoped to labels, not the tuner screen hero). Borderline count 41 -> 25 (rest are
+dup-counted selectors + tinted-bg cases that are fine).
+
+Verified the deepened hexes only appear in light-mode contexts (the light --sharp/palette
++ game overrides); dark-mode base accents untouched.
+
+Shipped the audit script (intonare_light_contrast_audit.py) so this is repeatable, not a
+one-off — future light-mode work can run it instead of screenshot-hunting.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.92.3
+
+**Methodical Train/Tools screen-by-screen audit (the real one)**
+
+Mapped all 31 modules, scanned each for the two light-mode failure modes (hardcoded dark
+screens + bright-color content), categorized intentional-dark vs orphans, fixed orphans.
+
+DARK-SCREEN scan: only toolTonal is keep-dark (intentional). CSS scan of all dark-bg
+rules showed the rest are intentional instrument surfaces (piano-*, tc-* CRT, thmn-*
+theremin, np-screen now-playing, org-/mel-/leslie- organ+melodica). Orphans (ce-screen,
+rr-tap-zone) already lifted in 0.92.0.
+
+BRIGHT-COLOR scan (per module prefix) found the real concentrations + fixed:
+- INTERVAL (iv-, 15 rules): hit/miss dots (#34d399/#f87171 -> #0b7048/#c0331f), perfect,
+  correct/wrong answers, target-miss, difficulty chips + pills (medium #6248bf, hard
+  #8a5f00, all #c0335f, custom #006f8f), reveal note. All deep-on-light.
+- RHYTHM READING (rr-, 8): survival streak/stats/diff/best/bar reds deepened. Tap-zone
+  feedback (fg/fy/fo/fr) left bright — those sit on the dark charcoal tap zone (correct).
+- CHORD EAR (ce-, 6): difficulty labels are INSIDE the lifted ce-screen (dark) so bright
+  is correct there; verified nesting, left as-is.
+- TEMPO (tg-): normal-tier difficulty label deepened.
+- SURVIVAL GUIDE (sg-): mode chars/rungs already had light overrides; confirmed.
+
+Method: per-module inventory, context-check each (on-dark-screen vs on-light), fix only
+what's genuinely on light. Not screenshot-driven this time.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.92.2
+
+**Metro screen: groove pips visible + warmer/airier (fix "seems dark")**
+
+- **Groove pips (.gs-step beat cells):** were faint white/gold (rgba .04-.35),
+  near-invisible on light. Themed all states: base cell, beat-marker, soft, accent,
+  cursor, beat-pulse — deep warm with clear fills + borders so the beat grid reads.
+- **"Seems dark" fix:** the accumulated deep-brown text (BPM was #5a3d00 = 5.8:1, heavy)
+  read muddy. Lightened the screen bg (#c6c4c0->#d4d2cc airier) AND warmed the content
+  from heavy brown to a lively amber-gold (BPM #7a5410, name #8a5e10, groove-name
+  gradient warmer). Now reads as a warm amber display, not dark brown. Still AA-large.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.92.1
+
+**Metro screen: full content pass (every element, not 5 of 25)**
+
+The metro screen was rough because I'd themed ~5 of its ~25 on-screen elements. Did a
+proper inventory (grepped every class rendering inside .metro-screen) and themed ALL of
+it deep-warm-on-light:
+- drum sound buttons (CLICK/WOOD/COWBELL/CONGA/RIM/HI-HAT/etc) — were faint gold 4%
+  fill, invisible; now readable brown with visible borders + active state
+- beat number (rose "1") deepened, top vol/menu icons
+- GROOVE mode: label, name (gradient), origin/style, beat cells, bpm, grid borders
+- pulse toggle + dots + pulse-off state
+All verified for contrast (BPM 4.9:1, buttons 3.8:1, deepened the borderline rose/origin
+to hold on the screen).
+
+Next: the promised methodical screen-by-screen Train/Tools audit.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.92.0
+
+**Orphan game screens found + lifted (the audit I should've done)**
+
+Dan rightly called out that my "comprehensive" passes weren't — the chord-ear display,
+rhythm-reading tap zone, and note-pop screen were pure-black-on-light and had never been
+touched. They're ORPHANS: hardcoded dark, not keep-dark (intentional), not following
+light. Never audited because they're deep in game modules the screenshots hadn't hit.
+
+Systematic grep for hardcoded dark backgrounds on light-following elements found them.
+Lifted (they're immersive game displays — dark is fine, but pure-black reads broken):
+- ce-screen (chord ear): purple-charcoal gradient matching the module hue
+- np-screen (note pop): charcoal
+- rr-tap-zone (rhythm reading): charcoal + charcoal-next state
+
+HONEST NOTE: this is a partial fix of a real gap. A truly complete screen-by-screen
+audit of every Train/Tools game module is still owed — difficulty chips, survival
+sub-buttons, and any other module-specific colors need a dedicated pass rather than
+more screenshot-driven patching. Metro screen readability also still being tuned.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.9
+
+**Metro screen readability fix + tuner bloom restored**
+
+- **Metro screen was too yellow + low contrast:** the warm C2.5 (#d0c9b0->#c2ba9c) was
+  over-saturated and the all-brown content blended in — BPM barely readable, drum
+  buttons (CLICK/WOOD/etc) were ghosts. Shifted the screen to a NEUTRAL-warm dusty
+  (#c6c4c0->#b8b5ae, much less yellow), deepened content (BPM #5a3d00), and gave the
+  on-LCD sound buttons real contrast (deep brown text + visible borders + active fill).
+  BPM wheel gold deepened to match.
+- **Tuner lost its bloom:** the soft color-wash on the tuner card came from the dark
+  screen's colored glow bleeding into the card. When the screen went light (C2.5) that
+  colored glow became a plain shadow, so the bloom vanished. Re-added it as a background
+  radial (same safe method as String Guide) on .tuner-bpm-card. Both cards now carry
+  the matching bloom.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.8
+
+**HOTFIX: bpm wheel canvas crash (my quoting bug from 0.91.7)**
+
+The 0.91.7 bpm-wheel light-awareness edit wrapped the template literals in single
+quotes: '`rgba(${_wg},...)`' — so JS passed the literal string (backticks and all) to
+addColorStop, which threw "could not be parsed as a color" and crashed the wheel draw.
+Fixed: stripped the surrounding single quotes so they're real backtick template
+literals. All 11 occurrences corrected. Verified: node --check clean, template
+evaluates to proper rgba(111,77,0,0.14), scanned for any other quote-wrapped-backtick
+mistakes (none). No other screen affected.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.7
+
+**Tuner screen fully audited/completed + metro LCD converted to light**
+
+- **String Guide bloom (safe version):** re-added the top color-wash, this time baked
+  into the card's own background gradient (radial over the surface) — no pseudo-element,
+  no child positioning, so it CAN'T break layout like the 0.91.5 version did.
+- **Tuner screen element audit — found + fixed gaps:** cross-referenced every DOM child
+  of .tuner-screen against the light overrides. Missing: tuner-screen-label (OCT, was
+  coral), tuner-screen-side (muted), tuner-screen-unit, meter-fill glow, and the
+  verdict feedback (perfect/close/off used bright neon text-shadows). All themed
+  deep-on-light + neon glows softened to subtle 1px shadows (neon muddies on light).
+- **Metro LCD -> warm C2.5 light:** screen bg warm dusty (#d0c9b0->#c2ba9c), BPM number
+  + unit + labels deep warm (#6f4d00), and the BPM WHEEL canvas made light-aware (deep
+  gold at boosted alpha; was faint gold-on-dark).
+
+Checkpoint: tuner (flagship) + metro both fully light now. Volume meter already
+light-aware (dbCanvas). Theremin + tonal-centre controls next.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.6
+
+**String Guide bloom bug fixed + C2.5 screens + hero content deepened**
+
+- **BUG: String Guide card blew up to full height.** The bloom ::after I added in
+  0.91.5 came with `#stringGuideCard > * { position:relative }` which broke the card's
+  internal grid layout, expanding it. Removed the bloom entirely — it caused more than
+  it solved, and the tuner/guide difference was always cosmetic. Card back to normal.
+- **C2.5 screens:** both tuner LCD + chroma to the midpoint between C2 and C3
+  (#b6bdd3->#a6afc8) per Dan. Between "light card" and "slate display."
+- **Screen content audit + deepened:** verified every screen element holds AA-large+ on
+  C2.5, then deepened the HERO elements for more pop: note letter + freq (#004a60),
+  cents/needle states (in-tune #264c00, sharp #8f2416, flat #163b8f). Strobe canvas
+  synced to the same deepened palette. Now the lit elements stand up clearly against
+  the screen instead of sitting soft.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.5
+
+**Screens -> C3 slate + bezels matched + String Guide bloom added**
+
+- **C3 slate:** both tuner LCD and chroma strip swapped from C2 to C3 (darker slate
+  #aab2ca->#9aa4bf) per Dan's pick — more "display" presence while staying light.
+  Content deepened to match (meter track #8f9ab8, chroma notes deeper).
+- **Bezels unified:** the tuner and chroma screens had different base 3D edges (tuner
+  0 4px thick raised edge, chroma 0 3px) making one look more dimensional. Gave both
+  the SAME light box-shadow recipe (inset well + edge-light + soft drop) so they read
+  as matching displays.
+- **String Guide bloom (Dan's idea):** rather than explain away the tuner-card-has-a-
+  screen-bloom difference, ADDED a matching soft radial bloom to the top of the String
+  Guide card (via #stringGuideCard::after, theme-tinted). Now the two cards read
+  consistently instead of one having screen-glow and one flat.
+
+Pending on-device: C3 look + whether the String Guide bloom makes them match.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.4
+
+**Chroma strip -> light C2 + inset softened + String Guide bloom identified**
+
+- **Chroma strip converted to C2 light** matching the tuner LCD: light dusty blue-grey
+  bg, note labels dark-on-light (rgba(40,55,95,.32) resting, #005c78 active), label
+  deep cyan. Now the whole tuner top (screen + chroma) is consistent light screens.
+- **Inset shadow softened:** the recessed-well shadow was a touch harsh (.22/.18) ->
+  eased to .14/.13 + brighter top edge-light. Still reads recessed, less severe.
+- **String Guide "different color" SOLVED (Dan figured it):** it IS the same card token
+  — but the tuner card CONTAINS the screen, whose drop-shadow blooms down into the card
+  bottom; String Guide has no screen so no bloom. Same color, different content casting
+  a gradient. Genuinely cosmetic + not matchable without faking a bloom on the guide.
+
+Pending on-device look at the whole tuner page (both screens light now) to judge overall
+theming coherence before rolling to metro/volume/theremin.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.3
+
+**TRUE LIGHT SCREEN — tuner LCD converted to C2 (flagship)**
+
+Big direction change: instead of a lifted-charcoal dark screen (which is inherently
+harsh on a light page), the tuner LCD is now a true LIGHT recessed display (C2 "dusty
+blue-grey" from the prototype Dan picked). A light screen with real inset depth so lit
+elements have something to read against — how real light-mode instrument apps do it.
+
+Full content re-theme (a light screen is not a bg swap — every element flips):
+- bg: dusty blue-grey gradient (#c2c8dc->#b2bad2) + strong inset shadow (recessed well)
+- note letter: deep cyan->green gradient (was glow-on-dark)
+- freq/cents/octave: deep cyan (#005c78)
+- cent meter: track #a6b0cc, dark ticks, needle deep green/red/blue by tune-distance
+- FLAT/SHARP head, STROBE button, OCT: deep-on-light
+- strobe CANVAS: made light-aware (deep colors at higher alpha; was bright-on-dark glow)
+
+This is the FLAGSHIP — one screen done fully right. Pending Dan's on-device approval
+before rolling the same treatment to metro, volume meter, etc. Tonal-centre CRT stays
+dark by design (green phosphor is its identity); its surrounding CONTROLS will follow
+light once the pattern's proven.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.2
+
+**Screens tinted per-module + metro START softened**
+
+- **Screen module-tinting:** the lifted charcoal screens were neutral grey; gave each a
+  hint of its tab hue so they feel integrated + easier on the eyes. Tuner LCD + chroma
+  = cool blue-charcoal (#3a4058), metro LCD = warm-charcoal (#46402f), tonale = violet-
+  charcoal (#2a2640), theremin + CRT already green. Content contrast still 8:1+.
+- **Metro START button:** grad-metro (gold->coral->pink) + a big 30%-opacity glow read
+  aggressive against the soft light palette. Softened in light mode to a calmer amber
+  gradient (#f0b93d->#e89b52) with dark text (9:1) + a lighter shadow. Still clearly the
+  primary "go" action, just not shouty.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.1
+
+**Splash to light + screens lifted from "dark smudge" to medium charcoal**
+
+- **Splash light palette:** now uses the tuner light palette (#bdc1db gradient) when
+  light mode is detected (auto — via the existing html.light-root pre-paint boot, same
+  intonare_appearance pref the app reads). Dimmed the bright particle animation (opacity
+  0.35) and remapped the logo gradient (bright #5ee2ff/#7aafff -> deep #006f8f/#2358c8)
+  + sub/tag colors so they read on the light bg. No more black-splash-into-light-app jar.
+- **Screens lifted (the "big dark smudge" fix):** measured that the LCD content (cyan
+  text, green needle, white readouts) keeps 8-11:1 contrast even on a medium charcoal,
+  so there was tons of headroom. Lifted every screen a full step:
+  - keep-dark palette: bg-0 #0a0a12 -> #262636, surface #181826 -> #313146
+  - tuner/metro LCD layers: #38342c/#2b2833/#211f2a -> #40405a/#34344a/#2a2a3c
+  - chroma strip, tonale wave/slider: matched to the charcoal family
+  - theremin pad + tonal-centre CRT: lifted (green-charcoal)
+  Screens now read as dark instrument panels in a lit room, not black slabs punched in
+  the page. Housing>bezel>inner depth order preserved.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.91.0
+
+**Header buttons matched to FORK + light-mode splash background**
+
+- **Header buttons (mic/QA/level) mismatched FORK + flat:** they used theme 24% while
+  FORK used accent 10% — different intensities = visible mismatch, and FORK had no
+  border/shadow so it read flat. Aligned BOTH to accent 16% tint + matching border
+  (accent 34%) + subtle layered shadow. Header buttons and FORK now read as one family,
+  neither flat.
+- **Light-mode splash:** a pure-black splash before a light app is jarring. Added a
+  medium-tint splash background (#3a3a52 gradient) when light mode is detected (via the
+  existing html.light-root class from the pre-paint boot) + bumped splash-bg canvas
+  opacity so the animation still reads. Chose MEDIUM not full-light because the splash
+  waveform/particles are drawn bright for a dark bg and would wash out on a pale one;
+  medium is clearly lighter than black + less jarring while keeping animation contrast.
+  (On-device judgment: can go lighter if the animation still holds.)
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.9
+
+**Light mode: header buttons strengthened + specifics audit round**
+
+- **Header buttons (mic/QA/level) still stark:** the 12% theme tint was too weak and
+  the bright white edge-light (0.4) was fighting it, reading glossy-white. Bumped tint
+  12->24%, border 22->40%, softened edge-light 0.4->0.18. They now clearly carry the
+  tab color instead of reading white.
+
+Specifics audit (8 categories):
+1. data-theme signal: 0. Clean.
+2. Canvas light-checks: cof/db/pitchHist done; latDraw green (ok). Clean.
+3. Active-state faint fills: all covered. Clean.
+4. White text on light: 5, all on colored/dark bg. Clean.
+5. **Bright text on light (FOUND):** chord-ear + interval trainer labels (ce-hud-diff-lbl,
+   iv-diff-pill-lbl, iv-test-dot.hit, reveal notes) used #5ee2ff/#b8a3ff/#34d399 on light
+   surfaces -> mapped to deep (#0b7048/#523aa0/#006f8f).
+6. Dark backgrounds on light: all guarded/boot. Clean.
+7. **White overlays (FOUND):** gs-step + settings notification rows (sm-notif-*) had
+   rgba(255,255,255,.0x) resting backgrounds that vanish on light -> dark tint.
+8. Sentinel: all 97 + 39 pins.
+
+Net: header button tint strengthened, ce/iv bright labels + gs-step/notif overlays fixed.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.8
+
+**Light mode: AUTO DETECT fixed + real app-wide faint-fill scan**
+
+Dan called out I hadn't actually scanned app-wide — fair. Did it properly:
+
+- **AUTO DETECT (.auto-banner):** the real element (built dynamically, class .auto-banner)
+  used a 4-6% green/cyan gradient — invisible on light. Boosted to a 16%/10% theme-tinted
+  gradient + stronger border, with a matching hover.
+- **Systematic scan:** grepped all faint accent-fill backgrounds (5 accent RGBs at
+  <=12% opacity) app-wide = 139 hits. Categorized: ~16 are hover/decorative (fine to
+  stay subtle), ~21 are resting/active states that actually matter. Boosted the active
+  states that read as "on/selected": tg-phase-pill, pr-mode-chip, cs-family-btn,
+  groove-cat-tab, prog-sync/loop/groove/metro, ts-preset, vibrato-toggle, scale-ghost,
+  kbd-oct, cs-picker-inst, cs-trumpet-strip-pill, pr-bpm-preset-chip, rs-chip,
+  tg-popup-chip, trp-full-note, tempo-verdict, tg-resultbox. All to ~18% theme tint (or
+  10% surface-tint for result boxes).
+
+Left the hover/decorative faint fills alone — subtle-on-hover is correct; boosting them
+would read busy. Active/selected/listening states now clearly fill across every module.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.7
+
+**Light mode: dim accent-fill backgrounds boosted + APPEARANCE label centered**
+
+- **Dim state backgrounds:** buttons like LISTENING (panel-badge), FORK, active
+  tiles/chips used low-opacity accent fills (0.05-0.10) tuned for dark backgrounds. On
+  the richer light base they barely registered as "filled/active". Boosted app-wide via
+  light-mode overrides using color-mix on the tab --theme: panel-badge to 20%, active
+  states (stb-tab/tile, tone-tile, metro-mode-chip, subdiv-btn, ts-opt, capo) to 18%,
+  fork buttons to a 10% accent-tinted surface, drone-mode greens to 20%, detect CTA to
+  a green-tinted surface. Active/listening/selected now clearly reads as filled.
+- **APPEARANCE label centered** over the toggle (was left-aligned via align-items:
+  flex-end on the wrap; now center + text-align center).
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.6
+
+**Pitch graph visibility fix + appearance toggle label/position**
+
+- **HIDDEN BUG — pitch-stability trace invisible in light:** the actual pitch trace
+  LINE (the data you watch) used bright #b6f25b/#ffd166/#ff8a65 by tune-distance — all
+  ~1.1-2:1 on the light plot = invisible. Plus the in-tune zone band was bright green
+  at 7%. Deepened both in light (#3a7000/#875d00/#c0331f trace, deeper green band). The
+  gridlines/labels were already fixed in 0.89.2; this is the trace itself, which is the
+  whole point of the graph. Good catch asking to verify since it needs mic to test.
+- **Appearance toggle:** was colliding with the settings close X (both top-right) and
+  ambiguous (icon-only). Added an "APPEARANCE" label above the toggle + padded the
+  title row 34px on the right so it clears the X. Now labeled and unobstructed.
+
+On the String Guide "different color": confirmed again it's the SAME .card token — it's
+an optical illusion from context (top card sits under the dark tuner screen so its
+surroundings read darker; String Guide is ringed by open light space so it reads
+brighter). Same pixels, different neighbors. Not fixable without faking a tint.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.5
+
+**Settings switcher relocated + header buttons themed + border pass**
+
+- **Appearance switcher moved:** was a full-width row below the SETTINGS title; now a
+  compact icon-only toggle (◐ ● ○) top-right of the title, in a flex row with the
+  title block. Titles keep their tooltips (Auto/Dark/Light). Fits clean up top.
+- **Header buttons (mic / quick-access / level) themed:** they read flat white and
+  didn't shift per-tab. Now mix 12% of the tab --theme into their surface + 22% into
+  the border, so they tint with each module (tuner blue, metro warm, etc.) and got the
+  layered shadow + edge-light. No longer stark static white.
+- **String Guide vs tuner card:** confirmed via inspection they are the SAME .card
+  token — no color difference. The tuner card just contains the dark tuner screen,
+  giving it visual weight; String Guide is all-light content so it reads lighter. Not a
+  bug, and the deeper borders give String Guide its own definition. (Didn't fake a tint
+  — they're genuinely the same surface.)
+- Borders: the deeper --border/--border-soft from 0.90.4 push bordered elements solid
+  app-wide. Left border:none elements alone (mostly intentional icon buttons); adding
+  borders everywhere would read busy. "Push solid where needed" best judged on-device
+  now that the tokens are stronger.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.4
+
+**Light mode: deeper borders — the "blends too hard / flat" fix**
+
+Dan nailed the root cause of the residual flat feeling: borders too soft, so buttons
+and cards blend into the background. Measured it: --border-soft was 1.01:1 against the
+base (LITERALLY invisible), --border only 1.33:1. That's why elements had no definition
+and the folders (which have stronger elevation) stood out while everything else didn't.
+
+Deepened both borders across all 5 palette blocks (base + 4 tabs):
+- --border: ~1.33:1 -> ~1.8:1 (#a3a3c4 -> #8a8ab0 and per-tab equivalents)
+- --border-soft: ~1.01:1 -> ~1.4:1 (#bcbcd6 -> #a3a3c4 etc)
+Kept per-tab hues (tuner blue-grey, metro warm, tools teal, train lavender borders).
+This defines every bordered element — buttons, chips, cards, inputs — without going
+harsh, and directly attacks the flatness.
+
+On String Guide vs the tuner card above it: they're structurally different — the tuner
+"card" contains the dark chroma screen (visual weight), String Guide is a plain light
+card. Not a bug, but the deeper borders give String Guide more definition so it floats
+less. Metro time-sig chips (.ts-opt) already share the unified button treatment; deeper
+borders make them read consistently now.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.3
+
+**Light mode: exhaustive 8-point audit**
+
+Ran every failure-category scan across the whole file:
+
+1. Wrong theme signal (data-theme): 0 left. Clean.
+2. Canvas light-awareness: cof/db/pitchHist done; latDraw draws green (legible),
+   rest are in guarded screens. Clean.
+3. White-overlay backgrounds on light surfaces: fixed the remaining light-following
+   ones — octave-badge, groove-countin-btn, gs-pulse-toggle/chip, tuner-refpitch-pill.
+   Survival Guide set already covered.
+4. White text on light: all 6 verified on colored/dark backgrounds. Clean.
+5. **color:var(--bg-0) on accent buttons (FOUND LEAKS):** 20 uses; only a few were
+   covered. In light --bg-0 is light -> low-contrast text on accent-filled buttons.
+   Expanded the white-text-in-light override to catch pr-go-btn, pr-ch-end-again,
+   metro-sound-btn.active, mq wrong letter, iv-diff-pill.active, ce-diff-cell.hit,
+   cs-picker-fam-tab.active, and the .active accent states.
+6. Hardcoded dark backgrounds: all verified inside guarded screens (tc-CRT, tuner
+   meter, rhodes piano). Clean.
+7. Heavy dark shadows on light chrome: all in guarded screens (streak card, tuner,
+   piano). Clean.
+8. Shadow tokens: both palette blocks carry the layered premium shadow. Clean.
+
+Net new fixes this pass: expanded accent-button white-text coverage (5) + remaining
+white-overlay controls (5).
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.2
+
+**Light mode: comprehensive module sweep + color-legibility audit**
+
+Two asks: (1) String Guide vs Utilities still mismatched, (2) every-module pass so all
+colored elements (greens/yellows/reds) match and are visible on the new richer base.
+
+**String Guide / Utilities matched:** they use different classes (.card vs
+.practice-card-btn) and had picked up slightly different backgrounds + layered shadows.
+Gave practice-card-btn the SAME gradient + layered shadow as .card so folder cards and
+content cards read identical.
+
+**Color legibility audit (measured on the deeper #bdc1db base):**
+- The deepened semantic colors (in-tune, sharp, metro, flat, accent) are AA-large on
+  the base and full AA on cards — fine, they're on large UI.
+- Raw bright chordle/feedback hexes (#22c55e/#eab308/#ef4444) FAIL on the light base
+  (1.1-2.7:1) — they're supposed to route through diffColorFor. Found 4 LEAKS that set
+  them raw: daily win/loss titles, two result titles, the confirm-tap warning. All now
+  routed through diffColorFor so they deepen in light.
+
+**Module sweep — bright dark-mode colors on light-following surfaces:**
+- Survival Guide (NOT guarded, follows light) used hardcoded #5ee2ff/#ffd166/#8b9cff
+  text + rgba(255,255,255,.03) white-overlay backgrounds that vanish on light. Mapped
+  all to deep equivalents + dark-tint backgrounds.
+- Fixed remaining white-overlay backgrounds on light-following buttons (mq-np-btn,
+  sg-cad-chip/vl-prog/vl-toggle).
+- Confirmed no old-pale literal values leaked anywhere from the richer-base migration.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.1
+
+**Light mode: sweep fix + premium polish (layered shadows)**
+
+Sweep caught a real miss: the BASE body.light surfaces (--surface/-2/panel + bg-0/1)
+still held the OLD pale values (#d1d1e0 etc) — my 0.90.0 richer-base edit had only
+partially landed. So any non-tab context showed pale. Updated to the richer values
+(#bdbddb base). Also fixed the COF hub literal + stale fallback literals. This is why
+the String Guide card read lighter — plus its full-height gradient; tightened the card
+gradient to a top-22% sheen so tall cards don't skew light.
+
+Premium polish (researched — the techniques that separate "good" from "$10K"):
+- **Layered shadows:** replaced the single flat card shadow with a STACKED set (4
+  layers, increasing blur + decreasing opacity) for a smooth realistic falloff instead
+  of one muddy drop. Applied to the --shadow-card token so it propagates app-wide, plus
+  cards and folder cards directly.
+- **Edge-light:** a 1px inset white highlight at the top of cards so they "catch light"
+  from above (glassmorphism dual-border technique), consistent light source.
+These are subtle by design — premium polish is felt, not announced.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.90.0
+
+**Light mode: richer + atmosphere — "plain" -> dynamic**
+
+Side-by-side, light felt plain vs dark's depth. Dan's read was right and he named the
+fix: a COLORED lighter version, not near-white, with the atmosphere dark has. Three moves:
+
+- **Richer, more saturated base:** pulled lightness down from ~85% to ~80% and bumped
+  saturation ~28-30%. Base is now a clear periwinkle #bdbddb, per-tab hues genuinely
+  colored (tuner blue-grey #bdc1db, metro warm sand #dbd4bd, tools teal #bddbd5, train
+  lavender #c0bddb) — reads as tinted paper, not off-white wash.
+- **Atmosphere restored:** the header glow (body::before) was dialed to 9%/5% when I
+  over-flattened for cohesion — dark uses 32%/18%/12%. Brought light up to 22%/13%/9%
+  (three-point), so light now has the light-pouring-in depth dark has, scaled for a
+  pale page.
+- **Card dimension:** restored a gentle top->bottom card gradient (surface-2 -> surface)
+  so surfaces have depth, not flat slabs. This is the RESTRAINED version, not the muddy
+  bloom from the early builds.
+- Deepened --muted to hold AA on the richer base; accents sit at AA-large on bg-0
+  (they're on large UI) and full AA on the lighter cards.
+
+Rolled to 0.90.0 — this is the pass that gives light mode its own character instead of
+reading as a washed-out dark mode.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.89.3
+
+**Light mode: title weight (the "thin" fix, done surgically)**
+
+Dan flagged light mode feeling thin — title especially, text/tabs a little. Diagnosis
+before acting:
+- It's partly perceptual: dark-on-light reads lighter than light-on-dark at the SAME
+  weight (no glow to bulk it out). Real effect, Dan's eye is right.
+- But the concrete cause for the TITLE: .logo is font-weight 300 (light) and leaned on
+  a drop-shadow GLOW for presence — and a colored glow does nothing on a light page.
+  So in light mode it's just thin 300-weight strokes with no glow. That's the thinness.
+- Tabs are weight 500 (medium) with wide tracking — fine as-is; bolding them would go
+  heavy-handed. Body text is fine. Did NOT touch either (avoiding the bold-everything
+  cascade Dan worried about).
+
+Fix: bumped ONLY the main .logo to weight 400 + removed the now-useless glow filter in
+light mode. Scoped to the title. If it still reads thin on-device the next lever is
+deepening the title gradient endpoints (current ~4.4:1 -> ~7:1, more substantial) —
+held for now to keep this a single evaluate-then-escalate change, not a blanket bold.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.89.2
+
+**Light mode: final sweep — one hidden stone found**
+
+Did a systematic audit for remaining dark-only assumptions:
+- data-theme wrong-signal checks: 0 left (all converted to body.light).
+- Canvas visuals: audited all 12 canvas contexts. cofDraw, dbDraw, pitchHistDraw now
+  light-aware; strobe/bpmWheel/thmnKnob are inside guarded dark screens (stay dark,
+  correct).
+- **HIDDEN STONE FOUND — pitch-stability graph:** pitchHistoryCanvas sits on a light
+  --bg-1 in light mode but drew its gridlines/labels in rgba(255,255,255,...) = white
+  on light = invisible. The tuner's pitch-history graph would render blank. Fixed with
+  a light flag drawing dark ink (same pattern as dB meter). This one was genuinely
+  hidden — only shows when you're actively holding a pitch.
+- latCanvas (Settings > Calibration) draws in green, legible on light — left as-is
+  (rarely-used, and touching the calibration draw risks more than it gains).
+
+Known cosmetic (deferred): Tonale wave/scope touch the side edges — a grid-overflow
+that resisted two blind fixes; needs an inspector reading to nail without guessing.
+
+Light mode is otherwise comprehensive: palette, cards, buttons, difficulty/feedback
+colors, all canvas visuals, and every dark screen (tuner, metro, theremin, CRT, Tonale).
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.89.1
+
+**Tonale: the real fix — side bleed, not vertical clipping**
+
+Dan clarified: the preview is scrollable, so vertical height was never the issue — the
+wave and slider were cut off on the SIDES, running past the content margin while the
+header sat inset.
+
+Root cause: #exTonale is a .stack (CSS grid). Grid items default to min-width:auto,
+which lets them overflow their track when a child is intrinsically wide (the wave
+canvas). So the wave-wrap pushed past the column edge and the width:100% canvas
+filled the over-wide box. Fix: min-width:0 on the grid children + max-width:100% +
+box-sizing:border-box on the tonale screens, so they shrink to the column and align
+with the rest of the app.
+
+Reverted the 0.89.0 height trims (wave 150px, slider min 300px restored) — those were
+solving a non-issue; the width constraint is the actual fix.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.89.0
+
+**Tonale: layout clip fix + screen contrast dialed in**
+
+- **Layout clipping:** the wave (150px) + slider (min 300px) + gaps/margins exceeded
+  the viewport on some screens, clipping the bottom DRAG TO MATCH text and edges.
+  Conservative trim: wave 150->132px, slider min-height 300->250px, margins tightened.
+  Fits without clipping, proportions preserved. (Not a light-mode issue; helped dark too.)
+- **Screen contrast:** first attempt lifted the slider to a medium grey — but the pitch
+  ladder + reference lines draw in var(--accent) at low opacity and would vanish on
+  grey. Dialed back to the screen-charcoal family (#242230 slider, #1a1822 wave) so
+  the lines stay readable AND it's consistent with tuner/CRT/metro. Lifted just enough
+  off pure-black to soften the contrast jump from the lavender page without losing the
+  glow the neon wave needs.
+
+Lesson logged: canvas/overlay content colours constrain how far a dark screen can lift
+— check what draws ON the surface before lightening it.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.9
+
+**Tonale screens lightened (this WAS the Tonale screen)**
+
+The "pitch-match" screen Dan flagged is actually Tonale — the DRAG TO MATCH / LOCK IN
+pitch game. Its two dark screens were the last black slabs:
+- tonaleWaveWrap (top wave display): was pure #000 -> #16141c charcoal in light.
+- tonaleSlider (the big scope): was linear-gradient(#0e0e15,#0a0a0f) -> charcoal
+  gradient (#211f2a,#1a1822) in light.
+Both now match the tuner/CRT/metro screen-charcoal family, so Tonale reads cohesively
+instead of as two black holes on the light page.
+
+Layout check: the REPLAY/LOCK IN right-rail buttons use inline var(--surface) styles,
+NOT any class in the button-unify list from 0.88.8 — so that change did not shift this
+layout. What looked like a shift is Tonale's normal cramped right-rail; the buttons
+were already light because they read the surface token. No regression.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.8
+
+**Light mode: COF rings, button consistency, Tonale**
+
+- **COF rings darker:** the wheel segment tints were pale on light. Boosted the
+  sectorTint alpha 1.7x in light mode so the color rings read with proper depth.
+- **BUTTON CONSISTENCY (Dan's catch):** equivalent controls across modules used
+  DIFFERENT surface tokens — metro-mode-chip=surface-2, subdiv-btn=panel, etc. In
+  dark those tokens are close; on light the gaps showed as "some lighter some darker".
+  Pinned the common interactive buttons (subdiv, ts-opt, mode chips, sound btns,
+  toggle chips, iv-mode, tg-seg) to one surface + border in light mode so modules
+  match each other.
+- **Tonale:** the reveal-key cells already use tokens (adapt fine) and the neon-wave
+  screen is a legit dark instrument display (like pitch-match, stays dark). The one
+  fix: its wave wrap was pure #000, harsher than the charcoal screen family — lifted
+  to #16141c in light so it's consistent with tuner/CRT/metro.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.7
+
+**Light mode: Circle of Fifths, volume meter re-fit, card presence**
+
+- **Circle of Fifths** was heavily dark-mode: the center TAP hub drew as a black
+  circle (canvas read --bg-1 via the @property fallback = dark initial) and every key
+  label (wedge names + center) was hardcoded white, invisible on the light wheel.
+  Added a light flag to cofDraw: hub fills light, all labels (wedge major/minor, TAP,
+  sub-labels) draw dark ink in light mode.
+- **Volume meter:** the charcoal plot from 0.88.6 clashed with the light green Tools
+  tab (dark slab on light page). Reverted to a tint-following light surface — AND
+  fixed the dB canvas gridlines/labels (hardcoded translucent-white) to draw dark in
+  light mode, so a light plot actually shows its content. This is the right fix: the
+  meter now matches the tab instead of fighting it.
+- **Card presence:** nudged .card one step darker (surface-2 -> surface) so the metro
+  settings panel and similar have a bit more weight against the tinted page.
+
+Pattern noted: canvas-drawn tools (circle of fifths, dB meter, staffs) don't get CSS
+overrides — each needs an in-draw light check. Circle + dB + staffs now all handled.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.6
+
+**Light mode: cohesion pass — flat cards, visible staffs, real meter plot**
+
+Dan's "they don't feel cohesive" was exactly right. Three root causes:
+
+- **Card bloom/fade:** every .card uses a top->bottom gradient (surface->bg-1) PLUS a
+  corner radial glow (.card-glow), both tuned for dark. On light they read as a muddy
+  vertical bloom — some surfaces flat, these faded = incohesive. Flattened cards to a
+  solid surface and killed the glow in light mode. This is the big cohesion fix.
+
+- **HIDDEN BUG — music staffs invisible:** the staff renderers checked
+  `data-theme==='light'` to pick black-vs-white ink, but light mode uses the .light
+  CLASS, not that attribute — so they ALWAYS drew white, invisible on light cards
+  (the transposer YOU READ / IT SOUNDS staves). Fixed the signal in 5 staff functions
+  + gave pitchedStaffSvg (which had no check at all) a proper light branch. Staffs now
+  draw dark ink on light.
+
+- **Volume-meter graph washed out:** the dB plot used var(--bg-1) (light), but the
+  canvas draws translucent-WHITE gridlines + faint zones designed for a dark plot. So
+  it washed out. Restored a charcoal plot in light mode = the meter reads like an
+  instrument display again.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.5
+
+**Light mode: full polish sweep (systematic, not reactive)**
+
+Did a proper audit pass instead of one-at-a-time. Found and fixed:
+- **Chroma strip shadow:** still had the heavy 0 5px 14px rgba(0,0,0,.7) dark drop
+  haloing onto the page. Softened to a clean lift, recessed inset kept.
+- **Header buttons (mic / fav / level chip):** used var(--surface) = near-white, so
+  they read as stark white circles on the header. Tinted to surface-2 with a defined
+  border + soft shadow.
+- **Big mic button:** same near-white gradient; retinted and softened.
+- **HIDDEN BUG — accent-button text contrast:** buttons like the interval-trainer
+  primary use color:var(--bg-0) as "contrast text" (dark text on bright accent). In
+  light mode --bg-0 is light grey, giving ~4:1 light-on-mid-tone (below AA). Forced
+  white text on accent-filled buttons = 5.7-6.6:1. This was invisible until audited.
+- **Card definition:** stark near-white panels (metro settings) got a slightly
+  stronger border so they read as distinct surfaces on the tinted page.
+- Softened remaining heavy shadows on light chrome (fork/subtab/mode chips).
+
+Audit noted 178 heavy-dark-shadow + 106 white-inset-bevel declarations total, but the
+vast majority are INSIDE guarded screens (knobs, keys, pedals) and correctly stay
+dark. Only the light-following chrome was swept.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.4
+
+**Light mode: chroma strip, stark card definition, softer screen frame**
+
+Three on-glass catches:
+- Tuner CHROMA STRIP (the C/C#/D... note strip under the tuner LCD) was still
+  near-black while the LCD above it went charcoal — inconsistent. Lifted its 3 layers
+  to the same charcoal so the tuner reads as one unit.
+- Cards read stark/flat on light (metro settings panel especially): near-white
+  surface on a near-white page with a border too faint to define the edge. Added a
+  slightly stronger card border in light mode so panels have definition.
+- The guarded-screen FRAME was a near-opaque cream ring (rgba 250,248,243 @ .9) that
+  read as a hard white border around the theremin/CRT/tuner. Softened to a single
+  subtle 1px edge + soft drop.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.3
+
+**Color-coding stragglers swept + screen scope locked**
+
+- Chordle "locked slot" cell (the confirmed-correct note at the current guess
+  position) escaped the feedback-color remap — still bright #22c55e. Routed through
+  diffColorFor. This was the green "I" that stayed bright while its neighbour deepened.
+- Interval-trainer + tempo-game feedback greens/golds (CSS hardcoded: .iv-test-dot,
+  .iv-test-perfect, .iv-answer-btn.correct, tg-hud diff) deepened for light mode.
+
+**Screen-lift scope decided (correctly, with Dan on glass):**
+- Lifted screens (done): tuner LCD, metro display, theremin, tonal-centre CRT — the
+  genuine near-black slabs. These read as dark panels in a lit room now.
+- NOT lifted (intentional): the piano "bed" is deliberately evoking a real piano —
+  the black is the instrument metaphor, not a neutral screen, so it stays black. The
+  game scopes read fine dark too.
+
+Remaining light-mode item: **Tónale** needs its own pass — it's layout + bespoke
+colour, not the screen-lift recipe, so it's a separate focused session.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.2
+
+**Game color-coding goes universal + screen charcoal rolled out**
+
+Difficulty text was just the tip — the same bright hexes (#22c55e correct, #eab308
+present, #ef4444 wrong, #3b82f6 root, #a855f7 inversion) do all the game COLOR-CODING
+and washed out identically on light. Fixed comprehensively:
+- diffColorFor() map extended to every feedback hex (+ #2ec78f, #facc15, #fbbf24,
+  #c084fc, #60a5fa).
+- Chordle/diadle guess-CELL colors (JS inline) now routed through the mapper — the
+  correct/present/inversion/rootonly states deepen on light.
+- Legend swatches (inline-styled dots) remapped via attribute-substring CSS.
+- Re-applied on appearance toggle so switching mid-session updates everything.
+
+**Screens charcoal-lift rolled out.** Tuner proof confirmed on-device (subtle but
+correct), so lifted the values a notch brighter and rolled the same recipe to the
+metro LCD (warm charcoal), theremin pad + console (green charcoal, radial highlight
+kept), and tonal-centre CRT (green charcoal glass). Each keeps its hue character and
+the housing>bezel>inner depth order so screens read as dark panels in a lit room, not
+black slabs.
+
+Still dark by design: piano keybed and the game scopes (next rollout candidates if
+these read right).
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.1
+
+**Difficulty text: universal fix + tuner-screen charcoal proof**
+
+- Difficulty labels were fixed for only ONE variant last build; there are several
+  (chordle & diadle set colours from JS as inline styles; ce-hud and iv-chip set them
+  in CSS). Now universal: a light-aware mapper (diffColorFor) deepens the JS inline
+  colours when light mode is active, re-applied on appearance switch; and the CSS
+  variants (.ce-hud-diff, .iv-diff-chip) get light-mode overrides. All difficulty
+  pills — chordle, diadle, chord-ear, intervals, pitch-match — now legible on light.
+
+- **Screen lightening — started, tuner as proof.** Lifted the tuner LCD's three
+  near-black layers (housing #1a150a, bezel #08070c, inner #010408) to warm charcoal
+  in light mode, keeping the housing>bezel>inner darkness order so the recessed depth
+  survives. This is one screen as a test: if it reads right on-device, the same
+  approach rolls out to metro, theremin, CRT, piano and the game scopes. If not, only
+  one screen was touched, not all six.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.88.0
+
+**Light mode: difficulty-label readability + a scope decision on the screens**
+
+- Difficulty-pill labels (EASY/MEDIUM/HARD/ALL on pitch-match & interval trainers)
+  used bright DARK-mode colours hardcoded — ~1.2:1 on the pale light pill, effectively
+  invisible. Deepened to AA in light mode (easy #2e7d4f, medium #6248bf, hard #8a5f00,
+  all #c0335f, custom #006f8f). This was the "difficulty text hard to read" report.
+
+- **Decision on lightening the guarded screens:** inventoried the work — 31 distinct
+  near-black backgrounds across the screens, each with its own character (theremin
+  cool-black, metro warm-black, CRT green-black). Properly lifting each to charcoal
+  is a genuine multi-session job, and done carelessly it damages the exact aesthetics
+  the .keep-dark guards exist to protect. Holding: the screens stay dark for now. A
+  dark instrument display framed in a light page is a legitimate pattern (dark video
+  player on a light page); the actual bug was puffy FRAMES around them, now fixed.
+  Per-screen charcoal remains available as deliberate future work if testers still
+  want it, but it is not blocking and not worth rushing.
+
+Tónale still flagged for its own polish pass (partly a screen, partly layout).
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.87.9
+
+**Light mode: metro/theremin halos + guard the expand views**
+
+Structural fixes from screenshots (the remaining "awkward" items that are fixable
+without the per-screen charcoal lift):
+- Metro display and theremin console had heavy dark drop shadows + coloured glows
+  (0 6px 20px rgba(0,0,0,.8) etc.) that haloed onto the light page. Softened the
+  OUTER drop to a clean soft lift in light mode; the internal recessed bevels are
+  kept so the screens still read as real displays.
+- The piano and theremin EXPAND/fullscreen overlays (#pianoOverlay, #thereminOverlay)
+  had no .keep-dark guard — light mode was trying to lighten these dark instrument
+  views and breaking them. Guarded; they stay dark like their inline versions.
+
+Known remaining (needs the deferred per-screen charcoal lift, bigger job): the piano
+keys, theremin knobs and metro-screen internals still read a bit awkward because the
+screens are pure-black slabs on a light page. Lightening the guarded screens from
+black to charcoal will resolve most of these at once — that's the next real Phase 2
+item, not more shadow-chasing.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.87.8
+
+**Light mode: flatten the screen frames, re-elevate the folder cards**
+
+Two opposite fixes from screenshots. (1) The tuner/metro MAIN cards still looked very
+3D — those are the housing frames (.tuner-bpm-card / .metro-bpm-card) that hold the
+dark screens, and they carry a heavy `0 20px 60px rgba(0,0,0,.55)` drop shadow plus
+inset bevels tuned for dark. On light that reads as a puffy beige slab. Flattened to
+a soft 2px lift. (2) The folder/group cards had been over-flattened last build into
+plain blocks with no separation — restored a GENTLE soft shadow (no bevel) so they
+lift off the tinted backdrop again.
+
+Colour/tint from 0.87.7 confirmed good on-device (train lavender, tools green-grey,
+tuner blue-grey all read correctly now).
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.87.7
+
+**Light mode: the diagnosis paid off — real tint + flatten the child 3D**
+
+The 0.87.6 test marker (loud coral cards + red borders) confirmed the changes DO
+reach the preview — some cards showed it, proving the rules apply. So the problem was
+never the pipeline; it was that my "tinted" values were 94% lightness = effectively
+white, and the 3D lived on CHILD elements I hadn't touched.
+
+Fixes:
+- Surfaces genuinely tinted now: bg-0 dropped from ~94% to ~85% lightness with 20%+
+  saturation, so each tab's hue is actually VISIBLE (tuner blue-grey, metro sand,
+  tools teal, train lavender) instead of reading white. Cards a touch lighter than
+  the backdrop but still clearly tinted, not white islands.
+- Child-element 3D flattened: instrument pills, toggle chips, tab buttons, folder
+  cards etc. carried their own dark-tuned inset-bevel + drop shadows that read puffy
+  on light. Neutralized to a single soft flat shadow app-wide in light mode. Guarded
+  dark subtrees keep theirs.
+- Test marker removed.
+
+Guarded signature screens unchanged.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.87.5
+
+**Light mode: cards carry the tint, and flatten the 3D**
+
+Two on-device problems. (1) The per-tab backdrop tint WAS landing (train lavender,
+metro cream, etc.) but the cards were near-white (#f5f5f7) and cover most of the
+screen, so the whole thing still read white. (2) Cards looked puffy/embossed.
+
+Fixes:
+- Card surfaces (--surface / --surface-2 / --panel) pulled DOWN into each tab's tint:
+  now a visibly lighter-tinted lavender/cream/teal that sits above the backdrop
+  without going white. Cards read as "tinted paper", not "white islands on a tinted
+  page". Applied to all four tabs + the base.
+- Shadows flattened. The old card shadow had a bright inset bevel (rgba white .6
+  inset) which reads as elegant depth on DARK but puffy/3D on light. Replaced with a
+  single soft low drop shadow (research: light mode wants 1-2 soft levels, no bevel).
+- The module/folder cards in the Tools hub share .practice-card-btn, so they now pick
+  up the tinted gradient too instead of white.
+
+Guarded signature screens unchanged (still dark, soft frame; charcoal lift = Phase 2).
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.87.4
+
+**Light mode: lightened version of the app palette, per tab**
+
+Still read as generic white because the base was neutral stone, not a lighter version
+of the app's actual colours — and it flattened every tab to one near-white despite
+each tab having its OWN hue in dark mode (tuner navy-blue 232, metro amber 45, tools
+teal 168, train violet 246).
+
+Reworked: each tab's light base is now derived from ITS OWN dark hue — a lightened
+version of that tab's colour, not neutral. Tuner is a soft blue-grey, metro a warm
+sand, tools a teal-grey, train a violet-grey. Subtle but present, so each tab reads
+as "itself, brighter" instead of "white app". Base surfaces keep hue 240 (the app's
+navy family). All accents re-verified for WCAG AA/AA-large on the tinted bases.
+
+The direct-paint block is now token-driven (with light literal fallbacks baked in) so
+the per-tab tint actually carries through to the backdrop, cards and ambient glow,
+instead of being overpainted with one flat literal.
+
+Guarded signature screens still dark with the soft warm frame; per-screen charcoal
+lift still Phase 2.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.87.3
+
+**Light mode: warm elevated-neutrals instead of stark white**
+
+On-device the previous pass was too stark — near-white chrome next to pitch-black
+signature screens read as a jarring slab, exactly the aggressive-contrast trap the
+research warns against. Reworked to the 2026 "elevated neutrals" direction (soft
+warm stone/oatmeal, not #FFFFFF):
+
+- Base is now a warm stone #e7e4dc with surfaces stepping up through #f4f2ec to a
+  soft #faf8f3 — warm, grounded, far easier on the eyes, and it NARROWS the gap to
+  the dark screens so they stop clashing.
+- Accents deepened slightly to keep WCAG AA on the warmer base (cyan #006f8f, green
+  #3a7000, etc. — all >=4.5:1 verified).
+- Per-tab tints warmed to match; shadows warmed (brown-grey, not blue-black).
+- Signature screens: a soft warm frame + light-side glow now eases the edge between
+  the dark screen and the light page, so it reads "dark instrument in a lit room".
+
+Deferred to Phase 2 (noted honestly): actually LIGHTENING the guarded screens from
+near-black to charcoal. Each screen (tuner, CRT, metro, theremin) paints its OWN
+hardcoded dark background, not the palette token — so it needs a per-screen override,
+not a token swap. The half-done token lift was pulled rather than shipped inconsistent.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.87.2
+
+**Light mode: fix the dark backgrounds in the in-app HTML preview**
+
+Root cause found via the app's HTML preview (not a real browser): the palette tokens
+(--bg-0, --surface, --theme, --accent...) are all @property-registered so the theme
+crossfade can animate them. The preview engine only partially supports @property — a
+registered custom property resolves to its dark INITIAL-VALUE instead of the cascaded
+light value. So light mode changed the unregistered vars (--text, --muted) but the
+registered ones stayed dark: dark backgrounds, light text. The CSS cascade was
+correct (verified with a resolver); the engine just wasn't honouring the override on
+registered properties.
+
+Fix: in light mode, paint the page chrome from LITERAL light values rather than via
+the registered tokens — html/body background, the ambient ::before glow (now a faint
+tint wash), and the structural surfaces (cards, panels, practice buttons, hints).
+Registered tokens still drive the animated crossfade where supported; these
+guarantee a correct static paint everywhere. html gets a .light-root class (the
+.light class is on body, but html paints --bg-0 as the parent and needs its own
+hook). Also darkened the TRAIN card sub-text that was cyan-on-white.
+
+.keep-dark signature surfaces are untouched — they re-declare their own dark values.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.87.1
+
+**Light mode actually lights up now, and the toggle shrank**
+
+On-device screenshots showed 0.87.0 only changed the TEXT — dark text on dark
+backgrounds. Cause: the per-tab theme blocks (body.theme-tuner/-metro/-tools/-train)
+come AFTER body.light in the stylesheet and re-declare the full dark surface set at
+equal specificity, so on every themed tab (which is every tab) the dark backgrounds
+won and only un-themed vars like --text went light.
+
+Fix: compound body.light.theme-X blocks placed after the theme overrides — higher
+specificity AND later in source — restore the light chrome on every tab. Personality
+survives per the Linear approach: each tab keeps its hue as a DEEPENED accent
+(tuner #007a9c, metro #8a5f00, tools #0b7a4e, train #6d4fc4 — all verified >=4.5:1
+AA on the light base) plus a barely-there 2-3% tint of that hue in the backdrop.
+
+The giant Appearance chips are gone. Replaced with a compact segmented control
+(AUTO / DARK / LIGHT with tiny half/filled/empty circle icons) sitting in one subtle
+line right under the Settings title. Same three-way behaviour, same live auto-follow.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.87.0
+
+**LIGHT MODE — Phase 1 (foundation)**
+
+Requested by several testers. Built to researched professional spec (Material/HIG
+guidance, WCAG AA verified by contrast math, not eyeballed):
+
+- **Light palette** under body.light: soft off-white base #eef0f4 (never pure white),
+  surfaces stepping TOWARD white for elevation, dark-slate text #1a1c26 (never pure
+  black, 15.96:1), every accent deepened to hold >=4.5:1 AA on the light base while
+  keeping its hue (cyan #007a9c, green #3f7a00, gold #8a5f00, blue #2563cc, red
+  #d92626, purple #6d4fc4). Shadows lightened for light surfaces.
+- **Signature surfaces guarded.** A .keep-dark wrapper re-declares the dark palette
+  for its subtree, so these keep their identity in both modes: tuner glass, tonal
+  centre CRT, theremin pad, Road Trip (has its own five themes), and the premium
+  Legendary/Mythic streak reward cards (gold-on-dark IS the reward). Regular
+  achievements, Music Quiz and Survival Guide follow light mode — reading surfaces
+  benefit from it.
+- **Settings > Appearance: AUTO / DARK / LIGHT.** Auto follows the device via
+  prefers-color-scheme and re-applies live when the system changes. Stored in
+  localStorage. Default is Auto.
+- **No flash-of-wrong-theme:** a tiny inline script right after <body> applies the
+  class before first paint (the main script block sits 61% into a 7.7MB file; without
+  this, light users would get a dark flash every boot). NOTE: script block count is
+  now 7 (was 6) — update any tooling that assumes 6.
+
+Phase 2 (next): on-device tuning from screenshots — the ~15 hardcoded dark chrome
+colors, white-inset highlights, per-tab tint whisper (Linear-style 3-5% surface wash),
+and whatever dark patches only real glass reveals. Per-tab personality is preserved:
+vivid accents on the loud elements, barely-there tint on surfaces.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.86.2
+
+**COMPARE: cross-degree moves now show an arrow**
+
+Ab Egyptian vs minor pentatonic drew a dropped-note X on the b3 and a glowing pip on
+the 2, but NO arrow — and the caption read the clunky "MINOR PENTATONIC ADDING 2
+WITHOUT b3". The ear hears that as one note sliding (b3 down a semitone to 2), so the
+missing arrow felt wrong.
+
+Cause: move-detection only paired notes with the SAME degree NUMBER. b3 (degree 3)
+becoming 2 (degree 2) crosses a degree boundary, so it read as an unrelated add +
+drop.
+
+Added a second pass: any leftover add and drop that sit ONE semitone apart (circular
+distance, so an octave wrap still counts) are paired into a move — giving the arrow.
+Egyptian now shows the arrow and the caption collapses to the clean "MINOR PENTATONIC
+with ♮2".
+
+Verified it does not create false moves: pure-subset scales (minor/major pentatonic
+dropping notes from their parent, In dropping from phrygian) have no adds to pair, so
+they still read as drops; blues' b5 has no adjacent drop, so it stays an add.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.86.1
+
+**COMPARE overlay: fades in as one unit, no morph-matching**
+
+Trying to time the arrows against the note morph kept reading as mistimed jank, in
+every variant (defer, draw-on). Stopped matching the morph at all.
+
+The whole ghost overlay — dashed markers, add-rings, drop-Xs and arrows — is one SVG
+group, and it now simply fades in together as a unit over 0.28s on an animated change,
+decoupled from the notes' movement. The arrows appear WITH their own markers because
+they are the same layer; nothing tracks the moving notes. Toggling COMPARE with no
+scale change still shows everything instantly.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.86.0
+
+**COMPARE arrow: draws on instead of fading up**
+
+The fade-in read slow: it held invisible for 0.27s, then ramped opacity over a
+further 0.18s, so the arrow did not even begin to appear for over a quarter second
+and had no sense of motion when it did.
+
+Replaced the opacity fade with a stroke DRAW-ON: the arrow wipes from the parent note
+toward the current note along its own path (stroke-dashoffset animation), after a
+short 0.14s hold and over 0.32s with a snappy ease. Faster overall, and directional —
+the arrow traces the path the note took, which reads as intentional rather than a
+vague fade. Dash length is set to 100, comfortably longer than the widest ghost arc
+(~85 units at a 3-semitone move) so the stroke is always fully hidden before it draws.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.9
+
+**COMPARE overlay: markers stay, only arrows fade in**
+
+The 0.85.8 approach (defer the whole overlay 440ms) fixed the wrong-position arrows
+but replaced them with a dead pause and a hard pop-in. Worse.
+
+Split the overlay by what it is anchored to. The dashed parent-note markers, the
+add-rings, the drop-Xs and the pip-glow all sit at FIXED tick positions — they do not
+depend on the moving notes, so they now appear immediately. Only the ARROWS connect a
+parent position to the current note's FINAL spot, so only the arrows wait: on an
+animated change they hold invisible through the morph and ease in as the notes land
+(keyframe stays at opacity 0 for the first 60%, then fades to full).
+
+Result: something is always on screen, nothing points at a stale position, and the
+one element that genuinely needs the settled layout arrives softly instead of
+popping. Toggling COMPARE with no scale change draws everything instantly as before.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.8
+
+**COMPARE arrows wait for the scale to settle**
+
+Rolling the dice (or changing scale) with COMPARE on drew the ghost arrows
+immediately, while the notes were still mid-morph to their new positions — so the
+arrows pointed at where the notes USED to be, then everything slid. Looked broken.
+
+The ghost overlay is now deferred until just past the .42s FLIP morph on animated
+changes, so the arrows are drawn against the notes' settled positions. The previous
+scale's arrows and pip-glow are wiped immediately (they must not hover over the
+morphing notes), and a per-render token cancels a stale pending draw if the scale is
+changed again mid-morph. Toggling COMPARE itself is unaffected — no morph is running,
+so it still draws instantly.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.7
+
+**Anchor coloring: the octave was never actually an anchor**
+
+The root lit cyan but the octave stayed plain blue — visible in every screenshot.
+The anchor test was `d.deg === '8'`, but the octave note usually does NOT carry deg
+'8': getScaleData already includes the octave, so scaleTapeData's '8'-labelling
+append is skipped, and the degrees array has no entry at the octave's index — so it
+fell through to deg '·'. The test never matched, so only the root (index 0) got the
+anchor.
+
+Fixed by testing the SEMITONE instead: the octave is simply the note at semi 12,
+whatever its degree label. Also labelled that note's degree '8' properly (it was
+showing '·' under the octave dot before). Every scale now has exactly two anchors,
+root and octave.
+
+Drone mode too: the bright-green highlight targeted .root, leaving the octave dim.
+Now targets .anchor, so both ends light green in drone mode, matching normal mode.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.6
+
+**Anchor coloring: fix the purple, brighten, enlarge**
+
+The anchors came out purple, not cyan. Cause: the CSS used var(--accent), and under
+the TRAIN tab body.theme-train remaps --accent to #b8a3ff (purple). The Scales tool
+lives under TRAIN, so every "accent" element there is purple, anchors included.
+
+Switched the anchor colour to an explicit bright cyan (#6ef0ff) so it is independent
+of the tab theme and reads as a deliberate boundary colour against the blue notes.
+Also enlarged the anchor dots (radius 6.7 vs 5.5) — sized via the radius attribute,
+NOT a CSS transform, because the dot's transform is already used by the hit-pop and
+drone-latched scale animations and a static scale would collide with them.
+
+Both ends get it: the root (degree 1) and the octave (degree 8) are both anchors, so
+the tape is framed at both ends.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.5
+
+**Scales: anchor coloring**
+
+Small, deliberate polish after previewing a much larger set of changes and rejecting
+most of them. The root and its octave (degrees 1 and 8 — the frame of the scale) are
+now cyan instead of the same blue as every other note, with the two octave-boundary
+ticks faintly tinted to match. "Home" now reads at a glance on any scale, sparse or
+full.
+
+That is the whole change. The gradient rail, halos, pitch-brightness gradient and
+per-note entrance animation from the previews were all cut: invisible, fussy, or
+fighting the note-shifting morph that scale changes already have. The morph stays as
+the only entrance motion.
+
+Cascade verified: anchor cyan is the base dot colour, and every meaningful state
+overrides it correctly by specificity or source order — hit (white), COMPARE moved
+(gold), drone latched and drone root (green). No state conflicts.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.4
+
+**Transport dot: the actual fix (synchronous teleport, no timing games)**
+
+Three previous attempts all fought the TIMING of when to re-enable the transform
+transition — single rAF, then double rAF. That was the wrong frame entirely, and
+under rapid tapping the deferred re-enable raced the next tap and the dot flew back
+and forth.
+
+Dropped the timing approach completely. New helper scalePlaceDot(x, show):
+  - adds a `.snap` class ( transition: none !important )
+  - forces a reflow (flush the "transitions off" state)
+  - sets the transform and visibility
+  - forces a second reflow (commit the new position while still off)
+  - removes `.snap`
+Because the transform CHANGES while transitions are hard-off, the browser has
+nothing to tween — the dot teleports. It is fully SYNCHRONOUS, so rapid up/down/stop
+taps cannot race it; each press does a clean stop, teleport, and re-arm in one go.
+
+.moving (the transform animation) is added only AFTER the dot is already sitting on
+the start note, so the only thing it can ever animate is the step to the next note —
+never the arrival at the first. Same helper used for play-start, loop-restart and
+stop, so all three behave identically.
+
+If it still flies after this, it is not the transform transition and the next step is
+a remote-inspector capture — but this removes every timing race by construction.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.3
+
+**Transport dot fly-home (real fix), and the Exotic group split up**
+
+**The dot.** Two prior attempts missed the mechanism. The dot's transform is relative
+to cx=0 (far left), and the .moving class carries `transition: transform`. If the
+transform is set while .moving is present — or in the SAME frame it is added — the
+browser animates from x=0 to the start note. That is the fly-home, and a single
+requestAnimationFrame was not enough to separate the two.
+
+Now every placement (initial play AND loop restart) strips .moving, kills the
+transition, sets the transform, forces a commit with getBoundingClientRect, then
+waits TWO frames before re-enabling. .moving is added only once the dot is already
+sitting on the start note, so the first thing it can ever animate is the step to the
+second note — never the arrival at the first. If it still flies after this it is not
+the transition and needs a remote-inspector look, but the mechanism is now airtight.
+
+**Scale groups.** The Exotic bucket had swollen to 13 scales — over a third of the
+library in one bin, mixing jazz modes, folk scales and symmetric scales. Split into
+three coherent families:
+  JAZZ · MELODIC MODES  — Lydian Dominant, Altered, Locrian nat2
+  WORLD & EXOTIC        — Double Harmonic, Phrygian Dominant, Hungarian Minor/Major, Hirajoshi
+  SYMMETRIC             — Diminished W-H, Diminished H-W, Augmented, Whole Tone, Chromatic
+Six groups now, none larger than six. Applied to both scale pickers and the Tonal
+Centre picker. All 28 scales verified present exactly once, EN + IT labels.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.2
+
+**AKA line: stop repeating the title**
+
+Two scales carry their mode name in the title itself — "MAJOR · IONIAN" and
+"NATURAL MINOR · AEOLIAN". Their AKA entries were Ionian and Aeolian, so the strip
+read "AKA IONIAN" right under a title that already said IONIAN. Redundant.
+
+Dropped both entries (the mode name earns its place in the title; the AKA line is
+for names the title does NOT show — Byzantine, half-diminished, acoustic scale).
+Added a guard in scaleMaybeNote so any AKA that already appears in the title is
+filtered out, in case a mode suffix is added to another title later.
+
+Now major and natural minor show nothing under the title, while double harmonic still
+shows "AKA Byzantine · Arabic · surf scale" and the rest are unchanged.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.1
+
+**Scales: alternative names ("AKA")**
+
+Many scales carry two or three names depending on who is teaching — jazz, classical,
+klezmer, surf. The caption strip under the scale name now shows them when it is not
+busy with something more important, prefixed AKA (DETTA ANCHE in Italian):
+  DOUBLE HARMONIC   -> AKA Byzantine · Arabic · surf scale
+  LOCRIAN nat2      -> AKA half-diminished
+  LYDIAN DOMINANT   -> AKA acoustic scale · Lydian b7
+  PHRYGIAN DOMINANT -> AKA Spanish Phrygian · Freygish
+  ALTERED           -> AKA super Locrian · diminished whole-tone
+...16 scales in all. Only well-attested names — no guitar-forum folklore. (The surf
+connection is real: Misirlou is double harmonic major.)
+
+The caption strip now has a clear precedence, since it can only show one thing:
+COMPARE sentence (when on) > melodic-minor practice note > AKA names. So turning on
+COMPARE replaces the AKA line with the comparison, and turning it off restores it.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.85.0
+
+**Full audit: tours, help panels, hints and i18n across the app**
+
+After a session of heavy restructuring (improv tab removed, Scales rebuilt, scale
+library grown 20 -> 28), the guidance layer had drifted from reality. Audited all of
+it mechanically: every tour selector against the markup and JS-created classes, every
+help panel against current behaviour, every data-i18n key against both language
+tables.
+
+**Broken tour steps (selector no longer exists):**
+- Interval trainer: two steps previewed `.iv-target-card`, a class renamed to
+  `#ivTargetZone` at some point. Repointed.
+- Tempo Lock: the "Your Score" step targeted `#tlResult`, which does not exist in the
+  rebuilt layout. Repointed at the real HUD (`#tlHudBest` / `#tlBarRow`).
+
+**Stale text describing the removed Improv tab (7 places):**
+- HELP_CONTENT.scales rewritten for the TAPE tool (was describing the old text strip
+  and its green glow)
+- HELP_CONTENT.scaledrone rewritten as "Drone Mode" (was a full panel for the deleted
+  Improv tab, START button and all; key kept for existing lookups)
+- TRAIN hub hint, Scales card subtitle, tool subtitle DOM default: all still said
+  "improvise" — now describe hear / drone / compare (EN + IT + markup defaults)
+- A tour step still offered "Listen, Sing, or Improv mode"; another listed "Scales
+  Improv" as a mic user (the Scales tool no longer uses the mic at all). Both fixed,
+  both languages.
+- Dead i18n keys scale_tab_reference / scale_tab_improv removed (the sub-tab nav they
+  labelled was deleted in 0.83.0).
+
+**i18n integrity: all 690 data-i18n keys verified to resolve in EN and IT.** One real
+gap found and filled: `tl_target` ("target tempo") was used in Tempo Lock markup but
+never defined in either language, so Italian users saw English. Added both.
+
+**Also:** duplicate `class` attribute removed from the progression practice card
+(browsers ignore the second, but it was sloppy); the vr_safety_hint audit flag was
+confirmed a false positive (defined in both languages; the audit regex trips on an
+escaped quote).
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.84.5
+
+**Full musical audit of the scale system**
+
+**Correctness: all 28 scales verified against independent authoritative pitch-class
+sets** (not the file's own data — a hand-written truth table). Zero errors.
+
+**Three COMPARE pairs improved after a musical review of every pair:**
+- PHRYGIAN DOMINANT now references PHRYGIAN ("phrygian with a major 3rd" — one move,
+  the Spanish-scale lesson as actually taught) instead of harmonic minor (mode-theory
+  correct but three moves)
+- DOUBLE HARMONIC was wrongly marked "no parent" — it is HARMONIC MAJOR with a b2,
+  one move
+- HUNGARIAN MAJOR likewise — it is LYDIAN DOMINANT with a #2, one move
+
+Every scale that has a tonal parent now has one; only the five genuinely symmetric
+scales (chromatic, whole tone, augmented, both diminished) show NO PARENT.
+
+**Melodic minor's descending form is now acknowledged.** The tool plays the ascending
+(jazz) form both directions — silently swapping to natural minor on the way down
+would confuse anyone who doesn't know the convention and annoy anyone who does. So
+it is stated instead: the caption strip under the scale name reads "CLASSICAL
+PRACTICE DESCENDS AS NATURAL MINOR" whenever melodic minor is selected and COMPARE
+isn't using the strip. Information, not behaviour. EN + IT.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.84.4
+
+**Scale coverage: the instrument overlay had none of the new scales**
+
+The new scales from 0.84.2 went into the Scales tool and Tonal Centre but NOT into
+GSS_SCALE_TYPES — the scale overlay for the instrument fretboard/keyboard views. So a
+guitarist picking scales saw 18 while the Scales tool showed 28. Now consistent: all
+8 new scales added to the instrument overlay (ids match SCALE_DEFS, intervals derive
+automatically via scaleDefIntervals), slotted into GSS_SCALE_GROUPS with two new
+groups (Melodic/Dominant, Symmetric).
+
+Also caught a pre-existing gap: HARMONIC MAJOR was in SCALE_DEFS but never in the
+instrument overlay. Added. Now the only scale missing from the overlay is chromatic,
+omitted on purpose — an all-twelve-note "scale" is not a useful fingering shape.
+
+Every bank now carries the same library bar that one deliberate exclusion.
+
+**Transpose:** confirmed it already exists where it belongs — the dedicated Transposer
+tool handles concert/written pitch for transposing instruments, and the Tuner has its
+own B♭/E♭ transpose. Not duplicated into the Scales tool or the instrument charts,
+where a third instance would risk inconsistency for little gain.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.84.3
+
+**COMPARE: pentatonics and blues get their reference back, rooted in theory**
+
+I had made the wrong call in 0.84.2: pentatonics were given NO parent because the
+diff could only compare equal-length scales. That let the algorithm's limitation
+decide a teaching question, which is backwards. Minor pentatonic against natural
+minor, and blues against minor pentatonic, are among the most useful comparisons in
+the tool.
+
+So the diff was rewritten to work in PITCH CLASSES and classify each difference as a
+move, an ADD, or a DROP:
+  MINOR PENTATONIC -> NATURAL MINOR without 2 and b6   (the subset, shown by what it omits)
+  MAJOR PENTATONIC -> MAJOR without 4 and 7            (drops the half-step tendency tones)
+  BLUES            -> MINOR PENTATONIC adding b5        (the blue note, one added chromatic)
+  HIRAJOSHI        -> NATURAL MINOR without 4 and b7
+  IN               -> PHRYGIAN without b3 and b7
+  EGYPTIAN         -> MINOR PENTATONIC with the 2 for the b3
+
+On the tape: a moved note still draws its arc arrow; an ADDED note draws a bright ring
+with a "+"; a DROPPED note draws a faded hollow marker with an x where the parent's
+note would sit, so you see exactly what the scale leaves out.
+
+Parents are now chosen from the theory, not from what the diff finds convenient. Every
+scale with a real parent gets one; only the genuinely symmetric scales (chromatic,
+whole tone, augmented, both diminished, double harmonic, hungarian major) show NO
+PARENT.
+
+Captions verified for all pairs in EN and IT.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+## v0.84.2
+
+**Scales: playhead fly-home killed, 8 scales added, ghost pairs audited, BPM range raised**
+
+**Playhead no longer flies home.** scaleStop() was setting `transform = ''`, which is
+translateX(0) — the far LEFT — so the next play() animated the dot from there to the
+root. Now stop() kills the dot (transition off, drop .show/.moving) but LEAVES the
+transform where it is; play() repositions it WHILE INVISIBLE and reveals it a frame
+later via requestAnimationFrame. The .moving state no longer animates opacity, so the
+dot can't fade mid-jump on a loop wrap. It appears where it belongs and never travels
+to get there.
+
+**Library 20 -> 28.** Added the melodic-minor modes that matter (Lydian Dominant,
+Altered, Locrian ♮2), both octatonic diminished scales (W-H and H-W), Augmented, and
+two world pentatonics (In, Egyptian). All eight verified for pitch classes and
+spelling by the scale audit. Wired into SCALE_DEFS, TC_SCALE_GROUPS, both picker group
+arrays, SCALE_SHORT_NAMES, and EN+IT scale_opts.
+
+**Ghost pairs audited and fixed.** The COMPARE parent map had real bugs the audit
+caught: pentatonics were being compared to 7-note parents (note-count mismatch, not a
+moved degree), and egyptian vs minor pentatonic were IDENTICAL pitch classes (egyptian
+is a rotation of it). Pentatonics now get NO parent — there is no clean heptatonic
+scale to compare a 5-note scale against, and the dice covers exploring them. New
+heptatonic scales got tight parents: lydian dominant -> lydian (1 move), altered ->
+locrian (1), locrian ♮2 -> locrian (1). Full re-audit: zero bad pairs (no note-count
+mismatches, no identical pairs). The three remaining 3-move pairs (major<->natural
+minor, phrygian dominant->harmonic minor) are correct — those scales genuinely differ
+by three notes, and the caption states it accurately.
+
+**BPM range raised.** Slider was 40-200, default 100. Now 60-260, default 120: the
+floor at 40 was tediously slow for scale practice and running scales fast is a real
+mode. The gradient-fill calc, which hardcoded (v-40)/(200-40), now reads the slider's
+own min/max so it can't go stale on a future range change.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 ## v0.84.1
 
 **Tone bank: stopped fighting the shared component, gave it its own classes**
