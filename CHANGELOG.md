@@ -16,70 +16,461 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.94.3
 
+**Organ + Rhodes now-playing / SONGS / song-bank all match their instrument motif**
 
+The NOW PLAYING screen, SONGS button, and song-bank popup were piano-flavoured everywhere: the
+organ/rhodes panels showed the generic blue-grey keep-dark fallback for np-screen/songs, and the
+shared popup opened CREAM over the wood organ + dark Rhodes (the cream .riff-popup rule wasn't
+instrument-scoped). Now each instrument's controls match its skin:
 
+- ORGAN (keeps its dark wood console in light mode): np-screen -> dark wood (#2a1a0c), transport
+  buttons + SONGS -> warm brown (#5a3a1d) with amber text (#f0d0a0). Song-bank popup themed via
+  riffOpenPopup's data-inst="organ" -> wood-dark card, amber era headers, amber accent.
+- RHODES (dark stage-piano skin, silver + red accents): np-screen -> dark neutral, transport +
+  SONGS -> brushed silver (#d8d8d8) with the Rhodes RED (#a01015) as the accent. Popup via
+  data-inst="rhodes" -> dark card, silver face, red era headers/accent.
+- PIANO popup stays cream (data-inst="piano"/unset); [data-inst] attribute selectors outrank the
+  generic cream rule so each instrument themes independently.
 
+Verified via Playwright: organ np/songs/popup = wood, rhodes = silver/red, piano popup = cream.
+All body.light CSS, no JS (data-inst was already set by riffOpenPopup). Dark mode untouched.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 
+## v0.94.2
 
+**Cream piano tab strip — whole strip adopts the ACTIVE instrument's family**
 
+The light tab strip tinted each tab by its OWN instrument permanently (organ always wood,
+rhodes always silver), so the strip looked like three different materials no matter what was
+selected — e.g. on the Rhodes panel the strip still showed a cream PIANO + wood ORGAN + silver
+RHODES mishmash. Dan wants the whole strip to match whichever panel is open.
 
+Rewrote the light tab rules with :has(): the strip detects which tab is .active and tints ALL
+THREE tabs in that instrument's family — all cream on piano, all wood on organ, all silver on
+Rhodes. Active tab is the brighter version, inactive siblings dimmer. Pure CSS, no JS.
 
+Verified via Playwright across all three active states: PIANO->cream trio, ORGAN->wood trio,
+RHODES->silver trio, each with the active tab brightest. :has() renders correctly in the WebView.
 
+Dark mode tab strip untouched (its inactive tabs are neutral grey which already reads fine on dark).
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 
+## v0.94.1
 
+**Splash CRT — remove the bar's extra glow layer at the seam (both modes)**
 
+The crossfade (0.94.0) already runs in BOTH light and dark — the waveFade/barFadeIn logic
+was never light-gated, only the glow *reduction* is. So dark already crossfades; confirmed.
 
+Remaining mismatch: the CRT bar drew a fat wide-glow layer (7px / blur 24) that the wave core
+has no equivalent for — and the wave's own wide/mid halos have already faded out by the hand-off
+(they ride waveFade). So the bar showed "extra glow" the wave didn't, right at the join. Fixed
+by gating the bar's wide-glow layer to the PINCH: ×_smoothstep(p2), so it's ZERO during the flat
+hold/crossfade (matching the wave's faded-halo seam) and ramps in only as the bar collapses inward
+— where the CRT power-off actually wants that bloom. Mode-independent, so light and dark both match
+at the seam now. The gold core (2.2/blur14) + faint white centre (1.0/blur6) already matched the
+wave core and are unchanged.
 
+Light crossfade continuity re-confirmed via frame sampling; dark uses the identical code path.
+Splash draw only.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 
+## v0.94.0
 
+**Splash CRT hand-off — true crossfade (kills the snap for good)**
 
+Previous attempts matched the bar's *recipe* to the wave but kept them mutually exclusive
+in TIME: wave drew until T_WAVE_END, bar drew after — a hard cut. Even a perfectly-matched
+line cut-swaps visibly. Fixed with an actual crossfade:
 
+- Added a 0.28s overlap window on each side of T_WAVE_END. The wave line now keeps drawing
+  ACROSS the boundary, fading out (waveFade 1->0), while the CRT bar fades IN (barFadeIn
+  0->1) over the same window — both at full width, identical line recipe (gold core 2.2px /
+  blur 14 + faint 0.7x white centre). The wave amplitude is ~0 there (raised-cosine decay),
+  so the near-flat wave dissolves seamlessly into the flat bar.
+- Bar gate changed from `crt > 0` to `crt > 0 || barFadeIn > 0.01` so it starts drawing
+  during the crossfade; its alpha ×barFadeIn. After the window it's business as usual
+  (hold -> pinch -> flare).
 
+Verified via Playwright frame-sampling across 2.6s-3.1s (spanning T_WAVE_END=2.8): the line
+stays continuous every frame — no vanish, no brightness spike, no white bar. Zoomed boundary
+crop shows one clean gold line throughout.
 
+Dark splash unchanged (crossfade applies in both, recipe identical to before outside the
+window). Splash draw only.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 
+## v0.93.9
 
+**Splash CRT hand-off — make the two lines identical (fix the white-bar snap)**
 
+0.93.8 made it worse: reducing the CRT bar's coloured glow (_glowMul) gutted its gold but
+left the white core at full alpha/1.8px, so the bar rendered as a BRIGHT WHITE bar while the
+wave was a thin gold line — gold->white jump at the pinch.
 
+Fix: the collapsing bar now uses the EXACT same recipe as the wave core instead of a white
+bar — gold `col` at 2.2px / shadowBlur 14, plus a faint 0.7× white centre at 1.0px (mirrors
+the wave's crisp-core + white-hot-centre pair). Also matched the bar's pickup brightness to
+the wave's core: holdLvl now starts at 0.72 (was 0.34) so there's no dim step at the hand-off.
+Net: the pinch reads as the wave straightening and collapsing to centre, same colour + weight
+throughout — not swapping into a different bright line.
 
+NOTE: this is a timing/feel change I can't fully verify headless (the transition frame is non-
+deterministic to catch). The recipe now provably matches the wave line; on-device confirmation
+of the actual motion is the real test.
 
+All in the splash draw. Dark splash unchanged.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 
+## v0.93.8
 
+**Cream piano nameplate shadow + splash CRT hand-off**
 
+NAMEPLATE: the silver "GRAND PIANO" oval had a hard black drop shadow (0 2px 8px
+rgba(0,0,0,.7)) + dark ring — fine floating on the old black card, heavy on cream.
+Light-mode override: tight warm shadow (0 1px 3px rgba(120,95,40,.28)) + warm hairline
+ring, so the plate sits on the surface without punching a dark halo. Inner bevels warmed
+too. Dark card untouched.
 
+SPLASH CRT SNAP: the real cause of the abrupt hand-off — in light mode the WAVE glow was
+reduced (0.93.7) but the CRT bar that the wave pinches into still drew its glow at FULL
+strength (shadowBlur 24 / 10). So the halo popped back on at the exact transition frame =
+visible snap. Applied the same _glowMul (0.18) / _blurMul (0.35) to the CRT bar's coloured
+glow + softened its white-core blur (×0.6) in light mode, so wave-end and bar now carry a
+matching minimal halo and the pinch is continuous. Dark splash unchanged.
 
+All body.light CSS + scoped splash-draw branches. Dark mode untouched.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 
+## v0.93.7
 
+**Cream piano lid — the actual fix (WebView native button bevel) + splash wave halo**
 
+LID (finally): after removing every shadow/border/filter and still seeing the dark edge
+on-device (while desktop rendered pixel-perfect cream), the culprit was the one thing left:
+.piano-lid-seg is a <button> and my rules only set border-right — the other three sides fell
+back to the WebView's NATIVE BUTTON bevel (a dark inset chrome the Android WebView draws but
+desktop Chromium doesn't). Fix: -webkit-appearance:none + appearance:none + explicit
+border:0 solid transparent on all sides (border-right kept as the divider), outline:none.
+Applied to both inline (#ptoPianoPanel) and expanded (#pianoOverlay) lids. This is the real
+root cause — the previous three attempts were chasing shadows that were never there.
 
+SPLASH WAVE: on the light splash the wave's coloured glow halo (shadowBlur strokes) muddied
+into a dark fringe on the lavender bg, and since the CRT bar it pinches into at the end has no
+halo, the hand-off looked abrupt. Added an html.light-root check in drawGatherParticles: in
+light mode the outer wide+mid glow layers drop to 18% alpha / 35% blur, so the wave reads as a
+clean bright line that matches the CRT. Dark splash unchanged. Core + white-hot centre untouched
+(they're the bright line, not the halo).
 
+TONE BANK: non-issue — that was just the phone held in portrait (confirmed by Dan).
 
+All body.light CSS + one scoped splash-draw branch. Dark mode untouched.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 
+## v0.93.6
 
+**Cream piano — lid bulletproofed (WebView dark-edge fix)**
 
+The lid segment control kept showing a dark edge on-device despite rendering clean cream
+in every desktop test (verified down to pixel sampling: the only sub-cream pixels were the
+antialiased brown TEXT, no dark outline anywhere in the CSS). Concluded the on-device edge
+is the Capacitor WebView compositing the inset box-shadows / near-transparent segment
+backgrounds differently from desktop Chromium.
 
+Bulletproofed both views (inline #ptoPianoPanel + expanded #pianoOverlay): removed ALL
+inset box-shadows from the segments (the most likely WebView culprit), swapped the near-
+transparent segment backgrounds (rgba(120,95,40,.06)) for flat OPAQUE cream (#e8dcc0),
+active segment flat #fbf6ec, single clean #cbb891 warm border. Also removed the redundant
+v0.93.1 duplicate lid-seg rules that were shadowed by the later block (source-order
+confusion risk). Text darkened slightly (#7a6844 / #3a2f1c) for contrast on the opaque fill.
 
+All body.light CSS, no JS. Dark mode untouched.
 
+STILL OPEN (need on-device screenshots, can't reproduce/verify headless):
+- Expanded tone bank opens vertically; wants horizontal + scrollable to match the inline
+  bank. Layout change — need to see the actual vertical popup before restructuring it.
+- Splash sine wave has a faint dark outline on the light splash. It's a canvas-drawn glow
+  (coloured shadowBlur strokes over the light bg); the fringe mechanism needs the animation
+  rendered to pin down. Flagged, not yet touched.
 
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 
+## v0.93.5
 
+**Cream piano — fullscreen leftovers (key-lip strip, tone-bank button, lid polish)**
 
+Landscape screenshot of the expanded piano caught three stragglers:
 
+- BLACK STRIP along the top of the keys: .piano-keyboard-full::before is a 14px
+  #020204 shadow lip where keys meet the fallboard — invisible on the old dark stage,
+  a hard black bar on cream. Warmed to a soft brown key-shadow (rgba(120,95,40,.35)->
+  transparent) so keys still look seated in the case.
+- TONE-BANK BUTTON: the "⌨ GRAND PIANO" chip in the overlay header (.piano-overlay-
+  voice-btn) was still dark (#1c1c22). It's populated into #pianoOverlay (keep-dark) so
+  body.light skipped it. Creamed + cocoa text, green caret kept as accent. Also pinned
+  .tone-chip cream in the overlay in case any render as chips.
+- LID: renders confirm the wrap border + segments are already cream in BOTH views (the
+  black-outline look was a photo/contrast artifact, not a real dark value — verified via
+  Playwright element crops). Defensively softened the active-segment inset ring across
+  all three lid rule sites (card / dup / overlay): rgba(150,125,70,.25)->rgba(165,142,95,
+  .16) so there's zero chance it reads as a dark edge against the white active segment.
 
+All #pianoOverlay-scoped body.light CSS, no JS. Dark mode untouched.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 
+## v0.93.4
 
+**Cream piano — the expanded fullscreen piano (its own pass)**
 
+The fullscreen EXPAND view was still fully dark. Root cause: the old body.light rules
+targeted .piano-key-well / .piano-fallboard, but the overlay's real classes are
+.piano-overlay-key-well / .piano-overlay-fallboard — so they never matched and the
+overlay stayed on its dark stage. Rewrote the whole overlay treatment.
 
+#pianoOverlay is .keep-dark (excluded from body.light), so every rule targets
+#pianoOverlay explicitly to override. .keep-dark only re-declares CSS vars, and these
+rules set literal !important colours, so no conflict. Dan-approved: fullscreen goes
+cream too (not spotlit-on-dark).
 
+Converted, warm-neutral convention (cream surface, mid-beige frame, cocoa text, one
+green accent):
+- Stage background: dark room (#111114->#050507) -> warm cream (#efe4cc->#ddcfb0).
+- Key-well frame + fallboard -> cream lacquer case (correct -key-well/-fallboard classes).
+- Keyboard bed behind the keys -> warm cream so key gaps read as wood shadow, not a void.
+  White div-keys unchanged (they already look right on any bg).
+- Chrome buttons (close, octave nav, width toggle) -> cream + cocoa text + hover states.
+- Pedals / lid / now-playing / SONGS button reuse the inline cream treatment, re-scoped.
+- Brushed-metal nameplate left as-is (reads fine on any background).
+
+Verified via Playwright: overlay/key-well/fallboard/bed/chrome all compute cream in
+forced light mode; screenshot confirms it reads as one coherent warm instrument.
+
+NOTE on the lid "black outline" from the 15:20 screenshot: that was a pre-0.93.3 build.
+The .piano-lid-seg-wrap border fix landed in 0.93.3 (v0.93.1 only styled the segments,
+not the wrap, so the wrap kept its base black box-shadow). Computed border in the current
+file is #cbb891 cream — confirmed via Playwright. Re-download resolves it.
+
+All body.light CSS, no JS. Dark mode untouched.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+
+## v0.93.3
+
+**Cream piano — pedals, lid frame, and the SONG BANK / TONE popups**
+
+More dark holdouts cleared from the light acoustic-piano tab (screenshots):
+
+- PEDALS: the chrome pads are real pedals and stay silver; the black recessed SLOT
+  they sat in read as a hard outline on cream. Warmed the slot to a shallow cream
+  recess (#d8c8a4->#ebe0c8) so each pad sits in wood, not a black hole. Pad-down glow
+  colours (soft violet / sost cyan / damper green) untouched. Pedal names -> warm brown.
+- LID segment control: the CLOSED/STICK/OPEN wrap border was faint-white-on-cream so
+  the left edge looked unfinished. Frame + segments + text rewarmed; active segment
+  brighter cream.
+- SONG BANK popup + TONE popup: shared full-screen modals (piano/organ/rhodes). A black
+  modal over a light app reads as forgotten, so creamed them — warm card (#f6efdd),
+  cocoa body text, mid-beige dividers, green kept for the accent rail (era headers, play
+  carets, active tile). Scrim -> warm-dark (rgba(60,48,24,.5)) so it dims like a lit room
+  rather than a blackout. creditsModal reuses .riff-popup-card so it follows too.
+
+All body.light-scoped CSS, no JS. Dark mode untouched.
+
+DEFERRED to its own pass: the EXPANDED fullscreen piano (#pianoOverlay, .keep-dark). It's
+a large immersive surface — nameplate, nav, fallboard, key-well borders, dark background,
+plus the dark keyboard well — and converting spotlit-on-dark to cream-on-light is a full
+redesign that needs its own screenshot loop, not a tail-end batch.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+
+## v0.93.2
+
+**Cream piano — the remaining dark holdouts (tabs, expand, screens, tone bank)**
+
+On-device screenshots showed the v0.93.1 cream card still had black islands. Cleared
+them all, following warm-neutral UI convention (cream surfaces, mid-beige structure,
+deep cocoa text — not washed-out grey; one accent kept for the CTA):
+
+- TABS: inactive ORGAN/RHODES tabs no longer share one flat dark gradient. Each previews
+  its instrument in a muted cream-friendly tint (organ dusty-wood, rhodes pewter-silver,
+  piano neutral cream) so the strip reads as three instruments before you tap. Strip
+  border -> #d0bf98.
+- EXPAND button -> warm cream, cocoa text (#5a4a2c).
+- LID direction-icon: silhouette + lid line rewarmed (#pianoLidSvg rect/line light-branched).
+- NOW-PLAYING screen: was a black LCD recess reading as a hole in the cream. Lightened to
+  a warm off-white display (#f6efdd->#efe4cc) with softened scanlines + inset so it still
+  reads as a screen; idle text -> cocoa. Transport buttons creamed.
+- SONGS button -> amber-cream, kept the green CTA text so it stays the primary action.
+- TONE bank: family pills + all instrument tiles -> cream tile bodies, cocoa labels, emoji
+  kept (content not chrome). Selected pill/tile gets a sage-tinted state so the choice pops.
+
+All body.light + #ptoPianoPanel-scoped CSS; ID specificity beats the global .np-screen dark
+rule so organ/rhodes screens stay dark. No JS touched. Dark mode untouched.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+
+## v0.93.1
+
+**Cream piano — finish the card chrome + kill the dark seam on the keys**
+
+Two loose ends from the v0.93.0 cream-piano pass:
+
+1. CARD CHROME: the piano panel's card base, nameplate strip, lid bar, and the PIANO
+   tab were all still tuned for a black lacquer slab, so on light the cream keybed sat
+   inside a black box. Added body.light overrides scoped to #ptoPianoPanel: card base ->
+   warm cream gradient (#f4ecdb->#e2d5ba), softened the black-tuned gloss arc + specular
+   line, nameplate/lid borders -> warm brown alphas, lid labels/segments -> cream family,
+   and #ptoPianoTab.active -> cream gradient so the tab matches the panel below it.
+
+2. KEY SEAM: the octave-separator line (drawn every 7th white key in csDrawKeyboard) was
+   hardcoded rgba(46,46,72,0.8) dark blue-grey. On the cream/white keys it read as a dark
+   scratch splitting the keyboard down the middle at the octave boundary. Light-branched
+   via the existing _csLightPiano flag -> rgba(180,162,120,0.5), 1px (was 1.5px).
+
+Dark mode untouched — all changes are body.light CSS + one _csLightPiano-gated ternary.
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## v0.93.0
+
+**Cream piano — light-mode Elton-white treatment (closes the color checklist)**
+
+The acoustic-piano tab now reads as a warm white-lacquer instrument in light mode instead of
+a black slab on the pale card. Dan-approved option F: option B's bright cream case + lid, with
+TRUE WHITE keys (not ivory) and a heavier warm outline so they read crisply against the cream.
+
+Inline card (CSS, body.light, scoped to #ptoPianoPanel): .piano-key-well body #f0e6d2,
+.piano-fallboard lid cream gradient, octave-bar buttons cream. Playable keyboard
+(csDrawKeyboard, scoped via pianoToolTab==='piano'): natural keys -> pure white gradient,
+keyboard bg rect -> cream #f0e6d2, black keys stay dark. Reference diagram (buildPianoKeyboard):
+white keys + 1.4px outline, cream-friendly marker/octave labels.
+
+Expanded fullscreen piano: cream piano BODY but the immersive DARK stage stays (white piano
+spotlit on a dark stage — chosen to keep the fullscreen drama, not a fully light overlay).
+
+Scoping is careful: pianoToolTab==='piano' gates the keyboard changes so ORGAN (Hammond) and
+RHODES keep their own skins, and the chord/scale keyboards are untouched. Dark mode verified
+byte-equivalent — keyboard region still #09090f, grey keys. Highlights (Middle C, A4) and
+labels preserved in both modes.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.92.9
+
+**Light-mode washout batch #2**
+
+Pitch-stability graph structure alphas boosted + 2px trace. Vocal-range waveform + history
+deepened (new vrVoiceColor mapper). Polyrhythm challenge-end panel (badge/buttons/stats via
+CSS). Trombone slide diagram. Splash particles (light-root deepening). Two mode-staff ticks.
+All in-draw light branches; dark untouched.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.92.8
+
+**Light-mode washout batch #1**
+
+Settings toggles solid ON state. Polyrhythm rings, rhythm-reading picker, latency canvas all
+deepened for light. Dark untouched.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.92.7
+
+**Survival Guide title pages** — _ttDarkenForLight() darkens bright per-page tab_color hues on
+the mint card; split --tt-color (dark title) from --tt-glow (bright wash). Dark untouched.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.92.6
+
+**SG notation diagrams** (clef/values/bars/roadmap) light-branched; sgDrawModeStaff white block
+fixed. Built intonare_draw_color_sweep.py. Dark byte-identical.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
+
+## v0.92.5
+
+**Second contrast pass** — six accent hexes bumped from 3.1-4.2:1 to >=4.6:1, light-scoped, dark
+byte-identical.
+
+Sentinel: all 97 tracked fixes present + 39 pins hold.
 
 ## v0.92.4
 
