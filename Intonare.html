@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.94.4 -->
+<!-- INTONARE_VERSION: 0.95.0 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -1910,12 +1910,22 @@ html,body{background:#000000!important;transition:none!important}
   /* TRUE LIGHT TUNER SCREEN (C2 dusty blue-grey) — a recessed light display, not a
      dark slab. Content re-themed to deep-on-light. */
   body.light .tuner-screen {
-    background: linear-gradient(180deg,#b6bdd3,#a6afc8) !important;
-    box-shadow: inset 0 2px 8px rgba(22,38,72,.16), inset 0 1px 0 rgba(255,255,255,.32), 0 2px 8px rgba(40,40,70,.09) !important;
-    border-color: #929cc0 !important;
+    background: linear-gradient(180deg,#e6e9f3,#d8dce9) !important;
+    box-shadow: inset 0 2px 8px rgba(22,38,72,.12), inset 0 1px 0 rgba(255,255,255,.5), 0 2px 8px rgba(40,40,70,.09) !important;
+    border-color: #c2c8dc !important;
   }
   body.light .tuner-screen-bezel{ background: transparent !important; box-shadow:none !important; }
   body.light .tuner-screen-inner{ background: transparent !important; }
+  /* Scanlines: the dark 0.06 lines were tuned to blend into a near-black CRT; on the
+     bright light screen they read as harsh stripes. Drop to a whisper so the surface
+     stays a "screen" without the aggressive CRT texture. */
+  body.light .tuner-screen-inner::after {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent, transparent 2px,
+      rgba(30,40,70,0.018) 2px, rgba(30,40,70,0.018) 3px
+    ) !important;
+  }
   /* content: deep-on-light instead of glow-on-dark */
   body.light .tuner-screen .tuner-screen-freq { color: #004a60 !important; }
   body.light .tuner-screen .tuner-screen-freq span { color: #004a60 !important; }
@@ -2036,23 +2046,144 @@ html,body{background:#000000!important;transition:none!important}
   body.light .thmn-pad-wrap {
     background: radial-gradient(150% 130% at 100% 50%, rgba(127,231,196,.16), transparent 60%),
                 linear-gradient(180deg, #3a4a44, #303e38) !important;
+    /* Keep the inset recess (reads as a sunken screen) but replace the heavy 0.85/0.5
+       dark drop with a clean soft lift — the dark drop haloed a box onto the light page. */
+    box-shadow: inset 0 3px 12px rgba(0,0,0,.55),
+                inset 0 0 0 1px rgba(127,231,196,.10),
+                0 2px 8px rgba(40,40,70,0.14) !important;
+    border-color: #2b3a34 !important;
   }
-  /* tonal-centre CRT — green-charcoal glass */
-  body.light .tc-crt {
-    background: radial-gradient(120% 130% at 50% 30%, #35473d 0%, #2c3d34 65%, #26352c 100%) !important;
+
+  /* ── THEREMIN EXPAND OVERLAY (light, two-tier) ──
+     The overlay is no longer keep-dark: chrome follows light, instrument surfaces
+     stay dark. Mirrors the compact theremin's light treatment (wood frame lightens,
+     inner black plate stays dark so knobs/toggles keep their light-on-black styling). */
+  body.light .thmn-overlay {
+    background: linear-gradient(180deg, var(--bg-0), var(--bg-1)) !important;
+  }
+  /* wood console frame: same softened light drop as the compact .thmn-console */
+  body.light .thmn-ov-console {
+    box-shadow: inset 0 2px 0 rgba(255,246,222,.5),
+                inset 0 -3px 8px rgba(90,60,20,.45),
+                0 2px 8px rgba(40,40,70,0.14) !important;
+  }
+  /* Instrument surfaces stay dark (piano-bed rationale): the play pad and the VU-style
+     volume track are the theremin's "screens", not chrome — hold them dark on light. */
+  body.light .thmn-ov-pad {
+    background: radial-gradient(150% 120% at 100% 50%, rgba(127,231,196,.15), transparent 60%),
+                linear-gradient(180deg,#14261f,#0a1612) !important;
+    border-color: #22332e !important;
+  }
+  body.light .thmn-vol-col-track {
+    background: linear-gradient(180deg,#11201c,#0a1310) !important;
+    border-color: #22332e !important;
+  }
+
+  /* ── TONAL CENTRE · LIGHT MODE = RETRO LCD (DMG sage) ──
+     Dark mode stays the green-phosphor CRT. In light mode the module drops keep-dark:
+     global tokens flip to the light/tools palette (chrome cards go teal, signal colors
+     auto-map to their dark variants), and this block remaps the module's own --tc-*
+     ink set + hardcoded dark structure to a pale sage LCD with deep green segments.
+     Approved via tonal_light_proof.html, variant A. */
+  body.light #toolTonal{
+    --tc-grn:#1f5c3b; --tc-grn-hi:#16351f; --tc-grn-dim:#2f6a4a; --tc-grn-deep:#8a9871; --tc-grn-glow:rgba(22,53,31,.35);
+    --tc-crt-bg:#bfcb9e;
+    --tc-sg:rgba(22,53,31,.30); --tc-snote:#16351f; --tc-syou:#16351f; --tc-shero:#16351f;
+    --tc-sdim:#5d7355; --tc-smid:#2c4a30; --tc-shi:#16351f; --tc-sdeep:#8a9871; --tc-smark:#264c00; --tc-sscale:#2f5438;
+  }
+  /* the screen itself: pale sage LCD, soft recess, whisper scanlines */
+  body.light .tc-crt{
+    background:radial-gradient(120% 130% at 50% 30%, #cfd8b4 0%, #bfcb9e 65%, #aab88a 100%) !important;
+    box-shadow:inset 0 2px 10px rgba(40,60,30,.22), inset 0 1px 0 rgba(255,255,255,.35), 0 2px 8px rgba(40,40,70,.10) !important;
+  }
+  body.light .tc-crt::before{
+    background:radial-gradient(ellipse 100% 100% at 50% 50%, transparent 58%, rgba(60,80,45,.16) 100%),
+               radial-gradient(ellipse 85% 55% at 50% 8%, rgba(255,255,255,.20) 0%, transparent 60%) !important;
+  }
+  body.light .tc-crt::after{
+    background:repeating-linear-gradient(0deg, rgba(22,53,31,.05) 0px, rgba(22,53,31,.05) 1px, transparent 1px, transparent 3px) !important;
+  }
+  body.light .tc-crt.tc-live{
+    box-shadow:inset 0 2px 10px rgba(40,60,30,.22), inset 0 1px 0 rgba(255,255,255,.35),
+               0 0 22px color-mix(in srgb, var(--tc-sg) 25%, transparent), 0 2px 8px rgba(40,40,70,.10) !important;
+  }
+  @keyframes tcWinflashL{0%{box-shadow:inset 0 2px 10px rgba(40,60,30,.22);}40%{box-shadow:inset 0 2px 10px rgba(40,60,30,.15), inset 0 0 44px rgba(58,112,0,.28);}100%{box-shadow:inset 0 2px 10px rgba(40,60,30,.22);}}
+  body.light .tc-crt.tc-win{animation-name:tcWinflashL;}
+  /* cabinet: pale sage bezel instead of near-black housing */
+  body.light .tc-cabinet{
+    background:linear-gradient(180deg,#dfe3d2,#c6cdb4) !important;
+    border-color:#9aa483 !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 4px 14px rgba(40,40,70,.10) !important;
+  }
+  /* reticle: ink-on-sage */
+  body.light .tc-ret-track{ background:rgba(22,53,31,.12) !important; box-shadow:inset 0 1px 3px rgba(22,53,31,.25) !important; }
+  body.light .tc-ret-tick{ background:rgba(22,53,31,.30) !important; }
+  /* scale-map mini screen: same sage LCD in a matching bezel ring */
+  body.light .tc-scale-crt{
+    background:radial-gradient(120% 130% at 50% 30%, #c7d1a8, #b4c193 70%) !important;
+    box-shadow:inset 0 2px 6px rgba(40,60,30,.18), 0 0 0 4px #dfe3d2, 0 0 0 5px #9aa483 !important;
+  }
+  body.light .tc-scale-crt::after{
+    background:repeating-linear-gradient(0deg, rgba(22,53,31,.05) 0px, rgba(22,53,31,.05) 1px, transparent 1px, transparent 3px) !important;
+  }
+  body.light .tc-chrome-cell{ color:rgba(22,53,31,.28); }
+  /* chrome housings: join the light card language (tokens resolve to tools teal) */
+  body.light .tc-strip, body.light .tc-temp-strip{
+    background:var(--panel) !important; border-color:var(--border) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 6px rgba(40,40,70,.06);
+  }
+  body.light .tc-help{ background:var(--surface) !important; border-color:var(--border) !important; }
+  /* keycaps (root grid + octave + temperament): light caps, deep text, green when on */
+  body.light .tc-root-cell, body.light .tc-oct-seg button, body.light .tc-temp-key{
+    background:linear-gradient(180deg,#eaf0e6 0%, #dbe3d6 55%, #cbd5c6 100%) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.8), inset 0 -2px 3px rgba(40,60,45,.12), 0 2px 0 #a8b5a3, 0 3px 4px rgba(40,40,70,.12) !important;
+  }
+  body.light .tc-root-cell.tc-sharp{
+    background:linear-gradient(180deg,#d9e0d3 0%, #cbd4c5 55%, #bcc6b6 100%) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6), inset 0 -2px 3px rgba(40,60,45,.14), 0 2px 0 #9aa795, 0 3px 4px rgba(40,40,70,.12) !important;
+  }
+  body.light .tc-root-cell:active, body.light .tc-oct-seg button:active, body.light .tc-temp-key:active{
+    box-shadow:inset 0 1px 2px rgba(40,60,45,.2), 0 0 0 #a8b5a3, 0 1px 2px rgba(40,40,70,.10) !important;
+  }
+  body.light .tc-root-cell.tc-on, body.light .tc-oct-seg button.tc-on, body.light .tc-temp-key.on{
+    color:#e2f5ea !important; text-shadow:none !important;
+    background:linear-gradient(180deg,#2f7a52 0%, #256545 55%, #1f5c3b 100%) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25), inset 0 -2px 3px rgba(0,30,15,.35), 0 2px 0 #174a2f, 0 3px 4px rgba(40,40,70,.15) !important;
+  }
+  /* scale dropdown */
+  body.light .tc-dd-btn{ background:var(--surface) !important; border-color:var(--border) !important; }
+  body.light .tc-dd-panel{ background:var(--panel) !important; border-color:var(--border) !important; box-shadow:0 12px 30px rgba(40,40,70,.18) !important; }
+  body.light .tc-dd-opt:hover{ background:rgba(31,92,59,.10) !important; }
+  body.light .tc-dd-opt.tc-sel{ background:rgba(31,92,59,.14) !important; text-shadow:none !important; }
+  /* start button: stays the bright green arcade key; stop goes light-surface */
+  body.light .tc-start-btn{
+    background:linear-gradient(180deg,#34d399,#1fa06e) !important; color:#021a12 !important;
+    box-shadow:0 4px 14px rgba(31,120,80,.30), inset 0 1px 0 rgba(255,255,255,.35) !important;
+  }
+  body.light .tc-start-btn.tc-stop{
+    background:var(--surface) !important; color:#1f5c3b !important;
+    border:1px solid #2f6a4a !important; text-shadow:none !important; box-shadow:none !important;
   }
   /* tuner chroma strip — match the tuner LCD charcoal (3-layer) */
   /* chroma strip: C2 light screen matching the tuner LCD */
   body.light .tuner-chroma-screen {
-    background: linear-gradient(180deg,#b6bdd3,#a6afc8) !important;
-    box-shadow: inset 0 2px 8px rgba(22,38,72,.16), inset 0 1px 0 rgba(255,255,255,.32), 0 2px 8px rgba(40,40,70,.09) !important;
-    border-color: #929cc0 !important;
+    background: linear-gradient(180deg,#e6e9f3,#d8dce9) !important;
+    box-shadow: inset 0 2px 8px rgba(22,38,72,.12), inset 0 1px 0 rgba(255,255,255,.5), 0 2px 8px rgba(40,40,70,.09) !important;
+    border-color: #c2c8dc !important;
   }
   body.light .tuner-chroma-bezel        { background: transparent !important; box-shadow:none !important; }
   body.light .tuner-chroma-screen-inner { background: transparent !important; }
+  /* Chroma scanlines: same whisper as the tuner LCD (was 0.07 dark for the CRT). */
+  body.light .tuner-chroma-screen-inner::after {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent, transparent 2px,
+      rgba(30,40,70,0.018) 2px, rgba(30,40,70,0.018) 3px
+    ) !important;
+  }
   body.light .tuner-chroma-label { color: #00536c !important; }
   body.light .chroma-note { color: rgba(32,48,88,.35) !important; }
-  body.light .chroma-note.active { color: #00536c !important; }
+  body.light .chroma-note.active { color: #00536c; }
 
   /* ── FULL LIGHT-MODE POLISH SWEEP ── */
   /* chroma strip: kill the heavy dark drop halo, keep the recessed inset */
@@ -15640,14 +15771,14 @@ html,body{background:#000000!important;transition:none!important}
   display: flex; align-items: center; justify-content: center;
 }
 .ww-hole.closed {
-  background: #2ec78f; border-color: #2ec78f;
-  box-shadow: 0 0 6px rgba(46,199,143,0.25);
+  background: var(--accent); border-color: var(--accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 .ww-hole.half::after {
   content: '';
   position: absolute; top: 0; left: 0;
   width: 50%; height: 100%;
-  background: #2ec78f; border-radius: 50% 0 0 50%;
+  background: var(--accent); border-radius: 50% 0 0 50%;
   pointer-events: none;
 }
 /* Thumb/octave/register keys — wider rectangle */
@@ -15727,7 +15858,7 @@ html,body{background:#000000!important;transition:none!important}
   width: 8px; height: 8px; border-radius: 50%;
   border: 1px solid var(--border-soft); background: transparent;
 }
-.ww-hole-mini.closed { background: #2ec78f; border-color: #2ec78f; }
+.ww-hole-mini.closed { background: var(--accent); border-color: var(--accent); }
 .ww-hole-mini.half {
   background: linear-gradient(90deg, var(--accent) 50%, transparent 50%);
   border-color: var(--accent);
@@ -20107,7 +20238,7 @@ try {
     </div><!-- /toolPiano -->
 
     <!-- ── TONAL CENTER tool ── -->
-    <div id="toolTonal" class="hidden keep-dark">
+    <div id="toolTonal" class="hidden">
       <button class="train-back" onclick="exitTool()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
       <!-- ══ CRT INSTRUMENT — tonal centre ══ -->
@@ -23736,7 +23867,7 @@ try {
 </div>
 
 <!-- ══ THEREMIN EXPAND OVERLAY (landscape, two-handed multi-touch) ══ -->
-<div class="thmn-overlay keep-dark" id="thereminOverlay">
+<div class="thmn-overlay" id="thereminOverlay">
   <button class="piano-overlay-close thmn-ov-close" onclick="closeThereminOverlay()">✕</button>
 
   <!-- TOP: left volume bar · pitch surface · right pitch antenna -->
@@ -24621,11 +24752,11 @@ try {
         <div class="sm-sub" data-i18n="settings_sub">app preferences</div>
       </div>
       <div class="sm-appearance-wrap">
-        <div class="sm-appearance-lbl" data-i18n="settings_appearance">Appearance</div>
+        <div class="sm-appearance-lbl" id="smAppearanceLbl">Appearance</div>
         <div class="app-seg app-seg-compact" id="smAppearanceRow" role="radiogroup" aria-label="Appearance">
-          <button class="app-seg-btn" data-value="auto"  onclick="setAppearance('auto')" title="Auto"><span class="app-seg-ic">&#9681;</span></button>
-          <button class="app-seg-btn" data-value="dark"  onclick="setAppearance('dark')" title="Dark"><span class="app-seg-ic">&#9679;</span></button>
-          <button class="app-seg-btn" data-value="light" onclick="setAppearance('light')" title="Light"><span class="app-seg-ic">&#9675;</span></button>
+          <button class="app-seg-btn" data-value="auto"  onclick="setAppearance('auto')" aria-label="Auto"><span class="app-seg-ic"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3 a9 9 0 0 0 0 18 z" fill="currentColor" stroke="none"/></svg></span></button>
+          <button class="app-seg-btn" data-value="dark"  onclick="setAppearance('dark')" aria-label="Dark"><span class="app-seg-ic"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5 A8.5 8.5 0 1 1 9.5 4 a6.5 6.5 0 0 0 10.5 10.5 z"/></svg></span></button>
+          <button class="app-seg-btn" data-value="light" onclick="setAppearance('light')" aria-label="Light"><span class="app-seg-ic"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg></span></button>
         </div>
       </div>
     </div>
@@ -24831,7 +24962,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.94.4</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.95.0</span>
     </div>
   </div>
 </div>
@@ -24839,7 +24970,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.94.4';
+const INTONARE_VERSION = '0.95.0';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -26654,6 +26785,38 @@ const CHROMA_ATTACK = 0.35;  // fast warm-up
 const CHROMA_DECAY  = 0.08;  // slow cool-down — bulb lingers
 let _chromaDecayRAF = null;
 
+// Glow reads differently by theme. On the near-black dark screen a bright CYAN halo
+// looks lit (bright light on black). On the bright light screen a pale halo vanishes;
+// what reads as "lit" there is a DEEP SATURATED colour that intensifies as it glows,
+// like a segment display lighting up — so return dark-teal on light, cyan on dark.
+// `g` is the 0..1 glow level. Returns {text, shadow} ready to assign.
+function _chromaGlowStyle(g) {
+  const light = document.body.classList.contains('light');
+  if (light) {
+    // Idle notes sit at a faint blue-grey (set in CSS); as glow rises, drive toward a
+    // deep vivid teal and add a soft matching bloom so it reads as illuminated ink.
+    // Interpolate 70,90,130 (faint) → 0,83,108 (#00536c) by glow.
+    const r = Math.round(70  - 70  * g);
+    const gg= Math.round(90  -  7  * g);
+    const b = Math.round(130 - 22  * g);
+    const a = (0.45 + g * 0.55).toFixed(2);
+    return {
+      text: `rgba(${r},${gg},${b},${a})`,
+      // subtle bloom in the same teal — small blur, only once bright enough to matter
+      shadow: g > 0.35
+        ? `0 0 ${(g*6).toFixed(1)}px rgba(0,83,108,${(g*0.5).toFixed(2)}), 0 0 ${(g*11).toFixed(1)}px rgba(0,83,108,${(g*0.22).toFixed(2)})`
+        : `0 0 ${(g*5).toFixed(1)}px rgba(0,83,108,${(g*0.35).toFixed(2)})`
+    };
+  }
+  // Dark screen: bright cyan halo on black (original look).
+  return {
+    text: `rgba(94,226,255,${(0.10 + g * 0.90).toFixed(2)})`,
+    shadow: g > 0.4
+      ? `0 0 ${(g*18).toFixed(1)}px rgba(94,226,255,${(g*0.9).toFixed(2)}), 0 0 ${(g*32).toFixed(1)}px rgba(94,226,255,${(g*0.35).toFixed(2)})`
+      : `0 0 ${(g*18).toFixed(1)}px rgba(94,226,255,${(g*0.6).toFixed(2)})`
+  };
+}
+
 function _runChromaDecay() {
   // Keep decaying all notes toward 0 until they're all dark
   let anyActive = false;
@@ -26665,10 +26828,11 @@ function _runChromaDecay() {
     if (!el) return;
     const glow = _chromaGlow[i];
     if (glow > 0.01) {
-      el.style.color      = `rgba(94,226,255,${(0.10 + glow * 0.90).toFixed(2)})`;
-      el.style.textShadow = `0 0 ${(glow*18).toFixed(1)}px rgba(94,226,255,${(glow*0.9).toFixed(2)}), 0 0 ${(glow*32).toFixed(1)}px rgba(94,226,255,${(glow*0.35).toFixed(2)})`;
+      const gs = _chromaGlowStyle(glow);
+      el.style.setProperty('color', gs.text, 'important');
+      el.style.textShadow = gs.shadow;
     } else {
-      el.style.color = ''; el.style.textShadow = '';
+      el.style.removeProperty('color'); el.style.textShadow = '';
     }
   });
   if (anyActive) {
@@ -26714,15 +26878,11 @@ function updateChromaStrip(noteIndex, oct, cents) {
     const glow = _chromaGlow[i];
 
     if (glow > 0.01) {
-      const alpha2 = (0.10 + glow * 0.90).toFixed(2);
-      const blur   = (glow * 18).toFixed(1);
-      const wide   = (glow * 32).toFixed(1);
-      el.style.color      = `rgba(94,226,255,${alpha2})`;
-      el.style.textShadow = glow > 0.4
-        ? `0 0 ${blur}px rgba(94,226,255,${(glow*0.9).toFixed(2)}), 0 0 ${wide}px rgba(94,226,255,${(glow*0.35).toFixed(2)})`
-        : `0 0 ${blur}px rgba(94,226,255,${(glow*0.6).toFixed(2)})`;
+      const gs = _chromaGlowStyle(glow);
+      el.style.setProperty('color', gs.text, 'important');
+      el.style.textShadow = gs.shadow;
     } else {
-      el.style.color      = '';
+      el.style.removeProperty('color');
       el.style.textShadow = '';
     }
 
@@ -26754,7 +26914,7 @@ const INST_TONE_MAP = {
   // Uke bass
   ukebass: 'ukebass',
   // Woodwind — each gets its own tone where possible
-  flute: 'flute', ww_flute: 'flute', ww_altoflute: 'flute', ww_whistle: 'flute',
+  flute: 'flute', ww_flute: 'flute', ww_altoflute: 'flute', ww_whistle: 'piccolo',
   ww_piccolo: 'piccolo', piccolo: 'piccolo',
   ww_recorder: 'recorder',
   ww_ocarina: 'ocarina',
@@ -49882,16 +50042,27 @@ function buildRefToneBank() {
       tile.onclick = () => {
         selectedRefTone = key;
         tileRow.querySelectorAll('.tone-tile').forEach(el => el.classList.toggle('active', el.dataset.tone === key));
-        // If this is a sample-backed tone, trigger lazy load
-        if (SampleEngine._instruments[key]) {
-          if (!SampleEngine.isReady(key) && !SampleEngine.isFailed(key)) {
-            const lbl = document.getElementById('pianoSampleStatus');
-            if (lbl) { lbl.textContent = t('samples_loading'); lbl.style.visibility = 'visible'; }
-            SampleEngine.load(key);
-          }
-        }
-        // Preview sound on selection
-        if (!droneMode && Object.keys(refOscs).length === 0 && !metroPlaying) {
+
+        // Can we preview right now? (not mid-drone, nothing ringing, no metronome)
+        const _canPreview = () => !droneMode && Object.keys(refOscs).length === 0 && !metroPlaying;
+        const _isSampleTone = !!SampleEngine._instruments[key];
+
+        if (_isSampleTone && !SampleEngine.isReady(key) && !SampleEngine.isFailed(key)) {
+          // Sample-backed but not loaded yet. Do NOT preview a synth blip first —
+          // that plays the wrong timbre then upgrades, which sounds like a glitch.
+          // Kick the load and defer the preview until the real buffer lands.
+          const lbl = document.getElementById('pianoSampleStatus');
+          if (lbl) { lbl.textContent = t('samples_loading'); lbl.style.visibility = 'visible'; }
+          SampleEngine.load(key).then(() => {
+            // Only preview if the user is still on this voice and nothing else is
+            // sounding now — otherwise a late blip would interrupt or play stale.
+            if (selectedRefTone === key && _canPreview() && SampleEngine.isReady(key)) {
+              const ctx = ensureRefCtx();
+              SampleEngine.play(key, 69, ctx, refMasterGain, refVolume, 0.8);
+            }
+          });
+        } else if (_canPreview()) {
+          // Ready sample tone, or a pure-synth tone (no samples to wait for): preview now.
           const ctx = ensureRefCtx();
           const sampleNode = SampleEngine.isReady(key)
             ? SampleEngine.play(key, 69, ctx, refMasterGain, refVolume, 0.8)
@@ -68169,6 +68340,7 @@ function setLang(lang) {
   progSave();
   document.body.classList.toggle('lang-it', lang === 'it');
   applyLang();
+  try { applyAppearance && applyAppearance(); } catch(e) {}  // re-localize the dynamic appearance-mode label
   buildScaleDropdown();
   buildScaleRootDropdown();
   buildFamilyTabs('tuner');
@@ -68781,6 +68953,13 @@ function applyAppearance() {
   document.documentElement.classList.toggle('light-root', light);
   document.querySelectorAll('#smAppearanceRow .app-seg-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.value === mode));
+  // Dynamic label reflects the active mode in words (icons show the options; the
+  // label confirms the selection). Uses the i18n mode strings so it tracks language.
+  const _lbl = document.getElementById('smAppearanceLbl');
+  if (_lbl) {
+    const key = mode === 'dark' ? 'appearance_dark' : mode === 'light' ? 'appearance_light' : 'appearance_auto';
+    _lbl.textContent = (typeof t === 'function' ? t(key) : key.replace('appearance_','').toUpperCase());
+  }
 }
 function setAppearance(mode) {
   if (mode !== 'light' && mode !== 'dark') mode = 'auto';
@@ -79691,7 +79870,7 @@ function banjoLightUpString(strIdx) {
   line.setAttribute('stroke-width', '3.0');
   line.style.filter = 'drop-shadow(0 0 3px rgba(94,211,153,0.5))';
   setTimeout(() => {
-    line.setAttribute('stroke', 'rgba(163,165,184,0.55)');
+    line.setAttribute('stroke', document.body.classList.contains('light') ? 'rgba(60,62,80,0.6)' : 'rgba(163,165,184,0.55)');
     line.setAttribute('stroke-width', strIdx === 0 ? '1.8' : '1');
     line.style.filter = '';
   }, 90);
@@ -79802,14 +79981,14 @@ const WIND_FINGERINGS = {
 // Instrument ranges (concert pitch MIDI)
 const WIND_RANGES = {
   trumpet: {
-    low: 54, high: 84, octaves:[3,4,5], defaultOct:4,
+    low: 52, high: 82, octaves:[3,4,5], defaultOct:4,
     subRanges: {
-      standard: { low:54, high:84, octaves:[3,4,5], defaultOct:4 }, // low F#3 (sounds E3 concert on Bb tpt) up to C6
-      piccolo:  { low:66, high:96, octaves:[4,5,6], defaultOct:5 }, // Bb/A piccolo: F#4–C7 concert
+      standard: { low:52, high:82, octaves:[3,4,5], defaultOct:4 }, // written F#3–C6 sounds E3–Bb5 concert (Bb tpt, −2)
+      piccolo:  { low:64, high:94, octaves:[4,5,6], defaultOct:5 }, // Bb piccolo: written F#4–C7 sounds E4–Bb6 concert
     },
   },
-  flugelhorn:  { low: 52, high: 82, octaves:[3,4,5], defaultOct:4 },
-  // Flugelhorn: Bb transposing, concert range Ab3–Bb5 — slightly lower/darker than trumpet
+  flugelhorn:  { low: 52, high: 80, octaves:[3,4,5], defaultOct:4 },
+  // Flugelhorn: Bb transposing, written F#3–Bb5 sounds E3–Ab5 concert — darker, slightly lower ceiling than trumpet
   frenchhorn:  { low: 41, high: 77, octaves:[3,4,5], defaultOct:4 },
   euphonium:   { low: 34, high: 72, octaves:[1,2,3,4], defaultOct:3 },
   // Euphonium: Bb transposing, concert range Bb1–C5. Same valve system as trumpet.
@@ -79824,7 +80003,7 @@ const WIND_RANGES = {
     low: 40, high: 77, octaves:[2,3,4], defaultOct:3,
     subRanges: {
       tenor:   { low:40, high:77, octaves:[2,3,4], defaultOct:3 }, // Bb tenor: E2–F5
-      soprano: { low:54, high:91, octaves:[3,4,5], defaultOct:4 }, // Bb soprano: sounds like trumpet range
+      soprano: { low:52, high:82, octaves:[3,4,5], defaultOct:4 }, // Bb soprano: E3–Bb5 concert, same territory as Bb trumpet
       bass:    { low:34, high:72, octaves:[1,2,3,4], defaultOct:2 }, // Bb/F bass trombone: Bb1–C5
     },
   },
@@ -79836,47 +80015,47 @@ const WIND_RANGES = {
       alto:    { low: 55, high: 91,  octaves:[3,4,5], defaultOct:4 }, // sounds P4 down: G3–F6 concert
     },
   },
-  // Alto flute: written D4–C7 (sounds G3–F6 concert, P4 lower). Concert range G3–F6 = MIDI 55–89.
+  // Alto flute: written C4–C7 sounds G3–G6 concert (P4 lower) = MIDI 55–91.
   ww_clarinet: { low: 50, high: 89, octaves:[3,4,5], defaultOct:4,
     subRanges: {
-      bb:   { low:50, high:89, octaves:[3,4,5], defaultOct:4 },
-      a:    { low:50, high:89, octaves:[3,4,5], defaultOct:4 },
-      eb:   { low:50, high:89, octaves:[3,4,5], defaultOct:4 },
+      bb:   { low:50, high:89, octaves:[3,4,5], defaultOct:4 }, // written E3 sounds D3
+      a:    { low:49, high:88, octaves:[3,4,5], defaultOct:4 }, // A clarinet: −3, sounds C#3 low
+      eb:   { low:55, high:91, octaves:[3,4,5], defaultOct:4 }, // Eb clarinet: +3, sounds G3 low
       bass: { low:34, high:70, octaves:[1,2,3,4], defaultOct:3 },
     }
   },
   ww_sax: {
-    low: 44, high: 87, octaves:[3,4,5,6], defaultOct:4,
+    low: 49, high: 80, octaves:[3,4,5], defaultOct:4,   // alto default: written Bb3–F6 sounds Db3–Ab5 (−9)
     subRanges: {
-      alto:    { low:44, high:87, octaves:[3,4,5,6], defaultOct:4 },
-      tenor:   { low:44, high:82, octaves:[3,4,5,6], defaultOct:4 },
-      soprano: { low:56, high:94, octaves:[4,5,6],   defaultOct:5 },
-      bari:    { low:32, high:75, octaves:[2,3,4,5], defaultOct:3 },
+      alto:    { low:49, high:80, octaves:[3,4,5], defaultOct:4 }, // Db3–Ab5 concert
+      tenor:   { low:44, high:75, octaves:[2,3,4], defaultOct:3 }, // Ab2–Eb5 concert (−14)
+      soprano: { low:56, high:87, octaves:[3,4,5], defaultOct:4 }, // Ab3–Eb6 concert (−2)
+      bari:    { low:36, high:68, octaves:[2,3,4], defaultOct:3 }, // C2–Ab4 concert (−21, low-A horn)
     },
   },
   ww_oboe: { low: 58, high: 93, octaves:[3,4,5,6], defaultOct:4,
     subRanges: {
       oboe:       { low:58, high:93, octaves:[3,4,5,6], defaultOct:4 },
-      coranglais: { low:51, high:77, octaves:[3,4,5],   defaultOct:4 },
+      coranglais: { low:52, high:81, octaves:[3,4,5],   defaultOct:4 }, // E3–A5 concert
     }
   },
-  ww_coranglais:{ low: 51, high: 77, octaves:[3,4,5], defaultOct:4 },
-  // Cor anglais (English horn): concert Bb3–C6. F transposing — written E3–G5.
-  // Concert MIDI 51(Eb3)–77(F5) practical range.
+  ww_coranglais:{ low: 52, high: 81, octaves:[3,4,5], defaultOct:4 },
+  // Cor anglais (English horn): F transposing (−7). Written B3–G6 sounds E3–C6 concert;
+  // practical concert MIDI 52(E3)–81(A5).
   ww_recorder: {
-    low: 60, high: 84, octaves:[4,5,6], defaultOct:5,  // soprano default
+    low: 72, high: 96, octaves:[5,6,7], defaultOct:5,  // soprano default (recorders sound 8va above written)
     subRanges: {
-      soprano: { low:60, high:84, octaves:[4,5,6], defaultOct:5 }, // C4–C6
-      alto:    { low:53, high:77, octaves:[3,4,5], defaultOct:4 }, // F3–F5
-      tenor:   { low:48, high:72, octaves:[3,4,5], defaultOct:4 }, // C3–C5
-      bass:    { low:41, high:65, octaves:[2,3,4], defaultOct:3 }, // F2–F4
+      soprano: { low:72, high:96, octaves:[5,6,7], defaultOct:5 }, // sounds C5–C7 (written C4–C6)
+      alto:    { low:65, high:89, octaves:[4,5,6], defaultOct:4 }, // sounds F4–F6 (written at pitch F4 by convention; treble sounds as written F4)
+      tenor:   { low:60, high:84, octaves:[4,5,6], defaultOct:4 }, // sounds C4–C6 (tenor sounds as written)
+      bass:    { low:53, high:77, octaves:[3,4,5], defaultOct:4 }, // sounds F3–F5 (written 8vb in bass clef)
     },
   },
   ww_whistle:  {
-    low: 62, high: 86, octaves:[4,5,6], defaultOct:4, // D whistle default
+    low: 74, high: 98, octaves:[5,6,7], defaultOct:5, // D whistle: lowest note is D5 (concert)
     subRanges: {
-      d:     { low:62, high:86, octaves:[4,5,6], defaultOct:4 }, // D4–D6 concert
-      low_d: { low:50, high:74, octaves:[3,4,5], defaultOct:3 }, // D3–D5 concert (octave lower)
+      d:     { low:74, high:98, octaves:[5,6,7], defaultOct:5 }, // D5–D7 concert (standard soprano D whistle)
+      low_d: { low:62, high:86, octaves:[4,5,6], defaultOct:4 }, // D4–D6 concert (low D, one octave below standard)
     },
   },
   ww_bassoon:  { low: 34, high: 77, octaves:[1,2,3,4], defaultOct:2 },
@@ -79891,7 +80070,7 @@ const WIND_RANGES = {
     },
   },
   harmonica:   { low: 60, high: 96, octaves:[4,5,6], defaultOct:5 },
-  ww_chrom_harp: { low: 60, high: 108, octaves:[4,5,6,7], defaultOct:5 },
+  ww_chrom_harp: { low: 60, high: 98, octaves:[4,5,6,7], defaultOct:5 }, // 12-hole chromatic: C4–D7
 };
 
 // Returns the active range object for the current instrument, resolving sax sub-type ranges.
@@ -79923,13 +80102,15 @@ function windEmbouchure(inst, midi) {
     return 'High register (C6+): narrow fast airstream, firm but flexible lips, small aperture, strong diaphragm support';
   }
   if (inst === 'ww_recorder') {
-    if (midi < 72) return 'First octave: gentle steady breath through the windway, relaxed jaw, warm round tone';
-    if (midi < 84) return 'Second octave: slightly faster air, use half-thumb (pinch) — lift thumb just enough to vent';
+    const _rLo = (windActiveRange() && windActiveRange().low) || 72;
+    if (midi < _rLo + 12) return 'First octave: gentle steady breath through the windway, relaxed jaw, warm round tone';
+    if (midi < _rLo + 24) return 'Second octave: slightly faster air, use half-thumb (pinch) — lift thumb just enough to vent';
     return 'Third octave: fast narrow airstream, precise thumb venting, steady diaphragm support';
   }
   if (inst === 'ww_whistle') {
-    if (midi < 74) return 'Lower octave: soft relaxed breath through the fipple, loose jaw, minimal pressure';
-    return 'Upper octave: firmer faster breath — same fingering as lower (D5 lifts hole 1), stay relaxed in the throat';
+    const _wLo = (windActiveRange() && windActiveRange().low) || 74;
+    if (midi < _wLo + 12) return 'Lower octave: soft relaxed breath through the fipple, loose jaw, minimal pressure';
+    return 'Upper octave: firmer faster breath — same fingering as lower (overblow to the octave), stay relaxed in the throat';
   }
   if (inst === 'ww_clarinet') {
     if (midi < 58) return 'Chalumeau (lowest): very relaxed lower jaw, warm slow air, mouthpiece well in, minimal chin movement';
@@ -81676,9 +81857,12 @@ function wwGetFingering(concertPc, altIdx, midi) {
     }
 
     if (chordScaleInstrument === 'ww_whistle') {
-      // Second octave D5: hole 1 lifts (-23|123 instead of 123|123)
-      // D5 = MIDI 74 (D whistle: D4=62, D5=74)
-      if (midi >= 74 && writtenPc === 0) { // written D in second octave
+      // Second octave: hole 1 lifts (-23|123 instead of 123|123). The break sits an
+      // octave above the instrument's lowest note, so it must track the active
+      // sub-range: standard D whistle low = D5(74) → break at D6(86); low D whistle
+      // low = D4(62) → break at D5(74). Never hardcode 74 or the two subtypes desync.
+      const _wLow = (windActiveRange() && windActiveRange().low) || 74;
+      if (midi >= _wLow + 12 && writtenPc === 0) { // written D in second octave
         data[0] = 0; // LH hole 1 open
       }
     }
@@ -81881,7 +82065,7 @@ function _ocSvg(W, H) {
 function _ocEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
 function _ocHole(svg, cx, cy, r, val, label, showLabel) {
   const closed = val === 1, half = val === 0.5;
-  const OACC='#2ec78f', OGRY='#4a6660';
+  const OACC='var(--accent)', OGRY='#4a6660';
   const c = _ocEl('circle');
   c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
   c.setAttribute('fill', closed ? OACC : 'none');
@@ -82048,7 +82232,7 @@ function _fluteSvgDraw(containerEl, data, mini, moving, noFoot) {
 
   // Helper: style a slot's OUTLINE path. Never swaps geometry, never fattens.
   const styleSlot = (p, slot, isClosed, fullD) => _fluteStyleSlotPath(p, slot, isClosed, fullD);
-  const ACCENT = '#2ec78f'; // hardcoded: SVG can't resolve CSS vars the same way
+  const ACCENT = 'var(--accent)'; // SVG (live DOM) resolves the theme token; canvas would not
   // PASS 1: all the non-circle keys (levers, foot, thumb, E♭ key) — traced paths.
   for (let slot=0; slot<18; slot++){
     if (noFoot && slot>=14) continue;          // piccolo: no foot joint (low C#/C/B, gizmo)
@@ -82149,7 +82333,7 @@ function _oboeSvgDraw(containerEl, data, mini) {
   // fill-rule:evenodd on the outline path keeps the trace crisp at any DPR.
   containerEl.innerHTML = '';
   const NS = 'http://www.w3.org/2000/svg';
-  const ACCENT='#2ec78f', GREY='#8a99a6', DARKTXT='#0d211c', LITTXT='#9ecfc4';
+  const ACCENT='var(--accent)', GREY='#8a99a6', DARKTXT='#0d211c', LITTXT='#9ecfc4';
   const SW_OPEN=1.3, SW_CLOSED=0.7;
   const VBW=130, VBH=172;
   const svg = document.createElementNS(NS, 'svg');
@@ -82232,8 +82416,8 @@ function _oboeSvgDraw(containerEl, data, mini) {
   for (const slot in OP) {
     const s = data[slot] || 0;
     if (s !== 1) continue;
-    const fillEl = el('path', {d:OP[slot], fill:'var(--accent)',
-      'fill-rule':'nonzero', stroke:'var(--accent)',
+    const fillEl = el('path', {d:OP[slot], fill:ACCENT,
+      'fill-rule':'nonzero', stroke:ACCENT,
       'stroke-width':'80', 'stroke-linejoin':'round'});
     fillEl.setAttribute('data-obfill', slot);
     g.appendChild(fillEl);
@@ -82244,7 +82428,7 @@ function _oboeSvgDraw(containerEl, data, mini) {
     const s = data[slot] || 0;
     const closed = s === 1;
     const half = s === 0.5;
-    const strokeCol = closed ? 'var(--accent)' : GREY;
+    const strokeCol = closed ? ACCENT : GREY;
     const sw = closed ? '80' : '160';
     const p2 = el('path', {d:OP[slot], fill:'none',
       'fill-rule':'evenodd', stroke:strokeCol,
@@ -82260,7 +82444,7 @@ function _oboeSvgDraw(containerEl, data, mini) {
     const r = 5.0;
     svg.appendChild(el('path', {
       d:'M '+(c.x-r)+' '+c.y+' A '+r+' '+r+' 0 0 1 '+(c.x+r)+' '+c.y+' Z',
-      fill:'var(--accent)', stroke:'none'}));
+      fill:ACCENT, stroke:'none'}));
   }
 
   // 5. Labels in viewBox space (not the transformed <g>)
@@ -82282,7 +82466,7 @@ function _oboeSvgDraw(containerEl, data, mini) {
 function _recorderSvgDraw(containerEl, data, mini) {
   containerEl.innerHTML = '';
   const NS = 'http://www.w3.org/2000/svg';
-  const ACCENT='#2ec78f',GREY='#8a99a6',DARKTXT='#0d211c',LITTXT='#9ecfc4';
+  const ACCENT='var(--accent)',GREY='#8a99a6',DARKTXT='#0d211c',LITTXT='#9ecfc4';
   const VBW=100,VBH=290;
   const svg=document.createElementNS(NS,'svg');
   svg.setAttribute('viewBox','0 0 '+VBW+' '+VBH);
@@ -82312,7 +82496,7 @@ function _recorderSvgDraw(containerEl, data, mini) {
 function _whistleSvgDraw(containerEl, data, mini) {
   containerEl.innerHTML = '';
   const NS='http://www.w3.org/2000/svg';
-  const ACCENT='#2ec78f',GREY='#8a99a6',DARKTXT='#0d211c',LITTXT='#9ecfc4';
+  const ACCENT='var(--accent)',GREY='#8a99a6',DARKTXT='#0d211c',LITTXT='#9ecfc4';
   const VBW=60,VBH=230;
   const svg=document.createElementNS(NS,'svg');
   svg.setAttribute('viewBox','0 0 '+VBW+' '+VBH);
@@ -82339,7 +82523,7 @@ function _clarinetSvgDraw(containerEl, data, mini) {
   // LH1 (slot 2) rendered as a circle primitive (source had solid fill).
   containerEl.innerHTML = '';
   const NS = 'http://www.w3.org/2000/svg';
-  const ACCENT = '#2ec78f', GREY = '#8a99a6';
+  const ACCENT = 'var(--accent)', GREY = '#8a99a6';
   const DARKTXT = '#0d211c', LITTXT = '#9ecfc4';
   const VBW = 100, VBH = 280;
 
@@ -82468,7 +82652,7 @@ function _clarinetSvgDraw(containerEl, data, mini) {
 function _bassoonSvgDraw(containerEl, data, mini, isContra) {
   containerEl.innerHTML = '';
   const NS = 'http://www.w3.org/2000/svg';
-  const ACCENT  = '#2ec78f';
+  const ACCENT  = 'var(--accent)';
   const GREY    = '#8a99a6';
 
   // Original SVG viewBox: 0 0 255.778 371.889, transform: matrix(.75 0 0 .75 3.718 2.395)
@@ -82675,7 +82859,7 @@ function _saxSvgDraw(containerEl, data, mini, moving) {
   // light up — they're reference structure — but labelling them makes the diagram read
   // as a complete sax key map. Compact tags: p = palm, s = side.
   const SDEC_LABELS = ['F', 'pD', 'pE♭', 'pF', 'Bis', 'sB♭', 'sC', 'sE', 'F#', 'sF#'];
-  const ACCENT = '#2ec78f';
+  const ACCENT = 'var(--accent)';
   const GREY = '#8a99a6';
   const DARKTXT = '#0d211c';
   const LITTXT = '#9ecfc4';
@@ -83784,6 +83968,16 @@ function gccDrawDiagram(v) {
   if (!svg) return;
   svg.innerHTML = '';
 
+  // Light-mode neck palette. The diagram's colours are tuned for the dark signature
+  // background (near-white nut, pale strings). On the light panel those vanish and
+  // the dark fret lines dominate — an inverted look. Mirror the clef/staff renderer:
+  // flip to dark-on-light so the neck reads the same way in both themes.
+  const _nkLight = document.body.classList.contains('light');
+  const NK_NUT   = _nkLight ? 'rgba(30,30,45,0.85)'   : 'rgba(232,232,240,0.85)';
+  const NK_FRET  = _nkLight ? 'rgba(20,20,20,0.55)'   : 'rgba(46,46,72,0.8)';
+  const NK_STR   = _nkLight ? 'rgba(60,62,80,0.6)'    : 'rgba(163,165,184,0.55)';
+  const NK_INLAY = _nkLight ? 'rgba(60,62,80,0.28)'   : 'rgba(106,108,133,0.22)';
+
   const W = 160;
   const openMidi  = gccGetOpenMidi();
   const strNames  = gccGetStringNames();
@@ -83837,7 +84031,7 @@ function gccDrawDiagram(v) {
     const nut = document.createElementNS('http://www.w3.org/2000/svg','rect');
     nut.setAttribute('x', left - 2); nut.setAttribute('y', topFret - 6);
     nut.setAttribute('width', right - left + 4); nut.setAttribute('height', 5);
-    nut.setAttribute('rx', '2'); nut.setAttribute('fill', 'rgba(232,232,240,0.85)');
+    nut.setAttribute('rx', '2'); nut.setAttribute('fill', NK_NUT);
     svg.appendChild(nut);
   } else {
     const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -83857,7 +84051,7 @@ function gccDrawDiagram(v) {
     const line = document.createElementNS('http://www.w3.org/2000/svg','line');
     line.setAttribute('x1', left); line.setAttribute('x2', right);
     line.setAttribute('y1', y);    line.setAttribute('y2', y);
-    line.setAttribute('stroke', 'rgba(46,46,72,0.8)');
+    line.setAttribute('stroke', NK_FRET);
     line.setAttribute('stroke-width', '1.2');
     svg.appendChild(line);
   }
@@ -83874,7 +84068,7 @@ function gccDrawDiagram(v) {
     dot.setAttribute('cx', String(cx));
     dot.setAttribute('cy', String(topFret + (row - 0.5) * fretSpacing));
     dot.setAttribute('r', '3');
-    dot.setAttribute('fill', 'rgba(106,108,133,0.22)');
+    dot.setAttribute('fill', NK_INLAY);
     dot.setAttribute('pointer-events', 'none');
     svg.appendChild(dot);
   };
@@ -83895,7 +84089,7 @@ function gccDrawDiagram(v) {
     const line = document.createElementNS('http://www.w3.org/2000/svg','line');
     line.setAttribute('x1', x); line.setAttribute('x2', x);
     line.setAttribute('y1', topFret); line.setAttribute('y2', bottomFret);
-    line.setAttribute('stroke', 'rgba(163,165,184,0.55)');
+    line.setAttribute('stroke', NK_STR);
     line.setAttribute('stroke-width', s === 0 ? '1.8' : '1');
     line.dataset.str = String(s); // for roll string-light animation
     svg.appendChild(line);
@@ -84645,6 +84839,14 @@ function gssDrawPosition(pos) {
   if (!svg) return;
   svg.innerHTML = '';
 
+  // Light-mode neck palette — same treatment as the chord diagram (gccDrawDiagram):
+  // flip the dark-tuned nut/fret/string colours to dark-on-light so the neck reads
+  // correctly on the light panel instead of vanishing.
+  const _nkLight = document.body.classList.contains('light');
+  const NK_NUT  = _nkLight ? 'rgba(30,30,45,0.85)' : 'rgba(232,232,240,0.85)';
+  const NK_FRET = _nkLight ? 'rgba(20,20,20,0.55)' : 'rgba(46,46,72,0.8)';
+  const NK_STR  = _nkLight ? 'rgba(60,62,80,0.6)'  : 'rgba(163,165,184,0.55)';
+
   const twoOct = gssOctaves === 2;
   const activeStrings = twoOct ? pos.strings2oct : pos.strings;
   const activeFretMax = twoOct ? pos.fretMax2oct : pos.fretMax;
@@ -84696,7 +84898,7 @@ function gssDrawPosition(pos) {
     const nut = document.createElementNS('http://www.w3.org/2000/svg','rect');
     nut.setAttribute('x', String(left - 2)); nut.setAttribute('y', String(topFret - 6));
     nut.setAttribute('width', String(right - left + 4)); nut.setAttribute('height','5');
-    nut.setAttribute('rx','2'); nut.setAttribute('fill','rgba(232,232,240,0.85)');
+    nut.setAttribute('rx','2'); nut.setAttribute('fill',NK_NUT);
     svg.appendChild(nut);
   } else {
     const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -84717,7 +84919,7 @@ function gssDrawPosition(pos) {
     const line = document.createElementNS('http://www.w3.org/2000/svg','line');
     line.setAttribute('x1',String(left)); line.setAttribute('x2',String(right));
     line.setAttribute('y1',String(y));    line.setAttribute('y2',String(y));
-    line.setAttribute('stroke','rgba(46,46,72,0.8)'); line.setAttribute('stroke-width','1.2');
+    line.setAttribute('stroke',NK_FRET); line.setAttribute('stroke-width','1.2');
     svg.appendChild(line);
   }
 
@@ -84727,7 +84929,7 @@ function gssDrawPosition(pos) {
     const line = document.createElementNS('http://www.w3.org/2000/svg','line');
     line.setAttribute('x1',String(x)); line.setAttribute('x2',String(x));
     line.setAttribute('y1',String(topFret)); line.setAttribute('y2',String(bottomFret));
-    line.setAttribute('stroke','rgba(163,165,184,0.55)');
+    line.setAttribute('stroke',NK_STR);
     line.setAttribute('stroke-width', s === 0 ? '1.8' : '1');
     svg.appendChild(line);
   }
@@ -84780,8 +84982,8 @@ function gssDrawPosition(pos) {
       } else {
         // Out-of-bound: smaller, muted, no glow
         dot.setAttribute('r', isRoot ? '6' : '5');
-        dot.setAttribute('fill', isRoot ? 'rgba(255,160,122,0.28)' : 'rgba(163,165,184,0.22)');
-        dot.setAttribute('stroke', isRoot ? 'rgba(255,160,122,0.45)' : 'rgba(163,165,184,0.35)');
+        dot.setAttribute('fill', isRoot ? 'rgba(255,160,122,0.28)' : (_nkLight ? 'rgba(70,72,92,0.30)' : 'rgba(163,165,184,0.22)'));
+        dot.setAttribute('stroke', isRoot ? 'rgba(255,160,122,0.45)' : (_nkLight ? 'rgba(70,72,92,0.45)' : 'rgba(163,165,184,0.35)'));
         dot.setAttribute('stroke-width', '1');
       }
       g.appendChild(dot);
@@ -84930,6 +85132,12 @@ function gssDrawFretboard() {
 
   const scaleSet = new Set(st.intervals.map(i => (rootIdx + i) % 12));
   const NUM_FRETS  = 12;
+  // Re-entrant context dots use a pale grey tuned for the dark bg; it vanishes on the
+  // light panel. Darken the grey in light mode (root context stays orange — reads on both).
+  const _fbLight = document.body.classList.contains('light');
+  const FB_CTX_FILL   = _fbLight ? 'rgba(70,72,92,0.30)'  : 'rgba(163,165,184,0.22)';
+  const FB_CTX_STROKE = _fbLight ? 'rgba(70,72,92,0.45)'  : 'rgba(163,165,184,0.35)';
+  const FB_CTX_LBL    = _fbLight ? 'rgba(70,72,92,0.60)'  : 'rgba(163,165,184,0.50)';
   // Vertical layout: frets = rows (nut at top), strings = columns (low string left)
   const STRING_NAMES = gccGetStringNames();
   const stringMidi   = gssGetStringMidi();
@@ -85075,8 +85283,8 @@ function gssDrawFretboard() {
       dot.setAttribute('r', String(isReentrantStr ? dotR * 0.75 : dotR));
       if (isReentrantStr) {
         // Context string (e.g. uke G-string): greyed, no glow
-        dot.setAttribute('fill', isRoot ? 'rgba(255,160,122,0.28)' : 'rgba(163,165,184,0.22)');
-        dot.setAttribute('stroke', isRoot ? 'rgba(255,160,122,0.45)' : 'rgba(163,165,184,0.35)');
+        dot.setAttribute('fill', isRoot ? 'rgba(255,160,122,0.28)' : FB_CTX_FILL);
+        dot.setAttribute('stroke', isRoot ? 'rgba(255,160,122,0.45)' : FB_CTX_STROKE);
         dot.setAttribute('stroke-width', '1');
       } else if (isRoot) {
         dot.setAttribute('fill', 'var(--accent-warm)');
@@ -85095,7 +85303,7 @@ function gssDrawFretboard() {
       lbl.setAttribute('font-family', 'JetBrains Mono, monospace');
       lbl.setAttribute('font-weight', '700');
       lbl.setAttribute('fill', isReentrantStr
-        ? (isRoot ? 'rgba(255,160,122,0.55)' : 'rgba(163,165,184,0.50)')
+        ? (isRoot ? 'rgba(255,160,122,0.55)' : FB_CTX_LBL)
         : 'var(--bg-0)');
       lbl.setAttribute('pointer-events', 'none');
       lbl.textContent = lblText;
@@ -86116,6 +86324,7 @@ function _loadInstSamples(inst) {
     const ids = new Set();
     if (typeof _frettedToneId === 'function' && CS_INST_FAMILY_MAP[inst] === 'fretted') ids.add(_frettedToneId());
     if (inst === 'ww_sax') ids.add(saxToneFor());
+    if (inst === 'mallet') ids.add(malletToneFor());
     if (inst === 'ww_flute') { ids.add('flute'); if (INST_TONE_MAP['ww_piccolo']) ids.add(INST_TONE_MAP['ww_piccolo']); }
     const mapped = INST_TONE_MAP[inst];
     if (mapped) ids.add(mapped);
@@ -86282,6 +86491,10 @@ function switchSubType(inst, key) {
   document.querySelectorAll('#csSubRow .cs-sub-pill').forEach(b =>
     b.classList.toggle('active', b.dataset.subKey === key));
   gccVoicingIdx = 0; gssPosIdx = 0;
+  // Warm the sample set for the newly-selected subtype. Entry-time _loadInstSamples
+  // only loads the DEFAULT subtype (marimba, alto sax, ...); without this, switching
+  // to vibraphone/tenor-sax/etc. never requests those samples and falls back to synth.
+  _loadInstSamples(inst);
   if (isPianoRenderInst()) {
     if (gccToolMode === 'chords') pccInit(); else pssInit();
   } else if (gccToolMode === 'chords') gccInit(); else gssInit();
@@ -86793,7 +87006,7 @@ function wwTrillDrawDiagram(containerEl, fing, movers) {
       } else {
         hl.setAttribute('d', p.getAttribute('d'));
       }
-      hl.setAttribute('fill', 'none'); hl.setAttribute('stroke', '#2ec78f'); hl.setAttribute('stroke-width', '3');
+      hl.setAttribute('fill', 'none'); hl.setAttribute('stroke', 'var(--accent)'); hl.setAttribute('stroke-width', '3');
       hl.setAttribute('data-trill-hl', '1');
       p.parentNode.insertBefore(hl, p);
     });
@@ -89637,11 +89850,14 @@ function pssStop() {
   pssNodes.forEach(n => { try { n.stop(); } catch(e){} });
   pssNodes = [];
   pssFlashTimers.forEach(clearTimeout); pssFlashTimers = [];
-  // Rebuild piano SVG to clear stuck highlights
-  const pssSvg = document.getElementById('pssSvg');
-  if (pssSvg) pssSvg.querySelectorAll('g[data-midi] rect, g[data-midi] path').forEach(s => {
-    if (s.getAttribute('fill') === 'rgba(52,211,153,0.85)') s.removeAttribute('fill');
-  });
+  // Fully rebuild the piano SVG from state to clear stuck highlights. The old
+  // approach swept for the green flash fill and removed it — but a flash captures
+  // each key's ORIGINAL fill and reverts to it via a nested timer. If STOP lands
+  // between "go green" and "revert", that revert timer gets cleared too, and the
+  // sweep can't restore a black key's dark fill (removeAttribute drops it to the
+  // default light fill). Rebuilding regenerates every key at its correct colour,
+  // black and white alike, with no per-flash state to get out of sync.
+  if (typeof pssRender === 'function') pssRender();
   const _psb = document.getElementById('pssPlayBtn');
   if (_psb && _psb.textContent === '■ STOP') _psb.textContent = (typeof t === 'function') ? (t('gtool_play_asc') || '▶︎ PLAY ASCENDING') : '▶︎ PLAY ASCENDING';
 }
@@ -89649,17 +89865,24 @@ function pssStop() {
 
 // Flash a piano key highlight during scale playback
 function pssFlashKey(midi, stepDelay, stepIdx) {
+  const GREEN = 'rgba(52,211,153,0.85)';
   pssFlashTimers.push(setTimeout(() => {
     const svg = document.getElementById('pssSvg');
-    if (!svg) return;
     if (!svg) return;
     const g = svg.querySelector(`g[data-midi="${midi}"]`);
     if (!g) return;
     const shape = g.querySelector('rect,path');
     if (!shape) return;
-    const orig = shape.getAttribute('fill');
-    shape.setAttribute('fill', 'rgba(52,211,153,0.85)');
-    pssFlashTimers.push(setTimeout(() => shape.setAttribute('fill', orig), Math.min(stepDelay * 900, 350)));
+    // Capture the true resting fill. If a previous overlapping flash already left
+    // this key green, don't memorise green as "original" or the revert restores
+    // green and the key sticks. Fall back to the attribute's absence (removeAttribute).
+    const cur  = shape.getAttribute('fill');
+    const orig = (cur && cur !== GREEN) ? cur : null;
+    shape.setAttribute('fill', GREEN);
+    pssFlashTimers.push(setTimeout(() => {
+      if (orig === null) shape.removeAttribute('fill');
+      else shape.setAttribute('fill', orig);
+    }, Math.min(stepDelay * 900, 350)));
   }, stepIdx * stepDelay * 1000));
 }
 function pssPlay() {
@@ -90733,7 +90956,8 @@ const HP_STRING_TO_PEDAL = {2:0, 0:1, 11:2, 4:3, 5:4, 7:5, 9:6};
 function hpStringBaseColor(pc) {
   if (pc === 0) return '#c94040'; // C — red
   if (pc === 5) return '#3a6ab5'; // F — blue
-  return 'rgba(200,202,220,0.7)';
+  // Neutral strings: pale on the dark bg; darken in light mode so they don't vanish.
+  return document.body.classList.contains('light') ? 'rgba(70,72,92,0.65)' : 'rgba(200,202,220,0.7)';
 }
 
 function hpDrawStrings(svgEl, activePcs, rootPc, startIdx, count, pedalPositions, useSharpSpelling, compactMode, allActive) {
