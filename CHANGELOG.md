@@ -16,6 +16,623 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.97.17 — Native mic routing: cover all pitch-consuming surfaces
+
+Audited every mic-using surface against the native-routing lists and found the routing had drifted from the mic-show lists. `MIC_TOOLS` shows the mic on piano/tonal/volume/vocalrange, but `_NATIVE_SURFACES_TOOLS` only routed tonal/piano native — so vocalrange (which runs its own pitch-detection loop for range assessment) was silently on the WebView path, and volume (level meter) too. Added both to native. vocalrange is the real fix: it's a pitch-holding surface, exactly what native stabilizes. volume is a level meter with no pitch detection, added for uniformity, native costs it nothing.
+
+Deliberately left `scales` OUT of native: it appears in MIC_EXERCISES (shows the mic button) but its pitch detection was removed long ago (it's a visual scale strip now, per scalesInit's own comment), so it scores nothing from the mic — routing it native would gain nothing. Flagged separately: the scales mic button is effectively dead UI and may want hiding.
+
+The WebView path stays as the automatic fallback (and remains the only mic path on iOS, which has no native plugin). Full pitch-consumer inventory confirmed complete: tuner, tools/tonal, interval (+ interval test), singsing, roadtrip, vocalrange all consume pitch and now all route native on Android.
+
+NEEDS ON-DEVICE RE-TEST: vocalrange lock/stability was tuned against WebView signal levels; native AudioRecord has different gain/levels, so the comfortable-low/high auto-lock and tessitura detection should be re-checked on-device to confirm the thresholds still behave. If locks feel too eager or too reluctant, the vocalrange stability thresholds need a native-levels pass.
+
+---
+
+## v0.97.16 — Vocal range: Italian localization of the singing-step instructions
+
+Closed the localization gap flagged in v0.97.15. The five singing-step instruction blocks (comfortable low/high, tessitura, extended low/high) had their label, heading, body, and tip hardcoded in English inside vrRenderSingingStep, so an Italian user read English instruction text on every step. Added `labelIt`/`headingIt`/`bodyIt`/`tipIt` twins to all five configs and a language pick (progState.lang === 'it') right after the config lookup, which reassigns the four fields on the fresh per-render config object before the template uses them. Also localized the tessitura status placeholder ("Sing freely in your comfortable range…" / "Canta liberamente nella tua zona comoda…") inline, since it had no i18n key.
+
+Translations follow house style for the module (fry → vocal fry kept as the term, tessitura kept, plain literal phrasing). The scan-complete status was already localized via vr_scan_complete.
+
+---
+
+## v0.97.15 — Vocal range: tessitura window 15s → 20s + sampling nudge
+
+Last item from the vocal range audit. Bumped the tessitura scan from 15 to 20 seconds and rewrote the tip to push the behavior that actually improves the estimate: moving around the comfortable range (varying tunes, sliding between notes) rather than parking on one note, which is what biases a short scan. The center estimate tightens mainly for users near a voice-type boundary; for everyone else it just makes a correct classification a bit more confident. Kept it at 20s rather than 30 to avoid "ran out of things to sing" dead air, which adds clustered samples that don't help. The live trace from v0.97.14 reinforces this — a user can see they've been sitting in one spot and naturally wander.
+
+Noted while here (NOT fixed — logged as its own task): the vocal-range singing-step instructions (all 5 steps' body/tip, plus the tessitura status placeholder) are hardcoded English with no Italian variants. An Italian user hits English instruction text on every singing step. Pre-existing gap, not introduced by this change; wants a dedicated localization pass.
+
+Deferred still: synthesized audio demos of the warmup exercises (#1).
+
+---
+
+## v0.97.14 — Vocal range: live pitch trace on the tessitura step
+
+The tessitura scan previously showed only scattered dots plus a running count and center marker, giving little live feedback that the mic was hearing you or that you were moving around your comfortable zone. Added a real-time pitch trace inside the same strip: the last ~6 seconds of your pitch drawn as a scrolling line (x = time, newest at the right; y = pitch on the E2–C6 range, high = top). Silence between phrases renders as a break in the line, so you see your voice sliding around as you sing.
+
+This replaces the deferred "live trace during the siren warmup" idea. Tessitura was chosen deliberately over the warmup: the mic is already live on this step (no new early mic-start, which matters while the launch-time mic init is under observation), and a live trace does more functional good on an actual measurement step than on a passive warmup timer.
+
+Implementation notes: canvas overlay in the existing dots-wrap (strip height 30→54px), samples pushed every detection frame (~20fps) into a rolling buffer capped at ~200 samples, drawn with the literal-color light/dark pattern (canvas can't read CSS vars), width/height guarded against per-frame reallocation. Buffer resets on scan start and full reset; the trace freezes as a snapshot when the scan completes.
+
+Still deferred: synthesized audio demos of the warmup exercises (#1), and the tessitura-window lengthening from the original audit.
+
+---
+
+## v0.97.13 — Vocal range: stall nudge + clearer lock-button hierarchy
+
+Two follow-ups from the vocal range audit, both aimed at newer singers who get stuck on the comfortable-low/high steps.
+
+**Stall-aware nudge.** Previously, if the ring wasn't filling (voice wobbling, too quiet, or a breathy/fry tone with no clean pitch), the status label just sat on "Locking in… 34%" with no explanation. Now, once progress has stalled below the lock threshold for ~3 seconds, the label tells the user *why*: "Hold it as steady as you can" (pitch is wobbling past the lock window), "A little louder or longer helps" (stable but not climbing), or "Sing a clear, connected tone" (no clean pitch detected — the fry/breathy case). The hint clears the instant progress resumes and resets between steps. New state is reset in vrResetState and vrShowStep; EN+IT strings added.
+
+**Lock-button hierarchy.** The comfortable low/high steps auto-lock once you hold steady, but the fallback button read "Detecting…" then became a bare active button at 40%, which looked like a required press (and pressing it means breaking your held note to reach the screen). It now reads "Listening…" while waiting and "Lock manually" once available, so the auto-lock is clearly primary and the button is an obvious optional override. Extended-range steps are unchanged ("Confirm Note →" — those are manual by design).
+
+Still deferred from the audit: synthesized audio demos of the warmup exercises and a live pitch trace during the siren (paired for their own session), plus the tessitura-window lengthening.
+
+---
+
+## v0.97.12 — Vocal warmup phase-timing fix
+
+Audited the vocal range tool against professional warmup and range-finding practice. The architecture holds up well (canonical hum/trill/siren warmup order, tessitura-based voice classification rather than range extremes, correctly-placed fry and falsetto guidance). One real mechanics bug surfaced: all three warmup exercises shared fixed phase durations of 4s/1.5s/4s/1.5s, which gave the trill and siren "up" slides only 1.5 seconds while the on-screen instruction says "slide up slowly." A full-range siren in 1.5s is a whip, not a slide.
+
+Fix: per-exercise `cycleDurs` on each VR_WARMUP_EXERCISES entry. Hum keeps its original cycle (the short slot is phonation onset; the hum carries through the 4s exhale). Trills and sirens now get a 3s inhale and symmetric 4s up / 4s down slides. Runner falls back to the old durations if an exercise omits `cycleDurs`.
+
+Deferred from the same audit (not shipped): lengthening the 15s tessitura window with a copy nudge toward multiple tunes, a live pitch trace during the siren exercise, an audio demo of a lip trill, and a note that vocal fry won't register on the extended-low step.
+
+---
+
+## v0.97.11 — Rhodes gets performance mode (7 songs)
+
+The Rhodes song bank is a separate set of entries (its own _rh IDs) from the piano bank, so perf conversions do not flow to it automatically. The perf scheduler already routes non-piano instruments through _riffSound, so a Rhodes entry with a perf block plays the captured performance through the Rhodes voice. Pedal data is stripped from the Rhodes perf blocks (Rhodes has its own sustain; the piano damper model should not drive it).
+
+Converted the 2 existing grid Rhodes entries to perf and added 5 new Rhodes songs, chosen to fit the mellow electric-piano character:
+- **Prélude in E Minor** (Chopin) — was grid, now perf.
+- **Liebestraum No. 3** (Liszt) — was grid, now perf.
+- **Clair de Lune** (Debussy) — new.
+- **Moonlight Sonata I** (Beethoven) — new.
+- **Barcarolle** (Tchaikovsky) — new.
+- **Träumerei** (Schumann) — new.
+- **To Spring** (Grieg) — new.
+
+Each carries Rhodes trem/vibe ctls and its own metadata in the electric-piano voice. The other 6 Rhodes songs (Gnossienne, Nocturne Op.9, Ständchen, Gymnopédie, Twinkle stride, Arabesque) have no Krueger source and stay on grid. Fast/percussive perf songs (Alla Turca, Fantaisie-Impromptu, Troika, Wedding Day, etc.) deliberately NOT added to Rhodes; they fight the voice.
+
+---
+
+## v0.97.10 — Ten more piano-midi.de performances (five new composers)
+
+Big performance-mode expansion: ten Krueger captured performances (piano-midi.de, CC BY-SA), adding five composers who were absent from the app (Tchaikovsky, Mozart, Grieg, Schumann, Rachmaninoff).
+
+- **Barcarolle** (Tchaikovsky, The Seasons: June): 1502 notes, 671 tempo, 391 pedal, 3:51.
+- **Troika** (Tchaikovsky, The Seasons: November): 1852 notes, 661 tempo, 245 pedal, 2:55.
+- **Alla Turca** (Mozart, Sonata K. 331 mvt 3): 2819 notes, 947 tempo, 376 pedal, 3:09.
+- **Sonata Facile** (Mozart, K. 545 mvt 1): 2714 notes, 1680 tempo, 304 pedal, 4:21.
+- **To Spring** (Grieg, Lyric Pieces Op. 43 No. 6): 1626 notes, 615 tempo, 224 pedal, 2:34.
+- **Wedding Day at Troldhaugen** (Grieg, Op. 65 No. 6): 3842 notes, 918 tempo, 370 pedal, 5:29.
+- **Butterfly** (Grieg, Op. 43 No. 1): 937 notes, 710 tempo, 210 pedal, 1:36.
+- **Träumerei** (Schumann, Scenes from Childhood Op. 15 No. 7): 456 notes, 144 tempo, 103 pedal, 2:08.
+- **Prélude in C-sharp minor** (Rachmaninoff, Op. 3 No. 2): 1725 notes, 298 tempo, 336 pedal, 4:04.
+- **Prélude Op. 23 No. 5** (Rachmaninoff, Alla marcia): 3861 notes, 673 tempo, 374 pedal, 3:17.
+
+All ten are NEW songs (no replacements). Sustain-only (CC64), same as prior batches; one-time CC7/10/91 mixer settings ignored. Each got composer/year/era/note metadata in plain house voice. Credits modal Krueger line now lists all 20 performances. Road Trip hooks not yet wired for the new songs (proportional ms defaults only; retune via Leg Tuner). Twenty Krueger performances now shipping.
+
+---
+
+## v0.97.9 — Four more piano-midi.de performances (Bach, Chopin ×2, Beethoven)
+
+Added Bernd Krueger captured performances (piano-midi.de, CC BY-SA) for four pieces:
+
+- **Prelude in C** (Bach WTC I, BWV 846): replaces the old grid version with Krueger's performance — 1284 notes, 358 tempo events, 70 pedal, 3:45. This is a replace, not a new song (prelude_c already existed).
+- **Raindrop Prélude** (Chopin Op. 28 No. 15): NEW song — 1518 notes, 997 tempo events, 485 pedal, 4:30.
+- **Moonlight Sonata (II)** (Beethoven, Piano Sonata No. 14, 2nd mvt): NEW song, slots between the existing I and III — 898 notes, 348 tempo events, 131 pedal, 2:04.
+- **Fantaisie-Impromptu** (Chopin Op. 66): NEW song — 3050 notes, 2142 tempo events, 491 pedal, 4:30.
+
+All Krueger files are sustain-only (CC64), same as prior batches; one-time CC7/10/91 mixer settings ignored (bach also had CC93 chorus depth, ignored). Three new songs got composer/year/era/note metadata in plain house voice. Credits modal Krueger line updated to list all ten performances. Road Trip hooks not yet wired for the new songs (proportional ms defaults only; retune via Leg Tuner). Ten Krueger performances now shipping.
+
+---
+
+## v0.97.8 — Liszt Liebestraum No. 3 to performance mode
+
+Liebestraum now plays Bernd Krueger's captured performance (piano-midi.de, CC BY-SA): 1888 notes, 970
+tempo events, 220 pedal (dedicated pedal track), 82 velocity levels, bpm 23-192 through Liszt's big
+rubato, 4:09. Replaces the old grid version. This completes the confirmed direct matches from
+piano-midi.de. Road Trip hooks converted to ms defaults (retune via Leg Tuner). Six Krueger
+performances now shipping (Clair de lune, Für Elise, Moonlight I & III, Prélude in E minor,
+Liebestraum No. 3).
+
+## v0.97.7 — Chopin Prélude in E minor to performance mode
+
+Prélude Op.28 No.4 now plays Bernd Krueger's captured performance (piano-midi.de, CC BY-SA): 604
+notes, 335 tempo events, 133 pedal, 67 velocity levels, 1:43. Replaces the old grid version. Road Trip
+hooks converted to ms defaults (retune via Leg Tuner). Credits updated. Five Krueger performances now
+shipping.
+
+## v0.97.6 — Three Beethoven pieces to performance mode (Für Elise, Moonlight I & III)
+
+Second perf-mode batch. Für Elise, Moonlight Sonata mvt I, and Moonlight Sonata mvt III now play
+Bernd Krueger's real captured performances (piano-midi.de, CC BY-SA), replacing the old grid
+reconstructions — same treatment as Clair de lune.
+
+All three are rich sequences: Für Elise (1041 notes, 923 tempo events, 150 pedal, 52 velocity
+levels); Moonlight I (1144 notes, 720 tempo events, 308 pedal — Krueger sequenced a dedicated pedal
+track here); Moonlight III (the big one — 6538 notes, 1223 tempo events, 721 pedal, bpm 14-184 through
+the Presto agitato's dramatic ritardandos, ~200KB perf block). Playback lengths match the source files
+(2:46 / 6:02 / 6:50).
+
+Road Trip hooks for all three converted to absolute-ms defaults (proportional; retune via Leg Tuner).
+Credits modal updated: the Krueger entry now lists all four performance-mode pieces under CC BY-SA.
+Adapted MIDIs to be published in the repo's SA folder.
+
+As with Clair: only Krueger's performance data drives playback now; the old Mutopia/authored grid data
+stays dormant in the file. Single-layer sample ceiling still applies (dynamics faithful, timbre flat).
+
+## v0.97.5 — Fix overlay scrubber touch mapping under portrait rotation
+
+The expand-overlay scrubber's touch target was off because in portrait the whole overlay is
+`transform: rotate(-90deg)`. The drag math read screen `clientX` against the track width, but under
+rotation the horizontal track's length runs along the screen's VERTICAL axis (its bounding box is
+tall/thin — measured 12×650 on a phone), so horizontal finger motion wasn't tracking the handle.
+
+Drag is now rotation-aware: when the overlay is portrait-rotated it computes the fraction from
+`(rect.bottom - clientY) / rect.height` (song start at screen bottom → end at top, matching the
+rotate(-90deg) mapping, verified against ground-truth positions). Non-rotated surfaces (card, true
+landscape) keep the original clientX/width math. Matches the existing rotation handling used by the
+overlay's organ faders.
+
+## v0.97.4 — Transport scrubber in the expand overlay
+
+The song scrubber now appears in the piano expand overlay, not just the card. Kept the time readouts
+(the useful part): restructured the overlay now-playing screen into a vertical stack — transport +
+marquee tightened and lifted into a top row, full-width scrubber with M:SS current/total times on a
+second row below. Buttons and title shrink slightly to make room; no overflow (screen ~50px,
+scrub track ~147px on a 412px phone).
+
+Under the hood the scrubber logic is now multi-surface: `_riffScrubEls` returns every present scrubber
+(card + overlay), and render/drag/`np-scrub-on` toggling drive all of them in sync off the same
+ms-space seek engine. Dragging either scrubber seeks identically. Card scrubber unchanged.
+
+## v0.97.3 — Expanded overlay: pedal indicator now tracks perf playback
+
+The expanded piano overlay has its own damper indicator (`pianoFullPedal`) separate from the card's
+(`pianoPedal`). `_riffPianoPedal` was only refreshing the card's, so in expand mode the keys lit
+correctly but the overlay's pedal indicator never moved during playback. Now refreshes both. The
+overlay keys themselves were already driven (via `_riffFlashPianoFullKey`) and already got the
+real-duration hold from v0.97.2, so expand mode is now fully in sync: keys, pedal, and audio.
+
+## v0.97.2 — Perf-mode key visuals hold for real note duration
+
+The held-key highlight wasn't matching perf playback: `_riffPianoNoteOn` flashed the key with no
+duration, so every key lit for a fixed ~170ms regardless of how long the note actually sounded. Fine
+in grid mode (short re-striking notes) but wrong in perf mode, where his notes have long real
+durations — the opening chord rings ~4s but the key released in 170ms, so notes sustained (audio,
+correct) while keys looked released and the pedal indicator seemed uncorrelated.
+
+Added a `holdMs` param to `_riffPianoNoteOn`; perf mode passes each note's real duration `n.d`, so the
+key highlight now holds for the actual finger-time. Under pedal, the key still releases at the written
+duration while the note rings on (pedal) — physically correct. Grid mode unchanged (still defaults to
+the 170ms flash).
+
+## v0.97.1 — Perf-mode pedal routing fix
+
+The pedal-routing check in `_riffPiano` only handed control to the damper model when a song had
+`rh || lh`. Clair happens to keep those as dormant data so it worked, but any future perf-ONLY song
+(no vestigial grid) would have fallen through to `setPianoSustainMode`, which stops all voices — pedal
+would have broken. Fixed to recognize `perf` songs explicitly so the damper model (and the visual
+pedal indicator refresh) works for perf mode regardless of whether grid data is present.
+
+Note on Clair's pedals: Krueger's file uses ONLY sustain (CC64, 327 events). No sostenuto (CC66) or
+una corda (CC67) — those aren't in his sequence. CC7/10/91 present are just one-time mixer settings
+(volume/pan/reverb), not performance pedals. Una corda mainly changes timbre, which single-layer
+samples can't reproduce anyway, so nothing audible is lost.
+
+## v0.97.0 — Performance mode: real captured MIDI playback (no quantization)
+
+New playback path. Songs can now carry a `perf` block — a flat list of notes with ABSOLUTE
+millisecond times/durations plus a pedal event stream, taken straight from a real performance MIDI.
+No beat grid, no tempoMap, no quantization: the engine fires each note at its real captured time, so
+the performer's micro-timing, pedalling, and dynamics play back intact.
+
+**How it fits:** the scheduler already worked in ms-space, so perf mode just fills the same
+`_riffEvents` timeline a different way. Seek, the transport scrubber, and pedal-state reconstruction
+all carry over unchanged (pedal transitions ride the timeline as _isCtl events through the same damper
+model). Perf branch runs before the grid rh/lh path and returns; grid songs are untouched.
+
+**First conversion — Clair de Lune.** Now plays Bernd Krueger's actual performance (piano-midi.de,
+CC BY-SA): 1491 notes, 327 pedal transitions, 58 velocity levels, his real rubato. This REPLACES the
+old Mutopia grid reconstruction + extracted tempo curve as what you hear. The Mutopia rh/lh/tempoMap
+stay in the file as dormant PD reference data but no longer drive playback. Track length 4:07, his
+actual performance.
+
+**Licensing:** shipping his real note/timing/pedal data makes this song a derivative, so CC BY-SA
+Share-Alike applies to the adapted MIDI (not the app — SA is viral only onto the derived work). Adapted
+MIDIs to be published under CC BY-SA in the public repo. User-visible credit already in the Credits
+modal.
+
+**Road Trip:** its beat-based hooks can't index a gridless perf song, so the RT seek path is now
+perf-aware — perf songs use absolute-ms hooks (`hook.ms` / `hookMs`) instead of beat math. Clair's 5
+journey hooks + 1 fallback hook were given proportional ms defaults so nothing breaks; these want a
+precise retune via the Leg Tuner on-device.
+
+**Reusable pipeline:** the MIDI→perf converter emits the notes+pedal block and the ms hook table for
+any cleanly-licensed performance MIDI. Future songs convert in a small batch-ship-screenshot loop.
+
+**Known ceiling:** velocity drives dynamics but samples are single-layer, so louder≠brighter-attack
+like a real piano. Dynamic shape is faithful; full timbral realism needs a multi-layer sample set
+(separate future work).
+
+## v0.96.10 — Clair de Lune tempo from a real performance MIDI (Bernd Krueger, CC BY-SA)
+
+Replaced the audio-derived tempo curve (v0.96.9, which read a touch slow through the animated
+section) with one extracted from a real hand-sequenced performance MIDI: Bernd Krueger's Clair de
+lune from piano-midi.de.
+
+**Why this source:** it's licensed CC BY-SA (attribution + share-alike, NO non-commercial clause), so
+unlike MAESTRO (NC) or GiantMIDI (performance copyright), it can actually be used in a paid app. The
+file carries 733 genuine tempo events (range 8-133 BPM) — real fine-grained rubato, not step marks.
+
+**What we took, and what we didn't:** only the abstract tempo CURVE (a list of numbers — tempo is
+fact, not copyrightable expression), applied to our existing Mutopia public-domain notes. We did NOT
+transplant Krueger's actual notes/pedal/velocity (that would be a derivative work and drag Share-Alike
+onto the app). His beat span (319.5) maps ~1:1 onto ours (322), so no stretching needed. Extracted
+curve validated against ground truth: our playback lands 4:05 vs his file's 4:08 — essentially exact.
+
+The 404-point curve confirms the user's repeated instinct: motion arrives SOONER than my timid
+hand-maps had it (animato peak ~beat 167, the piece reaches real movement early). Isolated sub-40bpm
+single-point dips were floored so they read as ritenuto, not a stall; the 11 sharp agogic accents are
+Krueger's genuine phrasing and were kept.
+
+**Attribution (required by CC BY):** added a user-visible credit in the Credits & Thanks modal —
+Bernd Krueger / piano-midi.de under CC BY-SA for tempo shaping, plus the Mutopia Project (PD) as the
+notes source for Clair de lune.
+
+**Reusable:** the MIDI tempo-curve extractor works for any cleanly-licensed performance MIDI — a
+scalable path for future pieces.
+
+## v0.96.9 — Clair de Lune tempo from a REAL recording (audio beat-tracking)
+
+Stopped hand-authoring. Ran librosa beat-tracking on an uploaded performance recording (4:48 solo
+piano) to extract its actual tempo curve — the library does the listening, we read the numbers.
+
+**What the real performance showed:** settled A-section ~quarter 99bpm-equiv, animated middle only
+~1.15-1.2× that (not the 1.4-2.0× I'd been inventing). CONFIRMS the perceived "faster" is mostly note
+DENSITY (the 16th arpeggios, ~5× the onset rate) plus dynamics, not a big tempo jump. Also confirmed
+the user's ear: motion arrives SOONER than my timid hand-maps had it (Un poco mosso now ~2:10 vs my
+2:32), because the real settled tempo is a touch quicker than my cautious 46-52.
+
+Derived curve, rescaled to app base 54 and phrase-smoothed:
+`[[0,44],[9,52],[18,57],[27,53],[63,56],[108,60],[126,57],[171,53],[180,56],[279,59]]`
+
+**Honest limits:** librosa's tracker is noisy on rubato solo piano (occasional pulse doubling / drift
+in sparse passages), so the tempo RANGE is trustworthy but exact beat-placement of each change is
+approximate — audio position doesn't map perfectly linearly to score beat. Good enough, and finally
+grounded in a real performance rather than my guesses. The recording was analysis-only (not shipped).
+
+**Reusable:** the beat-extraction approach works for any uploaded performance audio — a scalable path
+for future pieces instead of per-piece hand-authoring.
+
+## v0.96.8 — Clair de Lune: humanistic tempo shaping (denser, phrase-level)
+
+The "robotic" feel wasn't about peak SPEED — it was the SHAPE. A coarse 10-point map holds tempo
+constant within each span then jumps; real rubato is continuous and phrase-level. Also corrected a
+wrong assumption: reverse-engineering a real 5:01 recording's section timestamps showed pros BROADEN
+at the climax (take time for weight), not rush it — my prior map accelerated INTO the peak, which is
+both mechanical and interpretively backwards.
+
+Rebuilt as a 20-point map with phrase-level give-and-take, grounded in a real recording's contour +
+standard practice: flowing opening (~52, not a dragging 46), forward motion into En animant, climax
+BROADENS (82→72) for weight, ritardando into every section change, relaxed A' return, and a final
+slowing into the quiet close. Total ~6:07 (matches real recordings).
+`[[0,52],[18,48],[36,54],[63,50],[81,54],[108,46],[117,60],[144,68],[162,76],[175.5,82],[184.5,72],
+[189,54],[207,60],[216,44],[225,52],[243,50],[261,46],[279,50],[292.5,44],[306,38]]`
+
+**Honest ceiling:** even 20 segments is still stepped, not truly continuous. The remaining mechanical
+edge is WITHIN-phrase micro-timing (leaning into downbeats, stretching phrase tops) — that lives at the
+NOTE level, not the tempo-segment level, and this data-model (beat-quantized notes + tempoMap) can only
+approximate it. Fully human timing would require per-note time offsets, which only a real performance
+MIDI carries. This is the best the notation-derived source supports; it's a large step toward human,
+not a perfect one.
+
+## v0.96.7 — Clair de Lune: stronger, progressive accelerando
+
+The v0.96.6 tempoMap was too timid (flat ×1.4 plateau). Checked the uploaded Oguri performance to
+rip its tempo — but that sequence is also ~metronomic (589 beats at flat 120 ≈ its 302s length), so
+the acceleration was never in either source file. The dramatic speed-up is INTERPRETIVE (what pianists
+do), so it's authored by reference, not ripped.
+
+Grounded in performance/teaching sources: En animant (bar 37) is "bring the tempo forward with real
+eagerness… until nothing holds you back"; mainstream readings (Grimaud, Cho) take it markedly faster
+than restrained ones (Richter ~25% slower). So: a PROGRESSIVE accelerando, not a step —
+46→58→64→72→84→92 through bars 27-42, CLIMAX at ~bar42 (2.0× opening), hard pullback to Calmato
+(bar43), settle, a Tempo 1º (bar51). New map:
+`[[0,46],[63,46],[117,58],[144,64],[162,72],[175.5,84],[184.5,92],[189,66],[207,56],[225,46]]`
+
+Climax now hits 2× the opening — unmistakable. Peak ~3:34, total ~6:20.
+
+**Tuning levers (by ear):** the climax bpm is the `[184.5,92]` entry — raise 92 for a faster peak.
+The build steepness is the 72/84 entries. The pullback depth is `[189,66]`. All single-number nudges.
+
+## v0.96.6 — Clair de Lune tempo changes (tempoMap)
+
+**The piece was playing at one flat tempo — Debussy's tempo changes were missing.** Root cause: they
+were lost at COMPILE, before the converter. LilyPond's `\tempo "Un poco mosso"` etc. are TEXT LABELS,
+not metronome marks; without an explicit `\tempo 4=N` they don't render to MIDI. The compiled MIDI had
+exactly one tempo event (60bpm at tick 0), so the data was genuinely flat and the app played it faithfully.
+
+**Fix:** authored the tempo shifts as the engine's `tempoMap` (already supported — `_beatMs()`
+accumulates real time per segment; moonlight/arabesque/liebestraum already use it). Mapped Debussy's
+markings to app-beats via the LilyPond `\barNumberCheck` positions (9/8 → 4.5 beats/bar):
+`[[0,46],[63,46],[117,56],[162,64],[189,52],[225,46]]` — Andante base 46, Un poco mosso @117 (×1.22),
+En animant peak @162 (×1.4, the fast arpeggios), Calmato @189 (×1.12), a Tempo 1º @225 (back to base).
+
+The animated middle now runs 1.39× the opening — clearly audible. Fast arpeggio section lands ~3:20;
+whole piece ~6:34 (was a flat 7:00). Scrubber/seek unaffected: they work in ms space (post-`_beatMs`),
+so the tempoMap just reshapes the timeline they already read.
+
+**Caveat:** the bpm values are interpretive (Debussy gave Italian markings, not numbers) — the SHAPE is
+correct (slow→animated→calm→return) and the ratios musical, but the exact peak speed is a by-feel tweak
+if you want to nudge it.
+
+## v0.96.5 — Scrubber layout fix (full-width row)
+
+The v0.96.4 scrubber was nested INSIDE the small `.np-screen` readout, so it rendered ~1px wide.
+Moved it out to its own full-width row directly under the riff bar (sibling of `.pto-riff-bar`,
+not a child of `.np-screen`). Track is now ~266px usable. Visibility switched from
+`.np-screen.np-active .np-scrub` (parent-dependent) to its own `.np-scrub-on` class toggled in
+`_riffUpdateTransport` only for active piano playback.
+
+## v0.96.4 — Song transport scrubber (piano card)
+
+**New feature: a seek line under the piano song screen.** Scrub/tap to any point in a track
+instead of waiting through it — big time-saver for testing a passage.
+
+- Engine already had the seek primitive (`_riffScheduleFrom(offsetMs)` from pause/resume) and
+  a precomputed event list. Added `_riffTotalMs` (track length), and `riffSeek(ms)`.
+- **Control-state reconstruction (the careful bit):** a naive reschedule skips every pedal/lid
+  ctl before the seek target, landing with the wrong pedal state (notes wouldn't sustain). ctl
+  events are now tagged `_isCtl`; riffSeek REPLAYS all ctls up to the target (state-only, silent)
+  so the damper/lid is correct at the landing point, then schedules audio forward. Verified
+  headless: seeking to 6s replayed exactly the pedal events at 0/2/5s, skipped the 8s one.
+- **UI:** thin rail + cyan fill + draggable handle + elapsed/total time (M:SS), shown only while
+  a song is active. Full pointer drag + tap-to-seek; a RAF loop advances the fill, suppressed
+  while dragging so the handle doesn't fight the finger. Freezes at the paused position. Light-mode
+  styled.
+- Scoped to the **piano card** for now (first surface). Piano full overlay, organ, and Rhodes
+  reuse the same engine — their scrubber UI is a follow-up once the feel is confirmed on-device.
+
+## v0.96.3 — Song playback velocity (dynamics)
+
+**Song playback was fully flat — every note at fixed refVolume.** The scheduler called
+`_riffPianoNoteOn(mid)` with no velocity, and the per-note `v:` field (present in some songs) was
+dead data, read nowhere.
+
+**Wired velocity through:** scheduler now passes `n.v` → `_riffPianoNoteOn(midi, vel)` → gain on
+both sample and synth paths. Curve: `0.32 + 0.68 * v^1.4` (v is 0..1). Perceptual (pow 1.4), soft
+floor 0.32 so pp stays audible-but-quiet, ceiling at the user's refVolume so it never exceeds their
+level. Absent `v` → full (back-compat; velocity-less songs unchanged). Verified end-to-end headless:
+gain is monotonic across v0→v1 (0.32→1.0), absent→1.0.
+
+**Scope of benefit — honest:** these are single-layer samples (one sample per pitch, gain-scaled),
+so velocity shapes DYNAMICS (loud/soft swells), NOT timbre (a soft note is a quieter version of the
+same tone, not a rounder one). That's most of what matters perceptually, especially on phone speakers.
+
+**Clair de Lune** re-emitted with its per-note velocity (from the Mutopia MIDI). Caveat: LilyPond's
+preview dynamics are coarse (here only 2 levels, 0.71/0.87), so the audible gain here is subtle — the
+ceiling is the SOURCE, not the engine. Any richly-dynamic MIDI (a real performance, properly licensed)
+now gets full shading through the same path.
+
+## v0.96.2 — Clair de Lune replaced with complete public-domain version
+
+**The kunstderfuge Oguri file was NOT usable** — its terms are all-rights-reserved by default
+(the file had no CC marking), a subscription doesn't grant commercial use, the NC clause on their
+CC subset would exclude a paid app anyway, and it's a protected performance/arrangement (your hard-no
+rule). Free-tier placement wouldn't help: the app is commercial regardless of which module a file sits in.
+
+**Clean replacement sourced instead:** Mutopia Project's Clair de Lune (Debussy, Suite bergamasque
+L.75), typeset in LilyPond and placed in the PUBLIC DOMAIN by the typesetter — commercial use fine,
+no attribution required. Sparse-cloned from github.com/MutopiaProject (GitHub is reachable; ibiblio
+isn't), added a \midi block, compiled with LilyPond to MIDI, converted via the new pipeline:
+- Two LilyPond staves → real rh/lh split (not guessed).
+- 996 note/chord events, full 88-key range, 322 beats, ~2.5% overlap (clean).
+- 163 pedal changes authored bar-bass from the LH (LilyPond's sparse \sustain marks didn't render
+  to CC64, so pedal was authored the same way as the v0.96.0 pass).
+- bpm:46 to match the existing catalog metadata + Road-Trip journey entry (which is a SEPARATE system
+  that happens to share the name — untouched).
+
+Replaces the old partial clair_de_lune (pedalled only through b93, the ghost-note remainder). Honest
+trade vs the Oguri performance: dynamics are flat and timing is metronomic (notation-derived, not a
+performance) — but it's complete, correctly pedalled, and bulletproof on rights.
+
+**MIDI→app converter now exists and is proven** on heavy-rubato + dense-pedal input. Reusable for any
+cleanly-licensed MIDI. **Policy going forward: CC0 / CC-BY / PD / self-created only** — never
+kunstderfuge or default-ARR performance sequences.
+
+The Oguri .mid was evaluation-only and is NOT in the build.
+
+## v0.96.1 — Brahms Wiegenlied: missing melody restored (OpenScore Lieder, CC0)
+
+**Root cause of "sounds off" found: the transcription had NO MELODY.** Every event was
+accompaniment — the rocking thirds, harmony, bass. The famous vocal line (G–G–Bb pickup rising a
+minor third, the whole Guten-Abend tune) was absent; the MusicXML export had captured only the
+piano staves of this voice+piano lied, dropping the Soprano staff.
+
+**Fix:** pulled the authentic Soprano line from the OpenScore Lieder Corpus (github.com/OpenScore/
+Lieder, CC0 public domain, scholarly transcription) via sparse git clone; extracted staff 1 from
+the .mscx (54 notes, 3/4, Eb major). Verified alignment against the app's existing accompaniment
+by consonance sweep across offsets -6..+3 — offset 0 gave 2% dissonance (best + natural), confirming
+the voice maps directly onto the accompaniment beat grid. Merged into rh, then deduplicated 12
+exact-beat pitches the voice doubled in the accompaniment (prevents phasing double-strikes).
+Same-pitch overlaps 35→22 (remaining are legitimate cross-voice sustains, on par with nocturne).
+
+The pedal added in v0.96.0 now underpins a REAL melody. This is the piece to re-listen to first.
+
+**Method note for future gap-fills:** GitHub-hosted CC0/CC-BY MusicXML is reachable from the build
+env (raw.githubusercontent + git clone; kunstderfuge/MuseScore/IMSLP are proxy-blocked, GitHub is
+not). OpenScore Lieder (voice+piano, CC0) and OpenScore String Quartets are the good wells.
+
+## v0.96.0 — Pedal-authoring pass (10 songs), moonlight visible repedals, clair ghost fix
+
+**Method:** pedal points derived from each song's OWN encoded LH bass line — bar-bass legato
+pedalling (repress at the lowest attack per bar when its pitch-class changes, 1-bar max hold;
+2-bar for the gnossienne drone). Grounded against sources: Beethoven's documented con/senza
+sordino practice in the Presto agitato; Satie bar-bass wash; stride/blues played dry as standard
+practice. All new repedals use the VISIBLE two-event pattern (pedal,0 at b / pedal,1 at b+0.07).
+
+**Pedal authored (repedal counts):** gymnopedie 46 · gnossienne 41 · brahms_lullaby 17 ·
+standchen 58 · ode_to_joy 15 · bella_ciao 36 · carol_bells 32 · arabesque_1 102 (replaces
+stuck press-no-release) · liebestraum 90 (same) · moonlight_3 con/senza (pedal each arpeggio
+sweep, LIFT at the sf chord pairs b7/15/23/27/31, b32 bass arrival + bar-bass tail).
+
+**moonlight (mvt I) flat-pedal fix:** its 149 repedals were same-instant `pedal0;pedal1` in one
+ctl — the pedal graphic never visibly lifted (the reported "flat pedal"). All split into the
+two-event visible pattern.
+
+**Deliberately dry, documented in code:** blues, st_louis_blues, twinkle_stride (stride/blues
+practice — the LH pattern IS the sustain; pedal smears it). Harpsichord/organ/ragtime unchanged.
+
+**clair_de_lune ghost note FIXED:** `{b:84,d:1.5,m:[63,66]}` held F#4 to b85.5 while
+`{b:84.75,m:[66,78]}` re-struck it — physically impossible same-string overlap, audible as a
+phasing double-strike. Chord split: Eb3 holds 1.5, F#4 trimmed to 0.75.
+
+**brahms_lullaby audit:** melody tones verified consistent with the Eb-major Wiegenlied (no
+foreign pitches, no wrong-key notes). Likely "sounded off" because it played bone-dry — now
+pedalled. Re-listen before deeper MuseScore comparison.
+
+**Library-wide same-pitch overlap audit (informational, NOT auto-fixed — most are legitimate
+merged-tie wash / polyphony / organ voice-crossing; trim only where audibly reported):**
+gnossienne 298 · st_louis_blues 104 · toccata_dm 31 · arabesque_1 27 · liebestraum 22 ·
+nocturne 17 · air_g 8 · hallelujah 6 · ave_maria 4 · gymnopedie 4 · hungarian_5 2 · singles in
+moonlight_3, entertainer, minuet_g, carol_bells, prelude_em, twinkle_stride.
+
+Backup of pre-pass file: /tmp/Intonare.beforePedalPass.html (session-local).
+
+## v0.95.7 — Sostenuto overlay highlight + song pedal audit
+
+**Sostenuto on the FULL PIANO OVERLAY:** the audio logic is provably correct (verified headless
+across 5 scenarios: capture, new-note-after-pedal not held, damper-holds-through-sost-off, per-note
+finger tracking). The real defect was VISUAL: stopRef only cleared the inline card's `pb-` key
+highlight, never the overlay's separate `pwkf-`/`pbkf-` keys. So a sostenuto-held note released on
+pedal-lift stopped its audio but kept its lit key on the overlay — reading as "the note didn't stop".
+Fix: stopRef now refreshes highlightPianoFull from refOscs when the overlay is open. Verified headless:
+note stops AND highlight clears.
+
+**Song pedal audit (all 30 chart songs):** classified pedal coverage. Correct-as-is: harpsichord
+(prelude_c, minuet_g, canon_d) + organ (toccata_dm, air_g, hallelujah, lacrimosa, bridal_chorus) +
+ragtime (entertainer) legitimately have no damper pedal; RH-only practice variants likewise.
+- **hungarian_5**: was organ with a stuck pedal-down (pressed at b:0, never released) → pedal removed
+  (organ has no damper).
+- **arabesque_1, liebestraum**: stuck pedal-down (press-no-release) — LEFT as-is pending proper
+  per-phrase pedalling (documented below, not faked with a single release).
+- **11 songs flagged NO PEDAL that arguably want it** (moonlight_3, ode_to_joy, gymnopedie,
+  bella_ciao, carol_bells, gnossienne, brahms_lullaby, standchen, blues, st_louis_blues,
+  twinkle_stride): deferred to a dedicated pedal-authoring session — correct pedalling needs
+  per-piece harmonic-rhythm work, not a batch.
+- **clair_de_lune**: known-partial — pedalled only through beat 93 per its own source comment;
+  the un-authored remainder is the likely source of the reported "ghost notes". Also deferred to
+  the pedal session.
+
+**PINNED FOR NEXT SESSION: pedal-authoring pass** — 11 no-pedal songs + arabesque/liebestraum
+stuck-down + clair_de_lune remainder + brahms_lullaby MuseScore re-audit.
+
+## v0.95.6 — App-wide parity + content audit pass
+
+**Ran intonare_light_contrast_audit + intonare_draw_color_sweep + intonare_strings_audit.
+Verified every session color fix is properly `_nkLight`/theme-branched (dark preserved).
+False positives confirmed: splash, Road Trip (keep-dark), tonale wave (deliberately dark via
+its own light rule). Real fixes:**
+
+- **sgDrawModeKeyboard (Survival Guide mode keyboard)**: emphasis INVERTED on light — bright
+  in-scale keys blended into the light panel while "dimmed" dark keys popped. Now `_lt`-branched:
+  light gets washed-pale dims / solid lits (root white `#0f7d99`, root black `#0d6d86`, on-black
+  `#3d4454`, dims `#d7dae2`/`#a7abb8`); dark unchanged.
+- **fluteTrillPulseApply**: open-key trill label hardcoded pale `#c4d2dd` → `#2a3442` on light.
+- **vrRenderHistory**: sparkline strokes α.6 green/salmon washed out on light card →
+  `rgba(15,110,72,.85)` / `rgba(184,80,50,.85)` on light; dark unchanged.
+- **prChallengeEnd summit flag**: near-white pole `#d8d8e0` invisible on light end screen →
+  `#5a5a72` on light.
+- **tc-stop text**: `#2f6e28` (3.49:1) → `#275e21` for contrast headroom.
+- **CONTENT FIX — transposing-instruments learn card**: claimed "recorder and tin whistle sound
+  at concert pitch" — contradicted by the v0.95.0 range audit (both are octave-transposing).
+  EN corrected; matching IT paragraph ADDED (the IT twin had never had the closing paragraph —
+  pre-existing drift fixed in the same stroke).
+- Verified clean: tours have no CRT/phosphor/dark-screen references; tonal help body is
+  mode-neutral; theremin hint's "dark surface" stays true in both modes; "tap keys to hear"
+  scale hint is accurate again post-pssPlayNote fix.
+
+**Pre-existing debt logged, not fixed** (for a future session): 6 i18n-html keys missing from
+both dicts (rr_mode_listen, rr_mode_sight, rt_hero_title, tc_standby, vr_duration_hint,
+vr_safety_hint — fall back to hardcoded EN); 20 borderline 3.0–4.5:1 light-mode text colors
+(mostly piano overlay / riff cards); tuba contrabass low E0 unverified.
+
+## v0.95.5 — Muted-string X more legible
+
+- Chord-diagram mute-X was thin salmon `rgba(255,138,101,0.8)` at size 10 — low contrast on the
+  light panel. Now theme-aware: deep red `rgba(184,42,28,0.95)` on light / brighter coral
+  `rgba(255,120,90,0.95)` on dark, size 13, weight 700. Baseline nudged to `topFret - 10` so the
+  bigger glyph still clears the nut.
+
+## v0.95.4 — Chord diagram open/mute markers clear the nut
+
+- Open-string ring + mute-X in gccDrawDiagram sat at `topFret - 10`; the ring (r4) bottom edge
+  landed on the nut top (both at y≈22), clipping. Raised ring to `topFret - 13` and X to
+  `topFret - 11` for a clean gap. Still inside the 28px top margin. Scale-view open notes use a
+  proportional `topFret - fretSpacing*0.65` offset — already clear, untouched.
+
+## v0.95.3 — Barre/glyph light-mode + DMG-olive green cohesion
+
+- **Fretted barre line + markers light-mode**: barre line was near-white `rgba(232,232,240,.6)`
+  (invisible on the pale light neck) → slate `rgba(48,50,72,.85)` on light. Open-string ring
+  `rgba(52,211,153,.8)` → deep green `rgba(15,110,72,.9)` on light. Fret-position + capo labels
+  (gcc + gss) green-on-panel deepened to `rgba(15,110,72,.95)` on light. Muted-X salmon reads
+  on both — left. gssDrawPosition open-string already handled last round.
+- **Tonal green cohesion (DMG olive)**: the active-keycap/start-button green was modern mint
+  `#34d399` (cyan-leaning, ~157°, borrowed from global tools-teal) fighting the authentic
+  DMG-olive screen (~140°, yellow-tinted). Per Game Boy palette references (#0D5E1F/#3E9E4F
+  family), retuned the whole module to one hue family: active keycaps `#34d399`→`#4a9e3f`
+  (mid-olive), start button `#34d399`→`#4a9e3f`..`#6ec254` (brightest olive = CTA), stop text
+  `#2f6e28`. Screen unchanged (it was the olive source). Now: sage screen · mid-olive pressed ·
+  bright-olive CTA — hierarchy within one family instead of two decades of green colliding.
+
+## v0.95.2 — Fretted note dots, harmonica green, tonal green match
+
+**Three more from the device pass.**
+
+- **Fretted note dots readable in light mode**: non-root scale dots (gssDrawPosition) and
+  chord finger dots (gccDrawDiagram) were near-white `rgba(225–232,...)` — invisible on the
+  pale light neck. Now `_nkLight`-aware: deep slate `rgba(48,50,72,.9x)` fill on light with
+  light `rgba(235,236,244,.92)` numerals; white-on-dark unchanged. Open-string hollow stroke
+  also darkened on light. Out-of-bound dots already handled. gssDrawFretboard was token-based
+  (var(--text)/var(--accent-warm)) — already correct, untouched.
+- **Harmonica → diagram green**: blow/draw cell active/in-scale/primary states moved from the
+  cyan `rgba(94,226,255)` family to `--diagacc` (color-mix for the alpha tiers), matching the
+  other woodwind diagrams. Active-cell dark text still reads on the green fill.
+- **Tonal active-keycap green matches start button**: selected root/octave/temperament caps
+  went from deep forest `#2f7a52→#1f5c3b` to the start button's arcade family
+  `#34d399→#22936c` with dark text; kept a touch deeper than the CTA so a pressed key still
+  reads as pressed. Stop-button text bumped to `#1a7d5b` to match.
+
+## v0.95.1 — On-device feedback round + scale-screen tap regression
+
+**Six fixes from Daniele's v0.95.0 device pass, including one real regression found via
+headless hit-test elimination.**
+
+- **REGRESSION FOUND & FIXED — pssPlayNote amputated tail**: the scale screen's manual
+  key-tap player computed ctx/chain/dur/toneId then ended after the organ branch — a past
+  edit ate the non-organ playback. Every non-organ instrument's scale-screen taps were
+  SILENT (noticed on mallets). Restored `_chartPlay` + harmonics-fallback tail mirroring
+  pccPlayNote. Verified headless: taps now trigger voices for mallet + piano. Candidate
+  for a sentinel pin next session.
+- **Diagram accent token**: woodwind/ocarina hole fills, ww-hole CSS, trill overlay moved
+  from `var(--accent)` (resolved dark forest in light tools) to new `--diagacc: #2ec78f` 📌
+  pinned at the original light green in BOTH modes.
+- **Chromatic harmonica slide lever**: light-mode rules — light metallic stem/head, drop
+  shadow removed, diagacc-tinted when active.
+- **Metro screen whitened**: `#d4d2cc→#c8c5bd` → warm white `#f0eee6→#e5e1d5` 📌, border
+  `#cec8b6`; scanlines whisper override rgba(70,60,30,.018) matching the tuner treatment.
+- **Tonal centre chrome → Game Boy shell grey**: cabinet `#dcdeda→#c5c8c1`, strips
+  `#dadcd7→#cdd0c9`, keycaps `#eeefec→#cfd2cb` (sharps darker), dd/help/stop surfaces
+  `#e4e5e1`, scale-map ring greys. Screen stays DMG sage; active keycaps stay green.
+- **Theremin box**: the module-level keep-dark soft-frame rule (1px rgba(180,180,205,.5)
+  outline) removed for #toolTheremin (obsolete now that theremin has real light rules);
+  dead #toolTonal selector removed with it.
+
 ## v0.95.0 — Light-mode completion sweep + instrument range audit
 
 **Big batch: the light-mode visual cluster closed out, plus a full audit of WIND_RANGES
