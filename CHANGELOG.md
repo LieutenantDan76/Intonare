@@ -16,6 +16,1013 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.97.82 — Launcher titles, icon glows, and the purple pulled back
+
+Three separate things.
+
+**Light titles were not changing, and the reason was a duplicate rule.** `body.light .lnch-cell .lnch-nm { color: var(--text) }` appears twice in the stylesheet, 16k characters apart. The tinted ink from the last build was landing on the first one, and the later copy was quietly winning on source order. Worse, `--text` on the launcher resolves to whichever module the body class happens to be, so all four cards wore the tuner ink no matter which module they named. Each cell already sets its own `--lc`, so the title derives from that now. Capped at 22% tint: 42% looked right but measured 2.6–3.8:1, while 22% clears 4.5:1 on every surface the launcher can sit on.
+
+Worth recording as a method note: I added a competing rule at matching specificity first, and it did nothing, because the problem was source order rather than specificity. Searching for *later* duplicates should come before reasoning about specificity at all.
+
+**The icon glows were a dark-mode device left running in light mode.** `.practice-icon svg` carries `drop-shadow(0 0 6px …)` with no light override. On a dark ground that reads as light emission; on a light surface it smears a dark halo under the icon, which is why the folders looked dirty. Filter removed in light mode.
+
+**Dark train was too intense** because I kept FLAT's saturation *percentage* while raising lightness, and the same percentage produces far more chroma at higher lightness. Train's channel spread went from 19 steps to 29. Each theme is now solved for its own original spread instead: train back to 19, tools 10, metro 9, so the tint survives the lift without amplifying.
+
+---
+
+## v0.97.81 — Tinted ink in light mode; dark lift pulled back
+
+**Why light mode read like a reversed image.** The ink was a near-neutral dark grey at 14% saturation, and the same three values were used on every module. Against a 42%-saturated lavender, gold or teal surface, neutral text does not belong to what it sits on: the surface carries chroma, the text does not, and the eye reads it as an inverted photograph rather than a designed light theme.
+
+Each module's ink now carries that module's own hue at 30% saturation, holding identical contrast floors. Tuner takes a blue-violet ink (`#232742`), metro a warm brown (`#2e2919`), tools a deep green (`#182d29`), train a purple (`#292546`). Same 7.0 / 5.0 / 4.6:1 as before; the difference is that the text now belongs to its surface.
+
+**On dark being washed out, the lift was not the main culprit.** I had also flattened per-theme saturation to a uniform 22%, where FLAT ran 36–58% per module. That drained the colour: train's channel spread went from 19 steps to 11. Each theme now keeps its own saturation, and the base lift is pulled back from luminance 0.0075 to 0.0050 — under Material's `#121212` reference rather than past it, and still roughly double FLAT's elevation step.
+
+Result: train's base returns to a deep blue-violet instead of a washed grey, and every theme's channel spread is now wider than FLAT rather than narrower. Text holds at 11.7:1 worst case with `--muted` at 5.23:1.
+
+---
+
+## v0.97.80 — Light mode saturation restored; dark LIFTED goes live
+
+**Reverting an overreach.** The ask in v0.97.76 was fonts, SVGs and element colours. In v0.97.78 I rewrote the surface palette from 42% saturation down to 13% and shipped it as part of a "matching" pass. The 60-30-10 reasoning behind it was sound, but whether Intonare's light mode should read as coloured or as neutral is a design decision, and it was not mine to fold into a maintenance change without asking. "Lifeless and colorless" is the correct description of the result.
+
+All four module themes are back to the values approved in v0.97.75: tuner `#acb2dd`, metro `#c7b375`, tools `#6ec4b2`, train `#b4b0df`, at 42% saturation.
+
+Two things reverted with them, because they were solved *against* the desaturated surfaces and fail on the real ones. The softened ink would have landed at 6.28:1, 4.51:1 and 4.25:1 — all three under their floors — so the v0.97.75 values are back at 7.04:1, 5.05:1 and 4.61:1. And the tab pill's outline returns: at this saturation an accent-coloured pill genuinely cannot separate itself on hue alone, so the border is doing real work rather than propping up a weak palette.
+
+Kept from that pass: the stale-token replacements, the three missing dark-element overrides, and the tab bar being built from the ramp instead of from white. Those were the actual fixes.
+
+**Dark mode LIFTED is now the default.** Base lifted off near-black, elevation steps roughly tripled in absolute luminance, text at ~14.5:1 instead of 17.3:1, and `--muted` moved from a failing 2.54:1 to 4.64:1. FLAT stays available in Settings for the old ramp, and still carries the `--muted` fault by definition.
+
+---
+
+## v0.97.79 — Dark mode gets an opt-in rebuilt ramp
+
+Not a hard change: this ships behind **Settings → Dark Depth (FLAT / LIFTED)**, defaulting to FLAT, which is byte-identical to what has been shipping. Nothing moves unless it is switched on.
+
+First, the thing dark mode does **not** have: light mode's saturation problem. The per-module dark backgrounds report 36–58% HSL saturation, which looks alarming until you check the channel spread — `#050f0d` is RGB(5,15,13), a span of 10 steps out of 255. HSL saturation is a ratio, so it inflates as lightness approaches zero. The light-mode fault was 42% saturation at luminance 0.46, an ~80-step spread and genuinely vivid. Different geometry, so the fix does not transfer.
+
+What dark mode does have, measured:
+
+**Elevation steps of ~0.0024 in absolute luminance,** against the rebuilt light ramp's ~0.08 — roughly 40× smaller. That is the same "cards dissolve into their containers" problem Linda reported in light mode. Contrast *ratios* hide it because the WCAG formula adds 0.05 to both terms, which compresses everything near zero; the ratio reads 1.045:1 and looks merely tight rather than invisible. LIFTED spaces elevation by absolute luminance instead, roughly tripling each step.
+
+**`--bg-0` at luminance 0.0033,** effectively pure black. Sources are consistent that pure black causes eye strain and leaves shadows unreadable; Material puts its dark surface near `#121212`.
+
+**Text at 17.3:1.** Above roughly 15:1, light text on a dark ground starts to bloom, worst for readers with astigmatism. LIFTED uses an off-white at ~14.5:1, still double the 7:1 AAA floor.
+
+One genuine bug surfaced on the way: **`--muted` was failing dark mode at 2.54:1**, well under the 4.5:1 floor, and has been for as long as it has existed. LIFTED puts it at 4.64:1. Worth noting that FLAT still carries this fault, since FLAT is defined as "unchanged"; fixing it there is a separate decision.
+
+Recommendation stands from the last message: dark mode is the default, it has been in testing for months, and nobody has reported it. Compare the two on a real screen before deciding, and leave it on FLAT for the production push if there is any doubt.
+
+---
+
+## v0.97.78 — Light mode restructured as a system, not a set of tokens
+
+"Still feels a little off" was right, and reading the design literature found the reason. I had been tuning individual values without checking the structure they sat in.
+
+**The 60-30-10 split.** The established professional distribution puts 60% on a dominant neutral (backgrounds, containers, surfaces), 30% on secondary surfaces, and 10% on accents, where colour does its heaviest lifting. Keeping accents at 10% is what preserves their signal value.
+
+I had the surface tier — the largest area on screen — running at 42% saturation. That is accent-level colour on the dominant layer, and it explains every symptom left over. The accents had nowhere to go: metro's accent sat 4° from its own background hue, tools 12°, train 9°. Same hue family, differing only in lightness, on a surface already carrying heavy chroma. Active states read weakly, and the tab pill needed a border to be legible at all — a crutch, not a design.
+
+The literature also warns that high-saturation surfaces cause simultaneous contrast at boundaries and leave no room for hover, active or selected variations. Both were happening here.
+
+**The surface tier is now a chromatic neutral at 13% saturation:** tinted enough to read as deliberate rather than accidentally off-neutral, quiet enough to stop competing. Each module keeps its own hue, so the identity survives; the colour just stops shouting from the background.
+
+Consequences worth noting. Accents now carry 4.4–6.0:1 against backgrounds and 6.6–9.2:1 on panels, and they are the only saturated thing on screen, so the tab pill's border is gone. The active state reads on its own.
+
+**And the text lightening asked for two builds ago is now possible.** With the surfaces quieter there is finally headroom: `--text` 7.87:1, `--text-dim` 5.64:1, `--muted` 5.15:1 before any change, so all three inks were softened (`#272834`→`#2f303e`, `#3d3e51`→`#44455a`, `#424458`→`#47495f`) and still clear their floors. Last build that was impossible without brightening the whole app; the problem was never the ink, it was what sat behind it.
+
+---
+
+## v0.97.77 — Tab bar rebuilt from the ramp instead of from white
+
+The white backgrounds were my mistake in the last build. I mixed both the bar and the active pill with `#ffffff`, which made the pill 86% white: a foreign chip sitting on a coloured bar rather than part of the surface family, and mixing the bar with white too pulled it away from `--bg-0` so the strip stopped matching the screen above it.
+
+Both now come from the palette. The bar is `--bg-0` exactly, so it continues the screen. The active pill is `--panel`, the ramp's own raised layer, which lands 1.43–1.45:1 above the bar and carries the module accent at 5.6–7.8:1. No white anywhere in the strip.
+
+Checked the rest of the file for the same mistake: the other light rules touching `#ffffff` are white *text* on coloured fills, which is correct, and the settings chip mixes 30% white into a dark accent, which still reads as the accent.
+
+**On lightening text and symbols universally: I did not do it, and the numbers are the reason.** The three ink tokens currently sit at 7.04:1, 5.05:1 and 4.61:1 worst-case across the four themes — each already at its floor with zero headroom. Lightening them 15% while the surfaces hold drops `--muted` to 3.92:1, which is the exact failure that made light mode hard to read before this whole pass began.
+
+Contrast is a ratio, so the only way to soften the ink is to lift the surfaces with it. Solving for that puts `--bg-0` at luminance 0.62 against the current 0.46 — considerably brighter, the opposite of the complaint that started this. If the ink genuinely reads too heavy on the device, that is the trade to make deliberately rather than by accident, and it means accepting a brighter app.
+
+SVG strokes and fills were swept separately: exactly one value falls under the 3:1 UI-graphics floor, a deliberately pale piano lid fill.
+
+---
+
+## v0.97.76 — The rest of light mode caught up with the new palette
+
+Follow-up pass on the elements the palette rebuild did not reach.
+
+**39 stale values were frozen at the old palette.** Surfaces like the old panel and surface colours were hardcoded in 65 places rather than referencing the token, so they did not move when the palette changed and sat visibly against the new backgrounds. Those now use `var(--surface)`, `var(--panel)`, `var(--bg-0)` and friends, so they follow the palette from here on. The `lt-bright` restore block was deliberately left alone, since its whole job is holding the old values.
+
+**The tab bar had no light-mode rules at all.** It inherited dark styling: the active pill used `--panel`, which against a light bar is a 1.4:1 difference and reads as nothing, and no element carried the module colour, so every tab looked identical regardless of which was selected. That is the "odd and colorless" complaint. The active tab now takes a tinted surface with the module accent on its icon, label and border (6.5–8.6:1 on the pill), while inactive tabs stay muted.
+
+**Three elements never got a light value** and kept their dark fill as smudges on a light surface: spent hearts, lost pixel-hearts, and the Rhodes knob indicator.
+
+On "some text feels dark": the tokens themselves measure 9.1:1, 6.5:1 and 5.9:1 against the new surfaces, which sits in the comfortable band rather than the harsh one, so they were left alone. The near-black text values that turned up in the sweep are all sitting on bright accent buttons, where dark ink is correct.
+
+Also confirmed the six draw functions flagged as having no light branch are all inside `keep-dark` regions (CRT screens, piano overlay, Road Trip, splash), which opt out of light mode deliberately. Their colours are right as they are.
+
+---
+
+## v0.97.75 — Light mode rebuilt around measured luminance
+
+Linda's report was "too bright, hard to read". Measuring it turned up three separate problems, only one of which was brightness.
+
+**Brightness was inconsistent between modules.** Metro and tools sat at luminance 0.66 while tuner and train were at 0.53, so switching tabs changed how bright the screen was. Every module theme is now normalised to the same luminance (0.46, dimmer than all four were), so the app no longer flashes brighter when you move between them.
+
+**Layers were invisible.** Surfaces sat 1.04–1.11:1 apart, well under the ~1.2:1 where a light surface reads as separate from the one behind it, so cards dissolved into their containers. That is most of the "hard to see things". Steps are now ~1.13:1 with borders at 2.2:1 against panels.
+
+**`--muted` was already failing WCAG at 4.29:1** before any of this, on the darkest theme. Text tokens were re-solved against the new backgrounds: 7.0:1, 5.0:1 and 4.6:1 worst-case across all four modules.
+
+On the suggestion of saturating the backgrounds — that was the right instinct with a catch worth recording. Saturation moves luminance in opposite directions depending on hue: blue contributes 7% of perceived brightness, green 72%. Saturating tuner and train darkens them; saturating metro and tools *brightens* them. Applied uniformly it would have made the two worst offenders worse. So the target here is luminance directly, with saturation (42%, up from 29%) landing wherever each hue needs it.
+
+**Settings → Light Brightness (SOFT / BRIGHT)** restores the previous palette exactly, for whoever prefers it. Real values rather than a filter, so nothing shifts hue. The control only appears in light mode.
+
+Also darkened 21 hardcoded colour values across the piano overlay, riff cards and tone chips. Those were already marginal at 3.0–4.4:1 and the dimmer surfaces made them slightly worse; all now clear 4.6:1 on every module theme.
+
+---
+
+## v0.97.74 — Dragging the tempo slider no longer machine-guns the kit
+
+Direct consequence of the last build. A re-anchor cancels pending audio and restarts every track's pattern from phase 0, which is right for one tempo change and wrong sixty times a second. Dragging a range input fires roughly that many `input` events, so every one was re-triggering the downbeat.
+
+The tempo value and the re-anchor are now separated. `bpm`, `dk_bpm`, the beat length and the readout all update on every event, so the display tracks your finger exactly as before. The re-anchor waits 140ms for the drag to settle and then fires once. That is also the musically sensible moment for it — there is no point realigning the groove to a tempo you are still scrubbing past.
+
+During the drag itself nothing is rescaled, so both engines simply continue from their existing pointers using the same new beat length and stay locked to each other. The grid keeps its old phase until you let go.
+
+Simulated a 60-event drag from 120 down to 45: **one** re-anchor instead of sixty, and every track still lands on the new grid with chords 0.0ms from a drum hit. A single tap on +/- still produces exactly one re-anchor and updates the readout immediately, so discrete changes feel no different.
+
+---
+
+## v0.97.73 — Stopped rescaling and just re-anchored everything
+
+Yes, there was a simpler solution, and asking for it was the right call. This deletes more than it adds.
+
+Every fix in this run shared one assumption: that a tempo change means taking each engine's pending times and multiplying the remainder by `prevBpm / newBpm`. That built up three rescale functions, a shared-anchor variable and a latency constant, and it kept failing for a reason the arithmetic hides. Every pending value is itself derived from the *old* tempo, each engine holds a different number of them, and any error scales with the ratio — which is precisely why it got worse the further the slider moved.
+
+**Nothing now reads the old tempo at all.** A tempo change picks one restart point 60ms out and tells the chords, the kit and the metronome to resume exactly there with the new seconds-per-beat. Anything already committed past that point is cancelled. There is no ratio in the code, so alignment no longer depends on the size of the change: 30→300 is the same operation as 120→118.
+
+Verified at 120→45, 45→120, 120→200, 200→30 and 30→300. Every kit track's spacing is a whole multiple of the new grid and every chord lands 0.00ms from a drum hit, including the 6.7× and 10× changes that are far harsher than anything the slider does.
+
+Gone: `dk_retimeForBpm`, `retimeMetroForBpm`, `_retimeAnchor`, `PROG_COMP_LATENCY`, and the per-engine rescaling inside `setBPM`. Four moving parts replaced by one function.
+
+Kept: the drum node registry, because cancelling already-committed audio is still necessary — the scheduler calls `start()` ahead of time and those nodes cannot be rescheduled, only stopped.
+
+The lesson worth keeping: the reason this took so many attempts is that each fix was locally correct. Rescaling *is* the right way to convert a duration between tempos. It was the wrong thing to be doing at all.
+
+---
+
+## v0.97.72 — Reverted the snap, and cancelled the stale hits instead
+
+The snap in v0.97.71 was a regression and this reverts it.
+
+**Why it was wrong.** It snapped each track independently to the next step boundary on the new grid. Every track sits at a different point in its own step, so each got a different correction, and any track more than one step out was clamped down to a single step by a `Math.min(1, …)`. Tracks that were locked together landed on different beats — hits appearing where they were never due. The kit's tracks are one groove and have to move as a rigid body; proportional rescaling from a common instant is the only transform that preserves their relative positions, so that is what both engines do again.
+
+**Two real causes fixed underneath it.**
+
+Both retimes read `ctx.currentTime` themselves, at different points inside `setBPM`. The audio clock advances between those two reads, so the kit and the chords were rescaling from slightly different origins — at a ratio of 2.67 even a 2ms gap puts the grids ~3ms apart, and every later event inherits it. `setBPM` now captures the instant once and both retimes use it.
+
+And the part that was actually audible: the scheduler had already called `start()` on every hit inside its lookahead, carrying the old tempo's spacing. Rescaling pointers moves future hits and cannot touch those. Measured ~80ms of old-tempo audio surviving each change, consistently, on every track. Drum voices now register their nodes, and a tempo change stops any that were due after the change; a hit that never sounds is far less noticeable than one landing at the previous tempo, and the scheduler refills from the corrected pointer on its next tick.
+
+Verified across 120→45, 45→120, 120→200 and 200→60: every track's spacing is a whole multiple of the new grid, and chords land 0.0ms from a drum hit in all four. Steady playback with no tempo change triggers no cancellation and is untouched.
+
+One note on the measurement, since it cost time here: hooking `triggerInstrument` records hits that were *scheduled*, including ones later cancelled, so the log kept showing an 80ms residue that was no longer in the audio. Filtering to surviving nodes is what made the fix legible.
+
+---
+
+## v0.97.71 — Tempo changes stretched the wait instead of snapping to the new grid
+
+Stepping back and taking the three constraints seriously — kit only, on tempo change, worse the bigger the change — finally located it. Every previous fix was aimed at steady-state playback, which was never broken.
+
+**What the retime was doing.** Both engines rescaled the time remaining until their next event by `prevBpm / newBpm`. That is mathematically correct: it preserves exactly how many beats away the next event is, and I verified that it does. It also stretches the *wait* by the full tempo ratio. Slowing 120→45 turned a 0.29s wait into 0.77s.
+
+For that stretched moment the kit produces nothing new, while the hits already handed to the audio graph keep sounding at the old spacing. Caught in the act: right after a 120→45 change the kicks were 0.667s apart — the old half-beat — while the new grid was 1.333s. The chords, which commit far fewer events per bar, were already on the new tempo. Hence chords ahead of drums, only with the kit, and worse the larger the change.
+
+**The fix is to snap rather than stretch.** Both engines now keep the unelapsed *fraction* of the current step and apply it to the new step length, so playback resumes in tempo almost immediately and leaves no window for stale audio to disagree.
+
+Measured across 120→45, 120→200 and 45→120: every chord now lands within 0.0ms of a kick, and every gap between kicks after a change is a whole multiple of the new grid. Before, the first gap was half what the new tempo called for.
+
+Also worth stating plainly: the steady-state timing was correct the whole time, and I kept re-measuring it because it was the thing I knew how to measure. The bug only ever existed in the transition.
+
+---
+
+## v0.97.70 — The chord scheduler could not survive a busy main thread
+
+Every measurement so far has come back clean while the problem stayed audible, which meant the measurements were wrong, not the ear. They were all taken on an idle headless container. The phone is not idle.
+
+**The chord scheduler queued only 0.1s ahead and drove itself with a chained `setTimeout`.** The drum kit queues 0.12s ahead on a `setInterval`. That difference is invisible when nothing else is competing for the thread and decisive when something is.
+
+Simulated a phone's render load — a 70ms stall every 200ms — and measured how far ahead of the audio clock each chord was actually scheduled. With the widened lookahead the tightest case had 9.4ms to spare. Under the old 0.1s window the same stall would have put it at **−90.6ms**: the note handed to the audio graph after the moment it was supposed to start, which the browser then plays immediately. Late by however long the thread was blocked.
+
+That is not a fixed offset, which is why compensating by a constant never worked. It varies with how hard the device is working, and it only ever hit the chords — the kit's larger window and `setInterval` cadence meant a stalled tick never pushed its next one back. Chords late, drums on time, exactly as reported.
+
+Three changes:
+
+Lookahead widened from 0.1s to 0.2s, so a tick can be delayed by up to 200ms and still schedule its notes in the future.
+
+The per-chord grid rebuild now runs in a `requestAnimationFrame` instead of inline. It was firing on the main thread at the precise moment a chord started — the same moment the scheduler needed to queue the next one — putting layout and paint work directly in the audio path. Cheap in a container, not cheap on a phone.
+
+Added `progSyncDiag()`, reachable from the console or the diagnostics panel. It records actual scheduled times on the device along with `baseLatency` and `outputLatency`, two numbers that do not exist in a headless container and differ wildly between devices. If this still is not fixed, run it while the drift is audible and the numbers will say where the time is going rather than leaving me to guess.
+
+---
+
+## v0.97.69 — The drums now share the same output chain
+
+"Groove works, kit doesn't" was the detail that solved this, and I had been walking past it for three builds.
+
+The chords and the metronome/groove both run through `buildLimiterChain`. The drum kit connected straight to its own gain node. That chain contains a `DynamicsCompressorNode`, which carries a 256-sample lookahead — measured at 5.99ms. So chords and groove were both delayed by the same 6ms and matched each other perfectly, while the drums came out 6ms ahead of both.
+
+That is why the groove always sounded right. It was never that the groove was correct and the kit was broken; it was that the groove shared the chords' delay and the kit didn't.
+
+**And it means the previous fix was actively wrong.** Compensating on the chord side aligned the chords to the drums while simultaneously pushing them 5.8ms off the groove, which had been correct all along. Fixing one pair broke the other, which is what you were hearing. That compensation is reverted.
+
+The drums now go through the same chain as everything else. All three voices carry one identical latency, so nothing needs per-voice correction — measured separately, each path now sits at 5.99ms with 0.0ms spread between them. In the app, chord and drum scheduling times are identical at 45, 120 and 200 BPM.
+
+Two things worth recording from the hunt. Instrumenting both engines showed the schedules were always correct, including at the tempo extremes, with zero accumulating drift over 16 seconds — so every tempo-scaling fix was aimed at a bug that wasn't there. And a fixed offset in the output path is the thing that behaves exactly like your description: constant in milliseconds, inaudible when beats are close together, obvious when they are far apart.
+
+---
+
+## v0.97.68 — The chords and drums take different signal paths
+
+The scheduling was never the problem. Instrumenting both engines at 50 BPM showed chord onsets at 0.0, 2.4, 3.6 and 4.8 seconds and drum onsets at 0.0, 1.2, 1.8, 2.4, 3.6 and 4.8 — every chord landing exactly on a drum. Perfectly aligned on paper, and still audibly off.
+
+**Because they do not come out of the speaker at the same time.** Chords run through the limiter chain: a low shelf into a `DynamicsCompressorNode`. The drum kit connects straight to its own master gain with no compressor. A `DynamicsCompressorNode` has a spec-mandated 256-sample lookahead — it delays the signal so it can react to peaks before they arrive — which at 44.1kHz is 5.8ms. Measured the two paths against each other in an offline context: 5.99ms of extra delay on the chord side, matching the spec figure almost exactly.
+
+So the chords were scheduled correctly and arriving 6ms late, every time, on every beat. A constant offset like that is buried at fast tempos and exposed once the beats have space around them — which is precisely "it's only obvious when I slow it down", and why two rounds of tempo-scaling fixes did not touch it.
+
+Chords are now handed to the audio graph 5.8ms earlier so both paths reach the output together. Verified in an offline render: the two arrive within 0.18ms, down from 6ms.
+
+The compensation applies only to the moment the note is handed over. `progNextAudioTime` still holds the true musical position, so the sequence's own spacing is untouched and nothing accumulates. The visual chord highlight also stays on the musical grid rather than the compensated time — the sound leaves the compressor on the grid, so that is when the eye should see it.
+
+---
+
+## v0.97.67 — The drums were running at a different tempo
+
+The actual cause, and it was never the attack envelopes.
+
+**The drum machine keeps its own tempo in `dk_bpm`**, and its scheduler computes every step length from that rather than from `bpm`. The two were being allowed to diverge, so the kit and the chords ran at genuinely different speeds. Measured after loading Mixed Rhythm: chords at 90, drums at 95. Changing tempo live was far worse — the chords went to 45 while the drums stayed at 90, a 2:1 mismatch.
+
+Two clocks a few BPM apart do not sound like a fixed offset. They slide continuously, which is why the chords seemed late at one point in the loop and early at another, and why it was obvious at slow tempos where each beat has space around it.
+
+**Two separate leaks, both closed:**
+
+Loading a preset set `dk_bpm = bpm` and *then* called `loadPreset()`, which ends with `dk_bpm = p.dk_bpm` — so the drum preset's own tempo won every time. The order is now reversed.
+
+Live tempo changes only synced `dk_bpm` inside `progRetimeForBpm`, which runs solely while the progression is playing and only in 'kit' sync mode. Every other tempo change left the drums behind entirely. The sync now lives in `setBPM`, which is the single place tempo changes and therefore the one place nothing can bypass.
+
+**Another temporal dead zone bug on the way in.** `dk_bpm` is a `let` declared far below `setBPM`, and a `let` accessed before its declaration throws rather than reporting undefined — so the `typeof dk_bpm !== 'undefined'` guard I wrote protected nothing and killed `setBPM` outright on early calls. Now a try/catch. Second time this pattern has bitten in this session; the rule is that `typeof` only guards `var` and undeclared globals, never `let` or `const`.
+
+Verified across preset loads, live changes from 30 to 200 BPM, and the drum machine's own setter: the two clocks now match in every case, and the standalone drum machine still keeps its independent tempo as it should.
+
+---
+
+## v0.97.66 — Chords were arriving late because of their attack, not their timing
+
+This one was not a scheduling bug at all, which is why the previous two fixes did not touch it.
+
+The chords were being scheduled at exactly the right moment. What was late was the *sound*: the default sine voice ramped from silence to full volume over **40ms**, and the low-frequency harmonic layer that runs under any note below 200Hz took **50ms**. A drum transient peaks in one to three milliseconds. So on every downbeat the kit hit its peak while the chord was still fading in, and the ear placed the chord roughly 20ms behind the drum.
+
+**And that explains the tempo detail exactly.** The lag is a fixed number of milliseconds, so it never changes with tempo — but at 180bpm it is 12% of a beat, buried in the groove, while at 60–90bpm there is space around every beat and nothing to mask it. Fast tempos hide attack lag; slow ones expose it. "Only when I slow it down" was the clue that it was a constant offset rather than drift.
+
+Attacks are now 8ms for the main tone and 12ms for the low harmonics — the latter kept slightly longer because a hard onset on a 60Hz sine is a thump rather than a note. That puts all three voices (synth, harmonics, samples at 9ms) within a few milliseconds of each other and well under the ~20–30ms threshold where two sounds start to register as separate events.
+
+Checked the ramps are still long enough to avoid the click they were guarding against: a ramp needs roughly half a waveform cycle to remove the step edge, and the shortest case here — a low C at 12ms — spans 0.78 cycles. Every register passes.
+
+---
+
+## v0.97.65 — Presets keep their name, and stop inheriting the last time signature
+
+Two bugs, and the screenshot showed both at once.
+
+**Presets showed CUSTOM immediately on load.** `progLoadPreset` set the active preset first, then called `progApplyTimeSig()` — which clears the active preset, correctly, because changing the signature by hand means the grid has diverged. During a load it runs as part of *applying* the preset, so clearing was wrong. Any preset declaring a time signature wiped its own name a moment after loading: 23 of the 66 presets do, which is the "a lot" in the report.
+
+Fixed by claiming the preset last, after every call that might legitimately clear it, with a flag that suppresses the clear for the duration of a load. Verified both directions: loading a preset keeps its name, and a hand edit afterwards still falls back to CUSTOM.
+
+**And the stretched bars: Mixed Rhythm was being played in 7/8.** It declares no time signature, so the old code skipped the block entirely and left whatever the previously-loaded preset had set. Its bars are written for four beats, so against a seven-beat bar they render as those long single-chord rows in the screenshot. The preset was fine; the state was leaking.
+
+A preset without an explicit signature is a 4/4 preset — its durations assume it — so loading one now resets to 4/4 rather than inheriting. Confirmed by loading a 3/4 preset and then Mixed Rhythm: it comes up in 4/4.
+
+---
+
+## v0.97.64 — The progression name is a label, not a second title
+
+You were right that it looked awkward, and the reason is a specific one rather than a matter of taste.
+
+I had given the progression name the same typeface, the same weight and the same theme colour as the module header directly above it. That makes two headings at the same visual level, and the standard guidance on this is blunt: levels must differ in more than size, and two elements styled alike compete for attention instead of establishing an order. The eye had no idea which to read first.
+
+It also mislabels what the thing *is*. TOOLS is the page title. The progression name says what is loaded inside that page — a level below, closer to what design systems call an eyebrow or a supporting label. Guidance for those is consistent: noticeably smaller than the heading, and never styled so prominently that it rivals it.
+
+Rendered five treatments side by side against the real header to compare rather than guess: the current one, a mono label, a demoted Cinzel, a mono label tinted with the module colour, and a Fraunces italic echoing the splash wordmark. The competing version is obvious once they sit next to each other.
+
+Went with the tinted mono label — it matches the label language the app already uses everywhere else, and keeping a trace of the module colour stops it reading as inert chrome. The header is Cinzel 700 at 33px; the label is mono 500 at 10px with wide tracking. Contrast measured 7.85–10.83:1 on dark and 5.75–7.05:1 on light, comfortably clear for small text.
+
+---
+
+## v0.97.63 — Progression title styled properly; the rest of the tempo drift
+
+**The title was still Bebas in flat white** — it had its own rule and never picked up the treatment the header titles got. Now Cinzel 700 in the module's theme colour, with the same light-mode ink treatment, and it truncates with an ellipsis so a long preset name cannot shove the buttons beside it off the row.
+
+**Preset name removed from the chip.** The title carries it now, so repeating it there was both redundant and the thing pushing the button around as names got longer. The chip is just PRESETS and a caret.
+
+**The remaining tempo drift, and why lowering tempo was worse.** The previous fix rescaled `progNextAudioTime` — the pointer for the next event *not yet queued*. But the chord already sounding was handed to the audio graph with the old beat length baked in, and nothing rescaled that. So the gap between the sounding chord and the next one was wrong by exactly the tempo delta. Slowing down made that gap too short, which is heard as the following chords landing off the pulse once your ear locks to the new tempo.
+
+The in-flight chord is now faded out to meet the recalculated boundary, so it does not overhang the new grid. A chord cut slightly short is far less noticeable than one that holds the wrong length and displaces everything after it.
+
+**The drum kit had the same bug and now has the same fix.** It keeps a per-track `nextTime`, each queued at the tempo in force when it was scheduled, so a change left every track spaced for the old tempo — the kit sliding against the chords. All pending track times are rescaled by the same ratio the chords and metronome use.
+
+Modelled the whole system across a slow-down and a speed-up: chords, metronome and every kit track keep their exact relative positions, so nothing slides against anything else.
+
+---
+
+## v0.97.62 — Progression can play sampled instruments
+
+Chord voice picker in the sync tray: SYNTH (the default and the fallback), plus Grand Piano, Rhodes, Nylon Gtr, Vibraphone and Harpsichord.
+
+**The engine needed a change first.** `SampleEngine.play()` started every note at `ctx.currentTime` — fine for tap-to-play, useless for a sequencer. The progression scheduler queues events about 100ms ahead, so a note that ignores its scheduled time fires whenever the tick happened to run: modelled at up to **89ms of jitter**, which against a properly-scheduled drum kit is audibly loose. `play()` now takes an optional absolute start time, defaulting to `currentTime` so every existing caller is untouched, and clamped so a stale time cannot schedule into the past. With it, onsets are sample-accurate.
+
+**Falls back rather than failing.** The instrument id resolves to null unless the buffers are actually loaded, so an unloaded, still-loading or failed instrument gets a synth chord instead of silence. The check runs per scheduler tick, so a progression started before the piano finished loading picks it up mid-playback rather than staying synth until restarted. The status line under the picker says which state it is in, because "I chose piano and it sounds like a sine wave" is otherwise a mystery.
+
+Two things caught while building this, both by testing rather than reading:
+
+**A temporal dead zone crash.** The status hook and the preload touched `SampleEngine` at parse time, but it is a `const` declared much further down the file. Unlike an undeclared variable, a `const` accessed before its declaration *throws* — so the `typeof` guard I had written was worthless, and the page logged "Cannot access 'SampleEngine' before initialization" along with two knock-on errors. Both now defer past parse.
+
+**A wrong instrument id.** I had listed the piano as `acoustic_grand`; the registry calls it `grand_piano`. That would have rendered a chip that silently never resolved — the exact failure the fallback is meant to make impossible, arriving through the front door instead. All five ids are now verified against the live registry.
+
+Your choice persists, and a stored instrument preloads 2.5s after launch so it is ready before the first play rather than stalling on the first chord.
+
+---
+
+## v0.97.61 — Tempo changes land immediately; progression title says what is loaded
+
+**The session stamp was escaping its own box.** It sits inside `.session-bar`, which is only 4px tall — that element is the progress hairline, not a container — and the stamp was anchored `bottom: 4px`, which put the text entirely outside those 4px, rendering over whatever happened to be above it. It survived on luck until the header above changed height. Now anchored below the hairline, in the empty space where nothing overlaps it.
+
+**Tempo changes now apply immediately instead of at the next bar.** The scheduler queues audio about 100ms ahead, and each queued event carries the beat length that was in force when it was queued. Change the tempo and those events keep the old spacing, so playback drifts until the sequence loops and re-anchors — the "out of sync until the measure starts over" symptom exactly.
+
+Waiting it out was never going to work, so the pending timeline is rescaled instead: the time still remaining before the next event is multiplied by the tempo ratio, so that event lands where the new tempo says it should. Notes already sounding keep their original length, since retuning one mid-flight would click. The bar anchor is rescaled too, or the groove swap on the next boundary fires at the wrong moment.
+
+**The metronome had the identical bug** and now has the same fix, since it is frequently the thing the progression is playing against.
+
+Modelled the correction: a 120→180 change previously left the next beat 167ms late, and over a 16-beat phrase that accumulates to roughly 2.7 seconds — the chords and the kit end up a full beat apart. With the rescale the error is zero.
+
+**Progression title is dynamic.** It was a hardcoded "PROGRESSION" sitting directly beneath a header that already said the same word. It now shows the loaded preset's name, or CUSTOM once the grid no longer matches one. Every path that clears the active preset already refreshed the label, so the fallback works without new plumbing.
+
+**On the sample engine question: progression is synth-only.** Chords are built from `REF_TONES[...].synth()` — Web Audio oscillators with added low-frequency harmonics — not the sampled instrument library. Worth knowing that moving it onto samples would be real work rather than a flag, since the scheduler currently assumes a synth node it can stop and fade.
+
+---
+
+## v0.97.60 — Nothing pops over the picker
+
+**Splash Screen now sits above Open To**, matching the order the two things actually happen.
+
+**The streak toast was firing over the module picker**, and the cause is a good example of an assumption quietly expiring. The toast was scheduled on a flat 3200ms timer, picked so it would land just after the splash — with a comment saying exactly that. The launcher moved the goalposts: 3200ms now lands on the picker, so a celebration covered the cards before anything had been chosen. Skipping the splash made it worse, firing the toast over the splash's own replacement.
+
+A timer cannot know where the person is, so guessing at a delay was always going to break. Startup celebrations now go through a queue that drains on **module entry** instead: choosing a card drains it, and so does a pinned launch where the picker never appears. Held items fire 900ms after the module settles, staggered 4s apart so two never overlap.
+
+Both streak paths (the celebration and the reset notice) go through it. A 12-second failsafe drains the queue if the launcher never initialises — losing a streak toast is minor, but silently dropping every future one because a flag never flipped is not.
+
+Verified across all four paths: suppressed while the picker is up, fires after choosing a card, fires correctly on a pinned launch, and anything queued after the drain still fires rather than being stranded.
+
+---
+
+## v0.97.59 — Header Title is not a setting; splash row is just ON/OFF
+
+**Header Title removed from Settings.** Adding it was inventing a preference for a question already answered — module names are simply what the app does, not something to configure. The flag stays in code, default on, because `setMode` reads it; it just is not a choice any more.
+
+Removed with it: `setHeaderModuleTitles()`, `_applyHdrTitleUI()`, the row markup, and six now-unused strings. Checked explicitly that `HEADER_MODULE_TITLES` itself and its declaration survived — that is precisely the mistake from v0.97.55, where a deletion took a still-referenced declaration with it.
+
+**Splash row is ON and OFF with no sub-captions.** The two-line chips were 39px tall against 24px for the pin row above them; they now match at 24px, and the row uses the same compact chip treatment.
+
+Verified after the removal: no page errors, launch still shows the module name, the splash toggle persists in both directions, and nothing stale is left in the panel.
+
+---
+
+## v0.97.58 — Launch settings grouped, and the header-title flag comes out of the code
+
+The three launch settings now sit as sub-rows under one **Startup** heading:
+
+- **Open To** — grid, or straight into a pinned module
+- **Splash Screen** — full intro, or straight in
+- **Header Title** — module names, or the app name
+
+They were already adjacent, but the pin row had no sub-label of its own, so it read as *being* the section and Splash Screen underneath looked like a separate one. Giving it a label makes all three read as peers answering the same question.
+
+**Header Title was code-only until now** — `HEADER_MODULE_TITLES`, set by hand or by whatever was in storage. It belongs in this group: it decides what the header says the moment a module opens, which is the same question as the other two rows.
+
+Unlike its neighbours it applies **immediately** rather than from the next launch, because it changes something already on screen. Verified both directions live: MODULE shows TUNER, APP shows Intonare, the choice persists, and the chip state follows.
+
+Checked the rendered panel in both languages at 360px: one Startup heading with three sub-rows beneath it, nothing clipped.
+
+---
+
+## v0.97.57 — Skip the splash (safely)
+
+**Splash Screen ON / OFF**, sitting under Startup with the pin chips, since both answer "what happens when I open this".
+
+**On the danger question: there is one, and it is not what it looks like.** The risk is not loading straight into a module — that path is already well tested, because deep links have always done exactly that. The risk is *how* you skip.
+
+`removeSplash()` is not just teardown. It fires the `splash-done` event, kicks off staggered sample preloading, and installs the iOS first-gesture audio unlock. That last one matters: WebKit creates the AudioContext suspended, and only a real user gesture can start it — a `resume()` from a timer silently fails. Tearing the splash down any other way would leave iOS with no sound at all, and nothing would look broken until someone tried to play a tone.
+
+So the preference routes through the same path deep links use, which calls `removeSplash()`. Verified by instrumenting `addEventListener` and comparing both paths: with the splash skipped, all four unlock listeners (`touchend`, `pointerdown`, `click`, `keydown`) are registered immediately; with the splash running they arrive once it finishes. Same handlers, same state — skipping just gets there sooner.
+
+Also checked that both paths converge: splash element removed, `_splashGone` set, launcher shown, header correct, no page errors either way.
+
+The setting applies from the next launch, since by the time Settings is reachable the splash has already run or been skipped.
+
+---
+
+## v0.97.56 — Fixing what the scaffold removal broke
+
+My fault, and a clean lesson in checking what a deletion takes with it.
+
+**`HEADER_MODULE_TITLES` was declared inside the switcher block.** When that scaffold came out in the previous build, the declaration went with it — leaving two live references to a variable that no longer existed. Referencing an undeclared `let` throws, so the branch that names the tuner and metronome failed silently and fell through to the app name. That is the "says Intonare on load".
+
+The flag is now declared at top level, next to `setMode` which uses it, where a future deletion elsewhere cannot take it out.
+
+**The header was also never set at boot.** The app comes up on the tuner, but `setMode` does not run at startup, so the logo underneath kept whatever it was initialised with. Nothing revealed that while the launcher covered it, but a pinned launch or a fast dismissal showed the stale name. A sync now runs once on startup.
+
+Deliberately **not** hung off the launcher: whether the header names its module has nothing to do with the grid, and tying it to a splash event would leave it stale on every path that skips the splash — deep links, reloads, pinned launches. It runs on its own once the DOM is ready.
+
+Verified in a browser rather than by reading: launch shows TUNER, all four tabs show their own name, no page errors, and every function the scaffold removal could have touched still resolves.
+
+---
+
+## v0.97.55 — New title face, per-module colour, and the switcher scaffold is gone
+
+**The title switcher was still in the build.** 46 variants, 112 CSS rules, the long-press picker, the shortlist cycling — all for choosing a treatment for a header state that the launcher work made obsolete. Removed: 15,098 characters of JS and 26,461 of CSS, with zero remaining references to any of it.
+
+**Module titles are now the default.** `HEADER_MODULE_TITLES` was still shipping `false`, so tuner and metro showed the app name unless the flag had been toggled by hand. Every tab now names itself, which is what the launcher work was heading toward: the app name is established on the splash and again on the grid, so a header repeating it was the inconsistency this whole thread started from. A stored preference still wins if one was set.
+
+**New face: Cinzel 700, replacing Bebas 400.** Bebas is a light condensed sans; at header size with a gradient fill it read as thin outlines, which is the "plain" in the report. Cinzel has real stroke weight and serifs, so it reads as chosen type rather than a default. It was already embedded for other surfaces, so this adds nothing to load.
+
+**Per-module colour.** In dark mode the title now takes the tab's `--theme-a` as a solid fill with a soft glow of the same colour, rather than a two-stop gradient clipped to the glyphs — the gradient was what made the letters read as hollow in the first place. Light mode keeps the flat ink from the previous build. Each module's title now carries its own colour in both modes: measured 9.20–13.65:1 on dark and 7.33–8.93:1 on light.
+
+Rendered both modes in Chromium to confirm Cinzel actually resolves rather than falling back silently.
+
+---
+
+## v0.97.54 — Light titles are flat ink; the Tools peek matches the others
+
+**The title fix last build was aimed at the wrong thing.** Testing the real rules in a browser showed the darkened gradient *was* applying — contrast was never the remaining problem. What made it look washed out and plain is the treatment: a gradient clipped to text renders each glyph as a fill with no edge, and Bebas at weight 400 on a pale ground then reads as hollow outlines rather than letters.
+
+So light mode now drops the gradient entirely and uses flat ink, with the theme hue mixed in at 42%. A solid fill has a hard edge at every stroke, which is what makes it read as type instead of an outline. Measured 7.33–8.93:1 across the four tabs, and a faint white text-shadow gives it the slight lift that ink on paper has.
+
+**The Tools peek was the odd one out**, and it was two problems at once. Visually it was a photoreal keyboard — white and black keys with a drop shadow — sitting among three flat line diagrams, so it read as a different kind of object. Structurally its solid block sat higher than the other peeks' content, which is the "a little high" in the report.
+
+It is now a pitch read drawn in the same language as the rest: thin bars in the module colour with the detected peak highlighted, a baseline axis, and the note and frequency underneath. Content now starts within 5px across all four cards, where the piano was noticeably above the others. The dead piano CSS and markup were removed rather than left behind.
+
+Verified by rendering both modes in Chromium: zero collapsed elements, alignment measured, and the light-mode piano rules replaced with spectrum equivalents so nothing was left pointing at deleted markup.
+
+---
+
+## v0.97.53 — Light mode for the header titles and the launcher cards
+
+Two things the screenshots showed, both the same root cause: elements designed against a dark ground and never re-anchored for paper.
+
+**Header titles were washed out.** The section and module titles are a gradient clipped to the text, built from `--theme-a` and `--theme-b`. Those flip to pale tints in light mode, so the word sat on an equally pale page: measured at **3.58:1** for the tuner and **3.62:1** for the metronome, under the 4.5:1 floor — and since the pale end of the gradient covers most of the word, it read worse than the numbers suggest. Both stops now mix 55% toward ink in light mode, which keeps the hue and puts every tab between **5.47:1 and 7.89:1**.
+
+**Launcher cards were nearly invisible.** The card faces, the peek elements and the module names were all tuned for a dark card. On light the metronome peek disappeared completely — pale amber body and BPM label on a pale amber face — and the names sat near-black on an almost-white card, so the cards read as flat rectangles rather than objects.
+
+Every tier is now re-anchored: faces take a real edge, the colour wash strengthens, names take ink, and each peek element mixes 52% toward ink so it holds against a light face instead of blending into it. The piano keys invert properly too — white keys lighten, black keys stay dark, the lit key keeps its tint.
+
+Verified by rendering the launcher in light mode in Chromium rather than reasoning about it: all four peeks legible, and card text measured at 10.49:1 for names and 5.35:1 for descriptions.
+
+---
+
+## v0.97.52 — Notifications could be turned off but not back on
+
+A one-way switch, and worse than it looked.
+
+Turning a reminder **off** never needed permission, so it always worked. Turning it back **on** called `notifRequestPermission()` and bailed with a bare `return` if that came back false. Once Android has latched "don't ask again", `requestPermissions()` resolves denied *without showing a prompt* — so the button did nothing, explained nothing, and looked broken. Same on web or PWA, where the plugin does not exist at all and every enable attempt failed silently.
+
+The greyed-out time picker was correct behaviour, incidentally: it disables while the reminder is off. The bug was that the toggle beside it had stopped responding, so there was no way back.
+
+Now a refused enable says so, in a hint under the Notifications heading pointing at the device setting, in both languages. The app has no general-purpose toast — `dtFireDailyToast` is a streak celebration and the wrong semantics for a refusal — so the message is inline where the control is.
+
+Verified by simulating all three cases: with permission granted the round trip works, with permission denied the enable is refused *and reports why*, and with no plugin at all the same. Previously the second and third cases were indistinguishable from a dead button.
+
+---
+
+## v0.97.51 — Startup moved to the top; launcher subtitles fit
+
+**The tuner subtitle was clipped because the launcher was borrowing the header's text.** `tuner_sub` is the subtitle shown in the header when a module names itself, where it has a full row; a card has two short lines, and 41 characters does not fit in them. Shortening the shared key would have changed the header too, so the launcher now has its own set: `lnch_sub_tuner`, `lnch_sub_metro`, `lnch_sub_train` alongside the existing tools one. All four are 16–26 characters in both languages.
+
+**And yes, they translate** — every launcher string has both an EN and IT definition, verified: the eleven keys the launcher touches all have exactly two definitions. Rendered the Italian set at 360px, which is the tighter case since Italian runs longer: nothing clipped, every subtitle on one line.
+
+**Startup moved from second-to-last to first.** It was sitting between Help Buttons and Advanced, which meant the one setting that changes what happens *every time the app opens* was among the hardest to find in the panel. Order is now Startup → Language → Feedback → Practice → Hints & Display → Advanced, which runs roughly from "what happens when I open this" through preferences to rarely-touched maintenance.
+
+Audited the panel while in there: all six onclick handlers resolve to defined functions, and all four section titles have both translations. No dead controls found.
+
+---
+
+## v0.97.50 — Fixing what the screenshot showed
+
+The screenshot surfaced several things, including two real bugs.
+
+**The train staff was invisible, not sparse.** Its lines are `<span>` elements, so they are `display: inline` by default, and an absolutely positioned inline element with a height but no content collapses to nothing. The notes drew because they have a width; the staff never did. Every peek element that needs a box is now explicitly `display: block`. Measured after the fix: zero zero-sized elements across all four peeks.
+
+**The pins were still there and had landed on top of the peeks** — removing the card icons left the pin in the top-right corner, where it now covered the preview (on the tuner it sat squarely over the first row). Pins moved to the bottom-left, beside the text and clear of the peek, with the text block padded to make room. Verified: the pin sits below the peek boundary on all four cards.
+
+**The tuner peek was showing the wrong screen.** String rows are the reference-tone list, not the tuner. It now shows what the tuner actually shows: the large note readout, the frequency, and a cents bar with the needle just off centre.
+
+**The metronome was ambiguous** because a ring with a number in it could be any dial. It now has the metronome's body and swinging beam with the weight on it, plus the accented beat row and the BPM, so the object is unmistakable.
+
+**The cards did not line up.** The face used `justify-content: flex-end`, so a three-line description pushed its card's title higher than the others — Tools was 5.1px out. The text block is now a fixed region in the lower part of the card, vertically centred, and Tools has its own shorter launcher subtitle (the full one belongs on the hub, not on a card) with a two-line clamp as a backstop. Measured after: all four titles align to 0.0px.
+
+Verified by rendering the real CSS in Chromium at phone width rather than reading it: zero peek overflow, zero collapsed elements, pins clear, titles aligned.
+
+---
+
+## v0.97.49 — Peeks show the actual modules
+
+The previous peeks were invented abstractions — a swinging needle, bouncing bars — rather than pictures of the app. They now show the real surfaces, built from the same elements the modules use:
+
+- **Tuner** — string rows, exactly as the tuner draws them: note name, cents readout, the active row highlighted
+- **Metro** — the beat ring with its BPM, beat dots above it, first beat accented
+- **Tools** — piano keys, the hub's most recognisable surface, one key lit
+- **Train** — the interval staff from ear training, two notes a third apart
+
+**And they are static now**, which you were right about: a preview does not need to move to be understood. That removes four running animations, all their keyframes, and any question about what they cost on launch.
+
+**The card icons are gone.** With a real preview on each card, a glyph in the corner was saying something the peek already says better. The icons remain in the tab bar, where there is no room for a preview. Removing them made `LNCH_ICONS` and `lnchSvg()` dead, so both were deleted rather than left as unused code in a file this size.
+
+**Settings chips fit one row.** Five options at the default chip size was far too heavy for a single setting. The app already had a precedent in `.sm-toggle-compact`, so these follow it: no wrap, tighter padding, 10px labels, chips sharing the width equally with ellipsis as a backstop. Measured against a 360px phone — the row needs roughly 221px in English and 249px in Italian, against about 300px available, so it fits in both with headroom.
+
+---
+
+## v0.97.48 — Cards preview their module
+
+The coloured top hairline is gone; the peek does that job better.
+
+**Each card now previews its module in the top half**, fading down into the module's colour and then into the text below. The tuner's needle settles either side of centre; the metronome's four beats sweep in time with the accent brighter; Tools reads a waveform; Train steps a note up a staff as if answering the one before it. Tools and Train each pick one representative idea rather than trying to depict six utilities at once.
+
+**These are CSS animations, not engine instances.** Four live canvases running behind a launcher would cost battery and startup time for a screen that shows for a couple of seconds and, once a module is pinned, may never be seen at all. Everything here is transform and opacity only, which the compositor handles without touching layout. They stop entirely under `prefers-reduced-motion` and pause the moment a card is chosen, so nothing animates during the exit.
+
+The icon moved to the opposite corner from the text and shrank — the peek owns the top of the card now, and the icon is a marker rather than the main event.
+
+**The background was flat because it was near-black and themed.** It used `var(--bg-0)`, which is set per tab, so the launcher's ground changed colour depending on which module you last used — the chooser sits above all four modules, so it should not inherit any of them. It now has its own neutral ground with two very soft radial pools giving the surface a lit centre, which also addresses the standard dark-UI advice that pure black reads as dead space.
+
+**Light mode was asked about, so it was audited rather than assumed.** Of 64 launcher rules, only three hardcode colours — the background, the card face and the pin — and all three already had light counterparts, with the new background getting one in this build. Everything else resolves through `var(--lc)`, the text tokens, or `rgba()`, all of which follow the theme automatically. Peek elements were checked for contrast against the card face in both modes: 8.1–12.2:1 on dark, 3.8–5.6:1 on light, all clearing the 3:1 floor for non-text.
+
+---
+
+## v0.97.47 — No flash, no title, real depth, and the metronome finally renames itself
+
+**The flash.** The launcher shipped `display:none` and was revealed by script, so anything between the splash finishing and that script running showed the bare tuner and its tab bar. It now ships *visible*, and a small inline script immediately below the markup hides it when a pin is set. That script is synchronous and runs before the browser paints, so the decision is made without any frame in which the wrong thing is on screen. The deep-link case still resolves later, since the launch URL isn't known until a promise settles, but it can only turn the launcher off rather than on.
+
+**The metronome kept saying Intonare, and it was a real bug.** The consistency branch tested `m === 'metro'`, but `setMode` is called with `'metronome'` — the tab button passes `setMode('metronome')`. The condition never matched, so only the tuner ever renamed itself. Fixed in both the tab handler and the toggle helper. Swept the file for the same mistake; the one other `=== 'metro'` is the progression tool's sync mode, where 'metro' is correct.
+
+**Title removed from the grid.** The splash showed it at 58–82px seconds earlier; repeating it above the cards was the same redundancy that started this whole thread. The grid is now cards centred in the space.
+
+**Why it felt flat, and what changed.** Card layouts deliberately flatten hierarchy — they present everything as peers, which is the pattern's known weakness, and four identical tiles is that weakness at full strength. The fixes are the standard remedies: cards now have real elevation so they read as objects resting on a canvas rather than regions painted onto it, using an inset top highlight since drop shadows are nearly invisible on a dark ground; the flat fill became a directional gradient tinted by the module's colour; each card gets a hairline of its own colour along the top edge so it has structure that is unmistakably its own; and each card now has three internal tiers instead of one — the icon sits in a tinted well, the name leads in the text colour, and the description recedes.
+
+**Settings uses the app's chips.** The bespoke segmented control is gone, replaced with `.sm-toggle-chip` so the row matches every other setting. The no-pin option is **OFF** rather than GRID, since the row asks which module to launch into and the empty state is that shortcut being off, not a fifth destination.
+
+An escaping mistake in the Italian string (`all\'avvio`) broke a script block and was caught by the block checker before it shipped; it now uses double quotes.
+
+---
+
+## v0.97.46 — The grid is a choice, not a screen you are already in
+
+Two changes, same intent.
+
+**The tab bar is gone while the grid is up.** It was showing because the bar is `z-index: 1000` and the launcher is 900, so it sat on top. Raising the launcher would have fixed the overlap without fixing the meaning: you have not entered a module yet, so there is nothing for the bar to indicate. It now slides down out of the way when the launcher opens and slides back as the chosen module arrives, which also makes the bar read as belonging to the module rather than to the app frame.
+
+The risk with a body-class approach is a stale class leaving the bar invisible forever, so the class is cleared on every path that skips the launcher, and the removal happens at the *start* of the exit so the bar rises while the launcher is still fading rather than appearing after everything settles. Verified by execution across four paths, including one with a deliberately stale class: unpinned boot hides it, choosing a module restores it, pinned boot clears it, deep-link boot never sets it.
+
+**Cards are smaller with room around them.** They were stretching to fill the screen, which reads as a screen you are already inside. Now they are capped at 340px wide and 60vh tall and centred in whatever space is left, with the gap opened from 9px to 13px. On a tall phone they stay card-shaped instead of stretching into panels. Hiding the tab bar contributed here too, since the grid gets the full height to be centred within.
+
+Also added a small press state — the card face scales down slightly on touch — so a tap feels like pressing a physical thing rather than triggering a screen change.
+
+---
+
+## v0.97.45 — The splash dissolves into the grid
+
+The launcher popped in after the tuner had already appeared, which is a sequencing bug with a nice fix hiding behind it.
+
+**Why it popped.** The splash does not cut — it dissolves over 1.3 seconds, and `removeSplash()` only runs when that finishes. The launcher was listening for `intonare:splash-done`, which fires *after* all of it. So the splash faded to reveal the tuner, and only then did the grid appear on top.
+
+**The fix.** A new `intonare:splash-dissolving` event fires as the dissolve *begins*, one frame before opacity starts moving. The launcher listens for that instead, so it is already in place and the splash dissolves into the grid. The old `splash-done` listener stays as a fallback for the paths where a dissolve never happens at all — deep-link skip, the 7-second failsafe, an early error — and a guard makes the start idempotent so the two listeners cannot double-fire. Verified across all five boot paths: exactly one start each.
+
+**Tying them together visually.** The launcher is not faded in, because the splash is fading out on top of it — it is *revealed*. What animates is underneath: the cards rise and fade up in a short stagger while the tagline and hint follow, so the splash's own logo appears to stay put as the grid arrives beneath it.
+
+That only works if the logo really does stay put, which exposed a second seam. The splash wordmark is Fraunces **italic 300** with the theme gradient; the launcher had roman 400 in flat off-white. Cross-fading those morphs one logo into a different one. The launcher wordmark now matches the splash exactly — same face, same weight, same gradient — with only the size differing (58–82px down to 34–46px), so the dissolve reads as the logo settling into place rather than changing into something else.
+
+Reduced motion skips the stagger entirely, and the picked-card animation overrides the entry delays so a fast tap doesn't fight the entrance.
+
+---
+
+## v0.97.44 — Module launcher
+
+The 2x2 grid is in the app. After the splash you pick a module; the card you tap grows while the others drop away, then the app appears behind it.
+
+**It also fixes the launch-mic problem as a side effect.** The tap is a real user gesture, so the AudioContext unlocks *and* we land on a mic surface in one action — no race with the RECORD_AUDIO grant, which was the suspected cause of the intermittent mic bug and the reason auto-start was deferred. That fix comes free with a navigation change we wanted anyway.
+
+**The tap is optional.** Pin a module from its card or from Settings → Startup and launch goes straight there; the launcher never appears. The settings row is the control rather than an escape hatch: a five-way segmented picker (GRID · TUNER · METRO · TOOLS · TRAIN) so a mis-pin is fixed in place instead of by hunting for a screen that no longer shows up. Both paths write the same state through `lnchSetPin()`, so they cannot disagree, and a stale pin naming a module that no longer exists is discarded on read.
+
+**Deep links bypass it entirely.** A shared link must open its module, not a chooser — the same reasoning behind the existing splash skip, where a link landing on a menu looks like the link failed. `lnchShouldShow()` checks the deep-link flag.
+
+Sequencing follows the lesson already learned the hard way in the deep-link handler: wait for the `intonare:splash-done` event rather than guessing a delay, with a fallback for the case where the splash has already finished. `prefers-reduced-motion` skips the card animation.
+
+Verified by executing the real code against a stub DOM, not by reading it: unpinned boot builds 4 cells and 5 segments and shows the launcher without setting a mode; choosing a card sets the right mode; pinning then rebooting skips the launcher and lands on the pinned module; unpinning from settings restores the grid and leaves exactly 5 segments; and the deep-link flag suppresses the launcher. EN and IT strings both present for all five new keys.
+
+Still open, and the reason this wants on-device time before it's considered done: the tab bar is `position:fixed` with `env(safe-area-inset-bottom)`, so the launcher currently overlays it rather than animating it. The card-becomes-header swoop from the prototype is not in this build; getting it right in the real app means transforming a wrapper, not the fixed element, or it jumps on home-indicator devices.
+
+---
+
+## v0.97.43 — Should the header say the app name at all?
+
+Daniele's question, and it reframes everything the last several builds were doing: I was iterating on the treatment of something that may not belong there.
+
+Mapping the four header states makes the case. **Tools** and **Train** name themselves. **Every module screen** names itself. All three use Bebas Neue tracked caps with the theme gradient. **Tuner and metro** are the only states showing the app name, and the only ones using Fraunces italic. So that state is the odd one twice over: wrong content and a different typeface from everything else.
+
+The splash already shows "Intonare" in Fraunces italic with the same gradient at 58–82px, against the header's 36–52px. The app name is established on launch, larger and with the animation; repeating it smaller in the header tells you which app you're in while you're using it.
+
+Added `HEADER_MODULE_TITLES`, toggleable from the top of the title picker. Turn it on and tuner/metro name themselves like every other tab, with new subtitles ("chromatic · instruments · reference tones", "tempo · grooves · drum kits") in both EN and IT. The existing `setHeaderSection` machinery already did all the work; the change is passing a name instead of null, plus a guard so re-entering the same tab doesn't re-fire the animation.
+
+Left as a toggle rather than shipped on, because it's a real design call and the tuner is the default landing screen — some argument exists for brand presence there, though the tagline underneath already carries the app's voice. Worth living with both ways for a day.
+
+If it stays on, the 55 title variants become decoration on a state nobody sees, and the honest follow-up is deleting the switcher and matching the module typeface instead. That's a good outcome: the title stopped feeling wrong because it *was* wrong structurally, not typographically.
+
+---
+
+## v0.97.42 — The combination without the hierarchy, plus shortlist cycling
+
+Dropping the value hierarchy leaves three treatments pulling the same direction — colour, spacing, depth — with nothing dividing the word, which is closer to the "one dominant move" principle than the four-way version was. The hierarchy was the element working against the others.
+
+Six variants, so it can be dialled rather than accepted or rejected whole. **k1** is the straight answer: 18% tint, tight tracking, overlay depth. **k2** and **k3** vary the tint (26% and 12%), **k4** and **k5** vary the tracking (eased and tighter), **k6** strengthens the depth cue to test whether the subtle version is doing anything at all on-device.
+
+Tint was swept specifically for whole-word use, where saturation matters more than on a fragment: 12% reads barely tinted, 34% pushes the tuner blue to 0.75 saturation and into vibration territory. 18–26% keeps every tab theme under about 0.7 while staying clearly coloured, and all six sit at 13.2–14.8:1. Light mode mirrors each as ink on paper, since `--theme-a` flips to a dark value there.
+
+**Also fixed a usability problem the switcher had grown into.** At 55 variants, double-tap cycling takes 55 taps to loop and the k-family sits at index 49 — useless for comparing two candidates. The picker now has a star against each variant: star two or more and the cycle visits only those, falling back to the full list when fewer than two are starred. The flash tag shows a star when a shortlist is active. Verified by simulation including the edge case of cycling from a variant that isn't itself shortlisted.
+
+55 variants total.
+
+---
+
+## v0.97.41 — The combination, graded; and a light-mode bug in the whole family
+
+Built the requested combination — tinted to the theme, tight tracking, light-overlay depth, value hierarchy — as five variants rather than four toggles, graded from restrained to full-strength. Wordmark practice is consistent that a mark wants one dominant move, and stacking four is a real risk, so the grading exists to find where it stops being tasteful: **h1** is tint plus tight tracking only, **h2** adds the value hierarchy, **h3** is all four, **h4** flips the hierarchy so the tint closes the word instead of opening it, and **h5** is all four at normal tracking, since tight tracking is a decision that deserves testing against not-tight.
+
+Colours were computed rather than picked. The bright tier is 18% theme mixed into the neutral, landing at 13.7–14.7:1 across all four tab themes with saturation between 0.25 and 0.59, so it re-tints per tab without vibrating. The dim tier needed more care: a 50% mix scored **2.4:1**, below even the 3:1 large-text floor, and this is half the app name — so the dim tier is #9b9ea8 at 7.3:1, still a clean 2x step below bright but never anywhere near unreadable.
+
+**Then measuring caught a bug affecting everything built in the last two versions.** The g and h families hardcode light colours (#dfe2ee, #9b9ea8), which is right on the dark ground they were designed against. In light mode the same values put near-white text on a near-white page: **1.5:1, versus a 4.5:1 floor**. Light mode also flips `--theme-a` to a dark value (#00546d and friends), so the tint mix produces a pale wash rather than a tint. Every affected variant now has a light-mode override mirroring the tiers as ink-on-paper: bright tier is 18% dark theme mixed into #1e2030 (12.8–13.6:1 across themes), dim tier is #6f717d (4.45:1). All 15 g/h variants verified covered.
+
+49 variants total, all validated by execution.
+
+---
+
+## v0.97.40 — The calm baseline, taken through colour, spacing and hierarchy
+
+Took the f8 baseline (Fraunces roman, off-white, no effects) and built a family of ten treatments around it. Same font throughout, so any difference between them is the treatment rather than a different typeface — the point being to find what the treatment should be now that the face is settled.
+
+**Building it surfaced a flaw in the baseline itself.** Inspecting the embedded Fraunces shows it is a *static* font with only three faces: 400 roman, 300 italic and 400 italic. There is no 450 roman — so f8's `font-weight:450` was being **synthesised by the browser**, a smeared 400 rather than a drawn weight. Faux weight distorts stems, which is precisely what type practice says to avoid, and it may be part of why the baseline felt nearly-right rather than right. Audited every variant for this and found three more doing the same thing: the split-weight variant asked for 300/600 roman, tight tracking asked for 500, weight contrast asked for 200/700. All four now use real drawn faces, with weight contrast built from italic 300 against roman 400 rather than two synthesised weights.
+
+The ten treatments: corrected baseline at a real 400; tinted neutral with 18% theme mixed into the off-white (14.4:1, ties to the active tab without ever being a saturated word); warm paper white as a deliberate counterpoint to the cool UI; tight tracking; open tracking; value hierarchy inside the word; an accent hairline underneath; the tittle of the i as the only colour; light-overlay depth (shadows are invisible on dark grounds, so lift comes from a faint top highlight); and tracked caps.
+
+Colour throughout follows the dark-UI findings from the previous build: the neutral base rather than pure white, and where the theme hue appears it is either heavily diluted into the neutral or confined to something small — 1.5px of hairline, or a tittle — never a large saturated word.
+
+44 variants total, all validated by execution: every variant has matching CSS, every wrap class is styled, every variant preserves `textContent`, the `[data-logo^="g"]` prefix rule doesn't leak onto non-family variants, and no rule anywhere now requests a Fraunces weight that has no drawn face.
+
+---
+
+## v0.97.39 — Double-tap advanced twice; colour and perception research
+
+**The double-tap bug was mine.** I bound both `touchstart` (which runs a tap counter) and `dblclick` to the cycle. Browsers synthesize a `dblclick` after a touch double-tap, so both fired and the title jumped two variants. Fixed: touch devices use the counter only, and `dblclick` is now a mouse-only fallback suppressed once any touch has been seen. Verified by simulation — one gesture, one advance.
+
+**The research went wider this time**, into colour theory and perception rather than just wordmark construction, and it turned up something measurable about the app's own palette.
+
+Material's dark-theme guidance is explicit that saturated colours should be avoided on dark backgrounds: they optically vibrate and cause eye strain, and desaturated colours are the recommended alternative. Measuring this app's palette against #0b0d14: **`--theme-a` (#5ee2ff) and `--theme-b` (#7aafff) are both 100% saturated**, and `--in-tune` is 85%. Contrast was never the issue — the title sits at 12.75:1, far above the 4.5:1 floor — but saturation is, and the title is the largest coloured element on any screen, so it's the worst-affected element in the app. Desaturating to ~60% holds 10.8:1 while removing the vibration.
+
+Two other findings applied: pure white on dark reads as stark and haloed, with light grey the recommendation (the current title uses a gradient rather than flat white, but the softened variants use #dfe2ee); and the distinction between mathematical and optical alignment — round letters need overshoot to read as level, which matters for "Intonare" where o, a and e are most of the word, and optical centring beats mathematical centring because of the gravity effect.
+
+Eight new variants apply these directly: desaturated theme colour, softened off-white, neutral word with the colour carried by a small dot (a saturated 5px dot doesn't vibrate the way a saturated 40px word does), round-letter overshoot, weight contrast instead of colour contrast, low-luminance fill with a bright hairline (light overlays are the dark-mode substitute for shadows, which vanish on dark grounds), optically lifted caps, and a deliberate no-effects baseline as the control the rest are judged against.
+
+34 variants total. All validated by execution: every variant has matching CSS, every wrap class is styled, every variant preserves `textContent`, and no invalid colour values remain (one was caught in this pass).
+
+---
+
+## v0.97.38 — Quick-cycle, eight research-driven variants, and a real bug in the switcher
+
+**The long-press wasn't conflicting with the tour.** The tour fires automatically 600ms after first launch when `tune_tour_done` isn't set; the Settings entry is a button, not a logo gesture. Long-pressing the title on a fresh install just meant the tour landed on top of the picker. No collision to fix.
+
+**But the switcher did have a real bug.** `#appLogo` doubles as the section title ("TOOLS", "TRAIN"), and `setHeaderSection` decides whether to animate by comparing the element's `textContent` against the app name. The bracketed variant set that text to `[Intonare]`, which never matches — so returning to the tuner or metronome tab would have fired a spurious section animation every single time. Fixed by making the brackets CSS pseudo-elements so `textContent` stays exactly "Intonare". Every variant is now checked for this, and the span-wrapping ones were already safe since spans preserve text.
+
+**Quick-cycle, no picker.** Double-tap the title steps to the next variant; two-finger tap steps back; a small tag shows which one you landed on for about a second. The picker is still there on long-press, and `logoPick()` / `logoNext()` work from a console. The point is being able to flip through while actually using the app, which is a different test from choosing in a modal.
+
+**Eight more variants, sourced from wordmark practice rather than my own taste.** The literature is consistent on two things: a wordmark needs *one* distinctive move — a ligature, a notch, a colour break, a spacing decision — rather than stacked effects, and it has to survive monochrome and favicon size. Also that wide tracking is an all-caps technique, since lowercase letters are drawn to sit close. So: a notch cut into the n, tight optical tracking, an na ligature, a counter dot inside the o, tracked monochrome caps, a raised initial, the i's tittle replaced by the in-tune dot, and a centre-line passing through the word. Each makes exactly one move.
+
+26 variants total. Verified by execution: every variant has matching CSS, every wrap class is styled, every variant preserves `textContent`, and cycling forward from any starting point visits all 26 and returns to the beginning.
+
+---
+
+## v0.97.37 — Title style switcher (18 variants, on-device)
+
+Mockups can only get you so far with a title; the real test is seeing it every time the app opens. So the eighteen candidates are now in the app itself. **Long-press the title for 700ms** to open a picker, choose one, and it persists across launches. "Current" is the shipping look and the default, so doing nothing changes nothing.
+
+Variants: the shipping treatment, three with the same Fraunces but less treatment (solid 400, roman, theme-tinted), five in faces already embedded (Cinzel, Bebas, Bebas wide-tracked, IM Fell, Rajdhani), three lockups with a mark (centre-marker bar, in-tune dot, accent letter), and six creative treatments (cents ticks underneath, split weight, bracketed mono, letterpress deboss, extended t-crossbar, octave dots).
+
+Scaling was the point of the design. Each variant is one CSS block keyed on `data-logo` plus one entry in `LOGO_VARIANTS`; adding another is those two things and nothing else. Variants that style part of the word (the accent letter, split weight, brackets, the t-crossbar) declare an optional `wrap` function and the renderer rebuilds the text with spans, so the header markup stays a single element and nothing else has to know the switcher exists. Everything inherits the base `.logo` rule and overrides only what it changes, and the theme-coloured variants use `--theme-a`, so they re-tint per tab like the rest of the app.
+
+Verified by executing all eighteen against a stub DOM: every one applies cleanly, every one has a matching CSS block, the wrap functions preserve the word, and selecting "Current" fully removes the `data-logo` attribute rather than leaving a stale one behind.
+
+---
+
+## v0.97.36 — Missing glyphs: every font was falling back on ♭ and ♯
+
+Extracted all twelve embedded fonts and tested their cmap tables against the characters the app actually renders. The result was worse than the one bad symbol that prompted this:
+
+**Every font is missing ♭ and ♯** — used 719 times, including the tuner's "♭ Flat / Sharp ♯" readout and every note name in the app. All of it was rendering in whatever the browser fell back to, which is the mismatch that was visible. Also missing everywhere: ş Ş İ (Karşılama). Cinzel and IM Fell additionally lack ã Ã (Baião, the Portuguese one) and ø (half-diminished). Rajdhani is the worst at 84 glyphs, no accented characters at all.
+
+Fixed by subsetting GNU FreeSans (GPL with font exception, so shippable) down to just the fifteen missing characters — 3.5KB — and embedding it as `GlyphFix` with a `unicode-range` covering only those codepoints. Appended to all 945 font-family declarations that use a custom face. Because the range is restricted to the missing glyphs, it fills gaps and cannot affect any character the real fonts already have.
+
+I'd initially said this needed a local re-subset on your machine. That was wrong: fonttools and the FreeFont family are both available here, so the whole fix is buildable in-container.
+
+Also produced `intonare_title_options.html`, fourteen title treatments rendered in the real embedded fonts at real sizes against the real background, for choosing on-device. Covers three groups: the same Fraunces with less treatment, alternative faces already in the app, and drawn lockups with a mark.
+
+---
+
+## v0.97.35 — Descriptions in roman numerals, and two cadence presets that contradicted their own names
+
+**All 65 descriptions rewritten.** Two changes:
+
+*Roman numerals instead of literal chords.* This matters more than consistency: the progression tool transposes, so a description reading "Am Dm E7" becomes wrong the moment someone hits ♯. Numerals stay true in any key. Key names are kept where the preset loads in a specific one ("in Cm"), since that's information rather than drift.
+
+*No editorialising.* Phrases like "the groove does the work", "two chords, endless groove", "the extensions are the sound" and "by design" were stating a stance rather than describing the preset. Descriptions now say what the thing is and stop.
+
+**Two cadence presets did not demonstrate their own cadences.** Checked every description against its actual chord data, which turned up a real content bug in the theory section:
+
+- **Authentic Cadence** was C Am F G, ending on V. That's a half cadence, which the app has separately. Now ii V I (Dm G7 C C), so it actually resolves to the tonic.
+- **Plagal "Amen"** was C G Am F, ending on IV — the reverse of what a plagal cadence is. Now I IV I (C C F C).
+
+Half Cadence (C Am Dm G, stops on V) and Deceptive Cadence (C F G Am, V steps up to vi) were already correct and are untouched.
+
+Five other descriptions misstated their own chords and were corrected: Soul Gospel is in F, not C; Minor 5/4 ends on v; Country Waltz's numerals were incomplete.
+
+Full table re-validated with the description checks added to the suite: no literal chord symbols in any description, no em-dashes, every preset categorised, and all the existing structural checks (groove and kit resolution, meter matching including kit time signatures, bar durations, chord roots and qualities) still passing across 60 grooves, 65 presets and 62 kits.
+
+---
+
+## v0.97.34 — Fix: seven presets were invisible in the picker
+
+**You couldn't find the new presets because they weren't being rendered.** The picker grouped presets by time signature using a hand-written list of six meters, and anything that didn't match a filter was silently dropped. Two separate failures:
+
+- **12/8 and 2/4 had no group at all**, so Slow Blues 12/8, Slow Blues (9ths), Gospel 12/8, Polka and March never appeared.
+- **The 4/4 filter tested `!p.timeSig`**, meaning presets that carry an explicit `[4,4]` fell through every filter. That hid Cumbia and Bossa (tritone sub) — and explains why Cumbia seemed to "disappear" after the audit moved it from 6/8 to 4/4. It wasn't relocated to a different section; it stopped rendering entirely.
+
+Seven presets in total were in the data and unreachable from the UI.
+
+**Regrouped by genre instead of meter**, which fixes the immediate bug and the underlying fragility. Genre now comes from a `cat` field on each preset, and anything without one falls through to an OTHER section rather than vanishing, so a new preset can never silently disappear again. Sections: Rock/Pop, Blues, Jazz, Soul/Funk, Latin, World, Electronic, Classical/Theory, Odd Meter, Other. This also matches how people actually look for presets, by style rather than by time signature.
+
+**Descriptions rewritten.** All 65 now avoid em-dashes, the word "cadence" as decoration, and the general register of AI filler. Plain and literal: "Three chords, most of rock built on them", "Two chords, endless groove", "V points at the tonic, then goes to vi instead". Chord spellings kept where they're the useful information. En-dashes remain in *labels* like "ii–V–I" since that's chord-relation notation rather than prose.
+
+Verified: 65 of 65 presets render, every preset has a category, zero em-dashes and zero instances of "cadence" in descriptions, and the full table still validates (60 grooves, 66 presets, 62 kits, all groove/kit references resolving, all meters and bar durations correct, including the kit-meter check added in 0.97.33).
+
+---
+
+## v0.97.33 — Salsa, 2/4 meter, and a piano montuno in the song bank
+
+**Salsa was a conspicuous hole.** The montuno groove and Son Clave kit both existed but nothing reached them, while cumbia, samba, bossa, cha-cha-chá and bolero were all present. Added **Salsa** (i–iv–V–i montuno vamp) and **Salsa (ii–V vamp)** with the half-diminished ii and altered dominant that gives minor-key charts their heat.
+
+**2/4 was the one missing meter.** Grooves existed for 3, 4, 5, 6, 7, 9, 11 and 12 beats but nothing in 2, though sigMap already mapped it. Added POLKA 2/4 and MARCH 2/4 grooves plus **Polka** (I–V–I–IV) and **March** (I–IV–V–I) presets. Sources: polka's hallmark is the oom-pah — bass on the downbeat, chord on the offbeat, producing the accented upbeat that makes it bounce; marches share the duple frame but are squarer, which is why the two grooves differ.
+
+**A real piano montuno in the song bank.** Right hand plays a guajeo — the syncopated two-bar ostinato that fills the mid-range and locks to clave, accenting offbeats rather than downbeats. Left hand plays a tumbao that accents the "and of 2" (the 5th) and beat 4, where it *anticipates the next bar's root*; beat 1 is tied over and deliberately not restruck after the opening statement, which is what produces salsa's forward lean. Verified programmatically: all four bars anticipate correctly, exactly one left-hand note falls on a beat 1, and half the right-hand notes are offbeat. Written as an original demonstration pattern to the documented conventions, not a transcription.
+
+**Two new drum kits, and the check that forced them.** Pairing the March preset with the existing "6/8 March" kit looked fine to every existing validator, but that kit declares ts=6 against a 2/4 preset. Kits aren't meter-validated anywhere, so this class of mismatch was invisible. Wrote a new kit-ts-vs-preset-meter check, which revealed that **no ts=2 kit existed at all** — so the 2/4 presets had nothing correct to pair with. Added **2/4 Polka** (kick on the downbeat, snare on the offbeat) and **2/4 March** (both beats firm, no lilt) to the ODD TIME category. The new check now reports zero clashes across all 66 presets.
+
+Totals: 60 grooves, 66 presets, 62 kits. Meters covered: 2/4, 3/4, 4/4, 5/4, 6/8, 7/8, 9/8, 12/8.
+
+---
+
+## v0.97.32 — Audit of the new presets: one harmony error, one tempo error, two mislabels
+
+Re-checked everything added in 0.97.28–31 against sources, with the roman-numeral claims verified programmatically against the actual chord data rather than trusted.
+
+**Disco (Philly strings) had a real harmony problem.** It used Dmaj7, which puts a C♯ against an A-minor tonic — a stretch even for Philly soul's borrowed colour — and the description called it "IVmaj7", which is wrong twice over since IV in a minor key is minor. Changed to Dm9: the lushness stays, it's in key, and the ♭VIImaj7→V7 turn is the actual gospel-tinged cadence the sources describe for the style.
+
+**Bulerías was at half speed.** Sources put it at 195–240bpm counting the individual beats of the 12-count. The groove is 6 beats per bar (two bars = one compás), so the bpm field is the beat rate, and 120 gave a 6.0-second compás against a real ~3.0–3.7. Now 200, giving 3.6s. Soleá stays at 108 (a 6.7s compás), which is right for the slow grave end of the same family, and now says so in a comment.
+
+**Two labelling fixes.** The bossa tritone sub was described as D♭7♯11 while the data says C♯7♯11 — same pitches, but the sub of G7 is properly spelled D♭. CHORD_ROOTS is sharps-only app-wide so D♭ isn't expressible; documented at the chord rather than left as a silent discrepancy.
+
+**Verified correct and left alone:** the Dorian IV in Afrobeat, Deep House (Dorian) and Disco is genuinely major over a minor tonic (D7 supplies the F♯ that natural minor lacks), which is exactly the "im7 to IV7" move sources describe — and House (Dorian 9ths) is correctly distinct from Deep House, which uses Dm7 and stays natural-minor. Trap's Phrygian ♭II checks out: A♯maj7 contains A natural, so it sits consonantly over an A tonic. Samba's I–VI7–ii–V7, the Afrobeats im7–♭VImaj7–♭VII, and the 12/8 blues I7–IV7–V7 all match their sources.
+
+Full table re-validated: 58 grooves, 62 presets, 60 kits, no duplicate ids, all step arrays match their meters, all beats values in sigMap, every groove and kit reference resolves, every bar's durations sum to its time signature, and every chord quality exists in CHORD_DICT (the check that caught the silent B♭13 in 0.97.29).
+
+---
+
+## v0.97.31 — 12/8 meter, plus disco, cha-cha-chá and trap
+
+**The structural gap: 12/8 didn't exist.** There were 12/8 Blues and 12/8 Gospel *kits* in the drum machine, but no 12-beat groove and no 12/8 progression preset — so the meter was unreachable from both tools and those kits could never be selected. 12/8 is compound quadruple (four dotted-quarter beats, each split into three) and is not interchangeable with 6/8, which has two; sources describe it as essential to slow blues, gospel, doo-wop and slow rock ballads. Added SLOW BLUES 12/8 and GOSPEL 12/8 grooves plus three presets: **Slow Blues 12/8** (I7–IV7–V7), its spicier twin **Slow Blues (9ths)** for the uptown B.B. King voicing, and **Gospel 12/8** (I–vi–IV–V ballad).
+
+**Disco** got its own groove rather than reusing funk4. Four-on-the-floor with the backbeat on 2 and 4 is only half of it; sources single out the open hi-hat on every offbeat "and" as the key to the whole groove, which is exactly what distinguishes it from plain funk. Presets: **Disco** (im7–IV7 club vamp, deliberately minimal since the groove is the genre) and **Disco (Philly strings)** for the lush Philadelphia-soul end.
+
+**Cha-cha-chá** — new groove and preset. Jorrín deliberately reduced the syncopation so dancers could follow it, so the groove is steady quarter-note cowbell with the "cha-cha-chá" triple step landing on 4-and-1, less syncopated than mambo by design. The preset is a ii–V–I coro vamp, matching how the coro section cycles a short harmonic loop for the rest of the tune.
+
+**Trap** — new groove and two presets. Sparse half-time kick (beat 1 and the "and" of 3) leaving room for the 808, clap on the backbeat, busy hats; the contrast between sparse kicks and rushing hats is the genre. **Trap** (im–♭VI–♭VII) and **Trap (sus + Phrygian)**, since sus voicings on the tonic and the Phrygian ♭II are both cited trap moves. Harmony stays minimal on purpose: sources note trap's character comes from *when* chords change rather than which ones.
+
+Caught during validation: both 12/8 grooves were first written with 12 steps when the grid needs 24 (the app uses two steps per eighth, matching the existing 6-beat compound grooves). Fixed before shipping.
+
+Totals now 58 grooves / 62 presets / 60 kits, full table valid. Reachability: grooves 26→31, kits 31→37. Meters covered: 4/4, 3/4, 6/8, 12/8, 5/4, 7/8, 9/8.
+
+Deliberately not added: progression presets over the bare clave grooves (son/rumba/tresillo) and the African bell patterns (shiko, gahu, kpanlogo, fanga) — those are rhythm-teaching primitives, not song forms, and a chord loop over them would be arbitrary. The FILLS kits are fills by definition. Coverage for its own sake would be padding.
+
+---
+
+## v0.97.30 — Eight new progression presets, chosen to unlock unused content
+
+Audited which grooves and kits the progression tool could actually reach, and found that **31 of 53 grooves and 33 of 60 kits had no progression preset pointing at them** — more than half the rhythm content in the app was invisible from this tool. So rather than inventing new material, these eight presets expose what was already built.
+
+Each is sourced, and each ships with a "spicier" twin so the pair teaches something:
+
+**Samba** — I–VI7–ii–V7 (Cmaj7–A7–Dm7–G7). Sources describe this circle as the foundation of traditional samba, samba pagode and samba enredo; the VI7 secondary dominant is what keeps it turning, and it's distinct from the bossa ii–V–I already present. Twin: **Samba (tritone subs)**, Jobim's "One Note Samba" move — iii–VI–ii–V with tritones substituted for the VI and V, giving the chromatic bass descent Em7–E♭7–Dm7–D♭7.
+
+**Afrobeat** — Fela-era modal vamp, im7 to IV7 (Am7–D7). Afrobeat sits on one or two chords for minutes while the groove works. Twin: **Afrobeats (modern)** — im7–♭VImaj7–♭VII, deliberately separate because modern Nigerian pop (Wizkid, Burna Boy) is a genuinely different genre from Fela's Afrobeat despite the near-identical name; sources are explicit that conflating them is a mistake.
+
+**Deep House** — Am7–Dm7, the two-chord m7 foundation. Deep house uses extended voicings exclusively (plain Am is "too thin", m7 the minimum). Twin: **House (Dorian 9ths)** — the same vamp with the IV going major (Am9–D9), the Larry Heard move that shifts it from melancholy to soulful.
+
+**Bulerías** — A–B♭ por medio. Bulerías is the fastest 12-beat palo, normally in A Phrygian with a sharpened third, and the traditional rasgueado alternates just those two chords rather than the full Andalusian descent. Twin: **Soleá** — the same Andalusian cadence slow and grave over the 12-beat compás accented on 3, 6, 8, 10, 12, which is exactly what the app's COMPÁS SOLEÁ groove plays.
+
+Reachability: grooves 22→26 of 52, kits 27→31 of 60. Newly exposed: the samba, afrobeat, funk4, flamenco and compás grooves, and the Samba, Afrobeat, 4-on-Floor and Basic House kits.
+
+Validated with the eval-based method: all 54 presets resolve their groove and kit, every groove's beats match its preset's time signature, every bar's durations sum correctly, and every chord root and quality exists in CHORD_ROOTS and CHORD_DICT.
+
+---
+
+## v0.97.29 — Final audit pass: a silent chord in Jazz Blues
+
+Re-audited everything with a changed method: instead of regex extraction (which is what hid the BOOM BAP groove), the three arrays — 53 grooves, 46 presets, 60 kit presets — were eval'd in a real JS engine and cross-checked structurally: duplicate ids, step-array lengths vs meters, sigMap coverage, groove/kit resolution, bar durations summing to the time signature, and every chord's root and quality validated against CHORD_ROOTS and CHORD_DICT.
+
+That last check — which no previous pass performed — caught one real, audible, pre-existing bug: **Jazz Blues bar 3 contained a B♭13, and no `13` quality exists in CHORD_DICT.** `chordGetMidi` returns `[]` for unknown qualities and the caller passes the empty array through, so those two beats played *silence*. Changed to B♭9 — same dominant function, already used elsewhere in the preset. (Adding a proper 13th quality to the global chord dictionary is the fuller alternative if ever wanted; it touches the chord tool's picker, so it wasn't done as a drive-by.)
+
+Everything else verified clean: bar durations sum correctly across all 46 presets including the four new variants, no duplicate ids, all references resolve, all audit fixes from 0.97.26–28 intact. A session-wide sweep also re-confirmed the lid unlock, Waldstein's perf block and credits line, the 38 journey entries with the two tier moves and the six hand-tuned ms sets, the RT_TUNED badge machinery with the TDZ fix, all five Leg Tuner perf-mode fixes, the flagged-off auto-start scaffold, and vocalrange in the native mic surfaces — 22/22.
+
+(Two initial "failures" in the sweep were the checker tripping over its own artifacts: the lid selector legitimately appears in both the lock list and the later unlock rule that overrides it, and the only remaining `q:'13'` string is inside the explanatory comment documenting the fix.)
+
+---
+
+## v0.97.28 — Audit correction + four "spicier" preset variants
+
+**Correction first: the v0.97.26 claim that the Hip-Hop preset's groove didn't exist was wrong, and the "fix" made things worse.** The groove is real — its id is `'hip hop'`, with a space, and it's called BOOM BAP (kick on 1, snare on 2, kick on the "and-a" of 3, snare on 4). My extraction regex matched ids as `\w+`, which excludes spaces, so the groove was invisible to the audit; I declared it missing and rerouted the preset to a generic backbeat, replacing a genuine boom-bap pattern. Reverted — `hiphop_minor` points at BOOM BAP again. Re-audited with space-tolerant matching: it's the only spaced id, so nothing else was hidden, and the real groove count is 53, not 52.
+
+Also worth recording, since it looked like a bug: **the Cumbia preset didn't disappear.** The picker groups presets by time signature, and moving cumbia from 6/8 to 4/4 in the audit relocated it out of the 6/8 section into the larger 4/4 list.
+
+**Four new preset variants**, each teaching a specific harmonic technique rather than just adding extensions. Because the picker groups by meter, each lands beside its plain twin, so they A/B directly:
+
+- **Andalusian (flamenco)** — Am–G–F–E7♭9. The ♭9 is the F natural flamenco guitarists leave ringing on the E, turning it into a Phrygian dominant. Kept separate so the plain preset stays the clean teaching shape.
+- **Neo-Soul (extended)** — Am9–Fmaj9–Cmaj9–G9. The original was diatonic sevenths, which is jazz-lite; the 9ths and 13ths *are* the genre.
+- **Bossa (tritone sub)** — Dm9–D♭7♯11–Cmaj9. Same ii–V–I with the V replaced a tritone away; shared guide tones keep the pull to C while the bass walks D–D♭–C.
+- **Gospel 6/8 (passing)** — C–C7–F–Fm–C–G7–C. Gospel's signature is what happens between the triads: the I7 pulling to IV, the borrowed minor iv walking home.
+
+Caught during validation: the Andalusian twin had been given the `flamenco` groove, which is a 6-beat bulería, against a 4/4 preset. Corrected to `habanera` to match the plain version. Full meter/groove/kit cross-check now passes across all 46 presets.
+
+---
+
+## v0.97.27 — Three flagged grooves resolved with sources
+
+Went back to the six items the v0.97.26 audit had flagged rather than fixed. Three turned out to be answerable from sources and are now corrected; three are genuine judgment calls and stay flagged. Report updated with the reasoning and citations for each.
+
+**REGGAE ONE-DROP** — beat 1 is dropped entirely and the kick lands with the cross-stick *on beat 3*, where it must dominate. The old pattern accented 2, 3 and 4 equally, flattening the exact effect that names the groove. Now beat 1 empty, beat 3 strong, 2 and 4 light.
+
+**MOTOWN** — the signature is snare on every quarter note, not the "&-of-1 / &-of-3" push that was there. Sources are consistent on this (Drumeo, Drumhelper, Redison; Richard "Pistol" Allen on "It's the Same Old Song"). Now quarters throughout with 2 and 4 strongest.
+
+**DANCEHALL** — dembow is documented precisely as a 3+3+2 tresillo with the snare on 16th-steps 4 and 7. The old pattern was kick-only on 0/6/10/14 with no snare interlock, so it had the syncopation roughly but not the "boom-ch-boom-chick".
+
+**Still flagged, and not for lack of research:** jazz swing is a representation limit (swing is triplet-based; the grid is 4 steps per beat and cannot divide by three, so any pattern is an approximation chosen by ear); bossa is a design-intent question (the clave is documented, but whether this preset should be the clave or a comping figure is a choice); gahu has real regional variants and the literature treats it comparatively rather than canonically, so "fixing" it would mean elevating one school's version.
+
+---
+
+## v0.97.26 — Progression tool audit: meters, patterns, pairings (20 fixes)
+
+Full audit of all 42 progression presets, 52 grooves, and 60 drum-kit presets against genre sources. Full report with sources in progression_audit_report.md. Headline findings, all fixed:
+
+**Cumbia was wrong three ways.** Built as 6/8 when cumbia is duple (2/2, 2/4, modern 4/4 — no source anywhere supports 6/8); the app even disagreed with itself, since the rhythm cards and the drum machine's own 4/4 Cumbia kit already had it right while the progression preset ignored that kit for a generic "6/8 Feel". Rebuilt: 4/4 at 92bpm, i–iv–V–i (Am–Dm–E7–Am, the Sampuesana-family tonic/dominant vocabulary), paired with the actual Cumbia kit, groove rewritten as the guacharaca "chu-chucu" cell.
+
+**The Hip-Hop preset's groove never existed.** `groove: 'hip hop'` matched no groove id; the lookup failed silently but groove mode still switched on, so whatever groove was previously loaded leaked through. Now points at funkback.
+
+**Five more meter errors:** calypso 6/8→4/4 (duple per Merriam-Webster/MasterClass), siciliana 3/4→6/8 (Oxford: 6/8 or 12/8 dotted lilt), çiftetelli 11/8→4/4-over-8/4 with the real D-K-T-K-T-D-D-T cell (11/8 is kopanitsa, already listed separately), joropo 4/4→3/4 with the sesquiáltera cross-accent, and ESKISTA renamed KARŞILAMA — the 2+2+2+3 pattern is textbook Turkish 9/8, while the actual Ethiopian groove (chikchika) is 6/8; the Ethiopian Minor preset relabelled to match.
+
+**Eight pattern fixes where the steps contradicted the canon and usually the app's own comments:** tresillo (was 3+4+1; comment says 3+3+2), habanera (now the real dotted-quarter/eighth/quarter/quarter bass), blues shuffle (was a dotted-8th hemiola chain; now swung pairs per beat), maqsum (now the documented D.T...T.D...T... skeleton), irish jig (was accenting every 3rd 16th — the anti-jig hemiola), tarantella (now the quarter+eighth gallop), aksak (now a real 3+2+2), rachenitsa (now a real 2+2+3 — the old steps confused 8th positions with 16th steps).
+
+**Also:** QUINTILLO renamed 5/4 OSTINATO (cinquillo is a Cuban duple cell, not 5/4); BOLERO origin clarified (the 3/4 bolero is Spanish; Cuban bolero is 4/4); pachelbel's incoherent Bossa-kit-under-backbeat pairing → Half-Time.
+
+**Verified correct, untouched:** all four claves (son/rumba × 3-2/2-3), kopanitsa, shiko, soleá compás, the waltz family, all jazz/blues/funk pairings, andalusian cadence, Royal Road, rhythm changes.
+
+**Flagged in the report but deliberately NOT changed (feel judgment calls):** jazz swing's grid approximation, the bossa pattern vs the bossa clave, one-drop beat-3 emphasis, Motown accents, dancehall looseness, gahu variant, fifties/pop1645 near-duplication, and two optional new grooves (real boom-bap hip-hop; Ethiopian 6/8 chikchika).
+
+Validated after the fixes: all 52 step arrays match their meters, all beats values covered by the metronome sigMap, every preset's groove and kit reference resolves.
+
+---
+
+## v0.97.25 — Leg Tuner works on performance-mode songs
+
+The Leg Tuner was written for grid songs and never updated for performance mode, so every perf song behaved wrongly in it. Three separate bugs, one of them destructive.
+
+**Export silently dropped `ms`.** The serializer emitted only `{b,s}`, so pasting an exported table back into the file deleted every `ms` value — reverting all 21 perf songs to beat-based seeking, which is meaningless without a beat grid. Anyone who tuned a song and pasted the result would have quietly broken the rest. Export now preserves `ms` where present and stays clean for grid songs.
+
+**Playback seeked by beats.** `playLeg` used `b*beatMs` regardless of song type. Perf songs' `b:` values are nominal placeholders, so ▶︎ landed nowhere near the intended music — the "too short / wrong spot" behaviour. It now prefers the hook's absolute `ms` for perf songs, matching what `rtDistractSongStart` does at runtime.
+
+**Timelines were blank.** `songBeats()` and the note-tick renderer both read `rh`/`lh`, which perf songs don't have, so the bar count fell back to a default and no ticks were drawn — the "no legs at all" symptom. Both now derive a nominal beat axis from the perf block's real duration and map note onsets onto it.
+
+Also: the edge-edit buttons moved `h.b` only, so on perf songs the row would change while playback kept hitting the old position. `edgeEdit` now keeps `h.ms` in step.
+
+Export round-trip verified against both a grid and a perf song: grid stays `{b,s}`, perf keeps `{b,s,ms}`.
+
+---
+
+## v0.97.24 — Fix: Leg Tuner rendered empty (regression from v0.97.23)
+
+The badge work in v0.97.23 left `card.dataset.needs=(_needs?'1':'0')` sitting one line ABOVE the `const _needs = ...` that defines it. `const` is subject to the temporal dead zone, so reading it early throws `ReferenceError: Cannot access '_needs' before initialization` — on the first song, which killed the whole `Object.keys(RT_JOURNEY).forEach` loop and left the panel with no cards at all.
+
+Moved the declaration above its first use. Verified by extracting the card-building loop and executing it against stub data: renders the card, sets `dataset.needs`, emits the badge. Also reconstructed the previous ordering in isolation to confirm it was genuinely the cause rather than a coincidence.
+
+Worth noting for future edits here: `node --check` passes on TDZ bugs because they're runtime faults, not parse errors, so the syntax gate can't catch this class. Reordering a declaration relative to its use needs an actual execution check.
+
+---
+
+## v0.97.23 — Leg Tuner marks songs that still need tuning
+
+The tuner's yellow "changed" highlight compares against a snapshot taken when the panel opens, so it forgets everything the moment you close it — useful for spotting edits in the current session, useless for tracking what's been tuned across sessions. Added a persistent marker instead.
+
+`RT_TUNED` is a sign-off list (starts empty) and `rtNeedsTuning(id)` returns true for any song that plays from a `perf` block and isn't on it. Those songs get a "NEEDS TUNING" badge in the tuner card header, plus a "Show untuned only (n)" toggle in the toolbar that hides everything else. Add an id to `RT_TUNED` once its legs feel right and it stops being badged.
+
+Perf songs default to untuned deliberately, and it catches both cases: the fourteen entries added in v0.97.21 have analytically-placed hooks no human has heard, and the seven older ones (Clair de Lune, Prélude in E minor, Moonlight I & III, Liebestraum, Für Elise, Prelude in C) *were* tuned by ear — but against their pre-conversion grid versions. Performance mode replaced the timing wholesale, so that tuning is stale and wants redoing. Grid songs keep their original hand-tuned hooks and aren't flagged.
+
+Currently flags 21 of 38 journey songs; the other 17 are grid-based and left alone.
+
+---
+
+## v0.97.22 — Road Trip tier corrections
+
+Audited the tier assignments from v0.97.21 by measuring note density across the whole table, and found the new entries had been tiered on a scale the existing ones were never measured against. Perf songs capture every real note (ornaments, pedal-blurred passagework), grid songs are simplified arrangements — so density isn't comparable between the two kinds. Grid songs in the table run 1.3–7.7 notes/sec; perf songs run 3.2–19.6.
+
+The visible symptom: Fantaisie-Impromptu (11.3 n/s) and Wedding Day at Troldhaugen (11.7 n/s) sat in MEDIUM while being denser than *every* grid song in HARD (max 7.7). Moved both to HARD. Fantaisie-Impromptu is a virtuoso showpiece by any reading, so it was misfiled regardless of the numbers.
+
+Distribution is now easy 10 / medium 13 / hard 15 across 38 entries.
+
+Left alone deliberately: pre-existing grid-song placements that look odd numerically (Carol of the Bells at 3.8 n/s in HARD, Raindrop at 5.6 in EASY). Those were presumably tiered by ear when the table was built, and ear beats formula here — especially since in Road Trip the song is a *distractor* you sing against, where tempo, register and harmonic activity matter as much as raw note count. A slow dense piece distracts less than a fast sparse one. Final tiering wants a few trips per difficulty on-device.
+
+---
+
+## v0.97.21 — Road Trip journey entries for the performance-mode songs
+
+Road Trip draws its journey songs from `RT_JOURNEY`, which is a separate table from the piano bank — adding a song to RIFFS doesn't put it in Road Trip. Twenty-one perf songs had accumulated without journey entries, so they could never be picked for a trip. Added the fourteen piano ones: Alla Turca, Barcarolle, Butterfly, Fantaisie-Impromptu, Moonlight II, Prélude in C-sharp minor, Prélude Op. 23 No. 5, Raindrop, Sonata Facile, To Spring, Träumerei, Troika, Waldstein I, Wedding Day at Troldhaugen. Table goes 24 → 38 entries (easy 10 / medium 15 / hard 13).
+
+Hooks carry absolute `ms` rather than beats. That's required, not stylistic: `rtDistractSongStart` prefers `hook.ms` whenever the song has a perf block, and falls back to `hook.b * (60000/bpm)` otherwise — which is meaningless for a perf song, since it has no beat grid. `b:` is retained as a nominal value only.
+
+Hook placement used the same note-density approach as the original table: five target positions across the piece, each nudged to the densest 2-second window within ±6s so legs land on active material rather than quiet spots. Tiers assigned by notes per second (<7 easy, <12 medium, else hard). These are analytic starting points and have NOT been tuned by ear — they want a pass with the Leg Tuner (long-press the ROAD TRIP title, or `window.rtTuner()`, which has an Export table button for pasting values back).
+
+Rhodes (`_rh`) songs deliberately excluded: `rtPickJourneySong` filters on `RIFFS.piano[id]` and `riffStart('piano', id)` is hardcoded to the piano bank, so a rhodes entry could never be selected — and they're the same music as their piano twins, which would only repeat pieces in the pool.
+
+Waldstein is worth a look when tuning: at 10.3 minutes its evenly-spread hooks sit ~2 minutes apart, far wider than any existing entry, so its legs may want clustering into one dense stretch instead.
+
+---
+
+## v0.97.20 — Waldstein Sonata, first movement (performance mode)
+
+Beethoven's Sonata No. 21 in C major, Op. 53, first movement, from Bernd Krueger's captured performance (piano-midi.de, CC BY-SA). 8,576 notes, 497 pedal changes, 3,242 tempo events in the source (heavy rubato — genuinely performed, not sequenced flat), 81 distinct velocities, 10.31 minutes.
+
+This is now the largest piece in the bank by a wide margin: the perf block is 259,101 characters, against roughly 200k for Moonlight III and ~33k for a typical song. Worth knowing before adding movements 2 and 3 — the complete sonata would run to something like half a million characters, around 5% of the file for one work.
+
+Perf-native, so there's no dormant grid data underneath and nothing for the later grid-deletion cleanup pass to strip. Verified after insertion: all 8,576 notes and 497 pedal events parse, MIDI range 29–93 (F1–A6, correct for the movement's reach), velocities 0.173–0.835, and the first event is the quiet low C of the opening repeated-chord pulse.
+
+Road Trip hooks are proportional defaults at even quarter-points across ten minutes, so they sit far apart; they want retuning on-device via the Leg Tuner. Metadata and the credits modal both updated.
+
+---
+
+## v0.97.19 — Piano lid becomes a listener control
+
+The lid position (closed / stick / open) was set by the song and locked during playback. Every one of the 39 piano songs opened with `_riffPiano('lid','open')` at beat 0, and `.riff-locked` dimmed the lid segment control to `pointer-events:none` alongside the sustain pedal and tone picker, so you couldn't change it mid-song.
+
+Worth being clear about what the lid is: it isn't in the MIDI and it isn't in the score. Krueger's files carry notes, timing, velocity and sustain pedal only, and composers don't notate lid position — it's a performer/venue decision made on the day. So there was never a "score-accurate" setting to look up; every song was just inheriting `open` from the song template.
+
+Changed it to what it actually is — a listening choice:
+- Removed the beat-0 lid call from all 39 songs. Nothing forces the lid now, so whatever position you set persists into and through playback.
+- Unlocked `.piano-lid-seg-wrap` during playback, joining the octave nav and expand buttons that were already exempt from the riff lock.
+- Tidied one organ song whose ctls contained nothing but the (meaningless for an organ) lid call.
+
+The lid filter already retunes via `setTargetAtTime` with a 0.08s time constant, so switching mid-note morphs smoothly instead of clicking. Hearing one performance under three lid positions is a genuinely useful demonstration of what the lid does — closed is 900Hz, stick 4000Hz, open 18000Hz on the lowpass.
+
+Note the save/restore in `_riffSaveState`/`_riffRestoreState` still snapshots and restores the lid around playback; with songs no longer setting it, that path is now effectively a no-op for the lid.
+
+---
+
+## v0.97.18 — Launch mic auto-start scaffold (Android, flagged OFF)
+
+Diagnosed the "tuner needs a tap every launch" behaviour and built the fix behind a flag, defaulted off. **No behaviour change in this build.**
+
+Diagnosis: the 7-tap panel at cold launch reports AudioContext NOT CREATED / NO STREAM / NO ANALYSER / audioMode "not attempted". It is not a permission failure and not native-vs-WebView flakiness — nothing calls `startMic()` at boot, because `startMic`'s `_surfaceWantsNative` test reads mode/currentTool/currentExercise and the boot state isn't treated as a mic surface until you interact. Touching anything both unlocks audio (gesture) and lands you on a mic surface, so the mic appears to need a tap. Ordering, not a platform wall.
+
+Key finding that makes the fix possible: on Android, native capture needs neither a gesture nor the AudioContext. `_nativeMicStart()` only talks to the Capacitor plugin and pushes PCM into `_nativeRing`; `processAudio()` reads `_nativeRing`/`_nativeSampleRate` whenever `_nativeMicActive`, touching analyser/audioCtx only on the WebView branch. So listening is gesture-free; playback (reference tones) still needs the unlock.
+
+Scaffold: `INTONARE_AUTOSTART_MIC` in removeSplash, currently `false`. When enabled it waits 600ms after splash, checks platform is Android, mode is tuner, and the mic isn't already live, then calls `startMic({native:true})` — the explicit native opt-in bypasses the surface test that blocks it at boot. Any failure logs and falls through to today's tap behaviour.
+
+Flagged off because auto-starting this early races MainActivity's RECORD_AUDIO grant, the prime suspect for the original intermittent launch-mic issue. Needs verification across a dozen cold launches on real hardware before it becomes default. iOS deliberately excluded — no native plugin there yet, so it genuinely requires the gesture; when the Swift plugin lands, drop the platform check and both match.
+
+Context: native tuner apps (Fender Tune, Perfect Tuner) auto-enable the mic on open; web tuners require an explicit start. Intonare ships as a native app, so the undocumented tap reads as broken rather than as a design choice.
+
+---
+
 ## v0.97.17 — Native mic routing: cover all pitch-consuming surfaces
 
 Audited every mic-using surface against the native-routing lists and found the routing had drifted from the mic-show lists. `MIC_TOOLS` shows the mic on piano/tonal/volume/vocalrange, but `_NATIVE_SURFACES_TOOLS` only routed tonal/piano native — so vocalrange (which runs its own pitch-detection loop for range assessment) was silently on the WebView path, and volume (level meter) too. Added both to native. vocalrange is the real fix: it's a pitch-holding surface, exactly what native stabilizes. volume is a level meter with no pitch detection, added for uniformity, native costs it nothing.
