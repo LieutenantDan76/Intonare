@@ -16,6 +16,1594 @@ deliberately means telling Claude so the pin updates too.
 
 ---
 
+## v0.99.5 — Bass reinforcement caught up with the normalization
+
+Tester report after v0.99.4: low notes now clearly quieter than high ones. Correct — two
+misses in the calibration pass, found and fixed.
+
+### The harmonics layer was left at pre-normalization level
+
+`addLowFreqHarmonics` is what makes sub-200 Hz notes audible on a phone: the speaker can't
+reproduce the fundamental, so octave-up partials carry the note (missing-fundamental
+effect). All eight call sites passed the RAW vol. v0.99.4 raised the fundamentals 2-6x and
+left this layer behind, so the audible content of low notes fell relative to everything
+else by exactly the trim factor. The bass shelf was fine; it boosts fundamentals the
+speaker can't play anyway. Every harmonics site now scales by the same `_synthTrim` as the
+fundamental it reinforces. Measured at A2 (110 Hz): organ 0.455 → 0.833 peak (+5.3 dB),
+sine's harmonic layer ~doubled — and peaks understate it, since the harmonics ARE the
+audible part on a phone.
+
+### The trim was applied at one door of a four-door room
+
+v0.99.4 normalized inside `_samplePlay`'s fallback — but 60 call sites invoke `.synth`,
+and four surfaces (practice player, sight-singing, guitar chords, chordle) call it
+directly, bypassing `_samplePlay`. Their fundamentals never got trimmed. The trim now
+applies by wrapping every REF_TONES synth ONCE at the definition 📌, so every caller
+present and future gets it, and `_samplePlay` no longer applies it (no double-trim).
+
+The wrap needed a re-entrancy guard: **34 tones delegate to a base voice** by calling
+`REF_TONES.<base>.synth` at runtime (trumpet → brass, piccolo → flute, ...). Unguarded,
+delegated tones would trim twice. With the guard, the trim applies exactly once, keyed to
+the OUTER tone id — the id the calibration sweep measured end-to-end, delegation included.
+Verified: A4 organ (plain) and A4 trumpet (delegating) byte-identical before/after
+(0.360 / 0.362), while A2 rose as intended.
+
+---
+
+## v0.99.4 — App-wide volume calibration
+
+Tester report: overall app volume low versus other apps; master fader above 100% densifies
+more than it raises; samples louder than everything else. Every claim measured true, plus
+two clipping bugs found along the way. All measurements via a ScriptProcessor tap at the
+output, in headless Chromium (samples don't load there, which turned out to be the key —
+it isolated the synth path).
+
+### The diagnosis, measured
+
+- Percussion already rode full scale: metronome click true peak **1.04** (over, DAC-clamped).
+- Tonal material sat far below it — and wildly unevenly. A per-voice sweep of all 44 synth
+  voices (A4, chord chain, fixed vol) spanned **21 dB**: organ −23.4 dBFS, pad −22.6,
+  grand-piano fallback −21, sine −14.5 … up to a single banjo note at **+0.7 dBFS —
+  clipping today**.
+- Cause: the synth fallback multiplied by the SAMPLE instrument's playback gain
+  (`instGain` — 0.5 for the hot-recorded grand piano, 3 for most soundfonts), a trim sized
+  for the recording, applied to a synth that isn't one. Pure-synth tones (organ, pad, sine,
+  piano, brass) therefore sat 6–18 dB under the sample family — the "samples feel louder
+  than the rest" report, quantified.
+- At 200% master, a dense chord measured **+9.5 dBFS over full scale**. Loudness-mode makeup
+  (~+12.5 dB) multiplies whatever the compressor's 1 ms attack misses, and a coherent chord
+  onset misses all of it.
+
+### The fixes
+
+**`REF_SYNTH_TRIM` 📌 — per-voice normalization table**, 44 entries, each `instGain x target
+/ measured` from the sweep, x0.9 safety. Replaces `instGain` in the synth path of
+`_samplePlay`. Every voice now lands ~−8.9 dBFS single-note peak (post-fix sweep: spread
+under 2 dB); dense chords graze the limiter, which is the chain's designed operating point.
+The quiet family came up 6–15 dB; banjo came DOWN and no longer clips. These are calibrated
+numbers — re-run the sweep before editing by ear. `_CHART_SYNTH_BOOST` 1.8 → 1.0: it was a
+local patch for the same disease, and layered on the cure it over-boosts.
+
+**True-peak ceiling stage 📌** after the makeup in every `buildLimiterChain`: WaveShaper,
+identity below 0.9 (zero effect at normal levels), soft knee to an asymptote at **0.985**.
+WaveShaper clamps beyond ±1 to the curve ends, so the curve's end IS a hard ceiling for any
+input however far over — the guarantee no compressor can give against attack leakage.
+Makeup headroom 1 → 2 dB alongside it.
+
+Post-fix, measured: dense sine 100% = −0.5 dB (ceilinged, no DAC clip possible);
+**dense sine 200% = −0.4 dB, was +9.5** — the fader's top half is now loud instead of
+clipped. Metro click 1.04 → 0.959 through the same ceiling. Master-fader in-place updates
+unaffected (makeup nodes re-read `_getMakeupGain`, which carries the new margin).
+
+### What the container can't verify
+
+Samples don't load in headless (network-fetched), so the sample side of the sample/synth
+balance is calibrated only indirectly: synths were raised toward where the sample family
+measures via its fallback gains. On-device ears decide whether a residual gap remains; if
+so, the per-instrument `gain` descriptors in SampleEngine are the knob, adjusted listening,
+not guessing. Absolute loudness vs other apps is also an on-device judgement — the material
+now peaks where commercial apps master to, but the phone speaker voices the rest.
+
+---
+
+## v0.99.3 — Tap dots now agree with the colours they wear
+
+Follow-up to the tester's "look at the grades and colours versus where the dots landed."
+Correct call: even after the v0.99.2 matcher fix, dot position and note colour were computed
+from different numbers, in two ways.
+
+### Dots were raw; colours were drift-corrected
+
+Grading subtracts the stream's median lean (residual latency, not rhythm error) before
+tiering. The tap markers plotted at RAW tap time. So a stream leaning 80 ms late but
+perfectly in rhythm graded all green while its dots sat visibly right of every notehead —
+or, the reverse: an on-time tap in a leaning stream drew dead-centre while wearing yellow,
+because the correction pushed *its* error off zero. Position said one thing, colour another.
+
+Markers now plot at the **bias-corrected time**, the same number the colour is graded on.
+Verified: an 80 ms-late-but-tight stream draws dots exactly on the notehead centres
+(59.5 = 59.5 px) in green; a single genuinely-late tap in a tight stream draws 14 px right
+of its notehead wearing yellow — the offset you see is the error being graded. The lean
+itself isn't hidden: the feedback text reports a consistent early/late drift past ±120 ms,
+as it already did.
+
+### Dots were drawn 5.5 px left of the notehead
+
+Notes sit at grid x but the notehead glyph spans x..x+10.6, so its visual centre is ~x+5.5
+(beams attach there, confirming it). Dots were drawn at bare grid x — a systematic 5.5 px
+left shift 📌. Irrelevant on a sparse staff; on EXTREME, where notes sit 14–28 px apart,
+every on-time tap drew a fifth to a third of a note-gap early. Dots now carry the same
++5.5 px as the glyph centre.
+
+Both faults compounded with the (now-fixed) matcher mis-assignment on dense patterns, which
+is why the dots-vs-colours picture looked least trustworthy exactly where players needed it
+most.
+
+---
+
+## v0.99.2 — The grading inconsistency was the matcher
+
+Tester report: same-quality playing grading very differently run to run on EXTREME. A full
+audit of the grading pipeline found the cause upstream of everything touched in v0.99.1 —
+in the note-to-tap matching stage, plus one collateral fault in the dirty-tap sweep.
+
+### Chain-stealing in the matcher (the actual bug)
+
+The matcher walked notes IN SEQUENCE ORDER, each taking its nearest unused tap within a
+fixed 500 ms. Miss note 5 but hit note 6 slightly off, and note 5 — processed first —
+claims your note-6 tap (it's within 500 ms). Note 6 then claims note 7's. One mistake
+cascades red down the rest of the bar, and your real last-note tap gets reported as a
+"ghost hit."
+
+Measured on eighths @90: one skipped note produced **three reds and 63%** for an attempt
+worth 88%. The damage depended on where in the bar the miss fell and how dense the notes
+were — which is precisely "inconsistent grading." Dense EXTREME patterns made it constant,
+since 500 ms spans four or five notes there.
+
+Replaced with a globally nearest-first assignment: build every (note, tap) pair inside the
+window, sort by distance, assign closest first. A tap always belongs to the note it is
+actually nearest, so a miss stays one miss. Verified: the skip-one case now grades
+`GGGGGRGG · 88%` (was `GGGGGRRR · 63%`), and clean runs, double-hits, rest taps and the
+v0.99.1 threshold behaviour are all byte-identical before/after.
+
+**The match window now scales with the grading tiers** instead of sitting at a flat 500 ms:
+`min(500 ms, ORANGE x 1.4)` 📌. Slow patterns keep ~497 ms (unchanged in practice); fast
+patterns drop to ~235 ms, so a tap can no longer "match" a note several notes away. Just
+past ORANGE on purpose: an intended-but-bad hit is consumed and graded red once, rather
+than double-charged as a miss plus a ghost tap.
+
+### One stray tap was taxing every note in reach
+
+The dirty-tap demotion (v0.99.1) demoted every matched note within half a beat of any
+unmatched tap. On a triplet pattern half a beat covers two or three notes: measured, one
+stray bounce demoted **four notes** to yellow and scored 73% on a run worth 93%. Almost
+certainly the second tester screenshot.
+
+Each stray tap now charges its single NEAREST note only, one tier, with reach scaled to
+note spacing: `min(half beat, shortest-note duration)` 📌 so it cannot span neighbours on
+fast material. Same run now grades 93% with one yellow.
+
+### Structural note
+
+Threshold computation was hoisted above the matching stage (the scaled match window needs
+`rrTh`). No behavioural change from the move itself; the full six-case battery was run
+before/after on both builds to confirm.
+
+---
+
+## v0.99.1 — Grading that scales, clave pulse, tighter settings copy
+
+All six from on-device testing of v0.99.0.
+
+### Rhythm reading: thresholds now scale to the pattern
+
+The accuracy tiers were fixed at 50/160/300 ms regardless of tempo, meter or note value.
+Measured against the 6/8 @84 pattern from testing, where a triplet eighth lasts **119 ms**:
+
+- the GREEN window (±50 ms) covered **84% of the note's entire duration**
+- YELLOW reached **1.34x** the note length
+- ORANGE reached **2.52x** — you could be more than a whole note out and not be a miss
+
+So fast material was massively over-rewarded while slow material was graded strictly. Tiers
+now scale to the **shortest note in the pattern**, which captures tempo, meter and density in
+one number; beat duration alone can't, since a sixteenth run needs four times the precision of
+a quarter run at the same tempo.
+
+Two clamps keep it humane:
+
+| | old (fixed) | new ABS (loose end) | new CAP (of note) | new FLOOR (tight end) |
+|---|---|---|---|---|
+| green | 50 ms | **60 ms** 📌 | 37.5% | **42 ms** 📌 |
+| yellow | 160 ms | **190 ms** 📌 | 90% | **105 ms** 📌 |
+| orange | 300 ms | **355 ms** 📌 | 160% | **168 ms** 📌 |
+
+The absolutes are deliberately *looser* than the old fixed values, so normal and slow patterns
+grade more forgivingly than before. The caps only bite on fast material, where the windows were
+absurd. Net: 4/4 @84 quarters went 14% → 16.8% of a note (more forgiving); 6/8 @84 triplets went
+84% → 71% (tighter, correctly). Verified: a 55 ms error on slow quarters was YELLOW and is now
+GREEN; the same 55 ms on fast triplets stays YELLOW.
+
+FLOOR exists because human tap precision plus touchscreen latency bottoms out near 40 ms.
+Tightening past that grades noise. Fast patterns are harder because there's less margin, not
+because the window is proportionally meaner.
+
+**Expect scores on fast patterns to drop.** They were inflated; streaks and bests set under the
+old grader aren't comparable.
+
+### Rhythm reading: a dirty hit is no longer a miss
+
+A note struck on time and then struck again went fully RED — the same mark as a note never
+played. Those aren't the same failure. A dirty hit now demotes **one tier** (green→yellow,
+yellow→orange) so the timing you earned is acknowledged while the extra hit still costs. Orange
+stays orange, being already the lowest non-miss tier. Same test case scored 75% → 90%.
+
+### Rhythm reading: dense staves showed no scroll cue
+
+Patterns around 24+ subdivisions render wider than a phone (a 6/8 sixteenth run measures 408 px
+in a 356 px wrapper). The wrapper always scrolled, but nothing signalled it, so the staff looked
+cut off mid-glyph. Added a right-edge fade, class-driven so it clears once you reach the end
+rather than permanently implying content that isn't there.
+
+### Metronome: clave was missing from the pulse, and both defaulted to click
+
+`METRO_SOUNDS` carries nine voices; `PULSE_SOUNDS` listed eight, with **clave** simply absent.
+Added.
+
+Worse, `selectedMetroSound` and `grooveCountInSound` both defaulted to `'click'`, so out of the
+box the reference pulse and the groove it sits under were the *same voice* — the pulse work in
+v0.99.0 raised a level that was still disappearing into the pattern. Pulse now defaults to
+**clave**: a bright 2000 Hz stick against click's 1000 Hz sine, so it cuts without competing.
+
+### Chord ear training: settings copy cut back
+
+v0.99.0's descriptions were accurate and far too long — three stacked paragraphs read as a wall
+of hand-holding. Cut to one line each:
+
+- ROOT: "Hidden means naming the quality by sound alone. Harder."
+- INVERSIONS: "Same notes, restacked. Same chord, different shape to your ear."
+- RETRIES: "Wrong answers per round, shown as hearts."
+
+**Alignment fixed too.** The label column was sized by its own text (`min-width:30px`,
+right-aligned), so chips began at a different x on every row — 79 px on ROOT, 112 px on
+INVERSIONS — while descriptions sat at one fixed indent and lined up with their own row's chips
+only by luck. The label column is now a fixed 68 px, putting labels, chips and descriptions on a
+single left edge (117 px, verified across all four rows in both languages). Modal height dropped
+from 562 px to 521 px.
+
+---
+
+## v0.99.0 — Rhythm feedback, chord-ear settings, groove pulse
+
+Three areas, all from tester notes.
+
+### Rhythm reading: the staff was under-reporting
+
+Two display faults, both of which meant the grader knew more than it showed.
+
+**Beamed notes drew their beam in a flat colour.** The beam is the dominant visual mass of
+an eighth-note group, so a run of eighths read as ungraded even though the noteheads
+underneath were coloured correctly. Beams now draw segment-by-segment, each span taking the
+colour of the note it leaves from, so a group that was half green and half red looks it.
+Triplet beams already did this; regular beams were the odd one out.
+
+**Rests never coloured at all.** `colorMap` was only ever populated for sounding notes, so a
+player who tapped straight through a rest saw nothing. Rests now grade against the stray-tap
+list: a tap inside the rest's span turns it red, a clean rest turns green. Display only — the
+score still comes from the sounding notes plus the existing extra-tap penalty, which already
+charges for those taps. Giving rests their own score term would bill the same mistake twice.
+
+**Stray taps stopped being double-marked.** The dirty-hit sweep reds a note when an unmatched
+tap lands within half a beat of it. That rule was written when rests were invisible, so a tap
+in a rest could only show up by blaming the neighbouring note. At 80bpm half a beat is 375ms,
+wide enough that any tap in a rest next to a note fell inside it, so a single mistake reddened
+two glyphs and cost a scoring tier the player hadn't actually missed. Rest-owned taps are now
+held back from the sweep; strays in open space still reach it and behave as before. Genuine
+double-hits (two taps on one note) still red that note — verified.
+
+Rest ownership grace: **0.10 beat** at each edge of the rest span, so a hair-late release of
+the previous note isn't counted as filling the silence. One constant, shared by the sweep and
+the colouring, because a tap the sweep hands to the rest has to be a tap the rest colours for.
+
+### Chord ear training: settings that didn't say what they did
+
+The complaint was that the labels were abstract nouns with no statement of consequence.
+
+- **PLAY** options: `Block` → **Chord** (`Insieme` → `Accordo`). Block chord is arranger
+  jargon; arpeggio is standard vocabulary a student meets early, so the pair now teaches the
+  contrast instead of hiding it.
+- **AUTO** row → **NEXT ROUND** (`PROSSIMO`). The header now names what is automatic rather
+  than echoing its own options.
+- **ROOT, INVERSIONS, RETRIES** each gained a one-line description of what the setting costs
+  you. The other five rows were left alone; they explain themselves once labelled properly.
+- **SPEED dims when PLAY is Chord.** `chordPlayMidi` uses `when = arpeggiate ? now + i*step :
+  now`, so with Chord playback every note fires at `now` and the speed control does nothing.
+  Chord is the default, so the first control in the modal was a silent no-op. Dimmed rather
+  than hidden, so it doesn't appear and vanish as PLAY is toggled.
+- **SPEED now marks CUSTOM.** `ceApplyPreset` overwrites `ceArpSpeed` on every tier change,
+  so speed was tier-owned in every respect except that its handler skipped `ceMarkCustom()`.
+  Pick HARD, change speed, and the HUD kept claiming HARD while playing slow. It doesn't now.
+
+Still open, deliberately: tier switches silently reset your speed override, and whether speed
+should be a difficulty axis at all rather than a comfort setting. Both are feel calls.
+
+### Metronome groove: the pulse was inaudible under the pattern
+
+The count-in pulse fired at `metroVolume * grooveCountInVol * (downbeat ? 0.38 : 0.28)`. At a
+full slider that put an offbeat pulse at **0.168** against a groove accent's **1.0** — about
+−15.5 dB, a sixth of an accent, and only 40% of even a *soft* groove hit.
+
+Multipliers raised so a full slider puts the offbeat pulse level with a soft groove hit:
+
+- offbeat: **0.28 → 0.42** 📌 (equals the soft groove step exactly)
+- downbeat: **0.38 → 0.52** 📌 (0.65 delivered, via the further x1.25 inside `play()`)
+
+Parity is with the *soft* hit, not the accent. The pulse is a reference layer under the
+pattern; matching the groove's quiet voice makes it audible while leaving accents clearly on
+top, where matching the accent would fight the pattern instead of supporting it.
+
+**The pulse VOL slider never persisted.** `setGrooveCountInVol` updated the variable and
+stopped there, and `grooveSave` didn't carry the field at all — so adding a save call alone
+would have been a no-op. `countInVol` is now in both save and restore, range-guarded on the
+way back in so a bad stored value can't mute the pulse or blow it past the groove.
+
+---
+
+## v0.98.18 — One dark mode
+
+FLAT and LIFTED are merged. Measured, they differed in **two** ways rather than one, which
+is worth recording because only the first is obvious:
+
+1. **Lifted raised the black point by up to 2x.** Tuner's ground went L=0.0025 → 0.0049.
+2. **Lifted also flattened the stack.** Ground-to-panel separation dropped from about
+   **7x to 4.3x**. Tools was worst: its panel actually went *down* (0.0293 → 0.0220) while
+   its ground went up.
+
+So lifted lost depth as well as darkness. That is why it read as washed rather than merely
+bright — cards sat closer to the page and the depth cue weakened.
+
+The merged palette keeps the original black point almost exactly (tuner 0.0025 → 0.0029)
+and keeps the original separation at **5.6–7.0x**. The lift goes into the middle steps
+only, `--bg-1` and `--surface`, which is where lifted's readability gain actually came
+from. Ladders verified monotonic on all four themes.
+
+**A fault came out of hiding during the merge.** The old code comment noted that FLAT
+"still carries the --muted 2.54:1 fault" — and that was true, but invisible, because
+`dk-soft` was overriding `--muted` with `#9899ad` on every dark screen anyone actually
+used. Deleting the dk-soft blocks exposed the base value `#6a6c85`, which measured
+**2.58–2.97:1 on panel** across all four themes. Carried dk-soft's ink forward as the base:
+now 4.73–5.43:1 on panel and 6.90–7.08:1 on ground. Without this the merge would have
+quietly shipped a long-standing failure as the new default.
+
+Final: text 17.0–17.4:1 on ground and 11.6–13.4:1 on panel, dim 7.9–8.2/5.4–6.3, muted
+6.9–7.1/4.7–5.4, accents 9.1–13.6:1 on ground.
+
+The Dark Depth control is removed and any stored value is cleared on read, so nobody is
+left pointing at a mode that no longer exists. Same reasoning as Light Brightness last
+build: a toggle between two things that should be one good default is a decision the
+person does not need to make.
+
+---
+
+## v0.98.17 — Header titles centre on the back arrow; Light Brightness retired
+
+**The misalignment was not the row.** Every box in the header row measured perfectly
+centred — title, back button, and the SVG chevron all reported the same centre. The
+problem was inside the title's own box: `#appLogo` carried `min-height: 38px` around a
+~24px line, and that 14px of slack does not distribute evenly on a block element. The ink
+sat about **9px above** the chevron's centre while the geometry claimed everything was
+fine. The row already centres its children, so the min-height was contributing nothing
+except that slack. Removed. Re-measured: **0.00px**.
+
+**A second cause, worth its own note.** "EAR TRAINING" was silently rendering on *two*
+lines — `Range.getClientRects()` returned two rects — which stretched the box further. It
+happened because the fitter's only test was "is anything clipped", and a 2-line wrap
+reports no clipping at all when the 3-line clamp and the min-height absorb it. So the
+shrink loop never ran on a title that would have fitted on one line a couple of pixels
+smaller.
+
+The fitter now **prefers a single line**: it shrinks to try to win one, and only accepts
+wrapping if it hits the floor and genuinely cannot fit. Verified across every real title
+at 360/390/412 — all single-line, no clipping. At 320px, titles like CHORDS & HARMONY
+still wrap, correctly: only 127px is available there and the text needs 182px at the
+smallest permitted size, so two lines is the honest answer.
+
+**Light Brightness is gone.** There is one light palette now, the former "soft". The
+Settings row is removed and `lightBrightSetting()` always returns soft, and it also
+rewrites any stored `'bright'` back to `'soft'` so anyone upgrading mid-setting is
+migrated rather than stranded on a palette nothing maintains. The `lt-bright` CSS is left
+in place as a harmless fallback rather than ripped out mid-pass.
+
+**Light-mode audit.** Deepened the level chip and phase pills from `#2f7500` to `#286300`;
+the old value was derived against the panel but those elements sit on the ground, where it
+measured 3.62:1. The project's own contrast audit now reports no failures, with 26 entries
+in the 3.0–4.5 borderline band, all of which sit on lighter panels in practice than the
+page-background figure assumes.
+
+*Method note: a pixel-sampling sweep written for this pass reported ~73 failures that were
+all artefacts. Text is mostly background by area, so a 5th-percentile "ink" sample lands in
+the anti-aliased fringe rather than the stroke; labels measuring 8.5:1 in reality reported
+1.9:1. The token-maths audit in `/mnt/project` is the reliable instrument here.*
+
+---
+
+## v0.98.16 — Header titles move to Fraunces 600
+
+Cinzel is gone from the headers. It is a Trajan-derived Roman inscriptional face: real
+stroke weight, but a formal, ecclesiastical genre that was not in conversation with any
+other type in the app (Bebas readouts, JetBrains Mono labels, Fraunces italic subtitles).
+The note it left behind said Bebas had read as "thin outlines" and Cinzel fixed that. The
+diagnosis was right and the cure overshot: the problem was **weight**, and it got solved
+by changing **genre**.
+
+Fraunces was already the display voice one line below the title. The header now speaks the
+same language.
+
+**The font had to be built.** The Fraunces embedded in the app is a static 400 with no
+weight axis, so there was no bold to reach for. Generated from the Fraunces variable font
+at wght 600, then subsetted to the **57 characters** headers actually use — caps, digits,
+`& · ' - —` and the Italian accented capitals. **5.9 KB.**
+
+**Optical size mattered more than expected.** The first build used `opsz` 144, reasoning
+that a header is display type. But Fraunces' optical-size axis raises stroke *contrast* as
+it climbs, which is right for billboard type and wrong at 26px: measured on the letter O,
+the thin strokes collapsed from 8px to **3px** and contrast went from 3.1 to **7.7**.
+Pushing `wght` fattened the stems and did nothing for the hairlines, because `opsz` was
+thinning them in the opposite direction. Rebuilt at `opsz` 24 with `WONK` off, and the
+weight lands evenly.
+
+**Ampersand.** Fraunces ships a conventional two-bowl ampersand as an `ss01` alternate
+instead of the et-ligature curl. Rather than depend on a layout feature, it is remapped
+directly into `cmap`, so the alternate is simply what `&` draws.
+
+Letter-spacing drops 1.5px → 0.6px. Cinzel's wide Roman caps wanted the extra air;
+Fraunces' are narrower and 1.5px pulled them apart.
+
+Scope: the two header rules only. **Road Trip still uses Cinzel** — all 20 usages
+verified intact — because Parchment and Nautical are deliberate period map aesthetics
+where an inscriptional face is the correct choice. `.prog-top-title` was already on
+JetBrains Mono by an earlier decision and is unchanged.
+
+Verified: every title fits at 320/360/390/412 in both modes, both the section and module
+header paths resolve to FrauncesHdr 600, and the Road Trip parchment styling still
+resolves to Cinzel.
+
+---
+
+## v0.98.15 — Titles can no longer be cut off, for four separate reasons
+
+I said this was fixed twice and it wasn't. It turned out to be four independent faults
+stacked on top of each other, and the earlier fixes each corrected one and stopped.
+
+**1. Folder headers were never on the path I fixed.** The v0.98.10 work went into
+`.hdr-mod-title`, used by module headers. Folder and section titles are `#appLogo`, set
+through a different function. PITCH & SOUND was never touched by that fix.
+
+**2. The fitter measured a clipped element against itself.** `_fitHeaderTitle(logo)` is
+called with no `box`, so `box === el`, and `#appLogo` is `overflow: hidden` — its own rect
+is already the *clipped* width. Comparing clipped width against clipped width always
+concludes "it fits". `avail()` now ignores the element's own geometry and walks out to the
+first ancestor that is both blockish and genuinely wider, subtracting anything sharing the
+line (back chevron, mic, favourite, LV pill).
+
+**3. The shrink loop's output was being thrown away.** The size buckets are
+`font-size: clamp(...)` rules, which outrank a plain inline `style.fontSize`. Every
+reduction the loop computed was silently discarded, which is why titles kept clipping at
+sizes well above the 15px floor: the loop ran, the style never landed. Now applied with
+`setProperty(..., 'important')`.
+
+**4. Once wrapped, the width test lied.** A `Range` over a wrapped element reports the
+width of the *wrapped* text — 109px for CHORD EAR TRAINING at 320px, comfortably under the
+available width — so `fits()` returned true on the first check while `scrollHeight` 60 vs
+`clientHeight` 40 showed a hidden third line. The test is now purely
+`scrollWidth/scrollHeight` against `clientWidth/clientHeight`, which is the browser's own
+answer to "is any of this cut off" and cannot be fooled by wrapping.
+
+Underneath all four: a single line was never going to be enough. At 320px, CHORD EAR
+TRAINING needs 198px of glyphs in a 127px box, so no font size solves it. Long titles now
+wrap, capped at three lines, with the fitter shrinking only as far as needed first.
+
+Verified across every real title in the app — folders, sections and modules — at 320, 360,
+375, 390, 412 and 430px, in both light and dark: **no clipping anywhere**. The only
+failures left are invented 34-character test strings at 300px, which is narrower than any
+shipping phone.
+
+---
+
+## v0.98.14 — Sweep: the Bright variant was broken, and the survival tokens never existed
+
+A systematic pass over light mode rather than another visual fix. Three real problems,
+none of them visible in the module I had been screenshotting.
+
+**"Bright" was darker than "Soft".** `lt-bright` was frozen at the pre-F1b palette, so
+after the field lift it ended up *below* soft for tuner (L=0.541 vs 0.613) and train
+(0.527 vs 0.616) — the variant names were lying. It also failed contrast, because the inks
+were repaid against the lighter soft field: on those older grounds tuner measured tab
+**4.29:1**, title **2.84:1**, muted **4.10:1**, and train tab 4.17:1, muted 4.03:1.
+Re-derived above soft on the same hues, keeping the elevation ladder. Now 5.46–5.49:1 on
+tabs, 3.32–5.34:1 on titles, 5.24–5.29:1 on muted, and genuinely brighter than soft.
+
+**The screen-literal trap, fourth occurrence.** With `lt-bright`'s cards lifted to
+L=0.763, the metro glass — a literal at 0.715 — fell *below* its own card and would have
+read as a hole. The three instrument screens get a lift scoped to that variant. Soft is
+untouched. This keeps happening because screen fills are literals that never follow token
+changes; it is now worth treating as a required check after any surface edit, not a thing
+to rediscover.
+
+**The survival tokens were never actually added.** v0.98.10 claimed to add `--surv-*` for
+both modes; the edit silently failed to apply, and because the JS falls back to the
+original dark literals when a property is missing, **nothing looked broken** — the light
+values simply did not exist, and the survival card had been running dark-mode neon the
+whole time. Both blocks written and verified present: light resolves `#8a5a00 / #1f5c2e /
+#a3231a`, dark resolves `#fbbf24 / #4ade80 / #ef4444`.
+
+Also swept: every dark literal still living inside a `body.light` rule (73 found, all
+legitimate — ink values, `.keep-dark`, and the deliberately dark Organ/Rhodes/theremin
+instruments), and a full text-contrast pass over the Tools hub, which came back clean.
+
+---
+
+## v0.98.13 — Pips were structurally broken; the screen had too many cues, not too few
+
+**The pips could never light.** `.ce-diff-cell.hit` and `.miss` set the lamp with
+`background: radial-gradient(...)`. The light-mode rule from v0.98.12 set `background:`
+with `!important` on the **base** selector, which outranks both — so the lit states were
+being overwritten every time, and the breathe keyframes (which also animate `background`)
+were dead as well. Scoped the base rule to `:not(.hit):not(.miss)` and gave hit/miss their
+own light values.
+
+The lit colours had to change on principle too. On a dark screen a lamp lights by going
+*brighter*; on a pale screen a bright dot is invisible. Here a lamp lights by going
+**darker and more saturated**, which is also how a real LCD segment behaves — it darkens
+the field rather than emitting. Hit is deep teal, miss is deep rose, both with an inset
+highlight so they still read as lamps behind glass.
+
+**The screen problem was subtraction, not another rebuild.** Three attempts, three
+different failures: v0.98.10 was the wrong colour, v0.98.11 had no character, and
+v0.98.12 had **too many cues stacked at once** — vertical segment ruling every 6px,
+horizontal scan lines every 3px, top sheen, diagonal specular, vignette, inset recess, and
+a ghost-segment halo. Seven texture layers on a 240px box.
+
+Two repeating gratings at close periods produce a visible **cross-hatch** you can count,
+and that is what read as intense. Real LCD glass has one dominant ruling. Metro — the
+display everyone agrees looks right — has no vertical ruling at all: one whisper of scan
+line at `rgba(70,60,30,.018)`, plus smooth glass optics.
+
+So: vertical ruling removed entirely, scan lines moved to a 4px period at roughly a third
+of their previous strength, vignette softened. Sheen, specular and vignette stay — those
+are the glass cues, they are smooth, and they do not tile against anything.
+
+Colour re-verified across all four modules: root glyph 10.5–10.9:1, labels 10.2–10.7:1,
+HUD 6.4–6.8:1, hearts 5.3–5.4:1, lit lamps 4.4–5.4:1, lamp labels 6.2–6.7:1.
+
+---
+
+## v0.98.12 — The card "bloom" was a gradient, and the LCD gets its character back
+
+**It was never the page bloom.** `.metro-bpm-card`'s base rule runs
+`linear-gradient(160deg, theme-tint, --surface 35%, --bg-0 100%)`. In dark mode `--bg-0`
+is darker than `--surface`, so ending a card gradient there reads as the card receding
+into the page — correct. In light mode `--bg-0` is **also** darker than `--surface`, since
+it is the most chromatic step of the ramp, so the identical rule drags the bottom of the
+card down into the ground colour: measured at **−0.104 luminance** across all four
+themes. That dirty lower half is what kept reading as bloom.
+
+`.tuner-bpm-card` had already been given a flat override; `.metro-bpm-card` was missed and
+was still running the inherited gradient. Both now run light-on-top-of-darker as planned —
+starting at `--surface-2` and settling to `--surface`. Verified on a render: the card runs
+L=0.801 at the top down to 0.719 at the bottom.
+
+**The LCD's soul was in the cues, not the colour.** v0.98.10 made this screen Game Boy
+green, v0.98.11 correctly removed the green (167° from train's violet) but stripped the
+personality with it and left a plain pale rectangle.
+
+The retro feel was never the green. It comes from cues that are entirely hue-independent,
+and the metro screen still has all of them, which is exactly why that display still looks
+right in the same screenshot:
+
+- **segment grid** — fine ruling in *both* axes, not just scan lines. Vertical lines are
+  spaced wider than the horizontal so the two don't moiré.
+- **cover-glass optics** — top sheen plus a diagonal specular streak
+- **vignette** and **inset recess**, so the screen sits *inside* a bezel
+- **ghost segments** — a faint accent halo behind the lit ink
+- **hard-edged indicator lamps** with an inset shadow, rather than soft UI dots
+
+All restored, keeping the module tint from v0.98.11. Ink verified across all four
+modules: root glyph 10.5–10.9:1, labels 10.2–10.7:1, HUD 6.4–6.8:1, hearts 5.3–5.4:1. The
+rhythm tap zones get the same segment ruling so the two displays read as the same
+hardware.
+
+---
+
+## v0.98.11 — One light instead of three pools; screens take the module's hue
+
+**The splotchiness was measurable.** Scanning down the left gutter, the old three-bloom
+setup produced a bright band at the top, then a **dead flat plateau at L=0.616 for about
+700px**, then a second bright pool lower down. Two pools with a trough between them is
+not a light field; it is two stains. Three faults:
+
+1. **Falloff too short** — alpha ran 0.78 → 0.34 within 34% of the ellipse. A fast drop
+   makes the gradient's edge visible, and a visible edge on a soft wash is a blob.
+2. **Three separate ellipses**, two of them terminating inside the viewport.
+3. **`position: fixed`** — the pools stayed nailed to the glass while content scrolled
+   past. Light that doesn't move with the page reads as dirt on the screen.
+
+And cards amplified all of it: at 92% translucency, any card straddling a pool edge drew
+that edge across itself.
+
+Replaced with a single top-anchored wash, eight stops, near-linear falloff that never
+fully terminates on screen, plus one very wide accent tint whose edge is off-screen at
+any scroll position. Re-measured: **strictly monotonic top to bottom**, no trough, no
+second pool.
+
+**The Game Boy green was the wrong call.** The reflective-LCD *idea* was right — a
+display lit by the room rather than from behind — but green fights this app. Measured, it
+sits **167° from train's violet**, near-complementary, the worst pairing available; metro
+was olive-on-gold at 37°. Green only works if the whole app is green.
+
+The tuner and metro instrument screens already had the answer: a warm neutral field with
+a little of the module's own accent mixed in. Same approach now for `.ce-screen`,
+`.np-screen` and `.rr-tap-zone` — tuner reads cool grey, metro warm cream, tools soft
+sage, train faint lilac. Every reflective cue is kept (cover-glass sheen, scan lines,
+vignette, dark ink, no glow); it simply belongs to whichever module it sits in. Ink
+clears 10.6–11.0:1 on the root glyph and 5.1–5.4:1 on HUD text across all four.
+
+Rhythm feedback states stay semantic rather than module-tinted: green/yellow/orange/red
+must mean the same thing everywhere.
+
+---
+
+## v0.98.10 — Reflective LCD screens, survival card fixed, blooms off the cards
+
+**The dark screens were dark-mode values sitting in the light block.** `.ce-screen`,
+`.np-screen` and `.rr-tap-zone` all painted near-black on a pale page — the chord ear
+training screen measured a **13:1 luminance cliff** against its panel. That is emissive
+logic, and it does not survive the mode flip: on a dark page a black panel reads as a lit
+display, on a pale page it is a hole punched in paper.
+
+Your calculator/Game Boy instinct was the right reference, and for a specific reason:
+those are **reflective**, not emissive. A pale grey-green field carrying dark ink, lit by
+the room rather than from behind. So the screens keep everything that makes them screens
+— bezel, fixed-width type, scan lines, lamps, vignette — while sitting *above* the page
+instead of below it. Field `#c3ceb0` sits 1.33:1 under the panel; every ink on it clears
+4.4:1. The root glyph loses its glow (nothing is emitting) and gains a faint white
+underhighlight, which is how LCD segments actually catch light.
+
+**Survival card: the colours were unreachable from CSS.** The card is built imperatively,
+so the dark-mode neon was hardcoded in inline JS — amber `#fbbf24` measured **1.35:1** on
+a pale card, green `#4ade80` **1.41:1**. Every one failed. The JS now reads `--surv-*`
+tokens, with light values (amber `#8a5a00`, easy `#1f5c2e`, normal `#14507e`, hard
+`#8c4a0a`, extreme `#a3231a`) clearing 4.8–6.9:1 and dark defaults unchanged. Verified
+both modes resolve independently.
+
+**Blooms moved off the cards.** Two rules baked a radial of `--theme` (an ink value,
+L≈0.05) into card backgrounds — the same subtractive mistake the page blooms had, so they
+read as a smudge across the card top rather than light falling on it. Removed; ambient
+light belongs to the page, and cards are already translucent at 92% so it passes through
+them everywhere instead of on two cards.
+
+**Header titles were clipping because the fitter measured the wrong element.**
+`_fitHeaderTitle` compared text width against `#headerTagline`, which is **inline** — it
+shrink-wraps its own text, so its width *is* the text width and the shrink loop always
+concluded "it fits" and never ran. Measured at 390px: the tagline reported 89–136px while
+the real line box was 334px. It now walks out to the first ancestor that establishes a
+width and subtracts siblings sharing the line (mic, favourite, LV). RHYTHM TRAINING,
+CHORD EAR TRAINING, PROGRESSION and TEMPO GUESS all verified fitting at 360px and 390px.
+
+Lint: added `rr-tap-zone.rr-f*` to the instrument-chrome exclusions — those are semantic
+miss-severity states and are supposed to be louder than the palette, like the survival
+red.
+
+---
+
+## v0.98.9 — F1b: the field lifts, and every dulled ink gets paid back
+
+The field was the problem behind most of the "dull" complaints. Screen-median luminance
+was **0.52** (real light modes sit near 0.85) with median saturation **0.46–0.54**
+against dark's own 0.22 — a mid-luminance pastel, not a light mode. Ramp D had made the
+*ground* the vivid thing, and the ground is most of the screen.
+
+**F1b lifts the field and uses per-hue chroma.** Ground luminance 0.49 → **0.615**, with
+chroma set per hue rather than one value for all four: gold 0.66, green 0.56, blue 0.46,
+violet 0.48. Equal chroma does not look equal across hues — yellows and greens need more
+to read as themselves, blues and violets need less — which is why metro kept coming out
+as khaki. It is now `#e5cc82`, actual gold rather than oatmeal.
+
+Measured after: **luminance p50 0.62–0.65** (from 0.52) and the mud zone — mid luminance
+with low-mid chroma, where khaki and seafoam live — collapses from **13–29% of the screen
+to 2–6%**.
+
+**Ink repayment.** Everything deepened during the mid-ground era was near-black with a
+hue rumour, because on a mid ground 4.5:1 *forces* that. A lighter field pays them all
+back at once:
+
+- tab accents: tuner `#00495f` → `#004eb5` (black-with-a-blue-rumour → blue)
+- level chip `#274d00` → `#2f7500`, screen-adj `#7a5c0d` → `#826200`, badge `#6b240b` → `#b4400f`
+- every `--accent-*` re-derived per theme against its own new ground and panel
+
+Two derived values needed correcting by hand rather than by formula. Train's `--accent`
+came out `#2c02ff` at full saturation — technically correct, but electric blue-violet
+rather than a violet ink; capped to S=0.80. And `--accent-fill` initially derived as a
+pale wash that would not read as a state at all; rebuilt to target 1.55:1 against panel
+while keeping dark ink legible on top of it.
+
+**The screen-literal trap, third time.** Screen fills are literals and do not follow
+token changes. The new panels at L≈0.80 had risen *above* the glass's lower gradient
+stops (tuner bottomed at 0.728), which would have made every lit instrument screen read
+as a dead hole. All three screen gradients lifted so their darkest stop clears its panel
+by 1.06:1.
+
+Lint orphans 2 → 1. Scroll fixes from v0.98.7–8 verified still in place.
+
+---
+
+## v0.98.8 — overscroll-behavior removed; the scroll suspect list is now empty of my changes
+
+The refined symptom — taps work, Settings' own inner scroller works, but no module
+page pans — is the signature of the **document scroller** specifically being dead.
+Swept every `touch-action` in the file: all are scoped to sliders, knobs and pads,
+none on body or any container, so that whole family is innocent.
+
+After the halo revert, exactly one non-paint change of mine remained on the document
+scroller: **`overscroll-behavior-y: contain` on body**, added in v0.98.3 for
+rubber-band cosmetics. Scroll containment on body inside an Android WebView is a known
+trouble spot — the WebView owns the gesture, and containment at the propagation
+boundary can eat the pan rather than merely suppressing the glow it was meant to.
+Removed. Cosmetics do not get to break scrolling.
+
+Also fixed a hole in the diagnostic: the `touchmove`-listener census was installed in
+the **last** script block, so any listener registered while an earlier block executed
+was invisible to it. Moved to the first block; it now reports listeners it previously
+missed (verified: the tour overlay's non-passive handler now appears in the census,
+where before only the metro document listener did).
+
+If scrolling is still broken on device after this build, triple-tap the version stamp
+in Settings and the dump will name the blocker directly — the census is complete now.
+
+---
+
+## v0.98.7 — Tap-target halos reverted; scroll diagnostic added
+
+**My scroll testing this session was measuring nothing.** Headless Chromium does not
+composite touch scrolling: a synthesized touch gesture returns 0 pixels even on a plain
+page containing a single tall div. So every "verified, scrolls to exactly its expected
+distance" result in v0.98.6 was a `window.scrollBy()` call — programmatic scrolling,
+which works regardless of whether a real finger drag would. I confirmed the fix with the
+wrong instrument and reported it as working.
+
+**Tap-target halos reverted.** v0.98.3 added invisible 44pt `::after` boxes to nine
+control types for the iOS HIG minimum. They are the most plausible cause of the failure:
+`pointer-events: auto` on invisible boxes that overlap scrollable area, applied to chips
+that sit in horizontal rows, will intercept a drag that begins over them. That is exactly
+the reported symptom, and an unconfirmed accessibility nicety is not worth a broken app.
+If tap targets get revisited, the safe form is padding on the control itself plus a
+negative margin to preserve layout — never an overlay.
+
+**Scroll diagnostic added.** Since the container cannot reproduce this, the app now
+reports from the device. Triple-tap the version stamp in Settings for: document vs
+viewport height, body `overflow-y` / `touch-action` / `position`, what element sits under
+the screen centre, any fixed full-viewport element with pointer events enabled, every
+non-passive `touchmove` listener registered, and whether the tour overlay or splash is
+still present.
+
+Two things that diagnostic already rules in or out, worth knowing:
+- `.tour-overlay` is `position: fixed; inset: 0; pointer-events: auto` and blocks all
+  touch while active. The gate is `tune_tour_done` — **not** `intonare_tour_done`, which
+  is what my harness had been setting all session, meaning the tour was silently open in
+  every test I ran and I was deleting it before measuring.
+- `runSplash()` registers a non-passive `touchmove` handler that calls
+  `preventDefault()`, and `removeSplash()` restores `body.overflow` but never removes the
+  listener. It normally dies with the element; if the splash element ever survives, that
+  handler keeps killing touch scrolling app-wide.
+
+---
+
+## v0.98.6 — Scroll fix, and the background is actually the background now
+
+**Scrolling was broken in every module.** The header's `::before` still carried
+`left/right: -100vw` with `bottom: 0` from the v0.98.2 full-bleed band — a box extending
+390px past each edge and stretching down the page. That was harmless while an opaque
+band sat on top of it, and not harmless once it stayed. Treatment 9 never needed it: a
+radial has no hard edges to hide. The whole pseudo-element is gone and `.header` is
+static again so it cannot form a stacking context over the content below.
+
+Verified on a 640px viewport across all four modules: each now scrolls to exactly its
+expected distance (337/337, 291/291, 12/12, 382/382).
+
+**The ambient light was on the wrong element.** v0.98.5 put the vignette on the header,
+which is a header effect, not a background one. It has moved to `body.light::before`
+where the page blooms live, as the key light of a three-part setup: a warm key from above
+the frame, a cool accent-tinted skylight fill at bottom-right, and a weak bounce at lower
+left. Background variation now measures **1.17:1** top to bottom against dark's 1.14:1,
+and the light has a direction instead of being a wash.
+
+**And the reason none of it was visible: cards.** Measured — only **34% of the viewport
+is visible page background**; the rest is opaque cards. Any bloom could only ever show in
+a third of the screen, mostly thin gutters. The blooms were working the whole time and
+nothing could see them.
+
+Cards now sit at **92% over the page** instead of fully opaque, so the light behind them
+carries through: measured down a scrolled page, card luminance runs 0.619 under the key
+light to 0.511 at the bottom. Ink holds **10.9:1** (11.14:1 when opaque), so nothing is
+traded. Uses `color-mix` against transparent rather than `opacity`, which would have
+faded the borders and text too.
+
+---
+
+## v0.98.5 — Header vignette, and blooms that add light instead of subtracting it
+
+**Header switched to treatment 9.** No band, no edge: the ground simply brightens toward
+the top of the frame as if lit from above, and falls off with nothing to notice. It
+gives the title a lighter field to sit on — which is all the band was ever for — without
+announcing itself as a header element.
+
+Because the vignette *lightens* rather than tints, the title accents deepened in v0.98.4
+were no longer needed and are **restored to their brighter values** (`#0471ff`, `#977400`,
+`#00896c`, `#725fff`). They now measure 3.83–3.86:1 against a 3:1 floor, with far more
+headroom than the tinted band allowed.
+
+**The background blooms were backwards.** Light mode already had blooms, in the same
+three positions as dark. The problem was direction:
+
+- dark mixes bright cyan at **0.32 onto black** — the bloom *adds* light and reads as a
+  source glowing behind the content
+- light mixed `--theme` (an ink value, L=0.07) at **0.22 onto a pale ground** — it
+  *subtracted*, darkening the ground by 0.134, which reads as a stain on paper
+
+Same geometry, opposite physics. And the measurement that makes the point: light's
+background already varied **more** than dark's (1.37:1 vs 1.14:1 top to bottom). It was
+never too flat. It was dirty.
+
+Rebuilt as additive: a warm high bloom from above, a cooler accent-tinted lift at
+bottom-right, a faint one at left. The warm/cool split matters — real ambient light has a
+warm source and a cool skylight fill, and without that split it reads as one flat wash.
+Now measures **1.12:1** against dark's 1.14:1, and reads as lit from above (top L=0.521,
+bottom L=0.500).
+
+Dark verified untouched: keeps its cyan bloom, still has no header band.
+
+---
+
+## v0.98.4 — Ramp D and a tinted header
+
+**Ramp D.** Ground chroma rises from S=0.30 to **S=0.56**, luminance from L=0.458 to
+0.490. Metro stops being khaki and tools stops being seafoam, because both were
+collapsing for the same reason: a hue only reads as itself above a chroma threshold, and
+gold and green fail it earlier than blue. Chroma is now **56–86% of dark's identity
+colours**, up from a flat 30%. Tools also pulled 167° → 162°, closer to dark's 158°.
+Depth holds at 1.49:1; existing `--muted` values still clear at 4.86–4.97:1, so no ink
+changes were needed.
+
+**Header treatment 7: tinted wash.** The band was plain `--surface-2` — a neutral lift
+that gave the title something to sit on but said nothing about which module you are in.
+It now carries `--accent-bright` mixed into that surface, so the module's hue starts at
+the top of the screen rather than only in the title glyphs. Kept at 15% → 9%: a tint on
+an existing surface, not a coloured header.
+
+**The tint broke the title, and the fix was the title.** Mixing accent into the band
+darkens it, dropping the title from 3.20:1 to **2.80:1** — under the 3:1 floor. Lowering
+the tint until the title cleared meant 4–5%, which is invisible and not worth shipping.
+Deepened the first gradient stop instead: tuner `#0471ff → #0066ec`, metro `#977400 →
+#8c6b00`, tools `#00896c → #007e64`, train `#725fff → #6651ff`. All stay **S=1.00**, so
+no chroma was lost, and all four now clear at 3.26–3.28:1.
+
+**Nothing added below the title.** Options 3, 4 and 8 from the prototype were redundant
+exactly as you said — `.mode-accent-line` already draws the module gradient at y=82 and
+the session bar sits beside it. Both verified untouched after this change.
+
+Lint token table updated; orphans hold at 2.
+
+---
+
+## v0.98.3 — Native-grade rendering hints and HIG tap targets
+
+Two polish passes that apply everywhere and change no layout.
+
+**Rendering hints, app-wide.** These were set on `#toolSurvivalGuide` and nowhere else,
+so most of the app rendered with browser defaults.
+
+- `-webkit-font-smoothing: antialiased` — WebKit's default *subpixel* AA fringes
+  coloured text on a light ground, and our accents are saturated. It also makes small
+  type render heavier than the weight requested. Greyscale AA is what native iOS text
+  uses.
+- `text-rendering: optimizeLegibility` + `font-kerning: normal` — Fraunces and JetBrains
+  Mono both ship real kerning pairs that were being ignored.
+- `font-optical-sizing: auto` — **Fraunces is a variable font with an `opsz` axis.**
+  Without this the 44px title used the same letterforms as 10px body text, which is
+  precisely what optical sizing exists to prevent.
+- `overscroll-behavior-y: contain` — stops the rubber-band drag from revealing browser
+  chrome behind the fixed tab bar.
+
+**Tap targets.** Audit found **16 controls under the 44×44pt iOS HIG minimum**: header
+mic/fav at 36×36, strobe toggle at 59×18, fork at 64×28, reference pills at 126×28, help
+dots at **11×11**. Rather than resize them and disturb layouts that are already tuned,
+each gets an invisible `::after` expanding the hit area to 44pt from its own centre —
+the control looks identical, the finger target is compliant. This mirrors `UIButton`'s
+native hitTest expansion. The help dot is capped at 32pt so its halo doesn't swallow the
+pill beside it. Verified: halos measure 44px and centre clicks still resolve to the
+button.
+
+**Prototype attached, not shipped:** `module_colour_proto.html`. "Seafoam" and "brown"
+are **not hue drift** — tools is 8.8° off dark, metro 3.6°. The cause is chroma: every
+ground sits at S=0.30 while dark's identities are S=0.64–1.00, and gold at S=0.30 with
+mid luminance is definitionally khaki while green there is definitionally seafoam. Blue
+survives because desaturated blue still reads as blue. The prototype shows two fixes and
+three header treatments.
+
+---
+
+## v0.98.2 — Header band bleeds properly; elevation rebuilt as physics
+
+**The header cutoffs were a box-model bug.** The band was painted on `.header`, which
+sits inside `.app`'s 16px padding — a 358px rectangle in a 390px viewport, so it had
+hard vertical edges down both sides. A backdrop band has to bleed past its own box.
+Moved to a `::before` that escapes with `left/right: -100vw`, and masked on the
+horizontal axis so it fades out at the screen edges instead of stopping. Verified by
+scan: smooth 0.458 → 0.384 → 0.455 across the full width, no step.
+
+**Elevation, rebuilt from physical principles.** Audited both modes: dark uses 4–6
+layer shadow stacks, light was mostly 1–3, and its `--shadow-soft` was two faint layers
+at 0.05/0.06 alpha. A real object on lit paper produces four things, and the two that
+were missing are the ones that sell it — a tight **contact shadow** directly under the
+edge (without it nothing looks like it *touches* the page) and a wide **far falloff**
+(without it nothing sits *in* a space). Now a four-layer stack, at higher alpha than
+dark's equivalents on purpose: a shadow has to fight a bright surround here, where dark
+gets contrast for free against near-black.
+
+**Shadows retinted, 51 instances.** They were `rgba(40,40,70)`, near-neutral. Measured:
+a neutral shadow at 10% drops the tuner ground from S=0.30 to **0.21** — the shade
+reads as grey dirt sprinkled on a coloured page. Tinted toward the ground's hue
+(`rgba(18,32,60)`) it holds **S=0.25**, so shade reads as *less light* rather than
+*added grey*. That is the clearest cheap-vs-premium tell in light-mode shadow work.
+
+**The elevation ramp was crowded in the middle.** Ground→surface measured 1.27:1 but
+surface→panel only **1.13:1**, so cards barely separated from their containers. Panel
+raised to L=0.75 across all themes: the ramp is now 1.27 then 1.22–1.24 — even steps
+instead of one real one and one token one. Overall stack depth 1.56 → **1.66:1**, and
+ink on the brighter panel *improves* to 11.03–11.12:1.
+
+**Glass raised again.** Screen fills are literals and do not follow tokens, so the
+raised panel put the tuner glass 0.013 *below* it — the same trap as v0.98.0, caught by
+checking rather than by noticing later. Both screens raised to sit +0.048 above panel;
+all inks improve (tuner 6.87–11.61:1, metro 4.90–11.39:1).
+
+Lint token table updated; orphaned literals 7 → **2**.
+
+---
+
+## v0.98.1 — The title is actually coloured now
+
+Two separate faults, and the second one explains why the previous three attempts all
+looked identical on device.
+
+- **A later rule was overwriting every fix.** `body.light .header--section #appLogo`
+  appears **twice**. The second one (500 lines further down, so it wins) set
+  `background: none`, killed the clip, and applied a flat
+  `color-mix(in srgb, var(--theme-a) 42%, #191b28)` — i.e. mostly near-black. It also
+  set `-webkit-text-fill-color`, which beats `background-clip: text` regardless of
+  source order. Every attempt to give the title colour was landing upstream of this and
+  being silently overwritten. Measured on device, the shipped title was `rgb(16,52,70)`
+  at **L=0.029**.
+
+- **The ground made a vivid title impossible anyway.** `--bg-0` sits at L=0.458, the
+  middle of the range, so anything clearing 3:1 against it must be darker than L=0.108
+  or lighter than L=0.836 — there is no vivid *middle*. That is why every candidate came
+  back near-black: a constraint, not a hue choice. The header now takes a soft
+  `--surface-2` band (the ramp's own top step, so no new colour is invented) fading into
+  the ground. Against L=0.686 a full-chroma title can sit at L=0.19 and still clear 3:1.
+
+- **New token `--accent-bright` / `-2`**, for elements sitting on that band. Verified by
+  rendering: strokes now measure **S=0.97–1.00 at L=0.16–0.17, hue 214 (tuner) and 167
+  (tools)** — real saturated blue and green, roughly five times the luminance of before.
+  All four themes clear the 3:1 large-text floor at 3.04–4.51:1.
+
+- **Gradient stops kept in one hue family.** The `-2` values were drifting to a
+  different hue (tuner's second stop was teal at hue 196 versus 214), so the word
+  changed colour across its own length and the darker teal dominated. Drift is now 0°
+  on all four.
+
+---
+
+## v0.98.0 — Option B: cards become the calm part
+
+Surfaces drop from **S=0.42 to S=0.24** across all four themes and the base palette.
+
+v0.97.90 dropped the grounds to 0.30 and deliberately kept surfaces at 0.42, reasoning
+that cards should be *more* saturated than the page. Measuring against dark showed that
+backwards: dark's cards sit at **S=0.20**, and its accents read as colour precisely
+*because* their surroundings do not. Light had a card at 0.42 beside a page at 0.30
+beside a panel at 0.42 — an accent had nothing quiet to contrast against.
+
+- **Luminance pinned throughout**, so every elevation step is unchanged and ink holds
+  8.95–9.03:1 on all four themes (was 8.96–9.02). Nothing got lighter or darker; the
+  cards only got less colourful.
+
+- **Measured effect:** median screen saturation falls 0.339 → **0.274**, and the
+  p10→p99 range widens 0.275 → **0.303**. Cards are calm, ground carries the theme,
+  accents are the only vivid thing.
+
+- **The glass had to move with it.** Screen fills are literals and do not follow tokens,
+  so against the calmer panel the tuner glass fell to +0.004 above it — it would have
+  stopped reading as lit. Raised to `#dae5f2 → #d0dcee`, back to +0.061 above panel.
+  Metro's existing values already sat +0.055, so those stand.
+
+- **Header title verified end to end.** `background-clip: text` resolves, the gradient
+  renders as real colour (`rgb(0,86,201)` on tuner), and the glyphs measure **S=0.57 at
+  hue 201** rather than the near-black slab they were.
+
+**Lint updated** with the new token table, plus a new exclusion: instrument chrome
+(`-bezel`, `-screen-inner`, `meter-track`) is *supposed* to sit outside the ramp — a
+brushed casing and lit glass are physical materials, not palette surfaces, and holding
+them to token proximity would be asking a bezel to look like a card.
+
+---
+
+## v0.97.99 — Vivid display accent; tab seam removed
+
+**Why light feels monochrome, measured.** Sampled every pixel of both modes. Light is
+*not* less colourful than dark — its mean saturation is actually higher (0.341 vs
+0.297). The difference is range:
+
+| | p10 | p50 | p90 | p99 | range |
+|---|---|---|---|---|---|
+| dark | 0.086 | 0.222 | 0.636 | 1.000 | **0.914** |
+| light | 0.208 | 0.339 | 0.437 | 0.483 | **0.275** |
+
+Dark is mostly calm with vivid accents punching through. Light has **no neutral floor
+and no vivid ceiling** — everything sits mid. That flat distribution is the monochrome
+feeling, and more colour would not fix it; more *contrast between* colourful and calm
+would.
+
+- **New token `--accent-vivid` / `-2`.** The existing `--accent` values are already
+  S=1.00, but at L=0.07–0.13 they are dark enough that the eye reads them as near-black
+  whatever their hue. Dark's accents are equally saturated *and bright* (L 0.44–0.74),
+  which is why they glow. `--accent-vivid` keeps full chroma at the brightest luminance
+  that still clears the 3:1 large-text floor, for **large elements only**.
+
+- **The header title was the clearest casualty.** It paints a `--theme-a → --theme-b`
+  gradient, and in light both are ink values, so the gradient had nothing to travel
+  between and the word rendered as a flat dark slab — no hue visible at 44px, on the
+  one element that should carry the module's colour hardest. Now on `--accent-vivid`.
+  Both stops verified at 3.20–3.24:1 (a gradient's *lightest* point has to clear the
+  floor, and the first pass missed that — the second stops were at 1.76–2.84:1).
+
+- **Tab seam gone.** The radial still reached 78% of the box, so its falloff met the
+  tab edge. Pulled to 58% and centred lower. Largest adjacent luminance step across the
+  tab is now **0.0104** — a smooth gradient with no visible boundary.
+
+- **Top marker no longer dissolves.** It was `currentColor` at 0.9 with a glow sized
+  for a dark bar. Now the vivid accent at full opacity with a real shadow, 3px tall.
+
+**Prototype attached, not shipped:** `chromatic_range_proto.html` compares the current
+S=0.42 cards against 0.30 / 0.24 / 0.18. Dark's cards sit at S=0.20 — the accents read
+as colour *because* their surroundings do not. Calming the cards is the other half of
+this fix and wants an on-device look first.
+
+---
+
+## v0.97.98 — Tab wash fades out; real font-contrast pass
+
+- **The tab fill was boxy because of the geometry, not the colour.** `.mode-btn` is a
+  flex child with `border-radius: 0` and `gap: 0`, so *any* background paints a
+  hard-edged rectangle flush against its neighbours. Replaced the linear wash with a
+  radial centred under the icon that reaches full transparency by ~78% out, so nothing
+  lands on a boundary and there is no rectangle to see. Verified by pixel scan: L
+  descends 0.409 → 0.330 at centre → 0.405 by the far side, with no step until the tab
+  boundary itself. Also dropped the inset underline — `.mode-btn.active::before`
+  already draws a glowing accent bar at the top and inherits `currentColor`, so it
+  picks up `--tab-accent` for free; the underline was a second marker for one state.
+
+- **Font pass, done properly this time.** The previous sweep trusted computed
+  `backgroundColor`, which reports `transparent` for anything painted with a
+  `background-image` — so it produced mostly false positives. This one rasterises each
+  module and samples the real pixels around every text node (85th-percentile luminance
+  = background, not glyph). **30 genuine failures across the four themes, now 11**, and
+  the remainder sit at 3.88–4.20:1 rather than being broken.
+
+  Fixed: `.stamp-time` used `--theme`, a display accent, failing on all four
+  (2.74–3.98:1) → now `--tab-accent`. `.level-chip` lime failed on all four
+  (3.35–3.50:1) → deepened to `#274d00`, and its `opacity: 0.7` removed. The metro
+  `+`/`−` were `rgba(255,209,102,0.3)` with no light override, measuring **1.07:1** —
+  the worst reading in the app — now `#7a5c0d`. Metro mode chips, time-signature
+  presets, subdivision chips and the auto-detect banner were all the same fill-vs-ink
+  trap as the badge: fill set from the accent, label left at the accent, hues converge.
+
+Four apparent failures (`TUNER`/`METRO`/`TOOLS`/`TRAIN` at ~3.9) are a sampling
+artifact — the active tab's wash bleeds into the neighbouring label's sample box.
+`--muted` measures 4.58–4.67:1 on the bar directly, so those pass.
+
+---
+
+## v0.97.97 — Tabs lose the white box, glare dialled back, badge ink fixed
+
+- **The active tab was a white slab.** It painted `--panel`, which sits **+0.22 above
+  the bar** — a bright box behind a small icon, and all you see instead of the module's
+  colour. Dark mode gets this right by using *no* pill: identity comes from the
+  accent-coloured icon and label, and the tab reads as selected because it is the one
+  that is lit. Light now does the same, with a faint **darkening** wash and a 2px
+  accent underline, so the active tab presses in rather than popping out.
+
+- **New token `--tab-accent`.** For the above to work the accent has to clear 4.5:1
+  directly on the bar, and `--theme-a` did not on **any** theme — it is a *display*
+  accent, sized for big numerals on a panel, and as 7px tab text it measured
+  2.83–4.14:1. `--tab-accent` is the same hue deepened until it clears 4.8:1 on its own
+  bar: tuner `#00495f`, metro `#5a3e00`, tools `#084e31`, train `#483190`. All four
+  verified at 4.79–4.82:1.
+
+- **Glare dialled back.** The specular peak went from `.42` to `.15`, and the
+  underlying base sweep from `.42` to `.18` (chroma strip `.36 → .13`). It was reading
+  as a smear rather than a reflection.
+
+- **Panel badge ink.** `LISTENING…` set its *fill* from `--accent-warm` and left its
+  *text* at `--accent-warm` too, so label and background were the same hue and
+  converged to **3.12:1**. Deepened to `#6b240b` (5.26:1). This is the fill-vs-ink trap
+  from the wash pilot: where a label shares its state's hue, a fill fix needs a paired
+  ink deepening or contrast collapses.
+
+Also ran a live contrast sweep over every rendered text node in Tuner and Metro. Most
+apparent failures were a harness artifact — walking up for a painted ancestor lands on
+elements that paint via `background-image`, which reports `backgroundColor:
+transparent`. Checked against real backgrounds, the refpitch and strobe text measure
+5.85–6.88:1. The badge was the one true positive.
+
+---
+
+## v0.97.96 — Glass optics, and a sweep for dark-mode leftovers
+
+**Glass.** The `::before` on each display already carried a glare streak and a
+vignette, but both were built for the dark CRT — the vignette is `rgba(0,0,0,0.38)`,
+which on a light panel is a grey smudge round the edges rather than the fall-off of a
+curved surface. Rebuilt for light as four stacked effects, in the order light actually
+hits glass:
+
+1. a soft top-edge sheen where the cover glass catches the room
+2. the diagonal glare streak, sharpened with a hard leading edge so it reads as a
+   reflection rather than a gradient
+3. a faint cool tint toward the bottom — the colour a pane picks up in shadow
+4. a light vignette, *tinted* rather than black, so the glass looks slightly domed
+
+Measured across the render, the glare band lifts the glass from L=0.698 at the far
+edge to **0.775** across the sweep. Kept deliberately subtle: on a real panel these are
+a few percent, and anything stronger looks like a sticker of glass instead of glass.
+
+Metro's version is warm-tinted (a brass-cased display picks up warm room light, so the
+shadow tint and vignette lean amber). The chroma strip's glare is compressed to suit
+its aspect — a full-height sweep on a 40px-tall pane reads as a stripe, not a
+reflection.
+
+**Dark-mode leftover sweep.** Three of these have now been found by accident
+(v0.97.94 glass inset, v0.97.95 chroma shadow stack, and the black inner shadow), so I
+swept for the signature: `rgba(0,0,0,α)` with α ≥ 0.15 inside a `body.light` rule. Ten
+hits, and on inspection **all the remaining ones are correct** — the Organ, Rhodes and
+Piano nameplates and the theremin pad are deliberately dark instruments sitting on a
+light page, where a black inset is the right recess. No further accidental leftovers.
+
+Dark mode verified untouched: its glass keeps the original CRT `::before`.
+
+---
+
+## v0.97.95 — Metal on the right layer; screens now read as switched on
+
+v0.97.94 put the brushed metal on the wrong element and left the glass looking dead.
+Three corrections.
+
+- **The metal was on the middle layer.** Nesting is
+  `.tuner-screen > .tuner-screen-bezel > .tuner-screen-inner`, outermost first. The
+  metal went on `.tuner-screen-bezel` — the thin lip immediately around the glass —
+  when it belongs on the outer casing, the part the whole unit is milled from. Now:
+  **casing = brushed metal, bezel = 3D chamfer, inner = glass.** The chamfer is dark
+  on the top/left where the casing shadows it and catches light on the bottom/right,
+  which is what makes the display sit *inside* the metal instead of being printed on
+  it. Measured across the render: page 0.446 → casing 0.565 → lip **0.248** → glass
+  **0.744**, a 0.50 step from lip to glass.
+
+- **The screens looked switched off.** Every previous pass pushed the glass *down*
+  (v0.97.92 to 0.088 below `--surface`, v0.97.93 to 0.010 below). A display that is ON
+  sits **above** `--panel`. Glass now L=0.727, 0.045 above panel, with a diagonal
+  specular sweep and a top sheen so it reads as glass catching room light rather than
+  a painted rectangle. Contrast improves as a side effect: tuner inks now 6.39–10.79:1
+  (were 5.23–8.82), metro 6.40–10.84:1.
+
+- **The chroma strip had a dark-mode shadow stack still applied** — a later
+  `body.light` rule re-applied `rgba(0,0,0,0.5)` inset, painting black into a light
+  surface. It also has its own three layers (`.tuner-chroma-bezel` included, which the
+  previous pass missed entirely), so it was sitting beside a bezelled display looking
+  like a different component. Now the same casing / lip / lit-glass construction.
+
+Dark mode verified untouched: all three layers compute `none` for background-image and
+keep their original colours.
+
+---
+
+## v0.97.94 — Metal bezels (option D): steel for Tuner, brass for Metro
+
+The three-layer structure was always in the DOM — `.tuner-screen` (5px pad),
+`.tuner-screen-bezel` (3px pad), `.tuner-screen-inner` — but light mode set the inner
+two to `transparent`, so all 8px of ring **plus** the glass painted one flat housing
+gradient. A bezel-shaped space with no bezel in it, which is why the screen read as a
+slab no matter how the fill was tuned. This fills in structure that already existed.
+
+- **Depth now comes from ORDER, not darkness.** page < housing < metal ring, glass
+  pressed into the ring. That is the correction v0.97.92 needed and got wrong by
+  darkening the glass instead. Measured across the render: page 0.415 → housing 0.584
+  → ring dipping to 0.313 → glass 0.542.
+
+- **Hue-matched alloys.** Steel at the tuner's own 214, brass at the metro's 46. A
+  neutral grey ring on a blue instrument reads as a foreign part bolted on; the metal
+  belongs to its module, same reasoning that gave each module its own ink.
+
+- **The glass carries its own fill now.** It was transparent and inherited the
+  housing's gradient — fine when the bezel was also transparent, but with a brushed
+  ring behind it a transparent glass shows the **grain through the display**. Fill
+  moved to `.tuner-screen-inner` where the glass actually is; the housing drops back
+  to a panel value since it is now just the outer frame.
+
+- **The dark-mode inset shadow was still on the glass in light** —
+  `rgba(0,0,0,.9)`, which is soot on paper, not depth. Replaced with a tinted press
+  (`rgba(18,34,64,.20)` / `rgba(48,40,18,.20)`). This was a real part of why the
+  display looked murky and was never the fill's fault.
+
+All inks clear 4.5:1 on both glasses (tuner 5.23–8.82, metro 5.08–8.61). Dark mode
+verified untouched: the bezel computes `none` and the glass is still `#010408`.
+
+---
+
+## v0.97.93 — Screen darkening rolled back; it was an overcorrection
+
+v0.97.92 was right that the screens were too bright and wrong about how far to move
+them. Measured from a device screenshot of the tuner: page 0.452, housing 0.403,
+screen 0.547, chroma strip 0.528 — everything inside a single **0.40–0.55 luminance
+band at 0.29–0.33 saturation.** No separation anywhere, so the whole module read as one
+grey-blue slab.
+
+**The mistake:** "recessed" is a *shading* cue — light falling into a surface, produced
+by an inset shadow and a bezel. It is not a licence to collapse luminance. A screen
+still has to be the brightest thing inside its own housing, or it stops reading as a
+screen. I moved the tuner display 0.256 in one step, from 0.084 above `--panel` to
+0.088 below `--surface`, and the desaturated ground had already closed the gap from the
+other side.
+
+- **Tuner screen** now `#c0d1e5 → #b3c6db`: **0.010 below `--surface`, 0.127 above the
+  page**, saturation back to 0.38 from 0.33. That is the same relationship the approved
+  B prototype had (it sat 0.009 below the surface of its day). Verified rendering:
+  page 0.424 → housing 0.555 → screen 0.607, a clean ascending ramp.
+- **Metro screen** same correction: 0.022 below `--surface` instead of 0.097.
+- **Inset shadows softened** (.20 → .16) since depth now comes from shading rather than
+  from a dark fill. The deepened inks from v0.97.92 are kept — they still clear 4.5:1
+  on the lighter fill and read better than the originals.
+
+Grounds stay at S=0.30 and the tuner stays at hue 214; those were not the problem.
+
+---
+
+## v0.97.92 — A lint for stale literals, and the screens stop glowing
+
+**New audit: `intonare_light_literal_lint.py`.** Every palette rebuild works through
+CSS custom properties, and a rebuild cannot reach a literal. Four regressions have now
+come from exactly that gap (v0.97.85 launcher ground, v0.97.87 tuner screen, v0.97.90
+base palette, v0.97.91 launcher again) — each found by eye, two builds late. This finds
+them mechanically.
+
+Scope is deliberately narrow, because the naive version was useless: 656 hex literals
+live inside `body.light` rules. It checks only literals used as `background` /
+`border-color` (things that paint a **surface**), skips ink entirely (text is chosen
+for contrast, not palette match), skips small indicators like needles, dots and badges
+(an accent is *meant* to be loud), and skips `.lt-bright` / `keep-dark` blocks (those
+preserve old or dark values on purpose). Borders are scored on whether they are dark
+enough to define an edge rather than on ramp proximity, since an edge is *supposed* to
+sit outside the ramp. Result: 34/18 noise reduced to **9 loud, 7 orphaned**.
+
+Its first run immediately flagged the two surfaces already suspected by eye:
+
+- **Tuner screen** was `#e6e9f3 → #d8dce9`, mean **L=0.766 — 0.084 above `--panel`**,
+  the brightest surface in the app. A display that out-shines every card around it
+  reads as emitting; light should fall *into* a screen. Re-anchored to
+  `#b4c5da → #a6b9d0`, 0.088 **below** `--surface`, rehued to 214 with the rest of the
+  tuner ramp, with a deeper inset shadow so the recess looks pressed in rather than
+  merely darker. Three inks re-deepened to hold 4.5:1 on the darker fill: meter labels
+  `#4a5578 → #3a4360`, screen label → `#004154`, octave → `#004455`. Chroma strip gets
+  the same treatment; it is the same instrument panel.
+
+- **Metro screen** was worse — **L=0.804, 0.118 above `--panel`**. Now
+  `#d0c299 → #c2b48c`, 0.097 below `--surface`.
+
+---
+
+## v0.97.91 — Launcher and splash catch up with the calmer grounds
+
+Follow-up to v0.97.90. Three surfaces did not move with the palette, for two different
+reasons, and both are the recurring pattern: a token rebuild cannot reach a literal.
+
+- **The base `body.light` palette was never desaturated.** v0.97.90 dropped the four
+  *theme-scoped* grounds to S=0.30 and left the base at 0.42. Anything painting before
+  a theme class is applied — the splash most visibly — was therefore suddenly the most
+  saturated thing in light mode. Base `--bg-0`/`--bg-1` now match at S=0.30, luminance
+  pinned.
+
+- **Launcher ground dropped to S=0.20 at hue 230** (was `#b4b6dc`, S=0.36, hue 237).
+  Two faults: with modules at 0.30 it was again the most saturated surface, and its hue
+  sat between tuner's 214 and train's 247, so the chooser read as almost-Train rather
+  than neutral. It sits *above* all four modules, so it should be **less** chromatic
+  than any of them, not equal — 0.20 reads as a null state rather than a fifth theme.
+  Veil tracks it, as always, since it crossfades into the launcher.
+
+- **Splash needed no literal change.** Two of its three gradient stops are
+  `var(--bg-0)` / `var(--surface)`, so they followed the base fix automatically; the
+  hardcoded first stop was already S=0.28, within tolerance of the 0.30 target. It also
+  picks up the tuner's new blue at boot, which is correct — the app opens on the Tuner.
+
+- **Card border anchor still holds.** `#a0a2c0` sits 0.114 below the new launcher
+  ground and 0.242 below the card surface, so the edge survives the calmer ground
+  without retuning.
+
+---
+
+## v0.97.90 — Calmer grounds, and the tuner is actually blue
+
+- **Grounds drop to S=0.30.** The soft palette ran S=0.42 at *every* level of the ramp;
+  typical light UI sits nearer 0.10–0.20. A ground that saturated makes everything
+  placed on it fight for separation, which is the "muddy" read at its root — not any
+  one surface being wrong, but the page competing with its own content. `--bg-0` and
+  `--bg-1` now sit at 0.30 while surface/panel stay at 0.42, so cards are *more*
+  saturated than the page: tinted objects on calm ground rather than one shared wash.
+  Measured after: cards render S=0.36 on an S=0.30 ground.
+
+- **Desaturated with luminance pinned.** Naive desaturation shifts luminance in
+  opposite directions per hue — tuner/train got *lighter*, metro/tools *darker*, by up
+  to 0.078 — which would have destroyed the cross-theme luminance parity the soft
+  rebuild exists to provide. Binary search on HSL lightness holds each ground to its
+  original value instead. All four now land within **0.0051** of each other.
+
+- **Tuner rehued 232° → 214°.** 232 is blue-*violet*, not blue, which is why the tuner
+  read as periwinkle — and it sat only **13°** from Train's 245°, so the two themes
+  felt like the same colour. At 214 it is a real blue and they are 33° apart. The whole
+  ramp (grounds, surfaces, panel, borders) and the module ink were rebuilt at the new
+  hue with luminance pinned, so the steps are untouched; only the hue moved. Final
+  hues: tuner 214, metro 46, tools 167, train 247.
+
+- **Contrast holds.** Tuner ink on the new ramp: text 8.96:1, dim 6.42:1, muted 5.85:1
+  on `--surface`. The light-contrast audit reports the same four pre-existing items as
+  before; no new failures.
+
+---
+
+## v0.97.89 — Progression cells get real elevation
+
+Measured from a device screenshot: an empty Progression cell sat **+0.037** above the
+page, which is 26% of the 0.142 elevation step every other card on that page gets. Its
+saturation also *dropped* (0.43 → 0.36). Both barely-raised and less colourful than the
+ground it rests on — that combination is what reads as flat.
+
+- **Empty cells now match card elevation.** `.prog-cell` was painting a value partway
+  between `--bg-0` and `--panel` and carried `box-shadow: none` while `.card` gets a
+  five-layer stack. Now full `--panel` plus the card shadow: **+0.227** above the page.
+
+- **Filled cells were mixed into `--surface`, one step BELOW the `--panel` the empty
+  cell sits on** — so putting a chord into a bar visually pushed it *down*. Since every
+  cell in a real progression is filled, that was the entire grid reading as flat.
+  Rebased onto `--panel`: now +0.170 above the page, and chroma goes **up** (0.42 →
+  0.46) rather than down.
+
+- **Playing** keeps the deeper fill (32%) and gains a 2px ring; it is the one cell that
+  should command the eye, and it is transient. **Rest** is the only cell that should
+  read as recessed — an absence — so it keeps an inset shadow at `--surface`.
+
+---
+
+## v0.97.88 — The header fitter actually runs now
+
+v0.97.87 shipped `_fitHeaderTitle()` and it did nothing. Two independent faults, both
+of which made it silently decide the title already fitted.
+
+- **Called too early.** It ran three lines before
+  `header.classList.add('header--section')`, so it measured a header that had not yet
+  taken its section font-size rules and did not yet have the back chevron in the row.
+  Moved after the class application, where the layout is final.
+
+- **Measuring the box instead of the text.** For `#appLogo`, `el` and `box` are the
+  same element, so the loop compared the element against itself and was never true.
+  Worse, the element is `overflow:hidden`, so `getBoundingClientRect()` returns the
+  *clipped* width — by construction it can never exceed its own container. Now uses a
+  `Range` over the element's contents, which reports the width the text actually wants
+  regardless of clipping. Works for the block `#appLogo` and the inline
+  `.hdr-mod-title` alike, which is what the earlier `scrollWidth`/`rect` attempts were
+  each half-right about.
+
+Verified through the real `enterToolFolder()` path rather than a synthetic call:
+HARMONY at 412px now steps 35.02px → 33.02px, text 188px inside a 189px box (was
+199px in 189px). All five folder titles — HARMONY, PITCH & SOUND, RHYTHM, REFERENCE,
+UTILITIES — fit at 390, 412 and 430px.
+
+---
+
+## v0.97.87 — Fill colours are not ink colours; header titles shrink to fit
+
+**Why light mode looked muddy.** v0.97.86 based state fills on `--accent`. Measured
+from a device screenshot, an active chip in Chords sat at **S=0.34 against a page at
+S=0.43** — the selected item was the *greyest* thing on screen, and had collapsed to
+within 0.02 of the page's own luminance.
+
+- **The cause is a category error, not a tuning problem.** `--accent` and friends are
+  **ink** colours: chosen to clear 4.5:1 as *text* on a light surface, which makes them
+  very dark (L 0.07–0.13). Used as the base of a **fill**, a 12–22% mix lands near the
+  page luminance while dragging chroma *down*, because a dark low-chroma target pulls a
+  light high-chroma surface toward grey. Tested OKLCH mixing as a fix — it barely helps
+  (S 0.35 → 0.34), because the chroma loss is in the target colour, not the colour
+  space. The fix has to be a different target.
+
+- **New token: `--accent-fill`.** Same hue at *mid* luminance and *high* chroma, per
+  theme: tuner `#3f8fd0`, metro `#c99320`, tools `#00b877`, train `#7d63d8`. Mixed at
+  30% it darkens **and** saturates. Measured across all four themes: dL −0.09 to −0.16
+  (unchanged), dS now **+0.08 to +0.10** instead of −0.01 to −0.07. Ink still clears
+  4.5:1 everywhere (5.91–6.48:1).
+
+- **Tools needed its own value.** Its surface is already a high-chroma mint, so the
+  generic mid-green landed at the same saturation and the state read as plain
+  darkening. Pushed to `#00b877` for a real chroma gain (+0.08).
+
+- **Header titles were running under the buttons.** `data-len` sizes the title from
+  **character count**, which is a proxy for rendered width rather than a measurement of
+  it. Fraunces is wide, so HARMONY sat in the "short" bucket and still put ~200px of
+  glyphs under the mic button on a 1440px device. `.logo-area` was already reserving
+  the button space correctly — it was the text overflowing its box, not the box being
+  wrong.
+
+- **`_fitHeaderTitle()`**: keeps the title on one line and steps the size down until it
+  genuinely fits, with an ellipsis as last resort below 15px. Three things this needed
+  that the first attempt got wrong: an *absolute* floor (a proportional one stopped
+  before long titles could ever fit), wiring into **both** header paths (module titles
+  go through `setHeaderModule` and live in `#headerTagline`, not `#appLogo`), and
+  `getBoundingClientRect()` rather than `scrollWidth` (the module title is an inline
+  span, and inline boxes report scrollWidth 0 no matter how wide they render).
+  Verified: PROGRESSION, VOLUME METER and SURVIVAL GUIDE all fit at 390 and 412px.
+
+---
+
+## v0.97.86 — Light-mode state washes: pilot on three modules
+
+**The mechanism behind "light mode feels half-baked."** The palette is fine — all four
+light themes measure within 0.0042 of each other on `--bg-0`, identical saturation,
+consistent elevation steps. The gap is that **elevation is token-based but state is
+alpha-based, and only the tokens were rebuilt.**
+
+State is painted as a translucent wash of a fixed dark-mode colour:
+`.prog-cell.filled { background: rgba(255,160,122,0.07); }`. On near-black the dark
+ramp's step is ~0.0024, so a 7% warm wash is a ~2x lift and reads as a lit panel. On
+light the step is ~0.14, so the same declaration delivers ~5% of one step. Warm washes
+over cool light grounds go **negative** — `.playing` on Tools measured **-0.0134**, so
+the most important state rendered *darker* than the page. Measured off a device
+screenshot, chord cells sat **0.012** below the page against a designed step of 0.142.
+
+- **New audit: `intonare_light_wash_audit.py`.** Flags low-alpha state washes with no
+  light override, scoring each against one elevation step in both modes. Filters out
+  pure-black washes (deliberate recesses) and `keep-dark` subtrees (never see a light
+  ground). Also reports `already-overridden` so it works as a burndown rather than a
+  fixed complaint. Baseline: **74 inverted, 90 too weak, 5 acceptable, 50 overridden.**
+
+- **The washes are semantic, which is what makes a blanket rule viable.** cyan
+  `94,226,255` → `--accent`; gold `255,209,102` → `--metro`; peach `255,160,122` →
+  `--accent-warm`; lime `182,242,91` → `--in-tune`. Each already has a deep,
+  WCAG-passing light token, so light re-bases the wash on the token via `color-mix`
+  instead of hand-writing per-selector colours.
+
+- **Direction inverts on purpose.** Dark-mode active states get *lighter* (emission);
+  on paper they get *darker* (ink). Pilot states now land 44–121% of one elevation
+  step below the surface, consistent across all four themes.
+
+- **Pilot scope: chord progression, scale/tone tiles, chord builder.** Deliberately not
+  app-wide — the point was to find out whether one rule holds before committing to the
+  remaining ~35 modules. It mostly does.
+
+- **Where the blanket rule broke, and it did.** Three labels kept their accent colour
+  while the fill darkened toward that same accent, so hue converged:
+  `.stb-tile.active .stb-name` at 4.27:1 and `.prog-cell.playing .prog-cell-chord` at
+  4.28:1. Fixed by deepening the ink, not by weakening the fill — the fill is doing the
+  state work. All four themes now clear 4.5:1.
+
+Dark mode verified unchanged: the original `rgba()` declarations are still what
+computes there. Light overrides sit on top rather than replacing them.
+
+---
+
+## v0.97.85 — The module picker joins the soft light palette
+
+The Light Brightness rebuild works entirely through CSS tokens, so every surface
+using `--bg-0` / `--surface` / `--panel` picked it up for free. The launcher ground
+is a hardcoded literal, so it did not — and it was never noticed because the cards
+*themselves* are token-based and looked right in isolation.
+
+- **Launcher ground re-anchored.** `#cfd2e4` (L=0.649) was chosen against the old
+  brighter palette. On soft it sits 0.19 above `--bg-0` and within 0.036 of
+  `--surface`, so the cards had almost no separation from the ground they rest on —
+  precisely the failure the rebuild exists to fix, still live on the one surface it
+  could not reach. Now `#b4b6dc` (L=0.483): a 0.130 gap to `--surface` so cards lift,
+  while staying just off `--bg-0` so the chooser keeps its own neutral ground rather
+  than impersonating a tab. The original reason for hardcoding still holds — `--bg-0`
+  is themed per tab and the launcher must not change colour with it.
+
+- **Card border anchor re-anchored.** `#b9bbd0` (L=0.504) fell *between* the ground
+  and the face on the soft palette — 0.021 below one, 0.109 below the other — so the
+  edge sat between the two values it was meant to separate and read as mush. Now
+  `#a0a2c0` (L=0.371), clearly below both.
+
+- **Boot veil tracks the launcher.** The veil crossfades into `#lnch`, so a mismatched
+  ground would read as the background changing colour mid-fade. Updated in step.
+
+- **BRIGHT restores all three exactly.** `body.light.lt-bright` keeps `#cfd2e4` and
+  `#b9bbd0`, consistent with how the rest of the legacy palette is preserved: real
+  values, not a filter, so nothing shifts hue.
+
+---
+
+## v0.97.84 — The veil covers both paths, not just the pinned one
+
+**Follow-up to v0.97.83, which fixed the card pop and introduced an app flash.**
+Holding `#lnch` transparent while the grid built stopped the cards being seen
+arriving; it also meant the overlay was covering nothing, so the tuner underneath
+was simply on screen for ~240ms before the launcher faded in. A transparent
+overlay hides nothing. Trading a card-pop for an app-flash is not a fix.
+
+- **Veil hoisted out of the pinned branch.** `#lnchVeil` was written as a
+  pinned-launch feature and that framing was the mistake. With the splash off,
+  *something* has to be opaque over the app while the viewport settles, and that
+  holds whether or not a module is pinned — pinned shows the wrong module until
+  the real one arrives, unpinned shows the tuner under a transparent launcher.
+  Same hole, two descriptions. One veil, created pre-paint, now covers both.
+
+- **Crossfade sums to opaque.** The unpinned path lifts the veil in the same frame
+  the launcher starts fading in, both over `.34s`. The launcher arrives exactly as
+  fast as the veil leaves, so combined coverage holds at 1.0 across every frame of
+  the transition. Measured: `totalCover` never drops below 1.00 on either path.
+  Veil is `pointer-events:none`, so the first tap is never eaten.
+
+**Verified by render, not by reasoning.** The 120ms frame was a fully drawn tuner
+before this change and is flat launcher ground after it. The v0.97.83 numbers said
+the launcher faded correctly and they were true; they just weren't measuring the
+thing that was actually visible.
+
+---
+
+## v0.97.83 — Boot without the splash stops snapping
+
+**The shared problem.** Both bugs here are the same one wearing two hats: the
+launcher's timing was written against the splash, and the splash is now optional.
+With it off, nothing opaque covers the first few frames, and everything that was
+hiding behind it became visible.
+
+- **Launcher · no-splash entry (the snap).** The card stagger uses
+  `transition-delay` of `.34s`–`.72s`, tuned to play *underneath* the splash's
+  1.3s dissolve. With the splash off those delays ran against a bare background,
+  so you saw the empty launcher, then four cards popping in. New `lnch-nosplash`
+  path instead: the launcher ships fully transparent (set pre-paint, so there is
+  no wrong first frame), builds the grid and waits for the viewport while blank,
+  then fades up as one object on a `.04s`–`.22s` stagger. Blank → in at ~200ms,
+  fully up by ~320ms. The splash-on path is untouched.
+
+- **Pinned module · measured before the viewport settled.** A pinned launch is
+  the only path that enters a module at cold start with nothing in front of it.
+  `setMode()` sizes canvases from `offsetWidth`/`clientHeight`, and Capacitor
+  resolves safe-area insets, status bar and nav bar over the first frames — so
+  those reads were against a height that was about to change, and the module drew
+  itself wrong and then jumped. `setMode()` now waits for the viewport to hold
+  steady before it runs.
+
+- **Viewport settle promoted to a global.** `startWhenStable()` already existed
+  and already solved this, but it was a local inside `runSplash()` — so the one
+  path that most needed it (splash off) could not reach it. Now
+  `window._intonareWhenViewportStable()`, used by the splash, the launcher and
+  the pinned path. Waits for `visualViewport.height` to hold for 3 frames,
+  falls back to 200ms without `visualViewport`, hard-capped at 500ms. One
+  implementation, not three.
+
+- **Boot veil (pinned + splash off).** Gating `setMode()` on the settle opened a
+  new gap: the app boots on the tuner, so for that window the *wrong* module was
+  on screen and then swapped. Added `#lnchVeil`, created pre-paint and painted in
+  the same flat ground as the launcher, so a pinned launch and a grid launch start
+  from an identical frame. Lifted two frames after the real module paints, with a
+  2.5s failsafe so a throw on the module path cannot strand the app behind an
+  opaque rectangle.
+
+---
+
 ## v0.97.82 — Launcher titles, icon glows, and the purple pulled back
 
 Three separate things.
