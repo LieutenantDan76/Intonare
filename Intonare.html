@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.101.10 -->
+<!-- INTONARE_VERSION: 0.103.0 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -15,6 +15,11 @@
    decision is made, and by a failsafe timeout so a throw can never strand a blank
    screen. */
 html:not(.boot-ready) body > .app { visibility: hidden; }
+/* The launcher is hidden by the same guard. It ships VISIBLE in the markup so the
+   pre-paint script can decide synchronously whether to keep it, but that also
+   means it paints its own ground before that script has run - one of the flashes
+   on a skipped splash. It is revealed by lnchInit, not by boot-ready. */
+html:not(.boot-ready) #lnch { visibility: hidden; }
 </style>
 <script>
   /* Independent failsafe for the boot guard above. It must NOT live in the boot
@@ -4467,7 +4472,7 @@ html,body{background:#000000!important;transition:none!important}
   /* !important because the app-wide `*` transition rule otherwise replaces both the
      duration and the delay, which is what let the bar start moving mid-handover. */
   body:not(.lnch-settled) .mode-toggle {
-    transition: transform .38s cubic-bezier(.22,1,.36,1) .30s !important;
+    transition: transform .38s cubic-bezier(.22,.61,.36,1) !important;
   }
   body.lnch-settled .mode-toggle {
     transition: transform .34s cubic-bezier(.4,0,.2,1) !important;
@@ -4487,7 +4492,7 @@ html,body{background:#000000!important;transition:none!important}
      launcher SURFACE has to be opaque immediately to cover the app during the
      veil handover; only what sits on top of it waits, so there is still
      something to watch once the handover is done. */
-  #lnch .lnch-cell { opacity: 0; transition: opacity .34s cubic-bezier(.4,0,.2,1); }
+  #lnch .lnch-cell { opacity: 0; transition: opacity .38s cubic-bezier(.22,.61,.36,1); }
   #lnch.lnch-in .lnch-cell { opacity: 1; }
   /* Stagger reads as one gesture rather than four things appearing at once. Delays
      are additive on top of the dissolve, which is why they are short. */
@@ -4496,7 +4501,7 @@ html,body{background:#000000!important;transition:none!important}
      were not there yet. It rides lnch-in with everything else and trails it. */
   /* !important: without it the `*` rule replaces the shorthand and the delay is
      lost, so the hint fades in lockstep with the cards instead of after them. */
-  #lnch .lnch-hint { opacity: 0; transition: opacity .34s ease .22s !important; }
+  #lnch .lnch-hint { opacity: 0; transition: opacity .34s cubic-bezier(.22,.61,.36,1) .18s !important; }
   #lnch.lnch-in .lnch-hint { opacity: 1; }
 
   /* ── Quick-access pins ────────────────────────────────────────────────
@@ -4529,8 +4534,8 @@ html,body{background:#000000!important;transition:none!important}
        !important on the transition because the app-wide `*` rule replaces the
        whole shorthand; the values deliberately do not carry it, or the settled
        state would outrank :active and press feedback could never apply. */
-    transition: opacity .34s cubic-bezier(.4,0,.2,1),
-                transform .34s cubic-bezier(.4,0,.2,1) !important;
+    transition: opacity .34s cubic-bezier(.22,.61,.36,1),
+                transform .34s cubic-bezier(.22,.61,.36,1) !important;
   }
   /* Delays land AFTER the splash's 1.3s dissolve, not before it. At .70-.90s the
      whole stagger ran underneath the splash and the row was already settled by
@@ -4631,7 +4636,7 @@ html,body{background:#000000!important;transition:none!important}
      the grid is built and the viewport settles (that is the blank screen; it is blank
      ON PURPOSE, not a stall), then the whole thing fades up as one object on a much
      tighter stagger. Fading the container means the cards are never seen arriving. */
-  #lnch.lnch-nosplash { opacity: 0; transition: opacity .34s cubic-bezier(.4,0,.2,1); }
+  #lnch.lnch-nosplash { opacity: 0; transition: opacity .38s cubic-bezier(.22,.61,.36,1); }
   #lnch.lnch-nosplash-in { opacity: 1; }
   #lnch.lnch-nosplash .lnch-cell { transition-delay: 0s; }
   /* No per-card stagger: this reveal happens underneath the veil's own crossfade,
@@ -4895,7 +4900,7 @@ html,body{background:#000000!important;transition:none!important}
      they read as dimmer phosphor rather than grey. */
   .sf-note {
     font-family: 'Bebas Neue','GlyphFix', sans-serif;
-    font-size: 68px; line-height: .85; letter-spacing: 2px;
+    font-size: 60px; line-height: .85; letter-spacing: 2px;
     background: var(--grad-tune);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     /* --accent, not --theme: --theme is scoped to the module wrapper, so a
@@ -5025,8 +5030,8 @@ html,body{background:#000000!important;transition:none!important}
      asks the coarse question and the guide holds the settings, so a capo control
      on the glass was the same value offered in two places again. */
   .sf-chosen { display: flex; align-items: center; justify-content: center;
-    gap: 8px; flex: 0 0 auto; height: 24px; padding: 0 2px;
-    margin-top: 5px; padding-top: 5px;
+    gap: 8px; flex: 0 0 auto; height: 22px; padding: 0 2px;
+    margin-top: 3px; padding-top: 2px;
     border-top: 1px solid color-mix(in srgb, var(--accent) 10%, transparent); }
   body.sf-needs-pick .sf-chosen { display: none; }
   .sf-chosen-name { appearance: none; cursor: pointer; display: flex;
@@ -5383,8 +5388,13 @@ html,body{background:#000000!important;transition:none!important}
   #lnch .lnch-cell.lnch-other:nth-child(3){ transform: translate(-124%,50%)  rotate(17deg);  }
   #lnch .lnch-cell.lnch-other:nth-child(4){ transform: translate(126%,56%)   rotate(-22deg); }
   body #lnch .lnch-cell.lnch-picked,
-  body #lnch .lnch-cell.lnch-other { transition: transform .4s cubic-bezier(.36,0,.28,1),
-                                                 opacity .32s ease !important; }
+  body #lnch .lnch-cell.lnch-other {
+    /* Ease-OUT, not ease-in-out. The old curve ramped up from rest, so the first
+       ~110ms after the tap produced no visible movement - a stall before the card
+       committed, which is what read as jitter. Touch-triggered motion should
+       leave immediately and settle. */
+    transition: transform .38s cubic-bezier(.22,.61,.36,1),
+                opacity .3s cubic-bezier(.22,.61,.36,1) !important; }
 
   #lnchMorph{
     position: fixed; z-index: 950; display: none; overflow: hidden;
@@ -5399,9 +5409,9 @@ html,body{background:#000000!important;transition:none!important}
     /* No delay on opacity: the fade begins when JS adds .lnch-morph-fade. A CSS
        delay here raced the teardown timer and the card was hidden before its own
        fade had started, so it vanished instead of fading. */
-    transition: transform .58s cubic-bezier(.28,.84,.32,1) .04s,
-                border-radius .5s ease .04s,
-                opacity .36s cubic-bezier(.4,0,.2,1) !important;
+    transition: transform .42s cubic-bezier(.22,.61,.36,1),
+                border-radius .34s ease,
+                opacity .3s cubic-bezier(.4,0,.2,1) !important;
   }
   #lnchMorphCard{ position: absolute; inset: 0; }
   /* An explicit start value so the fade has something to animate FROM. Without it
@@ -7589,7 +7599,7 @@ html,body{background:#000000!important;transition:none!important}
   .ppc-pedal.sost.on   .ppc-pad { background: linear-gradient(180deg,#bff0ff 0%,#5ee2ff 45%,#3ab8d8 80%); box-shadow: 0 0 8px rgba(94,226,255,0.5); }
   .ppc-pedal.damper.on .ppc-pad { background: linear-gradient(180deg,#cfe8b0 0%,#aacf80 45%,#7fae55 80%); box-shadow: 0 0 8px rgba(140,210,90,0.5); }
   .ppc-pedal .ppc-lbl { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 6px; font-weight: 800; letter-spacing: 0.5px; color: rgba(40,42,48,0.6); }
-  .ppc-pedal .ppc-name { margin-top: 4px; font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 10px; letter-spacing: 1px; color: rgba(255,255,255,0.38); }
+  .ppc-pedal .ppc-name { margin-top: 4px; font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 10px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: clip; color: rgba(255,255,255,0.38); }
   .ppc-pedal.soft   .ppc-name { color: rgba(184,163,255,0.65); }
   .ppc-pedal.sost   .ppc-name { color: rgba(94,226,255,0.65); }
   .ppc-pedal.damper .ppc-name { color: rgba(182,242,91,0.65); }
@@ -8445,8 +8455,17 @@ html,body{background:#000000!important;transition:none!important}
        would put them below legibility on the LCD, so they wrap instead and the
        fitter only has to clear the WIDEST LINE. Capped at 2 lines with ellipsis
        so nothing can push the origin line off the screen. */
+    /* Wrap BETWEEN WORDS ONLY - never inside one. Computed against the real
+       172px column: with word-only wrapping every preset fits at 16.9px or
+       above, and only FUNK 4-ON-THE-FLOOR reaches that; MONTUNO needs 24.4px on
+       one line and HABANERA 21.5px. So a word split is never necessary, and
+       allowing it is what produced "MONTUN / O" and "HABANE / RA" - the fitter
+       had no reason to shrink because the text had already been forced to fit
+       by breaking. With this off, overflow is resolved by shrinking, which is
+       what the fitter exists to do. */
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
+    word-break: keep-all;
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
     overflow: hidden;
   }
@@ -22765,7 +22784,17 @@ try {
         }, 2500);
       }
 
-      if (pin) { el.style.display = 'none'; }        // pinned: never wanted
+      // A deep link means a module is already on its way, so the chooser must not
+      // paint at all - not even for the ~200ms between the launcher building and
+      // lnchInit noticing the flag. Checked here, at first paint, rather than
+      // later where it can only hide something already on screen.
+      var _link = false;
+      try {
+        _link = !!window._intonareWantSkipSplash ||
+                /[?&](d|dt|chordle|tonale|diadle)=/.test(location.search) ||
+                location.hash.indexOf('intonare://') === 0;
+      } catch (e) {}
+      if (pin || _link) { el.style.display = 'none'; }   // never wanted
       else {
         document.body.classList.add('lnch-open');   // hide tab bar from frame one
         document.body.classList.remove('lnch-settled');
@@ -22774,9 +22803,17 @@ try {
         // frame too late — and the frame you would see is the bare grid.
         if (_sk) el.classList.add('lnch-nosplash');
       }
-      // Safe to uncover: by now the veil, the splash, or the launcher itself is
-      // covering the app, so this can never expose a bare tuner.
-      _reveal();
+      // Safe to uncover ONLY if something is actually in front of the app right
+      // now. On the skipped-splash path the launcher fades in over ~1.4s, and
+      // revealing here left the app visible underneath for that whole window -
+      // the flashes on the recording. The veil is the cover on that path, so the
+      // reveal waits for it; where there is no veil (splash running, or pinned)
+      // the splash or the module is the cover and it can go immediately.
+      if (_sk && document.getElementById('lnchVeil')) {
+        // lnchInit releases it once the launcher itself is opaque.
+      } else {
+        _reveal();
+      }
     } catch (e) { _reveal(); }
   })();
 </script>
@@ -23454,7 +23491,7 @@ try {
         <!-- Three pedals below the keyboard: soft · sostenuto · damper -->
         <div class="piano-pedal-cluster"><div class="ppc-inner">
           <div class="ppc-pedal soft"   id="pianoSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOFT</span></div></div><div class="ppc-name">SOFT</div></div>
-          <div class="ppc-pedal sost"   id="pianoSostPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOST</span></div></div><div class="ppc-name">SOSTENUTO</div></div>
+          <div class="ppc-pedal sost"   id="pianoSostPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOST</span></div></div><div class="ppc-name">SOST</div></div>
           <div class="ppc-pedal damper" id="pianoPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SUST</span></div></div><div class="ppc-name">DAMPER</div></div>
         </div></div>
 
@@ -27224,7 +27261,7 @@ try {
   <!-- Three pedals below the keyboard: soft · sostenuto · damper -->
   <div class="piano-pedal-cluster"><div class="ppc-inner">
     <div class="ppc-pedal soft"   id="pianoFullSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOFT</span></div></div><div class="ppc-name">SOFT</div></div>
-    <div class="ppc-pedal sost"   id="pianoFullSostPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOST</span></div></div><div class="ppc-name">SOSTENUTO</div></div>
+    <div class="ppc-pedal sost"   id="pianoFullSostPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOST</span></div></div><div class="ppc-name">SOST</div></div>
     <div class="ppc-pedal damper" id="pianoFullPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SUST</span></div></div><div class="ppc-name">DAMPER</div></div>
   </div></div>
 
@@ -27397,11 +27434,11 @@ try {
         <div class="credits-item"><a href="https://www.mutopiaproject.org" target="_blank">Mutopia Project</a> &mdash; Debussy &ldquo;Clair de lune&rdquo; &mdash; Public Domain</div>
       </div>
       <div class="credits-group">
-        <div class="credits-group-title">Performance sequences</div>
-        <div class="credits-item"><a href="https://www.piano-midi.de" target="_blank">Bernd Kr&uuml;ger</a> &mdash; Prelude in C, Clair de lune, F&uuml;r Elise, Moonlight Sonata (I, II &amp; III), Raindrop Pr&eacute;lude, Pr&eacute;lude in E minor, Fantaisie-Impromptu, Liebestraum No. 3, Barcarolle, Troika, Alla Turca, Sonata Facile, To Spring, Wedding Day at Troldhaugen, Butterfly, Tr&auml;umerei, Pr&eacute;lude in C-sharp minor, Pr&eacute;lude Op. 23 No. 5, Waldstein Sonata (I) &mdash; <a href="https://creativecommons.org/licenses/by-sa/3.0/de/deed.en" target="_blank">CC BY-SA</a></div>
+        <div class="credits-group-title" data-i18n="credits_performances">Performance sequences</div>
+        <div class="credits-item"><a href="https://www.piano-midi.de" target="_blank">Bernd Kr&uuml;ger</a> &mdash; Prelude in C, Clair de lune, F&uuml;r Elise, Moonlight Sonata (I, II &amp; III), Raindrop Pr&eacute;lude, Pr&eacute;lude in E minor, Fantaisie-Impromptu, Liebestraum No. 3, Barcarolle, Troika, Alla Turca, Sonata Facile, To Spring, Wedding Day at Troldhaugen, Butterfly, Tr&auml;umerei, Pr&eacute;lude in C-sharp minor, Pr&eacute;lude Op. 23 No. 5, Waldstein Sonata (I) &mdash; <a href="https://creativecommons.org/licenses/by-sa/3.0/de/deed.en" target="_blank">CC BY-SA</a> &mdash; <a href="https://lieutenantdan76.github.io/Intonare/credits/midi-sources/" target="_blank" data-i18n="credits_adapted">adapted files</a></div>
       </div>
       <div class="credits-group">
-        <div class="credits-group-title">Fingering diagrams</div>
+        <div class="credits-group-title" data-i18n="credits_fingering">Fingering diagrams</div>
         <div class="credits-item"><a href="https://fingering.bretpimentel.com" target="_blank">Bret Pimentel</a> &mdash; Bassoon &amp; Contrabassoon body diagrams &mdash; <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></div>
       </div>
     </div>
@@ -28411,7 +28448,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.101.10</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.103.0</span>
     </div>
   </div>
 </div>
@@ -28419,7 +28456,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.101.10';
+const INTONARE_VERSION = '0.103.0';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -29132,21 +29169,56 @@ const GROOVE_CATEGORIES = [
 const GROOVE_PRESETS = [
   // ── LATIN ──
   {
+    // ── CLAVE FAMILY: VERIFIED ─────────────────────────────────────────────
+    // NOTE ON ENCODING: 16 steps here is ONE 4/4 bar of sixteenths, and the full
+    // TWO-BAR clave is written in cut time across it - the 3-side occupies the
+    // first half, the 2-side the second. The engine's own rule is "step duration
+    // = one bar / pattern length", so 16 steps in 4/4 are sixteenths. Do not
+    // re-read these as two bars of eighths; that misreading is what led to the
+    // montuno being "corrected" in the wrong direction earlier in this file's
+    // history.
+    // 3-2 son clave: 1, the "a" of 1, the "&" of 2 | the "&" of 3, 4.
+    // Verified against Soundbrenner ("clap 3-2 son clave: 1, and of 2, 4 | 2, 3"
+    // in its own two-bar counting) — https://www.soundbrenner.com/blogs/articles/son-clave
+    // The 2-3 forms below are exact half-swaps of the 3-2 forms, which is what
+    // the sources require: "3-2 and 2-3 are not two different rhythms... they are
+    // two directions of the same two-bar pattern."
+    // TOUSSAINT SIX (4 of 6). Also confirmed by the academic set: Son is
+    // x - - x - - x - - - x - x - - - = 0,3,6,10,12, which is what we have.
+    // Diaz-Banez et al. Table 1: https://www.scitepress.org/Papers/2013/43255/43255.pdf
     id: 'son32',    cat: 'latin', beats: 4, suggestedBpm: 110,
     name: 'SON CLAVE 3-2', origin: 'Cuban son / salsa',        originIt: 'Son cubano / salsa',
     steps: [2,0,0,2,0,0,2,0, 0,0,2,0,2,0,0,0],
   },
   {
+    // VERIFIED BY CONSTRUCTION: this is son32 above with its two halves swapped,
+    // which is exactly what the sources require of a 2-3 form ("3-2 and 2-3 are
+    // not two different rhythms... they are two directions of the same two-bar
+    // pattern"). son32 = A|B with A=[2,0,0,2,0,0,2,0] B=[0,0,2,0,2,0,0,0];
+    // this is B|A. No independent citation needed beyond son32's.
     id: 'son23',    cat: 'latin', beats: 4,
     name: 'SON CLAVE 2-3', origin: 'Cuban son',                 originIt: 'Son cubano',
     steps: [0,0,2,0,2,0,0,0, 2,0,0,2,0,0,2,0],
   },
   {
+    // RUMBA vs SON: the ONLY difference is the third stroke of the 3-side, which
+    // moves one sixteenth later. Ours: son has it on the "&" of 2, rumba on the
+    // "a" of 2. LANDR states exactly this: "Instead of being played on the 'and'
+    // of two, it's delayed by one-sixteenth note written on the 'a' of two."
+    // https://blog.landr.com/clave-variations/
+    // (Soundbrenner and Artdrum describe the same move in an eighth-note
+    // simplification where the two bars are written separately.)
+    // TOUSSAINT SIX (5 of 6). Confirmed independently: Rumba is
+    // x - - x - - - x - - x - x - - - = 0,3,7,10,12, which is what we have.
+    // Diaz-Banez et al. Table 1: https://www.scitepress.org/Papers/2013/43255/43255.pdf
     id: 'rumba32',  cat: 'latin', beats: 4,
     name: 'RUMBA CLAVE 3-2', origin: 'Afro-Cuban rumba',          originIt: 'Rumba afrocubana',
     steps: [2,0,0,2,0,0,0,2, 0,0,2,0,2,0,0,0],
   },
   {
+    // VERIFIED BY CONSTRUCTION: rumba32 above with its two halves swapped, same
+    // rule as son23. rumba32 = A|B with A=[2,0,0,2,0,0,0,2] B=[0,0,2,0,2,0,0,0];
+    // this is B|A.
     id: 'rumba23', originIt: 'Rumba afro-cubana',  cat: 'latin', beats: 4,
     name: 'RUMBA CLAVE 2-3', origin: 'Afro-Cuban rumba',
     steps: [0,0,2,0,2,0,0,0, 2,0,0,2,0,0,0,2],
@@ -29154,76 +29226,277 @@ const GROOVE_PRESETS = [
   {
     id: 'tresillo', cat: 'latin', beats: 4,
     name: 'TRESILLO',        origin: 'Afro-Cuban / reggaeton',    originIt: 'Afrocubano / reggaeton',
-    // 3+3+2 feel across the bar — pattern repeats in second half
+    // 3+3+2 feel across the bar — pattern repeats in second half.
+    // VERIFIED: onsets sit at steps 0,3,6 then 8,11,14 — exactly 3+3+2 twice.
+    // Puget Sound music theory 14.6: "the 3+3+2 rhythm is shown in both eighth
+    // notes and sixteenth notes. The sixteenth-note version is known as tresillo."
+    // https://musictheory.pugetsound.edu/mt21c/ThreeTwoClave.html
     steps: [2,0,0,2,0,0,2,0, 2,0,0,2,0,0,2,0],
   },
   {
     id: 'habanera', cat: 'latin', beats: 4, suggestedBpm: 80,
     name: 'HABANERA',        origin: 'Tango / danzón',            originIt: 'Tango / danzón',
     // Habanera bass: dotted-quarter, eighth, quarter, quarter → 1, "and"-of-2, 3, 4.
+    // VERIFIED: the steps hit exactly 1, the "&" of 2, 3, 4 as claimed. The
+    // habanera cell is the tresillo's first half plus beats 3 and 4 — compare
+    // TRESILLO above, whose first six steps are the same 3+3+2 opening.
+    // That relationship is not our observation, it is the standard one. Wikipedia's
+    // tresillo article states it directly: tresillo "is a more basic form of the
+    // rhythmic figure known as the habanera". So habanera is tresillo with the back
+    // half filled in by two plain quarters, which is exactly what these steps do.
+    // The Puget Sound music theory text reaches the same place from the other
+    // direction, listing Bizet's Habanera from Carmen among its 3+3+2 examples.
+    // https://musictheory.pugetsound.edu/mt21c/ThreeTwoClave.html
     steps: [2,0,0,0,0,0,1,0, 2,0,0,0,2,0,0,0],
   },
   {
     id: 'bossa',    cat: 'latin', beats: 4, suggestedBpm: 96,
     name: 'BOSSA NOVA',      origin: 'Brazilian bossa',            originIt: 'Bossa nova brasiliana',
-    steps: [2,0,0,1,0,0,2,0, 0,2,0,0,2,0,2,0],
+    // Son clave with the SECOND NOTE OF THE TWO-SIDE delayed by one pulse - the
+    // only difference, per Wikipedia "Clave (rhythm)": the bossa nova clave "has a
+    // similar rhythm to that of the son clave, but the second note on the two-side
+    // is delayed by one pulse". So: 1, the "a" of 1, the "&" of 2 | the "&" of 3,
+    // the "e" of 4. Five strokes, as every clave has.
+    // Matches The Signal Beat's 3-2 bossa nova clave transcription —
+    // https://thesignalbeat.com/bossa-nova-clave/
+    // Previously had SIX strokes, an extra one on the "e" of 3 that son clave does
+    // not have, and left beat 4 undelayed while also adding the "&" of 4.
+    // (Jobim considered this a rhythmic motif rather than a true clave; the name
+    // is the one in common use, so it stays.)
+    // TOUSSAINT SIX (6 of 6). Confirmed independently: Bossa-Nova is
+    // x - - x - - x - - - x - - x - - = 0,3,6,10,13, which is what we have.
+    // Diaz-Banez et al. Table 1: https://www.scitepress.org/Papers/2013/43255/43255.pdf
+    // All six of Toussaint's distinguished timelines now ship correct:
+    // shiko 0,4,6,10,12 | son 0,3,6,10,12 | rumba 0,3,7,10,12
+    // soukous 0,3,6,10,11 | bossa 0,3,6,10,13 | gahu 0,3,6,10,14
+    steps: [2,0,0,2,0,0,2,0, 0,0,2,0,0,2,0,0],
   },
   {
     id: 'samba',    cat: 'latin', beats: 4, suggestedBpm: 130,
     name: 'SAMBA',           origin: 'Brazilian samba',            originIt: 'Samba brasiliana',
-    // Surdo: strong 1, backbeat on 3. Tamborim: push on "and of 1", "and of 2", "and of 4"
+    // Surdo: strong 1, backbeat on 3. Both accents are correct and uncontroversial.
+    // ⚠ TAMBORIM PLACEMENT UNSOURCED, and the old comment described it wrongly. It
+    // claimed pushes on the "and" of 1, 2 and 4. What actually plays is the "and"
+    // of 1, 3 and 4, plus strokes on 2, the "e" of 2, and 4. The claim was corrected
+    // to the data rather than the data to the claim, because no source has been read
+    // that fixes the tamborim to specific sixteenths, and guessing which of the two
+    // was right would have been exactly that.
+    // ⚠ CEILING REACHED. The surdo half is solid and uncontroversial: strong 1,
+    // backbeat on 3. The tamborim is the part that carries samba's identity and it
+    // is also the part that no general-audience source notates. Every description
+    // found is prose about feel rather than a position on a grid.
+    // WHAT WOULD SETTLE IT: a bateria chart or a percussionist. Not another search.
+    // Until then the surdo is right, the tamborim is a plausible filling, and the
+    // comment says which is which so nobody mistakes the second for the first.
     steps: [2,0,1,0,1,1,0,0, 2,0,1,0,1,0,1,0],
   },
   {
     id: 'montuno',  cat: 'latin', beats: 4,
     name: 'MONTUNO',         origin: 'Cuban son / salsa piano',   originIt: 'Son cubano / piano salsa',
-    steps: [2,0,1,0,0,2,0,1, 2,0,1,0,0,2,0,0],
+    // THIS IS THE PIANO GUAJEO, not the bass line. That distinction matters and the
+    // old comment blurred it: it justified this pattern using the BASS tumbao's
+    // landmarks and claimed to land both of them. It lands one.
+    // Accents 1, the "a" of 1, the "a" of 2, the "a" of 3, and beat 4.
+    //   PONCHE (beat 4) lands squarely on step 12. Correct.
+    //   BOMBO (the "and" of 2) is step 6, and step 6 is silent here. The nearest
+    //   stroke is step 7, one sixteenth later. It does NOT land, and the claim that
+    //   it did has been removed rather than papered over.
+    // That is not a fault in the notes. The piano montuno is an offbeat-leaning
+    // figure running against the clave; marking bombo is the bass's job, and the
+    // bass now has its own preset (TUMBAO, directly below) which does exactly that.
+    // The two are meant to be heard next to each other, like BACKBEAT and THE ONE.
+    // Pattern was built by ear by the app's author and is kept as built; what
+    // changed here is only the explanation attached to it.
+    // The pattern before that accented 1, 2e, 3, 4e: it hit neither bombo nor
+    // ponche, and never beat 4.
+    // ⚠ CEILING REACHED, and this is the finished state rather than an open task.
+    // Desk research can source the tumbao precisely, because the bass line has two
+    // named landmarks that every source repeats. The PIANO guajeo has no equivalent:
+    // it is a family of interlocking figures that vary by tune, by pianist and by
+    // which side of the clave the bar sits on, and the available writing describes
+    // it in prose rather than in positions.
+    // WHAT WOULD SETTLE IT: a notated montuno from a Cuban piano method, or a
+    // salsa pianist. Not another search. What ships is one player's ear, which for
+    // this particular preset is a better authority than another lesson blog would
+    // have been.
+    steps: [2,0,1,2, 0,1,0,2, 0,1,0,2, 2,0,1,0],
+  },
+  {
+    // THE BASS LINE, and the counterpart to MONTUNO above. Sparse on purpose: in
+    // steady state the tumbao is TWO strokes, and the empty downbeat is the point.
+    // Three independent sources give it identically, by name:
+    //   Wikipedia "Tumbao": the tresillo is the rhythmic basis of the bass tumbao,
+    //   and "often the last note of the measure is held over the downbeat of the
+    //   next measure. In this way, only the two offbeats of tresillo are sounded.
+    //   The first offbeat is known as bombo, and the second offbeat (last note) is
+    //   sometimes referred to as ponche." https://en.wikipedia.org/wiki/Tumbao
+    //   Piano With Jonny: "The tumbao is an Afro-Cuban bass line that accentuates
+    //   the 'and of 2' and beat 4... beat 4 is tied across the bar line such that
+    //   beat 1 is rarely played, except on ad-libs."
+    //   https://pianowithjonny.com/piano-lessons/piano-montunos-the-complete-guide/
+    //   A salsa bassist on TalkBass, arriving at the same two: the tumbao "revolves
+    //   around two specific beats in the measure: namely, the upbeat 'and' of 2
+    //   (called the bombo) and the downbeat of the four (the ponche)."
+    // So: BOMBO on step 6, PONCHE on step 12, and beat 1 left empty because the
+    // previous bar's ponche is still ringing across it. Playing beat 1 fills in the
+    // gap that makes the figure work, the same mistake as adding a kick to
+    // REGGAE ONE-DROP's beat 1.
+    id: 'tumbao',   cat: 'latin', beats: 4, suggestedBpm: 180,
+    name: 'TUMBAO',          origin: 'Cuban bass / salsa',        originIt: 'Basso cubano / salsa',
+    steps: [0,0,0,0, 0,0,2,0, 0,0,0,0, 2,0,0,0],
   },
   // ── AFRICAN ──
   {
+    // TOUSSAINT SIX (1 of 6). Shiko is one of the six 16-pulse, 5-onset timelines
+    // in Toussaint, "The Geometry of Musical Rhythm", ch. 7. Box notation printed
+    // verbatim in Diaz-Banez et al., "Measuring Musical Rhythm Similarity" (Table 1):
+    //   Shiko  x - - - x - x - - - x - x - - -   = onsets 0,4,6,10,12
+    //   https://www.scitepress.org/Papers/2013/43255/43255.pdf
+    // CROSS-CHECK: the Shiko necklace is the same one Cuba calls CINQUILLO
+    // (rhythmnecklaces.tumblr.com/post/102984501946). Cinquillo in 8 pulses is
+    // x . x x . x x . = 0,2,3,5,6; doubled into sixteenths that is 0,4,6,10,12.
+    // Two independent sources, same answer.
+    // WAS: 0,4,7,10,14 - undocumented, matched no source.
     id: 'shiko',    cat: 'african', beats: 4,
     name: 'SHIKO',           origin: 'West African / highlife',   originIt: 'Africa occ. / highlife',
-    steps: [2,0,0,0,2,0,0,2, 0,0,2,0,0,0,2,0],
+    steps: [2,0,0,0,2,0,2,0, 0,0,2,0,2,0,0,0],
   },
   {
+    // TOUSSAINT SIX (2 of 6). Was byte-identical to TRESILLO, which could not be
+    // right for two differently-named styles. Now the canonical Soukous timeline:
+    //   Soukous  x - - x - - x - - - x x - - - -   = onsets 0,3,6,10,11
+    //   Diaz-Banez et al., "Measuring Musical Rhythm Similarity", Table 1
+    //   https://www.scitepress.org/Papers/2013/43255/43255.pdf
+    // It is the son clave with the fifth stroke pulled one sixteenth earlier
+    // (12 -> 11); that single pulse is the whole difference between the two.
+    // CAVEAT, deliberate: soukous's *ensemble* signature is the CAVACHA, a
+    // two-voice hi-hat + kick figure (Wikipedia "Soukous"). This engine plays one
+    // voice, so it cannot render a cavacha. What ships is the timeline that the
+    // rhythm-analysis literature files under this name, cited above.
     id: 'soukous',  cat: 'african', beats: 4,
     name: 'SOUKOUS',         origin: 'Congolese soukous',          originIt: 'Soukous congolese',
-    steps: [2,0,0,2,0,0,2,0, 2,0,0,2,0,0,2,0],
+    steps: [2,0,0,2,0,0,2,0, 0,0,2,2,0,0,0,0],
   },
   {
+    // TOUSSAINT SIX (3 of 6). RESOLVED by two independent sources agreeing exactly.
+    // 1) Johnston (Journal IFTAWM 2023) citing LOCKE 1998, "Drum Gahu", p.124:
+    //    gahu is in four beats with quadruple subdivisions, "organized around a
+    //    five-stroke timeline... with IOIs of 34423, in which the final onset
+    //    coincides with the downbeat of the measure."
+    //    https://journal.iftawm.org/previous/2023-volume-11-no-2/johnston/
+    //    Reading 3-4-4-2-3 backwards from the downbeat: 0 <- 14 <- 10 <- 6 <- 3.
+    //    Onsets 0,3,6,10,14. Five strokes, as Locke states.
+    // 2) Toussaint's Gahu timeline, box notation in Diaz-Banez et al. Table 1:
+    //    Gahu  x - - x - - x - - - x - - - x -   = onsets 0,3,6,10,14. Identical.
+    //    https://www.scitepress.org/Papers/2013/43255/43255.pdf
+    // WAS: six strokes in two identical halves (0,3,5,8,11,13), which a five-stroke
+    // timeline cannot be. That is now fixed.
     id: 'gahu',     cat: 'african', beats: 4,
     name: 'GAHU',            origin: 'Ewe / West Africa',          originIt: 'Ewe / Africa occ.',
-    steps: [2,0,0,2,0,2,0,0, 2,0,0,2,0,2,0,0],
+    steps: [2,0,0,2,0,0,2,0, 0,0,2,0,0,0,2,0],
   },
   {
+    // TONY ALLEN'S FIRST PATTERN, transcribed. Allen named this one himself as the
+    // thing to learn first: Rolling Stone reports he "added that the most important
+    // thing aspiring Afrobeat drummers need to learn is the first major pattern
+    // shown in the video", of the five he demonstrates in "Birth of Afrobeat".
+    // https://www.rollingstone.com/music/music-news/tony-allen-afrobeat-drum-patterns-unseen-doc-clip-993318/
+    // Kick/snare positions from Joe Ospalla's transcription PDF, which builds the
+    // groove up one instruction at a time:
+    //   "Add bass on 1e and 3e"            -> kick   steps 1, 9
+    //   "Add snare on 1a"                  -> snare  step 3
+    //   "Add snare on e& of 2"             -> snare  steps 5, 6
+    //   "Add snare on 4e"                  -> snare  step 13
+    //   "Add snare on & of 4"              -> snare  step 14
+    //   https://joethedrummer.com/wp-content/uploads/2023/01/Tony-Allens-First-Pattern-Of-Afrobeat-YT.pdf
+    // Kick is the accent, snare figures are weak, so the shape stays legible on one
+    // voice. The hi-hat layer (hand plus foot) is the third voice and is dropped;
+    // it is the only part that would have covered the downbeats.
+    // ⚠ DELIBERATE ODDITY: nothing lands on 1, 2, 3 or 4. That is not an encoding
+    // slip, it is the whole point of Allen. He displaces the kick off the downbeat
+    // onto its "e", which is why the groove floats over the pulse instead of
+    // stamping it. REGGAE ONE-DROP already sets the precedent for an empty step 0.
     id: 'afrobeat', cat: 'african', beats: 4,
     name: 'AFROBEAT',        origin: 'Fela Kuti / Nigeria',        originIt: 'Fela Kuti / Nigeria',
-    steps: [2,0,1,0,0,2,0,0, 1,0,2,0,0,1,0,0],
+    steps: [0,2,0,1, 0,1,1,0, 0,2,0,0, 0,1,1,0],
   },
   {
     id: 'kpanlogo', cat: 'african', beats: 4,
     name: 'KPANLOGO',        origin: 'Ga people / Ghana',          originIt: 'Popolo Ga / Ghana',
-    steps: [2,0,0,2,0,0,2,0, 0,2,0,0,2,0,0,0],
+    // BELL (ngongo). Wikipedia, "Kpanlogo": the bell pattern "is the same as the
+    // son clave pattern heard in Cuban music" - https://en.wikipedia.org/wiki/Kpanlogo
+    // So this is deliberately identical to SON CLAVE 3-2 above. It previously had
+    // a stroke on the "e" of 3 instead of the "&", one sixteenth early, which made
+    // it neither the clave nor the kpanlogo bell.
+    steps: [2,0,0,2,0,0,2,0, 0,0,2,0,2,0,0,0],
   },
   {
+    // ORIGIN CORRECTED: said "Mandinka / West Africa", which is wrong. Fanga is
+    // from the VAI people of LIBERIA. X8 Drums (Kenya Masala lesson): "the rhythm
+    // called Fanga... comes to us from the Vai people of Liberia."
+    // https://www.x8drums.com/How-to-Play-Fanga-Rhythm-on-Djembe-p/vid-024.htm
+    // Wikipedia "Fanga (dance)" agrees on Liberia (or Sierra Leone).
+    // PATTERN NOW SOURCED: this is the DJEMBE 1 accompaniment part, the main
+    // recognisable fanga line. Two independent transcriptions give a byte-identical
+    // sound row, which is the cross-check:
+    //   Server Hosted African Rhythm Exchange (djembe.net), Fanga / Djembe 1:
+    //     B--T -TT- B-B- TT--
+    //   Kresimir Oreski, "15 Essential Rhythms", entry "Fanga - Djembe 1":
+    //     B--T -TT- B-B- TT--
+    //   Both collated at https://drums.milesnature.com/ , whose legend states the
+    //   grouping outright: "4 groups of 4 | 16th notes. Count Aloud 1 e and uh..."
+    // So B(ass) at steps 0, 8, 10 and T(one) at 3, 5, 6, 12, 13. Bass strokes are
+    // the accents here, tones are the weak strokes; that is exactly the B/T
+    // distinction the source notation already makes.
+    // The dunun bass part is sparser (B--B ---- B-B- ----, steps 0,3,8,10) if this
+    // ever wants simplifying.
+    // CONTEXT worth keeping honest: fanga as the world plays it is partly a
+    // 20th-century staging. Pearl Primus choreographed her version in 1959 and
+    // LaRocque Bey wrote the "Fanga alafia" chant in New York in the late 50s.
+    // https://en.wikipedia.org/wiki/Fanga_(dance)
+    // The drum part above is still the drum part that gets played.
     id: 'fanga',    cat: 'african', beats: 4,
-    name: 'FANGA',           origin: 'Mandinka / West Africa',     originIt: 'Mandinka / Africa occ.',
-    steps: [2,0,2,0,0,2,0,0, 2,0,2,0,0,2,0,0],
+    name: 'FANGA',           origin: 'Vai / Liberia',              originIt: 'Vai / Liberia',
+    steps: [2,0,0,1, 0,1,1,0, 2,0,2,0, 1,1,0,0],
   },
   // ── FUNK ──
   {
     id: 'polka',    cat: 'world', beats: 2, suggestedBpm: 120,
     name: 'POLKA 2/4',      origin: '2/4 — Bohemian oom-pah',     originIt: '2/4 — oom-pah boemo',
     // 2/4 was the one meter with no groove at all, though sigMap already mapped it.
-    // Polka's hallmark is the oom-pah: bass note on the downbeat, chord on the
-    // offbeat, producing the accented upbeat that gives it its buoyant drive.
+    // Polka's hallmark is the oom-pah: bass note on beat 1 (the "oom"), chord on
+    // beat 2 (the "pah"). Both are stated, with light strokes on the two "ands"
+    // between them. Wording corrected: the old comment said the chord fell on "the
+    // offbeat" and produced "the accented upbeat", which reads as an accent on an
+    // "and". Nothing on an "and" is accented here and nothing should be; in 2/4 the
+    // pah IS beat 2.
+    // SOURCED, and the correction above turns out to be exactly right. Grokipedia,
+    // "Oom-pah": "In 2/4 time, prevalent in dances like the polka, the oom falls
+    // squarely on beat 1, with the pah occurring on beat 2."
+    // https://grokipedia.com/page/Oom-pah
+    // Melodigging on the origin and the feel: polka "emerged in the early 1830s in
+    // Bohemia... Its hallmark 'oom-pah' feel — bass on the downbeat and chords on
+    // the offbeat". https://www.melodigging.com/genre/polka
+    // ⚠ SOURCES DISAGREE WITH THEMSELVES on how strong beat 2 is, and we picked.
+    // The Oom-pah article calls it "a binary strong-weak alternation", which would
+    // make the pah quieter than the oom. The Polka article calls the same thing "an
+    // accented upbeat that imparts a buoyant, forward-driving feel", which makes it
+    // loud. Both accents are kept here, on the reasoning that the polka-specific
+    // description beats the general one for a polka preset, and that a weak beat 2
+    // would leave this nearly indistinguishable from MARCH 2/4 with lighter "ands".
+    // Reversible if it reads as too flat on device: drop step 4 to weight 1.
     steps: [2,0,1,0, 2,0,1,0],
   },
   {
     id: 'march24',  cat: 'world', beats: 2, suggestedBpm: 112,
     name: 'MARCH 2/4',      origin: '2/4 — military march',       originIt: '2/4 — marcia militare',
-    // Same duple frame as polka but square rather than bouncing: sources note that
-    // marches don't lilt the way polkas do, so both beats are stated firmly.
+    // Same duple frame as polka but square rather than bouncing: marches don't lilt
+    // the way polkas do, so both beats are stated firmly and nothing is weak.
+    // Soundbrenner draws exactly this contrast while defining the jig: "A march
+    // often emphasizes a steady left-right pulse in simple meter, such as 2/4 or
+    // 4/4", set against the compound lilt of a jig.
+    // https://www.soundbrenner.com/blogs/articles/jig-rhythm
+    // The left-right pulse is why both beats are accented here rather than one.
     steps: [2,0,0,0, 2,0,0,0],
   },
   {
@@ -29231,7 +29504,33 @@ const GROOVE_PRESETS = [
     name: 'DISCO',          origin: '4/4 — disco / dance',        originIt: '4/4 — disco / dance',
     // Four-on-the-floor kick with the backbeat on 2 and 4, but what MAKES it disco
     // (vs plain funk4) is the open hi-hat on every offbeat "and" — sources single
-    // that out as the key to the whole groove.
+    // that out as the key to the whole groove. THEY DO, unanimously:
+    //   MusicRadar: disco's drums exist "to relentlessly stomp out the all-important
+    //   four-to-the-floor kick and fill the space in between with the characteristic
+    //   hiss of the offbeat open hi-hat", and "the hi-hats are the most important
+    //   ingredient in any disco beat".
+    //   https://www.musicradar.com/how-to/how-to-program-a-typical-disco-drum-beat
+    //   DRUM! Magazine: "The bass drum must play consistently on all four downbeats...
+    //   The hi-hat generally plays an eighth-note pattern with accents on the upbeats
+    //   [which] can be accentuated by opening the hi-hat on the upbeats as well."
+    //   https://drummagazine.com/lesson-four-on-the-floor-disco/
+    //   Soundbrenner: "kick on every beat, backbeat on 2 and 4, and hi-hat movement
+    //   that often opens or accents on the offbeat 'ands'."
+    // ORIGIN, and it ties two presets in this file together: Earl Young invented
+    // this at Philadelphia International in the early 70s, on Harold Melvin & the
+    // Blue Notes' "The Love I Lost" (1973), by turning the Motown beat upside down —
+    // taking the quarter notes Motown put on the SNARE and moving them to the KICK,
+    // which freed the hi-hat hand to do the opening. So DISCO and MOTOWN above are
+    // the same idea inverted, and both are in the library.
+    // https://grokipedia.com/page/Four_on_the_floor_(music)
+    // ⚠ WHY THE "ANDS" STAY WEAK even though sources call them the defining feature.
+    // The open hat's distinguishing quality is TIMBRAL, not dynamic: open versus
+    // closed, not loud versus quiet. This engine's two weights mean loud and quiet.
+    // Accenting the "ands" would claim they are louder than the four-on-the-floor
+    // kick, which is false. Unrenderable is not the same as unimportant, and faking
+    // it with a dynamic accent would be a worse lie than leaving it light.
+    // (Contrast JOROPO, where the cross-rhythm genuinely IS an accent and so the
+    // accents were moved. The distinction is real and worth keeping straight.)
     steps: [2,0,1,0, 2,0,1,0, 2,0,1,0, 2,0,1,0],
   },
   {
@@ -29240,7 +29539,23 @@ const GROOVE_PRESETS = [
     // Jorrín deliberately SIMPLIFIED the syncopation so dancers could follow it:
     // steady quarter-note cowbell, with the "cha-cha-chá" triple step landing on
     // 4-and-1. Less syncopated than mambo by design.
-    steps: [2,0,0,0, 1,0,0,0, 1,0,0,0, 2,0,2,0],
+    // NOW SOURCED, and beat 3 promoted from weak to accent to match.
+    // Barbara Dance states both halves of it: "In order to facilitate Cha Cha Cha
+    // for Western population... Enrique Jorrin kept a strong metric accent in Cha
+    // Cha Cha on the first and third beat of the bar, played by the cowbell", and
+    // "Typical for Cuban Cha Cha Cha is that dancers would portray the Cha Cha Cha
+    // movement on 4+1 in every bar of the music."
+    // https://www.barbaradance.com/blog/witty-cha-cha-cha
+    // Victor López (Midwest Clinic) says the same about where the triple sits: the
+    // basic step is "the MAMBO with a double step in the fourth-to-first
+    // beats...chachaCHA!"
+    // Liberty Park Music confirms the cowbell runs all four quarters: "the timbal
+    // player plays a steady quarter note pulse on a small high pitched cowbell."
+    // https://www.libertyparkmusic.com/cha-cha-cha-drumming-rhythm-application-2/
+    // So: all four quarters present, metric accents on 1 and 3, and the triple
+    // lands on 4, the "&" of 4, and 1. Beat 2 is the only weak stroke. Previously
+    // beat 3 was weak, which contradicted Jorrín's own simplification.
+    steps: [2,0,0,0, 1,0,0,0, 2,0,0,0, 2,0,2,0],
   },
   {
     id: 'trap',     cat: 'funk', beats: 4, suggestedBpm: 140,
@@ -29248,14 +29563,67 @@ const GROOVE_PRESETS = [
     // Sparse half-time kick (beat 1 and the "and" of 3) leaving room for the 808,
     // clap on the backbeat, and the busy hat texture that defines the genre. The
     // contrast between sparse kicks and rushing hats is the whole point.
+    // VERIFIED, and one source gives our exact recipe as a numbered instruction:
+    // "Drop the kick on beat 1 of both bars, then add one or two off-beat kicks (try
+    // the 'and' of beat 3). Place the snare firmly on beats 2 and 4."
+    // https://melodycraft.app/insights/what-is-trap-rap
+    // Accents here are 1, 2, the "&" of 3, and 4 — kick, clap, kick, clap. Same
+    // source on why the kick stays thin: "In boom-bap, the kick is busy and
+    // syncopated. In trap, the kick is more sparse and deliberate, leaving room for
+    // the 808 bass to sustain and breathe." Which is also why BOOM BAP and TRAP sit
+    // as opposites in this library rather than as neighbours.
+    // ON AN APPARENT CONTRADICTION between sources, resolved rather than picked:
+    // some say the snare is on 2 and 4, others that "in half-time trap, the snare
+    // hits on beat 3 of every bar" and call that the defining characteristic. Those
+    // are the same groove counted at two speeds. Trap is written near 140 BPM but
+    // "often felt as a half-time groove around 65-85 BPM", and beat 3 of the fast
+    // bar is the backbeat of the slow one. This preset counts at the written rate,
+    // so the backbeat lands on 2 and 4. Set the BPM to half and it becomes the other
+    // description without a single step moving.
+    // ⚠ OUT OF SCOPE, deliberately: the hi-hats. Every source agrees they are the
+    // genre's signature, and they are 32nd rolls and triplet bursts. A one-voice
+    // sixteenth grid can render neither. What ships is the kick-and-clap skeleton,
+    // which is the part a metronome can usefully be.
     steps: [2,0,1,1, 2,0,1,0, 1,0,2,1, 2,0,1,1],
   },
   {
+    // The last groove in the table with no comment at all. It is also the simplest
+    // thing here, and the definition IS the pattern.
+    // Grokipedia, "Four on the floor": "a fundamental rhythmic pattern in popular
+    // music, consisting of a bass drum strike on each of the four quarter notes in a
+    // 4/4 time signature, creating a steady, pulsating foundation".
+    // https://grokipedia.com/page/Four_on_the_floor_(music)
+    // Soundbrenner on why nothing else is played: "The kick drum marks every main
+    // beat evenly, so the listener can feel the pulse without guessing where the
+    // downbeats are." https://www.soundbrenner.com/blogs/articles/four-on-the-floor
+    // Four accents, no weak strokes, nothing between. Anything added would make it a
+    // different preset, and the library already has those: DISCO is this plus the
+    // offbeat hats, BACKBEAT is this with 1 and 3 dropped to weak.
+    // It shares onsets with BACKBEAT for that reason; the accent weights are the
+    // entire difference and that is intentional.
     id: 'funk4',    cat: 'funk', beats: 4,
     name: 'FUNK 4-ON-THE-FLOOR', origin: 'Soul / funk',                originIt: 'Soul / funk',
     steps: [2,0,0,0,2,0,0,0, 2,0,0,0,2,0,0,0],
   },
   {
+    // VERIFIED, no change needed. The accents sit on 1, the "&" of 2, and 4
+    // (steps 0, 6, 12), which is the 3-side of the son clave as second-line
+    // players count it. Guitar Kitchen: "New Orleans Second Line uses the 3-side.
+    // The 3-side is the side that is counted 1, 2+, 4... 2nd Line usually gives a
+    // lot of extra push on the 2+ and/or 4."
+    // https://www.guitarkitchen.com/guitar-lessons/swing-bop-ragtime-secondline/learning-to-second-line/
+    // Drumming.com, independently: "Second line drumming often involves a 3/2 son
+    // clave." https://www.drumming.com/drum-lesson/second-line-drumming
+    // The accent on beat 4 is THE BIG FOUR, the thing the whole phrase leads to.
+    // The Old Jelly Rollers: the bass drum "provides the foundation of the groove
+    // with a pattern... that leads towards 'the big four' - an accent of both hands
+    // on beat four at the end of their phrase", and the snare's clave accents
+    // "similarly [have] a particular accent on the beat four".
+    // https://theoldjellyrollers.com/2017/01/05/the-second-line-groove/
+    // The weak stroke on step 10 is the "and of 3" anticipation into the big four,
+    // which the Ethnomusicology Review transcription of "The 2nd Line" describes:
+    // "the 'Big Four' is anticipated and further emphasized by the 'and-3' of the
+    // bass drum". https://ethnomusicologyreview.ucla.edu/journal/volume/18/piece/699
     id: 'secondline', cat: 'funk', beats: 4,
     name: 'SECOND LINE',     origin: 'New Orleans brass band',     originIt: 'Brass band New Orleans',
     steps: [2,0,0,1,0,0,2,0, 0,0,1,0,2,0,0,1],
@@ -29263,40 +29631,145 @@ const GROOVE_PRESETS = [
   {
     id: 'funkback', cat: 'funk', beats: 4,
     name: 'BACKBEAT',        origin: 'Funk / R&B',                 originIt: 'Funk / R&B',
+    // Accents on 2 and 4, beats 1 and 3 weak. VERIFIED; the notes do what this says.
+    // This is the pattern THE ONE below was invented against, so the two presets are
+    // only meaningful next to each other. PBS Sound Field, "How James Brown Invented
+    // Funk": "most music of that era gave heavy emphasis to the back beat, on the
+    // two and the four of the measure."
+    // https://www.pbs.org/video/how-james-brown-invented-funk-xtwzri
     steps: [1,0,0,0,2,0,0,0, 1,0,0,0,2,0,0,0],
   },
   {
     id: 'jamesbrown', cat: 'funk', beats: 4,
     name: 'THE ONE',         origin: 'James Brown funk',           originIt: 'Funk di James Brown',
-    steps: [2,1,0,1,0,1,0,1, 2,1,0,1,0,1,0,1],
+    // ONE accent, on beat 1, and nothing else at that weight - that IS the preset.
+    // PBS Sound Field, "How James Brown Invented Funk", season 1 episode 1: "most
+    // music of that era gave heavy emphasis to the back beat, on the two and the
+    // four of the measure... What James Brown did was he put the emphasis on the
+    // one, on the downbeat of the measure."
+    // https://www.pbs.org/video/how-james-brown-invented-funk-xtwzri
+    // Wikipedia (Funk): "a heavy emphasis on the first beat of every measure
+    // ('The One'), and the application of swung 16th notes and syncopation".
+    // Previously accented 1 AND 3 in two identical halves, which is a half-bar
+    // pulse and gives beat 3 equal weight - losing the contrast the name is for.
+    // The surrounding sixteenths stay as weak strokes: "emphasizing the one
+    // created space in the groove, so that the band could add syncopation to the
+    // other beats."
+    steps: [2,1,0,1, 0,1,0,1, 1,1,0,1, 0,1,0,1],
   },
   {
+    // BOOM BAP HAD NO BAP. The name is onomatopoeia: Wikipedia, "Boom bap": the
+    // term "represents the sounds used for the bass (kick) drum and snare drum,
+    // respectively". The old pattern accented beats 1 and 3 (the booms) and put
+    // nothing at all on 2 and 4, so the snare - the entire second half of the
+    // name - was missing.
+    // Every source gives the same skeleton. Hip Hop Music History: "The one and
+    // three count on the beat would typically have a kick drum and the two and
+    // four count of the beat would have a snare."
+    // https://www.hiphopmusichistory.com/subgenres/boom-bap/
+    // Native Instruments is more specific and supplies the syncopation: "snares on
+    // the second and fourth beat of the bar, and kicks on the first, fourth and
+    // sixth 8th notes" - eighths 1, 4, 6 are steps 0, 6, 10.
+    // https://blog.native-instruments.com/what-is-boom-bap/
+    // So: accents 0, 4, 8, 12 (boom-bap-boom-bap) with weak strokes at 6 and 10
+    // (the syncopated ghost kicks). Swing is a performance property, not a grid
+    // position, so it is not encoded here.
+    // ORIGIN CORRECTED: said "Hip-hop / trap", which is backwards. Boom bap is
+    // late-80s/early-90s East Coast golden age and is the thing TRAP (own preset,
+    // separately listed) departed from.
+    // NOTE: these onsets coincide with the cinquillo/SHIKO set. That is expected
+    // rather than a bug; the accent weights are what make it read as boom bap.
     id: 'hip hop',  cat: 'funk', beats: 4, suggestedBpm: 88,
-    name: 'BOOM BAP',        origin: 'Hip-hop / trap',             originIt: 'Hip-hop / trap',
-    steps: [2,0,0,0,0,0,1,0, 2,0,0,1,0,0,0,0],
+    name: 'BOOM BAP',        origin: 'East Coast golden age',      originIt: 'East Coast golden age',
+    steps: [2,0,0,0,2,0,1,0, 2,0,1,0,2,0,0,0],
   },
   {
     id: 'jazzswing', cat: 'funk', beats: 4, suggestedBpm: 130,
     name: 'JAZZ SWING',      origin: 'Jazz / big band',            originIt: 'Jazz / big band',
-    // Ride cymbal pattern: accent on 2 and 4, soft on "and" of each beat (triplet swing feel)
-    steps: [1,0,0,2,0,0,1,0, 0,2,0,0,1,0,0,0],
+    // NOTES REBUILT. The old comment described the correct ride pattern and the old
+    // notes played something else entirely: accents landed on the "a" of 1 and the
+    // "e" of 3, and beat 2 was not struck at all. The claim was right; the data was
+    // not. This is now the actual swing ride.
+    // BYU Percussion: the swing ride is "even quarter notes with additional 'swung'
+    // eighth notes on the 'and' of beats two and four... A crisp hi hat 'chick' on
+    // beats two and four is also necessary to the style."
+    // https://percussion.byu.edu/jazz-style
+    // ArtistWorks says the same as "spang-a-lang": "quarter notes with a triplet
+    // skip between beats 2 and 3 and between beats 4 and 1. Hi-hat on 2 and 4."
+    // https://blog.artistworks.com/jazz-drums-a-beginners-guide-to-patterns-grooves-and-practice/
+    // So quarters on 1, 2, 3, 4 plus the swung skip after 2 and after 4. The skip is
+    // the last note of a triplet, which a sixteenth grid can only approximate; it
+    // sits on the "a", the nearest available slot. Accents are the hi-hat backbeats.
+    // BLUES SHUFFLE makes the identical compromise for the identical reason, and
+    // both entries say so; see the note there for the source that acknowledges
+    // written shuffle being "open to interpretations" on a duple grid.
+    // Kenny Clarke invented the figure (NPR, "The Drummer Who Invented Jazz's Basic
+    // Beat"), which is why every source describes the same one.
+    steps: [1,0,0,0, 2,0,0,1, 1,0,0,0, 2,0,0,1],
   },
   {
     id: 'blueshuffle', cat: 'funk', beats: 4, suggestedBpm: 88,
     name: 'BLUES SHUFFLE',   origin: 'Chicago / Texas blues',      originIt: 'Blues Chicago / Texas',
     // Shuffle: long-short swung pair on every beat (beat + its triplet "and").
+    // VERIFIED. Every source gives the same rule. Drum Beats Online: "In a shuffle,
+    // you play the first and third notes of each triplet group and leave the middle
+    // one out, creating an uneven 'long-short' pattern that repeats on every beat."
+    // https://drumbeatsonline.com/blog/how-to-play-a-shuffle-beat-on-drums-a-beginners-guide-to-the-shuffle-feel
+    // Total Drummer, same rule and the rest of the kit with it: "you play the first
+    // and third note in the triplet but rest on the second note. So you play one,
+    // miss one, play one", then "add a bass drum on beats one and three, and a snare
+    // back beat on beats two and four". That is why all four beats sound here.
+    // https://www.totaldrummer.com/blues-shuffle-drum-beat/
+    // ArtistWorks gives the counting our encoding uses: straight eighths are
+    // "1-and-2-and-3-and-4-and", shuffle is "1-a-2-a-3-a-4-a (long-short,
+    // long-short)". Beat plus its "a" is exactly what these steps play.
+    // ⚠ ENCODING COMPROMISE, shared with JAZZ SWING and stated in both places: the
+    // second note of a shuffle pair is the THIRD TRIPLET of the beat, and a
+    // sixteenth grid has no slot there. The "a" is the nearest available position,
+    // slightly late. This is a known limitation of notating shuffle on a duple grid
+    // rather than a mistake; Rhythm Notes says as much, noting the feel "is
+    // sometimes more of a triplet feel than sixteenth notes" and that written
+    // versions are "open to interpretations".
+    // https://rhythmnotes.net/blues-drum-beats/
     steps: [2,0,0,1, 2,0,0,1, 2,0,0,1, 2,0,0,1],
   },
   // ── WORLD ──
   {
     id: 'flamenco', cat: 'world', beats: 6, suggestedBpm: 120,
     name: 'FLAMENCO BULERÍA', origin: 'Andalusian flamenco',        originIt: 'Flamenco andaluso',
-    // 12-beat compás starting on 12: accents on 12,3,6,8,10 → steps 0,2,5,7,9
-    steps: [2,0,2,0,0,2,0,2,0,2,0,0],
+    // NOTES CORRECTED. The comment had the right idea and the wrong arithmetic. It
+    // said "accents on 12,3,6,8,10 -> steps 0,2,5,7,9", but if step 0 is count 12
+    // then count 3 is step 3, not step 2, and every accent after the first was
+    // landing one step early. The mapping is now 12->0, 3->3, 6->6, 8->8, 10->10.
+    // Bulería carries the SAME five accents as soleá above; the only difference is
+    // where the counting starts, and that difference is the whole reason they feel
+    // different in a loop. Bulería opens on an accent, soleá does not.
+    //   flamencometronome.com: a basic bulerías "metronome accents the 12, 3, 6, 8,
+    //   and 10 beats, which gives it a more 'traditional' bulerías feel."
+    //   NZ Musician explains the shared set: "It is often asked why flamenco
+    //   musicians start playing/counting from beat 12 in bulerías? This is probably
+    //   to keep things consistent between the soleá and bulerías styles so that
+    //   internal accents, harmonic changes and closes happen in the same place
+    //   (beats 3, 6, 8 and 10)." https://nzmusician.co.nz/lessons/flamenco-compas/
+    //   Gran Gala Flamenco gives the same five for bulerías: "The compás consists of
+    //   12 beats, with accents on beats 3, 6, 8, 10 and 12."
+    // HISTORY: 0,3,6,8,10 was correct in this file once and got changed to 0,2,5,7,9
+    // at some point. Treat this as a fixed regression, not a new opinion.
+    steps: [2,0,0,2,0,0,2,0,2,0,2,0],
   },
   {
     id: 'compas',   cat: 'world', beats: 6, suggestedBpm: 108,
     name: 'COMPÁS SOLEÁ',    origin: 'Flamenco soleares',          originIt: 'Flamenco soleares',
+    // VERIFIED, no change. 12-beat compás counted from 1, so step 0 is count 1 and
+    // the accents on counts 3, 6, 8, 10, 12 land on steps 2, 5, 7, 9, 11. They do.
+    // Four independent sources give the same five accents:
+    //   studio-flamenco: soleares is "a twelve-count pattern with accents on beats
+    //   3, 6, 8, 10 and 12". https://www.studioflamenco.com/soleares
+    //   flamencometronome.com: "The compás of soleá starts on the 'one' count and
+    //   accents the 3, 6, 8, 10, and 12 beats of the 12 beat cycle."
+    //   NZ Musician (Paul Bosauder, flamenco guitarist in Seville): "accent with
+    //   your foot the beats 3, 6, 8, 10 and 12". https://nzmusician.co.nz/lessons/flamenco-compas/
+    //   chromatone.center: "Basic Soleares Compás, accents on beats 3, 6, 8, 10, and 12."
     // 12-beat compás: soleá accents on beats 3,6,8,10,12 → steps 2,5,7,9,11
     steps: [1,0,2,0,0,2,0,2,0,2,0,2],
   },
@@ -29304,18 +29777,64 @@ const GROOVE_PRESETS = [
     id: 'middleast', cat: 'world', beats: 4,
     name: 'MAQSUM',          origin: 'Middle Eastern / Egyptian',  originIt: 'Mediorientale / egiziano',
     // Maqsum skeleton: D . T . | . . T . | D . . . | T . . .  (dums accented)
+    // VERIFIED CHARACTER BY CHARACTER, which almost never happens. Wikipedia
+    // "Maqsoum" prints the basic structure on a 16-slot grid:
+    //     1 & 2 & 3 & 4 &
+    //     D-T---T-D---T---
+    // Read as sixteenths that is D at 0, T at 2, T at 6, D at 8, T at 12. Ours are
+    // on exactly those five and nowhere else. https://en.wikipedia.org/wiki/Maqsoum
+    // Dum is the deep stroke and tek the bright one, which is why the dums carry the
+    // accents here and the teks are the weak strokes; the source's own D/T split is
+    // doing the same work as this engine's accent/weak split.
+    // Tapadum lists the same cell in eighth-note shorthand as "D T - T D - T -".
+    // https://tapadum.com/darbuka-playing-techniques/
+    // WORTH KNOWING for anyone tempted to "fix" this: maqsoum is a derivative of
+    // BALADI and the two differ by a single stroke. Baladi is D-D---T-D---T---, so
+    // step 2 is a dum rather than a tek. Wikipedia: "The only difference is the
+    // accent on the second beat of maqsoum." Change step 2 and this stops being
+    // maqsum and becomes baladi.
     steps: [2,0,1,0,0,0,1,0, 2,0,0,0,1,0,0,0],
   },
   {
     id: 'bhangra',  cat: 'world', beats: 4,
     name: 'BHANGRA',         origin: 'Punjabi / South Asian',      originIt: 'Punjabi / Asia merid.',
-    // Dhol pattern: strong 1 and 3, with "and of 1" and "and of 3" push, lift on "and of 4"
+    // Dhol pattern: strong 1 and 3, with "and of 1" and "and of 3" push, lift on
+    // the "A" OF 4. Claim corrected: it previously said "and of 4", but the stroke
+    // sits on step 15, which is the "a". The notes were right and the label was
+    // one sixteenth out.
+    // ⚠ THIS IS AN APPROXIMATION, and after research it is a knowingly loose one.
+    // Two separate problems, neither fixable at this resolution or with the sources
+    // available, so both are recorded rather than quietly smoothed.
+    // 1) THE GRID IS WRONG FOR IT. The rhythm is the CHAAL, which every source
+    //    agrees is the dhol pattern underpinning bhangra: musicgcse.co.uk calls it
+    //    "a traditional rhythm that features in ALL Bhangra music", performed on the
+    //    dhol. https://www.musicgcse.co.uk/rhythms-of-the-world/bhangra
+    //    But it is a TRIPLET feel, not a straight one. A GCSE revision site gives
+    //    the meter as "4/4 (12/8)" and vocalises the chaal as "dum-di, dum-di,
+    //    dum-di, dum-di" — four swung pairs, i.e. compound. This engine's sixteenth
+    //    grid cannot place a triplet, exactly as with BLUES SHUFFLE and JAZZ SWING;
+    //    see the note on either for the same limitation stated at length.
+    // 2) THE SOURCES DISAGREE ON THE ACCENTS, in opposite directions. The same GCSE
+    //    page says "strong accents on first beat of bar", which is what we play.
+    //    Wikipedia's Bhangra (dance) article says the dhol "imbues the music with a
+    //    syncopated (accents on the weak beats), swinging rhythmic character that
+    //    has generally remained the hallmark of bhangra music", which is close to
+    //    the opposite. https://en.wikipedia.org/wiki/Bhangra_(dance)
+    //    Nothing was changed on that basis: flipping accents on a straight coin-toss
+    //    would be guessing, and guessing is what put the errors in this file.
+    // WHAT WOULD SETTLE IT: a dhol player, or a transcription of the chaal on a
+    // compound grid. Not another search. This is the ceiling for desk research.
+    steps: [2,0,1,0,1,0,0,0, 2,0,1,0,1,0,0,1],
     steps: [2,0,1,0,1,0,0,0, 2,0,1,0,1,0,0,1],
   },
   {
     id: 'balkan',   cat: 'world', beats: 11, suggestedBpm: 160,
     name: 'KOPANITSA',       origin: 'Bulgarian 11/8',             originIt: 'Bulgaro 11/8',
     // 2+2+3+2+2 grouping (quick-quick-slow-quick-quick): accents at group starts → steps 0,4,8,14,18
+    // VERIFIED against two sources: Wikipedia "Aksak" lists 11-pulse 2+2+3+2+2 as
+    // Bulg. Gankino (kopanitsa's other name) — https://en.wikipedia.org/wiki/Aksak
+    // and Melodigging gives "11/16 (2+2+3+2+2, e.g., kopanitsa)". Accents sit on
+    // exactly those group starts.
     steps: [2,0,0,0,2,0,0,0,2,0,0,0,0,0,2,0,0,0,2,0,0,0],
   },
   {
@@ -29323,53 +29842,134 @@ const GROOVE_PRESETS = [
     name: 'JOROPO',          origin: '3/4 + 6/8 — Venezuelan llanero', originIt: '3/4 + 6/8 — llanero venezuelano',
     // Joropo lives in 3/4 crossed with 6/8 (sesquiáltera) — not 4/4. One line:
     // strong 1, the 3/4 quarters, and the 6/8 mid-bar cross-accent together.
-    steps: [2,0,0,0,1,0, 1,0,1,0,0,0],
+    // SOURCED. The sesquiáltera is not a flourish, it is what the genre is FOR.
+    //   Pedroza, "The Joropo in Venezuela's Musical Modernity" (Muzikoloski Zbornik,
+    //   Univ. of Ljubljana), describing the llanera harp: the treble strings are
+    //   "in 6/8 against the 3/4 of the bordones (a vertical sesquiáltera)", and the
+    //   two together "produce a rich array of polyrhythmic encounters".
+    //   https://journals.uni-lj.si/MuzikoloskiZbornik/article/download/6657/6351/13836
+    //   Melodigging: joropo "is famous for sesquiáltera (the overlay of 3/4 and
+    //   6/8), creating propulsive hemiolas that drive dance."
+    //   https://www.melodigging.com/genre/folclor-llanero
+    // ACCENTS CHANGED so that the thing the sources call defining is actually
+    // audible. Onsets were already right: steps 0, 4, 8 are the 3/4 quarters and
+    // step 6 is the 6/8 midpoint, so both layers were present. But only step 0 was
+    // accented, which made it play as a plain light 3/4 with a stray extra stroke;
+    // the cross-rhythm was in the data and inaudible. Same class of fault as BOOM
+    // BAP having no bap.
+    // Now the 6/8 layer carries the accents (steps 0 and 6) and the 3/4-only
+    // quarters are weak (steps 4 and 8). Two against three, which is the hemiola.
+    // This is the best a two-weight, one-voice engine can do with a polyrhythm: it
+    // cannot sound both layers at once, so it sounds the one that fights the meter
+    // and lets the other sit underneath.
+    steps: [2,0,0,0,1,0, 2,0,1,0,0,0],
   },
 
   // ── 3/4 GROOVES (12 steps, 16th-note grid) ──
   {
     id: 'waltz',       cat: 'world', beats: 3, suggestedBpm: 120,
     name: 'WALTZ',           origin: '3/4 — European ballroom',    originIt: '3/4 — ballo da sala',
-    // Accent beat 1, soft on 2 and 3
+    // Accent beat 1, soft on 2 and 3. VERIFIED; the notes do exactly this.
+    // Berliner Philharmoniker, contrasting it with the mazurka: the waltz is the one
+    // "whose rhythm always accentuates the beginning of the bar".
+    // https://www.berliner-philharmoniker.de/en/stories/a-short-piano-lexicon/what-is-a-mazurka/
+    // TalkClassical puts it physically: "Waltzes have a strong 'down' on the first
+    // beat that mirrors the swooping downward step on the first beat in the dance."
+    // This preset is the plain ballroom waltz. VIENNESE WALTZ and MAZURKA are the
+    // two deliberate departures from it, and both are sourced against this one.
     steps: [2,0,0,0, 1,0,0,0, 1,0,0,0],
   },
   {
     id: 'mazurka',     cat: 'world', beats: 3, suggestedBpm: 132,
     name: 'MAZURKA',         origin: '3/4 — Polish folk dance',    originIt: '3/4 — danza popolare polacca',
-    // Accent on beat 2, lift on beat 3 — the mazurka's characteristic offbeat weight
+    // Accent on beat 2, lift on beat 3 — the mazurka's characteristic offbeat weight.
+    // VERIFIED, no change. Three sources, one of them Grove.
+    //   Wikipedia "Mazurka", quoting the New Grove: the character is defined by
+    //   "strong accents unsystematically placed on the second or third beat".
+    //   https://en.wikipedia.org/wiki/Mazurka
+    //   Polish Music Center (USC): "In the music, strong accents are irregularly
+    //   placed on the second or third beat of the measure."
+    //   https://polishmusic.usc.edu/research/dances/mazur/
+    //   Berliner Philharmoniker: "unlike the waltz, whose rhythm always accentuates
+    //   the beginning of the bar, the rhythmic emphasis in the mazurka is on the
+    //   second or third note of the bar, which would normally have no accent."
+    // Sources say second OR third; a single fixed preset has to pick one, and beat 2
+    // is the commoner reading and the one that contrasts most clearly with WALTZ.
     steps: [1,0,0,0, 2,0,0,0, 1,0,1,0],
   },
   {
     id: 'jazzwaltz',   cat: 'funk', beats: 3, suggestedBpm: 138,
     name: 'JAZZ WALTZ',      origin: '3/4 — jazz trio feel',       originIt: '3/4 — jazz trio',
-    // Light swing feel: strong 1, brushed 2 upbeat, medium 3
+    // CONSTRUCTED, not transcribed. Claim rewritten because the old one described
+    // something this engine cannot encode: it promised "strong 1, brushed 2 upbeat,
+    // MEDIUM 3", but steps only carry two weights, accent and weak, so there is no
+    // medium. Beats 2 and 3 were identical in the data while the comment implied
+    // they were not.
+    // What actually plays: accent on 1, then weak strokes on the "a" of 1, on 2 and
+    // its "&", and on 3 and its "&". That is the light trio feel, one clear
+    // downbeat with everything after it brushed.
     steps: [2,0,0,1, 1,0,1,0, 1,0,1,0],
   },
   {
     id: 'bolero34',    cat: 'latin', beats: 3, suggestedBpm: 72,
     name: 'BOLERO',          origin: '3/4 — Spanish (Cuban bolero is 4/4)', originIt: '3/4 — spagnolo (il bolero cubano è in 4/4)',
-    // Dotted-quarter feel: accent 1, pickup on the "and" of 2, accent 3
-    steps: [2,0,1,0, 0,0,2,0, 1,0,0,0],
+    // Dotted-quarter feel: accent 1, pickup on the "and" of 2, accent 3.
+    // NOTES CORRECTED: beat 3 was weak, so the claim promised two accents and the
+    // data delivered one. Beat 3 is now the accent the comment always said it was.
+    // THE METER AND THE LINEAGE ARE SOURCED, and the origin label's parenthetical
+    // turns out to be the important part of this entry rather than a footnote.
+    //   Wikipedia, "Bolero (Spanish dance)": "a Spanish dance in 3/4 time popular in
+    //   the late 18th and early 19th centuries", descended from the seguidilla
+    //   between 1750 and 1772, "accompanied by guitar and castanets".
+    //   https://en.wikipedia.org/wiki/Bolero_(Spanish_dance)
+    //   MasterClass draws the split: the Spanish bolero of around 1780 was "a dance
+    //   performed in 3/4 time as a solo or a duet", while "the Cuban boléro is
+    //   danced in 2/4 or 4/4 time". https://www.masterclass.com/articles/bolero-dance-guide
+    // Two different dances sharing a name, and this preset is the Spanish one. Anyone
+    // reaching for "bolero" expecting the Cuban ballad will find the meter wrong,
+    // which is why the label says so on the card and not just in here.
+    // ⚠ STROKE PLACEMENT UNSOURCED. The 3/4 meter is beyond dispute; where the
+    // guitar and castanets actually fall within the bar is not something any read
+    // source pins down. Accent 1, pickup on the "and" of 2, accent 3 is a plausible
+    // and self-consistent reading, not a transcribed one. Same standing as CALYPSO.
+    steps: [2,0,1,0, 0,0,2,0, 2,0,0,0],
   },
 
   // ── 5/4 GROOVES (10 steps, 8th-note grid) ──
   {
     id: 'takefive',    cat: 'funk', beats: 5, suggestedBpm: 168,
     name: 'TAKE FIVE',       origin: '5/4 — Brubeck / cool jazz',  originIt: '5/4 — Brubeck / cool jazz',
-    // 3+2 grouping: accents on 1, 3, 4 (groups of 3 then 2)
-    steps: [2,0,1,0,2,0, 2,0,1,0],
+    // The old comment contradicted itself: it said "3+2 grouping" and then listed
+    // accents on 1, 3 AND 4. A 3+2 grouping has group starts on 1 and 4 only; the
+    // accent on 3 belonged to no group and made it read as 2+1+2.
+    // Take Five's meter is 3+2 in every description of it, and the piece exists to
+    // teach that division, so the preset now plays it: accents on 1 and 4, weak
+    // strokes on 2, 3 and 5.
+    // https://en.wikipedia.org/wiki/Take_Five
+    steps: [2,0,1,0,1,0, 2,0,1,0],
   },
   {
     id: 'fiveostinato', cat: 'world', beats: 5,
     name: '5/4 OSTINATO',    origin: '5/4 — odd-meter vamp',       originIt: '5/4 — ostinato in metro dispari',
-    // 2+3 grouping: strong 1, medium 3, then triplet group
-    steps: [2,0,2,0, 2,0,1,0,1,0],
+    // CONSTRUCTED, not transcribed: there is no village that plays "5/4 ostinato".
+    // It is a teaching cell, so the only thing that has to be true is that the
+    // notes do what the label says. They now do; they did not before.
+    // 2+3: group starts fall on beats 1 and 3, so those two are the accents and
+    // everything else is weak. It was accenting 1, 2 AND 3, which is not a 2+3
+    // grouping, it is just three loud beats followed by two quiet ones.
+    // Deliberately the complement of TAKE FIVE (3+2) and distinct from FIVE ROCK
+    // (4+1), so the three 5/4 presets teach three different divisions of five.
+    steps: [2,0,1,0, 2,0,1,0,1,0],
   },
   {
     id: 'fiverock',    cat: 'funk', beats: 5,
     name: 'FIVE ROCK',       origin: '5/4 — prog rock',            originIt: '5/4 — prog rock',
-    // 4+1 feel: driving four then an extra beat
-    steps: [2,0,1,0,2,0,1,0, 2,0],
+    // CONSTRUCTED, not transcribed. Same rule as 5/4 OSTINATO: the label is the
+    // only claim, so the notes have to match it.
+    // 4+1: group starts on beats 1 and 5. Accents there, everything else weak,
+    // which is what "driving four then an extra beat" actually sounds like. It
+    // was accenting 1, 3 and 5, which is a 2+2+1 feel, not 4+1.
+    steps: [2,0,1,0,1,0,1,0, 2,0],
   },
 
   // ── 7/8 GROOVES (14 steps, 8th-note grid) ──
@@ -29377,19 +29977,40 @@ const GROOVE_PRESETS = [
     id: 'rachenitsa',  cat: 'world', beats: 7, suggestedBpm: 152,
     name: 'RACHENITSA',      origin: '7/8 — Bulgarian folk dance',  originIt: '7/8 — danza popolare bulgara',
     // 2+2+3 grouping: group starts on 8ths 0, 2, 4 (= steps 0, 4, 8).
+    // Verified: Wikipedia "Aksak" table lists 7-pulse 2+2+3 as Bulg. Račenica,
+    // and Wikipedia "Bulgarian dances" gives Rachenitsa as 2+2+3. Accents sit on
+    // exactly those group starts. https://en.wikipedia.org/wiki/Aksak
     steps: [2,0,1,0, 2,0,1,0, 2,0,1,0,1,0],
   },
   {
     id: 'aksak',       cat: 'world', beats: 7, suggestedBpm: 144,
-    name: 'AKSAK',           origin: '7/8 — Turkish asymmetric',   originIt: '7/8 — asimmetrico turco',
+    // Renamed from AKSAK. Wikipedia, "Aksak": "Strictly speaking, in Turkish music
+    // theory the term refers only to the grouping of nine pulses into a pattern of
+    // 2+2+2+3" - which is the KARŞILAMA entry below, not this one. The same
+    // article's table names 7-pulse 3+2+2 as Devr-i Hindi (Bulg. Lesnoto /
+    // Četvorno). https://en.wikipedia.org/wiki/Aksak
+    // The PATTERN was already correct: accents land on the 3+2+2 group starts.
+    name: 'DEVR-I HINDI',    origin: '7/8 — Turkish / Bulg. lesnoto',   originIt: '7/8 — turco / lesnoto bulgaro',
     // 3+2+2 grouping: long-short-short → group starts on 8ths 0, 3, 5.
     steps: [2,0,1,0,1,0, 2,0,1,0, 2,0,1,0],
   },
   {
     id: 'sevenrock',   cat: 'funk', beats: 7, suggestedBpm: 120,
-    name: 'SEVEN ROCK',      origin: '7/4 — prog / Brubeck',       originIt: '7/4 — prog / Brubeck',
-    // 4+3 grouping — Unsquare Dance feel
-    steps: [2,0,1,0,2,0,1,0, 2,0,2,0,1,0],
+    name: 'SEVEN ROCK',      origin: '7/4 — prog rock',           originIt: '7/4 — prog rock',
+    // CONSTRUCTED, not transcribed, and the Brubeck reference has been REMOVED
+    // because it was wrong. The old comment claimed "4+3 grouping - Unsquare Dance
+    // feel", but Unsquare Dance is not 4+3. E. Michael Harrington: "in Unsquare
+    // Dance he makes 7/4 your new favorite meter. 7 = 2 + 2 + 3."
+    // https://emichaelmusic.com/blog/three-songs-54-some-thoughts-74-about-dave-brubeck-98
+    // Jazz Backstory describes the parts and agrees: the bass taps "on 1, 3 and 5
+    // in conjunction with clapping on 2, 4, 6 and 7", and 1-3-5 IS the 2+2+3 group
+    // start. http://jazzbackstory.blogspot.com/2013/05/unsquare-dance.html
+    // 2+2+3 in seven is already in the library as RACHENITSA, correctly, so
+    // duplicating it here would have been pointless as well as misattributed.
+    // This preset is now an honest 4+3: group starts on 1 and 5, accents there,
+    // everything else weak. Three distinct sevens now ship: 2+2+3 (rachenitsa),
+    // 3+2+2 (devr-i hindi), 4+3 (this one).
+    steps: [2,0,1,0,1,0,1,0, 2,0,1,0,1,0],
   },
 
   // ── MORE 6/8 GROOVES (12 steps, 8th-note grid) ──
@@ -29399,6 +30020,19 @@ const GROOVE_PRESETS = [
     // Two dotted-quarter groups — strong on 1 and 4 (steps 0 and 6), the
     // in-between 8ths felt lightly. (The old steps accented every 3rd 16th,
     // which is the 3/4 hemiola — the opposite of a jig lilt.)
+    // VERIFIED against four sources that all name the same two beats:
+    //   Hannah Harris Ceol: "There are six eighth notes per measure, but they are
+    //   felt in two groups of three... The emphasis here is on beats 1 and 4
+    //   (ONE-two-three, FOUR-five-six)."
+    //   https://www.hannahharrisceol.com/fiddle-forays/comprehensive-guide-irish-tune-types
+    //   Bearmeadow: "Single and double jigs are in 6/8 time, counted '1, 2, 3, 4, 5,
+    //   6' with accents on the '1' and '4' beats."
+    //   Tradschool: the emphasis "is typically on the first and fourth beats in each
+    //   group of six quavers (eighth notes) in double jigs".
+    //   https://www.tradschool.com/en/irish-music/tune-types-in-irish-traditional-music/
+    //   Soundbrenner describes this exact encoding for a percussion part: "a stronger
+    //   stroke on 1 and 4, with lighter taps filling the subdivision."
+    //   https://www.soundbrenner.com/blogs/articles/jig-rhythm
     steps: [2,0,1,0,1,0, 2,0,1,0,1,0],
   },
   {
@@ -29407,19 +30041,64 @@ const GROOVE_PRESETS = [
     // 12/8 is compound QUADRUPLE: four dotted-quarter beats, each split into three,
     // which is why it isn't interchangeable with 6/8 (two beats). Backbeat on 2 and 4
     // — i.e. the 4th and 10th eighth. Essential to slow blues, gospel and doo-wop.
-    steps: [2,0,0,0,0,0, 1,0,0,0,0,0, 2,0,0,0,0,0, 1,0,0,0,0,0],
+    // NOTES CORRECTED: the comment called the backbeat essential and then the data
+    // accented beats 1 and 3 and left the backbeat weak, which is the opposite
+    // emphasis. Now accented on 2 and 4 with 1 and 3 weak, matching the BACKBEAT
+    // preset's treatment of the same idea in simple time.
+    // SOURCES. Tunable on the meter: "12/8 time is a compound quadruple meter with
+    // twelve eighth notes per measure grouped into four beats of three. It provides
+    // the lush, triplet-based feel that is essential to blues, gospel, doo-wop, and
+    // slow rock ballads." https://tunableapp.com/time-signature/12-8/
+    // Beta Monkey's blues drumming guide on where the snare goes, and it is the
+    // backbeat: play it "with a somewhat lazier feel, just placed slightly behind on
+    // the '2 and 4' backbeat". https://www.betamonkey.com/a-closer-look-at-blues-drumming-styles/
+    // NOTE, because it is a real divergence: some 12/8 sources put the snare on the
+    // 7th eighth instead, which is beat 3 of the four. That is the half-time slow-
+    // rock ballad feel, not slow blues; both are 12/8 and they are not the same
+    // groove. This preset is the blues one.
+    steps: [1,0,0,0,0,0, 2,0,0,0,0,0, 1,0,0,0,0,0, 2,0,0,0,0,0],
   },
   {
     id: 'gospel128',   cat: 'funk', beats: 12, suggestedBpm: 72,
     name: 'GOSPEL 12/8',    origin: '12/8 — gospel ballad',      originIt: '12/8 — ballata gospel',
-    // Same four dotted-quarter frame, but gospel fills the triplets: the third
-    // partial of each beat is felt, giving the rolling "one-and-a two-and-a" lilt.
-    steps: [2,0,0,0,1,0, 1,0,0,0,1,0, 2,0,0,0,1,0, 1,0,0,0,1,0],
+    // Same four dotted-quarter frame as SLOW BLUES 12/8 above, but gospel fills the
+    // triplets: the third partial of each beat is felt, giving the rolling
+    // "one-and-a two-and-a" lilt.
+    // NOTES CORRECTED so that "same frame" is actually true. Slow blues carries its
+    // accents on the 2 and 4 backbeat; this one was accenting beats 1 and 3, so the
+    // two presets did not share a frame at all and the comment was claiming they
+    // did. Backbeat now matches, and the pair differ by DENSITY, which is the real
+    // distinction: same four beats, same backbeat, gospel fills every third partial.
+    // Meter per Tunable: compound quadruple, twelve eighths in four beats of three,
+    // the feel "essential to blues, gospel, doo-wop, and slow rock ballads".
+    // https://tunableapp.com/time-signature/12-8/
+    steps: [1,0,0,0,1,0, 2,0,0,0,1,0, 1,0,0,0,1,0, 2,0,0,0,1,0],
   },
   {
     id: 'gospel68',    cat: 'funk', beats: 6,
     name: 'GOSPEL 6/8',      origin: '6/8 — gospel / soul',        originIt: '6/8 — gospel / soul',
-    // Strong 1 and 4, with the signature gospel push on "and of 2" and "and of 5"
+    // Strong 1 and 4, with gospel pushes on the "and" of 2, 3, 5 and 6.
+    // CLAIM CORRECTED, notes unchanged. The old comment listed only the pushes on
+    // the "and" of 2 and 5 and said nothing about the ones on the "and" of 3 and 6,
+    // which are also played. Four pushes, not two; the comment now says so.
+    // Compound duple, two dotted-quarter beats, which is what separates this from
+    // the 12/8 gospel entry above (four beats). Same lilt, half the frame.
+    // THE FRAME IS SOURCED. Practito: "6/8 has 2 main beats (compound duple), each
+    // dividing in three... Count 6/8 as two groups of three: ONE-two-three-FOUR-
+    // five-six. Emphasis falls on beats 1 and 4."
+    // https://practito.com/learn/time-signatures
+    // Drumscore is specific about where the backbeat goes once you are in 6/8: "a
+    // 'back beat' feel in 4/4 would involve placing snares on beats 2 and 4. To
+    // create a similar feel in 6/8 a snare would go on the 4th quaver beat of the
+    // bar." https://drumscore.com/356-grooves-in-6-8
+    // Drumhelper gives the same skeleton as a starting groove: "play the bass drum
+    // on count 1 and the snare drum on count 4."
+    // https://drumhelper.com/learning-drums/6-8-drum-beats-and-patterns/
+    // So accents on eighths 1 and 4 are the compound-duple frame plus the 6/8
+    // backbeat, and that is exactly what this plays.
+    // ⚠ THE FOUR PUSHES ARE NOT SOURCED. The strokes on the "and" of 2, 3, 5 and 6
+    // are the gospel ornament sitting on top of that frame, and no source read pins
+    // them to those specific positions. Frame verified, decoration asserted.
     steps: [2,0,0,1,0,1, 2,0,0,1,0,1],
   },
   {
@@ -29428,6 +30107,22 @@ const GROOVE_PRESETS = [
     // Cumbia is DUPLE (2/2, 2/4, modern 4/4) — never 6/8. This is the guacharaca
     // "chu-chucu" cell: a stroke on each beat, two quick strokes on its "and-a".
     // Matches the app's own 4/4 Cumbia drum-kit preset and rhythm cards.
+    // METER AND CELL SOURCED. Wikipedia, "Cumbia": it "has a 2/2 or 2/4 meter", and
+    // "the sound of cumbia can be characterized as having a simple 'chu-chucu-chu'
+    // rhythm created by the guacharaca". https://en.wikipedia.org/wiki/Cumbia
+    // So the duple claim above is right, the guacharaca is genuinely the instrument
+    // that makes the sound, and "chu-chucu" is the source's own word for it rather
+    // than ours. RF Dance says the same: the guacharaca "is the source of the
+    // well-known 'chu-chucu-chu' sound".
+    // NOTE ON THE 4/4: traditional cumbia is 2/2 or 2/4 and this preset is 4/4,
+    // which is the modern arrangement rather than the folkloric one. That is a
+    // deliberate call, not an error; 4/4 is where the rest of the app's cumbia
+    // material lives, and two bars of 2/4 fit inside one of 4/4 unchanged.
+    // ⚠ STROKE PLACEMENT IS A READING, not a transcription. "Chu-chucu" is
+    // onomatopoeia; mapping it to a stroke on the beat plus two quick ones on the
+    // "and" and "a" is a plausible rendering of that sound and is what ships. No
+    // source read pins the guacharaca to specific sixteenths. Same standing as
+    // CALYPSO and BOLERO.
     steps: [2,0,1,1, 2,0,1,1, 2,0,1,1, 2,0,1,1],
   },
 
@@ -29435,9 +30130,26 @@ const GROOVE_PRESETS = [
   {
     id: 'ciftetelli',  cat: 'world', beats: 4, suggestedBpm: 84,
     name: 'ÇİFTETELLİ',      origin: '4/4 (8/4 cycle) — Turkish / Greek', originIt: '4/4 (ciclo 8/4) — turco / greco',
-    // Çiftetelli is 8/4 (countable 2/4) — NOT 11/8 (that's kopanitsa, listed
-    // separately). Cell D K T K T D D T compressed onto one 4/4 bar in 8ths.
-    steps: [2,0,1,0,1,0,1,0, 1,0,2,0,2,0,1,0],
+    // ⚠ SOURCES GENUINELY CONFLICT. This is the one groove in the table where the
+    // written transcriptions disagree with each other, so this is a judgement call
+    // and is reversible. Three readings found, all calling themselves çiftetelli:
+    //   a) OLD PATTERN (uncited, "as taught"): cell D K T K T D D T in eighths,
+    //      dums at steps 0, 10, 12. Matched no written source found.
+    //   b) Darbuka Ritim Solo table, Ciftetelli / Turkey / 8/4, at sixteenth
+    //      resolution: D _ _ T | _ _ T _ | D _ _ T | K T K _
+    //      https://sites.google.com/view/darbuka-ritim-solo
+    //   c) Zahra Zuhair bellydance glossary, Chiftitelli 8/4:
+    //      "Dumm rest Tak Tak rest Tak Tak rest" over eight counts.
+    // (b) is adopted because it is the only one written at the resolution this
+    // engine actually stores, so it needs no interpretation to encode: dums at
+    // steps 0 and 8 as accents, teks and kas at 3, 6, 11, 12, 13, 14 as weak.
+    // TAQS.IM corroborates the meter and the character if not the exact strokes:
+    // çiftetelli "can be counted either as a 2/4 or 8/4 meter... its unmistakable
+    // driving beat contains a hypnotic quality." https://taqs.im/rhythms/
+    // Çiftetelli is 8/4 (countable 2/4), NOT 11/8; that is kopanitsa, listed
+    // separately. The Turkish and Greek traditions sharing the name is part of why
+    // the sources diverge.
+    steps: [2,0,0,1, 0,0,1,0, 2,0,0,1, 1,1,1,0],
   },
 
   // ── MORE 4/4 GROOVES (16 steps) ──
@@ -29447,6 +30159,19 @@ const GROOVE_PRESETS = [
     // Beat 1 is DROPPED (empty), kick+cross-stick land together on beat 3 — that
     // single hit is the "drop" and must dominate; 2 and 4 are light hi-hat/rimclick.
     // (Previously 2, 3 and 4 were all accented equally, which flattens the effect.)
+    // VERIFIED beat by beat. Tunable spells out the exact four: "On beat 1, play
+    // nothing (the 'drop'). On beat 2, play a hi-hat or rimclick accent. On beat 3,
+    // play the kick and snare simultaneously. On beat 4, play hi-hat or rimclick."
+    // That is this pattern with nothing left over.
+    // https://tunableapp.com/rhythm/reggae-one-drop/
+    // MusicRadar on why the empty 1 is the whole point: the one drop "is defined by
+    // the lack of the always-expected kick drum on beat 1 (hence the name - the 1 is
+    // dropped) and the emphasis in the bar moving to beat 3, with simultaneous kick
+    // and sidestick or snare hits."
+    // https://www.musicradar.com/how-to/how-to-program-a-typical-one-drop-reggae-beat-and-add-fills
+    // Bass Culture calls beat 3 "the single dominant accent of the bar", which is
+    // exactly why it is the only accent here.
+    // Popularised by Carlton Barrett of Bob Marley and the Wailers.
     steps: [0,0,0,0, 1,0,0,0, 2,0,0,0, 1,0,0,0],
   },
   {
@@ -29454,20 +30179,62 @@ const GROOVE_PRESETS = [
     name: 'DANCEHALL',       origin: 'Jamaican dancehall',            originIt: 'Dancehall giamaicano',
     // Dembow: 3+3+2 tresillo kick (steps 0, 3, 6) with the snare/rim on 16th-steps
     // 4 and 7 — the "boom-ch-boom-chick". Old version was kick-only on 0,6,10,14.
+    // VERIFIED, and unusually the source uses step numbers on the same 16-step grid
+    // this engine does, so there is no interpretation involved: the dembow "places
+    // the snare on syncopated 16th-note positions — specifically step 4 and step 7
+    // of a 16-step bar". Ours are on 4 and 7 (and their repeats at 12 and 15).
+    // https://plugg-supply.net/articles/how-to-make-reggaeton-beats
+    // Wikipedia "Dembow beat" confirms the kick side: the riddim "employs the
+    // tresillo pattern that is common in Latin American music", and takes its name
+    // from Shabba Ranks' 1990 dancehall track "Dem Bow".
+    // https://en.wikipedia.org/wiki/Dembow_beat
+    // So DANCEHALL and TRESILLO share a kick cell by descent, the same way CALYPSO
+    // does; the snare on 4 and 7 is what makes this one dancehall and not the cell.
     steps: [2,0,0,2, 1,0,2,1, 2,0,0,2, 1,0,2,1],
   },
   {
     id: 'motown',      cat: 'funk', beats: 4,
     name: 'MOTOWN',          origin: 'Motown / soul',                 originIt: 'Motown / soul',
-    // The signature Motown groove puts the snare on EVERY quarter note (Drumeo,
-    // Drumhelper, et al: "snare drum backbeats on every quarter note"), with 2 and 4
-    // strongest for the backbeat and steady 8ths between. The old pattern accented
-    // the "and" of 1 and 3, which is not the Motown emphasis.
+    // The signature Motown groove puts the snare on EVERY quarter note, with 2 and 4
+    // strongest for the backbeat and steady 8ths between. VERIFIED against four
+    // sources, including one that names the drummer who started it:
+    //   Drumeo: across the classic Motown sides, "most of them feature the same
+    //   eighth note drum groove with snare drum backbeats played on every quarter
+    //   note." https://www.drumeo.com/beat/the-ultimate-guide-to-soul-and-funk-drumming/
+    //   Loudlands Music credits Richard "Pistol" Allen, who "popularized playing the
+    //   snare drum on all four beats (instead of only the back beats, 2 and 4),
+    //   which gave a much more driving feel to the music."
+    //   https://www.loudlandsmusic.com/blog/the-uncredited-drummers-of-motown-the-funk-brothers
+    //   Belmont University thesis on Motown drumming names the groove Four-On-The-
+    //   Snare and specifies "eighth notes on the hi-hat, quarter notes on the snare,
+    //   and bass drum following the bass guitar line."
+    //   https://repository.belmont.edu/cgi/viewcontent.cgi?article=1023&context=music_recitals
+    //   eMastered: "Instead of keeping the snare drum exclusive to the 2 and 4
+    //   beats, the Motown drum beat has a snare on all the beats."
+    // The old pattern accented the "and" of 1 and 3, which is not the Motown
+    // emphasis.
     steps: [1,0,1,0, 2,0,1,0, 1,0,1,0, 2,0,1,0],
   },
   {
     id: 'new_orleans', cat: 'funk', beats: 4,
     name: 'NEW ORLEANS',     origin: 'New Orleans second line',       originIt: 'Seconda linea New Orleans',
+    // ⚠ CLAIM AND DATA DISAGREE, flagged rather than guessed. The comment says the
+    // bass sits on 1 and 3, but beat 3 carries no accent; the accents are on 1, 2,
+    // the "e" of 3, and 4. One of the two is wrong and deciding which needs a real
+    // second-line transcription, not a coin flip.
+    // Note also that SECOND LINE above is the sourced New Orleans entry (son clave
+    // 3-side with the big four). Whatever this preset becomes, it should be a
+    // genuinely different part rather than a second run at the same one.
+    // ⚠ CEILING REACHED, and this one has a second problem beyond the disagreement.
+    // Second-line drumming is explicitly not a fixed pattern. The Drummer Cafe puts
+    // it plainly: "Every player has their own unique way of playing these grooves,
+    // not to mention the vast number of rhythms, use and application over the
+    // years." So there is no single correct answer to converge on, only a
+    // well-chosen example, and this preset needs to be a different well-chosen
+    // example from SECOND LINE rather than a worse version of the same one.
+    // WHAT WOULD SETTLE IT: Antoon Aukes, "Second Line: 100 Years of New Orleans
+    // Drumming", which transcribes the styles by player, or a New Orleans drummer.
+    // Not another search.
     // Authentic syncopated parade groove: bass on 1&3, snare pushes and anticipations
     steps: [2,0,0,1, 2,0,1,0, 0,2,0,1, 2,0,0,1],
   },
@@ -29476,14 +30243,40 @@ const GROOVE_PRESETS = [
   {
     id: 'viennese',    cat: 'world', beats: 3, suggestedBpm: 168,
     name: 'VIENNESE WALTZ',  origin: '3/4 — Austrian court dance',   originIt: '3/4 — danza di corte austriaca',
-    // Beat 1 strong, beat 2 anticipated (step 3 = "and of 1"), beat 3 light
+    // Beat 1 strong, beat 2 anticipated, beat 3 light. The anticipation sits on
+    // step 3, which is the "A" of 1, not the "and" of 1; the old comment named the
+    // wrong subdivision. Notes unchanged, and the early second beat is exactly the
+    // Viennese characteristic.
+    // SOURCED, and the source draws the exact line between this preset and MAZURKA:
+    // "The Viennese waltz has an additional rhythmic quirk, unwritten and fairly
+    // subtle, of a slight anticipation of the second beat; this is different from
+    // the second-beat accent of a mazurka and gives the rhythm an exhilarating
+    // lift." So the three 3/4 presets are three distinct things and not variations
+    // on a theme: WALTZ accents 1, MAZURKA accents 2, VIENNESE accents 1 and moves
+    // beat 2 early without accenting it.
+    // https://www.talkclassical.com/threads/what-is-the-difference-between-a-waltz-a-mazurka-and-a-polonaise.36909/
+    // ⚠ ONE DIVERGENCE, recorded rather than hidden: a discussion on The Session
+    // describes the Viennese second beat as "slightly delayed" rather than early,
+    // though the poster hedges it. Anticipation is the commoner account and is what
+    // ships. If a better source says otherwise, step 3 moves later, not the rest.
     steps: [2,0,0,1, 1,0,0,0, 1,0,0,0],
   },
   {
     id: 'siciliana',   cat: 'world', beats: 6, suggestedBpm: 96,
     name: 'SICILIANA',       origin: '6/8 — Baroque pastoral',     originIt: '6/8 — pastorale barocca',
     // Siciliana is slow 6/8 or 12/8 (never 3/4): the signature lilt is
-    // dotted-8th + 16th + 8th on each dotted-quarter beat.
+    // dotted-8th + 16th + 8th on each dotted-quarter beat. VERIFIED; the strokes at
+    // 0, 3 and 4 in each group are exactly that figure.
+    //   Wikipedia "Siciliana": "in a slow 6/8 or 12/8 time with lilting rhythms...
+    //   usually in a minor key", pastoral in mood and "often characterized by dotted
+    //   rhythms". https://en.wikipedia.org/wiki/Siciliana
+    //   San Francisco Classical Voice: "The siciliana is normally in compound dotted
+    //   rhythm and is slow and sometimes melancholy in mood."
+    //   https://www.sfcv.org/learn/glossary/siciliana
+    // WHY IT RESEMBLES IRISH JIG ABOVE, which is neither coincidence nor duplicate:
+    // the sources say so outright, describing the siciliana as "somewhat
+    // resembl[ing] a slow jig or tarantella". Same two dotted-quarter pulses; the
+    // jig fills them evenly, the siciliana dots them. They do not share onsets.
     steps: [2,0,0,1,1,0, 2,0,0,1,1,0],
   },
 
@@ -29491,6 +30284,18 @@ const GROOVE_PRESETS = [
   {
     id: 'tarantella',  cat: 'world', beats: 6, suggestedBpm: 160,
     name: 'TARANTELLA',      origin: '6/8 — Southern Italian folk',   originIt: '6/8 — folk dell\'Italia meridionale',
+    // VERIFIED, no change. Compound duple: two strong pulses per bar, accents on
+    // the 1 and the 4 of the six eighths (steps 0 and 6), with the gallop stroke
+    // on the third eighth of each group (steps 4 and 10).
+    // Wikipedia "Tarantella": "characterized by a fast upbeat tempo, usually in
+    // 6/8 time (sometimes 12/8 or 4/4), accompanied by tambourines."
+    // Melodigging is explicit about where the weight goes: "Write in 6/8 (or 12/8)
+    // with two strong pulses per bar and a steady, danceable lilt. Use a recurring
+    // tamburello pattern: accented beats on 1 and 4."
+    // https://www.melodigging.com/genre/tarantella
+    // Naples LDM describes the same feel from the listener's side: the tarantella
+    // is "a very fast version of the ONE-two-three, ONE-two-three rhythm usually
+    // called 6/8 time". http://www.naplesldm.com/tarantella.php
     // Galloping quarter + eighth on each dotted-quarter group ("DUM..da DUM..da").
     steps: [2,0,0,0,1,0, 2,0,0,0,1,0],
   },
@@ -29499,6 +30304,24 @@ const GROOVE_PRESETS = [
     name: 'CALYPSO',         origin: '4/4 — Trinidad',             originIt: '4/4 — Trinidad',
     // Calypso is duple (2/4 or 4/4, syncopated) — never 6/8. Core cell is the
     // 3+3+2 tresillo family, here as boom-boom-chick per half-bar.
+    // WHAT IS SOURCED: the meter, the origin, and the syncopated bass.
+    //   Wikipedia "Calypso music": it "originated in Trinidad and Tobago from
+    //   Afro-Trinidadians during the early- to mid-19th century", with rhythms
+    //   traceable "back to West African Kaiso".
+    //   https://en.wikipedia.org/wiki/Calypso_music
+    //   Drum Set Tips, distinguishing it from its own offshoot soca: "Although its
+    //   patterns are similar to those of Soca, the bass drum in Calypso plays a more
+    //   syncopated rhythm with a less prominent snare pattern."
+    //   https://drumsettips.org/caribbean-drum-style-latin-drum-set-beats/
+    // ⚠ WHAT IS NOT: no transcription has been read that fixes calypso to these
+    // specific sixteenths. The cell here is the tresillo, inherited rather than
+    // independently attested, and that is stated plainly rather than dressed up.
+    // ON THE SHARED ONSETS WITH TRESILLO, which the audit flags: they are the same
+    // onsets on purpose. Calypso's cell IS the tresillo; what differs is weight.
+    // Tresillo accents all six strokes evenly, calypso accents the first two of each
+    // half-bar and lightens the third, which is the boom-boom-CHICK. If a real
+    // calypso transcription ever turns up and disagrees, this is the entry to
+    // change, not TRESILLO.
     steps: [2,0,0,2,0,0,1,0, 2,0,0,2,0,0,1,0],
   },
 
@@ -29509,11 +30332,26 @@ const GROOVE_PRESETS = [
     // 2+2+2+3 — the Turkish karşılama. (Previously labelled ESKISTA; the
     // characteristic Ethiopian groove is the 6/8 chikchika, not 9/8 — this
     // 2+2+2+3 cell is textbook karşılama, so the name was fixed, not the notes.)
+    // SOURCED, using the same reference DEVR-I HINDI above already relies on and
+    // which names this grouping specifically: Wikipedia, "Aksak" — "strictly
+    // speaking, in Turkish music theory the term refers only to the grouping of
+    // nine pulses into a pattern of 2+2+2+3".
+    // https://en.wikipedia.org/wiki/Aksak
+    // Group starts for 2+2+2+3 fall on pulses 1, 3, 5 and 7, and the accents sit on
+    // exactly those four, with pulse 9 weak. Checked, not assumed.
+    // The other nine in the library is COMPOUND 9, which is 3+3+3 and constructed
+    // rather than transcribed. This one is the aksak nine and is neither.
     steps: [2,0, 2,0, 2,0, 2,0,1],
   },
   {
     id: 'nine_eight',  cat: 'world', beats: 9, pulseBeats: 3, suggestedBpm: 160,
     name: 'COMPOUND 9',      origin: '9/8 — compound triple',          originIt: '9/8 — composto triplo',
+    // CONSTRUCTED, not transcribed, and CHECKED: the claim and the notes agree.
+    // 3 groups of 3 means group starts on pulses 1, 4 and 7, and the accents sit
+    // on exactly those. Second pulse of each group is weak, third is silent, which
+    // is what gives the swing-within-swing lilt.
+    // Distinct from KARŞILAMA, which is the other nine in the library and is
+    // 2+2+2+3, an aksak nine rather than a compound one.
     // 3 groups of 3 — swing-within-swing
     steps: [2,1,0, 2,1,0, 2,1,0],
   },
@@ -29829,7 +30667,7 @@ function grooveLoadPreset(id) {
 // Shrink the groove name font until it fits its column width (max 28px, min 15px)
 function _fitGrooveName(elName) {
   if (!elName) return;
-  const MAX = 36, MIN = 17;   // 17 is the smallest that still reads on the LCD at arm's length; only the 3-4 longest presets reach it
+  const MAX = 36, MIN = 16;   // 16 because the worst case, FUNK 4-ON-THE-FLOOR, needs 16.9px for its longest word; a 17px floor left it 0.1px short and the browser resolved that by splitting the word
   // Measure the text with an off-screen probe rather than looping on
   // scrollWidth > clientWidth. The name is a display:block filling a flex
   // column, so its scrollWidth tracks the box and the old condition could not
@@ -29837,7 +30675,13 @@ function _fitGrooveName(elName) {
   // "FUNK 4-ON-THE-FLOOR" at 15px, 212px of text in a 168px box). The element
   // also carries background-clip:text for its gradient fill, which makes the
   // usual overflow signals unreliable. One measurement, one assignment.
-  const box = elName.clientWidth;
+  // Measure the COLUMN, not the text element. #gsName is display:-webkit-box with
+  // line-clamp and background-clip:text, and its own clientWidth does not report
+  // the constraint reliably - measured on device, MONTUNO rendered at the 36px
+  // maximum in a ~172px column when it needs ~183px, so the fitter had stepped
+  // down zero times. The parent column is a plain block and is the real limit.
+  const col = elName.parentElement;
+  const box = (col ? col.clientWidth : 0) || elName.clientWidth;
   if (!box) { requestAnimationFrame(() => _fitGrooveName(elName)); return; }
   // Measure by inserting a Range over the element's own text node. A detached
   // probe span is not reliable here: it does not inherit the loaded webfont in
@@ -29863,6 +30707,10 @@ function _fitGrooveName(elName) {
     rects.forEach(function(r){ if (r.width > widest) widest = r.width; });
     return { lines: rects.length, widest: widest };
   };
+  // Always restart from MAX. Without this a previous fit's smaller size is the
+  // starting point, the first measurement passes, and the loop exits leaving the
+  // name smaller than it needs to be - the size never recovers when the column
+  // gets wider or the name gets shorter.
   let size = MAX;
   elName.style.fontSize = size + 'px';
   let guard = 0;
@@ -29888,6 +30736,13 @@ function grooveUpdateScreen() {
   if (el('gsName')) {
     el('gsName').textContent = preset ? (((progState.lang === 'it')&&preset.nameIt)?preset.nameIt:preset.name) : t('pr_custom');
     _fitGrooveName(el('gsName'));
+    // ...and again once layout has settled. This runs in the same frame the
+    // groove screen can become visible, so the first measurement may be against
+    // a column that is still resolving - which is how a name that comfortably
+    // fits ended up wrapped mid-word.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { try { _fitGrooveName(el('gsName')); } catch (e) {} });
+    });
   }
   if (el('gsOrigin')) el('gsOrigin').textContent = preset ? (((progState.lang === 'it')&&preset.originIt)?preset.originIt:preset.origin) : '';
   if (el('gsBpm'))    el('gsBpm').innerHTML = `${bpm} <span>BPM</span>`;
@@ -34758,6 +35613,12 @@ function stopMetro() {
   grooveCurrentStep = 0;
   document.querySelectorAll('.groove-step').forEach(el => el.classList.remove('gs-cursor'));
   for (let i = 0; i < groovePattern.length; i++) { const el = document.getElementById(`gvs-${i}`); if (el) el.classList.remove('gvs-cursor'); }
+  // ...and the MAIN SCREEN grid, which grooveUpdateCursor() also writes to. It
+  // was the one grid stop did not clear, so the cell that happened to be playing
+  // kept its outline after the groove stopped - on the only grid actually on
+  // screen. Cleared over the full row rather than groovePattern.length, so a
+  // pattern that shrinks cannot strand a cursor on a cell beyond the new end.
+  document.querySelectorAll('[id^="gs-step-"]').forEach(el => el.classList.remove('gs-cursor'));
   // cancel any ramp preview
   if (typeof _rampPreviewTimer !== 'undefined' && _rampPreviewTimer) {
     clearTimeout(_rampPreviewTimer); _rampPreviewTimer = null;
@@ -52737,9 +53598,9 @@ function lnchGo(m) {
   // the card floating alone over the module for ~180ms after the chooser had gone,
   // which reads as a third beat tacked onto the end - the "jerky finish". Starting
   // both at the same moment makes the handover one continuous movement.
-  const T_LAUNCHER_FADE = 420;   // launcher begins clearing, card ~90% arrived
-  const T_CARD_FADE     = 420;   // card fades with it
-  const CARD_FADE_MS    = 360;   // must match the CSS opacity duration
+  const T_LAUNCHER_FADE = 300;   // launcher clears while the card is still arriving,
+  const T_CARD_FADE     = 300;   // so travel and fade overlap and read as one move
+  const CARD_FADE_MS    = 300;   // must match the CSS opacity duration
   setTimeout(finish, T_LAUNCHER_FADE);
   setTimeout(() => {
     if (morph) morph.classList.add('lnch-morph-fade');
@@ -53057,9 +53918,18 @@ function lnchInit() {
           // underneath is never uncovered at any point in the crossfade.
           var v = document.getElementById('lnchVeil');
           if (v) {
-            v.classList.add('lnch-veil-gone');
-            setTimeout(function () { if (v.parentNode) v.parentNode.removeChild(v); }, 360);
+            // Held, NOT lifted on the same frame. Both fades are .34s, but the
+            // launcher's starts a frame or two later, so lifting together left
+            // the veil at 0 with the launcher still at 0.82 - ~170ms of neither
+            // covering, which is the flash of the app on a skipped splash.
+            setTimeout(function () {
+              v.classList.add('lnch-veil-gone');
+              setTimeout(function () { if (v.parentNode) v.parentNode.removeChild(v); }, 360);
+            }, 260);
           }
+          // The app can be uncovered now: the launcher is fading in and the veil
+          // is still over it until that finishes, so nothing is ever bare.
+          try { document.documentElement.classList.add('boot-ready'); } catch (e) {}
           // Contents fade in AFTER the veil handover, not during it. The veil and
           // the launcher surface crossfade over the same .34s by design, so
           // anything fading in alongside them is cancelled out by the veil fading
@@ -74303,6 +75173,9 @@ const STRINGS = {
     credits_ded_father:'Made for my father Luca, who first inspired the music in me.',
     credits_ded_mother:"Made possible by my mother Linda, who always believes in my dreams even when I don't.",
     credits_arrangements:'Sheet music arrangements',
+    credits_performances:'Performance sequences',
+    credits_fingering:'Fingering diagrams',
+    credits_adapted:'adapted files',
     scale_up:'UP', scale_down:'DOWN', scale_loop:'LOOP',
     chrome_root:'ROOT', chrome_in:'IN SCALE',
     subdiv_quarter:'QUARTER', subdiv_eighth:'EIGHTH',
@@ -75241,6 +76114,9 @@ const STRINGS = {
     credits_ded_father:'Per mio papà Luca, che per primo ha acceso in me la musica.',
     credits_ded_mother:'Grazie a mia mamma Linda, che crede sempre nei miei sogni anche quando non ci credo io.',
     credits_arrangements:'Arrangiamenti musicali',
+    credits_performances:'Sequenze di esecuzione',
+    credits_fingering:'Diagrammi di diteggiatura',
+    credits_adapted:'file adattati',
     scale_up:'SU', scale_down:'GIÙ', scale_loop:'LOOP',
     chrome_root:'TONICA', chrome_in:'IN SCALA',
     subdiv_quarter:'SEMIMINIMA', subdiv_eighth:'CROMA',

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Intonare &middot; Adapted performance MIDI</title>
+<style>
+  :root { --surface:#181826; --panel:#232338; --border:#2e2e48; --text:#eef0f7;
+           --dim:#a3a5b8; --theme:#5ee2ff; --gold:#ffd166; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:28px 18px 64px; background:var(--surface); color:var(--text);
+          font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:860px; margin:0 auto; }
+  h1 { font-size:1.5rem; margin:0 0 4px; letter-spacing:.01em; }
+  .sub { color:var(--dim); font-size:.92rem; margin:0 0 28px; }
+  a { color:var(--theme); }
+  h2 { font-size:1.05rem; margin:32px 0 10px; color:var(--gold); font-weight:600; }
+  p { margin:0 0 12px; }
+  ul { margin:0 0 12px; padding-left:20px; }
+  li { margin-bottom:7px; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:12px;
+           padding:16px 18px; margin-bottom:8px; }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  th { text-align:left; color:var(--dim); font-weight:600; font-size:.78rem;
+        text-transform:uppercase; letter-spacing:.06em; padding:0 8px 8px 0;
+        border-bottom:1px solid var(--border); }
+  td { padding:9px 8px 9px 0; border-bottom:1px solid var(--border); vertical-align:top; }
+  .w { width:52%; }
+  .c { display:block; color:var(--dim); font-size:.82rem; }
+  .n { color:var(--dim); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .d a { font-family:ui-monospace,"JetBrains Mono",monospace; font-size:.8rem;
+          word-break:break-all; }
+  .foot { color:var(--dim); font-size:.84rem; margin-top:28px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Adapted performance MIDI</h1>
+  <p class="sub">Source files for Performance mode in
+     <a href="../../">Intonare</a>.</p>
+
+  <div class="card">
+    <p>These twenty-one sequences are adaptations of MIDI recordings by
+       <strong>Bernd Kr&uuml;ger</strong>, published at
+       <a href="https://www.piano-midi.de" target="_blank" rel="noopener">piano-midi.de</a> under the
+       <a href="https://creativecommons.org/licenses/by-sa/3.0/de/deed.en" target="_blank" rel="noopener">Creative
+       Commons Attribution-ShareAlike 3.0 Germany</a> licence.</p>
+    <p>That licence is ShareAlike, so the adapted files are published here under the same terms.
+       Everything you hear in the app is his playing; the changes below are structural.
+       The compositions themselves are public domain.</p>
+  </div>
+
+  <h2>What was changed</h2>
+  <ul>
+    <li><strong>Tempo map flattened.</strong> Every file sits at a fixed 120&nbsp;BPM, 480 ticks
+        per quarter, with the rubato baked into the absolute note positions. Playback is
+        identical; the bar lines no longer line up with the score.</li>
+    <li><strong>Tracks merged.</strong> Left and right hand are collapsed onto one track,
+        channel&nbsp;1, so the hand split is gone.</li>
+    <li><strong>Velocities round-tripped</strong> through a 0 to 1 float, so a velocity may land
+        a step either side of the original.</li>
+    <li><strong>Pedal reduced to on and off</strong> (CC64 at 0 or 127). Half-pedalling is not
+        preserved.</li>
+    <li><strong>No trimming.</strong> Each file is the complete performance.</li>
+  </ul>
+  <p>Seven pieces also appear in the app with a Rhodes voice. Those reuse the same note data with
+     the pedal removed, so they are not listed separately.</p>
+
+  <h2>Files</h2>
+  <table>
+    <thead><tr><th class="w">Work</th><th>Length</th><th>Notes</th><th>Download</th></tr></thead>
+    <tbody>
+      <tr><td class="w">Für Elise (WoO 59)<span class="c">Beethoven</span></td><td class="n">2:46</td><td class="n">1,041</td><td class="d"><a href="fuer_elise.mid" download>fuer_elise.mid</a></td></tr>
+      <tr><td class="w">Piano Sonata No. 14 &quot;Moonlight&quot;, I. Adagio sostenuto<span class="c">Beethoven</span></td><td class="n">6:07</td><td class="n">1,144</td><td class="d"><a href="moonlight.mid" download>moonlight.mid</a></td></tr>
+      <tr><td class="w">Piano Sonata No. 14 &quot;Moonlight&quot;, II. Allegretto<span class="c">Beethoven</span></td><td class="n">2:04</td><td class="n">898</td><td class="d"><a href="moonlight_2.mid" download>moonlight_2.mid</a></td></tr>
+      <tr><td class="w">Piano Sonata No. 14 &quot;Moonlight&quot;, III. Presto agitato<span class="c">Beethoven</span></td><td class="n">6:50</td><td class="n">6,538</td><td class="d"><a href="moonlight_3.mid" download>moonlight_3.mid</a></td></tr>
+      <tr><td class="w">Piano Sonata No. 21 &quot;Waldstein&quot;, I. Allegro con brio<span class="c">Beethoven</span></td><td class="n">10:18</td><td class="n">8,576</td><td class="d"><a href="waldstein_1.mid" download>waldstein_1.mid</a></td></tr>
+      <tr><td class="w">Prelude in C major, BWV 846 (WTC I)<span class="c">J. S. Bach</span></td><td class="n">3:46</td><td class="n">1,284</td><td class="d"><a href="prelude_c.mid" download>prelude_c.mid</a></td></tr>
+      <tr><td class="w">Clair de lune (Suite bergamasque, L. 75)<span class="c">Debussy</span></td><td class="n">4:09</td><td class="n">1,491</td><td class="d"><a href="clair_de_lune.mid" download>clair_de_lune.mid</a></td></tr>
+      <tr><td class="w">Prélude in E minor, Op. 28 No. 4<span class="c">Chopin</span></td><td class="n">1:42</td><td class="n">604</td><td class="d"><a href="prelude_em.mid" download>prelude_em.mid</a></td></tr>
+      <tr><td class="w">Prélude in D-flat major &quot;Raindrop&quot;, Op. 28 No. 15<span class="c">Chopin</span></td><td class="n">4:32</td><td class="n">1,518</td><td class="d"><a href="raindrop.mid" download>raindrop.mid</a></td></tr>
+      <tr><td class="w">Fantaisie-Impromptu in C-sharp minor, Op. 66<span class="c">Chopin</span></td><td class="n">4:34</td><td class="n">3,050</td><td class="d"><a href="fantaisie_impromptu.mid" download>fantaisie_impromptu.mid</a></td></tr>
+      <tr><td class="w">The Seasons, June: Barcarolle, Op. 37a<span class="c">Tchaikovsky</span></td><td class="n">3:55</td><td class="n">1,502</td><td class="d"><a href="barcarolle.mid" download>barcarolle.mid</a></td></tr>
+      <tr><td class="w">The Seasons, November: Troika, Op. 37a<span class="c">Tchaikovsky</span></td><td class="n">2:57</td><td class="n">1,852</td><td class="d"><a href="troika.mid" download>troika.mid</a></td></tr>
+      <tr><td class="w">Piano Sonata No. 11, K. 331, III. Rondo alla turca<span class="c">Mozart</span></td><td class="n">3:10</td><td class="n">2,819</td><td class="d"><a href="alla_turca.mid" download>alla_turca.mid</a></td></tr>
+      <tr><td class="w">Piano Sonata No. 16 &quot;Sonata facile&quot;, K. 545, I<span class="c">Mozart</span></td><td class="n">4:21</td><td class="n">2,714</td><td class="d"><a href="sonata_facile.mid" download>sonata_facile.mid</a></td></tr>
+      <tr><td class="w">To Spring, Op. 43 No. 6<span class="c">Grieg</span></td><td class="n">2:36</td><td class="n">1,626</td><td class="d"><a href="to_spring.mid" download>to_spring.mid</a></td></tr>
+      <tr><td class="w">Butterfly, Op. 43 No. 1<span class="c">Grieg</span></td><td class="n">1:38</td><td class="n">937</td><td class="d"><a href="butterfly.mid" download>butterfly.mid</a></td></tr>
+      <tr><td class="w">Wedding Day at Troldhaugen, Op. 65 No. 6<span class="c">Grieg</span></td><td class="n">5:30</td><td class="n">3,842</td><td class="d"><a href="wedding_day.mid" download>wedding_day.mid</a></td></tr>
+      <tr><td class="w">Kinderszenen, Träumerei, Op. 15 No. 7<span class="c">Schumann</span></td><td class="n">2:17</td><td class="n">456</td><td class="d"><a href="traumerei.mid" download>traumerei.mid</a></td></tr>
+      <tr><td class="w">Prélude in C-sharp minor, Op. 3 No. 2<span class="c">Rachmaninoff</span></td><td class="n">4:09</td><td class="n">1,725</td><td class="d"><a href="prelude_csharp.mid" download>prelude_csharp.mid</a></td></tr>
+      <tr><td class="w">Prélude in G minor, Op. 23 No. 5<span class="c">Rachmaninoff</span></td><td class="n">3:17</td><td class="n">3,861</td><td class="d"><a href="prelude_op23.mid" download>prelude_op23.mid</a></td></tr>
+      <tr><td class="w">Liebestraum No. 3, S. 541<span class="c">Liszt</span></td><td class="n">4:09</td><td class="n">1,888</td><td class="d"><a href="liebestraum.mid" download>liebestraum.mid</a></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Reuse</h2>
+  <p>Take them. Under CC BY-SA 3.0 DE you need to credit Bernd Kr&uuml;ger and piano-midi.de,
+     note that the files were adapted, and licence anything you build from them under the same
+     licence.</p>
+
+  <p class="foot">21 files, 423&nbsp;KB total.
+     Plain-text version: <a href="README.md">README.md</a></p>
+</div>
+</body>
+</html>
