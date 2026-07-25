@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.103.0 -->
+<!-- INTONARE_VERSION: 0.103.20 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -28448,7 +28448,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.103.0</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.103.20</span>
     </div>
   </div>
 </div>
@@ -28456,7 +28456,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.103.0';
+const INTONARE_VERSION = '0.103.20';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -29163,11 +29163,57 @@ const GROOVE_CATEGORIES = [
   { id: 'african', label: 'AFRICAN', labelIt: 'AFRICANO'    },
   { id: 'funk',    label: 'FUNK',    labelIt: 'FUNK'        },
   { id: 'world',   label: 'WORLD',   labelIt: 'MONDO'       },
+  // PRACTICE holds patterns INVENTED for this app rather than transcribed from a
+  // tradition. They were previously scattered: 5/4 OSTINATO and COMPOUND 9 sat in
+  // WORLD, FIVE ROCK and SEVEN ROCK in FUNK, so two near-identical odd-meter teaching
+  // cells lived in different tabs. Grouping them by METER was considered and rejected:
+  // an odd-meter tab would also have to take RACHENITSA, KOPANITSA, KARSILAMA and
+  // DEVR-I HINDI, which are Balkan and Turkish dances first and odd second, and it
+  // would make the category filter ask two questions at once. What actually unites
+  // these four is that nobody plays them; they are exercises.
+  // LAYOUT COST, MEASURED not guessed (Playwright, real CSS): a sixth tab takes the row
+  // from 1 line to 2 at 390-412px, +29px. At 360px it already wrapped at five tabs, so
+  // small phones are unaffected. Shorter labels were tested and rejected: the only
+  // six-label set that fits 390px is AFRO/PRAC/MINE, which clears by ONE pixel and
+  // would wrap on any font substitution. Readable labels and 29px beat that.
+  { id: 'practice',label: 'PRACTICE',labelIt: 'ESERCIZI'    },
   { id: 'custom',  label: 'CUSTOM',  labelIt: 'PERSONALIZ.' },
 ];
 
 const GROOVE_PRESETS = [
   // ── LATIN ──
+  // ══ SUBDIVISION, TIMELINE FAMILY (claves, tresillo, bossa, and the African
+  //    timelines below). Researched rather than assumed; the three sources do not
+  //    agree with each other and the disagreement is the useful part.
+  //
+  //    1) THE 16-PULSE GRID IS THE RIGHT REPRESENTATION. Magill, quoted in Riddim
+  //       (arXiv:1705.04792): West African bell patterns "can nearly always be
+  //       subdivided into a number of regular pulses (usually 8, 12, or 16)". That
+  //       is what these arrays are, and why they are straight and not swung.
+  //
+  //    2) BUT ISOCHRONY IS REGIONAL, NOT UNIVERSAL. Polak, "Rhythmic feel as meter"
+  //       (2010), compared West African percussion genres and found uneven beat
+  //       subdivision "play[s] a substantial role in genres from Mali (Mande) and
+  //       northern Ghana (Dagbamba) but not in southern and central Ghana (Ewe,
+  //       Asante)", explicitly contradicting "the widespread assumption that, in
+  //       African rhythmic systems, the fast pulse in general is structurally
+  //       isochronous". So a straight grid is CORRECT for the Ewe material and is
+  //       an OPEN QUESTION for anything from outside that region. Per-groove notes
+  //       below say which of those two situations each one is in.
+  //
+  //    3) EVEN WHERE IT IS ISOCHRONOUS, PLAYERS DEVIATE, AND WE CANNOT SHOW THAT.
+  //       The quantitative study of Cuban guaguanco drumming measured 186 clave
+  //       cycles and found the strokes are not deadpan: note 2 short, note 3 long,
+  //       note 4 late, relative to an idealised 12-slot grid, with the deviations
+  //       "more or less cancel[ling]" so the last stroke lands almost exactly where
+  //       the grid says. https://researchgate.net/publication/326182955
+  //       A step sequencer places strokes on slots and has no microtiming at all.
+  //       This is a CEILING, not a bug: the grid positions are right, the human
+  //       push and drag around them is unrepresentable at any grid resolution.
+  //       Recorded here so nobody "fixes" it by moving a stroke to a neighbouring
+  //       slot, which would make the pattern wrong rather than merely quantised.
+  //    SUBDIV-AUDIT: ok - 16 straight pulses, sourced above; microtiming is a
+  //    documented engine ceiling, not a grid error.
   {
     // ── CLAVE FAMILY: VERIFIED ─────────────────────────────────────────────
     // NOTE ON ENCODING: 16 steps here is ONE 4/4 bar of sixteenths, and the full
@@ -29186,8 +29232,18 @@ const GROOVE_PRESETS = [
     // TOUSSAINT SIX (4 of 6). Also confirmed by the academic set: Son is
     // x - - x - - x - - - x - x - - - = 0,3,6,10,12, which is what we have.
     // Diaz-Banez et al. Table 1: https://www.scitepress.org/Papers/2013/43255/43255.pdf
-    id: 'son32',    cat: 'latin', beats: 4, suggestedBpm: 110,
+    id: 'son32',    cat: 'latin', beats: 4, suggestedBpm: 90,
     name: 'SON CLAVE 3-2', origin: 'Cuban son / salsa',        originIt: 'Son cubano / salsa',
+    // CYCLE: 2 conventional bars. Established by the CLAVE FAMILY encoding note
+    // at the top of this list: 16 steps is ONE app bar of sixteenths carrying the
+    // full TWO-BAR timeline in cut time. Consequence for TEMPO: one app beat equals
+    // two beats of the style, so a genre figure must be HALVED to go in
+    // suggestedBpm. Son clave's 110 therefore reads as 220 in salsa terms.
+    // TEMPO SOURCED AND HALVED FOR THE TWO-BAR CYCLE. Salsa sits around 180 BPM with
+    // a 150-250 range (Se7en BPM Index; dance sources agree, most dancing 160-220).
+    // One app beat is two beats of the style, so 180 genre = 90 here. The old 110
+    // read as 220, i.e. salsa dura / timba, not the middle of the form.
+    // TEMPO-SOURCE: MEDIUM. Basis is genre-level figures from a DJ tempo index plus dance forums, not a named record.
     steps: [2,0,0,2,0,0,2,0, 0,0,2,0,2,0,0,0],
   },
   {
@@ -29196,8 +29252,18 @@ const GROOVE_PRESETS = [
     // not two different rhythms... they are two directions of the same two-bar
     // pattern"). son32 = A|B with A=[2,0,0,2,0,0,2,0] B=[0,0,2,0,2,0,0,0];
     // this is B|A. No independent citation needed beyond son32's.
-    id: 'son23',    cat: 'latin', beats: 4,
+    id: 'son23',    cat: 'latin', beats: 4, suggestedBpm: 90,
     name: 'SON CLAVE 2-3', origin: 'Cuban son',                 originIt: 'Son cubano',
+    // CYCLE: 2 conventional bars. Established by the CLAVE FAMILY encoding note
+    // at the top of this list: 16 steps is ONE app bar of sixteenths carrying the
+    // full TWO-BAR timeline in cut time. Consequence for TEMPO: one app beat equals
+    // two beats of the style, so a genre figure must be HALVED to go in
+    // suggestedBpm. Son clave's 110 therefore reads as 220 in salsa terms.
+    // TEMPO SOURCED AND HALVED FOR THE TWO-BAR CYCLE. Salsa sits around 180 BPM with
+    // a 150-250 range (Se7en BPM Index; dance sources agree, most dancing 160-220).
+    // One app beat is two beats of the style, so 180 genre = 90 here. The old 110
+    // read as 220, i.e. salsa dura / timba, not the middle of the form.
+    // TEMPO-SOURCE: MEDIUM. Basis is same source as son32.
     steps: [0,0,2,0,2,0,0,0, 2,0,0,2,0,0,2,0],
   },
   {
@@ -29211,26 +29277,54 @@ const GROOVE_PRESETS = [
     // TOUSSAINT SIX (5 of 6). Confirmed independently: Rumba is
     // x - - x - - - x - - x - x - - - = 0,3,7,10,12, which is what we have.
     // Diaz-Banez et al. Table 1: https://www.scitepress.org/Papers/2013/43255/43255.pdf
-    id: 'rumba32',  cat: 'latin', beats: 4,
+    id: 'rumba32',  cat: 'latin', beats: 4, suggestedBpm: 112,
     name: 'RUMBA CLAVE 3-2', origin: 'Afro-Cuban rumba',          originIt: 'Rumba afrocubana',
+    // CYCLE: 2 conventional bars. Established by the CLAVE FAMILY encoding note
+    // at the top of this list: 16 steps is ONE app bar of sixteenths carrying the
+    // full TWO-BAR timeline in cut time. Consequence for TEMPO: one app beat equals
+    // two beats of the style, so a genre figure must be HALVED to go in
+    // suggestedBpm. Son clave's 110 therefore reads as 220 in salsa terms.
+    // TEMPO SOURCED AND HALVED FOR THE TWO-BAR CYCLE. Drumgenius 2.0 lists basic
+    // Havana-style rumba guaguanco at 231 BPM and a Robby Ameen version at 217.
+    // Halved for the cycle that is 115 and 108; 112 is between them. Guaguanco is
+    // the rumba style that carries rumba clave, which is why it is the reference.
+    // TEMPO-SOURCE: MEDIUM. Basis is a commercial drum-library index (Drumgenius), two entries, 231 and 217.
     steps: [2,0,0,2,0,0,0,2, 0,0,2,0,2,0,0,0],
   },
   {
     // VERIFIED BY CONSTRUCTION: rumba32 above with its two halves swapped, same
     // rule as son23. rumba32 = A|B with A=[2,0,0,2,0,0,0,2] B=[0,0,2,0,2,0,0,0];
     // this is B|A.
-    id: 'rumba23', originIt: 'Rumba afro-cubana',  cat: 'latin', beats: 4,
+    id: 'rumba23', originIt: 'Rumba afro-cubana',  cat: 'latin', beats: 4, suggestedBpm: 112,
     name: 'RUMBA CLAVE 2-3', origin: 'Afro-Cuban rumba',
+    // CYCLE: 2 conventional bars. Established by the CLAVE FAMILY encoding note
+    // at the top of this list: 16 steps is ONE app bar of sixteenths carrying the
+    // full TWO-BAR timeline in cut time. Consequence for TEMPO: one app beat equals
+    // two beats of the style, so a genre figure must be HALVED to go in
+    // suggestedBpm. Son clave's 110 therefore reads as 220 in salsa terms.
+    // TEMPO SOURCED AND HALVED FOR THE TWO-BAR CYCLE. Drumgenius 2.0 lists basic
+    // Havana-style rumba guaguanco at 231 BPM and a Robby Ameen version at 217.
+    // Halved for the cycle that is 115 and 108; 112 is between them. Guaguanco is
+    // the rumba style that carries rumba clave, which is why it is the reference.
+    // TEMPO-SOURCE: MEDIUM. Basis is same source as rumba32.
     steps: [0,0,2,0,2,0,0,0, 2,0,0,2,0,0,0,2],
   },
   {
-    id: 'tresillo', cat: 'latin', beats: 4,
+    id: 'tresillo', cat: 'latin', beats: 4, suggestedBpm: 95,
     name: 'TRESILLO',        origin: 'Afro-Cuban / reggaeton',    originIt: 'Afrocubano / reggaeton',
     // 3+3+2 feel across the bar — pattern repeats in second half.
     // VERIFIED: onsets sit at steps 0,3,6 then 8,11,14 — exactly 3+3+2 twice.
     // Puget Sound music theory 14.6: "the 3+3+2 rhythm is shown in both eighth
     // notes and sixteenth notes. The sixteenth-note version is known as tresillo."
     // https://musictheory.pugetsound.edu/mt21c/ThreeTwoClave.html
+    // CYCLE: 1 bar. Read off the accents, which sit at steps 0,3,6 then 8,11,14: that is
+    // the 3+3+2 cell twice, in SIXTEENTHS, so each cell is half a bar and the array is
+    // one 4/4 bar. Not the eighth-note tresillo that spans a whole bar; the spacing of
+    // three sixteenths settles which reading this is.
+    // TEMPO SOURCED. Wikipedia's 'Dembow beat' confirms the dembow carries a 3+3+2
+    // (tresillo) cross-rhythm, so reggaeton is the right reference. Reggaeton runs
+    // 85-100 and bpmcalc names 95 as the global radio standard. Cycle is 1, so 95 as-is.
+    // TEMPO-SOURCE: WEAK. Basis is bpmcalc.com, a DJ tool site with no stated methodology.
     steps: [2,0,0,2,0,0,2,0, 2,0,0,2,0,0,2,0],
   },
   {
@@ -29247,10 +29341,12 @@ const GROOVE_PRESETS = [
     // The Puget Sound music theory text reaches the same place from the other
     // direction, listing Bizet's Habanera from Carmen among its 3+3+2 examples.
     // https://musictheory.pugetsound.edu/mt21c/ThreeTwoClave.html
+    // CYCLE: 1 bar. The habanera cell is a single-bar figure and the accents at 0, 8 and
+    // 12 are beats 1, 3 and 4 of one bar. Tempo 80 kept; not re-sourced this pass.
     steps: [2,0,0,0,0,0,1,0, 2,0,0,0,2,0,0,0],
   },
   {
-    id: 'bossa',    cat: 'latin', beats: 4, suggestedBpm: 96,
+    id: 'bossa',    cat: 'latin', beats: 4, suggestedBpm: 65,
     name: 'BOSSA NOVA',      origin: 'Brazilian bossa',            originIt: 'Bossa nova brasiliana',
     // Son clave with the SECOND NOTE OF THE TWO-SIDE delayed by one pulse - the
     // only difference, per Wikipedia "Clave (rhythm)": the bossa nova clave "has a
@@ -29269,6 +29365,21 @@ const GROOVE_PRESETS = [
     // All six of Toussaint's distinguished timelines now ship correct:
     // shiko 0,4,6,10,12 | son 0,3,6,10,12 | rumba 0,3,7,10,12
     // soukous 0,3,6,10,11 | bossa 0,3,6,10,13 | gahu 0,3,6,10,14
+    // CYCLE: 2 conventional bars. Established by the CLAVE FAMILY encoding note
+    // at the top of this list: 16 steps is ONE app bar of sixteenths carrying the
+    // full TWO-BAR timeline in cut time. Consequence for TEMPO: one app beat equals
+    // two beats of the style, so a genre figure must be HALVED to go in
+    // suggestedBpm. Son clave's 110 therefore reads as 220 in salsa terms.
+    // TEMPO SOURCED AND HALVED FOR THE TWO-BAR CYCLE. Bossa is explicitly the relaxed,
+    // slower cousin of samba (Drum Set Tips, 'Bossa Nova Drum Style'). Reference
+    // recordings and play-alongs sit around 130 genre BPM: Drumgenius puts 'The Girl
+    // from Ipanema' at 180 in its swung-bossa count and a plain bossa phrase at 111,
+    // and a Blue Bossa backing track is 140. ~130 halves to 65. The old 96 read as
+    // 192, which is faster than samba, the thing bossa is defined as slower than.
+    // SUBDIV-AUDIT: ok - straight 16 pulses per the timeline family note above. The
+    // word 'swung' in the tempo note refers to Drumgenius's name for a swing-bossa
+    // ARRANGEMENT, not to this grid, which is not swung.
+    // TEMPO-SOURCE: WEAK. Basis is a mix of drum-library entries and a backing-track product page, no single record.
     steps: [2,0,0,2,0,0,2,0, 0,0,2,0,0,2,0,0],
   },
   {
@@ -29288,10 +29399,20 @@ const GROOVE_PRESETS = [
     // WHAT WOULD SETTLE IT: a bateria chart or a percussionist. Not another search.
     // Until then the surdo is right, the tamborim is a plausible filling, and the
     // comment says which is which so nobody mistakes the second for the first.
+    // CYCLE: the array is 2 bars of 2/4, which is samba's native meter, written here as
+    // one 4/4 frame. The surdo accents at steps 0 and 8 are beat 1 of each 2/4 bar. The
+    // four app beats are four quarters either way, so the genre figure goes in as-is.
+    // TEMPO: 130, and this is the widest honest range in the Latin set. Two anchors pull
+    // apart: ballroom samba's recommended competition tempo is 48-56 bars per minute
+    // (Wikipedia, citing the ISTD guide), which is 96-112 quarters, while a Samba
+    // Batucada recording reads 135. Escola/batucada samba is the faster tradition and is
+    // what this surdo pattern belongs to, so 130 sits at that end on purpose. If it feels
+    // hectic the ballroom end of the range is the defensible alternative, not an error.
+    // TEMPO-SOURCE: STRONG. Basis is Wikipedia citing the ISTD official guide for the ballroom end.
     steps: [2,0,1,0,1,1,0,0, 2,0,1,0,1,0,1,0],
   },
   {
-    id: 'montuno',  cat: 'latin', beats: 4,
+    id: 'montuno',  cat: 'latin', beats: 4, suggestedBpm: 90,
     name: 'MONTUNO',         origin: 'Cuban son / salsa piano',   originIt: 'Son cubano / piano salsa',
     // THIS IS THE PIANO GUAJEO, not the bass line. That distinction matters and the
     // old comment blurred it: it justified this pattern using the BASS tumbao's
@@ -29319,6 +29440,12 @@ const GROOVE_PRESETS = [
     // salsa pianist. Not another search. What ships is one player's ear, which for
     // this particular preset is a better authority than another lesson blog would
     // have been.
+    // CYCLE: 2 bars, like the clave it locks to. A piano guajeo is written across the
+    // two-bar clave cycle, which is also why its accents do not repeat within the array.
+    // TEMPO: 90, derived not searched. Salsa's 180 is already sourced on SON CLAVE 3-2 in
+    // this file, and a two-bar cycle halves it. Set to match son32 deliberately: a guajeo
+    // and the clave under it must not disagree about tempo.
+    // TEMPO-SOURCE: MEDIUM. Basis is derived from son32, so it inherits son32 grade and adds an inference.
     steps: [2,0,1,2, 0,1,0,2, 0,1,0,2, 2,0,1,0],
   },
   {
@@ -29343,6 +29470,12 @@ const GROOVE_PRESETS = [
     // REGGAE ONE-DROP's beat 1.
     id: 'tumbao',   cat: 'latin', beats: 4, suggestedBpm: 180,
     name: 'TUMBAO',          origin: 'Cuban bass / salsa',        originIt: 'Basso cubano / salsa',
+    // CYCLE: 1 bar. The bass tumbao figure repeats every bar; its two strokes sit on the
+    // 'and' of 2 (step 6) and beat 4 (step 12) of a single bar.
+    // TEMPO 180 CHECKED AND CORRECT, which is worth stating because it looks wrong next
+    // to SON CLAVE 3-2's 90. They agree: son32 is a TWO-bar cycle at 90, this is a
+    // ONE-bar cycle at 180, and both come out at 180 in salsa terms. Do not 'fix' this
+    // to match son32's number.
     steps: [0,0,0,0, 0,0,2,0, 0,0,0,0, 2,0,0,0],
   },
   // ── AFRICAN ──
@@ -29359,6 +29492,21 @@ const GROOVE_PRESETS = [
     // WAS: 0,4,7,10,14 - undocumented, matched no source.
     id: 'shiko',    cat: 'african', beats: 4,
     name: 'SHIKO',           origin: 'West African / highlife',   originIt: 'Africa occ. / highlife',
+    // SUBDIVISION: CEILING REACHED. West African / highlife, origin not pinned to a region in any
+    // source found. Polak's result is regional, so it cannot be applied here either
+    // way. The 16-pulse grid follows Magill's general rule and Toussaint's treatment
+    // of shiko as one of the six 16-pulse timelines; whether the fast pulse is even
+    // in practice is unestablished. Would be settled by a timing study of the genre.
+    // SUBDIV-AUDIT: ok - straight 16 pulses; see the timeline family note above.
+    // CYCLE: 2 conventional bars. Established by the CLAVE FAMILY encoding note
+    // at the top of this list: 16 steps is ONE app bar of sixteenths carrying the
+    // full TWO-BAR timeline in cut time. Consequence for TEMPO: one app beat equals
+    // two beats of the style, so a genre figure must be HALVED to go in
+    // suggestedBpm. Son clave's 110 therefore reads as 220 in salsa terms.
+    // TEMPO: CEILING REACHED. Searched and not found. Shiko is filed under West African
+    // highlife, which sources describe only as 'fast tempo' without a figure, and no
+    // tempo data exists for shiko as a named timeline. Inherits the dial. A highlife
+    // discography timing study, or a percussion method that prints one, would settle it.
     steps: [2,0,0,0,2,0,2,0, 0,0,2,0,2,0,0,0],
   },
   {
@@ -29373,8 +29521,21 @@ const GROOVE_PRESETS = [
     // two-voice hi-hat + kick figure (Wikipedia "Soukous"). This engine plays one
     // voice, so it cannot render a cavacha. What ships is the timeline that the
     // rhythm-analysis literature files under this name, cited above.
-    id: 'soukous',  cat: 'african', beats: 4,
+    id: 'soukous',  cat: 'african', beats: 4, suggestedBpm: 62,
     name: 'SOUKOUS',         origin: 'Congolese soukous',          originIt: 'Soukous congolese',
+    // SUBDIVISION: CEILING REACHED. Congolese, which is outside the West African material every source
+    // here examines. Toussaint's 16-pulse classification is structural and stands;
+    // isochrony in performance is simply not addressed by anything found.
+    // SUBDIV-AUDIT: ok - straight 16 pulses; see the timeline family note above.
+    // CYCLE: 2 conventional bars. Established by the CLAVE FAMILY encoding note
+    // at the top of this list: 16 steps is ONE app bar of sixteenths carrying the
+    // full TWO-BAR timeline in cut time. Consequence for TEMPO: one app beat equals
+    // two beats of the style, so a genre figure must be HALVED to go in
+    // suggestedBpm. Son clave's 110 therefore reads as 220 in salsa terms.
+    // TEMPO SOURCED AND HALVED FOR THE TWO-BAR CYCLE. Chosic gives soukous a typical
+    // range of 115-130 BPM from artist tempo data; individual tracks read 106, 130 and
+    // 144. Taking 125 as the middle, halved for the cycle, that is 62.
+    // TEMPO-SOURCE: WEAK. Basis is Chosic, whose genre page self-labels part of its content "(AI Generated)".
     steps: [2,0,0,2,0,0,2,0, 0,0,2,2,0,0,0,0],
   },
   {
@@ -29393,6 +29554,19 @@ const GROOVE_PRESETS = [
     // timeline cannot be. That is now fixed.
     id: 'gahu',     cat: 'african', beats: 4,
     name: 'GAHU',            origin: 'Ewe / West Africa',          originIt: 'Ewe / Africa occ.',
+    // SUBDIVISION: SOURCED. Ewe, southern Ghana. Polak names Ewe explicitly as a region where the
+    // fast pulse IS isochronous, so the straight 16-pulse grid is not an assumption
+    // here; it is the one case in this family the study directly settles.
+    // SUBDIV-AUDIT: ok - straight 16 pulses; see the timeline family note above.
+    // CYCLE: 2 conventional bars. Established by the CLAVE FAMILY encoding note
+    // at the top of this list: 16 steps is ONE app bar of sixteenths carrying the
+    // full TWO-BAR timeline in cut time. Consequence for TEMPO: one app beat equals
+    // two beats of the style, so a genre figure must be HALVED to go in
+    // suggestedBpm. Son clave's 110 therefore reads as 220 in salsa terms.
+    // TEMPO: CEILING REACHED. Searched and not found. Gahu is an Ewe dance rather than a
+    // recorded genre, so there is no track database to read a figure off, and no method
+    // book found prints one. Inherits the dial. An Ewe drumming method, or a recording of
+    // a gahu performance timed directly, would settle it.
     steps: [2,0,0,2,0,0,2,0, 0,0,2,0,0,0,2,0],
   },
   {
@@ -29416,8 +29590,24 @@ const GROOVE_PRESETS = [
     // slip, it is the whole point of Allen. He displaces the kick off the downbeat
     // onto its "e", which is why the groove floats over the pulse instead of
     // stamping it. REGGAE ONE-DROP already sets the precedent for an empty step 0.
-    id: 'afrobeat', cat: 'african', beats: 4,
+    id: 'afrobeat', cat: 'african', beats: 4, suggestedBpm: 132,
     name: 'AFROBEAT',        origin: 'Fela Kuti / Nigeria',        originIt: 'Fela Kuti / Nigeria',
+    // SUBDIVISION: CEILING REACHED. Nigerian. Polak's study covers Mali and Ghana and says nothing about
+    // Nigeria, and its whole point is that the answer differs by region, so borrowing
+    // the Ewe result would be exactly the overgeneralisation it argues against.
+    // Tony Allen's own playing is the thing to measure; no timing study was found.
+    // SUBDIV-AUDIT: ok - straight 16 pulses; see the timeline family note above.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
+    // TEMPO: 132, FOUND BY CHANGING METHOD. Earlier passes searched for 'the tempo of
+    // afrobeat' as a style, came back empty, and recorded a ceiling. That was not a
+    // ceiling, it was the wrong query. Searching a NAMED RECORD works: Fela Kuti's
+    // 'Zombie' reads 132 on songbpm, and Fela is this groove's own origin line.
+    // CAVEAT: afrobeat is often felt in half-time, and this pattern puts nothing on the
+    // four beats, so the cycle cannot be cross-checked from the accents the way the funk
+    // family's were. If it runs double-speed on device, 66 is the answer.
+    // TEMPO-SOURCE: MEDIUM. One named record, one reading, with a live half-time question.
     steps: [0,2,0,1, 0,1,1,0, 0,2,0,0, 0,1,1,0],
   },
   {
@@ -29428,6 +29618,29 @@ const GROOVE_PRESETS = [
     // So this is deliberately identical to SON CLAVE 3-2 above. It previously had
     // a stroke on the "e" of 3 instead of the "&", one sixteenth early, which made
     // it neither the clave nor the kpanlogo bell.
+    // SUBDIVISION: CONFLICT. See the grid dispute recorded below. Region note: Ga, Accra,
+    // southern Ghana. Polak's isochronous finding covers
+    // 'southern and central Ghana (Ewe, Asante)'. Ga is the same region but is not one
+    // of the two peoples named, so this is a regional inference, not a citation.
+    // SUBDIV-AUDIT: ok - straight 16 pulses; see the timeline family note above.
+    // CYCLE: 2 conventional bars. Established by the CLAVE FAMILY encoding note
+    // at the top of this list: 16 steps is ONE app bar of sixteenths carrying the
+    // full TWO-BAR timeline in cut time. Consequence for TEMPO: one app beat equals
+    // two beats of the style, so a genre figure must be HALVED to go in
+    // suggestedBpm. Son clave's 110 therefore reads as 220 in salsa terms.
+    // TEMPO: CEILING REACHED. Searched and not found; described only as 'a street party
+    // rhythm from the Ga tribe' (congajoy) with no figure anywhere. Inherits the dial.
+    // ⚠ SUBDIVISION DOWNGRADED TO CONFLICT, and this is the more important finding.
+    // globalmusictheory.com states the foundational Kpanlogo rhythm is 'often structured
+    // around 6/8 or 12/8 time signatures, which feature groups of three pulses per beat',
+    // which if true would make this straight 16-pulse grid the WRONG SHAPE, not merely
+    // an approximation. Against that: Wikipedia's Kpanlogo article says the nono bell
+    // 'plays the key pattern or timeline' and that the main bell part 'is one of the most
+    // common and oldest key patterns found in sub-Saharan Africa', which is the 16-pulse
+    // family, and our array is byte-identical to SON CLAVE 3-2, a 16-pulse timeline.
+    // Two credible sources, opposite answers, and the disagreement is about the grid
+    // rather than about accents. Not resolved by picking one. Settled by a Ga drumming
+    // method or an ethnomusicological transcription of the nono part.
     steps: [2,0,0,2,0,0,2,0, 0,0,2,0,2,0,0,0],
   },
   {
@@ -29457,6 +29670,13 @@ const GROOVE_PRESETS = [
     // The drum part above is still the drum part that gets played.
     id: 'fanga',    cat: 'african', beats: 4,
     name: 'FANGA',           origin: 'Vai / Liberia',              originIt: 'Vai / Liberia',
+    // SUBDIVISION: CEILING REACHED. Liberian. Same situation as AFROBEAT: outside the regions studied,
+    // and the source explicitly warns against treating Africa as rhythmically uniform.
+    // SUBDIV-AUDIT: ok - straight 16 pulses; see the timeline family note above.
+    // CYCLE: 2 bars, on the same reading as the other 16-pulse timelines in this file.
+    // Fanga is a bell timeline rather than a kit groove, so it follows the clave family
+    // convention: a genre figure would need halving. No genre figure exists for it, so
+    // nothing is set; see the tempo note above.
     steps: [2,0,0,1, 0,1,1,0, 2,0,2,0, 1,1,0,0],
   },
   // ── FUNK ──
@@ -29485,6 +29705,9 @@ const GROOVE_PRESETS = [
     // description beats the general one for a polka preset, and that a weak beat 2
     // would leave this nearly indistinguishable from MARCH 2/4 with lighter "ands".
     // Reversible if it reads as too flat on device: drop step 4 to weight 1.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,1,0, 2,0,1,0],
   },
   {
@@ -29497,6 +29720,9 @@ const GROOVE_PRESETS = [
     // 4/4", set against the compound lilt of a jig.
     // https://www.soundbrenner.com/blogs/articles/jig-rhythm
     // The left-right pulse is why both beats are accented here rather than one.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,0, 2,0,0,0],
   },
   {
@@ -29531,6 +29757,9 @@ const GROOVE_PRESETS = [
     // it with a dynamic accent would be a worse lie than leaving it light.
     // (Contrast JOROPO, where the cross-rhythm genuinely IS an accent and so the
     // accents were moved. The distinction is real and worth keeping straight.)
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,1,0, 2,0,1,0, 2,0,1,0, 2,0,1,0],
   },
   {
@@ -29555,6 +29784,7 @@ const GROOVE_PRESETS = [
     // So: all four quarters present, metric accents on 1 and 3, and the triple
     // lands on 4, the "&" of 4, and 1. Beat 2 is the only weak stroke. Previously
     // beat 3 was weak, which contradicted Jorrín's own simplification.
+    // CYCLE: 1 bar; accents at 0, 8, 12, 14 are all inside one bar. Tempo 120 kept.
     steps: [2,0,0,0, 1,0,0,0, 2,0,0,0, 2,0,2,0],
   },
   {
@@ -29584,6 +29814,12 @@ const GROOVE_PRESETS = [
     // genre's signature, and they are 32nd rolls and triplet bursts. A one-voice
     // sixteenth grid can render neither. What ships is the kick-and-clap skeleton,
     // which is the part a metronome can usefully be.
+    // SUBDIV-AUDIT: ok - the 32nd rolls and triplet bursts are ORNAMENTS over a
+    // correct sixteenth base groove, not the groove's own subdivision. A finer
+    // grid would let them be drawn but is not needed for the pattern itself.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,1,1, 2,0,1,0, 1,0,2,1, 2,0,1,1],
   },
   {
@@ -29601,8 +29837,37 @@ const GROOVE_PRESETS = [
     // offbeat hats, BACKBEAT is this with 1 and 3 dropped to weak.
     // It shares onsets with BACKBEAT for that reason; the accent weights are the
     // entire difference and that is intentional.
-    id: 'funk4',    cat: 'funk', beats: 4,
+    id: 'funk4',    cat: 'funk', beats: 4, suggestedBpm: 114,
     name: 'FUNK 4-ON-THE-FLOOR', origin: 'Soul / funk',                originIt: 'Soul / funk',
+    // CYCLE: 1 conventional bar. Established from the pattern itself, not assumed:
+    // BACKBEAT and MOTOWN accent steps 4 and 12 of 16, which is the snare on beats 2
+    // and 4 of ONE 4/4 bar. Two bars would put four backbeats in the array. Every
+    // other groove in this family accents quarter positions of a single bar the same
+    // way. Consequence for TEMPO: genre BPM goes in as-is, no halving.
+    // TEMPO SOURCED, loosely. Ali Jamieson analysed the classic funk breaks (Funky
+    // Drummer, Amen, Think, Big Beat, Mardi Gras) and found them clustering, concluding
+    // '114 bpm is the funkiest tempo', with further evidence around 120 and 130. A
+    // generic four-on-the-floor cell has no single record behind it, so the cluster
+    // centre is the best anchor available. Weaker than a named track.
+    // TEMPO-SOURCE: WEAK. Basis is a blogger who describes his own method as "entirely non-scientific".
+    // ⚠ ACCENT AUDIT: THIS GROOVE HAS NO IDENTITY IN A ONE-VOICE ENGINE, and that is a
+    // structural problem rather than a wrong accent. Four equal accents and no soft
+    // strokes is a plain quarter-note click, carrying LESS than the metronome does,
+    // since the metronome at least emphasises beat 1. Compare its neighbours: DISCO has
+    // the offbeat hat, BACKBEAT has 2 and 4 in front, MOTOWN adds eighths, THE ONE puts
+    // the downbeat in front. Each carries something a click does not. This does not.
+    // It is not fixable by moving accents. Four-on-the-floor's identity IS the layering:
+    // kick on all four, backbeat on 2 and 4, hats between. Put the backbeat in front and
+    // you have written BACKBEAT. Add the offbeat and you have written DISCO. The file's
+    // own rule — put the layer that FIGHTS the meter in front — has no answer here,
+    // because four-on-the-floor does not fight the meter, it IS the meter.
+    // DECISION MADE, v0.103.19: KEEP IT, deliberately, and do not 'fix' or delete it.
+    // The reasoning is not resignation. A four-on-the-floor click is what a producer or
+    // a dancer actually counts to, so it earns its place as a NAMED entry even though it
+    // is musically a plain quarter click: someone browsing the funk list for it and not
+    // finding it would conclude the app was missing something. Findability is the point,
+    // not novelty. Anyone reading the analysis above and reaching for the delete key
+    // should stop here; the redundancy was examined and accepted on purpose.
     steps: [2,0,0,0,2,0,0,0, 2,0,0,0,2,0,0,0],
   },
   {
@@ -29624,12 +29889,22 @@ const GROOVE_PRESETS = [
     // which the Ethnomusicology Review transcription of "The 2nd Line" describes:
     // "the 'Big Four' is anticipated and further emphasized by the 'and-3' of the
     // bass drum". https://ethnomusicologyreview.ucla.edu/journal/volume/18/piece/699
-    id: 'secondline', cat: 'funk', beats: 4,
+    id: 'secondline', cat: 'funk', beats: 4, suggestedBpm: 100,
     name: 'SECOND LINE',     origin: 'New Orleans brass band',     originIt: 'Brass band New Orleans',
+    // CYCLE: 1 conventional bar. Established from the pattern itself, not assumed:
+    // BACKBEAT and MOTOWN accent steps 4 and 12 of 16, which is the snare on beats 2
+    // and 4 of ONE 4/4 bar. Two bars would put four backbeats in the array. Every
+    // other groove in this family accents quarter positions of a single bar the same
+    // way. Consequence for TEMPO: genre BPM goes in as-is, no halving.
+    // TEMPO: two sourced anchors, 100 between them. 'Cissy Strut' is 88, and Drumgenius
+    // 2.0 lists 'Second line ala Gio Rossi, 3-2 son clave' at 224, which for a one-bar
+    // groove is the double-time count, i.e. 112. Second line genuinely spans 88-112
+    // rather than sitting on one figure, so the midpoint is the honest default.
+    // TEMPO-SOURCE: WEAK. Basis is the midpoint of two anchors, one of which required my own halving inference.
     steps: [2,0,0,1,0,0,2,0, 0,0,1,0,2,0,0,1],
   },
   {
-    id: 'funkback', cat: 'funk', beats: 4,
+    id: 'funkback', cat: 'funk', beats: 4, suggestedBpm: 100,
     name: 'BACKBEAT',        origin: 'Funk / R&B',                 originIt: 'Funk / R&B',
     // Accents on 2 and 4, beats 1 and 3 weak. VERIFIED; the notes do what this says.
     // This is the pattern THE ONE below was invented against, so the two presets are
@@ -29637,10 +29912,19 @@ const GROOVE_PRESETS = [
     // Funk": "most music of that era gave heavy emphasis to the back beat, on the
     // two and the four of the measure."
     // https://www.pbs.org/video/how-james-brown-invented-funk-xtwzri
+    // CYCLE: 1 conventional bar. Established from the pattern itself, not assumed:
+    // BACKBEAT and MOTOWN accent steps 4 and 12 of 16, which is the snare on beats 2
+    // and 4 of ONE 4/4 bar. Two bars would put four backbeats in the array. Every
+    // other groove in this family accents quarter positions of a single bar the same
+    // way. Consequence for TEMPO: genre BPM goes in as-is, no halving.
+    // TEMPO: CONSTRUCTED default, no citation possible. BACKBEAT is not a style with a
+    // tempo; it is the universal snare-on-2-and-4 cell under most Anglo-American popular
+    // music, played anywhere from a ballad to a punk record. 100 is a neutral teaching
+    // default, labelled as one rather than dressed up with a source.
     steps: [1,0,0,0,2,0,0,0, 1,0,0,0,2,0,0,0],
   },
   {
-    id: 'jamesbrown', cat: 'funk', beats: 4,
+    id: 'jamesbrown', cat: 'funk', beats: 4, suggestedBpm: 101,
     name: 'THE ONE',         origin: 'James Brown funk',           originIt: 'Funk di James Brown',
     // ONE accent, on beat 1, and nothing else at that weight - that IS the preset.
     // PBS Sound Field, "How James Brown Invented Funk", season 1 episode 1: "most
@@ -29655,6 +29939,15 @@ const GROOVE_PRESETS = [
     // The surrounding sixteenths stay as weak strokes: "emphasizing the one
     // created space in the groove, so that the band could add syncopation to the
     // other beats."
+    // CYCLE: 1 conventional bar. Established from the pattern itself, not assumed:
+    // BACKBEAT and MOTOWN accent steps 4 and 12 of 16, which is the snare on beats 2
+    // and 4 of ONE 4/4 bar. Two bars would put four backbeats in the array. Every
+    // other groove in this family accents quarter positions of a single bar the same
+    // way. Consequence for TEMPO: genre BPM goes in as-is, no halving.
+    // TEMPO SOURCED. 'Funky Drummer' is 101 BPM (Ali Jamieson's break-tempo analysis,
+    // which prints a correction to its own earlier figure, so the number was checked).
+    // The One is James Brown's concept and Funky Drummer is its most-sampled example.
+    // TEMPO-SOURCE: MEDIUM. Basis is a blogger's break-tempo analysis, but one that prints a correction to its own figure.
     steps: [2,1,0,1, 0,1,0,1, 1,1,0,1, 0,1,0,1],
   },
   {
@@ -29680,7 +29973,10 @@ const GROOVE_PRESETS = [
     // NOTE: these onsets coincide with the cinquillo/SHIKO set. That is expected
     // rather than a bug; the accent weights are what make it read as boom bap.
     id: 'hip hop',  cat: 'funk', beats: 4, suggestedBpm: 88,
-    name: 'BOOM BAP',        origin: 'East Coast golden age',      originIt: 'East Coast golden age',
+    name: 'BOOM BAP',        origin: 'East Coast golden age',      originIt: 'East Coast, epoca d\'oro',
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,0,2,0,1,0, 2,0,1,0,2,0,0,0],
   },
   {
@@ -29697,15 +29993,22 @@ const GROOVE_PRESETS = [
     // ArtistWorks says the same as "spang-a-lang": "quarter notes with a triplet
     // skip between beats 2 and 3 and between beats 4 and 1. Hi-hat on 2 and 4."
     // https://blog.artistworks.com/jazz-drums-a-beginners-guide-to-patterns-grooves-and-practice/
-    // So quarters on 1, 2, 3, 4 plus the swung skip after 2 and after 4. The skip is
-    // the last note of a triplet, which a sixteenth grid can only approximate; it
-    // sits on the "a", the nearest available slot. Accents are the hi-hat backbeats.
-    // BLUES SHUFFLE makes the identical compromise for the identical reason, and
-    // both entries say so; see the note there for the source that acknowledges
-    // written shuffle being "open to interpretations" on a duple grid.
+    // So quarters on 1, 2, 3, 4 plus the swung skip after 2 and after 4.
+    // NO LONGER AN APPROXIMATION. This used to be 16 steps, and the comment here
+    // claimed a sixteenth grid "can only approximate" the triplet skip, which put it
+    // on the "a" instead. That claim was wrong about the engine: `stepsPerBar` is
+    // just the array length, so 12 steps over 4 beats ARE triplet eighths, and the
+    // beat markers, pulse dots and the counting labels ("1 + a") all already handle
+    // 3 per beat. Nothing needed building; the groove was written on the wrong grid.
+    // On this grid: beats at 0, 3, 6, 9; the two swung skips are the LAST triplet of
+    // beats 2 and 4, i.e. steps 5 and 11, which is literally where the sources put
+    // them. Accents are the hi-hat backbeats on 2 and 4.
     // Kenny Clarke invented the figure (NPR, "The Drummer Who Invented Jazz's Basic
     // Beat"), which is why every source describes the same one.
-    steps: [1,0,0,0, 2,0,0,1, 1,0,0,0, 2,0,0,1],
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
+    steps: [1,0,0, 2,0,1, 1,0,0, 2,0,1],
   },
   {
     id: 'blueshuffle', cat: 'funk', beats: 4, suggestedBpm: 88,
@@ -29731,11 +30034,22 @@ const GROOVE_PRESETS = [
     // sometimes more of a triplet feel than sixteenth notes" and that written
     // versions are "open to interpretations".
     // https://rhythmnotes.net/blues-drum-beats/
-    steps: [2,0,0,1, 2,0,0,1, 2,0,0,1, 2,0,0,1],
+    // GRID CORRECTED, accents untouched. Was 16 steps with the shuffle's second
+    // stroke on the "a" of each beat, the nearest slot a sixteenth grid offers. A
+    // shuffle is a triplet: the beat, a rest, then the third triplet. 12 steps over
+    // 4 beats gives exactly that, so this now plays a real shuffle rather than a
+    // dotted-sixteenth impression of one. Same fix as JAZZ SWING and for the same
+    // reason; the old note claiming the grid could not do it was wrong.
+    // SUBDIV-AUDIT: ok - triplet grid is correct; the historical text above names
+    // the old sixteenth positions only to explain what was wrong.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
+    steps: [2,0,1, 2,0,1, 2,0,1, 2,0,1],
   },
   // ── WORLD ──
   {
-    id: 'flamenco', cat: 'world', beats: 6, suggestedBpm: 120,
+    id: 'flamenco', cat: 'world', beats: 6, suggestedBpm: 110,
     name: 'FLAMENCO BULERÍA', origin: 'Andalusian flamenco',        originIt: 'Flamenco andaluso',
     // NOTES CORRECTED. The comment had the right idea and the wrong arithmetic. It
     // said "accents on 12,3,6,8,10 -> steps 0,2,5,7,9", but if step 0 is count 12
@@ -29755,10 +30069,22 @@ const GROOVE_PRESETS = [
     //   12 beats, with accents on beats 3, 6, 8, 10 and 12."
     // HISTORY: 0,3,6,8,10 was correct in this file once and got changed to 0,2,5,7,9
     // at some point. Treat this as a fixed regression, not a new opinion.
+    // CYCLE: one 12-count compás, and the arithmetic here is unlike anything else in
+    // the library. The 12 steps ARE the 12 counts, not a subdivision of them. beats:6 means
+    // app bar is six beats, so ONE APP BEAT = TWO COMPAS COUNTS. Flamenco tempo is
+    // always quoted in counts, so a quoted figure must be HALVED to go in here.
+    // TEMPO: 110 here = 220 counts. Same NZ Musician article says bulerías is 'the same
+    // rhythmical and harmonic structure sped up to around 220 to 240bpm'. Richter Guitar
+    // gives 160-275 and BeatKey 180-240, so 220 is where all three overlap. The old 120
+    // (= 240 counts) sat at the very top of the range rather than in it.
+    // Worth keeping next to COMPÁS SOLEÁ: the two share a compás and differ mainly by
+    // speed, which is exactly what the sources say. 48 and 110 preserve that relationship;
+    // 108 and 120 did not, and made the pair nearly the same tempo.
+    // TEMPO-SOURCE: STRONG. Three independent sources with overlapping ranges.
     steps: [2,0,0,2,0,0,2,0,2,0,2,0],
   },
   {
-    id: 'compas',   cat: 'world', beats: 6, suggestedBpm: 108,
+    id: 'compas',   cat: 'world', beats: 6, suggestedBpm: 48,
     name: 'COMPÁS SOLEÁ',    origin: 'Flamenco soleares',          originIt: 'Flamenco soleares',
     // VERIFIED, no change. 12-beat compás counted from 1, so step 0 is count 1 and
     // the accents on counts 3, 6, 8, 10, 12 land on steps 2, 5, 7, 9, 11. They do.
@@ -29771,10 +30097,23 @@ const GROOVE_PRESETS = [
     //   your foot the beats 3, 6, 8, 10 and 12". https://nzmusician.co.nz/lessons/flamenco-compas/
     //   chromatone.center: "Basic Soleares Compás, accents on beats 3, 6, 8, 10, and 12."
     // 12-beat compás: soleá accents on beats 3,6,8,10,12 → steps 2,5,7,9,11
+    // CYCLE: one 12-count compás, and the arithmetic here is unlike anything else in
+    // the library. The 12 steps ARE the 12 counts, not a subdivision of them. beats:6 means
+    // app bar is six beats, so ONE APP BEAT = TWO COMPAS COUNTS. Flamenco tempo is
+    // always quoted in counts, so a quoted figure must be HALVED to go in here.
+    // TEMPO CORRECTED, and it was badly wrong: 108 here meant 216 counts a minute.
+    // Paul Bosauder, a professional flamenco guitarist based in Seville, gives soleá as
+    // 'traditionally interpreted at a speed of between 70 to 120bpm' (NZ Musician), and
+    // BeatKey's production guide puts it at 60-80. 96 counts is the middle of the wider
+    // range, which halves to 48. The old value ran the mother of flamenco singing, a
+    // palo whose name comes from 'soledad' and which is described as slow and
+    // introspective, at nearly twice the top of its own range.
+    // TEMPO-SOURCE: STRONG. A named working flamenco guitarist stating a range, plus an
+    // independent production guide agreeing on the slow end.
     steps: [1,0,2,0,0,2,0,2,0,2,0,2],
   },
   {
-    id: 'middleast', cat: 'world', beats: 4,
+    id: 'middleast', cat: 'world', beats: 4, suggestedBpm: 105,
     name: 'MAQSUM',          origin: 'Middle Eastern / Egyptian',  originIt: 'Mediorientale / egiziano',
     // Maqsum skeleton: D . T . | . . T . | D . . . | T . . .  (dums accented)
     // VERIFIED CHARACTER BY CHARACTER, which almost never happens. Wikipedia
@@ -29793,10 +30132,19 @@ const GROOVE_PRESETS = [
     // step 2 is a dum rather than a tek. Wikipedia: "The only difference is the
     // accent on the second beat of maqsoum." Change step 2 and this stops being
     // maqsum and becomes baladi.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
+    // TEMPO: 105. Melodigging's Arabic Pop guide names Maqsum as one of the base iqa'at
+    // and gives typical tempos of 70-90 for ballads and 95-120 for dance-pop. Maqsum is
+    // the everyday dance groove rather than the ballad one, so 105 is the middle of the
+    // upper band. Wikipedia's Maqsoum entry confirms the pattern but states no tempo.
+    // TEMPO-SOURCE: MEDIUM. The range is for Arabic pop broadly, with maqsum named as its
+    // base groove, rather than a figure given for maqsum itself.
     steps: [2,0,1,0,0,0,1,0, 2,0,0,0,1,0,0,0],
   },
   {
-    id: 'bhangra',  cat: 'world', beats: 4,
+    id: 'bhangra',  cat: 'world', beats: 4, suggestedBpm: 98,
     name: 'BHANGRA',         origin: 'Punjabi / South Asian',      originIt: 'Punjabi / Asia merid.',
     // Dhol pattern: strong 1 and 3, with "and of 1" and "and of 3" push, lift on
     // the "A" OF 4. Claim corrected: it previously said "and of 4", but the stroke
@@ -29824,8 +30172,35 @@ const GROOVE_PRESETS = [
     //    would be guessing, and guessing is what put the errors in this file.
     // WHAT WOULD SETTLE IT: a dhol player, or a transcription of the chaal on a
     // compound grid. Not another search. This is the ceiling for desk research.
-    steps: [2,0,1,0,1,0,0,0, 2,0,1,0,1,0,0,1],
-    steps: [2,0,1,0,1,0,0,0, 2,0,1,0,1,0,0,1],
+    // DUPLICATE KEY REMOVED. This object declared `steps:` twice, identically.
+    // JavaScript takes the last one so nothing ever misbehaved, but it defeats any
+    // tool that assumes one declaration per groove. Pre-existing; found by an
+    // assert that expected a unique match and got two.
+    // GRID CORRECTED to the compound reading the sources describe. Problem (1) above
+    // is solved and its premise was wrong: the engine was never limited to sixteenths,
+    // `stepsPerBar` is just the array length. 12 steps over 4 beats are triplet
+    // eighths, so the chaal's "dum-di, dum-di, dum-di, dum-di" is four swung pairs
+    // written as four pairs: dum on the beat, di on the last triplet. That is what
+    // the GCSE source vocalises and what its "4/4 (12/8)" meter means.
+    // Problem (2) IS STILL OPEN: the sources contradict each other on accents. This
+    // keeps the reading the old notes used (strong on 1 and 3). Only the grid moved.
+    // SUBDIV-AUDIT: ok - triplet grid is correct; the text above quotes the old
+    // sixteenth reading to document the correction. Accents remain contested.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
+    // TEMPO: 98, FOUND BY CHANGING METHOD, same lesson as AFROBEAT. Panjabi MC's 'Mundian
+    // To Bach Ke' reads 98 on songbpm and 99 on getsongbpm, two independent sources
+    // agreeing. Previously recorded CEILING REACHED after two style-level searches; the
+    // ceiling was in the query, not the world.
+    // CAVEAT, and it is real: that record is bhangra-fusion pop over a hip-hop beat, not
+    // a dhol ensemble playing chaal. It is the most widely known bhangra record by a
+    // distance, which is why it is usable, but it is not the tradition this pattern is
+    // transcribed from. A dhol recording timed directly would be better evidence.
+    // This groove still carries two OTHER open problems: sources contradict each other on
+    // its accents, and it sat on the wrong grid until v0.103.4.
+    // TEMPO-SOURCE: MEDIUM. Two agreeing readings of a named record, wrong sub-style.
+    steps: [2,0,1, 1,0,1, 2,0,1, 1,0,1],
   },
   {
     id: 'balkan',   cat: 'world', beats: 11, suggestedBpm: 160,
@@ -29835,6 +30210,14 @@ const GROOVE_PRESETS = [
     // Bulg. Gankino (kopanitsa's other name) — https://en.wikipedia.org/wiki/Aksak
     // and Melodigging gives "11/16 (2+2+3+2+2, e.g., kopanitsa)". Accents sit on
     // exactly those group starts.
+    // CYCLE: 1 bar. An aksak meter's bar IS the pattern; there is no two-bar cycle to
+    // unwind. Tempo for these is conventionally quoted PER EIGHTH, which is what the
+    // engine already uses here, so no halving or doubling applies.
+    // TEMPO: CEILING REACHED. Searched across this pass and no tempo figure was found
+    // for any of the Balkan or Turkish dances as named styles. The existing value is
+    // inherited from whoever first entered it and has NOT been verified. Flagged so
+    // it is not mistaken for one of the sourced numbers elsewhere in this file.
+    // TEMPO-SOURCE: WEAK. No source; the value is unaudited, not researched.
     steps: [2,0,0,0,2,0,0,0,2,0,0,0,0,0,2,0,0,0,2,0,0,0],
   },
   {
@@ -29862,6 +30245,7 @@ const GROOVE_PRESETS = [
     // This is the best a two-weight, one-voice engine can do with a polyrhythm: it
     // cannot sound both layers at once, so it sounds the one that fights the meter
     // and lets the other sit underneath.
+    // CYCLE: 1 bar of 3/4. Tempo 180 kept.
     steps: [2,0,0,0,1,0, 2,0,1,0,0,0],
   },
 
@@ -29877,6 +30261,9 @@ const GROOVE_PRESETS = [
     // beat that mirrors the swooping downward step on the first beat in the dance."
     // This preset is the plain ballroom waltz. VIENNESE WALTZ and MAZURKA are the
     // two deliberate departures from it, and both are sourced against this one.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,0, 1,0,0,0, 1,0,0,0],
   },
   {
@@ -29895,6 +30282,9 @@ const GROOVE_PRESETS = [
     //   second or third note of the bar, which would normally have no accent."
     // Sources say second OR third; a single fixed preset has to pick one, and beat 2
     // is the commoner reading and the one that contrasts most clearly with WALTZ.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [1,0,0,0, 2,0,0,0, 1,0,1,0],
   },
   {
@@ -29908,6 +30298,9 @@ const GROOVE_PRESETS = [
     // What actually plays: accent on 1, then weak strokes on the "a" of 1, on 2 and
     // its "&", and on 3 and its "&". That is the light trio feel, one clear
     // downbeat with everything after it brushed.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,1, 1,0,1,0, 1,0,1,0],
   },
   {
@@ -29932,6 +30325,8 @@ const GROOVE_PRESETS = [
     // guitar and castanets actually fall within the bar is not something any read
     // source pins down. Accent 1, pickup on the "and" of 2, accent 3 is a plausible
     // and self-consistent reading, not a transcribed one. Same standing as CALYPSO.
+    // CYCLE: 1 bar of 3/4. Tempo 72 kept. Note the origin line already flags that this
+    // is the Spanish 3/4 bolero and that the Cuban bolero is a different, 4/4 form.
     steps: [2,0,1,0, 0,0,2,0, 2,0,0,0],
   },
 
@@ -29946,10 +30341,13 @@ const GROOVE_PRESETS = [
     // teach that division, so the preset now plays it: accents on 1 and 4, weak
     // strokes on 2, 3 and 5.
     // https://en.wikipedia.org/wiki/Take_Five
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,1,0,1,0, 2,0,1,0],
   },
   {
-    id: 'fiveostinato', cat: 'world', beats: 5,
+    id: 'fiveostinato', cat: 'practice', beats: 5, suggestedBpm: 100,
     name: '5/4 OSTINATO',    origin: '5/4 — odd-meter vamp',       originIt: '5/4 — ostinato in metro dispari',
     // CONSTRUCTED, not transcribed: there is no village that plays "5/4 ostinato".
     // It is a teaching cell, so the only thing that has to be true is that the
@@ -29959,16 +30357,29 @@ const GROOVE_PRESETS = [
     // grouping, it is just three loud beats followed by two quiet ones.
     // Deliberately the complement of TAKE FIVE (3+2) and distinct from FIVE ROCK
     // (4+1), so the three 5/4 presets teach three different divisions of five.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
+    // TEMPO: CONSTRUCTED default, no citation possible. An invented odd-meter vamp with no
+    // repertoire behind it, same class as FIVE ROCK and the 9/8 teaching cell. 100 neutral.
+    // TEMPO-SOURCE: WEAK. Declared default, not researched.
     steps: [2,0,1,0, 2,0,1,0,1,0],
   },
   {
-    id: 'fiverock',    cat: 'funk', beats: 5,
+    id: 'fiverock',    cat: 'practice', beats: 5, suggestedBpm: 100,
     name: 'FIVE ROCK',       origin: '5/4 — prog rock',            originIt: '5/4 — prog rock',
     // CONSTRUCTED, not transcribed. Same rule as 5/4 OSTINATO: the label is the
     // only claim, so the notes have to match it.
     // 4+1: group starts on beats 1 and 5. Accents there, everything else weak,
     // which is what "driving four then an extra beat" actually sounds like. It
     // was accenting 1, 3 and 5, which is a 2+2+1 feel, not 4+1.
+    // CYCLE: 1 conventional bar. Established from the pattern itself, not assumed:
+    // BACKBEAT and MOTOWN accent steps 4 and 12 of 16, which is the snare on beats 2
+    // and 4 of ONE 4/4 bar. Two bars would put four backbeats in the array. Every
+    // other groove in this family accents quarter positions of a single bar the same
+    // way. Consequence for TEMPO: genre BPM goes in as-is, no halving.
+    // TEMPO: CONSTRUCTED default, no citation possible. An invented 5/4 rock cell, same
+    // class as its own pattern and as the invented 9/8 teaching cell. 100 is neutral.
     steps: [2,0,1,0,1,0,1,0, 2,0],
   },
 
@@ -29980,6 +30391,14 @@ const GROOVE_PRESETS = [
     // Verified: Wikipedia "Aksak" table lists 7-pulse 2+2+3 as Bulg. Račenica,
     // and Wikipedia "Bulgarian dances" gives Rachenitsa as 2+2+3. Accents sit on
     // exactly those group starts. https://en.wikipedia.org/wiki/Aksak
+    // CYCLE: 1 bar. An aksak meter's bar IS the pattern; there is no two-bar cycle to
+    // unwind. Tempo for these is conventionally quoted PER EIGHTH, which is what the
+    // engine already uses here, so no halving or doubling applies.
+    // TEMPO: CEILING REACHED. Searched across this pass and no tempo figure was found
+    // for any of the Balkan or Turkish dances as named styles. The existing value is
+    // inherited from whoever first entered it and has NOT been verified. Flagged so
+    // it is not mistaken for one of the sourced numbers elsewhere in this file.
+    // TEMPO-SOURCE: WEAK. No source; the value is unaudited, not researched.
     steps: [2,0,1,0, 2,0,1,0, 2,0,1,0,1,0],
   },
   {
@@ -29990,12 +30409,23 @@ const GROOVE_PRESETS = [
     // article's table names 7-pulse 3+2+2 as Devr-i Hindi (Bulg. Lesnoto /
     // Četvorno). https://en.wikipedia.org/wiki/Aksak
     // The PATTERN was already correct: accents land on the 3+2+2 group starts.
-    name: 'DEVR-I HINDI',    origin: '7/8 — Turkish / Bulg. lesnoto',   originIt: '7/8 — turco / lesnoto bulgaro',
+    name: 'DEVR-I HINDI',    origin: '7/8 — Turkish usul',   originIt: '7/8 — usul turco',
     // 3+2+2 grouping: long-short-short → group starts on 8ths 0, 3, 5.
+    // CYCLE: 1 bar. An aksak meter's bar IS the pattern; there is no two-bar cycle to
+    // unwind, and tempo for these is conventionally quoted per eighth, which is what
+    // the engine uses here.
+    // TEMPO: CEILING REACHED. No figure found for Devr-i Hindi as a named usul. The
+    // existing value is inherited and unverified.
+    // TEMPO-SOURCE: WEAK. No source; unaudited rather than researched.
+    // ORIGIN STRING CORRECTED, user-facing. It read '7/8 — Turkish / Bulg. lesnoto',
+    // which fuses two different traditions that merely share a meter: Devr-i Hindi is a
+    // Turkish usul, lesnoto is a Macedonian/Bulgarian dance. Whether this exact pattern
+    // also serves lesnoto was NOT established, so the claim was removed rather than
+    // rewritten; naming only what is verified is the safer of the two.
     steps: [2,0,1,0,1,0, 2,0,1,0, 2,0,1,0],
   },
   {
-    id: 'sevenrock',   cat: 'funk', beats: 7, suggestedBpm: 120,
+    id: 'sevenrock',   cat: 'practice', beats: 7, denom: 4, suggestedBpm: 120,
     name: 'SEVEN ROCK',      origin: '7/4 — prog rock',           originIt: '7/4 — prog rock',
     // CONSTRUCTED, not transcribed, and the Brubeck reference has been REMOVED
     // because it was wrong. The old comment claimed "4+3 grouping - Unsquare Dance
@@ -30010,12 +30440,29 @@ const GROOVE_PRESETS = [
     // This preset is now an honest 4+3: group starts on 1 and 5, accents there,
     // everything else weak. Three distinct sevens now ship: 2+2+3 (rachenitsa),
     // 3+2+2 (devr-i hindi), 4+3 (this one).
+    // CYCLE: 1 bar. An aksak meter's bar IS the pattern; there is no two-bar cycle to
+    // unwind. Tempo for these is conventionally quoted PER EIGHTH, which is what the
+    // engine already uses here, so no halving or doubling applies.
+    // TEMPO: CEILING REACHED. Searched across this pass and no tempo figure was found
+    // for any of the Balkan or Turkish dances as named styles. The existing value is
+    // inherited from whoever first entered it and has NOT been verified. Flagged so
+    // it is not mistaken for one of the sourced numbers elsewhere in this file.
+    // TEMPO-SOURCE: WEAK. No source; the value is unaudited, not researched.
+    // METER LABEL CORRECTED. The app showed 7/8 because sigMap maps every 7-beat groove
+    // to an /8 denominator. This groove's origin says 7/4 and its own comment cites
+    // Brubeck's 'Unsquare Dance', which is 7/4. `denom: 4` overrides the lookup. Nothing
+    // audible changes; 14 steps over 7 beats at the same tempo either way.
     steps: [2,0,1,0,1,0,1,0, 2,0,1,0,1,0],
   },
 
   // ── MORE 6/8 GROOVES (12 steps, 8th-note grid) ──
   {
-    id: 'irishjig',    cat: 'world', beats: 6,
+    id: 'irishjig', pulse: 2,   // compound duple, two dotted-quarter beats
+       cat: 'world', beats: 6, suggestedBpm: 100,
+    // TEMPO SOURCED. Tom Hanway gives the standard metronome setting for jigs as
+    // dotted crotchet = 100 (Banjo Hangout). Fiddle Hangout puts the usual range at
+    // 84-120 with dancers preferring 110-120, and Bill Troxler gives 80-100. 100 is
+    // where session and dance readings overlap. Had no suggestedBpm at all before.
     name: 'IRISH JIG',       origin: '6/8 — Celtic dance',         originIt: '6/8 — danza celtica',
     // Two dotted-quarter groups — strong on 1 and 4 (steps 0 and 6), the
     // in-between 8ths felt lightly. (The old steps accented every 3rd 16th,
@@ -30033,10 +30480,15 @@ const GROOVE_PRESETS = [
     //   Soundbrenner describes this exact encoding for a percussion part: "a stronger
     //   stroke on 1 and 4, with lighter taps filling the subdivision."
     //   https://www.soundbrenner.com/blogs/articles/jig-rhythm
+    // TEMPO-SOURCE: STRONG. Basis is three teaching sources converging on 84-120 with 100 as the standard setting.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,1,0,1,0, 2,0,1,0,1,0],
   },
   {
-    id: 'slowblues128', cat: 'funk', beats: 12, suggestedBpm: 60,
+    id: 'slowblues128', pulse: 4,   // compound quadruple, four dotted-quarter beats
+    cat: 'funk', beats: 12, suggestedBpm: 60,
     name: 'SLOW BLUES 12/8', origin: '12/8 — slow blues',        originIt: '12/8 — blues lento',
     // 12/8 is compound QUADRUPLE: four dotted-quarter beats, each split into three,
     // which is why it isn't interchangeable with 6/8 (two beats). Backbeat on 2 and 4
@@ -30056,10 +30508,15 @@ const GROOVE_PRESETS = [
     // 7th eighth instead, which is beat 3 of the four. That is the half-time slow-
     // rock ballad feel, not slow blues; both are 12/8 and they are not the same
     // groove. This preset is the blues one.
+    // TEMPO-SOURCE: STRONG. Basis is a published backing track printed at 52 with the form sitting 52-60.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [1,0,0,0,0,0, 2,0,0,0,0,0, 1,0,0,0,0,0, 2,0,0,0,0,0],
   },
   {
-    id: 'gospel128',   cat: 'funk', beats: 12, suggestedBpm: 72,
+    id: 'gospel128', pulse: 4,   // compound quadruple, four dotted-quarter beats
+      cat: 'funk', beats: 12, suggestedBpm: 72,
     name: 'GOSPEL 12/8',    origin: '12/8 — gospel ballad',      originIt: '12/8 — ballata gospel',
     // Same four dotted-quarter frame as SLOW BLUES 12/8 above, but gospel fills the
     // triplets: the third partial of each beat is felt, giving the rolling
@@ -30072,10 +30529,19 @@ const GROOVE_PRESETS = [
     // Meter per Tunable: compound quadruple, twelve eighths in four beats of three,
     // the feel "essential to blues, gospel, doo-wop, and slow rock ballads".
     // https://tunableapp.com/time-signature/12-8/
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [1,0,0,0,1,0, 2,0,0,0,1,0, 1,0,0,0,1,0, 2,0,0,0,1,0],
   },
   {
-    id: 'gospel68',    cat: 'funk', beats: 6,
+    id: 'gospel68', pulse: 2,   // compound duple, two dotted-quarter beats
+       cat: 'funk', beats: 6, suggestedBpm: 66,
+    // TEMPO UNSOURCED, flagged as such. No recording or marking was found for the
+    // gospel 6/8 ballad feel specifically, so 66 is a considered default sitting just
+    // above SLOW BLUES 12/8 (60) and below GOSPEL 12/8 (72), which is where the form
+    // lives. Had no suggestedBpm at all before, so it inherited whatever was on the
+    // dial. Adjust by ear; this is the weakest tempo claim in the groove table.
     name: 'GOSPEL 6/8',      origin: '6/8 — gospel / soul',        originIt: '6/8 — gospel / soul',
     // Strong 1 and 4, with gospel pushes on the "and" of 2, 3, 5 and 6.
     // CLAIM CORRECTED, notes unchanged. The old comment listed only the pushes on
@@ -30099,6 +30565,9 @@ const GROOVE_PRESETS = [
     // ⚠ THE FOUR PUSHES ARE NOT SOURCED. The strokes on the "and" of 2, 3, 5 and 6
     // are the gospel ornament sitting on top of that frame, and no source read pins
     // them to those specific positions. Frame verified, decoration asserted.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,1,0,1, 2,0,0,1,0,1],
   },
   {
@@ -30123,6 +30592,7 @@ const GROOVE_PRESETS = [
     // "and" and "a" is a plausible rendering of that sound and is what ships. No
     // source read pins the guacharaca to specific sixteenths. Same standing as
     // CALYPSO and BOLERO.
+    // CYCLE: 1 bar; accents on all four quarters of one bar. Tempo 92 kept.
     steps: [2,0,1,1, 2,0,1,1, 2,0,1,1, 2,0,1,1],
   },
 
@@ -30149,6 +30619,13 @@ const GROOVE_PRESETS = [
     // Çiftetelli is 8/4 (countable 2/4), NOT 11/8; that is kopanitsa, listed
     // separately. The Turkish and Greek traditions sharing the name is part of why
     // the sources diverge.
+    // CYCLE: FLAGGED, unresolved. beats:4 with 16 steps reads as one 4/4 bar, but this
+    // groove's own origin line says '4/4 (8/4 cycle)', i.e. the full çiftetelli cycle is
+    // twice what the array holds. If that is right the tempo needs halving like the
+    // clave family; if the array is one half of the cycle repeated, it does not. The
+    // pattern audit already records this as the one CONFLICT entry in the library, so
+    // the cycle stays open too rather than being guessed alongside it.
+    // TEMPO-SOURCE: WEAK. Value inherited and unverified.
     steps: [2,0,0,1, 0,0,1,0, 2,0,0,1, 1,1,1,0],
   },
 
@@ -30172,6 +30649,9 @@ const GROOVE_PRESETS = [
     // Bass Culture calls beat 3 "the single dominant accent of the bar", which is
     // exactly why it is the only accent here.
     // Popularised by Carlton Barrett of Bob Marley and the Wailers.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [0,0,0,0, 1,0,0,0, 2,0,0,0, 1,0,0,0],
   },
   {
@@ -30190,10 +30670,13 @@ const GROOVE_PRESETS = [
     // https://en.wikipedia.org/wiki/Dembow_beat
     // So DANCEHALL and TRESILLO share a kick cell by descent, the same way CALYPSO
     // does; the snare on 4 and 7 is what makes this one dancehall and not the cell.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,2, 1,0,2,1, 2,0,0,2, 1,0,2,1],
   },
   {
-    id: 'motown',      cat: 'funk', beats: 4,
+    id: 'motown',      cat: 'funk', beats: 4, suggestedBpm: 105,
     name: 'MOTOWN',          origin: 'Motown / soul',                 originIt: 'Motown / soul',
     // The signature Motown groove puts the snare on EVERY quarter note, with 2 and 4
     // strongest for the backbeat and steady 8ths between. VERIFIED against four
@@ -30213,11 +30696,26 @@ const GROOVE_PRESETS = [
     //   beats, the Motown drum beat has a snare on all the beats."
     // The old pattern accented the "and" of 1 and 3, which is not the Motown
     // emphasis.
+    // CYCLE: 1 conventional bar. Established from the pattern itself, not assumed:
+    // BACKBEAT and MOTOWN accent steps 4 and 12 of 16, which is the snare on beats 2
+    // and 4 of ONE 4/4 bar. Two bars would put four backbeats in the array. Every
+    // other groove in this family accents quarter positions of a single bar the same
+    // way. Consequence for TEMPO: genre BPM goes in as-is, no halving.
+    // TEMPO: NOT SET. Searched in this pass and no figure was found for the Motown feel
+    // as a style; the break-tempo work covers funk rather than Motown specifically.
+    // Inherits the dial. A named Motown record with a verified BPM would settle it.
+    // TEMPO: 105. The Temptations' 'My Girl', 1964, Hitsville USA, is the Motown backbeat
+    // record. FIVE independent readings: 104 (getsongbpm), 105 (musicstax), 105 (songbpm),
+    // 104 (sfrbeats), 105 (Music Will's JamZone). A one-BPM spread across five sources is
+    // the tightest agreement anywhere in this file.
+    // Previously CEILING REACHED after two style-level searches. It took one search of a
+    // named record. Third time this audit that the ceiling was the query.
+    // TEMPO-SOURCE: STRONG. Five independent readings of one named record, spread of 1.
     steps: [1,0,1,0, 2,0,1,0, 1,0,1,0, 2,0,1,0],
   },
   {
-    id: 'new_orleans', cat: 'funk', beats: 4,
-    name: 'NEW ORLEANS',     origin: 'New Orleans second line',       originIt: 'Seconda linea New Orleans',
+    id: 'new_orleans', cat: 'funk', beats: 4, suggestedBpm: 88,
+    name: 'NEW ORLEANS',     origin: 'New Orleans funk / The Meters',       originIt: 'Funk di New Orleans / The Meters',
     // ⚠ CLAIM AND DATA DISAGREE, flagged rather than guessed. The comment says the
     // bass sits on 1 and 3, but beat 3 carries no accent; the accents are on 1, 2,
     // the "e" of 3, and 4. One of the two is wrong and deciding which needs a real
@@ -30236,6 +30734,18 @@ const GROOVE_PRESETS = [
     // Drumming", which transcribes the styles by player, or a New Orleans drummer.
     // Not another search.
     // Authentic syncopated parade groove: bass on 1&3, snare pushes and anticipations
+    // CYCLE: 1 conventional bar. Established from the pattern itself, not assumed:
+    // BACKBEAT and MOTOWN accent steps 4 and 12 of 16, which is the snare on beats 2
+    // and 4 of ONE 4/4 bar. Two bars would put four backbeats in the array. Every
+    // other groove in this family accents quarter positions of a single bar the same
+    // way. Consequence for TEMPO: genre BPM goes in as-is, no halving.
+    // TEMPO SOURCED. 'Cissy Strut' by The Meters, the canonical New Orleans funk record,
+    // reads 88 BPM on getsongbpm and sfrbeats, and songbpm's 176 is flagged there as
+    // half-time 88. This OVERTURNS the figure a drumming history gives: seesharppress
+    // puts New Orleans funk at 'quarter note = 152-208' while also saying it is 'easily
+    // interpreted in double time'. That is the double-time count; taking it literally
+    // would have run this at twice the speed of the records.
+    // TEMPO-SOURCE: STRONG. Basis is three independent readings of one canonical record agreeing on 88.
     steps: [2,0,0,1, 2,0,1,0, 0,2,0,1, 2,0,0,1],
   },
 
@@ -30259,10 +30769,18 @@ const GROOVE_PRESETS = [
     // describes the Viennese second beat as "slightly delayed" rather than early,
     // though the poster hedges it. Anticipation is the commoner account and is what
     // ships. If a better source says otherwise, step 3 moves later, not the rest.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,1, 1,0,0,0, 1,0,0,0],
   },
   {
-    id: 'siciliana',   cat: 'world', beats: 6, suggestedBpm: 96,
+    id: 'siciliana', pulse: 2,   // compound duple, two dotted-quarter beats
+      cat: 'world', beats: 6, suggestedBpm: 42,
+    // TEMPO SOURCED: the Clarinet Institute edition of Bach's Siciliano BWV 1031
+    // prints dotted quarter = 42. Wikipedia and SFCV both call the form slow and
+    // melancholy. The old 96 was the one value in this pass that was too FAST once
+    // the unit was corrected, not too slow.
     name: 'SICILIANA',       origin: '6/8 — Baroque pastoral',     originIt: '6/8 — pastorale barocca',
     // Siciliana is slow 6/8 or 12/8 (never 3/4): the signature lilt is
     // dotted-8th + 16th + 8th on each dotted-quarter beat. VERIFIED; the strokes at
@@ -30277,12 +30795,21 @@ const GROOVE_PRESETS = [
     // the sources say so outright, describing the siciliana as "somewhat
     // resembl[ing] a slow jig or tarantella". Same two dotted-quarter pulses; the
     // jig fills them evenly, the siciliana dots them. They do not share onsets.
+    // TEMPO-SOURCE: STRONG. Basis is a printed tempo marking in a published edition (dotted quarter = 42).
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,1,1,0, 2,0,0,1,1,0],
   },
 
   // ── MORE 6/8 GROOVES (12 steps) ──
   {
-    id: 'tarantella',  cat: 'world', beats: 6, suggestedBpm: 160,
+    id: 'tarantella', pulse: 2,   // compound duple, two dotted-quarter beats
+     cat: 'world', beats: 6, suggestedBpm: 135,
+    // TEMPO SOURCED FROM RECORDINGS, not from a marking. Four Tarantella Napoletana
+    // recordings read 127, 134, 136 and 149 foot-taps a minute (songbpm/tunebat).
+    // Algorithmic, and all four mislabel the meter as 4/4, so it is a cluster rather
+    // than a figure; 135 is the middle of it. The old 160 sat above all four.
     name: 'TARANTELLA',      origin: '6/8 — Southern Italian folk',   originIt: '6/8 — folk dell\'Italia meridionale',
     // VERIFIED, no change. Compound duple: two strong pulses per bar, accents on
     // the 1 and the 4 of the six eighths (steps 0 and 6), with the gallop stroke
@@ -30297,6 +30824,10 @@ const GROOVE_PRESETS = [
     // is "a very fast version of the ONE-two-three, ONE-two-three rhythm usually
     // called 6/8 time". http://www.naplesldm.com/tarantella.php
     // Galloping quarter + eighth on each dotted-quarter group ("DUM..da DUM..da").
+    // TEMPO-SOURCE: MEDIUM. Basis is four algorithmic readings clustering 127-149; all four mislabel the meter as 4/4.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,0,1,0, 2,0,0,0,1,0],
   },
   {
@@ -30322,6 +30853,9 @@ const GROOVE_PRESETS = [
     // half-bar and lightens the third, which is the boom-boom-CHICK. If a real
     // calypso transcription ever turns up and disagrees, this is the entry to
     // change, not TRESILLO.
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,0,0,2,0,0,1,0, 2,0,0,2,0,0,1,0],
   },
 
@@ -30341,10 +30875,24 @@ const GROOVE_PRESETS = [
     // exactly those four, with pulse 9 weak. Checked, not assumed.
     // The other nine in the library is COMPOUND 9, which is 3+3+3 and constructed
     // rather than transcribed. This one is the aksak nine and is neither.
+    // CYCLE: 1 bar. An aksak meter's bar IS the pattern; there is no two-bar cycle to
+    // unwind. Tempo for these is conventionally quoted PER EIGHTH, which is what the
+    // engine already uses here, so no halving or doubling applies.
+    // TEMPO: CEILING REACHED. Searched across this pass and no tempo figure was found
+    // for any of the Balkan or Turkish dances as named styles. The existing value is
+    // inherited from whoever first entered it and has NOT been verified. Flagged so
+    // it is not mistaken for one of the sourced numbers elsewhere in this file.
+    // TEMPO-SOURCE: WEAK. No source; the value is unaudited, not researched.
     steps: [2,0, 2,0, 2,0, 2,0,1],
   },
   {
-    id: 'nine_eight',  cat: 'world', beats: 9, pulseBeats: 3, suggestedBpm: 160,
+    id: 'nine_eight', pulse: 3,   // 3+3+3, three even dotted-quarter beats
+     cat: 'practice', beats: 9, pulseBeats: 3, suggestedBpm: 53,
+    // TEMPO UNCHANGED IN SOUND, deliberately. A CONSTRUCTED teaching cell with no
+    // recording behind it, so there is nothing to source a tempo against. The old 160
+    // was almost certainly entered as EIGHTHS and gave a 3.4s bar that worked; 53
+    // reproduces that same bar under the corrected unit. Left at 160 it would have
+    // become eight eighths a second, which is unplayable. Do not 'restore' the 160.
     name: 'COMPOUND 9',      origin: '9/8 — compound triple',          originIt: '9/8 — composto triplo',
     // CONSTRUCTED, not transcribed, and CHECKED: the claim and the notes agree.
     // 3 groups of 3 means group starts on pulses 1, 4 and 7, and the accents sit
@@ -30353,6 +30901,9 @@ const GROOVE_PRESETS = [
     // Distinct from KARŞILAMA, which is the other nine in the library and is
     // 2+2+2+3, an aksak nine rather than a compound one.
     // 3 groups of 3 — swing-within-swing
+    // CYCLE: 1 bar. The array is a single bar of its own meter; the accents fall inside
+    // one bar and the pattern repeats every bar. No halving applies: a genre tempo
+    // figure goes into suggestedBpm as written.
     steps: [2,1,0, 2,1,0, 2,1,0],
   },
 
@@ -30645,8 +31196,13 @@ function grooveLoadPreset(id) {
 
   // Sync metronome time signature to match the groove's native meter (always, including 4/4)
   if (preset.beats && typeof setTS === 'function') {
+    // sigMap keys off the BEAT COUNT alone, so every 7-beat groove was shown as 7/8.
+    // Correct for RACHENITSA and DEVR-I HINDI, wrong for SEVEN ROCK, whose own origin
+    // line says 7/4 and whose Brubeck reference ('Unsquare Dance' is 7/4) agrees. The
+    // sound is identical either way — same 14 steps, same per-beat tempo — so this is a
+    // LABEL fix only. A groove may now override the denominator with `denom`.
     const sigMap = { 2:4, 3:4, 4:4, 5:4, 6:8, 7:8, 9:8, 11:8, 12:8 };
-    const denom = sigMap[preset.beats] || 4;
+    const denom = preset.denom || sigMap[preset.beats] || 4;
     setTS(preset.beats, denom);
   }
 
@@ -31045,7 +31601,12 @@ function grooveUpdateCursor(stepIdx) {
   }
   // Pulse dots — animate on beat steps
   const activePreset = typeof GROOVE_PRESETS !== 'undefined' ? GROOVE_PRESETS.find(p => p.id === groovePresetId) : null;
-  const effectivePulseBeats = (activePreset && activePreset.pulseBeats) ? activePreset.pulseBeats : (typeof tsTop !== 'undefined' ? tsTop : 4);
+  // Must agree with the AUDIO count-in in scheduleNote(), which follows the felt
+  // pulse since v0.103.1. These dots are the picture of that click; when they used
+  // tsTop they drew six dots under a 6/8 groove you could hear pulsing twice.
+  const effectivePulseBeats = (activePreset && activePreset.pulseBeats) ? activePreset.pulseBeats
+                            : (activePreset && activePreset.pulse) ? activePreset.pulse
+                            : (typeof tsTop !== 'undefined' ? tsTop : 4);
   const stepsPerBeat = Math.max(1, len / effectivePulseBeats);
   if (stepIdx % stepsPerBeat === 0) {
     const beatIdx = Math.round(stepIdx / stepsPerBeat);
@@ -35664,7 +36225,8 @@ function scheduleNote(beat, time) {
   if (grooveModeActive && grooveCountIn) {
     const stepIdx = beat % groovePattern.length;
     const preset = typeof GROOVE_PRESETS !== 'undefined' ? GROOVE_PRESETS.find(p => p.id === groovePresetId) : null;
-    const effectiveBeats = (preset && preset.pulseBeats) ? preset.pulseBeats : tsTop;
+    const effectiveBeats = (preset && preset.pulseBeats) ? preset.pulseBeats
+                         : (preset && preset.pulse) ? preset.pulse : tsTop;
     const stepsPerBeat = groovePattern.length / effectiveBeats;
     if (stepIdx % stepsPerBeat === 0) {
       const pulseSound = METRO_SOUNDS[grooveCountInSound] || METRO_SOUNDS.click;
@@ -35708,6 +36270,26 @@ function scheduleNote(beat, time) {
   notesInQueue.push({ beat, time, isMain, isAccent, mainBeat });
 }
 
+// How many FELT pulses are in one bar of the active groove. In simple meters this
+// is just tsTop and nothing changes. In compound meters it is the number of
+// dotted-quarter beats you would tap your foot to: 6/8 has two, 12/8 has four.
+// That distinction is the whole fix. `bpm` means one felt pulse, which is what a
+// musician means by BPM and what every tempo marking on a score refers to. Before
+// this, a 6/8 groove read its BPM as EIGHTHS, so TARANTELLA's 160 played at 53
+// foot-taps a minute and SLOW BLUES 12/8 had a twelve-second bar.
+// Grooves that do not declare `pulse` fall back to tsTop, so every simple-meter
+// groove behaves exactly as it did.
+// NOT declared, deliberately: the flamenco pair (their 12 steps are the twelve
+// compás counts, not sixteenths) and the aksak meters (2+2+3 and friends have
+// UNEVEN pulses, so a single pulse count cannot describe them; their tempo is
+// conventionally given per eighth, which is what they already do).
+function _grooveFeltPulses() {
+  if (!grooveModeActive) return tsTop;
+  const preset = (typeof GROOVE_PRESETS !== 'undefined')
+    ? GROOVE_PRESETS.find(p => p.id === groovePresetId) : null;
+  return (preset && preset.pulse) ? preset.pulse : tsTop;
+}
+
 function advanceNote() {
   const secondsPerBeat    = 60.0 / bpm;
   const secondsPerSubdiv  = secondsPerBeat / subdivision;
@@ -35716,7 +36298,7 @@ function advanceNote() {
     // Step duration = one bar duration / pattern length
     // e.g. 16 steps in 4/4 = 16th notes; 12 steps in 6/8 = 8th notes; 22 steps in 11/8 = 8th notes
     const stepsPerBar = groovePattern.length;
-    const secondsPerStep = (secondsPerBeat * tsTop) / stepsPerBar;
+    const secondsPerStep = (secondsPerBeat * _grooveFeltPulses()) / stepsPerBar;
     nextNoteTime += secondsPerStep;
     currentBeat = (currentBeat + 1) % stepsPerBar;
     return;
@@ -109866,17 +110448,30 @@ let MQ = {
 
 // Shorten an answer option to its core claim (removes detail after em-dash)
 function mqTrimOpt(text) {
-  // Cut at em/en dash
+  // Trims long options to fit an answer card. THE CUT MUST BE VISIBLE.
+  //
+  // Before v0.103.20 this cut silently at a comma, bracket or colon and returned the
+  // fragment with no marker, which produced answers that read as complete but short.
+  // ROOM TREATMENT was the case that exposed it: its four options are 78-89 chars, a
+  // near-perfect 1.07x balance, and the correct one
+  //   "Acoustic panels, bass traps, and diffusers installed to control reflections..."
+  // was cut at its first comma to "Acoustic panels, bass traps" and shown next to two
+  // full sentences. It looked like a throwaway. A tester picked one of the sentences
+  // and got it wrong. The trimmer, not the question, caused that.
+  //
+  // An ellipsis makes a trimmed option read as "there is more here" rather than as a
+  // deliberately terse answer, which is the whole difference.
+  var trimmed = false;
   var d = text.indexOf(' \u2014 ');
   if (d < 0) d = text.indexOf(' \u2013 ');
-  if (d > 0) text = text.slice(0, d);
-  // If still long, cut at last natural break before 60 chars
+  if (d > 0) { text = text.slice(0, d); trimmed = true; }
   if (text.length > 60) {
     var breaks = [text.lastIndexOf(', ', 60), text.lastIndexOf(' (', 60), text.lastIndexOf(': ', 60)];
     var cut = Math.max.apply(null, breaks);
-    if (cut > 20) text = text.slice(0, cut);
+    if (cut > 20) { text = text.slice(0, cut); trimmed = true; }
   }
-  return text.trim();
+  text = text.trim().replace(/[,;:(]+$/, '');
+  return trimmed ? text + '\u2026' : text;
 }
 
 

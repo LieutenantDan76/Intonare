@@ -48,6 +48,841 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.103.20 — the quiz audit was scoring the wrong text, and hid 129 giveaways
+
+Daniele reported half-broken quiz questions and obvious answers, and proposed replacing
+the whole bank. Two screenshots turned out to contain two different faults that look
+identical on screen, and chasing them found a bug in the checker itself.
+
+**THE AUDIT WAS MEASURING TRIMMED TEXT.** It ran every option through `trim_opt`, a copy
+of the app's display trimmer, before comparing lengths. The app cuts options at about 60
+characters. So STEM MASTERING — a 151-char correct answer against distractors of 26, 32
+and 40, a 4.6x dead giveaway — was trimmed to 32 characters before measurement, scored
+about 1.0x, and passed clean. The trimmer was hiding the exact fault the script exists to
+find.
+
+Measuring the raw options instead:
+
+    before   Critical 0     Warn 100    "No criticals — good to ship"
+    after    Critical 129   Warn 69
+
+    Guitar Gods 13   Beatles 11   Jazz Legends 15   Rock & Metal 23
+    Theory 14        Studio 14    Gear 20           Music History 19
+
+129 questions, 11% of the bank, where the correct answer is more than 2.5x the average
+wrong answer. That is what Daniele was finding by hand while the script said ship it.
+
+**THE TRIMMER CUT SILENTLY, AND THAT BROKE A GOOD QUESTION.** ROOM TREATMENT's four
+options are 78-89 characters, a 1.07x balance — genuinely well written. The trimmer cut
+the correct one at its first comma:
+
+    "Acoustic panels, bass traps, and diffusers installed to control reflections..."
+    displayed as: "Acoustic panels, bass traps"
+
+Shown beside two full sentences, the right answer read as a throwaway. The tester picked
+a sentence and got it wrong. The question was fine; the trimmer lost it.
+
+Trimmed options now end in an ellipsis and drop any trailing comma or bracket, so a cut
+option reads as "there is more here" rather than as a deliberately terse answer.
+
+**ON REPLACING THE BANK: the questions are not wrong, they are uniform.** Measured across
+1,151: 48.9% open "What is", 23.2% "What was", 14.9% "Which". Ninety-one percent are a
+definitional lookup. There are five "why" questions and two "how" in the entire bank, and
+78.5% contain a quoted term because the scaffold is nearly always What is 'X'?. The
+Studio pack runs overdubbing, mastering, parallel compression, sidechain, automation,
+tape saturation, punching in, phase cancellation, mic placement consecutively, all in
+that shape. That is the "doesn't feel human" complaint, and it is a rewrite of question
+STEMS rather than a sourcing problem. No audit fixes it.
+
+**OpenTriviaQA was assessed and rejected.** 5,579 music questions, CC BY-SA 4.0, clean
+format. But it is pop-recording trivia rather than music education, it quotes copyrighted
+song lyrics verbatim in the questions themselves, its apostrophes have been stripped
+throughout ("Its", "shes", "Cant"), and CC BY-SA raises the same ShareAlike question as
+the Krueger MIDIs at a scale of thousands.
+
+---
+
+## v0.103.19 — FUNK 4-ON-THE-FLOOR: decided, keep it
+
+v0.103.18 established that this groove is musically a plain quarter click and left the
+call open. Daniele's call: keep it.
+
+Written into the file as a DECISION rather than an open flag, with the reasoning,
+because the analysis sitting above it makes a compelling case for deletion and the next
+person to read it will reach for the delete key.
+
+The reason to keep is not resignation. A four-on-the-floor click is what a producer or a
+dancer actually counts to, so it earns its place as a NAMED entry even though it is
+musically identical to a click: someone browsing the funk list for it and not finding it
+would conclude the app was missing something. Findability is the point, not novelty.
+
+Tempos are also frozen as they stand. 56 of 60 set, graded 8 STRONG / 10 MEDIUM /
+12 WEAK, with the four West African dance traditions left unset and each naming what
+would settle it.
+
+---
+
+## v0.103.18 — accent sweep, and one groove that cannot exist in this engine
+
+The last dimension nobody had examined. Three candidates came out of a mechanical pass;
+two were my checker being wrong and one is real and unfixable by moving accents.
+
+**Cleared: the 15 "all accent, no soft" grooves.** SON CLAVE, the rumbas, TRESILLO,
+BOSSA, SHIKO, SOUKOUS, GAHU, KPANLOGO, BULERÍA, KOPANITSA and the rest. A clave has
+strokes and rests, not a dynamic layer, so having no soft stroke is the correct shape
+rather than a missing one.
+
+**Cleared: MONTUNO.** Flagged as accenting a downbeat its comment called empty. Its
+accents at 0, 3, 7, 11, 12 match its comment exactly; the regex had caught the phrase
+"step 6 is silent here" and misread it.
+
+**Cleared: MARCH 2/4.** Both beats accented with no weak stroke, which looks like a
+flattened march. It is deliberate and sourced: Soundbrenner's definition contrasts a
+march's "steady left-right pulse" against a jig's lilt, and the comment already said so.
+
+**FUNK 4-ON-THE-FLOOR has no identity in a one-voice engine.** Its pattern is four equal
+accents and nothing else, which is a plain quarter-note click carrying LESS than the
+metronome, since the metronome at least emphasises beat 1. Every neighbour carries
+something a click does not:
+
+    DISCO                2 0 1 0 | ...   offbeat hat under the four
+    BACKBEAT             1 0 0 0 | 2 0 0 0    2 and 4 in front
+    MOTOWN               1 0 1 0 | 2 0 1 0    backbeat plus eighths
+    THE ONE              2 1 0 1 | 0 1 0 1    the one in front
+    FUNK 4-ON-THE-FLOOR  2 0 0 0 | 2 0 0 0    four identical hits
+
+**And it cannot be fixed by moving accents.** Four-on-the-floor's identity is the
+layering: kick on all four, backbeat on 2 and 4, hats between. Put the backbeat in front
+and you have written BACKBEAT. Add the offbeat and you have written DISCO. This file's
+own rule — put the layer that FIGHTS the meter in front — has no answer, because
+four-on-the-floor does not fight the meter, it IS the meter.
+
+Left as-is and flagged in the file. The alternatives are duplicating an existing groove
+or deleting this one, and both are Daniele's call on-device.
+
+**Origin sweep, prose half.** NEW ORLEANS and SECOND LINE carried origins that were near
+synonyms — "New Orleans second line" and "New Orleans brass band" — which does not help
+anyone tell two adjacent grooves apart. NEW ORLEANS is now "New Orleans funk / The
+Meters", matching the record its tempo was sourced from.
+
+**EN/IT parity: no drift, and the two failures found today were both mine.** A sweep for
+Italian strings missing what the English says returned 34 hits, every one a false
+positive: it was looking for the literal English word, so "Cuban → cubano" and
+"Bulgarian → bulgara" read as missing. The pre-existing Italian was correct throughout.
+The only two genuine twin failures this session were DEVR-I HINDI and NEW ORLEANS, and I
+introduced both by editing the English and forgetting the twin.
+
+---
+
+## v0.103.17 — MOTOWN in one search, and SEVEN ROCK was mislabelled
+
+**MOTOWN: 105, and it is the best-sourced number in the file.** The Temptations' "My
+Girl", 1964, Hitsville USA. Five independent readings: 104, 105, 105, 104, 105. A
+one-BPM spread across five sources.
+
+It had been recorded CEILING REACHED after two style-level searches. It took one search
+of a named record. That is the third time in this audit the ceiling turned out to be the
+query, which is now written into the file next to all three.
+
+**SEVEN ROCK was showing the wrong time signature.** The origin sweep started by checking
+every origin string that states a meter against what the app actually sets, and found one
+disagreement: the origin says 7/4, the app displayed 7/8.
+
+The cause is structural rather than a typo. `sigMap` looks the denominator up from the
+BEAT COUNT alone, so every 7-beat groove gets /8. That is correct for RACHENITSA and
+DEVR-I HINDI, which are genuinely 7/8, and wrong for SEVEN ROCK, whose own comment cites
+Brubeck's "Unsquare Dance" — a 7/4 tune. One lookup cannot serve both.
+
+Grooves may now override with `denom`, and SEVEN ROCK sets `denom: 4`. **Nothing audible
+changes:** 14 steps over 7 beats at the same per-beat tempo either way. This is a label
+fix, and the file says so, so nobody hunts for a timing bug that is not there.
+
+The same latent trap exists at 5 and 9 and is currently harmless: sigMap gives 5/4 and
+9/8, which is right for everything in the table today. A future 5/8 or 9/4 groove would
+need `denom` too.
+
+**Four grooves now carry no tempo, down from nine at the start of the day:** SHIKO, GAHU,
+KPANLOGO and FANGA. All four are West African dance traditions rather than recorded
+genres, so there is no track database to read a figure off, and tapping along to a
+performance is the remaining method.
+
+Every origin string that states a meter now agrees with the app. The rest of the origin
+sweep — the prose halves, which no check can verify mechanically — and the accent sweep
+are still to do.
+
+---
+
+## v0.103.16 — two of the "ceilings" were my search terms
+
+Daniele pushed back on whether the remaining unknowns were really unknowable. They were
+not. Two came back inside one search.
+
+**The mistake was the query, not the world.** For AFROBEAT, BHANGRA and MOTOWN I had
+searched for "the tempo of style X", got nothing, and written CEILING REACHED. But the
+method that actually worked earlier in this audit was searching a NAMED RECORD: that is
+how NEW ORLEANS got 88 from Cissy Strut and TARANTELLA got its cluster. I never applied
+it to the three commercially recorded genres on the list, which are exactly the ones
+where track data is abundant.
+
+    AFROBEAT   --  -> 132    Fela Kuti, "Zombie"
+    BHANGRA    --  ->  98    Panjabi MC, "Mundian To Bach Ke" (98 and 99, two sources)
+
+Both carry their caveats in the file. Afrobeat is often felt in half-time and this
+pattern puts nothing on the four beats, so the cycle cannot be cross-checked from the
+accents the way the funk family's were; if it runs double on device the answer is 66.
+Bhangra's record is fusion pop over a hip-hop beat rather than a dhol ensemble playing
+chaal, which is a real limitation on what it proves, and it is written down as one.
+
+**MOTOWN still has no figure, and the right tool for it is not a website.** Play "My
+Girl" or "Dancing in the Street" and use the app's own tap tempo. Twenty seconds, and
+better evidence than any of the aggregators quoted in this file.
+
+**Five grooves now carry no tempo, down from nine:** SHIKO, GAHU, KPANLOGO, FANGA and
+MOTOWN. The four African ones are the genuinely hard cases, being dance traditions
+rather than recorded genres, so there is no track database to read a figure off.
+
+**An assert caught me pasting SHIKO's note into AFROBEAT** mid-edit, and a second guard
+had to be rewritten because it tested for the word "suggestedBpm" appearing anywhere in
+a block rather than being declared on a non-comment line. The cycle comments added in
+v0.103.13 mention the field by name, so the naive check saw a key that was not there.
+Same class of error as the duplicate-key sweep that first flagged three false positives.
+
+---
+
+## v0.103.15 — a PRACTICE tab for the patterns nobody plays
+
+Four grooves in the library were invented for this app rather than transcribed from a
+tradition, and they were scattered: 5/4 OSTINATO and COMPOUND 9 in WORLD, FIVE ROCK and
+SEVEN ROCK in FUNK. So 5/4 Ostinato and Five Rock, which are the same kind of object,
+lived in different tabs. They now share a PRACTICE tab (ESERCIZI in Italian).
+
+    LATIN 14   AFRICAN 6   FUNK 16   WORLD 20   PRACTICE 4
+
+**An ODD METER tab was considered and rejected, and the reasoning is worth keeping.**
+It would have been a tidier nine grooves and dropped WORLD from 22 to 16. But it would
+also have to take RACHENITSA, KOPANITSA, KARŞILAMA and DEVR-I HINDI, which are Balkan
+and Turkish dances first and odd-metered second, and pulling them out of WORLD would
+hide them from anyone browsing by region. More importantly it makes the category filter
+ask two questions at once — "where is this from" AND "what meter is it" — and every one
+of those nine then has two valid homes, which is what makes a filter unpredictable.
+
+What actually unites the four is not their meter. COMPOUND 9 is 9/8, which is compound
+rather than odd. It is that nobody plays them; they are exercises.
+
+**The layout cost was measured, not estimated.** A sixth tab takes the row from one line
+to two at 390-412px, costing 29px. At 360px it already wrapped at five tabs, so smaller
+phones are unaffected. Shorter labels were tested in a real browser against the real
+CSS: the only six-label set that fits 390px is AFRO / PRAC / MINE, and it clears by ONE
+pixel, so any font substitution would wrap it anyway. Readable labels and 29px is the
+better trade, and the numbers are in the file so the next person does not re-derive them.
+
+**Also checked and found clean: the names.** The transliterations that could plausibly
+be wrong were verified — Rachenitsa/Ruchenitsa, Maqsum/Maqsoum, Çiftetelli,
+Kopanitsa/Gankino — and all are accepted forms. Nothing like the ESKISTA error, where an
+Ethiopian name sat on a Turkish pattern, is present now.
+
+**And a correction to what this changelog said one entry ago.** v0.103.14 described the
+category field as filing jazz swing, Take Five and gospel under "funk" as though that
+were an error. It is not. The picker has four tabs and there is no JAZZ, BLUES or
+CLASSICAL among them, so FUNK is the least-bad home available rather than a misfiling.
+LATIN and AFRICAN are both clean. The taxonomy is four slots doing the work of eight,
+which is a different complaint and a much smaller one.
+
+---
+
+## v0.103.14 — last tempos, a user-facing error, and me breaking my own rule
+
+**MAQSUM: 105.** Melodigging's Arabic Pop guide names Maqsum as one of the base iqa'at
+and gives 70-90 for ballads, 95-120 for dance-pop. Maqsum is the everyday dance groove
+rather than the ballad one, so 105 is the middle of the upper band. Graded MEDIUM: the
+range is for Arabic pop broadly, not a figure stated for maqsum itself.
+
+**5/4 OSTINATO: 100, declared CONSTRUCTED.** An invented vamp with no repertoire behind
+it. Same class as FIVE ROCK.
+
+**BHANGRA and MOTOWN: CEILING REACHED after a second search.** Bhangra now carries three
+open problems at once: no tempo, sources that contradict each other on accents, and a
+grid that was wrong until v0.103.4. Motown needs one named record with a verified BPM
+and it is done.
+
+**DEVR-I HINDI's origin line was wrong where users could see it.** It read "7/8 —
+Turkish / Bulg. lesnoto", fusing two traditions that only share a meter: Devr-i Hindi
+is a Turkish usul, lesnoto is a Macedonian/Bulgarian dance. Whether this exact pattern
+also serves lesnoto was never established, so the claim was REMOVED rather than
+rewritten. Naming only what is verified is the safer of the two.
+
+**And then I did the thing this project has a standing rule against.** Having fixed the
+English origin, I left the Italian reading "7/8 — turco / lesnoto bulgaro", i.e. shipped
+the corrected string in one language and the wrong one in the other. Caught by an
+EN/IT parity sweep run immediately afterward, which is the only reason it is not in the
+build. Both now read "usul turco".
+
+That sweep also found BOOM BAP's Italian origin was untranslated English ("East Coast
+golden age"), now "East Coast, epoca d'oro". The other 15 identical EN/IT strings are
+correctly identical: "Jazz / big band", "Fela Kuti / Nigeria", "Motown / soul" and the
+like do not translate.
+
+**State of the groove table.** Cycles 60/60. Tempo grades 7 STRONG, 8 MEDIUM, 14 WEAK.
+Six grooves still carry no tempo: SHIKO, GAHU, AFROBEAT, KPANLOGO, FANGA, BHANGRA,
+MOTOWN. Open questions that name their own resolution: KPANLOGO's grid CONFLICT,
+ÇİFTETELLİ's cycle, and the aksak tempos.
+
+Still unaudited, and worth saying plainly rather than leaving implied: CATEGORY
+assignment, which is the filter users navigate by, and the groove NAMES themselves. The
+category field currently files jazz swing, jazz waltz, Take Five, slow blues, gospel and
+two prog-rock cells under "funk", and puts reggae, dancehall and calypso in "world"
+while bossa and samba sit in "latin". Naming has been wrong once already: KARŞILAMA
+shipped labelled ESKISTA, an Ethiopian name on a Turkish pattern.
+
+---
+
+## v0.103.13 — family 4, and SOLEÁ was running at twice its own range
+
+All 60 grooves now state their cycle. The world set was left until last because its
+arithmetic does not follow the other families, and that turned out to matter.
+
+**COMPÁS SOLEÁ: 108 -> 48, and it was the worst error found in this whole audit.**
+
+Flamenco tempo is quoted in COMPÁS COUNTS. This groove holds 12 steps that ARE the 12
+counts, with beats:6, so one app beat equals two counts and a quoted figure must be
+halved. At 108 it was running 216 counts a minute. Paul Bosauder, a working flamenco
+guitarist in Seville, gives soleá as "traditionally interpreted at a speed of between
+70 to 120bpm"; a production guide independently puts it at 60-80. So the palo whose
+name comes from "soledad", described everywhere as slow and introspective, was playing
+at nearly double the top of its own range.
+
+**FLAMENCO BULERÍA: 120 -> 110.** The same article says bulerías is "the same
+rhythmical and harmonic structure sped up to around 220 to 240bpm". Richter Guitar
+gives 160-275, BeatKey 180-240. 220 counts is where all three overlap; 110 halves to
+it. The old 120 sat at the very top rather than inside.
+
+The pair matters more together than apart. They share a compás and differ mainly by
+speed, which is what every source says. At 108 and 120 they were nearly the same
+tempo, which made the difference between them inaudible. At 48 and 110 the
+relationship the sources describe is actually there.
+
+**The aksak set is flagged rather than fixed.** RACHENITSA, KOPANITSA, KARŞILAMA,
+DEVR-I HINDI and SEVEN ROCK all now say their cycle is one bar and that tempo for them
+is conventionally quoted per eighth, which is what the engine already does, so no
+halving applies. But no tempo figure was found for any of them as a named style. Their
+existing values are inherited from whoever first typed them and are graded WEAK:
+unaudited rather than researched. That is a downgrade, not a fix, and it is the honest
+label.
+
+**ÇİFTETELLİ's cycle is left open.** beats:4 with 16 steps reads as one bar, but its own
+origin line says "4/4 (8/4 cycle)". If the full cycle is twice the array, the tempo
+needs halving like the claves. It is already the library's one pattern CONFLICT, so the
+cycle stays open beside it rather than being guessed.
+
+**Every groove now has a documented cycle: 60 of 60.** Tempo source grades stand at 7
+STRONG, 7 MEDIUM, 11 WEAK. Nine grooves still carry no tempo at all: SHIKO, GAHU,
+AFROBEAT, KPANLOGO, FANGA, MAQSUM, BHANGRA, 5/4 OSTINATO and MOTOWN.
+
+The checker flagged my own prose twice more, on the phrase "not sixteenths" inside the
+flamenco cycle note. Reworded rather than loosening the rule.
+
+---
+
+## v0.103.12 — grading my own sources, because they were not equal
+
+Three families of tempos have been written up in one confident voice, and the sources
+behind them are not the same quality. Every tempo claim now carries a TEMPO-SOURCE
+grade and the audit script reports the spread.
+
+    STRONG  5   SICILIANA, IRISH JIG, SLOW BLUES 12/8, NEW ORLEANS, SAMBA
+    MEDIUM  7   the four claves, MONTUNO, THE ONE, TARANTELLA
+    WEAK    5   TRESILLO, BOSSA NOVA, SOUKOUS, FUNK 4-ON-THE-FLOOR, SECOND LINE
+
+**Two should have been flagged as I wrote them.**
+
+The Chosic page used for SOUKOUS self-labels part of its content "(AI Generated)".
+That was quoted as though it were research.
+
+FUNK 4-ON-THE-FLOOR's 114 comes from a blogger whose own sentence is "by my entirely
+non-scientific logic, 114 bpm is the funkiest tempo". That was written up here as
+"sourced, loosely", which is too generous by some margin.
+
+**What the grades mean.** STRONG is a printed tempo marking, an official dance body's
+guide, or several independent readings of one named record agreeing. MEDIUM is a
+genre-level figure from a commercial index or a careful individual, without a specific
+recording behind it. WEAK is a single DJ-tool or SEO page with no stated methodology,
+or a figure I derived by inference rather than found.
+
+TARANTELLA sits at MEDIUM rather than STRONG for a reason worth repeating: its four
+readings are algorithmic and all four mislabel the meter as 4/4. They cluster, which
+is why the number is usable, but no human wrote 135 down anywhere.
+
+**Nothing was changed on the strength of this.** The WEAK five are still the best
+figures found, and a labelled weak number beats an unlabelled one. What changes is
+that anyone reading the file, including me next session, can see which of these to
+trust and which to replace first when a better source turns up.
+
+---
+
+## v0.103.11 — family 3, Latin: all 14 have a cycle now
+
+Every Latin groove now states how many conventional bars its array represents, which
+is the fact the tempo depends on. Two tempos added, one defended, one flagged as the
+widest honest range in the set.
+
+**TRESILLO: 95, and the cycle was read off the accents rather than assumed.** They sit
+at 0,3,6 then 8,11,14, which is the 3+3+2 cell twice in SIXTEENTHS, so each cell is
+half a bar and the array is one 4/4 bar. That rules out the eighth-note tresillo that
+spans a whole bar; the spacing of three sixteenths settles it. Wikipedia's "Dembow
+beat" confirms the dembow carries a 3+3+2 tresillo cross-rhythm, so reggaeton is the
+reference: 85-100, with bpmcalc naming 95 as the global radio standard.
+
+**MONTUNO: 90, derived rather than searched, and deliberately equal to SON CLAVE.** A
+piano guajeo is written across the two-bar clave cycle, so it takes the same halving.
+Salsa's 180 is already sourced on son32 in this file. A guajeo and the clave under it
+disagreeing about tempo would be worse than either being slightly off.
+
+**TUMBAO's 180 was checked and is correct, which needed saying in the file.** It looks
+wrong sitting next to son clave's 90. They agree: son32 is a two-bar cycle at 90, tumbao
+is a one-bar cycle at 180, and both land on 180 in salsa terms. The comment now says
+not to "fix" it to match.
+
+**SAMBA keeps 130 and admits the range is wide.** Ballroom samba's recommended
+competition tempo is 48-56 bars per minute (Wikipedia citing the ISTD guide), which is
+96-112 quarters; a Samba Batucada recording reads 135. Escola and batucada samba is the
+faster tradition and is what this surdo pattern belongs to, so 130 sits at that end on
+purpose. If it feels hectic, the ballroom end is the defensible alternative rather than
+a bug, and the file says so.
+
+HABANERA, CHA-CHA-CHÁ, CUMBIA, BOLERO and JOROPO kept their existing tempos and gained
+a documented cycle. BOLERO's note points at its own origin line, which already flags
+that this is the Spanish 3/4 form and the Cuban bolero is a different 4/4 one.
+
+Three families done. Remaining: the world set (Balkan, Middle Eastern, European dances),
+MOTOWN's tempo, and KPANLOGO's unresolved grid conflict.
+
+---
+
+## v0.103.10 — family 2, and a drumming history that was off by double
+
+The funk and soul set. Cycle settled first, and for once it did not need a source.
+
+**CYCLE: 1 bar, proved from the patterns.** BACKBEAT and MOTOWN accent steps 4 and 12
+of 16, which is the snare on beats 2 and 4 of a single 4/4 bar; two bars would put
+four backbeats in the array. Every other groove in the family accents quarter
+positions of one bar the same way. So genre BPM goes in as written, no halving, and
+the 2x ambiguity that stalled this twice does not apply here.
+
+    NEW ORLEANS      --  ->  88    Cissy Strut
+    THE ONE          --  -> 101    Funky Drummer
+    SECOND LINE      --  -> 100    between two anchors, 88 and 112
+    FUNK 4-ON-FLOOR  --  -> 114    break-tempo cluster
+    BACKBEAT         --  -> 100    constructed default, labelled as one
+    FIVE ROCK        --  -> 100    constructed default, labelled as one
+    MOTOWN           --      --    searched, not found, still on the dial
+
+**NEW ORLEANS overturns a source rather than agreeing with one.** A drumming history
+puts New Orleans funk at "quarter note = 152-208" while also saying the style is
+"easily interpreted in double time". Cissy Strut, the canonical record, is 88 BPM on
+getsongbpm and sfrbeats, and songbpm's 176 is itself flagged there as half-time 88.
+The 152-208 is the double-time count. Taken literally it would have run this groove at
+twice the speed of the records it comes from, and it would have looked properly
+sourced doing it.
+
+**Two are labelled CONSTRUCTED rather than given a fake citation.** BACKBEAT is not a
+style with a tempo; it is the snare-on-2-and-4 cell under most Anglo-American popular
+music, played at any speed from a ballad to a punk record. FIVE ROCK is an invented
+5/4 cell. Both get a neutral 100 and say plainly that it is a default.
+
+**MOTOWN is still on the dial.** Searched in this pass, nothing found; the break-tempo
+analysis covers funk rather than Motown. A named Motown record with a verified BPM
+settles it.
+
+**The checker caught me twice more, both times on my own prose.** Writing "swung-bossa
+count" flagged BOSSA, and naming COMPOUND 9 inside FIVE ROCK's note flagged FIVE ROCK,
+because "compound" is triplet vocabulary. First resolved with an acknowledgement
+marker, second by rewording, since the reference was incidental. A checker that only
+ever agrees with you is not doing anything.
+
+---
+
+## v0.103.9 — family 1 closed, and KPANLOGO turns out to be a real dispute
+
+Going back for the four grooves left inheriting the dial found one tempo, three dead
+ends, and a grid disagreement that matters more than any of them.
+
+**SOUKOUS: 62.** Chosic gives soukous a typical range of 115-130 from artist tempo
+data, with individual tracks reading 106, 130 and 144. 125 as the middle, halved for
+the two-bar cycle, is 62.
+
+**SHIKO, GAHU and KPANLOGO: CEILING REACHED on tempo,** and each says what would end
+it. Shiko is filed under highlife, which sources describe only as "fast" with no
+figure. Gahu is an Ewe dance rather than a recorded genre, so there is no track
+database to read a number off. Kpanlogo is described as "a street party rhythm from
+the Ga tribe" and nothing more. All three keep inheriting the dial, which is the
+honest state rather than a number that looks researched.
+
+**KPANLOGO's subdivision is downgraded from INFERRED to CONFLICT, and it is a dispute
+about the GRID, not about accents.** globalmusictheory.com states the foundational
+Kpanlogo rhythm is "often structured around 6/8 or 12/8 time signatures, which feature
+groups of three pulses per beat". If that is right, a straight 16-pulse grid is the
+wrong SHAPE for it, in the same way JAZZ SWING was before v0.103.4, and not merely a
+quantisation of it.
+
+Against that reading: Wikipedia's Kpanlogo article says the nono bell "plays the key
+pattern or timeline of the music" and that the main bell part "is one of the most
+common and oldest key patterns found in sub-Saharan Africa", which is the 16-pulse
+family. And our array is byte-identical to SON CLAVE 3-2, a 16-pulse timeline, which
+the groove audit already examined and accepted.
+
+Two credible sources, opposite answers, on the thing this whole audit is about. It is
+recorded rather than resolved, because picking one would be a guess dressed as a
+finding. A Ga drumming method or a transcription of the nono part settles it.
+
+Family 1 ledger: 1 SOURCED, 1 CONFLICT, 4 CEILING REACHED, 9 cycles established,
+6 tempos set.
+
+---
+
+## v0.103.8 — family 1 tempos, halved for the cycle
+
+First tempos set with the cycle length known, so they are right in genre terms rather
+than right in app terms and wrong to a musician.
+
+    SON CLAVE 3-2   110 ->  90     reads as 180 salsa (was 220)
+    SON CLAVE 2-3    --  ->  90     had no tempo
+    RUMBA CLAVE 3-2  --  -> 112     reads as 224 (was inheriting the dial)
+    RUMBA CLAVE 2-3  --  -> 112
+    BOSSA NOVA       96  ->  65     reads as 130 (was 192)
+
+**SON CLAVE** now sits at the middle of the form. Salsa runs around 180 BPM across a
+150-250 range, most social dancing 160-220. The old 110 read as 220, which is salsa
+dura and timba territory, not a neutral reference for a clave.
+
+**BOSSA NOVA was the worst of the five.** Its own defining description is the relaxed,
+slower cousin of samba, and at 96 it read as 192 genre BPM, faster than the samba it
+is defined as slower than. Reference points cluster near 130: Drumgenius has a plain
+bossa phrase at 111 and "The Girl from Ipanema" at 180 in its swung count, and a Blue
+Bossa backing track is 140. 130 halves to 65.
+
+**RUMBA CLAVE is referenced to guaguanco,** which is the rumba style that actually
+carries rumba clave. Drumgenius lists basic Havana-style guaguanco at 231 and a Robby
+Ameen version at 217; halved that is 115 and 108, so 112 sits between them.
+
+**The four African timelines got a cycle and no tempo, on purpose.** SHIKO, SOUKOUS,
+GAHU and KPANLOGO have their two-bar cycle written down, but no tempo source was found
+for any of them as a style. Halving an invented genre figure would produce something
+that looks as researched as the five above and is not. They keep inheriting the dial
+and each says so in the file.
+
+Every one of these carries its source and its arithmetic in the comment, so the next
+person can check the halving rather than trust it.
+
+---
+
+## v0.103.7 — cycle length declared, and a pin that was anchored to the wrong thing
+
+**Method change first, because it is the point.** Cycle length, subdivision, tempo and
+the user-facing origin line are all answered by the same paragraph of the same source.
+Auditing them as four separate sweeps means opening sixty comment blocks four times,
+which is how SICILIANA sat at more than double its tempo while three other audits
+passed it. From here it is one pass per family that resolves everything about a groove
+at once, and then that groove is not opened again.
+
+**CYCLE is now written down for the timeline family.** Nine grooves, the four claves
+plus BOSSA, SHIKO, SOUKOUS, GAHU and KPANLOGO, each carry a note saying the pattern
+spans TWO conventional bars. This was never a new discovery; the CLAVE FAMILY encoding
+note at the top of the list already said 16 steps is one app bar of sixteenths holding
+a two-bar timeline in cut time. It had just never been written where a tempo decision
+would trip over it.
+
+The consequence is stated in each one: one app beat equals two beats of the style, so a
+genre tempo must be HALVED before it goes in `suggestedBpm`. Son clave's 110 reads as
+220 in salsa terms, against a genre that sits around 180. That is not corrected yet;
+the tempo pass for this family comes next, and now it has the fact it needs.
+
+**The SON CLAVE pin drifted, and it was the pin's fault.** It was anchored to the
+`name:` line plus the steps line, because the array is not unique (KPANLOGO is
+byte-identical, which the groove audit accepts as correct). Inserting a comment between
+those two lines broke it, without a single value changing.
+
+A pin that fires on edits which changed nothing trains everyone to ignore it, so it has
+been rebuilt as the bare array plus an EXACT-COUNT guard: the pattern must appear
+exactly twice, son32 and kpanlogo. Fewer means one of the twins was edited; more means
+a third groove drifted into the same pattern, which is also worth knowing.
+
+Verified by sabotage rather than by reading: altering son32's copy while leaving
+kpanlogo's alone now reports "found 1, expected exactly 2" and fails the build. The
+old pin would have caught that too; the difference is that this one no longer fails
+when nothing is wrong.
+
+---
+
+## v0.103.6 — subdivision audit, family 1 of 4: the timelines
+
+First real pass. The script in v0.103.5 could only check a grid against its own
+comment, which is circular; this is the start of putting external sources behind the
+claims so the check has something true to compare against. Same statuses the pattern
+audit uses, and the script now reads them and reports a ledger.
+
+**The research did not come back tidy, which is the useful part.** Three sources,
+pulling different ways:
+
+Magill (quoted in Riddim, arXiv:1705.04792) gives the general rule: West African bell
+patterns "can nearly always be subdivided into a number of regular pulses (usually 8,
+12, or 16)". That is what these arrays are and why they are straight.
+
+Polak's "Rhythmic feel as meter" (2010) then complicates it. Uneven beat subdivision
+"play[s] a substantial role in genres from Mali (Mande) and northern Ghana
+(Dagbamba) but not in southern and central Ghana (Ewe, Asante)", explicitly against
+"the widespread assumption that, in African rhythmic systems, the fast pulse in
+general is structurally isochronous". So a straight grid is not universally right or
+wrong; it depends on where the groove comes from.
+
+And the quantitative study of Cuban guaguanco measured 186 clave cycles and found the
+strokes are not deadpan even where the framework is isochronous: note 2 short, note 3
+long, note 4 late, with the deviations "more or less cancel[ling]" so the final
+stroke lands where the grid says. A step sequencer has no microtiming, so this is a
+CEILING and is written up as one, specifically so nobody later "fixes" it by nudging
+a stroke to a neighbouring slot, which would make the pattern wrong rather than
+merely quantised.
+
+**Ledger for this family, 6 grooves:**
+
+    SOURCED          GAHU        Ewe; Polak names Ewe as isochronous, so this is the
+                                 one groove the study settles outright
+    INFERRED         KPANLOGO    Ga, Accra; same region, not one of the two peoples
+                                 Polak names. Regional inference, not a citation
+    CEILING REACHED  SHIKO       region not pinned by any source found
+                     SOUKOUS     Congolese; outside the material studied
+                     AFROBEAT    Nigerian; borrowing the Ewe result would be exactly
+                                 the overgeneralisation Polak argues against
+                     FANGA       Liberian; same
+
+Four CEILING REACHED out of six is not a failure to research. It is what the sources
+actually support, and each one names what would settle it.
+
+**Still 32 grooves with no subdivision claim at all.** Three families to go: funk and
+soul, the Latin dances, the Balkan and Middle Eastern set.
+
+---
+
+## v0.103.5 — subdivisions checked, and the checker made honest
+
+New audit script, `intonare_subdiv_audit.py`. The pattern audit checked WHICH steps
+are struck; this checks whether a groove's grid can express what its own comment says
+is being played. It exists because the v0.103.4 bug was three grooves describing a
+triplet feel on a duple grid while asserting that was unavoidable, and the wrong
+claim had been copied between them.
+
+**Result: no further wrong grids.** The first run flagged five, and all five were
+false. MARCH 2/4 and KARSILAMA say "compound" only to contrast themselves with a jig
+and with COMPOUND 9. FUNK 4-ON-THE-FLOOR had the word "swing" inside a URL. THE ONE
+states outright that swing is a performance property and deliberately not encoded as
+a grid position. TRAP's triplets are ornaments over a correct sixteenth base.
+
+**A check that fires on things which are not wrong is worse than no check.** A second
+version added GRID-FINER-THAN-USED, which flagged 31 of 61 grooves for using only
+even sixteenths on a sixteenth grid. That is not an error; the spare resolution is
+what makes a pattern editable. Demoted to an informational column rather than left
+as a flag that would train everyone to ignore the script.
+
+**Compromises are acknowledged in the file, not pattern-matched around.** Rather than
+keep making the regex cleverer, a groove whose subdivision is knowingly a compromise
+now carries a `SUBDIV-AUDIT: ok - reason` marker the script reads. Three do: TRAP,
+plus BLUES SHUFFLE and BHANGRA, which were flagging on their own corrective text
+describing the sixteenth positions they used to sit on. The reason is required, so
+the marker cannot become a silencer someone pastes in to quiet the checker.
+
+The script reports **FLAGGED: 0, acknowledged: 3.**
+
+**What it does NOT prove.** 38 of 61 grooves make no subdivision claim in their
+comments, so there is nothing to check them against and the script says so rather
+than passing them silently. Their grids may be right; nobody has established it.
+Closing that gap means writing a subdivision claim for each, which is research, not
+tooling.
+
+---
+
+## v0.103.4 — three grooves were on the wrong grid, and the file said it was unavoidable
+
+JAZZ SWING, BLUES SHUFFLE and BHANGRA are triplet feels. All three were written on a
+sixteenth grid, and all three carried a comment saying a sixteenth grid could only
+approximate a triplet, so the second stroke sat on the "a" as the nearest available
+slot. GOSPEL 6/8 and the 12/8 pair pointed at those notes as precedent.
+
+**That premise was wrong.** The grid is not fixed at sixteenths. `stepsPerBar` is
+just the array length, so 12 steps over 4 beats ARE triplet eighths. The scheduler
+divides cleanly, the beat markers land at 3 per beat, the pulse dots agree, and the
+counting labels already carry a "1 + a" entry for that exact case. Nothing needed
+building. The three grooves were simply written on the wrong grid, and the note
+explaining why it could not be fixed had been copied between them.
+
+    JAZZ SWING     [1,0,0,0, 2,0,0,1, ...]  ->  [1,0,0, 2,0,1, 1,0,0, 2,0,1]
+    BLUES SHUFFLE  [2,0,0,1, x4]            ->  [2,0,1, 2,0,1, 2,0,1, 2,0,1]
+    BHANGRA        [2,0,1,0,1,0,0,0, ...]   ->  [2,0,1, 1,0,1, 2,0,1, 1,0,1]
+
+JAZZ SWING's two swung skips now sit on the LAST TRIPLET of beats 2 and 4, steps 5
+and 11, which is literally where BYU Percussion and ArtistWorks put them. BLUES
+SHUFFLE plays a real shuffle instead of a dotted-sixteenth impression of one; its
+accents were not touched, only the grid. BHANGRA's chaal is now the four swung pairs
+its own GCSE source vocalises as "dum-di, dum-di, dum-di, dum-di", which is what that
+source's "4/4 (12/8)" meter meant all along.
+
+These are the first three grooves in the library on a triplet grid.
+
+**BHANGRA also had a duplicate `steps:` key,** the same array declared twice in one
+object. JavaScript takes the last one so nothing ever misbehaved, which is why it
+survived. Pre-existing, present in the file before any of this session's edits, and
+found only because an assert expecting a unique match got two. A sweep of all 60
+grooves for repeated `steps`, `beats`, `name`, `pulse` and `suggestedBpm`
+declarations found no others.
+
+**BHANGRA's accents are still contested and still flagged.** Its sources disagree in
+opposite directions and this change keeps the old reading (strong on 1 and 3). Only
+the grid moved.
+
+**Still open: the swing control does nothing in groove mode.** `advanceNote()`
+returns early in the groove branch, before the swing block runs, so the slider only
+affects the plain metronome click. Arguably correct now that grooves can carry a real
+triplet grid, but it is a silent no-op and the help text does not say so.
+
+---
+
+## v0.103.3 — the dots were lying about the pulse
+
+Moving the audio to the felt pulse in v0.103.1 left the display behind. Three places
+compute the beat grouping and after that change they disagreed.
+
+**The pulse dots drew six under a groove you could hear pulsing twice.** They read
+`pulseBeats || tsTop` and never learned about `pulse`, so a 6/8 groove clicked on
+its two foot-taps while six dots animated underneath. Those dots are the picture of
+that click; they now read the same felt pulse the scheduler does.
+
+**The step grid and its counting syllables still use the notated beat, deliberately.**
+That is the notation view: for a 6/8 groove it shows the six eighths, which is what
+you want when editing a pattern and reading its structure. The pulse dots show what
+you hear; the grid shows what is written. Those are different jobs and it is correct
+for them to differ. Worth stating outright because it looks like the same
+inconsistency that was just fixed and is not.
+
+Caught by Daniele asking whether subdivisions had been checked, which they had not
+been; the tempo work had taken all the attention.
+
+---
+
+## v0.103.2 — tempos taken from recordings, not from theory
+
+v0.103.1 fixed the unit and left the numbers where they were, on the assumption that
+a value written as a felt pulse was the right value. Checking each against what the
+music actually gets played at says otherwise for three of them.
+
+    IRISH JIG        --  -> 100    had no tempo at all; inherited the dial
+    GOSPEL 6/8       --  ->  66    had no tempo at all; inherited the dial
+    SICILIANA        96  ->  42    was too FAST, not too slow
+    TARANTELLA      160  -> 135    above every recording found
+    COMPOUND 9      160  ->  53    same sound as before, corrected unit
+    SLOW BLUES 12/8  60      kept  52-60 is where the form sits
+    GOSPEL 12/8      72      kept
+
+**SICILIANA was wrong in the other direction.** The Clarinet Institute edition of
+Bach's Siciliano BWV 1031 prints dotted quarter = 42, and both Wikipedia and San
+Francisco Classical Voice describe the form as slow and melancholy. At 96 it was
+more than twice that. It is the only value in this whole pass that was playing too
+fast rather than too slow, which is a good argument for checking numbers against
+recordings instead of reasoning about them.
+
+**TARANTELLA came down.** Four recordings of Tarantella Napoletana read 127, 134,
+136 and 149 foot-taps a minute. These are algorithmic readings and all four mislabel
+the meter as 4/4, so they are a cluster and not a figure; 135 is the middle of it.
+The old 160 sat above all four.
+
+**IRISH JIG had no tempo at all,** so it inherited whatever was on the dial. Tom
+Hanway gives the standard metronome setting for jigs as dotted crotchet = 100, Bill
+Troxler gives 80-100, and Fiddle Hangout puts the range at 84-120 with dancers
+preferring 110-120. 100 is where the session and dance readings overlap.
+
+**COMPOUND 9 was deliberately held at the speed it already had.** It is a
+constructed teaching cell with no recording behind it, so there is nothing to check
+it against. Its old 160 was almost certainly entered as eighths, and it produced a
+3.4-second bar that worked; 53 reproduces that same bar under the corrected unit.
+Left at 160 it would have run to eight eighths a second. The comment says not to
+restore the old number.
+
+**GOSPEL 6/8's 66 is the weakest claim in the groove table and says so in the
+file.** No recording or marking was found for that feel specifically. 66 sits just
+above SLOW BLUES 12/8 at 60 and below GOSPEL 12/8 at 72, which is where the form
+lives, but it is a considered default and not a citation.
+
+Patterns untouched again; 48 pins held.
+
+---
+
+## v0.103.1 — BPM meant the wrong note
+
+TARANTELLA felt slow because it was slow. It plays at 53 foot-taps a minute and its
+own comment cites Wikipedia's "fast upbeat tempo."
+
+**The groove patterns were never the problem.** Not one step array changed in this
+entry, and all 48 sentinel pins held throughout. What was wrong is the unit the
+tempo number was read in.
+
+**`bpm` was being applied to the notated beat, not the felt one.** Selecting a
+groove calls `setTS(preset.beats, ...)`, so a 6/8 groove sets `tsTop` to 6, and the
+scheduler computed a bar as `secondsPerBeat * tsTop`. That makes BPM count EIGHTHS.
+But a 6/8 bar has two beats, not six: ONE-two-three FOUR-five-six. Every value in
+the file was written as the felt pulse, the way a tempo marking on a score is, so
+each one played three times too slow. SLOW BLUES 12/8 had a twelve-second bar,
+which is five bars a minute.
+
+**Grooves can now declare `pulse`,** the number of felt beats in a bar, and the
+scheduler uses that instead of `tsTop`. Anything that does not declare it falls
+back to `tsTop`, so all the simple-meter grooves behave exactly as before and the
+change cannot reach them. Seven declared it:
+
+    TARANTELLA       2    2.25s bar -> 0.75s     53 -> 160 /min
+    SICILIANA        2    3.75s bar -> 1.25s     32 ->  96 /min
+    IRISH JIG        2    3.00s bar -> 1.00s
+    GOSPEL 6/8       2    3.00s bar -> 1.00s
+    SLOW BLUES 12/8  4   12.00s bar -> 4.00s     20 ->  60 /min
+    GOSPEL 12/8      4   10.00s bar -> 3.33s     24 ->  72 /min
+    COMPOUND 9       3    3.38s bar -> 1.12s     53 -> 160 /min
+
+**Fixing `bpm` rather than the display was the smaller change, not the lazier one.**
+`bpm` is read by tap tempo, the drum kit, progressions, the timeline and
+`getTempoName`, and rendered in eight places. Leaving it meaning eighths and
+correcting only what is shown would have meant patching all of those; `getTempoName`
+was already naming compound tempos off the eighth rate and was wrong today. Making
+`bpm` mean what a musician means by BPM fixes every one of them at once.
+
+**Two shortcuts rejected, both of which look right until you check.**
+
+Multiplying the seven values by three does not work: `setBPM` clamps at 300, and
+five of them need more. TARANTELLA would want 480 and silently clamp to 300,
+landing at 100 foot-taps rather than 160. It would have looked fixed and been wrong.
+
+Inferring the grouping from the meter does not work either. "Divisible by three
+means compound" gets 6/8 and 12/8 right and then mangles KARŞILAMA, whose 9/8 is
+2+2+2+3, four beats of unequal length rather than three even ones. Every grouping
+here is declared and taken from the sources already in the file.
+
+**Deliberately left alone, and why.** The flamenco pair is not a compound-meter
+case at all: their twelve steps are the twelve counts of the compás, not sixteenths,
+so the arithmetic that applies to TARANTELLA does not apply to them. The aksak
+meters (RACHENITSA 2+2+3, KOPANITSA 2+2+3+2+2, KARŞILAMA 2+2+2+3, DEVR-I HINDI,
+SEVEN ROCK) have UNEVEN pulses, which a single `pulse` count cannot describe, and
+their tempo is conventionally given per eighth, which is what they already do.
+Whether they are individually too slow is a separate question and still open.
+
+**The background click layer follows the felt pulse now.** In 6/8 it hits the two
+foot-taps instead of all six eighths. It is off by default and has its own volume,
+so it never touched the groove's own hits either way.
+
+**Listen list.** Every one of the seven is now roughly three times faster, so all of
+them want a hearing. TARANTELLA at 160 foot-taps and COMPOUND 9 at 160 are the two
+to judge hardest: both are now genuinely quick, TARANTELLA's number is unsourced
+beyond "fast upbeat tempo," and COMPOUND 9 is a constructed teaching cell that never
+had a source to begin with. If either feels frantic the number is the thing to move,
+not the pattern. IRISH JIG and GOSPEL 6/8 still carry no `suggestedBpm` and inherit
+whatever is on the dial, which now means foot-taps rather than eighths.
+
+---
+
 ## v0.103.0 — the ShareAlike debt, paid
 
 Performance mode plays twenty-one recordings by Bernd Krüger, taken from
