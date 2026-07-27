@@ -121,7 +121,7 @@
     <header>
       <div class="app-name">Intonare</div>
       <h1>Privacy Policy</h1>
-      <p class="updated">Effective date: June 24, 2026</p>
+      <p class="updated">Effective date: July 26, 2026</p>
     </header>
 
     <div class="highlight-box">
@@ -129,14 +129,14 @@
     </div>
 
     <h2>Who We Are</h2>
-    <p>Intonare is a music education app developed by LieutenantDan76, an independent developer based in Italy. The app is available on Android (Google Play Store), iOS (Apple App Store), and as a Progressive Web App (PWA).</p>
+    <p>Intonare is a music education app developed by LieutenantDan76, an independent developer based in the United States. The app is distributed for Android via the Google Play Store, for iOS via Apple's TestFlight, and as a Progressive Web App (PWA). The PWA is served from GitHub Pages, whose hosting provider keeps standard server access logs (including IP addresses) that the developer cannot read; see <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub's privacy statement</a>.</p>
 
     <h2>Data We Do Not Collect</h2>
     <p>Intonare does not collect, process, or transmit any of the following:</p>
     <ul>
       <li>Personal information of any kind (name, email, age, etc.)</li>
       <li>Usage analytics or behavioural telemetry</li>
-      <li>Device identifiers or advertising IDs</li>
+      <li>Advertising IDs, or any identifier used for tracking or profiling (if you make a purchase, an anonymous identifier is generated solely so the purchase can be restored &mdash; see Purchases below)</li>
       <li>Location data</li>
       <li>Audio recordings</li>
       <li>Crash reports or diagnostics sent to external servers</li>
@@ -153,7 +153,13 @@
     <p>Microphone access is only active while you are actively using a feature that requires it (such as the tuner or pitch exercises). You can revoke microphone permission at any time through your device's system settings without affecting other features of the app.</p>
 
     <h2>Internet Access</h2>
-    <p>Intonare requires an internet connection solely to load audio instrument samples on first use. These samples are fetched from <a href="https://gleitz.github.io/midi-js-soundfonts/" target="_blank" rel="noopener noreferrer">gleitz's open-source MIDI soundfonts</a>, a public repository of royalty-free audio files. No personal data is transmitted during these requests — they are equivalent to loading an image from a website. Once loaded, samples may be cached by the browser for offline use.</p>
+    <p>Audio instrument samples ship inside the app itself and are loaded from local storage, so playing an instrument requires no internet connection at all. (The sample naming follows the conventions of <a href="https://gleitz.github.io/midi-js-soundfonts/" target="_blank" rel="noopener noreferrer">gleitz's open-source MIDI soundfonts</a>, but the files are bundled rather than fetched.)</p>
+    <p>Two features do reach the internet, and only when you choose to use them:</p>
+    <ul>
+      <li><strong>Music Quiz</strong> fetches its questions from <a href="https://opentdb.com" target="_blank" rel="noopener noreferrer">the Open Trivia Database</a>. The request sends only a category, a difficulty, and how many questions are wanted.</li>
+      <li><strong>Reference summaries</strong> in the learning material are fetched from Wikipedia's public API when you open an article.</li>
+    </ul>
+    <p>Neither request carries any personal data, account, or identifier. As with visiting any website, the service receiving the request can see the IP address it came from; Intonare sends nothing else. If you never open Music Quiz or a reference article, neither request is ever made.</p>
 
     <h2>Local Storage</h2>
     <p>Intonare stores a small amount of data locally on your device, including your settings preferences, exercise history, and progress statistics. This data:</p>
@@ -165,16 +171,22 @@
 
     <h2>Purchases</h2>
     <p>Intonare offers a single optional one-time purchase that unlocks the app's premium features. This purchase is handled through Google Play's billing system and a service called RevenueCat, which manages your unlock so it can be restored if you reinstall the app or move to a new device.</p>
-    <p>When you make a purchase, RevenueCat receives an anonymous identifier and your purchase status. It does not receive your name, email address, or payment card details. Payment information is handled entirely by Google Play and is never seen by the developer or by RevenueCat. RevenueCat processes this data solely on the developer's behalf to manage your unlock, and the data is encrypted in transit.</p>
+    <p>When you make a purchase, RevenueCat receives an anonymous identifier, your purchase status, and your locale and currency code so the price can be shown correctly. It does not receive your location. It does not receive your name, email address, or payment card details. Payment information is handled entirely by Google Play and is never seen by the developer or by RevenueCat. RevenueCat processes this data solely on the developer's behalf to manage your unlock, and the data is encrypted in transit.</p>
     <p>If you never make a purchase, no purchase data is generated or collected. If you have made a purchase and would like the associated purchase data deleted, contact the developer (see Contact below) and it will be removed.</p>
 
     <h2>Third-Party Services and Advertising</h2>
-    <p>Intonare does not integrate any third-party analytics SDKs, advertising networks, or tracking frameworks. There are no ads in the app. The only third-party services involved are Google Play's billing system and RevenueCat, used solely to process the optional in-app purchase described under Purchases above. No data is shared with any third party for advertising, profiling, or any commercial purpose whatsoever.</p>
-    <p>Aside from processing purchases, the only external network requests the app makes are to load audio sample files, as described under Internet Access above.</p>
+    <p>Intonare does not integrate any third-party analytics SDKs, advertising networks, or tracking frameworks. There are no ads in the app. The only third-party services involved are Google Play's billing system and RevenueCat, used solely to process the optional in-app purchase described under Purchases above. No data is shared with any third party for advertising, profiling, or any commercial purpose whatsoever. Google Play lists purchase history as being collected for "app functionality" and "analytics"; the analytics there means the developer being able to see how many copies sold, and nothing about you or how you use the app.</p>
+    <p>Aside from processing purchases, the only external network requests the app makes are the Music Quiz and reference-summary lookups described under Internet Access above, and only when you use those features.</p>
 
     <h2>Children's Privacy</h2>
     <p>Intonare does not collect any personal data from any users, including children under 13 (or under 16 in the European Union). The optional purchase described under Purchases involves only anonymous data with no personal information attached. The app is safe for use by learners of all ages. Because no personal data is collected, transmitted, or stored off-device, the app does not knowingly collect personal information from children as defined by the U.S. Children's Online Privacy Protection Act (COPPA), the GDPR, or comparable laws.</p>
     <p>The microphone is used only for real-time, on-device pitch detection and is never recorded or transmitted (see Microphone Access above). Because no personal data is collected, no special parental consent mechanisms are required or implemented.</p>
+
+    <h2>Data Security and Retention</h2>
+    <p>Because no personal data is collected or transmitted, there is no server-side database to secure and no retention period to run. Everything the app creates lives in your device's own storage, protected by your device's security, and is deleted when you clear the app's data or uninstall it. The only exception is the anonymous purchase record described under Purchases, which is retained by RevenueCat for as long as your unlock is active so that it can be restored, and is transmitted encrypted.</p>
+
+    <h2>Do Not Track</h2>
+    <p>Some browsers can send a "Do Not Track" signal. Intonare does not track you across websites or apps, and does not build a profile of your activity, so there is nothing for that signal to switch off. No third party collects personally identifiable information through the app. The app's behaviour is the same whether the signal is sent or not, because it never tracks in the first place.</p>
 
     <h2>Your Rights (GDPR / EU Users)</h2>
     <p>Because Intonare collects no personal data, there is nothing to access, correct, export, or delete on our end. All data associated with your use of the app exists only on your own device and is entirely under your control.</p>
@@ -193,13 +205,13 @@
     <p>If this policy is updated, the revised version will be published at this URL with an updated effective date. Given the nature of the app, meaningful changes to this policy are unlikely unless significant new features are added. Users are not automatically notified of policy updates; we encourage you to check this page periodically if you have concerns.</p>
 
     <h2>Governing Law</h2>
-    <p>This policy is governed by the laws of Italy. Any disputes arising in connection with it shall be subject to the jurisdiction of Italian courts, without prejudice to any mandatory consumer protection rights you may hold under the laws of your country of residence.</p>
+    <p>This policy is governed by the laws of the State of California, United States, without regard to its conflict-of-laws rules. This does not remove any mandatory consumer protection rights you hold under the laws of your own country or state of residence.</p>
 
     <h2>Contact</h2>
-    <p>Questions about this privacy policy can be directed to the developer via the <a href="https://github.com/LieutenantDan76/Intonare" target="_blank" rel="noopener noreferrer">Intonare GitHub repository</a>.</p>
+    <p>Questions about this privacy policy, or any request to delete purchase data, can be emailed to <a href="mailto:Intonare.dev@gmail.com">Intonare.dev@gmail.com</a>. You can also reach the developer through the <a href="https://github.com/LieutenantDan76/Intonare" target="_blank" rel="noopener noreferrer">Intonare GitHub repository</a>.</p>
 
     <footer>
-      <p>© 2026 LieutenantDan76 &nbsp;·&nbsp; <a href="https://github.com/LieutenantDan76/Intonare">GitHub</a> &nbsp;·&nbsp; Effective: June 24, 2026</p>
+      <p>© 2026 LieutenantDan76 &nbsp;·&nbsp; <a href="https://github.com/LieutenantDan76/Intonare">GitHub</a> &nbsp;·&nbsp; Effective: July 26, 2026</p>
     </footer>
   </div>
 </body>
