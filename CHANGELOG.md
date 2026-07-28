@@ -4,20 +4,36 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS — groove audit (as of v0.102.24)
+## OPEN ITEMS (as of v0.104.0)
 
 Not a release entry. A standing list so these survive outside anyone's memory.
 
-**Two decisions waiting on Daniele**
+**Road Trip: 21 songs need their legs tuned on device**
 
-1. `intonare_groove_audit.py` needs copying into `/mnt/project/`. It ships to
-   outputs on every build but does not persist, and it already had to be rebuilt
-   from scratch once for exactly this reason.
-2. Undecided: whether groove patterns should join the regression sentinel's pin
-   list. Bulería had been correct in this file once and was silently changed back;
-   the audit caught it, but only because someone happened to be looking. Pinning
-   the Toussaint six, maqsum and the flamenco pair would make that class of
-   regression impossible rather than merely detectable.
+clair_de_lune, prelude_em, moonlight, liebestraum, fuer_elise, moonlight_3,
+prelude_c, alla_turca, barcarolle, butterfly, fantaisie_impromptu, moonlight_2,
+prelude_csharp, prelude_op23, raindrop, sonata_facile, to_spring, traumerei,
+troika, waldstein_1, wedding_day.
+
+That is exactly the set with a perf: block, and it is not a coincidence. Hooks
+were placed as beat positions against the grid; converting to performance mode
+replaced the timing wholesale, so every one of them is either analytic or stale.
+RT_TUNED is still empty. Long-press the ROAD TRIP title to open the Leg Tuner,
+tune, then add the id to RT_TUNED and pin its line in the sentinel.
+
+The 17 grid songs were hand-tuned by ear and are now pinned (v0.104.0), so a
+silent drift becomes a build failure rather than a lucky catch.
+
+**Housekeeping**
+
+`intonare_groove_audit.py` still needs copying into `/mnt/project/`. It ships to
+outputs on every build but does not persist, and it already had to be rebuilt
+from scratch once for exactly this reason. The same now applies to the sentinel:
+v0.104.0 added 17 pins, so the copy in the project must be replaced or those
+pins vanish on the next fresh chat.
+
+RESOLVED: groove patterns are pinned. The Toussaint six, maqsum and the flamenco
+pair went into the sentinel, which is why Bulería cannot silently revert again.
 
 **On-device listening, ordered by how much actually changed**
 
@@ -45,6 +61,583 @@ REACHED note naming what would settle it: a Cuban piano method, a bateria chart,
 or Antoon Aukes' "Second Line: 100 Years of New Orleans Drumming" — failing those,
 a player. Bhangra is technically sourced but sits on the wrong grid for a triplet
 feel and its sources contradict each other on accents.
+
+---
+
+## v0.105.6 — piano notes in riff playback never decayed, they looped
+
+Daniele reported hard stops in the performance captures, worst in Liebestraum,
+some in Moonlight 3, and Fur Elise sounding choppy. He guessed the pedal was
+not working or the cutoffs were too harsh. Neither.
+
+The pedal data is intact: 220 events in Liebestraum, 721 in Moonlight 3, clean
+binary values, and the damper model reads them correctly. The stop is not harsh
+either; it already tapers over 40ms rather than chopping.
+
+**THE NOTES WERE LOOPING.** _riffPianoNoteOn passed null as the duration to
+SampleEngine.play, which takes the drone branch: src.loop = true, looping
+between 15% and 95% of the buffer. So a piano note held at full sustain level
+forever instead of dying away like a string. Nothing sounds wrong while a note
+rings, which is why this survived. It shows up at the other end: every damp
+became a full-volume note being switched off, and 40ms of taper from full
+volume is audible. On a real piano the string has already decayed to almost
+nothing by the time the damper lands, so damping is silent.
+
+That is exactly why it tracked the note lengths. Median note duration and the
+share of notes under 200ms line up with the report: Liebestraum 204ms and 44%,
+Moonlight 3 97ms and 88%, Fur Elise 217ms and 29%, and Moonlight 440ms with
+zero, which is the one he did not flag. More note-offs, more full-volume cuts.
+
+Fixed by passing a finite 8 second ceiling, which is what the synth fallback
+eleven lines below has always done, with a comment explaining this exact trap.
+The sample path never got the same treatment. With a duration set, the buffer
+plays once and carries its own recorded decay; 8s is a ceiling rather than a
+hold, and a Salamander piano sample runs out well before it. The damper model is
+untouched and still stops notes early on finger-lift and pedal-lift.
+
+Only one caller in the file passed null, so the blast radius is contained, but
+it is wider than the 21 performance songs: _riffPianoNoteOn serves the whole
+damper model, so two-track rh/lh grid piano songs get the same change.
+
+**NEEDS EARS, NOT REASONING.** One thing to listen for specifically: a note can
+no longer ring longer than its sample, roughly four seconds. That is correct
+behaviour for a piano, but any passage that was leaning on the accidental
+infinite sustain will sound thinner than it did.
+
+## v0.105.5 — the Apply button was off the side of the screen
+
+The ENTER CODE row put a text field and an Apply button in a flex row, gave the
+field flex:1, and let the button fall off the right edge. Flex:1 says the field
+may shrink, but an <input> in a flex container defaults to min-width:auto, which
+resolves to its intrinsic width of roughly twenty characters. So it never
+shrank: measured at a fixed 253px at every screen size, pushing Apply 17px past
+the edge on a normal phone and 61px past it on a narrow one.
+
+One declaration, min-width:0, plus flex:0 0 auto and nowrap on the button so it
+can never be squeezed or wrapped instead. Measured at 320, 360, 393 and 412
+across headless Chromium: the field now flexes from 171px to 215px and the
+button sits 21px inside the padding at every width.
+
+Swept the rest of the file for the same shape. Two other text fields in flex
+rows had it, the setlist name field and the tuner reference pitch field, and
+both are fixed the same way; neither was visibly broken at common widths but
+both would go the same way on a narrow screen. Five range sliders share the
+pattern, left alone for now: a slider's intrinsic width is far smaller so the
+overflow does not bite, and changing them risks feel for no visible gain.
+
+Also confirmed alert() works fine in the WebView, unlike prompt() and confirm().
+The seven purchase and restore dialogs stay as they are; a blocking dialog is
+the right call for a failed payment, since a toast can be missed.
+
+## v0.105.4 — SAVE did nothing, because prompt() does nothing here
+
+Shipped a window.prompt() into a Capacitor WebView. It returns null without ever
+drawing a dialog, so the save read that as a cancel and quietly did nothing.
+
+The file already had the answer in it. window.prompt appeared exactly once in
+ten megabytes: the line added yesterday. The drum kit names its saved patterns
+with an inline input and two chips, and that is not a stylistic choice, it is
+the workaround. Naming a progression now uses the same shape: SAVE swaps itself
+for a text field with a tick and a cross, Enter saves, Escape cancels, and an
+empty field falls back to numbering.
+
+window.confirm was the same story and the same count of one, on the delete
+cross. It is now arm-then-confirm, the pattern RESET ALL PROGRESS already uses:
+first tap turns the cross into a red tick, second tap deletes, and it disarms
+itself after three seconds. Better than a dialog here regardless, since the
+thing sits inside an open modal.
+
+Lesson worth writing down: before using a browser primitive in this app, grep
+for it. If the count is zero across ten megabytes, that is an answer.
+
+## v0.105.3 — the progression tool had nowhere to put your own work
+
+Build a progression, close the app, gone. progBars was a plain array at line
+51765 and nothing ever wrote it anywhere; the only thing that survived the tool
+was the instrument sound. The preset modal was load-only.
+
+It reads like it grew rather than was designed that way. Sixty-odd built-in
+presets came first, with a genre-grouped table and a modal of their own, and bar
+editing, add and remove bar, transpose and octave shift were layered on top of a
+preset player afterwards. Nobody went back and asked where the user's own work
+was supposed to go.
+
+**SAVE, next to CLR.** It writes to progState.savedProgressions in the same
+shape as a built-in preset, which is why restoring one needed no new code path:
+progLoadPreset already accepted exactly that object. Saves appear under YOURS,
+pinned above the genre groups, because scrolling past sixty presets to reach
+your own work would be a strange way to sort a list. Each carries a × to delete,
+behind a confirm.
+
+**IT SAVES THE WHOLE THING.** Chords with their voicing, time signature, tempo,
+groove, drum preset and instrument. The same changes at 70bpm over a bossa are
+not the same idea as at 140 dry. Voicing needed one change to the loader: it was
+rebuilding bars as progBlock('chord', r, q, dur) and dropping oct, inv and
+manual on the floor. Built-in presets leave those undefined so they default
+exactly as before, but without manual surviving, auto voice leading would
+quietly undo whatever voicing you had set before saving.
+
+Being inside progState, saved progressions ride along in backups with no extra
+work, and a reset clears them along with the rest of a clean profile.
+
+Verified in isolation across 22 assertions: capture of every field, voicing
+preserved, groove correctly null when disabled, lookup finding both built-ins
+and saves, blank names falling back to numbering, delete releasing the title,
+and an empty grid refusing to save rather than storing four empty bars.
+
+## v0.105.2 — reset all progress was revoking Pro
+
+Asked to make reset clear the four keys it was missing. It was worse than that.
+
+**RESET WAS TAKING AWAY PURCHASES.** resetProgress() rebuilt progState from a
+literal typed out inside the function, and that literal had drifted: it omitted
+hasPro, so a reset left the field undefined, isPro() went false, and a paying
+user lost Pro until they happened to find Restore Purchases. The same omission
+silently reverted uiScale, notifications, master volume, session goal and the
+launch sound, directly under a comment claiming settings were preserved.
+
+The literal is gone. There is now one PROG_DEFAULTS object; progState starts as
+a copy of it and reset returns to it, so the two cannot drift again. What
+survives a reset is a named list, PROG_KEEP_ON_RESET, and hasPro is on it
+deliberately: revoking Pro is the testing button's job, and that button comes
+out before launch. A purchase should not be reachable from a reset button.
+
+**AND IT IS A CLEAN PROFILE NOW.** Reset was missing Tónale, Road Trip stats and
+its adventurer flag, and both drum kit keys, because the list of things to clear
+was typed by hand and had fallen behind. It reads BACKUP_KEYS_PROGRESS instead,
+so a key added for one is never absent from the other. Saved metronome and ramp
+presets, saved charts and pinned favourites now clear too; those were already
+being wiped by the old literal, just by accident rather than on purpose.
+
+Verified by running a reset over a fully populated profile: nine preserved
+fields still correct afterwards, fourteen wiped ones actually empty.
+
+## v0.105.1 — backup and restore, and the paywall hole it would have opened
+
+Settings has a Your Data section now: one button writes a JSON file with
+everything worth carrying to a new phone, and one reads it back.
+
+**RESTORE IS REPLACE, NOT MERGE.** That is the convention for file-based restore
+and it is the right one here. The case this exists for is a new phone with
+nothing on it worth keeping, and merging two live copies is the sync problem,
+which gets solved when accounts land rather than guessed at now. The merge
+rules are written down in BACKUP_LEDGER.md for whenever that happens.
+
+**hasPro DOES NOT TRAVEL, AND NOW CANNOT.** isPro() trusts progState.hasPro
+directly and hasPro lives inside intonare_progress_v1, so a backup file would
+have been a free Pro unlock for anyone willing to open it in a text editor and
+change one word. It is excluded from the payload in both directions, the local
+value survives a restore untouched, and there are two independent guards on it:
+a sentinel pin and a named check in the new audit script. Both were tested by
+removing the exclusion and confirming they fail.
+
+Excluded alongside it: tapOffsetMs and masterVolume, which are measured against
+one particular device and make the receiving phone worse if carried; and the
+four same-day session fields, which would drop yesterday's practice into today's
+goal tracking.
+
+**THE KEY LIST WAS WRONG, TWICE OVER.** The first count of what the app persists
+came to 42. The real number is 47. Three of the original 42 were prefixes rather
+than keys, and four more are written through const identifiers and never appear
+as quoted strings, so no amount of grepping for localStorage finds them. One of
+those four was DK_SAVES_KEY: saved drum kit patterns, user-authored content, and
+the single worst thing on the list to lose silently. The pref_ family was the
+other near-miss; the generic name hides real settings including metronome
+volume, SingSing difficulty and playback mode, and Road Trip difficulty.
+
+**intonare_backup_audit.py** exists so that stops being a matter of memory. It
+walks every persisted key and every progState field and fails if any of them is
+not classified, because a backup gap is invisible: nothing breaks, users just
+quietly lose that data when they change phones and nobody hears about it for
+months. Currently 47 keys and 36 fields, all accounted for.
+
+Restore validates before it writes anything. A file that is not ours, one that
+cannot be parsed, and one from a newer schema are each refused with their own
+message rather than partially applied. The confirmation sheet reads the backup
+back before you commit: when it was made, which version made it, and the streak,
+XP and achievement counts on both sides, so replacing is a decision made against
+real numbers. Export is three tiers, the same shape as the share handler: native
+file plus share sheet where @capacitor/filesystem is present, a browser download
+where it is not, and the JSON through the share sheet as text as the floor.
+
+## v0.105.0 — the save migration is now a function, because restore needs to run it too
+
+Groundwork for backup and restore. Nothing changes on device; this build exists
+so the next one can be small.
+
+**THE MIGRATION LADDER MOVED OUT OF progLoad().** Every field added to progState
+since the first release needs a default somewhere, because an old save simply
+will not have the key and everything downstream assumes it does. That ladder had
+lived inline inside progLoad, which was fine while boot was the only thing that
+ever read a saved blob. Restore has to run the same ladder over an incoming
+file, and two copies of it would drift apart within a release or two. It is now
+progMigrate(s): it mutates and returns whatever object it is handed, so progLoad
+can call it on the live progState during boot and restore can call it on a staged
+copy later. The body is the old body, moved. The extraction was mechanical rather
+than retyped, and the result was checked against the original across six shapes
+of save, from empty to fully populated, with identical output every time.
+
+**WHAT THE READ TURNED UP, AND DID NOT FIX.** isPro() trusts progState.hasPro
+directly, and hasPro is stored inside intonare_progress_v1. A backup file is
+plain JSON, so exporting one, flipping a boolean in a text editor and restoring
+it would hand over Pro. localStorage is already editable in desktop devtools, so
+the hole is not new; a backup feature would just hand it to every phone. hasPro
+will be excluded from the export payload in both directions when the serializer
+lands, with a sentinel pin to keep it excluded. Nothing about Pro changed here.
+
+Two smaller notes from the same read, both for the next build. tapOffsetMs is
+tap calibration measured against one specific device, so carrying it to a new
+phone makes the timing worse rather than better; it belongs on the same
+exclusion list, along with sessionTodayMs and the rest of the same-day scratch
+fields. And the stats loop in the ladder reads s.stats[k] without checking that
+s.stats exists, so a blob missing that key throws partway through and silently
+skips every migration below it. Harmless today because progLoad's own try/catch
+swallows it and a real save always has stats; worth a guard once an arbitrary
+file can reach the function.
+
+## v0.104.5 — the polish backlog was mostly the tools lying, and what was left
+
+Cleanup of the findings that survived verification. Most of the list did not
+survive, which is the useful part.
+
+**ROAD TRIP COULD BE FAVOURITED AND THE FAVOURITE WAS BROKEN.** The card has
+carried data-fav-id="exercise:roadtrip" since it shipped, but FAV_META had no
+entry for it. Starring it produced a row with no label, no type and no icon: the
+star worked, the favourite appeared, and it led nowhere. Twenty-six of the
+twenty-seven entries were complete; this was the one gap. Now added with the
+Train hub's own icon, and every entry has been checked for the full shape.
+
+**THE DAILY QUIZ POPUP WAS ENTIRELY HARDCODED ENGLISH.** Six user-facing strings
+in a flagship surface never translated: the completed line, VIEW RESULT, the "10
+questions, one attempt" meta, the IN PROGRESS counter, RESUME and START. All now
+go through t() with Italian twins. Also added `slow` and `fast`, which were
+referenced by data-i18n from the scale speed slider and had never existed in
+either dictionary, so both rendered as their English DOM defaults regardless of
+language.
+
+**HELP BUTTONS WERE TOO FAINT TO READ.** The `?` controls sat at opacity 0.6,
+measuring 2.81:1 against a 4.5:1 requirement. Raised to 0.9. Nothing else the
+contrast audit flagged was touched, and that is deliberate: the ghost chromatic
+note row and the unselected metro tabs are faint because being faint is what
+tells you they are inactive. WCAG exempts inactive controls, and flattening that
+hierarchy would cost more than it gained. The help button is different because it
+is something you are meant to find and press.
+
+**WHAT DID NOT SURVIVE VERIFICATION.** The 82 missing i18n keys were 2. The
+"body_it variants exist but render() doesn't select by language" error was wrong;
+the Survival Guide has done `(_il && page.body_it) ? page.body_it : page.body`
+all along, and the audit was reading a different render() from another module
+because it used a bare find() for the first match in the file. The two launchable
+cards "missing" data-fav-id are the Coming Soon cards, which correctly have none.
+Of thirty contrast selectors, sampling real pixels found six of seven passing.
+
+**AUDIT FIXES, since the tools generated most of that noise.**
+- strings audit: render() lookup now starts from the C object instead of the top
+  of the file, same first-match trap that had it reading the wrong STRINGS block.
+- strings audit: cards with class `wip` or an `svcToast(t('wip_toast'))` handler
+  are skipped by the fav-id check. There is nothing to favourite on an unreleased
+  tool and a star there would be a dead end.
+- Errors dropped from 20 to 9 without a single one being suppressed rather than
+  understood.
+
+**STILL HARDCODED, LEFT DELIBERATELY.** Nine remain and they want your wording,
+not mine: the GENRE_ORDER table (ELECTRONIC, CLASSICAL / THEORY, ODD METER,
+OTHER), the four polyrhythm grades (LOCKED IN, CLOSE, NEEDS WORK, OFF), and the
+piano SUST pedal label. Two more are the Leg Tuner's own dev strings and never
+need translating. The audit's remaining 'OCT', 'RESUME' and 'DAILY' hits are
+false positives: it is flagging the STRINGS definitions themselves.
+
+Verified at runtime: 1532 EN keys, perfect EN/IT parity in both directions, every
+markup key resolves, all nine new keys return correctly in both languages, and
+the Italian switch returns LENTO, INIZIA and VEDI RISULTATO. No console errors.
+
+---
+
+## v0.104.4 — the audio preflight was about to reintroduce the iOS quiet-audio bug
+
+Sweep of the other startup subsystems after v0.104.3, checking the audio preflight
+and the lazy song data against the mic and the sample engine. The preflight had a
+real problem on iOS that no test in this container could ever have caught.
+
+**THE PREFLIGHT BROKE A DOCUMENTED INVARIANT.** getAudio() carries the note that it
+"only ever RUNS on a user gesture, long after parse". v0.104.2 started calling it
+from an idle callback, which is not a gesture. That matters because building the
+context calls _iosSyncAudioMode('first audio'), and that function sets
+_iosAudioEverApplied as soon as an AudioContext exists, which permanently stops
+later calls forcing through native's cache.
+
+On iOS WKWebView does not build its audio engine until something actually plays
+after a gesture. Preflighting would therefore configure a session with nothing
+attached to it, let WebKit come up with its own defaults immediately afterwards,
+and leave native's cache asserting the work was already done. That is precisely the
+failure written up on _iosAudioEverApplied: audio quieter than either normal level,
+stuck there, until a mic toggle changes micLive and bypasses the cache. Saving
+115ms on the first tap is not worth reintroducing a bug that took that long to find.
+
+iOS is now excluded and keeps the gesture-driven path exactly as it was. If the
+platform check throws for any reason it assumes iOS and does nothing, so the unsafe
+branch is the one that requires positive proof. Android and the PWA keep the win.
+
+**AND IT COULD HAVE RACED THE LAUNCH MIC.** The app auto-starts the mic at launch
+when permission is already granted, which is gesture-free on the native path. If
+that had come up first, the preflight would have asserted a mic-off session
+underneath a live mic. It now returns early when isListening is already true, since
+in that case the mic owns the session and has built the context itself.
+
+**TIMING, MEASURED.** load at 4526ms, splash gone at 7613ms, launcher entry at
+7656ms, context built at 9057ms. requestIdleCallback waited out both the splash and
+the entry animation on its own and landed in the first genuinely idle moment after,
+which is exactly the behaviour wanted and the opposite of what the RIFFS idle warm
+did in v0.104.1. Only one AudioContext is ever constructed.
+
+**EVERYTHING ELSE CHECKED CLEAN.** The sample engine does not preload at boot and
+never did, so lazy RIFFS cannot have disturbed it. Nothing reads RIFFS during boot;
+it is still lazy after twelve seconds of idling. No getUserMedia call at boot in
+this environment, the mic autostart being Capacitor-gated. The isListening guard
+cannot throw: it is typeof-tested, wrapped in try/catch, and the preflight runs
+after load by which point the binding exists.
+
+Re-ran the full fifteen-scenario matrix and the data fidelity check on this build:
+all pass, 59 songs, 1802 ctl functions, 76,586 notes, fingerprint 8814428228214,
+Road Trip 38 entries and 21 untuned, no console errors.
+
+---
+
+## v0.104.3 — the setMode deferral broke reduced motion, and a full sweep of every entry path
+
+Verification pass over the whole startup surface after v0.104.2. It found a
+regression I had shipped the build before.
+
+**REDUCED MOTION LANDED IN THE WRONG MODULE.** lnchGo takes an early exit when
+prefers-reduced-motion is set: `if (reduce) { finish(); return; }`. Deferring
+setMode into the morph's second frame in v0.104.2 meant that path returned before
+the mode was ever applied. Tapping METRO with reduced motion on left you sitting in
+the tuner, wearing the tuner's theme, with no error in the console. Confirmed
+against the reconstructed v0.104.0 build, which correctly reported metronome where
+v0.104.2 reported tuner.
+
+The reduce path now calls the deferred applier explicitly. It also sets lnch-settled,
+which it never did: lnchGoPin's reduce path always has, .mode-toggle is styled off
+that class, and without it a reduced-motion user's toggle sat in its pre-entry state
+permanently. That second half was pre-existing, not from v0.104.2.
+
+**FULL MATRIX, ALL PASSING.** Fifteen scenarios at 4x CPU throttle: splash on and
+off, picker on and off, pinned modules, dark mode, all four cards tapped under both
+normal and reduced motion, and splash-off combined with a tap. Every one lands in
+the right mode with the right theme, tears the launcher and morph down to display
+none with the morph card emptied, sets lnch-settled, and logs no console errors.
+
+**THE MORPH SEQUENCE IS CORRECT.** Traced frame by frame from the tap: the card
+clone appears around 250ms with the launcher still fully opaque behind it, both hold
+together to about 700ms, then the launcher fades from BEHIND the card between 830ms
+and 950ms, and only then does the card itself fade and the morph layer tear down
+near 1000ms. That is the documented intent and nothing is uncovered early at any
+point.
+
+**TWO FALSE ALARMS, RECORDED SO NOBODY RE-CHASES THEM.** A white screen appeared in
+dark-mode screenshots during splash-off boot, which looked like a bad flash. It was
+the test: appearance was forced to dark but the browser context was left light, so
+`auto` resolved light and the screenshot was a legitimately white light-theme
+screen. With the context actually dark, html and body backgrounds are rgb(0,0,0)
+for the whole boot on both this build and the baseline. Separately, lnch-settled
+reading false while the chooser is still up is correct; it is set at the end of the
+morph teardown, so it only becomes true once a module has been entered.
+
+**STILL OPEN.** With the splash off there is roughly 600ms of empty themed screen
+before the chooser fades in, because the launcher waits for boot rather than the
+splash. It is the correct colour and nothing pops, so it reads as a slow start
+rather than a fault, but it is the weakest moment left in the sequence.
+
+---
+
+## v0.104.2 — the module entry animation was starting late, not running slow
+
+Tapping a card in the chooser dropped frames before the animation finished. It was
+two separate stalls, and neither of them was the animation.
+
+**THE FIRST TAP OF A SESSION BUILT THE AUDIO ENGINE.** The audio unlock is bound to
+pointerdown in CAPTURE, so it runs before the tap is even a click, and on the first
+call getAudio() does `new AudioContext()`. Measured: first pointerdown 115ms, second
+1ms, and 248ms inside a real tap with everything else in flight. So the first module
+you picked stuttered and every one after it was clean, which is the kind of fault
+that disappears the moment you try to reproduce it.
+
+Construction does not need a gesture; only starting audio does. The context is now
+built on an idle callback about a second after load, while the chooser is just
+sitting there, and arrives suspended exactly as before. The gesture path is
+untouched and still does the real unlock. If a user taps before the preflight runs
+they pay what they paid yesterday, so it cannot regress.
+
+**EVERY TAP REBUILT THE MODULE BEFORE THE ANIMATION STARTED.** lnchGo called
+setMode() synchronously on its first line, and setMode builds the target module:
+first-time canvas draws, csDrawKeyboard, hpRender, and a pile of
+getBoundingClientRect reads, which was the single largest cost in the profile at
+73ms of forced synchronous layout. The whole call blocked for 261ms, with 140ms of
+style recalc over 627 elements and 65ms of layout, ALL OF IT BEFORE the morph drew
+a single frame. Tuner felt smoother than the other three only because it is the
+default mode and setMode had less to change.
+
+It now runs two frames later, inside the morph: the first frame commits the
+transform, the second lets it paint, then the module is built underneath. Nothing
+about the look depended on the old ordering, because the palette was already held
+by _themeHold and released in finish(), and the morph card is opaque over the whole
+screen while the build happens. The no-morph fallback applies the mode immediately,
+since in that path nothing is covering anything.
+
+**MEASURED, 1.2s window after the tap, 4x CPU throttle.**
+
+    module   frames          median            worst
+    Tuner    33 -> 52    19.4 -> 17.7ms    243 -> 102ms
+    Metro    10 -> 23    35.4 -> 21.4ms    290 -> 174ms
+    Tools    14 -> 40    55.7 -> 17.3ms    259 -> 157ms
+    Train    11 -> 32    48.1 -> 16.7ms    421 -> 237ms
+
+Ten frames in 1.2 seconds is about 8fps, which is what "laggy" meant. All four now
+sit near a 16.7ms frame. Not perfect: two to four frames per entry still cross
+100ms, so there is more in there.
+
+**NOT THE CAUSE, CHECKED AND RULED OUT.** The lazy RIFFS work in v0.104.1 does not
+touch this; builtByTap was false on all four modules, so picking a card never
+triggers the song build. And this was not a regression from that change either: the
+reconstructed pre-lazy build measured the same or slightly worse, Train at a 79ms
+median against 48.1ms. The morph code itself is clean, one rect read and one
+deliberate reflow.
+
+Verified all four modules still enter correctly with the deferred setMode: tuner,
+metronome, tools and practice each land in the right mode with the right theme, the
+launcher hides, and no console errors.
+
+---
+
+## v0.104.1 — the launcher was not sluggish, it was waiting for two and a half megabytes of piano
+
+The grid felt heavy coming out of the splash. It turned out not to be the animation
+at all, which is worth writing down because the animation is where anyone would look
+first and the CSS there has already been tuned twice.
+
+**WHAT IT ACTUALLY WAS.** Traced at 4x CPU throttle: a single 4.3s blocking task.
+
+    RunTask            4309ms
+    +- ParseHTML       4301ms   lines 25020 -> 85868
+       +- EvaluateScript  3529ms   line 28443
+          +- v8.compile      2434ms   notStreamedReason: "inline script"
+
+V8 cannot stream-compile an inline script, so the HTML parser stopped dead while the
+5.2MB block was compiled. RIFFS was 49% of it, and it was being compiled and
+constructed at every cold launch whether or not anyone ever opened the piano. The
+launcher was animating on a main thread that was busy.
+
+**THE FIX.** The literal is wrapped in `__riffsBuild()` and reached through an
+accessor. V8 only pre-parses an uncalled function body, so the compile moves off the
+boot path and happens the first time a song is asked for. Measured over five runs
+each: domInteractive 3417ms -> 2686ms, and the launcher grid appears about 520ms
+sooner. Frames during the entry window were 70 before and 67 after, which is the
+same within noise: this makes the launcher arrive sooner with less behind it, it does
+not repaint faster.
+
+An accessor rather than a variable so nothing else has to know. RIFFS.piano[id] in
+Road Trip, RIFFS[inst][id] in the riff player, the `typeof RIFFS === 'undefined'`
+guards and anything written later all work untouched. First read builds it, then the
+property replaces itself with the plain value so there is no getter cost after that.
+It cannot be `var RIFFS`; var creates a non-configurable window property and
+defineProperty throws on it.
+
+**TWO THINGS TRIED THAT WERE WRONG, BOTH CAUGHT BY MEASURING.**
+
+Converting RIFFS to JSON was the first plan and it benchmarked beautifully: 77ms to
+parse against 613ms to evaluate the literal, and smaller once gzipped. It would also
+have been a silent catastrophe. Every ctls entry is an arrow function, 1802 of them
+across 58 of the 59 songs, and JSON.stringify drops function values without erroring.
+Every piece would have played with no pedal at all and nothing would have thrown. The
+round-trip fidelity check missed it too, because it compared JSON.stringify(before)
+against JSON.stringify(after) and both sides had already been stripped. A test that
+cannot fail is not a test.
+
+Pre-building on requestIdleCallback was the second, and it made the exact thing worse
+that this was meant to fix. The 1.4s build landed inside the launcher's entry window
+and starved the animation: 75 frames dropped to between 8 and 31 across five runs.
+Removed. The cost is paid on first use instead, under a screen transition that is
+already moving.
+
+**THE TRADE, STATED PLAINLY.** Boot is ~730ms cheaper every launch. In exchange the
+first piano or Road Trip of a session pays a one-time build, 1.4s at 4x throttle in
+the container and presumably a good deal less on a real phone. Sessions that never
+open a riff surface never pay it at all. If it turns out to bite on device, the next
+step is splitting the build per bank so opening Road Trip only constructs the piano.
+
+Verified identical to the old data, not merely working: 59 songs, 1802 ctl functions,
+76,586 notes and a summed note fingerprint of 8814428228214 matching the previous
+build exactly, with Road Trip reporting the same 38 journey entries, 21 untuned, and
+the same duck factor on Fuer Elise.
+
+**FOUND WHILE LOOKING, NOT FIXED.** The app-wide `*, *::before, *::after` rule puts
+nine transitioned properties on 5,568 of 5,572 elements, which is why the launcher CSS
+is littered with defensive `!important`. And 5,189 elements stay live behind the
+launcher while an opaque surface covers them. Both are real and both are minor:
+removing them moved the median frame from 30.3ms to 28.7ms. Style and layout are not
+the problem here. UpdateLayoutTree, Layout and Paint together came to 1.1s across an
+entire 8s boot, against 2.6s of v8.compile.
+
+---
+
+## v0.104.0 — dead code audit: four provable removals, and one that is not dead but wrong
+
+A cleanup pass, run report-first because the last one backfired. The audit swept CSS
+classes, DOM ids, i18n keys, top-level globals, function declarations, commented-out
+blocks and the piano song data. Most of what it flagged was wrong, which is the finding
+worth writing down.
+
+**STATIC ANALYSIS LIES ABOUT THIS FILE, REPEATEDLY.** The first sweep called
+`.rarity-common` dead. It is built at runtime by `` `rarity-${a.rarity}` ``. The second
+sweep, rewritten to catch template literals, called five Italian i18n keys missing; they
+exist, packed several to a line, and the line-anchored regex walked past them. A third
+pass reported eight empty CSS rules, two of which were the regex breaking on comments
+interleaved inside a live selector list. Every sweep needed a second sweep to correct it.
+Of 299 CSS classes initially flagged as unused, the honest number after filtering is
+much smaller, and it is still only a lead list rather than a delete list.
+
+**WHAT WAS ACTUALLY REMOVED — 1,145 bytes.** Small, and that is the point; these are the
+only four things that could be proven.
+
+- Chordle's picker was declared twice. `chordleOpenSlot`, `chordleOpenSheet` and
+  `chordleCloseSheet` appear at top level, then again twenty lines later as the two-card
+  sliding sheet. Hoisting means the second set wins, so the first eighteen lines have
+  never run. The dead copy has no `chordleLockedSlots` guard, no `chordlePMod`, no
+  `chordlePCard`, and never calls `chordleInitPickerSwipe`.
+- A global `_salamanderNotes` sat below the `SampleEngine` IIFE. Both of its call sites
+  are inside that IIFE, which closes at what was line 57207, so they resolve to the copy
+  declared within it. The global was never reachable.
+- Eight empty CSS rulesets. Where the braces held an explanatory comment, the comment
+  was kept and only the no-op rule dropped, so nothing that documents a deliberate
+  non-choice was lost.
+
+**SF_CAPO_FAMS WAS LEFT IN PLACE, AND IT NEEDS A DECISION.** It is the one top-level
+global in the file with zero references, so by the rules of this audit it should have
+gone. It did not, because of what it says. The live gate is
+`CAPO_FAMILIES = ['guitar','bass','uke']`. The orphan reads
+`SF_CAPO_FAMS = ['guitar','bass','uke','plucked']`, under a comment explaining that
+fretted instruments only should get a capo. Those two lists disagree, and `plucked` is
+mandolin and banjo, which take a capo perfectly well. So this is not leftover scaffolding;
+it is the only surviving evidence of an intent that was never wired up. Deleting it would
+quietly close a question nobody has answered. Either mandolin and banjo should get the
+capo control and `CAPO_FAMILIES` is the thing that is wrong, or they should not and the
+orphan goes. That is Daniele's call, not the audit's.
+
+**MEASURED, NOT TOUCHED.** Eight piano songs still carry the dormant grid data kept for
+rollback, and it is now counted per song rather than estimated: liebestraum 52,900 bytes,
+moonlight 37,400, minuet_g 35,468, prelude_c 12,291, prelude_em 10,113, moonlight_3 9,598,
+fuer_elise 3,434. About 157 KB in total, waiting on on-device approval song by song.
+Separately, five Rhodes arrangements share a byte-identical left hand with their piano
+twin: arabesque_1, nocturne, twinkle_stride, gnossienne and gymnopedie, roughly 60 KB of
+exact duplication. Their right hands genuinely differ, since the Rhodes versions swap in
+tremolo control calls, so only the left hand could be shared. That refactor couples two
+songs together and has not been attempted.
+
+The orphaned CSS clusters that survived filtering come to 232 rules and 36.5 KB, which is
+0.36% of the file. They fall into coherent islands rather than scattered rot: the old
+improv-tab drone markup, `groove-countin`, `tl-`, `tg-`, `rr-`, `ce-pool`, `ss-cents` and
+the Leslie rotor. Each one is a removed sub-feature whose skeleton stayed behind. None of
+them were touched, and none should be touched in a batch.
 
 ---
 

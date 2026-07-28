@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.103.20 -->
+<!-- INTONARE_VERSION: 0.105.6 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -1398,7 +1398,6 @@ html,body{background:#000000!important;transition:none!important}
     background: color-mix(in srgb,var(--sharp) 14%,var(--surface));
     color: var(--sharp);
   }
-  .mq-fb-verdict-text {}
   .mq-fb-verdict-title {
     font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 24px; letter-spacing: 2px; line-height: 1;
   }
@@ -2838,8 +2837,6 @@ html,body{background:#000000!important;transition:none!important}
   body.light #toolSurvivalGuide .sg-mode-basis.major { background:rgba(138,95,0,0.14); color:#664600; }
   body.light #toolSurvivalGuide .sg-mode-basis.minor { background:rgba(98,72,160,0.14); color:#523aa0; }
   body.light #toolSurvivalGuide .sg-mode-rung.active { border-color:#00546d; background:rgba(0,111,143,0.08); }
-  body.light #toolSurvivalGuide .sg-mode-char b,
-  body.light #toolSurvivalGuide .sg-md-real { }
   /* white-overlay backgrounds (rgba 255,255,255,.03) vanish on light -> subtle dark tint */
   body.light #toolSurvivalGuide .sg-md-real,
   body.light #toolSurvivalGuide .sg-mode-rung,
@@ -8960,7 +8957,6 @@ html,body{background:#000000!important;transition:none!important}
   .groove-panel { display: none; }
   .groove-panel.active { display: block; animation: grooveFadeIn 0.2s ease; }
   .metro-panel.active .metro-settings-wrap { display: block; }
-  .metro-settings-wrap { }
   body.groove-active .metro-settings-wrap { display: none; }
   @keyframes grooveFadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
@@ -9618,7 +9614,7 @@ html,body{background:#000000!important;transition:none!important}
     flex-shrink: 0;
   }
   .tuner-refpitch-input {
-    flex: 1; background: var(--surface);
+    flex: 1; min-width: 0; background: var(--surface);
     border: 1px solid var(--border-soft); border-radius: 5px;
     padding: 5px 8px;
     font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 11px;
@@ -9891,7 +9887,7 @@ html,body{background:#000000!important;transition:none!important}
   }
 
   /* ── Bottom section: chroma + history + vibrato ── */
-  .tuner-bottom-section { /* no extra styling needed — lives inside .tuner-bpm-card */ }
+  /* .tuner-bottom-section needs no styling of its own — it lives inside .tuner-bpm-card */
   .tuner-hist-section { margin-top: 0; }
   .pitch-history-label {
     display: flex; align-items: center;
@@ -11732,11 +11728,7 @@ html,body{background:#000000!important;transition:none!important}
     align-content: start;
   }
   /* When last row has 3 orphans in a 4-col grid (count=7), span them to fill nicely */
-  .tone-tile-row[data-count="7"][data-cols="4"] .tone-tile:nth-child(5),
-  .tone-tile-row[data-count="7"][data-cols="4"] .tone-tile:nth-child(6),
-  .tone-tile-row[data-count="7"][data-cols="4"] .tone-tile:nth-child(7) {
-    /* 3 tiles across 4 cols — let each take their natural 1fr, looks fine */
-  }
+  /* 3 tiles across 4 cols take their natural 1fr and look fine, so no rule here. */
   /* Single orphan: span full width */
   .tone-tile-row[data-cols="4"] .tone-tile:last-child:nth-child(4n+1),
   .tone-tile-row[data-cols="5"] .tone-tile:last-child:nth-child(5n+1),
@@ -13764,7 +13756,6 @@ html,body{background:#000000!important;transition:none!important}
   #exSingSing .ss-slot.active .n { transform:scale(1); opacity:1; filter:drop-shadow(0 0 18px rgba(150,110,255,.35)); }
   #exSingSing .ss-slot .n.pop { animation:ssSlotPop .5s cubic-bezier(.34,1.56,.64,1); }
   @keyframes ssSlotPop { 0%{transform:scale(1);} 40%{transform:scale(1.12);} 100%{transform:scale(1);} }
-  #exSingSing .ss-slot .n.locked { }
   #exSingSing .ss-slot.done .n { background:linear-gradient(150deg,var(--in-tune),#8fd94a); -webkit-background-clip:text; background-clip:text; }
   #exSingSing .ss-slot.miss .n { background:linear-gradient(150deg,var(--sharp),#ff8a8a); -webkit-background-clip:text; background-clip:text; }
   #exSingSing .ss-slot.hidden .n { background:none; -webkit-text-fill-color:#4a4a6a; color:#4a4a6a; filter:none; }
@@ -15872,7 +15863,10 @@ html,body{background:#000000!important;transition:none!important}
   }
   .pw-code-row { display: flex; gap: 8px; }
   .pw-code-input {
-    flex: 1; background: var(--panel); border: 1px solid var(--border-soft);
+    /* min-width:0 is load-bearing. An <input> in a flex row defaults to
+       min-width:auto, which resolves to its intrinsic ~20ch size, so flex:1
+       cannot shrink it and the Apply button gets pushed off the right edge. */
+    flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--border-soft);
     border-radius: 10px; padding: 11px 12px; color: var(--text);
     font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 13px; letter-spacing: 1px;
     text-transform: uppercase; outline: none; transition: border-color .15s ease;
@@ -15883,6 +15877,7 @@ html,body{background:#000000!important;transition:none!important}
     background: var(--panel); border: 1px solid var(--border-soft); border-radius: 10px;
     color: var(--text); font-family: inherit; font-size: 12px; font-weight: 700;
     letter-spacing: 1px; padding: 0 16px; cursor: pointer; transition: all .15s ease;
+    flex: 0 0 auto; white-space: nowrap;
   }
   .pw-code-btn:hover { border-color: var(--theme); color: var(--theme); }
   .pw-code-error { color: var(--bad, #ff6b6b); font-size: 11.5px; margin-top: 8px; text-align: center; }
@@ -17314,7 +17309,11 @@ html,body{background:#000000!important;transition:none!important}
     margin-left: 4px;
     transition: color 0.15s;
     font-family: 'JetBrains Mono','GlyphFix', monospace;
-    opacity: 0.6;
+    /* Was 0.6, which measured 2.81:1 against a 4.5:1 requirement. This is a
+       tappable control rather than decoration, so it has to be readable; the
+       inactive-state greys elsewhere are deliberate hierarchy and stay as they
+       are. Hover still lifts it to full. */
+    opacity: 0.9;
   }
   .help-btn:hover { color: var(--accent); opacity: 1; }
   .card.warm .help-btn:hover { color: var(--accent-warm); }
@@ -18149,9 +18148,7 @@ html,body{background:#000000!important;transition:none!important}
   background: var(--accent); box-shadow: 0 0 14px rgba(52,211,153,0.35);
 }
 
-.gcc-quality-scroll {
-  /* kept for backwards compat — no longer scrolls */
-}
+/* .gcc-quality-scroll: kept as a class name for backwards compat — no longer scrolls. */
 .gcc-quality-scroll::-webkit-scrollbar { display: none; }
 .gcc-quality-row {
   display: flex; flex-direction: column; gap: 8px;
@@ -18310,9 +18307,7 @@ html,body{background:#000000!important;transition:none!important}
 }
 
 /* ── GUITAR SCALE DISPLAY (GSS) ── */
-.gss-type-scroll {
-  /* kept for backwards compat — no longer scrolls */
-}
+/* .gss-type-scroll: kept as a class name for backwards compat — no longer scrolls. */
 .gss-type-scroll::-webkit-scrollbar { display:none; }
 .gss-type-row { display:flex; flex-direction:column; gap:8px; }
 .gss-type-btn {
@@ -20344,7 +20339,7 @@ body.ov-portrait-rotate .pto-organ-overlay.active {
   .setlist-title { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 11px; letter-spacing: 3px; color: var(--metro); }
   .setlist-close { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--border-soft); color: var(--text-dim); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .setlist-save-row { display: flex; gap: 8px; margin-bottom: 12px; flex-shrink: 0; }
-  .setlist-name-input { flex: 1; padding: 8px 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-soft); border-radius: var(--r-sm); color: var(--text); font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 10px; outline: none; }
+  .setlist-name-input { flex: 1; min-width: 0; padding: 8px 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-soft); border-radius: var(--r-sm); color: var(--text); font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 10px; outline: none; }
   .setlist-name-input:focus { border-color: var(--metro); }
   .setlist-add-btn { padding: 8px 12px; border-radius: var(--r-sm); background: color-mix(in srgb, var(--metro) 12%, transparent); border: 1px solid var(--metro); color: var(--metro); font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 10px; letter-spacing: 1px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
   .setlist-list { overflow-y: auto; flex: 1; }
@@ -21539,6 +21534,54 @@ try {
       ['touchend', 'pointerdown', 'click', 'keydown'].forEach(function (ev) {
         document.addEventListener(ev, _unlock, true);   // capture: fire before anything swallows it
       });
+
+      // Construction is the expensive half, and it does NOT need a gesture.
+      // getAudio() does `new AudioContext()` on first call, which measured 115ms
+      // on its own and 248ms inside a real tap. Because _unlock is bound to
+      // pointerdown in CAPTURE, that cost landed before the tap was even a click:
+      // the first module you picked in a session stuttered and every one after it
+      // was clean, which is exactly the kind of fault that vanishes when you try
+      // to reproduce it. Build the context while the chooser is just sitting there
+      // instead. Autoplay policy blocks STARTING audio without a gesture, not
+      // constructing a context; it simply arrives suspended and the gesture path
+      // above still does the real unlock, unchanged. If the user taps before this
+      // runs they pay exactly what they pay today, so this cannot be a regression.
+      (function _preflightAudioContext() {
+        // iOS IS DELIBERATELY EXCLUDED, and this is not caution for its own sake.
+        // getAudio() calls _iosSyncAudioMode('first audio') the first time it builds
+        // the context, and that call sets _iosAudioEverApplied the moment an
+        // AudioContext exists, which permanently stops later calls forcing through
+        // native's cache. On iOS WKWebView does not build its audio engine until
+        // something actually plays after a gesture, so doing this early would
+        // configure a session nothing is attached to, let WebKit come up with its
+        // own defaults afterwards, and leave the cache saying the work was already
+        // done. That is exactly the "audio quieter than either normal level, stuck
+        // there" bug documented on _iosAudioEverApplied, and it was hard enough to
+        // find the first time. Saving ~115ms on the first tap is not worth
+        // reintroducing it, so iOS keeps the gesture-driven path unchanged.
+        var _isIOS = false;
+        try {
+          _isIOS = !!(window.Capacitor && window.Capacitor.getPlatform &&
+                      window.Capacitor.getPlatform() === 'ios');
+        } catch (e) { _isIOS = true; }   // unsure → behave as before
+        if (_isIOS) return;
+
+        var done = false;
+        function build() {
+          if (done) return; done = true;
+          // Never race the launch mic autostart: if the mic is already coming up it
+          // owns the session and has built the context itself, so there is nothing
+          // to preflight and asserting .playback underneath it would be wrong.
+          try { if (typeof isListening !== 'undefined' && isListening) return; } catch (e) {}
+          try { getAudio(); } catch (e) {}
+        }
+        function schedule() {
+          if (typeof requestIdleCallback === 'function') requestIdleCallback(build, { timeout: 4000 });
+          else setTimeout(build, 1500);
+        }
+        if (document.readyState === 'complete') setTimeout(schedule, 900);
+        else window.addEventListener('load', function () { setTimeout(schedule, 900); });
+      })();
     })();
 
     // ── LAUNCH AUTO-START TUNER MIC (Android, FLAGGED OFF) ────────────────────
@@ -24281,6 +24324,7 @@ try {
           <span class="prog-preset-btn-label" data-i18n="prog_presets_title">PRESETS</span>
           <span style="opacity:0.5">▾</span>
         </button>
+        <span id="progSaveWrap" style="display:flex;gap:4px;align-items:center;flex:0 0 auto"><button class="prog-preset-btn" style="width:auto;padding:5px 10px;margin:0;font-size:8px" onclick="progPromptSave()" data-i18n="prog_save">SAVE</button></span>
         <button class="prog-preset-btn" style="width:auto;padding:5px 10px;margin:0;font-size:8px;color:var(--muted)" onclick="progClear()" data-i18n="btn_clr">CLR</button>
       </div>
 
@@ -28410,6 +28454,25 @@ try {
     </div>
 
     <!-- ── ADVANCED ── -->
+    <div class="sm-section-title" style="margin-top:18px" data-i18n="settings_data">Your Data</div>
+    <button class="sm-action-btn" onclick="backupExport()" data-i18n="backup_export">⬇ Back Up Progress</button>
+    <button class="sm-action-btn" style="margin-top:8px" onclick="backupPickFile()" data-i18n="backup_import">⬆ Restore From Backup</button>
+    <input type="file" id="backupFileInput" accept="application/json,.json" style="display:none" onchange="backupFileChosen(event)">
+
+    <div id="backupSheet" class="hidden" style="margin-top:12px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);padding:14px">
+      <div class="sm-section-title" style="margin-top:0" data-i18n="backup_confirm_title">Restore this backup?</div>
+      <div style="font-size:10px;letter-spacing:.5px;color:var(--text-dim);margin-bottom:2px" data-i18n="backup_from">From the backup</div>
+      <div id="backupFileWhen" style="font-size:11px;color:var(--text-dim);margin-bottom:2px"></div>
+      <div id="backupFileStats" style="font-size:12px;font-weight:700;margin-bottom:10px"></div>
+      <div style="font-size:10px;letter-spacing:.5px;color:var(--text-dim);margin-bottom:2px" data-i18n="backup_now">On this device now</div>
+      <div id="backupNowStats" style="font-size:12px;font-weight:700;margin-bottom:10px"></div>
+      <div style="font-size:11px;line-height:1.45;color:var(--bad,#ff6b6b);margin-bottom:12px" data-i18n="backup_warn">Everything on this device is replaced by the backup. Anything you have done here since it was made is lost. Pro and your tap calibration stay as they are.</div>
+      <div style="display:flex;gap:8px">
+        <button class="sm-action-btn" style="flex:1;margin:0" onclick="backupCloseSheet()" data-i18n="backup_cancel">Cancel</button>
+        <button class="sm-action-btn" style="flex:1;margin:0;border-color:var(--bad,#ff6b6b);color:var(--bad,#ff6b6b)" onclick="backupConfirmRestore()" data-i18n="backup_replace">Replace</button>
+      </div>
+    </div>
+
     <div class="sm-section-title" style="margin-top:18px" data-i18n="settings_advanced">Advanced</div>
     <button class="sm-action-btn" onclick="closeSettings(); setTimeout(() => startTour('overview'), 200);" data-i18n="settings_tour">↻ Re-run Welcome Tour</button>
     <button class="sm-action-btn" style="margin-top:8px" onclick="window.open('https://lieutenantdan76.github.io/Intonare/privacy.html','_blank')" data-i18n="settings_privacy">Privacy Policy</button>
@@ -28448,7 +28511,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.103.20</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.105.6</span>
     </div>
   </div>
 </div>
@@ -28456,7 +28519,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.103.20';
+const INTONARE_VERSION = '0.105.6';
 
 // ═══════════════════════════════════════════════
 // INSTRUMENT DEFINITIONS (same as before)
@@ -38408,7 +38471,25 @@ var RIFF_META = {
   }
 };
 
-var RIFFS = {
+/* LAZY BUILD — do not turn this back into a plain object literal.
+   This data is ~2.56MB and it sits inside a 5.2MB inline <script>. V8 cannot
+   stream-compile an inline script, so the HTML parser stopped dead while the
+   whole thing was compiled: measured at 4x CPU throttle, one 4.3s blocking task
+   of which v8.compile alone was 2.4s. Wrapping the literal in a function means
+   V8 only PRE-parses the body at load and compiles it the first time a song is
+   actually asked for. Measured effect: domInteractive 3417ms -> 2686ms and the
+   launcher grid appears ~520ms sooner, with the entry animation unchanged.
+
+   NOT converted to JSON, which was tried first and would have been a silent
+   disaster: every ctls entry is an arrow function (1802 of them across 58 of the
+   59 songs) and JSON.stringify drops function values without erroring. Every
+   piece would have played with no pedal and nothing would have thrown.
+
+   Also NOT idle-warmed. Pre-building during requestIdleCallback was tried and
+   made things worse in exactly the place that mattered: the 1.4s build landed in
+   the launcher's entry window and starved the animation, 75 frames down to 8-31.
+   The cost is paid on first use instead, under a screen transition. */
+function __riffsBuild() { return {
   piano: {
     fuer_elise: { label:'Für Elise (I)', tempo:1.0, bpm:68,
       // PERFORMANCE MODE: real captured MIDI (Bernd Krueger, piano-midi.de, CC BY-SA).
@@ -44986,7 +45067,26 @@ clair_de_lune: { label:'Clair de Lune', tempo:1.0, bpm:46,
     },
   }
     
-};
+}; }
+/* An accessor rather than a variable, so nothing else has to know this is lazy:
+   RIFFS.piano[id] in Road Trip, RIFFS[inst][id] in the riff player, the
+   `typeof RIFFS === 'undefined'` guards, and anything written in future all keep
+   working untouched. The first read builds the object and then this property
+   replaces itself with the plain value, so there is no getter cost afterwards.
+   It CANNOT be `var RIFFS`: var creates a non-configurable window property and
+   defineProperty throws on it. The setter is here so an assignment would still
+   work rather than silently failing in strict mode. */
+Object.defineProperty(window, 'RIFFS', {
+  configurable: true,
+  get: function () {
+    var v = __riffsBuild();
+    Object.defineProperty(window, 'RIFFS', { value: v, writable: true, configurable: true });
+    return v;
+  },
+  set: function (v) {
+    Object.defineProperty(window, 'RIFFS', { value: v, writable: true, configurable: true });
+  }
+});
 
 var _riffActive   = false;
 var _riffTimers   = [];
@@ -45153,7 +45253,19 @@ function _riffPianoNoteOn(midi, vel, holdMs) {
   var sampleId = (SampleEngine._instruments[selectedRefTone] && SampleEngine.isReady(selectedRefTone)) ? selectedRefTone : null;
   var sound = null;
   if (sampleId) {
-    sound = SampleEngine.play(sampleId, midi, ctx, refMasterGain, _breathVol(selectedRefTone, noteVol), null);
+    // A finite duration matters more than it looks. Passing null takes
+    // SampleEngine's DRONE branch, which loops the sample between 15% and 95%
+    // of the buffer: the note then holds at full sustain forever instead of
+    // decaying like a string. Nothing sounded wrong while a note was ringing,
+    // but every damp became a full-volume note being switched off in 40ms, and
+    // that is the hard stop you hear in heavily pedalled writing. With a finite
+    // dur the sample plays once and carries its own recorded decay, so by the
+    // time the damper lands the note is already quiet and the cut is inaudible.
+    // 8s is a ceiling, not a hold: SampleEngine caps there and the sample runs
+    // out long before. The damper model still stops notes early on finger-lift
+    // and pedal-lift exactly as before. Matches what the synth fallback below
+    // has always done, and for the same reason.
+    sound = SampleEngine.play(sampleId, midi, ctx, refMasterGain, _breathVol(selectedRefTone, noteVol), 8.0);
   }
   if (!sound) {
     var tone = REF_TONES[selectedRefTone] || REF_TONES.sine;
@@ -52004,6 +52116,54 @@ function progBuildPresetGrid() {
   const shownIds = new Set();
   let first = true;
 
+  // The user's own saves go first: it is what they came for, and scrolling past
+  // sixty built-ins to reach your own work would be a strange way to sort this.
+  const mine = progState.savedProgressions || [];
+  if (mine.length) {
+    const header = document.createElement('div');
+    header.className = 'prog-preset-section-label first';
+    header.textContent = (t('prog_yours') || 'YOURS');
+    grid.appendChild(header);
+    first = false;
+    mine.slice().reverse().forEach(p => {
+      const card = document.createElement('button');
+      card.className = 'prog-preset-card' + (p.id === progActivePreset ? ' active' : '');
+      card.style.position = 'relative';
+      card.innerHTML = '<div class="prog-preset-card-name"></div><div class="prog-preset-card-desc"></div>';
+      // textContent, not innerHTML: the label is a name the user typed.
+      card.firstChild.textContent = p.label || '';
+      card.lastChild.textContent  = p.desc  || '';
+      const del = document.createElement('span');
+      del.textContent = '\u00d7';
+      del.setAttribute('aria-label', t('prog_delete') || 'Delete');
+      del.style.cssText = 'position:absolute;top:2px;right:6px;font-size:16px;line-height:1;opacity:.45;padding:4px 6px';
+      // Arm-then-confirm, the same shape as RESET ALL PROGRESS. window.confirm()
+      // is a no-op in the Capacitor WebView, and a modal over a modal would be
+      // wrong here anyway.
+      let armed = false, armTimer = null;
+      del.onclick = ev => {
+        ev.stopPropagation();
+        if (!armed) {
+          armed = true;
+          del.textContent = '\u2713';
+          del.style.opacity = '1';
+          del.style.color = 'var(--bad, #ff6b6b)';
+          del.title = t('prog_delete_confirm') || 'Delete this progression?';
+          armTimer = setTimeout(() => {
+            armed = false; del.textContent = '\u00d7';
+            del.style.opacity = '.45'; del.style.color = '';
+          }, 3000);
+          return;
+        }
+        clearTimeout(armTimer);
+        progDeleteSaved(p.id);
+      };
+      card.appendChild(del);
+      card.onclick = () => { progLoadPreset(p.id); progClosePresetModal(); };
+      grid.appendChild(card);
+    });
+  }
+
   groups.forEach(({ label, filter }) => {
     const presets = allPresets.filter(filter);
     if (!presets.length) return;
@@ -52043,7 +52203,7 @@ function progBuildPresetGrid() {
   }
 }
 function progUpdatePresetLabel() {
-  const p = PROG_PRESETS.find(x => x.id === progActivePreset);
+  const p = progFindPreset(progActivePreset);
   const named = p && p.id !== 'empty';
   const name = named ? (((progState.lang === 'it') && p.labelIt) ? p.labelIt : p.label) : null;
 
@@ -52061,8 +52221,17 @@ function progUpdatePresetLabel() {
                              : ((typeof t === 'function' && t('prog_custom')) || 'CUSTOM');
   }
 }
+// Built-in presets and the user's saved progressions are the same shape, so
+// everything downstream (load, label, grid) works on either without caring.
+function progFindPreset(id) {
+  const built = PROG_PRESETS.find(x => x.id === id);
+  if (built) return built;
+  const mine = progState.savedProgressions || [];
+  return mine.find(x => x.id === id) || null;
+}
+
 function progLoadPreset(id) {
-  const p = PROG_PRESETS.find(x => x.id === id);
+  const p = progFindPreset(id);
   if (!p) return;
   progStop();
 
@@ -52095,7 +52264,7 @@ function progLoadPreset(id) {
   } else {
     progNumBars = p.bars.length;
     progBars = p.bars.map(barDefs =>
-      barDefs.map(b => progBlock('chord', b.r, b.q, b.dur))
+      barDefs.map(b => progBlock('chord', b.r, b.q, b.dur, b.oct, b.inv, b.manual))
     );
   }
   if (p.bpm) setBPM(p.bpm);
@@ -52119,6 +52288,9 @@ function progLoadPreset(id) {
       dk_bpm = bpm;
     }
   }
+  // Saved progressions carry their instrument; built-in presets do not declare
+  // one, so this leaves the current voice alone for them.
+  if (p.voice && p.voice !== progSampleInst) { try { progSetVoice(p.voice); } catch (e) {} }
   progApplyVoiceLeading();
   progBuildGrid();
   progSyncBpmDisplays();
@@ -52126,6 +52298,124 @@ function progLoadPreset(id) {
   _progLoadingPreset = false;
   progActivePreset = id;
   progUpdatePresetLabel();
+}
+
+// ── Saved progressions ────────────────────────────────────────────────────
+// The tool shipped as a preset player that grew editing on top, so a
+// progression you built yourself lived in a plain array and died with the page.
+// A save is stored in the same shape as a built-in preset, which is why
+// progLoadPreset needs no special case to restore one.
+//
+// "The whole thing" means the whole thing: chords with their voicing, the time
+// signature, tempo, groove, drum preset and instrument. The same changes at
+// 70bpm over a bossa are not the same idea as at 140 dry.
+function progSnapshot() {
+  const ts = PROG_TIME_SIGS[progTimeSigIdx] || [4, 4];
+  return {
+    cat: 'yours',
+    bars: progBars.map(bar => bar.map(b => ({
+      r: b.r, q: b.q, dur: b.dur, oct: b.oct, inv: b.inv, manual: b.manual,
+    }))),
+    timeSig: [ts[0], ts[1]],
+    bpm: bpm,
+    groove: progGrooveEnabled ? (typeof groovePresetId !== 'undefined' ? groovePresetId : null) : null,
+    drumPreset: (typeof dk_loadedPresetName !== 'undefined') ? dk_loadedPresetName : null,
+    voice: progSampleInst || null,
+  };
+}
+
+// Chord names, trimmed. Past four bars a full listing is unreadable, so it
+// stops and counts the rest rather than running off the tile.
+function progAutoDesc(snap) {
+  const names = [];
+  (snap.bars || []).forEach(bar => bar.forEach(b => {
+    if (b && b.r) names.push(b.r + (b.q || ''));
+  }));
+  if (!names.length) return '';
+  if (names.length <= 4) return names.join(' ');
+  return names.slice(0, 4).join(' ') + ' +' + (names.length - 4);
+}
+
+function progHasContent() {
+  return progBars.some(bar => bar.some(b => b && b.r));
+}
+
+function progSaveCurrent(name) {
+  if (!progHasContent()) { svcToast(t('prog_save_empty')); return false; }
+  if (!progState.savedProgressions) progState.savedProgressions = [];
+  const snap = progSnapshot();
+  snap.id    = 'u' + Date.now().toString(36);
+  snap.desc  = progAutoDesc(snap);
+  const clean = (name || '').trim();
+  snap.label = clean || (t('prog_save_default') + ' ' + (progState.savedProgressions.length + 1));
+  progState.savedProgressions.push(snap);
+  progSave();
+  hapticSuccess && hapticSuccess();
+  svcToast(t('prog_saved'));
+  // Loading it back claims the title, so the tool stops saying CUSTOM.
+  progActivePreset = snap.id;
+  progUpdatePresetLabel();
+  return true;
+}
+
+function progDeleteSaved(id) {
+  if (!progState.savedProgressions) return;
+  progState.savedProgressions = progState.savedProgressions.filter(p => p.id !== id);
+  progSave();
+  if (progActivePreset === id) { progActivePreset = null; progUpdatePresetLabel(); }
+  progBuildPresetGrid();
+}
+
+// Naming happens inline, not through window.prompt(). prompt() is a no-op in
+// the Capacitor WebView: it returns null without ever showing a dialog, so the
+// save silently took the cancel path. The drum kit already solved this with an
+// input and two chips; this is the same shape.
+function progRestoreSaveBtn() {
+  const wrap = document.getElementById('progSaveWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.className = 'prog-preset-btn';
+  btn.style.cssText = 'width:auto;padding:5px 10px;margin:0;font-size:8px';
+  btn.setAttribute('data-i18n', 'prog_save');
+  btn.textContent = t('prog_save') || 'SAVE';
+  btn.onclick = progPromptSave;
+  wrap.appendChild(btn);
+}
+
+function progPromptSave() {
+  if (!progHasContent()) { svcToast(t('prog_save_empty')); return; }
+  const wrap = document.getElementById('progSaveWrap');
+  if (!wrap) return;
+  const fallback = t('prog_save_default') + ' ' + (((progState.savedProgressions || []).length) + 1);
+
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.maxLength = 24;
+  inp.placeholder = t('prog_save_placeholder') || 'name\u2026';
+  inp.style.cssText = 'font-family:inherit;font-size:9px;background:var(--bg-1);border:1px solid var(--accent);color:var(--text);border-radius:4px;padding:3px 6px;width:88px;outline:none;letter-spacing:1px';
+
+  const ok = document.createElement('button');
+  ok.className = 'prog-preset-btn';
+  ok.textContent = '\u2713';
+  ok.style.cssText = 'width:auto;padding:5px 8px;margin:0;font-size:10px;color:var(--accent);border-color:var(--accent)';
+
+  const no = document.createElement('button');
+  no.className = 'prog-preset-btn';
+  no.textContent = '\u2715';
+  no.style.cssText = 'width:auto;padding:5px 8px;margin:0;font-size:10px';
+
+  const done = () => { progSaveCurrent(inp.value.trim() || fallback); progRestoreSaveBtn(); };
+  ok.onclick = done;
+  no.onclick = progRestoreSaveBtn;
+  inp.onkeydown = e => {
+    if (e.key === 'Enter')  { e.preventDefault(); done(); }
+    if (e.key === 'Escape') { e.preventDefault(); progRestoreSaveBtn(); }
+  };
+
+  wrap.innerHTML = '';
+  wrap.appendChild(inp); wrap.appendChild(ok); wrap.appendChild(no);
+  try { inp.focus(); } catch (e) {}
 }
 
 // Find a drum machine preset by name across all categories
@@ -54077,7 +54367,20 @@ function lnchGo(m) {
   // body recolours the instant a card is tapped, so the next module's background
   // and accent flash around the chooser during the pick animation.
   window._themeHold = true;
-  try { setMode(m.mode); } catch(e) {}
+  // setMode() builds the target module: first-time canvas draws, keyboard
+  // rendering, and a pile of getBoundingClientRect reads. Measured from a tap it
+  // blocked for 261ms, with 140ms of style recalc over 627 elements and 65ms of
+  // layout, ALL OF IT BEFORE the morph had drawn a single frame. The animation
+  // was never slow; it was starting late on a thread mid-recalculation. Tuner
+  // felt smoother than the rest only because it is the default mode and setMode
+  // had less to change.
+  //
+  // So defer it. The palette is already held by _themeHold and released in
+  // finish(), so nothing about the look depends on this running first, and the
+  // morph card is opaque over the whole screen while the module is built, so the
+  // work is hidden either way. Two frames, not one: the first commits the
+  // transform, the second lets it actually paint before we block again.
+  var _applyMode = function () { try { setMode(m.mode); } catch (e) {} };
   const finish = () => {
     // Drop lnch-open first so the tab bar starts sliding up WITH the launcher fading
     // out, rather than appearing once everything else has settled. The module and its
@@ -54091,7 +54394,19 @@ function lnchGo(m) {
     lc.classList.add('lnch-gone');
     setTimeout(() => { lc.style.display = 'none'; }, 320);
   };
-  if (reduce) { finish(); return; }
+  // REDUCED MOTION: there is no morph here, so _applyMode must be called
+  // explicitly. Deferring setMode into the morph's second frame silently broke
+  // this path in v0.104.2 (it returned before the mode was ever applied, so
+  // tapping Metro landed you in the tuner). lnch-settled is set for the same
+  // reason lnchGoPin's reduce path sets it: entry is over the instant we return,
+  // and .mode-toggle is styled off that class, so skipping it leaves the toggle
+  // stuck in its pre-entry state forever.
+  if (reduce) {
+    _applyMode();
+    finish();
+    document.body.classList.add('lnch-settled');
+    return;
+  }
 
   // The unpicked cards are dealt away; the chosen one is handed to the morph layer
   // and grown to fill the screen. Because the morph is a real clone pinned at the
@@ -54155,6 +54470,7 @@ function lnchGo(m) {
         morph.style.transform =
           'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + GROW + ')';
         morph.style.borderRadius = (17 * GROW).toFixed(1) + 'px';
+        requestAnimationFrame(_applyMode);   // module built under the moving card
       });
       morphed = true;
     }
@@ -54164,7 +54480,10 @@ function lnchGo(m) {
     c.classList.add(c.dataset.id === m.id ? 'lnch-picked' : 'lnch-other');
   });
 
-  if (!morphed) { setTimeout(finish, 125); return; }
+  // No morph (missing card, or a zero-size rect): nothing is covering the screen,
+  // so build the module immediately rather than leaving the chooser on a mode that
+  // has not been applied.
+  if (!morphed) { _applyMode(); setTimeout(finish, 125); return; }
 
   // Sequencing. The card no longer covers the screen, so the module cannot be
   // uncovered "under" it; instead the card holds at centre while the launcher
@@ -57272,11 +57591,6 @@ function _capacitorAssetUrl(folder, fname) {
     document.baseURI
   ).href;
 }
-function _salamanderNotes() {
-  const n = []; for (let m = 21; m <= 108; m += 3) n.push(m);
-  if (n[n.length-1] !== 108) n.push(108); return n;
-}
-
 // Shared gleitz note-to-filename for all FatBoy soundfonts
 function _gleitzNoteToFile(midi) {
   const NAMES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
@@ -73452,25 +73766,6 @@ function chordlePlayChordAudio(chordStr) {
   chordlePlayFreqs(chordleChordFreqs(chordStr));
 }
 
-// ── Picker ───────────────────────────────────────
-function chordleOpenSlot(i) {
-  if (chordleGameState!=='playing') return;
-  chordleSelSlot=i; chordlePNum=''; chordlePQual=''; chordlePStep='numeral';
-  chordleRender();
-  chordleOpenSheet();
-  hapticLight();
-}
-function chordleOpenSheet() {
-  var overlay=document.getElementById('chordlePickerOverlay');
-  if (overlay){overlay.style.display='flex';}
-  chordleSheetOpen=true;
-  chordleRenderSheet();
-}
-function chordleCloseSheet() {
-  var overlay=document.getElementById('chordlePickerOverlay');
-  if (overlay){overlay.style.display='none';}
-  chordleSheetOpen=false;
-}
 // ── Picker — two-card sliding sheet ──────────────────────────────────────
 
 // Reset state each time a slot is opened
@@ -75566,7 +75861,11 @@ function progRenderGraph() {
   });
 }
 const PROG_STORAGE_KEY = 'intonare_progress_v1';
-let progState = {
+// The one definition of what a fresh profile looks like. progState starts as a
+// copy of it and resetProgress() returns to it; before this existed reset kept
+// its own hand-typed literal, which had silently drifted out of sync and was
+// dropping fields (including hasPro) on every reset.
+const PROG_DEFAULTS = {
   xp: 0,
   level: 1,
   masterVolume: 100,      // global volume scale 50-200 (%)
@@ -75602,7 +75901,8 @@ let progState = {
   metroPresets: [],  // [{ id, name, bpm, sound, mode }]
   rampPresets:  [],  // [{ id, name, fromBpm, toBpm, stepBpm, measuresPerStep, sound }]
   favorites: [],  // array of 'kind:id' strings e.g. 'tool:piano', 'exercise:interval'
-  savedCharts: [],  // saved CHARTS-tool views: [{ id, name, inst, section, capo, sub, root }]
+  savedCharts: [],
+  savedProgressions: [],  // user-built progressions, stored in PROG_PRESETS shape  // saved CHARTS-tool views: [{ id, name, inst, section, capo, sub, root }]
   stats: {
     tempo:      {},
     interval:   {},
@@ -75613,6 +75913,7 @@ let progState = {
     chordle:    {},
   },
 };
+let progState = JSON.parse(JSON.stringify(PROG_DEFAULTS));
 
 // Fixed-Do Italian solfège mapping. Used by getDisplayNote() — internally we
 // always store and reason about notes in English (C, D, E, F, G, A, B); only
@@ -75648,6 +75949,11 @@ const STRINGS = {
   chordle_present:'Right chord, wrong spot', chordle_wrong_inversion:'Right chord, wrong inversion', chordle_right_root:'Right root, wrong quality',
     chordle_wrong:'Wrong', chordle_tonic:'Tonic (I)',
     chordle_new_prog:'NEW PROGRESSION ↺',
+    slow:'SLOW', fast:'FAST',
+    mqd_meta_done:'Completed \u00b7', mqd_meta_correct:'/10 correct',
+    mqd_meta_fresh:'10 questions \u00b7 one attempt',
+    mqd_view_result:'VIEW RESULT', mqd_in_progress:'IN PROGRESS \u00b7 Q',
+    mqd_resume:'RESUME \u2192', mqd_start:'START \u2192',
     chordle_daily:'DAILY',
     chordle_play_daily:'PLAY THE DAILY',
     chordle_daily_ready:'Same progression for everyone today',
@@ -75835,6 +76141,13 @@ const STRINGS = {
     settings_calib_btn:'⚙ Calibration',
     settings_feedback:'Feedback', settings_practice_section:'Practice',
     settings_hints:'Hints & Display', settings_advanced:'Advanced',
+    settings_data:'Your Data', backup_export:'⬇ Back Up Progress', backup_import:'⬆ Restore From Backup',
+    backup_confirm_title:'Restore this backup?', backup_from:'FROM THE BACKUP', backup_now:'ON THIS DEVICE NOW',
+    backup_warn:'Everything on this device is replaced by the backup. Anything you have done here since it was made is lost. Pro and your tap calibration stay as they are.',
+    backup_cancel:'Cancel', backup_replace:'Replace', backup_saved:'Backup saved', backup_restored:'Backup restored',
+    backup_u_days:'-day streak', backup_u_ach:' achievements',
+    backup_err_notours:'That is not an Intonare backup.', backup_err_unreadable:'That file could not be read.',
+    backup_err_newer:'That backup was made by a newer version of Intonare. Update the app first.', backup_err_writefail:'The restore could not be saved. Free up some space and try again.',
     settings_privacy:'Privacy Policy', wip_toast:'In development — coming in a future update!',
     settings_lesson_hints:'Lesson Hints', settings_lesson_hints_off:'Off · compact UI', settings_lesson_hints_on:'On · inline hints',
     settings_notifications:'Notifications',
@@ -76166,6 +76479,10 @@ const STRINGS = {
     // Progression labels
     label_octave_uc:'OCTAVE', label_inversion:'INVERSION',
     prog_auto_voice:'↺ AUTO VOICE LEAD', prog_presets_title:'PRESETS',
+    prog_save:'SAVE', prog_yours:'YOURS', prog_saved:'Progression saved',
+    prog_save_prompt:'Name this progression', prog_save_default:'Progression', prog_save_placeholder:'name…',
+    prog_save_empty:'Add some chords first', prog_delete:'Delete',
+    prog_delete_confirm:'Delete this progression?',
     // Settings additions
     settings_help_tips:'Help Buttons',
     settings_help_tips_off:'Hidden',
@@ -76589,6 +76906,11 @@ const STRINGS = {
   chordle_present:'Accordo giusto, posto sbagliato', chordle_wrong_inversion:'Accordo giusto, rivolto sbagliato', chordle_right_root:'Radice giusta, qualità sbagliata',
     chordle_wrong:'Sbagliato', chordle_tonic:'Tonica (I)',
     chordle_new_prog:'NUOVA PROGRESSIONE ↺',
+    slow:'LENTO', fast:'VELOCE',
+    mqd_meta_done:'Completato \u00b7', mqd_meta_correct:'/10 corrette',
+    mqd_meta_fresh:'10 domande \u00b7 un solo tentativo',
+    mqd_view_result:'VEDI RISULTATO', mqd_in_progress:'IN CORSO \u00b7 D',
+    mqd_resume:'RIPRENDI \u2192', mqd_start:'INIZIA \u2192',
     chordle_daily:'GIORNALIERA',
     chordle_play_daily:'GIOCA LA GIORNALIERA',
     chordle_daily_ready:'Stessa progressione per tutti oggi',
@@ -76776,6 +77098,13 @@ const STRINGS = {
     settings_calib_btn:'⚙ Calibrazione',
     settings_feedback:'Feedback', settings_practice_section:'Pratica',
     settings_hints:'Suggerimenti e Display', settings_advanced:'Avanzate',
+    settings_data:'I Tuoi Dati', backup_export:'⬇ Salva i Progressi', backup_import:'⬆ Ripristina da Backup',
+    backup_confirm_title:'Ripristinare questo backup?', backup_from:'DAL BACKUP', backup_now:'SU QUESTO DISPOSITIVO ORA',
+    backup_warn:'Tutto quello che c\'è su questo dispositivo viene sostituito dal backup. Quello che hai fatto qui da quando è stato creato andrà perso. Pro e la calibrazione del tap restano come sono.',
+    backup_cancel:'Annulla', backup_replace:'Sostituisci', backup_saved:'Backup salvato', backup_restored:'Backup ripristinato',
+    backup_u_days:' giorni di serie', backup_u_ach:' obiettivi',
+    backup_err_notours:'Questo non è un backup di Intonare.', backup_err_unreadable:'Non è stato possibile leggere il file.',
+    backup_err_newer:'Questo backup è stato creato da una versione più recente di Intonare. Aggiorna prima l\'app.', backup_err_writefail:'Non è stato possibile salvare il ripristino. Libera spazio e riprova.',
     settings_privacy:'Informativa sulla Privacy', wip_toast:'In sviluppo — arriverà in un prossimo aggiornamento!',
     settings_lesson_hints:'Suggerimenti Lezione', settings_lesson_hints_off:'Off · UI compatta', settings_lesson_hints_on:'On · suggerimenti inline',
     settings_notifications:'Notifiche',
@@ -77107,6 +77436,10 @@ const STRINGS = {
     // Progression labels
     label_octave_uc:'OTTAVA', label_inversion:'RIVOLTO',
     prog_auto_voice:'↺ CONDUZIONE AUTOMATICA', prog_presets_title:'PRESET',
+    prog_save:'SALVA', prog_yours:'I TUOI', prog_saved:'Progressione salvata',
+    prog_save_prompt:'Dai un nome a questa progressione', prog_save_default:'Progressione', prog_save_placeholder:'nome…',
+    prog_save_empty:'Aggiungi prima qualche accordo', prog_delete:'Elimina',
+    prog_delete_confirm:'Eliminare questa progressione?',
     // Settings additions
     settings_help_tips:'Pulsanti Aiuto',
     settings_help_tips_off:'Nascosti',
@@ -79909,43 +80242,55 @@ function progLevelFromXp(xp) {
   return lv;
 }
 
+// Bring a saved progress object up to the current schema. Every field added
+// since the first release needs a default here, because an old save simply
+// won't have the key and the code downstream assumes it does. Mutates and
+// returns the object it is given, so it works on the live progState during
+// boot and on a staged copy during a backup restore; those are the only two
+// callers, and they must stay in sync, which is the whole reason this is a
+// function rather than a block inside progLoad().
+function progMigrate(s) {
+  // Migrate: ensure audioCues.vols exists for saves predating volume controls
+  if (!s.audioCues) s.audioCues = {};
+  if (!s.audioCues.vols) s.audioCues.vols = { correct:100, wrong:100, milestone:100, levelup:100, achievement:100 };
+  if (!s.audioCues.achievement) s.audioCues.achievement = 'chime';
+  if (s.audioCues.vols.achievement === undefined) s.audioCues.vols.achievement = 100;
+  // Make sure each stat slot exists
+  ['tempo','interval','tempoguess','poly','drone','scale','chords','singsing','chordle'].forEach(k => {
+    if (!s.stats[k]) s.stats[k] = {};
+  });
+  // Migrate: ensure streak + history exist
+  if (!s.streak) s.streak = { count: 0, lastDate: null, longest: 0 };
+  if (!s.history) s.history = {};
+  // Migrate: ensure unlock flags exist
+  if (s.secret_chime_unlocked  === undefined) s.secret_chime_unlocked  = false;
+  if (s.beethoven_unlocked === undefined) s.beethoven_unlocked = false;
+  if (s.mythic_unlocked === undefined) s.mythic_unlocked = false;
+  // Migrate: ensure achievements exist
+  if (!s.achievements) s.achievements = {};
+  if (!s.presetsLoadedSet) s.presetsLoadedSet = [];
+  if (s.sessionGoalMin === undefined) s.sessionGoalMin = 20;
+  if (!s.sessionTodayMs) s.sessionTodayMs = 0;
+  if (!s.sessionDate) s.sessionDate = '';
+  if (s.sessionCompleted === undefined) s.sessionCompleted = false;
+  if (!s.sesModulesVisited) s.sesModulesVisited = [];
+  if (!s.metroPresets) s.metroPresets = [];
+  if (!s.rampPresets) s.rampPresets = [];
+  if (!s.favorites) s.favorites = [];
+  if (!s.savedProgressions) s.savedProgressions = [];
+  // Migrate: default notifications on for existing users
+  if (!s.notifications) s.notifications = { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00' };
+  if (s.hapticsOn === undefined) s.hapticsOn = true;
+  if (s.uiScale === undefined) s.uiScale = 0;
+  return s;
+}
+
 function progLoad() {
   try {
     const raw = localStorage.getItem(PROG_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      progState = Object.assign(progState, parsed);
-      // Migrate: ensure audioCues.vols exists for saves predating volume controls
-      if (!progState.audioCues) progState.audioCues = {};
-      if (!progState.audioCues.vols) progState.audioCues.vols = { correct:100, wrong:100, milestone:100, levelup:100, achievement:100 };
-      if (!progState.audioCues.achievement) progState.audioCues.achievement = 'chime';
-      if (progState.audioCues.vols.achievement === undefined) progState.audioCues.vols.achievement = 100;
-      // Make sure each stat slot exists
-      ['tempo','interval','tempoguess','poly','drone','scale','chords','singsing','chordle'].forEach(k => {
-        if (!progState.stats[k]) progState.stats[k] = {};
-      });
-      // Migrate: ensure streak + history exist
-      if (!progState.streak) progState.streak = { count: 0, lastDate: null, longest: 0 };
-      if (!progState.history) progState.history = {};
-      // Migrate: ensure unlock flags exist
-      if (progState.secret_chime_unlocked  === undefined) progState.secret_chime_unlocked  = false;
-      if (progState.beethoven_unlocked === undefined) progState.beethoven_unlocked = false;
-      if (progState.mythic_unlocked === undefined) progState.mythic_unlocked = false;
-      // Migrate: ensure achievements exist
-      if (!progState.achievements) progState.achievements = {};
-      if (!progState.presetsLoadedSet) progState.presetsLoadedSet = [];
-      if (progState.sessionGoalMin === undefined) progState.sessionGoalMin = 20;
-      if (!progState.sessionTodayMs) progState.sessionTodayMs = 0;
-      if (!progState.sessionDate) progState.sessionDate = '';
-      if (progState.sessionCompleted === undefined) progState.sessionCompleted = false;
-      if (!progState.sesModulesVisited) progState.sesModulesVisited = [];
-      if (!progState.metroPresets) progState.metroPresets = [];
-      if (!progState.rampPresets) progState.rampPresets = [];
-      if (!progState.favorites) progState.favorites = [];
-      // Migrate: default notifications on for existing users
-      if (!progState.notifications) progState.notifications = { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00' };
-      if (progState.hapticsOn === undefined) progState.hapticsOn = true;
-      if (progState.uiScale === undefined) progState.uiScale = 0;
+      progState = progMigrate(Object.assign(progState, parsed));
     }
   } catch(e) {}
   // Apply the saved accessibility UI scale as early as possible.
@@ -80483,6 +80828,274 @@ function progSave() {
   try { localStorage.setItem(PROG_STORAGE_KEY, JSON.stringify(progState)); } catch(e) {}
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// BACKUP / RESTORE
+// ═══════════════════════════════════════════════════════════════════════════
+// A backup is one JSON file holding everything worth carrying to a new phone.
+// Restore is REPLACE, not merge: the file wins outright. That is the convention
+// for file-based restore (a game save, a chat backup, a device backup) and it
+// is the right one here, because the case this exists for is a new phone with
+// nothing on it worth keeping. Merging two live copies is the sync problem, and
+// it gets solved when accounts land, not before.
+//
+// Three lists below decide what travels. Anything persisted by the app must be
+// in exactly one of them, or in the skip list, and intonare_backup_audit.py
+// enforces that so a key added next year is not silently left out of backups.
+const BACKUP_SCHEMA = 1;
+
+// Earned progress that lives OUTSIDE progState in its own key.
+const BACKUP_KEYS_PROGRESS = [
+  'mq_stats', 'mq_daily', 'intonare_tonale', 'intonare_chordle_daily',
+  'intonare_diadle_daily', 'intonare_vr_sessions', 'rt_stats',
+  'rt_ach_adventurer', 'pr_endless_best', 'pr_endless_unlocked',
+  'pr_hardcore_unlocked', 'intonare_dk_saves', 'intonare_dk_custom',
+];
+
+// Preferences and onboarding state. Carried, because a returning user on a new
+// phone is the same person and should not be re-toured.
+const BACKUP_KEYS_SETTINGS = [
+  'intonare_appearance', 'intonare_dark_depth', 'intonare_light_bright',
+  'intonare_hdr_modtitles', 'intonare_skip_splash', 'intonare_splash_sound',
+  'intonare_launch_pin', 'intonare_refpitch', 'intonare_transpose',
+  'intonare_autodetect', 'intonare_groove', 'intonare_strobe',
+  'intonare_vibrato', 'intonare_prog_voice', 'ss_voice', 'rt_design',
+  'tune_teaching', 'intonare_tp_chordmode', 'intonare_tp_chords',
+  'intonare_tp_from', 'intonare_tp_inst', 'intonare_tp_semi', 'intonare_tp_to',
+  'intonare_tours_seen', 'intonare_first_autotour_done',
+  'intonare_autotour_prompted', 'intonare_autotours_off', 'tune_tour_done',
+];
+
+// prefGet/prefSet writes real settings under a generic name; the whole family
+// travels. sl_ is per-section collapse state and sg_zones_ is the survival
+// guide's calibration scratch, which is authoring data, not the user's.
+const BACKUP_PREFIX_TAKE = ['pref_'];
+const BACKUP_PREFIX_SKIP = ['sl_', 'sg_zones_'];
+const BACKUP_KEYS_SKIP   = [PROG_STORAGE_KEY, 'mq_in_progress', 'intonare_restored'];
+
+// Fields inside progState that must NOT travel.
+//   hasPro       entitlement; isPro() trusts it, so a text editor and one
+//                boolean would be a free unlock. Comes from RevenueCat only.
+//   tapOffsetMs  calibration measured against one device's audio latency.
+//   masterVolume same argument, and 100 is a sane start on new hardware.
+//   session*     same-day scratch; restoring yesterday corrupts today's goal.
+// Fields that survive "reset all progress". Preferences the user chose, plus
+// the entitlement: Pro is a purchase, and no button labelled reset-progress
+// should be able to take it away. Revoking Pro is the testing button's job,
+// and that button comes out before launch.
+const PROG_KEEP_ON_RESET = [
+  'masterVolume', 'tapOffsetMs', 'noteNaming', 'uiScale', 'lang', 'teachingMode',
+  'helpTips', 'hapticsOn', 'splashSoundOn', 'mqMusicOn', 'audioCues',
+  'notifications', 'sessionGoalMin', 'hasPro',
+];
+
+const BACKUP_PROG_EXCLUDE = [
+  'hasPro', 'tapOffsetMs', 'masterVolume',
+  'sessionTodayMs', 'sessionDate', 'sessionCompleted', 'sesModulesVisited',
+];
+
+function _backupTravelKeys() {
+  const out = BACKUP_KEYS_PROGRESS.concat(BACKUP_KEYS_SETTINGS);
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && BACKUP_PREFIX_TAKE.some(p => k.indexOf(p) === 0) && out.indexOf(k) === -1) out.push(k);
+    }
+  } catch (e) {}
+  return out;
+}
+
+// Build the payload. Reads live state; writes nothing.
+function backupBuild() {
+  const prog = {};
+  Object.keys(progState).forEach(k => {
+    if (BACKUP_PROG_EXCLUDE.indexOf(k) === -1) prog[k] = progState[k];
+  });
+  const keys = {};
+  _backupTravelKeys().forEach(k => {
+    try { const v = localStorage.getItem(k); if (v !== null) keys[k] = v; } catch (e) {}
+  });
+  return {
+    app: 'intonare', schema: BACKUP_SCHEMA, appVersion: INTONARE_VERSION,
+    exported: new Date().toISOString(), prog: prog, keys: keys,
+  };
+}
+
+// Returns null if the object is a backup this build can apply, otherwise a
+// reason string the UI turns into a message. A file from a NEWER schema is
+// refused outright rather than partially applied; that is the whole point of
+// carrying a schema number.
+function backupValidate(b) {
+  if (!b || typeof b !== 'object' || Array.isArray(b)) return 'unreadable';
+  if (b.app !== 'intonare') return 'notours';
+  if (typeof b.schema !== 'number') return 'unreadable';
+  if (b.schema > BACKUP_SCHEMA) return 'newer';
+  if (!b.prog || typeof b.prog !== 'object' || Array.isArray(b.prog)) return 'unreadable';
+  if (b.keys && typeof b.keys !== 'object') return 'unreadable';
+  return null;
+}
+
+// What the confirmation sheet shows, for both the file and the current device,
+// so the warning can name what is about to change instead of saying "are you
+// sure". Never throws; a malformed field reads as zero.
+function backupSummary(src) {
+  const p = (src && src.prog) || src || {};
+  const n = o => { try { return Object.keys(o || {}).length; } catch (e) { return 0; } };
+  return {
+    xp:      (typeof p.xp === 'number' ? p.xp : 0),
+    streak:  ((p.streak && typeof p.streak.count === 'number') ? p.streak.count : 0),
+    ach:     n(p.achievements),
+    days:    n(p.history),
+    version: src && src.appVersion, exported: src && src.exported,
+  };
+}
+
+// Apply a validated backup. REPLACE semantics: every key the file carries is
+// overwritten, every managed key it does NOT carry is cleared, and only the
+// deliberately-excluded fields keep their local values.
+//
+// localStorage has no transaction, so the order matters: validate everything
+// first, write the auxiliary keys, and write progState LAST as a single
+// setItem. If the write dies partway (quota, private mode), progState is still
+// the old one and the next boot runs progMigrate over it, which is recoverable.
+function backupApply(b) {
+  const why = backupValidate(b);
+  if (why) return why;
+
+  // Stage the new progState in full before touching anything.
+  const incoming = {};
+  Object.keys(b.prog).forEach(k => {
+    if (BACKUP_PROG_EXCLUDE.indexOf(k) === -1) incoming[k] = b.prog[k];
+  });
+  let staged;
+  try { staged = progMigrate(Object.assign({}, progState, incoming)); }
+  catch (e) { return 'unreadable'; }
+
+  const files = b.keys || {};
+  const managed = _backupTravelKeys();
+  // Any managed key the file also knows about, plus any it carries that this
+  // build has not seen before (forward compatibility within the same schema).
+  Object.keys(files).forEach(k => { if (managed.indexOf(k) === -1) managed.push(k); });
+
+  try {
+    managed.forEach(k => {
+      if (BACKUP_KEYS_SKIP.indexOf(k) !== -1) return;
+      if (BACKUP_PREFIX_SKIP.some(p => k.indexOf(p) === 0)) return;
+      try {
+        if (Object.prototype.hasOwnProperty.call(files, k)) localStorage.setItem(k, files[k]);
+        else localStorage.removeItem(k);
+      } catch (e) {}
+    });
+    progState = staged;
+    progSave();
+  } catch (e) { return 'writefail'; }
+  return null;
+}
+
+// ── Export ────────────────────────────────────────────────────────────────
+// Three tiers, same shape as intonareNativeShare: a real file where the
+// platform allows it, a browser download where it does not, and the share
+// sheet with the JSON as text as the floor. Tier 1 stays dormant until
+// @capacitor/filesystem is installed; it is feature-detected, not assumed.
+function _backupFilename() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return 'intonare-backup-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '.json';
+}
+function backupExport() {
+  let txt;
+  try { txt = JSON.stringify(backupBuild(), null, 2); }
+  catch (e) { try { svcToast(t('backup_err_writefail')); } catch (e2) {} return; }
+  const name = _backupFilename();
+  try { hapticLight(); } catch (e) {}
+
+  // Tier 1: native filesystem + share sheet.
+  try {
+    const P = window.Capacitor && window.Capacitor.Plugins;
+    if (P && P.Filesystem && P.Share) {
+      P.Filesystem.writeFile({ path: name, data: txt, directory: 'CACHE', encoding: 'utf8' })
+        .then(r => P.Share.share({ title: 'Intonare', url: r.uri, dialogTitle: t('backup_export') }))
+        .catch(() => intonareNativeShare(txt, null, 'Intonare'));
+      return;
+    }
+  } catch (e) {}
+
+  // Tier 2: browser download.
+  try {
+    const url = URL.createObjectURL(new Blob([txt], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { try { document.body.removeChild(a); URL.revokeObjectURL(url); } catch (e) {} }, 1000);
+    try { svcToast(t('backup_saved')); } catch (e) {}
+    return;
+  } catch (e) {}
+
+  // Tier 3: hand the JSON to the share sheet as text.
+  try { intonareNativeShare(txt, null, 'Intonare'); } catch (e) {}
+}
+
+// ── Restore ───────────────────────────────────────────────────────────────
+let _backupPending = null;
+
+function backupPickFile() {
+  const el = document.getElementById('backupFileInput');
+  if (el) { el.value = ''; el.click(); }
+}
+function backupFileChosen(ev) {
+  const f = ev && ev.target && ev.target.files && ev.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onerror = () => { try { svcToast(t('backup_err_unreadable')); } catch (e) {} };
+  r.onload = () => {
+    let parsed = null;
+    try { parsed = JSON.parse(r.result); } catch (e) { parsed = null; }
+    const why = backupValidate(parsed);
+    if (why) { try { svcToast(t('backup_err_' + why)); } catch (e) {} return; }
+    _backupPending = parsed;
+    backupShowSheet();
+  };
+  r.readAsText(f);
+}
+
+// The sheet reads the file back to the user before anything is written. Replace
+// is destructive, so this is the safety mechanism, not decoration: it names the
+// numbers on both sides so "replace" is a decision rather than a leap.
+function backupShowSheet() {
+  if (!_backupPending) return;
+  const f = backupSummary(_backupPending), now = backupSummary({ prog: progState });
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  let when = '';
+  try { when = new Date(_backupPending.exported).toLocaleDateString(progState.lang === 'it' ? 'it-IT' : 'en-GB',
+        { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { when = '—'; }
+  set('backupFileWhen', when + (f.version ? '  ·  v' + f.version : ''));
+  set('backupFileStats', f.streak + t('backup_u_days') + '  ·  ' + f.xp + ' XP  ·  ' + f.ach + t('backup_u_ach'));
+  set('backupNowStats',  now.streak + t('backup_u_days') + '  ·  ' + now.xp + ' XP  ·  ' + now.ach + t('backup_u_ach'));
+  const sheet = document.getElementById('backupSheet');
+  if (sheet) sheet.classList.remove('hidden');
+}
+function backupCloseSheet() {
+  _backupPending = null;
+  const sheet = document.getElementById('backupSheet');
+  if (sheet) sheet.classList.add('hidden');
+}
+function backupConfirmRestore() {
+  if (!_backupPending) return;
+  const why = backupApply(_backupPending);
+  _backupPending = null;
+  if (why) { backupCloseSheet(); try { svcToast(t('backup_err_' + why)); } catch (e) {} return; }
+  // progState and every setting are read into memory at boot, so the only
+  // honest way to apply this is to start again.
+  try { localStorage.setItem('intonare_restored', '1'); } catch (e) {}
+  location.reload();
+}
+
+// A restore reloads the page, so the confirmation has to outlive the reload.
+// That is the only thing this key is for; it is read once and thrown away.
+try {
+  if (localStorage.getItem('intonare_restored') === '1') {
+    localStorage.removeItem('intonare_restored');
+    setTimeout(function() { try { svcToast(t('backup_restored')); } catch (e) {} }, 1200);
+  }
+} catch (e) {}
+
 function progAddXp(amount) {
   if (!amount || amount < 0) return;
   const oldLv = progState.level;
@@ -80623,26 +81236,19 @@ function resetProgress() {
   clearTimeout(_resetTimer); _resetArmed = false;
   const btn = document.querySelector('.pm-reset');
   if (btn) { btn.textContent = '↺ RESET ALL PROGRESS'; btn.style.color = ''; btn.style.borderColor = ''; }
-  progState = {
-    xp: 0, level: 1, tapOffsetMs: progState.tapOffsetMs || 38,
-    noteNaming: progState.noteNaming || 'english',
-    lang: progState.lang || 'en',
-    teachingMode: progState.teachingMode || false,
-    helpTips: progState.helpTips !== false,
-    hapticsOn: progState.hapticsOn !== false,
-    audioCues: progState.audioCues || { correct:'chime', wrong:'buzz', milestone:'fanfare', levelup:'chiptune', achievement:'chime', vols:{correct:100,wrong:100,milestone:100,levelup:100,achievement:100} },
-    streak: { count: 0, lastDate: null, longest: 0 },
-    dailyChallengeStreak: { count: 0, lastDate: null, longest: 0 },
-    history: {}, secret_chime_unlocked: false, beethoven_unlocked: false, mythic_unlocked: false,
-    stats: { tempo:{}, interval:{}, tempoguess:{}, poly:{}, drone:{}, scale:{}, chords:{}, singsing:{}, chordle:{}, diadle:{} },
-  };
+  // A reset is a clean profile: progress, unlocks, stats and anything the user
+  // built go back to defaults. What survives is listed in PROG_KEEP_ON_RESET,
+  // and the entitlement is on that list on purpose. Building the new state from
+  // PROG_DEFAULTS rather than a literal here is what stops the two drifting.
+  const kept = {};
+  PROG_KEEP_ON_RESET.forEach(function(k) {
+    if (Object.prototype.hasOwnProperty.call(progState, k)) kept[k] = progState[k];
+  });
+  progState = progMigrate(Object.assign(JSON.parse(JSON.stringify(PROG_DEFAULTS)), kept));
   _lastMilestone = 0;
-  // Clear earned progress that lives outside progState (separate localStorage
-  // keys): challenge unlock, daily quiz, daily puzzles, vocal-range sessions.
-  // NOTE: settings/preferences (calibration, language, slider state, survival-
-  // guide zones) are deliberately preserved.
-  ['pr_hardcore_unlocked', 'pr_endless_unlocked', 'pr_endless_best', 'mq_stats', 'mq_daily', 'mq_in_progress',
-   'intonare_chordle_daily', 'intonare_diadle_daily', 'intonare_vr_sessions']
+  // Earned progress living outside progState. Read from the same list the
+  // backup uses, so a key added to one is never missing from the other.
+  BACKUP_KEYS_PROGRESS.concat(['mq_in_progress'])
     .forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
   progSave(); progRefreshChip(); progRenderModal();
   try { renderAchievements(); } catch(e) {}
@@ -101010,6 +101616,12 @@ const FAV_META = {
   'exercise:diadle':    { label: 'DIADLE',  type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 3\"/></svg>',
     launch: () => { setMode('practice'); enterExercise('diadle'); } },
+  // Road Trip carried data-fav-id since it shipped but had no entry here, so
+  // favouriting it produced a row with no label, no type and no icon: the star
+  // worked and led nowhere. Icon matches the card in the Train hub.
+  'exercise:roadtrip':  { label: 'ROAD TRIP', type: 'EXERCISE',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 L9 5 L15 19 L21 5"/><circle cx="9" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="21" cy="5" r="1.4" fill="currentColor" stroke="none"/></svg>',
+    launch: () => { setMode('practice'); enterExercise('roadtrip'); } },
 };
 
 function favGetList() { return progState.favorites || []; }
@@ -112431,25 +113043,25 @@ function mqOpenDailyPopup() {
 
   if (st && st.status === 'done') {
     // Completed today — show score + share, no replay
-    meta.textContent = 'Completed · ' + (st.correct || 0) + '/10 correct';
+    meta.textContent = t('mqd_meta_done') + ' ' + (st.correct || 0) + t('mqd_meta_correct');
     prog.style.display = 'none';
-    startBtn.textContent = 'VIEW RESULT';
+    startBtn.textContent = t('mqd_view_result');
     startBtn.dataset.mode = 'view';
     shareBtn.style.display = 'block';
   } else if (st && (st.status === 'in_progress' || st.status === 'awaiting_finish')) {
     // Mid-attempt — resume only
     var done = (st.answers || []).length;
-    meta.textContent = '10 questions · one attempt';
+    meta.textContent = t('mqd_meta_fresh');
     prog.style.display = 'block';
-    prog.textContent = 'IN PROGRESS · Q' + Math.min(done + 1, 10) + '/10';
-    startBtn.textContent = 'RESUME →';
+    prog.textContent = t('mqd_in_progress') + Math.min(done + 1, 10) + '/10';
+    startBtn.textContent = t('mqd_resume');
     startBtn.dataset.mode = 'resume';
     shareBtn.style.display = 'none';
   } else {
     // Fresh
-    meta.textContent = '10 questions · one attempt';
+    meta.textContent = t('mqd_meta_fresh');
     prog.style.display = 'none';
-    startBtn.textContent = 'START →';
+    startBtn.textContent = t('mqd_start');
     startBtn.dataset.mode = 'start';
     shareBtn.style.display = 'none';
   }
