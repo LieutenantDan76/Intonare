@@ -64,6 +64,1778 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.108.29 — the top row joins the card it sits on
+
+Three mismatches, found by dumping every computed colour in the row rather than
+squinting at it.
+
+The pills and the cog were painted flat --panel while the stave card under them
+is a translucent gradient, so they read as three solid blocks laid on the
+surface instead of part of it. They take the card's fill now.
+
+Corners were 9px against the card's 12.
+
+And the labels went accent purple in light mode but grey in dark. That is a
+global written for Interval Training, where those pills are colour-coded by
+difficulty and the light theme has an override to match. Staff Notes borrowed
+the class and inherited a colour that means nothing here. Scoped to #exStaffRead
+so Interval Training keeps its own.
+
+Every control in the row now shares the card's fill, border and corner, and all
+of its text lands on one value per theme: 163,165,184 in dark, 47,65,88 in light.
+The sub-label stays one step dimmer than the label, which is the relationship
+dark mode already had and light mode had lost.
+
+## v0.108.28 — silence was the fallback, and it should never have been
+
+The diagnostics panel answered it in one screenshot. Daniele was testing in the
+HTML preview, not the app: platform web, origin null, and every sample fetch
+404ing because the bundled audio/ folder only exists inside the Capacitor build.
+ok / fail read 0 / 63. The preview reported route warmNote, warmed=false,
+PLAYED false.
+
+That also explains the shape of it exactly. First tap of a sampled voice: the
+instrument is not yet marked failed, so the preview tries to fetch, gets a 404,
+and plays nothing. Second tap: isFailed is now true, the sample branch is
+skipped, and the code falls through to the synth. Which sounds. Synth voices
+worked every time; sampled ones never worked once.
+
+Reproduced it exactly by serving the app with audio/ 404ing: first pick silent,
+second pick six oscillators. Then fixed and re-ran: first pick now sounds.
+
+The fix is that a preview never goes silent. If the sample cannot be had, for a
+missing file, no network, or a build with no audio in it, it speaks with the
+synth instead. The old code treated an unavailable sample as nothing to say,
+which reads as a broken control.
+
+Checked both ways. With samples present nothing changed: four fresh voices still
+sound in 34 to 73ms from their real samples, one request each, full sets loaded.
+With samples absent every voice now sounds on the first tap.
+
+Worth recording about the last four builds: three of them fixed real faults that
+were not this one, and all three were reasoned rather than observed. What ended
+it was building a rig that could actually run the code, and then reading a
+readout off the device instead of arguing from the source.
+
+## v0.108.27 — found it, by finally building the right test
+
+Every test up to here ran the page over file://, and SampleEngine.load returns
+early on file:// without fetching anything. So four builds of "verified" had
+never once executed the sample path. Served the app over HTTP with decodable
+stand-in files and the bug was visible in one run.
+
+On the piano's path, pickTonePopup calls _syncToneUI first, which starts the
+full instrument load: 88 files, fired in parallel. The preview's single request
+then goes out as number 89 and waits on the connection pool, which a browser
+caps at about six per host. Measured on localhost with 11KB stand-ins: the note
+sounded 830ms after the tap. With real MP3s on a phone that is seconds, which is
+silence as far as anyone tapping is concerned.
+
+v0.108.25 cut the preview from 88 files to one, which was right and did nothing,
+because the other 88 were already in flight ahead of it.
+
+- load() now fetches the note a preview asks for first, on its own, and waits for
+  it before firing the rest.
+- warmNote shares one in-flight request per file, so the preview and the load
+  cannot race for the same one.
+- The full load skips notes already held, so nothing is fetched twice.
+
+Same measurement after: 53ms. Four fresh voices auditioned in a row sounded in 28
+to 57ms and every one still loaded its full 88 samples.
+
+Two pins. Also worth writing down: the reason this took four attempts is that the
+test rig silently skipped the code under test. A green run on file:// says
+nothing about sample behaviour.
+
+## v0.108.26 — instrumenting it instead of guessing again
+
+Three builds of theories, none of which was the bug. Stopping.
+
+The audio diagnostics panel already exists for faults that are invisible without
+a Mac, and a preview that does not sound is one. Every branch of
+_tonePreviewPick now records what it decided into window._previewDiag, and the
+panel has a section for it: which tone, whether it is sampled and whether it was
+ready, the context state and whether the resume settled, canPreview and
+stillPicked, which route it took, gain and volume, and whether anything actually
+played. Seven taps on the version stamp opens the panel.
+
+Also the picker stays open while you audition. Daniele's suggestion, and right
+regardless of the bug: closing on every tap means reopening to hear the next
+one, which is the wrong shape for a control whose whole purpose is comparing
+voices. The active tile follows the choice; the X or the backdrop closes it.
+The skin no longer comes off on pick, only on close, since the pick no longer
+ends the session.
+
+One pin reworded. It was tied to the exact resume line, which this build
+reshaped; it now pins the behaviour and forbids the unguarded form.
+
+## v0.108.25 — it was never silent, it was waiting for 88 files
+
+Two builds spent on the wrong thing. Daniele said to step back, and the fact that
+mattered was one I had not asked for: it is not the first pick after launching,
+it is the first pick of each voice. Pick a voice you have picked before and it
+plays instantly.
+
+That is the sample loader, not the audio context. pickTonePopup calls
+_syncToneUI, which starts SampleEngine.load for the chosen voice; the preview
+then waits on that same promise, and load does not resolve until the whole
+instrument is in. Most instruments here are 88 files. Grand piano is 30. So the
+first preview of a voice fired somewhere between one and several seconds after
+the tap, which is silence as far as anyone tapping is concerned.
+
+A note reads exactly one buffer and pitch-shifts it, so waiting for the set was
+always stricter than the code needed.
+
+- SampleEngine.warmNote(id, midi, ctx) fetches only the sample nearest the note
+  asked for, into the same map the full load fills, so nothing is fetched twice.
+- play() no longer refuses a partially loaded instrument. It holds only when
+  there is nothing at all to play from.
+- The preview warms one note and plays. The full set carries on loading behind
+  it, so the instrument still ends up complete.
+
+One request instead of 88. Verified: with a single buffer present and isReady
+still false, play() returns a node where it used to return null.
+
+The two previous builds fixed real things that were not this. The context was
+genuinely being built off-gesture, and notes were genuinely being scheduled
+before resume() settled. Both stay; neither was the bug.
+
+## v0.108.24 — waiting for the resume
+
+v0.108.23 fixed the wrong half. The context was being built on the gesture, which
+was right and still is, but getAudio() asks it to resume and resume() is a
+promise. The old code went straight on to schedule a note. On a context that is
+still suspended that note is scheduled and then dropped, so the first pick of a
+session was silent whether the voice was sampled or synthesised, and the second
+was fine because by then the resume had settled.
+
+Waits for it now, then plays. Same shape the quiz ambience and the metronome
+already use.
+
+Verified by counting where notes get scheduled. With the context forced suspended
+the way a fresh launch leaves it: nothing starts on the call, and once the resume
+settles two nodes start on a running context. Zero were ever scheduled against a
+suspended one.
+
+_toneBankWarm resumes as well, so opening a bank leaves the chain running before
+you have picked anything.
+
+The sentinel caught one of its own pins drifting on this build: v0.108.23 pinned
+the context creation by the line that followed it, and reshaping the function
+around a _play closure moved that line. Rewritten to pin what must not come back,
+which is the context being built inside the load callback, rather than what
+happened to sit next to it. 94 pins.
+
+## v0.108.23 — the first preview of a session was always silent
+
+Not the samples, the audio context. getAudio() carries a comment in this file
+saying it only ever runs on a user gesture. A sample load breaks that promise:
+the code after the await is no longer on the gesture that started it, so the
+first pick of a session built the context off-gesture, got it back suspended,
+and played nothing. The second pick found a context already there and worked.
+Hence first selection silent, every one after it fine.
+
+The chain is opened synchronously at the top of _tonePreviewPick now, while the
+tap is still the current call stack, and the load callback uses that context
+rather than asking for one. Traced to confirm the order: on a pick, ensureRefCtx
+fires before the load, where it used to fire inside its callback.
+
+Tone banks also warm on open, which is itself a gesture: the chain comes up and
+the samples for whatever is currently selected start pulling, so the first tap
+has less to wait for. Both shared builders do it, so it covers every surface with
+a bank: the piano and Rhodes tools, Chords' two banks, Chordle, Interval
+Reference and Staff Notes.
+
+Two pins, because the ordering is invisible in the code and only ever wrong on
+device.
+
+Headless cannot produce a real gesture, so this is verified by call order rather
+than by hearing it. Worth a listen on device: change the reveal voice on a fresh
+launch and check the very first one speaks.
+
+## v0.108.22 — changing a setting was deleting your history
+
+Asked for a reroll on leaving the sheet. Found the reason the reroll was missing,
+and it was much worse than a missing reroll.
+
+srSetAcc, srSetKeySig and srSetLedger all called srReset. srReset is the RESET
+button's function: it empties the note table, the position table, the best run,
+the score and the input counters. So turning accidentals on, or nudging ledger
+lines by one, silently deleted every reading statistic the module had on you.
+srToggleClef never did this, which is why it was never noticed.
+
+They mark the card stale now. Ten answered cards, then accidentals on, key
+signatures on, a ledger nudge and a clef added: note table, total and best run
+all unchanged.
+
+The reroll happens on close rather than on tap, so the card does not jump about
+underneath settings you are still adjusting. Verified the card holds while the
+sheet is open and is redrawn on the way out.
+
+Two pins added, one of them a must-not: srReset must never appear in srSetAcc
+again.
+
+Header: both buttons were pinned at 12px while the title starts below the sheet's
+22px padding, so their centres sat 12px apart. All three are on 39 now, and the
+title has 14px under it instead of 2.
+
+Settings were already saved the moment you change them, not on exit; every setter
+calls prefSet immediately.
+
+## v0.108.21 — the instrument sheet was opening underneath
+
+Real bug, and one the file already had a comment about. Every .ce-stats-modal
+shares z-index 2000, so DOM order decides which is on top, and the instrument
+sheet sits above the settings sheet in the document. It opened behind it. Same
+trap #codeModal and #proUnlockedModal hit, fixed the same way.
+
+The two banks ran the full column, which made two dropdowns the heaviest things
+in the sheet. They are inline now at 176px against the column's 308.
+
+Not 152, which is where half landed and where GRAN PIANOFORTE and CHITARRA
+CLASSICA both clipped. All 44 tone names and all 6 instruments were checked in
+both languages; 176 is the width where nothing needs an ellipsis.
+
+Auto advance moved up with the other two toggles, which is what it is. That
+leaves the two banks together in a group of their own, which is also what they
+are.
+
+The ledger row's label sits 6px further down, because its control is a tall
+graphic rather than a single line and the label was reading as part of the row
+above.
+
+Sheet is 492, from 547 and 564 over the last two builds. Still does not scroll.
+
+## v0.108.20 — settings, without the captions
+
+The group headings from v0.108.19 are gone, along with their six strings. They
+were explaining the sheet rather than designing it; the rows already say what
+they are. The grouping stays, carried by a hairline and 16px of space instead of
+by a caption.
+
+Two things that were actually wrong, found by measuring every control's box
+rather than by looking:
+
+Chips were 26px tall and the two bank buttons 30, so no two kinds of control in
+the sheet were the same height. Everything is 30 now, one value across chips,
+toggles and buttons.
+
+Right edges were already consistent at +21. The only outlier was the ledger
+graphic at 200 centred against everyone else's 308, so I widened it, and it was
+worse: the two steppers are composed to sit at the stave's edges and widening
+pulled them 107px away from the thing they annotate. Reverted, with a comment
+saying why, because it is a single control rather than a row of them and its
+internal alignment beats matching the column.
+
+Sheet is 547 against 564 before the last two builds, and still does not scroll.
+
+## v0.108.19 — settings, arranged
+
+Seven unrelated rows in a flat list, three of them identical two-state toggles
+each given a label on its own line above a full-width pair of buttons. Now
+grouped in three, by what each setting actually decides.
+
+THE CARD holds clef, ledger lines, accidentals and key signatures. ANSWERING
+holds the fretboard instrument. ONCE YOU ANSWER holds the reveal voice and auto
+advance, which is where auto advance belonged all along; it had been sitting
+between key signatures and the fretboard for no reason.
+
+That also answers whether the two banks share a row. They should not. They are
+not the same kind of setting, they now sit in different groups, and one of them
+only applies to one of the three input surfaces.
+
+Group headers are a small caps label with a rule running to the edge, so the eye
+has something to travel along. The groups carry the separation, which lets the
+rows inside sit at 10px instead of 13.
+
+The three toggles are inline now, label left and the pair right at 108px, which
+takes each from 42px to 26. Those savings go straight back into the headers, so
+the sheet is 566 against 564 and the point was never compactness.
+
+Checked: nothing in the sheet is clipped at 390px wide, all six labels and every
+chip fit their boxes, and the sheet is 566 against a 712 max so it still does not
+scroll.
+
+## v0.108.18 — the fretboard picker becomes a bank
+
+Six instruments in an sr-optrow gave every chip 46px, and the row splits its
+width evenly regardless of what is in it. GUITAR needed 47, UKULELE 57 and
+MANDOLIN 65, so half the labels were clipped.
+
+It is a button now, reading the current instrument with its string count, opening
+a sheet of six. Same shape as the voice button directly below it in the same
+sheet, and the same shape as KEYS above. The chips inside are three across at
+99px, which every name fits with room over.
+
+The alternative considered was a chooser in the drill itself on switching to the
+fretboard. Rejected: it puts a gate in front of the exercise, which is the
+pattern that came out of this module a few builds ago, and it does not remove the
+need for a settings control, so the setting would live in two places.
+
+The two buttons sat at 28 and 30 because the voice one carries a 13px icon and
+this one does not, so there is a min-height holding them level.
+
+Checked: every label fits, picking mandolin redraws the board to four strings,
+the choice persists, and the narrowed pool follows the instrument.
+
+## v0.108.17 — the heat renderer comes out
+
+srRenderHeat and srHeatBars were defined and never called. Tracing what they
+reached: srHeatStave and srHeatLedgerRow were only ever called by srRenderHeat,
+the three element ids it looked up do not exist in the markup at all, and the
+five sr_heat_ strings were used only by its legend. That whole closure is gone,
+144 lines and about 7KB, along with ten i18n keys.
+
+What they borrowed stays, because it is live elsewhere: srHeatColor has nine
+other callers in the stats sheet, and srPosAll, SR_TOPSTEP and rrMidiToStaff are
+used throughout.
+
+Checked before cutting rather than after: no dynamic dispatch can reach them.
+The file has three window[fn] call sites and none of their lists contain
+anything from this module.
+
+Checked after: the stats sheet is the surface that shares code with what was
+removed, so all of it was exercised. Headline numbers, the four clef tiles, the
+trouble list, the per-note breakdown, the per-input summary and the clef detail
+sheet all render, with no console errors.
+
+Also removed in v0.108.16 and worth recording together: srFretOrder, a pref read
+on boot and never written.
+
+## v0.108.16 — taking out what I left lying around
+
+srFretOrder was read on boot, consulted by the row builder, never written and
+never exposed. A setting in appearance only. It is what it always actually was
+now, a constant, with tab order hardcoded.
+
+Audit of the module also turned up two functions that are defined and never
+called, srHeatBars and srRenderHeat. Both predate this work and neither is mine
+to delete on a hunch, so they are flagged rather than removed.
+
+## v0.108.15 — lowering the stave without dragging the inputs with it
+
+v0.108.14 lowered the stave with top padding, which grew the box, which pushed
+everything under it down by the same amount. The stave moved 8px, the fretboard
+moved 8px, and the gap between them was identical; the card just got taller.
+Daniele spotted it from the screenshot before I measured it.
+
+Done with margin instead, added above and taken back off below, so the stave
+lowers and nothing under it moves. The first attempt at that only shifted 2px of
+the intended 6, because the tool row's own 4px bottom margin collapses with the
+stave's top margin rather than adding to it. Margin-top is 10 to clear the
+collapse.
+
+Measured against the pre-nudge baseline: stave 66 to 72, octave row unchanged at
+243, fretboard unchanged at 275, NEXT unchanged at 433, card unchanged at 490.
+
+## v0.108.14 — the card holds still
+
+The stave box no longer changes size when the range does. It was already
+clef-independent on purpose, and the comment above srMetrics defended range as
+the deliberate exception: a wider span was supposed to earn more room. Cycling
+ledger tiers moved everything under it, which is worse than the air it saved.
+
+The allowance is now computed at the deepest tier whatever is selected. Box is
+154px at every setting, against 87 / 124 / 143 before, so it costs 67px at zero
+ledger lines and 11px at three. Note size is constant across every setting too,
+which for a reading drill is worth more than the air.
+
+Card height is now identical across all five ledger tiers: 368 on the letter
+grid, 492 on the keyboard, 498 on the fretboard.
+
+The stave also sits slightly lower in its box, 14px of padding above against 6
+below, so it is not pinned to the tool row.
+
+Pinned, because this is the third attempt at it: v0.106.3 measured per note and
+the card grew card to card, v0.106.5 measured per clef and the card resized under
+the clef pill, and this one closes the range half.
+
+## v0.108.13 — the neck stops looking like a spreadsheet
+
+String lanes were 30px, which made the cells 20 wide by 32 tall. A real neck's
+cells are landscape and these were portrait, so the board read as a grid with
+strings drawn on it rather than as a fretboard. Lanes are 22px now, cells 20 by
+24, and the board went from 194 to 146. Card height in fretboard mode: 479 down
+to 431.
+
+Also answering the other half of the question: the stave has not moved. srMetrics
+returns topY 18 and height 72 at zero ledger lines, the same values it has always
+returned, and nothing in the last four builds touched it. What changed is that
+everything underneath it got shorter, so it reads as higher than it did.
+
+24px lanes are under any touch-target guideline, but the target is a band running
+the full width of a fret rather than a square, so it may well be fine. If it is
+not, the lever is fewer frets per slice rather than taller lanes, since taller
+lanes are what caused this.
+
+## v0.108.12 — the fretboard, and the module is feature complete
+
+Third input surface. Guitar, bass, five-string bass, ukulele, mandolin and
+banjo, picked in settings; the INPUT pill cycles all three surfaces.
+
+**It reads written pitch, not concert.** Guitar, bass and ukulele are notated an
+octave above where they sound, so a card asking for E4 is answered where E3
+sounds. Mandolin and banjo are written at pitch and carry an offset of zero. The
+alternative was making a guitarist's every instinct an octave wrong and calling
+it correct, which would have read as the app being broken. A tap converts to
+written pitch at the boundary, so the scoring, the stats and the stave ghost all
+carry on in written pitch exactly as they do for the other two inputs.
+
+**Any position counts.** Notation says E4, not which string, so marking three of
+the four E4s wrong would penalise something the card never asked. On guitar 27
+of 37 reachable pitches sit in more than one place, so this is the ordinary case.
+Answer correctly and every position of that note lights.
+
+**The pool narrows to the instrument.** With the fretboard up, the drill only
+draws notes the selected instrument can physically reach, and tries the other
+clefs before giving up on one that is out of range. Two hundred consecutive
+cards drawn on guitar in treble at two ledger lines: zero unplayable. If every
+clef in the pool is unreachable the card says so rather than asking for the
+impossible.
+
+**Geometry**, which took four prototype rounds on a real phone. Tab order with
+the highest string on the top line; v1 had it inverted and a note Daniele was
+aiming at came back wrong. Open strings outside the nut as rings, because putting
+them in the first fret cell ate fret 1's space and made every number read one
+high. Inlays on the real frets, since they had inherited that same error and were
+all a fret flat. Markers say the note, not the fret number, which is what made
+the other three findable. Stretched rather than fitted, so the string lanes stay
+32px instead of shrinking to 21 along with the width.
+
+**Twenty-four frets in two slices**, OPEN–12 and 12–24, stepped with the same
+arrows as the keyboard's octaves and sharing the same row. Twelve is not enough
+and this was measured: a treble stave with three ledger lines asks up to E6 and a
+12-fret guitar stops at E5.
+
+Four pins added, verified against a broken copy: the written offset, the 24-fret
+neck, the pool narrowing, and the conversion at the tap.
+
+On device: the board is 316 by 194 at phone width with 23 by 32 cells, so the
+lanes are comfortable and the frets are narrow. Check that trade before anything
+else. Then the three-input layout pass, which is the one thing deliberately left.
+
+## v0.108.11 — taking the air out of it
+
+Three stacked rows sat between the stave and the answer, each with its own
+margin. Trimmed rather than removed: the stave's bottom margin, the feedback
+row's height and margin, the accidental row's margin, and the octave row's.
+
+The octave row is collapsed on the letter grid now instead of held open, which
+reverses the call made in v0.108.10. Holding it open cost 26px of dead air on
+the mode most people will use most of the time, to prevent a shift that only
+happens when you deliberately change input, never between cards. That was the
+wrong trade and the screenshots made it obvious.
+
+Keys are 140px rather than 178. At 23 wide that is about one to six, which is
+roughly a real key; 178 made them one to seven and a half, which is longer than
+anything you have played.
+
+Card heights at 390px wide: the letter grid went from 355 to 301, the keyboard
+from 487 to 425.
+
+Note that the keyboard is still a vertical stretch of a surface the shared
+renderer draws at 104px, now by a factor of 1.35 rather than 1.71. Removing the
+stretch entirely would give correct proportions at about 97px tall, which is
+shorter than what is there now. That is a look-at-it decision rather than a
+measurable one.
+
+## v0.108.10 — room made for the keys
+
+Second pass on device. The INPUT pill is back in the tool row and properly
+centred, which needed a three-column grid rather than space-between; with two
+flanking items of different widths, space-between centres nothing. Measured at
+zero pixels off the card's centre line.
+
+"name the note" is gone. It said nothing you did not already know from being in
+the drill, and its row is now the octave control: a left arrow, the range, a
+right arrow. That row keeps its 30px height on the letter grid too, hidden
+rather than removed, so switching input never walks the keys up and down under
+your thumb.
+
+With nothing flanking it, the keyboard takes the full width. It was still only
+104px tall, because the shared renderer writes its own width and height
+attributes and a max-height does not touch them. It stretches on the vertical
+only now, so a two-octave span keeps its key widths and gains the height: 316 by
+178 at phone width, against 316 by 104 before.
+
+Key widths are unchanged at 23px, which is simply what fourteen white keys on a
+390px screen comes to. If that is still too fiddly the fix is one octave rather
+than two, which doubles the width at the cost of more stepping. Say the word.
+
+On device: the keys are stretched rather than redrawn, so check the black keys
+still sit right at the new proportions.
+
+## v0.108.9 — the keyboard you can actually hit
+
+Four things from Daniele's first pass on device.
+
+Deriving the window from the whole pool was wrong once ledger lines were on. The
+deep tiers span four octaves, and fitting those on a phone made the keys too
+narrow to press. It is two octaves now, fixed, with a stepper either side and
+the range printed underneath.
+
+The window does not follow the card, and that is the point rather than an
+oversight. Snapping it to the target's octave would hand over half the answer on
+exactly the notes the octave question is interesting for, which is the ones
+needing ledger lines. It starts at the bottom of the pool, clamps to it, and
+stays where you left it. Verified across eight consecutive cards that it does
+not move on its own.
+
+Keys you press stay lit until the next card, in the same colours the stave uses
+for the same states: red for a wrong key, accent for a clean read, amber for one
+you got on the second or third go. Painted through style rather than the fill
+attribute so a var() resolves and so it beats what the renderer wrote.
+
+The INPUT control moved out of the tool row into a centred row of its own above
+the stave, and it cycles rather than opening a sheet. Two surfaces, three once
+the fretboard lands, is not enough of a choice to justify a full-screen modal.
+srToneModal went the same way two builds ago for the same reason.
+
+Two pins added: the two-octave constant, and the line that starts the window at
+the bottom of the pool rather than at the card.
+
+On device: whether two octaves is the right compromise, and whether starting at
+the bottom of the pool is the right default or whether it should remember per
+clef.
+
+## v0.108.8 — answer it on a keyboard
+
+Staff Notes takes a second input surface. An INPUT pill sits next to KEYS in the
+card's tool row, because the key pool was promoted out of settings into a pill
+for exactly the reason a mode selector would need to be, and Rhythm Reading puts
+its difficulty chip in the header for the same reason. Buried in the settings
+sheet nobody would find it.
+
+The keyboard is unlabelled. Naming the note is the exercise, so a labelled
+keyboard would turn a reading drill into a matching game. The armed accidental
+row hides in this mode too, since on a keyboard the key is the accidental.
+
+Answers are octave-exact. Right pitch class in the wrong octave is simply wrong,
+which is only fair because the visible keys are derived from the clef and ledger
+depth the drill is actually using. Treble with no ledger lines spans about an
+octave, so the window is two octaves centred on the pool and the answer is
+always on screen. That also means a wrong octave is only reachable on cards
+where the drill has genuinely put two octaves in play, rather than being a trap
+on a card where the octave was never a question.
+
+Both surfaces now share `_srResolve`. The grid and the keyboard disagree about
+what an answer looks like and agree about everything that happens afterwards, so
+the callers decide only whether it was right and what to mark as tried. Two
+copies of the tries and stats rules would have drifted the first time either
+one changed.
+
+The stave ghost still works. A keyboard tag carries the pitch itself, so instead
+of searching for the nearest note matching a letter it draws exactly the key you
+hit, which is the more useful version of that hint.
+
+Stats stay in one table. Splitting the note breakdown by input would have
+tripled the attempts needed before srPickWeighted has four on a position and
+starts adapting at all. Instead there are two counters per input under the
+breakdown, so you can see the keyboard dragging you down without splintering the
+data that drives the picker.
+
+Repeat taps on an already-wrong key cost nothing, matching the grid, which
+disables a letter once it has been tried.
+
+Four pins added, verified against a deliberately broken copy: the shared scoring
+path, octave-exact keyboard answers, the grid default, and the id exemption that
+stops the shared renderer drawing a drawbar console under the drill.
+
+Fretboard is the next build. `gssDrawFretboard` is not reusable for it: it reads
+the scale tool's own globals, draws into a fixed element id and has no tap
+callback, so that surface gets written rather than borrowed.
+
+On device: check the keyboard's height against the letter grid it replaces, and
+whether two octaves is the right window once ledger lines are on.
+
+## v0.108.7 — the timer nobody could cancel
+
+Auto-advance sets two timers when a card resolves: one at 1150ms to silence the
+reveal, one at 1400ms to turn the card. The second was held in _srAutoTO and
+cancelled by both NEXT and the next call. The first was a bare setTimeout held
+in nothing, so nothing could cancel it and nothing could see it.
+
+Tap NEXT quickly and it survived into whatever card had landed since. If you had
+tapped the stave to hear that one, it got cut off mid-note for no reason visible
+on screen. It also stacked, one orphan per card, so a fast run left several
+landing at overlapping times. It only bit when you were moving quickly, which is
+why it lasted this long.
+
+Held in _srStopTO now and cleared in the same two places the advance is.
+
+Eight pins added to the sentinel, the first this module has had. The one that
+matters guards the owner branch in pickTonePopup: delete it and Staff Notes goes
+back to writing selectedRefTone, and the symptom is the piano quietly changing
+voice, which nobody would trace to a reading drill. The rest hold the popup
+owner, the skin stripping, the preview call, the sr-tonepop skin, the grand
+piano default, three tries per card, and the timer above. All eight verified
+against a deliberately broken copy first, because a pin that cannot fail is
+decoration.
+
+intonare_regression_sentinel.py ships to outputs with this build and must be
+copied back into /mnt/project/ or the pins vanish on the next fresh chat.
+
+## v0.108.6 — the picker stops looking like it wandered in from the piano
+
+Two things Daniele called on device. REVEAL SOUND now sits at the bottom of the
+Staff Notes settings sheet rather than between KEY SIGNATURES and AUTO ADVANCE.
+And the voice button and its popup were both black, because the shared surface
+was drawn for the piano console and every module that borrowed it had to re-skin
+it; Chords and Interval Reference already had, Staff Notes had not.
+
+The button is matched to .sr-opt, the chips sitting directly above it: same fill,
+border, radius and Bebas at the same size, with the caret in the module's purple.
+The popup gets an sr-tonepop skin on the same accent.
+
+The skin took three passes to land, all of it specificity. Sharing the rules with
+the Interval Reference skin was tidy but wrong: the light-mode base skin paints
+this popup cream and green with !important, so the shared rules lost there and
+adding !important would have changed Interval Reference too. Written standalone
+it still lost, because body.light .tone-pop-tile is two classes and an element
+and .sr-tonepop .tone-pop-tile is two classes and nothing. Every rule is
+.sr-tonepop.riff-popup now, which is what the card rule already was, and why the
+card was the only part that came out right on the first attempt.
+
+Measured in both themes: card, tiles, group headers, the close button and the
+caret all resolve to the module purple, with no gradient bleeding through from
+the cream skin underneath. Every value is a variable that already flips, so
+there is no second set of light-mode colours to keep in step.
+
+The row also came off .tone-bank-row. That class masks its last 24px to fade a
+scrolling chip strip, and with a single full-width button the fade sat on the
+caret.
+
+On device: the button should read as one more row of the sheet. If it does not
+sit right against CLEF and ACCIDENTALS, the sizing is in one place.
+
+## v0.108.5 — one picker, and it knows who opened it
+
+v0.108.4 gave Staff Notes the real tone bank but left it inside a local modal,
+where the tiles sat in a stats sheet that never themed them and came out black.
+The fix was to stop hosting a picker at all. The settings row now holds the same
+compact voice button the Chords and Chordle surfaces use, and tapping it opens
+the shared popup, which renders at body level and is already themed.
+
+The popup needed to learn whose setting it was writing. Its tiles are inline
+onclick handlers on generated markup, so pickTonePopup has no closure to read
+from; openTonePopup takes an owner now and parks it in _tonePopOwner, and both
+pickTonePopup and closeTonePopup clear it. When a module owns the pick, the
+app-wide branch is skipped entirely, so selectedRefTone is left alone and the
+piano and Chords voice buttons cannot relabel themselves to a voice the app was
+never switched to. Called with no owner, every existing surface behaves exactly
+as it did.
+
+buildChordToneBank takes the same optional get/set pair buildRefToneBank does,
+plus a skin class for the popup. It defaulted to the Chords colours because the
+Chords tool was the only caller; Staff Notes passes skin:null and takes the
+default theme.
+
+Picking a voice now previews it. The tabbed bank always did, sample-loading and
+all, while the popup had a comment claiming it did and no code behind it, which
+made the two surfaces feel unrelated. That logic is one helper now and both call
+it, so the piano, Chords, Chordle and Interval Reference pickers all speak when
+you tap them.
+
+MATCH THE APP is gone. It only existed because the drill's voice defaulted to
+following the app's, and a picker with a null option in it is harder to explain
+than a picker without one. Staff Notes defaults to grand piano and stays there;
+a stored empty string from an older build fails the validator and migrates to
+the same default.
+
+Also fixed on the way past: closeTonePopup did not strip chd-tonepop, so
+dismissing the Chords picker with the X left the next piano open wearing Chords
+green. And the voice button that opened the popup is redrawn on pick, which the
+old hardcoded refresh list never did for Chordle's bank.
+
+Deleted: srToneModal, srOpenTonePicker, srCloseTonePicker, srSyncToneApp,
+srToneName, srRenderToneChips, the srToneAppBtn markup, the .sr-tone-app and
+#srToneModal rules, and the sr_tone_title / sr_tone_sub / sr_tone_app strings in
+both languages.
+
+On device: the REVEAL SOUND row sits under the label now rather than beside it,
+so check it against the CLEF and ACCIDENTALS rows above it. Then pick a voice in
+Staff Notes and confirm the piano tool is still on whatever it was.
+
+## v0.108.4 — the tone bank uses the tone bank
+
+v0.108.2 gave Staff Notes six hand-picked voices as chips, which Daniele rightly
+questioned: the app already has a tone picker with every voice in it, grouped
+into five tabs with sample-loading states and previews. Building a second, worse
+one was wasted work.
+
+buildRefToneBank takes an optional host id and an optional get/set pair now.
+Called with nothing it behaves exactly as before, writing into #refToneBank and
+setting selectedRefTone, so the piano panel and the instrument auto-select path
+are untouched. Staff Notes passes its own container and its own accessors, and
+the same picker drives a per-module voice without the two ever crossing.
+
+In the settings sheet it is a CHOOSE button showing the current voice, matching
+the key picker one row above it, opening a sheet with MATCH THE APP across the
+top and the full bank underneath. MATCH THE APP is the default and means exactly
+that: the reveal follows whatever the app's reference tone is set to.
+
+Verified with both banks live at once: same tab renders the same tiles in each,
+five groups present, picking sine in the module leaves the app on grand piano,
+the choice persists and labels correctly, the reveal plays through it and
+restores the app tone immediately after, and MATCH THE APP puts it back.
+
+The six placeholder chips and their hardcoded list are gone.
+
+## v0.108.3 — READING was the only folder showing its title twice, and it was
+
+There is a CSS rule that hides a hub's internal train-header once the app header
+takes over the section name, and it lists the hubs by id: toolsHub, toolFolder,
+practiceHub, earTrainingHub, gamesHub, rhythmHub. It was written before READING
+existed and nobody added it, so Reading alone kept its own header and showed the
+title twice while the other four looked correct.
+
+readingHub is on the list now. Verified by walking all four folders and checking
+whether the in-hub header is actually rendered: all four agree, Reading still has
+its card, and backing out still works without the in-hub button, since the app
+header supplies the back action.
+
+Worth recording how this was nearly missed. Asked whether other folders did the
+same, the first check looked only at whether the title element had display:none
+and reported that Games behaved identically, which led to telling Daniele it was
+app-wide behaviour rather than a bug. He pushed back saying he had only ever seen
+it in Reading. He was right: the element is present in every hub, it is the
+ancestor that gets hidden, so testing the element's own display says nothing.
+Re-run with an offsetParent check the difference was immediate and unambiguous.
+
+## v0.108.2 — the drill gets its own voice
+
+REVEAL SOUND in the settings sheet: APP, sine, piano, flute, guitar, marimba. Six
+rather than the whole REF_TONES table, because forty instruments is a different
+screen and this is a reading drill. Names come from REF_TONES itself so they
+follow the interface language.
+
+APP is the default and changes nothing: the reveal keeps using whatever the app's
+reference tone is set to. Choosing anything else swaps selectedRefTone in for the
+length of one note and puts it back in a finally block, so the drill can have its
+own voice without altering the setting the tuner, the chord tools and everything
+else share.
+
+Sine is the reason the setting exists. No decay, no timbre, no bass strings
+ringing three times longer than treble ones; just the pitch, which is what you
+want when you are checking whether the note you read is the note you heard.
+
+Tapping a voice plays a note in it, since choosing a sound you cannot hear is
+guesswork.
+
+Verified: six options with one active, the choice persists, the reveal plays
+through the chosen voice, the app-wide tone is restored immediately afterwards,
+and APP leaves it untouched throughout.
+
+## v0.108.1 — three from Daniele, and the third is bigger than Staff Notes
+
+**THE CLEF DETAIL OPENED UNDERNEATH THE SHEET THAT OPENED IT.** .ce-stats-modal sits
+at z-index 2000 and the overlay was at 60, a number picked without checking what
+it had to clear. 2100 now.
+
+**THE REVEAL NOTE WAS STILL RINGING UNDER THE NEXT QUESTION.** Every note gets the
+same three-second window, but bass samples decay far slower than treble ones, so
+a low card was still sounding while a high one had long gone. It is cut when the
+next card is dealt, and silenced at 1150ms when auto-advance is on, 250ms before
+the card turns, so the two never overlap.
+
+**AND SWITCHING LIGHT AND DARK LEFT EVERY STAVE ON THE OLD INK.** Staves resolve
+their colour when they are drawn, reading body.light at that moment rather than
+from CSS, so nothing already on screen follows the switch until something else
+forces a redraw. Daniele guessed this affects every stave in the app, and it
+does: the Chords tool, Rhythm Reading and the Survival Guide diagrams all paint
+the same way.
+
+applyAppearance calls a _restainStaves hook now. Staff Notes redraws in full,
+including its settings, key picker and stats sheets if any are open. The hooks
+for Rhythm Reading and the Chords tool are written and guarded but currently
+no-op, because neither module has a single re-render entry point to call; both
+need a small refactor before they can join, and that is its own job rather than
+something to bolt on here.
+
+Verified: the detail's z-index clears the sheet, stave ink follows a switch to
+light and back to dark, and dealing a card silences the previous reveal.
+
+## v0.108.0 — the stats screen, rebuilt on the mockup
+
+Four attempts at drawing per-position accuracy on one screen all failed the same
+way, so the fifth stops trying. The top level answers how you are doing without
+any spatial decoding, and the picture that genuinely needs room gets a screen of
+its own turned on its side.
+
+**TOP LEVEL.** Three headline numbers: notes read, first-try percentage, and best
+run, which is new. Then four clef tiles, each with its own accuracy, read count
+and bar, dimmed and unclickable for clefs you have never opened. Then the four
+worst positions, written out: "F · 1st ledger below · TREBLE · 27% of 11". A rank
+list needs no hunting and does not care how many clefs there are, which is the
+whole reason the map kept failing. 629px, no scrolling.
+
+**TAP A CLEF.** The full range for that clef alone, rotated so the pitch axis gets
+the phone's long edge: 25 positions across 852px instead of 393, dots at their
+real stave heights with ledger lines under the ones outside, percentage above and
+note name below, and that clef's note-name grid underneath. The geometry and
+rotation direction are copied from .ov-portrait-rotate .piano-overlay, and it
+calls the same lockOrientation and unlockOrientation the piano, Rhodes, organ and
+theremin already use, so on device the screen itself turns rather than the CSS.
+
+**BEST RUN** is one new field, consecutive first-try reads, cleared by RESET. The
+per-clef summaries, the rankings and the position descriptions are all derived
+from the existing clef:diatonic store; nothing else was added.
+
+**ONE REAL BUG CAUGHT IN TESTING.** The detail stave looked up positions with
+srPosKey(clef, step), but srPosKey takes a MIDI note and converts it. Handing it
+a diatonic step made every lookup miss, so a fully populated clef rendered as
+entirely unread. It reads the key directly now. Worth recording because the
+symptom was a plausible-looking empty map rather than an error.
+
+Verified: best run counts and breaks correctly, three of four tiles live with the
+fourth disabled, trouble list populated and described in words, the panel measures
+852x393 with the piano's rotation matrix, all 25 positions drawn with percentages,
+every colour band reachable, and an unplayed clef cannot be opened. Both existing
+sweeps still pass.
+
+## v0.107.15 — each ledger control moves to the side its own lines are not on
+
+The upper ticks sit right of centre and the lower ticks left, and both control
+clusters were pinned to the left edge, so the lower pair sat on top of the very
+lines it was adjusting. The lower cluster is on the right now, with its label
+after the buttons rather than before so the text still reads outward. Checked by
+projecting the SVG coordinates into page space and counting intersections: zero
+overlaps on either side at three lines up and three down.
+
+## v0.107.14 — the chips lost their fill because the borrowed rule used borrowed variables
+
+Matching .iv-mode-btn last build meant copying its declarations, and its
+declarations are written against --surf, --bdrs, --mu and --soft. Those four are
+aliases defined inside #toolSurvivalGuide and nowhere else. Copied out here they
+resolve to nothing, so background and border simply vanished and the settings
+chips became floating text. The colours are right; the names were local.
+
+Same colours under their real names now: --surface, --border-soft, --muted and
+--accent-soft. Verified by comparing a live active chip against a live inactive
+one rather than by reading the rule.
+
+**THE LEDGER DIAGRAM STOPPED RESIZING.** All eight slots are always drawn, four
+above and four below, with unset ones at 16% opacity. Pressing a button lights one
+up instead of growing the diagram, so the control is a fixed 118px and the sheet a
+fixed 446px no matter what is set. You can also see how far the setting goes
+without pressing anything, which the old version could not show.
+
+**AND THE BUTTONS SIT LEVEL WITH THE LINES THEY DRIVE**, absolutely positioned
+against the diagram at the vertical centre of each run rather than stacked above
+and below the whole thing. Half the height, and it is obvious which pair belongs
+to which stack.
+
+Verified across six settings: control height, sheet height and slot count all
+constant, lit count always matching, and the two control clusters landing either
+side of the stave's midline.
+
+## v0.107.13 — the stats view was a barcode, and the chips were not the app's chips
+
+**TWENTY-FIVE STACKED BARS DID NOT WORK EITHER.** Bars fixed the diagonal but
+replaced it with a barcode: every row the same width, note names overlapping into
+an unreadable column down the left, and no way to tell a ledger position from a
+stave one. The shape was legible in principle and illegible in practice.
+
+Split in two, because it was always two questions. The nine positions inside the
+stave are the ones you name constantly, so they get a stave drawn at a size you
+can read, one dot each sitting where that note sits, names underneath. Fixed
+height whatever depth you practise, dots 23px apart, nothing overlapping. How far
+out of the stave you can read is a different question, so it gets its own row:
+eight small chips, four above and four below, each outlined in its band's colour,
+dimmed past the depth you have set. The map no longer changes size or density
+with a setting.
+
+**THE OPTION CHIPS WERE INVENTED RATHER THAN BORROWED.** 8px transparent pills with
+a 6px radius, next to an app whose segmented controls are all .iv-mode-btn: filled,
+8px radius, 10px Bebas, with a colour-mixed active state. They are that now,
+verified against the live rule rather than copied by eye.
+
+**AND THE LEDGER PREVIEW USES ENGRAVING PROPORTIONS.** It was a small stave with
+wide bars across it, which is backwards; ledger lines are short marks on a long
+stave. 200px wide with 22px ticks, the upper run set right of centre and the
+lower run left, which is roughly where a passage climbing out of the stave and
+one falling out of it would actually sit, and it stops the two runs stacking into
+a single vertical block.
+
+## v0.107.12 — the heat map was a staircase falling off the stave
+
+Daniele's screenshot showed it plainly: at four ledger lines below, twenty-five
+ascending noteheads across 300px collide into a diagonal running clean off the
+stave, with the ledger lines merging into a smear behind them. It was drawing the
+right data in a shape that cannot hold it.
+
+**IT IS BARS NOW, STACKED BY PITCH.** One horizontal bar per stave position at its
+own height, coloured by that position's record, with the note name and octave
+beside it and the five stave lines behind. No noteheads, so nothing collides
+horizontally and the map gets BETTER the deeper you go, because where you are
+weak becomes a gradient you read up the page rather than a row you scan across.
+Verified at four depths: bar counts match the pool exactly, nothing falls outside
+the box, no two bars overlap, and every position is labelled. The deepest map is
+146px and the whole sheet 408px.
+
+**TURNING SIGNATURES OFF GREYS THE PILL RATHER THAN REMOVING IT.** It said C
+already in everything but name, since no signature is C major, so it says C now,
+sub-labelled "no signature", disabled and at 42% opacity. Hiding it made the tools
+row jump and left the key picker with no way back in. Pinned to 88px so the two
+states are the same width and nothing shifts on the toggle.
+
+**AND THE LEDGER CONTROL STOPPED BEING A SLAB.** Panel background and border gone,
+buttons round and a few pixels smaller, spacing tightened. It reads as a diagram
+with controls now rather than a block dropped into the middle of the sheet.
+Settings 488px.
+
+## v0.107.11 — ledger lines are a picture you push out from either side
+
+Five preset chips could not say "three above, none below", which is a real place
+to be: the treble ledger lines above the stave and the ones below it are separate
+skills learned at different times. Ledger reach is set per side now, and the
+control is the thing itself rather than a number describing it. A stave with its
+current ledger lines drawn in accent colour, a minus and a plus above it and
+another pair below, each side clamped between none and four. The count of stave
+positions the current reach gives you sits next to the label.
+
+Pools take an up and a down. Everything downstream followed: the heat map draws
+whatever you practise and captions itself with both figures, the metrics cache
+keys on both, and the XP bonus applies when either side is out. Existing settings
+carry over to equal sides.
+
+**AND THE SETTINGS SHEET LOST ITS FURNITURE.** The three group headings read as
+busier than the five rows they were organising, so they are gone. KEYS IN THE
+DRILL went with them, since the pill on the card opens the same picker and a
+setting reachable two ways from one screen is one way too many. STATS moved into
+the sheet header, matching where Interval Training puts its own, which takes the
+second icon back off the card and leaves the cog alone in the corner.
+
+469px now, from 627 two builds ago, with a control that shows you what it does.
+
+Verified: asymmetric reach builds the right pools in both directions, the preview
+draws five stave lines plus exactly the ledger lines set, the buttons clamp at
+both ends, five rows and no headings, the key row is gone, the stats button is in
+the header, the card is back to one icon, and the map follows both sides. Sweep
+harness updated for two-sided depths and still passing.
+
+## v0.107.10 — the heat map was lying, so the module started measuring what it drew
+
+Daniele spotted that a heat map on a stave implies position accuracy, and the
+module only had letter accuracy. Being better at C in the middle of the stave
+than at C on a ledger line below is not an edge case, it is the entire difficulty
+of ledger lines, and the map was quietly claiming to show something it could not
+see.
+
+**IT MEASURES POSITIONS NOW**, alongside the letters rather than instead of them.
+They answer different questions: the letters say whether you know your note
+names, the positions say where on the stave you struggle. Keyed by clef and
+diatonic step, so the same pitch in two clefs is two entries, which it should be:
+C4 is a ledger line under a treble stave and the third space in bass, and those
+are different reads that happen to sound the same.
+
+The map draws every position at whatever depth you practise, 9 at depth 0 up to
+25 at depth 4, each coloured by its own record, captioned with the clef and depth
+so it is clear what you are looking at. Note names appear only at depth 0, since
+twenty-one labels is a wall and the shape is the point. Adaptive weighting reads
+positions first and falls back to the letter until a position has four attempts
+behind it, so the drill now favours the exact ledger line you keep missing rather
+than every C.
+
+Existing letter data is untouched, so nothing is lost and the summary grid below
+still aggregates by name.
+
+**THE SETTINGS SHEET WAS A LADDER OF SPACED-OUT ROWS.** Six labels floating beside
+six control strips down a 627px sheet. Three groups now, WHAT YOU READ, KEY
+SIGNATURES and HOW IT RUNS, with each control sitting directly under its own label
+instead of beside it, and the gaps closed up. 407px, and the grouping means the
+key-signature switch and the key picker read as one setting rather than two
+unrelated rows.
+
+Verified: the same letter at two stave positions records separately while the
+letter total still aggregates, the map draws the right count at all five depths
+and varies colour by position, the settings sheet carries three groups, and all
+sr_ strings stay paired across both languages. Full sweep still passes.
+
+## v0.107.9 — the bar wall goes, and a pass over all three screens
+
+**ACCURACY BY NOTE WAS RESTATING THE MAP, TALLER AND GREYER.** Seven rows of bar
+directly under a heat map showing the same seven values. The only thing the map
+cannot give you is the number, so the number is all that is left: seven cells in
+one row, each with the note, its percentage and how many times you have read it,
+the percentage tinted with the same colour it has on the stave above. The two
+now read as one thing rather than as a picture followed by its own transcript.
+The whole stats sheet is 400px, down from something you had to scroll.
+
+Every letter keeps its cell even with no history, showing a dash. Notes you have
+never read are information too, and a grid that grows as you play makes the
+layout move under you.
+
+**THE HEAT MAP IS THE STAVE, ALWAYS.** It was following the practice depth, which
+meant it changed size with a setting and still could not show four ledger lines
+in the room available. Accuracy is tracked per letter and all seven letters live
+between the outer lines, so the stave alone is the complete picture rather than a
+cropped one. It stays the same size at every depth and there is nothing missing
+from it.
+
+**AND A PASS OVER THE THREE SCREENS.** Section titles centred and given consistent
+spacing, settings labels aligned to the top of their controls rather than floating
+mid-row, and the vertical rhythm made the same across the settings, keys and stats
+sheets. Measured after: play card 318px, stats 400px, keys 608px, settings 627px,
+all comfortably inside a phone screen.
+
+Full sweep and the navigation check both still pass.
+
+## v0.107.8 — your reading, drawn on a stave
+
+The most interesting thing the module knew about you was a stack of percentage
+bars two taps down, behind a cog, under three rows of settings. It has its own
+sheet now, behind its own button on the card, and it opens with a stave.
+
+**THE HEAT MAP.** The notes of the stave, in the clef you actually practise, each
+one tinted by how reliably you name it: red for weak, amber for shaky, green for
+good, cyan for solid, and two greys for notes with too little history to judge or
+none at all. Six bands, all distinct, with a legend. A list of percentages says
+the same thing and none of it lands anywhere; seeing that the two notes you keep
+missing are both below the stave is a different kind of knowing, and it is only
+possible because the data is drawn where the reading happens.
+
+pitchedStaffSvg gained colColors, which tints whole columns rather than notes
+within a column, since a row of one-note columns is what this needs. Underneath:
+total notes read and first-try percentage, then the per-note bars, then RESET,
+which now sits with the numbers it clears rather than among the settings.
+
+**THE SETTINGS SHEET IS SETTINGS AGAIN.** Six rows, all of them things you set.
+The breakdown and the reset button that used to pad it out have moved.
+
+The card's tools row has a small chart button beside the cog. Two icons rather
+than one, which is the cost, and the stave stays the tallest thing on the card.
+
+Verified: nine notes drawn with distinct heat colours and their names, five legend
+bands, totals correct, the stave following the clef, settings carrying no stats,
+and reset clearing the history and greying the whole map. The 5,100-render sweep
+still passes.
+
+## v0.107.7 — the wrong answer stops shoving the right one aside
+
+The ghost note was a second column, which meant the layout treated it as an equal
+partner: the real note shifted left to make room, and the two sat a full
+column-gap apart. Two notes of the same weight, far enough apart to read as a
+question with two answers, when one is the answer and the other is an aside.
+
+pitchedStaffSvg takes an opts.ghost now, drawn after the columns and outside the
+layout entirely. The real note keeps exactly the position it would have had on
+its own, and the ghost sits 34px to its right in red at 85% opacity, with its
+label underneath in the same colour. Ledger lines under a ghost are tinted to
+match, so a guess well outside the stave still reads as the aside rather than as
+new information about the answer.
+
+Verified: the real notehead's x is identical before and after a wrong guess, the
+ghost lands 34px right, it carries the distinct colour, and a guess one step away
+from the answer never collides with it in any of the four clefs.
+
+Also updated the sweep harness, which still referenced the hand-written pools that
+v0.107.6 replaced with generated ones. It now covers five ledger depths instead
+of two ranges: 5,100 renders, no missing noteheads, no NaN, nothing clipped.
+
+## v0.107.6 — ledger lines became a depth, and weak notes come up a little more
+
+**THE OLD RANGE TOGGLE WAS LOPSIDED AND NOBODY COULD SEE IT.** IN STAFF versus
+LEDGER LINES was two hand-written arrays per clef, built by adding an octave each
+way, which in treble meant one ledger line below the stave and two above. Nothing
+looked wrong; the reach was just quietly uneven.
+
+It is a depth now, 0 to 4, and the pools are generated by counting lines out from
+the stave rather than typed. Symmetric by construction, verified in all four
+clefs at all five depths. 9 positions at depth 0 rising to 25 at depth 4, four
+more per step. The point of the setting is being able to sit at one ledger line
+until you own it, instead of jumping from none to a fistful, which is how
+musictheory.net handles it and it is right.
+
+Existing settings carry over: the old LEDGER becomes depth 2, which is slightly
+wider than it was and evenly spread. The sheet shows how many positions the
+current depth gives you, since the number is more use than the label.
+
+**AND WEAK NOTES COME UP A LITTLE MORE OFTEN.** Weighted by miss rate, deliberately
+gently: a note you have never once read correctly is three times as likely as one
+you always get, not twenty, and nothing is weighted at all until there are four
+attempts on record. Heavy weighting collapses a reading drill into the same three
+notes forever, which is a worse exercise that looks like a smarter one.
+
+Measured rather than assumed. With no history, all nine stave positions come up
+within 8% of each other over 7,000 draws. With one note at 0/20 and another at
+20/20, the ratio between them settles at 3.25. A note with three attempts on
+record is still drawn as though it had none.
+
+One thing worth knowing rather than fixing: weighting is per letter, and at
+depth 0 the treble pool holds both E4 and E5, so those letters see double the
+exposure. That is correct. Reading E on the bottom line and E in the top space
+are different reads that happen to share a name.
+
+Stave geometry re-verified at every depth: one box and one stave-line y per
+depth, across all four clefs.
+
+## v0.107.5 — backing out of Staff Notes left it on screen, and the key picker got quieter
+
+**A LIST WRITTEN TWICE DISAGREED WITH ITSELF.** exitExercise hid the exercise
+panels by two separate hand-typed runs of twelve element ids, and Staff Notes was
+on neither, so leaving it left the panel sitting underneath the folder it came
+from. The file's own comment above stopAllAudio warns about exactly this, that
+nothing should leak because a module was forgotten on a hand-maintained list; the
+audio got the general treatment and the panels never did.
+
+One EXERCISE_PANELS constant now, used by both loops. Verified by entering and
+leaving all thirteen exercises in turn and checking that no panel is left visible
+after any of them, and that the set enterExercise can show and the set
+exitExercise hides are the same size.
+
+**FIFTEEN LITTLE SCORES WERE A LOT TO SCAN.** Each key in the picker was drawn as
+a full stave with a clef, which is more instrument than the job needs when all
+you are choosing is a key. Each card carries just the cluster now: the
+accidentals in their real vertical pattern over five short lines, no clef, sized
+to the shape rather than to a bar of music. Three to a row instead of two, and
+the whole sheet reads at a glance.
+
+The clusters still follow the clef you are practising, verified by comparing five
+sharps in treble against five sharps in tenor and confirming the shapes differ,
+which is the entire reason the tenor exception exists.
+
+Audited while in there: all six settings both read and written through prefGet
+and prefSet, all 38 sr_ strings paired across both languages, all 21 markup keys
+resolving, and every integration point present, from the folder card through the
+back-navigation map to the progress ladder and the favourites id.
+
+## v0.107.4 — the card's one button is the keys, and clefs became a pool too
+
+**BOTH WAS ONE HARD-CODED PAIR OUT OF ELEVEN.** Clef was a five-way cycle ending in
+a treble-and-bass special case, which meant a violist who reads alto and treble
+could not have that combination at all. It is a pool now, the same as the keys:
+tick whichever clefs you want and they shuffle. Four chips in the sheet rather
+than a modal, since four items do not need one. Existing settings carry over,
+BOTH included, which becomes treble plus bass and is now just one option among
+the rest.
+
+**AND THE PILL SHOWS THE KEYS.** Clef is the identity of the exercise, picked once
+by whoever you are, so it belongs in the sheet; which keys you are working
+through is the thing you actually change mid-session, so it takes the card's one
+button. It names the key on the current card, sub-labels how many keys are in the
+pool, and opens the picker on tap. With signatures off there is no pool to name,
+so it disappears rather than sitting there disabled, leaving the score and the cog.
+
+Nothing was lost by moving the clef off the card, because the stave draws its own
+clef; the label was restating what was already in front of you.
+
+Verified: an arbitrary pair mixes, three clefs mix, the pool cannot be emptied and
+persists, the pill hides with signatures off and opens the picker on tap, and the
+box and stave geometry hold across all seven clef-pool shapes tested. The
+1,248-render NaN and notehead sweep still passes.
+
+## v0.107.3 — all fifteen major keys
+
+C sharp and C flat added, so the drill covers every standard major signature from
+seven flats to seven sharps rather than stopping at six.
+
+Seven accidentals is the case worth checking, since it is where a signature is
+widest and where the two off-stave placements live: the treble G sharp in the
+space above and the bass F flat below, both conventional and both only reachable
+in these keys.
+
+900 renders across four clefs at the wider range, every key: no NaN, nothing
+clipped, signature glyph counts correct in all sixty key-and-clef combinations,
+and the notehead still fixed to one x per clef. The tightest a signature comes to
+the note is 71px at seven accidentals, down from 80 at six, which is still clear.
+
+## v0.107.2 — the note sits still, and the keys are a picker that shows you the keys
+
+**THE NOTE WAS SLIDING RIGHT AS THE SIGNATURE GREW.** The chord area was measured
+from the end of the key signature, so six sharps pushed the notehead further
+across than none, and the same stave position landed somewhere different in F
+sharp than in C. The eye had to find the note again every card, which is work
+that has nothing to do with reading it.
+
+pitchedStaffSvg takes anchorCenter now, which measures the area from the clef
+alone and ignores the signature's width. Off by default, so the cadence and
+voice-leading diagrams that share the renderer are untouched. Measured across all
+thirteen keys in all four clefs: one notehead x per clef, and the closest a
+signature ever comes to the note is 80px, so nothing collides at seven
+accidentals either.
+
+**THE KEY PICKER SHOWS THE KEYS.** Thirteen name-and-number chips told you how
+many sharps a key has and nothing about what it looks like, which is backwards for
+a reading drill. It is a CHOOSE button now, the same shape as Interval Training's
+interval picker, opening a sheet where every key is a card with its signature
+actually drawn on a stave by the same renderer the drill uses. What you pick is
+what you will see.
+
+The previews follow whichever clef you are practising, which matters more than it
+sounds: five sharps in tenor is a different shape from five sharps in treble, and
+that difference is the whole reason the tenor exception exists.
+
+Verified: each of the thirteen previews draws exactly its own accidental count,
+0 through 6 sharps and 1 through 6 flats, the labels are right, tapping toggles
+and the count updates, and the full 1,248-render NaN and notehead sweep still
+passes.
+
+## v0.107.1 — v0.107.0 shipped without noteheads, and the key pool is choosable
+
+**A HOISTED VAR ATE EVERY NOTE.** The key signature width was computed where the
+glyphs are drawn, which is well below the line that positions the notes. `var`
+hoisting meant it existed but was undefined at the point of use, so contentX0
+came out NaN, every notehead was placed at translate(NaN, y), and SVG silently
+drew nothing. The signature and the clef rendered perfectly, which is why the
+card still looked plausible.
+
+The width is computed alongside the clef metrics now, before anything consumes
+it. And the reason this got shipped is that every test I wrote checked things
+that were present rather than things that should be: glyph counts, box heights,
+stave positions. None of them asked whether a note was on the stave at all.
+
+So the harness asks now. 1,248 renders across four clefs, two ranges and thirteen
+keys, each one checked for a notehead actually being placed, for that notehead
+sitting inside the box, and for the string NaN or undefined appearing anywhere in
+the emitted SVG. That last check would have caught this before it left.
+
+**THE KEYS ARE A POOL YOU PICK.** Thirteen chips in the settings sheet, tap to add
+or drop, each showing the key and its signature count. Three shortcuts: ALL, EASY
+for C, G, D, F and B flat, and C ONLY. One key always survives, so the drill can
+never be left with nothing to draw. Stored by id rather than index, so a saved
+pool keeps meaning if the list is ever reordered.
+
+It lives in the sheet rather than on the card deliberately. The card took three
+builds to get down to five rows and thirteen more buttons would undo that; the
+clef pill already names the key you are reading, so the feedback stays where you
+are looking.
+
+## v0.107.0 — key signatures, looked up rather than guessed
+
+Thirteen standard majors, drawn at the head of the stave, and the answer is what
+the note SOUNDS. In D major the F line is F sharp, so F sharp is the answer;
+applying the signature is the entire skill being added.
+
+**THE PLACEMENT WAS WORTH LOOKING UP.** The order never varies, F C G D A E B for
+sharps and B E A D G C F for flats, in every clef. The positions do vary, and not
+uniformly. Treble, bass and alto share one shape where the sharps zig-zag down a
+4th and up a 5th with a break after D sharp. The tenor clef is a documented
+exception: no break, and the first and third sharps sit an octave lower so the
+run does not begin above the stave. Flats zig-zag up a 3rd and down a 4th with no
+break in all four clefs.
+
+Four independent sources agree on the tenor exception, and the offsets were then
+checked arithmetically against the real pitches rather than transcribed. Two
+placements fall outside the stave lines and are supposed to: the treble G sharp
+sits in the space above, and the bass F flat below, both only in extreme keys.
+Guessing this would have shown, and four clefs is the part of this module nothing
+else on mobile has.
+
+**GRADING IS BY SOUNDING PITCH.** Verified across all 117 combinations of the
+thirteen keys and every stave position in treble: the letter, the accidental and
+the sounding midi all agree with the signature. Naming the right letter without
+the sign the signature demands counts as a miss, which was the point of building
+the answer as a sign plus a letter rather than a grid of twelve. The reveal plays
+the altered pitch, not the written one.
+
+Stave positions stay diatonic while a signature is showing, so inline accidentals
+are not fighting the signature. Signs cancelling the signature are a further tier
+and can wait for their own pass.
+
+The clef pill's sub-label shows which key you are reading in, and the signature
+glyph count was checked against every key in every clef: 52 cases, all correct.
+Stave geometry re-verified with signatures on, since they widen the head of the
+stave: still one viewBox and one stave-line y.
+
+## v0.106.8 — RESET appeared to do nothing
+
+It sat directly beneath Accuracy by Note and cleared neither. v0.106.4 made the
+per-note breakdown lifetime, correctly, and then left reset touching only the
+sitting's score, so tapping it closed the sheet, zeroed a counter you were not
+looking at, and left the thing you were looking at untouched.
+
+It clears the breakdown now, along with the exercise's lifetime correct and
+total. XP already earned is not clawed back, since you cannot un-learn a note.
+
+Being destructive, it arms first: one tap turns it into the warning, a second
+confirms, and it disarms itself after three seconds or when the sheet closes.
+That is the same pattern as RESET ALL PROGRESS and as deleting a saved
+progression, rather than a third way of asking the same question.
+
+Verified: history accumulates, the first tap arms without wiping, the second
+clears the notes and the totals, the empty-state line comes back, XP is
+unchanged, and the cleared state reaches localStorage.
+
+## v0.106.7 — alto and tenor clefs, and NEXT stops appearing out of nowhere
+
+**FOUR CLEFS, AND THE FILE ALREADY HAD EVERYTHING.** pitchedStaffSvg was hard
+wired to treble and bass with a pair of ternaries, but RR_CCLEF has been sitting
+in the file all along, and CHD_CLEFS already carried the numbers: topStep 38, 26,
+32 and 30, which is exactly the diatonic index of each clef's top line, plus the
+line each glyph's origin sits on. The renderer reads a table now instead of
+asking whether the clef is bass, so a clef added in one place is not a clef
+missing in the other. Alto and tenor are one C clef glyph placed on a different
+line, which is what they are on paper too.
+
+Pools to match: alto F3 to G4 with middle C on the middle line, tenor D3 to E4.
+Both verified by spelling every pool note out and checking where middle C lands.
+
+This is the part of the module nothing else on mobile does. musictheory.net has
+four clefs on the desktop web; the app store does not, and a violist or a
+trombonist currently has nowhere to drill the clef they actually read.
+
+BOTH deliberately stays treble and bass. It is the pairing a pianist reads, and
+shuffling four clefs together is a different exercise rather than a harder one.
+Alto and tenor are practised on purpose.
+
+The clef row also wraps now, since five chips do not fit one line at 393px.
+
+**NEXT NO LONGER POPS INTO EXISTENCE.** It was toggled with visibility, which
+reserved its space but still made a button materialise on every single answer.
+It is always drawn, dimmed and disabled until the card resolves, then it takes
+the accent colour over a 0.18s fade. Verified visible before and after, same
+width throughout, disabled then enabled.
+
+Box geometry re-checked with five clef options in play rather than three: one
+viewBox, one stave-line y, one card height per range.
+
+## v0.106.6 — third attempt at the stave not moving, and this time the pill was the tell
+
+Daniele sent screenshots of TREBLE, BASS and BOTH side by side, and each card was
+a different height. Two previous passes at this were both half right, which is
+worth writing down because the pattern is instructive.
+
+v0.106.3 measured the box from each note's own excursion, so the card grew and
+shrank card to card. v0.106.5 measured it per clef, which fixed BOTH mode and
+missed the obvious: selecting TREBLE computes a treble box, selecting BASS a bass
+box, so cycling the pill resized the card. The headless test passed because it
+only ever exercised BOTH.
+
+The allowance now ignores the clef selection completely. It takes the largest
+excursion in either direction across both clefs' pools and applies it
+symmetrically, which also puts the five stave lines dead centre in the box
+whatever is chosen. Range still changes the box: reading a wider span is a
+deliberate choice and the extra room is the point of making it.
+
+Measured across all four range and accidental combinations, cycling all three
+clef options: one viewBox, one stave-line y, one card height in every case.
+
+**THE ACCIDENTAL SIGN WAS FLUSH AGAINST THE NOTEHEAD.** 6px, which put the flat
+touching the note it belonged to. pitchedStaffSvg takes an accGap now, 12 for this
+drill, defaulting to the old value so nothing else moves.
+
+**THE MODIFIER ROW LOOKED LIKE THREE MORE ANSWERS.** Full width, three equal
+columns, same height as the letters. It is 46px wide, centred, shorter, and
+unfilled now, set apart from the grid so the letters still read as the thing you
+are choosing from.
+
+**AND THE GRID SAYS WHAT IT WILL ANSWER.** Arm a sharp and the buttons read C
+sharp through B sharp; arm a flat and they read C flat through B flat. The armed
+sign stops being something you have to hold in your head. Grid columns are
+fractional so the relabelling cannot change the button sizes, which was the
+condition attached to the request and is now verified rather than assumed.
+
+## v0.106.5 — the stave stops moving when the clef changes, and accidentals arrive
+
+**THE STAVE WAS STILL HOPPING IN BOTH MODE.** v0.106.3 fixed the card growing and
+shrinking per note, but metrics were still measured per clef, and treble needs
+more room above while bass needs more below. So the five stave lines landed at a
+different height in each, and with BOTH selected the stave itself moved every
+time the clef swapped. The stave is the fixed thing you read against and it
+should never move. Metrics now take the worst case above and below across every
+clef that can appear and give them all the same box.
+
+Measured across all four setting combinations, both clefs, every note: the top
+stave line sits at one y value, the viewBox is one string, and the answer keys
+have one top edge. Four values, four sets of size one.
+
+**ACCIDENTALS, AND NOT AS A TWELVE-BUTTON GRID.** musictheory.net puts all twelve
+names in a grid, which collapses two separate readings into one lookup. On a
+stave the sign tells you the accidental and the position tells you the letter, so
+the input is built the same way: a row of flat, natural and sharp that arms a
+modifier, then the seven letters. Naming the right letter without the sign is
+wrong, which is the point.
+
+Black keys are written both ways, chosen per card, so F sharp and G flat both
+come up and you have to read the sign rather than memorise a position. That
+needed one optional argument on pitchedStaffSvg, spell, since midi alone cannot
+say which spelling a black key is meant to have. Absent, it behaves exactly as
+before.
+
+Accidentals are their own on/off setting rather than a difficulty tier, so they
+combine with clef and range instead of replacing them. Eight combinations now.
+
+**AUTO ADVANCE**, on by default, at 1.4s — long enough to see where the note was
+and hear it, short enough not to feel like waiting. NEXT cancels the pending
+timer so tapping through never double-advances.
+
+Verified: both spellings occur across 80 draws, the correct accidental scores,
+the right letter with no sign counts as a miss, the accidental row hides when the
+setting is off, and auto advance fires.
+
+## v0.106.4 — Staff Notes counts for something now
+
+It looked finished and read as second-class: no XP, no level, no history, and a
+breakdown that evaporated when you left the screen. Everything else in Train
+feeds the streak, and an exercise that does not is an exercise people stop
+opening.
+
+**IT FEEDS PROGRESS.** A stats slot in PROG_DEFAULTS and in progMigrate's ladder,
+so both fresh profiles and existing saves have somewhere to put it. Every card
+commits through progUpdate, which also means the perfect-session achievement
+works on it for free. One XP per clean read and two when ledger lines are in
+play, matching the order of the other per-answer awards rather than inventing an
+economy. A card you needed two tries for still counts as attempted and awards
+nothing, which is the same rule the on-screen score already used.
+
+**THE BREAKDOWN IS LIFETIME NOW.** It was per-session, which made it useless:
+you would read twelve notes, see a breakdown, and lose it on the way out. It
+lives in progState.stats.staffread.notes, so it accumulates. RESET clears the
+sitting's score and deliberately leaves your history alone, which is what every
+other breakdown in the app does.
+
+Being inside progState, all of it rides along in a backup with no extra work,
+and the backup audit still passes at 47 keys and 37 fields.
+
+**AND THE TWO ICONS ARE NOT THE SAME ICON.** The folder and the exercise both
+carried three lines and a dot, which said "list" rather than "music" and gave a
+category and its only child an identical silhouette. The folder is an open score
+now, two leaves with staff lines. The exercise is a full stave with a stemmed,
+flagged note actually sitting on a line, which is literally what the card shows
+you.
+
+Verified: a clean read awards 1 XP and a ledger read 2, a missed read awards
+nothing but still counts toward the total, the numbers survive into
+localStorage, reset clears the sitting and keeps the history, and the two icons
+differ.
+
+## v0.106.3 — nothing moves any more, and the wrong answer teaches something
+
+**THE STAVE WAS RESIZING ON EVERY CARD.** v0.106.1 worked out topY and height
+from each note's own distance outside the staff, which fixed clipping and
+introduced something worse: a high card produced a taller SVG than a low one, so
+the stave grew and shrank and everything under it walked up and down the screen
+as you played. Metrics are now measured once from the pool's own extremes and
+cached until the clef or range changes, so every card in a pool renders at
+identical dimensions. Height still differs between ranges, 333px in-staff versus
+360px with ledger lines, but that only changes when you deliberately change the
+setting rather than card to card.
+
+Two smaller shifts went with it. Feedback swaps between one and two lines of text
+and had only a 16px floor, so the answer keys jumped on most cards; it reserves
+30px now. And the score had no fixed width, so the cog slid left as the numbers
+grew; tabular figures and a reserved 52px hold it still.
+
+Proved by measurement, not by looking: every note in all four pools rendered in
+each of its three states — fresh, one wrong guess showing, resolved — and both
+the card height and the answer keys' top edge collected into a set. One value per
+pool, in every case. 144 renders, no movement.
+
+**THE GEAR IS THE APP'S GEAR NOW.** It was a hand-rolled eight-spoke thing that
+read as clutter at 18px. Replaced with the same path Interval Training uses, so
+it matches everything else with a cog in it.
+
+**AND THE IDENTITY PIECE: A GHOST NOTE.** Name a note wrongly and a second
+column appears showing where the letter you actually chose sits, labelled with
+what you said. Naming a wrong note is almost always a position error, and being
+shown the position you pointed at teaches the mapping in a way that marking you
+incorrect never does. Nothing on musictheory.net, tonedear, teoria or the Chordle
+sites does this. A second column rather than a stacked notehead, because a guess
+a step away would collide with the answer.
+
+Around it: the notehead tints on reveal, cyan for a clean read and amber for one
+that took more than a try, so the answer lands on the stave rather than only in
+the text underneath. The stave sits on a faint surface of its own instead of
+floating in the card, since it is the subject of the exercise. Tapping it replays
+the note once resolved, because one reveal is easy to miss. And the seven answer
+keys are one row across rather than a four-column grid, which reads as a scale
+and drops the empty eighth cell.
+
+pitchedStaffSvg gained one optional argument, noteColors, to tint individual
+noteheads. Absent, it behaves exactly as before, so the cadence and voice-leading
+diagrams that share it are untouched.
+
+## v0.106.2 — Staff Notes was turning into a wall of controls
+
+Two builds in and the card already carried a score bar, two labelled selector
+rows, the stave, feedback, seven answer keys, a next button and a second card of
+statistics underneath. Daniele called it a brick wall, which it was, and asked
+which existing module to model it on instead.
+
+**INTERVAL TRAINING, and it was not close.** It carries more settings than this
+does — direction, difficulty, a custom interval pool, auto-advance, sing mode —
+and its play card shows almost none of them. One iv-card-tools row holds a
+difficulty pill that cycles on tap and a cog that opens a settings modal, and the
+statistics live in a modal of their own rather than on screen. The stave has to
+be the thing you look at, and it cannot be if it is the fourth item down.
+
+Rebuilt on that shape. The play card is five rows now: tools, stave, feedback,
+keys, next. The clef pill cycles treble to bass to both and carries the current
+range as its sub-label, so the primary setting is one tap and still readable at a
+glance. Range, the accuracy breakdown and reset moved behind the cog. Both
+selectors are rebuilt from the live variable each time the modal opens, so the
+active state cannot drift out of step with the pool that is actually in use.
+
+Reused the existing iv-card-tools, iv-diff-pill, iv-cog-btn and ce-stats-modal
+classes rather than writing parallel ones, so it inherits the look and there is
+no second set of styles to keep in sync. Three of the module's own CSS rules were
+deleted in the process.
+
+Verified: the card is one card of five rows at 398px, the pill cycles through all
+three states and back, the modal holds both selectors and the breakdown, closes
+cleanly, and the drill still scores. No page errors.
+
+## v0.106.1 — bass clef, ledger lines, and the claim that tiers are data
+
+The first slice asserted that every tier after it would be a change to the pitch
+pool rather than new code. This is that claim being tested, and it mostly held.
+
+**CLEF: TREBLE, BASS or BOTH.** BOTH draws the clef per card, so you cannot
+settle into one set of positions, which is the only reason to practise two clefs
+together. **RANGE: IN STAFF or LEDGER LINES.** In-staff keeps every note between
+the outer lines; ledger opens it to two octaves so notes run above and below and
+the renderer's automatic ledger lines start doing work. Four combinations, 48
+distinct cards, from four arrays.
+
+Both settings persist through prefGet and prefSet like every other exercise
+setting, which also means they ride along in a backup for nothing: the pref_
+family was already classified as travelling.
+
+**THE ONE THING THAT WAS NOT FREE.** A high or low card needs vertical room for
+its ledger lines, and the first slice passed a fixed topY of 30 and height of
+108, which clipped anything far outside the staff. topY is now worked out from
+the note's own diatonic distance above the top line, with the same allowance
+below, so the box grows to fit the card instead of the card being cropped to fit
+the box.
+
+Verified by measuring rather than eyeballing: every one of the 48 pool notes was
+rendered in turn and its glyph bounding box compared against the SVG viewBox.
+Zero clipped, in either clef, at either range. Also confirmed BOTH actually mixes
+across 40 draws, the clef survives into localStorage, and no page errors.
+
+Accidentals are still out. They need a second answer control — letter plus
+sharp, flat or natural — rather than a wider pool, so they are a UI pass rather
+than a data one and get their own build.
+
+## v0.106.0 — Staff Notes, and a READING folder to grow into
+
+The one whole column of musictheory.net with no counterpart in the app: reading
+pitch off a stave. Rhythm reading existed; pitch reading did not.
+
+**A NEW TRAIN FOLDER, READING.** Chosen over adding a fifth card to Ear Training
+because reading will hold note naming, symbols, key signatures and both of the
+Coming Soon cards before long, and folders of three to five items is the band the
+rest of the hub sits in. Tools is already foldered the same way, so this is the
+existing pattern rather than a new one.
+
+**STAFF NOTES, first slice, deliberately narrow.** Treble clef, one natural note
+at a time, inside the stave so no ledger lines are needed: E4 up to F5, which
+reaches all seven letters. Tap the name, three tries, and the note sounds when
+the card resolves so the shape and the pitch arrive together. Only a first-try
+answer scores, because a note you got on the third go is a note you could not
+read. Accuracy breaks down per note name, the same shape Interval Training uses.
+
+The point of choosing notes over a symbol deck: notes GENERATE. Rhythm Cards is
+151 hand-written cards with EN/IT twins; a symbol deck would be the same job
+again. This needs no authored content at all, and every tier after it — bass,
+ledger lines, accidentals, alto and tenor, key signatures — is a change to the
+pitch pool or the clef rather than new code.
+
+Nothing new was needed to draw it. pitchedStaffSvg, ledgerLines, rrMidiToStaff
+and Bravura were all already in the file, which is worth recording because this
+module was twice described in planning as blocked on a renderer that does not
+exist. It does exist, four times over.
+
+Session stats only for now. Persisting them means a new progState.stats key and
+a pass through progMigrate and the backup classification, which is worth doing
+once the feel is settled rather than in the same build as new UI.
+
+Verified in headless Chromium: the stave draws with five lines and a clef, seven
+answer keys appear in the user's naming convention, a wrong guess counts a try
+without resolving the card, a right answer after a miss resolves and scores
+zero, a first-try answer scores, the breakdown renders, and no page errors. Also
+confirmed all sixteen new i18n keys resolve in both languages.
+
+One bug caught in passing: the solfege branch referenced IT_SOLFEGE, a global
+that exists nowhere in the file. It is SOLFEGE_MAP. Guarded by a typeof check,
+so it would have failed silently and simply never shown Do-Re-Mi.
+
+## v0.105.12 — the Games folder had five games and said four
+
+Found while auditing content coverage rather than by anyone noticing, which is
+how counts written by hand usually go wrong.
+
+The Games folder contains Chordle, Diadle, Tonale, Road Trip and Music Quiz.
+The badge read "4 games" and the summary line under it read "Chordle · Diadle ·
+Tonale · Music Quiz". Road Trip was in the folder and absent from both, in both
+languages. The badge key was literally named folder_badge_games4, so the number
+was baked into the identifier as well as the value; it is folder_badge_games5
+now rather than a games4 key holding a five, because a key that lies about its
+own contents is worse than a wrong number.
+
+Also removed wip_chordprog_title and wip_chordprog_sub. That card was pulled
+from the Practice Lab at some point and only its strings stayed behind, in both
+language tables, referenced by nothing.
+
+Checked rather than assumed this time: all 723 data-i18n keys used in markup
+resolve in both languages, and every folder badge now agrees with the number of
+cards actually inside it. Ear 3 and 3, Rhythm 4 and 4, Games 5 and 5.
+
+Worth noting what is NOT changed. GAMES_EXERCISES lists chordle, diadle, tonale
+and roadtrip without Music Quiz, which looks like the same bug and is not: that
+list routes enterExercise() back-navigation, and Music Quiz opens through
+mqOpen() on its own path, so it was correct to leave alone.
+
+## v0.105.11 — the blank hold before the launcher was waiting on an impossible condition
+
+The empty themed screen on a skipped splash has been on the open list since
+v0.104.3 as the weakest moment left. It is not dead time; it is a reflow guard.
+Capacitor resolves safe-area insets over the first frames and the launcher grid
+is max-height:60vh, so a card measured too early is a card that visibly jumps,
+and a held blank frame reads as loading where a visible reflow reads as broken.
+That trade is right. How long it held was not.
+
+**IT WAS TESTING FOR EXACT FLOAT EQUALITY.** _intonareWhenViewportStable waits
+for visualViewport.height to hold for three consecutive frames, comparing with
+===. That height is a double, and on Android it is routinely fractional and
+micro-oscillating: 850.66 one frame, 850.67 the next, indefinitely. Sub-pixel
+noise reset the counter every time, three matching frames never arrived, and the
+promise resolved off its 500ms hard cap on every launch. The cap was written as
+a safety net for a device that never settles; it had quietly become the normal
+path.
+
+Compared against four viewport traces. A clean settle is unchanged at 84ms. Slow
+inset resolution improves slightly, 150ms to 117ms. Sub-pixel jitter, which is
+the case that was silently hitting the cap, goes from 500ms to 84ms.
+
+The comparison is now a half-pixel tolerance. That is far below anything capable
+of moving a card, and an inset genuinely resolving moves the height by tens of
+pixels, so it still resets the count and the guard still guards.
+
+## v0.105.10 — the app scrolled behind the Settings sheet
+
+Every other modal in the file locks the body while it is open. Settings never
+did, so the page underneath dragged around behind it.
+
+overflow:hidden on its own is necessary but not enough, for the reason the
+splash code already documents: on Android WebView it does not stop touchmove,
+and the gesture still reaches the page beneath. So the lock is three parts. The
+body gets overflow:hidden off the settings-open class it was already setting for
+an unrelated reason. The sheet gets overscroll-behavior:contain so a scroll that
+reaches its end does not chain out. And a touchmove handler on the backdrop
+swallows anything that is not inside the scrollable sheet, which is the same
+trick the splash uses, inverted: it has to let the sheet's own touches through
+or Settings would stop scrolling, which is the bug next door in reverse.
+
+Verified headless: body scrollable before, hidden while open, released on close,
+with the class added and removed correctly either side.
+
+## v0.105.9 — the dormant piano data was not dormant, and deleting it naively would have been 2.6x louder
+
+200KB out of seven songs, and a good reminder that "nothing reads this" is a
+claim to check rather than assume.
+
+**IT WAS FEEDING THE LIMITER.** The plan was simply to delete ctls, rh and lh
+from the seven converted songs, since playback takes the perf branch wholesale
+and never looks at them. Playback does not. _riffDuckFactor does. It sweeps the
+two-track arrays to estimate real peak polyphony under the sustain pedal, and
+uses that to set output gain, precisely so dense pedal writing does not pump the
+limiter. Delete the arrays and the branch stops firing; the fallback reads
+riff.notes, a key performance songs do not have, so maxV stays 1 and the factor
+jumps to 1.00. Clair de Lune and Liebestraum would have gone out 2.6x louder,
+straight into the clipping the comment above that function was written to
+prevent.
+
+rtTuner's meterOf reads rh too, deriving three-time from four. Without it every
+one of these reads as 4/4 and the Leg Tuner draws the wrong bar lines, on the
+exact songs about to be tuned.
+
+**SO THE ARRAYS WERE REPLACED BY WHAT THEY WERE FOR.** Both figures were computed
+from the real data and baked in as two numbers per song: duckV, the peak
+polyphony the sweep found, and meter, 3 or 4. Both readers prefer the baked
+value and fall back to the old sweep for anything still carrying arrays. Seven
+songs, fourteen numbers, replacing 200KB.
+
+Verified by parsing the object before and after: perf.notes and perf.ped
+byte-identical for all seven, ctls, rh and lh gone, labels and tempi kept, all
+34 untouched songs identical, and the resulting duck factor the same number to
+two decimals for every song. 0.38, 0.38, 0.40, 0.44, 0.38, 0.38, 0.47.
+
+One process note. The first attempt cut the arrays out by bracket-matching in
+the text, which ate a closing brace and broke the file; the second serialised
+the songs through JSON, whose quoted keys added more bytes to a 6538-note piece
+than the arrays being removed. Third attempt emits a JS object literal with
+unquoted keys and replaces whole song blocks rather than cutting inside them.
+Both bad attempts were caught by node --check before going anywhere.
+
+## v0.105.8 — all three pedals now work during a performance, and two of them are yours
+
+The piano had a three-pedal model that playback ignored. Soft and sostenuto
+were implemented and worked under your own fingers, but _riffPianoNoteOn routed
+straight to refMasterGain and read neither, so a playing performance was deaf
+to both. Only the damper did anything, and only because the song drove it.
+
+**SOFT REACHES PLAYBACK** through _pianoVoiceRoute, the same route the live keys
+already use, so your playing and a performance now sound alike under una corda.
+Worth being honest about what that route is: a lowpass at 1500Hz and half gain.
+A real soft pedal shifts the action so hammers strike two strings instead of
+three, which changes tone colour, not just level. Single-layer samples cannot
+do that. Veiled and quieter is the closest honest approximation available until
+there are velocity layers to shift between.
+
+**SOSTENUTO REACHES PLAYBACK** too, and needed two halves. _riffPianoNoteOff now
+lets a note ring past its written end if sostenuto caught it, the same way it
+already did for the damper. And setPianoSost was only ever capturing from
+refOscs, which is where live key presses live; a performance sounds through
+_riffVoices, so pressing the pedal mid-song used to catch nothing at all. It
+captures both now, and releases riff voices with the same pitch-dependent damper
+curve a pedal lift uses.
+
+**WHICH MAKES THEM AN INSTRUMENT RATHER THAN A SETTING.** The captures carry
+damper data only, so soft and sostenuto are never automated and never fight the
+performance for control. Press sostenuto during Liebestraum and whatever is
+sounding at that instant is held while everything after it damps normally,
+which is the actual musical use of the pedal and not something you can do on a
+recording. Damper still belongs to the performer.
+
+Ring logic verified across the three-pedal truth table: no pedal damps on
+finger-lift, sostenuto holds only what it captured, uncaptured notes still damp
+underneath it, and the damper overrides everything.
+
+## v0.105.7 — Back Up said it worked and produced nothing
+
+**THE WORST KIND OF FAILURE.** On device the export fell through to the browser
+download tier, and clicking an <a download> is a silent no-op in an Android
+WebView: it produces no file and throws no error. So the code sailed past it,
+toasted "Backup saved" and returned, never reaching the share fallback below.
+It reported success and did nothing. Same family as prompt() and confirm(),
+and I should have expected it after those two.
+
+The tiers are reordered and gated on isNativePlatform() rather than on whether
+something threw. Native goes to the share sheet directly; the browser download
+only runs in an actual browser. Tier one, a real file through
+@capacitor/filesystem, is still dormant: install it and export starts producing
+a proper .json instead of JSON through the share sheet.
+
+**THE TWO BUTTONS ARE SIDE BY SIDE** and now read Back Up and Restore rather
+than eating two full rows.
+
+**AND BACK UP ASKS FIRST.** Restore already showed what it was about to do;
+export just fired. It now lists what is going in the file, streak, XP,
+achievements, days practised, saved progressions, drum patterns, metronome
+presets and how many settings, plus a line saying Pro and tap calibration are
+not included and Pro returns through Restore Purchase. Neither direction should
+be a leap of faith.
+
+**PEDAL LIFTS ARE NOT A SWITCH ANY MORE.** Daniele reported that after the decay
+fix Liebestraum sounded much better but some chords still ended abruptly when
+the damper came up, and asked whether it wanted a ramp. It did. Every voice was
+being stopped with the same fixed 40ms taper regardless of pitch or reason. A
+real damper is a felt pad landing on a string that is still moving, and a heavy
+bass string takes far longer to go quiet than the top octave. Stopping an entire
+pedalled texture with one uniform 40ms switch reads as an edit rather than a
+release.
+
+stop() now takes an optional release time, defaulting to the old 0.04 so every
+other caller is unchanged, and pedal-lift passes a pitch-dependent value: about
+70ms of time constant at the top of the keyboard widening to 190ms at the
+bottom, so roughly 210ms to silence up top and 570ms in the bass. Notes still
+held by a finger are untouched, as before.
+
+Wants ears. If pedal changes now smear instead of ending, the constant is too
+long; if they still click, too short.
+
 ## v0.105.6 — piano notes in riff playback never decayed, they looped
 
 Daniele reported hard stops in the performance captures, worst in Liebestraum,
