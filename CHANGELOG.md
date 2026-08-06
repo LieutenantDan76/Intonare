@@ -64,1898 +64,1709 @@ feel and its sources contradict each other on accents.
 
 ---
 
-## v0.108.29 — the top row joins the card it sits on
-
-Three mismatches, found by dumping every computed colour in the row rather than
-squinting at it.
-
-The pills and the cog were painted flat --panel while the stave card under them
-is a translucent gradient, so they read as three solid blocks laid on the
-surface instead of part of it. They take the card's fill now.
-
-Corners were 9px against the card's 12.
-
-And the labels went accent purple in light mode but grey in dark. That is a
-global written for Interval Training, where those pills are colour-coded by
-difficulty and the light theme has an override to match. Staff Notes borrowed
-the class and inherited a colour that means nothing here. Scoped to #exStaffRead
-so Interval Training keeps its own.
-
-Every control in the row now shares the card's fill, border and corner, and all
-of its text lands on one value per theme: 163,165,184 in dark, 47,65,88 in light.
-The sub-label stays one step dimmer than the label, which is the relationship
-dark mode already had and light mode had lost.
-
-## v0.108.28 — silence was the fallback, and it should never have been
-
-The diagnostics panel answered it in one screenshot. Daniele was testing in the
-HTML preview, not the app: platform web, origin null, and every sample fetch
-404ing because the bundled audio/ folder only exists inside the Capacitor build.
-ok / fail read 0 / 63. The preview reported route warmNote, warmed=false,
-PLAYED false.
-
-That also explains the shape of it exactly. First tap of a sampled voice: the
-instrument is not yet marked failed, so the preview tries to fetch, gets a 404,
-and plays nothing. Second tap: isFailed is now true, the sample branch is
-skipped, and the code falls through to the synth. Which sounds. Synth voices
-worked every time; sampled ones never worked once.
-
-Reproduced it exactly by serving the app with audio/ 404ing: first pick silent,
-second pick six oscillators. Then fixed and re-ran: first pick now sounds.
-
-The fix is that a preview never goes silent. If the sample cannot be had, for a
-missing file, no network, or a build with no audio in it, it speaks with the
-synth instead. The old code treated an unavailable sample as nothing to say,
-which reads as a broken control.
-
-Checked both ways. With samples present nothing changed: four fresh voices still
-sound in 34 to 73ms from their real samples, one request each, full sets loaded.
-With samples absent every voice now sounds on the first tap.
-
-Worth recording about the last four builds: three of them fixed real faults that
-were not this one, and all three were reasoned rather than observed. What ended
-it was building a rig that could actually run the code, and then reading a
-readout off the device instead of arguing from the source.
-
-## v0.108.27 — found it, by finally building the right test
-
-Every test up to here ran the page over file://, and SampleEngine.load returns
-early on file:// without fetching anything. So four builds of "verified" had
-never once executed the sample path. Served the app over HTTP with decodable
-stand-in files and the bug was visible in one run.
-
-On the piano's path, pickTonePopup calls _syncToneUI first, which starts the
-full instrument load: 88 files, fired in parallel. The preview's single request
-then goes out as number 89 and waits on the connection pool, which a browser
-caps at about six per host. Measured on localhost with 11KB stand-ins: the note
-sounded 830ms after the tap. With real MP3s on a phone that is seconds, which is
-silence as far as anyone tapping is concerned.
-
-v0.108.25 cut the preview from 88 files to one, which was right and did nothing,
-because the other 88 were already in flight ahead of it.
-
-- load() now fetches the note a preview asks for first, on its own, and waits for
-  it before firing the rest.
-- warmNote shares one in-flight request per file, so the preview and the load
-  cannot race for the same one.
-- The full load skips notes already held, so nothing is fetched twice.
-
-Same measurement after: 53ms. Four fresh voices auditioned in a row sounded in 28
-to 57ms and every one still loaded its full 88 samples.
-
-Two pins. Also worth writing down: the reason this took four attempts is that the
-test rig silently skipped the code under test. A green run on file:// says
-nothing about sample behaviour.
-
-## v0.108.26 — instrumenting it instead of guessing again
-
-Three builds of theories, none of which was the bug. Stopping.
-
-The audio diagnostics panel already exists for faults that are invisible without
-a Mac, and a preview that does not sound is one. Every branch of
-_tonePreviewPick now records what it decided into window._previewDiag, and the
-panel has a section for it: which tone, whether it is sampled and whether it was
-ready, the context state and whether the resume settled, canPreview and
-stillPicked, which route it took, gain and volume, and whether anything actually
-played. Seven taps on the version stamp opens the panel.
-
-Also the picker stays open while you audition. Daniele's suggestion, and right
-regardless of the bug: closing on every tap means reopening to hear the next
-one, which is the wrong shape for a control whose whole purpose is comparing
-voices. The active tile follows the choice; the X or the backdrop closes it.
-The skin no longer comes off on pick, only on close, since the pick no longer
-ends the session.
-
-One pin reworded. It was tied to the exact resume line, which this build
-reshaped; it now pins the behaviour and forbids the unguarded form.
-
-## v0.108.25 — it was never silent, it was waiting for 88 files
-
-Two builds spent on the wrong thing. Daniele said to step back, and the fact that
-mattered was one I had not asked for: it is not the first pick after launching,
-it is the first pick of each voice. Pick a voice you have picked before and it
-plays instantly.
-
-That is the sample loader, not the audio context. pickTonePopup calls
-_syncToneUI, which starts SampleEngine.load for the chosen voice; the preview
-then waits on that same promise, and load does not resolve until the whole
-instrument is in. Most instruments here are 88 files. Grand piano is 30. So the
-first preview of a voice fired somewhere between one and several seconds after
-the tap, which is silence as far as anyone tapping is concerned.
-
-A note reads exactly one buffer and pitch-shifts it, so waiting for the set was
-always stricter than the code needed.
-
-- SampleEngine.warmNote(id, midi, ctx) fetches only the sample nearest the note
-  asked for, into the same map the full load fills, so nothing is fetched twice.
-- play() no longer refuses a partially loaded instrument. It holds only when
-  there is nothing at all to play from.
-- The preview warms one note and plays. The full set carries on loading behind
-  it, so the instrument still ends up complete.
-
-One request instead of 88. Verified: with a single buffer present and isReady
-still false, play() returns a node where it used to return null.
-
-The two previous builds fixed real things that were not this. The context was
-genuinely being built off-gesture, and notes were genuinely being scheduled
-before resume() settled. Both stay; neither was the bug.
-
-## v0.108.24 — waiting for the resume
-
-v0.108.23 fixed the wrong half. The context was being built on the gesture, which
-was right and still is, but getAudio() asks it to resume and resume() is a
-promise. The old code went straight on to schedule a note. On a context that is
-still suspended that note is scheduled and then dropped, so the first pick of a
-session was silent whether the voice was sampled or synthesised, and the second
-was fine because by then the resume had settled.
-
-Waits for it now, then plays. Same shape the quiz ambience and the metronome
-already use.
-
-Verified by counting where notes get scheduled. With the context forced suspended
-the way a fresh launch leaves it: nothing starts on the call, and once the resume
-settles two nodes start on a running context. Zero were ever scheduled against a
-suspended one.
-
-_toneBankWarm resumes as well, so opening a bank leaves the chain running before
-you have picked anything.
-
-The sentinel caught one of its own pins drifting on this build: v0.108.23 pinned
-the context creation by the line that followed it, and reshaping the function
-around a _play closure moved that line. Rewritten to pin what must not come back,
-which is the context being built inside the load callback, rather than what
-happened to sit next to it. 94 pins.
-
-## v0.108.23 — the first preview of a session was always silent
-
-Not the samples, the audio context. getAudio() carries a comment in this file
-saying it only ever runs on a user gesture. A sample load breaks that promise:
-the code after the await is no longer on the gesture that started it, so the
-first pick of a session built the context off-gesture, got it back suspended,
-and played nothing. The second pick found a context already there and worked.
-Hence first selection silent, every one after it fine.
-
-The chain is opened synchronously at the top of _tonePreviewPick now, while the
-tap is still the current call stack, and the load callback uses that context
-rather than asking for one. Traced to confirm the order: on a pick, ensureRefCtx
-fires before the load, where it used to fire inside its callback.
-
-Tone banks also warm on open, which is itself a gesture: the chain comes up and
-the samples for whatever is currently selected start pulling, so the first tap
-has less to wait for. Both shared builders do it, so it covers every surface with
-a bank: the piano and Rhodes tools, Chords' two banks, Chordle, Interval
-Reference and Staff Notes.
-
-Two pins, because the ordering is invisible in the code and only ever wrong on
-device.
-
-Headless cannot produce a real gesture, so this is verified by call order rather
-than by hearing it. Worth a listen on device: change the reveal voice on a fresh
-launch and check the very first one speaks.
-
-## v0.108.22 — changing a setting was deleting your history
-
-Asked for a reroll on leaving the sheet. Found the reason the reroll was missing,
-and it was much worse than a missing reroll.
-
-srSetAcc, srSetKeySig and srSetLedger all called srReset. srReset is the RESET
-button's function: it empties the note table, the position table, the best run,
-the score and the input counters. So turning accidentals on, or nudging ledger
-lines by one, silently deleted every reading statistic the module had on you.
-srToggleClef never did this, which is why it was never noticed.
-
-They mark the card stale now. Ten answered cards, then accidentals on, key
-signatures on, a ledger nudge and a clef added: note table, total and best run
-all unchanged.
-
-The reroll happens on close rather than on tap, so the card does not jump about
-underneath settings you are still adjusting. Verified the card holds while the
-sheet is open and is redrawn on the way out.
-
-Two pins added, one of them a must-not: srReset must never appear in srSetAcc
-again.
-
-Header: both buttons were pinned at 12px while the title starts below the sheet's
-22px padding, so their centres sat 12px apart. All three are on 39 now, and the
-title has 14px under it instead of 2.
-
-Settings were already saved the moment you change them, not on exit; every setter
-calls prefSet immediately.
-
-## v0.108.21 — the instrument sheet was opening underneath
-
-Real bug, and one the file already had a comment about. Every .ce-stats-modal
-shares z-index 2000, so DOM order decides which is on top, and the instrument
-sheet sits above the settings sheet in the document. It opened behind it. Same
-trap #codeModal and #proUnlockedModal hit, fixed the same way.
-
-The two banks ran the full column, which made two dropdowns the heaviest things
-in the sheet. They are inline now at 176px against the column's 308.
-
-Not 152, which is where half landed and where GRAN PIANOFORTE and CHITARRA
-CLASSICA both clipped. All 44 tone names and all 6 instruments were checked in
-both languages; 176 is the width where nothing needs an ellipsis.
-
-Auto advance moved up with the other two toggles, which is what it is. That
-leaves the two banks together in a group of their own, which is also what they
-are.
-
-The ledger row's label sits 6px further down, because its control is a tall
-graphic rather than a single line and the label was reading as part of the row
-above.
-
-Sheet is 492, from 547 and 564 over the last two builds. Still does not scroll.
-
-## v0.108.20 — settings, without the captions
-
-The group headings from v0.108.19 are gone, along with their six strings. They
-were explaining the sheet rather than designing it; the rows already say what
-they are. The grouping stays, carried by a hairline and 16px of space instead of
-by a caption.
-
-Two things that were actually wrong, found by measuring every control's box
-rather than by looking:
-
-Chips were 26px tall and the two bank buttons 30, so no two kinds of control in
-the sheet were the same height. Everything is 30 now, one value across chips,
-toggles and buttons.
-
-Right edges were already consistent at +21. The only outlier was the ledger
-graphic at 200 centred against everyone else's 308, so I widened it, and it was
-worse: the two steppers are composed to sit at the stave's edges and widening
-pulled them 107px away from the thing they annotate. Reverted, with a comment
-saying why, because it is a single control rather than a row of them and its
-internal alignment beats matching the column.
-
-Sheet is 547 against 564 before the last two builds, and still does not scroll.
-
-## v0.108.19 — settings, arranged
-
-Seven unrelated rows in a flat list, three of them identical two-state toggles
-each given a label on its own line above a full-width pair of buttons. Now
-grouped in three, by what each setting actually decides.
-
-THE CARD holds clef, ledger lines, accidentals and key signatures. ANSWERING
-holds the fretboard instrument. ONCE YOU ANSWER holds the reveal voice and auto
-advance, which is where auto advance belonged all along; it had been sitting
-between key signatures and the fretboard for no reason.
-
-That also answers whether the two banks share a row. They should not. They are
-not the same kind of setting, they now sit in different groups, and one of them
-only applies to one of the three input surfaces.
-
-Group headers are a small caps label with a rule running to the edge, so the eye
-has something to travel along. The groups carry the separation, which lets the
-rows inside sit at 10px instead of 13.
-
-The three toggles are inline now, label left and the pair right at 108px, which
-takes each from 42px to 26. Those savings go straight back into the headers, so
-the sheet is 566 against 564 and the point was never compactness.
-
-Checked: nothing in the sheet is clipped at 390px wide, all six labels and every
-chip fit their boxes, and the sheet is 566 against a 712 max so it still does not
-scroll.
-
-## v0.108.18 — the fretboard picker becomes a bank
-
-Six instruments in an sr-optrow gave every chip 46px, and the row splits its
-width evenly regardless of what is in it. GUITAR needed 47, UKULELE 57 and
-MANDOLIN 65, so half the labels were clipped.
-
-It is a button now, reading the current instrument with its string count, opening
-a sheet of six. Same shape as the voice button directly below it in the same
-sheet, and the same shape as KEYS above. The chips inside are three across at
-99px, which every name fits with room over.
-
-The alternative considered was a chooser in the drill itself on switching to the
-fretboard. Rejected: it puts a gate in front of the exercise, which is the
-pattern that came out of this module a few builds ago, and it does not remove the
-need for a settings control, so the setting would live in two places.
-
-The two buttons sat at 28 and 30 because the voice one carries a 13px icon and
-this one does not, so there is a min-height holding them level.
-
-Checked: every label fits, picking mandolin redraws the board to four strings,
-the choice persists, and the narrowed pool follows the instrument.
-
-## v0.108.17 — the heat renderer comes out
-
-srRenderHeat and srHeatBars were defined and never called. Tracing what they
-reached: srHeatStave and srHeatLedgerRow were only ever called by srRenderHeat,
-the three element ids it looked up do not exist in the markup at all, and the
-five sr_heat_ strings were used only by its legend. That whole closure is gone,
-144 lines and about 7KB, along with ten i18n keys.
-
-What they borrowed stays, because it is live elsewhere: srHeatColor has nine
-other callers in the stats sheet, and srPosAll, SR_TOPSTEP and rrMidiToStaff are
-used throughout.
-
-Checked before cutting rather than after: no dynamic dispatch can reach them.
-The file has three window[fn] call sites and none of their lists contain
-anything from this module.
-
-Checked after: the stats sheet is the surface that shares code with what was
-removed, so all of it was exercised. Headline numbers, the four clef tiles, the
-trouble list, the per-note breakdown, the per-input summary and the clef detail
-sheet all render, with no console errors.
-
-Also removed in v0.108.16 and worth recording together: srFretOrder, a pref read
-on boot and never written.
-
-## v0.108.16 — taking out what I left lying around
-
-srFretOrder was read on boot, consulted by the row builder, never written and
-never exposed. A setting in appearance only. It is what it always actually was
-now, a constant, with tab order hardcoded.
-
-Audit of the module also turned up two functions that are defined and never
-called, srHeatBars and srRenderHeat. Both predate this work and neither is mine
-to delete on a hunch, so they are flagged rather than removed.
-
-## v0.108.15 — lowering the stave without dragging the inputs with it
-
-v0.108.14 lowered the stave with top padding, which grew the box, which pushed
-everything under it down by the same amount. The stave moved 8px, the fretboard
-moved 8px, and the gap between them was identical; the card just got taller.
-Daniele spotted it from the screenshot before I measured it.
-
-Done with margin instead, added above and taken back off below, so the stave
-lowers and nothing under it moves. The first attempt at that only shifted 2px of
-the intended 6, because the tool row's own 4px bottom margin collapses with the
-stave's top margin rather than adding to it. Margin-top is 10 to clear the
-collapse.
-
-Measured against the pre-nudge baseline: stave 66 to 72, octave row unchanged at
-243, fretboard unchanged at 275, NEXT unchanged at 433, card unchanged at 490.
-
-## v0.108.14 — the card holds still
-
-The stave box no longer changes size when the range does. It was already
-clef-independent on purpose, and the comment above srMetrics defended range as
-the deliberate exception: a wider span was supposed to earn more room. Cycling
-ledger tiers moved everything under it, which is worse than the air it saved.
-
-The allowance is now computed at the deepest tier whatever is selected. Box is
-154px at every setting, against 87 / 124 / 143 before, so it costs 67px at zero
-ledger lines and 11px at three. Note size is constant across every setting too,
-which for a reading drill is worth more than the air.
-
-Card height is now identical across all five ledger tiers: 368 on the letter
-grid, 492 on the keyboard, 498 on the fretboard.
-
-The stave also sits slightly lower in its box, 14px of padding above against 6
-below, so it is not pinned to the tool row.
-
-Pinned, because this is the third attempt at it: v0.106.3 measured per note and
-the card grew card to card, v0.106.5 measured per clef and the card resized under
-the clef pill, and this one closes the range half.
-
-## v0.108.13 — the neck stops looking like a spreadsheet
-
-String lanes were 30px, which made the cells 20 wide by 32 tall. A real neck's
-cells are landscape and these were portrait, so the board read as a grid with
-strings drawn on it rather than as a fretboard. Lanes are 22px now, cells 20 by
-24, and the board went from 194 to 146. Card height in fretboard mode: 479 down
-to 431.
-
-Also answering the other half of the question: the stave has not moved. srMetrics
-returns topY 18 and height 72 at zero ledger lines, the same values it has always
-returned, and nothing in the last four builds touched it. What changed is that
-everything underneath it got shorter, so it reads as higher than it did.
-
-24px lanes are under any touch-target guideline, but the target is a band running
-the full width of a fret rather than a square, so it may well be fine. If it is
-not, the lever is fewer frets per slice rather than taller lanes, since taller
-lanes are what caused this.
-
-## v0.108.12 — the fretboard, and the module is feature complete
-
-Third input surface. Guitar, bass, five-string bass, ukulele, mandolin and
-banjo, picked in settings; the INPUT pill cycles all three surfaces.
-
-**It reads written pitch, not concert.** Guitar, bass and ukulele are notated an
-octave above where they sound, so a card asking for E4 is answered where E3
-sounds. Mandolin and banjo are written at pitch and carry an offset of zero. The
-alternative was making a guitarist's every instinct an octave wrong and calling
-it correct, which would have read as the app being broken. A tap converts to
-written pitch at the boundary, so the scoring, the stats and the stave ghost all
-carry on in written pitch exactly as they do for the other two inputs.
-
-**Any position counts.** Notation says E4, not which string, so marking three of
-the four E4s wrong would penalise something the card never asked. On guitar 27
-of 37 reachable pitches sit in more than one place, so this is the ordinary case.
-Answer correctly and every position of that note lights.
-
-**The pool narrows to the instrument.** With the fretboard up, the drill only
-draws notes the selected instrument can physically reach, and tries the other
-clefs before giving up on one that is out of range. Two hundred consecutive
-cards drawn on guitar in treble at two ledger lines: zero unplayable. If every
-clef in the pool is unreachable the card says so rather than asking for the
-impossible.
-
-**Geometry**, which took four prototype rounds on a real phone. Tab order with
-the highest string on the top line; v1 had it inverted and a note Daniele was
-aiming at came back wrong. Open strings outside the nut as rings, because putting
-them in the first fret cell ate fret 1's space and made every number read one
-high. Inlays on the real frets, since they had inherited that same error and were
-all a fret flat. Markers say the note, not the fret number, which is what made
-the other three findable. Stretched rather than fitted, so the string lanes stay
-32px instead of shrinking to 21 along with the width.
-
-**Twenty-four frets in two slices**, OPEN–12 and 12–24, stepped with the same
-arrows as the keyboard's octaves and sharing the same row. Twelve is not enough
-and this was measured: a treble stave with three ledger lines asks up to E6 and a
-12-fret guitar stops at E5.
-
-Four pins added, verified against a broken copy: the written offset, the 24-fret
-neck, the pool narrowing, and the conversion at the tap.
-
-On device: the board is 316 by 194 at phone width with 23 by 32 cells, so the
-lanes are comfortable and the frets are narrow. Check that trade before anything
-else. Then the three-input layout pass, which is the one thing deliberately left.
-
-## v0.108.11 — taking the air out of it
-
-Three stacked rows sat between the stave and the answer, each with its own
-margin. Trimmed rather than removed: the stave's bottom margin, the feedback
-row's height and margin, the accidental row's margin, and the octave row's.
-
-The octave row is collapsed on the letter grid now instead of held open, which
-reverses the call made in v0.108.10. Holding it open cost 26px of dead air on
-the mode most people will use most of the time, to prevent a shift that only
-happens when you deliberately change input, never between cards. That was the
-wrong trade and the screenshots made it obvious.
-
-Keys are 140px rather than 178. At 23 wide that is about one to six, which is
-roughly a real key; 178 made them one to seven and a half, which is longer than
-anything you have played.
-
-Card heights at 390px wide: the letter grid went from 355 to 301, the keyboard
-from 487 to 425.
-
-Note that the keyboard is still a vertical stretch of a surface the shared
-renderer draws at 104px, now by a factor of 1.35 rather than 1.71. Removing the
-stretch entirely would give correct proportions at about 97px tall, which is
-shorter than what is there now. That is a look-at-it decision rather than a
-measurable one.
-
-## v0.108.10 — room made for the keys
-
-Second pass on device. The INPUT pill is back in the tool row and properly
-centred, which needed a three-column grid rather than space-between; with two
-flanking items of different widths, space-between centres nothing. Measured at
-zero pixels off the card's centre line.
-
-"name the note" is gone. It said nothing you did not already know from being in
-the drill, and its row is now the octave control: a left arrow, the range, a
-right arrow. That row keeps its 30px height on the letter grid too, hidden
-rather than removed, so switching input never walks the keys up and down under
-your thumb.
-
-With nothing flanking it, the keyboard takes the full width. It was still only
-104px tall, because the shared renderer writes its own width and height
-attributes and a max-height does not touch them. It stretches on the vertical
-only now, so a two-octave span keeps its key widths and gains the height: 316 by
-178 at phone width, against 316 by 104 before.
-
-Key widths are unchanged at 23px, which is simply what fourteen white keys on a
-390px screen comes to. If that is still too fiddly the fix is one octave rather
-than two, which doubles the width at the cost of more stepping. Say the word.
-
-On device: the keys are stretched rather than redrawn, so check the black keys
-still sit right at the new proportions.
-
-## v0.108.9 — the keyboard you can actually hit
-
-Four things from Daniele's first pass on device.
-
-Deriving the window from the whole pool was wrong once ledger lines were on. The
-deep tiers span four octaves, and fitting those on a phone made the keys too
-narrow to press. It is two octaves now, fixed, with a stepper either side and
-the range printed underneath.
-
-The window does not follow the card, and that is the point rather than an
-oversight. Snapping it to the target's octave would hand over half the answer on
-exactly the notes the octave question is interesting for, which is the ones
-needing ledger lines. It starts at the bottom of the pool, clamps to it, and
-stays where you left it. Verified across eight consecutive cards that it does
-not move on its own.
-
-Keys you press stay lit until the next card, in the same colours the stave uses
-for the same states: red for a wrong key, accent for a clean read, amber for one
-you got on the second or third go. Painted through style rather than the fill
-attribute so a var() resolves and so it beats what the renderer wrote.
-
-The INPUT control moved out of the tool row into a centred row of its own above
-the stave, and it cycles rather than opening a sheet. Two surfaces, three once
-the fretboard lands, is not enough of a choice to justify a full-screen modal.
-srToneModal went the same way two builds ago for the same reason.
-
-Two pins added: the two-octave constant, and the line that starts the window at
-the bottom of the pool rather than at the card.
-
-On device: whether two octaves is the right compromise, and whether starting at
-the bottom of the pool is the right default or whether it should remember per
-clef.
-
-## v0.108.8 — answer it on a keyboard
-
-Staff Notes takes a second input surface. An INPUT pill sits next to KEYS in the
-card's tool row, because the key pool was promoted out of settings into a pill
-for exactly the reason a mode selector would need to be, and Rhythm Reading puts
-its difficulty chip in the header for the same reason. Buried in the settings
-sheet nobody would find it.
-
-The keyboard is unlabelled. Naming the note is the exercise, so a labelled
-keyboard would turn a reading drill into a matching game. The armed accidental
-row hides in this mode too, since on a keyboard the key is the accidental.
-
-Answers are octave-exact. Right pitch class in the wrong octave is simply wrong,
-which is only fair because the visible keys are derived from the clef and ledger
-depth the drill is actually using. Treble with no ledger lines spans about an
-octave, so the window is two octaves centred on the pool and the answer is
-always on screen. That also means a wrong octave is only reachable on cards
-where the drill has genuinely put two octaves in play, rather than being a trap
-on a card where the octave was never a question.
-
-Both surfaces now share `_srResolve`. The grid and the keyboard disagree about
-what an answer looks like and agree about everything that happens afterwards, so
-the callers decide only whether it was right and what to mark as tried. Two
-copies of the tries and stats rules would have drifted the first time either
-one changed.
-
-The stave ghost still works. A keyboard tag carries the pitch itself, so instead
-of searching for the nearest note matching a letter it draws exactly the key you
-hit, which is the more useful version of that hint.
-
-Stats stay in one table. Splitting the note breakdown by input would have
-tripled the attempts needed before srPickWeighted has four on a position and
-starts adapting at all. Instead there are two counters per input under the
-breakdown, so you can see the keyboard dragging you down without splintering the
-data that drives the picker.
-
-Repeat taps on an already-wrong key cost nothing, matching the grid, which
-disables a letter once it has been tried.
-
-Four pins added, verified against a deliberately broken copy: the shared scoring
-path, octave-exact keyboard answers, the grid default, and the id exemption that
-stops the shared renderer drawing a drawbar console under the drill.
-
-Fretboard is the next build. `gssDrawFretboard` is not reusable for it: it reads
-the scale tool's own globals, draws into a fixed element id and has no tap
-callback, so that surface gets written rather than borrowed.
-
-On device: check the keyboard's height against the letter grid it replaces, and
-whether two octaves is the right window once ledger lines are on.
-
-## v0.108.7 — the timer nobody could cancel
-
-Auto-advance sets two timers when a card resolves: one at 1150ms to silence the
-reveal, one at 1400ms to turn the card. The second was held in _srAutoTO and
-cancelled by both NEXT and the next call. The first was a bare setTimeout held
-in nothing, so nothing could cancel it and nothing could see it.
-
-Tap NEXT quickly and it survived into whatever card had landed since. If you had
-tapped the stave to hear that one, it got cut off mid-note for no reason visible
-on screen. It also stacked, one orphan per card, so a fast run left several
-landing at overlapping times. It only bit when you were moving quickly, which is
-why it lasted this long.
-
-Held in _srStopTO now and cleared in the same two places the advance is.
-
-Eight pins added to the sentinel, the first this module has had. The one that
-matters guards the owner branch in pickTonePopup: delete it and Staff Notes goes
-back to writing selectedRefTone, and the symptom is the piano quietly changing
-voice, which nobody would trace to a reading drill. The rest hold the popup
-owner, the skin stripping, the preview call, the sr-tonepop skin, the grand
-piano default, three tries per card, and the timer above. All eight verified
-against a deliberately broken copy first, because a pin that cannot fail is
-decoration.
-
-intonare_regression_sentinel.py ships to outputs with this build and must be
-copied back into /mnt/project/ or the pins vanish on the next fresh chat.
-
-## v0.108.6 — the picker stops looking like it wandered in from the piano
-
-Two things Daniele called on device. REVEAL SOUND now sits at the bottom of the
-Staff Notes settings sheet rather than between KEY SIGNATURES and AUTO ADVANCE.
-And the voice button and its popup were both black, because the shared surface
-was drawn for the piano console and every module that borrowed it had to re-skin
-it; Chords and Interval Reference already had, Staff Notes had not.
-
-The button is matched to .sr-opt, the chips sitting directly above it: same fill,
-border, radius and Bebas at the same size, with the caret in the module's purple.
-The popup gets an sr-tonepop skin on the same accent.
-
-The skin took three passes to land, all of it specificity. Sharing the rules with
-the Interval Reference skin was tidy but wrong: the light-mode base skin paints
-this popup cream and green with !important, so the shared rules lost there and
-adding !important would have changed Interval Reference too. Written standalone
-it still lost, because body.light .tone-pop-tile is two classes and an element
-and .sr-tonepop .tone-pop-tile is two classes and nothing. Every rule is
-.sr-tonepop.riff-popup now, which is what the card rule already was, and why the
-card was the only part that came out right on the first attempt.
-
-Measured in both themes: card, tiles, group headers, the close button and the
-caret all resolve to the module purple, with no gradient bleeding through from
-the cream skin underneath. Every value is a variable that already flips, so
-there is no second set of light-mode colours to keep in step.
-
-The row also came off .tone-bank-row. That class masks its last 24px to fade a
-scrolling chip strip, and with a single full-width button the fade sat on the
-caret.
-
-On device: the button should read as one more row of the sheet. If it does not
-sit right against CLEF and ACCIDENTALS, the sizing is in one place.
-
-## v0.108.5 — one picker, and it knows who opened it
-
-v0.108.4 gave Staff Notes the real tone bank but left it inside a local modal,
-where the tiles sat in a stats sheet that never themed them and came out black.
-The fix was to stop hosting a picker at all. The settings row now holds the same
-compact voice button the Chords and Chordle surfaces use, and tapping it opens
-the shared popup, which renders at body level and is already themed.
-
-The popup needed to learn whose setting it was writing. Its tiles are inline
-onclick handlers on generated markup, so pickTonePopup has no closure to read
-from; openTonePopup takes an owner now and parks it in _tonePopOwner, and both
-pickTonePopup and closeTonePopup clear it. When a module owns the pick, the
-app-wide branch is skipped entirely, so selectedRefTone is left alone and the
-piano and Chords voice buttons cannot relabel themselves to a voice the app was
-never switched to. Called with no owner, every existing surface behaves exactly
-as it did.
-
-buildChordToneBank takes the same optional get/set pair buildRefToneBank does,
-plus a skin class for the popup. It defaulted to the Chords colours because the
-Chords tool was the only caller; Staff Notes passes skin:null and takes the
-default theme.
-
-Picking a voice now previews it. The tabbed bank always did, sample-loading and
-all, while the popup had a comment claiming it did and no code behind it, which
-made the two surfaces feel unrelated. That logic is one helper now and both call
-it, so the piano, Chords, Chordle and Interval Reference pickers all speak when
-you tap them.
-
-MATCH THE APP is gone. It only existed because the drill's voice defaulted to
-following the app's, and a picker with a null option in it is harder to explain
-than a picker without one. Staff Notes defaults to grand piano and stays there;
-a stored empty string from an older build fails the validator and migrates to
-the same default.
-
-Also fixed on the way past: closeTonePopup did not strip chd-tonepop, so
-dismissing the Chords picker with the X left the next piano open wearing Chords
-green. And the voice button that opened the popup is redrawn on pick, which the
-old hardcoded refresh list never did for Chordle's bank.
-
-Deleted: srToneModal, srOpenTonePicker, srCloseTonePicker, srSyncToneApp,
-srToneName, srRenderToneChips, the srToneAppBtn markup, the .sr-tone-app and
-#srToneModal rules, and the sr_tone_title / sr_tone_sub / sr_tone_app strings in
-both languages.
-
-On device: the REVEAL SOUND row sits under the label now rather than beside it,
-so check it against the CLEF and ACCIDENTALS rows above it. Then pick a voice in
-Staff Notes and confirm the piano tool is still on whatever it was.
-
-## v0.108.4 — the tone bank uses the tone bank
-
-v0.108.2 gave Staff Notes six hand-picked voices as chips, which Daniele rightly
-questioned: the app already has a tone picker with every voice in it, grouped
-into five tabs with sample-loading states and previews. Building a second, worse
-one was wasted work.
-
-buildRefToneBank takes an optional host id and an optional get/set pair now.
-Called with nothing it behaves exactly as before, writing into #refToneBank and
-setting selectedRefTone, so the piano panel and the instrument auto-select path
-are untouched. Staff Notes passes its own container and its own accessors, and
-the same picker drives a per-module voice without the two ever crossing.
-
-In the settings sheet it is a CHOOSE button showing the current voice, matching
-the key picker one row above it, opening a sheet with MATCH THE APP across the
-top and the full bank underneath. MATCH THE APP is the default and means exactly
-that: the reveal follows whatever the app's reference tone is set to.
-
-Verified with both banks live at once: same tab renders the same tiles in each,
-five groups present, picking sine in the module leaves the app on grand piano,
-the choice persists and labels correctly, the reveal plays through it and
-restores the app tone immediately after, and MATCH THE APP puts it back.
-
-The six placeholder chips and their hardcoded list are gone.
-
-## v0.108.3 — READING was the only folder showing its title twice, and it was
-
-There is a CSS rule that hides a hub's internal train-header once the app header
-takes over the section name, and it lists the hubs by id: toolsHub, toolFolder,
-practiceHub, earTrainingHub, gamesHub, rhythmHub. It was written before READING
-existed and nobody added it, so Reading alone kept its own header and showed the
-title twice while the other four looked correct.
-
-readingHub is on the list now. Verified by walking all four folders and checking
-whether the in-hub header is actually rendered: all four agree, Reading still has
-its card, and backing out still works without the in-hub button, since the app
-header supplies the back action.
-
-Worth recording how this was nearly missed. Asked whether other folders did the
-same, the first check looked only at whether the title element had display:none
-and reported that Games behaved identically, which led to telling Daniele it was
-app-wide behaviour rather than a bug. He pushed back saying he had only ever seen
-it in Reading. He was right: the element is present in every hub, it is the
-ancestor that gets hidden, so testing the element's own display says nothing.
-Re-run with an offsetParent check the difference was immediate and unambiguous.
-
-## v0.108.2 — the drill gets its own voice
-
-REVEAL SOUND in the settings sheet: APP, sine, piano, flute, guitar, marimba. Six
-rather than the whole REF_TONES table, because forty instruments is a different
-screen and this is a reading drill. Names come from REF_TONES itself so they
-follow the interface language.
-
-APP is the default and changes nothing: the reveal keeps using whatever the app's
-reference tone is set to. Choosing anything else swaps selectedRefTone in for the
-length of one note and puts it back in a finally block, so the drill can have its
-own voice without altering the setting the tuner, the chord tools and everything
-else share.
-
-Sine is the reason the setting exists. No decay, no timbre, no bass strings
-ringing three times longer than treble ones; just the pitch, which is what you
-want when you are checking whether the note you read is the note you heard.
-
-Tapping a voice plays a note in it, since choosing a sound you cannot hear is
-guesswork.
-
-Verified: six options with one active, the choice persists, the reveal plays
-through the chosen voice, the app-wide tone is restored immediately afterwards,
-and APP leaves it untouched throughout.
-
-## v0.108.1 — three from Daniele, and the third is bigger than Staff Notes
-
-**THE CLEF DETAIL OPENED UNDERNEATH THE SHEET THAT OPENED IT.** .ce-stats-modal sits
-at z-index 2000 and the overlay was at 60, a number picked without checking what
-it had to clear. 2100 now.
-
-**THE REVEAL NOTE WAS STILL RINGING UNDER THE NEXT QUESTION.** Every note gets the
-same three-second window, but bass samples decay far slower than treble ones, so
-a low card was still sounding while a high one had long gone. It is cut when the
-next card is dealt, and silenced at 1150ms when auto-advance is on, 250ms before
-the card turns, so the two never overlap.
-
-**AND SWITCHING LIGHT AND DARK LEFT EVERY STAVE ON THE OLD INK.** Staves resolve
-their colour when they are drawn, reading body.light at that moment rather than
-from CSS, so nothing already on screen follows the switch until something else
-forces a redraw. Daniele guessed this affects every stave in the app, and it
-does: the Chords tool, Rhythm Reading and the Survival Guide diagrams all paint
-the same way.
-
-applyAppearance calls a _restainStaves hook now. Staff Notes redraws in full,
-including its settings, key picker and stats sheets if any are open. The hooks
-for Rhythm Reading and the Chords tool are written and guarded but currently
-no-op, because neither module has a single re-render entry point to call; both
-need a small refactor before they can join, and that is its own job rather than
-something to bolt on here.
-
-Verified: the detail's z-index clears the sheet, stave ink follows a switch to
-light and back to dark, and dealing a card silences the previous reveal.
-
-## v0.108.0 — the stats screen, rebuilt on the mockup
-
-Four attempts at drawing per-position accuracy on one screen all failed the same
-way, so the fifth stops trying. The top level answers how you are doing without
-any spatial decoding, and the picture that genuinely needs room gets a screen of
-its own turned on its side.
-
-**TOP LEVEL.** Three headline numbers: notes read, first-try percentage, and best
-run, which is new. Then four clef tiles, each with its own accuracy, read count
-and bar, dimmed and unclickable for clefs you have never opened. Then the four
-worst positions, written out: "F · 1st ledger below · TREBLE · 27% of 11". A rank
-list needs no hunting and does not care how many clefs there are, which is the
-whole reason the map kept failing. 629px, no scrolling.
-
-**TAP A CLEF.** The full range for that clef alone, rotated so the pitch axis gets
-the phone's long edge: 25 positions across 852px instead of 393, dots at their
-real stave heights with ledger lines under the ones outside, percentage above and
-note name below, and that clef's note-name grid underneath. The geometry and
-rotation direction are copied from .ov-portrait-rotate .piano-overlay, and it
-calls the same lockOrientation and unlockOrientation the piano, Rhodes, organ and
-theremin already use, so on device the screen itself turns rather than the CSS.
-
-**BEST RUN** is one new field, consecutive first-try reads, cleared by RESET. The
-per-clef summaries, the rankings and the position descriptions are all derived
-from the existing clef:diatonic store; nothing else was added.
-
-**ONE REAL BUG CAUGHT IN TESTING.** The detail stave looked up positions with
-srPosKey(clef, step), but srPosKey takes a MIDI note and converts it. Handing it
-a diatonic step made every lookup miss, so a fully populated clef rendered as
-entirely unread. It reads the key directly now. Worth recording because the
-symptom was a plausible-looking empty map rather than an error.
-
-Verified: best run counts and breaks correctly, three of four tiles live with the
-fourth disabled, trouble list populated and described in words, the panel measures
-852x393 with the piano's rotation matrix, all 25 positions drawn with percentages,
-every colour band reachable, and an unplayed clef cannot be opened. Both existing
-sweeps still pass.
-
-## v0.107.15 — each ledger control moves to the side its own lines are not on
-
-The upper ticks sit right of centre and the lower ticks left, and both control
-clusters were pinned to the left edge, so the lower pair sat on top of the very
-lines it was adjusting. The lower cluster is on the right now, with its label
-after the buttons rather than before so the text still reads outward. Checked by
-projecting the SVG coordinates into page space and counting intersections: zero
-overlaps on either side at three lines up and three down.
-
-## v0.107.14 — the chips lost their fill because the borrowed rule used borrowed variables
-
-Matching .iv-mode-btn last build meant copying its declarations, and its
-declarations are written against --surf, --bdrs, --mu and --soft. Those four are
-aliases defined inside #toolSurvivalGuide and nowhere else. Copied out here they
-resolve to nothing, so background and border simply vanished and the settings
-chips became floating text. The colours are right; the names were local.
-
-Same colours under their real names now: --surface, --border-soft, --muted and
---accent-soft. Verified by comparing a live active chip against a live inactive
-one rather than by reading the rule.
-
-**THE LEDGER DIAGRAM STOPPED RESIZING.** All eight slots are always drawn, four
-above and four below, with unset ones at 16% opacity. Pressing a button lights one
-up instead of growing the diagram, so the control is a fixed 118px and the sheet a
-fixed 446px no matter what is set. You can also see how far the setting goes
-without pressing anything, which the old version could not show.
-
-**AND THE BUTTONS SIT LEVEL WITH THE LINES THEY DRIVE**, absolutely positioned
-against the diagram at the vertical centre of each run rather than stacked above
-and below the whole thing. Half the height, and it is obvious which pair belongs
-to which stack.
-
-Verified across six settings: control height, sheet height and slot count all
-constant, lit count always matching, and the two control clusters landing either
-side of the stave's midline.
-
-## v0.107.13 — the stats view was a barcode, and the chips were not the app's chips
-
-**TWENTY-FIVE STACKED BARS DID NOT WORK EITHER.** Bars fixed the diagonal but
-replaced it with a barcode: every row the same width, note names overlapping into
-an unreadable column down the left, and no way to tell a ledger position from a
-stave one. The shape was legible in principle and illegible in practice.
-
-Split in two, because it was always two questions. The nine positions inside the
-stave are the ones you name constantly, so they get a stave drawn at a size you
-can read, one dot each sitting where that note sits, names underneath. Fixed
-height whatever depth you practise, dots 23px apart, nothing overlapping. How far
-out of the stave you can read is a different question, so it gets its own row:
-eight small chips, four above and four below, each outlined in its band's colour,
-dimmed past the depth you have set. The map no longer changes size or density
-with a setting.
-
-**THE OPTION CHIPS WERE INVENTED RATHER THAN BORROWED.** 8px transparent pills with
-a 6px radius, next to an app whose segmented controls are all .iv-mode-btn: filled,
-8px radius, 10px Bebas, with a colour-mixed active state. They are that now,
-verified against the live rule rather than copied by eye.
-
-**AND THE LEDGER PREVIEW USES ENGRAVING PROPORTIONS.** It was a small stave with
-wide bars across it, which is backwards; ledger lines are short marks on a long
-stave. 200px wide with 22px ticks, the upper run set right of centre and the
-lower run left, which is roughly where a passage climbing out of the stave and
-one falling out of it would actually sit, and it stops the two runs stacking into
-a single vertical block.
-
-## v0.107.12 — the heat map was a staircase falling off the stave
-
-Daniele's screenshot showed it plainly: at four ledger lines below, twenty-five
-ascending noteheads across 300px collide into a diagonal running clean off the
-stave, with the ledger lines merging into a smear behind them. It was drawing the
-right data in a shape that cannot hold it.
-
-**IT IS BARS NOW, STACKED BY PITCH.** One horizontal bar per stave position at its
-own height, coloured by that position's record, with the note name and octave
-beside it and the five stave lines behind. No noteheads, so nothing collides
-horizontally and the map gets BETTER the deeper you go, because where you are
-weak becomes a gradient you read up the page rather than a row you scan across.
-Verified at four depths: bar counts match the pool exactly, nothing falls outside
-the box, no two bars overlap, and every position is labelled. The deepest map is
-146px and the whole sheet 408px.
-
-**TURNING SIGNATURES OFF GREYS THE PILL RATHER THAN REMOVING IT.** It said C
-already in everything but name, since no signature is C major, so it says C now,
-sub-labelled "no signature", disabled and at 42% opacity. Hiding it made the tools
-row jump and left the key picker with no way back in. Pinned to 88px so the two
-states are the same width and nothing shifts on the toggle.
-
-**AND THE LEDGER CONTROL STOPPED BEING A SLAB.** Panel background and border gone,
-buttons round and a few pixels smaller, spacing tightened. It reads as a diagram
-with controls now rather than a block dropped into the middle of the sheet.
-Settings 488px.
-
-## v0.107.11 — ledger lines are a picture you push out from either side
-
-Five preset chips could not say "three above, none below", which is a real place
-to be: the treble ledger lines above the stave and the ones below it are separate
-skills learned at different times. Ledger reach is set per side now, and the
-control is the thing itself rather than a number describing it. A stave with its
-current ledger lines drawn in accent colour, a minus and a plus above it and
-another pair below, each side clamped between none and four. The count of stave
-positions the current reach gives you sits next to the label.
-
-Pools take an up and a down. Everything downstream followed: the heat map draws
-whatever you practise and captions itself with both figures, the metrics cache
-keys on both, and the XP bonus applies when either side is out. Existing settings
-carry over to equal sides.
-
-**AND THE SETTINGS SHEET LOST ITS FURNITURE.** The three group headings read as
-busier than the five rows they were organising, so they are gone. KEYS IN THE
-DRILL went with them, since the pill on the card opens the same picker and a
-setting reachable two ways from one screen is one way too many. STATS moved into
-the sheet header, matching where Interval Training puts its own, which takes the
-second icon back off the card and leaves the cog alone in the corner.
-
-469px now, from 627 two builds ago, with a control that shows you what it does.
-
-Verified: asymmetric reach builds the right pools in both directions, the preview
-draws five stave lines plus exactly the ledger lines set, the buttons clamp at
-both ends, five rows and no headings, the key row is gone, the stats button is in
-the header, the card is back to one icon, and the map follows both sides. Sweep
-harness updated for two-sided depths and still passing.
-
-## v0.107.10 — the heat map was lying, so the module started measuring what it drew
-
-Daniele spotted that a heat map on a stave implies position accuracy, and the
-module only had letter accuracy. Being better at C in the middle of the stave
-than at C on a ledger line below is not an edge case, it is the entire difficulty
-of ledger lines, and the map was quietly claiming to show something it could not
-see.
-
-**IT MEASURES POSITIONS NOW**, alongside the letters rather than instead of them.
-They answer different questions: the letters say whether you know your note
-names, the positions say where on the stave you struggle. Keyed by clef and
-diatonic step, so the same pitch in two clefs is two entries, which it should be:
-C4 is a ledger line under a treble stave and the third space in bass, and those
-are different reads that happen to sound the same.
-
-The map draws every position at whatever depth you practise, 9 at depth 0 up to
-25 at depth 4, each coloured by its own record, captioned with the clef and depth
-so it is clear what you are looking at. Note names appear only at depth 0, since
-twenty-one labels is a wall and the shape is the point. Adaptive weighting reads
-positions first and falls back to the letter until a position has four attempts
-behind it, so the drill now favours the exact ledger line you keep missing rather
-than every C.
-
-Existing letter data is untouched, so nothing is lost and the summary grid below
-still aggregates by name.
-
-**THE SETTINGS SHEET WAS A LADDER OF SPACED-OUT ROWS.** Six labels floating beside
-six control strips down a 627px sheet. Three groups now, WHAT YOU READ, KEY
-SIGNATURES and HOW IT RUNS, with each control sitting directly under its own label
-instead of beside it, and the gaps closed up. 407px, and the grouping means the
-key-signature switch and the key picker read as one setting rather than two
-unrelated rows.
-
-Verified: the same letter at two stave positions records separately while the
-letter total still aggregates, the map draws the right count at all five depths
-and varies colour by position, the settings sheet carries three groups, and all
-sr_ strings stay paired across both languages. Full sweep still passes.
-
-## v0.107.9 — the bar wall goes, and a pass over all three screens
-
-**ACCURACY BY NOTE WAS RESTATING THE MAP, TALLER AND GREYER.** Seven rows of bar
-directly under a heat map showing the same seven values. The only thing the map
-cannot give you is the number, so the number is all that is left: seven cells in
-one row, each with the note, its percentage and how many times you have read it,
-the percentage tinted with the same colour it has on the stave above. The two
-now read as one thing rather than as a picture followed by its own transcript.
-The whole stats sheet is 400px, down from something you had to scroll.
-
-Every letter keeps its cell even with no history, showing a dash. Notes you have
-never read are information too, and a grid that grows as you play makes the
-layout move under you.
-
-**THE HEAT MAP IS THE STAVE, ALWAYS.** It was following the practice depth, which
-meant it changed size with a setting and still could not show four ledger lines
-in the room available. Accuracy is tracked per letter and all seven letters live
-between the outer lines, so the stave alone is the complete picture rather than a
-cropped one. It stays the same size at every depth and there is nothing missing
-from it.
-
-**AND A PASS OVER THE THREE SCREENS.** Section titles centred and given consistent
-spacing, settings labels aligned to the top of their controls rather than floating
-mid-row, and the vertical rhythm made the same across the settings, keys and stats
-sheets. Measured after: play card 318px, stats 400px, keys 608px, settings 627px,
-all comfortably inside a phone screen.
-
-Full sweep and the navigation check both still pass.
-
-## v0.107.8 — your reading, drawn on a stave
-
-The most interesting thing the module knew about you was a stack of percentage
-bars two taps down, behind a cog, under three rows of settings. It has its own
-sheet now, behind its own button on the card, and it opens with a stave.
-
-**THE HEAT MAP.** The notes of the stave, in the clef you actually practise, each
-one tinted by how reliably you name it: red for weak, amber for shaky, green for
-good, cyan for solid, and two greys for notes with too little history to judge or
-none at all. Six bands, all distinct, with a legend. A list of percentages says
-the same thing and none of it lands anywhere; seeing that the two notes you keep
-missing are both below the stave is a different kind of knowing, and it is only
-possible because the data is drawn where the reading happens.
-
-pitchedStaffSvg gained colColors, which tints whole columns rather than notes
-within a column, since a row of one-note columns is what this needs. Underneath:
-total notes read and first-try percentage, then the per-note bars, then RESET,
-which now sits with the numbers it clears rather than among the settings.
-
-**THE SETTINGS SHEET IS SETTINGS AGAIN.** Six rows, all of them things you set.
-The breakdown and the reset button that used to pad it out have moved.
-
-The card's tools row has a small chart button beside the cog. Two icons rather
-than one, which is the cost, and the stave stays the tallest thing on the card.
-
-Verified: nine notes drawn with distinct heat colours and their names, five legend
-bands, totals correct, the stave following the clef, settings carrying no stats,
-and reset clearing the history and greying the whole map. The 5,100-render sweep
-still passes.
-
-## v0.107.7 — the wrong answer stops shoving the right one aside
-
-The ghost note was a second column, which meant the layout treated it as an equal
-partner: the real note shifted left to make room, and the two sat a full
-column-gap apart. Two notes of the same weight, far enough apart to read as a
-question with two answers, when one is the answer and the other is an aside.
-
-pitchedStaffSvg takes an opts.ghost now, drawn after the columns and outside the
-layout entirely. The real note keeps exactly the position it would have had on
-its own, and the ghost sits 34px to its right in red at 85% opacity, with its
-label underneath in the same colour. Ledger lines under a ghost are tinted to
-match, so a guess well outside the stave still reads as the aside rather than as
-new information about the answer.
-
-Verified: the real notehead's x is identical before and after a wrong guess, the
-ghost lands 34px right, it carries the distinct colour, and a guess one step away
-from the answer never collides with it in any of the four clefs.
-
-Also updated the sweep harness, which still referenced the hand-written pools that
-v0.107.6 replaced with generated ones. It now covers five ledger depths instead
-of two ranges: 5,100 renders, no missing noteheads, no NaN, nothing clipped.
-
-## v0.107.6 — ledger lines became a depth, and weak notes come up a little more
-
-**THE OLD RANGE TOGGLE WAS LOPSIDED AND NOBODY COULD SEE IT.** IN STAFF versus
-LEDGER LINES was two hand-written arrays per clef, built by adding an octave each
-way, which in treble meant one ledger line below the stave and two above. Nothing
-looked wrong; the reach was just quietly uneven.
-
-It is a depth now, 0 to 4, and the pools are generated by counting lines out from
-the stave rather than typed. Symmetric by construction, verified in all four
-clefs at all five depths. 9 positions at depth 0 rising to 25 at depth 4, four
-more per step. The point of the setting is being able to sit at one ledger line
-until you own it, instead of jumping from none to a fistful, which is how
-musictheory.net handles it and it is right.
-
-Existing settings carry over: the old LEDGER becomes depth 2, which is slightly
-wider than it was and evenly spread. The sheet shows how many positions the
-current depth gives you, since the number is more use than the label.
-
-**AND WEAK NOTES COME UP A LITTLE MORE OFTEN.** Weighted by miss rate, deliberately
-gently: a note you have never once read correctly is three times as likely as one
-you always get, not twenty, and nothing is weighted at all until there are four
-attempts on record. Heavy weighting collapses a reading drill into the same three
-notes forever, which is a worse exercise that looks like a smarter one.
-
-Measured rather than assumed. With no history, all nine stave positions come up
-within 8% of each other over 7,000 draws. With one note at 0/20 and another at
-20/20, the ratio between them settles at 3.25. A note with three attempts on
-record is still drawn as though it had none.
-
-One thing worth knowing rather than fixing: weighting is per letter, and at
-depth 0 the treble pool holds both E4 and E5, so those letters see double the
-exposure. That is correct. Reading E on the bottom line and E in the top space
-are different reads that happen to share a name.
-
-Stave geometry re-verified at every depth: one box and one stave-line y per
-depth, across all four clefs.
-
-## v0.107.5 — backing out of Staff Notes left it on screen, and the key picker got quieter
-
-**A LIST WRITTEN TWICE DISAGREED WITH ITSELF.** exitExercise hid the exercise
-panels by two separate hand-typed runs of twelve element ids, and Staff Notes was
-on neither, so leaving it left the panel sitting underneath the folder it came
-from. The file's own comment above stopAllAudio warns about exactly this, that
-nothing should leak because a module was forgotten on a hand-maintained list; the
-audio got the general treatment and the panels never did.
-
-One EXERCISE_PANELS constant now, used by both loops. Verified by entering and
-leaving all thirteen exercises in turn and checking that no panel is left visible
-after any of them, and that the set enterExercise can show and the set
-exitExercise hides are the same size.
-
-**FIFTEEN LITTLE SCORES WERE A LOT TO SCAN.** Each key in the picker was drawn as
-a full stave with a clef, which is more instrument than the job needs when all
-you are choosing is a key. Each card carries just the cluster now: the
-accidentals in their real vertical pattern over five short lines, no clef, sized
-to the shape rather than to a bar of music. Three to a row instead of two, and
-the whole sheet reads at a glance.
-
-The clusters still follow the clef you are practising, verified by comparing five
-sharps in treble against five sharps in tenor and confirming the shapes differ,
-which is the entire reason the tenor exception exists.
-
-Audited while in there: all six settings both read and written through prefGet
-and prefSet, all 38 sr_ strings paired across both languages, all 21 markup keys
-resolving, and every integration point present, from the folder card through the
-back-navigation map to the progress ladder and the favourites id.
-
-## v0.107.4 — the card's one button is the keys, and clefs became a pool too
-
-**BOTH WAS ONE HARD-CODED PAIR OUT OF ELEVEN.** Clef was a five-way cycle ending in
-a treble-and-bass special case, which meant a violist who reads alto and treble
-could not have that combination at all. It is a pool now, the same as the keys:
-tick whichever clefs you want and they shuffle. Four chips in the sheet rather
-than a modal, since four items do not need one. Existing settings carry over,
-BOTH included, which becomes treble plus bass and is now just one option among
-the rest.
-
-**AND THE PILL SHOWS THE KEYS.** Clef is the identity of the exercise, picked once
-by whoever you are, so it belongs in the sheet; which keys you are working
-through is the thing you actually change mid-session, so it takes the card's one
-button. It names the key on the current card, sub-labels how many keys are in the
-pool, and opens the picker on tap. With signatures off there is no pool to name,
-so it disappears rather than sitting there disabled, leaving the score and the cog.
-
-Nothing was lost by moving the clef off the card, because the stave draws its own
-clef; the label was restating what was already in front of you.
-
-Verified: an arbitrary pair mixes, three clefs mix, the pool cannot be emptied and
-persists, the pill hides with signatures off and opens the picker on tap, and the
-box and stave geometry hold across all seven clef-pool shapes tested. The
-1,248-render NaN and notehead sweep still passes.
-
-## v0.107.3 — all fifteen major keys
-
-C sharp and C flat added, so the drill covers every standard major signature from
-seven flats to seven sharps rather than stopping at six.
-
-Seven accidentals is the case worth checking, since it is where a signature is
-widest and where the two off-stave placements live: the treble G sharp in the
-space above and the bass F flat below, both conventional and both only reachable
-in these keys.
-
-900 renders across four clefs at the wider range, every key: no NaN, nothing
-clipped, signature glyph counts correct in all sixty key-and-clef combinations,
-and the notehead still fixed to one x per clef. The tightest a signature comes to
-the note is 71px at seven accidentals, down from 80 at six, which is still clear.
-
-## v0.107.2 — the note sits still, and the keys are a picker that shows you the keys
-
-**THE NOTE WAS SLIDING RIGHT AS THE SIGNATURE GREW.** The chord area was measured
-from the end of the key signature, so six sharps pushed the notehead further
-across than none, and the same stave position landed somewhere different in F
-sharp than in C. The eye had to find the note again every card, which is work
-that has nothing to do with reading it.
-
-pitchedStaffSvg takes anchorCenter now, which measures the area from the clef
-alone and ignores the signature's width. Off by default, so the cadence and
-voice-leading diagrams that share the renderer are untouched. Measured across all
-thirteen keys in all four clefs: one notehead x per clef, and the closest a
-signature ever comes to the note is 80px, so nothing collides at seven
-accidentals either.
-
-**THE KEY PICKER SHOWS THE KEYS.** Thirteen name-and-number chips told you how
-many sharps a key has and nothing about what it looks like, which is backwards for
-a reading drill. It is a CHOOSE button now, the same shape as Interval Training's
-interval picker, opening a sheet where every key is a card with its signature
-actually drawn on a stave by the same renderer the drill uses. What you pick is
-what you will see.
-
-The previews follow whichever clef you are practising, which matters more than it
-sounds: five sharps in tenor is a different shape from five sharps in treble, and
-that difference is the whole reason the tenor exception exists.
-
-Verified: each of the thirteen previews draws exactly its own accidental count,
-0 through 6 sharps and 1 through 6 flats, the labels are right, tapping toggles
-and the count updates, and the full 1,248-render NaN and notehead sweep still
-passes.
-
-## v0.107.1 — v0.107.0 shipped without noteheads, and the key pool is choosable
-
-**A HOISTED VAR ATE EVERY NOTE.** The key signature width was computed where the
-glyphs are drawn, which is well below the line that positions the notes. `var`
-hoisting meant it existed but was undefined at the point of use, so contentX0
-came out NaN, every notehead was placed at translate(NaN, y), and SVG silently
-drew nothing. The signature and the clef rendered perfectly, which is why the
-card still looked plausible.
-
-The width is computed alongside the clef metrics now, before anything consumes
-it. And the reason this got shipped is that every test I wrote checked things
-that were present rather than things that should be: glyph counts, box heights,
-stave positions. None of them asked whether a note was on the stave at all.
-
-So the harness asks now. 1,248 renders across four clefs, two ranges and thirteen
-keys, each one checked for a notehead actually being placed, for that notehead
-sitting inside the box, and for the string NaN or undefined appearing anywhere in
-the emitted SVG. That last check would have caught this before it left.
-
-**THE KEYS ARE A POOL YOU PICK.** Thirteen chips in the settings sheet, tap to add
-or drop, each showing the key and its signature count. Three shortcuts: ALL, EASY
-for C, G, D, F and B flat, and C ONLY. One key always survives, so the drill can
-never be left with nothing to draw. Stored by id rather than index, so a saved
-pool keeps meaning if the list is ever reordered.
-
-It lives in the sheet rather than on the card deliberately. The card took three
-builds to get down to five rows and thirteen more buttons would undo that; the
-clef pill already names the key you are reading, so the feedback stays where you
-are looking.
-
-## v0.107.0 — key signatures, looked up rather than guessed
-
-Thirteen standard majors, drawn at the head of the stave, and the answer is what
-the note SOUNDS. In D major the F line is F sharp, so F sharp is the answer;
-applying the signature is the entire skill being added.
-
-**THE PLACEMENT WAS WORTH LOOKING UP.** The order never varies, F C G D A E B for
-sharps and B E A D G C F for flats, in every clef. The positions do vary, and not
-uniformly. Treble, bass and alto share one shape where the sharps zig-zag down a
-4th and up a 5th with a break after D sharp. The tenor clef is a documented
-exception: no break, and the first and third sharps sit an octave lower so the
-run does not begin above the stave. Flats zig-zag up a 3rd and down a 4th with no
-break in all four clefs.
-
-Four independent sources agree on the tenor exception, and the offsets were then
-checked arithmetically against the real pitches rather than transcribed. Two
-placements fall outside the stave lines and are supposed to: the treble G sharp
-sits in the space above, and the bass F flat below, both only in extreme keys.
-Guessing this would have shown, and four clefs is the part of this module nothing
-else on mobile has.
-
-**GRADING IS BY SOUNDING PITCH.** Verified across all 117 combinations of the
-thirteen keys and every stave position in treble: the letter, the accidental and
-the sounding midi all agree with the signature. Naming the right letter without
-the sign the signature demands counts as a miss, which was the point of building
-the answer as a sign plus a letter rather than a grid of twelve. The reveal plays
-the altered pitch, not the written one.
-
-Stave positions stay diatonic while a signature is showing, so inline accidentals
-are not fighting the signature. Signs cancelling the signature are a further tier
-and can wait for their own pass.
-
-The clef pill's sub-label shows which key you are reading in, and the signature
-glyph count was checked against every key in every clef: 52 cases, all correct.
-Stave geometry re-verified with signatures on, since they widen the head of the
-stave: still one viewBox and one stave-line y.
-
-## v0.106.8 — RESET appeared to do nothing
-
-It sat directly beneath Accuracy by Note and cleared neither. v0.106.4 made the
-per-note breakdown lifetime, correctly, and then left reset touching only the
-sitting's score, so tapping it closed the sheet, zeroed a counter you were not
-looking at, and left the thing you were looking at untouched.
-
-It clears the breakdown now, along with the exercise's lifetime correct and
-total. XP already earned is not clawed back, since you cannot un-learn a note.
-
-Being destructive, it arms first: one tap turns it into the warning, a second
-confirms, and it disarms itself after three seconds or when the sheet closes.
-That is the same pattern as RESET ALL PROGRESS and as deleting a saved
-progression, rather than a third way of asking the same question.
-
-Verified: history accumulates, the first tap arms without wiping, the second
-clears the notes and the totals, the empty-state line comes back, XP is
-unchanged, and the cleared state reaches localStorage.
-
-## v0.106.7 — alto and tenor clefs, and NEXT stops appearing out of nowhere
-
-**FOUR CLEFS, AND THE FILE ALREADY HAD EVERYTHING.** pitchedStaffSvg was hard
-wired to treble and bass with a pair of ternaries, but RR_CCLEF has been sitting
-in the file all along, and CHD_CLEFS already carried the numbers: topStep 38, 26,
-32 and 30, which is exactly the diatonic index of each clef's top line, plus the
-line each glyph's origin sits on. The renderer reads a table now instead of
-asking whether the clef is bass, so a clef added in one place is not a clef
-missing in the other. Alto and tenor are one C clef glyph placed on a different
-line, which is what they are on paper too.
-
-Pools to match: alto F3 to G4 with middle C on the middle line, tenor D3 to E4.
-Both verified by spelling every pool note out and checking where middle C lands.
-
-This is the part of the module nothing else on mobile does. musictheory.net has
-four clefs on the desktop web; the app store does not, and a violist or a
-trombonist currently has nowhere to drill the clef they actually read.
-
-BOTH deliberately stays treble and bass. It is the pairing a pianist reads, and
-shuffling four clefs together is a different exercise rather than a harder one.
-Alto and tenor are practised on purpose.
-
-The clef row also wraps now, since five chips do not fit one line at 393px.
-
-**NEXT NO LONGER POPS INTO EXISTENCE.** It was toggled with visibility, which
-reserved its space but still made a button materialise on every single answer.
-It is always drawn, dimmed and disabled until the card resolves, then it takes
-the accent colour over a 0.18s fade. Verified visible before and after, same
-width throughout, disabled then enabled.
-
-Box geometry re-checked with five clef options in play rather than three: one
-viewBox, one stave-line y, one card height per range.
-
-## v0.106.6 — third attempt at the stave not moving, and this time the pill was the tell
-
-Daniele sent screenshots of TREBLE, BASS and BOTH side by side, and each card was
-a different height. Two previous passes at this were both half right, which is
-worth writing down because the pattern is instructive.
-
-v0.106.3 measured the box from each note's own excursion, so the card grew and
-shrank card to card. v0.106.5 measured it per clef, which fixed BOTH mode and
-missed the obvious: selecting TREBLE computes a treble box, selecting BASS a bass
-box, so cycling the pill resized the card. The headless test passed because it
-only ever exercised BOTH.
-
-The allowance now ignores the clef selection completely. It takes the largest
-excursion in either direction across both clefs' pools and applies it
-symmetrically, which also puts the five stave lines dead centre in the box
-whatever is chosen. Range still changes the box: reading a wider span is a
-deliberate choice and the extra room is the point of making it.
-
-Measured across all four range and accidental combinations, cycling all three
-clef options: one viewBox, one stave-line y, one card height in every case.
-
-**THE ACCIDENTAL SIGN WAS FLUSH AGAINST THE NOTEHEAD.** 6px, which put the flat
-touching the note it belonged to. pitchedStaffSvg takes an accGap now, 12 for this
-drill, defaulting to the old value so nothing else moves.
-
-**THE MODIFIER ROW LOOKED LIKE THREE MORE ANSWERS.** Full width, three equal
-columns, same height as the letters. It is 46px wide, centred, shorter, and
-unfilled now, set apart from the grid so the letters still read as the thing you
-are choosing from.
-
-**AND THE GRID SAYS WHAT IT WILL ANSWER.** Arm a sharp and the buttons read C
-sharp through B sharp; arm a flat and they read C flat through B flat. The armed
-sign stops being something you have to hold in your head. Grid columns are
-fractional so the relabelling cannot change the button sizes, which was the
-condition attached to the request and is now verified rather than assumed.
-
-## v0.106.5 — the stave stops moving when the clef changes, and accidentals arrive
-
-**THE STAVE WAS STILL HOPPING IN BOTH MODE.** v0.106.3 fixed the card growing and
-shrinking per note, but metrics were still measured per clef, and treble needs
-more room above while bass needs more below. So the five stave lines landed at a
-different height in each, and with BOTH selected the stave itself moved every
-time the clef swapped. The stave is the fixed thing you read against and it
-should never move. Metrics now take the worst case above and below across every
-clef that can appear and give them all the same box.
-
-Measured across all four setting combinations, both clefs, every note: the top
-stave line sits at one y value, the viewBox is one string, and the answer keys
-have one top edge. Four values, four sets of size one.
-
-**ACCIDENTALS, AND NOT AS A TWELVE-BUTTON GRID.** musictheory.net puts all twelve
-names in a grid, which collapses two separate readings into one lookup. On a
-stave the sign tells you the accidental and the position tells you the letter, so
-the input is built the same way: a row of flat, natural and sharp that arms a
-modifier, then the seven letters. Naming the right letter without the sign is
-wrong, which is the point.
-
-Black keys are written both ways, chosen per card, so F sharp and G flat both
-come up and you have to read the sign rather than memorise a position. That
-needed one optional argument on pitchedStaffSvg, spell, since midi alone cannot
-say which spelling a black key is meant to have. Absent, it behaves exactly as
-before.
-
-Accidentals are their own on/off setting rather than a difficulty tier, so they
-combine with clef and range instead of replacing them. Eight combinations now.
-
-**AUTO ADVANCE**, on by default, at 1.4s — long enough to see where the note was
-and hear it, short enough not to feel like waiting. NEXT cancels the pending
-timer so tapping through never double-advances.
-
-Verified: both spellings occur across 80 draws, the correct accidental scores,
-the right letter with no sign counts as a miss, the accidental row hides when the
-setting is off, and auto advance fires.
-
-## v0.106.4 — Staff Notes counts for something now
-
-It looked finished and read as second-class: no XP, no level, no history, and a
-breakdown that evaporated when you left the screen. Everything else in Train
-feeds the streak, and an exercise that does not is an exercise people stop
-opening.
-
-**IT FEEDS PROGRESS.** A stats slot in PROG_DEFAULTS and in progMigrate's ladder,
-so both fresh profiles and existing saves have somewhere to put it. Every card
-commits through progUpdate, which also means the perfect-session achievement
-works on it for free. One XP per clean read and two when ledger lines are in
-play, matching the order of the other per-answer awards rather than inventing an
-economy. A card you needed two tries for still counts as attempted and awards
-nothing, which is the same rule the on-screen score already used.
-
-**THE BREAKDOWN IS LIFETIME NOW.** It was per-session, which made it useless:
-you would read twelve notes, see a breakdown, and lose it on the way out. It
-lives in progState.stats.staffread.notes, so it accumulates. RESET clears the
-sitting's score and deliberately leaves your history alone, which is what every
-other breakdown in the app does.
-
-Being inside progState, all of it rides along in a backup with no extra work,
-and the backup audit still passes at 47 keys and 37 fields.
-
-**AND THE TWO ICONS ARE NOT THE SAME ICON.** The folder and the exercise both
-carried three lines and a dot, which said "list" rather than "music" and gave a
-category and its only child an identical silhouette. The folder is an open score
-now, two leaves with staff lines. The exercise is a full stave with a stemmed,
-flagged note actually sitting on a line, which is literally what the card shows
-you.
-
-Verified: a clean read awards 1 XP and a ledger read 2, a missed read awards
-nothing but still counts toward the total, the numbers survive into
-localStorage, reset clears the sitting and keeps the history, and the two icons
-differ.
-
-## v0.106.3 — nothing moves any more, and the wrong answer teaches something
-
-**THE STAVE WAS RESIZING ON EVERY CARD.** v0.106.1 worked out topY and height
-from each note's own distance outside the staff, which fixed clipping and
-introduced something worse: a high card produced a taller SVG than a low one, so
-the stave grew and shrank and everything under it walked up and down the screen
-as you played. Metrics are now measured once from the pool's own extremes and
-cached until the clef or range changes, so every card in a pool renders at
-identical dimensions. Height still differs between ranges, 333px in-staff versus
-360px with ledger lines, but that only changes when you deliberately change the
-setting rather than card to card.
-
-Two smaller shifts went with it. Feedback swaps between one and two lines of text
-and had only a 16px floor, so the answer keys jumped on most cards; it reserves
-30px now. And the score had no fixed width, so the cog slid left as the numbers
-grew; tabular figures and a reserved 52px hold it still.
-
-Proved by measurement, not by looking: every note in all four pools rendered in
-each of its three states — fresh, one wrong guess showing, resolved — and both
-the card height and the answer keys' top edge collected into a set. One value per
-pool, in every case. 144 renders, no movement.
-
-**THE GEAR IS THE APP'S GEAR NOW.** It was a hand-rolled eight-spoke thing that
-read as clutter at 18px. Replaced with the same path Interval Training uses, so
-it matches everything else with a cog in it.
-
-**AND THE IDENTITY PIECE: A GHOST NOTE.** Name a note wrongly and a second
-column appears showing where the letter you actually chose sits, labelled with
-what you said. Naming a wrong note is almost always a position error, and being
-shown the position you pointed at teaches the mapping in a way that marking you
-incorrect never does. Nothing on musictheory.net, tonedear, teoria or the Chordle
-sites does this. A second column rather than a stacked notehead, because a guess
-a step away would collide with the answer.
-
-Around it: the notehead tints on reveal, cyan for a clean read and amber for one
-that took more than a try, so the answer lands on the stave rather than only in
-the text underneath. The stave sits on a faint surface of its own instead of
-floating in the card, since it is the subject of the exercise. Tapping it replays
-the note once resolved, because one reveal is easy to miss. And the seven answer
-keys are one row across rather than a four-column grid, which reads as a scale
-and drops the empty eighth cell.
-
-pitchedStaffSvg gained one optional argument, noteColors, to tint individual
-noteheads. Absent, it behaves exactly as before, so the cadence and voice-leading
-diagrams that share it are untouched.
-
-## v0.106.2 — Staff Notes was turning into a wall of controls
-
-Two builds in and the card already carried a score bar, two labelled selector
-rows, the stave, feedback, seven answer keys, a next button and a second card of
-statistics underneath. Daniele called it a brick wall, which it was, and asked
-which existing module to model it on instead.
-
-**INTERVAL TRAINING, and it was not close.** It carries more settings than this
-does — direction, difficulty, a custom interval pool, auto-advance, sing mode —
-and its play card shows almost none of them. One iv-card-tools row holds a
-difficulty pill that cycles on tap and a cog that opens a settings modal, and the
-statistics live in a modal of their own rather than on screen. The stave has to
-be the thing you look at, and it cannot be if it is the fourth item down.
-
-Rebuilt on that shape. The play card is five rows now: tools, stave, feedback,
-keys, next. The clef pill cycles treble to bass to both and carries the current
-range as its sub-label, so the primary setting is one tap and still readable at a
-glance. Range, the accuracy breakdown and reset moved behind the cog. Both
-selectors are rebuilt from the live variable each time the modal opens, so the
-active state cannot drift out of step with the pool that is actually in use.
-
-Reused the existing iv-card-tools, iv-diff-pill, iv-cog-btn and ce-stats-modal
-classes rather than writing parallel ones, so it inherits the look and there is
-no second set of styles to keep in sync. Three of the module's own CSS rules were
-deleted in the process.
-
-Verified: the card is one card of five rows at 398px, the pill cycles through all
-three states and back, the modal holds both selectors and the breakdown, closes
-cleanly, and the drill still scores. No page errors.
-
-## v0.106.1 — bass clef, ledger lines, and the claim that tiers are data
-
-The first slice asserted that every tier after it would be a change to the pitch
-pool rather than new code. This is that claim being tested, and it mostly held.
-
-**CLEF: TREBLE, BASS or BOTH.** BOTH draws the clef per card, so you cannot
-settle into one set of positions, which is the only reason to practise two clefs
-together. **RANGE: IN STAFF or LEDGER LINES.** In-staff keeps every note between
-the outer lines; ledger opens it to two octaves so notes run above and below and
-the renderer's automatic ledger lines start doing work. Four combinations, 48
-distinct cards, from four arrays.
-
-Both settings persist through prefGet and prefSet like every other exercise
-setting, which also means they ride along in a backup for nothing: the pref_
-family was already classified as travelling.
-
-**THE ONE THING THAT WAS NOT FREE.** A high or low card needs vertical room for
-its ledger lines, and the first slice passed a fixed topY of 30 and height of
-108, which clipped anything far outside the staff. topY is now worked out from
-the note's own diatonic distance above the top line, with the same allowance
-below, so the box grows to fit the card instead of the card being cropped to fit
-the box.
-
-Verified by measuring rather than eyeballing: every one of the 48 pool notes was
-rendered in turn and its glyph bounding box compared against the SVG viewBox.
-Zero clipped, in either clef, at either range. Also confirmed BOTH actually mixes
-across 40 draws, the clef survives into localStorage, and no page errors.
-
-Accidentals are still out. They need a second answer control — letter plus
-sharp, flat or natural — rather than a wider pool, so they are a UI pass rather
-than a data one and get their own build.
-
-## v0.106.0 — Staff Notes, and a READING folder to grow into
-
-The one whole column of musictheory.net with no counterpart in the app: reading
-pitch off a stave. Rhythm reading existed; pitch reading did not.
-
-**A NEW TRAIN FOLDER, READING.** Chosen over adding a fifth card to Ear Training
-because reading will hold note naming, symbols, key signatures and both of the
-Coming Soon cards before long, and folders of three to five items is the band the
-rest of the hub sits in. Tools is already foldered the same way, so this is the
-existing pattern rather than a new one.
-
-**STAFF NOTES, first slice, deliberately narrow.** Treble clef, one natural note
-at a time, inside the stave so no ledger lines are needed: E4 up to F5, which
-reaches all seven letters. Tap the name, three tries, and the note sounds when
-the card resolves so the shape and the pitch arrive together. Only a first-try
-answer scores, because a note you got on the third go is a note you could not
-read. Accuracy breaks down per note name, the same shape Interval Training uses.
-
-The point of choosing notes over a symbol deck: notes GENERATE. Rhythm Cards is
-151 hand-written cards with EN/IT twins; a symbol deck would be the same job
-again. This needs no authored content at all, and every tier after it — bass,
-ledger lines, accidentals, alto and tenor, key signatures — is a change to the
-pitch pool or the clef rather than new code.
-
-Nothing new was needed to draw it. pitchedStaffSvg, ledgerLines, rrMidiToStaff
-and Bravura were all already in the file, which is worth recording because this
-module was twice described in planning as blocked on a renderer that does not
-exist. It does exist, four times over.
-
-Session stats only for now. Persisting them means a new progState.stats key and
-a pass through progMigrate and the backup classification, which is worth doing
-once the feel is settled rather than in the same build as new UI.
-
-Verified in headless Chromium: the stave draws with five lines and a clef, seven
-answer keys appear in the user's naming convention, a wrong guess counts a try
-without resolving the card, a right answer after a miss resolves and scores
-zero, a first-try answer scores, the breakdown renders, and no page errors. Also
-confirmed all sixteen new i18n keys resolve in both languages.
-
-One bug caught in passing: the solfege branch referenced IT_SOLFEGE, a global
-that exists nowhere in the file. It is SOLFEGE_MAP. Guarded by a typeof check,
-so it would have failed silently and simply never shown Do-Re-Mi.
-
-## v0.105.12 — the Games folder had five games and said four
-
-Found while auditing content coverage rather than by anyone noticing, which is
-how counts written by hand usually go wrong.
-
-The Games folder contains Chordle, Diadle, Tonale, Road Trip and Music Quiz.
-The badge read "4 games" and the summary line under it read "Chordle · Diadle ·
-Tonale · Music Quiz". Road Trip was in the folder and absent from both, in both
-languages. The badge key was literally named folder_badge_games4, so the number
-was baked into the identifier as well as the value; it is folder_badge_games5
-now rather than a games4 key holding a five, because a key that lies about its
-own contents is worse than a wrong number.
-
-Also removed wip_chordprog_title and wip_chordprog_sub. That card was pulled
-from the Practice Lab at some point and only its strings stayed behind, in both
-language tables, referenced by nothing.
-
-Checked rather than assumed this time: all 723 data-i18n keys used in markup
-resolve in both languages, and every folder badge now agrees with the number of
-cards actually inside it. Ear 3 and 3, Rhythm 4 and 4, Games 5 and 5.
-
-Worth noting what is NOT changed. GAMES_EXERCISES lists chordle, diadle, tonale
-and roadtrip without Music Quiz, which looks like the same bug and is not: that
-list routes enterExercise() back-navigation, and Music Quiz opens through
-mqOpen() on its own path, so it was correct to leave alone.
-
-## v0.105.11 — the blank hold before the launcher was waiting on an impossible condition
-
-The empty themed screen on a skipped splash has been on the open list since
-v0.104.3 as the weakest moment left. It is not dead time; it is a reflow guard.
-Capacitor resolves safe-area insets over the first frames and the launcher grid
-is max-height:60vh, so a card measured too early is a card that visibly jumps,
-and a held blank frame reads as loading where a visible reflow reads as broken.
-That trade is right. How long it held was not.
-
-**IT WAS TESTING FOR EXACT FLOAT EQUALITY.** _intonareWhenViewportStable waits
-for visualViewport.height to hold for three consecutive frames, comparing with
-===. That height is a double, and on Android it is routinely fractional and
-micro-oscillating: 850.66 one frame, 850.67 the next, indefinitely. Sub-pixel
-noise reset the counter every time, three matching frames never arrived, and the
-promise resolved off its 500ms hard cap on every launch. The cap was written as
-a safety net for a device that never settles; it had quietly become the normal
-path.
-
-Compared against four viewport traces. A clean settle is unchanged at 84ms. Slow
-inset resolution improves slightly, 150ms to 117ms. Sub-pixel jitter, which is
-the case that was silently hitting the cap, goes from 500ms to 84ms.
-
-The comparison is now a half-pixel tolerance. That is far below anything capable
-of moving a card, and an inset genuinely resolving moves the height by tens of
-pixels, so it still resets the count and the guard still guards.
-
-## v0.105.10 — the app scrolled behind the Settings sheet
-
-Every other modal in the file locks the body while it is open. Settings never
-did, so the page underneath dragged around behind it.
-
-overflow:hidden on its own is necessary but not enough, for the reason the
-splash code already documents: on Android WebView it does not stop touchmove,
-and the gesture still reaches the page beneath. So the lock is three parts. The
-body gets overflow:hidden off the settings-open class it was already setting for
-an unrelated reason. The sheet gets overscroll-behavior:contain so a scroll that
-reaches its end does not chain out. And a touchmove handler on the backdrop
-swallows anything that is not inside the scrollable sheet, which is the same
-trick the splash uses, inverted: it has to let the sheet's own touches through
-or Settings would stop scrolling, which is the bug next door in reverse.
-
-Verified headless: body scrollable before, hidden while open, released on close,
-with the class added and removed correctly either side.
-
-## v0.105.9 — the dormant piano data was not dormant, and deleting it naively would have been 2.6x louder
-
-200KB out of seven songs, and a good reminder that "nothing reads this" is a
-claim to check rather than assume.
-
-**IT WAS FEEDING THE LIMITER.** The plan was simply to delete ctls, rh and lh
-from the seven converted songs, since playback takes the perf branch wholesale
-and never looks at them. Playback does not. _riffDuckFactor does. It sweeps the
-two-track arrays to estimate real peak polyphony under the sustain pedal, and
-uses that to set output gain, precisely so dense pedal writing does not pump the
-limiter. Delete the arrays and the branch stops firing; the fallback reads
-riff.notes, a key performance songs do not have, so maxV stays 1 and the factor
-jumps to 1.00. Clair de Lune and Liebestraum would have gone out 2.6x louder,
-straight into the clipping the comment above that function was written to
-prevent.
-
-rtTuner's meterOf reads rh too, deriving three-time from four. Without it every
-one of these reads as 4/4 and the Leg Tuner draws the wrong bar lines, on the
-exact songs about to be tuned.
-
-**SO THE ARRAYS WERE REPLACED BY WHAT THEY WERE FOR.** Both figures were computed
-from the real data and baked in as two numbers per song: duckV, the peak
-polyphony the sweep found, and meter, 3 or 4. Both readers prefer the baked
-value and fall back to the old sweep for anything still carrying arrays. Seven
-songs, fourteen numbers, replacing 200KB.
-
-Verified by parsing the object before and after: perf.notes and perf.ped
-byte-identical for all seven, ctls, rh and lh gone, labels and tempi kept, all
-34 untouched songs identical, and the resulting duck factor the same number to
-two decimals for every song. 0.38, 0.38, 0.40, 0.44, 0.38, 0.38, 0.47.
-
-One process note. The first attempt cut the arrays out by bracket-matching in
-the text, which ate a closing brace and broke the file; the second serialised
-the songs through JSON, whose quoted keys added more bytes to a 6538-note piece
-than the arrays being removed. Third attempt emits a JS object literal with
-unquoted keys and replaces whole song blocks rather than cutting inside them.
-Both bad attempts were caught by node --check before going anywhere.
-
-## v0.105.8 — all three pedals now work during a performance, and two of them are yours
-
-The piano had a three-pedal model that playback ignored. Soft and sostenuto
-were implemented and worked under your own fingers, but _riffPianoNoteOn routed
-straight to refMasterGain and read neither, so a playing performance was deaf
-to both. Only the damper did anything, and only because the song drove it.
-
-**SOFT REACHES PLAYBACK** through _pianoVoiceRoute, the same route the live keys
-already use, so your playing and a performance now sound alike under una corda.
-Worth being honest about what that route is: a lowpass at 1500Hz and half gain.
-A real soft pedal shifts the action so hammers strike two strings instead of
-three, which changes tone colour, not just level. Single-layer samples cannot
-do that. Veiled and quieter is the closest honest approximation available until
-there are velocity layers to shift between.
-
-**SOSTENUTO REACHES PLAYBACK** too, and needed two halves. _riffPianoNoteOff now
-lets a note ring past its written end if sostenuto caught it, the same way it
-already did for the damper. And setPianoSost was only ever capturing from
-refOscs, which is where live key presses live; a performance sounds through
-_riffVoices, so pressing the pedal mid-song used to catch nothing at all. It
-captures both now, and releases riff voices with the same pitch-dependent damper
-curve a pedal lift uses.
-
-**WHICH MAKES THEM AN INSTRUMENT RATHER THAN A SETTING.** The captures carry
-damper data only, so soft and sostenuto are never automated and never fight the
-performance for control. Press sostenuto during Liebestraum and whatever is
-sounding at that instant is held while everything after it damps normally,
-which is the actual musical use of the pedal and not something you can do on a
-recording. Damper still belongs to the performer.
-
-Ring logic verified across the three-pedal truth table: no pedal damps on
-finger-lift, sostenuto holds only what it captured, uncaptured notes still damp
-underneath it, and the damper overrides everything.
-
-## v0.105.7 — Back Up said it worked and produced nothing
-
-**THE WORST KIND OF FAILURE.** On device the export fell through to the browser
-download tier, and clicking an <a download> is a silent no-op in an Android
-WebView: it produces no file and throws no error. So the code sailed past it,
-toasted "Backup saved" and returned, never reaching the share fallback below.
-It reported success and did nothing. Same family as prompt() and confirm(),
-and I should have expected it after those two.
-
-The tiers are reordered and gated on isNativePlatform() rather than on whether
-something threw. Native goes to the share sheet directly; the browser download
-only runs in an actual browser. Tier one, a real file through
-@capacitor/filesystem, is still dormant: install it and export starts producing
-a proper .json instead of JSON through the share sheet.
-
-**THE TWO BUTTONS ARE SIDE BY SIDE** and now read Back Up and Restore rather
-than eating two full rows.
-
-**AND BACK UP ASKS FIRST.** Restore already showed what it was about to do;
-export just fired. It now lists what is going in the file, streak, XP,
-achievements, days practised, saved progressions, drum patterns, metronome
-presets and how many settings, plus a line saying Pro and tap calibration are
-not included and Pro returns through Restore Purchase. Neither direction should
-be a leap of faith.
-
-**PEDAL LIFTS ARE NOT A SWITCH ANY MORE.** Daniele reported that after the decay
-fix Liebestraum sounded much better but some chords still ended abruptly when
-the damper came up, and asked whether it wanted a ramp. It did. Every voice was
-being stopped with the same fixed 40ms taper regardless of pitch or reason. A
-real damper is a felt pad landing on a string that is still moving, and a heavy
-bass string takes far longer to go quiet than the top octave. Stopping an entire
-pedalled texture with one uniform 40ms switch reads as an edit rather than a
-release.
-
-stop() now takes an optional release time, defaulting to the old 0.04 so every
-other caller is unchanged, and pedal-lift passes a pitch-dependent value: about
-70ms of time constant at the top of the keyboard widening to 190ms at the
-bottom, so roughly 210ms to silence up top and 570ms in the bass. Notes still
-held by a finger are untouched, as before.
-
-Wants ears. If pedal changes now smear instead of ending, the constant is too
-long; if they still click, too short.
-
-## v0.105.6 — piano notes in riff playback never decayed, they looped
-
-Daniele reported hard stops in the performance captures, worst in Liebestraum,
-some in Moonlight 3, and Fur Elise sounding choppy. He guessed the pedal was
-not working or the cutoffs were too harsh. Neither.
-
-The pedal data is intact: 220 events in Liebestraum, 721 in Moonlight 3, clean
-binary values, and the damper model reads them correctly. The stop is not harsh
-either; it already tapers over 40ms rather than chopping.
-
-**THE NOTES WERE LOOPING.** _riffPianoNoteOn passed null as the duration to
-SampleEngine.play, which takes the drone branch: src.loop = true, looping
-between 15% and 95% of the buffer. So a piano note held at full sustain level
-forever instead of dying away like a string. Nothing sounds wrong while a note
-rings, which is why this survived. It shows up at the other end: every damp
-became a full-volume note being switched off, and 40ms of taper from full
-volume is audible. On a real piano the string has already decayed to almost
-nothing by the time the damper lands, so damping is silent.
-
-That is exactly why it tracked the note lengths. Median note duration and the
-share of notes under 200ms line up with the report: Liebestraum 204ms and 44%,
-Moonlight 3 97ms and 88%, Fur Elise 217ms and 29%, and Moonlight 440ms with
-zero, which is the one he did not flag. More note-offs, more full-volume cuts.
-
-Fixed by passing a finite 8 second ceiling, which is what the synth fallback
-eleven lines below has always done, with a comment explaining this exact trap.
-The sample path never got the same treatment. With a duration set, the buffer
-plays once and carries its own recorded decay; 8s is a ceiling rather than a
-hold, and a Salamander piano sample runs out well before it. The damper model is
-untouched and still stops notes early on finger-lift and pedal-lift.
-
-Only one caller in the file passed null, so the blast radius is contained, but
-it is wider than the 21 performance songs: _riffPianoNoteOn serves the whole
-damper model, so two-track rh/lh grid piano songs get the same change.
-
-**NEEDS EARS, NOT REASONING.** One thing to listen for specifically: a note can
-no longer ring longer than its sample, roughly four seconds. That is correct
-behaviour for a piano, but any passage that was leaning on the accidental
-infinite sustain will sound thinner than it did.
-
-## v0.105.5 — the Apply button was off the side of the screen
-
-The ENTER CODE row put a text field and an Apply button in a flex row, gave the
-field flex:1, and let the button fall off the right edge. Flex:1 says the field
-may shrink, but an <input> in a flex container defaults to min-width:auto, which
-resolves to its intrinsic width of roughly twenty characters. So it never
-shrank: measured at a fixed 253px at every screen size, pushing Apply 17px past
-the edge on a normal phone and 61px past it on a narrow one.
-
-One declaration, min-width:0, plus flex:0 0 auto and nowrap on the button so it
-can never be squeezed or wrapped instead. Measured at 320, 360, 393 and 412
-across headless Chromium: the field now flexes from 171px to 215px and the
-button sits 21px inside the padding at every width.
-
-Swept the rest of the file for the same shape. Two other text fields in flex
-rows had it, the setlist name field and the tuner reference pitch field, and
-both are fixed the same way; neither was visibly broken at common widths but
-both would go the same way on a narrow screen. Five range sliders share the
-pattern, left alone for now: a slider's intrinsic width is far smaller so the
-overflow does not bite, and changing them risks feel for no visible gain.
-
-Also confirmed alert() works fine in the WebView, unlike prompt() and confirm().
-The seven purchase and restore dialogs stay as they are; a blocking dialog is
-the right call for a failed payment, since a toast can be missed.
-
-## v0.105.4 — SAVE did nothing, because prompt() does nothing here
-
-Shipped a window.prompt() into a Capacitor WebView. It returns null without ever
-drawing a dialog, so the save read that as a cancel and quietly did nothing.
-
-The file already had the answer in it. window.prompt appeared exactly once in
-ten megabytes: the line added yesterday. The drum kit names its saved patterns
-with an inline input and two chips, and that is not a stylistic choice, it is
-the workaround. Naming a progression now uses the same shape: SAVE swaps itself
-for a text field with a tick and a cross, Enter saves, Escape cancels, and an
-empty field falls back to numbering.
-
-window.confirm was the same story and the same count of one, on the delete
-cross. It is now arm-then-confirm, the pattern RESET ALL PROGRESS already uses:
-first tap turns the cross into a red tick, second tap deletes, and it disarms
-itself after three seconds. Better than a dialog here regardless, since the
-thing sits inside an open modal.
-
-Lesson worth writing down: before using a browser primitive in this app, grep
-for it. If the count is zero across ten megabytes, that is an answer.
-
-## v0.105.3 — the progression tool had nowhere to put your own work
-
-Build a progression, close the app, gone. progBars was a plain array at line
-51765 and nothing ever wrote it anywhere; the only thing that survived the tool
-was the instrument sound. The preset modal was load-only.
-
-It reads like it grew rather than was designed that way. Sixty-odd built-in
-presets came first, with a genre-grouped table and a modal of their own, and bar
-editing, add and remove bar, transpose and octave shift were layered on top of a
-preset player afterwards. Nobody went back and asked where the user's own work
-was supposed to go.
-
-**SAVE, next to CLR.** It writes to progState.savedProgressions in the same
-shape as a built-in preset, which is why restoring one needed no new code path:
-progLoadPreset already accepted exactly that object. Saves appear under YOURS,
-pinned above the genre groups, because scrolling past sixty presets to reach
-your own work would be a strange way to sort a list. Each carries a × to delete,
-behind a confirm.
-
-**IT SAVES THE WHOLE THING.** Chords with their voicing, time signature, tempo,
-groove, drum preset and instrument. The same changes at 70bpm over a bossa are
-not the same idea as at 140 dry. Voicing needed one change to the loader: it was
-rebuilding bars as progBlock('chord', r, q, dur) and dropping oct, inv and
-manual on the floor. Built-in presets leave those undefined so they default
-exactly as before, but without manual surviving, auto voice leading would
-quietly undo whatever voicing you had set before saving.
-
-Being inside progState, saved progressions ride along in backups with no extra
-work, and a reset clears them along with the rest of a clean profile.
-
-Verified in isolation across 22 assertions: capture of every field, voicing
-preserved, groove correctly null when disabled, lookup finding both built-ins
-and saves, blank names falling back to numbering, delete releasing the title,
-and an empty grid refusing to save rather than storing four empty bars.
+## v0.115.3 — the targeting computer
+
+Better than mine, and it is the closer mapping. Luke switches off the instrument
+and hits the shot on feel alone, which is precisely what the climb asks: no
+reference tone, no lifelines, twenty-four notes named on nothing but what you
+carry in your head. Mallory was about doing a hard thing for its own sake; this
+is about doing it without help, which is the actual condition.
+
+The Force Is With You, described by the line that names the feat rather than the
+one everyone quotes: "You switched off your targeting computer." Italian: "Hai
+spento il computer di mira." The name is longer than most, and short of the
+longest already in the set, so nothing about it is unusual for the card.
+
+One thing to weigh rather than a problem: that makes three Star Wars references
+across thirty-six achievements, alongside I Have You Now and Maestro. Still a
+minority, and the other thirty-three range across Tolkien, Rowling, the Princess
+Bride, Gladiator and Back to the Future — but it is now the most-quoted single
+source, which is worth knowing before a fourth.
+
+---
+
+## v0.115.2 — Free Solo
+
+The clean-summit achievement was written in the wrong shape. Looking at the
+other thirty-five, the pattern is consistent: the NAME is plain and short, and
+the DESCRIPTION is a quotation. Impressive. Most impressive. Inconceivable! A
+day may come when your strength would fail, but it is not this day. It's
+leviOsa, not levioSA. Mine had a plain name and prose where the quote goes,
+which is why it read as written rather than found.
+
+It is Free Solo now, and the description is Mallory on Everest: "Because it's
+there." A real line, the most famous thing anyone has said about climbing
+something for no reason other than that it can be done, and the right register
+for an ascent made without touching a single lifeline. Italian: "Perché è lì."
+
+Worth noting the neighbours, since the module borrowed their vocabulary: The
+Climb and The Summit already exist as achievements. No collision — all
+thirty-six names are still unique — but the words are spoken for.
+
+---
+
+## v0.115.1 — release check, and a backup that was a live view
+
+Full pass over everything since 0.108.29 before this goes out: forty-seven
+releases, the Relative Pitch module start to finish, the light-mode rebuild, the
+tour work and the leg tuner. Every screen and every exercise opened in both
+themes with no overflow and no console errors, the whole climb played end to end
+to a clean 200,000 summit, and every gate green.
+
+One real thing turned up, in the backup. backupBuild copied progState shallowly,
+so the object it handed back shared every nested value with the live state — the
+"backup" was a window onto the present, not a snapshot of the moment. In the
+export path it never mattered, because the object is serialised to JSON on the
+next line and the file is a true copy. Anywhere else it would matter a lot: hold
+a payload, change something, apply it, and you restore what you have now rather
+than what you had then. The tell was a round-trip test restoring zeros.
+
+One JSON round trip at build time cuts it loose, and the round trip now behaves:
+build with a score, wipe it, apply, and the score comes back in memory and on
+disk. Pro entitlement still excluded, leg tuner state still excluded.
+
+Also worth recording from the same pass: the ink audit sits at 41 and the
+project light audit at 29, both steady and mostly sub-12px type where heavy ink
+is correct. Neither is a gate.
+
+---
+
+## v0.115.0 — your tuning is in, and five songs are signed off
+
+Sixty-six hand-tuned leg values across five songs, written in from the export:
+clair_de_lune, prelude_em, moonlight, liebestraum and fuer_elise, all five legs
+on each. Every one of those ids is now in RT_TUNED, so the tuner stops badging
+them and the list is the record — the panel's own "changed" highlight only
+remembers as far back as the last time it opened, which is what RT_TUNED exists
+to fix. Sixteen perf songs still untuned.
+
+**And fourteen stale bpm values, which were nothing to do with the tuning.**
+Every song's tempo lives in two places: with the song, and again in RT_JOURNEY.
+Fourteen of the newer entries had a placeholder 100 sitting in the second copy —
+alla_turca reading 100 against a real 120, troika 100 against 92, waldstein_1 100
+against 160. Harmless, because every reader prefers the song's own value and only
+falls back to this one, and invisible for exactly the same reason. They now
+agree. bella_ciao is genuinely 100 and was left alone.
+
+There is a note on the object saying to treat that field as a fallback for
+entries with no song data rather than as a second source of truth, since one
+number kept in two places is how it drifted for months without anyone noticing.
+
+Verified in the running app: the five report as tuned, their hooks match the
+export leg for leg, the bpm copies agree with the songs, and a trip still picks
+a song and builds.
+
+---
+
+## v0.114.9 — the rest of the holes in the leg tuner, found before you spend another hour
+
+You asked whether anything else was waiting to eat an evening. Three things were.
+
+**The save ran before the ms recompute.** Perf songs seek by absolute ms, and the
+nudge buttons update ms straight after b and s. I put the save between those two
+steps, so the stored snapshot had the new position and the old ms. It would have
+survived the reload perfectly and then played the wrong spot — visibly correct in
+the panel, audibly wrong on the road. Worse than losing the work, because you
+would have tuned against it. Save moved after the recompute and pinned there,
+with the reason written down.
+
+**The key was invisible to the backup audit.** It was passed as a const, and the
+audit finds keys by matching literals in setItem, so a newly persisted key went
+unnoticed by the one check whose job is noticing exactly that. Literal now, and
+the audit immediately flagged it as unclassified, which is the tool working.
+
+**And it needed classifying rather than just silencing.** It goes in
+BACKUP_KEYS_SKIP on purpose: the tuner is a scratchpad whose output belongs in
+the source, and carrying it in a backup would drop a half-finished session onto
+another device and silently override that device's hooks. Reasoning is in the
+file next to the entry. 48 keys classified now, up from 47.
+
+Verified end to end on the real button path rather than by calling the functions
+directly: nudge a perf leg, b and s and ms all change together, all three land in
+storage, all three come back after a full reload, backup skips the key, and
+FORGET removes it.
+
+---
+
+## v0.114.8 — the leg tuner never saved anything, and now it does
+
+Checking rather than guessing: the tuner edited RT_JOURNEY in memory and wrote
+nothing anywhere. No localStorage, no progState, no prompt on close. A reload, a
+crash, a fresh build — the whole session gone, silently. So yes, an evening of
+tuning is gone, and it was never anywhere to lose: it would have gone the same
+way on any reload, with or without a new build.
+
+Nothing I changed took it. The export fix touched only the copy path, and the
+hook values in the file are exactly what they were. But that is a small comfort
+against a tool that quietly discards work, so it does not do that any more.
+
+Every edit is written to localStorage as it is made. The saved set is applied
+back over RT_JOURNEY at module load rather than when the panel opens, which
+matters: it means a tuned leg actually PLAYS tuned instead of only reading tuned
+inside the tuner. Verified across a full page reload — edit a hook, reload,
+values still there and in effect.
+
+A FORGET SAVED TUNING button sits beside the others for when a session needs
+throwing away, behind a confirm, since it cannot be undone.
+
+The one thing worth saying plainly: this was the second silent-loss bug in the
+same panel in one day. The export looked like it worked and copied nothing; the
+editor looked like it worked and saved nothing. Both were quiet in exactly the
+same way, and both only surfaced because you asked a direct question about
+something that should not have needed asking.
+
+---
+
+## v0.114.7 — the leg tuner's EXPORT was copying nothing
+
+Three empty pastes in a row is not three accidents. The export ran
+document.execCommand('copy') inside a try/catch that swallowed the failure, on a
+textarea marked readonly — which the Android WebView will not select, so there
+was nothing on the clipboard to copy in the first place. Every part of that
+fails quietly: the button gave no feedback, the catch ate the error, and the
+textarea appeared with the right text in it, so from the outside it looked like
+it had worked. It had never worked on the device.
+
+navigator.clipboard.writeText now, with execCommand as a fallback that lifts the
+readonly attribute for exactly as long as it needs the selection and puts it
+straight back. The button reports which one happened — COPIED, or SELECT AND
+COPY BELOW — rather than assuming, and a line under it explains what to do if
+the WebView blocked the clipboard entirely. The textarea grew to 300px and has
+user-select forced on, so selecting it by hand is a real option rather than a
+theoretical one.
+
+Verified end to end with clipboard permissions granted: 5,451 characters, 39
+songs, and the clipboard contents match the textarea byte for byte.
+
+**Also struck from the open list: the dormant grid deletion.** It has been
+sitting there as a pending cleanup for the seven converted piano songs. Checking
+the actual entries, all seven carry only duckV, meter, label, tempo, bpm, perf
+and tempoMap — no grid arrays at all. The data went out with the perf conversion
+rather than needing a separate pass. Nothing to delete, and nothing about tuning
+those songs removes anything.
+
+---
+
+## v0.114.6 — one press was firing two gestures
+
+Both, yes. The leg tuner has been on a 600ms long-press of the ROADTRIP title
+since it was built, and yesterday I bound the tour replay to the same element at
+500ms. One press fired both: the tour opened at 500, the tuner opened on top of
+it at 600. Verified before the fix rather than reasoned about.
+
+Nothing in the code looks wrong. Two handlers on one element, each correct on
+its own, added eight months apart, and the only way to notice is to know the
+older gesture is there and try it.
+
+The tour keeps the title, because it is the user-facing feature and the title is
+where every other tour replays from. The tuner moves to the INTONARE brand pill
+at 900ms — 84 by 18, so it is reachable on a phone, and not a thing anyone
+presses on the way to something else. window.rtTuner() is unchanged. Verified:
+the title now opens only the tour, the pill only the tuner, and a short press on
+the pill opens neither.
+
+**The audit gained a collision check.** It cannot find every clash — nothing can
+enumerate listeners after the fact — but the leg tuner leaves a dataset marker
+behind, so it can at least say whether something else has claimed the element a
+tour hold is bound to. That is the one clash that exists today, and it is the
+shape of the next one.
+
+---
+
+## v0.114.5 — Road Trip's tour could fire once and never again
+
+Good question, and the answer was worse than it looked.
+
+Every tour in the app replays the same way: press and hold the title. The gesture
+is bound to #appLogo and #headerTagline so it works on whichever one is showing.
+Road Trip draws its own full-screen chrome over the header — and the trap is that
+the tagline is still in the DOM, still reports as visible, and still has pointer
+events enabled. Nothing about it looks broken from the code. It is simply
+covered: elementFromPoint at the middle of the tagline lands on a difficulty
+chip. So the Road Trip tour could auto-fire once, on first open, and then be
+unreachable forever.
+
+Music Quiz had exactly this problem and already had the fix, because it is a
+modal with no header at all and the failure was obvious there. Road Trip's
+failure was not obvious, because it has a header — just not one you can touch.
+Same fix, same shape: press-and-hold bound to the module's own ROADTRIP title,
+with the movement threshold the Android WebView needs so its constant pointermove
+jitter does not cancel every hold.
+
+**The audit now checks this,** which it could not before. Coverage and selectors
+were never going to catch it: the tour existed, every step resolved, and it
+worked perfectly the one time it ran. The new check asks whether the tour can be
+reached a second time, and it asks with elementFromPoint rather than by looking
+at visibility, because visibility was the thing that lied.
+
+Both full-screen modules now report bound and reachable.
+
+---
+
+## v0.114.4 — the switch went missing inside its own mode, and a tour audit
+
+**Moving the switch into the card head stranded people in the climb.** It
+landed on the practice card and on the climb's GAME card, and nowhere else —
+the intro and the result screen have no head, so once you were on either of them
+there was no way back to practice. That is worse than the row of slabs it
+replaced, and it is exactly the failure that only shows up when someone uses the
+thing rather than looks at it. Both screens carry it now, and it is pinned.
+
+**The rules went back behind their toggle.** Unfolded they are three paragraphs
+sitting between the record and the button, on a screen whose entire shape is
+built to end on START. Behind a link they cost one dim line and are one tap away
+for anyone who wants them, which was the right answer the first time.
+
+**And a tour audit, because tours rot silently.** Nothing breaks when a module
+ships without one, since the prompt simply never fires. Nothing breaks when a
+step points at an element that has been renamed, since the tour skips it. Both
+failures are invisible from inside the app, which is why they accumulate.
+
+intonare_tour_audit.py checks three things: coverage against the app's own
+module roster, every step opened against the live DOM, and a scan for the
+writing tells this project keeps having to strip.
+
+It found Road Trip with no tour — the last one — and it caught a broken selector
+in the Road Trip tour I had just written, within a minute of writing it: I had
+pointed at #rtDiffstrip and the element carries that as a class, not an id. That
+is the whole argument for the tool in one example.
+
+The tone scan flags thirteen. Two were the real thing and are rewritten: the
+overview's "TUNER tunes any instrument by mic. METRO is a full metronome." and
+the piano's "Fully multi-touch, so chords work. Glide across keys." Both are the
+stacked-declarative rhythm rather than anything wrong with the content. The
+other eleven are colons doing their proper job in front of a list, or a short
+sentence that earns its length; the scan cannot tell those apart and is not
+meant to. It says where to look.
+
+Coverage is complete for the first time: every exercise in the roster has a
+tour, and every step in all thirty-three resolves.
+
+---
+
+## v0.114.3 — the switch moves into the card, and the tour stops sounding like a tagline
+
+**The switch replaces the title it was duplicating.** It sat in a row of its own
+above the card, and the card's first line said PRACTICE — which the switch had
+just said, one row up. It lives in the head now, where the title was, with the
+settings line underneath it. The climb head does the same, folding the band name
+and its gap onto one line. The practice card drops from 519px to 488.
+
+**The rules come out from behind the toggle.** With the tour covering the module
+itself, what is left is the terms of the bet, and those have no element to point
+at until you are already climbing. Three lines, on the intro, where someone
+deciding whether to press START can read them without going looking. The
+one-wrong-ends-it rule went, because the intro line already says it and saying
+it twice on one screen is worse than not saying it at all. The toggle, its
+handler, its two labels and its link style are all gone rather than left
+dangling.
+
+**And the tour copy was written in the voice you keep catching.** A colon before
+a punchline, "not a skill, it is a crutch", short declaratives stacked three
+deep — a tour is somebody showing you round, and it should read like someone
+talking rather than like a tagline. All six steps rewritten in both languages,
+with the sentences let out to their natural length and the aphorisms taken out.
+The fork step now explains why it costs you instead of scoring a point off it.
+
+---
+
+## v0.114.2 — the tour gap, and a mode switch that stops shouting
+
+**No, tours have not been kept up, and asking found it.** Thirty tours exist.
+Five exercises have none: Road Trip, Pitch Match, Chord Ear, and both modules
+shipped this month, Staff Notes and Relative Pitch. The reason it stayed
+invisible is that maybeAutoTour keys off the TOURS object, so a module without
+an entry simply never prompts — nothing breaks, nothing warns, the module just
+quietly has no first-run explanation while every older one does.
+
+Relative Pitch gets four steps: the two modes, hearing a note with nothing to
+compare it to, the screen, and why the fork costs you a run. Staff Notes gets
+two. Both in English and Italian, both with every selector verified to resolve
+against the live DOM rather than assumed. Road Trip, Pitch Match and Chord Ear
+are still open and now written down rather than merely absent.
+
+**The mode switch was this module inventing a control the app already has.**
+Two full-width slabs, 358px across, the loudest thing on the screen — for a
+choice between two things. .app-seg is what everything else uses for a small
+either/or: an inline pill sized to its labels, sitting left. 181px now, and it
+reads as a switch rather than as navigation.
+
+Two things that fix took. The pill kept filling the row despite align-self,
+because the parent is a GRID and align-self is the wrong axis there —
+justify-self is what a grid item needs. And the state class changed from .on to
+.active, since the shared control has its own convention and the point of using
+it is to stop having two.
+
+**On whether the rules should just be the tour:** mostly yes, and they now
+overlap. But they are not the same job. A tour points at elements and runs once;
+the rules are the terms of a game with stakes, and a rung-eighteen decision is
+exactly when someone wants to re-read what a haven is worth. The tour explains
+the module, the rules link explains the bet. Worth revisiting once the tour has
+been on a device.
+
+---
+
+## v0.114.1 — you were right about the lifelines
+
+**They were refreshing at every band edge,** which meant twelve across a climb
+at 0.08 of the multiplier each. Spend every single one and you still settled at
+x1.04. That is not a cost, it is paperwork. And a resource that refills cannot
+be hoarded, so the one decision the multiplier was supposed to create — burn
+this now, or keep the number — never actually came up, because there was always
+another one along in six rungs.
+
+Three for the whole climb now, at a quarter of the multiplier each. Spend all
+three and you finish on x1.25 against x2.00 clean, so the full set is worth
+three quarters of your score. Only the replays refresh at a band edge, which is
+what your rewritten rule text already said before the code agreed with it.
+
+Verified: a lifeline spent in the first band is still spent in the second, a
+clean summit pays 200,000 and unlocks No Hands, and a summit with all three
+spent pays 125,000.
+
+**The eight rewritten strings are in, with Italian twins.** Two small
+corrections inside them. The havens sit at rungs 6, 12 and 18, so "every five
+steps" became "every sixth step" in both languages. And the lifeline rule still
+said twelve, which was true this morning and is not any more — it says three.
+
+The result captions are noticeably warmer than what they replaced, and losing
+now says so plainly rather than describing the mechanics of where you landed.
+
+---
+
+## v0.114.0 — No Hands, a lighter ladder, and an editor for the climb's copy
+
+**An achievement for the clean summit.** Twenty-four rungs with the wrong
+answers closing in the whole way, not one lifeline taken, so the multiplier is
+still on 2.0 at the top and the payout settles at 200,000. There is exactly one
+way to earn it. It is called No Hands and it is legendary, which for once is
+literal rather than a rarity tier: nothing else in the app asks for two dozen
+correct answers in a row with no help available except the ones you are choosing
+not to spend.
+
+The condition checks the multiplier as well as the figure. Checking the payout
+alone would let a helped run that happened to bank 200,000 some other way slip
+through, and the whole point is the absence of help.
+
+**The ladder was the last thing wearing floor-pinned ink.** A haven at 2.5:1
+against the card is not gold, it is brown, and the cleared rungs behind it were
+the accent at 42% opacity — which on a dark lamp bed is a lit rung and on a pale
+one is a smear. Both are fills rather than text: they have to be findable, not
+legible. The golds come up to 1.5 and 1.9 against a plain segment, still a clear
+step either way, and a cleared rung is now an opaque lifted accent rather than a
+wash of one.
+
+**And an editor for the climb's copy.** ClimbCopy_Editor.html: every string the
+CHALLENGE mode shows, English beside Italian, forty-five of them, each with the
+place it appears and the width it has to live in. The character counts and
+ceilings are measured off the app rather than guessed, so a label that will
+ellipsise says so before it ships rather than after.
+
+EXPORT prints only the lines that actually changed, was and now, both languages
+— which means a rewrite comes back as a patch I can apply verbatim with no risk
+of a stray edit riding along unnoticed. Nothing in the file touches the app.
+
+---
+
+## v0.113.9 — the app has more than one word for "a raised surface"
+
+Read the residue rather than the headline, and it says something structural
+about light mode that had gone unnoticed for the whole of this work.
+
+**The card-scoped fix assumed there was one kind of card.** There is not. The
+tuner's instrument card is .tuner-bpm-card, the interval card is .iv-card-v2,
+the tour is .tour-card, the hub buttons are .practice-card-btn, the chooser
+faces are .lnch-face — five raised surfaces holding text, none of them .card. So
+the hierarchy fix reached the module cards and nothing else, and every one of
+those five kept the ground-pinned ink it should not have had. That is why the
+tuner and metro screens between them accounted for twenty-six of the forty-two
+remaining findings while the module screens had almost none.
+
+Extending the scope to all five overshot immediately, and the other audit caught
+it: the practice hub buttons and the interval card carry sub-9px labels that the
+lighter secondary drops below AA, and the tuner card's pill labels are 8px. So
+the rule is not "is it raised" but "is its secondary text at label size", which
+is not something a selector can ask. The scope now holds the surfaces that pass
+that test — the module cards, the sheets, the tour and the chooser faces — and
+the ones that failed it are deliberately outside, documented as such.
+
+**Two things worth saying plainly about what this means.** The first is that the
+residue is dominated by small type: of the elements still over ceiling, thirty
+of forty-two are under 12px, where heavy ink is arguably correct and lightening
+it is what breaks AA. The second is that four of the remaining findings are in
+dark mode and all four are dark ink on a bright accent fill — a primary button —
+which is right by design. The tool has no way to know that, so those stay.
+
+Ends at 39 by the ink audit with the other two audits at zero new failures and
+none made worse. That number is not going to zero, and it should not: it is a
+hunting tool with a deliberately conservative ceiling, not a gate.
+
+---
+
+## v0.113.8 — what the ink audit actually found
+
+Ran it properly and read the whole list rather than the top of it. Eighty-seven
+pairings, and grouping them by the colour rather than by the element turned most
+of the list into one fault.
+
+**The hierarchy had collapsed.** Measured on a card: text 11.9:1, dim 10.2,
+muted 9.6. Three levels that are supposed to be obviously different, sitting
+barely two points apart. Nothing was individually wrong, which is why no
+contrast audit ever mentioned it — and it is exactly what "muddy" turns out to
+mean. Everything on a card weighed the same, so nothing led.
+
+They cannot simply be lightened, because the same two tokens also carry text on
+the GROUND where they are already near the AA floor. So they are redeclared
+inside .card and inherited from there: the ground keeps its legal values, the
+card gets values pinned for a card. Text stays, dim goes to 7.2:1, muted to 5.0.
+The steps are visible again and both still clear AA on the surface they are
+actually read on.
+
+That one change cleared twenty pairings. Three more went with the tokens the
+audit named individually — the ladder's gold and multiplier, the screen's rung
+figure, and the tuner's face-swap control, all still using raw floor-pinned
+values where a lifted variant already existed for exactly this.
+
+**The tool needed two fixes of its own to be trustworthy.** It was flagging
+primary body ink, which is supposed to be high contrast — black on white is 21:1
+and nobody calls that a fault — and that noise was burying the real findings. It
+reads the theme's own --text off the root and skips it now. The first attempt at
+that silently did nothing, because a custom property comes back as the author
+wrote it, and here that is a bare hex the parser did not know.
+
+**And one thing the fix broke, which the other audit caught.** A card-scoped
+secondary is right for a label at 10-12px and a step too far below that: the 9px
+hint and the inactive instrument tabs lost their footing. --ink-tight keeps the
+ground-pinned value reachable inside a card for those, and the card scope
+deliberately leaves it alone.
+
+Eighty-seven down to forty-two. The remainder is mostly small and several of
+them are deliberate.
+
+---
+
+## v0.113.7 — a tool that finds the fault instead of hunting it
+
+You should not have to hunt these down one screenshot at a time, and the reason
+you have been is that a contrast audit can only ask one question: is this dark
+enough? Every light-mode fault in this app has been the opposite — a colour
+pinned dark enough to clear 4.5:1 on the FLOOR, then used on a CARD two steps
+lighter, where the same value lands near 10:1 and reads as ink rather than as
+colour. A contrast audit passes that every single time, because more contrast is
+never a failure by its rules.
+
+**intonare_ink_audit.py** asks the inverse. It walks twelve screens in both
+themes and reports every element whose contrast is far HIGHER than its role
+needs: over 9:1 for small text, over 7:1 for large text and graphical fills.
+Those ceilings are not standards — nothing forbids high contrast — they are the
+line past which, in this app, a colour has reliably turned out to be pinned
+against the wrong ground. It prints the ink, the ground, the class and the
+screen, so a colour can be found rather than searched for.
+
+It found 87 pairings on its first run, and the single largest was systemic:
+**the body ink itself.** Pinned at 7:1 against the floor, it lands at 13.8 to
+14.6:1 on a card. That is well past AAA, and since almost everything in this app
+is read on a card, it is what made light mode feel heavy element by element
+rather than in any one place. The trio is pinned at 5.6 / 4.8 / 4.55 on the
+floor now — still clearing AA there — and lands at 11.4 / 9.9 / 9.5 on a card.
+Ink rather than tar.
+
+**And the answer keys, which is where you noticed it.** Right and wrong are the
+two states you look straight at, and both were wearing floor-pinned status ink
+on a near-white card: 8.8:1 for a letter that is supposed to read as green,
+which is how it ends up looking like moss. Both take the lifted status colours
+in light now, along with the big note reading on the screen.
+
+The audit still reports 81 pairings, most of them minor and several of them
+deliberate. It is a hunting tool, not a gate; nothing about it blocks a build.
+
+---
+
+## v0.113.6 — the emboss was eating the letterforms
+
+**Three shadows around a glyph, two of them white, is an outline.** That is what
+the title treatment had become: a white pass above at 92% and another below at
+55%, with the dark one underneath. Around type rather than around a box, the
+white bleeds inward at the stroke edges and eats the contrast of the very thing
+it is supposed to be lifting — the letters get a halo and lose their weight, and
+at header size that reads as softness rather than as depth.
+
+A raised object needs one highlight and one shadow. The white is a single
+hairline on the lit side at 45%, and the dark does the lifting. Same modelling,
+nothing eroding the stroke.
+
+**And the paper is a nudge cooler.** Same lightness, chroma pulled back a third
+and the hue eased off yellow toward neutral: 82 degrees at C .013 becomes the
+same lightness at C .009. Still warm enough not to read as overcast, cool enough
+to be paper rather than parchment. The top bloom went with it.
+
+No new contrast failures, project audit steady at 26, module audit zero.
+
+---
+
+## v0.113.5 — paper
+
+The chooser ground is paper. Warm off-white, a shade deeper toward the foot,
+with a wide bloom across the top.
+
+**Value stops holding the grid together at this lightness,** and that is the
+whole consequence of the choice rather than a side effect of it. The ground sits
+1.05:1 from a card's lit top edge and 1.16 from its foot, so the cards are held
+entirely by their rim, their contact shadow and their own pool. All three were
+tuned against a mid-tone ground and had to be stepped up: a firmer rim carrying
+more of the module's own colour, a tighter and darker contact shadow so the card
+meets the page somewhere definite, and a longer ambient so it still lifts off a
+field this light. Sentinel-pinned, both the ground and the rim, because
+softening any one of them now dissolves the grid into the page.
+
+The pools read at their strongest here. On a mid grey they were fighting the
+ground for the same territory; on paper they are the only colour in the field
+outside the cards themselves.
+
+**Two things the change broke and put back.** The pinned chips were white on a
+near-white ground at 1.27:1, a chip with no edges — they carry more of their tool
+colour and a firmer rim now. And the hint under the grid was pinned against a
+mid ground; on paper it landed at 4.17:1, which is the AA floor with no headroom
+at 7.5px. It is pinned against the darkest ground it can land on rather than the
+lightest, since it sits over the lower pools and not over bare paper.
+
+No new contrast failures, project audit steady at 26, module audit zero.
+
+---
+
+## v0.113.4 — the dark faces were fighting their own glow
+
+**The vignette on the dark cards had to come down.** The face fell to 22% black
+at its foot, which was right when the card had nothing behind it: the falloff
+was doing the job a shadow does, and dark shadows are nearly invisible on
+near-black. With a pool underneath, the same gradient stops reading as depth and
+starts reading as a hard vignette — lit at the top, blackened at the bottom —
+and the glow makes the swing worse rather than better, because now there is
+light immediately outside the darkest part of the card.
+
+Ten percent instead of twenty-two. The fall is still there, the light gets
+through, and the 3D work stays exactly as it was: rim, inset highlight, layered
+shadow, and now the pool.
+
+**The mock could not be judged, and that was a fair criticism.** A ground shown
+in a box the grid fills is a swatch, not a screen. In the app the field runs the
+whole viewport with large empty regions above and below the grid, and those
+regions are most of what you actually see. The stage is a phone now — 814px
+tall against a 499px grid, so roughly forty percent of it is the dead space the
+decision actually turns on — with the nav bar in place so the ground is judged
+under the chrome that sits on it.
+
+PAPER and LIFTED WARM are the two you picked out; they are next to each other in
+the picker for a straight comparison.
+
+---
+
+## v0.113.3 — dark gets the glows, and the ground goes to a vote
+
+**Yes, dark should have them, and it needed them more.** The whole language of
+the dark theme is emission — every card has a lit rim, the page carries pools,
+the icons glow — and the chooser was the one screen not speaking it. The same
+card-attached pool is there now, weaker and tighter: a glow on near-black reads
+at much lower alpha and turns to fog with far less spread, so it runs at 34%
+against light's 70% and blurs 20px against 22.
+
+**On the ground: you are not crazy, and the reason is structural.** A mid
+neutral is being asked to do two incompatible jobs at once. It has to be dark
+enough that pale cards read against it and light enough that it does not feel
+like weather, and the value that satisfies both is the value that satisfies
+neither. Measured, the cards all sit at OKLCH L .90 at the top and .966 at the
+foot — they are very light and very close together, so anything in the middle
+distance from them reads as a compromise.
+
+That is a taste call with real trade-offs on each side, and it has now cycled
+four times on my judgement, so it goes to a file rather than another guess:
+ChooserGround_Mock.html, six grounds on the real components and the real glows,
+with the measured value gap under each. WARM MID is what ships today at 1.29:1
+to a card top. LIFTED WARM is the smallest possible answer if the complaint is
+weight rather than hue. PAPER removes the gap almost entirely and lets border
+and shadow hold the cards. DEEP and COOL DEEP go the other way at 2.65 and 2.74,
+which is where the glows have something to fall on. INK is a dark chooser inside
+a light app at 10:1 — the most striking and the biggest question, since one
+screen breaking the theme is either a signature or a mistake.
+
+---
+
+## v0.113.2 — an overcast sky is a cool grey, and the four cards were not equals
+
+Two faults, both measurable, and the reading around colour theory named them
+before the eye could.
+
+**The four cards were not the same weight.** Mixing a fixed percentage of each
+module colour into white looks even on paper and is not, because the four
+sources are not equals to begin with: measured in OKLCH they run C .121 to .154
+and L .769 to .880. Tools' mint is the most chromatic and one of the darkest,
+metro's gold the lightest, so the grid came out with tools heaviest and metro
+faintest. This is the standard failure — two hues at matching perceptual chroma
+feel balanced, the same hues at different chroma feel unbalanced with the more
+saturated one dominating, and the traditional harmony rules all assume equal
+saturation as a baseline.
+
+Faces are built at matched lightness and matched chroma per stop now,
+inheriting only the hue. A set of colours reads as a family when each sits at
+the same perceptual distance from neutral; it reads as four swatches when they
+do not.
+
+**And the overcast feeling was literal.** An overcast sky is a cool grey — that
+is the whole description — and the ground was sitting at hue 260 with a chroma
+of .005. That value is the dead zone: enough tint to be felt, not enough to
+register as a decision, which is exactly the "accidentally off-neutral" trap.
+Pure greyscale also does not occur in nature and tends to read as unnatural, and
+a neutral surrounded by saturated colour takes on the opponent cast of whatever
+is nearest it, so a grey among four hues gets pushed four ways at once.
+
+The ground is a warm neutral now: hue 76, chroma .013 so the tint is a decision
+rather than an accident, and lifted. Same value structure, and it stops being
+weather and starts being paper in daylight.
+
+Contrast unchanged: no new failures, module audit zero in both themes.
+
+---
+
+## v0.113.1 — the light belongs to the card
+
+The four pools worked, and they only worked at the aspect ratio they were
+measured on. Anchoring them to percentages of the viewport meant a shorter
+screen, a tablet or a rotation slid every one of them off the card it was
+supposed to sit under. Checked at 360x640, 390x844, 430x932 and 768x1024: the
+card centres move by up to 190px horizontally between them.
+
+So the pool is attached to the cell. It goes wherever the card goes, at any
+size, with no measurement to keep in sync — and it puts the physics the right
+way round, which is the better half of the change. The cards emit onto the
+ground rather than the ground happening to be tinted underneath them. Move a
+card, add a fifth, change the grid, and the light follows on its own.
+
+With the light coming off the cards, the ground goes flat and gets out of the
+way: one near-neutral tone with a hair of fall so it is not a dead field.
+
+**The stops are weighted outward,** which looks wrong written down and is the
+only thing that works here. A card covers the middle of its own pool, so a
+conventional falloff puts all the colour exactly where nothing can see it. The
+visible part is the band in the gutters, so that is where the alpha sits: 70% at
+the centre, still 62% at the halfway mark, 34% at 78%.
+
+**And they breathe,** nine seconds, out of phase by a quarter cycle each. In
+phase they read as the page flickering rather than as four lights. Reduced
+motion holds them still at a fixed opacity.
+
+Contrast unchanged: no new failures, module audit zero in both themes.
+
+---
+
+## v0.113.0 — the chooser ground is the four modules, out of focus
+
+Every single-hue version of this failed the same way, and it took four attempts
+to see it as one problem. A violet-grey clashed with the mint and the cream. A
+neutral grey fixed the clash and read bland. The splash's blue brought the clash
+back in a different key. The fault was never which colour — it was that one
+colour has to sit behind four cards in four other colours, and there is no
+single hue that agrees with all of them.
+
+So the ground carries all four. A soft pool of each module's colour, centred on
+the card that owns it: cyan top left, gold top right, mint bottom left, lavender
+bottom right, over a near-neutral base. The centres are measured against the
+real card positions rather than guessed, so each pool actually sits under its
+own module. Nothing on the screen is foreign to what is behind it.
+
+They are wide and shallow on purpose — 84% by 40% each, fading out by three
+quarters — so the effect reads as a tint the whole field shares rather than four
+blocks. Because the cards cover most of their own pool, what you actually see is
+the spill in the gutters and margins, which is why they are stronger than they
+look in the numbers.
+
+Contrast unchanged: no new failures, module audit zero, project audit steady.
+
+---
+
+## v0.112.10 — the black flash, the bare top, and titles with a lift
+
+**The challenge screen was flashing black in light mode,** and it was carried
+straight over from dark. The entrance dims the display to brightness(.25) before
+it stutters on, which on a near-black panel is an unlit screen and on a
+near-white one is a black rectangle. Light gets its own range now: the unlit
+state is a dim, slightly desaturated panel at .965, and the flicker moves
+between .97 and 1.04 rather than a quarter to one and a half. Same stutter, in
+the right key.
+
+**The field started too high and fell too far.** Beginning at --surface put a
+near-white band across the top of the screen with nothing in it, which is the
+bare feeling. It starts one step down and spends more of its height near the
+floor, so light still comes from above without giving a third of the screen away
+to it. Splash and chooser share the change, since they share the recipe.
+
+**The pinned chips got their colour back.** Rebuilding them as white with a 7%
+tint fixed their invisibility and left them anaemic; the tool colour runs at
+13-24% through the face now, the border carries nearly half of it, and the icon
+is 78% of the tool colour rather than being mixed most of the way to ink.
+
+**And the titles are lifted.** Dark uses a glow, which does not transfer. The
+paper equivalent is an emboss: a white pass above, a soft dark one below, the
+same modelling the cards get, at type scale. It has to be drop-shadow rather
+than text-shadow — the titles are painted with background-clip:text, and a
+text-shadow paints beneath a transparent fill and shows straight through it.
+
+Contrast: no new failures, project audit steady at 26, module audit zero.
+
+---
+
+## v0.112.9 — the tagline audit, the chooser, and the last of the muddy darks
+
+**The subtitle was never a header line.** Truncating it was treating the
+symptom. Relative Pitch had no header tagline of its own — it was borrowing its
+CARD subtitle, which is written for a card and roughly twice what the header can
+hold. Staff Notes had no entry in the map at all, so it showed nothing.
+
+Audited all thirteen exercises in both languages: they now all have a tagline,
+none clips, and every header sits on one line. Relative Pitch gets "name it
+cold" and Staff Notes "read it, name it", which is the register the rest of the
+set already uses. The Italian for Staff Notes needed to be shorter than the
+English, since NOTE SUL PENTAGRAMMA is the longest title in the app and leaves
+its tagline the least room.
+
+**The chooser follows the splash now.** Flat mid-tone read muddy behind pastel
+cards, flat neutral read bland — both were flat, which was the actual problem.
+The splash already solves the same brief, a field that has to hold anything in
+no particular theme, and it does it with a fall from near-white down into the
+floor. Sharing the recipe also means the app opens on one surface and stays on
+it: splash into chooser, no cut.
+
+**The last two muddy darks.** The fork button and the havens were the remaining
+places a warm ink pinned against the floor was sitting on a near-white card,
+where it reads brown rather than warm. Both lifted. The havens took a second
+pass: gold reads instantly by hue, but hue alone strands anyone who cannot use
+it, and at the first value the luminance step off a plain segment was 1.09. The
+shipped gold is 1.8, and a cleared haven 2.5, so it is findable either way.
+
+**Two more audit blind spots, both found by this pass.** It could not read
+color-mix output, so any gradient starting with one made the backdrop walk fall
+through to the page ground. And it treated background-clip:text elements as
+having a painted box — those paint into the glyphs and nothing else, and since
+the gradient is always an accent, it invented a failure every time. Fixed both:
+thirty-one failures cleared, none introduced.
+
+---
+
+## v0.112.8 — the header wrap, the bland ground, and an audit that could not see color-mix
+
+**The header tagline.** The subtitle was shortened once, but that fixed the hub
+card, not the header — a different layout with a fixed-height box that the title
+scales to fit. The base rule sets nowrap with an ellipsis, which works on the
+title alone; with a subtitle appended inline, the SPAN inside still wrapped,
+because the ellipsis belongs to the block and not to its inline child. So the
+second line ran into the rule underneath. The row is a flex line now with the
+ellipsis on the subtitle itself, where the overflow actually is. Header height
+goes from 38px back to 19 on the longest one, and the shorter modules are
+untouched.
+
+**The chooser ground was bland because neutralising it took its modelling too.**
+Fixing the muddiness left a flat field with two pools at 3 to 9 percent. It gets
+what the module pages got: a warm key from above, a cool fill at the lower
+right, a cool lift at the left, and a real top-to-bottom fall. Neutral in hue,
+not neutral in modelling — those are separate decisions and only the first one
+was wanted.
+
+**The picker cards were pale because five sixths of each was neutral.** They
+mixed 10% of the module colour into white at the top and then ran to the
+un-themed surface for the rest of the height, so only the lid carried any
+identity. The colour runs through the whole face now, 26% down to 9% and back up
+at the foot, with the same four-layer shadow and rim the module cards got.
+
+**And the audit could not see color-mix.** Both its colour parser and its
+gradient extractor only knew rgba(). A gradient whose first stop is a color-mix
+serialises as color(srgb ...), so the backdrop walk fell straight past the card
+to the page ground and reported failures for text that is comfortably legible on
+a pale face. Fixed in both places. With honest backdrops it found something
+real: the peek labels mix 52% of the module colour into ink, which was tuned
+against a nearly white face and lands at 3.5-4.0:1 against a tinted one. 34%
+now. Thirty-one failures cleared, none introduced.
+
+---
+
+## v0.112.7 — the status colours had the same two-grounds problem
+
+**The stats chart was a row of near-black bars.** in-tune, sharp, flat and metro
+are pinned dark enough to clear 4.5:1 as small text on the floor, same as the
+accent was. Used as a filled bar on a near-white card they measure 9.4 to
+10.5:1 — and a filled shape is a graphical object, which needs 3:1, not 4.5.
+So the chart was reading correct and heavy at the same time. A lifted set now
+exists for fills and lands at 5.2 to 5.8:1 on a card: still comfortably above
+the graphical floor, and green again rather than nearly black.
+
+**The stats sheet was still wearing the page floor,** the same fault the
+settings sheet had: a raised panel that fades to --bg-1 ends up with the page's
+own colour along its bottom edge. Paint only — the geometry stays in the base
+rule, which is the mistake that made settings unusable two versions ago.
+
+**And the module picker was muddy for a reason.** Its ground carried real chroma
+at hue 293, a violet-grey, and four cards in four other hues sat on it — one of
+them lavender, right next to it. Four hues on a fifth hue is what makes a screen
+look dirty rather than colourful; the ground was competing with everything it
+was supposed to hold. Near-neutral now, a touch warm, at the same depth: the
+seamless-backdrop trick a product photographer uses so that objects in different
+colours can share a frame. The chooser stops being a colour and goes back to
+being a surface.
+
+Contrast: no new failures, project audit steady at 26, module audit zero.
+
+---
+
+## v0.112.6 — one accent was doing two jobs, and off did not look off
+
+**Why the dark colours read harsh.** --accent is pinned at OKLCH L .36 because
+it has to clear 4.5:1 as small text on the FLOOR, which is the hardest ground in
+the app. But almost everywhere you actually see it — chip borders, labels,
+controls — it is sitting on a CARD, two full steps lighter, where that same
+value measures 9.5 to 10.9:1. That is not colour, it is ink, and ink on a pale
+card looks severe.
+
+One token cannot serve both grounds. --accent-lift sits at L .46 for card-borne
+use and clears 6.2 to 7.1:1 there, which is comfortably above AA while reading
+as a colour again. The floor keeps the darker value, because on the floor it is
+genuinely needed. Settings chips take the lifted one for their border and label.
+
+**The havens were the hardest thing to find on the ladder,** which is backwards
+for the one mark that tells you where you can fall back to. In dark a gold rim
+glows against near-black and reads instantly; on a light card the same rim is a
+thin line on a pale ground. Filled in light now, with the rim kept as the edge
+rather than as the whole signal. A haven segment measures 7.4:1 against a plain
+one, where before it was a hairline.
+
+**An unlit lamp was a white box on a white card.** In dark it is dark glass,
+which explains itself. On paper the equivalent of off is recessed, so an unlit
+lamp is pressed into the card: the token drops a step, and it takes the standard
+soft-UI inset pairing — a dark shadow at the top edge where the surface falls
+away and a light one along the lower lip where it catches the ambient. Same
+technique as a raised chip, run in reverse. It now sits 1.36:1 below the card
+instead of level with it.
+
+That inset pairing is the one genuinely new idea from reading around the current
+material on depth-driven UI, and it is the piece light was missing: raised
+elements were getting the four-layer treatment while recessed ones were getting
+nothing at all, so half the vocabulary was mute.
+
+Contrast: no new failures, project audit steady at 26, module audit zero.
+
+---
+
+## v0.112.5 — light gets volume the way paper does
+
+Side by side, dark reads three-dimensional and light reads fat. The reason is
+that dark's depth is all emission: every card has a lit rim, the page carries a
+theme-tinted bloom from above and two smaller pools, icons glow. None of that
+transfers — a glow on a light ground is a smear, which is why it was stripped in
+the first place. But nothing was put back in its place, so light had the geometry
+of a design with no lighting model at all.
+
+What does the same job on paper is edge and shadow. Cards now get all four
+things that describe a real object on a lit page: a defined rim, a crisp
+highlight along the top where the light strikes, a contact shadow directly under
+the edge with a wide far falloff behind it, and a diagonal fall inside the card
+so it is a surface rather than one flat tint. It is the same information dark
+gets from a glowing border, said the other way round.
+
+**The page field got dark's structure too.** Dark paints three theme-tinted
+pools; light had a single top-down ramp and a 7% tint, so there was nothing to
+read across the screen. Same three-pool geometry now, opposite physics: a warm
+daylight bloom from above, a cooler accent lift at bottom right, a faint accent
+pool at left. A warm key with a cool fill is what stops a light field reading as
+one wash — it is how a real room looks and it is why the flat version felt
+synthetic.
+
+**And the selected chips had gone dark in every theme.** They mixed 70% of
+--theme over white, which was right when --theme was a mid-tone. The light ramp
+took the accent to OKLCH L .36, so the same mix landed at 3.0-3.9:1 against its
+own label: a dark slab sitting in a pale sheet, in all four themes. A selected
+chip in light should be a tinted LIGHT chip with a firm edge, not an inverted
+one. It is 16-26% over white now with the accent as the border and the label,
+which is legible and still unmistakably ON.
+
+Contrast unchanged: no new failures, project audit steady at 26.
+
+---
+
+## v0.112.4 — the settings panel was unusable, and it was my fault
+
+Adding the light-mode background override in v0.112.2 split the base rule. I
+closed `.settings-modal-content` after its first property and opened
+`body.light .settings-modal-content` before the rest, which handed max-width,
+padding, max-height and overflow-y to the light selector alone. In dark the
+panel had no width limit, no padding and no scrolling, so it rendered oversized
+and immovable — and since the theme switch lives inside it, there was no way to
+get to light mode and out of the problem.
+
+The base rule owns geometry again; the theme rule may only repaint. Verified in
+both themes: 366px wide inside a 420 max, correct padding, scrolls, sits inside
+the viewport.
+
+Sentinel-pinned, because the shape of this mistake is not specific to one
+selector. Any theme override that reaches past paint into layout can strand a
+control that only exists inside the thing it broke.
+
+The lesson for the audits: everything I checked after that change was a
+full-screen module view, and every one of them passed. A modal that only opens
+on a tap was never in the frame. Screens behind an interaction need opening.
+
+---
+
+## v0.112.3 — light was flat because I had taken the depth out of it
+
+The complaint that dark looks alive and light looks flat turned out to be
+measurable rather than a matter of taste. Compared side by side:
+
+    dark   card chroma .037-.042   fall inside one card .029
+    light  card chroma .011-.015   fall inside one card .019
+
+A third of the colour and two thirds of the modelling. On top of that light has
+no glows, which were removed on purpose because a drop-shadow on a light ground
+smears rather than emits. Three of the devices that give dark its depth were
+missing from light, and two of them were mine.
+
+Cards carry their hue again, chroma .038 falling to .026 across the card, with
+the internal fall widened to match dark's. Every card is now a surface with a
+top and a bottom rather than a flat rectangle, and each one wears its module's
+colour instead of being white with a rumour of it. Floor-to-card separation is
+unchanged at 1.84-1.89.
+
+**The launcher's quick-access chips were wearing the dark palette.** Their
+colour comes from --pc, which falls back to the dark theme's cyan, so in light
+they were a 9% tint of a colour that does not exist in the light palette, on a
+light ground: effectively invisible, which is exactly how they looked in the
+module picker. They are small raised chips now, white with a tint of the tool's
+own colour, a real border and a contact shadow, and an icon dark enough to read.
+
+**The splash has moved with all of this** — it builds from --surface, --bg-1 and
+--bg-0, so it followed the ramp, the chroma equalisation and this pass without
+being touched directly. Checked: it runs light at the top into the floor at the
+bottom, which is the direction it was fixed to in v0.112.1.
+
+No new contrast failures; the project audit stays at 26 with none introduced.
+
+---
+
+## v0.112.2 — why light mode read washed out and heavy at the same time
+
+Two faults, and between them they explain a complaint that sounded like it
+contradicted itself.
+
+**The four floors were not the same weight.** The ramp set every floor to the
+same OKLCH lightness and then multiplied each hue's existing chroma by the same
+factor — which preserved the inequality it was supposed to remove. Measured:
+metro's gold sat at C .137 and tools' mint at C .128, while tuner's blue sat at
+C .054 and train's lavender at C .066. Two and a half times the colour at
+identical lightness. Perceived weight is lightness AND chroma, so two modes read
+heavy and two read washed, from what was meant to be one recipe.
+
+Chroma is absolute now, .075 on every floor. Gold and mint come down a long way,
+blue and lavender come up slightly, and all four sit at the same weight with
+their hue intact. Separation holds at 1.87 to 1.98.
+
+**The daylight wash was repainting the top of the screen.** A white overlay at
+62% at the top falling to 3% at the bottom, tuned when the floor was pale. On a
+deeper floor it means the top third is nearly white and the bottom is the raw
+floor colour: washed out up there, heavy down here, on every screen. Measured
+down the left gutter the swing was about 90 points of luminance top to bottom.
+It is 20% to 5% now, and the swing is 18 to 19 points, the same on all four
+modes. A light field should be felt, not seen.
+
+**And the sheets were dissolving into the page.** Settings, the favourites
+sheet, the launcher sheet and the quiz sheet all ran from the card colour at the
+top down to the page floor at the bottom. That reads as depth in dark, where the
+floor is the darker end and a panel fading toward it looks like it is receding.
+In light the floor is the darker end too, so a raised sheet ended up wearing the
+page's own colour along its bottom edge and stopped looking raised at all. They
+stay on raised colours now.
+
+Contrast: no new failures, nine fixed, none made worse; the project audit goes
+42 to 26 with none introduced. Two per-theme inks and the launcher hint needed
+re-pinning by a hair as the floors moved.
+
+**The audit was also measuring elements mid-fade,** which is why the launcher
+hint kept reporting a different failing ratio on every run. It now skips
+anything with an opacity transition in flight, and three consecutive runs agree.
+
+---
+
+## v0.112.1 — the light gradient ran the wrong way, and the climb got twice as long
+
+**Light was coming from under the floor.** The splash gradient ran from a pale
+top, down through the ground colour in the middle, and back up to near-white at
+the bottom. That put the brightest band of the screen underneath everything,
+which is why cards looked weakest exactly where they sit and the whole thing read
+bottom-heavy. It runs one way now: lit at the top, settling into the floor and a
+shade below it at the bottom.
+
+The launcher had the opposite problem and the same cause. Its ground is a literal
+rather than a token, deliberately, so the chooser does not change colour with
+whichever module you last used — but that meant the ramp could not reach it, and
+at OKLCH L .787 it stayed lighter than every module floor once those dropped to
+.745. On the one screen that is nothing but cards, the cards had the least to sit
+against. Re-pinned to ramp depth, still less chromatic than any module so it
+reads as a null state. The lower radial pool is softened and lifted off the
+bottom edge as well; anchored at 104% it pooled light under the content. The
+crossfade veil tracks it exactly, or the background appears to change colour
+mid-fade.
+
+**The climb is twenty-four rungs.** Twelve was too short to be hard — two warm-up
+rungs, four in the middle, six that could bite, and a clean run only had to
+survive six real questions.
+
+Four distance bands now instead of three, because doubling the length without
+adding a step would just have meant more of the same: WIDE at a fourth or more,
+OPEN at a third to a fourth, CLOSE at a tone to a minor third, ADJACENT within a
+tone. Six rungs each. Havens sit on the first three band edges, at 6, 12 and 18,
+so there are three places to fall back to rather than two, and each still means
+what a haven has always meant here: the value is yours, and the lifelines and
+replays refresh.
+
+Values run 25 to 100,000, so a clean summit pays 200,000. The multiplier step
+drops from a tenth to 0.08 because there are now twelve lifelines to spend across
+four bands rather than nine across three; spend them all and you settle at ×1.04,
+which is close enough to the floor that the difference between a careful climb
+and a helped one is the whole score. Verified: clean summit 200,000, every
+lifeline spent 104,000, a fall at rung 20 leaves 22,000, banking at 15 with two
+lifelines gone pays 5,888.
+
+All twenty-four rungs verified to deal four distinct options with the answer
+present and every distractor inside its band's distance range.
+
+---
+
+## v0.112.0 — light mode gets a floor
+
+Testers said light mode was washed out across the whole app. Measuring it agreed
+and gave the reason: floor-to-card contrast was 1.16:1 in every one of the four
+mode palettes. That identical figure across four independently chosen palettes is
+the giveaway that it was a systematic architecture choice rather than four
+decisions, and at that ratio nothing on screen reads as raised. Everything looks
+like haze because everything is the same brightness.
+
+**Generated from one ramp instead of picked by hand.** The four light palettes,
+plus the un-themed fallback, now come from a single OKLCH ramp: floor at L .745
+with chroma held high, card at L .965 with chroma pulled back, borders at L .52,
+accent at L .36. OKLCH rather than HSL because equal perceptual lightness looks
+equally deep across hues and equal HSL lightness does not, and because chroma
+has to be gamut-aware — the earlier attempt in HSL multiplied saturation, which
+did nothing at all for metro's gold and tools' mint since both were already at
+the edge of what sRGB can show.
+
+Separation now measures 1.84 to 1.96 across the four, with a spread of 0.12
+between best and worst. The mode hue survives in the card as a whisper, which is
+what keeps the four modes telling each other apart.
+
+**Dropping the floor broke everything that was pinned to it,** and that was most
+of the work. A before-and-after diff across twelve screens in all four modes
+found 119 newly failing elements, every one of them text sitting directly on the
+background rather than on a card. All resolved:
+
+- The per-theme ink trio had been pinned against the card. The card is no longer
+  the hard case, so the trio is pinned to the ground instead, at 7.0 / 5.5 /
+  4.6:1. On the card, which got lighter, they now land 13.7 to 14.7.
+- `--tab-accent` carries the bottom-nav labels and the session stamp, both drawn
+  straight on the ground. Re-pinned with headroom, since the two contrast audits
+  resolve the nav bar's backdrop differently and 5.3:1 clears both.
+- The shared status colours — in-tune, sharp, flat, metro — had all fallen to
+  around 2.6:1. Re-pinned to clear 4.6 on every ground and 8:1 on every card.
+- Level chip and phase pills, deepened for the second time; the previous fix was
+  measured against the old floor.
+- The help button stopped being thinned to 90 percent opacity.
+- The accent deepened with the floor, because it had to: at the old value it
+  would have dropped from 5.24:1 to 3.66:1 on the new ground.
+
+**Two long-standing failures fixed on the way past.** The session stamp's goal
+text was half-opacity ink that never cleared AA even before this, and the panel
+badge sat on a translucent wash so its contrast moved with whatever ground it
+happened to land on. Both are real colours on real fills now.
+
+**Seven hardcoded copies of the old tuner accent** were sitting in the string
+face, the capo popup and the instrument pills, frozen at the old value while the
+token moved. They read from the token now. The tonal-centre panel's greys were
+left alone deliberately: that is an instrument face, not themed chrome.
+
+Light failures across twelve screens: 150 down to 138, with none introduced.
+The project's own light audit: 42 down to 25, none introduced. Dark mode
+unchanged at 65, which is the point — nothing outside the light blocks moved.
+
+---
+
+## v0.111.4 — light-mode sweep of the module
+
+A full pass over every Relative Pitch screen in light mode: practice, answered,
+chromatic, the entrance settled, mid-game, the result, settings and stats, all
+screenshotted and inspected rather than trusted to the contrast numbers.
+
+The module holds up. Lamps, glows, ladder, hearts, the screen panel, the boot
+sequence, the transport row and the utility row all read correctly on the light
+surfaces, and the automated audit stays at zero failures in both themes.
+
+One inconsistency found and fixed: on an unanswered card the big note reading
+dimmed to placeholder grey while the Hz line under it stayed lit in the hit
+colour, so half the display looked switched off and half looked on. Both dim
+together now and both light together on the reveal.
+
+The wider question — testers finding light mode across the whole app too light —
+is a palette decision, not a bug, and it gets its own mockup file rather than a
+quiet change: LightMode_Palettes.html, four palettes on the same components.
+
+---
+
+## v0.111.3 — four things on the intro that were not behaving
+
+**THE RULES was restarting the entrance.** The toggle went through rlpRender,
+which rebuilds the intro card, which replays the whole boot sequence from the
+flicker. Opening a paragraph should not restart the machine. It edits the DOM in
+place now; the card node survives, the ladder stays built, and the title does
+not blink.
+
+**A ghost B-flat was showing through the placeholder.** The unlit segment behind
+the reading is what makes a lit one look lit, but that only works behind a real
+value. Behind a two-dash placeholder it reads as a stray letter someone forgot
+to clear. The ghosts appear once there is something to read and not before.
+
+**THE CLIMB was sitting on the screen.** 22px above it now.
+
+**START cut rather than handed over.** The intro vanished mid-word and the game
+appeared fully formed, which is a page swap, not a machine changing state. The
+intro lifts away over 220ms and the first rung arrives from below over 340ms.
+The first note was also scheduled 350ms after the card was built, which put it
+right in the middle of that; on rung one it waits 620ms instead, so it lands on
+a settled screen. Measured at 854ms after the tap, with the transition classes
+cleaned up behind it.
+
+Reduced motion skips the hand-off.
+
+---
+
+## v0.111.2 — the intro stopped explaining itself
+
+The second card described the three distractor bands and how close the wrong
+answers sit in each one, and it did that before you had heard a single note.
+Nobody can use that information at that point; it only becomes real once you are
+in ADJACENT and everything on screen is within a tone. The game already prints
+the band and its gap in the card head at the moment it matters, so the chips
+were a manual for something that explains itself two seconds in.
+
+Gone, along with the card holding them. The intro is one card ending on START,
+which is also what the entrance animation was already driving at — the sequence
+used to keep going for another half second after the button, fading in a second
+card that pulled attention back off it.
+
+The rules survive, because two things genuinely are not discoverable from play:
+that lifelines cost multiplier, and that unspent ones expire at the band edge.
+They live under a plain text link below the best line now. Closed it is one dim
+line; open it is the four rules in place, no second card, and it collapses back.
+
+519px settled instead of two cards and a scroll. The entrance now ends: START at
+2.0s, best line at 2.1, rules link at 2.2, and the button starts breathing at
+2.3.
+
+---
+
+## v0.111.1 — the intro ladder was showing somebody else's run
+
+**The bars on the start screen were arbitrary, and worse than arbitrary.** They
+lit rungs one to eight with nine standing tall, which was a number carried over
+from the design mock and had nothing to do with the person looking at it. The
+ladder sits on the intro to be the machine's memory of you, so it reads your
+furthest rung now: cleared rungs dim, the one you reached standing tall, and a
+caption saying FURTHEST 9/12 beside the multiplier you start on. A first-time
+player gets twelve dark bars and NO RUNS YET, which still shows the shape of the
+climb without pretending to a history.
+
+**START makes no sound of its own.** The entrance is built so the chime belongs
+to the build and the next thing you hear is the question; a cue on the button
+sat between the two and blurred exactly the line it was meant to draw. Verified
+silent at the tap, with the first note arriving on its own.
+
+---
+
+## v0.111.0 — the climb has an entrance
+
+Arriving on the CHALLENGE tab used to look like a different page from the game:
+a title, one line, a START button, and a stack of bars looping an attract
+pattern. None of the machine you were about to use was on screen.
+
+It is the same machine at rest now. The ladder, the twelve lamps and the
+instrument screen are all present before you press anything, and they build
+themselves once on arrival while a welcome chime plays over the top.
+
+**The sequence,** five phases with one focal point each, measured in the app:
+
+    0.12  the card lands and the screen stutters to life with its readings on it
+    0.64  the ladder climbs a rung per tick, the record rolling up beside it
+    1.32  ladder tops out; the lamps sweep once
+    1.37  the record lands
+    1.82  the title arrives on the chord, then the line and START
+    2.42  the bands card follows, chips after it
+    2.84  settled, and silent
+
+The screen readings snap on inside the flicker rather than fading in afterwards,
+because a display shows its content as it finds mains. Segments land with a
+touch of overshoot instead of sliding to a stop, the rung you reached last time
+gets a brighter pop as it grows tall, and once everything settles START takes a
+slow three-and-a-half second breath.
+
+**The chime lives entirely inside the build, and that is the point.** Once the
+intro settles on your records nothing sounds again until you press START, so the
+first note after that is unambiguously the question rather than a leftover
+flourish. Verified: twenty-two sounds during the build, zero between settling
+and START. It is bespoke rather than a cue-bank event, because it is tied frame
+by frame to this animation and a user-swappable cue set would break the sync. It
+still respects the module's own sound switch.
+
+The idle sweep is one slow pass every two and a half seconds while you decide,
+rather than the continuous chase the old attract loop ran.
+
+**Two things the port needed that the mock did not.** The card's fade-in and the
+staged reveal of its contents were sharing one class, so the moment the card
+appeared everything inside it appeared with it; hiding is now a class on each
+element, applied before the first paint. And the boot's timers are on their own
+list that gets cleared by teardown and by START, so leaving mid-animation or
+starting early cannot leave anything running — verified zero timers after exit.
+
+Reduced motion skips the whole thing and renders the settled state.
+
+---
+
+## v0.110.9 — the chimes were scrubbing the note, and lifelines were free
+
+**The chime after every correct rung had to go, and not for taste.** It fired a
+pitched fifth immediately after the target note, in a drill whose whole job is
+holding a pitch in your head. It was rinsing the thing you were being asked to
+carry. What is left is the shape of a game show: a flourish when you press
+START, then nothing but the notes until the run ends one way or the other.
+
+The three remaining sounds — summit, loss, bank — go through the app's own cue
+bank rather than being hard-coded arpeggios. That means they follow whichever
+cue set the person picked and their per-event volumes, instead of ignoring every
+audio setting in Settings.
+
+**Lifelines were free, which made them admin rather than a decision.** Three a
+band, expiring at the edge, so the only wrong move was leaving one unspent. They
+cost something now: each one takes a tenth off the multiplier the final payout
+is settled at. Start at double, drop a tenth per lifeline, floor at level. A
+summit reached without asking for help pays 50,000 against 25,000 for the same
+climb with help.
+
+The multiplier sits under the ladder while you play, lime while it is still
+clean, so the cost is in front of you at the moment you are deciding whether to
+take the fork. The result screen shows the working — 25000 × 2.0, no help taken
+— and the best take carries its multiplier into the intro and the stats sheet,
+since a best score is now a settled figure rather than a rung value.
+
+**The writing.** Every line in the challenge was a run of short declaratives,
+which is the tell. "Twelve notes. Four answers each. One wrong and you leave with
+your last haven." Three fragments where one sentence would do the work. All of
+it rewritten in both languages to breathe: the intro line, the four rules, the
+four result captions. The rules also stopped repeating the same
+bold-lead-then-fragment shape four times in a row, and one of them now explains
+the multiplier, which is new information rather than a restatement of the
+replay budget.
+
+---
+
+## v0.110.8 — a voice for the drill, and the climb stopped being a list of lists
+
+**Tone bank in settings.** The drill sounded on grand piano because that is what
+the app's reference tone happened to be. It picks its own voice now, from the
+same bank every other module uses, and swaps it in for the length of one note
+before putting the app's setting back, so choosing a nylon guitar here does not
+change what the Chords tool sounds like.
+
+Both halves of the skin opt-out are in, because a tone row that does not ask for
+one inherits the piano console's near-black button and the Chords tool's green
+popup, and then ships looking broken on a Train card. The button override is
+keyed on the modal id and the builder is handed ex-tonepop explicitly. Pinned,
+since this is the third time that trap has come up.
+
+**The climb was eleven stacked blocks.** A card of twelve ladder rows, then a
+card carrying a header, the lamps, the screen, a replay button, a row of replay
+pips, a caption under the pips, a caption over the lifelines, the lifelines, the
+options, the verdict and the actions. Almost half of it was labelling the other
+half.
+
+Now it is one card of six blocks. The ladder is a horizontal strip of twelve
+segments at the top, cleared rungs dim, the one you are on standing taller,
+havens in gold, with a line underneath giving the rung and what is already
+banked — the same information as twelve labelled rows in a fifth of the height.
+The replay budget moved onto the screen as pips, where the hearts sit in
+practice, so the two modes read the same way. Replay itself joined the lifelines
+as one utility row of four, which is what it always was: something you spend.
+And the screen's right-hand reading is what is on the line right now rather than
+a lifetime best you cannot act on mid-climb.
+
+The card is 624px, where the two cards together were closer to 930. Identical
+across the reveal at rungs 1, 5 and 12, in both languages.
+
+Lifeline labels lost a word each to fit four across — FORK, DROP 2, B OR W.
+
+---
+
+## v0.110.7 — the accidental toggle was rewriting your answers
+
+In chromatic mode the answer input was seven letters and a flat/natural/sharp
+toggle. Tap D-sharp, get it wrong, switch the toggle to flats, and the red mark
+jumps to E. It is the same pitch class and the app is not lying, but it reads as
+your own history moving under you. Worse on natural: the mark disappeared
+altogether while the spent try stayed spent, so the card looked like it had
+forgotten a guess it was still counting.
+
+The toggle was the problem, not the marking. It was a mode you had to hold in
+your head, it cost two taps per accidental, and it meant one button could mean
+three different notes depending on state you could not see from the button.
+
+**Twelve buttons instead, laid out as a keyboard.** Five accidentals on an upper
+row, shifted half a column so each straddles the two naturals it sits between —
+C-sharp between C and D, nothing between E and F, exactly where the gaps fall on
+a real keyboard. Seven naturals below. Every note is one tap, every button means
+one thing, and a wrong answer stays where you put it because the mark is keyed
+to the pitch class rather than to a letter plus a mode.
+
+Names come from the app's existing noteNaming preference, so solfège users get
+Do-sharp and Mi-flat without the module needing its own setting. White-key mode
+is unchanged, a single row of seven.
+
+Verified all twelve reachable in one tap, marks stable across re-renders, both
+pools and both input styles still answer correctly, and the card holds its
+height through the cycle at 468 white and 513 chromatic.
+
+---
+
+## v0.110.6 — the free reference tone had to go, and the card lost a third of itself
+
+**HEAR IT AGAINST A was a hole in the design.** Striking the fork costs you your
+run; that button handed you the same A440 for nothing, and it arrived at exactly
+the moment you would want it, right before the next note. The fork is supposed
+to be the resource the whole module is built around. Removed, and pinned, so it
+cannot come back as a convenience.
+
+**The hearts now do what they do everywhere else.** The px-heart sprite has a
+loss animation — a dark damage flash, then the heart drains and falls away
+leaving a pip — and the module was using only its resting states. It fires now
+on the try you just spent, and only that one: the flag clears on the next render
+so a re-draw does not replay every heart you have already lost.
+
+**The card was loaded, and three things were doing nothing.** The verdict line
+under the answers said "it was E flat" while the screen two rows up already
+printed the note and its frequency, so it was the same fact twice; mid-card the
+key going red and the heart falling say "not that one" better than a caption
+does. Gone. The fork was the biggest button on the card despite being the rarest
+action, and it sat between the transport and the thing you actually tap — it is
+one line now, below the answers, where a rarely-used destructive action belongs.
+It also stopped announcing A440, since the button is the fork.
+
+The practice card is 468px, down from 582 two versions ago. Still identical at
+every step of the cycle, in both languages, in every input mode: 468 with letter
+keys, 511 with the accidental row, 426 with the lamps.
+
+---
+
+## v0.110.5 — one transport row, and a screen that looks like a screen
+
+**The buttons were in three places.** Replay sat on its own above the fork, and
+the two reveal actions were stranded at the bottom of the card under the answer
+grid. They are the same kind of thing — what you do with the note in front of
+you — so they are one row of three now, where replay already was: AGAIN, NEXT,
+AGAINST A, each with a small icon, all three the same width. Next and the A
+reference are dashed and dimmed until there is an answer to use them on, so the
+row never changes shape. Replay carries the accent, since it is the one you
+reach for while you are still working.
+
+That also took 69px off the card, because the reserved space at the bottom is no
+longer needed. The card is 513px through the whole cycle now, down from 582, and
+still identical at every step.
+
+The climb keeps its single wide replay. It has no next and no reference tone, so
+a three-up row there would have been two thirds empty.
+
+**The screen.** It had the right shape but was still reading as a box with
+numbers in it. Three things fixed that. Scanlines, one pixel on and two off,
+multiplied over at low opacity. A corner vignette, so the middle sits brighter
+than the edges the way a lit panel does. And the values glow rather than just
+being coloured — the note carries a two-stop halo in the lit colour, the streak
+gets a smaller one once it is above zero, while the labels take a downward
+shadow so they read as etched into the bezel instead of printed on the glass.
+
+All of it is off or inverted in light mode, where a glow washes out and an
+etched label wants a highlight above it rather than a shadow below. Contrast
+holds at zero failures in both themes.
+
+---
+
+## v0.110.4 — one screen instead of four scattered readouts
+
+The card was telling you four things in four places. The note and its frequency
+sat in a thin strip, the tries were two grey dots below the answer buttons where
+nobody looked, and the streak was in a card of its own, a scroll further down,
+rendered as twelve pips and a caption. Meanwhile the whole thing jumped when you
+answered, because NEXT and HEAR IT AGAINST A only existed after a reveal.
+
+**The screen.** All four readings live in one panel now, laid out the way a
+tuner front panel would be: the run on the left, the note and its frequency in
+the middle, the record on the right, and the tries on a strip underneath. It has
+a proper inset and a glass highlight along the top edge so it reads as a panel
+let into the card rather than a box drawn on it. The ghost segments behind the
+note and the Hz stay — an unlit segment is what makes a lit one look lit.
+
+The tries are the pixel hearts from Music Quiz and Rhythm Survival, the shared
+px-heart sprite, so spending one looks the same here as it does there. Two grey
+dots said nothing; a heart going out says it without a label.
+
+The climb uses the same screen with the same geometry: rung on the left, best
+take on the right, and the strip underneath carries what is on the line. That
+also cleared a duplication, since the card header was printing the rung and the
+value as well; it now says which band you are in and how close the wrong answers
+sit, which is the thing you actually want to know at a glance.
+
+**No more jumping.** Both action buttons are always mounted and simply disabled
+until there is an answer to move on from, and the climb reserves the height of
+its taller state so the bank row and the CLIMB button swap in place. Measured
+across a full card cycle — fresh, one wrong, answered, next — the card is 582px
+at every step, and the buttons do not move by a pixel. The climb holds at 663px
+across the reveal at rungs 1, 5 and 12.
+
+A disabled control still has to be readable, so it is a dashed outline in muted
+rather than the 34%-opacity smudge it started as.
+
+**Contrast, and an audit that was lying.** The app paints cards with a gradient,
+and getComputedStyle reports gradient-painted elements as having a transparent
+background, so the audit had been resolving text against the body colour two
+levels up. Taught it to read the gradient's first colour stop, and to ignore
+stops that are themselves translucent, which is what made the fork button look
+like a 1:1 failure when it is fine.
+
+With honest backdrops it found three real ones, all in light mode or in states
+built from opacity: ruled-out letter keys at 2.08:1, dimmed to the point of
+being unreadable by a .5 opacity that a real colour replaces; the lifeline
+numerals at 4.36:1; and the option letters at 4.27:1. Both themes are at zero
+across eight screens now.
+
+---
+
+## v0.110.3 — reset was disarming itself, and the drill opened mute
+
+Three from on-device, and one more the fix uncovered.
+
+**Reset never fired.** Arm-then-confirm, and the arming tap re-rendered the
+stats sheet through rlpOpenStats — whose first line clears the armed flag,
+because opening the sheet fresh should never inherit an armed reset. So tap one
+armed it, the re-render disarmed it, and every tap was a first tap. The button
+never even said TAP AGAIN. Split into rlpOpenStats, which opens fresh and
+disarms, and rlpRenderStats, which redraws in place and touches nothing.
+Verified: first tap arms and relabels, second tap zeroes the tab you are on and
+leaves the other alone.
+
+**The drill opened mute.** rlpInit dealt the first card with silent=true, a
+leftover from the prototype where init ran before any user gesture. In the app
+you arrive by tapping the card, so the module whose whole point is "hear a note,
+name it" opened with nothing to name. It deals live now; the autoplay switch
+still decides.
+
+Fixing that exposed a ghost: the note rides a 350ms timeout, and leaving the
+module inside that window sounded a note on a hidden panel. Both deferred sounds
+— practice card and climb card — now check the panel is still visible before
+playing, same guard as every other deferred callback in the module.
+
+**NATURAL and CHROMATIC, not 7 and 12.** The pool picker was labelled with
+counts. Counts are what the code sees; names are what a musician reads. Settings
+buttons, the card-head summary and the stats sheet subtitle all say the words
+now, in both languages — naturali · media · 2 tentativi reads like the app,
+7 · mid · 2 read like a debug string.
+
+Also swept content and flow end to end while in there: dirty cards do not extend
+the run, the fork zeroes it, 50/50 never eliminates the answer and eliminated
+options ignore taps, banking pays the rung below, the SUMMITED badge shows on
+the intro, and the lamps input answers by pitch class so it works in any octave.
+All held.
+
+---
+
+## v0.110.2 — the module survey: a leak, a lost chime, and the favourites hole
+
+Asked to go back over the whole build with fresh eyes. Three real findings.
+
+**The comet outlived the module.** exitExercise stops every exercise from a
+hand-maintained list — ivStop, ceStop, roadtripStop and eleven friends — and
+Relative Pitch was not on it. Worse, switching bottom tabs does not call
+exitExercise at all, so the comet's requestAnimationFrame loop kept running at
+60fps on a hidden panel while the user sat on the Tuner. On a phone that is
+compositor work and battery for nothing, invisibly.
+
+Fixed both ways. rlpTeardown is on the stop list now, and every frame loop —
+comet, landing, intro attract — bails the moment its own panel is hidden, which
+covers any path that hides it without asking. The auto-advance timer got the
+same guard, since it could fire after exit and render a hidden panel back to
+life, restarting the comet with it. Verified: RAF alive in the module, dead
+after back, dead after a tab switch, alive again on re-entry. Both guards are
+sentinel-pinned, because the stop list is exactly the kind of thing a refactor
+tidies away.
+
+**The favourites hole, and it was not ours.** The hub cards carry data-fav-id
+and the star pin works, but the favourites sheet renders from FAV_META, a
+separate hand-built registry — and neither Relative Pitch nor Staff Notes was in
+it. Pin either module and it silently never appeared in the sheet. So Staff
+Notes has been half-favouritable since it shipped and nobody noticed, which is
+what happens when the same fact lives in two places. Both entries added, with
+icons and launch handlers.
+
+**Small ones.** The START chime on the climb got lost in the port; restored.
+Checked the rest of the assumptions while in there: progUpdate is a shallow
+merge onto the live object so nothing clobbers the nested challenge stats, and
+it feeds the perfect-session and achievement bookkeeping for free; progAddXp
+exists; every colour var the module leans on is defined app-wide; all 88 t()
+keys and 6 data-i18n keys exist in both languages; per-module settings not
+surviving Reset All Progress matches how every other module behaves.
+
+---
+
+## v0.110.1 — the ghost glow, and copy that did not sound like the app
+
+Three things from the first look at v0.110.0.
+
+**The ghost glow.** A soft blob was drifting across the card, out of step with
+the lamps. It was the ambient bleed: a 132x150 radial gradient tracking the
+comet head, standing 26px above the lamp row and 48px below it, so it swept over
+the card header and the readout as a second light that never lined up with the
+first. At the end of each pass it snapped back to the left edge, which is what
+read as something moving the wrong way.
+
+It was there to give the row some spill back when the glows were clipped. They
+are not clipped any more, and the three-stop shadows do that job properly, so
+the bleed is gone rather than tamed. Verified: every lit thing on screen is now
+an actual lamp, and the overlay sits on its housing to the pixel.
+
+**The subtitle.** Fifty-one characters and it ended on "the fork is a resource",
+which is a thing written about a design, not a thing said to a person. Now "Hear
+a note alone · name it · no reference first", 48 characters, which sits between
+Chord Ear at 42 and Pitch Match at 56. Fixed in all three places the same string
+lives: the i18n value, the hardcoded DOM default, and the Italian twin.
+
+The rules card had the same problem in longer form. Each line lost a clause and
+a piece of documentation grammar — "Each band is a stage. Clear one and its
+value is yours whatever happens after, and you get fresh lifelines and a fresh
+set of replays" became "Clear a band and its value is yours for good. Fresh
+lifelines and fresh replays with it." Italian rewritten alongside, not
+translated after.
+
+**The folder.** EAR TRAINING still said three exercises and listed three. Now
+four, with Relative Pitch named, and the folder subtitle leads with pitch.
+
+---
+
+## v0.110.0 — Relative Pitch
+
+The Coming Soon card said "name notes by ear, sing any degree from a given
+root". Half of that was already Interval Training's SING mode wearing a
+different name, so the module that got built is only the first half: hear a note
+cold, name it. No reference before the card, no key established. The only tools
+are a note you carry in your head and an A440 fork, which is what the skill
+actually is outside an app.
+
+That framing decided the shape. The fork is a RESOURCE, not a difficulty slider,
+so there is no anchor setting and no in-app note picker — picking your own
+reference lets you cheese it. Drift is not a mode either; it is a number on the
+practice screen, notes named since you last reached for the fork, because the
+run falls out of the drill for free.
+
+**PRACTICE.** A note sounds, you name it. Letter buttons, or the twelve lamps
+themselves if you would rather tap a keyboard. Two tries by default. After a
+reveal there is HEAR IT AGAINST A, which plays the fork and then the note, so
+you hear the interval you should have been computing.
+
+**CHALLENGE.** Twelve rungs, four answers a rung. The ladder escalates on ONE
+axis: how close the wrong answers sit to the right one. Rungs 1-2 offer nothing
+closer than a major third, 3-6 a tone to a third, 7-12 everything within a tone.
+Same note pool throughout, same tone length, same everything else. Two rungs of
+warmup, four in the middle, six where you can actually lose.
+
+Havens at 2 and 6, which are the band edges, and lifelines and replays refresh
+on the same edge. One boundary, three meanings: clear a band and its value is
+yours, and you get three fresh lifelines and six fresh replays. Anything unspent
+is gone. Six replays a band rather than three a note, so where you spend them is
+a decision instead of a formality.
+
+One wrong answer ends the run and you leave with your last haven, or nothing if
+you never cleared one. Falling back to a haven and continuing, which is what the
+first draft did, made banking pointless: a run you cannot lose is not worth
+walking away from.
+
+**What the design pass caught, in the order it hurt.**
+
+BLACK-OR-WHITE was dead for a third of the game. The first band had been
+white-keys-only, so "is it a black key" always answered no. That was a second
+difficulty axis bolted onto the distance one, and removing it fixed the lifeline
+and simplified the ladder at the same time. Sentinel-pinned, because a pool
+creeping back into a band would bring the bug with it.
+
+A miss taught you nothing. It named the answer and stopped, in a module whose
+entire subject is how far apart two notes are. It now says "it was E-flat, you
+were a semitone high", on the card and on the result screen.
+
+The distractor fallback filled with random notes when a band could not produce
+three, so the band that exists to guarantee distance occasionally served a
+semitone. It sorts by distance now. Also pinned.
+
+**The lamps.** The play surface is twelve lamps with a comet running left to
+right while you listen, then the answer lands. Getting them to look like lights
+rather than coloured boxes took three things: a housing with an inset shadow and
+a lens gradient so an unlit lamp reads as dark glass, a three-stop glow so the
+falloff is not a hard halo, and a white core above three-quarters brightness,
+because a real emitter goes white at full output rather than more violet. Attack
+is one frame, release is exponential on a 135ms constant; the first pass used a
+linear tail and read flat.
+
+Two bugs there. The glow was clipped by two `overflow:hidden` ancestors, and
+even unclipped it sat inside each lamp, where the next lamp's opaque housing
+painted over it. Glows now live in one overlay above every housing. That in turn
+erased the key letters in keyboard input, so the captions moved into the overlay
+too, above the light.
+
+Only opacity and transform are animated. The glow shadows are painted once and
+never touched, because animating box-shadow repaints a blurred area every frame.
+
+**Colour.** The palette was already sitting on a complementary pair without
+anyone deciding it: the Train violet measures 254 degrees, its true complement
+is 74, and the in-tune lime is 84. Ten degrees off opposite is why the reveal
+reads before you have read the label. Amber at 17 completes a rough
+split-complementary, which is where the fork sits. 60/30/10, one accent lit at a
+time.
+
+Every lamp colour is a variable, so light mode is an override rather than a
+parallel stylesheet — tighter bloom, denser fill, darker accents, because a glow
+that reads on black washes out on white. Pinned, since hard-coded glows are
+exactly what shipped the tone banks black twice.
+
+**Contrast and type.** A pass with element opacity counted, not just colour,
+found 124 failures across ten screens in the two themes. Nearly all of them were
+labels dimmed with `opacity:.55`, which looks fine on black and disappears on
+white. Those are real colours now. Type floor is 9px; there were 39 elements
+below it, six at 7px, which had crept in card by card. Both themes are at zero
+failures.
+
+**Housekeeping.** Settings and stats use the app's own shells: `iv-cog-btn`,
+`ce-stats-modal`, `progress-modal-close`, and the `iv-stats-hdr-btn` pattern
+where STATS lives in the settings header, the way Staff Notes, Interval, Pitch
+Match and Chord Ear all already do. Settings and stats persist inside progState,
+so they ride the existing backup instead of adding a forty-eighth standalone
+key. Audio goes through chordPlayMidi and inherits the soundfont and the master
+volume. Seven sentinel pins added.
+
+Stats are one window with two tabs rather than two windows. The per-note
+accuracy stays separate between them on purpose: Challenge gives you four
+options and Practice makes you name it cold, so folding a one-in-four guess into
+"named first try" would quietly inflate it.
+
+**Not done.** The module is Pro-gated by the existing rule, since FREE_TRAIN is
+poly only; whether a brand-new module should be the free taste instead is a
+decision, not an oversight. Nothing about feel, audio or animation has been
+judged on a device yet — twelve glow layers at 60fps in an Android WebView is a
+question, not a fact.
+
+---
 
 ## v0.105.2 — reset all progress was revoking Pro
 
