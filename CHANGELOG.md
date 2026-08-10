@@ -64,6 +64,1511 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.131.7 — the mega pass, and the deck was in the wrong order
+
+Chord symbols were the one pack that had never been source-checked. All five
+qualities confirmed: the triangle is major seventh, the circle diminished, the
+slashed circle half-diminished (minor seventh flat five, 1-b3-b5-b7), the plus
+augmented, and the letter after a slash is the bass note.
+
+**A contradiction scan across all 138 glyph cards with a SMuFL description:**
+zero conflicts. Up against down, above against below, open against closed, sharp
+against flat, first against second. Nothing in a definition contradicts what the
+spec says the glyph is.
+
+**Then the visual pass found a real one, and it was structural.** The cards are
+authored in two blocks — font glyphs, then the drawn ones — so each pack's drawn
+cards landed after its glyph cards and split nine confusion groups into two
+separate runs. Whole rest and half rest sat 120 cards away from the other rests.
+
+Worse, the contents list emits a group header only the FIRST time it meets a
+group, so that second run appeared with no header of its own, filed silently
+under whichever group happened to come before it. Anyone opening the index
+looking for the whole rest would have found it listed under something else.
+
+Sorted once at load, by pack and then by the order each group first appears. All
+nine groups are single runs now, the seven rests are contiguous, the index has 36
+headers and no duplicates, and every card still renders at one height with its
+distractors intact.
+
+That is the fourth time this session the fix was ordering or registration rather
+than the thing itself — panels, back-map, folder list, favourites, and now the
+deck's own sequence.
+
+---
+
+## v0.131.6 — cards that describe instead of instruct
+
+Daniele caught staccato reading shaky, and the bass clef saying "the left hand"
+of nothing. Both right, and scanning for the same shapes found two more.
+
+**Staccato hedged so hard it never said what to do.** "Detached from the note
+that follows; how short depends on context." Every word is defensible — strictly,
+the only thing you can infer from a staccato dot is that the note is not legato —
+but a card that qualifies before it instructs teaches nobody. It now says to
+shorten the note and leave a gap, and keeps the qualification after.
+
+**Staccatissimo had the same problem** and only made sense read directly after
+staccato: "Always very short, regardless of context" never mentions shortening.
+
+**Bass clef said "the left hand"** with no instrument attached. The treble card
+says "the right hand at the piano"; this one had lost the referent, so it read as
+the left hand of whatever you happened to play.
+
+**Tenuto-staccato** said "slightly separated but held", which specifies neither
+how long nor how separated.
+
+All four fixed in English and Italian, and every card still measures 348px with
+nothing clipped in either language.
+
+The scan also flagged a dozen cards for stating what something is NOT — laissez
+vibrer, harmonic, let ring, arpeggio, the tab staff. Those are left alone: each
+contrasts against the default behaviour, which is the informative part. A
+harmonic really is defined by touching the string instead of pressing it.
+
+---
+
+## v0.131.5 — full pass over the session
+
+Everything built since v0.120.0, re-verified in the final file rather than
+trusted from when it was written.
+
+**One real find: "centre" in the C clef definition.** The US spelling sweep at
+v0.117.0 corrected 772 instances across the app; I then wrote 181 new cards and
+put a British spelling straight back in. It was the only one — every other card
+is clean — but it is a good illustration of why a sweep is not a permanent state.
+
+Everything else held:
+
+  Version synced across all three spots. All seven gates pass, read individually.
+  Folders each render exactly their own modules, Games included.
+  Zero leaks across 24 exercise-to-folder jumps.
+  All six modules back out to their own folder, Music Quiz included.
+  181 cards in both languages: one card height, no missing ink, no missing text,
+  nothing clipped.
+  A full English test scores 10/10, 100%, +20 XP, drill hidden on a clean run.
+  A quit run changes XP by zero.
+  Shuffle stays on the card, is fresh each time, resumes in place, leaves the
+  deck alone.
+  Index: 181 rows, none broken, exact deck order with shuffle both on and off.
+  Casual counters never unlock Flawless Victory; a completed run does.
+  Removing a pin removes it and launches nothing.
+  No page errors anywhere in the sweep.
+
+One check reported a false failure again — the index order looked wrong because
+the row's textContent includes the SVG label text on drawn cards, so "P.M." was
+being read as part of the name. Comparing the name element directly: all 181 in
+exact order. Third time this session a test has been wrong rather than the code,
+which cuts both ways and is worth remembering.
+
+---
+
+## v0.131.4 — Daniele's tour copy
+
+His wording, applied. Better than mine in the place that matters: "bowing,
+blowing, or bending" does in three words what my version explained in a clause,
+and naming the three kinds of set up front is clearer than leading with the
+instrument case.
+
+Two changes to what he sent. The shuffle button is on the CARD, not inside the
+index, and the sentence as written put them together — that would send people
+looking in the wrong place. And XP is capitalised everywhere else in the app.
+
+Italian written to match rather than translated literally: "arco, fiati o
+bending" keeps the same three-beat shape, and bending stays in English because
+that is what Italian players say.
+
+All three steps fire, selectors resolve, and each body fits its card without
+scrolling.
+
+---
+
+## v0.131.3 — the tour, held to the standard the sweep set
+
+The rewrite an hour ago failed the rules the v0.118.0 tour sweep was written to
+enforce. Written in the same session as everything else, and never read back
+cold against them.
+
+What was wrong with it:
+
+  "These are the marks that sit around the notes rather than the notes
+  themselves" — the not-X-but-Y construction, explicitly banned.
+
+  "when you want the deck to stop being predictable" — quippy.
+
+  "the wrong answers are always things you could plausibly have picked rather
+  than something obviously unrelated", and "so reading through the deck can
+  never be mistaken for practice" — explaining our own design reasoning to the
+  person using it. They do not care why the distractors are chosen that way;
+  they care that the wrong answers are hard.
+
+  "the card teaches on the way out" — a flourish.
+
+Five steps for a module whose card, deck size and TEST button are all on screen
+and labelled. The sweep collapsed the two hub tours to one step each on exactly
+this reasoning: only say the thing that is hidden.
+
+Three steps now, 46 / 24 / 32 words. Picking a set, because the instrument pools
+are worth choosing and the reason is not visible. Browsing, because tapping the
+counter opening an index is not discoverable and neither is the shuffle button.
+And the test, because only it earns XP. The deck itself needed no step; it is on
+the screen behind the card.
+
+---
+
+## v0.131.2 — the tour catches up with the module
+
+The Notation Cards tour was written at v0.121.1, when the module was browse-only
+with 17 dynamics cards and a button that cycled between two packs. Everything it
+described has since changed and it had never been revisited.
+
+It never mentioned TEST at all — the primary action, and the only thing that
+earns anything. It described packs as a cycle when the picker is now a grid with
+curated instrument pools. And it predated both shuffle and the contents list, so
+two features had no explanation anywhere in the app.
+
+Five steps now: the deck, choosing a set, browsing, the test, and what counts.
+The pools step leads with the reason they exist rather than the mechanism — a
+guitarist gets bar lines and repeats and never bowing — because that is the part
+worth knowing. The last step keeps the design decision out loud: only the test
+earns XP, browsing earns nothing, and an abandoned run scores nothing at all.
+
+Verified in the app: all five steps fire in order, every selector resolves at the
+moment the tour runs, and Italian is twinned throughout.
+
+This is the same failure mode as the tour sweep back in v0.118.0 — tours drift
+silently because nothing checks whether what they describe still exists. The tour
+audit confirms a tour is PRESENT and its selectors resolve; it cannot know the
+words are describing a button that was replaced three builds ago.
+
+---
+
+## v0.131.1 — removal removes, and a perfect score means something
+
+**Removing a pinned module also launched it.** The long-press timer fired the
+removal but never cleared its own handle, so lifting the finger ran the tap path
+too: it saw a live timer and no movement, closed the sheet and opened the module
+it had just deleted. The press now marks itself as spent. Verified: the item is
+removed, the sheet stays open, and nothing launches.
+
+**Flawless Victory was unlocking off casual play.** It fires when an exercise
+reports correct equal to total over at least ten attempts — but Chord Ear, Pitch
+Match, Staff Notes and Relative Pitch all report RUNNING session counters that
+tick upward while you are still playing, so ten right in a row during practice
+unlocked a legendary. A perfect score now requires `runComplete`: a scored run
+with a defined start and end. Verified both ways — twelve of twelve on running
+counters does not unlock; a completed ten-question test does.
+
+Notation Cards' test mode sets that flag. The other exercises need their own pass
+to decide which of them have a real completed run; until then they no longer
+award it by accident. Anyone who already has the achievement keeps it.
+
+**The pool and contents sheets scrolled the page behind them** once their own
+content reached the end. Both now contain their scroll.
+
+**The tap lag is NOT the JavaScript, and I have not blind-fixed it.** Measured:
+entering a module costs 3ms for Notation Cards, 7ms for Staff Notes, 8ms for
+Intervals, 35ms for Road Trip. None of that is perceptible. The delay is paint or
+transition, and the fix would mean restructuring `enterExercise`, which is shared
+by fifteen modules and is exactly where the panel-list and back-map misses have
+happened. Not something to reorganise speculatively on the way into a build.
+
+---
+
+## v0.131.0 — shuffle, and the contents list stops saying undefined
+
+**43 rows in the contents list were broken.** Every row built a font glyph from
+the card's codepoint, but a drawn card has no codepoint and no font metrics
+either, so those rows rendered "&#xundefined;" at a NaN size. They now render
+their SVG. Checked: 181 rows, 0 containing undefined or NaN, 43 carrying a
+drawing.
+
+**Shuffle.** Top left of the card, crossed arrows when on and parallel when off.
+
+It is an ORDER over the deck rather than a reordering of it, which is what keeps
+the contents list alone: the deck stays in its natural sequence and only the path
+the arrows walk changes. Verified against each thing you asked for — toggling
+leaves you on the card you were already looking at, the walk is not sequential,
+each switch-on builds a fresh order, turning it off resumes the natural order
+from wherever you are rather than jumping, the deck order is untouched, and the
+contents list reads in deck order regardless.
+
+Changing pool or preset rebuilds the order, so a shuffle never outlives the deck
+it was built for.
+
+One note on the verification: my first check of the contents order failed, and
+the code was right — the test selector was picking a nested span inside a drawn
+card's artwork rather than the name. Compared directly, the two orders are
+identical.
+
+---
+
+## v0.130.3 — everything in its right place
+
+Staff Notes was appearing in Games. It is not in Games: the folder registries and
+the hub markup are both correct, and every folder renders exactly the modules it
+should. What was happening is a leak.
+
+**Opening a folder never closed the module already open.** `exitExercise()` hides
+the panels, but changing folder is a second way out of an exercise and nothing
+called it — so going Reading, into Staff Notes, then straight to Games left Staff
+Notes sitting on top of the Games hub. It looked like a misplaced module and was
+a stale one.
+
+All four folder entry points now close any open exercise first. Tested as a
+matrix, six exercises against four folders, 24 combinations: no panel survives
+the jump.
+
+**Two registry gaps found by the same scan.** Music Quiz was never added to
+`GAMES_EXERCISES`, so backing out of it landed on TRAIN rather than GAMES — the
+identical miss notationcards had, sitting there since Music Quiz shipped. And
+Notation Cards had no entry in the favourites registry, so pinning it would have
+produced a tile with no label and no icon. Both fixed, and the favourites entry
+follows the `launch:` convention its neighbours use rather than the shape I first
+wrote.
+
+That is now four separate hand-maintained lists a new module has to join: the
+panel list, the back-map, its folder list, and the favourites registry. Nothing
+checks them against each other, and something has been missed in every one.
+
+---
+
+## v0.130.2 — third sweep, on the dimensions never looked at
+
+The first two sweeps kept finding things, so the question was whether a third was
+worth it. Repeating a check that already came back clean finds nothing; each
+sweep had paid because it looked at a different dimension. So this one went at
+the four that had never been examined at all.
+
+**Switching language mid-test broke the answer marking.** The option buttons are
+built once per question and carry no i18n key, so they kept their old-language
+text while `ncName()` switched under them — and the right answer was found by
+comparing button text to the card name, which then matched nothing. The green
+highlight landed on no button at all.
+
+Two fixes. The right answer is now identified by card ID rather than by text,
+which cannot drift. And `applyLang` calls a relabel hook, so a live question, its
+prompt, its reveal and the missed chips all follow the language. Verified in both
+directions, including switching while a reveal is on screen: options follow,
+the right answer stays marked, and the marked one is the correct one.
+
+**Edge cases hold.** Every pack off falls back to the whole deck rather than an
+empty one. A six-card pack builds a six-question test rather than padding to ten
+or crashing. A confusion group with only two members still yields three
+distractors through the widening fallback.
+
+**The pool choice survives leaving and re-entering** the module.
+
+**And light mode, which this module had never once been seen in.** Glyphs, drawn
+cards and the stand-in notes all measure 10.7:1 against the stage; the name
+11.9:1 and the definition 10.2:1 against the card. Nothing washes out, no
+hardcoded colour leaked in — every surface uses theme variables, which is what
+the light-mode remediation established and what the tone-bank rule exists to
+protect.
+
+---
+
+## v0.130.1 — second pass, including the Italian
+
+**Italian terminology checked against Italian sources**, not written from memory:
+legatura di valore for the tie (same pitch, sums the duration) against legatura
+di portamento for the slur (different pitches, articulation) — a pair that is
+easy to swap and that the cards get right; punto di valore, which lengthens the
+note by half its value; corona, stanghetta, bequadro, pentagramma; and the
+semibreve / minima / semiminima / croma / semicroma chain. All confirmed.
+
+**Functional sweep across both languages.** Every one of the 181 cards stepped
+through in EN and IT: all render ink, all have a name and a definition, none
+empty. Distractors drawn 60 times per language: always exactly three, never the
+answer itself, never a duplicate label. A full ten-question run in Italian scores
+10 / 10 and awards its XP, which matters because the correct-answer check
+compares button text to the card name — if any site had missed the language
+accessor, Italian would have scored zero.
+
+**And the sweep found what eyeballing had not.** The reveal box in test mode
+clips longer definitions: 8 in English and 14 in Italian. Browse gives the
+definition 70px to itself with a group line beneath; the reveal has to fit the
+name as well, so it needed that height back. Harp harmonic's English definition
+was 144 characters and too long for any box; trimmed without losing the
+instruction, since the bracketed fret is already drawn on the card.
+
+Both cards now measure 348px in both modes and both languages, and nothing clips
+anywhere.
+
+---
+
+## v0.130.0 — Italian for all 181 cards
+
+Names and definitions, every card, using the `nameIt` convention the instrument,
+interval and tuning tables already use. Verified 181 of 181 have both fields and
+none is empty.
+
+**The dynamics cards are not translations.** "Piano means quiet" teaches an
+English speaker something and an Italian speaker nothing, because the vocabulary
+IS Italian. Those seventeen teach the convention instead: that the mark means
+volume and not touch, that it is always relative, where it sits on the ladder,
+that the gap between mp and mf is the narrowest on the scale. Same card,
+different lesson.
+
+**Note values use the Italian names**, which follow the British system rather
+than the American: semibreve, minima, semiminima, croma, semicroma — not
+"nota intera". Rests likewise, and the clefs are chiave di violino and chiave di
+basso.
+
+Guitar keeps the English technique names players actually read — bend, tapping,
+slide, palm mute — while using the real Italian where one is in normal use:
+barre, capotasto, pizzicato alla Bartok.
+
+**Every place card text is shown now goes through one accessor.** Browse, the
+test reveal, the answer buttons, the contents list, the missed chips. Checked
+that no site still reads `.name` or `.def` directly, because missing one leaves
+the module half-Italian — and the answer buttons in particular would have scored
+wrong, since the correct-answer check compares button text to the card name.
+
+**Two layout fixes the Italian forced.** Italian names run longer and wrap to two
+lines, so the name slot needed a fixed height like the definition slot already
+had; without it the card grew and the layout jumped between languages as well as
+between cards. Card heights now measure a single value, 326px, in both modes and
+both languages, with no clipped text anywhere.
+
+---
+
+## v0.129.4 — the drawn cards checked against engraving rules
+
+The last unverified set: the 43 drawn cards, which have no SMuFL glyph to check
+against. The guitar ones were already drawn to the Hal Leonard legend and the
+bend descriptions; this covers the standard-notation ones.
+
+**Rest positions were right, proportions were not.** A whole rest hangs BELOW the
+fourth line and a half rest sits ON the third — both correct, and both land in
+the third space, one filling its upper half and one its lower. But the height
+should be half the distance between staff lines, and mine was 7px against a 9px
+space, near enough a full space. Both rects are now half a space tall and about
+1.6 spaces wide, which is what makes the hanging and sitting legible rather than
+the block simply filling the gap.
+
+Checked and correct as drawn: the multi-bar rest (thick bar centred on the staff,
+vertical caps at each end, count above), first and second endings, slur and tie
+curves, the ottava and trill and pedal lines, the tuplet bracket, the glissando
+line and the courtesy accidental.
+
+That closes the accuracy pass. Every card in the module has now been checked
+against something outside my own memory: 140 glyph cards against the SMuFL
+codepoint tables and classification, 181 definitions against published sources,
+and 43 drawings against Hal Leonard's legend or standard engraving practice.
+
+Still open: Italian for all 181 cards.
+
+---
+
+## v0.129.3 — the strum arrows were backwards
+
+Went back over how much of the module had actually been verified and the honest
+number was worse than I had been saying: 65 of 181 definitions source-checked,
+116 not.
+
+**All 116 names cross-checked against SMuFL's own glyph descriptions first** —
+free, and it proves no card points at the wrong symbol. All 116 match. So the
+glyphs are right and only the explanations were in question.
+
+**Then the explanations, and the strum pair was reversed.** A downstroke moves
+toward the floor and sounds the LOWEST string first; an upstroke moves toward the
+ceiling and sounds the HIGHEST first. Both cards said the opposite. This is the
+error most likely to have actually taught someone something false, because a
+beginner has no way to catch it and the two cards sit side by side confirming
+each other.
+
+**"Indicio" is not the Spanish for index finger.** The right-hand fingering card
+glossed p-i-m-a as pulgar, indicio, medio, anular. Indicio means a clue. It is
+indice. That has been wrong since the very first draft of the deck and survived
+every pass, including one where I read the card aloud in a changelog.
+
+Everything else in accidentals, note values, rests, navigation, pauses, chord
+symbols and the staff pack checked out: accidental duration to the end of the
+bar, the note-value chain, whole and half rest positions, the barlines, the
+octave and pedal marks, the clefs, the chord-symbol qualities and the slash
+chord.
+
+Running total on definition errors found by checking rather than assuming: 5 in
+dynamics and ornaments, 8 in strings and winds, 3 here. All 16 were in cards
+that read perfectly plausibly.
+
+---
+
+## v0.129.2 — strings and winds get their source pass
+
+The 26 cards that had never been checked against anything. Eight were wrong.
+
+**Sul ponticello was the wrong technique entirely.** Sul ponticello is bowing
+NEAR the bridge; this glyph is `stringsBowBehindBridge`, which is bowing BEHIND
+it, on the short length between bridge and tailpiece — a different technique with
+a different sound. SMuFL's own description reads "Bow behind bridge (sul
+ponticello)" and I inherited the spec's looseness. Checked: there is no SMuFL
+glyph for sul ponticello at all, because it is written as text. The card is now
+"Behind the bridge".
+
+**Buzz pizzicato buzzes against the FINGERNAIL**, not the fingerboard. Snapping
+against the fingerboard is Bartok pizzicato, which is the card directly beside
+it — so the two cards described the same thing and one of them was wrong.
+
+**Fouetté arrives from the air.** Mine said it "starts from the string", which is
+the one thing a fouetté is not: the bow is lifted and whipped back down onto the
+string, usually up-bow near the tip.
+
+Also corrected: bowing ON the bridge keeps the hair on the strings, hence quiet
+and squeaky rather than a scrape; a flip is a turn off the note; scoop is
+specifically a lip slur from about a semitone below; plop is a rapid descent onto
+the note.
+
+Half harmonic now says what the mark asks for — press only partway, between a
+stopped note and a harmonic — rather than describing a tone I could not source.
+
+**Verified correct and left alone:** down and up bow, harmonic, snap pizzicato,
+left-hand pizzicato, thumb position (the thumb works like a capo, which is the
+movable-nut framing the card already used), doit, the three falls, brass bend,
+the three tone-hole cards, multiphonic and mouthpiece pop.
+
+---
+
+## v0.129.1 — an audit against the spec's own data
+
+Daniele asked whether there is a repository or database for this rather than me
+fixing one card at a time. There is, and I should have gone looking before the
+fourth alignment pass.
+
+**The W3C publishes SMuFL's own classification** — `classes.json`, 85 classes
+over the whole font — and it settles by data what I had been assigning by hand:
+which glyphs are articulations, which are ornaments, which are rests or clefs or
+barlines. Checked against every card: 96 carry a class, and all 96 agree with the
+attachment mode I had given them. That is the first accuracy claim on this module
+that is not me marking my own homework.
+
+**Bravura's own metadata is the bigger prize and I could not reach it.** SMuFL
+fonts ship a metadata file carrying `glyphsWithAnchors` — `stemUpSE` gives the
+exact point where a stem meets a notehead, in staff spaces — and
+`engravingDefaults` for stem and staff-line thickness. Those are precisely the
+numbers I derived by hand from outlines over the last four builds. Steinberg's
+copy is not at any path reachable from here; MuseScore's Leland metadata came
+down and confirms the schema, but its values describe Leland, not Bravura, so
+they cannot be used. Worth another look from a machine with wider network access.
+
+**New gate: `intonare_notation_audit.py`.** Checks that every codepoint resolves
+and matches the id claiming it, that attachment agrees with SMuFL, that no two
+cards share a codepoint, and that every confusion group has something to confuse
+with. Needs `glyphnames.json` and `classes.json` beside it.
+
+**It found a real bug on its first run.** Trill and Arpeggio each existed twice —
+once in Ornaments, once added again during the guitar rewrite — so two cards
+pointed at one codepoint. In a test that is a question with two correct answers,
+the sf/sfz trap I had explicitly designed against. Merged: packs are a list, so
+the surviving card simply belongs to both. 181 cards, and Guitar still counts 47
+because nothing was lost.
+
+---
+
+## v0.129.0 — bends drawn from the sources, not from memory
+
+Daniele called out that I was chasing fixes rather than checking against real
+notation, and he was right: every previous pass redrew these from memory and then
+verified geometry I had chosen myself. This one starts from published
+descriptions.
+
+**Bend arrows were the wrong shape.** A bend is a CURVED arrow leaving the note
+and turning upward, with the interval label at the PEAK of the arrow. Mine were
+straight vertical arrows with the label off to one side. All eight redrawn:
+half-step, whole-step, slight, bend and release, unison and grace-note bend now
+bow out of the fret number and turn up under their label.
+
+The one that was already right turns out to have been right by accident: a
+pre-bend genuinely is a straight vertical line, because the string is bent before
+it is struck. That is now deliberate rather than lucky.
+
+**Grace-note bend was greying its fret number.** MuseScore's convention is that
+grace-note bend fret numbers are CUE SIZED. It is small now, not faded.
+
+**Rake now runs into the note.** Practically you drag across the muted strings
+and land on the target, so the Xs sit directly under the fretted note on the
+strings you cross, not floating above it on a separate part of the staff.
+
+**And the whammy text is w/bar**, no space, which is the default MuseScore uses.
+
+183 cards, 43 drawn, every card 296px, nothing overflows, no page errors.
+
+---
+
+## v0.128.1 — guitar cards get their tab
+
+Daniele's on-device pass found things a contact sheet at desk size did not.
+
+**Rake was pointing the wrong way.** You rake INTO a target note, and dragging
+from low strings to high puts the muted strings BELOW the fretted note. Mine had
+the Xs above and the note on the bottom string, which is a rake nobody plays. The
+target note is on an upper string now with the muted strings under it.
+
+**Three cards were a bare symbol where the technique is the point.** A lone C
+tells a learner nothing about a barré; it now shows one fret stopped across all
+six strings with the bracket that marks it, and half barré across three. A T over
+a notehead does not show that tapping is a two-hand move; it is tab with the
+tapped fret, a slur, and the fretted note it pulls off to. Muffled strings and
+the rhythm slash likewise needed strings to sit on.
+
+**Text was overlapping its own dashes.** "let ring" ran into its extension line,
+"P.M." into its dashes, "w/ bar" into the -1, and "full" into the pre-bend hold.
+All given clearance.
+
+**And one conversion I got wrong.** I put the string number on tab, where the
+line the number sits on already tells you the string — the mark only means
+anything on a staff. Reverted to a staff note.
+
+183 cards, 43 drawn, every card 296px, nothing overflows.
+
+---
+
+## v0.128.0 — the drawn cards land
+
+**183 cards.** The 38 that SMuFL cannot represent are in: slur, tie, the eight
+bends, both slides, hammer-on, pull-off, all four harmonics, the tab conventions,
+the ottava and trill and pedal lines, the tuplet bracket, first and second
+endings, the multi-bar rest, the courtesy accidental, and the two rests that need
+a staff line to be told apart. Drawn to the Hal Leonard legend where one exists.
+
+The card list carries the SVG directly, so a drawn card is data like any other
+and the pools pick them up: Guitar goes from 74 to 109, Staff from 19 to 27,
+Beginner from 30 to 35.
+
+Swept all 38 rendered through the app's own renderer, as before. Three wrong.
+
+**Tremolo picking was the wrong concept, not a wrong drawing.** It showed two
+fret numbers with strokes between them, which is a fingered tremolo — alternating
+between two pitches. Tremolo picking is one note picked as fast as possible. It
+is a single fret number with strokes on it now.
+
+The **tie** curve dipped to y 50 inside a 48-tall viewBox and was being clipped;
+both tie and slur are rebalanced within their box. And **wide vibrato** was
+barely deeper than plain vibrato, which is the entire distinction between them.
+
+Verified in the app: all 183 render, every card still 296px, no drawn card
+overflows its stage, no page errors.
+
+---
+
+## v0.127.3 — flags push the head sideways
+
+Last build anchored the plain note cards vertically on the notehead and left the
+horizontal axis alone. A flag hangs off the right of an eighth or sixteenth note
+and widens the bounding box that way, so centring on the box puts the NOTEHEAD
+6.8px left of centre on the eighth and 7.1px on the sixteenth — visible against
+the quarter note, which has no flag and sits nearly true.
+
+The renderer only ever applied a vertical shift. It takes a horizontal one now,
+and the six note glyphs with a stem or flag carry a `dx` computed from the font:
+the distance between the glyph's bbox centre and its notehead's centre.
+
+Measured across whole, breve, half, quarter, eighth and sixteenth: every notehead
+is 0 from the stage centre, matching a composed card's head exactly.
+
+---
+
+## v0.127.2 — plain notes anchor on the notehead too
+
+**The tremolo fix in the last build was wrong.** I moved the strokes with
+`translate(9px, calc(50% + 4px))`, and a percentage translate resolves against
+the element being moved — the 30px slot — not against the stem. That pushed them
+19px down, straight onto the notehead. The vertical translate is gone entirely:
+the slot already bottoms out just above the head, which puts the strokes across
+the stem without being told to. Measured: on the stem to within 1px horizontally,
+inside the stem's span vertically, 4px clear of the head, on all three cards.
+
+**Plain note cards were anchored differently from composed ones.** A composed
+card centres the notehead on the stage; a bare quarter or eighth note centred its
+whole glyph, which puts the head below centre by half a stem. Flipping between
+them moved the head. The eight note glyphs — half, quarter, eighth, sixteenth,
+both grace notes, whole and breve — now carry a notehead-anchored offset computed
+from the font rather than their bounding box. Measured: every one sits at 0 from
+the stage centre, the same as a composed card's head.
+
+---
+
+## v0.127.1 — looking at all 145
+
+Rendered every card through the module's own renderer into contact sheets and
+read them, rather than measuring. Measurement can prove a thing is where I put
+it; it cannot say the thing is wrong. Three problems, and the third is a notation
+error rather than a layout one.
+
+**Marks were touching the notehead.** The gap measured a consistent 0, which I
+had recorded as a pass. Consistent, but wrong: notation leaves roughly half a
+staff space, or the mark reads as part of the head. 5px clearance.
+
+**Tremolo strokes sat at the far end of the stem** instead of crossing its
+middle, which is where they belong.
+
+**Eight brass articulations had no direction.** A scoop or plop leads INTO a note
+and a doit, fall, flip or bend leaves it — they attach to the notehead on the
+correct side. All eight were rendering above the head, which made a fall look
+like it rises. Scoop and plop are now `before`, the five falls and bend are
+`after`.
+
+The rest checked out against convention: articulations on the notehead side with
+the stem turned away, accidentals at head height, grace notes visibly smaller
+than the note they lean on, the arpeggio spanning its chord, rests and clefs and
+barlines all correct.
+
+---
+
+## v0.127.0 — the notehead is the anchor
+
+Four rounds of nudging the composition and the augmentation dot still was not
+beside the fat part of the note. Measuring the font explains why: in
+`noteQuarterUp` the notehead centre sits at y -16 while the glyph's bounding box
+centre is y 367. Anything aligned to that glyph lands 22px above the head. Every
+fix so far had been aligning to the wrong point.
+
+The stand-in note is no longer the composite glyph. It is a `noteheadBlack` with
+an absolutely-positioned CSS stem, so the element's box IS the notehead and every
+alignment is exact by construction rather than by offset. The stem adds no height
+and cannot shift anything.
+
+Full sweep over all 71 composed cards, measuring the gap between mark and
+notehead rather than centre to centre — centre distance is SUPPOSED to vary with
+the mark's height, which is why the earlier checks looked wrong when they were
+not:
+
+    before   7px, one value        after   7px, one value
+    grace    7px, one value        above   0px, one value
+    stem     0px, one value
+
+Row modes align dead on the notehead's centre line (dy 0 across every card).
+Tremolo strokes are offset 9px onto the stem, which runs from the right edge of
+the head, instead of being centred over the head.
+
+---
+
+## v0.126.4 — the note is the centred thing
+
+The last two fixes stopped the note moving between cards but left it off-centre
+on the stage, because the symbol and note were still being balanced as a PAIR:
+centring the group puts the note off to one side by half the symbol's width. On a
+sharp it leaned right, on the augmentation dot it leaned left.
+
+The composition is a three-track grid now, with the note in the middle track and
+the symbol hanging off whichever side it belongs on. Measured across all 71
+composed cards: the note's centre is offset from the stage's centre by 0 in every
+one of the six modes.
+
+Getting there took one wrong turn worth recording. In column mode I first put the
+mark in grid column 1 and the note in column 2, which gives the grid two columns
+and centres the note inside ITS column rather than on the stage — the offsets came
+back scattered from 3 to 26px. Both live in column 2 now, different rows.
+
+---
+
+## v0.126.3 — and stops wandering vertically
+
+The same bug on the other axis, which the last fix did not touch. A column sized
+to its contents moves the note up or down depending on how tall the mark is: a
+staccato dot is 4px of ink and a staccatissimo wedge is 14px, so the note sat in
+a different place on each.
+
+The mark now gets a fixed 30px slot, bottom-aligned. Bottom rather than centre
+because that is also what the notation asks for — an articulation sits a constant
+distance from the notehead whatever its own height, rather than being centred in
+whatever space it happens to need.
+
+Verified across all six composition modes: each one resolves to exactly one note
+position, x and y. Above 197,267 across all 57 cards; grace, beside, stem, before
+and after each a single pair of their own. Nothing overflows the stage.
+
+---
+
+## v0.126.2 — the note stops wandering
+
+Three complaints, one cause. The symbol and its stand-in note were laid out as a
+plain centred flex row, which centres the PAIR — so the note slid left or right
+depending on how wide the symbol happened to be. A flat and a natural are
+different widths, so the notehead landed somewhere different on each card, and
+flipping between them looked like the note was drifting.
+
+Each side now gets a fixed 54px slot: the symbol moves within its own half and
+the note lands on the same pixel every time. Measured across sharp, flat,
+natural, double sharp and double flat: identical x and identical baseline.
+
+**The augmentation dot sits beside the notehead now**, not floating at the
+vertical centre of the whole glyph. On a stem-up note the head is at the bottom,
+so the accidental and dot slots align to the bottom rather than the middle —
+which is also where an accidental belongs.
+
+**And every card is the same height.** The definition was a minimum rather than a
+fixed height, so a three-line definition (treble clef) made that card taller than
+a one-line one and the whole layout jumped as you flipped. All 145 now measure
+296px, verified by stepping through the deck and collecting the distinct heights:
+one value.
+
+---
+
+## v0.126.1 — scale, after the scale changed
+
+`NC_SCALE` was 1.65, tuned when every glyph was normalised to roughly the same
+ink height. Switching to one uniform font-size made the tallest glyph 99px of ink
+BEFORE scaling, so a treble clef was rendering at 163px inside a 104px stage. Now
+1.15, with the stage at 124px, and every one of the 145 verified to fit.
+
+**My overflow check could not have caught that**, which is the part worth
+recording. It measured `.nc-g`, the span that carries `line-height: 0` and
+therefore reports zero height no matter how much ink spills out of it. It
+returned "none" on a build where clefs were half again taller than their
+container. It now measures the `.nc-gb` wrappers, which carry the real ink
+height. Third time this session a check has measured the wrapper instead of the
+thing.
+
+Composed cards were oversized for the same reason and now sit correctly: the
+stand-in note is 59px against a 6px staccato dot, which is the true ratio.
+
+**The contents list drew every symbol at full card size**, so a treble clef ran
+down across five rows. Each row now scales its glyph to fit its slot on BOTH
+axes — height alone still clipped the wide dynamics like pppp against the side —
+and the slot clips anything left over. Cards carry a width for this.
+
+The counter gave no sign it opened anything. It has a list icon now.
+
+---
+
+## v0.126.0 — one font size, and the notes that were missing
+
+**The sizing approach was wrong from the start.** I was normalising every
+glyph's ink height, which meant computing a different font-size per glyph — a 41
+to 1 spread across this set, since a treble clef is 1.98em tall and a tenuto line
+is 0.05em. Stroke weight scales with font-size, so normalising height necessarily
+distorts weight. That is the "some feel thin, some feel stretched" exactly.
+
+SMuFL is designed the other way round: every glyph works at ONE size, 1 em to 4
+staff spaces, and ink height is meant to vary. Every card now renders at 50px.
+Stroke weight is identical everywhere and relative sizes are the ones the font
+was drawn for.
+
+**Which exposed a thing I had never ported.** At true scale a staccato dot is 4px
+of ink, and on its own that is not a card, it is a speck. The stand-in note
+composition existed in the review sheet and never made it into the app — the
+`mode` field was sitting in the card data doing nothing. All six modes are in
+now: 57 cards above a stem-down note so the mark is on the notehead side, 5
+accidentals before a notehead, the augmentation dot after one, 3 tremolos on the
+stem, 2 grace notes leaning on a full note, 3 arpeggios beside a chord. 74 cards
+stand alone and should.
+
+A bug caught while porting: dimming the stand-in with `:not(:first-child)` would
+have dimmed the augmentation dot instead, because in `after` mode the note comes
+first. The note pieces carry their own class now.
+
+**Curated pools are pruned rather than blanket.** Pulling in a whole pack drags
+along cards the player never meets: Guitar was including the C clef, the
+percussion clef and all three piano pedal marks. Pools take a `drop` list, by
+card name or confusion group, and a card in the pool's own instrument pack is
+never dropped. Guitar is 74 cards and no longer contains a sustain pedal.
+
+**Presets show their state.** They highlight when the selection matches them, and
+Everything now switches every pack on rather than clearing the grid, so the
+selection always shows what it includes. Hand-toggling any pack drops back to
+Custom.
+
+**And a contents sheet.** Flipping one card at a time through 145 to reach the
+one you want was the wrong interaction for a deck this size. The counter is now a
+button: grouped list, each row showing the symbol and its name, tap to jump.
+
+---
+
+## v0.125.0 — all thirteen packs
+
+**145 cards, up from 17.** Generated straight from SYMBOL_DECK.md, so the deck
+document is the source and the app is the build product rather than a second copy
+to keep in sync. Dynamics 17, Guitar 21, Staff 19, Winds & brass 15, Ornaments
+12, Strings 11, Articulation 10, Chord symbols 9, Pauses 7, Note values 7,
+Navigation 7, Accidentals 5, Rests 5.
+
+Every glyph verified to render real ink: stepped through all 145 with the font
+loaded and checked none came back empty. The Bravura subset already covered them,
+so no font work was needed.
+
+The curated pools have something to curate now. Guitar draws 74 cards, Woodwind
+73, Strings 69 — each their own pack plus the general notation that instrument
+actually meets on a page.
+
+**38 drawn cards are deferred.** Slur, tie, the bend family, the tab conventions
+and the rest have no SMuFL codepoint and exist only as SVGs in the review sheet;
+porting those is its own pass.
+
+**Two layout fixes.** The test card measured 274px against browse's 266 because
+the reveal slot and the prompt slot did not match the definition and name they
+replace; both are pinned now and measure identical. And the counter read "1 /
+100" — the score was butted straight onto the question count with nothing between
+them. It now reads "1 / 10 · 0 right".
+
+---
+
+## v0.124.0 — one bar, and the name where it belongs
+
+**The bar was the thing that moved.** Browse and test had separate bars of
+different heights, so starting a test shifted everything below them. There is now
+one bar that never moves and only swaps its contents: pool chip and TEST on the
+left and right in browse, progress and QUIT in test. Measured: bar height delta
+0, card top delta 0.
+
+**Rhythm Cards looks better and I finally rendered it side by side instead of
+guessing.** Three concrete differences, all now matched:
+
+The name sits ABOVE the figure. Burying it underneath made the card read as an
+image with a caption rather than a card about a thing. TEST is a solid filled
+accent button, not another outline chip in a row of outline chips — it is the
+primary action and now looks like one. And the pool chip is small and
+left-aligned rather than a full-width block, so the bar has a shape instead of
+being two equal slabs.
+
+Navigation is circular prev/next flanking the counter, same as Rhythm Cards,
+rather than three equal full-width blocks.
+
+The test card gains a WHAT IS THIS? prompt in the same slot the name occupies in
+browse, so the card body does not reflow between modes either.
+
+---
+
+## v0.123.1 — the glyph was eating the taps
+
+**QUIT did nothing, and the reason is worth writing down.** The glyph span
+carries `line-height: 0` so its box collapses to zero height while the ink spills
+far outside it. At the sizes this module uses, that invisible zero-height span
+was lying on top of the progress row and swallowing every tap aimed at QUIT.
+`elementFromPoint` on the button's own centre returned `nc-g`. It now has
+`pointer-events: none` — it is decoration, nothing about it should be a hit
+target — and the stage clips its overflow. Verified with a real tap rather than
+a scripted click, which is what hid this the first time.
+
+**A third hand-maintained registry.** `READING_EXERCISES` decides which hub the
+back button returns to, and an unregistered exercise falls through to TRAIN. That
+is now three lists a new module must join — panels, back-map, and this — none of
+which any audit knows about, and I have missed a different one in each of the
+last three builds.
+
+**The pool picker is a grid now**, matching how Rhythm Cards does categories:
+packs toggle on and off, and presets overwrite the selection rather than sitting
+beside it as a parallel list. That is what stops a pack appearing under two
+names. The label reads Everything with nothing filtered, the pack's own name for
+one, the preset's name when the selection matches it exactly, and Custom
+otherwise.
+
+Two duplication bugs came out of that. Single-pack presets repeated the grid
+directly beneath them, so Dynamics is a pack tile only. And Beginner is a
+curation rather than a subject, so it is a preset only. Separately, a preset
+whose other packs do not exist yet collapsed to the same selection as a single
+pack — with only dynamics live, turning dynamics on reported itself as "Guitar".
+Only live presets are matched now.
+
+**The card no longer jumps** between browse and test; both are pinned to the same
+minimum height, measured identical at 266px.
+
+---
+
+## v0.123.0 — pools, an exit, and a result worth reading
+
+**The leak was mine and my last fix was wrong.** `exitExercise()` hides
+everything in `EXERCISE_PANELS`, a hand-maintained list, and I wired the module
+into `enterExercise` without ever registering it there. So it was shown on the
+way in and never hidden on the way out, by any route. What I patched in v0.122.1
+was `exitReading()` — one exit path out of several — which fixed the symptom on
+the route I happened to test and left every other one leaking. The panel is now
+in the list and the patch is reverted.
+
+**Pool selection replaces the cycling button.** Three kinds, and the curated ones
+are the reason to bother: a guitarist needs bar lines and repeats as much as
+bends and gets nothing from bowing, so Guitar pulls in dynamics, articulation,
+staff and navigation alongside the guitar pack. Woodwind and Strings do the same
+with ornaments. Presets are Beginner and Everything; By subject is the raw packs
+for drilling one thing.
+
+Curated pools carry a `req` — the pack that makes them worth existing. Without it
+all three instrument pools would show the same count while claiming to be
+different things, since today only dynamics has cards. They stay hidden until
+their own pack lands. Verified by injecting a guitar card: Guitar appears
+immediately at 18, correctly pulling dynamics in with it.
+
+**There was no way out of a test but to finish it**, which is a trap rather than
+a design. QUIT sits in the progress row. An abandoned run scores nothing and
+awards nothing, because it is not a result.
+
+**The finish screen was a number in a box.** Now a ring that fills to the score,
+the percentage, the XP earned, and — the part that matters — the names of what
+you missed. "8 to work on" tells you nothing; eight names tell you whether you
+are confusing a whole family or just guessed badly once.
+
+---
+
+## v0.122.1 — chimes, a still layout, and the folder bug
+
+**Answer cues were never wired.** Both branches called `hapticLight()`, a
+placeholder, so a wrong answer felt exactly like a right one and neither made a
+sound. Now `hapticCorrect()` + `playCueCorrect()` and `hapticWrong()` +
+`playCueWrong()`, which respect the cue choices in Settings like every other
+exercise.
+
+**The layout shifted on answer.** The reveal appeared out of nothing and pushed
+the option grid down the screen at the exact moment your finger was on it. The
+reveal now reserves its height and fades in; measured, the option row's top is
+identical before and after answering.
+
+**The classic folder bug.** `exitReading()` swapped the hubs and never hid the
+open exercise, so backing out left the module sitting behind the hub. It now
+hides both Reading modules first. Worth noting this is a shape the app has hit
+before, and nothing checks for it: no audit knows that leaving a folder should
+close what was open inside it.
+
+Reading's folder badge still read "1 exercise". Now 2, both languages.
+
+**Visual polish.** The symbol floated in a large empty panel; Rhythm Cards works
+because the figure sits ON something. The glyph now has its own inset stage with
+a hairline and a subtle inner highlight, the card tightened around it, the
+progress counters became pills, and the options got a real press state. Same
+type scale as Rhythm Cards so the two decks read as one family.
+
+---
+
+## v0.122.0 — Notation Cards test mode
+
+Ten questions, four options, reveal on answer, drill your misses. Notation Cards
+is an exercise now rather than a reference.
+
+**The distractors are the whole design.** They come from the card's confusion
+GROUP intersected with the active PACK, which is why `grp` has been a field on
+every card since the data was written. Four random wrong answers would make every
+question free, because nobody confuses a segno with a fortissimo; the drill only
+teaches anything when the wrong answers are things you could plausibly have
+picked. Loudness cards draw from the loudness ladder, sudden accents from each
+other. Verified over 40 draws: always exactly four options, and the only
+off-group cases are crescendo and diminuendo, whose group has just two members,
+so the widening fallback fires as designed.
+
+**XP is test-only, by decision.** Two per correct answer, awarded once at the
+end. Verified that twenty browse flips move XP by zero, so the deck cannot be
+farmed by flipping cards. A drill run pays the same per answer as a clean one,
+because replaying your worst cards should not be worth less than a lucky first
+pass.
+
+The definition lands on the ANSWER, not the question — that is the teaching
+moment, and putting it on the card would give the answer away. Right answers
+advance after 900ms, wrong ones hold for 2100ms so the reveal is actually read.
+
+Entering the module always lands on browse, so a half-finished test cannot be
+walked back into from the hub.
+
+Verified end to end: a ten-question run scores, awards XP, offers the drill and
+hides it on a clean sweep; a deliberately perfect run reads 10 / 10, "Every one."
+and no drill button. No page errors.
+
+---
+
+## v0.121.2 — sizing, icon, and the copy Reading had outgrown
+
+Glyphs were scaled 2.2x, a number carried over from the standalone review sheet
+where cards sit in a narrow list. On a full-width card it overshoots. Now 1.65
+and behind a single `NC_SCALE` constant, so it can be nudged on device without
+hunting through the render function. Card height 293px to 259px.
+
+The module icon was a bordered rectangle with a plus in it, indistinguishable
+from any other card-shaped icon in the app. It is now a two-card deck with a
+fermata on the face: reads as notation at 24px and does not collide with Staff
+Notes' stave-and-note beside it.
+
+**And two strings that had quietly gone stale.** Reading's subtitle read "Staff
+Notes · treble & bass" and the hub hint described only Staff Notes, both written
+when Reading had exactly one module in it. The subtitle is now "notes on the
+stave · marks on the page" and the hint covers both, in both languages. Neither
+was flagged by any audit, because nothing checks whether a folder's description
+still matches its contents; it only showed up in a screenshot.
+
+---
+
+## v0.121.1 — Notation Cards tour
+
+Three steps, closing the gap the tour audit flagged the moment the module
+landed: an exercise with no tour at all, which also breaks the welcome tour's
+promise that picking a module gets you one.
+
+The deck itself, the packs, and browsing. The third step carries the design
+decision out loud — reading cards costs nothing and earns nothing, the scoring
+lives in the test — so nobody spends an evening flipping cards expecting XP.
+
+Tour audit back to 0 missing and 0 broken. All three selectors verified present
+at the moment the tour fires, and the tour confirmed auto-firing on first entry
+rather than only on a title-hold.
+
+---
+
+## v0.121.0 — Notation Cards, first slice
+
+Reading's second module. Browse only, dynamics only: 17 cards, every one read
+line by line before a keystroke of this went in.
+
+**Bravura is now embedded.** A 149-glyph subset of Steinberg's SMuFL font
+(SIL OFL 1.1), 19KB, base64 inlined as an @font-face. The app previously named
+Bravura in a few font-family rules with no font behind it; notation was drawn
+from hand-extracted SVG path constants. Reserved Font Name, so the subset keeps
+the name and Steinberg needs a line in Credits & Thanks before this ships
+publicly. The same subset covers all 183 cards in the full deck, so no further
+font work is needed as packs land.
+
+**Each card carries its own font-size and baseline shift**, computed from the
+glyph's real bounding box. This is the part that is not obvious: Bravura em-boxes
+vary enormously, a treble clef being four staff spaces tall and a staccato dot a
+speck, so one font-size makes clefs overflow and dots vanish. Displayed ink is
+clamped by a power law instead. Flat normalisation is equally wrong: it makes a
+clef and a dot the same height. The glyph also needs a fixed-height wrapper or
+its translateY leaks into the layout.
+
+Packs are a LIST on each card rather than a category, so Beginner is a curation
+of 8 of these 17 and nothing is written twice. The pack button cycles for now; a
+picker comes with the second pack.
+
+**Two bugs found in testing, both in the wiring rather than the module.** With no
+entry in `EXERCISE_NAME_KEYS` the header fell back to `k.toUpperCase()` and read
+NOTATIONCARDS. And the pack label was set by textContent alone, so switching
+language mid-session left it in English; it now carries the i18n key on the
+element and `applyLang` picks it up like everything else.
+
+Not in yet: test mode, XP (test only, by decision), the distractor logic, the
+drawn cards, the other 166 cards, and Italian for any card text. Module chrome is
+EN/IT twinned; card definitions are English until the twins are written.
+
+**A sentinel pin drifted and I shipped anyway before catching it.** The pin
+asserted that `staffread` and `relpitch` were ADJACENT lines in
+EXERCISE_SUB_KEYS; inserting `notationcards` between them broke the literal
+string while leaving the guarded behaviour completely intact. Adjacency was
+never the fix being protected — having a tagline entry each was — so the pin has
+been split into two that assert exactly that, and the count moves 190 to 191.
+The sentinel is green. The process failure is the point worth recording: the
+gate said do not ship and the build shipped in the same command, because the
+copy step was chained onto the gate with && rather than gated on reading it.
+
+---
+
+## v0.120.1 — Rhythm Cards
+
+The rhythm deck was called FLASH CARDS, which names its format rather than its
+contents. A notation symbol deck is coming to the Reading folder on the same
+chassis, and two cards both labelled FLASH CARDS would have been
+indistinguishable in the two places the app shows a module name with no folder
+around it: the launcher's pinned row and the header star sheet. Both are now
+named for their subject. Rhythm Cards in Tools, Notation Cards in Reading when
+it lands.
+
+Nine live strings, not one. The i18n value in both languages, the hardcoded DOM
+default beside it, the folder subtitle in both languages and its DOM default, the
+tool's own help text (which already called it "RHYTHM FLASH CARDS", so the card
+label was the odd one out), the tools-hub hint in both languages, the launcher
+tour's Italian body, the module tour's step title, and the favourites registry
+entry. That last one supplies the label for the pinned row, which is exactly
+where the collision would have been invisible.
+
+Italian is Carte Ritmiche throughout. Only the section banners and code comments
+still say FLASH CARDS, and those are internal.
+
+---
+
+## v0.120.0 — Coming Soon goes away
+
+The Train hub's Coming Soon section and its two cards, MELODY DICTATION and
+SCORE READER, are removed. Neither is cancelled and neither has been superseded;
+a first public release that advertises two unbuilt exercises just reads badly.
+
+Worth recording accurately, because the reason given was not quite the reason:
+Relative Pitch was NOT one of the cards still sitting there. It and Chord
+Progressions were pulled back in July as genuinely obsolete, since the shipped
+Relative Pitch module and Chordle cover them. What remained were the two that are
+still real gaps.
+
+The i18n strings, the `wip_toast` and the `.practice-card-btn.wip` / `.wip-badge`
+CSS all stay. Restoring a card is markup only, and the strings are already
+twinned EN/IT.
+
+Train now reads: four folders (Ear Training, Rhythm Training, Games, Reading),
+then Explore with Scales. Nothing else on the hub referenced the removed cards;
+the practice tour dropped to one step in v0.118.0 and never pointed at them.
+
+The build path is unchanged and still one path with something shippable at each
+rung: staff renderer, then staff note ID (shipped as Staff Notes), then melody
+dictation, then score reader. Dictation needs the renderer plus sequence
+playback; score reader needs both of those plus the mic scoring Road Trip already
+proves works. Score Reader is still the differentiator nobody else has, in that
+none of musictheory.net, tonedear, tonesavvy or teoria listens while you read.
+
+---
+
+## v0.119.2 — copy stops being a secret
+
+The two support rows carried a chevron, which promises a sub-screen. Contact
+opens a mail composer and Share opens the system sheet, so neither earns one, and
+the rows read as inert. They now carry a COPY chip instead.
+
+That does more than relabel. Copying was the silent fallback from v0.119.1, the
+thing that happened only when the mail client or share sheet failed, and a device
+with no mail app configured fails with no error at all. Promoting it to a visible
+control means the reliable route is the one you can see. Text rather than a glyph
+because the app's vocabulary is mono and letterspaced, and the slot one section
+up already holds "38 MS".
+
+The parent Support row keeps its chevron. Disclosure is the one thing a chevron
+honestly means, and that one already rotates to show state.
+
+Feedback moved from the sub-line to the chip. The sub-line carries the row's
+description, and swapping it made the row flicker between two meanings; the chip
+just reads "Copied" in --in-tune for 1.6s. Share text is now built by one
+function so the chip and the row cannot drift apart.
+
+**Two faults in my first pass at this.** The chip came out 26px tall, which is
+not a touch target; it is now 40px, which fits inside the existing ~66px two-line
+row without changing the row's height. And my test for whether tapping the chip
+also fired the row used a capture-phase listener, which runs *before* the target
+handler can call stopPropagation, so it reported a leak that was not there and
+would equally have missed a real one. Re-tested by wrapping the row's actual
+function: it does not fire.
+
+---
+
+## v0.119.1 — both support rows were no-ops
+
+Shipped two buttons that did nothing. Both my fault, and both fail silently,
+which is why the gates and the headless check waved them through: the functions
+ran, threw nothing, and produced no effect.
+
+**Share.** Every tier of `intonareNativeShare` ends at `copyFn`, and I passed
+`null`. With the Capacitor Share plugin present that does not matter, but opening
+`Intonare.html` directly rather than through the installed app means no plugins
+at all, and `file://` is not a secure context so `navigator.share` is undefined
+too. Tier 1 skipped, tier 2 skipped, tier 3 called a null. A guaranteed no-op in
+exactly the way the file gets tested. It now passes a real clipboard ladder
+(Capacitor Clipboard, async API, execCommand textarea) and confirms on the row.
+
+**Contact.** `window.location.href = 'mailto:'` is not reliable inside a WebView:
+a non-http scheme is resolved in `shouldOverrideUrlLoading`, and a scripted
+navigation does not always reach it, so the tap is swallowed with no error and no
+mail app. Now built as a real anchor and clicked, which goes through the normal
+link path that Capacitor and Android both handle, and the element is removed on
+the next tick. A device with no mail client still fails silently and cannot be
+detected, so after 900ms — unless `document.hidden` says the mail app took over —
+the address is copied to the clipboard and shown on the row.
+
+Feedback goes on the row rather than swapping button text the way the daily
+puzzles do, because these rows carry a two-line label and swapping the text would
+eat the description. The chevron becomes a tick and the sub-line carries the
+message for 1.8s.
+
+**A race in the first version of that fix:** the address line and the "Link
+copied" confirmation both wrote `.sm-link-sub`, so which one you saw depended on
+whether the clipboard promise had resolved. `supportCopy` now takes the message
+as an argument and there is one writer.
+
+Verified with clipboard permissions granted: share copies the full text and
+restores the description after the timeout, contact copies the address and leaves
+it on the row, no stray mailto anchors left in the DOM, no page errors.
+
+---
+
+## v0.119.0 — settings stops being a pile
+
+The tail of Settings had grown to five identical full-width boxes, and adding a
+sixth for the support sheet was what made it obvious. The problem was never the
+count; it was that the boxes were the same weight while doing different kinds of
+thing. Re-run Welcome Tour and Calibration act on the app. Privacy, Credits and
+now Support only open something else. Identical slabs for both meant nothing
+grouped and nothing receded.
+
+Actions stay buttons. Openers became one bordered group with hairline dividers
+and a right chevron, under a new ABOUT heading. Six boxes down to three, and the
+new row cost no visual weight at all because it joined a group instead of
+extending a stack. The chevron reuses the slot where Calibration puts its "38 ms",
+which was already the best-reading row down there.
+
+**The support sheet.** Two rows for now. Get in touch opens a mail composer to
+intonare.dev@gmail.com with version, platform, language and viewport prefilled in
+the body, so a bug report arrives with a build number instead of "it doesn't
+work"; platform comes from `Capacitor.getPlatform()` with a web fallback, and a
+missing mail client falls back to showing the address rather than failing on a
+tap. Share reuses `intonareNativeShare`, the same helper the daily puzzles use.
+
+No Rate row yet: it needs a listing that is not live, and a button pointing at a
+dead URL is worse than no button. No donation row either. Google's position on
+developer tip jars is genuinely unclear (their documented policy covers charity
+donations, and the Play community threads asking about BuyMeACoffee have no
+public resolution), but the deciding factor is that the Pro unlock already runs
+through store billing, and an external payment link beside an existing IAP is
+exactly what anti-steering rules are written to catch. Not worth the risk on the
+build that goes in for its first production review.
+
+Also checked and worth writing down, because it is the opposite of what the
+tester report suggested: the "are you enjoying this app?" pre-prompt is
+prohibited. Google's Developer Program Policies name it directly, and Apple
+treats routing happy users to the store and unhappy ones to a form as review
+manipulation. The sanctioned version of that instinct is Apple's own advice to
+keep support contact easy to find, which is what this build adds.
+
+**One flaw the first render caught.** The support panel was appended after the
+group, so tapping row one opened a panel below row three. It reads as a different
+control opening. The rows are now nested directly beneath their own trigger with
+a 28px inset and a `--surface` fill, and the trigger's chevron rotates to show
+state.
+
+Strings are EN/IT twinned and verified at two definitions each. Gates: syntax
+clean, sentinel at 97 + 190, backup audit at 48 keys, no page errors, both themes
+rendered at 412x915.
+
+Still sitting in the file for launch: `smResetProBtn` carries a comment reading
+"Strip this button + resetProTesting() before production launch." It is hidden
+unless Pro is active, so it is invisible today, but it ships.
+
+---
+
+## v0.118.0 — the tours stop lying
+
+A systematic pass over all 34 tours against what their modules actually contain
+now. Tours were written when each module shipped and several never kept up.
+
+**The hub tours were the worst, and the fix was deletion.** TOOLS ran five steps
+and TRAIN ran six. Between them they listed every folder's contents by name,
+which is text the hubs already print on screen in their own card subtitles, and
+those subtitles were current while the tours were not. `folder_ear_sub` reads
+"Intervals · Chords · Pitch Match · Relative Pitch"; the tour listed three.
+`folder_games_sub` reads "Chordle · Diadle · Tónale · Road Trip · Music Quiz";
+the tour listed four. `folder_reading_sub` exists at all; the tour had no Reading
+folder. TOOLS opened "Thirteen tools in five folders" and then correctly listed
+fourteen across the next two steps. TRAIN's mic step named Chord Ear Training,
+which is not in MIC_EXERCISES, while omitting Scales and Road Trip, which are.
+
+Both are now one card. They are menus, not modules, and everything a tour could
+say about them is already on the screen behind it, printed correctly. What is
+left in each card is the one genuinely hidden thing: pinning is a 500ms
+press-and-hold on a hub card, with no affordance anywhere. The old TOOLS step
+told people to "tap the ★ button in any tool", which does not exist for this
+purpose; that star is `svc-save-star` in Charts and it saves diagram views.
+Eleven steps became two, and neither can go stale again, because neither counts
+anything or names a module.
+
+**Survival Guide was described as the wrong tool.** Its sections are DYNAMICS,
+THEORY, GUITAR, BASS, PLUCKED, STRINGS, WINDS, BRASS, FREE REED, PERCUSSION,
+PIANO, VOICE, THEREMIN and PEDALS. The tour called it "a quick-reference music
+theory guide" and listed intervals, chords, scales and notation, describing one
+section of fourteen as though it were the whole thing.
+
+**Progression and Chord Player were rewritten.** Both were label narration: "Set
+the key and scale here", "Plays the selected chord". Chord Player's first two
+steps were one idea on two cards. Progression's first step talked about key and
+scale while spotlighting `#progAddBarBtn`, the wrong control entirely.
+
+**Three features got a clause each** where the feature changes what you are
+practicing rather than just doing a thing: rhythm reading's LISTEN FIRST versus
+SIGHT READ, the tonal centre's EQUAL TEMP versus JUST, and the polyrhythm
+challenge modes. Drumkit's presets and kits were deliberately left out; they are
+labelled buttons on screen and exploring answers them.
+
+Smaller: music quiz dropped two hard counts ("over a thousand questions across
+nineteen packs"). Three steps stopped opening by restating their own title.
+Verb agreement in the metronome RAMP step, a dangling clause in the piano
+keyboard step, a missing conjunction in the tone bank list, and a comma in the
+Charts quality step that read as a list of three things. The "handy for" tic
+appeared five times across the tours and is down to zero; four
+superlative-shortcut constructions went with it. And the three newest tours
+(relpitch, roadtrip, staffread) were the only ones in the app written without a
+single contraction, which made the warmest writing also the stiffest; they now
+match everything else.
+
+**Two mistakes worth recording, both mine, both caught before shipping.**
+
+I deleted the metronome tour. The TOOLS rewrite sliced from `"  tools: ["` to
+`"  practice: ["`, and `metronome:` sits between them in the object, so the slice
+swallowed all six of its steps. Nothing caught it: syntax passed, the sentinel
+passed, the tour audit reported 0 missing and 0 broken because it only checks the
+tours that exist. It surfaced only because a later `str.replace` on the RAMP step
+asserted count==0. Restored from the shipped baseline and verified at 34 tours
+with all six steps and every selector resolving. Index-pair slicing across a
+sorted object is not safe when the endpoints are not adjacent; a diff of every
+tour's step count against the previous build now runs as part of this work.
+
+I also invented two facts in new copy. I wrote that Music Quiz survival ramps
+difficulty as the run gets longer; `mqStartSurvival` sets `qCount=50` with no
+escalation, and what it actually offers is pack selection. And I wrote that the
+polyrhythm challenge gets harder as you go; `prOpenChallenge` builds a picker
+with per-card locks (`prHardcoreUnlocked`, `prEndlessUnlocked`), so the truth is
+harder modes that unlock. Both were plausible, both were fabricated, and the only
+reason they did not ship is that I went back to read the functions. Separately, I
+typed British spellings into new copy twice within an hour of sweeping them out
+of the file, and named an Italian button "LETTURA A PRIMA VISTA" when the label
+reads "LETTURA VISTA".
+
+Gates: syntax clean across 9 blocks, sentinel at 97 fixes + 190 pins, backup
+audit at 48 keys, tour audit 0 missing and 0 broken, US sweep reports nothing
+left, and every rewritten tour verified rendering at 412x915 with no page errors.
+Tour count 34 before and after; step count 137 to 128.
+
+Three audit tools added: `tour_weight.py` (step counts and body lengths),
+`tour_tone.py` (hand-holding tells and title echoes) and `tour_drift.py` (each
+module's control labels beside its tour's step titles).
+
+---
+
+## v0.117.0 — one dialect
+
+The app was already inconsistent with itself: identifiers American
+(`practiceHub`, `mode:'practice'`, every CSS `color:`), visible copy drifted
+British. Daniele is US-based, so the copy moves rather than the code.
+
+772 replacements across 58 distinct forms. The big ones are colour (185), centre
+(105), grey (88) and centred (66); the long tail runs through theatre, programme,
+equaliser, organise, recognise, memorise, prioritise, labelled, modelling,
+cancelling, travelling, neighbour, behaviour, catalogue and favourite. Comments
+were swept too, not just user-visible strings: leaving them would have meant
+building perfect comment detection purely to preserve a second dialect nobody
+reads, and the classification is the risky part, not the replacement.
+
+**What was protected, and why.** A blind find-and-replace on this file eats
+`AudioContext`, `createAnalyser` and every design note we have. So the identifier
+collisions were enumerated first by scanning every `class=`/`id=`/`data-*`
+attribute, every CSS selector, every `function`/`const`/`let`/`var` declaration
+and every object key in the file. The full set turned out to be small: the
+element ids `mst-analyse` and `mp-analyse`, the i18n KEY `metro_tab_analyse`, the
+mode string `'analyse'` the metro subnav switches on, `analyser` and
+`analyseVibrato`, a local `centre` in the capo solver, and the `underCentre`
+property in a layout diagnostic. Those are masked. `GREY` in the woodwind diagram
+renderers is handled by case: lower and Title case sweep, ALL CAPS does not.
+Verified after writing that all ten survive at their exact original counts.
+
+The i18n key `metro_tab_analyse` keeps its name while its value became ANALYZE,
+which is the split that matters: the label on the button is what people read, the
+string the handler switches on is not.
+
+**Two bugs in the audit tooling itself, caught before they did damage.** The
+first classifier called `'ANALYSE'` and `'Favourites'` identifiers purely for
+being one word long inside quotes, which would have left two visible strings
+British; case turned out to separate wiring from display labels cleanly.
+`programme(d)` was a false positive throughout, since "programmed" is spelled the
+same in both dialects, as are "specialist", "analysis" and "emphasis" without a
+verb suffix. And the sweep's first pass silently dropped every pattern carrying a
+lookahead (practis, analys, emphasis) because it re-matched the captured text
+against a pattern whose lookahead context was outside the capture. Named groups
+now carry the dispatch. That one is worth remembering: it failed by doing
+nothing, and the only tell was four expected words missing from a summary count.
+
+Gates: syntax clean across 9 blocks, sentinel at 97 fixes + 190 pins, backup
+audit at 48 keys and 38 progState fields, tour audit 0 missing and 0 broken. The
+quiz audit's 129 criticals are pre-existing and unrelated; identical count on the
+pre-sweep baseline.
+
+`intonare_us_spelling_audit.py` is in the toolkit now, so a future drift back is
+one command away from being visible.
+
+---
+
+## v0.116.1 — dealing the cards back in
+
+Two device bugs from the v0.116.0 re-run path, both mine, both invisible to the
+way I tested it.
+
+**The reopened chooser had no cards.** `lnchGo()` marks every cell `lnch-picked`
+or `lnch-other` to fling them off screen behind the morph card, and nothing ever
+cleared those classes; both rules set opacity 0, and `lnch-other` adds a
+translate of around 125% with a rotation. `lnchReopen()` restored the container
+and its classes, so the hint line and the pinned row came back correctly around
+an empty space where the grid should be. Measured after re-run: all four cells at
+opacity 0 with zero-size rects. Now stripped on reopen, and verified back at
+opacity 1 in a 2x2 with real rects.
+
+The reason this shipped is worth writing down: I verified the reopen by reading
+classes and computed style on `#lnch` itself, which reported display flex,
+opacity 1 and `lnch-gone` cleared. Every one of those was true. The state that
+was wrong lived one level down on the children, and a container-level check
+cannot see it. Same family as the original bug this release fixed, where the tour
+overlay was genuinely active and genuinely visible while everything it pointed at
+was not.
+
+**The last card told people to hold a title that isn't there.** `showStep()`
+appends the replay note to the final step of every tour, and it names the header
+title as the replay gesture. That is correct in every tour but this one: the
+chooser has no header, because `body.lnch-open` hides it. So the welcome tour
+ended by naming a control that was not on screen and describing a gesture that
+could not be performed. The launcher tour now points at Settings then Re-run
+Welcome Tour instead, in both languages; every other tour keeps the hold-the-title
+note unchanged, verified side by side.
+
+---
+
+## v0.116.0 — the tour that pointed at nothing
+
+A paid tester report came back saying the app had no onboarding for new users.
+It does. It has had one the whole time. It just fired at a moment when nothing
+it described was on screen.
+
+**What was actually happening.** On first launch, `startTour('overview')` ran on
+a flat 600ms timer from the bottom of the main script. The splash runs about
+three and a half seconds plus a 1.3s dissolve, so the tour opened underneath it;
+the card's entrance animation played in full behind an opaque overlay and the
+tour was already sitting there mid-flow when the splash finally cleared. What it
+cleared to was the chooser, and the overview is anchored to the app proper.
+Measured on a 412x915 viewport with the launcher up: `.logo`, `#micBtn` and
+`#levelChip` all sit behind the opaque grid, so their spotlights cut a hole onto
+a blank frosted rectangle. `.mode-toggle` measured at y=915 and `#mode-settings`
+at y=916, which on a 915px viewport is a full bar-height below the fold, so the
+caret on steps 2 and 5 pointed off the bottom edge at nothing at all. Six steps,
+zero visible targets. The same anchors measure y=862 and y=863 once a module is
+open, so the tour was never broken, only homeless.
+
+**The new shape.** Onboarding is two halves handed to each other. A three-step
+`launcher` tour runs on the chooser, about the chooser, and ends on a START
+button that gives the person the grid instead of dismissing a document. Whichever
+module they pick then introduces itself on arrival via `maybeSectionTour()`. The
+four section tours (tuner, metronome, tools, practice) existed but had never been
+wired to auto-fire; `maybeAutoTour` only ever covered tools and exercises, and it
+keys off `currentTool`/`currentExercise`, both null at section level.
+
+Three steps rather than six by choice. Each card already carries its name, a
+subtitle and a static miniature of the real module surface, so a step per card
+narrates what the person is reading at that moment. Pinning stayed out of the
+walkthrough as its own card and became a clause in step 3: nobody knows their
+favourite module before they have opened one, and following that instruction
+sets `LNCH_PIN`, which makes `lnchShouldShow()` false and removes the chooser
+permanently. Teaching it forty seconds in is teaching someone to delete the
+screen they are standing on.
+
+**Fixed card without the preview pane.** Module tours get a centred card and a
+scaled DOM clone, because their subject is often on another screen. The launcher
+tour wants the first and not the second: a near-fullscreen grid spotlit would
+darken four thin margins and leave the card nowhere to sit, and a clone would
+show a small copy of what is already behind the card. New `dataset.fixed` flag
+rather than a fifth branch in the module list; `showStep` and `positionTour` now
+read `_isFixedCard` for scroll-skip and positioning while `_isModuleTour` keeps
+owning the preview.
+
+**Triggering.** The boot-time timer is gone. `maybeWelcomeTour()` is called from
+`lnchInit()` on both shown paths, hung off the launcher actually being visible
+rather than off a duration the splash does not honour, and from the no-chooser
+branch for pinned or deep-linked launches, where the in-module overview is the
+tour that matches what is on screen.
+
+**Re-running.** The Settings button ran `startTour('overview')` in place, which
+from inside a module would have reproduced the original fault in mirror image.
+`rerunWelcomeTour()` calls the new `lnchReopen()` to bring the chooser back
+first, then runs the launcher tour against it, falling back to the overview only
+if there is no launcher to restore. The auto-tour opt-in prompt deliberately does
+not fire after the welcome tour on a first launch: it would cover the grid at the
+exact moment step 3 says to pick a card. It arrives after the first section tour
+instead, and a manual re-run still gets it via `_welcomeTourManual`.
+
+Verified on a genuinely empty profile: tour appears after the splash with the
+launcher in, three steps, no spotlight, no preview, START on the last card,
+`tune_tour_done` and `intonare_tours_seen` both written, METRO picked afterwards
+fires the metronome tour at 1/6 with a real spotlight. Returning users get no
+welcome tour and still get unseen section tours. No page errors on any path.
+
+Copy is US English throughout, which the rest of the app is not; a spelling
+sweep is queued as its own build. 728 British spellings in the file, 461 of them
+in comments, the rest split between user-visible strings and identifiers that
+should stay exactly where they are.
+
+---
+
 ## v0.115.3 — the targeting computer
 
 Better than mine, and it is the closer mapping. Luke switches off the instrument
