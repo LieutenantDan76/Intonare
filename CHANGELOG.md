@@ -64,6 +64,745 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.133.9 — softer selection, and the editor gets a floor
+
+**The selection was tuned against a background that no longer exists.** A 2px dark
+gold frame reads as definition on khaki and as harshness on cream, so removing the
+slab in v0.133.8 changed what the frame had to fight without changing the frame. Now
+a mid-gold frame instead of dark, a paler wash, a gentler glow, and the bright cap
+line dropped entirely — on a pale card that line was the loudest part of the whole
+treatment. Still outline and box-shadow only, so selection still cannot reflow the
+grid. Name contrast holds at 4.62:1.
+
+**The lower half of the panel had no depth at all.** Header, step grid and the
+button were cream on cream separated by hairlines, so everything below the grooves
+read as one undifferentiated field. The header and step grid now share a single
+recessed slate — the surface you work on — with the button raised above it. Three
+depths where there was one, and the inset shadow says "manipulate this" in the same
+language the selected card uses.
+
+Done without adding a wrapper to the markup: the slate is drawn on the pattern
+header with square bottom corners and no bottom border, and the step grid continues
+it with square top corners, so two adjacent elements share one well.
+
+BAND FLASH gains a little saturation to sit clearly above that well as the action
+rather than another panel.
+
+All `body.light` scoped; dark mode confirmed unchanged by reading computed values
+back in both schemes.
+
+## v0.133.8 — the khaki slab goes, and the rest of the panel gets a light mode
+
+**The slab was mine and it was wrong.** Giving the card grid a filled khaki ground
+made sense on paper: pale cards need something to read against. On a device it is a
+hard-edged tan block dropped into a cream page, and it looks like a rendering fault
+rather than a surface. Gone. The cards separate on their own instead — pushed
+slightly whiter than the page, given a warmer border, and lifted with a soft shadow.
+Paper on paper, no slab required.
+
+Which exposed that the rest of the panel had never been converted either, and two of
+those were unreadable rather than merely dim:
+
+**The selected-groove header.** Its subtitle measured `#c3b17b` on a `#c3b27b` bar —
+the same colour as its own background, near enough 1:1. "tap steps to edit" is an
+instruction, and nobody could read it. Now 5.08:1, with the title at 6.15.
+
+**The step pips**, which is the worst of the lot. On measured 1.05:1 against off, so
+you could see sixteen squares but not which ones were lit: the pattern you are
+editing was invisible while you edited it. Three states need three separated steps
+of lightness rather than three tints of one, and a first pass at this only reached
+2.12 and 1.29 — better than what it replaced and still not enough to read a rhythm
+from. Tuned until every neighbouring pair separates: **off to soft 2.19, soft to
+accent 3.04, off to accent 6.66.**
+
+**BAND FLASH** read flat because it was a single cream fill with no edge and no
+ground. It now carries a warm vertical gradient, a defined border and a lift, with a
+pressed state to match — the same weight START already has, which is right, since
+these are the two primary actions on the panel.
+
+All `body.light` scoped; dark mode untouched throughout.
+
+## v0.133.7 — the groove picker gets a light mode
+
+It never had one. The cards were running dark-mode values on a cream sheet, which
+put filled khaki tiles on pale ground and made the eleven grooves you did not choose
+heavier than the one you did. The step preview was worse: khaki dots on a khaki
+card, measured at **1.37:1**, which means the one thing that tells son clave from
+rumba clave at a glance was effectively invisible and people were picking grooves by
+reading names.
+
+The grid now takes the khaki and each card becomes pale paper on it — the same
+construction as the metro screen itself, so it borrows an idiom the app already owns
+rather than inventing one. Palette sampled off a device screenshot rather than
+guessed, after two earlier attempts at light-mode colour went wrong by guessing.
+
+**Selected reads as pressed in**, not lifted out: a warm wash, a gold frame, and an
+inset glow along the top edge. Three cues on three different channels — hue, weight
+and light — because on a grid of near-identical pale tiles any one alone is too
+quiet, which four separate single-cue attempts demonstrated.
+
+Nothing touches layout. The frame is an outline, which paints outside the box, and
+the glow is an inset shadow, which never affects flow; there are no padding or
+margin changes. Selected and unselected cards measure identically, so the grid
+cannot reflow when the choice moves. An earlier cut of this did shift the rows, and
+the cause was a single stray `margin-top` — grid rows size to their tallest cell, so
+five pixels on one card dragged everything below it down.
+
+Measured after merging: unselected name 13.19:1, origin 4.63:1, pattern 3.62:1;
+selected 4.44, 6.08, 3.62. The pattern went from 1.37 to 3.62.
+
+Dark mode is untouched — every rule is `body.light` scoped, confirmed by reading the
+computed values back in both schemes.
+
+## v0.133.6 — the third one in the same family
+
+The groove screen has its own BPM readout, separate from the click screen's. Its
+number had been given a light-mode value; the "BPM" caption inside it had not, and
+was still on `rgba(255,209,102,.28)` — dark-mode amber at 28% alpha, **1.14:1**
+against the cream screen, which is fainter than either of the icons fixed in
+v0.133.5. Now `#523700`, the same 4.85:1 as its neighbours.
+
+That is three in a row with an identical shape: a child element left behind when its
+parent was converted to light mode. The BPM caption inside a converted number, the
+icons inside a converted top row. Worth remembering as a place to look rather than a
+coincidence — when a light override exists for a container, check what is nested
+inside it.
+
+## v0.133.5 — the screen icons had no light mode at all
+
+The BPM label took the v0.133.4 fix; the mute and setlist icons did not, and the
+reason is worse than a wrong colour. They had never been given a light-mode value:
+both were still carrying the dark-mode `rgba(255,209,102,.4)`, pale amber at 40%
+alpha, which resolves to **1.21:1** against the cream screen. That is the lowest
+figure anything in the app has measured, and it is why they looked like ghosts.
+
+The previous pass aimed at `.metro-screen-top` and `.screen-bpm-row` and hit
+nothing, because the real containers are `#screenTopRow` and
+`.groove-screen-bpm-row`. Found by walking up from the icons themselves rather than
+by searching the stylesheet for a plausible-looking selector. Both now resolve to
+`#523700`, **4.85:1**, verified by reading the computed colour back off all three
+icons in the running app.
+
+Stroke and fill are stated explicitly alongside the colour even though both resolve
+from `currentColor`, because the paths carry `fill="currentColor"` as an attribute
+and an attribute is an easy thing to lose track of later.
+
+## v0.133.4 — the metro screen was hiding text inside its own background
+
+The light-mode contrast audit reports 22 failures. On device, most of them are
+fine: the chromatic strip's unlit note names are dim on purpose, the metro subtabs
+read clearly, and the bottom-nav labels are flat but legible. Two were real, and
+they turned out to share one cause.
+
+The BPM label and the metronome screen's top icons were both a translucent amber
+drawn on an amber screen, so the alpha blended them halfway into their own
+background: `rgba(122,84,16,.7)` over `rgb(189,171,117)` resolves to roughly 2:1.
+Solid `#523700` measures about 4.9:1 on the same ground, keeps the brass identity,
+and still reads as secondary to the big BPM number because that number is far
+larger.
+
+**An earlier attempt at this made things worse and was reverted**, which is worth
+recording. Guessing at what sat behind each element took the failure count from 22
+to 39. The reason the guesses were bad is that light mode was being forced by adding
+a class after load, while the audit sets a stored preference before it — two
+different states, so every measurement disagreed with the last. Reading the same
+state the audit reads gave numbers that matched, and the fix landed first time.
+
+The remaining 21 are being left alone rather than silenced. Several are measurement
+artifacts of the audit's own method — it samples the 2nd and 90th percentile pixels
+of a text node's box, which under-reports contrast badly when a few small glyphs sit
+in a wide button. The active metro subtab reporting 1.48:1 while looking perfectly
+clear on a real screen is that. The audit is advisory and not one of the seven ship
+gates, so a known-noisy signal is better left honest than allowlisted into silence.
+
+## v0.133.3 — the tab fade is gone
+
+Three attempts at a tab crossfade, from 0, then 0.4, then 0.72, each reduced the
+flash on the Metro tab without removing it. So this time the fade went instead of
+the number.
+
+It was never reproducible here, and that turned out to be the useful fact. Sampled
+on every animation frame, the region's opacity rises cleanly from 0.72 with no
+bright frame anywhere; scanned across the whole Metro subtree, nothing inside it
+animates or transitions during the switch. The most likely explanation is layer
+promotion: animating opacity on a 772px subtree hands it to the compositor as its
+own layer, and creating that layer can show a frame of unpainted content on some
+hardware. The Tuner region is 317px and never showed it, which fits, and it also
+explains why a headless desktop browser sees nothing.
+
+Guessing at a fix for a device artifact that cannot be reproduced is how you end up
+with four more versions of the same number. The effect was marginal by admission;
+the artifact was not. Tab switches return to instant, which is what they were before
+any of this and what nobody ever complained about. Folders and modules keep their
+shared axis Z, where the motion means something and the regions are smaller.
+
+**Removing it immediately brought back a bug**, which is worth recording. Unwrapping
+`setMode` made its internal `exitTool` the outermost navigation call, so tabbing out
+of a module fired a Z scale-out: the exact Metro-scales symptom from v0.133.1. It
+stays wrapped with a null kind, taking part in the depth guard while animating
+nothing.
+
+If tab feedback is wanted later, the nav indicator is the place for it. Animating a
+3px bar promotes a 3px layer.
+
+## v0.133.2 — on a dark theme, a crossfade is a dip to black
+
+The remaining blackout on the Metro card had nothing to do with a second animation;
+a sweep of every animating element during a tab switch found exactly one, as
+intended. It was the fade itself. Fading opacity on a dark theme fades toward a
+near-black ground, so what reads as a crossfade on paper is really a dip to black on
+screen, and how badly it shows scales with how much lit surface is dipping. The
+Metro region is 772px tall against the Tuner's 317, which is why one looked wrong
+and the other looked fine at the same setting.
+
+The floor went 0, then 0.4, now 0.72, and the last move is the one that fixes it:
+above roughly 0.7 the dip stops registering as darkness and just softens the swap.
+Duration trimmed to 130ms to match.
+
+**Full re-check while in here.** Twenty-six navigations driven in a real browser
+covering every tab, every Tools folder and tool, every Train hub and exercise, both
+directions, plus tabbing out from inside a folder and from inside a module. Each was
+checked for exactly one animation, the right kind for the relationship, no animation
+on the header, and nothing stale left behind afterwards. Then the whole run again
+with the reduced-motion preference set, confirming every path dissolves instead.
+Fifty-two navigations, no failures, no console errors.
+
+## v0.133.1 — the Metro scale was a module closing, and the blink was a blackout
+
+Two reports, one shared cause and one of its own.
+
+**Metro appeared to scale where the Tuner did not.** The tab was never the
+difference; whether a module was open was. `setMode` calls `exitExercise` on its
+way to a new tab, and the train hubs call their own exits, so a single tap ran two
+wrapped navigation functions. The inner exit fired a Z scale-out on the region
+being left, and the tab's own fade landed on top of it. Leave Metro from a bare hub
+and you saw a clean fade; leave it from inside the piano and you saw the scale
+first. A depth counter now means only the outermost navigation animates, which is
+also just the correct rule: one gesture, one transition.
+
+**Titles blinking out on a tab switch** was the fade starting from fully
+transparent. The header sits above the content and never moves, so it gives the eye
+a fixed reference against which the content below going to zero reads as a blackout
+rather than a crossfade. It now starts at 0.4 and runs 150ms instead of 190ms.
+
+The 8px lift is gone from tab switches too. On a short hub it read as a lift; on a
+full-height screen like the Tuner or the Metro, shifting that much content is a
+lurch. Folders and modules keep their shared axis Z, which is where a depth cue
+actually means something.
+
+## v0.133.0 — the app moves between screens now
+
+Navigation was instant everywhere. The palette crossfaded on a tab switch, over
+0.06s, which is fast enough to read as a snap; the content itself teleported,
+because panels are toggled with `.hidden`, and `display` cannot be transitioned.
+The app had 133 keyframe animations and used none of them to get from one screen
+to another.
+
+Two patterns, picked to match what they mean rather than to look busy. **Tabs fade
+through**, which Material names for elements with no strong relationship and
+illustrates with bottom-navigation destinations; tabs are peers, so nothing there
+implies a direction. **Folders and modules use shared axis Z**, which Material
+names for parent-child navigation: scale and fade, no travel.
+
+The no-travel part was learned the hard way. An earlier cut grew the new screen
+out of the card you tapped, which sounds like Material's container transform and
+is not one: that pattern morphs the card's own bounds into the screen's, keeping
+the container visible throughout. Scaling a whole new screen up from a point where
+a card happened to be is the same idea with the container missing, and it read as
+the module scooting in from nowhere. Deleting the translate fixed the feel and
+deleted the origin-rect bookkeeping with it.
+
+**Cards cascade on the way down only**, forty milliseconds apart. Never on the way
+back, because returning should feel quicker than descending, and never on a tab
+switch: Apple's guidance is to avoid decorating interactions that happen often,
+and switching tabs is the most repeated gesture in the app.
+
+**Reduced motion dissolves rather than snapping.** The previous convention here was
+a 0.01ms duration, which deletes the animation; Apple's position is that removing
+animation outright can hurt understandability and that the replacement should be a
+fade, and iOS 18's own zoom transition degrades to a standard transition rather
+than to nothing. So travel and scale go, a 120ms dissolve stays, and the stagger
+is dropped.
+
+**The header does not animate**, by design. It is persistent chrome, and a still
+frame is what makes movement inside it legible. It also must never be scaled:
+`_fitModuleTagline` measures text width with a Range, and an ancestor transform
+would corrupt that measurement.
+
+Implemented as one hook that wraps the fifteen navigation functions after they
+run, rather than an edit at every call site. The animation applies to whichever
+mode region is showing, since only one panel inside a region is ever visible. It
+is enter-only: a true cross-dissolve needs both panels mounted at once and
+`display:none` has already removed the outgoing one. Every path was driven in a
+real browser, with and without the reduced-motion preference, and checked for
+stale animation classes left behind.
+
+## v0.132.16 — the tumbao in octaves
+
+The source line is an acoustic-bass patch, so it is one note per attack, and a bare
+single note down at D2 is thin and woolly on a piano. A pianist plays the tumbao in
+octaves, so it does now, on both montunos and the Rhodes twin.
+
+The added octave sits ABOVE the source note rather than below. That keeps the
+written bass as the floor and puts the definition where it can actually be heard;
+doubling downward would have reached D1, which on this instrument is mud. Range is
+now D2 to B3, all eighteen events doubled, and still no gaps between a note and the
+next attack.
+
+## v0.132.15 — Waldstein and Liebestraum lost their descriptions, and it was my regex
+
+Both rendered as bare cards: title, no composer, no year, no note. The cause was in
+v0.132.13, where the montuno metadata was replaced with a DOTALL `.*?\},\n` pattern.
+The metadata entries on that line end with `}, ` and a space, not a newline, so the
+first `},\n` the pattern could find was two entries further along, and the
+replacement quietly took Waldstein and Liebestraum with it. Restored verbatim from
+the last upload and pinned, since nothing in the gate set notices a missing
+description.
+
+This is the second failure today from a loose pattern on this file, and the
+file's own rule covers it: never DOTALL `.*?` here, use bracket matching and assert
+what you matched. Both restores were done that way.
+
+**The montuno import itself is clean.** Checked by extracting the note events back
+out of the running app and comparing them against the MIDI: 36 events in the 2-3 and
+34 in the 3-2, identical to the source in both position and pitch. Whatever is wrong
+with the 3-2 is not a transcription error.
+
+**The left-hand durations are also fine, and measurably so.** Each tumbao note
+sustains exactly to the next attack, with no gap anywhere: 0 to 1.5, 1.5 to 3, 3 to
+5.5, and so on. It is already legato rather than clipped.
+
+## v0.132.14 — accents from the clave track, and twice through
+
+**Accents.** The source is flat at velocity 49 on every note, so dynamics had to be
+added; the question was whether to invent them. They are not invented. A note takes
+the accent when it lands on a stroke of the file's own clave track, which is data
+already in the file rather than a judgement about style, and everything else sits
+back at 0.7. In the left hand the beat-4 anticipation takes the weight, since that
+is the gesture the tumbao exists for.
+
+It stays a two-level scheme on purpose. The guajeo mostly falls BETWEEN clave
+strokes, and how much it does is the actual difference between the two patterns:
+4 of 18 notes coincide in the 2-3, 7 of 17 in the 3-2. That tension is the thing
+being taught, and heavy accenting would bury it.
+
+**Length.** Both are written out twice, eight bars, which is 16.8 seconds instead of
+8.4. Four bars was barely long enough to hear the pattern, let alone play over it,
+and repetition is what an ostinato does. Written out rather than looped because the
+transport reports a real length and a real end.
+
+**Pedals need nothing.** Both already carry `_riffPiano('pedal',0)` at bar zero and
+that is correct and complete: son montuno is played dry, the articulation is the
+point, and a wash glues the offbeats onto the downbeats. With the damper model in
+place, pedal-up means each note stops at its finger-lift, which is what the written
+durations now actually control.
+
+## v0.132.13 — the montuno is a transcription now, and there are two of them
+
+The old Salsa Montuno was an original pattern written to the documented conventions
+rather than transcribed from anything, and it did not sound right. It is gone,
+replaced by two transcriptions from a public-domain Basic Montunos MIDI, one per
+clave direction.
+
+**The clave direction is measured, not asserted.** The source carries a clave track,
+and reading it settles which is which: the first pattern strikes 2 and 3 in its
+opening bar, then 1, the "and of 2" and 4 in the next, so the two side leads and it
+is 2-3. The second reverses. They ship as separate pieces rather than one piece with
+a switch, because playing a 2-3 guajeo over 3-2 clave is the crossed-clave mistake
+every salsa pianist learns to hear first, and hearing the two back to back is the
+lesson.
+
+**Only the piano parts came across.** The file also carries clave and cascara on
+percussion channels; those are excluded, because a piano playing its own clave
+teaches the wrong thing. The bass tumbao does come across, into the left hand, since
+that is what a solo pianist plays: its chord lands on beat 4 of the bar before, which
+is where the forward lean lives.
+
+Two things were adjusted rather than copied. Note durations arrived as 0.948 and
+0.473 of a beat, a sequencer's gate setting rather than anyone's intent, and are
+snapped to the grid the part was obviously written on. Velocity is flat at 49 across
+every note in the source, so it is left to the engine default rather than having
+accents invented for it; if the guajeo wants accenting later, that is a musical
+decision to make with ears.
+
+Tempo stays at the source's 120, which is slower than a dance floor because the file
+was written to be followed rather than danced.
+
+The Rhodes twin was cloned from the deleted invention, so it has been rebuilt from
+the 2-3 transcription, keeping its tremolo-off and bright-tine voicing.
+
+## v0.132.12 — a song can exist and still not be in the list
+
+Salsa Montuno was missing from the piano picker, and the cause is one the code
+made easy. `_riffBuildList` groups piano songs by era, then filters that grouping
+against `RIFF_ERAS` to fix the running order, and renders only what survives the
+filter. Anything in a group the list has never heard of is dropped without a word.
+Montuno was tagged `era:'Afro-Cuban'`, which is not one of the five, so the piece
+loaded, held its metadata, sorted correctly, could be launched from a favourite,
+and simply never appeared in the bank.
+
+Fixed on both sides. Unknown groups are now appended after the known order instead
+of being filtered away, so a typo or a new genre costs a group in an odd position
+rather than a song nobody can find. Montuno itself moves to `Other`, an era the
+list already renders, keeping its Latin style tag on the Rhodes twin where organ
+and Rhodes group by style rather than era.
+
+Checked the rest of the shelf while there, by building each picker for real and
+looking for defined songs absent from the rendered HTML: 41 piano, 5 organ and 16
+Rhodes, all present, and metadata coverage complete in both directions for all
+three. Montuno was the only one hiding.
+
+## v0.132.11 — two strings that never went through the translator
+
+Ran the eleven audit scripts that sit outside the seven-gate set. Nine passed.
+The strings audit found nine hardcoded literals, of which seven were false
+positives (the literal appears inside the string table itself, or in a comment) and
+two were real, both user-facing and both English-only in every language:
+
+The **sustain pedal cap** on the piano and Rhodes wrote `'SUST'` directly.
+Now `lbl_sust`, SUST in English and SOST in Italian; both abbreviated because the
+cap is narrow, and sostenuto is the word the abbreviation comes from either way.
+
+The **Music Quiz daily badge** wrote `'RESUME'` directly, so an Italian user with a
+half-finished daily saw an English word on it. `rr_resume` already existed with its
+twin, RIPRENDI, so it reuses that rather than adding a key.
+
+A third hit, the leg tuner's "Show untuned only", is dev-only: it opens from the
+console or a long-press on the brand pill and is not on any user path. Left in
+English deliberately.
+
+Key parity holds at 1,804 each side with no orphans in either direction.
+
+The contrast audit reports 22 light-mode failures, mostly small uppercase labels in
+the tuner and metro at 2:1 against a 4.5:1 requirement. Not touched here: that is a
+palette decision across four modules, not a typo, and it wants its own pass.
+
+## v0.132.10 — cleaning up after myself
+
+Adding the Rhodes all-off call to every place the piano voices are cleared was
+done with a blanket string replace, and the six-space indented occurrences contain
+the four-space string as a substring, so two of them got the line inserted twice at
+the wrong indent. Harmless to run and sloppy to read. Removed.
+
+Also went back over two things from this run that were never actually verified
+rather than assumed.
+
+**The two-track Rhodes songs were already fine.** They schedule a finger-lift
+through `rhodesCardRelease`, which checks the sustain mode and lets the note ring
+if the pedal is down. Only the performance path had no note-off, which is the one
+that was fixed. The two paths reach the same behaviour by different routes, worth
+knowing but not worth merging today.
+
+**The overlay seek lines are correct.** Measured in portrait they came back 12px
+wide by 184 tall, which looked like a broken layout until the cause turned up:
+`body.ov-portrait-rotate` rotates the whole overlay -90 degrees, and
+getBoundingClientRect reports the transformed box. Re-measured at a landscape
+viewport where no rotation applies, both read 184 by 12 inside a 200 by 50 screen,
+and both render properly: transport and title on top, seek line and times beneath.
+
+## v0.132.9 — the Rhodes had no note-off at all
+
+The pedal moved correctly after v0.132.8 and still changed nothing you could hear,
+and the reason turned out to be bigger than the pedal. A Rhodes performance fired
+each note and walked away. There was no finger-lift event anywhere in the path, so
+every note ran to the end of its sample regardless of what the score said, and the
+entire piece sounded as though the pedal had been nailed down in bar one. That is
+also why restoring the pedalling in v0.132.6 was inaudible: a damper needs
+something to damp, and nothing was ever being held back.
+
+The piano riffs have had a proper damper model for a while. The Rhodes now uses the
+same one, which is the right shape for it: a felt pad landing on a tine is the same
+mechanism as one landing on a string. A note rings for its written duration, the
+finger lifts, and what happens next depends on the pedal. Down, it keeps ringing.
+Up, it stops, and everything still sounding only because the pedal was down stops
+with it. Release is the sample engine's own recorded release sample rather than a
+gain ramp, so damping is click-free without any per-note shaping.
+
+Verified against Clair de Lune with the state sampled twice a second: notes ring on
+past their finger-lift while the pedal is down, the count of those collapses to
+zero the instant it lifts, and after a stop nothing is left tracked or sounding.
+
+Two smaller things fixed while in there. `riffStop` silenced Rhodes audio through
+`stopAllRhodesDrones`, which knows nothing about the new voice map, so the
+bookkeeping survived the song; and `rhodesPlayNote` sets its own teardown timer at
+the end of a sample, so a note could already be gone by the time its finger-lift
+arrived and left a stale entry behind. Both now clear.
+
+## v0.132.8 — nothing was delivering the Rhodes pedal data
+
+Restoring the pedalling in v0.132.6 was necessary and not sufficient. The
+performance scheduler built its pedal events with `_riffPiano('pedal', pv)`
+hardcoded, whatever instrument was playing, so a Rhodes performance spent four
+minutes moving the PIANO's pedal on a tab nobody was looking at while its own sat
+still. The arrays were loaded, timed and correct; nothing carried them anywhere.
+Pedal events now dispatch on `inst`.
+
+**Which exposed a second thing, worse than the first.** `_riffRhodes('pedal', 0)`
+called `stopAllRhodesDrones()`, and that function silences every ringing note. It
+is the right behaviour when a person leaves drone mode by hand, and ruinous inside
+a performance: Clair de Lune lifts the pedal 163 times, so every one of those would
+have chopped the whole texture dead. The hard stop now only fires when leaving
+drone mode, which a performance never enters.
+
+Verified by playing Clair de Lune on the Rhodes and sampling: the sustain state
+changes four times in the first thirteen seconds, the card pedal toggles its
+engaged class with it, the voice count keeps climbing and falling naturally
+through pedal lifts instead of collapsing to zero, and the piano's pedal stays out
+of it entirely.
+
+**Worth knowing, and not fixed here:** on the sample path the Rhodes pedal is
+visual only. `rhodesPlayNote` plays the sample to its natural end regardless of
+sustain state; only the synth fallback lengthens its decay. So the pedal now moves
+correctly and truthfully reflects the performance, but it will not sound different
+while the electric piano samples are loaded.
+
+## v0.132.7 — the organ console had twelve controls and songs could reach five
+
+Before authoring any organ automation, the plumbing needed checking, and it was
+worse than the earlier note suggested. `_riffOrgan` routed drawbars for both
+manuals, Leslie, percussion on/off, percussion harmonic and the vibrato/chorus
+selector. Percussion decay, percussion volume, the VIB UPPER and VIB LOWER
+rockers, the VOL rocker and the HOLD latch all had working setters, and
+`_riffRestoreState` was already saving and restoring their state around a song,
+but nothing connected song data to them. Six controls sat there unreachable.
+
+The volume rocker is the one that matters. On a real console the swell pedal is
+how an organist phrases a line, and NORM/SOFT is the two-step version of that;
+without it a song can change its registration but not its dynamics.
+
+All six are routed now, HOLD refreshing both its pedals for the same reason the
+Rhodes fix did. Verified by driving each control through `_riffOrgan` in the
+running app and reading the state back: twelve for twelve, including both
+nine-drawbar manuals.
+
+No song data changed. The five organ pieces still set their registration at bar 0
+and never move, which is the next job and the one that needs ears.
+
+## v0.132.6 — the Rhodes gets its pedal back, and three songs that suit it
+
+**Pedal.** Seven Rhodes performances shipped with `ped: []` because an earlier pass
+decided a Rhodes has its own sustain and stripped it. It does have its own sustain,
+and it also has a damper: felts lifting off tines, the same job a piano's lift off
+strings. Stripped, the pedal sat frozen on screen through an entire performance and
+the sustain stayed flat.
+
+The seven are the same captured performance as their piano twins, note arrays
+identical byte for byte at the same tempo and bpm, so the pedalling transferred
+exactly rather than being invented: 1,706 events across Clair de Lune, Moonlight,
+Barcarolle, Träumerei, To Spring, the E minor Prelude and Liebestraum. Checked in
+the running app, every array spans its piece and lifts after the final note.
+
+**Three songs for the Rhodes bank**, taking it from 13 to 16, all converted from the
+piano bank and voiced for tines rather than hammers:
+
+- **Salsa Montuno.** Tremolo off, bright. A wobble fights the clave and the guajeo
+  needs its edges; the pattern is percussive, not sung. The electric piano is the
+  standard salsa comping voice, so this is the one that most belonged here already.
+- **St. Louis Blues.** Soft tremolo, warm tine. The Stage sound from soul records.
+- **Blues Lick.** Soft tremolo, bright. A twelve-bar lick wants the attack to define
+  each note.
+
+All three keep their pianos' pedal-up marking, which was a deliberate call there and
+is the same call here: blues and montuno piano is played essentially senza pedale,
+and a wash glues the offbeats back onto the downbeats.
+
+Organ control automation is still untouched and remains the biggest audible gap: all
+five organ songs set their registration at bar 0 and never change Leslie speed again.
+
+## v0.132.5 — the seek line only ever knew about the piano
+
+Organ and Rhodes had a play/pause and a stop and nothing else: no seek line on the
+card, none in the expand overlay. The transport was never instrument-aware.
+`_riffScrubEls()` returned a hardcoded pair of piano element ids, so the render
+loop and the drag handler had two surfaces to talk to and the other four did not
+exist as far as the player was concerned. It now queries `.np-scrub` and finds
+whatever the markup actually contains, because a hardcoded list is a list that
+forgets the next instrument.
+
+Both instruments gained a seek row under their riff bar, copied from the piano's,
+and their overlay screens changed from the single-line compact panel to the same
+stacked LCD the piano overlay uses: transport and title on top, seek line
+underneath, inside the one panel. Only the playing instrument's line lights up.
+Measured in the running app: all three read 346px wide by 14px tall with the
+correct totals (organ 2:33, Rhodes 4:07, piano 2:45), fills advancing, no errors.
+
+**The Rhodes sustain pedal had two separate problems and only one of them was a
+bug.** `_riffRhodes('pedal')` and `_riffRestoreState('rhodes')` both refreshed
+`rhodesPedal` and never `rhodesFullPedal`, so in full screen the pedal sat still
+no matter what the song did. The piano has always refreshed both. There is now one
+`_rhodesRefreshPedals()` and both call sites use it.
+
+The second is not a bug and has not been touched. All seven Rhodes performance
+songs carry `ped: []`, and the file says why: "Pedal stripped (Rhodes has its own
+sustain)." Their piano twins carry 103 to 391 pedal events over byte-identical
+note arrays at the same tempo and bpm, so the data could be restored exactly, but
+that changes how those seven pieces sound and is a decision rather than a repair.
+
+## v0.132.4 — the scale name never fitted its own box
+
+The card did not shrink in the move. Measured both builds side by side and the
+name box is 350px wide and 75px tall in each, character for character; the
+clipping was already there and Scales moving into Reference just put it in front
+of someone.
+
+`.scale-name-big` was declared twice. The real rule sets 36px on a 1.04 line
+height, which is the pair that makes the pinned 75px box hold exactly two lines,
+and its comment says as much. A second copy sat further down in the leftover
+Scale Reference block — `.scale-display`, `.scale-notes`, `.scale-select`, none of
+which appear in the markup any more — setting 40px on a line height of 1. Being
+later in the file, it won. At 40/1 two lines want 80px, so even a short name was
+five pixels over its own box before anything wrapped to three, and
+"E NATURAL MINOR · AEOLIAN" wrapped to three and got sliced through the middle,
+top and bottom at once, because the text is flex-centred in a fixed height inside
+a card that clips its overflow.
+
+The duplicate is gone. That alone is not enough: three lines at 36px still want
+112px, and a name like that genuinely needs three. Growing the box is the wrong
+trade, since the pin is what stops the tape below jumping every time the scale
+changes, so long names shrink to fit instead, down to a 20px floor.
+
+Checked across every scale in the library at three roots, at 320, 360 and 412, in
+both languages: 84 names each pass, none clipped, and the smallest any name had to
+go was 24px, so the floor is not doing any work yet. The longest strings are
+"F♯ NATURAL MINOR · AEOLIAN" in English and "F♯ DOPPIO ARMONICO MAGGIORE" in
+Italian.
+
+## v0.132.3 — Scales was never a Train module
+
+It sat alone on the Train hub, full width, under a section label called "Explore"
+that existed for nothing else. The case for moving it was already written into the
+file: it never calls `progUpdate`, so unlike the thirteen exercises that do it
+earns no XP, keeps no stats and reaches no achievement; its own subtitle reads
+"look it up · hear it · play along"; and a comment beside the removed IMPROV tab
+already refers to it as "the Scales tool". It is now the fourth card in
+Tools > Reference, beside Circle of Fifths, Interval Reference and Vocal Range,
+which is the company it was always keeping.
+
+Not a merge with Tonal Center, before anyone asks. They share the drone engine
+and nothing else: Tonal Center listens to you sing against the drone, Scales just
+plays.
+
+**The screen had to physically move.** `#exScales` lived inside `.train-only`,
+which CSS hides outside the Train tab, so re-pointing the card without moving the
+markup would have opened a blank tool. The id keeps its `ex` prefix on purpose:
+about twenty-five CSS rules key off `#exScales` for its drone-mode skin, and a
+cosmetic rename across all of them buys nothing anyone can see.
+
+Rewired throughout: out of EXERCISE_NAME_KEYS, EXERCISE_SUB_KEYS, EXERCISE_PANELS,
+MIC_EXERCISES and the exercise back-label map; into TOOL_NAME_KEYS, TOOL_SUB_KEYS,
+TOOL_FOLDER_MAP and MIC_TOOLS, with `scalesInit` on the enterTool path and
+`scaleStop`/`droneStop` on the exitTool path. The in-page back button was still
+calling `exitExercise`. Reference went from four tools to five, badge included.
+
+**Two things that would have quietly cost people something.** The favourite pin
+key stays `exercise:scales` rather than becoming `tool:scales` — the registry is
+keyed by string and `tool:musicquiz` already lives in the Games hub, so the prefix
+and the placement never had to agree, and renaming it would have dropped the pin
+of anyone who had starred it. And the Everything In Its Right Place achievement
+tracks visits by key, which went `e:scales` to `t:scales`; an old `e:scales` still
+counts, so nobody has to walk back and re-earn it.
+
+Pro gating is unchanged, since Scales was in neither FREE_TRAIN nor FREE_TOOLS
+before or after.
+
+**Two stale strings on the way past.** The Train tour still told people scales was
+on its own card. And the Tools hub tagline claimed "six utilities in three groups"
+when there are fifteen in five; a tagline that counts things is a tagline that
+goes stale, so it describes instead.
+
+## v0.132.2 — the green subtitle was Chordle, three screens ago
+
+A screenshot of RHYTHM TRAINING came in with its subtitle rendered in lime.
+Sampling the pixels off it gave #c1e095, which is `--in-tune` (#b6f25b) with a
+JPEG's opinion applied; the TUNER tab label in the same shot sampled #a4a5b9,
+exactly `--text-dim`, so the palette was fine and the tagline alone was wrong.
+
+`#headerTagline` is a single element shared by every screen, and modules write
+inline styles onto it directly. Solve a Chordle and it fades out, swaps to the
+progression's name and sets `tag.style.color = 'var(--in-tune)'` as a small
+flourish. The only code that ever clears that again is Chordle's and Diadle's own
+daily-reset paths. Leave the game any other way and the green leaves with you,
+through folder headers and into other modules, since inline styles outrank every
+rule in the stylesheet.
+
+`_resetTaglineInline` wipes colour, opacity, transform, transition, font-size and
+the length bucket, and both owners of the element call it before they write:
+setHeaderModule, setHeaderSection, and the root branch that restores the INTONARE
+tagline. Blunt on purpose. The alternative is chasing each new inline style to its
+own cleanup site, which is the race that was already lost once here.
+
+Reproduced against the previous build first, which reported rgb(182, 242, 91) on
+the Rhythm folder header after a simulated win, then confirmed back to
+rgb(163, 165, 184) on this one. Not a regression from the subtitle work; it has
+been reachable for as long as Chordle has had the flourish.
+
+## v0.132.1 — the module header was sizing the title as if it owned the row
+
+A screenshot of Notation Cards showed its tagline reading "know the marks on the
+pa...". Chasing that turned up something larger sitting underneath it.
+
+Module headers put the title and its italic subtitle on one flex row and called
+`_fitHeaderTitle` on the title. That function finds available width by walking up
+to the first ancestor WIDER than the element it is fitting, which is right for a
+shrink-wrapped inline box and wrong here: when the title overflowed its row, the
+walk stepped straight past the row to the header and reported a width the title
+never had. Italian RICONOSCIMENTO ACCORDI rendered 283px inside a 264px row and
+the fitter called it comfortable, so the TITLE was being clipped, not merely the
+subtitle. It also never subtracted the subtitle's width, so every title was sized
+as though it had the whole row, and the subtitle got whatever fell off the end.
+
+`_fitModuleTagline` replaces that call and measures against the row itself, which
+is known at the call site. Title first, since the title is content: it shrinks to
+its 15px floor only if it does not fit alone. The subtitle then takes what is
+left, shrinks to its 9px legibility floor, and if it still does not fit it is
+removed rather than ellipsed. A half word trailing three dots reads as breakage;
+an absent flourish reads as a decision, and the module's full description is on
+its card regardless.
+
+Measured, not counted. The device font-scale setting changes rendered width, so
+no character-count rule survives contact with a real phone; the fitter asks the
+browser at runtime instead.
+
+**Seventeen subtitles were also simply too long for a header.** The file's own
+rule, written when Staff Notes and Relative Pitch were fixed, is three or four
+words, and a good few had drifted well past it. Trimmed in both languages, which
+took the subtitles dropped at 320px from ten to one in English and twelve to five
+in Italian. The stragglers all sit behind titles long enough that no subtitle
+would fit beside them: INTERVAL REFERENCE in English, and in Italian CERCHIO
+DELLE QUINTE, NOTE SUL PENTAGRAMMA, INTONAZIONE RELATIVA and RICONOSCIMENTO
+ACCORDI. Those hide cleanly now instead of showing a fragment. Nothing is clipped
+at 320, 360, 390 or 412 in either language.
+
+## v0.132.0 — the folder subtitles were answering the same question twice
+
+Every folder carried a subtitle, and no two of them agreed on what a subtitle was
+for. Eight named their contents; Reading described itself. Underneath that sat a
+second, entirely separate family of subtitle strings, `folder_X_subtitle`, fully
+written and fully translated, that nobody had seen in months: it lives in the
+in-page `train-header`, and CSS hides that header whenever `body.in-section` is
+on, which is always, once you have opened a folder.
+
+The visible string was doing two jobs at once. On the hub card it is the only
+preview of what is inside, so naming the tools earns its place. In the folder
+header it sat directly above cards reading CIRCLE OF FIFTHS, VOCAL RANGE and
+SURVIVAL GUIDE while itself reading "Circle of Fifths · Vocal Range · Survival
+Guide". A label that repeats the labels below it is not telling you anything.
+
+Split by surface. The card names the contents; the header describes the folder.
+That put the dead `_subtitle` family back on screen, where four of the nine were
+already written in the right voice. The other four were lowercase echoes of the
+tool names and have been rewritten, Tools > Rhythm never had one at all and now
+does, and all nine were measured in the running app at 320, 360, 390, 412 and
+768 in both languages: single line everywhere, worst case the Italian Reference
+string at 185px in a 264px box.
+
+**Three things that were simply wrong, found on the way through.** The Reference
+folder holds four tools and its card claimed three, omitting Interval Reference
+from both the subtitle and the badge. The Games card had a hardcoded fallback
+predating Road Trip, so it listed four of five whenever the string table was not
+consulted. The Reading card's fallback still read "Staff Notes" alone, from
+before Notation Cards shipped.
+
 ## v0.131.7 — the mega pass, and the deck was in the wrong order
 
 Chord symbols were the one pack that had never been source-checked. All five
