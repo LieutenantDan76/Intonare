@@ -64,6 +64,3187 @@ feel and its sources contradict each other on accents.
 
 ---
 
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+## v0.148.3 — Five rhythm hints described the wrong beats
+
+Questioning the backbeat wording turned up something worse than prose.
+Checking the hints against the actual note arrays found five that name
+the wrong positions. `n.p` is measured in beats from the bar, so p:1 is
+beat 2, and that made the claims checkable:
+
+    five_four_groove  rest is on BEAT 2          hint said "the and-of-2"
+    cascara           rests on and-of-1, and-of-3 hint said "the and of 2 and 4"
+    mozambique        rest is on BEAT 2           hint said "an offbeat rest"
+    guajeo            rests on 1, 2, and-of-3     hint said "1 and the and-of-2"
+
+Someone tapping along and trusting the hint was being told the wrong
+thing, which matters more in a rhythm trainer than any amount of cadence.
+All four corrected against the data.
+
+The fifth, `eighth_rest`, was accurate but read as a contradiction: the
+rests really are on 2 and 4, and calling that "silence on the backbeat"
+invites the obvious objection, since backbeat means those beats
+accented. Rewritten to say what actually happens, that the rests land
+where the accent is expected.
+
+Swept every card with a verifiable rest claim afterwards; no others
+disagree with their note data.
+
+Worth recording the sequence: a question about a word led to checking a
+musical claim, which led to finding four false ones. The copy pass was
+looking at rhythm and cadence while the sentences were wrong about the
+rhythm.
+
+## v0.148.2 — Rewrote the "house style" hints too, because the consistency was the tell
+
+Correct pushback: I wrote most of this text, so "house style" is really
+"my style", which is the thing being removed. Preserving it was preserving
+the problem.
+
+The dash was never the real fingerprint. **334 blurbs sharing one
+construction** was. Every rhythm hint ran [label] — [gloss]. [extra
+sentence], with no exceptions across dozens of entries. A person writing
+sixty-five of these drifts: some open with the count, some with the
+instruction, some with what it sounds like, some are blunt because by the
+fortieth one you get terse. Perfect uniformity is what reads as generated.
+
+Twenty-two rewritten so that no two share a shape:
+
+    The cornerstone of all rhythm — four even quarter notes per bar.
+    Four even quarter notes per bar. Everything else is built on this.
+
+    Beats 1 and 3 — the downbeat. Your feet would land here in a march.
+    Beats 1 and 3, where your feet land in a march.
+
+    Almost nothing — two hits, lots of silence. The rests are the challenge.
+    Two hits and a lot of silence. The rests are the hard part.
+
+    Syncopation inside 5/4 — already asymmetric, now off-beats too.
+    5/4 is lopsided enough before you add off-beats.
+
+Sentence lengths vary deliberately, several lose a sentence entirely, and
+contractions are in where a person would use one — "you'll lose it" rather
+than "you will lose it". That last one cost two syntax breaks: apostrophes
+inside single-quoted strings. The stiff workaround was written first, then
+replaced with proper escaping, because avoiding contractions to dodge an
+escaping problem is how prose ends up sounding like a manual.
+
+43 hints still carry a dash and the remaining content areas are untouched.
+This is a reading job, not a pass; it goes at the speed of actually
+reading each line.
+
+## v0.148.1 — Read the rhythm-card hints properly, which the automated pass could not
+
+Fair correction: cadence is not something a rule can see, and the previous
+build proved it. 205 of 237 replacements landing on a colon is itself the
+tell — no editor's mix looks like that.
+
+The classifier's specific blind spot, now demonstrable: it treated
+"Downbeat is a rest — your first hit is the and-of-1" as house style,
+because the text before the dash is short. But that is two clauses, not a
+label and its gloss. Length is not the distinction; grammar is, and
+telling them apart means reading the sentence.
+
+Read all 83 hint fields containing a dash. Most really are house style and
+were left exactly as they are: "The cornerstone of all rhythm — four even
+quarter notes per bar", "3+3+2 eighth-note grouping — three uneven hits
+that underpin reggaeton". Eighteen were genuine AI cadence and are
+rewritten by hand, individually:
+
+    Beat 1 is silence — feel the empty downbeat
+    Beat 1 is silence. Feel the empty downbeat
+
+    Rest on 1 then an eighth — the first hit is pushed off the beat
+    Rest on 1 then an eighth, so the first hit is pushed off the beat
+
+    Hemiola in both bars — three-against-four feel sustained across two bars
+    Hemiola in both bars, three-against-four sustained across the pair
+
+Several were recast rather than repunctuated, which is the part no rule
+reaches: "so the first hit is pushed off the beat" says the same thing
+with a joint instead of a hinge, and "sustained across the pair" drops a
+repetition the dash was hiding.
+
+Also swept the previous build's colons for ones sitting in front of a full
+clause, which is the damage that pass was most likely to have done. Two
+turned up; one was a legitimate list, the other is fixed.
+
+The remaining areas — Survival Guide prose, vocal range references, tool
+blurbs — need the same treatment: read, not matched.
+
+## v0.148.0 — Em-dash copy pass: 237 AI-cadence dashes rewritten, house style kept
+
+Scanned every user-facing string for AI-speak. The result was lopsided:
+576 em-dashes across 364 fields, and almost nothing else — four
+"powerful/amazing", three "simply", one "seamless", one "not just X but
+Y". The prose is in decent shape; the punctuation was the tell.
+
+**Not every em-dash is AI cadence, so they were classified rather than
+stripped.** The app's voice uses a label followed by its gloss, which is a
+deliberate house pattern: "SAFE (under 70 dB) — no risk at any duration",
+"Dotted quarter into eighth — the classic waltz lilt". 334 of those were
+left alone. The other 237 are mid-sentence appositives, the rhythm that
+reads as machine-written, and those are rewritten.
+
+Replacement chosen by what actually follows the dash rather than a single
+substitution: a full independent clause takes a semicolon, an imperative
+becomes its own sentence with a capital, a participial phrase takes a
+comma, and a noun-phrase gloss takes a colon. Final mix was 205 colons,
+16 semicolons, 12 commas and 4 new sentences.
+
+Also fixed `dt_streak_generic`, which read "days. keep going." in English
+and "giorni. continua così." in Italian — lowercase after a full stop in
+both.
+
+Two things worth recording about how this went. The first classifier
+called 219 of 237 semicolons, which would have been ungrammatical
+wherever a fragment followed; semicolons need an independent clause on
+both sides. And a capitalisation sweep run as a separate step duplicated
+words ("Keepkeep") because of nested capture groups — that build was
+discarded and the whole pass redone as a single operation with
+capitalisation handled at the point of replacement. Nothing shipped in
+between.
+
+`COPY_PASS_REPORT.md` lists all 237 changes with their context for review.
+
+## v0.147.1 — Dev code gets its own confirmation, and a way out that doesn't need the code
+
+The developer code was reusing the Pro unlock modal, which congratulates
+you on a purchase — the wrong message when what actually happened is that
+six testing tools appeared. It now grants Pro quietly and shows a "DEV
+TOOLS ON" notification instead, saying what turned on rather than
+celebrating a transaction.
+
+Added an **"Exit developer mode"** button at the bottom of Settings,
+rendered only while dev mode is on. Entering the code again already
+toggled it off, but that requires remembering the code; a visible way out
+is better. It leaves Pro alone deliberately — the code granted it, and
+silently revoking it on the way out would be a surprise — and confirms
+with "DEV TOOLS OFF".
+
+Two ordering faults found by testing rather than reasoning, both mine:
+
+The Reset Pro button's visibility was only recomputed when the Settings
+panel refreshed, so enabling dev mode left it hidden until Settings was
+reopened. It is now updated by the dev toggle itself.
+
+And even after that, it still didn't appear: `setDevMode(true)` ran BEFORE
+Pro was granted, and the button's condition is "dev mode AND Pro", so the
+check ran while Pro was still false. Granting Pro first fixes it. Worth
+recording because the symptom — a dev code that looks like it half worked
+— had two independent causes and fixing the first one changed nothing
+visible.
+
+Verified: the exit button is hidden before the code and visible after,
+both dev buttons appear together, the purchase modal does not fire, the
+notification reads DEV TOOLS ON, exiting hides both buttons again, and Pro
+survives the exit.
+
+## v0.147.0 — Every developer tool behind one code, and the iOS bypass restored
+
+**The iOS beta bypass is back.** Removing it was premature: iOS is still
+on TestFlight, it has no StoreKit IAP wired, and Apple rejects builds that
+gate features behind a purchase path that does not work. It is scoped to
+`isIOS() && isCapacitor()` so Android, desktop and the iOS PWA are
+untouched, with the submission constraint recorded beside it.
+
+**All six developer tools are now behind a single code.** Found by
+searching rather than listing from memory, which turned up two nobody had
+mentioned:
+
+  · the Reset Pro button, which revokes a purchase
+  · CALIBRATE on Survival Guide photos
+  · UNLOCK ALL, the bulk achievement unlocker
+  · long-press on an achievement to unlock just that one
+  · the Road Trip leg tuner, on a long-press of the brand pill
+  · `injectMockData`, which overwrites real progress with a fabricated save
+
+Each function guards itself rather than relying only on its button being
+hidden, because they are all reachable as globals.
+
+**The dev code is deliberately NOT the tester code.** `INTONARE_AMICI` is
+already the friends-and-family Pro unlock, so reusing it would hand every
+tester a button that revokes their own Pro and a tool that overwrites
+their progress. Developer tools use `DEV_CODE` — currently
+`INTONARE_OFFICINA` — entered in the same Settings field, case
+insensitive. It grants Pro as well, since every tool assumes access.
+Entering it again turns the tools back off, so there is a way out that
+isn't clearing site data.
+
+The mode persists in localStorage rather than living in source, because
+the build output is always plain `Intonare.html` and a source flag would
+be overwritten by the next download.
+
+Verified in both states. With no code: every tool is a no-op, the UNLOCK
+ALL button is hidden, and entering the TESTER code grants Pro while
+leaving dev mode off. With the dev code: it is accepted case-insensitively,
+Pro is granted, the flag persists, all tools work, and entering it again
+turns them off.
+
+`intonare_dev_flag_audit.py` now checks all six gates and fails if the two
+codes are ever made identical.
+
+## v0.146.1 — Dev tools become a runtime toggle, and the iOS unlock is deleted rather than gated
+
+v0.146.0 put three testing affordances behind a build-time constant. Two
+things about that were wrong.
+
+**A build-time flag is the wrong shape here.** Android is in production
+while iOS is still on TestFlight, and both ship from ONE file. A source
+constant would have to be edited per build and would be overwritten by the
+next download. `INTONARE_DEV` is now read at runtime from a localStorage
+key, so it ships off and is enabled per-device:
+
+    localStorage.setItem('intonare_dev', '1'); location.reload();
+
+Nothing behind it grants Pro, deliberately — so even if someone finds the
+switch, the only things exposed are the Reset Pro button and the
+Survival Guide CALIBRATE tool.
+
+**_iosBetaUnlock is deleted, not gated.** It returned true for any native
+iOS build and `isPro()` consulted it, so a public iOS release would have
+handed Pro to every customer. Gating left that one boolean away from
+happening. `tryUnlockCode()` with `UNLOCK_CODE` already lets a TestFlight
+tester grant themselves Pro, so it was redundant as well as dangerous.
+`isPro()` now depends on purchase state alone.
+
+**Its original comment recorded a real App Store constraint, which is kept
+in place rather than deleted with the code:** iOS has no StoreKit IAP
+wired (the RevenueCat key is Android-only), and Apple rejects builds that
+gate features behind a purchase path that does not work. That bypass
+existed so review never met a dead purchase button. Before an iOS
+submission, either StoreKit IAP must actually work or Pro must not be
+gated on iOS for that build. Android is unaffected — RevenueCat works
+there and this removal is what makes the Play Store build correct.
+
+Verified both states: with no key the flag is false, a fresh install is
+not Pro, the Reset button computes to display none even with Pro active,
+calling `resetProTesting()` is a no-op, and the unlock code path still
+exists. With the key set, the flag is true and the reset works.
+
+`intonare_dev_flag_audit.py` updated to match — it now also fails if
+`_iosBetaUnlock` reappears or if `isPro()` starts consulting anything
+besides purchase state.
+
+## v0.146.0 — Development hooks gated behind a single flag, with an audit that refuses to ship them live
+
+Three testing affordances were sitting in the shipping file, each a real
+problem in front of a paying customer rather than merely untidy.
+
+`_iosBetaUnlock()` returned true for any iOS Capacitor build, and `isPro()`
+consults it — so a public iOS release would have handed Pro to every
+customer for free. The "Reset Pro (testing)" button appears in Settings
+whenever Pro is active and REVOKES it; a customer could have tapped it and
+destroyed what they bought. And the CALIBRATE button on Survival Guide
+photos is a label-positioning tool with no meaning to a user.
+
+All three are now gated on one `INTONARE_DEV` constant, declared beside
+the version string where it can't be missed, and set to false. Gated
+rather than deleted so the tooling still exists for development —
+switching it on restores all three at once.
+
+`resetProTesting()` also refuses to run outside a dev build regardless of
+the button. It is a global function that destroys a purchase, and hiding
+its button is not the same as making it safe.
+
+Verified against a production build: the flag is false, the iOS unlock
+returns false, `isPro()` is no longer true merely from running on iOS,
+the reset button computes to `display: none` even with Pro active, and
+calling `resetProTesting()` directly is a no-op.
+
+**Added `intonare_dev_flag_audit.py`**, which exits non-zero if the flag
+is true or if any of the four gates is missing, so it can gate a release
+script. The point of the flag is that shipping is now exactly one boolean
+away from unsafe; that is worth a machine check rather than a memory.
+
+One consequence worth being explicit about: **TestFlight builds will no
+longer grant Pro automatically** unless INTONARE_DEV is set true for those
+builds. That is the correct behavior for a production binary, but it will
+change what iOS testers see.
+
+## v0.145.4 — Checked subdivisions, not just tempo numbers; bossa was still playing at double
+
+Asked whether the subdivisions had been verified — whether a tempo that
+reads correctly might still be playing in double or half time. It had
+not been checked, and the question found something.
+
+**Meter is sound: zero mismatches.** Every progression's time signature
+matches its groove's beat count, so nothing is structurally stretched or
+compressed.
+
+**But several grooves declare a TWO-BAR cycle written into 16 steps,
+while the engine plays those 16 steps across 4 beats — so the tempo a
+listener hears is double the number in the preset.** Comparing tempo
+figures cannot reveal that; it only shows up by computing the real
+duration of one cycle and asking what style tempo it corresponds to.
+
+Effective tempos, computed rather than assumed:
+
+    salsa          app  90  ->  180   salsa runs 160-220        ok
+    salsa_ii_v     app  95  ->  190   salsa runs 160-220        ok
+    samba          app 130  ->  260   samba runs 130-320        ok
+    bossa_251      app  88  ->  176   bossa runs 70-120         TOO FAST
+    bossa_tritone  app  88  ->  176   bossa runs 70-120         TOO FAST
+
+So the salsa correction in v0.145.2 was right, and the bossa correction
+in v0.145.3 was not enough — 88 sounded like samba rather than bossa.
+Both bossa progressions are now 60, an effective 120 and the top of the
+typical range. Documented in place so the next person doesn't "fix" them
+back up.
+
+The general point, worth keeping: a tempo number is meaningless without
+knowing how many bars the pattern spans and how many beats the engine
+gives it. Two of the last three tempo passes compared numbers and drew
+the wrong conclusion; the one that computed cycle durations found the
+real answer.
+
+## v0.145.3 — Researched the remaining tempo outliers; most were already right
+
+The ratio table in v0.145.2 flagged six progressions whose tempo differed
+sharply from their groove's suggested figure. Researched each rather than
+assuming the same units mismatch applied, and the answer for four of them
+is that nothing was wrong.
+
+**Soleá (108) and bulerías (200) are correct.** Flamenco sources put
+soleá at roughly 70-120bpm and bulerías at 160-275 counting compás beats,
+which is exactly what the progression tempo represents. The compás
+groove's `suggestedBpm` uses a different reference; the progressions are
+right and were left alone.
+
+**The waltzes are correct.** Waltz sits around 114-130 in practice, which
+is where `country_waltz` (132) and `folk_waltz` (116) already are.
+`ballad_34` at 72 and `minor_waltz` at 84 are deliberately slow jazz
+waltzes, a real thing rather than a units error.
+
+**Rhythm changes at 180 is correct.** Sources describe it being called at
+200-340 at jam sessions with 144 as a learning tempo, so 180 is a
+sensible practice speed rather than a mistake.
+
+**Compound Jazz at 160 is correct, and the ratio explains itself.**
+160 ÷ 3 = 53.3, which is the nine_eight groove's suggested 53. Nine-eight
+groups into three dotted quarters, so the groove quotes the compound
+pulse and the progression quotes the eighth-note pulse. Identical tempo,
+two units — the same class of confusion as salsa, but harmless here
+because both figures describe the same speed.
+
+**One genuine correction: Bossa (tritone sub) was 128, now 88.** Bossa
+nova runs roughly 70-120bpm, with teaching guides giving slow 56, medium
+72 and fast 96, and the pattern is a two-bar cycle. 128 ran it fast and
+out of style, and its sibling `bossa_251` was already at 88.
+
+Worth recording the general lesson: a tempo that looks wrong against a
+groove's suggested figure is usually a units difference, not an error.
+Salsa was a real fault because the two figures described genuinely
+different speeds; the rest describe the same speed counted differently.
+
+## v0.145.2 — The preset chip leak was in the DOM, and salsa was running at double speed
+
+**The drum module's preset chip still showed the progression's beat.** The
+state was being handed back correctly — the variable restored, verified —
+but `_rcApply` assigned `dk_loadedPresetName` directly while
+`dkUpdatePresetLabel()` is what writes both the variable AND the visible
+`#dkPresetLabel` element. So the chip kept displaying whatever
+`loadPreset` last wrote. The leak was in the DOM, not the data, which is
+why every state-level check said it was fixed. Restore now goes through
+the updater.
+
+**Clicking the Custom category didn't reset like CLEAR did.**
+`_applySnapshot` handles patterns, kit, swing and bars but never touched
+the preset label, so switching to Custom left the chip naming the preset
+you had just come from. Both paths now behave identically.
+
+**Salsa was running at double speed, and the cause is a units mismatch
+that affects more than salsa.** Dance sources quote salsa at 160-220bpm
+while DJs call the same records 89-100 — the same music described two
+ways, differing by exactly 2x. The montuno and clave grooves are TWO-BAR
+cycles written into 16 steps and authored at `suggestedBpm: 90`, the
+half-time figure. The salsa progressions carried 180 and 190, so the
+montuno played at literally twice the tempo it was written for. Now 90
+and 95, with the convention documented on the groove so it doesn't get
+"corrected" back.
+
+Checking every progression against its groove's suggested tempo rather
+than just this one found five more at roughly 2x, all of them grooves
+with a two-bar cycle in 16 steps: compound_jazz (3.0x), solea (2.25x),
+bossa_tritone (1.97x), bulerias (1.82x), and two waltzes at roughly half.
+Those are left alone for now — each groove's cycle note needs reading
+before assuming the same fix applies, and guessing at five more tempos
+after this session is exactly the wrong instinct. The ratio table is
+reproducible.
+
+## v0.145.1 — Three device findings, traced rather than guessed
+
+Taken one at a time, each verified before moving to the next.
+
+**The flamenco beat sounded like twelve hits in a row.** In this engine a
+step value of 1 is a GHOST NOTE, not silence — the scheduler passes
+`val === 1` as the ghost flag and still triggers the voice. The preset
+put a 1 on every non-accent step, so the clave fired on all twelve, seven
+quiet and five loud, which on a sharp percussive voice reads as a stream
+rather than a compás. The compás IS the accent figure, so only the five
+accents sound now: 3, 6, 8, 10, 12, with kick on the two structural
+pillars.
+
+**The drum module's preset chip showed the progression's beat name, and
+progression presets changed names without changing audio.** Both are the
+same root cause, found by tracing the state through the whole flow rather
+than reasoning about it.
+
+`progLoadPreset` had TWO captures. The first is correct: borrow the
+engine, apply the preset's beat, save the result as Progression's setup,
+hand the drum module back. The second — added in v0.137.8 to store an
+explicit choice — then ran unconditionally, and by that point the globals
+had already been restored to the DRUM MODULE's state. So it captured the
+drum module's pattern and label and saved them over the beat that had just
+been stored. The progression ended up holding the drum module's pattern
+under the preset's name: names changed, audio did not. That second capture
+now only runs when the preset brings no beat of its own.
+
+The Progression tray's beat cards had a related fault: they called
+`loadPreset(p)` directly with no borrow at all, writing the drum module's
+live pattern, kit and preset label. That is why the chip named the
+progression's beat. They now borrow first, exactly as the preset path
+does, and use `progSetBpm` rather than `setBPM` so no re-anchor fires.
+
+Verified as a full sequence rather than in pieces: with the drum module
+on Basic Rock at 96bpm, loading a progression preset leaves its pattern,
+label and tempo untouched; the progression stores the flamenco beat;
+playback runs that beat at ts 6; and after handback the drum module is
+bit-for-bit as it was. The tray card path passes the same test. The state
+leak audit now shows "PROGRESSION loads a preset" touching only `prog*`
+variables, with the `dk_*` writes gone.
+
+## v0.145.0 — Device testing round: a self-inflicted regression, and the sampled-note stop bug behind it all
+
+Five findings from testing on hardware. One is a regression I introduced,
+one is a bug that has been in the app the whole time, and it explains a
+symptom that looked instrument-specific.
+
+**Progressions skipped their first bar.** Mine, from v0.139.0. Giving
+Progression its own tempo meant calling `setBPM(progBpm)` as it started,
+and `setBPM` debounces a `_scheduleRetime()` which — by its own comment —
+cancels pending audio and restarts every track's pattern from phase zero.
+Correct when someone drags the tempo slider; catastrophic when the
+progression is mid-launch, because the retime fires a moment later and
+restarts what had just been aligned. Added `_setBpmNoRetime`, used
+wherever tempo is loaded into or restored from the engine rather than
+changed by a user. Also removes the same hazard from the context restore
+on stop and from live tempo changes during playback.
+
+**Fretted guitar kept playing through a subfamily switch while 12-string
+stopped.** That asymmetry was the clue. `SampleEngine.play` returns a
+handle whose `stop(releaseSec)` takes a DURATION; `gccStop` was calling
+`n.stop(t + 0.12)` with `t = ctx.currentTime`, an absolute audio time.
+So tau became the current clock value — thousands of seconds — meaning
+the gain decayed over roughly twenty minutes and the buffer source was
+scheduled to stop about ninety minutes out. The note never stopped. Only
+sampled voices were affected, which is exactly why 12-string behaved: it
+returns a composite handle that calls `stop()` with no argument and gets
+the 0.04 default. Every other chart stop passes `stop()` or `stop(0)` and
+was already correct; this was the single site.
+
+**Survival Guide audio still didn't stop.** Third time, and the previous
+two fixes were both real but neither was sufficient: the function is
+exported and correctly listed, and `exitTool` does call `stopAllAudio`.
+The remaining problem was the tenth instance of the fire-and-forget
+pattern — the Guide's `tone()` created an oscillator, started it and
+returned nothing, so `stopAllSounds` could only clear pending timers
+while anything already sounding ran to full length. Tones are now tracked
+and faded out, with self-pruning so a long session doesn't accumulate
+finished oscillators.
+
+**The new Flamenco Compás beat never appeared in the Progression tray.**
+The tray filters its beat list by time signature, and the flamenco
+progressions are `timeSig: [6, 8]` while the preset was `ts:12` — the
+most literal reading of a twelve-beat cycle, and silently excluded.
+Re-expressed as `ts:6` with `globalSub:2`: identical twelve-step array,
+same accents, now matching the meter the progressions are actually
+written in. It appears in the tray and shows as selected.
+
+**CLEAR left the preset pill naming a preset that was no longer loaded.**
+It reset the kit, swing, category and pattern but never the label.
+
+Still outstanding from this round and not addressed here: the drum kit
+module reportedly still being overridden by a progression. The state leak
+audit reports clean, so whatever is happening is outside what that
+instrument can see, and it needs its own pass rather than a guess.
+
+## v0.144.1 — Sanity sweep after the compás work, which found two drum presets that never loaded at all
+
+Re-ran everything after the content change: all seven project audits pass,
+all 15 tools open, the audio path still installs its lookahead limiter at
+0.7 headroom, both global stops are clean and the rhythm context is
+released. Every progression preset resolves its drum preset by name and
+every groove id it names exists.
+
+The sweep did turn up two failures, and checking the pre-session build
+confirmed they are not from this work: **2/4 Polka and 2/4 March threw on
+load and always have.** `TIME_SIGS` had entries for 3, 4, 5, 6, 7, 9, 11
+and 12 but not 2, so `loadPreset` read `.label` off undefined and gave up.
+Those two presets have been unloadable rather than merely mis-tuned.
+
+Added the missing 2/4 entry, shaped like the 3/4 and 4/4 rows: four
+sixteenths per beat, eight at 32nd resolution, fill rows naming the
+sixteenth positions. Both presets now load with their tracks populated
+and the sequencer UI builds for them. 63 of 63 drum presets load, up from
+61.
+
+Worth noting how it surfaced. The check that found it was "load every
+preset and see what throws", which is not something any existing audit
+does — the groove audit checks musical content and the sentinel checks
+that known fixes survive, but nothing tried to actually use each preset.
+A whole time signature was missing from a lookup table and nothing
+noticed.
+
+## v0.144.0 — A real flamenco compás drum preset, and a correction to my own reading of the pairings
+
+Asked to check the progression preset pairings against what the styles
+actually do. Two findings, and one of them is me being wrong.
+
+**The grooves themselves are well researched and correct.** Checked
+against sources rather than assumed. `compas` (Soleá) accents steps 3, 6,
+8, 10 and 12, which is exactly what the flamenco literature gives.
+`flamenco` (Bulería) accents 1, 4, 7, 9 and 11, which looks wrong until
+you account for bulerías starting its cycle on beat 12 — rotate so 12 is
+step one and it becomes 12, 3, 6, 8, 10. Correct, including the
+rotation. `son32` is a textbook 3-2 son clave. Whoever built this library
+did the work.
+
+**Salsa was fine.** The suspicion that the salsa progression doesn't use a
+salsa beat was reasonable but wrong: it pairs `montuno` with `Son Clave`,
+and those ARE salsa — montuno is the piano guajeo, son clave the
+underlying clave. There is no groove named "salsa" because salsa is built
+from those parts.
+
+**I was also wrong about `funkback`.** I flagged it as a lazy catch-all
+used by thirteen presets including Pachelbel's Canon and the cadence
+demos. Its id misled me: the preset is `name: 'BACKBEAT'`, accents on 2
+and 4, with a cited source, and it is the fundamental rock and pop
+backbeat. Pairing it with three-chord pop, the Axis progression and
+cadence demonstrations is correct. I judged it by its identifier instead
+of its contents, which is the same mistake this session has caught
+elsewhere. No change made.
+
+**The one real defect: flamenco had no correct drum pairing.** Both
+`bulerias` and `solea` used "6/8 Feel", and the compás is not 6/8 — it is
+a 12-beat cycle grouped 3+3+2+2+2, usually notated in 3/4. "12/8 Blues"
+would be no better, being four groups of three. Nothing in the library
+fit, so this adds one.
+
+`Flamenco Compás` is `ts:12` with `globalSub:1`, so one step is one
+compás beat, which is how flamenco is actually counted rather than
+burying the cycle inside a subdivision. Written on `clave` because the
+real timekeeper is palmas and clave is the closest voice in the kit, with
+kick marking the structural pillars at 12 and 6 the way a cajón bass tone
+does. One preset serves both palos, since soleá and bulerías share the
+accent pattern and differ in tempo and feel — soleá around 70-120bpm,
+bulerías 160-275, and the progressions already carry their own tempos of
+108 and 200 respectively.
+
+Verified the accents land on exactly 3, 6, 8, 10, 12, that the preset
+resolves by name, and that both progressions now point at it.
+
+## v0.143.1 — The Interval Reference tour named controls that don't exist
+
+Asked to check the tour actually reads correctly rather than merely
+existing, which was the right question. It exists, its five selectors all
+resolve, and its claims about the card check out — short name, full name
+and semitone count are each real elements. But its third step described
+buttons by names the app never uses.
+
+The direction row's buttons read **Up**, **Down** and **TOGETHER**. The
+tour body said "**Ascending** and **descending** play the notes one after
+the other; **harmonic** plays them at once" — three bolded words, none of
+which appear on any button. Bolding in these tours means "this is the
+control you are looking at", so it was pointing at things that weren't
+there. The step's own title had it right, "Up, Down or Together", while
+its body invented different vocabulary. Italian had the identical
+mismatch: buttons say Su, Giù and INSIEME, the body said Ascendente,
+discendente and armonico.
+
+Reworded so the bold names match the buttons while the musical terms stay
+as explanation: "**Up** and **Down** play the notes one after the other,
+ascending or descending; **Together** sounds them at once."
+
+Swept every other tour for the same fault by collecting each bolded word
+and checking it against the app's visible UI strings. That produced 53
+hits and almost all are false positives — bolded phrases like "press and
+hold the title" or "rushing" are ordinary emphasis, not control names.
+The handful that did look like labels (the sing-sing modes, HEAR AGAIN,
+NEW ROUND, TAP MODE, Strum) all resolve to real UI text. So the interval
+reference was the outlier, and it was found by reading the tour against
+the module rather than by any pattern match — worth recording, because
+the automated version of this check is too noisy to gate on.
+
+## v0.143.0 — Interval Reference gets its own tour; it was the only module without one
+
+Reported as the interval reference showing the main tour. Auditing every
+module against `TOURS` found the cause: `intervalref` was the only tool
+or exercise in the app with no tour of its own. All fourteen exercises
+have one and every other tool has one.
+
+So the fallback was working exactly as designed — `startTour()` drops to
+the overview when a module has no entry, deliberately, because a
+section-level tour would target elements hidden behind the open tool and
+close instantly. Nothing was mis-mapped; the tour simply didn't exist.
+Confirmed by resolving the key with and without the new entry: with it,
+`intervalref`; without, `overview`, which reproduces the report exactly.
+
+Written to match the existing tool tours in structure and voice, five
+steps in both languages: the card and what it shows, HEAR IT, the
+up/down/harmonic row (the same interval sounds different depending on how
+it's played, and harmonic is how you meet it inside a chord), the jump
+row, and the voice picker.
+
+Two mistakes in my own new copy were caught by running the audits rather
+than by review: an HTML entity in an Italian title — `Su, Gi&ugrave; o
+Insieme` — which is precisely the fault fixed one build ago in v0.142.2,
+and it would have rendered literally for the same reason. Plus a British
+spelling and an em dash the tone audit flags. All three corrected, and
+both audits are back at their baselines.
+
+Verified: five steps, every selector and preview selector resolves inside
+the open tool, both languages complete on every step, and no entity
+remains in any title.
+
+## v0.142.2 — Tour titles showing raw HTML entities, in English and worse in Italian
+
+Chased the "tour ampersands" report and it turned out to be the reverse
+of missing: two English titles were showing a literal `&amp;`.
+
+Tour titles render through `textContent`, not `innerHTML`. A bare `&` is
+therefore correct and displays as an ampersand, while `&amp;` displays as
+the five characters `&amp;`. Twelve titles used a bare `&` and were fine;
+`rhythmcards` step 2 read "Pick &amp; Blend Categories" and `cof` step 3
+read "Sharps &amp; Flats". Both had been HTML-escaped for a context that
+never parses HTML.
+
+**Checking the rest surfaced a worse version of the same fault in
+Italian.** Four Italian titles carried entities that were rendering
+literally: `L&rsquo;Accordo`, and `Modalit&agrave;` in three places, so
+Italian users were reading "Modalit&agrave; Giornaliera" rather than
+"Modalità Giornaliera". Replaced with the actual characters. The English
+`&amp;` cases at least stayed readable; these did not.
+
+Swept every title in both languages afterwards — no entity of any kind
+remains in a field that renders as text. The one other `&amp;` found in
+i18n strings, `hint_tools_main`, is bound with `data-i18n-html` and is
+correctly escaped for that path, so it was left alone.
+
+Worth noting the tour audit passes this file clean and always did: it
+checks for missing tours, broken steps and tone, and has no concept of a
+string that renders differently from how it reads in source. The check
+that found this was rendering each title through the real path and
+comparing.
+
+## v0.142.1 — XP toast: lower, correct in light mode, and stacking updates in place
+
+Three corrections from the first pass.
+
+**It sat too high and clipped the level chip.** The toast was placed 2px
+below the chip and then rises 3px as it fades in, so it overlapped the
+chip's lower edge. Now 8px below, leaving a 5px gap at rest.
+
+**The colour was right, the shadow wasn't.** `--in-tune` is properly
+themed and matches the chip it sits under — #b6f25b in dark, #224700 in
+light — with contrast against the page background of 14.6 and 4.9
+respectively, so both are legible. But the text-shadow was a dark drop
+shadow in both modes, and in light mode the text is dark, so the shadow
+did nothing except muddy it. Light mode now uses a white halo instead.
+
+**Stacking now updates in place rather than re-animating.** The number
+changes on the toast that is already there and it does not replay its
+entrance — no dropping back down and lifting again. If an award arrives
+while the toast has already begun fading, it returns to full opacity from
+wherever it had reached and holds its position, so the effect reads as
+the total ticking up rather than a new toast arriving. The scale pulse
+from the first version is gone; it was fighting the same idea.
+
+Verified against the described scenario: three answers worth 2 XP each
+show +2, +4, +6 on a single toast, and an award landing mid-fade updates
+to +8 on the same element with the fade cancelled and the position held.
+
+## v0.142.0 — "+N XP" toast under the level chip, with rapid awards stacking
+
+A small monospace "+N XP" that fades in, rises slightly and fades out
+beneath the level chip, showing the actual amount earned.
+
+**Rapid awards stack rather than queue or replace.** If more XP lands
+while a toast is still visible, the number adds to the running total, the
+toast pulses and its timer restarts. Several quick answers in a test
+therefore read as one climbing total — +12, then +20, then +50 — instead
+of a stutter of overlapping toasts. It's calmer to watch and more honest
+about what was earned in that burst. Once it fades, the next award starts
+a fresh total rather than continuing the old one.
+
+Positioned `fixed` against the chip's measured rect rather than absolute
+inside the header. `.header-top-right` isn't a positioned ancestor, and
+making it one would have shifted the buttons already laid out inside it.
+The position is re-measured on every award, since the chip moves between
+layouts and a stacked award can arrive after a reflow, and it's clamped
+to the viewport so a wide total can't run off the edge.
+
+Hooked into `progAddXp`, which every grant in the app already routes
+through, so it needs exactly one call site and cannot miss a source.
+
+Verified: appears below the chip and roughly centred on it, stacks three
+awards into a single toast, clears itself after the timeout, starts a
+fresh total afterwards, ignores zero and negative amounts, stays on
+screen, and fires from the real `progAddXp` path rather than only when
+called directly. It also no-ops when the chip is hidden, which is the
+case behind the fullscreen instrument overlays.
+
+## v0.141.1 — Level curve reshaped: two years now reaches the 100s rather than 47
+
+Two years of daily practice reaching only level 47 was too harsh, and
+modelling the curve against the actual earning rate showed why.
+
+**The mismatch is between curve shape and income.** Standard RPG curves
+are quadratic or exponential because in an RPG the player's income grows
+with level — tougher enemies pay more, so the rate rises alongside the
+requirement. Intonare's income is flat: a rhythm test pays the same at
+level 40 as at level 4. A quadratic requirement against constant income
+means time-per-level grows linearly and never stops. Level 20 cost about
+13 days of typical practice, level 50 about 33, level 100 about 66.
+
+`25n(n+1)` is replaced with `50 * n^1.5`, which keeps the early game
+identical while flattening the long tail — quick progression first,
+slowing afterwards, without slowing forever. Later levels settle around
+7 to 14 days each instead of growing without bound.
+
+    old: 1wk L5 · 1mo L10 · 3mo L17 · 6mo L23 · 1yr L33 · 2yr L47
+    new: 1wk L5 · 1mo L13 · 3mo L27 · 6mo L43 · 1yr L68 · 2yr L108
+
+**Tuned so it can never demote anyone.** The coefficient was chosen so
+the new requirement never exceeds the old one at any level — verified
+across 300 levels, maximum excess exactly 0. A curve that asked for more
+XP anywhere would have dropped a level from any user sitting just above
+that threshold, which is a bad thing to do to someone silently on
+update. Existing levels can only stay the same or go up, and most will
+go up substantially.
+
+Also verified the curve is strictly increasing, that level boundaries are
+exact in both directions (one XP below a threshold gives the lower level,
+exactly on it gives the higher), and that `progLevelFromXp` still
+resolves instantly at five million XP — it's a `while` loop, so an
+ill-shaped curve could have hung it.
+
+Rate assumptions come from the grants added in v0.141.0: roughly 76 XP a
+day for a user completing a 20-minute session plus a few exercise rounds.
+
+## v0.141.0 — XP for completing a practice session, and for the two rhythm-card modes that were missing it
+
+Before adding anything, checked what the research actually says, because
+this is a decision that can backfire rather than just be suboptimal.
+
+**The risk is the overjustification effect**: attaching expected rewards
+to an activity someone already finds intrinsically rewarding reduces
+their motivation for it, and engagement can end up below where it
+started once the reward is removed. That is a direct argument against
+paying XP for time spent in the piano, drums or progression tools —
+somebody playing piano for an hour is already motivated, and points would
+risk turning "I enjoy this" into "I want the points". Reviews of gamified
+music apps say exactly this, that gamification can reward repetition
+rather than skill.
+
+**But it isn't binary.** Recent work finds it is not the presence of
+rewards that determines the outcome so much as how they are interpreted:
+informational feedback on progress behaves very differently from pressure
+to act. And rewards are most useful precisely for the tasks people
+otherwise avoid.
+
+**So the rule this build adopts: XP rewards effortful assessment, not
+time spent or content viewed.** That keeps levels meaning something
+rather than measuring how long the app was open.
+
+**Added:**
+
+- **Session completion**, scaled as `8 * sqrt(goalMin)`. This is the only
+  time-based award and it qualifies because the goal is set BY the user,
+  so it reads as feedback on a target they chose. Square root rather than
+  linear so a 60-minute goal is worth more than a 20-minute one without
+  being three times more — linear scaling quietly pressures people into
+  longer goals than suit them, which defeats the point of letting them
+  choose. 5 min earns 18, 20 min earns 36, 60 min earns 62, 120 min earns
+  88, against 50 XP for level 2 and 150 for level 3.
+- **Rhythm card test** (`rctFinish`), 2 XP per card passed, minimum 3. It
+  was the only graded test in the app awarding nothing.
+- **Rhythm card drill** (`rcdFinish`), 2 XP per card mastered. Skipped
+  cards earn nothing. Drilling what you failed is the clearest case for a
+  reward there is.
+
+**Deliberately not added**, both suggested and both declined on the
+evidence: XP for flipping through Survival Guide pages, since reading
+reference material isn't practice and rewarding it makes XP purchasable
+by scrolling; and timed XP drops while sitting in a learning tool, since
+that rewards presence rather than effort and is where the
+overjustification risk is highest.
+
+Also checked every other test-completion path for a missed hookup.
+`ivtFinish` is cleanup only, with the award already in `ivtShowResults`.
+`vrShowResults` is vocal range measurement — a calibration, not a test —
+so it stays unrewarded. The music quiz keeps its own separate `MQ.xp`
+economy feeding `totalXP`; merging that with the main XP pool is a design
+question rather than a missing wire, so it was left alone.
+
+## v0.140.2 — "First Light" fired on any XP rather than a completed session, and a map of what grants XP
+
+The achievement's condition reads "complete your first session" and its
+check was `s => (s.xp||0) > 0` — so it unlocked the instant any XP was
+earned anywhere, which is why opening a single training module triggered
+it.
+
+Fixing it needed a new field rather than a different comparison.
+`sessionCompleted` is a per-DAY flag, set when the daily practice goal is
+reached and reset every night, so it can never answer "have you ever
+finished one". There is now a cumulative `sessionsCompleted`, incremented
+where a session genuinely completes, and the achievement keys off that.
+`checkAchievements()` is called at that point too — it was previously only
+invoked there for a different achievement, so nothing re-evaluated the
+session achievements at the moment one finished.
+
+Existing installs that already completed a session today are credited on
+migration rather than being made to wait until tomorrow. The backup audit
+picked the new field up automatically: 43 progState fields, all
+classified.
+
+**Also mapped every XP grant, since "work out what grants XP" was the
+next item.** There are 16, and every one of them is in a training or
+exercise module: note cards, interval training, interval pitch, tone
+listen, tone generator, staff reading, relative pitch, rhythm reading,
+perfect pitch, sight singing, chord ear training, Tonale, Chordle,
+Diadle.
+
+Nothing else grants XP at all. Not practice time, not completing a
+session, not any of the tools — the piano, drums, progression, charts,
+tuner, metronome and Survival Guide award nothing. That is worth stating
+plainly because it explains the bug above: XP was the only signal
+available to that achievement, and it means "did an exercise", not "put
+in a practice session". Whether the tools and session time should award
+XP is a design decision rather than a bug, so it's left for a call rather
+than guessed at.
+
+## v0.140.1 — Dead code swept after the SVG conversion, including a cluster propping itself up
+
+Checked for leftovers from the piano conversion and from the earlier
+attempts at other bugs this session. Most of it was already clean: the
+reverted organ fixes, the trill's oscillator fallback, the abandoned
+bar-alignment helpers and the deferred-restart flag are all fully gone,
+leaving only comments recording why.
+
+**The DOM piano keyboard's touch chain was still there** —
+`_buildPianoKeyboardRows`, `_initPianoMultiTouch`,
+`_initPianoFullMultiTouch`, `_pianoPointerDown/Move/Up`,
+`_pianoMidiFromPoint` and the `_pianoPointers` map. All of it bound to
+`#pianoKeyboard`, an id that appears nowhere in the markup, so the chain
+had been attaching listeners to an element that doesn't exist. Both piano
+keyboards are SVG now and get their touch handling from
+`_initSvgMultiTouch`.
+
+**Deleting it exposed a second dead cluster that had been hiding behind
+the first.** The Rhodes handlers — `_rhodesPointerDown/Move/Up`,
+`_initRhodesMultiTouch`, `_rhodesPointers` — call the piano's
+`_pianoMidiFromPoint`, and they bind to `#rhodesKeyboard`, which also
+doesn't exist. Two unreachable systems calling into each other, so each
+looked referenced while neither could ever run. Only removing one made
+the other visible, which is a good argument for doing this sweep at all
+rather than trusting a reference count.
+
+Both clusters removed after checking for string and inline-handler
+references, not just direct calls — the failure mode that made a previous
+dead-code cull unsafe. The file is about 4.5KB smaller.
+
+Verified after deletion rather than before: all 15 tools open, all four
+keyboards render (piano card 24 keys, piano fullscreen 48, Rhodes card
+24, Rhodes fullscreen 36), no page errors, and the regression sentinel,
+backup audit, stop-all audit and spelling audit all pass.
+
+## v0.140.0 — Fullscreen piano rebuilt on the shared SVG keyboard, removing the app's last DOM keyboard
+
+Asked whether there was a real reason the expanded piano wasn't SVG like
+everything else. There wasn't. Every other keyboard in the app — the
+piano card, both Rhodes keyboards, the organ overlay, every chart
+keyboard — goes through `csDrawChromPerc`. The fullscreen piano was the
+only one built from DOM divs, with no comment anywhere explaining why. It
+reads as the original implementation that never got migrated.
+
+Being the odd one out was expensive, and the last few builds were paying
+for it. The held-key highlight had to be written twice in two unrelated
+ways, so fixing one left the other broken — which is exactly how it was
+reported. The keys looked wrong beside the Rhodes and Hammond because
+their bottom-edge rounding was designed at card size and the fullscreen
+keyboard is rotated 90 degrees, landing that rounding on the key ENDS.
+And a trail of dead code led back to the same place.
+
+Now rendered through the shared renderer with `preserveAspectRatio="none"`
+to fill the height, matching the Rhodes and organ overlays. Appearance,
+touch handling, held-key behavior and riff flash all come from one
+implementation instead of two kept in sync by hand.
+
+**Every reader of the old keyboard was followed**, which is the lesson
+this session kept teaching. `highlightPianoFull` looked up `pwkf-`/`pbkf-`
+ids and now queries `data-midi`. `_riffFlashPianoFullKey` had its own
+div-based flash and now defers to `_riffFlashSvgKey`, the same path
+Rhodes and organ use. `_pianoKeyEls` was returning an empty list — one
+prefix belonged to a DOM card keyboard whose builder has no callers at
+all, the other to this keyboard — so the decay styling it feeds was
+silently doing nothing; it now finds SVG keys on both.
+
+`_pianoIsHeld` needed the same treatment and is worth calling out: it
+walked `_pianoPointers`, which belongs to DOM touch handlers bound to
+`#pianoKeyboard`, an element that does not exist. The map was always
+empty, so it always answered false and the held-key decay skip added in
+v0.139.3 never actually engaged. The SVG keyboards now publish their held
+notes on the element and it reads those.
+
+Verified: 48 keys render, touch is wired, the old div rows and their ids
+are gone, highlight applies and clears, decay styling finds keys, held
+state reports correctly, and octave shifting rebuilds properly (the first
+shift test showed no movement, which turned out to be a correct clamp at
+the top of the range rather than a fault).
+
+## v0.139.5 — The held-key fix reached only the fullscreen keyboard
+
+Reported that touch-and-hold works in expand but not compact, which is
+correct: the two keyboards are entirely separate implementations and
+v0.139.3 only fixed one of them.
+
+The fullscreen keyboard is DOM divs with a `pressed` class. The compact
+one is SVG — keys are `<g data-midi>` wrapping a `<rect>` — with its own
+touch system in `_initSvgMultiTouch` and its own pointer map, so neither
+`_pianoSetPressed` nor `_pianoPointers` reached it. Its highlight came
+from `_flashKey`, which appended an overlay rect and removed it on a
+150ms timer: the same shape of bug, in a second place, with no shared
+code between them.
+
+`_flashKey` is replaced by `_holdKey` / `_unholdKey`, which tag the
+overlay with `data-hold-midi` so it can be found and removed by note on
+release rather than by timer. Pressing lights the key, sliding onto
+another moves the light, and releasing clears it. Pressing the same key
+twice can't stack two overlays, and `_clearHeldKeys` sweeps everything if
+a gesture is cancelled without reporting its pointers — better to clear a
+key still held than strand one lit under no finger.
+
+Verification is honest here: the compact keyboard's SVG has zero layout
+size headlessly, so `elementFromPoint` can't hit it and synthetic
+pointer events don't register. The wiring is confirmed by reading, and
+`_flashKey` no longer exists anywhere in the file, but whether it feels
+right needs a device. The fullscreen equivalent was fully driven in the
+harness and passed.
+
+Also corrected two British spellings in comments added this session
+("cancelled", "relabelled"), keeping the spelling audit at its 59
+baseline.
+
+## v0.139.4 — Fullscreen piano keys squared off to match the Rhodes and Hammond
+
+Screenshots side by side made this obvious: the Rhodes and the Hammond
+both have square-ended keys and the piano's end in heavy rounded tabs,
+which is why it looked awkward next to them.
+
+The cause is a rotation. Both key styles carry `border-radius: 0 0 7px
+7px` — rounding on the BOTTOM edge — and the fullscreen keyboard is
+displayed rotated 90 degrees, so that rounding lands on the right-hand
+ENDS of the keys. At the card's size it reads as a normal rounded key
+edge. Blown up to fullscreen it reads as a row of rounded tabs.
+
+The black keys had a second problem in the same place. Their gradient
+lightened toward the end (#242433 at 100%) and they carried a white inset
+shadow along that edge; rotated, both become a soft fade at the key tip,
+which is what let the white keys' seams show through underneath. They now
+stay dark to the end.
+
+Scoped to `#pianoOverlay` so the piano card is untouched. The Rhodes
+keyboard is unaffected regardless — it has its own overlay and draws its
+keys as SVG rather than using these classes — and the Hammond likewise.
+
+Verified the rules resolve on the real fullscreen keys rather than
+assuming the selector matched.
+
+## v0.139.3 — Held keys stay lit through a song, and a correction to yesterday's diagnosis
+
+Two clarifications from device testing pinned this down: the fading only
+happens while a song is playing, and a key held by a finger should stay
+highlighted for the whole press regardless of what the audio is doing.
+
+**First, a correction.** v0.139.2 said `_pianoKeyEls` was dead. It is
+half dead. Its `pwk-`/`pbk-` lookup finds nothing, because the piano CARD
+is drawn as SVG and `_buildPianoKeyboardRows`, which would have created
+those ids, has no callers at all. But its `pwkf-`/`pbkf-` lookup works,
+because `buildPianoFull` does assign those to the fullscreen keyboard. So
+the decay styling is live in fullscreen, which is where the fading was
+seen and where it was reported.
+
+**The fade is `_applyPianoDecayStyle`.** It repaints each key as its note
+decays, lerping the background from the lit color back toward resting —
+which is what reads as fading out and showing the seams underneath. That
+is correct and intended for notes a song is playing. What it had no way
+of knowing is whether a key is currently under a finger, so during
+playback it repainted held keys back to resting while they were still
+being held.
+
+Holding is a user action and outranks the audio, so `_pianoIsHeld` now
+checks the live pointer map and both `_applyPianoDecayStyle` and
+`_clearPianoDecayStyle` skip keys being held. Release clears what the
+hold was protecting, and the pointer entry is deleted BEFORE that clear
+runs — clearing first would have been a no-op against its own guard and
+left the key painted after the finger lifted. Sliding off a key mid
+gesture clears it the same way.
+
+Verified against the real fullscreen keyboard rather than by reading:
+with a finger simulated on a key, it stays lit through a decay repaint,
+through an explicit decay clear, and past the old 120ms timer; it clears
+when the finger lifts; and the decay styling still paints and clears
+normally when nothing is held.
+
+## v0.139.2 — Piano keys never showed a pressed state at all
+
+Reported as held keys not visually holding. The cause turned out to be
+one step further back: they were never highlighted in the first place.
+
+`pianoKeyClick` looked up `'pwk-' + midi` or `'pbk-' + midi` and added a
+`pressed` class to the result. Nothing in the app assigns those ids. The
+card keyboard builds its keys with a variable prefix plus `'w'`/`'b'` and
+the midi number, and the fullscreen keyboard sets no id at all, only
+`data-midi`. So `getElementById` returned null every time and the class
+was never applied to anything.
+
+What made it look like a hold problem rather than a missing highlight is
+that `.pressed` is styled alongside `:active`, and on desktop `:active`
+supplies the pressed look for as long as the pointer is down. The touch
+handlers call `preventDefault()`, which suppresses `:active` in the
+Android WebView — so on device there was no highlight from either source.
+
+Keys are now selected by `data-midi`, which is what both keyboards
+actually set. A second problem was real as well: the class was removed on
+a fixed 120ms timer regardless of whether the key was still held.
+`pianoKeyClick` now takes a `hold` flag, set by the touch handlers, and
+the timer only runs for callers that fire a note with no release to
+follow — playback, previews, chord cards. Sliding off a key un-lights it,
+and release clears it.
+
+Noted, not fixed: `_pianoKeyEls` uses the same dead `pwk-`/`pbk-`
+prefixes and the decay styling depends on it, so that is very likely
+inert too. It is a different behavior and wants its own look rather than
+being changed blind alongside this.
+
+Honest about verification: the piano keyboard isn't built by `enterTool`
+in the headless harness, so this is confirmed by reading how the keys are
+constructed rather than by driving them. It needs a device check.
+
+## v0.139.1 — Full verification pass against the pre-session build
+
+Ran every audit in the project against v0.139.0 and, where a script
+reported anything, ran it again against the build this session started
+from (v0.134.11) to establish whether the finding was ours or
+pre-existing.
+
+**Identical before and after, so pre-existing and untouched by this
+work:** the quiz audit's 129 critical items, the tour audit's 13
+tone flags, and the groove audit's meter conflicts. Those are real
+findings and worth their own pass, but none were introduced here.
+
+**One regression found and fixed:** the British/US spelling audit went
+from 59 to 62. All four were mine, in comments written during this
+session — "analysing", "behaviour" twice, and "Parameterising". The
+codebase standardises on US spelling and I default to British, so these
+would have kept accumulating unnoticed. Corrected, and the count is back
+to the 59 baseline exactly.
+
+**Everything else clean:** regression sentinel (97 fixes, 241 pins),
+backup audit (48 keys, 42 progState fields), stop-all audit, audio handle
+audit, changelog gate, and a syntax check across all script blocks.
+
+**Runtime smoke test:** all 15 tools open without error, the lookahead
+limiter is installed with headroom at 0.7, `stopAllAudio` and
+`chordScaleStopAllAudio` are both safe to call after visiting everything,
+the rhythm context is released rather than left borrowed, and there are
+no page errors.
+
+**State leak audit clean:** every action writes only its own module's
+state. Progression touches `prog*`, the metronome touches `bpm`,
+`groovePattern` and `groovePresetId`, the drum kit touches
+`dk_currentKit`. Nothing crosses.
+
+## v0.139.0 — Tempo separated too, and the leak audit now comes back clean
+
+Tempo was the last value the rhythm modules shared, deferred twice as
+"its own pass". Asked for a third time, so it's done.
+
+**Progression owns `progBpm`.** Its chord scheduler reads it, its
+displays show it, its sliders and adjust buttons set it, and it persists.
+The metronome's own screen controls are untouched and still drive the
+metronome's tempo.
+
+The engine still has to run at one tempo during playback, or the click
+and the kit would drift against the chords. So tempo travels in the
+rhythm context: while Progression holds the engine, the globals are set
+to `progBpm` and the metronome's value is stashed, then handed back on
+release. Changing tempo mid-playback retimes the click and kit live
+rather than waiting for a restart.
+
+**Two more leaks the audit caught while finishing this.**
+`progLoadPreset` called `setBPM(p.bpm)`, so opening a progression preset
+retuned the metronome and the drum kit. And `dk_loadedPresetName` wasn't
+in the context, so a progression preset relabelled which preset the Drums
+module showed as loaded.
+
+**The groove selector now shows its selection after a preset load**, on
+the category tab that holds it, without playing anything first.
+
+**The leak audit now comes back clean.** Every action touches only its
+own module: Progression writes `prog*` variables, the metronome writes
+`bpm`, `groovePattern` and `groovePresetId`, the drum kit writes
+`dk_currentKit`. No value crosses between modules any more, which is what
+was asked for: a tool should behave the same way every time it's opened
+regardless of what was done somewhere else earlier.
+
+Verified end to end: with the metronome at 90 and Progression at 140,
+each keeps its own, the engine runs at 140 while Progression plays, and
+the metronome is back at 90 afterwards.
+
+## v0.138.2 — Every cross-module write found by audit instead of by report
+
+Five bugs in a row had the same root and each was fixed the same way: wait
+for it to be noticed, trace that one value, patch it. That was never
+going to converge, so this build audits the whole thing.
+
+**Two real leaks found, both fixed.**
+
+`grooveLoadPreset` is not a pure loader. Alongside setting the preset id
+and pattern it calls `setTS()` to move the metronome's time signature to
+the groove's native meter, calls `setBPM()` with the groove's suggested
+tempo, sets `grooveCategory`, and rewrites the metronome's on-screen name
+and meta text. `progSetGrooveChoice` was calling it purely to resolve a
+pattern and then restoring the handful of fields the rhythm context
+captures — so every one of those other changes stayed. That is
+Progression moving the metronome. Presets are plain data, so the pattern
+is now read directly from `GROOVE_PRESETS` and that path touches no
+global at all.
+
+`progLoadPreset` called `loadPreset()` directly to apply a preset's drum
+beat, and that writes the Drums module's live state — patterns, steps,
+subdivisions, the loaded-preset label. Opening a progression preset
+therefore replaced whatever the user had built in Drums. It now borrows
+the engine first, applies the beat, captures the result as Progression's
+setup, and hands Drums back untouched. `dk_loadedPresetName` was also
+missing from the context, so it is captured now too.
+
+**Added `intonare_state_leak_audit.py`.** It extracts every top-level
+state variable from the source, snapshots all of them, performs a user
+action, snapshots again, and reports everything that moved.
+
+The first version of it enumerated `window` and reported a perfectly
+clean app while all of the above was live — top-level `let` and `const`
+in a classic script live in script scope, not on `window`, so only `var`
+and function declarations were visible. Reading names individually
+through eval raised coverage from a handful to 1,180 variables, and the
+leaks appeared immediately. Worth recording, because a clean result from
+the wrong instrument is more dangerous than no result.
+
+After the fixes, every change is either the acting module's own state or
+tempo. `bpm` / `dk_bpm` remains genuinely shared app-wide, which is the
+one known and documented exception: separating it means moving
+Progression's scheduler and every BPM display onto their own value.
+
+## v0.138.1 — The metronome's groove was overwriting a progression preset's
+
+Same class as the drum module case, and caused by the capture added in
+v0.137.8 reading the wrong copy.
+
+`progSetGrooveChoice` records the preset's groove into Progression's
+saved setup and then deliberately puts the live globals back, so choosing
+a groove in Progression doesn't move the metronome. `progLoadPreset` then
+called `_rcCapture()` a few lines later, which reads those same live
+globals — the metronome's, by design — and wrote them over the groove
+that had just been stored. So setting a groove on the metronome and then
+loading a progression preset handed the progression the metronome's
+groove instead of the preset's.
+
+The drum-side fields still come from the capture, since those are live
+and correct at that moment. The groove-side fields now come from
+`progRhythmState`, which is already right either way: updated by
+`progSetGrooveChoice` when the preset declares a groove, and holding the
+previous choice when it doesn't, since a preset with no groove has
+expressed no opinion about one.
+
+The reverse direction was checked and is already correct: the
+metronome's own groove picker writes the global, which is its own state
+when it holds the engine, and Progression's saved setup is untouched by
+it.
+
+Verified as the full sequence: with the metronome on one groove, loading
+a progression preset carrying a different one keeps the preset's for
+Progression and leaves the metronome's alone; changing the metronome
+again afterwards doesn't move Progression; and at playback the engine
+receives Progression's groove and the metronome's is restored after.
+
+## v0.138.0 — The BPM pill now names the beat or groove you picked
+
+Requested as a small quality-of-life addition, and the element for it
+already existed: `#progBpmGroove`, inside the pill that opens the sync
+tray. It was being filled, just not with anything useful.
+
+**In kit mode it showed the drum CATEGORY** — "Rock" rather than "Basic
+Rock" — and read it from `dk_activeCat`, which is the Drums module's
+current category and has nothing to do with what Progression selected.
+**In metro mode it was gated on `grooveModeActive`**, the live global that
+gets restored to the metronome's value whenever Progression isn't holding
+the engine, so the name only appeared during playback and was blank
+exactly when you'd want to check what was loaded.
+
+Both are the same mistake found repeatedly today: reading a shared global
+instead of the module's own selection. It now uses
+`progCurrentGrooveId()` and `progDkSelectedName`, so the name is correct
+while stopped, and blank in silent mode where there's nothing to name.
+
+Coloured with `--metro`, the same yellow the groove and beat cards use
+when selected, so the name reads as the thing you picked in the tray
+rather than as more tempo text beside the BPM number (which is
+`--accent-warm`). Being theme tokens, light mode follows automatically —
+though it's worth recording that neither keeps its dark-mode hue there:
+`--metro` is #ffd166 dark and #503600 light, and `--accent-warm` is green
+dark but burnt orange light. The "green like the BPM" from the request
+only reads green in dark mode.
+
+Verified in both modes: the beat name shows in kit mode, the groove name
+in metro mode, both while stopped, blank in silent, and the colour
+resolves to the theme's value for each appearance.
+
+## v0.137.10 — Swap restarts pause briefly instead of trying to thread a gap
+
+The instant restart in v0.137.9 still glitched: with a chord change
+imminent, the new pass appeared to skip straight to the next chord. The
+cause is the chord scheduler's 0.2s lookahead. A pass beginning 0.16s out
+has its first chord and the queueing of its second happen in the same
+tick, so the first chord is immediately followed by the next. Pushing the
+lead further doesn't help, because the lookahead window travels with it —
+every value that clears one collision creates another.
+
+Given a short pause was acceptable, the restart now stops, waits 250ms,
+and starts clean. That sidesteps the whole class of problem rather than
+picking a number that happens to work: everything from the old pass —
+chords, and drum hits already scheduled inside `SCHEDULE_AHEAD` — has
+finished before the new one begins, so there is nothing to overlap with
+and no timing left to get right. It also reads as a deliberate reset
+rather than a stutter.
+
+Two edge cases came with it, both guarded and tested. Swapping twice in
+quick succession cancels the pending restart rather than stacking a
+second one. And stopping during the pause cancels it too, which matters
+because `progStop` sets `progPlaying` false and the pause's own guard
+checks that flag — without the cancel, a swap followed by pressing stop
+would have restarted playback a quarter second after being told to stop.
+
+`progStart`'s lead parameter is kept but nothing passes one now; the
+comment explaining it has been corrected rather than left describing an
+approach that no longer exists.
+
+Verified: playback stops immediately on swap, stays silent through the
+pause, resumes from the top afterwards, a double swap produces one
+restart, and stop during the pause stays stopped.
+
+## v0.137.9 — Swaps take effect immediately, and stop double-hitting the drums
+
+Two complaints about the swap restart, both fair, and both consequences
+of choices made in the last two builds.
+
+**It waited for the current chord to finish.** v0.137.5 deferred the
+restart to the next bar line to avoid racing the scheduler. That fixed
+the race and introduced a worse problem: a swap could sit doing nothing
+for most of a bar, which reads as the app having ignored the tap.
+Swapping a beat is a direct instruction, so it now takes effect
+immediately.
+
+**It double-hit the drums when swapping near a chord change.** Stopping
+clears the drum scheduler so no new hits are queued, but hits already
+scheduled within `SCHEDULE_AHEAD` (0.12s) are created nodes with future
+start times and will sound regardless. The new pass began at
+`ctx.currentTime + 0.05`, which is inside that window, so fresh hits
+landed underneath the leftovers. `progStart` now takes an optional lead
+and the restart passes 0.16s — past the window, so the old pattern's tail
+finishes before the new one starts. The only existing caller uses the
+default and is unaffected.
+
+The deferred-restart flag and its bar-line handling in the scheduler tick
+are removed rather than left dead.
+
+Worth noting what this build is not: a measurement. The restart being
+synchronous, playback continuing and the kit still running are all
+verified, but the lead itself can't be read back at runtime — `progStart`
+runs a scheduler tick immediately, so both `progNextAudioTime` and
+`progCurrentBarStartTime` have already advanced by the time anything can
+observe them. The lead is verified as a property of the code rather than
+of a running system, and whether the swap actually sounds clean is a
+listening test.
+
+## v0.137.8 — One rule for whose setup wins, which is what the last four builds were missing
+
+The half-time report came with the detail that settled it: selecting a
+preset played its drums at half time, swapping to groove was correct, and
+swapping back was also correct. Swapping back re-runs `loadPreset`, which
+sets the timing fresh — so the preset's beat was never wrong, something
+was overwriting it afterwards.
+
+**Progression had two sources of truth with no precedence between them:**
+the preset, which declares a beat and groove, and the persisted
+`progRhythmState`, which remembers what was last used. Whichever got
+applied second won, and which one that was kept changing build to build.
+Every symptom reported over the last four builds was an instance of that
+one ambiguity, and each was fixed by patching whichever side had lost
+that week.
+
+**The rule, now stated in the code so it stops being re-decided:** an
+explicit selection wins immediately and is written to the saved setup.
+The persisted setup applies only when nothing more explicit has happened.
+Loading a progression preset and picking a beat in the tray both count as
+explicit, and both now capture the resulting state at the moment of
+selection.
+
+Concretely, that kills the half time: the preset loaded its beat
+correctly and then playback applied the persisted setup over it, whose
+`dk_timeSigKey`, `dk_numSteps` and `dk_globalSub` were left over from
+whatever ran before. With the setup captured at selection there is
+nothing stale left to win.
+
+A preset that declares no groove keeps whichever groove was already
+chosen, since it has expressed no opinion about it.
+
+`progDkSelectedName` is also set from the preset's `drumPreset`, so the
+beat shows as chosen without opening the tray or starting playback —
+the selection existed all along and nothing recorded it.
+
+Verified as the sequence rather than the parts, which is the change in
+method this needed: the saved setup was deliberately poisoned with
+conflicting timing, a preset carrying a drum beat was loaded, and then
+playback was simulated. The stale values are gone from the saved setup,
+the beat is highlighted, and loading the setup at playback no longer
+alters the live timing at all. Testing each piece in isolation is what
+let this survive three previous attempts.
+
+## v0.137.7 — Half time, and the beat still not showing as chosen
+
+**Everything played at half time.** v0.137.6 made the rhythm context load
+for both sync sources, on the reasoning that applying fields the current
+mode doesn't use is harmless. That reasoning was wrong, and it was
+asserted rather than checked. `dk_timeSigKey`, `dk_numSteps` and
+`dk_globalSub` feed step timing, and the METRO sync source runs the
+groove without the kit — so loading a saved setup's values over the
+metronome's changed the rate the groove was clocked at.
+
+`_rcLoad` and `_rcApply` now take a scope. Metro sync loads only the
+groove selection and leaves every drum-engine field alone; kit sync still
+loads the whole setup, since there the kit genuinely is playing and those
+fields are its own.
+
+**The beat still didn't show as chosen on open**, and the value was never
+the problem — it was stored correctly the whole time. The card's
+highlight also required `progGrooveEnabled`, which is false when you open
+a progression whose groove hasn't been switched on yet, so a correctly
+stored selection simply never rendered as selected. Whether a groove is
+currently sounding is a different question from which one is chosen, and
+the card answers the second, so the highlight now turns on identity
+alone.
+
+Verified with the timing fields deliberately set to conflicting values:
+metro sync loads the groove and leaves timeSigKey, numSteps and globalSub
+exactly as the metronome had them; kit sync does load them; restore puts
+them back; and the selected card highlights with groove output off.
+
+Worth recording as a pattern, since it has now happened twice in this
+run: both of these came from reasoning about what a change would do
+instead of measuring it. The half-time bug was introduced by an explicit
+"this is harmless" claim in a code comment, and the highlight was chased
+through three builds at the wrong layer because the stored value looked
+suspect and was never actually checked.
+
+## v0.137.6 — Progression presets get their beats back: the context was only loading for one sync mode
+
+Reported that presets stopped calling their own beats. `_rcLoad` sat
+inside the `kit` branch of `progStartSyncSource` and nowhere else.
+Grooves play through the METRO sync source, so a progression's groove was
+being written into its own saved setup by `progSetGrooveChoice` and then
+never loaded back into the engine when playback started. The preset asked
+for a beat and the beat never arrived.
+
+The context now loads for either sync source. Applying fields the current
+mode doesn't use costs nothing, since `_rcApply` only writes what the
+saved setup actually contains.
+
+This is the third consequence of the same root change and worth naming
+plainly: separating module state moved where the truth lives, and each of
+these bugs has been a place that was still looking at the old location or
+never told to read the new one. The separation itself is right, but it
+had more reach than the initial audit showed, and the failures have been
+silent ones — nothing throws, the value is simply stale or absent.
+
+Verified as a full round trip, which is what the earlier fixes were
+missing: with the metronome on its own groove and mode off, a progression
+preset's groove is stored in Progression's setup without touching the
+metronome's pattern; on playback the engine actually receives that groove,
+groove mode comes on and the pattern genuinely changes; and after
+handback the metronome's groove, pattern and mode are all exactly as they
+were while Progression still remembers its own choice.
+
+## v0.137.5 — Swap restart no longer races the scheduler, and Progression's groove shows as selected again
+
+**Swapping near a chord change started the progression on its second
+beat.** v0.137.4 restarted by calling progStop and then progStart behind
+a short timeout. The scheduler runs a lookahead window, so chords were
+already queued at future audio times when the restart began — swap close
+to a chord change and that queued chord played over the top of the new
+pass, which is what came out as starting on the second beat. The timeout
+made it worse by widening the window.
+
+Restart is now a flag the scheduler acts on at the next bar line:
+sequence index and bar counter rewind, and when the kit is the sync
+source its scheduler is re-initialised to that same bar time. Nothing is
+torn down mid-flight and nothing is left in the queue behind it, because
+the restart never leaves the clock it was already running on.
+
+**A progression preset's groove stopped showing as selected.** This one
+was a regression from the module separation in v0.137.0 and had been
+reported before, in a form I fixed the wrong layer of. Progression's
+groove choice now lives in its own saved setup, and the global
+`groovePresetId` is restored to the METRONOME's groove the moment
+Progression isn't holding the engine. The drawer, the tray's category
+sync and the drawer label were all still reading that global, so they
+were highlighting against the metronome's value and finding no match.
+
+Added `progCurrentGrooveId()`, which returns the live global while
+Progression holds the engine (it is Progression's state at that point)
+and its saved choice otherwise, and pointed all three readers at it. This
+is the same class of mistake as the Survival Guide stop earlier in the
+session: separating state without following every reader of the thing
+that was separated.
+
+Verified: with the metronome on one groove and Progression on another,
+the metronome's stays untouched, Progression's choice is stored and
+returned, exactly one card highlights in the drawer, and the tray opens
+on the category holding it.
+
+## v0.137.4 — Beat and groove swaps restart the progression, which makes alignment a fact rather than a calculation
+
+Third attempt at this, and the first one that doesn't depend on getting
+arithmetic right at the instant of a swap.
+
+The first attempt restarted the pattern at the next bar boundary, which
+restarts it at ITS bar one — so a four-bar loop's variation bar landed
+wherever you happened to tap. The second computed the loop's position
+from an absolute bar counter so the pattern would sit where it would have
+been had it played from the start. That arithmetic was verified correct
+in isolation (bar 3 to step 48, bar 6 wrapping to bar 2, single-bar
+patterns untouched) and it still came out of phase on device, because it
+depends on every track's phase, the progression's bar counter and the
+audio clock all agreeing at the moment of the swap.
+
+Swapping now restarts the progression from the top. Both parts begin
+together from a known state, so there is nothing left to compute or get
+wrong. The cost is that a swap returns you to bar one rather than
+continuing, which is a fair trade for a beat that is reliably in phase,
+and it's what a drum machine does when you change pattern anyway.
+
+The same applies to groove swaps, which previously queued to the next bar
+boundary via `progPendingGrooveId` and had exactly the same
+within-pattern problem. They now apply immediately and restart.
+
+`progDkPhaseForBar` and `progDkInitAligned` from v0.137.3 are removed
+rather than left dead, with a note recording what they did and why the
+approach was abandoned — the arithmetic wasn't wrong, the assumption
+behind it was.
+
+Verified: the restart helper is safe to call when nothing is playing,
+leaves a stopped progression stopped, and resets both the sequence index
+and the bar counter.
+
+## v0.137.3 — Multi-bar drum loops now land on the progression's bar, not their own bar one
+
+v0.137.2 concluded the drumbeat swap was already handled because it
+restarts cleanly on the next bar line. That was true and still missed the
+point, which device testing with the Amen break made obvious: restarting
+cleanly is not the same as restarting in the right place.
+
+`_initTrackScheduler` zeroes every track's phase, so a swap always
+restarted the pattern from its own first bar. For a one-bar pattern
+that's invisible. For a four-bar pattern whose entire character is the
+variation in its last bar, that bar then lands wherever you happened to
+tap, and moves again on every swap — which is exactly the "tricky to see
+where the odd 4th measure lands" that was reported.
+
+Added `progBarsElapsed`, an absolute count of bars played since the
+progression started. Unlike the existing `barIdx` it doesn't cycle with
+the progression's own length, which is what a multi-bar loop needs in
+order to work out which of ITS bars should be sounding. `progDkPhaseForBar`
+turns that into a step offset, and `progDkInitAligned` starts each track
+there instead of at zero, so a swapped-in pattern sits exactly where it
+would have been had it been playing from the start.
+
+Phase is computed per track because tracks can carry different
+subdivisions and therefore different steps-per-bar; using one figure for
+all of them would misplace any track running triplets.
+
+Verified against a four-bar loop of 64 steps: bar 3 lands at step 48, bar
+6 wraps to bar 2 at step 32, bar 4 returns to step 0, negative input is
+clamped rather than producing a negative index, and single-bar patterns
+are untouched at phase 0 for every bar.
+
+This is measure-position alignment, which earlier in the session was
+scoped as the larger follow-up to the quick reset-to-downbeat fix. It
+turned out to be small once there was a bar counter to hang it on.
+
+## v0.137.2 — Tempo taken back out of the rhythm contexts: v0.137.0 could desync chords from drums
+
+Checking the drumbeat-swap item found that both swap paths were already
+correct — the kit preset resets `dk_currentStep` and restarts at the next
+bar boundary, and a groove swap during playback is queued via
+`progPendingGrooveId` and applied exactly on the bar line. Nothing needed
+doing there.
+
+What it did find was a fault introduced by v0.137.0. That build gave
+Progression its own `dk_bpm` inside its rhythm context, but Progression's
+CHORD scheduler reads the global `bpm`, and its BPM sliders call `setBPM`
+directly. So a progression whose saved setup carried 140 would have
+played its chords at the global tempo and its drums at 140 — the two
+drifting apart within the same progression. The separation work created
+this; it wasn't pre-existing.
+
+Tempo is therefore no longer part of a context, and the kit explicitly
+follows the shared `bpm` when Progression borrows the engine, as it did
+before. Everything else from v0.137.0 stands: kit, swing, bars,
+subdivisions, per-track overrides and volumes, mutes, patterns and groove
+selection remain per-module, and the Drums module still restores
+bit-for-bit after Progression has played.
+
+Verified: with Drums on brush/37% swing and a specific pattern, and the
+shared tempo at 96, Progression loads its own kit and swing, the kit
+tempo matches what the chords are using, the saved setup carries no
+tempo, and after restore the Drums module and the tempo are both
+untouched.
+
+Separating tempo properly remains worth doing, and is now the last real
+crossing between these modules. It means moving Progression's scheduler
+and all of its BPM displays and sliders onto their own value, which is a
+change to the most timing-sensitive path in the app. That deserves its
+own pass with room to test, not being tacked onto the end of a long
+session days from release.
+
+## v0.137.1 — Trills sounded like a different instrument than the notes view
+
+Reported from device testing: trill sounds don't match their note
+sounds. The comment sitting above the trill audio code claims it uses
+"the SAME engine the flute NOTES view uses... so the trill always matches
+the rest of the flute's timbre". The code underneath it did not.
+
+There were two paths. With samples loaded it called `windSynth`, which
+matches. Without them it fell through to a hand-rolled square-plus-sine
+oscillator pair through a 1kHz lowpass — an approximation that sounds
+nothing like the app's wind synth. So whenever samples weren't ready, a
+trill played a noticeably different instrument from the notes view of the
+very same instrument.
+
+That fallback existed to avoid per-note node churn, described in the
+original comment as "that was the crackle". The crackle it was working
+around has since been diagnosed properly and fixed at the source: there
+was no master bus, and every synth voice was running over full scale into
+a waveshaper that was permanently squashing it. With a real lookahead
+limiter on the master bus, the reason for the workaround no longer holds,
+so the trill now takes one path through `windSynth` and simply sounds
+correct — samples when they're loaded, the app's own wind synth when
+they're not, which is what the comment always described.
+
+Two things followed from the change. The `windSynth` return value was
+being discarded, one of the outstanding items the audio-handle audit had
+been listing, so trill notes are now tracked and stopped properly (capped
+at 24, since anything older has long finished). And `_trillEnsureOsc`
+became genuinely dead — verified by full-file sweep for dynamic and
+string references before deleting, not by static analysis alone, which is
+how a previous cull removed things that were still reachable via onclick.
+`_trillTeardown` and its variables are deliberately kept: the stop path
+still calls the teardown, and with nothing creating those nodes it is a
+guarded no-op.
+
+Verified: the trill schedules through `windSynth`, tracks its notes,
+clears them on stop, the button label round-trips through STOP and back,
+and both stop functions are safe to call with nothing playing.
+
+## v0.137.0 — Modules stop moving each other: Progression gets its own rhythm setup
+
+The goal set for this: a tool should behave the same way every time you
+open it, regardless of what you did somewhere else earlier. Nothing
+should quietly reconfigure another part of the app.
+
+**What was actually happening.** The drum engine reads its setup from
+module-level globals, and Progression drives that same engine directly —
+setting `dk_bpm`, flipping `dk_playing`, running `dk_scheduler`. Because
+those globals are the only copy that exists, building a custom kit in
+Drums and then playing a progression played your custom kit. There was no
+such thing as "the progression's beat"; there was only THE beat, and
+whichever module touched it last won. The same applied to tempo, time
+signature and groove mode, which Progression wrote straight into the
+metronome's globals — so choosing a groove in Progression flipped the
+metronome out of METRO into GROOVE mode.
+
+An audit of the four rhythm modules found exactly four variables written
+by more than one module — `dk_bpm`, `bpm`, `grooveModeActive` and `tsKey`
+— plus `dk_playing`, which Progression writes and Drums reads. Everything
+else (`dk_patterns`, `dk_currentKit`, `dk_swingPct`, `dk_barCount`,
+`dk_trackSub`, `dk_humanizeSnapshot`, `dk_viewBar`) was already properly
+owned. So the fix is contained rather than a rewrite of four modules.
+
+**Rhythm contexts.** Each module now owns a named context holding its
+whole setup — tempo, kit, swing, bars, subdivisions, per-track
+overrides and volumes, mutes, patterns, and groove selection. The
+engine's globals become a scratch area that whoever is currently playing
+loads into. `_rcLoad` borrows the engine with a module's setup,
+`_rcRestore` hands it back and returns what the borrower ended with.
+
+Restore is the part that has to be right, so it is idempotent, safe to
+call when nothing was borrowed, called unconditionally rather than only
+when playback ended tidily, and additionally called from `stopAllAudio`
+as a safety net. If it were ever skipped, the Drums module would silently
+show Progression's kit.
+
+**Groove selection needed separate handling** because it happens at
+selection time rather than play time, so the swap alone wouldn't have
+covered it. `progSetGrooveChoice` writes the live globals when
+Progression currently holds the engine (they ARE its state at that
+moment) and otherwise records the choice into its saved setup, restoring
+the metronome's state exactly. Progression also no longer calls
+`grooveUpdateScreen`, which was repainting another module's UI.
+
+**Persistence follows the distinction asked for:** builder-type tools
+keep their work, so Progression's rhythm setup is saved and reloaded —
+backing out to check something else shouldn't cost you the beat you built.
+Training and reference modules deliberately don't persist and start fresh.
+
+**On the choice of approach.** Parameterising the scheduler to read from
+a passed-in state object is the tidier architecture and was considered.
+It was rejected for now: the scheduler is the most timing-sensitive code
+in the app, and swapping a known-good component for an untested one to
+gain a structural nicety, days from release, is the wrong trade. Loading
+and restoring around playback achieves the required behaviour with a much
+smaller surface and is explicit rather than hidden. The parameterised
+version remains the better long-term shape.
+
+Verified end to end: with Drums set to 92bpm, brush kit, 37% swing and a
+specific step pattern, Progression plays its own setup (140bpm,
+electronic, no swing), and after it stops the Drums module is bit-for-bit
+intact — tempo, kit, swing, pattern, groove and mode all unchanged.
+Progression remembers what it ended with. Choosing a groove in
+Progression leaves the metronome's groove and mode untouched. Restore is
+safe called twice or with nothing borrowed.
+
+Not changed, and worth being explicit about: Progression borrows the drum
+engine rather than running its own, so Drums and Progression still cannot
+play simultaneously. Separating their setups doesn't change that, and
+making both playable at once would mean two independent schedulers, which
+is a materially larger piece of work.
+
+## v0.136.11 — Survival Guide audio: the fix in v0.136.2 was a silent no-op
+
+Device testing found Survival Guide audio still playing after backing
+out, despite v0.136.2 claiming to have fixed exactly that. It hadn't.
+
+`stopAllAudio()` resolves its entries with `window[fn]`. Everything in
+the Survival Guide block lives inside an IIFE, so none of its functions
+are reachable from `window` — including `stopAllSounds`, which v0.136.2
+added to the list. The name resolved to `undefined`, the surrounding
+try/catch swallowed it without complaint, and the audit reported full
+coverage the whole time because it only checks that a name is listed, not
+that the name resolves to anything.
+
+Worse, this was the exact failure mode already identified in that build:
+`sgStopCadence` was rejected for not being reachable on `window` and
+`stopAllSounds` was chosen instead — without checking whether that one
+was reachable either. It wasn't.
+
+Fixed by explicitly exporting the function from inside the IIFE
+(`window.sgStopAllSounds`) and pointing the list at the exported name.
+Verified by resolving every one of the 50 names `stopAllAudio` calls
+against `window` at runtime: all reachable.
+
+The lesson generalises past this one function. A name in a
+hand-maintained list can fail in two independent ways — being absent, or
+being present but resolving to nothing — and only the first was being
+checked. Any future stop function added inside that block needs the same
+export, which is noted in a comment beside it.
+
+## v0.136.10 — The limiter wasn't loading on device; added a second URL scheme and real error reporting
+
+On-device `audioPathStatus()` came back with `synthHeadroom: 0.32` and
+`isPrimaryLimited: false` — meaning the AudioWorklet never installed and
+the app was running the fallback shaper. The fail-safe added in v0.136.1
+did exactly its job here: the level stayed at the conservative value, so
+the failure was quiet rather than distorted, and nothing shipped louder
+than its protection. But it also means the true limiter has not actually
+been heard yet.
+
+The page carries no Content-Security-Policy, so the refusal is coming
+from the WebView itself rather than from anything in the app. Desktop
+Chrome loads a worklet module from a `blob:` URL without complaint;
+Android WebView and WKWebView do not reliably allow it, and which schemes
+are permitted varies by version.
+
+Rather than pick a scheme and hope, both are now tried in order: `blob:`
+first, then a `data:` URL built from the same source. Verified by
+simulating a WebView that refuses `blob:` outright — the attempt is
+recorded as refused, the `data:` attempt succeeds, and the worklet
+installs and swaps in normally.
+
+Each attempt's exact error text is now recorded on the bus and reported
+by `audioPathStatus()`, so if both schemes are refused on real hardware
+the actual error can be read off the device instead of reasoned about
+from here. Four builds were spent this session inferring audio state from
+how things sounded; this is the same lesson applied to a failure that
+only happens on hardware this environment can't reach.
+
+## v0.136.9 — Verification sweep: every fix confirmed, and six more instances of the same hole
+
+Asked for a full check of everything worked on this session plus a hunt
+for similar holes. Built a static sweep that does both, and it earned its
+keep immediately.
+
+**Part one: all 22 structural fixes from this session verified present**
+— master bus, worklet limiter with its sliding-window detector,
+per-context bus and promise maps, exactly two raw destination
+connections, fail-safe adaptive headroom, the diagnostic, organ stagger
+and teardown, harmonic handles, chart button registry, harp chord
+tracking, interval node tracking, the data-kit lookup, clearAll, tray
+category sync. Runtime check confirms the worklet attaches, headroom
+reaches 0.7, and every stop function is safe to call cold.
+
+**Part two found six more instances of the fire-and-forget pattern**,
+the same one that has now appeared nine times: start a note, discard the
+handle, leave nothing for any stop function to act on.
+
+- The **Interval Reference tool** discarded every note. `ivrStop` cleared
+  its timers and bumped its session, which only blocks notes that haven't
+  fired — anything already sounding played on.
+- The **interval peek** had the identical fault.
+- **Both chart dot-taps** — `gccPlayString` and `gssPlayNote`, the "tap a
+  dot to hear that string" notes — discarded their handles, so a tapped
+  string survived instrument and subfamily switches.
+- **12-string guitar** sounds two notes per string and its `synth`
+  returned only the first, so every caller tracking "the note" was
+  tracking half of it and the doubled course rang on after a stop.
+- **`ssPlayNoteEnhanced` returned nothing at all**, the same shape as
+  `addLowFreqHarmonics` before this session. Sight singing and Road Trip
+  both play their reference notes through it.
+
+All six now return or record stoppable handles.
+
+**Saved `intonare_audio_handle_audit.py`.** The first version of the
+sweep missed the chart taps because it only matched the wrapper players
+and not bare `.synth()` calls — which is exactly how these survive
+review. The saved version matches both, and also reports partial stop
+lists, textContent-based DOM lookups that break under translation, and
+synth voices that create nodes without disconnecting them.
+
+**Known and deliberately not fixed in this build**, listed so they aren't
+lost: roughly ten remaining discarded returns, mostly Survival Guide
+playback (its own AudioContext, reached via `stopAllSounds`), the flute
+trill's wind synth, and a handful of theory-tool preview notes. Several
+are legitimately fire-and-forget. They want a decision each rather than a
+blanket change, and the audit now lists them every run.
+
+## v0.136.8 — The Progression tray never showed you what was selected
+
+Two separate gaps, both making the tray feel like it had forgotten what
+you chose.
+
+**The groove side highlighted the active card but never followed it.**
+`progBuildDrawerGrooveCards` marks the selected groove active correctly,
+but nothing ever pointed the category tabs at the category that groove
+lives in. Pick a latin groove, close the tray, reopen it, and you land
+back on whichever tab you last browsed with the active card sitting on a
+tab you can't see — so the selection was effectively invisible.
+
+**The drum kit side had no selection at all.** Every card rendered as
+`'groove-card'` with no active state, and nothing anywhere recorded which
+preset had been loaded. There was no state to highlight even if the
+markup had allowed for it.
+
+Fixed by adding `progDkSelectedName` (by name, since drum presets carry
+no id), highlighting the matching card, repainting the list on selection
+so the highlight lands immediately, and adding
+`progSyncTrayCategories()` which runs on every tray open and points both
+sets of category tabs at whatever is currently selected.
+
+Verified: with a latin groove selected and the browse tab forced to funk,
+opening the tray lands on latin with exactly one visible active card; the
+same holds on the kit side for a preset in a non-default category.
+
+Note on scope: this makes the tray honest about the selection it already
+had. It does NOT separate that selection from the metronome and drum kit
+modules — choosing a groove here still writes the same global those tools
+read. That separation is a larger piece of work and is being scoped on
+its own.
+
+## v0.136.7 — Brush presets never applied their kit, and CLEAR left the old one standing
+
+**The preset kit lookup matched on the button's visible label.** Loading a
+preset ran `.find(b => b.textContent.toLowerCase() === p.kit)` against the
+kit chips. The brush chip reads "Brushes" while the preset's kit id is
+"brush", so it never matched, `setKit` never ran, and no brush preset
+ever applied its kit.
+
+It was worse than the report, because the bug is locale-dependent. In
+Italian the chips read "Elettronico", "Latino" and "Spazzole", so
+electronic, latin and brush all failed there too — only English standard
+and jazz ever worked, and only by the coincidence of their label being
+identical to their id. Every chip already carries a `data-kit` attribute
+holding the real id, so the lookup now uses that. Verified directly: the
+old comparison returns false for brush, the new one returns true.
+
+Two other `textContent` lookups nearby were checked and left alone; they
+match time signature labels like "4/4", which aren't translated.
+
+**CLEAR wiped the grid and left everything else standing.** The loaded
+preset stayed selected and highlighted, its kit stayed active (so
+clearing a brush preset left you writing new patterns into brushes), and
+its swing stayed applied. It now returns to the custom default the way
+the Custom tab's own reset does: steps cleared, kit back to standard with
+the chip re-highlighted, swing back to zero with its slider and hint
+updated, and the category switched to Custom.
+
+BPM is deliberately NOT reset, even though `_applySnapshot`'s blank path
+sets it to 90. The drum BPM is shared with the main metronome, so
+clearing a drum pattern must not pull the metronome's tempo out from
+under whatever else is using it.
+
+Also confirmed while in here, and left for a decision rather than
+changed: the Progression tool's groove drawer and the metronome's groove
+panel are not merely displaying the same highlight, they share one piece
+of state. Progression's card click calls `grooveLoadPreset`, which writes
+the global `groovePresetId`, and also forces `grooveModeActive = true` —
+so choosing a groove in Progression flips the metronome out of METRO into
+GROOVE mode as a side effect. The highlight is therefore accurate rather
+than stale; what's questionable is the two tools sharing one selection at
+all. Unpairing them is a design change, not a bug fix.
+
+## v0.136.6 — The bass layer nothing could stop: addLowFreqHarmonics returned no handle
+
+Reported that subfamily tabs still didn't stop playback. Tested directly
+by clicking the real tab in the DOM after starting a strum, and the
+switch itself was correct: nodes went 5 to 0, subtype changed, button
+restored. So the switch was doing its job and something it couldn't see
+was still sounding.
+
+**`addLowFreqHarmonics` returned nothing.** It creates a gain node and
+three oscillators and handed back no reference of any kind, so this
+entire layer was unreachable by every stop function in the app. Callers
+tracked the note they got from the tone player and had no way to know
+this existed alongside it.
+
+It only runs below 200Hz, which is why it hid for so long and why it was
+worst in the reported case. Standard guitar's low E is 82Hz; baritone
+guitar is tuned B1 to B3, so nearly every note of a chord triggers it.
+Measured on a baritone strum: eleven nodes, five of them harmonic
+handles. Before this build those five kept ringing through the switch
+while the six tone nodes stopped correctly — which is exactly the
+"tracked notes stop, something still sounds" behaviour described.
+
+Now returns a handle that ramps its gain down and stops its oscillators,
+and every call site tracks it. That covers the guitar strum, the piano
+chord chart, both single-note chart taps, the chord tool's sample path
+and the progression bus.
+
+`practicePlayNote` got a slightly different treatment: it returns a
+single combined handle stopping both the tone and its harmonic layer,
+because its callers reasonably track one node per note. Interval training
+is the main one, so the overlap fix in v0.136.3 was silencing the tone
+and leaving the bass layer underneath it on low notes — a real remaining
+hole in a fix that had been reported as working.
+
+## v0.136.5 — All thirteen chart play buttons, done properly this time
+
+v0.136.4 fixed the piano chord chart because that was the one reported,
+and stopped there. Pushed to check the whole tool, the count was thirteen
+play buttons, not four, and an audit of every play/stop pair found only
+four handled their state correctly.
+
+**What was wrong, per button.** Two had no `id` at all and so could never
+show anything: the didgeridoo drone and the fretboard-overlay strum (a
+second `gccPlayChord` button, distinct from the one in the main panel).
+`hpPlayChord`, `trpPlayCardNote`, `bowedNotePlayCurrent`,
+`bowedDsPlayCurrent` and `fluteTrillTogglePlay` never showed STOP. And
+`trpPlay`, `bowedScalePlay` and `didiPlay` set STOP and never restored
+it, so those buttons sat reading "■ STOP" over silence until something
+else happened to redraw them.
+
+**Rather than nine more bespoke label lines**, which is precisely how
+this drifted in the first place, there is now a single `CHART_BTNS`
+registry naming each button once with its i18n key, plus `_chartBtnPlay`,
+`_chartBtnIdle` and `_chartBtnsResetAll`. `chordScaleStopAllAudio` calls
+the reset as a backstop, so no instrument switch, subfamily switch or tab
+switch can strand a button reading STOP regardless of which chart was
+playing. `fluteTrillStop` was also added to that stop list, having been
+missing from it.
+
+**Two real bugs surfaced while wiring this, neither of them cosmetic.**
+The harp had no chord node list at all — `hpPlayChord` discarded every
+node it created and the only list that existed was `hpScaleNodes`, so
+nothing anywhere could stop a ringing harp chord, not `hpStop` and not
+the global stop. It played straight through instrument switches. Same
+fire-and-forget shape as the interval training bug two builds ago. And
+`hpPlayScale` never called `hpUpdatePlayBtn`, which is why the harp scale
+run was the one chart that stayed reading PLAY for its whole duration;
+the restore side was already correct, only the set side was missing.
+
+**One deliberate exception.** `hpPlayBtn` is excluded from the registry
+and delegates to `hpUpdatePlayBtn`, because that function picks its label
+from `hpScaleDir` — ascending versus descending. Resetting it generically
+would have silently relabelled a descending run as ascending, which is
+the kind of regression this sweep was supposed to prevent rather than
+introduce.
+
+Single-note buttons (wind card note, bowed note, bowed double stop) now
+show STOP for the note's actual duration, 1.8s in the bowed case, and
+toggle to stop on a second press.
+
+Verified at runtime: every registry id resolves to a real element, no
+button remains on STOP after a global stop even when all are forced into
+that state first, and the helpers are safe when handed an id that doesn't
+exist.
+
+## v0.136.4 — The chart stop button that only worked on fretted, and two more partial copies of the same stop list
+
+**The piano chord chart's play button had no `id`.** That's the whole
+reason it was the one instrument that never showed a stop state:
+`pccPlay` and `pccStop` had nothing to address, so neither ever tried.
+The fretted equivalent has `id="gccStrumBtn"` and works, and the piano
+scale chart has `id="pssPlayBtn"` and works. Given an id, `pccPlay` now
+shows STOP while the chord rings and `pccStop` restores the label, both
+matching what the other three charts already did. Also removed a
+duplicated STOP assignment in `pssPlay`, which set the same label twice
+in consecutive lines.
+
+**Swapping subfamily or chart tab left audio playing, for the same
+reason `stopAllAudio` did: rival partial lists.** There are ten chart
+voices and `chordScaleStopAllAudio()` stops all of them.
+`switchChordScaleInstrument` correctly called it. But `switchSubType`
+called only `gccStop(); gssStop();` — the two FRETTED stops — so
+swapping subtype on mallet, sax, harmonica, organ, bowed, harp or
+didgeridoo left it ringing through the swap, while guitar behaved. And
+`switchGuitarChordMode` (the CHORDS/SCALES tabs) called four of the ten,
+missing harp, wind, bowed, organ and didgeridoo.
+
+Both now defer to `chordScaleStopAllAudio()`, so there is one list to
+keep correct rather than three that drift apart. This is the third time
+in three builds that a hand-maintained partial stop list has been the
+bug; the pattern is now consistent enough to be worth watching for
+directly.
+
+Verified: the button exists and its label round-trips through
+STOP and back, all ten chart stops are safe to call cold with nothing
+playing, and none throw.
+
+## v0.136.3 — Interval training notes overlapping between questions: nothing was holding the handles
+
+`ivStop()` looked like it stopped playback and effectively stopped
+nothing. `ivPlayReference` calls `practicePlayNote` through `playOne` and
+`playBoth` and discarded every return value; only the sing-mode reference
+kept a handle, in `ivRefNode`. So the melodic and harmonic notes — the
+ones every manual and test round is built from — were fire-and-forget,
+with no reference anywhere for `ivStop` to act on.
+
+The session token (`ivSession`) hid how bad this was, because it does
+prevent notes that haven't started yet from firing. Notes already
+sounding, though, simply ran to their full length: 0.58s melodic, 1.4s
+harmonic, 2.7s end to end for mel_harm, with the sample's own release
+tail on top of that. Test mode advances on every answer, so the previous
+question was still ringing underneath the next one — which is exactly how
+it was reported.
+
+Fixed by tracking every node started during playback in `ivNodes` and
+having `ivStop()` stop them all. `practicePlayNote` already returns a
+stoppable node on both the sampled and the synth path, so the handles
+were there to be kept the whole time.
+
+`ivReplay()` had the same fault by a different route: it calls
+`ivPlayReference` directly rather than going through `ivStop`, so hitting
+replay stacked a fresh playback on top of whatever was still sounding.
+Rather than patch that one call site, playback now silences any tracked
+notes at the top of `ivPlayReference`, which covers advancing, replaying,
+and any future caller that reaches playback another way.
+
+Verified that stopping is robust rather than merely present: tracked
+nodes are stopped and the list cleared, `ivStop()` is safe to call cold
+with nothing playing, and a node whose `stop()` throws does not prevent
+the nodes after it from being stopped.
+
+## v0.136.2 — Module audio that kept playing after you left: stopAllAudio had never heard of the drones
+
+`stopAllAudio()` is the single source of truth for "make it quiet", and it
+is a hand-maintained list of function names. Its own comment records that
+it drifted once before, when `exitTool` and `exitExercise` kept two rival
+lists with different holes. An audit diffing every stop-style function
+defined in the file against the ones the list actually calls found it had
+drifted again, and considerably further: 43 were missing.
+
+Most of those are missing correctly — per-note and per-voice stops
+covered by their module's own stop, animation and timer stops that make
+no sound, and mic teardown that must not run on every exit. But the ones
+that mattered were the worst possible category: **every drone**.
+`stopAllRhodesDrones`, `stopAllPianoDrones`, `stopAllRef`,
+`_organStopAll` and `diadleStopDrone` all ring indefinitely by design, so
+nothing else was ever going to stop them, and the global "make it quiet"
+had never heard of any of them. Alongside those, `riffStop` (20 call
+sites), `mqAmbStop`, `hpStop`, `fluteTrillStop`, `tpStopAudio`,
+`rcStopPlayback`, `thmnStopDemo`, `tonaleStopCompare`, `tonaleStopWave`,
+`rtDistractStop`, `rcdStop`, `_bowedStopAll` and `bowedScaleStop` were
+all leaking through every exit.
+
+The Survival Guide turned out to be entirely outside the system. It runs
+its own separate `AudioContext` in a later script block, and its
+module-level stop, `stopAllSounds`, was not in the list — so backing out
+mid-cadence left it playing. `sgStopCadence` isn't reachable on `window`,
+so wiring that directly would have been a silent no-op; the fix calls
+`stopAllSounds`, which is global and stops the cadence internally.
+
+Every newly wired function was verified callable cold, with no module
+open, since `stopAllAudio` fires on every module exit and on
+backgrounding: none throw, and calling `stopAllAudio()` twice from a
+standing start is clean. Coverage goes from 32 functions to 52.
+
+**Added `intonare_stopall_audit.py`.** A list that has now drifted twice
+will drift a third time, so this diffs defined stop functions against
+called ones and fails on anything that is neither wired in nor named in
+an exemption table with a stated reason. Adding a new stop function now
+forces a decision instead of allowing silence.
+
+Deliberately left alone pending a decision: `stopMic`, `_nativeMicStop`
+and `vrStopDetect` are mic-side, and wiring them here would tear down the
+mic stream on every module exit and every backgrounding, which would
+break tuner resume. They are exempt with that reason recorded rather than
+quietly omitted.
+
+## v0.136.1 — Duplicate master buses, and making the loud setting conditional on the limiter actually existing
+
+Reported still clipping, with the right question attached: are the sounds
+routed correctly? They weren't.
+
+**The master bus cache was a single slot, and this app runs several audio
+contexts** — the main one plus dedicated contexts for the tuner, tone
+generator, practice, drum kit and latency probing. A second context
+overwrote the slot; when the first context asked for its bus again the
+stored one no longer matched, so a SECOND bus was built for a context
+that already had one, with both still connected to the destination.
+Every sound on that context then ran through two parallel paths summing
+into the same output, which clips harder than having no limiter at all.
+The worklet promise was a single slot for the same reason, so only the
+first context could ever receive a real limiter and the rest silently
+stayed on the fallback shaper. Both are now keyed per context, verified
+by interleaving `_getMasterOut` calls across three contexts and checking
+each one gets exactly one stable bus.
+
+**Second, and more likely what was actually audible: the loud setting was
+unconditional.** v0.136.0 raised SYNTH_HEADROOM from 0.32 to 0.7 and
+removed the per-chain ceiling shapers in the same build. Both are correct
+when the lookahead limiter is running. If the worklet fails to load on a
+given device, though, that combination is the worst of all worlds — a
+level raised on the assumption of protection that isn't there, with the
+old protection already removed. The worklet loads fine in Chrome over
+http, and fails on file:// where blob module loading is blocked, which is
+exactly the kind of environment-specific difference that shouldn't be
+assumed away for a device that can't be inspected from here.
+
+So the headroom is now adaptive: it starts at the conservative 0.32 and
+is raised to 0.7 only once the limiter is confirmed installed and running
+on the app's primary context. A worklet failure can now only ever sound
+quiet, never distorted.
+
+**Added `audioPathStatus()`**, callable from a device console, reporting
+per context whether the true lookahead limiter or the fallback shaper is
+carrying the ceiling, the install state, and the headroom currently in
+force. Four builds were spent inferring the state of the audio path from
+how it sounded; this makes it readable on the hardware it actually
+matters on.
+
+## v0.136.0 — One master bus, one true lookahead brickwall limiter, and the app can finally be loud
+
+The question that produced this build was the right one: other music apps are
+loud and don't clip, so what's the professional version of this? The answer
+turned out to be architectural, not a tuning value.
+
+**The structural problem: there was no master bus.** Around 30 separate places
+connected straight to `ctx.destination`, each carrying its own
+`DynamicsCompressor`, each limiting as though it were the only thing playing.
+Organ plus metronome plus drum kit plus an achievement cue is four independent,
+near-full-scale signals summing at the output with nothing supervising the
+total. No per-chain limiter can fix that, because none of them can see each
+other. That is the real reason the app couldn't be loud without distorting, and
+it's why professional audio software routes everything through a single master
+bus with one limiter at the end.
+
+**Why `DynamicsCompressor` was never going to do this job.** It has no
+lookahead. It reacts only after a peak has arrived, and its detector is
+RMS-like, so coherent transients are out the door before gain reduction starts.
+The standard approach — what every mastering limiter does — is to delay the
+audio a few milliseconds while analysing the undelayed copy, so the reduction is
+already in place when the peak lands, and to ramp the gain rather than step it,
+since an abrupt gain change generates harmonics that weren't in the source. The
+ceiling waveshaper in this file existed purely as cleanup for that leakage, and
+a shaper doing heavy continuous work is itself distortion — which is exactly
+what v0.135.5 measured happening on every synth voice.
+
+**Built: a real lookahead brickwall limiter as an AudioWorklet**, 5 ms
+lookahead, ceiling at -1 dBFS (industry practice is -1.0 to -0.1, the margin
+being for intersample peaks that only appear after reconstruction in the DAC),
+80 ms release. The worklet source lives in a template string and loads from a
+Blob URL, so the single-file build is preserved.
+
+The detector is the part that matters, and the first attempt got it wrong: it
+took the instantaneous sample peak and ramped toward the required gain with a
+one-pole attack, which lags the very peak it exists to catch. Measured, that
+version let an 8x-full-scale input out at 3.07 — reducing, but nowhere near
+brickwalling. The correct design takes a sliding maximum over the entire
+lookahead buffer (every sample still queued for output), computed with a
+monotonic deque for O(1) per sample. Because the detector sees every sample
+before it's heard, the required reduction is always already applied, and the
+ceiling becomes a guarantee rather than an approximation. Attack is therefore
+structural, not a time constant; only release needs smoothing. Re-measured:
+inputs from 0.9 to 8.0 all emerge at exactly 0.891 with zero samples over, and
+anything already under the ceiling passes through completely untouched.
+
+**Per-chain ceiling shapers removed**, from both `buildLimiterChain` and the
+organ chain. With a real limiter at the end they were actively harmful: they
+squash at 0.9 before the limiter ever sees the signal, turning clean gain
+reduction back into the continuous waveshaping the whole exercise set out to
+remove. The master bus keeps an identical shaper as its fallback, so protection
+is never absent — just applied once, in the right place.
+
+**Loudness restored: `SYNTH_HEADROOM` back up from 0.32 to 0.7.** The 0.32
+value existed only because a waveshaper had to be kept out of its squashing
+range. Measured, 0.7 is where usefulness tops out: a single note peaks at 0.828,
+just under the ceiling, so solo notes pass with no gain reduction at all, while
+chords are caught cleanly. Beyond that it's gain reduction without loudness —
+three-note chord RMS is 0.420 at headroom 0.7 and 0.421 at 0.9, the point where
+a limiter stops making things louder and only makes them flatter. Solo-note RMS
+more than doubles against 0.32.
+
+**Fallback behaviour.** `AudioWorkletProcessor` has been available across
+browsers since April 2021, so both Android WebView and WKWebView support it on
+any version this app targets. It's still loaded defensively: the master bus
+works from the moment it's created using the shaper, and the worklet is swapped
+in only once it has actually compiled, connecting the new path before tearing
+down the old one so no buffer renders into silence. If it never loads,
+behaviour is what shipped before. Both paths were verified — worklet attached
+and every chain building on the real app context, and a clean load with the
+worklet blocked.
+
+Two bugs were caught by testing rather than review while building this: the
+install returned an already-resolved promise to concurrent callers instead of
+the in-flight one, and the async swap read the bus from a global at completion
+time, so a context created during the load window left it silently targeting a
+stale object while still reporting success.
+
+Everything routes through this now — synths, samples, metronome, drums, cues,
+Road Trip, every module. That was the ask.
+
+## v0.135.5 — Every synth voice was over full scale on a single note; one global headroom factor fixes all of them
+
+v0.135.4 fixed the organ's missing ceiling shaper, which was real, but
+the report that piano still crackled meant the organ was never the whole
+story. So the same offline-render harness was pointed at every synth
+voice in REF_TONES, twice: once through the real `buildLimiterChain` to
+see what reaches the DAC, and once through a bare gain to see what the
+voices actually generate.
+
+**Nothing hard-clips anywhere — and that was hiding the problem.** Almost
+every voice sat at exactly 0.959 in the first sweep, including a bare
+sine on a single note. That number is the ceiling shaper's asymptote, so
+what looked like "no clipping" was actually the shaper pinned flat out
+on essentially every note.
+
+**The bare-gain sweep showed why.** Every synth voice generates over full
+scale on a SINGLE note — sine 1.18, tuba 1.16, brass 1.32, harmonica
+1.38, trumpet 1.41 — and 2.4x to 3.5x over on a three-note chord. The
+ceiling was squashing a 3.5x overshoot continuously. That isn't
+protection, it's permanent waveshaping distortion on every note, and it
+is the crackle that has been audible across all synth voices from the
+start. It also explains the clue that turning an instrument's volume to
+soft nearly cured it: dropping the level was the only thing that got the
+signal back under the shaper's 0.9 identity threshold.
+
+**Fix: a global `SYNTH_HEADROOM` of 0.32 folded into `_synthTrim`.** That
+function already existed as the per-tone loudness calibration applied by
+the wrapper around every synth, so this scales all voices together and
+leaves the relative balance that sweep established untouched. It lives
+inside `_synthTrim` rather than in the wrapper because several
+`addLowFreqHarmonics` call sites read the trim directly — putting it here
+means the harmonics layer scales with its voice instead of overpowering
+it once the voice got quieter. Sampled voices don't route through
+`REF_TONES.synth` and are unaffected, which is correct, since samples
+were never the ones crackling.
+
+After: single notes land at 0.22-0.67 with the shaper fully out of the
+way, and three-note chords touch it lightly instead of being crushed.
+
+**The organ's local makeup cut from v0.135.4 is reverted to 4.0.** It was
+a local answer to what turned out to be a global problem, and with
+SYNTH_HEADROOM in place the two stacked and left the organ at a 0.19 peak
+on a single note. Its ceiling shaper — the genuinely missing piece —
+stays. Organ now measures 0.35 on one note up to 0.96 on six, reaching
+the ceiling only on dense chords.
+
+0.32 is a starting value chosen to put chords near the threshold rather
+than a derived constant. If everything now sounds clean but too quiet,
+that one number is the dial, and master volume compensates in the
+meantime.
+
+## v0.135.4 — The organ was clipping the DAC on a single note, found by rendering the actual code instead of reasoning about it
+
+Four builds of hypotheses went nowhere, so this one started by rendering
+the app's real organ synth through an `OfflineAudioContext` in a headless
+browser and reading the output samples directly. The answer was
+immediate and not subtle.
+
+**A three-note chord peaked at 1.59 with 7,265 of 96,000 samples pinned
+over full scale** — 7.6% of the output hard-clipping at the DAC. A single
+note peaked at 1.05, already over. That is the crackle, and it explains
+every symptom that made no sense before: it never tracked note count,
+register or registration because it was clipping in all of them, and
+drawbar changes only altered which harmonics were clipping, not whether
+clipping happened. It also explains why the previous three fixes did
+nothing — they were tuning stages upstream of a problem at the output.
+
+Worth being blunt about the earlier Python simulation of this chain: it
+predicted a 0.59 peak and it was wrong, because it modelled the gain
+stages but not the `DynamicsCompressor`'s actual behaviour. Simulating a
+chain from its component values is not the same as measuring it, and the
+measurement was available the whole time.
+
+**Root cause: `_getOrganChain` had no true-peak ceiling.** Every chain
+built by `buildLimiterChain` ends with a ceiling WaveShaper after the
+makeup gain, and the comment there already spells out why: a compressor's
+attack lets coherent onsets through uncompressed, and no compressor
+setting fixes peak leakage — a shaper after the makeup does. The organ
+chain ended at a bare `DynamicsCompressor`, which detects on something
+RMS-like and therefore waves through exactly the kind of signal an organ
+produces: nine phase-locked harmonics per voice, several voices summing
+coherently.
+
+**Two changes.** The ceiling shaper is now in the organ chain, matching
+every other chain in the app. And the makeup gain drops from 4.0 to 2.2,
+because with the ceiling alone the shaper would have been working
+constantly rather than catching occasional peaks. Measured after:
+single note 0.59, three notes 0.96, six notes 0.96, zero clipped samples
+at any polyphony. The registry entry feeding live master-volume updates
+was moved to the new base too — left at 4.0 it would have restored the
+clipping level the moment the volume slider moved.
+
+The organ is quieter than it was. That is the correct trade: the old
+level was never reaching the speaker intact. Chords still ride the
+ceiling's asymptote at 0.96, so if it now sounds clean but too quiet
+there is a further loudness-versus-headroom adjustment available.
+
+## v0.135.3 — Audio graph node leak in the organ voice, and the same pattern found across 11 synth voices
+
+New information reframed the whole investigation: the crackle is not
+organ-specific. Every synthesized voice tends toward it, while sampled
+voices don't. That rules out the organ's own chain (which is where the
+last three builds were digging) and points at something shared by
+synthesis but not playback.
+
+**Found: synth voices leak audio graph nodes.** `voice.stop()`
+disconnected `toneBus` and nothing else. The per-voice output gain `g`
+stays wired to the organ bus permanently, and the key-click filter and
+gain connect straight to the bus on every single note-on and are never
+disconnected at all. Stopping an oscillator releases the oscillator;
+GainNodes and BiquadFilters attached to the bus are not released by
+that. Fixed by tracking every output-facing node in a `_toDisconnect`
+list and tearing all of them down together.
+
+**Second, worse leak: finite-duration voices never called `stop()` at
+all.** Chart and scale taps pass a `dur`, so their oscillators self-stop
+via `o.stop(when+dur)`, but nothing ever ran the teardown — so those
+voices leaked their nodes AND their `_organActiveVoices` entry forever,
+meaning the voice list itself grew without bound for the whole session.
+Only the manual keyboard (which passes `dur: null` and releases on
+key-up) was being cleaned up. Now a matching teardown is scheduled when
+`dur` is set.
+
+**The pattern is not confined to the organ.** A sweep of `REF_TONES`
+found 11 synth voices — sine, piano, flute, bell, marimba, xylophone,
+vibraphone, pad, guitar, brass, melodica — that create GainNodes and
+BiquadFilters per note and contain zero `.disconnect()` calls anywhere.
+The organ was the only voice doing even partial cleanup, and it was the
+one being investigated purely by coincidence.
+
+Deliberately not overclaiming this as the fix: Chrome can reclaim some
+orphaned nodes once their inputs finish, so whether this fully accounts
+for the audible crackle is an on-device question, not something the code
+alone settles. The decisive test is whether crackle worsens across a long
+session and clears after an app restart — that signature would confirm
+accumulation. Sweeping the remaining 10 voices is queued behind that
+answer rather than done blind.
+
+## v0.135.2 — Two speculative organ fixes reverted, and the one real gain-staging flaw found by measurement
+
+**Reverted v0.135.0's phase-decorrelation drift LFOs and v0.135.1's
+polyphony bus rebalance.** Neither changed anything on-device, and a
+numeric simulation of the whole organ chain explained why: nothing in the
+signal path was clipping in the first place. Measured across every
+polyphony and registration, the signal reaching the WaveShaper sits at
+0.03-0.11 — deep in the tanh curve's linear region — and output peaks at
+0.59 against a 0.84 limiter threshold, with master volume capped by
+`_getEffectiveScale` at an effective peak of 0.82 even at maximum. Both
+fixes were solving a problem that didn't exist. The drift LFOs also cost
+two extra oscillators per voice, so leaving them in was a real expense
+for no benefit. The v0.135.0 mass-release stagger stays — that one
+addressed a genuine mechanical issue (every held voice's oscillators
+being truncated on the identical sample when the pedal releases them all
+in one tick) independent of any clipping question.
+
+**The one thing measurement did find: chorus adds amplitude with no
+compensation anywhere.** The `isChorus` branch creates a second
+oscillator per active drawbar at 0.5x that bar's gain, so a chorus voice
+carries roughly 1.5x the amplitude of the same voice with chorus off, and
+nothing downstream accounted for it. On a low five-note chord that's
+0.586 peak with V/C off versus 0.871 with chorus — the only configuration
+in the entire sweep that crossed the limiter threshold. Vibrato is
+unaffected since it only modulates detune and adds no layer. Fixed with a
+chorus-only trim on the per-voice gain target, applied to `_gTarget`
+rather than the bar gains because `_organUpdateLive` recomputes barGains
+from `bars` on every live drawbar move (which would undo it) while
+deliberately preserving `v.gTarget`.
+
+Worth being straight about scope: this is a real flaw and it is the
+correct fix, but the measured overshoot is small and it may not be the
+whole of the reported crackle. The headphone/high-chord/no-16' tests are
+still the thing that will say whether the remainder is digital or the
+phone speaker giving up on sub-bass.
+
+## v0.135.1 — Organ crackle, take two: the real culprit was fixed headroom, not phase drift
+
+v0.135.0's phase-decorrelation fix didn't move the needle on-device — right
+instinct (static detune re-locking is real) but not the dominant cause.
+Correct diagnosis: `_getOrganChain`'s `drive` gain is a FIXED value sized
+for "about 5 voices." Actual playing swings from one held note to a full
+chord across both manuals — with fixed headroom, more simultaneous voices
+just means a bigger combined signal driving deeper into the tanh
+saturation curve. Tanh never hard-clips, but deep in the curve it
+compresses hard and throws heavy intermodulation distortion across every
+stacked sine partial — that's the buzz, and it scales with polyphony, not
+with detune phase.
+
+Fix: `_organRebalanceBus()` now scales the organ bus gain down as active
+voice count rises (gentle curve, not 1/N — full chords should sound
+fuller, not just quieter) and back up as notes release, so the combined
+signal hitting the drive stage stays roughly constant regardless of how
+many notes are stacked. Hooked into every voice add/remove path: the
+synth's own internal push/removal, the chart-tool push, and (via
+`voice.stop()`) every note-off route including the pedal's mass-release.
+
+Also noted in passing, not touched: `pssPlayNote` (scale-chart organ
+voices) pushes the voice returned by `synth()` a second time — `synth()`
+already pushes it internally, so that path double-counts in
+`_organActiveVoices`. Pre-existing, out of scope for this fix, flagged
+for its own pass.
+
+## v0.135.0 — Two organ crackle bugs, both root-caused instead of patched over
+
+**Held-chord buzz that shows up a little after the note is pressed, then
+clears — worst on bass, worst with Leslie off.** The per-bar drawbar
+detune (`_BAR_DETUNE`, added earlier to stop the attack-instant coherent
+peak) is a fixed cents offset per bar. That's fine at the moment of
+attack, but on a HELD note those fixed offsets keep drifting in and out
+of phase alignment forever — every time they drift back into alignment
+the summed peak spikes and overdrives the saturation curve. A fixed
+cents gap is a smaller absolute Hz separation down in the bass, so the
+drift cycle runs slower there, which is exactly why the bug reads as
+"worse on lows." And Leslie's own vibrato LFO already scrambles phase
+continuously, which is why the whole thing nearly vanished whenever
+Leslie was on — turn it off and the static detune has nothing left
+disrupting it. Fix: two ultra-slow, ultra-shallow LFOs (10-20s period,
+well under audible-vibrato depth) now run continuously on alternating
+bars, independent of the Leslie setting, so harmonics never resettle
+into a fixed relationship long enough to spike. Applied to both the main
+bar oscillators and the chorus dry-copy oscillator.
+
+**Pedal press crackle/buzz burst with multiple notes held.** Separate
+bug, same neighborhood. `voice.stop()` schedules every oscillator's hard
+`.stop()` at an identical `ctx.currentTime`-derived sample — fine for a
+single note release. But `_organStopAll()` (what the hold pedal calls)
+stops every active voice in the same JS tick, so with several notes
+held, every oscillator across every one of those voices got truncated on
+the exact same sample. `.stop()` chops mid-waveform, not at a zero
+crossing, and the gain is still mid-fade at that point (`setTargetAtTime`
+approaches zero but never truly hits it) — so several simultaneous
+truncations stacked into one audible crackle. Fixed by giving
+`voice.stop()` an optional stagger offset and having `_organStopAll()`
+space each voice's stop a few ms apart, so the truncations land on
+different samples instead of colliding.
+
+Both awaiting an on-device listen to confirm — this is a "does it
+actually sound fixed" call, not something a syntax check settles.
+
+## v0.134.11 — Drumkit preset panel two-tone split, and every remaining instance of the gradient-flip bug found in one pass
+
+**Drumkit preset panel: two sibling panes on two unrelated background
+tokens.** Reported with a screenshot — the category rail (left) and the
+preset list (right) read as two different brightness levels sitting side
+by side. Cause: the rail used `var(--surface)` (near-white in light mode,
+`#ececf6`) and the list used `var(--bg-1)` (`#b0b0d9`, a medium lavender)
+— fine as two points on the same ramp in the abstract, but never
+designed to sit edge-to-edge as siblings, and the gap between them is
+small in dark mode and enormous in light mode. Unified both panes onto
+`--surface`.
+
+**Then the real question: how many more of these are there, and is there
+a faster way than finding them one screenshot at a time?** Every color
+bug this week — achievement categories, Chordle/Diadle/Tonale pickers,
+the daily buttons, the chord/progression play buttons — turned out to be
+the same mechanical shape: a CSS variable that deliberately flips
+brightness direction between themes (`--accent`, `--accent-warm`,
+`--accent-soft`, `--grad-*`), paired with a hardcoded literal text color
+that assumed one direction. That shape is fully greppable. Wrote a script
+that finds every gradient-background CSS rule built from one of those
+theme-flipping variables, checks whether it hardcodes a literal color
+instead of a theme-aware one, and reports every hit in the file at once
+rather than waiting for the next screenshot to find the next instance.
+
+**Result: five total matches file-wide. Two were already fixed
+(v0.134.10's chord/progression play buttons). Three more found and fixed
+in this build:**
+- `.mq-daily-pop-start` (Music Quiz daily result popup)
+- `.prog-sheet-confirm-btn` (Progression tool's save-sheet confirm)
+- `#exIntervals .iv-mode-btn.active` (interval training mode toggle)
+
+All three turned out to be a variant one step worse than the play
+buttons: each gradient mixes a theme-flipping variable with a *second,
+hardcoded* stop that never flips, so in light mode the gradient itself
+spans dark-to-light internally — computed contrast confirmed neither
+black nor white text can clear 4.5:1 against both ends of a gradient
+shaped like that. Fixing the text color alone couldn't have worked here;
+each got its own light-mode gradient instead, built from two stops in the
+same dark family (matching the palette already established for
+`--accent-warm`/`--accent-soft` light-mode ink elsewhere), so one white
+ink now reads cleanly across the whole button.
+
+**Five for five, file-wide, in one pass — this is the shape of thing that
+should stop recurring, not the last instance of it.** Which is the honest
+answer to "isn't there a better way than finding these one at a time":
+for this ONE specific pattern, yes, and it's done. It doesn't generalize
+automatically to the other three patterns behind this week's bugs
+(bright accent colors used as ink with no light variant; glow/blur
+effects that are a dark-UI-only idiom; sibling elements pulled from
+different points on the color ramp, exactly like today's preset panel) —
+those aren't mechanically greppable the same way, and finding the rest of
+them needs either the wider audit sweep or a real token-level redesign,
+not a bigger regex.
+
+## v0.134.10 — chord/progression play buttons, and three near-misses investigated and left alone
+
+Continuing the v3 audit's list. This batch turned up two more real hits
+of the same `--grad-*` direction-flip bug as v0.134.9's daily buttons,
+and — just as important — three flagged items checked and confirmed
+fine, not fixed, because they weren't actually broken.
+
+**Two real bugs, same root cause as last build.** `.chord-play-btn`
+("PLAY" in the Chords tool) and `.prog-play-btn` ("PLAY" in Progression)
+both pair `background: var(--grad-warm)` with hardcoded `color: #000`.
+`--grad-warm` is a light salmon-to-pink gradient in dark mode (black
+text correct) and a dark burnt-orange-to-maroon one in light mode (black
+text nearly invisible) — identical shape to v0.134.9's fix, different
+buttons. Measured 1.31:1; now white text in light mode, confirmed
+cleared by the audit and by a fresh screenshot.
+
+**Three flagged items checked, not touched:**
+- `.iv-btn.primary` ("START" in ear training) — measures ~3.86:1 by hand
+  calculation against the audit's 1.32:1, and reads clearly in a real
+  screenshot. Already uses `color: var(--bg-0)`, which is the correct
+  theme-aware approach; this is a near-miss, not a break, in the same
+  category v2 already allowlists elsewhere. Left alone rather than
+  fixing a number instead of a problem.
+- `.tc-start-btn` ("START DRONE" in Tonal Center) — already has a
+  deliberate, carefully-reasoned `body.light` override (bright DMG-green
+  background, near-black text, part of that tool's considered retro
+  aesthetic). The audit's 1.46:1 reading almost certainly caught a
+  transitional render state, not the real one. Trusted the existing,
+  documented design decision over one unverified number.
+- `.gss-play-btn` ("STRUM CHORD" in Guitar Chords) — already uses
+  `color: var(--accent)`, which is theme-aware and resolves to a dark
+  legible teal in light mode. Screenshot confirms it reads fine. Another
+  false positive.
+
+Three checks, three real saves from "fixing" things that already work —
+the same discipline as v0.134.8's false-positive cleanup, just applied
+per-item instead of to a whole batch at once. An audit is a lead to
+verify, not a queue to clear blindly.
+
+## v0.134.9 — Chordle/Diadle/Tonale picker colors, daily-button text, chevron
+
+Continuing the v3 audit's severity-ranked list, working top to bottom.
+
+**Difficulty/mode picker colors were half-fixed already, just not wired
+up.** `diffColorFor()` and a `DIFF_COLOR_LIGHT` mapping table already
+existed in the file — built for exactly this problem, deepening each
+difficulty's bright dark-mode color to an AA-legible equivalent in light
+mode. `chordlePickerCard()`, the shared renderer behind Chordle's,
+Diadle's, and Tonale's difficulty/mode cards, was passing `color`
+straight through instead of calling it. One function was the actual fix;
+finding it was the work. Also extended the table itself — Tonale runs
+its own distinct four-color palette (`#54d18a`/`#f2c14e`/`#e8743b`/
+`#d6455d`) that was never in there, so Tonale's cards weren't improving
+even after the wiring fix until this got added too.
+
+**"PLAY THE DAILY" and five other buttons were invisible, not just dim.**
+Seven buttons across Chordle/Diadle/Tonale share one gradient background
+built from `--accent`/`--accent-soft`, paired with hardcoded `color:#000`.
+Correct in dark mode, where those two variables are light colors and
+black text reads fine. Wrong in light mode, where the same two variables
+are deliberately *dark* (legible-ink versions, same reasoning as
+everywhere else) — meaning the gradient itself goes dark and the black
+text nearly disappears into it. Same category of bug as the achievement
+category colors (v0.134.3): a variable's brightness direction assumed
+constant across themes when the theme system deliberately flips it.
+Fixed with one attribute-selector CSS rule matching the shared inline
+style, rather than touching seven separate button literals scattered
+across three files' worth of game logic.
+
+**Chevron arrow (`›`)** on the same picker cards — 0.4 opacity on an
+already-modest `var(--muted)`, measuring ~2.06:1. Raised to 0.82;
+confirmed clearing 4.5:1 afterward rather than guessing at a number that
+looked reasonable.
+
+**Net for this cluster:** 105 audit failures \u2192 11 across Chordle, Diadle,
+and Tonale combined, verified by re-running the audit and by a fresh
+rendered screenshot (not just trusting the numbers). The 11 remaining are
+lower-severity near-misses — an attribution line, nav-label edge cases —
+left for a later pass rather than chased for diminishing returns here.
+
+Working the rest of the v3 audit's list top-to-bottom continues next
+build; this is one batch of it, not the finish.
+
+## v0.134.8 — a contrast audit that can actually reach the tools, and the three bugs it was built to catch
+
+**Built `intonare_light_contrast_audit_v3.py`.** The standing audit
+(`intonare_light_contrast_audit.py`) only ever visits 4 surfaces — the top
+screen of each launcher tab, once. Every tool and every exercise —
+Drumkit, Volume Meter, Rhythm Cards, Chordle, Road Trip, ~29 of them —
+sat behind that top screen and had never been machine-checked once.
+Reported with three screenshots this time: Drumkit's preset pills, Volume
+Meter's SAFE/CAUTION/WARN/DANGER labels, both genuinely broken.
+
+v3 reaches all of it by calling the app's own screen routers directly —
+`enterTool('drumkit')`, `enterExercise('roadtrip')` — the same functions
+a real tap ultimately calls, pulled straight out of `enterTool`/
+`enterExercise`'s own hidden-class toggle lists so the surface list can't
+drift out of sync with what the app can actually show. 4 hub screens + 15
+tools + 14 exercises = 33 surfaces per run, up from 4. Same measurement
+core as v2 (rendered-pixel percentile sampling — proven more trustworthy
+than reading CSS declarations, see v2's own docstring for why).
+
+**The first raw run came back with 278 "failures." Most were noise, not
+bugs — caught before treating any of it as a finding:**
+- Elements scrolled off-screen in horizontal strips were still being
+  measured against whatever sat behind them. Fixed: added a right-edge
+  bound to the existing viewport check.
+- A meaningful chunk were genuinely tiny glyphs (a single digit, a
+  bullet) inside generously-padded containers, where the percentile
+  sampler's dark/light picks can both land on background pixels and
+  report a false ~1:1. Fixed the common case: measure the text's own
+  `Range` bounding box instead of the element's full padded box.
+- The rest — Drumkit's category counts and names inside the collapsed
+  `PRESETS ▾` panel — are clipped via `max-height:0`, not `display:none`,
+  so the hidden-content walk doesn't catch them and they get measured
+  as if visible. Not fixed this pass; noted in the script's own output
+  rather than silently dropped, since it needs a real visibility check
+  (actual rendered pixel area), not another special case.
+
+An audit that reports noise as signal is worse than no audit — v2's own
+docstring says exactly that, and v3 nearly repeated the mistake at 70x
+the scale on its first run. Every fix here came from checking a raw
+result against the real rendered screenshot before believing it, not
+from trusting the number.
+
+**Three bugs, confirmed and fixed:**
+- **Drumkit preset pills** (Jazz/Latin/Standard/Electronic/Brushes) — the
+  pill was fully transparent, relying on the app's carefully-pinned
+  `--muted` ink token for contrast. That token is pinned against
+  `--bg-0`/a card, not against this tool's own colored wash, and fell
+  short here specifically: measured 3.29–3.81:1. Gave the pills their
+  own light backing tint so their contrast doesn't depend on guessing
+  what's behind them.
+- **Drumkit's *active* preset color** — found while fixing the pills
+  above: the selected chip's ink was hardcoded bright saturated RGB
+  (the same bug shape as the achievement category colors, v0.134.3),
+  measured 1.45–2.36:1 across the five kit colors. Added light-mode
+  darkened variants for all five, each confirmed 4.65:1 or better.
+- **Volume Meter's SAFE/CAUTION/WARN/DANGER labels** — black ink at 55%
+  opacity wasn't dark enough against the light pastel band tints.
+  Computed the actual contrast needed against all four bands and raised
+  to 78%, with margin on every band.
+
+All three verified two ways: the audit's own re-measurement, and a fresh
+rendered screenshot checked by eye — the same discipline the audit itself
+demands of its own results.
+
+**Rhythm Cards' subtitle, investigated, not reproduced.** Screenshotted
+as looking pale near the TEST button. Rendered it fresh, ran it through
+the new audit: reads clearly, measures well clear of 4.5:1, not flagged.
+Couldn't find a bug here to fix — noting that honestly rather than
+inventing a change for something that isn't actually broken.
+
+**Still not covered by v3:** the ~90 modals/overlays/sheets/popups (a
+running list of their IDs is in a comment at the bottom of the script,
+collected while investigating this so the next pass doesn't start from
+zero). Those aren't behind a uniform router the way tools/exercises are;
+each opens its own way, which is real additional harness work, not a
+config change.
+
+## v0.134.7 — grep sweep for the hardcoded-white-text pattern app-wide
+
+Searched the whole file for the exact bug shape that hit achievements three
+times running: `color: rgba(255,255,255,...)` used as ink with no
+light-mode counterpart. 61 raw hits. Most were not bugs:
+
+- A meaningful chunk already had light-mode coverage I'd missed on first
+  pass — scoped as `body.light #containerID .class` rather than
+  `body.light .class`, which a naive check for "does this class have a
+  light override" walks right past. The whole piano overlay (~15 of the
+  61 hits) falls in this bucket: fully handled already, just not
+  adjacent to the rule in the file.
+- A larger chunk are deliberately, permanently dark regardless of theme:
+  the piano's mode-selector chrome, the drone mute button, the flash
+  metronome's fullscreen strobe, the theremin's play pad and volume
+  track. There's an explicit comment on the theremin block stating the
+  reasoning: instrument "screens" (a play pad, an LED-style readout, a
+  strobe display) stay dark on light the way a real piano's key-bed or a
+  real synth's LCD would, and that's a considered design choice already
+  applied consistently, not an oversight repeated 61 times.
+
+Filtering those out left two genuine, confirmed bugs — same shape as
+achievements, different screens: the groove editor's subdivision step
+numbers (`.groove-step-num.subdiv`), and the drum kit precision-mode
+step numbers and cursor ring (`#toolDrumkit .dk-prec-step-num`, `.cursor`
+ring). Both sit on containers that already go theme-adaptive in light
+mode (`.groove-step-nums` background, `.dk-prec-step`'s `var(--surface)`)
+while the mark on top of them stayed hardcoded near-invisible white.
+Fixed both the same way as achievements: a `body.light` override with a
+dark low-opacity ink instead of the light one.
+
+This was one grep sweep, not the audit rewrite — it only catches this one
+specific anti-pattern (hardcoded white-as-ink) and only where the string
+`rgba(255,255,255` appears literally in the CSS. It doesn't catch a wrong
+color chosen some other way, and it doesn't touch the ~90 unaudited
+modals/overlays/sheets/popups that still have zero machine coverage.
+Cheap, fast, and it found two real bugs beyond achievements; the actual
+audit-widening work is still open.
+
+## v0.134.6 — seven achievements had no icon at all, silently showing the padlock
+
+**"Some are the same lock icon" — because they were.** `ACH_ICONS[a.id] ||
+ACH_ICONS.locked` was doing exactly what it says: any achievement with no
+entry in `ACH_ICONS` fell back to the padlock glyph, even when unlocked.
+Seven had no entry: The Force Is With You, I Got a Fever, Hard Day's
+Night, First Blood, Boom, Giant Steps, Dead Composer. An earned
+achievement showing a padlock isn't just uninspired, it reads as broken —
+this was a real bug wearing a design complaint's clothes.
+
+Drew all seven to match the existing hand-crafted convention exactly
+(24x24, stroke-width 1.5, round caps/joins, main shape drawn twice — once
+as a soft low-opacity fill, once as a crisp outline) rather than pulling
+from an icon library and hoping it blended in:
+- **The Force Is With You** (turn off the targeting computer) → a scope
+  reticle with a slash through it, switched off
+- **I Got a Fever** (more cowbell) → an actual cowbell
+- **Hard Day's Night** (60-minute session, working like a dog) → a hard hat
+- **First Blood** (first Chordle solved) → a puzzle grid with a checkmark
+  in the first row
+- **Boom** (Chordle solved first try — "headshot") → a bullseye, dead
+  center
+- **Giant Steps** (5 V.Hard Chordles, "living on the edge") → literal
+  ascending stairs
+- **Dead Composer** (Chordle solved without pressing play — deaf,
+  composing anyway) → an ear with a slash through it
+
+Verified two things, not just one: every one of the 40 achievements now
+resolves to a real, unique icon (checked programmatically — zero missing,
+zero byte-identical duplicates among the dedicated set), and separately
+rendered all 40 on one sheet to eyeball the set as a whole rather than
+trusting the count alone. Everything else in `ACH_ICONS` held up on
+inspection — a couple (Master, Practitioner) lean more abstract than the
+rest, but they're not broken or duplicated, so left alone rather than
+redrawing icons nobody flagged as a problem.
+
+## v0.134.5 — light mode achievement design, rethought rather than re-tinted; another run at the disappearing-content bug
+
+**The glow fix from last build wasn't enough, and it couldn't have been.**
+Screenshots still showed a hazy smudge behind unlocked icons. The actual
+problem was never the specific blur radius or opacity — it's that glow is a
+*dark-UI idiom*. A blurred color only reads as light bleeding into its
+surround when the color is brighter than the surround. That's true of the
+old bright saturated colors against near-black. It's structurally never
+true in light mode: the color has to stay dark enough to work as legible
+ink (v0.134.3's fix), and a dark color blurred onto a light panel is a
+stain at any radius, any opacity. No amount of retuning the same recipe
+was going to fix that — needed a different technique, not a better number.
+
+Replaced glow with what flat/paper-style UI actually uses for this job —
+Apple HIG, Material's light theme, Notion, Linear all do the same thing:
+a solid tinted chip behind the icon, no blur, color communicated by fill
+instead of luminosity. No filter, no drop-shadow. Common and rare are now
+fully static in light mode, which is a better match for this file's own
+stated design intent ("cards are the calm part, not the colorful part")
+than the previous constant pulsing glow ever was; legendary and secret
+keep a small amount of motion (a scale pulse, not a color blur) since
+those tiers should still feel like a bit of an event. Same swap applied
+to the achievement toast: flat tinted circle behind the icon instead of
+the double drop-shadow, and the radial glow wash across the toast
+background cut down to a faint corner tint instead of a full wash. Dark
+mode is untouched — the original glow techniques are correct there, this
+was never a dark-mode problem.
+
+**Disappearing content, third attempt — different theory this time.** The
+last two fixes (parent layer promotion, then pausing off-screen
+animations) both assumed the trigger was specifically about elements
+animating while scrolled off-screen. New screenshots broke that theory:
+blank and fully-rendered cards showed up *side by side in the same
+viewport at the same time*, which an off-screen-specific bug can't
+produce. Also caught the same row flip from blank to fully-rendered
+between two screenshots taken moments apart — consistent with the
+WebView compositor genuinely falling behind on paint during a fast
+scroll and catching up shortly after, not a permanently broken tile.
+
+Removed both previous mitigations (layer promotion stays, harmless;
+the custom IntersectionObserver pause/resume hack is gone) and replaced
+them with `content-visibility: auto` on `.pm-ach-card`, with
+`contain-intrinsic-size` to keep scroll position stable as cards enter
+and exit rendering. This is the platform's own answer to "too much
+off-screen content for the renderer to keep up with" — it skips layout
+and paint work for content nowhere near the viewport, which cuts the
+total paint burden during a scroll instead of trying to out-guess
+WebView's tile scheduling with more CSS hints. Given two narrower,
+targeted theories already came back wrong on-device, this cuts the
+actual variable in play (total concurrent paint work) rather than
+guessing at a third specific mechanism. Whether it holds still needs
+your device, same as the last two rounds — this sandbox has never been
+able to reproduce the bug itself, only reason about likely causes and
+verify that nothing else broke.
+
+## v0.134.4 — icon glow was a smudge in light mode, disappearing achievements: round two
+
+**Icon glow, light mode.** Reported with screenshots: the icon halo behind
+unlocked achievements looked like a hazy colored blob, not a glow. Root
+cause was the previous build's own contrast fix: `--cat-c` now holds a
+darkened, WCAG-legible color in light mode (needed for the rarity pill and
+border text), and that same variable feeds the icon's `drop-shadow` glow.
+A drop-shadow blur only reads as *emitted light* when the color is
+brighter than its surround — true of the old bright dark-mode colors
+against near-black, false of a dark burnt-orange or deep green blurred
+onto a near-white panel. That's a stain, not a glow, however you tune it,
+and no shared color token can be both a legible dark ink and a convincing
+bright bloom at once. Gave light mode its own glow recipe instead of
+reusing dark mode's with a swapped color: half the blur radius, every
+stop routed through `color-mix()` at 35–60% so the halo stays a light
+tint, and dropped the stacked double-`drop-shadow` on rare+ that was
+making the smudge worse rather than richer. Applies to both the animated
+breathing glow and the static base glow on every unlocked icon.
+
+**Disappearing achievement content — still happening, tried a different
+angle.** The `translateZ(0)` layer-promotion fix from two builds ago
+didn't hold; screenshots showed the same failure, still isolated to
+`rarity-secret` cards (the only rarity, along with legendary, that runs
+the animated `@property`-driven conic-gradient border trace). Promoting
+the parent card to its own compositing layer clearly wasn't sufficient —
+it doesn't necessarily carry down to guarantee the animated pseudo-element
+inside it gets the same treatment.
+
+Two changes this time, aimed more at the actual trigger than another
+layer-promotion guess: promoted the `::after` trace pseudo-element itself
+to its own layer (not just its parent), and — the more likely real fix —
+added an `IntersectionObserver` that pauses the border-trace and icon-
+breathe animations on legendary/secret cards while they're off-screen,
+resuming on scroll-back. These animations previously ran continuously and
+indefinitely regardless of visibility. The failure mode this whole time
+was plausibly: a card mid-animation scrolls off-screen, WebView's tile
+cache discards or reuses that paint, and it comes back mis-composited.
+A paused animation has no in-flight paint state for that to happen to —
+this removes the precondition rather than hoping a layer hint changes how
+Chromium schedules around it. Verified the observer itself works exactly
+as intended (23 legendary/secret cards tracked, correctly toggling
+between paused/running as the grid scrolls), which is as far as this
+environment can confirm; the compositing bug itself is a device-specific
+WebView quirk this sandbox has never been able to reproduce, so whether
+it's actually gone still needs your eyes on the device, not mine on a
+screenshot.
+
+## v0.134.3 — achievement category colors in light mode, toast bleed-through behind open modals
+
+**Achievement category colors were unreadable in light mode too, not just
+the text.** `ACH_CATS` — the five accent colors for consistency/accuracy/
+exploration/milestones/secrets — were hardcoded `rgba(...)` values shared
+between both themes, tuned to glow on near-black. Measured their actual
+rendered contrast against the light panel background: as low as 1.17:1 for
+milestones (lime), none of the five cleared WCAG AA's 4.5:1 floor. This is
+why the rarity pills, category dots, and section headers all read as faint
+pastel smudges in the screenshots — same root cause as the text-color bug
+from the last build, just on the accent colors instead of the ink.
+
+Gave each category a light-mode-specific darker, more saturated version of
+its own hue, chosen by reusing existing app tokens where the hue already
+matched rather than inventing new colors: consistency → `--accent-warm`,
+exploration → `--accent-soft`, milestones → `--in-tune`, secrets →
+`--accent-rose`. Accuracy didn't have an existing match so it got one
+custom deep teal. All five now measure 4.5:1 to 9.65:1. Also extended the
+existing rare/legendary/secret background tint down to common-rarity cards
+(previously flat `--panel` with zero tint) — a small thing, but it's a
+chunk of why the achievement list read as a wall of plain white rather
+than a set of grounded, categorized cards. Verified both changes rendered,
+light and dark, not just computed.
+
+**Audit coverage gap, confirmed and scoped.** `intonare_light_contrast_
+audit.py` only opens the four launcher cells (tuner/metro/tools/train) and
+screenshots once each — it never opens Profile, Settings, or any modal or
+toast, which is exactly where both of the last two contrast bugs were
+hiding. Not touched this build; flagging the real size of the gap so it
+doesn't get treated as fixed: Road Trip, Rhythm Runner, Music Quiz,
+Ladder Climb, and Chordle all sit deeper than the audit's one-tap reach
+too.
+
+**Toast rendering corrupted behind an open modal.** While testing the
+light-mode fixes above, firing an achievement toast with Profile open
+showed the modal's "No practice recorded" text visibly bled through the
+toast's background — not a color problem, a compositing one. Confirmed
+by disabling Profile's `backdrop-filter: blur(8px)`, which made the
+artifact disappear; layer-promoting the toast stack instead (`transform:
+translateZ(0)` + `backface-visibility: hidden` on `.ach-toast-stack`) is
+the equivalent fix without touching the modal. Same family of bug as the
+achievement-card scroll flicker from two builds ago — a Chromium/WebView
+sibling failing to composite correctly against a neighboring layer — just
+a different trigger: an animated `@property` there, a `backdrop-filter`
+neighbor here.
+
+This almost certainly wasn't visible before now: real achievement unlocks
+fire during a practice session, when no modal is open behind them. The
+long-press test-unlock feature (previous build) made "toast fires while
+Profile is open" the normal case for the first time, which is exactly
+what surfaced it. Not a regression of the scroll-flicker fix — that one's
+still in place and unrelated — but a genuine bug found using the very
+feature built to make bugs like this easier to catch.
+
+## v0.134.2 — long-press to test-unlock, achievement panel unreadable in light mode
+
+**Light mode contrast, Profile > Achievements.** Reported with screenshots:
+unlocked achievement cards were unreadable — title, italic flavor line, and
+condition text all washed out to the point of invisibility. Cause was three
+hardcoded `rgba(255,255,255,...)` text colors on `.pm-ach-name` (unlocked),
+`.pm-ach-desc`, and `.pm-ach-cond` — literal near-white text that assumed a
+dark background and had no light-mode counterpart, plus the same problem on
+the locked-card icon color and the progress-bar track background. All five
+now resolve through theme variables (`var(--text)`, `var(--muted)`,
+`var(--border-soft)`) instead of a fixed color, so they invert correctly
+with the theme like everything else on the card already did. Verified
+rendered, not just read — headless light-mode and dark-mode screenshots of
+the actual expanded card grid, before assuming the CSS change was enough.
+
+This slipped through because `intonare_light_contrast_audit.py` only walks
+the four main module screens (tuner/metro/tools/train); the Profile modal's
+Achievements panel isn't part of its sweep. Noting it here since the audit
+itself wasn't touched this build — a real gap, not a false negative.
+
+**Long-press a locked achievement card to test-unlock it.** Testing the new
+sound-unlock toast (v0.134.1) meant resetting all progress and re-earning
+achievements by hand to see one fire. Holding a locked card for 650ms now
+unlocks that one achievement and runs it through the exact same pipeline as
+a genuine unlock — toast, haptic, sound, and the sound-unlock toast above it
+if that achievement carries one — instead of `devUnlockAll`'s silent
+bulk-unlock. A short tap does nothing; verified the 650ms threshold actually
+holds (a 200ms press left the card locked, a 750ms hold fired the toast).
+
+## v0.134.1 — a toast for the sound you just unlocked
+
+**Nothing told you a new cue option existed.** Six achievements unlock a
+custom sound (Secret Found, Beethoven's Fifth, Adventurer, Hallelujah, The
+Mountain King, Mythic Fanfare) and the achievement toast plays it once at
+unlock, but nothing pointed at Settings afterward — the sound just became
+selectable and sat there until someone happened to go looking.
+
+Added a second, smaller toast that appears stacked above the achievement
+toast exactly when (and only when) the achievement being unlocked also
+unlocks a sound: name of the sound, plus which cue categories it's now
+available for ("Achievement, Streak" for The Mountain King, "Achievement,
+Level Up" for the others). Deliberately kept quiet — no glow, no shimmer,
+no bounce, roughly a third the visual weight of the main toast — so it
+reads as a bonus detail riding along, not a second achievement competing
+for attention. It fades in a beat after the main toast rather than with
+it, and both dismiss together.
+
+Built as a stack (`achToastStack`, flex column-reverse) rather than two
+independently-positioned fixed elements, so the sound toast's position
+above the achievement toast is automatic and survives either toast's
+height changing — no offset math to keep in sync by hand. That stack also
+had to replace `achToast` in the DOMContentLoaded re-parenting fixup (the
+one that rescues modals from the file's deeply-nested broken HTML
+upstream); leaving the old id there would have yanked the achievement
+toast back out to `body` on load and separated it from the sound toast
+sitting above it.
+
+## v0.134.0 — missing haptics on achievement/win/game-over, achievement card scroll flicker
+
+**Haptics gap, four spots.** The seven audio-cue events (correct, wrong,
+milestone, level up, achievement, game over, win) all funnel through
+individual dispatch functions, but only four of them had a haptic paired
+to the sound — correct, wrong, milestone, and level up. Achievement,
+game over, and win never got one; there was no `hapticAchievement`,
+`hapticGameOver`, or `hapticWin` function to begin with. Every place those
+three fire — the achievement toast, the summit-climb win in the ladder
+challenge, Rhythm Runner survival's end screen, and Music Quiz survival's
+end screen — was sound-only.
+
+Found a fourth, separate spot with the exact same shape: the ladder-climb
+game's own terminal-sound dispatcher (`rlpCue`) mapped win/gameover/
+milestone to sound at all three of its call sites with zero haptics,
+independent of the main event system.
+
+Added the three missing haptic functions (`hapticAchievement` — bright
+Light-Light-Medium; `hapticWin` — a bigger build than Milestone, Medium-
+Light-Heavy-Heavy; `hapticGameOver` — a fade-out distinct from Wrong's
+sharp double-Heavy, Heavy-Medium-Light) and wired them into every real
+trigger plus the settings preview, then fixed `rlpCue` centrally so its
+three call sites inherit the fix without touching each one.
+
+**Achievement card scroll flicker.** Reported as achievements "losing
+visual data" and reappearing after scrolling off and back on. Not a data
+bug — `renderAchievements()` builds the DOM once and nothing rebuilds it
+on scroll. The likely cause is the legendary/secret rarity cards: they
+animate a custom `@property --pm-trace-a` angle driving a `conic-gradient`
+border trace on a masked `::after`, on top of `color-mix()` gradient
+backgrounds — a combination WebView is known to mis-repaint when the
+element scrolls offscreen and the layer gets discarded or reused instead
+of re-rasterized. Forced `.pm-ach-card` onto its own stable compositing
+layer (`transform: translateZ(0)` + `backface-visibility: hidden`) so the
+browser stops trying to reuse the paint mid-scroll.
+
+## v0.133.18 — the unlockable-sound registry refactor
+
+**The architecture cleanup from tonight's design conversation.** Every
+secret/achievement-tied cue (Secret Found, Beethoven's Fifth, Mythic
+Fanfare, Adventurer, Hallelujah, The Mountain King) used to need edits in
+~10-13 places to wire up: an entry in each eligible pool's `_CUE_DEFS.opts`,
+a branch in each pool's dispatch function, a line in `_sndKey`, two i18n
+lines, a line in the gate filter, plus `PROG_DEFAULTS`/`progMigrate`/
+`devUnlockAll` for the unlock flag. That's exactly the surface where
+tonight's wrong-achievement mistake happened — no single source of truth
+for "what unlocks what, and where can it play."
+
+Added one `UNLOCKABLE_SOUNDS` registry — a single array, one entry per
+sound, declaring its play function, its unlock flag, which pools it's
+eligible for, and (where relevant) which achievement id triggers it.
+Everything downstream now reads from it instead of repeating itself:
+`_CUE_DEFS` pool opts, all three dispatch functions (`playCueAchievement`,
+`playCueLevelUp`, `playCueMilestone`), the picker's gate filter, `_sndKey`,
+`devUnlockAll`, `progMigrate`, and the achievement-toast override all
+collapsed from ~40 hand-written lines total down to a handful of generic
+lookups. Adding the next unlockable sound is one registry entry, not a
+hunt through ten places.
+
+`PROG_DEFAULTS` and `checkAchievements()`'s 3-line flag-set were
+deliberately left alone — the former for six flat lines not worth
+restructuring, the latter because zelda and adventurer set their flags
+through separate bespoke trigger paths (Road Trip completion) that don't
+flow through the same loop as the other three, and generalizing it would
+have silently widened scope.
+
+**Verified with an actual behavioral diff, not just review.** Built an
+offline spy harness (same `node-web-audio-api` tooling as the volume
+measurements) that snapshotted every pool/key dispatch resolution and
+every gate-filter visibility state *before* touching any code, then
+re-ran the identical driver against the refactored code and diffed:
+41 test cases, zero differences. The one real behavior change — Level
+Up's Secret Found/Beethoven's Fifth/Hallelujah cues now respect the cue
+volume slider, which they silently ignored before — doesn't show up in
+that diff since it only checks which function fires, not its arguments;
+confirmed safe separately since all three already handle that parameter
+correctly in their other call sites.
+
+## v0.133.17 — Mountain King moved to Streak
+
+Swapped Mountain King's second pool from Level Up to Milestone/Streak —
+perseverance fits a streak better than a level-up moment. Out of
+`_CUE_DEFS.levelup.opts` and `playCueLevelUp()`, into `_CUE_DEFS.milestone.opts`
+and `playCueMilestone()`. Gate filter needed no change — it already checks
+`mountainking_unlocked` generically regardless of which pool's rendering it.
+
+## v0.133.16 — Mountain King moved to the right Summit
+
+**Wrong achievement.** Last release wired the Mountain King chime to
+`clean_summit` ("The Force Is With You") based on how it had been tagged
+through the prototyping conversation — should have been `the_summit` ("The
+Summit," the Hardcore Polyrhythm climb specifically). Moved everything:
+the achievement-unlock override, the `mountainking_unlocked` flag-set in
+`checkAchievements()`, and the doc comment. `clean_summit` is back to
+exactly what it was before — the plain achievement cue, no override,
+nothing left behind.
+
+**The Summit is now named The Mountain King.** Renamed the achievement
+itself (`name:` field) since Hardcore-specific felt like it earned the more
+evocative name over the general Climb.
+
+## v0.133.15 — The Mountain King joins the achievement chimes
+
+**Grieg's In the Hall of the Mountain King is now the clean_summit ("The
+Force Is With You") achievement chime.** The lighter version from the last
+prototyping round — dropped the sustained drone, quieted the octave doubling
+— wired in following the exact same pattern as the other four special
+achievement chimes: dedicated override at unlock time, its own
+`mountainking_unlocked` flag (PROG_DEFAULTS, migrate, devUnlockAll,
+checkAchievements, and the picker's gate filter all touched), selectable in
+both the Achievement and Level Up pools once earned.
+
+Measured it against its achievement-pool siblings before shipping this
+time — landed 6.5dB hot on the first pass, corrected with a measured 0.473
+gain factor, re-verified at dead-even with the pool average. Given what the
+last release found, checking before shipping instead of after seemed like
+the actual lesson to take from it.
+
+One assumption worth flagging: there are two "summit" achievements —
+`clean_summit` ("The Force Is With You", the regular Climb) and
+`the_summit` ("The Summit", Hardcore-specific). Wired to `clean_summit`
+based on how this had been tagged throughout the prototyping conversation;
+straightforward to move if that's not the one intended.
+
+## v0.133.14 — actually measured the volumes instead of guessing
+
+**Funiculì's stutter, fixed.** The first note was a leftover from an earlier
+"shorten it" pass and read as an awkward stutter against the rest of the
+phrase. Dropped it, re-timed everything after to fill the gap.
+
+**Built a real offline measurement harness** (`node-web-audio-api`, an actual
+OfflineAudioContext implementation) to check whether the three new cues from
+recent releases were louder than their pool-mates — not by ear, by rendering
+each cue's real audio graph and comparing RMS. They were, badly:
+
+| Cue | vs. pool average |
+|---|---|
+| Hallelujah (Completionist) | +22.3 dB |
+| Press F (Game Over) | +16.5 dB |
+| Funiculì (Win) | +14.3 dB |
+| Valkyries (Mythic Fanfare) | +0.7 dB — already fine |
+
+Root cause: these three route through the shared `_es*` primitives, where
+several simultaneous voices (chord tones × doubling × sparkle layers) each
+get their own independent limiter chain during cue playback rather than a
+shared bus, so nothing was compressing the sum — the individually-reasonable
+per-voice gains just added up. Valkyries used the older hand-rolled
+`playAdventurerChime`-style pattern instead (single voice at a time, no
+stacking), which is why it was never off in the first place.
+
+Applied measured correction factors (0.077 / 0.15 / 0.193) directly to each
+cue's gain values, then re-measured against the corrected production code to
+confirm convergence — all four now sit within 4 dB of their siblings, game
+over and win essentially exact.
+
+**Mountain King's "too thick" preview is being reworked** — prototyping in
+the standalone mockup first, not in this build yet.
+
+## v0.133.13 — Mythic Fanfare is Ride of the Valkyries now
+
+**Replaced the chiptune square-wave Mythic Fanfare with real Wagner.** Went
+through a real prototyping pass first: full phrase felt too long/insistent
+against the Mythic card's 3.6-second display window, a tag+payoff hybrid
+landed better, a "filled out" version with timpani/octave-doubling/a
+sustained pad sounded worse (the static pad fought the actively-moving
+melody — lesson: a drone only works when it tracks the harmony, not just
+sits under it). Ended up on the plain second half of the real phrase — the
+turn into the big A4 leap, landing on a held F#4. Real notes from an actual
+trumpet transcript, confirmed B minor, 9/8 meter.
+
+Matches the same pattern `playAdventurerChime` already established: local
+`brass()` helper with a proper sustain hold, a short convolver room (a
+fanfare with no tail sounds like a doorbell), direct destination connection.
+No dispatch changes — same function name, same two call sites as before.
+
+## v0.133.12 — the staccato bug, and some housekeeping
+
+**Found the actual cause of the new cues sounding clipped in-app versus the
+mockups: `_esSaw` and `_esTone` never had a sustain phase.** They ramp up on
+attack, then immediately start decaying — an AD envelope, not ADSR. My
+mockup's custom voices held a real plateau before releasing; porting to the
+app's shared primitives silently dropped that. Added an optional `sustain`
+param to both (backward compatible — existing callers untouched, only cues
+that pass it get the hold), and wired it into the Hallelujah and Funiculì
+cues. The limiter chain was a red herring: it builds a fresh instance per
+note during cue playback rather than a shared one, so it wasn't compounding
+across notes the way it looked like it might.
+
+**Hallelujah, trimmed.** Was playing both "Hallelujah" statements (measures
+4 and 5); cut to just the first — it was running long next to the other
+achievement chimes.
+
+**Sad Trombone → Press F.** Better reference for the joke.
+
+**Level Up can now play Secret Found, Beethoven's Fifth, or Hallelujah.**
+Turned out `playCueLevelUp()` already had dead branches for `secret_chime`
+and `beethoven_chime` — dispatchable but never exposed in the options list.
+Finished that and added Hallelujah alongside them, so the achievement pool
+isn't the only place these live once you've earned them.
+
+## v0.133.11 — three real songs join the cue pool
+
+**Three new audio cues, built from real MIDI transcriptions instead of guessed
+melodies.** All three went through an extended prototyping pass in a standalone
+mockup before landing here — real notes verified against source files, tempo
+and voicing dialed in against feedback, then ported into the app's own synth
+primitives (`_esSaw`, `_esBell`, `_esTone`, `_esSub`) so they inherit the
+shared limiter chain like every other end-state cue.
+
+**Hallelujah — new Completionist achievement chime.** Real chords from a
+piano-solo arrangement of Handel's Hallelujah Chorus, measures 4-5: F#4-A4-D5,
+D4-A4, D4-G4-B4, D4-F#4-A4, repeating, over the real walking bass line. Follows
+the same pattern as the Zelda/Beethoven/Adventurer chimes — a dedicated
+override at achievement-unlock time, plus a `completionist_unlocked` flag so
+it's selectable in the achievement sound picker once actually earned. (Also
+added to `devUnlockAll()` this time, learned that lesson already this
+release.)
+
+**Sad Trombone — new Game Over option.** Real first six notes of Taps, cut at
+"gone the—": F4-F4-Bb4-F4-Bb4-D5, confirmed Bb major bugle triad. Cartoon/sad
+character from a wobbly vibrato and a muting lowpass, not a big pitch-bend
+slide — that read as too much. One low "womp" under the final note only.
+
+**Funiculì — new New Record option.** Real notes from measures 68-71 of an
+actual Funiculì Funiculà MIDI — the "Funiculì, funiculà!" tagline hook, choir
+line rendered as a light flute tone, piano kept as piano. Compressed well
+under the source tempo for a frantic, comedic-urgency win moment.
+
+## v0.133.10 — the preview button only unlocked half the secrets
+
+**Adventurer wasn't broken where it looked broken.** The achievement badge
+unlocks fine from UNLOCK ALL (PREVIEW) — `devUnlockAll()` force-sets every
+entry in `ACHIEVEMENTS` directly, no condition check involved. What's actually
+gated separately is the *sound*: four flags control which secret chimes appear
+in the audio cue pickers (`secret_chime_unlocked`, `beethoven_unlocked`,
+`mythic_unlocked`, `rt_parchment_done`), and the preview button only ever set
+two of them. Adventurer's chime and Mythic Fanfare stayed hidden in the
+picker no matter how "unlocked" the trophy looked. Both flags now get set
+alongside the other two.
+
+Reset was already correct — none of the four flags live in
+`PROG_KEEP_ON_RESET`, so a reset wipes them properly. But `beethoven_unlocked`
+and `rt_parchment_done` weren't literal keys in `PROG_DEFAULTS`, only
+backfilled through `progMigrate()`. Worked by accident. Both are now explicit
+defaults, and `rt_parchment_done` picked up the same migrate-backfill line
+its three siblings already had.
+
 ## v0.133.9 — softer selection, and the editor gets a floor
 
 **The selection was tuned against a background that no longer exists.** A 2px dark
