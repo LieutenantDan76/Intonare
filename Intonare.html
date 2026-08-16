@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.148.3 -->
+<!-- INTONARE_VERSION: 0.150.2 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16090,6 +16090,37 @@ html,body{background:#000000!important;transition:none!important}
     text-shadow: 0 1px 3px rgba(255,255,255,0.7), 0 0 2px rgba(255,255,255,0.9);
   }
 
+  /* ── SCROLL LOCK ──────────────────────────────────────────────────────────
+     One rule for every overlay, drawer, sheet, tray, modal and popup in the app.
+
+     There are 133 overlay-ish elements and only nine of them ever locked body
+     scroll by hand, which is why background scrolling kept reappearing behind
+     things: each new overlay had to remember to do it, and most did not. There
+     is also no single show/hide mechanism to hook — .active, .show, .open and
+     direct style.display are all in use — so this is enforced by watching the
+     DOM instead of by trusting call sites. See _scrollLockSync.
+
+     overscroll-behavior stops a scroll gesture that reaches the end of a
+     scrollable overlay from chaining to the page underneath it. */
+  body.scroll-locked {
+    overflow: hidden !important;
+    /* No touch-action here. It was set to none, which does not just stop the page
+       scrolling behind an overlay — it stops touch scrolling ANYWHERE, including
+       inside the overlay itself, so modules became unscrollable the moment
+       anything locked. It read as fine in testing because a test sets scrollTop
+       directly and never generates a touch gesture. overscroll-behavior below
+       already stops scroll chaining, which was the actual goal. */
+  }
+  body.scroll-locked .tool-panel,
+  body.scroll-locked #appMain {
+    overflow: hidden !important;
+  }
+  .overlay, .modal, .drawer, .sheet, .tray, .popup,
+  [class*="-overlay"], [class*="-modal"], [class*="-drawer"],
+  [class*="-sheet"], [class*="-tray"], [class*="-popup"] {
+    overscroll-behavior: contain;
+  }
+
   .level-chip.leveling-up {
     animation: lvUp 1.2s ease-out;
   }
@@ -17892,6 +17923,12 @@ html,body{background:#000000!important;transition:none!important}
   }
   .mini-notif {
     position: fixed; left: 50%; transform: translateX(-50%);
+    /* Anchored above the mode bar rather than left to fall wherever its static
+       position happened to be, which put it at y44 — straight under the pinhole
+       camera on most phones, where it was half hidden. The bar occupies the
+       bottom 53px, so this clears it with room to breathe, and the entrance
+       animation already rises from below, which reads correctly down here. */
+    bottom: calc(69px + env(safe-area-inset-bottom, 0px)); top: auto;
     z-index: 300; pointer-events: none;
     font-family: 'JetBrains Mono','GlyphFix', monospace;
     font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
@@ -30872,7 +30909,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.148.3</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.2</span>
     </div>
   </div>
 </div>
@@ -30880,7 +30917,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.148.3';
+const INTONARE_VERSION = '0.150.2';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -34430,6 +34467,10 @@ function flushModeTheme(){
   if (window._themeHoldPending){ applyModeTheme(window._themeHoldPending); window._themeHoldPending = null; }
 }
 function setMode(m) {
+  // Close anything floating over the page before leaving. A drawer or picker
+  // left open when a tab is tapped used to stay on screen over the new tab,
+  // because nothing tied overlay lifetime to navigation.
+  try { closeAllOverlays(); } catch (e) {}
   // Exit any active exercise first (covers switching to any tab, not just practice)
   if (currentExercise) exitExercise();
   // setHeaderSection (called below) clears in-module synchronously — no separate call needed
@@ -39615,7 +39656,20 @@ function enterTool(name, restoreState) {
   if (name === 'volume') dbStart();
   if (name === 'theremin') thmnInit();
   if (name === 'transpose') tpInit();
-  if (name === 'chords') chordInit();
+  if (name === 'chords') {
+    // The Chords tool keeps its own voice.
+    //
+    // selectedRefTone is shared, and switchChordScaleInstrument writes it on
+    // purpose so a sax CHART plays with a sax voice. That is right for charts
+    // and wrong for this tool, which inherited whatever the charts last picked:
+    // choosing sax on a chart silently changed the sound bank here. Restoring on
+    // entry keeps both correct without charts having to know this tool exists.
+    try {
+      const saved = prefGet('chordToolTone', '');
+      if (saved && typeof REF_TONES === 'object' && REF_TONES[saved]) selectedRefTone = saved;
+    } catch (e) {}
+    chordInit();
+  }
   if (name === 'cof') cofInit();
   if (name === 'intervalref') ivrInit();
   if (name === 'vocalrange') vrInit();
@@ -57376,7 +57430,12 @@ function tpSemiStep(delta) {
   if (valEl)  valEl.textContent  = (_tpSemiShift > 0 ? '+' : '') + _tpSemiShift;
   if (nameEl) nameEl.textContent = TP_SEMI_NAMES[_tpSemiShift] || '';
   try { localStorage.setItem('intonare_tp_semi', String(_tpSemiShift)); } catch(e) {}
-  if (typeof hapticLight === 'function') hapticLight();
+  // Only buzz when the value actually moved. tpInit() calls this with delta 0 to
+  // paint the initial state, so an unconditional haptic here fired every time the
+  // Transpose tool was OPENED — which is why launching that one module vibrated
+  // and no other did. It was never the launcher; it was this function doing
+  // double duty as a setup call and a user action.
+  if (delta && typeof hapticLight === 'function') hapticLight();
   tpTransposeChords();
 }
 
@@ -88214,6 +88273,129 @@ function progUpdate(exerciseKey, partialStats) {
 
 function progGet(exerciseKey) { return progState.stats[exerciseKey] || {}; }
 
+// ── SCROLL LOCK + OVERLAY CLOSING ───────────────────────────────────────────
+// Background scrolling behind overlays kept coming back because locking body
+// scroll was a per-overlay responsibility and most overlays never took it: 133
+// overlay-shaped elements, nine scroll locks. Rather than add the missing 124 by
+// hand and hope the next one remembers, the state of the page decides.
+//
+// A MutationObserver watches for anything becoming visible and syncs a single
+// body class. Any overlay added in future is covered without touching this code,
+// which is the point.
+const _OVERLAY_SEL = [
+  '.overlay', '.modal', '.drawer', '.sheet', '.tray', '.popup', '.picker',
+  '[class*="-overlay"]', '[class*="-modal"]', '[class*="-drawer"]',
+  '[class*="-sheet"]', '[class*="-tray"]', '[class*="-popup"]', '[class*="-picker"]',
+  // Also match on id, because the two things actually reported carried no
+  // keyword in their class list at all: the module picker is #lnch with class
+  // "lnch-entering", and the progression drawer is #progSyncTray.
+  //
+  // These are anchored with a capital letter (camelCase id convention) rather
+  // than matched as loose substrings. The first version used patterns like
+  // [id*="ray" i], which matched "grayscale" and anything else containing those
+  // letters: 411 elements scanned instead of the ~130 that exist, at 5ms a pass,
+  // which is a third of a frame budget on desktop and worse on a phone.
+  '[id*="Overlay"]', '[id*="Modal"]', '[id*="Drawer"]',
+  '[id*="Sheet"]', '[id*="Tray"]', '[id*="Popup"]', '[id*="Picker"]',
+  '#lnch'
+].join(',');
+
+// The candidate list only changes when nodes are added or removed, not when a
+// class or style is edited — which is the overwhelming majority of mutations.
+// Re-querying on every attribute change was most of the cost.
+let _overlayNodes = null;
+function _overlayCandidates() {
+  if (!_overlayNodes) _overlayNodes = document.querySelectorAll(_OVERLAY_SEL);
+  return _overlayNodes;
+}
+
+function _isVisiblyOpen(el) {
+  if (!el || !el.getBoundingClientRect) return false;
+  // Cheap checks first; getComputedStyle on 133 elements per mutation is not free.
+  const r = el.getBoundingClientRect();
+  if (r.width < 40 || r.height < 40) return false;
+  const cs = getComputedStyle(el);
+  if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+  if (parseFloat(cs.opacity || '1') < 0.05) return false;
+  // Only things that actually sit over the page count. An inline panel that
+  // happens to be called a "sheet" scrolls with the page and must not lock it.
+  if (cs.position !== 'fixed' && cs.position !== 'absolute') return false;
+  // Is it actually ON screen? Bottom sheets are parked off-canvas with a
+  // transform rather than hidden — display:flex, opacity 1, sitting below the
+  // fold. Without this the app locked its own scroll at rest, because four
+  // closed sheets looked open by every other measure.
+  const vw = window.innerWidth, vh = window.innerHeight;
+  if (r.bottom <= 1 || r.top >= vh - 1) return false;
+  if (r.right <= 1 || r.left >= vw - 1) return false;
+  return true;
+}
+
+function _anyOverlayOpen() {
+  const nodes = _overlayCandidates();
+  for (let i = 0; i < nodes.length; i++) if (_isVisiblyOpen(nodes[i])) return true;
+  return false;
+}
+
+let _scrollLockRAF = null;
+function _scrollLockSync() {
+  if (_scrollLockRAF) return;                 // coalesce bursts of mutations
+  _scrollLockRAF = requestAnimationFrame(() => {
+    _scrollLockRAF = null;
+    try {
+      const open = _anyOverlayOpen();
+      document.body.classList.toggle('scroll-locked', open);
+      // Clear a stale inline lock. Nine places still set body.style.overflow by
+      // hand and not all of them restore it, which leaves the page unscrollable
+      // with nothing on screen. When nothing is open, nothing should be locked.
+      if (!open && document.body.style.overflow === 'hidden') {
+        document.body.style.overflow = '';
+      }
+    } catch (e) {}
+  });
+}
+
+// Close every open overlay. Used when a tab is tapped: leaving a screen with a
+// drawer still on it was leaving that drawer floating over the new screen.
+function closeAllOverlays() {
+  let closed = 0;
+  document.querySelectorAll(_OVERLAY_SEL).forEach(el => {
+    if (!_isVisiblyOpen(el)) return;
+    // Tour, splash and the module launcher manage their own lifecycle and must
+    // not be yanked. The launcher matters most: lnchGo() deliberately keeps it on
+    // screen while the chosen module builds behind it, and calls setMode() during
+    // that hold — so force-hiding it here cut the morph short and the app
+    // appeared before the animation had finished.
+    if (el.id === 'tourOverlay' || el.id === 'lnch' ||
+        el.classList.contains('intonare-splash')) return;
+    ['active','open','show','visible'].forEach(c => el.classList.remove(c));
+    if (el.style && el.style.display && el.style.display !== 'none') el.style.display = 'none';
+    closed++;
+  });
+  try { if (typeof closeTonePopup === 'function') closeTonePopup(); } catch (e) {}
+  _scrollLockSync();
+  return closed;
+}
+
+try {
+  const _mo = new MutationObserver((records) => {
+    for (let i = 0; i < records.length; i++) {
+      if (records[i].type === 'childList') { _overlayNodes = null; break; }
+    }
+    _scrollLockSync();
+  });
+  const _startObs = () => {
+    try {
+      _mo.observe(document.body, {
+        subtree: true, childList: true,
+        attributes: true, attributeFilter: ['class', 'style']
+      });
+      _scrollLockSync();
+    } catch (e) {}
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _startObs);
+  else _startObs();
+} catch (e) {}
+
 // "+N XP" toast under the level chip.
 //
 // Rapid awards STACK rather than queueing or replacing: if more XP lands while a
@@ -88617,6 +88799,16 @@ function closeTonePopup() {
   _ivrToneReturn = false;
   _tonePopOwner = null;
 }
+// Records the Chords tool's voice when the user changes it there, so entering
+// the tool later restores their choice rather than the charts' last instrument.
+function _rememberChordToolTone(key) {
+  try {
+    if (typeof currentTool !== 'undefined' && currentTool === 'chords' && key) {
+      prefSet('chordToolTone', key);
+    }
+  } catch (e) {}
+}
+
 function pickTonePopup(key) {
   const _pp = document.getElementById('tonePopup');
   // The skin used to come off here because the pick closed the picker. It stays
@@ -88632,6 +88824,7 @@ function pickTonePopup(key) {
   } else {
     if (typeof _syncToneUI === 'function') _syncToneUI(key);
     selectedRefTone = key;
+    _rememberChordToolTone(key);
     // refresh the voice button label + overlay bank
     if (typeof buildPianoFullToneBank === 'function') buildPianoFullToneBank();
     // also refresh the Interval Reference voice button if it's the active surface
@@ -94051,6 +94244,14 @@ function chdSetSpelling(mode){
   chdApplyEnharmonicDefault();
   buildChordRootGrid();
   chordPlayerUpdate();
+  // The builder's note buttons have to be redrawn explicitly.
+  //
+  // chordBuilderUpdate() refreshes the chord name, the staff and the selected
+  // set, but never touches the grid — so the toggle worked in the Player tab and
+  // did nothing in the Builder tab. The labels themselves were always correct
+  // code reading gRootFlatOverride; they simply were not re-rendered after the
+  // set changed.
+  if (typeof chordBuilderUpdateGrid === 'function') chordBuilderUpdateGrid();
   chordBuilderUpdate();
 }
 function chdSyncSpellingUI(){
@@ -112196,10 +112397,18 @@ function showMiniNotif(text, type, durationMs) {
   if (!el) return;
   el.textContent = text;
   el.className = 'mini-notif ' + (type || '');
-  // Position just above the accent line
-  const bar = document.querySelector('.session-bar');
-  const barRect = bar ? bar.getBoundingClientRect() : null;
-  el.style.bottom = barRect ? (window.innerHeight - barRect.top + 8) + 'px' : '70px';
+  // Anchor above the mode bar at the BOTTOM of the screen, not under the session
+  // hairline at the top. The old anchor put it around y47, which on a phone with
+  // a pinhole camera sits directly under the cutout and gets clipped.
+  //
+  // This sets an inline bottom, which is why the stylesheet alone could not move
+  // it: an inline value beats any rule. Anchoring to the element that is actually
+  // in the way keeps it correct if that bar ever changes height.
+  const navBar = document.getElementById('mode-toggle');
+  const navRect = navBar ? navBar.getBoundingClientRect() : null;
+  el.style.bottom = navRect
+    ? Math.max(12, window.innerHeight - navRect.top + 12) + 'px'
+    : '80px';
   void el.offsetWidth;
   el.classList.add('visible');
   clearTimeout(el._hide);
@@ -114667,6 +114876,33 @@ function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)(
 // after backing out even once the stop function was correctly wired up. Tenth
 // instance of this same pattern found in the app.
 var _liveTones=[];
+
+// Register any oscillator/gain pair so stopAllSounds can silence it. Every sound
+// source in this module must call this. Tracking only tone() was not enough:
+// playTempo's click, toneSoft (a 3 second note) and the eight sources inside
+// sgPlayTermDemo all made sound that nothing could stop, which is why Survival
+// Guide audio kept playing after backing out through three separate fixes.
+// The term demos play through REF_TONES synths rather than this module's own
+// tone(), and those return a stoppable handle that was being discarded at all
+// six call sites. That is the audio that kept playing after backing out of a
+// term demo: three earlier fixes all targeted the oscillators in tone(), which
+// the demos never touch.
+var _sgHandles=[];
+function _sgTrackHandle(hnd, dur) {
+  if (!hnd) return hnd;
+  _sgHandles.push(hnd);
+  setTimeout(function(){ var k=_sgHandles.indexOf(hnd); if(k>=0) _sgHandles.splice(k,1); },
+             ((dur||3) + 0.4) * 1000);
+  return hnd;
+}
+
+function _sgTrack(o, g, dur) {
+  var rec = {o:o, g:g};
+  _liveTones.push(rec);
+  setTimeout(function(){ var k=_liveTones.indexOf(rec); if(k>=0) _liveTones.splice(k,1); },
+             ((dur||3) + 0.3) * 1000);
+  return rec;
+}
 function tone(f,d,v,t){v=v||0.3;t=t||'triangle';var c=ac(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(_getMasterOut(c));o.type=t;o.frequency.value=f;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(v,c.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.start(c.currentTime);o.stop(c.currentTime+d);
   var rec={o:o,g:g};
   _liveTones.push(rec);
@@ -114685,14 +114921,31 @@ function stopAllSounds(){
   // Silence anything already sounding. Clearing the timers above only prevents
   // notes that haven't started; these are the ones you can still hear.
   _liveTones.forEach(function(rec){
-    try {
-      var c=ac();
-      rec.g.gain.cancelScheduledValues(c.currentTime);
-      rec.g.gain.setValueAtTime(rec.g.gain.value, c.currentTime);
-      rec.g.gain.linearRampToValueAtTime(0.0001, c.currentTime+0.06);
-      rec.o.stop(c.currentTime+0.08);
-    } catch(e){}
+    var c;
+    try { c = ac(); } catch(e){ return; }
+    // Fade the gain if there is one. The LFO in the term demo has no gain of its
+    // own, and doing this in one try block meant its oscillator never reached
+    // .stop() — the throw on rec.g skipped the rest.
+    if (rec.g && rec.g.gain) {
+      try {
+        rec.g.gain.cancelScheduledValues(c.currentTime);
+        rec.g.gain.setValueAtTime(rec.g.gain.value, c.currentTime);
+        rec.g.gain.linearRampToValueAtTime(0.0001, c.currentTime+0.06);
+      } catch(e){}
+    }
+    try { rec.o.stop(c.currentTime+0.08); } catch(e){}
   });
+  // Reference-tone handles from the term demos.
+  _sgHandles.forEach(function(hnd){
+    try { if (typeof hnd.stop === 'function') hnd.stop(); } catch(e){}
+    try { if (hnd.gain && hnd.gain.gain) {
+      var c2 = ac();
+      hnd.gain.gain.cancelScheduledValues(c2.currentTime);
+      hnd.gain.gain.setValueAtTime(hnd.gain.gain.value, c2.currentTime);
+      hnd.gain.gain.linearRampToValueAtTime(0.0001, c2.currentTime+0.06);
+    } } catch(e){}
+  });
+  _sgHandles=[];
   _liveTones=[];
   if(typeof sgStopCadence==='function')sgStopCadence();
 }
@@ -114711,6 +114964,7 @@ function playTempo(bpm,row){
   var n=0,ms=60000/bpm;
   function clk(){n++;if(n>12){clearInterval(tmr);tmr=null;row.classList.remove('playing');trow=null;return;}
     var c=ac(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(_getMasterOut(c));
+    _sgTrack(o,g,0.3);
     o.frequency.value=n===1?1100:880;g.gain.setValueAtTime(0.45,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.06);o.start(c.currentTime);o.stop(c.currentTime+0.07);}
   clk();tmr=setInterval(clk,ms);
 }
@@ -114720,6 +114974,7 @@ function playTempo(bpm,row){
 // ── PIANO-STYLE TONE ─────────────────────────────────────────────────
 function toneSoft(freq) {
   var ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain(),dur=3.0;
+  _sgTrack(o,g,dur);   // 3 seconds long, so this is the one most likely to outlive the screen
   o.type='triangle'; o.frequency.value=freq;
   o.connect(g); g.connect(_getMasterOut(ctx));
   var t=ctx.currentTime;
@@ -115069,7 +115324,7 @@ function sgPlayTermDemo(term) {
       var _delay = 0;
       if (demo.ivseq) {
         demo.ivseq.forEach(function(n) {
-          _piano.synth(ctx, n.f, now + _delay, 0.38, refMasterGain, 0.55);
+          _sgTrackHandle(_piano.synth(ctx, n.f, now + _delay, 0.38, refMasterGain, 0.55), 0.5);
           _delay += 0.44;
         });
         _delay += 0.18; // brief gap before the simultaneous ring
@@ -115098,6 +115353,7 @@ function sgPlayTermDemo(term) {
         o3.connect(m3); m3.connect(filt);
         filt.connect(g); g.connect(refMasterGain);
         o1.start(_chordStart); o2.start(_chordStart); o3.start(_chordStart);
+    _sgTrack(o1, g, totalDur); _sgTrack(o2, g, totalDur); _sgTrack(o3, g, totalDur);
         o1.stop(_chordStart + totalDur); o2.stop(_chordStart + totalDur); o3.stop(_chordStart + totalDur);
       });
 
@@ -115144,9 +115400,11 @@ function sgPlayTermDemo(term) {
         lfo.connect(lfoG);
         lfoG.connect(o1.frequency); lfoG.connect(o2.frequency); lfoG.connect(o3.frequency);
         lfo.start(now); lfo.stop(now + totalDur + 0.05);
+    _sgTrack(lfo, null, totalDur);
       }
       filt.connect(g); g.connect(refMasterGain);
       o1.start(now); o2.start(now); o3.start(now);
+    _sgTrack(o1, g, totalDur); _sgTrack(o2, g, totalDur); _sgTrack(o3, g, totalDur);
       o1.stop(now + totalDur + 0.05);
       o2.stop(now + totalDur + 0.05);
       o3.stop(now + totalDur + 0.05);
@@ -115157,7 +115415,7 @@ function sgPlayTermDemo(term) {
       var _org = REF_TONES.organ || REF_TONES.sine;
       // Context notes before accent
       (demo.before || []).forEach(function(n) {
-        _org.synth(ctx, n.f, now + n.t, n.d, refMasterGain, n.v);
+        _sgTrackHandle(_org.synth(ctx, n.f, now + n.t, n.d, refMasterGain, n.v), n.d);
       });
       // The accent itself: a very sharp-attack sound built from the
       // existing guitar synth (instant attack) played at high volume,
@@ -115165,7 +115423,7 @@ function sgPlayTermDemo(term) {
       var _acc = demo.accent;
       var _at = now + _acc.t;
       var _guitar = REF_TONES.guitar || REF_TONES.piano;
-      _guitar.synth(ctx, _acc.f, _at, _acc.d || 0.6, refMasterGain, _acc.v || 0.92);
+      _sgTrackHandle(_guitar.synth(ctx, _acc.f, _at, _acc.d || 0.6, refMasterGain, _acc.v || 0.92), _acc.d || 0.6);
       // Add a bright transient on top for definition
       (function() {
         var c2 = ensureRefCtx();
@@ -115176,16 +115434,17 @@ function sgPlayTermDemo(term) {
         gb.gain.exponentialRampToValueAtTime(0.001, _at + 0.08);
         ob.connect(gb); gb.connect(refMasterGain);
         ob.start(_at); ob.stop(_at + 0.1);
+      _sgTrack(ob, gb, 0.2);
       })();
       // Notes after the accent
       (demo.after || []).forEach(function(n) {
-        _org.synth(ctx, n.f, now + n.t, n.d, refMasterGain, n.v);
+        _sgTrackHandle(_org.synth(ctx, n.f, now + n.t, n.d, refMasterGain, n.v), n.d);
       });
 
     } else if (demo.sim) {
       // ── Simultaneous mode (intervals) ────────────────────────────────────
       var tone = REF_TONES.piano || REF_TONES.sine;
-      demo.seq.forEach(function(n) { tone.synth(ctx, n.f, now, n.d, refMasterGain, n.v); });
+      demo.seq.forEach(function(n) { _sgTrackHandle(tone.synth(ctx, n.f, now, n.d, refMasterGain, n.v), n.d); });
 
     } else {
       // ── Sequential mode (articulation, dynamics sequences) ───────────────
@@ -115193,7 +115452,7 @@ function sgPlayTermDemo(term) {
       var t = 0;
       demo.seq.forEach(function(n) {
         var when = now + (n.t !== undefined ? n.t : t);
-        tone.synth(ctx, n.f, when, n.d, refMasterGain, n.v);
+        _sgTrackHandle(tone.synth(ctx, n.f, when, n.d, refMasterGain, n.v), n.d);
         if (n.t === undefined) t += n.d * 0.85;
       });
     }

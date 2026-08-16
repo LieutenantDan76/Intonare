@@ -80,6 +80,278 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.150.2 — Opening the Transpose tool buzzed, and a spacing audit
+
+**The Transpose tool vibrated when you launched it.** Not the launcher, and
+not a card handler — every module card goes through the same `lnchGo()`,
+which fires no haptic at all. The cause was inside the tool: `tpInit()`
+calls `tpSemiStep(0)` to paint the initial semitone display, and
+`tpSemiStep` fired `hapticLight()` unconditionally. One function doing
+double duty as a setup call and a user action, so opening the tool felt
+like pressing a button.
+
+Now conditional on `delta`, so it buzzes when the value actually moves and
+stays quiet during setup. Confirmed by counting haptic calls while opening
+each of the fifteen tools in turn: previously Transpose was the only one
+that fired, now none do.
+
+**Added `intonare_spacing_audit.py`**, prompted by the chord tabs feeling
+close to the card. The finding is that spacing is not unstandardised
+randomly — it is CONTINUOUS. Every integer from 1px to 14px is in use, with
+no gaps, plus 347 distinct padding values. A design system uses a scale;
+this is per-component tuning by eye, which is why "does this gap feel
+right" has no answer anyone can apply twice.
+
+Against a 4px scale, 37% of values already fit. The biggest offenders are
+6px (189 uses), 10px (149) and 5px (141), and there are one-offs at 26, 34,
+38, 44, 72 and 76px that look accidental rather than chosen.
+
+Nothing was changed. Snapping around 900 values to a scale would alter
+every screen in the app, which is a design pass rather than a cleanup, and
+not something to do before a release.
+
+The audit is static rather than a runtime measurement, and that was a
+deliberate second attempt. Measuring rendered gaps needs a reliable answer
+to "is this element visible to the user right now", and getting it wrong
+silently pulls in elements from hidden panels — the runtime version
+confidently reported that all fourteen tools had identical 5px and 20px
+gaps, which was nonsense produced by exactly that mistake.
+
+Also measured haptic coverage while looking into this: 47 of 465 inline
+handlers fire one, so about 10%. Not recorded as a fault, just a fact worth
+having before deciding whether haptics should be everywhere or nowhere.
+
+## v0.150.1 — The enharmonic toggle worked in the Player tab and not the Builder
+
+Reproduced by reading the labels out of both grids in each mode: the
+Player switches C sharp to D flat correctly, the Builder stayed on sharps
+in all three.
+
+The cause is one missing call. `chdSetSpelling` refreshes the Player's
+root grid, then calls `chordBuilderUpdate()` for the Builder — but that
+function refreshes the chord name, the staff and the selected note set,
+and never touches the grid. Both grids label their buttons with the same
+`gccRootDisplayName()`, which reads the same `gRootFlatOverride` set, so
+the Builder's labels were correct code that simply never re-rendered after
+the set changed. `chordBuilderUpdateGrid()` is now called alongside.
+
+For the record, since it was asked: the toggle DOES force a spelling
+rather than suggest one. Sharp and flat write every accidental semitone
+into `gRootFlatOverride`, not just the selected root, so the whole grid
+reads consistently. Auto does something different — it spells only the
+current root, chosen by `chdPreferFlatRoot` from the chord context, which
+is why it currently shows one label rather than both.
+
+## v0.150.0 — Streak toast moved to the bottom, and the Chords tool stops inheriting the charts' voice
+
+**The toast sat under the pinhole camera.** It was anchored to
+`.session-bar`, the 4px hairline at the top of the screen, which put it
+around y47 — directly under the cutout on most phones, where it was half
+covered. It now anchors to the mode bar at the bottom, landing at roughly
+y810 with the bar at 862, and the entrance animation already rises from
+below so it reads correctly down there.
+
+Worth recording why a CSS fix alone did nothing: `showMiniNotif` sets an
+inline `bottom` every time it runs, and an inline value beats any
+stylesheet rule. Adding `bottom` to `.mini-notif` computed correctly and
+was then overwritten on show. The anchor itself had to change.
+
+**Choosing a chart instrument changed the Chords tool's sound bank.**
+`switchChordScaleInstrument` writes `selectedRefTone` on purpose, so a sax
+chart plays with a sax voice — correct for charts. But the Chords tool
+plays through that same shared variable, so it inherited whatever the
+charts last selected.
+
+The Chords tool now remembers its own voice and restores it on entry,
+which keeps both behaviors right without the charts needing to know this
+tool exists. Verified: pick marimba in Chords, switch a chart to sax, come
+back, and it is marimba again while the chart keeps alto sax.
+
+Checked whether the same leak exists elsewhere by snapshotting fifteen
+tone and voice variables around a chart instrument switch. Only
+`chordScaleInstrument` and `selectedRefTone` move; no other module's voice
+is touched.
+
+Three failed edits are worth noting rather than hiding: I assumed the
+indentation of the line I was replacing and got it wrong twice, and the
+assertion caught it both times so nothing was written — but the test then
+ran against an unmodified file and reported failure as though the fix were
+broken. Reading the exact line before editing would have been faster than
+guessing three times.
+
+## v0.149.2 — Two regressions from the scroll rule: touch scrolling and the launcher morph
+
+Both reported, both mine, both from the same build.
+
+**Modules could not be scrolled.** `body.scroll-locked` carried
+`touch-action: none`. That does not merely stop the page scrolling behind
+an overlay — it stops touch scrolling ANYWHERE, including inside the
+overlay that is open, so the moment anything locked, the app went rigid.
+It passed testing because a test sets `scrollTop` directly and never
+produces a touch gesture, and the property has no effect on programmatic
+scrolling. Removed; `overscroll-behavior: contain` already prevents scroll
+chaining, which was the actual goal.
+
+**The module picker's animation was cut short.** `lnchGo()` deliberately
+keeps the launcher on screen while the chosen module builds behind it, and
+calls `setMode()` during that hold — where the new `closeAllOverlays()`
+force-hid it. The app appeared before the morph had finished. The launcher
+is now excluded alongside the tour and splash, all three of which manage
+their own dismissal.
+
+Verified by sampling the morph frame by frame: the launcher holds solid
+through 180ms, fades between 240 and 360, and is gone by 420. Through the
+real dismissal path the lock releases afterwards, body overflow returns to
+`hidden auto` and touch-action to `auto`.
+
+Worth noting for future testing here: driving `enterTool()` directly
+leaves the launcher up, because only `lnchGo()` dismisses it. That made
+the harness report a stuck scroll lock in every tool, which looked exactly
+like the reported bug and was not it.
+
+## v0.149.1 — Checked the scroll rule for collateral damage, and found a real cost
+
+Asked whether the new rule affects anything unintentionally. It did, in a
+way that would not have shown up as a bug report until someone complained
+the app felt sluggish.
+
+**The observer was costing a third of a frame.** Each pass ran
+`querySelectorAll` afresh and scanned 411 elements at roughly 5ms — on
+desktop. On a phone that is a dropped frame every time a class changes,
+which during any animation is constantly. Two causes:
+
+The id patterns were loose substrings. `[id*="ray" i]` matches "grayscale"
+and anything else containing those three letters, so the selector was
+pulling in three times the elements that exist. They are now anchored to
+the capitalised form the app's ids actually use.
+
+And the candidate list was rebuilt on every mutation, when it only changes
+if nodes are added or removed — which attribute edits, the overwhelming
+majority, never do. It is cached and invalidated only on childList
+changes. 5ms became 0.006ms.
+
+**Everything else checked out.** Toasts and mini-notifications do not match
+the overlay selector and do not lock anything. All 15 tools scroll normally
+with nothing open. Overlays that need to scroll internally still do —
+settings and progress both confirmed with the body locked.
+
+One earlier result that looked alarming was my test's fault rather than the
+rule's: walking every tool in sequence showed the paywall "open"
+everywhere, because entering a Pro tool legitimately opens it and the loop
+kept entering tools underneath it. With Pro granted and overlays closed
+between each, no tool locks scroll.
+
+## v0.149.0 — One rule for scroll locking, and tabs now close what's open
+
+Two related requests, both handled at the app level rather than by fixing
+the two instances reported.
+
+**Background scrolling behind overlays.** The count explains why it kept
+coming back: 133 overlay-shaped elements in the app, nine of which locked
+body scroll by hand. Locking was a per-overlay responsibility that most
+overlays never took, and there is no single show/hide mechanism to hook
+either — `.active` (80 uses), `.show` (28), `.open` (17) and direct
+`style.display` (54) are all in play.
+
+So the page state decides instead of the call sites. A MutationObserver
+watches for anything becoming visible and toggles one body class. Any
+overlay added later is covered without touching this code. `overscroll-
+behavior: contain` also stops a scroll gesture that reaches the end of a
+scrollable overlay from chaining through to the page underneath.
+
+**Tabs leaving drawers on screen.** Nothing tied overlay lifetime to
+navigation, so a drawer open when a tab was tapped simply stayed there
+over the new tab. `setMode()` now calls `closeAllOverlays()` first. The
+tour and splash are excluded, since they manage their own lifecycle.
+
+Three faults in my own rule, each found by testing rather than reasoning:
+
+The first version locked scroll at rest. Four bottom sheets are parked
+off-canvas with a transform while still `display:flex` and `opacity:1`, so
+by every measure except position they looked open. Visibility now checks
+the element is actually within the viewport.
+
+The second version missed the exact two things reported. The module picker
+is `#lnch` with class `lnch-entering`, and the progression drawer is
+`#progSyncTray` — neither carries a keyword anywhere in its class list, and
+the selector was class-only. It now matches on id as well.
+
+And the observer clears a stale inline `overflow: hidden` when nothing is
+open, because not all nine of the old manual locks restore it, which can
+leave the page unscrollable with nothing on screen.
+
+## v0.148.5 — Survival Guide term demos play through a different synth entirely
+
+"It's synth audio" was the detail that solved this. Three earlier fixes and
+the one before this all targeted the Guide's own `tone()` oscillators. The
+term demos never touch them.
+
+`sgPlayTermDemo` plays through `REF_TONES` — the app's reference-tone
+synths, the same ones the tuner uses — via `tone.synth()`, `_org.synth()`,
+`_piano.synth()` and `_guitar.synth()`. A completely separate subsystem
+from anything `stopAllSounds` knew about. Legato in particular uses the
+`seq` branch, which calls `tone.synth()` for each note of the sequence, and
+none of the demo's branches appear in the oscillator scan that found the
+last four sources, because they create no oscillators of their own.
+
+**Six `.synth()` calls, zero captured returns.** Eleventh instance of the
+fire-and-forget pattern in this app, and the one actually being heard.
+`REF_TONES` synths return `{gain, stop}` and every call site was discarding
+it, so nothing could stop a demo once it started.
+
+All six now register with `_sgTrackHandle`, and `stopAllSounds` stops them
+alongside the oscillators. Verified that the handle's `stop` takes no
+arguments before calling it bare — the same assumption, made without
+checking, is what caused the sampled-guitar bug in v0.145.0, where an
+absolute time was passed to a function expecting a duration.
+
+Worth recording why this took five attempts. Each fix was verified against
+the thing it changed and never against the thing being reported. The
+oscillator scan that found `toneSoft` and `playTempo` was thorough and
+still missed these, because it searched for `createOscillator` and these
+call a function that creates them somewhere else entirely. Searching for
+what makes sound is not the same as searching for what plays sound.
+
+## v0.148.4 — Survival Guide audio, fourth attempt: four more sound sources nobody had tracked
+
+Still not stopping on backout. The first three fixes were each real and each
+insufficient, so this time the module was enumerated rather than reasoned
+about.
+
+The plumbing was never the problem, and that is worth stating because it
+absorbed two of the previous attempts. `stopAllSounds` is called by the
+Guide's own `render()`, exported as `window.sgStopAllSounds`, and listed in
+`stopAllAudio`, which `exitTool` calls. All verified at runtime. The chain
+has been intact since v0.136.11.
+
+**The tracking was incomplete.** v0.145.0 added node tracking to `tone()` and
+stopped there. Scanning every function in the module for `createOscillator`,
+`createBufferSource` and `SampleEngine.play` found four more:
+
+    playTempo       the tempo-row click
+    clk             its inner tick
+    toneSoft        a THREE SECOND note, the worst offender
+    sgPlayTermDemo  eight separate sources: two 3-oscillator voices,
+                    an LFO, and an accent blip
+
+Eleven sound calls in total that nothing could stop. `toneSoft` alone runs
+for three seconds, so backing out during one guaranteed audio survived the
+screen.
+
+All of them now register with `_sgTrack`, a single helper next to the
+registry, so any future sound source in this module has one obvious place
+to hand its nodes.
+
+One flaw in the stop loop found while wiring it: the term demo's LFO has no
+gain of its own, and the loop read `rec.g.gain` inside the same try block as
+the oscillator stop — so the throw on the missing gain skipped `.stop()`
+entirely and the LFO would have kept running. Gain handling and stopping are
+now separate.
+
+Cannot be verified headlessly: these functions live inside an IIFE and are
+not reachable from a test harness, which is also how the original gap went
+unnoticed. Needs a device check.
+
 ## v0.148.3 — Five rhythm hints described the wrong beats
 
 Questioning the backbeat wording turned up something worse than prose.
