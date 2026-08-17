@@ -80,6 +80,298 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.150.13 — In-app update card, with a real download-and-install flow on Android
+
+Uses Google Play In-App Updates through `@capawesome/capacitor-app-update`.
+Play is asked directly whether a newer build of the app exists, so there is no
+version manifest to host anywhere and nothing to remember to bump at release
+time — the store already knows. An earlier plan in this project's notes called
+for a JSON file on GitHub Pages; that was the wrong approach and is dropped.
+
+**Android gets the flexible flow.** Tapping DOWNLOAD pulls the new build in the
+background with a live progress bar while the app stays fully usable, then the
+button becomes RESTART and `completeFlexibleUpdate()` restarts and installs it.
+The person never leaves for the Play listing.
+
+**iOS cannot do this** — Apple does not permit in-app update flows — so there
+the plugin only reports the store version and the button reads OPEN STORE. The
+card's wording switches accordingly rather than promising an in-app install
+that cannot happen. Same fallback if Play itself declines the flexible flow.
+
+A dismissible card above the tab bar, not a launch modal: the entire point of
+the flexible flow is that it does not interrupt, so a blocking overlay would
+defeat it. It cannot nag — LATER snoozes for three days, and the snooze is
+recorded per version, so declining once never hides a *later* release. The
+check is also deferred behind the same launcher gate the daily streak toast
+uses, plus its own delay, so it can never land on the splash or the chooser.
+
+Feature-detected end to end: with the plugin absent (a browser, or any build
+made before `npx cap sync`), every entry point no-ops silently.
+
+`iu_snooze` is classified as backup-skip. It is a per-device "do not re-ask
+about this version" note; restoring it onto a new phone could silence a
+legitimate prompt there, and it rebuilds itself the moment one is dismissed.
+The backup audit caught it unclassified before this shipped.
+
+**Requires `npm install @capawesome/capacitor-app-update` + `npx cap sync`.**
+Until then the card simply never appears. Note also that in-app updates only
+report correctly for builds *installed from Play* — a sideloaded `go.bat` build
+returns UNKNOWN forever, so this can only be verified through Play internal app
+sharing, not the normal dev loop.
+
+Verified across six branches: no update, update available, Android flexible
+start, iOS store fallback, snooze suppressing the same version while still
+showing a newer one, and silent no-op with no plugin.
+
+## v0.150.12 — Notation symbols beside the Survival Guide's interactive terms
+
+The Guide's tappable terms now carry their written symbol. Eight of the nine
+have one: forte, marcato, fermata, decrescendo, tremolo, legato, glissando and
+vibrato. `subito` does not and never will, since it is a direction rather than
+a mark on the page.
+
+No new assets were needed. `NC_CARDS` (the Notation Cards deck) already holds
+181 symbols with Bravura codepoints and per-glyph sizing, and the embedded
+Bravura subset already ships these glyphs. The codes and metrics are lifted
+verbatim so weight and baseline match that deck instead of being re-guessed;
+legato, glissando and vibrato are drawn SVG there rather than font glyphs, and
+stay that way here.
+
+**Badge strip, not inline glyphs.** Both were prototyped and reviewed on
+device. Bravura's em-boxes vary enormously — a staccato dot is 4px tall, a
+quarter rest 37px — so inline glyphs shove line-height around inside a
+paragraph. The strip leaves the body typography completely untouched.
+
+**Built at render time from the DOM**, not written into the page copy. The
+body strings are duplicated across ten render branches, and `body`/`body_it`
+are twins that drift when edited separately; reading `data-term` out of the
+rendered card means the Italian page gets its strip for free and neither copy
+carries markup for it. Hooked into `sgAttachTermListeners()`, which already
+runs once per card, so there was one insertion point rather than ten.
+
+Verified it dedupes repeated terms, skips terms with no symbol, sits above the
+first body block, and does not duplicate the strip when a card re-renders.
+Styled with theme vars only, so light mode needs no parallel block.
+
+## v0.150.11 — A sound at launch with no toast behind it
+
+Reported as the streak audio cue firing for the daily streak. Traced every
+caller of `playCueMilestone()` first — the nine game-streak sites, the ×40
+mythic card, Relative Pitch's bank/start, Music Quiz at 5/10/20, and the
+settings preview. None of them is the daily streak, and the daily toast path
+(`dtFireDailyToast` → `dtBuildInner` → `dtAnimToast`) plays no audio at all.
+So the cue was not the streak cue.
+
+The actual bug: achievement toasts were not queued at launch while the daily
+streak toast was. `checkDailyStreak()` calls `checkAchievements()` directly,
+and `_achShowNextToast()` fired immediately, sound included — but at boot
+that lands on the splash or the launcher, where the toast itself is not
+visible. The daily toast two lines below it already defers through
+`_queueLaunchCelebration()` for exactly this reason, which is why it waited
+and the achievement did not. The audible half of the achievement arrived
+alone, near the daily toast, and read as the streak cue misfiring.
+
+`_achShowNextToast()` now checks the same launch gate and re-queues itself if
+celebrations have not drained yet, so the toast and its sound arrive together
+once the person is actually in a module. Mid-session unlocks are unaffected —
+the gate is only closed during launch. Verified the queued case does not
+strand or double-fire toasts when several unlock at once.
+
+The `typeof` guard normally used for this kind of check does not work on a
+`let` in its temporal dead zone (it throws rather than returning
+'undefined'), so the read is wrapped in try/catch instead.
+
+## v0.150.10 — Tier toast shows the current multiplier
+
+The toast now reads "OPEN reached! At least 200 points, ×2.0 multiplier."
+
+Deliberately two separate numbers rather than one combined figure.
+`rlpHavenValue()` returns a RAW value and the multiplier is only applied
+later in `rlpSettle()`, so the honest reading of "at least 200 points" is a
+floor that can only ever go up. `rlpMult()` moves the other way — it drops a
+quarter every time a lifeline is spent. Multiplying them into a single
+"at least 400 points" would have been a promise the game breaks the moment
+the player uses 50/50 on the next rung.
+
+Known display quirk, left as-is for consistency: `toFixed(1)` renders ×1.75
+as "×1.8" and ×1.25 as "×1.3". The multiplier readout already in the climb
+HUD rounds identically, so the toast matches what's on screen; the
+underlying math is unaffected. Worth fixing in both places together if it
+ever matters.
+
+## v0.150.9 — A440 corrected to a one-time free start, tier toast now shows guaranteed points, feedback box no longer pops in and out
+
+**v0.150.8 overshot on the A440 fix.** Made it free and unlimited for the
+entire climb, when the actual ask was a single free A440 as an optional
+start-screen option, with the in-game lifeline behaving exactly as before —
+one-shot, costs a slice of the multiplier, same as 50/50 and Black/White.
+Reverted the in-game lifeline back to its original behavior byte-for-byte,
+and added a genuinely separate button on the climb's intro screen — "HEAR
+A440 FIRST" — that plays the tone before the run starts and has zero
+interaction with `rlpLives`/`rlpLivesUsed`, since it fires before either
+exists for that run.
+
+**The tier toast now says what it actually means.** Was "New tier: OPEN,"
+which doesn't tell you anything useful mid-climb. Now reads "OPEN reached!
+You've got at least 200 points" — the exact payout `rlpHavenValue()` already
+computes for the safe haven you just passed, the same number the app already
+shows if you choose to bank there. Verified the three tier boundaries resolve
+to 200 / 1,600 / 11,000, matching `RLP_VALUES`.
+
+**Interval Training's feedback box popped in and out of the layout every
+round.** It was the only piece of the exercise screen doing that — Chord Ear
+and Sing Sing's equivalent boxes are visible-but-empty from the start.
+`ivFeedback` had `display:none` baked into its markup and got re-hidden on
+every round reset; both removed, replaced with a plain class-and-text reset
+so the box keeps its reserved space and just goes blank between rounds.
+
+## v0.150.8 — A440 is free in Relative Pitch, a toast on each new tier, and Interval Training finally says "got it"
+
+**Relative Pitch's A440 reference tone was costing you a lifeline.** The
+climb has three lifelines — A440, 50/50, Black/White — and using any of them
+dents your score multiplier, since 50/50 and B/W actually remove information
+from the question. A440 doesn't; it's just a reference pitch, the same kind
+of thing you can tap anywhere else in the app for free. It was still wired
+into the same one-shot, multiplier-costing lifeline system as the other two.
+Pulled it out: free, unlimited, no multiplier hit, replayable as many times
+as you want per rung.
+
+**Relative Pitch now toasts when you cross into a new difficulty band.**
+WIDE → OPEN → CLOSE → ADJACENT, the four named tiers the climb steps
+through. Fires exactly on the transition, using the same names already in
+both languages.
+
+**Interval Training's manual mode never actually said you got it right.**
+The feedback box already existed and already had a `.got` (green, correct)
+CSS style defined — Sing mode was already using it. Manual/tap mode's wrong
+path filled the same box with retry text and a hint; the correct path just
+marked the button green and left the box empty. Wired the correct path to
+use the box too, with the same "★ GOT IT!" text Sing mode shows.
+
+`intonare_regression_sentinel.py` needed a pin update for the Relative Pitch
+band-change block — the toast call changed the exact code shape the pin was
+watching. Updated pin ships alongside this build; needs re-uploading to
+project knowledge since `/mnt/project/` doesn't save back automatically.
+
+## v0.150.7 — Streak toast under the camera cutout, Chords defaulting to whatever tone you last touched
+
+**The milestone streak toast (5/10/15…40) was never actually moved off the
+camera cutout.** There are two different streak toasts: `dailyStreakToast`
+("day streak at risk") sits at `bottom:90px` and was already clear.
+`streakMilestoneToast` — the one wired into four more exercises in
+v0.150.5 — was hardcoded to `top:20px`, a bare pixel value with no
+relationship to the safe area, landing right where an Android punch-hole
+camera commonly sits. Changed to `calc(20px + env(safe-area-inset-top))`,
+matching the pattern used elsewhere in the file.
+
+**The Chords tool showed and played whatever tone was last picked anywhere
+else in the app, not piano.** Root cause: its tone bank read and wrote the
+same app-wide `selectedRefTone` that Interval Training, Sing Sing, Chord Ear
+and Charts all share — so browsing a saxophone voice in an ear-training
+exercise, then opening Chords, left Chords sounding like sax too, with no way
+to tell it apart from a deliberate choice.
+
+Found a half-built fix already sitting in the file: `_rememberChordToolTone()`
+persisted a `chordToolTone` preference whenever you changed Chords' voice,
+with a comment saying it was meant to restore your choice on return "rather
+than the charts' last instrument." Nothing ever read that preference back —
+not the tone bank button, not actual chord playback — so the write was
+completely dead. Wired it up for real: `chordInit()` now passes explicit
+`get`/`set` hooks pointing at `chordToolTone` (default `grand_piano`) instead
+of the shared fallback, `chordPlayMidi()` takes an optional tone override so
+Chords' actual playback matches what the button shows, and the old
+no-hooks refresh of Chords' buttons was removed from `pickTonePopup` — it
+was overwriting the correct scoped display with the shared tone every time
+you picked a voice anywhere else. Interval Training, Sing Sing and Chord Ear
+still intentionally share `selectedRefTone` with each other; only Chords was
+decoupled.
+
+## v0.150.6 — Backup export stopped popping a share sheet
+
+The Tier 1 export path (native platform, `@capacitor/filesystem` present) wrote
+the backup file to CACHE and then handed it straight to the Share plugin, so
+saving a backup always meant an extra manual step: pick where to send it. That
+was the actual complaint, not the file format.
+
+It now writes directly to `Directory.DOCUMENTS` and stops there. A toast
+confirms the save; no picker. On iOS that lands in the Files app under "On My
+iPhone" once file sharing is enabled in the native project; on Android it's
+the app's own document storage. Same shape Tier 3 (plain browser) already had —
+Tier 1 just wasn't taking it.
+
+Falls back to the share sheet only if the direct write itself fails, same as
+before.
+
+## v0.150.5 — Streak toasts wired into four more exercises, a sax note leak, and a duplicate button id
+
+**Streak milestones only fired in three of eight exercises that track one.**
+`checkStreakMilestone()` — the 5/10/15…40 toast — was wired into Interval
+Training, Sing Sing and Chord Ear Training. Tempo Lock, Tempo Guess,
+Polyrhythm and Rhythm Reading all keep their own streak counters and none of
+them called it. Added the call at each exercise's streak-update site, same
+pattern as the three that already had it. Left Music Quiz alone; it already
+has its own streak-aware celebration (XP toast text + haptics at 5/10/20) and
+wiring the shared toast in too would have doubled up.
+
+Second bug behind the same symptom: `_lastMilestone`, which stops a milestone
+firing twice, only reset on entering six specific exercises. None of the four
+above were on that list, so even with the wiring in place, hitting milestone
+10 in one exercise and then 5 in another would not have fired — 5 is not
+greater than the leftover 10. Added `rhythmread`, `tempo`, `tempoguess` and
+`poly` to the reset list.
+
+**Sax (and every wind instrument) kept a tapped note ringing through a
+subfamily switch, while the scale run stopped correctly.** Two separate audio
+paths: the scale run plays through `trpPlayNodes`, which `trpStop()` clears —
+that's why switching subfamily killed it. A single note tapped on the
+fingering chart plays through a different variable, `trpLastTapNode`, which
+was only ever stopped by the *next* tap. `trpStop()` never touched it, so it
+was never included when `chordScaleStopAllAudio()` runs on a subfamily
+switch. Added the cleanup to `trpStop()`.
+
+**The wind "Notes" screen showed "PLAY ASCENDING."** Root cause: the Notes
+screen's single-note button and the Scale screen's run button shared the
+literal same DOM id, `trpPlayBtn`. `getElementById` always resolves the first
+match regardless of which screen is visible, so every scale function
+(`trpPlay`, `trpStop`, `trpToggleDirection`, the chart-button registry reset)
+was silently overwriting the Notes button's "PLAY NOTE" label with scale
+text, while the actual Scale button on screen never updated at all. Not a
+leak from a previous chart — a standing cross-wire that fired the same way
+every time. Gave the Notes button its own id, `trpCardPlayBtn`, and a
+registry entry, matching the existing `bowedNotePlayBtn` / `bowedScalePlayBtn`
+split for the equivalent bowed-strings screen.
+
+## v0.150.4 — Rhythm Reading never had a streak toast to lose
+
+Reported as "no streak toast at 5 in Rhythm Reading." Turned out the toast had
+never been wired up for this exercise at all — `checkStreakMilestone()` was
+only called from Interval Training, Sing Sing and Chord Ear Training. Added
+the call to Rhythm Reading's streak update. (v0.150.5 found and fixed the
+same gap in three more exercises, plus a second bug in the milestone-reset
+logic that would have kept blocking this even after the wiring landed.)
+
+## v0.150.3 — Overlays could still be scrolled behind, on-device only
+
+Reported as scrolling behind the module picker; confirmed to be every overlay,
+not just the picker, and confirmed to only happen on-device, never in a
+desktop HTML preview.
+
+Cause: `body.scroll-locked` (added v0.149.0, the generic MutationObserver-
+driven lock covering all 133 overlay-shaped elements) only set
+`overflow: hidden`. That blocks mouse-wheel and click-drag scrolling on
+desktop, which is why every preview looked correct. It does not reliably
+block touch-drag in mobile WebViews — touch gestures can still drag body
+content through `overflow: hidden` via momentum scrolling. The three other
+full-screen locks already in the file (`mq-open`, `rt-open`, `sg-open`) knew
+this and use `position: fixed` too; the newer generic lock, written after
+those, missed it.
+
+Added `position: fixed` (plus `left`/`right`/`width`/`height`) to
+`scroll-locked`. Fixed positioning drops the body's current scroll offset, so
+`_scrollLockSync` now saves `scrollY` before locking, applies it as an inline
+`top`, and restores it via `scrollTo` on unlock — otherwise every overlay
+open/close would have jumped the page back to the top.
+
 ## v0.150.2 — Opening the Transpose tool buzzed, and a spacing audit
 
 **The Transpose tool vibrated when you launched it.** Not the launcher, and

@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.2 -->
+<!-- INTONARE_VERSION: 0.150.13 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -295,7 +295,13 @@ html,body{background:#000000!important;transition:none!important}
   .dt-mythic-streak { font-size:8px; letter-spacing:.22em; color:rgba(255,120,60,.6); text-transform:uppercase }
   .dt-mythic-unlock { font-size:7.5px; letter-spacing:.18em; color:rgba(182,242,91,.75); margin-top:7px; text-transform:uppercase }
   /* ─── MILESTONE TOAST (top, drops down) ─── */
-  #streakMilestoneToast { top:20px !important; bottom:auto !important }
+  /* This is a different toast from dailyStreakToast (the day-streak-at-risk
+     notification, which sits at bottom:90px and was already clear). This one
+     — the 5/10/15...40 in-session streak toast — was hardcoded to a bare
+     top:20px with no relationship to the safe area, landing right where an
+     Android punch-hole camera commonly sits. Matches the calc(Npx +
+     env(safe-area-inset-top)) pattern used elsewhere in the file. */
+  #streakMilestoneToast { top:calc(20px + env(safe-area-inset-top)) !important; bottom:auto !important }
   .streak-milestone-inner { border-radius:18px !important; padding:9px 20px 8px !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:2px !important }
   .streak-ms-main { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:15px; letter-spacing:.22em }
   .streak-ms-quip { font-size:7px; letter-spacing:.2em; opacity:.8; text-transform:uppercase; font-weight:700 }
@@ -637,6 +643,27 @@ html,body{background:#000000!important;transition:none!important}
 #toolSurvivalGuide .sg-cad-staff{max-width:100%;height:auto;display:inline-block}
 #toolSurvivalGuide .sg-cad-desc{font-size:14px;line-height:1.5;opacity:.9;margin:2px 0 4px}
 #toolSurvivalGuide .sg-term-play:active{opacity:.5}
+/* ── Notation symbol strip (v0.150.12) ────────────────────────────────────
+   Built by sgBuildSymbolStrip() from the data-term values already in the
+   body copy. Badge layout was chosen over inline glyphs on device: Bravura's
+   em-boxes vary enormously (a staccato dot is 4px tall, a quarter rest 37px),
+   so inline glyphs shove line-height around inside a paragraph. Keeping them
+   in a strip leaves the body typography untouched.
+   Theme vars only, no hardcoded hex, so light mode comes for free. */
+#toolSurvivalGuide .sg-symstrip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+#toolSurvivalGuide .sg-sym{display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-end;gap:6px;min-width:58px;padding:10px 8px 7px;
+  background:var(--surface);border:1px solid var(--border-soft);border-radius:9px}
+/* Fixed box height: the badges must sit on one baseline regardless of how tall
+   the glyph inside happens to be, same reason NC_CARDS uses a fixed slot. */
+#toolSurvivalGuide .sg-sym-box{display:flex;align-items:center;justify-content:center;
+  height:24px;color:var(--text)}
+#toolSurvivalGuide .sg-sym-lbl{font-size:8.5px;letter-spacing:.8px;color:var(--muted);
+  text-transform:uppercase;white-space:nowrap}
+#toolSurvivalGuide .sg-sym-gb{display:inline-flex;align-items:center;justify-content:center;overflow:visible}
+#toolSurvivalGuide .sg-sym-g{font-family:'Bravura';line-height:0;display:block;white-space:nowrap}
+#toolSurvivalGuide .sg-sym-draw{display:inline-block;color:currentColor}
+#toolSurvivalGuide .sg-sym-draw svg{width:100%;height:auto;display:block}
 
 /* ── TRY IT OUT BUTTON ── */
 #toolSurvivalGuide .try-inst-wrap{margin-top:12px}
@@ -16104,12 +16131,23 @@ html,body{background:#000000!important;transition:none!important}
      scrollable overlay from chaining to the page underneath it. */
   body.scroll-locked {
     overflow: hidden !important;
-    /* No touch-action here. It was set to none, which does not just stop the page
+    /* position:fixed is what actually pins the body on a phone. overflow:hidden
+       alone blocks mouse-wheel/drag scrolling on desktop (which is why this
+       looked fine in every HTML preview) but touch-drag in mobile WebViews does
+       not reliably respect overflow:hidden by itself — it can still drag body
+       content via momentum/rubber-band scrolling. mq-open, rt-open and sg-open
+       already do this correctly; scroll-locked did not.
+       No touch-action here. It was set to none, which does not just stop the page
        scrolling behind an overlay — it stops touch scrolling ANYWHERE, including
        inside the overlay itself, so modules became unscrollable the moment
        anything locked. It read as fine in testing because a test sets scrollTop
        directly and never generates a touch gesture. overscroll-behavior below
        already stops scroll chaining, which was the actual goal. */
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
   body.scroll-locked .tool-panel,
   body.scroll-locked #appMain {
@@ -16599,6 +16637,44 @@ html,body{background:#000000!important;transition:none!important}
      no glow, no shimmer, no overshoot bounce — so it reads as a bonus detail,
      not a second achievement. Slight transition delay on entry (below) so it
      reveals a beat after the achievement toast, not simultaneously. */
+  /* ── In-app update card (v0.150.13) ───────────────────────────────────────
+     Sits above the tab bar as a dismissible card, not a launch modal. The
+     whole point of the flexible flow is that it does not interrupt: the
+     download runs while the app stays usable, so a blocking overlay would
+     defeat it. Theme vars only, so light mode needs no parallel block. */
+  .iu-card {
+    position: fixed; left: 12px; right: 12px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    z-index: 8800; display: none;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 15px 13px;
+    box-shadow: 0 10px 34px rgba(0,0,0,.45);
+    transform: translateY(14px); opacity: 0;
+    transition: transform .28s cubic-bezier(.22,.9,.3,1), opacity .28s;
+  }
+  .iu-card.up { transform: translateY(0); opacity: 1; }
+  .iu-row { display: flex; align-items: flex-start; gap: 11px; }
+  .iu-ico { flex: 0 0 auto; width: 20px; height: 20px; color: var(--accent); margin-top: 1px; }
+  .iu-ico svg { width: 100%; height: 100%; display: block; }
+  .iu-body { flex: 1 1 auto; min-width: 0; }
+  .iu-title { font-size: 12.5px; letter-spacing: .4px; color: var(--text); margin-bottom: 3px; }
+  .iu-sub { font-size: 10.5px; line-height: 1.5; color: var(--muted); }
+  .iu-x { flex: 0 0 auto; background: none; border: none; color: var(--muted);
+    font-size: 17px; line-height: 1; padding: 2px 2px 6px 8px; }
+  .iu-x:active { color: var(--text); }
+  .iu-acts { display: flex; gap: 8px; margin-top: 12px; }
+  .iu-btn { flex: 1 1 0; padding: 9px 0; border-radius: 9px; font-size: 10.5px;
+    letter-spacing: 1.2px; text-align: center; border: 1px solid var(--border-soft);
+    background: none; color: var(--text-dim); }
+  .iu-btn.go { border-color: var(--accent); color: var(--accent); }
+  .iu-btn:active { opacity: .6; }
+  .iu-btn[disabled] { opacity: .45; }
+  /* Progress track only appears once a download is actually running. */
+  .iu-prog { display: none; height: 3px; margin-top: 12px; border-radius: 2px;
+    background: var(--border-soft); overflow: hidden; }
+  .iu-prog.on { display: block; }
+  .iu-bar { height: 100%; width: 0%; background: var(--accent);
+    transition: width .25s linear; }
   .snd-unlock-toast {
     position: relative; width: 100%; transform: translateY(46px);
     background: var(--surface-2); border: 1px solid var(--border-soft);
@@ -23266,6 +23342,15 @@ body.light #exRelPitch .rlp-flick { animation:rlpFlickLight .48s steps(1) both; 
 #exRelPitch .rlp-ruleslink { display:block; width:100%; margin-top:14px; padding:4px 0; background:none;
   border:none; font-size:9px; letter-spacing:1.5px; color:var(--muted); text-align:center; }
 #exRelPitch .rlp-ruleslink:active { color:var(--accent); }
+/* Optional free A440 before the climb starts. Deliberately lighter weight
+   than .rlp-start — this is a courtesy, not a decision, and shouldn't
+   compete with the actual START button for attention. Unlike the A440
+   lifeline inside the climb, this has no spent state and can be tapped
+   as many times as wanted; it's over before rlpLives even exists for the run. */
+#exRelPitch .rlp-intro-a440 { display:flex; align-items:center; justify-content:center; gap:6px;
+  width:100%; margin-top:10px; padding:9px 0; border-radius:10px; border:1px solid var(--border-soft);
+  background:none; color:var(--text-dim); font-size:11px; letter-spacing:.6px; }
+#exRelPitch .rlp-intro-a440:active { color:var(--text); border-color:var(--accent-soft); }
 #exRelPitch .rlp-rules { margin-top:6px; padding-top:12px; border-top:1px solid var(--border-soft); }
 #exRelPitch .rlp-rule { font-size:10px; color:var(--text-dim); line-height:1.6; margin-top:9px; }
 #exRelPitch .rlp-rule b { color:var(--text); font-weight:400; }
@@ -27159,7 +27244,7 @@ try {
             </div>
             <div id="trpPitchToggleRow" style="display:none"></div>
             <div class="cs-trumpet-fingering-text" id="trpCardFingering" style="font-size:13px;letter-spacing:2px"></div>
-            <button class="gss-play-btn" id="trpPlayBtn" style="width:100%;margin-top:4px" onclick="trpPlayCardNote()" data-i18n="trp_play_note">▶︎ PLAY NOTE</button>
+            <button class="gss-play-btn" id="trpCardPlayBtn" style="width:100%;margin-top:4px" onclick="trpPlayCardNote()" data-i18n="trp_play_note">▶︎ PLAY NOTE</button>
             <div id="wwAltNav" style="display:none"></div>
             <div id="tbnAltNav" style="display:none"></div>
             <div id="trpCardEmbouchure" style="font-family:'Fraunces','GlyphFix',serif;font-style:italic;font-size:11px;color:var(--text-dim);text-align:center;max-width:220px;line-height:1.4;min-height:78px;display:flex;align-items:center;justify-content:center"></div>
@@ -28733,7 +28818,7 @@ try {
           <!-- legacy hidden nodes kept so existing sing/test code paths don't null-crash -->
           <div class="iv-target-detail" id="ivTargetDetail" style="display:none"></div>
           <div class="iv-target-ref" id="ivRefRow" style="display:none"><span data-i18n="iv_reference">REFERENCE</span>: <strong id="ivRefName">—</strong></div>
-          <div class="iv-feedback" id="ivFeedback" style="display:none">
+          <div class="iv-feedback" id="ivFeedback">
             <span id="ivFeedbackText"></span>
             <div class="ce-countdown-bar" id="ivCountdownBar" style="display:none"></div>
           </div>
@@ -30478,6 +30563,21 @@ try {
     <div class="ach-toast-rarity" id="achToastRarity"></div>
     <div class="ach-toast-countdown"></div>
   </div>
+  <div id="iuCard" class="iu-card">
+    <div class="iu-row">
+      <span class="iu-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg></span>
+      <div class="iu-body">
+        <div class="iu-title" id="iuTitle" data-i18n="iu_title">Update available</div>
+        <div class="iu-sub" id="iuSub"></div>
+      </div>
+      <button class="iu-x" id="iuClose" onclick="iuDismiss()" aria-label="Dismiss">&#215;</button>
+    </div>
+    <div class="iu-prog" id="iuProg"><div class="iu-bar" id="iuBar"></div></div>
+    <div class="iu-acts" id="iuActs">
+      <button class="iu-btn" onclick="iuDismiss()" data-i18n="iu_later">LATER</button>
+      <button class="iu-btn go" id="iuGo" onclick="iuGo()" data-i18n="iu_download">DOWNLOAD</button>
+    </div>
+  </div>
   <div id="sndUnlockToast" class="snd-unlock-toast">
     <svg class="snd-unlock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" fill-opacity="0.18"/><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7" opacity="0.85"/><path d="M19 6a8.5 8.5 0 0 1 0 12" opacity="0.5"/></svg>
     <div class="snd-unlock-body">
@@ -30495,7 +30595,7 @@ try {
 </div>
 
 <!-- STREAK MILESTONE TOAST -->
-<div id="streakMilestoneToast" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9100;pointer-events:none;">
+<div id="streakMilestoneToast" style="display:none;position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9100;pointer-events:none;">
   <div class="streak-milestone-inner" id="streakMilestoneInner">
     <span class="streak-ms-main" id="streakMilestoneText"></span>
     <span class="streak-ms-quip" id="streakMilestoneQuip"></span>
@@ -30909,7 +31009,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.2</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.13</span>
     </div>
   </div>
 </div>
@@ -30917,7 +31017,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.2';
+const INTONARE_VERSION = '0.150.13';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -50987,7 +51087,7 @@ function enterExercise(name) {
   if (name === 'rhythmread') rrInit();
   // Start module time tracker
   moduleEnter(name);
-  if (['chords','interval','singsing','chordle','diadle','tonale'].includes(name)) { _lastMilestone = 0; }
+  if (['chords','interval','singsing','chordle','diadle','tonale','rhythmread','tempo','tempoguess','poly'].includes(name)) { _lastMilestone = 0; }
 
   const micLblEx = document.getElementById('micLabel');
   if (micLblEx) micLblEx.textContent =
@@ -51167,7 +51267,14 @@ function ivEnterNeutral() {
   if (k2) { k2.className = 'iv-knote n2'; k2.textContent = ''; }
   var name = document.getElementById('ivTargetName'); if (name) { name.textContent = ''; name.className = 'iv-hero-name'; }
   ivBuildGauge();
-  var fb = document.getElementById('ivFeedback'); if (fb) { fb.style.display = 'none'; }
+  // Was display:none, which made the box pop in/out of layout every round —
+  // the only piece of the exercise screen that did that (Chord Ear and Sing
+  // Sing's equivalent boxes are visible-but-empty from the start, same as
+  // this now is). Neutral class + empty text keeps its reserved space
+  // without carrying color or a message from the previous round.
+  var fb = document.getElementById('ivFeedback');
+  if (fb) { fb.style.display = ''; fb.className = 'iv-feedback'; }
+  ivFbText('');
   var nb = document.getElementById('ivNextBtn'); if (nb) nb.textContent = t('iv_play') || '▶︎ PLAY';
   ivRenderAnswerGrid(true);   // grayed until first play
 }
@@ -52428,6 +52535,13 @@ function ivAnswerTap(sem, btn) {
     ivStreak++; ivCorrect++; ivRecordCorrect(correctSem);
     hapticCorrect(); playCueCorrect(); ivUpdateStats();
     ivManualReveal(true);
+    // Wrong answers already got a feedback box (below); correct never did —
+    // the box just stayed hidden and the only signal was the button turning
+    // green. Same box, same .got style already defined in CSS and already
+    // used by Sing mode, just never wired up for tap mode's correct path.
+    var vFbRight = document.getElementById('ivFeedback');
+    if (vFbRight) { vFbRight.style.display = ''; vFbRight.className = 'iv-feedback got'; }
+    ivFbText(t('iv_got_it'));
     var _rl = document.getElementById('ivRefLink'); if (_rl) _rl.disabled = false;
     if (ivAutoAdvance) ivAutoTimer = setTimeout(function(){ if (ivMode === 'manual') ivNext(); }, 1100);
     return;
@@ -52980,6 +53094,21 @@ let chordArp      = false;
 let chordNodes    = [];
 let _progChordBus = null;   // gain bus all progression chords route through, so stop can fade smoothly
 let chordVolume   = 1.0;
+// The Chords tool's own voice, decoupled from the app-wide selectedRefTone
+// that every other tone bank shares (Interval/Sing Sing/Chord Ear all bleed
+// into each other and into Charts' last instrument). A prefSet('chordToolTone', ...)
+// call already existed (_rememberChordToolTone below) but nothing ever read
+// it back — the tone bank button and actual playback both still went straight
+// to selectedRefTone, so the write was dead and Chords kept surfacing
+// whatever tone was last touched anywhere else in the app. Defaults to piano,
+// which is the natural voice for a generic chord-quality tool.
+let chordToolTone = prefGet('chordToolTone', 'grand_piano');
+function chordSetTone(v) {
+  chordToolTone = v;
+  prefSet('chordToolTone', v);
+  buildChordToneBank('chordToneBank',        { get: () => chordToolTone, set: chordSetTone, skin: 'chd-tonepop' });
+  buildChordToneBank('chordToneBankBuilder', { get: () => chordToolTone, set: chordSetTone, skin: 'chd-tonepop' });
+}
 function setChordVolume(v) {
   chordVolume = v / 100;
   document.querySelectorAll('.chord-vol-pct').forEach(el => el.textContent = v + '%');
@@ -53502,11 +53631,14 @@ function chordStop() {
   if (window._chordAutoStop) { clearTimeout(window._chordAutoStop); window._chordAutoStop = null; }
 }
 
-function chordPlayMidi(midiNotes, arpeggiate, arpDelay) {
+function chordPlayMidi(midiNotes, arpeggiate, arpDelay, toneOverride) {
   chordStop();
   const ctx   = getAudio();
   const chain = buildLimiterChain(ctx, 0.55);
-  const toneId = selectedRefTone;
+  // toneOverride lets the Chords Player/Builder use their own decoupled voice
+  // (chordToolTone) instead of the app-wide selectedRefTone that Chord Ear
+  // Training and Staff Notes' reveal-sound still legitimately want here.
+  const toneId = toneOverride || selectedRefTone;
   const vol   = (0.38 / Math.sqrt(midiNotes.length)) * chordVolume;
   const now   = ctx.currentTime;
   const step  = (arpeggiate && arpDelay != null) ? arpDelay : 0.13;
@@ -53557,8 +53689,8 @@ function chordInit() {
   buildChordRootGrid();
   buildChordQualityGroups(true);
   buildChordBuilderGrid();
-  buildChordToneBank('chordToneBank');
-  buildChordToneBank('chordToneBankBuilder');
+  buildChordToneBank('chordToneBank',        { get: () => chordToolTone, set: chordSetTone, skin: 'chd-tonepop' });
+  buildChordToneBank('chordToneBankBuilder', { get: () => chordToolTone, set: chordSetTone, skin: 'chd-tonepop' });
   chdSyncSpellingUI();
   chordPlayerUpdate();
 }
@@ -53728,7 +53860,7 @@ function chordPlayerPlay() {
   const m = chordInv
     ? midiNotes.slice(chordInv).concat(midiNotes.slice(0, chordInv).map(x => x + 12))
     : midiNotes;
-  chordPlayMidi(m, chordArp);
+  chordPlayMidi(m, chordArp, undefined, chordToolTone);
 }
 
 // ── Builder ────────────────────────────────────
@@ -53897,7 +54029,7 @@ function chordBuilderPlay() {
     lastMidi = m;
     return m;
   });
-  chordPlayMidi(midi, chordArp);
+  chordPlayMidi(midi, chordArp, undefined, chordToolTone);
 }
 
 function chordBuilderUndo() {
@@ -57662,6 +57794,9 @@ function lnchGo(m) {
   const lc = document.getElementById('lnch');
   // Held startup celebrations can run now: a module is being entered.
   try { _drainLaunchCelebrations(); } catch(e) {}
+  // Update check rides the same gate: only once past the launcher, and then on
+  // its own delay, so it can never appear over the splash or the chooser.
+  try { iuScheduleCheck(); } catch(e) {}
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Hold the palette swap while the launcher is still on screen. Without this the
   // body recolours the instant a card is tapped, so the next module's background
@@ -63425,6 +63560,7 @@ function tlEvaluateRound(_activePhaseStartTime) {
   else if (avgAbsMs < 50)  { grade = t('tl_grade_close');     gradeClass = 'good';  tlStats.streak++; }
   else if (avgAbsMs < 100) { grade = t('tl_grade_needs_work'); gradeClass = 'meh';   tlStats.streak = 0; }
   else                     { grade = t('tl_grade_off');        gradeClass = 'bad';   tlStats.streak = 0; }
+  checkStreakMilestone(tlStats.streak);
 
   // Your tapped tempo: 60 / average interval between consecutive taps.
   let tappedBpm = null;
@@ -64026,6 +64162,7 @@ function tgLockGuess() {
   else if (absDelta <= 10) { grade = t('tg_grade_good');    gradeClass = 'good';  tgStats.streak++; }
   else if (absDelta <= 20) { grade = t('tg_grade_close');   gradeClass = 'meh';   tgStats.streak = 0; }
   else                     { grade = t('tg_grade_off');     gradeClass = 'bad';   tgStats.streak = 0; }
+  checkStreakMilestone(tgStats.streak);
 
   // Phase pill
   const pill = document.getElementById('tgPhasePill');
@@ -69261,6 +69398,7 @@ function rlpChallengeHTML() {
       '<div class="rlp-ititle">' + t('rlp_the_climb') + '</div>' +
       '<div class="rlp-iline">' + t('rlp_intro_line') + '</div>' +
       '<button class="rlp-start" data-rlpact="start"><span>\u25b2</span>' + t('rlp_start') + '</button>' +
+      '<button class="rlp-intro-a440" data-rlpact="a440start"><span>\u266b</span>' + t('rlp_intro_a440') + '</button>' +
       (s.ch.best ? '<div class="rlp-best">' + t('rlp_best') + ' <b>' + s.ch.best.toLocaleString() + '</b>' +
         (s.ch.bestMult ? ' \u00d7' + s.ch.bestMult.toFixed(1) : '') +
         (s.ch.furthest >= RLP_TOP ? ' \u00b7 ' + t('rlp_summited') : '') + '</div>' : '') +
@@ -69395,7 +69533,22 @@ function rlpCNext() {
     rlpRung++;
     var nb = rlpBandFor(rlpRung).name;
     /* Replays refresh at a band edge. Lifelines do not: three for the climb. */
-    if (nb !== rlpCurBand) { rlpCurBand = nb; rlpBandReplays = RLP_BAND_REPLAYS; }
+    if (nb !== rlpCurBand) {
+      rlpCurBand = nb;
+      rlpBandReplays = RLP_BAND_REPLAYS;
+      var _bandKey = rlpBandFor(rlpRung).key;
+      // rlpHavenValue(rlpRung) finds the highest safe haven strictly below
+      // the rung you just landed on, which is exactly the one you passed to
+      // get here — the guaranteed payout if the run ended right now.
+      // Kept separate from the multiplier rather than multiplied together:
+      // the haven is a floor that can only go up, but rlpMult() falls each
+      // time a lifeline is spent, so a single combined figure would become
+      // a promise the game then breaks. Two numbers, both honest.
+      svcToast(t('rlp_new_tier')
+        .replace('%b', t(_bandKey))
+        .replace('%v', rlpHavenValue(rlpRung))
+        .replace('%m', rlpMult().toFixed(1)));
+    }
     rlpNewRung(); rlpRender(); return;
   }
   rlpCue('gameover');
@@ -69599,6 +69752,7 @@ function rlpOnTap(e) {
     case 'start':
       rlpStopBoot();
       rlpStartClimb(); break;
+    case 'a440start': rlpSound(69); break;
     case 'creplay':
       if (rlpBandReplays <= 0 || rlpPicked !== null) return;
       rlpBandReplays--; rlpSound(rlpCTarget); rlpRender(); break;
@@ -71056,6 +71210,7 @@ function rrShowResults() {
 
   // Streak
   if (score >= 70) { rrStreak++; } else { rrStreak = 0; }
+  checkStreakMilestone(rrStreak);
   if (rrStreak > rrBestStreak) {
     rrBestStreak = rrStreak;
     if (progState) { progState.rrBestStreak = rrBestStreak; progSave(); }
@@ -73731,6 +73886,7 @@ function prTwoLiveAnalyze() {
   } else {
     prGameStats.streak = 0;
   }
+  checkStreakMilestone(prGameStats.streak);
   prGameUpdateUI();
 }
 
@@ -73897,6 +74053,7 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
   else if (meanFrac <= 0.15) { grade = 'CLOSE';      gradeClass = 'good';  xp = 10; prGameStats.streak++; }
   else if (meanFrac <= 0.26) { grade = 'NEEDS WORK'; gradeClass = 'meh';   xp = 3;  prGameStats.streak = 0; }
   else                       { grade = 'OFF';        gradeClass = 'bad';   xp = 1;  prGameStats.streak = 0; }
+  checkStreakMilestone(prGameStats.streak);
   const sign = reportMs > 8 ? '+' : reportMs < -8 ? '−' : '±';
   const dir  = reportMs > 8 ? t('dir_late') : reportMs < -8 ? t('dir_early') : t('dir_on');
   resultEl.innerHTML = `<span class="pr-game-${gradeClass}">${sign}${Math.round(Math.abs(reportMs))}ms · ${dir} · <strong>${grade}</strong></span>`;
@@ -81745,6 +81902,151 @@ function _launcherIsUp() {
   return !!el && getComputedStyle(el).display !== 'none' && !el.classList.contains('lnch-gone');
 }
 
+// ── In-app update (v0.150.13) ─────────────────────────────────────────────
+// Google Play In-App Updates via @capawesome/capacitor-app-update. Play is
+// asked directly whether a newer build exists, so there is no version manifest
+// to host and nothing to remember to bump; the store already knows.
+//
+// Android gets the real flexible flow: the APK downloads in the background
+// while the app stays usable, then completeFlexibleUpdate() restarts and
+// installs it. The person never leaves for the Play listing.
+//
+// iOS cannot do this. Apple does not permit in-app update flows, so the plugin
+// only reports the store version there and openAppStore() is the whole action.
+// That asymmetry is Apple's, not the plugin's, and the card wording changes to
+// match rather than promising an in-app install that cannot happen.
+//
+// Feature-detected end to end. If the plugin is absent (browser, or a build
+// made before the sync), every entry point no-ops silently.
+//
+// IMPORTANT for testing: in-app updates only report correctly for builds
+// INSTALLED FROM PLAY. A sideloaded go.bat build always returns UNKNOWN and
+// the card will never appear. That is expected, not a bug; verify through
+// Play internal app sharing.
+var IU_SNOOZE_DAYS = 3;          // after LATER, stay quiet this long
+var IU_MIN_UPTIME_MS = 12000;    // never interrupt the first seconds of a session
+var _iuInfo = null, _iuBusy = false, _iuFlexListener = null;
+
+function _iuPlugin() {
+  try {
+    var P = window.Capacitor && window.Capacitor.Plugins;
+    return (P && P.AppUpdate) ? P.AppUpdate : null;
+  } catch (e) { return null; }
+}
+function _iuIsIOS() {
+  try { return window.Capacitor && window.Capacitor.getPlatform() === 'ios'; } catch (e) { return false; }
+}
+function _iuSnoozedFor(ver) {
+  try {
+    var raw = localStorage.getItem('iu_snooze');
+    if (!raw) return false;
+    var s = JSON.parse(raw);
+    // Snooze is per-version: a newer build than the one dismissed always asks
+    // again, so declining once never hides a later release.
+    if (s.v !== ver) return false;
+    return (Date.now() - (s.t || 0)) < IU_SNOOZE_DAYS * 864e5;
+  } catch (e) { return false; }
+}
+function _iuSnooze(ver) {
+  try { localStorage.setItem('iu_snooze', JSON.stringify({ v: ver, t: Date.now() })); } catch (e) {}
+}
+function _iuSet(id, txt) { var e = document.getElementById(id); if (e) e.textContent = txt; }
+
+function iuShowCard() {
+  var c = document.getElementById('iuCard');
+  if (!c) return;
+  c.style.display = 'block';
+  requestAnimationFrame(function () { c.classList.add('up'); });
+}
+function iuHideCard() {
+  var c = document.getElementById('iuCard');
+  if (!c) return;
+  c.classList.remove('up');
+  setTimeout(function () { if (!c.classList.contains('up')) c.style.display = 'none'; }, 300);
+}
+function iuDismiss() {
+  if (_iuBusy) return;                       // a download in flight is not dismissable
+  try { hapticLight(); } catch (e) {}
+  if (_iuInfo) _iuSnooze(_iuInfo.availableVersion);
+  iuHideCard();
+}
+
+function iuCheck() {
+  var P = _iuPlugin();
+  if (!P || !P.getAppUpdateInfo) return;     // plugin not installed: nothing to do
+  P.getAppUpdateInfo().then(function (info) {
+    // 0 UNKNOWN, 1 UPDATE_NOT_AVAILABLE, 2 UPDATE_AVAILABLE, 3 UPDATE_IN_PROGRESS
+    if (!info || info.updateAvailability !== 2) return;
+    var ver = info.availableVersionName || info.availableVersionCode || '';
+    if (_iuSnoozedFor(ver)) return;
+    _iuInfo = { availableVersion: ver, flexible: !!info.flexibleUpdateAllowed };
+    _iuSet('iuSub', (_iuIsIOS() || !info.flexibleUpdateAllowed)
+      ? (t('iu_sub_store') || 'A newer version is on the store.')
+      : ((t('iu_sub_flex') || 'Version %v can install without leaving the app.').replace('%v', ver)));
+    var go = document.getElementById('iuGo');
+    if (go) go.textContent = (_iuIsIOS() || !info.flexibleUpdateAllowed)
+      ? (t('iu_open_store') || 'OPEN STORE') : (t('iu_download') || 'DOWNLOAD');
+    iuShowCard();
+  }).catch(function () {});
+}
+
+function iuGo() {
+  var P = _iuPlugin();
+  if (!P || !_iuInfo || _iuBusy) return;
+  try { hapticLight(); } catch (e) {}
+  // No flexible flow available (iOS, or Play declined it): the store listing is
+  // the only honest option.
+  if (_iuIsIOS() || !_iuInfo.flexible || !P.startFlexibleUpdate) {
+    try { P.openAppStore(); } catch (e) {}
+    iuHideCard();
+    return;
+  }
+  _iuBusy = true;
+  var go = document.getElementById('iuGo');
+  if (go) { go.disabled = true; go.textContent = t('iu_downloading') || 'DOWNLOADING…'; }
+  var x = document.getElementById('iuClose'); if (x) x.style.display = 'none';
+  var prog = document.getElementById('iuProg'); if (prog) prog.classList.add('on');
+
+  if (P.addListener && !_iuFlexListener) {
+    try {
+      _iuFlexListener = P.addListener('onFlexibleUpdateStateChange', function (st) {
+        // 2 DOWNLOADING, 11 DOWNLOADED, 5 FAILED, 6 CANCELED
+        var bar = document.getElementById('iuBar');
+        if (st && st.installStatus === 2 && st.bytesDownloaded && st.totalBytesToDownload) {
+          var pct = Math.max(2, Math.min(100, Math.round(st.bytesDownloaded / st.totalBytesToDownload * 100)));
+          if (bar) bar.style.width = pct + '%';
+        } else if (st && st.installStatus === 11) {
+          if (bar) bar.style.width = '100%';
+          _iuBusy = false;
+          _iuSet('iuTitle', t('iu_ready_title') || 'Update ready');
+          _iuSet('iuSub', t('iu_ready_sub') || 'Restart to finish installing.');
+          if (go) { go.disabled = false; go.textContent = t('iu_restart') || 'RESTART'; go.onclick = iuInstall; }
+        } else if (st && (st.installStatus === 5 || st.installStatus === 6)) {
+          _iuBusy = false;
+          if (prog) prog.classList.remove('on');
+          if (x) x.style.display = '';
+          if (go) { go.disabled = false; go.textContent = t('iu_retry') || 'RETRY'; }
+        }
+      });
+    } catch (e) {}
+  }
+  try { P.startFlexibleUpdate().catch(function () { _iuBusy = false; }); }
+  catch (e) { _iuBusy = false; }
+}
+
+function iuInstall() {
+  var P = _iuPlugin();
+  if (!P || !P.completeFlexibleUpdate) return;
+  try { P.completeFlexibleUpdate(); } catch (e) {}
+}
+
+// Deferred so the check never lands on the splash or during the launcher, and
+// never in the first seconds of a session.
+function iuScheduleCheck() {
+  if (!_iuPlugin()) return;
+  setTimeout(function () { try { iuCheck(); } catch (e) {} }, IU_MIN_UPTIME_MS);
+}
+
 function _queueLaunchCelebration(fn) {
   if (typeof fn !== 'function') return;
   // Already in a module and past the launcher? Nothing to wait for.
@@ -82794,8 +83096,16 @@ const STRINGS = {
     rlp_the_climb:'THE CLIMB',
     rlp_intro_line:'Twenty-four notes, each with multiple choice answers. Get one wrong and lose it all, with safe havens every sixth step.',
     rlp_start:'START', rlp_rules_show:'THE RULES', rlp_rules_hide:'HIDE THE RULES',
+    rlp_intro_a440:'HEAR A440 FIRST',
     rlp_band_wide:'WIDE', rlp_band_open:'OPEN', rlp_band_close:'CLOSE', rlp_band_adj:'ADJACENT',
     rlp_gap_wide:'a fourth or more apart', rlp_gap_open:'a third to a fourth', rlp_gap_close:'a tone to a minor third', rlp_gap_adj:'within a tone',
+    rlp_new_tier:'%b reached! At least %v points, \u00d7%m multiplier',
+    iu_title:'Update available', iu_later:'LATER', iu_download:'DOWNLOAD',
+    iu_downloading:'DOWNLOADING\u2026', iu_restart:'RESTART', iu_retry:'RETRY',
+    iu_open_store:'OPEN STORE',
+    iu_sub_flex:'Version %v can install without leaving the app.',
+    iu_sub_store:'A newer version is on the store.',
+    iu_ready_title:'Update ready', iu_ready_sub:'Restart to finish installing.',
     rlp_rule_stage:'<b>Clear a band</b> and safely earn those points on a loss, along with six fresh replays. Unspent lifelines add multipliers to your final score!',
     rlp_rule_wrong:'<b>One wrong answer ends it,</b> and you leave with the last band you cleared, or with nothing at all if you didn\u2019t make one.',
     rlp_rule_bank:'<b>You can walk away</b> at any point before you answer, keeping the rung below you and its points. The note sounds first, so the decision is yours whether you risk it all.',
@@ -83851,8 +84161,16 @@ const STRINGS = {
     rlp_the_climb:'LA SCALATA',
     rlp_intro_line:'Ventiquattro note, ognuna con risposte a scelta multipla. Sbagli una volta e perdi tutto, con rifugi sicuri ogni sei gradini.',
     rlp_start:'INIZIA', rlp_rules_show:'LE REGOLE', rlp_rules_hide:'NASCONDI LE REGOLE',
+    rlp_intro_a440:'ASCOLTA IL LA440',
     rlp_band_wide:'LARGA', rlp_band_open:'APERTA', rlp_band_close:'STRETTA', rlp_band_adj:'ADIACENTE',
     rlp_gap_wide:'a una quarta o pi\u00f9', rlp_gap_open:'da una terza a una quarta', rlp_gap_close:'da un tono a una terza minore', rlp_gap_adj:'entro un tono',
+    rlp_new_tier:'Fascia %b raggiunta! Almeno %v punti, moltiplicatore \u00d7%m',
+    iu_title:'Aggiornamento disponibile', iu_later:'PI\u00d9 TARDI', iu_download:'SCARICA',
+    iu_downloading:'DOWNLOAD IN CORSO\u2026', iu_restart:'RIAVVIA', iu_retry:'RIPROVA',
+    iu_open_store:'APRI LO STORE',
+    iu_sub_flex:'La versione %v pu\u00f2 installarsi senza uscire dall\u2019app.',
+    iu_sub_store:'Sullo store c\u2019\u00e8 una versione pi\u00f9 recente.',
+    iu_ready_title:'Aggiornamento pronto', iu_ready_sub:'Riavvia per completare l\u2019installazione.',
     rlp_rule_stage:'<b>Supera una fascia</b> e ne guadagni i punti al sicuro anche perdendo, pi\u00f9 sei riascolti nuovi. Gli aiuti non spesi aumentano il moltiplicatore del punteggio finale!',
     rlp_rule_wrong:'<b>Una risposta sbagliata chiude tutto,</b> e te ne vai con l\u2019ultima fascia superata, o senza niente se non ne hai superata nessuna.',
     rlp_rule_bank:'<b>Puoi andartene</b> in qualsiasi momento prima di rispondere, tenendo il gradino sotto di te e i suoi punti. La nota suona per prima, quindi sta a te decidere se rischiare tutto.',
@@ -87733,6 +88051,21 @@ function checkAchievements() {
 
 function _achShowNextToast() {
   if (!_achToastQueue.length) { _achToastActive = false; return; }
+  // Achievement toasts used to fire immediately from wherever checkAchievements()
+  // was called. That is right mid-session, but wrong at boot: checkDailyStreak()
+  // calls checkAchievements() during launch, so an achievement unlocked by the
+  // streak advancing played its cue over the splash/launcher, where the toast
+  // itself is not visible. The result was a sound with no toast, landing near
+  // the daily streak toast and reading as the streak cue misfiring.
+  // The daily toast right below it in checkDailyStreak already defers through
+  // this queue; achievements now use the same gate.
+  var _deferToLaunch = false;
+  try { _deferToLaunch = !_launchCelebrationsDrained; } catch (e) { _deferToLaunch = false; }
+  if (_deferToLaunch) {
+    _achToastActive = false;
+    try { _queueLaunchCelebration(_achShowNextToast); } catch (e) {}
+    return;
+  }
   _achToastActive = true;
   const a = _achToastQueue.shift();
   const cat = ACH_CATS.find(c => c.id === a.cat) || ACH_CATS[0];
@@ -87953,6 +88286,11 @@ const BACKUP_PREFIX_SKIP = ['sl_', 'sg_zones_'];
 // another device would silently override that device's hooks with someone
 // else's half-finished session.
 const BACKUP_KEYS_SKIP   = [PROG_STORAGE_KEY, 'mq_in_progress', 'intonare_restored',
+                            // iu_snooze is a per-device "do not re-ask about this
+                            // version until DATE" note. Restoring it onto a new
+                            // phone could silence a legitimate update prompt there,
+                            // and it rebuilds itself the moment one is dismissed.
+                            'iu_snooze',
                             'intonare_rt_legtune'];
 
 // Fields inside progState that must NOT travel.
@@ -88086,6 +88424,16 @@ function backupApply(b) {
 // platform allows it, a browser download where it does not, and the share
 // sheet with the JSON as text as the floor. Tier 1 stays dormant until
 // @capacitor/filesystem is installed; it is feature-detected, not assumed.
+//
+// Tier 1 writes straight to Directory.DOCUMENTS and stops there — no Share
+// sheet. On iOS that's the app's Documents folder, which shows up in the
+// Files app under "On My iPhone" once file sharing is enabled in the native
+// project; on Android it's the app's own documents directory, visible via
+// any file manager that shows app storage. That's a real download, matching
+// what Tier 3 already does in a browser. Previously this tier wrote to CACHE
+// and immediately handed the file to the share sheet — a save always
+// required an extra manual step (choosing where to send it) instead of just
+// landing on the device.
 function _backupFilename() {
   const d = new Date(), p = n => String(n).padStart(2, '0');
   return 'intonare-backup-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '.json';
@@ -88101,12 +88449,17 @@ function backupExport() {
   let native = false;
   try { native = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); } catch (e) {}
 
-  // Tier 1: write a real file, then hand its URI to the share sheet.
-  // Dormant until @capacitor/filesystem is installed; feature-detected.
-  if (P && P.Filesystem && P.Share) {
-    P.Filesystem.writeFile({ path: name, data: txt, directory: 'CACHE', encoding: 'utf8' })
-      .then(r => P.Share.share({ title: 'Intonare', url: r.uri, dialogTitle: t('backup_export') }))
-      .catch(() => { try { intonareNativeShare(txt, null, 'Intonare'); } catch (e) {} });
+  // Tier 1: write a real file straight to Documents. No Share sheet — this
+  // IS the download. Dormant until @capacitor/filesystem is installed;
+  // feature-detected, not assumed.
+  if (P && P.Filesystem) {
+    P.Filesystem.writeFile({ path: name, data: txt, directory: 'DOCUMENTS', encoding: 'utf8' })
+      .then(() => { try { svcToast(t('backup_saved')); } catch (e) {} })
+      .catch(() => {
+        // Fall back to the share sheet only if the direct write itself failed.
+        try { intonareNativeShare(txt, null, 'Intonare'); }
+        catch (e) { try { svcToast(t('backup_err_writefail')); } catch (e2) {} }
+      });
     return;
   }
 
@@ -88337,12 +88690,29 @@ function _anyOverlayOpen() {
 }
 
 let _scrollLockRAF = null;
+let _scrollLockSavedY = null;   // scrollY at the moment we lock, so unlocking can restore it
 function _scrollLockSync() {
   if (_scrollLockRAF) return;                 // coalesce bursts of mutations
   _scrollLockRAF = requestAnimationFrame(() => {
     _scrollLockRAF = null;
     try {
       const open = _anyOverlayOpen();
+      const wasLocked = document.body.classList.contains('scroll-locked');
+      // body.scroll-locked now uses position:fixed to actually pin the page on a
+      // phone (overflow:hidden alone doesn't stop touch-drag in mobile WebViews,
+      // only mouse/wheel on desktop — see the CSS comment). Fixed positioning
+      // drops the body's current scroll offset, so it has to be saved before
+      // locking and reapplied as inline `top` while locked, then restored to
+      // window.scrollTo on unlock. Skipped entirely if nothing changed.
+      if (open && !wasLocked) {
+        _scrollLockSavedY = window.scrollY || window.pageYOffset || 0;
+        document.body.style.top = (-_scrollLockSavedY) + 'px';
+      } else if (!open && wasLocked) {
+        document.body.style.top = '';
+        const y = _scrollLockSavedY || 0;
+        _scrollLockSavedY = null;
+        window.scrollTo(0, y);
+      }
       document.body.classList.toggle('scroll-locked', open);
       // Clear a stale inline lock. Nine places still set body.style.overflow by
       // hand and not all of them restore it, which leaves the page unscrollable
@@ -88799,8 +89169,11 @@ function closeTonePopup() {
   _ivrToneReturn = false;
   _tonePopOwner = null;
 }
-// Records the Chords tool's voice when the user changes it there, so entering
-// the tool later restores their choice rather than the charts' last instrument.
+// Dead code as of the chordToolTone fix below: Chords' tone bank now always
+// passes its own hooks (see chordInit), so this branch — writing the pref
+// from the no-hooks fallback path — can never fire for a real Chords pick
+// anymore. Left as a harmless no-op guard rather than deleted, in case
+// something calls buildChordToneBank without hooks again by mistake.
 function _rememberChordToolTone(key) {
   try {
     if (typeof currentTool !== 'undefined' && currentTool === 'chords' && key) {
@@ -88829,11 +89202,12 @@ function pickTonePopup(key) {
     if (typeof buildPianoFullToneBank === 'function') buildPianoFullToneBank();
     // also refresh the Interval Reference voice button if it's the active surface
     if (_ivrToneReturn && typeof ivrBuildToneBank === 'function') { ivrBuildToneBank(); _ivrToneReturn = false; }
-    // and the Chords tool's two voice buttons, which use the same picker
-    if (typeof buildChordToneBank === 'function') {
-      buildChordToneBank('chordToneBank');
-      buildChordToneBank('chordToneBankBuilder');
-    }
+    // Chords' two voice buttons used to be refreshed here too, back when they
+    // shared selectedRefTone. Now that they read chordToolTone through their
+    // own hooks (see chordInit / chordSetTone), refreshing them from this
+    // branch would overwrite their correct display with the unscoped
+    // fallback every time a tone gets picked ANYWHERE else in the app —
+    // exactly the bleed this fix removes. Left out on purpose.
   }
   // Whichever button opened this gets its label redrawn, which the fixed list
   // above never covered for Chordle's bank or for any module row.
@@ -104588,8 +104962,16 @@ let trpCardMidi    = null; // midi of the note the wind card is currently showin
 function trpPlayCardNote() {
   if (trpCardMidi == null) return;
   gccPlayString(trpCardMidi);
-  _chartBtnPlay('trpPlayBtn');
-  setTimeout(function(){ _chartBtnIdle('trpPlayBtn'); }, 1500);
+  // trpCardPlayBtn (Notes view) and trpPlayBtn (Scale view) used to share the
+  // id "trpPlayBtn". getElementById always resolves the first match in the
+  // DOM regardless of which screen is visible, so every scale function
+  // (trpPlay/trpStop/trpToggleDirection, and the CHART_BTNS registry reset)
+  // was silently overwriting this button's "PLAY NOTE" label with scale text
+  // ("PLAY ASCENDING", "■ STOP") any time it ran — including on a plain
+  // instrument/subfamily switch, which fires chordScaleStopAllAudio. The
+  // visible Scale button, meanwhile, never updated at all. Split into two ids.
+  _chartBtnPlay('trpCardPlayBtn');
+  setTimeout(function(){ _chartBtnIdle('trpCardPlayBtn'); }, 1500);
 }
 
 function gccPlayString(midi) {
@@ -106593,6 +106975,13 @@ function trpStop() {
   trpPlayTimer  = null;
   trpPlayNodes.forEach(n => { try { n.stop(); } catch(e){} });
   trpPlayNodes  = [];
+  // The scale run (above) and the single tapped-note preview are two separate
+  // audio paths. trpLastTapNode only self-cleared on the NEXT tap, so a note
+  // left ringing from a tap kept sounding straight through a subfamily switch
+  // even though the scale audio stopped correctly.
+  if (typeof trpLastTapNode !== 'undefined' && trpLastTapNode) {
+    try { trpLastTapNode.stop(); } catch(e){} trpLastTapNode = null;
+  }
   try { _chartBtnIdle('trpPlayBtn'); } catch(e){}
 }
 
@@ -111260,6 +111649,7 @@ const CHART_BTNS = {
   pssPlayBtn:        { key: 'gtool_play_asc',   fallback: '▶︎ PLAY ASCENDING' },
   hpPlayChordBtn:    { key: 'gcc_play_chord',   fallback: '▶︎ PLAY CHORD' },
   trpPlayBtn:        { key: 'gtool_play_asc',   fallback: '▶︎ PLAY ASCENDING' },
+  trpCardPlayBtn:    { key: 'trp_play_note',    fallback: '▶︎ PLAY NOTE' },
   bowedScalePlayBtn: { key: 'gtool_play_asc',   fallback: '▶︎ PLAY ASCENDING' },
   bowedNotePlayBtn:  { key: 'gcc_play_note',    fallback: '▶︎ PLAY NOTE' },
   bowedDsPlayBtn:    { key: 'gcc_play_note',    fallback: '▶︎ PLAY' },
@@ -115459,7 +115849,53 @@ function sgPlayTermDemo(term) {
   } catch(e) {}
 }
 
+// Notation symbols for the Guide's interactive terms. Glyph codes and their
+// per-glyph sizing are lifted verbatim from NC_CARDS (the Notation Cards deck)
+// so weight and baseline match that deck rather than being re-guessed; the
+// Bravura subset already ships these. Legato, glissando and vibrato are drawn
+// SVG in NC_CARDS too, not font glyphs, so they carry markup instead of a code.
+// `subito` is deliberately absent: it is a direction, not a written symbol.
+var SG_TERM_GLYPHS = {"forte":{"g":"E522","fs":50.0,"dy":7.3,"h":30.0,"w":25.0},"marcato":{"g":"E4AC","fs":50.0,"dy":6.3,"h":13.0,"w":12.0},"fermata":{"g":"E4C0","fs":50.0,"dy":8.2,"h":17.0,"w":30.0},"decrescendo":{"g":"E53F","fs":50.0,"dy":11.2,"h":13.0,"w":37.0},"tremolo":{"g":"E222","fs":50.0,"dy":-0.1,"h":28.0,"w":15.0},"legato":{"svg":"<svg viewBox=\"0 0 92 48\"><circle cx=\"30\" cy=\"30\" r=\"4\" fill=\"currentColor\"/><circle cx=\"62\" cy=\"30\" r=\"4\" fill=\"currentColor\"/><path d=\"M30 23 Q46 11 62 23\" stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg>"},"glissando":{"svg":"<svg viewBox=\"0 0 60 48\"><circle cx=\"12\" cy=\"34\" r=\"4\" fill=\"currentColor\"/><circle cx=\"48\" cy=\"14\" r=\"4\" fill=\"currentColor\"/><line x1=\"18\" y1=\"30\" x2=\"42\" y2=\"18\" stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg>"},"vibrato":{"svg":"<svg viewBox=\"0 0 92 48\"><path d=\"M10 24 q5 -6 10 0 t10 0 t10 0 t10 0 t10 0 t10 0\" stroke=\"currentColor\" stroke-width=\"1.8\" fill=\"none\"/></svg>"}};
+
+// Built at render time from the data-term values already in the body HTML,
+// rather than written into each page's copy. Two reasons: the body strings are
+// duplicated across ten render branches, and body/body_it are twins that drift
+// when edited separately. Reading the terms out of the DOM means the Italian
+// page gets its strip for free and neither copy has to carry markup for it.
+var _SG_GLYPH_SCALE = 0.46;
+function sgBuildSymbolStrip(card) {
+  if (!card || card.querySelector('.sg-symstrip')) return;
+  var seen = [], K = _SG_GLYPH_SCALE;
+  card.querySelectorAll('.sg-term-play').forEach(function (span) {
+    var term = (span.dataset.term || '').toLowerCase();
+    if (!term || !SG_TERM_GLYPHS[term]) return;      // no symbol for this term
+    if (seen.indexOf(term) === -1) seen.push(term);  // one badge per term per card
+  });
+  if (!seen.length) return;
+  var html = '';
+  seen.forEach(function (term) {
+    var d = SG_TERM_GLYPHS[term], g;
+    if (d.svg) {
+      g = '<span class="sg-sym-draw" style="width:' + Math.round(48 * K) + 'px">' + d.svg + '</span>';
+    } else {
+      g = '<span class="sg-sym-gb" style="height:' + (d.h * K).toFixed(1) + 'px;width:' + (d.w * K).toFixed(1) + 'px">'
+        + '<span class="sg-sym-g" style="font-size:' + (d.fs * K).toFixed(1) + 'px;transform:translate(0,'
+        + (d.dy * K).toFixed(1) + 'px)">&#x' + d.g + ';</span></span>';
+    }
+    html += '<div class="sg-sym"><div class="sg-sym-box">' + g + '</div>'
+          + '<div class="sg-sym-lbl">' + term + '</div></div>';
+  });
+  var strip = document.createElement('div');
+  strip.className = 'sg-symstrip';
+  strip.innerHTML = html;
+  // Sits above the first body block, below the heading/subhead.
+  var firstBody = card.querySelector('.pg-body');
+  if (firstBody && firstBody.parentNode) firstBody.parentNode.insertBefore(strip, firstBody);
+  else card.appendChild(strip);
+}
+
 function sgAttachTermListeners(card) {
+  try { sgBuildSymbolStrip(card); } catch (e) {}
   card.querySelectorAll('.sg-term-play').forEach(function(span) {
     if (span.classList.contains('sg-drum-play')) return; // handled separately below
     span.addEventListener('click', function(e) {
