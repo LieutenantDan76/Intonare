@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.13 -->
+<!-- INTONARE_VERSION: 0.150.27 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -31009,7 +31009,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.13</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.27</span>
     </div>
   </div>
 </div>
@@ -31017,7 +31017,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.13';
+const INTONARE_VERSION = '0.150.27';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -34604,12 +34604,16 @@ function setMode(m) {
   document.querySelectorAll('.tools-only').forEach(el => el.classList.toggle('hidden', m !== 'tools'));
   document.querySelectorAll('.metro-only').forEach(el => el.classList.toggle('hidden', m !== 'metronome'));
   if (m === 'metronome' && typeof syncScreenHeights === 'function') requestAnimationFrame(syncScreenHeights);
-  // Reset practice sub-hubs when leaving practice so returning always lands on main hub
-  if (typeof mode !== 'undefined' && mode === 'practice' && m !== 'practice') {
-    document.getElementById('rhythmHub')?.classList.add('hidden');
-    document.getElementById('gamesHub')?.classList.add('hidden');
-    document.getElementById('earTrainingHub')?.classList.add('hidden');
-    document.getElementById('practiceHub')?.classList.remove('hidden');
+  // Reset practice sub-hubs on ANY tab tap that involves practice — both leaving
+  // it and tapping TRAIN while already inside it.
+  //
+  // This used to fire only when LEAVING (mode === 'practice' && m !== 'practice'),
+  // so tapping TRAIN from inside a folder skipped it: the main hub was revealed by
+  // the .train-only toggle below while the sub-hub stayed rendered underneath, and
+  // both were on screen at once. Tapping the tab you are already on is a normal way
+  // to ask for the top level of that tab, and now behaves like one.
+  if (typeof mode !== 'undefined' && (mode === 'practice' || m === 'practice')) {
+    closeAllSubHubs();
   }
   document.querySelectorAll('.train-only').forEach(el => el.classList.toggle('hidden', m !== 'practice'));
   document.querySelectorAll('.t-or-r').forEach(el => el.classList.toggle('hidden', m === 'metronome' || m === 'practice' || m === 'tools'));
@@ -34629,10 +34633,7 @@ function setMode(m) {
   if (m === 'metronome') buildBeatDots();
   if (m === 'practice') exitExercise(); // return to hub
   if (m === 'practice') { // also close any open sub-hub if we weren't in an exercise
-    document.getElementById('earTrainingHub')?.classList.add('hidden');
-    document.getElementById('rhythmHub')?.classList.add('hidden');
-    document.getElementById('gamesHub')?.classList.add('hidden');
-    document.getElementById('practiceHub')?.classList.remove('hidden');
+    closeAllSubHubs();
   }
   if (currentTool) {
     // Explicitly hide all tool panels (some are outside .tools-only wrapper)
@@ -39879,9 +39880,11 @@ const TC_IV_IT = ['Unisono','2ª minore','2ª maggiore','3ª minore','3ª maggio
 const TC_SCALE_GROUPS = [
   { g:'MAJOR FAMILY', items:[['major','Major (Ionian)'],['lydian','Lydian'],['mixolydian','Mixolydian'],['harmmaj','Harmonic Major']] },
   { g:'MINOR FAMILY', items:[['natminor','Natural Minor'],['dorian','Dorian'],['phrygian','Phrygian'],['locrian','Locrian'],['harmminor','Harmonic Minor'],['melminor','Melodic Minor']] },
-  { g:'PENTATONIC & BLUES', items:[['majpent','Major Pentatonic'],['minpent','Minor Pentatonic'],['blues','Blues'],['inscale','In'],['egyptian','Egyptian']] },
+  { g:'PENTATONIC & BLUES', items:[['majpent','Major Pentatonic'],['minpent','Minor Pentatonic'],['blues','Blues'],['inscale','In'],['yo','Yo'],['egyptian','Egyptian']] },
+  { g:'JAPANESE', items:[['hirajoshi','Hirajoshi'],['iwato','Iwato'],['kumoi','Kumoi'],['insen','Insen']] },
+  { g:'INDIAN THAATS', items:[['purvi','Purvi'],['marwa','Marwa'],['todi','Todi']] },
   { g:'JAZZ · MELODIC MODES', items:[['lyddom','Lydian Dominant'],['altered','Altered'],['locrian2','Locrian nat2']] },
-  { g:'WORLD & EXOTIC', items:[['dblharm','Double Harmonic'],['phrygdom','Phrygian Dominant'],['hungmin','Hungarian Minor'],['hungmaj','Hungarian Major'],['hirajoshi','Hirajoshi']] },
+  { g:'WORLD & EXOTIC', items:[['dblharm','Double Harmonic'],['phrygdom','Phrygian Dominant'],['hungmin','Hungarian Minor'],['hungmaj','Hungarian Major'],['ukrdorian','Ukrainian Dorian']] },
   { g:'SYMMETRIC', items:[['dimwh','Diminished W-H'],['dimhw','Diminished H-W'],['augmented','Augmented'],['wholetone','Whole Tone'],['chromatic','Chromatic']] },
 ];
 
@@ -48833,10 +48836,7 @@ function startTour(key) {
   // Return to hubs before running generic mode-specific tours so selectors are visible
   if (!isModuleTour && key === 'practice' && typeof currentExercise !== 'undefined' && currentExercise) exitExercise();
   if (!isModuleTour && key === 'practice') {
-    document.getElementById('earTrainingHub')?.classList.add('hidden');
-    document.getElementById('rhythmHub')?.classList.add('hidden');
-    document.getElementById('gamesHub')?.classList.add('hidden');
-    document.getElementById('practiceHub')?.classList.remove('hidden');
+    closeAllSubHubs();
   }
   if (!isModuleTour && key === 'tools' && typeof currentTool !== 'undefined' && currentTool) exitTool();
   currentTourKey = key;
@@ -49547,10 +49547,34 @@ function closeOpenExercise() {
   } catch (e) {}
 }
 
+// Every practice sub-hub, in one place. There were three separate copies of this
+// list (tab switch away from practice, tab switch back to practice, and the tour's
+// return-to-hub) and readingHub was added later than the other three, so all three
+// copies were left one short. Tapping TRAIN while inside the Reading folder
+// therefore showed the main hub AND left the Reading sub-hub rendered under it.
+// A fifth folder would have repeated the bug, so the list stopped being a list.
+const PRACTICE_SUBHUBS = ['earTrainingHub', 'rhythmHub', 'gamesHub', 'readingHub'];
+function closeAllSubHubs() {
+  PRACTICE_SUBHUBS.forEach(function (id) {
+    document.getElementById(id)?.classList.add('hidden');
+  });
+  document.getElementById('practiceHub')?.classList.remove('hidden');
+}
+// Show exactly one sub-hub and hide the rest. Each enterX() used to hide only
+// practiceHub and show its own, so nothing ever hid a SIBLING folder: opening
+// Games while Reading was still up left both rendered on top of each other.
+// That was invisible in normal use only because leaving a folder usually went
+// through exitX() first.
+function openSubHub(id) {
+  PRACTICE_SUBHUBS.forEach(function (h) {
+    document.getElementById(h)?.classList.toggle('hidden', h !== id);
+  });
+  document.getElementById('practiceHub')?.classList.add('hidden');
+}
+
 function enterEarTraining() {
   closeOpenExercise();
-  document.getElementById('practiceHub').classList.add('hidden');
-  document.getElementById('earTrainingHub').classList.remove('hidden');
+  openSubHub('earTrainingHub');
   setHeaderSection(t('folder_ear_title') || 'EAR TRAINING', exitEarTraining, 'folder_ear_subtitle');
 }
 function exitEarTraining() {
@@ -49560,8 +49584,7 @@ function exitEarTraining() {
 }
 function enterRhythm() {
   closeOpenExercise();
-  document.getElementById('practiceHub').classList.add('hidden');
-  document.getElementById('rhythmHub').classList.remove('hidden');
+  openSubHub('rhythmHub');
   setHeaderSection(t('folder_rhythm_title') || 'RHYTHM', exitRhythm, 'folder_rhythm_subtitle');
 }
 function exitRhythm() {
@@ -49571,8 +49594,7 @@ function exitRhythm() {
 }
 function enterGames() {
   closeOpenExercise();
-  document.getElementById('practiceHub').classList.add('hidden');
-  document.getElementById('gamesHub').classList.remove('hidden');
+  openSubHub('gamesHub');
   setHeaderSection(t('folder_games_title') || 'GAMES', exitGames, 'folder_games_subtitle');
 }
 function exitGames() {
@@ -49583,8 +49605,7 @@ function exitGames() {
 
 function enterReading() {
   closeOpenExercise();
-  document.getElementById('practiceHub').classList.add('hidden');
-  document.getElementById('readingHub').classList.remove('hidden');
+  openSubHub('readingHub');
   setHeaderSection(t('folder_reading_title') || 'READING', exitReading, 'folder_reading_subtitle');
 }
 function exitReading() {
@@ -59834,6 +59855,36 @@ const SCALE_DEFS = {
                 degrees: [[1,0],[2,1],[3,0],[4,1],[5,0],[6,0],[7,-1]] },
   hirajoshi:  { name: 'HIRAJOSHI',              it: 'HIRAJOSHI',                cat: 'exotic',
                 degrees: [[1,0],[2,0],[3,-1],[5,0],[6,-1]] },                // Japanese koto pentatonic
+  // ─── Japanese pentatonic family ───
+  // Sources disagree on these names: the intervals given here for iwato are what
+  // Slonimsky calls hirajoshi, and regional Japanese usage differs again. These
+  // follow the common English-language guitar/jazz convention consistently, which
+  // matters more than picking a "correct" source, since mixing conventions is what
+  // produces two scales with the same name and different notes.
+  yo:         { name: 'YO',                     it: 'YO',                       cat: 'exotic',
+                degrees: [[1,0],[2,0],[4,0],[5,0],[6,0]] },                  // bright, no semitones: the counterpart to In
+  iwato:      { name: 'IWATO',                  it: 'IWATO',                    cat: 'exotic',
+                degrees: [[1,0],[2,-1],[4,0],[5,-1],[7,-1]] },               // mode of hirajoshi; locrian without the 3 and 6
+  kumoi:      { name: 'KUMOI',                  it: 'KUMOI',                    cat: 'exotic',
+                degrees: [[1,0],[2,0],[3,-1],[5,0],[6,0]] },                 // mode of hirajoshi; minor 3rd with a natural 6
+  insen:      { name: 'INSEN',                  it: 'INSEN',                    cat: 'exotic',
+                degrees: [[1,0],[2,-1],[4,0],[5,0],[7,-1]] },                // In with a b7 instead of a b6
+  // ─── Eastern European / klezmer ───
+  // Dorian with a raised 4. Known as Mi Sheberakh, Altered Dorian, Romanian and
+  // Hutsul; it carries that many names because Ukrainian, Romanian, Greek, Balkan
+  // and Jewish traditions all use it. The standard klezmer minor.
+  ukrdorian:  { name: 'UKRAINIAN DORIAN',       it: 'DORICO UCRAINO',           cat: 'exotic',
+                degrees: [[1,0],[2,0],[3,-1],[4,1],[5,0],[6,0],[7,-1]] },
+  // ─── Hindustani thaats ───
+  // Seven of the ten thaats already exist here under Western names (bilawal=major,
+  // kalyan=lydian, khamaj=mixolydian, kafi=dorian, asavari=natminor,
+  // bhairavi=phrygian, bhairav=dblharm). These three complete the set.
+  purvi:      { name: 'PURVI',                  it: 'PURVI',                    cat: 'exotic',
+                degrees: [[1,0],[2,-1],[3,0],[4,1],[5,0],[6,-1],[7,0]] },    // double harmonic #4
+  marwa:      { name: 'MARWA',                  it: 'MARWA',                    cat: 'exotic',
+                degrees: [[1,0],[2,-1],[3,0],[4,1],[5,0],[6,0],[7,0]] },     // lydian b2
+  todi:       { name: 'TODI',                   it: 'TODI',                     cat: 'exotic',
+                degrees: [[1,0],[2,-1],[3,-1],[4,1],[5,0],[6,-1],[7,0]] },   // phrygian #4 with a natural 7
   wholetone:  { name: 'WHOLE TONE',             it: 'PER TONI INTERI',          cat: 'exotic',
                 degrees: [[1,0],[2,0],[3,0],[4,1],[5,1],[6,1]] },
   // ─── Melodic-minor modes (jazz) ───
@@ -59953,7 +60004,9 @@ const SCALE_SHORT_NAMES = {
   dblharm:'DBL HARM', phrygdom:'PHRYG DOM', hungmin:'HUNG. MIN', hungmaj:'HUNG. MAJ',
   hirajoshi:'HIRAJOSHI', lyddom:'LYD DOM', altered:'ALTERED', locrian2:'LOC ♮2',
   dimwh:'DIM W-H', dimhw:'DIM H-W', augmented:'AUGMENT', inscale:'IN', egyptian:'EGYPTIAN',
-  wholetone:'WHOLE TONE', chromatic:'CHROMATIC'
+  wholetone:'WHOLE TONE', chromatic:'CHROMATIC',
+  yo:'YO', iwato:'IWATO', kumoi:'KUMOI', insen:'INSEN',
+  ukrdorian:'UKR DORIAN', purvi:'PURVI', marwa:'MARWA', todi:'TODI'
 };
 
 const STP_X0 = 20, STP_XU = 28;
@@ -60002,6 +60055,14 @@ const SCALE_GHOST_OVERRIDE = {
   blues:'minpent',           // minor pentatonic PLUS the b5 blue note
   hirajoshi:'natminor',      // natural minor without the 4 and b7
   inscale:'phrygian',        // in/Japanese vs phrygian (shares the b2 color)
+  yo:'minpent',              // same notes as minor pentatonic rotated; brightest of the Japanese five
+  iwato:'locrian',           // locrian without the 3 and 6
+  kumoi:'dorian',            // dorian without the 4 and b7
+  insen:'phrygian',          // in with a b7: still phrygian-coloured
+  ukrdorian:'dorian',        // dorian with a raised 4 — one move
+  purvi:'dblharm',           // double harmonic with a #4 — one move
+  marwa:'lydian',            // lydian with a b2 — one move
+  todi:'hungmin',            // hungarian minor with a b2
   egyptian:'minpent',        // suspended pentatonic: minor pent with the 2 for the b3
   dblharm:'harmmaj',         // harmonic major with a b2 — one move
   hungmaj:'lyddom',          // lydian dominant with a #2 — one move
@@ -74049,10 +74110,14 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
   const reportMs = residualLean + (errsMs.reduce((a, b) => a + b, 0) / errsMs.length);
 
   let grade, gradeClass, xp;
-  if      (meanFrac <= 0.07) { grade = 'LOCKED IN';  gradeClass = 'great'; xp = 20; prGameStats.streak++; }
-  else if (meanFrac <= 0.15) { grade = 'CLOSE';      gradeClass = 'good';  xp = 10; prGameStats.streak++; }
-  else if (meanFrac <= 0.26) { grade = 'NEEDS WORK'; gradeClass = 'meh';   xp = 3;  prGameStats.streak = 0; }
-  else                       { grade = 'OFF';        gradeClass = 'bad';   xp = 1;  prGameStats.streak = 0; }
+  // Was hardcoded English, so Polyrhythm graded in English for an Italian user
+  // while Tempo Lock right next door graded in Italian. The tl_grade_* keys
+  // already carry both twins and use the same four bands, so they are reused
+  // rather than duplicated under a pr_ prefix.
+  if      (meanFrac <= 0.07) { grade = t('tl_grade_locked');     gradeClass = 'great'; xp = 20; prGameStats.streak++; }
+  else if (meanFrac <= 0.15) { grade = t('tl_grade_close');      gradeClass = 'good';  xp = 10; prGameStats.streak++; }
+  else if (meanFrac <= 0.26) { grade = t('tl_grade_needs_work'); gradeClass = 'meh';   xp = 3;  prGameStats.streak = 0; }
+  else                       { grade = t('tl_grade_off');        gradeClass = 'bad';   xp = 1;  prGameStats.streak = 0; }
   checkStreakMilestone(prGameStats.streak);
   const sign = reportMs > 8 ? '+' : reportMs < -8 ? '−' : '±';
   const dir  = reportMs > 8 ? t('dir_late') : reportMs < -8 ? t('dir_early') : t('dir_on');
@@ -75857,16 +75922,16 @@ const RT_JOURNEY = {
   moonlight:{tier:'medium',bpm:50,hooks:[{b:0,s:20.4,ms:0},{b:16,s:24,ms:19200},{b:59,s:28.8,ms:70800},{b:95,s:37.2,ms:114000},{b:271,s:30,ms:325200}]}, // ms hooks for perf mode; retune via Leg Tuner
   bella_ciao:{tier:'medium',bpm:100,hooks:[{b:0,s:5.4},{b:9,s:6},{b:19,s:7.8},{b:40,s:19.2},{b:72,s:23.4}]},
   st_louis_blues:{tier:'medium',bpm:72,hooks:[{b:0,s:5.83},{b:7,s:6.67},{b:15,s:12.5},{b:58,s:20.82},{b:102,s:18.33}]},
-  maple_rag:{tier:'hard',bpm:88,hooks:[{b:0,s:2.73},{b:4,s:2.72},{b:8,s:5.46},{b:16,s:5.46},{b:23,s:7.5}]},
-  entertainer:{tier:'hard',bpm:104,hooks:[{b:0,s:4.04},{b:7,s:4.62},{b:15,s:5.19},{b:23,s:9.23},{b:31,s:5.19}]},
+  maple_rag:{tier:'hard',bpm:88,hooks:[{b:0,s:3.41},{b:4,s:3.4},{b:8,s:6.14},{b:16,s:5.46},{b:23,s:7.5}]},
+  entertainer:{tier:'hard',bpm:104,hooks:[{b:0,s:4.62},{b:7,s:4.62},{b:15,s:5.19},{b:23,s:9.23},{b:31,s:5.19}]},
   twinkle_stride:{tier:'hard',bpm:200,hooks:[{b:0,s:4.5},{b:32,s:9.6},{b:119,s:9.9},{b:154,s:20.7},{b:223,s:15.9}]},
   hungarian_5:{tier:'hard',bpm:130,hooks:[{b:0,s:7.38},{b:16,s:7.39},{b:64,s:14.78},{b:96,s:20.33},{b:170,s:15.25}]},
   carol_bells:{tier:'hard',bpm:144,hooks:[{b:0,s:5},{b:12,s:5},{b:36,s:10},{b:60,s:10},{b:84,s:15}]},
   liebestraum:{tier:'hard',bpm:152,hooks:[{b:3,s:16.14,ms:1184},{b:43,s:14.97,ms:16974},{b:189,s:24.04,ms:74605},{b:255,s:36.98,ms:100658},{b:531,s:35.43,ms:209605}]}, // ms hooks for perf mode; retune via Leg Tuner
   arabesque_1:{tier:'hard',bpm:120,hooks:[{b:0,s:4},{b:8,s:10.5},{b:151,s:16},{b:202,s:15},{b:386,s:19.5}]},
   fuer_elise:{tier:'hard',bpm:68,hooks:[{b:0,s:11.47,ms:0},{b:24,s:18.54,ms:21176},{b:66,s:25.6,ms:58235},{b:122,s:30.02,ms:107647},{b:155.84,s:28.26,ms:137506}]}, // ms hooks for perf mode; retune via Leg Tuner
-  moonlight_3:{tier:'hard',bpm:152,hooks:[{b:0,s:3.18,ms:0},{b:8,s:3.17,ms:3091},{b:16,s:6.32,ms:6182},{b:32,s:3.56,ms:12365},{b:40.99,s:5.92,ms:15839}]}, // ms hooks for perf mode; retune via Leg Tuner
-  prelude_c:{tier:'hard',bpm:72,hooks:[{b:0,s:6.67},{b:8,s:6.67},{b:16,s:9.99},{b:28,s:16.66},{b:108,s:20.83}]},
+  moonlight_3:{tier:'hard',bpm:152,hooks:[{b:0,s:11.76,ms:0},{b:29,s:9.83,ms:11447},{b:76,s:18.52,ms:30000},{b:122,s:36.6,ms:48158},{b:214.99,s:33.46,ms:84864}]}, // ms hooks for perf mode; retune via Leg Tuner
+  prelude_c:{tier:'hard',bpm:72,hooks:[{b:0,s:13.33,ms:0},{b:16,s:21.67,ms:13333},{b:42,s:24.99,ms:35000},{b:72,s:29.99,ms:60000},{b:107,s:21.66,ms:89167}]},
   // ── Performance-mode additions ─────────────────────────────────────────────
   // Perf songs have no beat grid, so hooks carry absolute ms (rtDistractSongStart
   // prefers hook.ms whenever the song has a perf block). b: is nominal, kept only so
@@ -75879,20 +75944,20 @@ const RT_JOURNEY = {
   // RIFFS.piano[id] and riffStart('piano', id) is hardcoded to the piano bank, so a
   // rhodes entry could never be picked — and they're the same music as their piano
   // twins, which would only repeat pieces in the pool.
-  alla_turca:{tier:'hard',bpm:120,hooks:[{b:6.66667,s:5,ms:4000},{b:58.54,s:7,ms:35124},{b:127.567,s:10,ms:76540},{b:173.26,s:14,ms:103956},{b:251.453,s:17,ms:150872}]},
-  barcarolle:{tier:'easy',bpm:69,hooks:[{b:9.16667,s:5,ms:5500},{b:65.295,s:7,ms:39177},{b:155.808,s:10,ms:93485},{b:213.822,s:14,ms:128293},{b:296.835,s:17,ms:178101}]},
-  butterfly:{tier:'medium',bpm:132,hooks:[{b:2.5,s:5,ms:1500},{b:25.7283,s:7,ms:15437},{b:59.6867,s:10,ms:35812},{b:102.812,s:14,ms:61687},{b:116.77,s:17,ms:70062}]},
-  fantaisie_impromptu:{tier:'hard',bpm:84,hooks:[{b:10,s:5,ms:6000},{b:83.6183,s:7,ms:50171},{b:168.75,s:10,ms:101250},{b:264.717,s:14,ms:158830},{b:359.015,s:17,ms:215409}]},
-  moonlight_2:{tier:'medium',bpm:80,hooks:[{b:9.16667,s:5,ms:5500},{b:33.045,s:7,ms:19827},{b:72.7267,s:10,ms:43636},{b:115.74,s:14,ms:69444},{b:167.922,s:17,ms:100753}]},
-  prelude_csharp:{tier:'medium',bpm:54,hooks:[{b:0,s:5,ms:0},{b:72.5317,s:7,ms:43519},{b:154.05,s:10,ms:92430},{b:228.902,s:14,ms:137341},{b:317.087,s:17,ms:190252}]},
-  prelude_op23:{tier:'hard',bpm:108,hooks:[{b:10,s:5,ms:6000},{b:58.28,s:7,ms:34968},{b:115.628,s:10,ms:69377},{b:199.643,s:14,ms:119786},{b:259.492,s:17,ms:155695}]},
-  raindrop:{tier:'easy',bpm:60,hooks:[{b:8.33333,s:5,ms:5000},{b:74.3767,s:7,ms:44626},{b:180.26,s:10,ms:108156},{b:266.977,s:14,ms:160186},{b:344.527,s:17,ms:206716}]},
-  sonata_facile:{tier:'medium',bpm:120,hooks:[{b:8.33333,s:5,ms:5000},{b:70.0067,s:7,ms:42004},{b:155.383,s:10,ms:93230},{b:262.428,s:14,ms:157457},{b:336.973,s:17,ms:202184}]},
-  to_spring:{tier:'medium',bpm:88,hooks:[{b:4.16667,s:5,ms:2500},{b:46.2617,s:7,ms:27757},{b:104.33,s:10,ms:62598},{b:147.4,s:14,ms:88440},{b:209.635,s:17,ms:125781}]},
-  traumerei:{tier:'easy',bpm:60,hooks:[{b:4.16667,s:5,ms:2500},{b:45.155,s:7,ms:27093},{b:72.9217,s:10,ms:43753},{b:119.022,s:14,ms:71413},{b:171.788,s:17,ms:103073}]},
-  troika:{tier:'medium',bpm:92,hooks:[{b:0,s:5,ms:0},{b:45.95,s:7,ms:27570},{b:116.082,s:10,ms:69649},{b:162.045,s:14,ms:97227},{b:237.177,s:17,ms:142306}]},
-  waldstein_1:{tier:'hard',bpm:160,hooks:[{b:0.833333,s:5,ms:500},{b:191.362,s:7,ms:114817},{b:395.84,s:10,ms:237504},{b:596.15,s:14,ms:357690},{b:813.96,s:17,ms:488376}]},
-  wedding_day:{tier:'hard',bpm:112,hooks:[{b:9.16667,s:5,ms:5500},{b:102.948,s:7,ms:61769},{b:200.205,s:10,ms:120123},{b:309.963,s:14,ms:185978},{b:428.887,s:17,ms:257332}]},
+  alla_turca:{tier:'hard',bpm:120,hooks:[{b:0,s:13.5,ms:0},{b:27.54,s:13.5,ms:13770},{b:81.57,s:27,ms:40785},{b:149.26,s:34,ms:74630},{b:325.45,s:30,ms:162725}]},
+  barcarolle:{tier:'easy',bpm:69,hooks:[{b:0,s:13.7,ms:0},{b:16.3,s:14.83,ms:14174},{b:32.81,s:24.79,ms:28530},{b:87.82,s:35.75,ms:76365},{b:220.83,s:37.88,ms:192026}]},
+  butterfly:{tier:'medium',bpm:132,hooks:[{b:0,s:11.83,ms:0},{b:25.73,s:12.01,ms:11695},{b:51.69,s:18.65,ms:23495},{b:104.81,s:24.45,ms:47641},{b:171.77,s:19.27,ms:78077}]},
+  fantaisie_impromptu:{tier:'hard',bpm:84,hooks:[{b:3,s:9.32,ms:2143},{b:15.62,s:12.72,ms:11157},{b:32.75,s:19.31,ms:23393},{b:84.72,s:29.03,ms:60514},{b:351.02,s:18.42,ms:250729}]},
+  moonlight_2:{tier:'medium',bpm:80,hooks:[{b:0,s:15.5,ms:0},{b:21.05,s:16,ms:15788},{b:42.73,s:18.25,ms:32047},{b:66.74,s:28.25,ms:50055},{b:140.92,s:19.25,ms:105690}]},
+  prelude_csharp:{tier:'medium',bpm:54,hooks:[{b:11,s:16.1,ms:12222},{b:24.53,s:15.88,ms:27256},{b:90.05,s:24.43,ms:100056},{b:127.9,s:26.21,ms:142111},{b:151.09,s:39.2,ms:167878}]},
+  prelude_op23:{tier:'hard',bpm:108,hooks:[{b:1,s:12.78,ms:556},{b:23.28,s:18.1,ms:12933},{b:55.63,s:17.76,ms:30906},{b:125.64,s:46.7,ms:69800},{b:297.49,s:32.52,ms:165272}]},
+  raindrop:{tier:'easy',bpm:60,hooks:[{b:0,s:15,ms:0},{b:65.38,s:20,ms:65380},{b:176.26,s:22,ms:176260},{b:198.98,s:35,ms:198980},{b:234.53,s:34,ms:234530}]},
+  sonata_facile:{tier:'medium',bpm:120,hooks:[{b:0,s:7,ms:0},{b:14.01,s:14,ms:7005},{b:41.38,s:23.5,ms:20690},{b:247.43,s:27.5,ms:123715},{b:464.97,s:31.5,ms:232485}]},
+  to_spring:{tier:'medium',bpm:88,hooks:[{b:0,s:13.87,ms:0},{b:20.26,s:19.96,ms:13814},{b:97.33,s:23.61,ms:66361},{b:146.4,s:25.61,ms:99818},{b:183.64,s:26.56,ms:125209}]},
+  traumerei:{tier:'easy',bpm:60,hooks:[{b:1.17,s:17,ms:1170},{b:18.16,s:14,ms:18160},{b:47.92,s:15,ms:47920},{b:62.02,s:31,ms:62020},{b:91.79,s:33,ms:91790}]},
+  troika:{tier:'medium',bpm:92,hooks:[{b:0,s:19.35,ms:0},{b:29.95,s:17.44,ms:19533},{b:105.08,s:17.83,ms:68530},{b:142.04,s:31.62,ms:92635},{b:221.18,s:30.05,ms:144248}]},
+  waldstein_1:{tier:'hard',bpm:160,hooks:[{b:0,s:19.26,ms:0},{b:52.36,s:26.52,ms:19635},{b:121.84,s:37.02,ms:45690},{b:591.15,s:32,ms:221681},{b:1553.96,s:38.01,ms:582735}]},
+  wedding_day:{tier:'hard',bpm:112,hooks:[{b:0,s:10.88,ms:0},{b:19.95,s:11.28,ms:10687},{b:70.21,s:20.18,ms:37612},{b:195.96,s:36.46,ms:104979},{b:544.89,s:38.4,ms:291905}]},
 };
 // Songs whose Road Trip legs have been hand-tuned on-device and signed off.
 // WHY THIS EXISTS: the tuner's yellow "changed" highlight only compares against a
@@ -75916,6 +75981,25 @@ const RT_TUNED = new Set([
   'moonlight',
   'liebestraum',
   'fuer_elise',
+  // Second tuning pass, signed off on device.
+  'moonlight_3',
+  'prelude_c',
+  'alla_turca',
+  'barcarolle',
+  'butterfly',
+  'moonlight_2',
+  // Third tuning pass, signed off on device.
+  'fantaisie_impromptu',
+  'prelude_csharp',
+  'prelude_op23',
+  'raindrop',
+  'sonata_facile',
+  // Final pass: every perf leg is now signed off.
+  'to_spring',
+  'traumerei',
+  'troika',
+  'waldstein_1',
+  'wedding_day',
 ]);
 // A song needs tuning if it plays from a perf block and hasn't been signed off.
 function rtNeedsTuning(id){
@@ -81902,6 +81986,61 @@ function _launcherIsUp() {
   return !!el && getComputedStyle(el).display !== 'none' && !el.classList.contains('lnch-gone');
 }
 
+// ── Global error net (v0.150.15) ──────────────────────────────────────────
+// One 10MB file, ~118k lines of JS, no framework and therefore no error
+// boundary. An uncaught throw inside a render or an audio path leaves the
+// screen half-drawn: overlays stuck open, the body still scroll-locked, notes
+// still ringing, and no message. The person force-quits and the report reads
+// "the app froze", which is unactionable.
+//
+// This is deliberately NOT crash reporting. Nothing is sent anywhere; there is
+// no analytics SDK in this app and adding one at 1.0 would mean a new Data
+// Safety disclosure for data that would not get acted on. This only makes a
+// single error survivable.
+//
+// Recovery order matters: audio first (the most intrusive symptom), then the
+// scroll lock (which otherwise leaves the page unscrollable with nothing on
+// screen to explain it), then the message.
+var _errNetLast = 0, _errNetCount = 0;
+
+function _errNetRecover() {
+  // Each step is independently guarded: recovery must never itself throw, or
+  // the handler becomes the thing that breaks the app.
+  try { if (typeof stopAllAudio === 'function') stopAllAudio(); } catch (e) {}
+  try {
+    document.body.classList.remove('scroll-locked');
+    document.body.style.top = '';
+    document.body.style.overflow = '';
+  } catch (e) {}
+  try { if (typeof _scrollLockSync === 'function') _scrollLockSync(); } catch (e) {}
+}
+
+function _errNetHandle(what) {
+  var now = Date.now();
+  // A throw inside a rAF loop or an audio callback can fire hundreds of times a
+  // second. Recovering on every one would be its own freeze, so collapse a
+  // burst into a single recovery.
+  if (now - _errNetLast < 4000) { _errNetCount++; return; }
+  _errNetLast = now;
+  _errNetCount = 0;
+  try { console.error('[intonare] recovered from', what); } catch (e) {}
+  _errNetRecover();
+  try {
+    if (typeof svcToast === 'function') svcToast(t('err_recovered') || 'Something went wrong. That screen was reset.');
+  } catch (e) {}
+}
+
+try {
+  window.addEventListener('error', function (ev) {
+    // Ignore resource load failures (a missing image fires this too and needs
+    // no recovery); only script errors carry an Error object.
+    if (ev && ev.error) _errNetHandle(ev.message || 'error');
+  });
+  window.addEventListener('unhandledrejection', function (ev) {
+    _errNetHandle((ev && ev.reason && ev.reason.message) || 'promise rejection');
+  });
+} catch (e) {}
+
 // ── In-app update (v0.150.13) ─────────────────────────────────────────────
 // Google Play In-App Updates via @capawesome/capacitor-app-update. Play is
 // asked directly whether a newer build exists, so there is no version manifest
@@ -83100,6 +83239,7 @@ const STRINGS = {
     rlp_band_wide:'WIDE', rlp_band_open:'OPEN', rlp_band_close:'CLOSE', rlp_band_adj:'ADJACENT',
     rlp_gap_wide:'a fourth or more apart', rlp_gap_open:'a third to a fourth', rlp_gap_close:'a tone to a minor third', rlp_gap_adj:'within a tone',
     rlp_new_tier:'%b reached! At least %v points, \u00d7%m multiplier',
+    err_recovered:'Something went wrong. That screen was reset.',
     iu_title:'Update available', iu_later:'LATER', iu_download:'DOWNLOAD',
     iu_downloading:'DOWNLOADING\u2026', iu_restart:'RESTART', iu_retry:'RETRY',
     iu_open_store:'OPEN STORE',
@@ -83149,6 +83289,7 @@ const STRINGS = {
     backup_confirm_title:'Restore this backup?', backup_from:'FROM THE BACKUP', backup_now:'ON THIS DEVICE NOW',
     backup_warn:'Everything on this device is replaced by the backup. Anything you have done here since it was made is lost. Pro and your tap calibration stay as they are.',
     backup_cancel:'Cancel', backup_replace:'Replace', backup_saved:'Backup saved', backup_restored:'Backup restored',
+    backup_save_to:'Save backup',
     backup_out_title:'This backup will contain', backup_go:'Back Up',
     backup_out_note:'Pro and your tap calibration are not included. Pro comes back through Restore Purchase on a new device.',
     backup_row_streak:'Streak', backup_row_xp:'XP', backup_row_ach:'Achievements', backup_row_days:'Days practiced',
@@ -83219,7 +83360,9 @@ const STRINGS = {
       dblharm:'Double Harmonic Major', phrygdom:'Phrygian Dominant', hungmin:'Hungarian Minor',
       hungmaj:'Hungarian Major', hirajoshi:'Hirajoshi', lyddom:'Lydian Dominant', altered:'Altered',
       locrian2:'Locrian ♮2', dimwh:'Diminished (W-H)', dimhw:'Diminished (H-W)', augmented:'Augmented',
-      inscale:'In', egyptian:'Egyptian', wholetone:'Whole Tone', chromatic:'Chromatic'
+      inscale:'In', egyptian:'Egyptian', wholetone:'Whole Tone', chromatic:'Chromatic',
+      yo:'Yo', iwato:'Iwato', kumoi:'Kumoi', insen:'Insen',
+      ukrdorian:'Ukrainian Dorian', purvi:'Purvi', marwa:'Marwa', todi:'Todi'
     },
     root_names:[
       ['C','C'],['C#','C♯'],['Db','D♭'],['D','D'],['D#','D♯'],['Eb','E♭'],
@@ -84165,6 +84308,7 @@ const STRINGS = {
     rlp_band_wide:'LARGA', rlp_band_open:'APERTA', rlp_band_close:'STRETTA', rlp_band_adj:'ADIACENTE',
     rlp_gap_wide:'a una quarta o pi\u00f9', rlp_gap_open:'da una terza a una quarta', rlp_gap_close:'da un tono a una terza minore', rlp_gap_adj:'entro un tono',
     rlp_new_tier:'Fascia %b raggiunta! Almeno %v punti, moltiplicatore \u00d7%m',
+    err_recovered:'Qualcosa \u00e8 andato storto. Quella schermata \u00e8 stata reimpostata.',
     iu_title:'Aggiornamento disponibile', iu_later:'PI\u00d9 TARDI', iu_download:'SCARICA',
     iu_downloading:'DOWNLOAD IN CORSO\u2026', iu_restart:'RIAVVIA', iu_retry:'RIPROVA',
     iu_open_store:'APRI LO STORE',
@@ -84213,6 +84357,7 @@ const STRINGS = {
     backup_confirm_title:'Ripristinare questo backup?', backup_from:'DAL BACKUP', backup_now:'SU QUESTO DISPOSITIVO ORA',
     backup_warn:'Tutto quello che c\'è su questo dispositivo viene sostituito dal backup. Quello che hai fatto qui da quando è stato creato andrà perso. Pro e la calibrazione del tap restano come sono.',
     backup_cancel:'Annulla', backup_replace:'Sostituisci', backup_saved:'Backup salvato', backup_restored:'Backup ripristinato',
+    backup_save_to:'Salva il backup',
     backup_out_title:'Questo backup conterrà', backup_go:'Salva',
     backup_out_note:'Pro e la calibrazione del tap non sono inclusi. Pro torna con Ripristina Acquisto su un nuovo dispositivo.',
     backup_row_streak:'Serie', backup_row_xp:'XP', backup_row_ach:'Obiettivi', backup_row_days:'Giorni di pratica',
@@ -84283,7 +84428,9 @@ const STRINGS = {
       dblharm:'Doppio Armonico Maggiore', phrygdom:'Frigio Dominante', hungmin:'Minore Ungherese',
       hungmaj:'Maggiore Ungherese', hirajoshi:'Hirajoshi', lyddom:'Lidio Dominante', altered:'Alterata',
       locrian2:'Locrio ♮2', dimwh:'Diminuita (T-S)', dimhw:'Diminuita (S-T)', augmented:'Aumentata',
-      inscale:'In', egyptian:'Egizia', wholetone:'Per Toni Interi', chromatic:'Cromatica'
+      inscale:'In', egyptian:'Egizia', wholetone:'Per Toni Interi', chromatic:'Cromatica',
+      yo:'Yo', iwato:'Iwato', kumoi:'Kumoi', insen:'Insen',
+      ukrdorian:'Dorico Ucraino', purvi:'Purvi', marwa:'Marwa', todi:'Todi'
     },
     root_names:[
       ['C','Do'],['C#','Do♯'],['Db','Re♭'],['D','Re'],['D#','Re♯'],['Eb','Mi♭'],
@@ -88286,11 +88433,17 @@ const BACKUP_PREFIX_SKIP = ['sl_', 'sg_zones_'];
 // another device would silently override that device's hooks with someone
 // else's half-finished session.
 const BACKUP_KEYS_SKIP   = [PROG_STORAGE_KEY, 'mq_in_progress', 'intonare_restored',
-                            // iu_snooze is a per-device "do not re-ask about this
-                            // version until DATE" note. Restoring it onto a new
+                            // iu_snooze is a per-device note recording which
+                            // version was dismissed and when. Restoring it onto a new
                             // phone could silence a legitimate update prompt there,
                             // and it rebuilds itself the moment one is dismissed.
                             'iu_snooze',
+                            // intonare_dev is the developer-tools switch. It is
+                            // per-device on purpose (set from a console, survives
+                            // a rebuilt file). Carrying it in a backup would turn
+                            // dev tools on for whoever restores it, which is
+                            // exactly wrong if a tester ever shares an export.
+                            'intonare_dev',
                             'intonare_rt_legtune'];
 
 // Fields inside progState that must NOT travel.
@@ -88449,14 +88602,42 @@ function backupExport() {
   let native = false;
   try { native = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); } catch (e) {}
 
-  // Tier 1: write a real file straight to Documents. No Share sheet — this
-  // IS the download. Dormant until @capacitor/filesystem is installed;
-  // feature-detected, not assumed.
-  if (P && P.Filesystem) {
-    P.Filesystem.writeFile({ path: name, data: txt, directory: 'DOCUMENTS', encoding: 'utf8' })
-      .then(() => { try { svcToast(t('backup_saved')); } catch (e) {} })
-      .catch(() => {
-        // Fall back to the share sheet only if the direct write itself failed.
+  // Tier 1: write a real file to CACHE, then hand its URI to the share sheet so
+  // the person can put it somewhere that actually survives.
+  //
+  // This deliberately went back and forth. Writing silently to Directory.DOCUMENTS
+  // looked like the cleanest "download", and it does write successfully — but on
+  // Android 11+ scoped storage that resolves INSIDE the app sandbox
+  // (/Android/data/<pkg>/files/Documents), not the Documents folder anyone can
+  // see in a file manager. Worse for a backup specifically: that directory is
+  // deleted when the app is uninstalled, so a backup whose whole job is
+  // surviving a phone change would evaporate at the exact moment it was needed.
+  //
+  // Android has no API for silently writing a non-media file to a public folder.
+  // The sanctioned routes are the Storage Access Framework (no Capacitor plugin
+  // exposes ACTION_CREATE_DOCUMENT; it would mean a hand-written native plugin
+  // per platform) or handing the file to the system sheet, which offers
+  // "Save to Files" and lands it in real, visible, uninstall-proof storage.
+  //
+  // The original complaint was a share sheet full of raw JSON TEXT, which is a
+  // message-sharing sheet with nothing useful in it. Attaching a real file URI
+  // changes what the sheet offers, so it reads as a save dialog rather than a
+  // "share my data" prompt. Same tap count as before; a genuine file at the end.
+  if (P && P.Filesystem && P.Share) {
+    P.Filesystem.writeFile({ path: name, data: txt, directory: 'CACHE', encoding: 'utf8' })
+      .then(function (r) {
+        return P.Share.share({
+          title: name,
+          url: r.uri,                       // the file itself, not its contents
+          dialogTitle: t('backup_save_to') || 'Save backup'
+        });
+      })
+      .then(function () { try { svcToast(t('backup_saved')); } catch (e) {} })
+      .catch(function (err) {
+        // A dismissed share sheet rejects too, and that is not a failure worth
+        // shouting about; only report if the file never got written.
+        var msg = (err && (err.message || err)) + '';
+        if (/cancel|dismiss|abort/i.test(msg)) return;
         try { intonareNativeShare(txt, null, 'Intonare'); }
         catch (e) { try { svcToast(t('backup_err_writefail')); } catch (e2) {} }
       });
@@ -88658,7 +88839,24 @@ const _OVERLAY_SEL = [
 // Re-querying on every attribute change was most of the cost.
 let _overlayNodes = null;
 function _overlayCandidates() {
-  if (!_overlayNodes) _overlayNodes = document.querySelectorAll(_OVERLAY_SEL);
+  if (!_overlayNodes) {
+    const all = document.querySelectorAll(_OVERLAY_SEL);
+    // Keep only OUTERMOST matches. The substring selectors match an overlay's own
+    // children too ([class*="-sheet"] alone hits 116 nodes, because mq-sheet-title,
+    // mq-sheet-handle and fav-sheet-body all contain "-sheet"), which tripled the
+    // scan for no information: a child cannot be open unless its parent is, and
+    // the parent is already in the list. 409 nodes down to the real overlays.
+    const out = [];
+    for (let i = 0; i < all.length; i++) {
+      let p = all[i].parentElement, nested = false;
+      while (p && p !== document.body) {
+        if (p.matches && p.matches(_OVERLAY_SEL)) { nested = true; break; }
+        p = p.parentElement;
+      }
+      if (!nested) out.push(all[i]);
+    }
+    _overlayNodes = out;
+  }
   return _overlayNodes;
 }
 
@@ -88685,7 +88883,29 @@ function _isVisiblyOpen(el) {
 
 function _anyOverlayOpen() {
   const nodes = _overlayCandidates();
-  for (let i = 0; i < nodes.length; i++) if (_isVisiblyOpen(nodes[i])) return true;
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i];
+    if (!_isVisiblyOpen(n)) continue;
+    // Geometry alone is a guess, and it has been wrong three times now: it drove
+    // a 409-node scan, it made Road Trip crawl, and a single false positive locks
+    // the WHOLE app because scroll-locked sets position:fixed on the body.
+    //
+    // The failure is asymmetric. A false negative means a page scrolls behind an
+    // overlay, which is cosmetic. A false positive means nothing scrolls anywhere
+    // and the app looks broken. So the guess now has to be confirmed.
+    //
+    // hit-testing the middle of the screen is the confirmation: if something
+    // genuinely covers the page, the element at the centre of the viewport IS
+    // that element or lives inside it. One cheap call, and it is authoritative
+    // in a way that width/height/opacity checks can never be. Anything that
+    // merely looks overlay-shaped but is not actually on top fails here.
+    try {
+      const hit = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      if (hit && (hit === n || n.contains(hit))) return true;
+    } catch (e) {
+      return true;   // no hit-test available: fall back to the old behaviour
+    }
+  }
   return false;
 }
 
@@ -88696,8 +88916,21 @@ function _scrollLockSync() {
   _scrollLockRAF = requestAnimationFrame(() => {
     _scrollLockRAF = null;
     try {
+      // Road Trip, Music Quiz and Survival Guide run their own full-screen lock
+      // (rt-open / mq-open / sg-open) and manage their own internal scrolling.
+      // Scanning 133 nodes to decide something they have already decided is pure
+      // cost, so hand it to them and leave.
+      const cl = document.body.classList;
+      if (cl.contains('rt-open') || cl.contains('mq-open') || cl.contains('sg-open')) {
+        if (cl.contains('scroll-locked')) {
+          cl.remove('scroll-locked');
+          document.body.style.top = '';
+          if (_scrollLockSavedY != null) { const y = _scrollLockSavedY; _scrollLockSavedY = null; window.scrollTo(0, y); }
+        }
+        return;
+      }
       const open = _anyOverlayOpen();
-      const wasLocked = document.body.classList.contains('scroll-locked');
+      const wasLocked = cl.contains('scroll-locked');
       // body.scroll-locked now uses position:fixed to actually pin the page on a
       // phone (overflow:hidden alone doesn't stop touch-drag in mobile WebViews,
       // only mouse/wheel on desktop — see the CSS comment). Fixed positioning
@@ -88748,9 +88981,27 @@ function closeAllOverlays() {
 
 try {
   const _mo = new MutationObserver((records) => {
+    // PERF, and it was a bad one. This observer watches class/style on the whole
+    // subtree, so every animated element in the app woke it up — and the work it
+    // wakes up to is _anyOverlayOpen(), which calls getBoundingClientRect() AND
+    // getComputedStyle() on up to 133 nodes. Both force synchronous layout, so an
+    // animation-dense screen was paying ~266 forced reflows per frame. Road Trip
+    // (constant map, marker and progress animation) was close to unusable.
+    //
+    // An attribute change can only matter if the element that changed is itself
+    // an overlay candidate. A progress bar restyling itself cannot open or close
+    // an overlay, so it is skipped without touching layout. childList still
+    // invalidates the cached node list, since a new overlay may have been added.
+    let relevant = false;
     for (let i = 0; i < records.length; i++) {
-      if (records[i].type === 'childList') { _overlayNodes = null; break; }
+      const r = records[i];
+      if (r.type === 'childList') { _overlayNodes = null; relevant = true; break; }
+      const tgt = r.target;
+      if (tgt && tgt.nodeType === 1 && tgt.matches) {
+        try { if (tgt.matches(_OVERLAY_SEL)) { relevant = true; break; } } catch (e) {}
+      }
     }
+    if (!relevant) return;
     _scrollLockSync();
   });
   const _startObs = () => {
@@ -89603,36 +89854,36 @@ function vrVoiceColor(hex) {
   return VR_VOICE_COLOR_LIGHT[hex.toLowerCase()] || hex;
 }
 const VR_VOICE_TYPES = [
-  { id:'bass',     name:'Bass',          nameIt:'Basso',             gender:'male',   lowMidi:40, highMidi:64, tessCenter:52, color:'#4169e1', timbre:'Deep · dark · round',        timbreIt:'Profondo · scuro · rotondo',      singers:['Johnny Cash','Barry White','Leonard Cohen','Tom Waits'],          desc:'The lowest standard male voice. Rich, dark resonance that anchors harmony. True basses are rarer than most think: many who identify as bass are actually bass-baritones.',                                                                                                            descIt:'La voce maschile standard più grave. Ricca, scura, il pilastro dell\'armonia. I veri bassi sono più rari di quanto si pensi — molti che si definiscono bassi sono in realtà bassi-baritoni.' },
-  { id:'baritone', name:'Baritone',      nameIt:'Baritono',          gender:'male',   lowMidi:45, highMidi:69, tessCenter:57, color:'#6495ed', timbre:'Warm · full · versatile',     timbreIt:'Caldo · pieno · versatile',       singers:['Frank Sinatra','Elvis Presley','David Bowie','Jim Morrison'],     desc:'The most common male voice type. Warm, full tone that suits lyrical and dramatic singing across virtually every genre. Most male pop and rock singers are baritones.',                                                                                                                 descIt:'La voce maschile più comune. Timbro caldo e pieno, adatto al canto lirico e drammatico in quasi ogni genere. La maggior parte dei cantanti maschi pop e rock è baritonale.' },
+  { id:'bass',     name:'Bass',          nameIt:'Basso',             gender:'male',   lowMidi:40, highMidi:64, tessCenter:52, color:'#4169e1', timbre:'Deep · dark · round',        timbreIt:'Profondo · scuro · rotondo',      singers:['Johnny Cash','Barry White','Leonard Cohen','Tom Waits'],          desc:'The lowest standard male voice. A rich, dark resonance that anchors harmony. True basses are uncommon: many singers who identify as bass are bass-baritones.',                                                                                                            descIt:'La voce maschile standard più grave. Ricca, scura, il pilastro dell\'armonia. I veri bassi sono più rari di quanto si pensi — molti che si definiscono bassi sono in realtà bassi-baritoni.' },
+  { id:'baritone', name:'Baritone',      nameIt:'Baritono',          gender:'male',   lowMidi:45, highMidi:69, tessCenter:57, color:'#6495ed', timbre:'Warm · full · versatile',     timbreIt:'Caldo · pieno · versatile',       singers:['Frank Sinatra','Elvis Presley','David Bowie','Jim Morrison'],     desc:'The most common male voice type. A warm, full tone that suits both lyrical and dramatic singing. Most male pop and rock singers are baritones.',                                                                                                                 descIt:'La voce maschile più comune. Timbro caldo e pieno, adatto al canto lirico e drammatico in quasi ogni genere. La maggior parte dei cantanti maschi pop e rock è baritonale.' },
   { id:'tenor',    name:'Tenor',         nameIt:'Tenore',            gender:'male',   lowMidi:48, highMidi:72, tessCenter:60, color:'#34d399', timbre:'Bright · clear · powerful',   timbreIt:'Luminoso · chiaro · potente',     singers:['Michael Jackson','Stevie Wonder','Andrea Bocelli','Bruno Mars'], desc:'The highest standard male voice. Carries the melody in choral and operatic writing. The most common lead vocal range in pop and rock.',                                                                                                                                             descIt:'La voce maschile standard più acuta. Porta la melodia nella scrittura corale e operistica. L\'estensione vocale solistica più comune nel pop e nel rock.' },
-  { id:'alto',     name:'Alto',          nameIt:'Contralto',         gender:'female', lowMidi:53, highMidi:77, tessCenter:65, color:'#ffa07a', timbre:'Rich · deep · chest-forward', timbreIt:'Ricco · profondo · di petto',     singers:['Nina Simone','Shirley Bassey','Adele','Cher'],                   desc:'The lowest female voice type, with a rich chest-dominant tone in the lower register. True contraltos are rare — many choir "altos" are actually mezzos singing low.',                                                                                                                descIt:'La voce femminile più grave, con un timbro ricco e dominante di petto nel registro basso. I veri contralti sono rari — molte "contralto" corali sono in realtà mezzosoprani che cantano in basso.' },
-  { id:'mezzo',    name:'Mezzo-Soprano', nameIt:'Mezzosoprano',      gender:'female', lowMidi:57, highMidi:81, tessCenter:69, color:'#ff8aae', timbre:'Warm · dark · versatile',     timbreIt:'Caldo · scuro · versatile',       singers:['Amy Winehouse','Alicia Keys','Rihanna','Amy Lee'],               desc:'The middle female range, and the most common female voice type. Darker in timbre than a soprano, but with more agility and reach than an alto.',                                                                                                                                          descIt:"L'estensione femminile media, e il tipo di voce femminile più comune. Più scura nel timbro di un soprano, ma con maggiore agilità ed estensione di un contralto." },
-  { id:'soprano',  name:'Soprano',       nameIt:'Soprano',           gender:'female', lowMidi:60, highMidi:84, tessCenter:72, color:'#b8a3ff', timbre:'Bright · clear · soaring',    timbreIt:'Luminoso · chiaro · brillante',   singers:["Beyoncé",'Mariah Carey','Ariana Grande','Hayley Williams'],      desc:'The highest standard female voice type. Known for a brilliant upper register. Often the principal voice in opera and the top part in choral SATB writing.',                                                                                                                          descIt:"La voce femminile standard più acuta. Nota per il registro superiore brillante. Spesso la voce principale nell'opera e la parte più alta nella scrittura corale SATB." },
+  { id:'alto',     name:'Alto',          nameIt:'Contralto',         gender:'female', lowMidi:53, highMidi:77, tessCenter:65, color:'#ffa07a', timbre:'Rich · deep · chest-forward', timbreIt:'Ricco · profondo · di petto',     singers:['Nina Simone','Shirley Bassey','Adele','Cher'],                   desc:'The lowest female voice type, with a rich chest-dominant tone in the lower register. True contraltos are rare: many choral altos are mezzos singing low.',                                                                                                                descIt:'La voce femminile più grave, con un timbro ricco e dominante di petto nel registro basso. I veri contralti sono rari — molte "contralto" corali sono in realtà mezzosoprani che cantano in basso.' },
+  { id:'mezzo',    name:'Mezzo-Soprano', nameIt:'Mezzosoprano',      gender:'female', lowMidi:57, highMidi:81, tessCenter:69, color:'#ff8aae', timbre:'Warm · dark · versatile',     timbreIt:'Caldo · scuro · versatile',       singers:['Amy Winehouse','Alicia Keys','Rihanna','Amy Lee'],               desc:'The middle female range, and the most common female voice type. Darker in timbre than a soprano, with more agility and reach than an alto.',                                                                                                                                          descIt:"L'estensione femminile media, e il tipo di voce femminile più comune. Più scura nel timbro di un soprano, ma con maggiore agilità ed estensione di un contralto." },
+  { id:'soprano',  name:'Soprano',       nameIt:'Soprano',           gender:'female', lowMidi:60, highMidi:84, tessCenter:72, color:'#b8a3ff', timbre:'Bright · clear · soaring',    timbreIt:'Luminoso · chiaro · brillante',   singers:["Beyoncé",'Mariah Carey','Ariana Grande','Hayley Williams'],      desc:'The highest standard female voice type, known for a brilliant upper register. Usually the principal voice in opera and the top part in choral SATB writing.',                                                                                                                          descIt:"La voce femminile standard più acuta. Nota per il registro superiore brillante. Spesso la voce principale nell'opera e la parte più alta nella scrittura corale SATB." },
 ];
 
 // Extended / specialist voice types — toggled in the Reference section
 const VR_EXTENDED_TYPES = [
   {
-    id:'basso-profondo', nameIt:'Basso Profondo', name:'Basso Profondo', nameIt:'Basso Profondo', gender:'male',
+    id:'basso-profondo', name:'Basso Profondo', nameIt:'Basso Profondo', gender:'male',
     lowMidi:36, highMidi:52, tessCenter:44, color:'#1e40af',
     timbre:'Subterranean · thunderous · rare', timbreIt:'Sotterraneo · tonante · rarissimo',
     singers:['Feodor Chaliapin','René Pape','Tim Storms','Boris Christoff'],
-    desc:"The deepest male voice — and arguably the rarest voice type of all. Capable of pitches below the conventional bass range. Prized in Russian Orthodox choral music and Wagnerian opera. Tim Storms holds the Guinness record for the lowest note ever sung.", descIt:'La voce maschile più profonda — e probabilmente il tipo di voce più raro. Capace di note al di sotto del range del basso convenzionale. Preziosa nella musica corale ortodossa russa e nell\'opera wagneriana.',
+    desc:'The deepest male voice, and one of the rarest. It reaches pitches below the conventional bass range. Used in Russian Orthodox choral music and in Wagnerian opera. Tim Storms holds the Guinness record for the lowest note ever sung.', descIt:'La voce maschile pi\u00f9 profonda, e una delle pi\u00f9 rare. Raggiunge note al di sotto dell\'estensione del basso convenzionale. Usata nella musica corale ortodossa russa e nell\'opera wagneriana. Tim Storms detiene il record Guinness per la nota pi\u00f9 grave mai cantata.',
   },
   {
     id:'countertenor', name:'Countertenor', nameIt:'Controtenore', gender:'male',
     lowMidi:52, highMidi:77, tessCenter:64, color:'#0ea5e9',
     timbre:'Light · agile · ethereal', timbreIt:'Leggero · agile · etereo',
     singers:['Andreas Scholl','Philippe Jaroussky','Alfred Deller','Iestyn Davies'],
-    desc:'The highest standard male voice, performed primarily in falsetto register. Countertenors took on roles originally written for castrati in Baroque opera. The range overlaps significantly with the alto: the same notes, but completely different timbres.', descIt:'La voce maschile standard più acuta, eseguita principalmente in falsetto. I controtenori hanno assunto ruoli originariamente scritti per castrati nell\'opera barocca.',
+    desc:'A male voice sung mainly in the falsetto register, reaching higher than a tenor. Countertenors took on roles written for castrati in Baroque opera. The range overlaps the alto: the same notes, a different timbre.', descIt:'Una voce maschile eseguita principalmente in falsetto, che raggiunge note pi\u00f9 acute del tenore. I controtenori hanno assunto ruoli scritti per i castrati nell\'opera barocca. L\'estensione si sovrappone al contralto: stesse note, timbro diverso.',
   },
   {
     id:'coloratura', name:'Coloratura Soprano', nameIt:'Soprano di Coloratura', gender:'female',
     lowMidi:57, highMidi:91, tessCenter:76, color:'#d946ef',
     timbre:'Brilliant · agile · acrobatic', timbreIt:'Brillante · agile · acrobatico',
     singers:['Diana Damrau','Joan Sutherland','Beverly Sills','Natalie Dessay'],
-    desc:"A soprano sub-type defined by exceptional agility for rapid runs, trills, and leaps as much as by range. Mozart', descIt:'Un sottotipo di soprano definito da un\'eccezionale agilità per passaggi rapidi, trilli e salti. La Regina della Notte di Mozart raggiunge il Fa6.'s Queen of the Night aria reaches F6 — territory only coloraturas can inhabit reliably.",
+    desc:'A soprano sub-type defined by agility as much as by range, built for rapid runs, trills and leaps. The Queen of the Night aria by Mozart reaches F6.', descIt:'Un sottotipo di soprano definito dall\'agilit\u00e0 quanto dall\'estensione, adatto a passaggi rapidi, trilli e salti. L\'aria della Regina della Notte di Mozart raggiunge il Fa6.',
   },
 ];
 
@@ -103420,6 +103671,14 @@ const GSS_SCALE_TYPES = [
   { id:'hungmin',    name:'Hungarian Minor',   nameIt:'Minore Ungherese' },
   { id:'hungmaj',    name:'Hungarian Major',   nameIt:'Maggiore Ungherese' },
   { id:'hirajoshi',  name:'Hirajoshi',         nameIt:'Hirajoshi' },
+  { id:'yo',         name:'Yo',                nameIt:'Yo' },
+  { id:'iwato',      name:'Iwato',             nameIt:'Iwato' },
+  { id:'kumoi',      name:'Kumoi',             nameIt:'Kumoi' },
+  { id:'insen',      name:'Insen',             nameIt:'Insen' },
+  { id:'ukrdorian',  name:'Ukrainian Dorian',  nameIt:'Dorico Ucraino' },
+  { id:'purvi',      name:'Purvi',             nameIt:'Purvi' },
+  { id:'marwa',      name:'Marwa',             nameIt:'Marwa' },
+  { id:'todi',       name:'Todi',              nameIt:'Todi' },
   { id:'lyddom',     name:'Lydian Dominant',   nameIt:'Lidio Dominante' },
   { id:'altered',    name:'Altered',           nameIt:'Alterata' },
   { id:'locrian2',   name:'Locrian ♮2',        nameIt:'Locrio ♮2' },
@@ -112239,14 +112498,23 @@ function svcSubtitle(snap) {
             : (wind ? 'Notes' : 'Chords');
   if (snap.capo > 0) s += ' + ' + snap.capo;
   if (snap.sub) {
+    // NOTE: this object had duplicate keys. `standard` was declared twice
+    // ('STANDARD' for strings, then 'STD' for woodwinds) and `tenor` twice with
+    // the same value. In an object literal the last one wins silently, so every
+    // instrument was already rendering 'STD'. Kept 'STD' to preserve exactly
+    // what shipped rather than change a label as a side effect of a cleanup;
+    // switch it to 'STANDARD' deliberately if that reads better on a chart.
     const SUB_LABELS = {
       ukebass:'BASS', '4string':'4-STR', '5string':'5-STR', '6string':'6-STR',
       mandolin:'MANDOLIN', mandola:'MANDOLA', mandocello:'CELLO', octave:'OCTAVE',
-      standard:'STANDARD', baritone:'BARITONE', tenor:'TENOR', '12string':'12-STR',
+      baritone:'BARITONE', '12string':'12-STR',
       // woodwind subs
       bb:'B♭', a:'A', eb:'E♭', alto:'ALTO', soprano:'SOPRANO', bari:'BARI',
       bass:'BASS', g:'G', f:'F', d:'D', low_d:'LOW D',
       tenor:'TENOR', piccolo:'PICCOLO', contrabass:'CB', standard:'STD',
+      // Oboe family: these rendered as raw uppercase keys, so cor anglais came
+      // out as 'CORANGLAIS' with no space.
+      oboe:'OBOE', coranglais:'COR ANGLAIS',
       // harmonica keys — show as-is (already short note names)
     };
     s += ' · ' + (SUB_LABELS[snap.sub] || snap.sub.toUpperCase());
@@ -121525,7 +121793,9 @@ function mqSyncDailyCard() {
     if (dot) dot.classList.add('show');     // pulse: unfinished daily
   } else {
     badge.classList.remove('mq-daily-done-badge');
-    if (label) label.textContent = 'DAILY';
+    // Same bug as the RESUME branch above, missed at the time: hardcoded English
+    // on the daily badge. chordle_daily already exists with its twin (GIORNALIERA).
+    if (label) label.textContent = (typeof t === 'function') ? t('chordle_daily') : 'DAILY';
     if (dot) dot.classList.add('show');     // pulse: not played yet today
   }
 }

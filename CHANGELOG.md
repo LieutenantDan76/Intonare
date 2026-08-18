@@ -80,6 +80,379 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.150.27 — Road Trip leg tuning complete: 39 of 39
+
+`to_spring`, `traumerei`, `troika`, `waldstein_1` and `wedding_day` applied and
+signed off. `RT_TUNED` 16 to 21, which is every perf leg.
+
+Both checks now read zero: no leg is badged NEEDS TUNING, and no leg still
+carries the converter's default hook spacing of 5/7/10/14/17. Every hook in
+Road Trip has been heard by a person and placed by hand.
+
+`waldstein_1` is the outlier worth noting: its final hook sits at beat 1553.96
+(about 9m43s in), the longest leg in the set by a wide margin.
+
+## v0.150.26 — Five more Road Trip legs tuned
+
+`fantaisie_impromptu`, `prelude_csharp`, `prelude_op23`, `raindrop` and
+`sonata_facile` applied from device and signed off in `RT_TUNED` (11 to 16).
+
+34 of 39 legs tuned. Five remain on converter defaults: to_spring, traumerei,
+troika, waldstein_1, wedding_day. The badge list and the hook data agree on the
+same five.
+
+## v0.150.25 — Tuned legs stopped claiming they need tuning
+
+`RT_TUNED` is the sign-off list the leg tuner reads: a perf song is badged
+NEEDS TUNING until its id appears there. Six legs tuned on device across the
+last two passes were never added, so the tuner kept flagging work that was
+already done.
+
+Added `moonlight_3`, `prelude_c`, `alla_turca`, `barcarolle`, `butterfly` and
+`moonlight_2`. Five entries to eleven.
+
+Cross-check: the ten perf songs still badged are exactly the ten whose hook
+spacing is still the converter's default (5/7/10/14/17). The badge list and the
+data now agree, which was the point.
+
+## v0.150.24 — Two untranslated strings, and duplicate keys in the chart labels
+
+**Polyrhythm graded in English for Italian users.** Its four grade labels
+(LOCKED IN / CLOSE / NEEDS WORK / OFF) were hardcoded, while Tempo Lock right
+next door used `tl_grade_*` keys that already carry Italian twins and cover the
+same four bands. Reused those rather than duplicating under a `pr_` prefix.
+
+**Music Quiz's daily badge said DAILY in Italian.** The RESUME branch two lines
+above it in the same function had already been fixed for exactly this and
+carries a comment saying so; the DAILY branch was missed at the time. Now uses
+`chordle_daily`, which already has its twin (GIORNALIERA).
+
+**`SUB_LABELS` had duplicate keys.** `standard` was declared twice ('STANDARD'
+for strings, then 'STD' for woodwinds) and `tenor` twice with the same value. In
+an object literal the last wins silently, so every instrument was already
+rendering 'STD' and the 'STANDARD' entry was dead. Removed the dead entries and
+kept 'STD' to preserve exactly what shipped — changing the label is a separate
+decision, not a side effect of a cleanup.
+
+Also added the oboe family: `oboe` and `coranglais` were missing, so cor anglais
+rendered as its raw key, 'CORANGLAIS' with no space.
+
+Two strings the audit flags are deliberately left in English: the leg tuner's
+untuned filter and the `audioPathStatus` debug overlay are both dev-only
+surfaces.
+
+Note on the instrument audit: it reads a fixed 600-character window after
+`SUB_LABELS`, so the comment added above the map pushes later entries out of its
+view. It will report `coranglais` as missing even though it resolves correctly
+at runtime. Verified by evaluating the object directly.
+
+## v0.150.23 — Vocal range reference copy, and a broken string that was shipping
+
+**The Coloratura Soprano description was corrupted.** An unescaped apostrophe in
+"Mozart's" ended the string early, so the Italian text and the `descIt:` key
+itself were swallowed into the English string. The app was rendering literal
+code to users:
+
+> ...as much as by range. Mozart', descIt:'Un sottotipo di soprano...
+
+Coloratura also had no working Italian description at all as a result. Both
+rewritten and separated properly.
+
+**Basso Profondo had a duplicate `nameIt` key** in the same object literal. The
+second silently won. Harmless, but it was one typo away from mattering.
+
+**Tenor and Countertenor both claimed to be "the highest standard male voice."**
+Countertenor now describes what it actually is: a male voice sung mainly in
+falsetto, reaching higher than a tenor.
+
+Copy pass on all nine voice types: opinions dropped ("arguably the rarest voice
+type of all", "rarer than most think", "territory only coloraturas can inhabit
+reliably"), em-dashes replaced, scare quotes around choral "altos" removed.
+Verified all nine now carry both EN and IT text with no leaked code.
+
+**Dormant grid deletion: nothing to delete.** Checked the whole file — no song
+carries both perf data and a legacy lh/rh grid. The 33 remaining `lh:` arrays
+all belong to songs with no perf data, so they are live. Either the deletion
+happened and was not recorded, or the perf conversion replaced them outright.
+Removing this from the backlog.
+
+## v0.150.22 — Eight world scales added: 28 to 36
+
+Audited the scale bank against Western, Eastern European, Middle Eastern,
+Indian and East Asian practice. Western coverage was already complete. Three
+real gaps existed, and two things were deliberately left out.
+
+**Japanese — was 2 of 6.** The app had Hirajoshi and In. Added **Yo, Iwato,
+Kumoi and Insen**. Yo matters most: it is the bright, semitone-free counterpart
+to In, and the two are the standard contrasting pair in Japanese folk music, so
+shipping In without Yo was like shipping minor without major. Sources genuinely
+disagree on these names — the intervals given here for Iwato are what Slonimsky
+calls Hirajoshi — so the code follows one convention consistently and says so,
+since mixing sources is what produces two scales with the same name and
+different notes.
+
+**Eastern European — one clear miss.** Added **Ukrainian Dorian** (Dorian ♯4),
+also known as Mi Sheberakh, Altered Dorian, Romanian and Hutsul. It carries
+that many names because Ukrainian, Romanian, Greek, Balkan and Jewish
+traditions all use it; it is the standard klezmer minor and was the only one of
+klezmer's four modes missing.
+
+**Indian — completes the thaat system.** Seven of the ten Hindustani thaats
+already existed under Western names (Bilawal=Major, Kalyan=Lydian,
+Khamaj=Mixolydian, Kafi=Dorian, Asavari=Natural Minor, Bhairavi=Phrygian,
+Bhairav=Double Harmonic). Added **Purvi, Marwa and Todi**, so the app now covers
+all ten parent scales of Hindustani classical music.
+
+**Deliberately NOT added.** Rast, Bayati, Saba and Sikah — four of the most
+important maqamat, and Rast is called the mother of them all — are defined by
+quarter tones. Rast's third sits between a major and minor third. There is no
+honest 12-TET representation: an approximation is not a simplified version of
+the scale, it is a different scale that a listener from that tradition hears as
+wrong. Same reasoning for Indonesian slendro and pelog, which are not equal
+tempered and vary between individual gamelan sets. Chinese gōng/shāng/jué/zhǐ/yǔ
+are rotations of the major pentatonic, whose pitches the app already has, so
+adding them would be five near-duplicates.
+
+All eight go into `SCALE_DEFS`, which is the single source of truth: the
+instrument charts derive their intervals from it via `scaleDefIntervals()`
+rather than keeping a second table, so each scale reaches the Scales module,
+tonal centre, drone and every chart at once. Each also gets a ghost-parent
+mapping, without which the fingering charts render the scale with no positions.
+
+Verified: all eight interval sets checked against expected pitch sets at root C,
+all 8 present in the chart table and resolving to a definition, all 8 with a
+ghost parent, and `intonare_scale_audit.py` passes all 36 scales for both pitch
+content and spelling.
+
+## v0.150.21 — Six more Road Trip legs tuned, and all six pinned
+
+Applied from device: `moonlight_3` refined again (third hook moved to b:76 /
+s:18.52), and five legs taken off the converter's default spacing entirely —
+`prelude_c`, `alla_turca`, `barcarolle`, `butterfly`, `moonlight_2`.
+
+`prelude_c` is the notable one: it had real values but no `ms` fields at all,
+and is now fully specified with them.
+
+**All six added to the sentinel as pins**, which is the part that actually
+matters. A hand-tuned leg with no pin can be silently overwritten by a
+converter re-run and nothing would report it — the previous six tuned legs sat
+unprotected for exactly that reason. 241 pins to 247. Tamper-tested one of the
+new pins by reverting `butterfly` to its old values; the sentinel caught it.
+
+Tuning status: **29 of 39 legs tuned, 10 still on converter defaults** —
+fantaisie_impromptu, prelude_csharp, prelude_op23, raindrop, sonata_facile,
+to_spring, traumerei, troika, waldstein_1, wedding_day. Detection is a leg whose
+five `s` values are exactly 5/7/10/14/17.
+
+(Worth recording: the first version of that detection reported zero untuned,
+because `s:([\d.]+)` also matches the `s:` inside `ms:`, so every leg looked
+hand-tuned. Anchored to `,s:` now.)
+
+## v0.150.20 — Tapping TRAIN inside a folder left both hubs on screen
+
+Exact repro from device: open the Reading folder, tap the TRAIN tab. The main
+Train hub appeared and the Reading sub-hub stayed rendered underneath it, so the
+READING folder card and the loose STAFF NOTES / NOTATION CARDS cards were all on
+screen together.
+
+Three bugs behind it, all now fixed at the source rather than patched:
+
+**1. The reset only fired when LEAVING practice.** The condition was
+`mode === 'practice' && m !== 'practice'`. Tapping TRAIN while already in
+practice is `m === 'practice'`, so it was skipped: the main hub was revealed by
+the `.train-only` toggle while the sub-hub was never hidden. Tapping the tab you
+are already on is a normal way to ask for the top level of that tab, and now
+behaves like one.
+
+**2. The list of sub-hubs was copied in three places and was one short
+everywhere.** `earTrainingHub`, `rhythmHub` and `gamesHub` were listed at all
+three reset sites; `readingHub` was added later, with Staff Notes, and none of
+the three copies were updated. That is why this was Reading-only. Replaced with
+a single `PRACTICE_SUBHUBS` list and a `closeAllSubHubs()` helper, so a fifth
+folder cannot repeat it.
+
+**3. Found while testing: folders never hid each other.** Each `enterX()` hid
+only `practiceHub` and showed its own hub, so opening Games while Reading was up
+left both rendered. Not previously reported because leaving a folder normally
+goes through `exitX()` first. Added `openSubHub(id)`, which shows one and hides
+the rest.
+
+Verified in a mobile-viewport browser across all four folders: exactly one hub
+visible at every step, and TRAIN from inside any folder returns to the main hub.
+
+## v0.150.19 — Nothing scrolled anywhere, because the scroll lock was guessing
+
+Reported as the Tools tab not scrolling. It was not the Tools tab: a single
+false positive in the overlay detector locks the WHOLE app, because
+`body.scroll-locked` sets `position: fixed`.
+
+Measured in a real browser rather than reasoned about. Two findings:
+
+**The candidate scan was 409 nodes, not the ~130 the code comment claims.** The
+substring selectors match an overlay's own children — `[class*="-sheet"]` alone
+hits 116, because `mq-sheet-title`, `mq-sheet-handle` and `fav-sheet-body` all
+contain "-sheet". Now filtered to outermost matches only: a child cannot be open
+unless its parent is, and the parent is already in the list. **409 → 97.** That
+is also a straight win for the Road Trip lag fixed in v0.150.17.
+
+**Geometry alone is a guess, and the guess is now confirmed by hit-testing.**
+Width, height, opacity and position can all say "overlay" about something that
+is not actually covering the page. If something genuinely covers the page, then
+the element at the centre of the viewport IS that element or lives inside it, so
+`elementFromPoint` at the viewport centre settles it in one cheap call.
+
+The failure here is asymmetric, which is why the stricter test is the right
+trade: a false negative means a page scrolls behind an overlay (cosmetic), a
+false positive means nothing scrolls anywhere and the app appears broken.
+
+Verified in a mobile-viewport browser: unlocked on Tools, Train, Tuner and
+Metro; locks correctly when the module picker opens; unlocks when it closes.
+One deliberate behaviour change — the tour overlay no longer locks, because it
+is a `pointer-events: none` backdrop and the hit test correctly reports it is
+not blocking the page.
+
+This detector has now caused three incidents (a 411-node scan, the Road Trip
+lag, and this). If there is a fourth, it should stop inferring state from the
+DOM and have overlays declare themselves on open and close, the way `rt-open`,
+`mq-open` and `sg-open` already do.
+
+## v0.150.18 — Three hand-tuned Road Trip legs applied
+
+`maple_rag`, `entertainer` and `moonlight_3` were tuned on device but never
+made it into the file — they had been pasted as reference in conversation and
+read, not written. Diffed all 39 legs field by field to find exactly which
+differed rather than trusting either copy; those three, and only those three.
+
+`moonlight_3` changed substantially (every hook moved, e.g. the final hook from
+b:40.99/s:5.92 to b:214.99/s:33.46). `maple_rag` and `entertainer` were smaller
+adjustments to their opening hooks.
+
+Sentinel pins for `maple_rag` and `entertainer` updated to match; both are
+pinned legs and correctly flagged the change as drift.
+
+Remaining untuned: 14 legs still carry the converter's default hook spacing
+(s values of exactly 5/7/10/14/17) — alla_turca, barcarolle, butterfly,
+fantaisie_impromptu, moonlight_2, prelude_csharp, prelude_op23, raindrop,
+sonata_facile, to_spring, traumerei, troika, waldstein_1, wedding_day.
+
+## v0.150.17 — Road Trip was crawling because of the scroll-lock observer
+
+Reported as Road Trip being laggy, glitchy and hard to use in the first build
+since v0.148.3. That is also the first build carrying the generic scroll lock,
+and the lock was the cause.
+
+The MutationObserver watches `class` and `style` across the whole body subtree,
+so **every animated element in the app woke it up**. The work it wakes up to is
+`_anyOverlayOpen()`, which calls `getBoundingClientRect()` and
+`getComputedStyle()` on up to 133 nodes — both force synchronous layout. An
+animation-dense screen was therefore paying on the order of 266 forced reflows
+per frame. Road Trip, with constant map, marker and progress animation, was the
+worst-hit screen in the app.
+
+Two fixes:
+
+**Ignore mutations that cannot change overlay state.** An attribute change only
+matters if the element that changed is itself an overlay candidate. A progress
+bar restyling itself cannot open or close an overlay, so it is now skipped
+without touching layout at all. `childList` still invalidates the cached node
+list, since a genuinely new overlay may have appeared.
+
+**Bail entirely for modules that run their own lock.** Road Trip, Music Quiz and
+Survival Guide each manage a full-screen lock (`rt-open` / `mq-open` /
+`sg-open`) and their own internal scrolling. Scanning 133 nodes to decide
+something they have already decided is pure cost. The generic lock now hands
+over to them and returns immediately — clearing any stale `scroll-locked` and
+restoring the saved scroll position on the way out, so the two systems cannot
+fight.
+
+Verified: zero overlay scans while `rt-open` is set, stale lock cleared, scroll
+position preserved rather than lost on entry, and normal overlay locking
+unaffected on every other screen.
+
+## v0.150.16 — Backup export saves a real file you can actually find
+
+v0.150.6 removed the share sheet and wrote straight to `Directory.DOCUMENTS`.
+The write succeeded and the toast was honest, but on Android 11+ scoped storage
+that path resolves INSIDE the app sandbox
+(`/Android/data/com.lieutenantdan.intonare/files/Documents`), not the Documents
+folder visible in a file manager. Reported as "toasts backup saved but no file".
+
+Worse for this feature specifically: that directory is deleted on uninstall. A
+backup whose entire job is surviving a phone change would have evaporated at
+exactly the moment it was needed.
+
+Android has no API for silently writing a non-media file to a public folder.
+The sanctioned routes are the Storage Access Framework — no Capacitor plugin
+exposes `ACTION_CREATE_DOCUMENT`, so that means a hand-written native plugin per
+platform — or handing the file to the system sheet, which offers "Save to Files"
+and lands it in real, visible, uninstall-proof storage.
+
+Tier 1 now writes to CACHE and shares the file's URI. The original complaint was
+a sheet full of raw JSON *text*, which is a message-sharing sheet with nothing
+useful in it; attaching a real file changes what the sheet offers, so it reads
+as a save dialog. Same tap count, a genuine file at the end.
+
+A dismissed sheet no longer reports an error — cancelling rejects the same as a
+failure, and only a failed write is worth shouting about.
+
+Verified across seven branches: writes to CACHE not DOCUMENTS, hands over a file
+URI, no raw text in the sheet, one success toast, silent on dismissal, text-share
+fallback on write failure, tier 2 fallback with no Filesystem plugin.
+
+### Full session re-verification
+Every change from v0.150.3 onward re-checked in one pass: syntax across all 9
+script blocks, version synced in all three spots, no duplicate IDs among the
+elements touched, all 17 session fixes still present, all 11 new strings present
+in both EN and IT, and every audit green — sentinel (97 fixes + 241 pins),
+backup (50 keys + 43 fields), stopAll, audio handles, and state leak.
+
+Note for future reads of the state-leak report: `_scrollLockRAF` now appears in
+every action's changed-state list. That is the v0.150.3 scroll-lock coalescer, a
+transient rAF handle rather than module state. Benign.
+
+## v0.150.15 — A net under uncaught errors
+
+The app had no `window.onerror` and no `unhandledrejection` handling at all.
+For one 10 MB file with ~118k lines of JS and no framework error boundary,
+that means a single uncaught throw inside a render or audio path leaves the
+screen half-drawn: overlays stuck open, body still scroll-locked, notes still
+ringing, no message. The person force-quits and the report reads "it froze",
+which is unactionable.
+
+Both handlers now recover instead. Order matters: audio first (the most
+intrusive symptom), then the scroll lock (which otherwise leaves the page
+unscrollable with nothing on screen explaining why), then one plain message.
+
+Deliberately NOT crash reporting. Nothing is transmitted; there is no analytics
+SDK in this app and adding one at 1.0 would mean a new Data Safety disclosure
+for data that would not get acted on by a solo developer at launch. This only
+makes one error survivable.
+
+Details that matter:
+- Every recovery step is independently guarded. The handler must never itself
+  throw, or it becomes the thing that breaks the app. Verified by testing with
+  a `stopAllAudio` that throws.
+- A throw inside a rAF loop or audio callback can fire hundreds of times a
+  second, so a burst collapses into a single recovery on a 4-second window.
+  Verified with 200 consecutive errors producing one recovery.
+- Resource load failures (a missing image also fires `error`) are ignored;
+  only events carrying an Error object trigger recovery.
+
+EN and IT strings both added.
+
+## v0.150.14 — The dev-tools switch could ride a backup onto someone else's phone
+
+`intonare_dev` was the last unclassified key in the backup audit, warning on
+every run this session. It is the developer-tools switch: per-device on
+purpose, set from a console, and deliberately granting no Pro. But it was
+never told whether to travel, so it defaulted to travelling — meaning an
+export shared by a tester would silently enable dev tools for whoever restored
+it. Classified as skip.
+
+The backup audit now passes clean for the first time in this session: all 50
+persisted keys and 43 progState fields classified. That matters beyond the bug
+itself — a gate that always warns is a gate that stops being read.
+
 ## v0.150.13 — In-app update card, with a real download-and-install flow on Android
 
 Uses Google Play In-App Updates through `@capawesome/capacitor-app-update`.
