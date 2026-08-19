@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.48 -->
+<!-- INTONARE_VERSION: 0.150.51 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -31086,7 +31086,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.48</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.51</span>
     </div>
   </div>
 </div>
@@ -31094,7 +31094,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.48';
+const INTONARE_VERSION = '0.150.51';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -82196,6 +82196,67 @@ try {
   });
 } catch (e) {}
 
+// ── First-open warm-up (v0.150.49) ────────────────────────────────────────
+// Opening the FIRST module of a session drops roughly half its frames; every
+// module after is smooth. Measured cold: Tuner 33/70 slow frames, Tools 35/70,
+// Train 43/70, with only 2-16ms of synchronous work at the tap. The cost is not
+// the animation and not script at tap; it is first-layout of the module's own
+// DOM and first-touch audio setup landing under the morph.
+//
+// Confirmed by experiment rather than assumed: paying that cost up front takes
+// Train from 43 slow frames to 18. It also matches the observation that tapping
+// anywhere on screen BEFORE picking a card makes Tuner and Metro noticeably
+// better — that first gesture is what lets the audio context start.
+//
+// Deliberately does NOT navigate. An earlier version called setMode() for each
+// hub, which warms more (43 -> 8) but actually changes the current view; doing
+// that behind the launcher risks leaving the app in a state nobody asked for.
+// This forces style and layout on the hidden hub subtrees instead, which is the
+// expensive half, and restores the inline styles it touched.
+//
+// Runs on idle so it can never compete with something being looked at, and only
+// once. requestIdleCallback is missing on Safari, hence the timeout fallback.
+let _warmedUp = false;
+function warmFirstOpen() {
+  if (_warmedUp) return;
+  _warmedUp = true;
+  try { if (typeof getAudio === 'function') getAudio(); } catch (e) {}
+  // Decode the embedded fonts up front. Ten families ship inline, and a font is
+  // only decoded when something first RENDERS text in it — so opening a module
+  // that uses a face nothing has used yet pays that cost mid-animation. It is
+  // synchronous and it blocks layout.
+  //
+  // This is what the Chrome-on-phone test showed: jittery for the first few
+  // loads, smooth once repeated reloads had warmed the font and bytecode caches.
+  // document.fonts.load() does the same warming deliberately, at idle, instead
+  // of leaving it to land under the first card morph.
+  try {
+    if (document.fonts && document.fonts.load) {
+      ['Bebas Neue','JetBrains Mono','JBMono','Fraunces','FrauncesHdr','GlyphFix',
+       'Bravura','Cinzel','Rajdhani','IM Fell English','Press Start 2P']
+        .forEach(function (f) { try { document.fonts.load('16px "' + f + '"'); } catch (e) {} });
+    }
+  } catch (e) {}
+  ['toolsHub','practiceHub','earTrainingHub','rhythmHub','gamesHub','readingHub'].forEach(function (id) {
+    try {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const prev = el.style.cssText;
+      el.style.cssText += ';position:absolute;visibility:hidden;display:block;';
+      void el.offsetHeight;
+      void el.getBoundingClientRect();
+      el.style.cssText = prev;
+    } catch (e) {}
+  });
+}
+function scheduleWarmUp() {
+  const go = function () { try { warmFirstOpen(); } catch (e) {} };
+  try {
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(go, { timeout: 2500 });
+    else setTimeout(go, 1200);
+  } catch (e) { setTimeout(go, 1200); }
+}
+
 // ── In-app update (v0.150.13) ─────────────────────────────────────────────
 // Google Play In-App Updates via @capawesome/capacitor-app-update. Play is
 // asked directly whether a newer build exists, so there is no version manifest
@@ -83447,7 +83508,7 @@ const STRINGS = {
     settings_data:'Your Data', backup_export:'⬇ Back Up Progress', backup_import:'⬆ Restore From Backup',
     backup_confirm_title:'Restore this backup?', backup_from:'FROM THE BACKUP', backup_now:'ON THIS DEVICE NOW',
     backup_warn:'Everything on this device is replaced by the backup. Anything you have done here since it was made is lost. Pro and your tap calibration stay as they are.',
-    backup_cancel:'Cancel', backup_replace:'Replace', backup_saved:'Backup ready to send', backup_restored:'Backup restored',
+    backup_cancel:'Cancel', backup_replace:'Replace', backup_saved:'Backup saved', backup_restored:'Backup restored',
     backup_save_to:'Send your backup somewhere safe',
     backup_out_title:'This backup will contain', backup_go:'Back Up',
     backup_out_note:'Pro and your tap calibration are not included. Pro comes back through Restore Purchase on a new device.',
@@ -84526,7 +84587,7 @@ const STRINGS = {
     settings_data:'I Tuoi Dati', backup_export:'⬇ Salva i Progressi', backup_import:'⬆ Ripristina da Backup',
     backup_confirm_title:'Ripristinare questo backup?', backup_from:'DAL BACKUP', backup_now:'SU QUESTO DISPOSITIVO ORA',
     backup_warn:'Tutto quello che c\'è su questo dispositivo viene sostituito dal backup. Quello che hai fatto qui da quando è stato creato andrà perso. Pro e la calibrazione del tap restano come sono.',
-    backup_cancel:'Annulla', backup_replace:'Sostituisci', backup_saved:'Backup pronto da inviare', backup_restored:'Backup ripristinato',
+    backup_cancel:'Annulla', backup_replace:'Sostituisci', backup_saved:'Backup salvato', backup_restored:'Backup ripristinato',
     backup_save_to:'Invia il backup in un posto sicuro',
     backup_out_title:'Questo backup conterrà', backup_go:'Salva',
     backup_out_note:'Pro e la calibrazione del tap non sono inclusi. Pro torna con Ripristina Acquisto su un nuovo dispositivo.',
@@ -88853,6 +88914,22 @@ function backupExport() {
   // message-sharing sheet with nothing useful in it. Attaching a real file URI
   // changes what the sheet offers, so it reads as a save dialog rather than a
   // "share my data" prompt. Same tap count as before; a genuine file at the end.
+  // Tier 0: a real "Save as..." dialog, if the FileSaver plugin is installed.
+  // This is the only path that puts the file somewhere the person chose, in
+  // visible storage that survives uninstalling the app. Everything below is a
+  // fallback for builds that predate the plugin.
+  if (P && P.FileSaver && P.FileSaver.save) {
+    P.FileSaver.save({ filename: name, data: txt, mimeType: 'application/json' })
+      .then(function (r) {
+        // Backing out of the picker is a deliberate choice, not an error.
+        if (r && r.saved) { try { svcToast(t('backup_saved')); } catch (e) {} }
+      })
+      .catch(function () {
+        try { svcToast(t('backup_err_writefail')); } catch (e) {}
+      });
+    return;
+  }
+
   if (P && P.Filesystem && P.Share) {
     P.Filesystem.writeFile({ path: name, data: txt, directory: 'CACHE', encoding: 'utf8' })
       .then(function (r) {
@@ -89998,6 +90075,9 @@ buildScaleRootDropdown();
 document.body.classList.toggle('lang-it', progState.lang === 'it');
 applyLang();
 initSliderToggles();
+// Warm the first module open. Not tied to the splash or the launcher: a pinned
+// module or a deep link skips both, and those users need it most.
+try { scheduleWarmUp(); } catch(e) {}
 // Reflect saved Pro state: toggle body.is-pro and stamp lock badges on locked cards.
 try { refreshProUI(); } catch (e) {}
 // Notification scheduling is DEFERRED, not run at boot.

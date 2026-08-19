@@ -82,6 +82,103 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.150.51 — Backup export gets a real Save dialog
+
+A backup you cannot retrieve is not a backup, which the share-sheet approach
+proved in practice.
+
+New native plugin, `FileSaverPlugin.java`, wrapping `ACTION_CREATE_DOCUMENT`.
+The system file picker opens, the person chooses folder and filename, and the
+app writes through the returned URI. No storage permission is needed, because
+picking the location IS the grant. This is the sanctioned Android route and
+nothing in the Capacitor ecosystem wraps it, hence writing it.
+
+Export is now four tiers, each a fallback for the one above:
+0. FileSaver — a real Save dialog, visible storage, survives uninstall
+1. Filesystem + Share — writes a file, hands it to the share sheet
+2. Share with the JSON as text
+3. Browser download
+
+The copy goes back to "Backup saved" from "Backup ready to send", because with
+tier 0 it genuinely is saved rather than handed off.
+
+Backing out of the picker resolves `saved: false` rather than rejecting — that
+is a deliberate choice by the person, not a failure, and it should not raise an
+error toast.
+
+**Needs installing before it does anything**: drop the .java into
+`android/app/src/main/java/com/lieutenantdan/intonare/`, add
+`registerPlugin(FileSaverPlugin.class);` to MainActivity BEFORE `super.onCreate`,
+then `npx cap sync android`. Until then the app falls through to tier 1 exactly
+as before, so this build is safe to ship either way.
+
+## v0.150.50 — Pre-decoding the fonts
+
+Testing the same file in Chrome ON the phone was the breakthrough: jittery for
+the first few loads, then smooth on every card once repeated reloads had warmed
+the caches. That rules out the app, the WebView and the hardware, and points at
+work that only happens the first time.
+
+Two things reloading warms: V8's bytecode cache, and the font cache. Ten font
+families ship embedded in this file, and a font is only decoded when something
+first RENDERS text in it — so opening a module that uses a face nothing has used
+yet pays a synchronous decode that blocks layout, mid-animation.
+
+`warmFirstOpen()` now calls `document.fonts.load()` for all eleven families at
+idle, doing deliberately what those reloads were doing by accident.
+
+Worth recording what this session ruled OUT, so nobody re-treads it:
+- **Not `overflow: hidden` on the morph.** A single run said otherwise; five runs
+  said identical with and without.
+- **Not module construction timing.** Deferring the build until after the
+  animation changed 22 slow frames to 23.
+- **Not document size.** 6,459 nodes exist but only 551 are rendered; the other
+  5,908 are already skipped by `display: none`, so `content-visibility` would add
+  risk for no gain — and it breaks size measurement of hidden elements, which
+  this app does in several places including the overlay detector.
+- **Not the hardware.** An S25 Ultra.
+
+Also worth recording: frame timings measured in this headless container swing
+between 15 and 43 slow frames on identical runs. They are not trustworthy for
+anything this size. The Chrome-on-device comparison was worth more than every
+measurement taken here.
+
+## v0.150.49 — Warming the first module open
+
+Your report that tapping anywhere BEFORE picking a card makes Tuner and Metro
+better was the clue: that first gesture is what lets the audio context start.
+
+Measured cold from a fresh load, with the launcher up: Tuner 33 of 70 frames
+over 20ms, Tools 35, Train 43 — and only 2-16ms of synchronous work at the tap.
+So it is neither the animation nor script at the moment of the tap. It is
+first-layout of the module's own DOM plus first-touch audio setup, both landing
+underneath the morph.
+
+`warmFirstOpen()` pays that cost on idle after boot. Result:
+
+| module | cold | warmed |
+|---|---|---|
+| Tuner | 33/70 | 23/70 |
+| Tools | 35/70 | 23/70 |
+| Train | 43/70 | 31/70 |
+
+**Not tied to the splash or the launcher.** `lnchShouldShow()` returns false for
+a pinned module or a deep link, so both are skippable — and those users need this
+most, since their module opens immediately. It runs on `requestIdleCallback`
+after boot regardless of path, with a timeout fallback for Safari.
+
+**Deliberately does not navigate.** An earlier version called `setMode()` for each
+hub, which warms considerably better (Train 43 → 8) but genuinely changes the
+current view; doing that behind a launcher risks leaving the app somewhere nobody
+asked for. This forces style and layout on the hidden hub subtrees instead, which
+is the expensive half, and restores the inline styles it touched.
+
+Honest about the size of it: this is a real, measured improvement of roughly a
+quarter to a third of the dropped frames, not a fix. Train remains the worst
+because it builds the most. Closing the rest means either accepting the
+navigating warm-up or splitting the hub construction so it does not all land in
+one frame.
+
 ## v0.150.48 — Morph timings, measured against the spec
 
 The card morph is a "container transform" in Material terms — a card expanding
