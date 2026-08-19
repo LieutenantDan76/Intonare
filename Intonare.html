@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.51 -->
+<!-- INTONARE_VERSION: 0.150.65 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -11305,7 +11305,11 @@ html,body{background:#000000!important;transition:none!important}
     background: var(--panel); border: 1px solid var(--border-soft);
     border-radius: var(--r-sm); padding: 0 12px; height: 44px;
     cursor: pointer; flex: 1; transition: border-color 0.15s; min-width: 0;
-  }
+    /* Column so the groove name can sit under the number and use the pill's
+     full width. min-width:0 lets the ellipsis actually engage inside a flex
+     parent; without it the text forces the pill wider instead of truncating. */
+  flex-direction: column; min-width: 0;
+}
   .prog-bpm-pill:hover { border-color: rgba(255,160,122,0.4); }
   .prog-bpm-mode-icon { font-size: 16px; line-height: 1; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--accent-warm); }
   .prog-bpm-center { display: flex; align-items: baseline; gap: 4px; flex: 1; }
@@ -11327,7 +11331,14 @@ html,body{background:#000000!important;transition:none!important}
        neither keeps its dark-mode hue there: --metro is #ffd166 dark and #503600
        light, and --accent-warm is green dark but burnt orange light. */
     color: var(--metro);
+    /* Sits UNDER the BPM number inside the pill, not beside it. A previous
+       attempt moved this out to its own full-width line, but .prog-transport-strip
+       is a horizontal flex row, so a 100%-wide block there shoved the KIT button
+       out of shape. Keeping it inside the pill and letting the pill itself grow
+       is the fix: the name gets the pill's full width instead of the sliver left
+       over next to the number. */
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    width: 100%; text-align: center; margin-top: 2px;
   }
 
   /* Metro quick panel (drawer) */
@@ -23592,7 +23603,7 @@ try {
     font-size:13px;letter-spacing:0.3em;text-indent:0.3em;
     color:#8a8caa;text-transform:uppercase;
     opacity:0;
-  ">play in tune</div>
+  " data-i18n="ui_play_in_tune">play in tune</div>
   <div id="splash-tag" style="
     position:absolute;
     left:0;right:0;
@@ -25227,9 +25238,9 @@ try {
           <div class="tuner-refpitch-popover" id="tunerRefPitchPopover">
             <div class="tuner-refpitch-presets" id="tunerRefPitchPresets"></div>
             <div class="tuner-refpitch-custom">
-              <span class="tuner-refpitch-custom-label">Custom</span>
+              <span class="tuner-refpitch-custom-label" data-i18n="ui_custom">Custom</span>
               <input class="tuner-refpitch-input" id="tunerRefPitchInput" type="number" min="400" max="480" value="440" placeholder="440">
-              <button class="tuner-refpitch-set" onclick="setRefPitchCustom()">SET</button>
+              <button class="tuner-refpitch-set" onclick="setRefPitchCustom()" data-i18n="ui_set">SET</button>
             </div>
           </div>
         </div>
@@ -25298,14 +25309,14 @@ try {
           <span class="vibrato-stat"><span class="vibrato-label" data-i18n="tuner_depth">DEPTH</span><span class="vibrato-val" id="vibratoDepth">—</span><span class="vibrato-unit">¢</span></span>
         </div>
 
-        <div class="teach-hint" data-i18n-html="hint_adv_meters">The graph plots pitch accuracy over the last 5 seconds, where a flat line means steady intonation. <strong>STROBE</strong> is a high-precision meter whose pattern locks completely still when you're perfectly in tune. <strong>VIBRATO</strong> measures the speed (Hz) and width (cents) of pitch oscillation on sustained notes.</div>
+        <div class="teach-hint" data-i18n-html="hint_adv_meters">The graph plots pitch accuracy over the last 5 seconds, where a flat line means steady intonation. <strong data-i18n="ui_strobe">STROBE</strong> is a high-precision meter whose pattern locks completely still when you're perfectly in tune. <strong data-i18n="ui_vibrato">VIBRATO</strong> measures the speed (Hz) and width (cents) of pitch oscillation on sustained notes.</div>
       </div>
 
     </div>
 
   <!-- ═══════════════ TUNER ONLY ═══════════════ -->
   <div class="tuner-only stack">
-    <div class="teach-hint" data-i18n-html="hint_tuner_main"><strong>TUNER</strong> — chromatic pitch detection via microphone. Play any note to see its name, octave, and how sharp or flat it is. Tap the mic button to start.</div>
+    <div class="teach-hint" data-i18n-html="hint_tuner_main"><strong data-i18n="ui_tuner">TUNER</strong> — chromatic pitch detection via microphone. Play any note to see its name, octave, and how sharp or flat it is. Tap the mic button to start.</div>
     <div class="card" id="stringGuideCard">
       <div class="card-glow"></div>
       <div class="panel-head">
@@ -25324,7 +25335,7 @@ try {
         </div>
       </div>
       <div class="strings-grid" id="stringsGrid"></div>
-      <div class="teach-hint" data-i18n-html="hint_strings_guide">Strings are shown <strong>low to high from the bottom up</strong> — same as tab notation. While the mic is on, the closest string highlights in cyan with your cents deviation and turns green when in tune. <strong>Tap any string row</strong> to hear it played back.</div>
+      <div class="teach-hint" data-i18n-html="hint_strings_guide">Strings are shown <strong data-i18n="ui_low_to_high_from_the_bot">low to high from the bottom up</strong> — same as tab notation. While the mic is on, the closest string highlights in cyan with your cents deviation and turns green when in tune. <strong data-i18n="ui_tap_any_string_row">Tap any string row</strong> to hear it played back.</div>
 
       <!-- instrument selector — family tabs + pill list, unified inside card -->
       <div class="tuner-card-divider" style="margin-top:14px"></div>
@@ -25737,7 +25748,7 @@ try {
 
         <!-- Three pedals below the keyboard: soft · sostenuto · damper -->
         <div class="piano-pedal-cluster"><div class="ppc-inner">
-          <div class="ppc-pedal soft"   id="pianoSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOFT</span></div></div><div class="ppc-name" data-i18n="pn_ped_soft">SOFT</div></div>
+          <div class="ppc-pedal soft"   id="pianoSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl" data-i18n="ui_soft">SOFT</span></div></div><div class="ppc-name" data-i18n="pn_ped_soft">SOFT</div></div>
           <div class="ppc-pedal sost"   id="pianoSostPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOST</span></div></div><div class="ppc-name">SOST</div></div>
           <div class="ppc-pedal damper" id="pianoPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SUST</span></div></div><div class="ppc-name" data-i18n="pn_ped_damper">DAMPER</div></div>
         </div></div>
@@ -25804,13 +25815,13 @@ try {
             <span class="rhodes-ctrl-label">TREM</span>
             <div class="piano-lid-seg-wrap">
               <button class="piano-lid-seg" data-rt="off"   onclick="setRhodesTremolo('off')">OFF</button>
-              <button class="piano-lid-seg active" data-rt="soft" onclick="setRhodesTremolo('soft')">SOFT</button>
+              <button class="piano-lid-seg active" data-rt="soft" onclick="setRhodesTremolo('soft')" data-i18n="ui_soft">SOFT</button>
               <button class="piano-lid-seg" data-rt="deep"  onclick="setRhodesTremolo('deep')">DEEP</button>
             </div>
             <span class="rhodes-ctrl-label" style="margin-left:4px">VIBE</span>
             <div class="piano-lid-seg-wrap">
               <button class="piano-lid-seg" data-rv="bright" onclick="setRhodesVibe('bright')">BRIGHT</button>
-              <button class="piano-lid-seg active" data-rv="warm" onclick="setRhodesVibe('warm')">WARM</button>
+              <button class="piano-lid-seg active" data-rv="warm" onclick="setRhodesVibe('warm')" data-i18n="ui_warm">WARM</button>
             </div>
           </div>
 
@@ -26132,7 +26143,7 @@ try {
               <div class="thmn-knob-cell">
                 <div class="thmn-knob" id="thmnKnobWave" data-thmn-knob="wave"></div>
                 <div class="thmn-knob-label" data-i18n="thmn_k_waveform">WAVEFORM</div>
-                <div class="thmn-knob-val" id="thmnKnobWaveVal">WARM</div>
+                <div class="thmn-knob-val" id="thmnKnobWaveVal" data-i18n="ui_warm">WARM</div>
               </div>
               <div class="thmn-knob-cell">
                 <div class="thmn-knob" id="thmnKnobBright" data-thmn-knob="bright"></div>
@@ -26160,7 +26171,7 @@ try {
         <button class="thmn-toggle" id="thmnSnapToggle" onclick="thmnToggleSnap()" data-i18n="thmn_snap">SNAP TO SCALE</button>
         <button class="thmn-toggle thmn-reset" onclick="thmnResetDefaults()" data-i18n="thmn_reset">DEFAULTS</button>
       </div>
-      <div class="teach-hint" data-i18n-html="hint_theremin">Drag anywhere on the dark surface and move <strong>right for higher pitch</strong>. It glides continuously like a real theremin, so there are no keys to hit. Set loudness with the <strong>VOLUME</strong> knob. Turn on <strong>NOTE GRID</strong> to see where each note sits, or <strong>SNAP TO SCALE</strong> to lock the glide onto a C-major scale for practice. Tap <strong>TRY A SOUND</strong> for guided demos.</div>
+      <div class="teach-hint" data-i18n-html="hint_theremin">Drag anywhere on the dark surface and move <strong data-i18n="ui_right_for_higher_pitch">right for higher pitch</strong>. It glides continuously like a real theremin, so there are no keys to hit. Set loudness with the <strong>VOLUME</strong> knob. Turn on <strong data-i18n="ui_note_grid">NOTE GRID</strong> to see where each note sits, or <strong data-i18n="ui_snap_to_scale">SNAP TO SCALE</strong> to lock the glide onto a C-major scale for practice. Tap <strong data-i18n="ui_try_a_sound">TRY A SOUND</strong> for guided demos.</div>
     </div><!-- /toolTheremin -->
 
     <!-- ═══════════════ RHYTHM FLASH CARDS ═══════════════ -->
@@ -26233,7 +26244,7 @@ try {
         <button class="rc-toggle" id="rcTapModeToggle" onclick="rcToggleTapMode()">TAP MODE: OFF</button>
       </div>
 
-      <div class="teach-hint" data-i18n-html="hint_rhythmcards"><strong>RHYTHM CARDS</strong> — a shuffled deck of common rhythmic figures, each a single 2/4 bar. Tap <strong>PLAY</strong> to hear it, or turn <strong>CLICK</strong> off to hear it dry and fire instantly for quick flipping. Move through them with the arrows. The button up top-left filters by category, and tapping more than one blends them (it reads <strong>CUSTOM</strong>). Switch on <strong>TAP MODE</strong> and the pad takes over: tap it once to start, it counts you in, then tap the figure along with the click. The card grades your timing and points out what to fix. Hit <strong>TEST</strong> (top-right) for a rapid run of eight cards over a steady pulse, which scores you and targets the figures you struggle with most. <strong>BPM</strong> doubles as a difficulty dial: slow is forgiving, fast is unforgiving.</div>
+      <div class="teach-hint" data-i18n-html="hint_rhythmcards"><strong data-i18n="ui_rhythm_cards">RHYTHM CARDS</strong> — a shuffled deck of common rhythmic figures, each a single 2/4 bar. Tap <strong>PLAY</strong> to hear it, or turn <strong>CLICK</strong> off to hear it dry and fire instantly for quick flipping. Move through them with the arrows. The button up top-left filters by category, and tapping more than one blends them (it reads <strong data-i18n="ui_custom">CUSTOM</strong>). Switch on <strong data-i18n="ui_tap_mode">TAP MODE</strong> and the pad takes over: tap it once to start, it counts you in, then tap the figure along with the click. The card grades your timing and points out what to fix. Hit <strong>TEST</strong> (top-right) for a rapid run of eight cards over a steady pulse, which scores you and targets the figures you struggle with most. <strong>BPM</strong> doubles as a difficulty dial: slow is forgiving, fast is unforgiving.</div>
 
       <!-- ═══ TEST MODE OVERLAY ═══ -->
       <div class="rct-overlay" id="rctOverlay">
@@ -26529,7 +26540,7 @@ try {
       <!-- Top bar: back + presets -->
       <div class="prog-top-bar">
         <button class="train-back" style="position:static;margin:0" onclick="exitTool()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <div class="prog-top-title" id="progTopTitle">CUSTOM</div>
+        <div class="prog-top-title" id="progTopTitle" data-i18n="ui_custom">CUSTOM</div>
         <!-- The current preset name lives in the title now, so repeating it here was
              both redundant and the thing shoving this button out of the row as names
              got longer. Just the label and the caret. -->
@@ -26779,7 +26790,7 @@ try {
         <div style="font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;font-weight:500;margin-bottom:6px" data-i18n="tone_label">TONE</div>
         <div class="piano-overlay-tone-row" id="ivrToneBank"></div>
 
-        <div class="teach-hint" data-i18n-html="hint_ivref"><strong>INTERVAL REFERENCE</strong> — a card for every interval. Tap <strong>HEAR IT</strong> to play the interval, and use the direction buttons to hear it ascending, descending, or as a chord. Flip through the cards with the arrows. The buttons up top filter which intervals appear in the deck. Each card lists familiar songs that open with that interval, so you have something to hum when you are trying to recognize it by ear. To drill and score yourself, head to <strong>Interval Training</strong> under the Train tab.</div>
+        <div class="teach-hint" data-i18n-html="hint_ivref"><strong data-i18n="ui_interval_reference">INTERVAL REFERENCE</strong> — a card for every interval. Tap <strong data-i18n="ui_hear_it">HEAR IT</strong> to play the interval, and use the direction buttons to hear it ascending, descending, or as a chord. Flip through the cards with the arrows. The buttons up top filter which intervals appear in the deck. Each card lists familiar songs that open with that interval, so you have something to hum when you are trying to recognize it by ear. To drill and score yourself, head to <strong>Interval Training</strong> under the Train tab.</div>
       </div>
     </div><!-- /toolIntervalRef -->
 
@@ -27173,7 +27184,7 @@ try {
 
 <div class="hint"><span data-i18n="dk_tap_hint_full">tap = hit · long-press = ghost/flam · <span style="white-space:nowrap">hold label = precision</span></div>
 <div class="hint swing-hint" id="swingHintTip" style="display:none;transition:opacity 0.3s;color:var(--accent-warm)"><span data-i18n="dk_swing_hint">swing needs off-beat hits to be audible, so try ghost notes on odd steps</span></div>
-<div class="teach-hint" style="margin:6px 16px 2px" data-i18n-html="hint_drumkit">Each row is a drum track. Tap a step to add a hit and it lights up. <strong>Long-press</strong> for a ghost note (quieter, shown dimmer) or flam (double strike). <strong>Hold the track label</strong> on the left to open the precision editor for that row. Load a <strong>PRESET</strong> below to hear a complete pattern, then change it from there.</div>
+<div class="teach-hint" style="margin:6px 16px 2px" data-i18n-html="hint_drumkit">Each row is a drum track. Tap a step to add a hit and it lights up. <strong data-i18n="ui_long_press">Long-press</strong> for a ghost note (quieter, shown dimmer) or flam (double strike). <strong>Hold the track label</strong> on the left to open the precision editor for that row. Load a <strong>PRESET</strong> below to hear a complete pattern, then change it from there.</div>
 
 <div class="dk-bottom">
   <div class="dk-preset-toggle-row">
@@ -28198,7 +28209,7 @@ try {
           <!-- Editable step grid -->
           <div class="groove-step-grid" id="grooveStepGrid"></div>
           <div class="groove-step-nums" id="grooveStepNums"></div>
-          <div class="teach-hint" data-i18n-html="hint_groove_steps">Each square is one 16th-note step. Tap once for a <strong>soft</strong> hit, tap again for an <strong>accent</strong>, tap a third time to <strong>clear</strong> it. Beat 1 starts at the left, and the vertical lines mark each quarter-note beat.</div>
+          <div class="teach-hint" data-i18n-html="hint_groove_steps">Each square is one 16th-note step. Tap once for a <strong data-i18n="ui_soft">soft</strong> hit, tap again for an <strong data-i18n="ui_accent">accent</strong>, tap a third time to <strong data-i18n="ui_clear">clear</strong> it. Beat 1 starts at the left, and the vertical lines mark each quarter-note beat.</div>
 
           <div class="ce-card-divider"></div>
           <button class="flash-launch" onclick="openFlash()" style="padding:14px 20px;font-size:17px">
@@ -28870,7 +28881,7 @@ try {
         <span class="iv-retry-line" id="ivRetryLine"><span class="iv-retry-heart"></span><span id="ivRetryLabel">1 retry</span></span>
         <div class="iv-card-tools">
           <button class="iv-diff-pill" id="ivDiffPill" onclick="ivCycleDiff()" aria-label="difficulty">
-            <span class="iv-diff-pill-lbl" id="ivDiffPillLbl">EASY</span>
+            <span class="iv-diff-pill-lbl" id="ivDiffPillLbl" data-i18n="ui_easy">EASY</span>
             <span class="iv-diff-pill-sub" id="ivDiffPillSub"></span>
           </button>
           <button class="iv-cog-btn" onclick="ivOpenSettings()" aria-label="Settings">
@@ -29529,7 +29540,7 @@ try {
           </div>
           <div class="rr-surv-streakwrap">
             <div class="rr-surv-streak" id="rrSurvStreak">0</div>
-            <div class="rr-surv-streak-lbl">STREAK</div>
+            <div class="rr-surv-streak-lbl" data-i18n="ui_streak">STREAK</div>
           </div>
         </div>
 
@@ -29537,11 +29548,11 @@ try {
         <div class="rr-surv-end" id="rrSurvEnd">
           <div class="rr-surv-end-title" id="rrSurvEndTitle">GAME OVER</div>
           <div class="rr-surv-end-score" id="rrSurvEndScore">0</div>
-          <div class="rr-surv-end-lbl">STREAK</div>
+          <div class="rr-surv-end-lbl" data-i18n="ui_streak">STREAK</div>
           <div class="rr-surv-end-record" id="rrSurvEndRecord"></div>
           <div class="rr-surv-end-stats" id="rrSurvEndStats"></div>
           <button onclick="rrSurvRestart()" class="rr-surv-end-again">PLAY AGAIN</button>
-          <button onclick="rrSurvExit()" class="rr-surv-end-exit">EXIT</button>
+          <button onclick="rrSurvExit()" class="rr-surv-end-exit" data-i18n="ui_exit">EXIT</button>
         </div>
 
         <!-- Mode selector + NEW button -->
@@ -29790,7 +29801,7 @@ try {
 
   <!-- Three pedals below the keyboard: soft · sostenuto · damper -->
   <div class="piano-pedal-cluster"><div class="ppc-inner">
-    <div class="ppc-pedal soft"   id="pianoFullSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOFT</span></div></div><div class="ppc-name" data-i18n="pn_ped_soft">SOFT</div></div>
+    <div class="ppc-pedal soft"   id="pianoFullSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl" data-i18n="ui_soft">SOFT</span></div></div><div class="ppc-name" data-i18n="pn_ped_soft">SOFT</div></div>
     <div class="ppc-pedal sost"   id="pianoFullSostPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOST</span></div></div><div class="ppc-name">SOST</div></div>
     <div class="ppc-pedal damper" id="pianoFullPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SUST</span></div></div><div class="ppc-name" data-i18n="pn_ped_damper">DAMPER</div></div>
   </div></div>
@@ -29863,7 +29874,7 @@ try {
       </svg>
       <div class="thmn-ov-readout">
         <span class="thmn-ov-note off" id="thmnOvNote">—</span>
-        <span class="thmn-ov-hz" id="thmnOvHz">silent</span>
+        <span class="thmn-ov-hz" id="thmnOvHz" data-i18n="ui_silent">silent</span>
       </div>
       <div class="thmn-ov-hint" id="thmnOvHint" data-i18n="thmn_ov_hint">RIGHT HAND → PITCH  ·  LEFT BAR ↕ VOLUME</div>
     </div>
@@ -29908,7 +29919,7 @@ try {
     <div class="thmn-ov-knobs">
       <div class="thmn-ov-kc"><div class="thmn-knob thmn-knob-sm" id="thmnOvKnobVol"></div><span data-i18n="thmn_k_volume">VOLUME</span><b id="thmnOvKnobVolVal">80%</b></div>
       <div class="thmn-ov-kc"><div class="thmn-knob thmn-knob-sm" id="thmnOvKnobRange"></div><span data-i18n="thmn_k_range">PITCH RANGE</span><b id="thmnOvKnobRangeVal">5 oct</b></div>
-      <div class="thmn-ov-kc"><div class="thmn-knob thmn-knob-sm" id="thmnOvKnobWave"></div><span data-i18n="thmn_k_waveform">WAVEFORM</span><b id="thmnOvKnobWaveVal">WARM</b></div>
+      <div class="thmn-ov-kc"><div class="thmn-knob thmn-knob-sm" id="thmnOvKnobWave"></div><span data-i18n="thmn_k_waveform">WAVEFORM</span><b id="thmnOvKnobWaveVal" data-i18n="ui_warm">WARM</b></div>
       <div class="thmn-ov-kc"><div class="thmn-knob thmn-knob-sm" id="thmnOvKnobBright"></div><span data-i18n="thmn_k_bright">BRIGHTNESS</span><b id="thmnOvKnobBrightVal">60%</b></div>
       <div class="thmn-ov-kc thmn-knob-extra"><div class="thmn-knob thmn-knob-sm" id="thmnOvKnobVib"></div><span data-i18n="thmn_k_vibrato">VIBRATO</span><b id="thmnOvKnobVibVal">0%</b></div>
       <div class="thmn-ov-kc thmn-knob-extra"><div class="thmn-knob thmn-knob-sm" id="thmnOvKnobGlide"></div><span data-i18n="thmn_k_glide">GLIDE</span><b id="thmnOvKnobGlideVal">12ms</b></div>
@@ -30013,7 +30024,7 @@ try {
       <!-- Toggles: ARP + speed + config -->
       <div style="display:flex;align-items:center;gap:6px">
         <button id="chordleArpBtn" onclick="chordleToggleArp()" style="background:transparent;color:var(--muted);border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;letter-spacing:1.5px;cursor:pointer;font-family:inherit;transition:all .15s" data-i18n="btn_arp">ARP</button>
-        <button id="chordleSpeedBtn" onclick="chordleCycleSpeed()" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:5px 9px;font-size:9px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit;transition:all .15s">MED</button>
+        <button id="chordleSpeedBtn" onclick="chordleCycleSpeed()" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:5px 9px;font-size:9px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit;transition:all .15s" data-i18n="ui_med">MED</button>
         <button id="chordleCfgBtn" onclick="chordleToggleCfg()" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:5px 9px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M14 17H5" /> <path d="M19 7h-9" /> <circle cx="17" cy="17" r="3" /> <circle cx="7" cy="7" r="3" /></svg></button>
       </div>
     </div>
@@ -30096,7 +30107,7 @@ try {
     <!-- Row 1: difficulty · guess counter · speed — matched rounded rects -->
     <div style="display:flex;align-items:center;gap:10px;padding:10px 16px 8px">
       <button id="diadleDiffBtn" onclick="diadleCycleDiff()" style="flex:1;min-width:0;border-radius:12px;height:38px;padding:0 14px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .2s;border-width:1.5px;border-style:solid;box-shadow:inset 0 1px 0 rgba(255,255,255,.09)">
-        <span id="diadleDiffLabel">EASY</span>
+        <span id="diadleDiffLabel" data-i18n="ui_easy">EASY</span>
         <span style="opacity:.45;font-size:12px;line-height:1">▾</span>
       </button>
       <div id="diadleGuessLabel" style="flex:1;text-align:center;font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--muted);white-space:nowrap">GUESS 1 OF 5</div>
@@ -31086,7 +31097,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.51</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.65</span>
     </div>
   </div>
 </div>
@@ -31094,7 +31105,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.51';
+const INTONARE_VERSION = '0.150.65';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -35822,7 +35833,7 @@ function renderRhodesFull() {
   gccToolMode = prevMode;
   chromBaseOct = prevBase;
   const lbl = document.getElementById('rhodesFullOctLabel');
-  if (lbl) lbl.textContent = 'OCT ' + baseOct + '–' + (baseOct + rhodesFullOctaves - 1);
+  if (lbl) lbl.textContent = _tf('lbl_oct','OCT ') + baseOct + '–' + (baseOct + rhodesFullOctaves - 1);
 }
 
 function shiftRhodesOctave(delta) {
@@ -35855,7 +35866,7 @@ function buildRhodesKeyboard() {
   chordScaleInstrument = prevInst;
   gccToolMode = prevMode;
   chromBaseOct = prevBase;
-  if (lbl) lbl.textContent = nOct === 1 ? 'OCT ' + rhodesOctave : 'OCT ' + rhodesOctave + '–' + (rhodesOctave + 1);
+  if (lbl) lbl.textContent = nOct === 1 ? _tf('lbl_oct','OCT ') + rhodesOctave : _tf('lbl_oct','OCT ') + rhodesOctave + '–' + (rhodesOctave + 1);
   if (rng) rng.textContent = nOct === 1 ? 'C' + rhodesOctave + ' — B' + rhodesOctave
                                         : 'C' + rhodesOctave + ' — B' + (rhodesOctave + 1);
   if (dn)  dn.disabled = rhodesOctave <= RHODES_MIN_OCT;
@@ -36437,7 +36448,7 @@ function buildPiano() {
   if (!svgEl) return;
   const nOct = pianoSingleOct ? 1 : 2;
   document.getElementById('pianoOctLabel').textContent =
-    nOct === 1 ? 'OCT ' + pianoOctave : 'OCT ' + pianoOctave + '–' + (pianoOctave + 1);
+    nOct === 1 ? _tf('lbl_oct','OCT ') + pianoOctave : _tf('lbl_oct','OCT ') + pianoOctave + '–' + (pianoOctave + 1);
   document.getElementById('pianoOctRange').textContent =
     nOct === 1 ? `${getDisplayNote('C')}${pianoOctave} — ${getDisplayNote('B')}${pianoOctave}`
                : `${getDisplayNote('C')}${pianoOctave} — ${getDisplayNote('B')}${pianoOctave + 1}`;
@@ -49873,6 +49884,45 @@ function _fitModuleTagline(tagline) {
   if (textW(sub) > room) sub.style.display = 'none';
 }
 
+// Redraw the header in the CURRENT language.
+//
+// The first attempt stored setHeaderModule's arguments and replayed them, which
+// did nothing: those arguments arrive already translated — enterTool calls
+// setHeaderModule(TOOL_NAME(name), ...) and TOOL_NAME resolves at call time. So
+// replaying them redrew the same Italian in English mode, which is exactly what
+// the live sweep kept reporting.
+//
+// Re-deriving from the tool or exercise ID is the fix: currentTool and
+// currentExercise are already tracked, so the label functions can be called
+// again and will pick up the new language.
+function _rerenderHeader() {
+  try {
+    if (typeof currentTool !== 'undefined' && currentTool) {
+      const back = (typeof t === 'function' && t('hdr_back_to') !== 'hdr_back_to')
+        ? t('hdr_back_to') : 'back to ';
+      const folder = (typeof currentToolFolder !== 'undefined' && currentToolFolder)
+        ? TOOL_FOLDER_NAME(currentToolFolder)
+        : (t('mode_tools') || 'Tools');
+      setHeaderModule(TOOL_NAME(currentTool), TOOL_SUB(currentTool), null, back + folder);
+      return;
+    }
+    if (typeof currentExercise !== 'undefined' && currentExercise) {
+      const bt = (typeof t === 'function' && t('hdr_back_to') !== 'hdr_back_to')
+        ? t('hdr_back_to') : 'back to ';
+      const map = { tempo:'rhythm', tempoguess:'rhythm', poly:'rhythm', rhythmread:'rhythm',
+                    interval:'ear_training', chordear:'ear_training', singsing:'ear_training',
+                    relpitch:'ear_training', chordle:'games', diadle:'games', tonale:'games',
+                    roadtrip:'games', staffread:'reading', notationcards:'reading' };
+      const lbls = { practice: bt + (t('mode_train') || 'Train'),
+                     rhythm: bt + (t('folder_rhythm') || 'Rhythm'),
+                     ear_training: bt + (t('folder_ear') || 'Ear Training'),
+                     games: bt + (t('folder_games') || 'Games'),
+                     reading: bt + (t('folder_reading') || 'Reading') };
+      setHeaderModule(EXERCISE_NAME(currentExercise), EXERCISE_SUB(currentExercise),
+                      currentExercise, lbls[map[currentExercise] || 'practice']);
+    }
+  } catch (e) {}
+}
 function setHeaderModule(name, subtitle, exerciseId, backLabel) {
   var header    = document.getElementById('appHeader');
   var logo      = document.getElementById('appLogo');
@@ -49930,6 +49980,21 @@ function setHeaderModule(name, subtitle, exerciseId, backLabel) {
 }
 
 // ─── Section-level header (tab hub or folder) ───
+// Redraw the section header in the current language. Only the two hub tabs have
+// a translated section title; every other tab shows the app name, which does not
+// change, so there is nothing to redo for them.
+function _rerenderSection() {
+  try {
+    if (document.body.classList.contains('in-module')) return;  // a module owns the header
+    // The variable is `mode`, not `currentMode`. Guarding on the wrong name would
+    // have failed silently forever — the typeof check makes it a no-op, not an
+    // error, which is the worst kind of wrong.
+    const m = (typeof mode !== 'undefined') ? mode : null;
+    if (m === 'tools') setHeaderSection(t('mode_tools') || 'TOOLS', null, 'tools_sub');
+    else if (m === 'practice') setHeaderSection(t('mode_train') || 'TRAIN', null, 'train_sub');
+  } catch (e) {}
+}
+
 function setHeaderSection(name, onBack, subKey) {
   var header    = document.getElementById('appHeader');
   var logo      = document.getElementById('appLogo');
@@ -51117,12 +51182,15 @@ function enterExercise(name) {
     staffread: 'reading', notationcards: 'reading'
   };
   var _exBackKey = _exBackMap[name] || 'practice';
+  var _bt = (t('hdr_back_to') !== 'hdr_back_to') ? t('hdr_back_to') : 'back to ';
   var _exBackLabels = {
     practice: ((t('hdr_back_to') !== 'hdr_back_to') ? t('hdr_back_to') : 'back to ') + (t('mode_train') || 'Train'),
-    rhythm: 'back to Rhythm',
-    ear_training: 'back to Ear Training',
-    games: 'back to Games',
-    reading: 'back to Reading'
+    // Four folder names were hardcoded English while the rest of the header was
+    // translated, so Polyrhythm read "back to Rhythm" above POLIRITMO.
+    rhythm: _bt + (t('folder_rhythm') || 'Rhythm'),
+    ear_training: _bt + (t('folder_ear') || 'Ear Training'),
+    games: _bt + (t('folder_games') || 'Games'),
+    reading: _bt + (t('folder_reading') || 'Reading')
   };
   setHeaderModule(EXERCISE_NAME(name), EXERCISE_SUB(name), name, _exBackLabels[_exBackKey]);
   // Hide the section-level hint so exercises start at the top of the viewport
@@ -53070,77 +53138,77 @@ function ivCheckPitch(detectedFreq) {
 const CHORD_DICT = [
   // Triads
   { intervals:[0,4,7],       deg:[0,2,4],     sp:['n','n','n'],         symbol:'',       name:'Major',           nameIt:'Maggiore',             rank:1 },
-  { intervals:[0,3,7],       deg:[0,2,4],     sp:['n','f','n'],         symbol:'m',      name:'Minor',             rank:1 },
-  { intervals:[0,3,6],       deg:[0,2,4],     sp:['n','f','f'],         symbol:'dim',    name:'Diminished',        rank:2 },
-  { intervals:[0,4,8],       deg:[0,2,4],     sp:['n','n','s'],         symbol:'aug',    name:'Augmented',         rank:2 },
-  { intervals:[0,2,7],       deg:[0,1,4],     sp:['n','n','n'],         symbol:'sus2',   name:'Suspended 2nd',     rank:3 },
-  { intervals:[0,5,7],       deg:[0,3,4],     sp:['n','n','n'],         symbol:'sus4',   name:'Suspended 4th',     rank:3 },
+  { intervals:[0,3,7],       deg:[0,2,4],     sp:['n','f','n'],         symbol:'m',      name:'Minor', nameIt:'Minore',             rank:1 },
+  { intervals:[0,3,6],       deg:[0,2,4],     sp:['n','f','f'],         symbol:'dim',    name:'Diminished', nameIt:'Diminuito',        rank:2 },
+  { intervals:[0,4,8],       deg:[0,2,4],     sp:['n','n','s'],         symbol:'aug',    name:'Augmented', nameIt:'Aumentato',         rank:2 },
+  { intervals:[0,2,7],       deg:[0,1,4],     sp:['n','n','n'],         symbol:'sus2',   name:'Suspended 2nd', nameIt:'Sospeso 2ª',     rank:3 },
+  { intervals:[0,5,7],       deg:[0,3,4],     sp:['n','n','n'],         symbol:'sus4',   name:'Suspended 4th', nameIt:'Sospeso 4ª',     rank:3 },
   // 7ths
-  { intervals:[0,4,7,11],    deg:[0,2,4,6],   sp:['n','n','n','n'],     symbol:'maj7',   name:'Major 7th',         rank:1 },
-  { intervals:[0,4,7,10],    deg:[0,2,4,6],   sp:['n','n','n','f'],     symbol:'7',      name:'Dominant 7th',      rank:1 },
-  { intervals:[0,3,7,10],    deg:[0,2,4,6],   sp:['n','f','n','f'],     symbol:'m7',     name:'Minor 7th',         rank:1 },
-  { intervals:[0,3,6,10],    deg:[0,2,4,6],   sp:['n','f','f','f'],     symbol:'m7b5',   name:'Half Diminished',   rank:2 },
-  { intervals:[0,3,6,9],     deg:[0,2,4,6],   sp:['n','f','f','f'],     symbol:'dim7',   name:'Diminished 7th',    rank:2 },
-  { intervals:[0,3,7,11],    deg:[0,2,4,6],   sp:['n','f','n','n'],     symbol:'mM7',    name:'Minor Major 7th',   rank:3 },
-  { intervals:[0,4,8,11],    deg:[0,2,4,6],   sp:['n','n','s','n'],     symbol:'augM7',  name:'Augmented Major 7', rank:3 },
-  { intervals:[0,4,8,10],    deg:[0,2,4,6],   sp:['n','n','s','f'],     symbol:'aug7',   name:'Augmented 7th',     rank:3 },
-  { intervals:[0,5,7,10],    deg:[0,3,4,6],   sp:['n','n','n','f'],     symbol:'7sus4',  name:'Dom 7 Sus4',        rank:3 },
+  { intervals:[0,4,7,11],    deg:[0,2,4,6],   sp:['n','n','n','n'],     symbol:'maj7',   name:'Major 7th', nameIt:'Settima Maggiore',         rank:1 },
+  { intervals:[0,4,7,10],    deg:[0,2,4,6],   sp:['n','n','n','f'],     symbol:'7',      name:'Dominant 7th', nameIt:'Settima di Dominante',      rank:1 },
+  { intervals:[0,3,7,10],    deg:[0,2,4,6],   sp:['n','f','n','f'],     symbol:'m7',     name:'Minor 7th', nameIt:'Settima Minore',         rank:1 },
+  { intervals:[0,3,6,10],    deg:[0,2,4,6],   sp:['n','f','f','f'],     symbol:'m7b5',   name:'Half Diminished', nameIt:'Semidiminuito',   rank:2 },
+  { intervals:[0,3,6,9],     deg:[0,2,4,6],   sp:['n','f','f','f'],     symbol:'dim7',   name:'Diminished 7th', nameIt:'Settima Diminuita',    rank:2 },
+  { intervals:[0,3,7,11],    deg:[0,2,4,6],   sp:['n','f','n','n'],     symbol:'mM7',    name:'Minor Major 7th', nameIt:'Minore con Settima Maggiore',   rank:3 },
+  { intervals:[0,4,8,11],    deg:[0,2,4,6],   sp:['n','n','s','n'],     symbol:'augM7',  name:'Augmented Major 7', nameIt:'Aumentato con Settima Maggiore', rank:3 },
+  { intervals:[0,4,8,10],    deg:[0,2,4,6],   sp:['n','n','s','f'],     symbol:'aug7',   name:'Augmented 7th', nameIt:'Settima Aumentata',     rank:3 },
+  { intervals:[0,5,7,10],    deg:[0,3,4,6],   sp:['n','n','n','f'],     symbol:'7sus4',  name:'Dom 7 Sus4', nameIt:'Settima di Dominante Sosp. 4ª',        rank:3 },
   // 6ths
-  { intervals:[0,4,7,9],     deg:[0,2,4,5],   sp:['n','n','n','n'],     symbol:'6',      name:'Major 6th',         rank:2 },
-  { intervals:[0,3,7,9],     deg:[0,2,4,5],   sp:['n','f','n','n'],     symbol:'m6',     name:'Minor 6th',         rank:2 },
+  { intervals:[0,4,7,9],     deg:[0,2,4,5],   sp:['n','n','n','n'],     symbol:'6',      name:'Major 6th', nameIt:'Sesta Maggiore',         rank:2 },
+  { intervals:[0,3,7,9],     deg:[0,2,4,5],   sp:['n','f','n','n'],     symbol:'m6',     name:'Minor 6th', nameIt:'Sesta Minore',         rank:2 },
   // Extended
-  { intervals:[0,4,7,11,14], deg:[0,2,4,6,1], sp:['n','n','n','n','n'], symbol:'maj9',   name:'Major 9th',         rank:2 },
-  { intervals:[0,4,7,10,14], deg:[0,2,4,6,1], sp:['n','n','n','f','n'], symbol:'9',      name:'Dominant 9th',      rank:2 },
-  { intervals:[0,3,7,10,14], deg:[0,2,4,6,1], sp:['n','f','n','f','n'], symbol:'m9',     name:'Minor 9th',         rank:2 },
-  { intervals:[0,4,7,2],     deg:[0,2,4,1],   sp:['n','n','n','n'],     symbol:'add9',   name:'Add 9',             rank:3 },
+  { intervals:[0,4,7,11,14], deg:[0,2,4,6,1], sp:['n','n','n','n','n'], symbol:'maj9',   name:'Major 9th', nameIt:'Nona Maggiore',         rank:2 },
+  { intervals:[0,4,7,10,14], deg:[0,2,4,6,1], sp:['n','n','n','f','n'], symbol:'9',      name:'Dominant 9th', nameIt:'Nona di Dominante',      rank:2 },
+  { intervals:[0,3,7,10,14], deg:[0,2,4,6,1], sp:['n','f','n','f','n'], symbol:'m9',     name:'Minor 9th', nameIt:'Nona Minore',         rank:2 },
+  { intervals:[0,4,7,2],     deg:[0,2,4,1],   sp:['n','n','n','n'],     symbol:'add9',   name:'Add 9', nameIt:'Add 9',             rank:3 },
   // Altered dominant
-  { intervals:[0,4,7,10,13], deg:[0,2,4,6,1], sp:['n','n','n','f','f'], symbol:'7b9',    name:'Dom 7 flat 9',      rank:3 },
-  { intervals:[0,4,7,10,15], deg:[0,2,4,6,2], sp:['n','n','n','f','s'], symbol:'7#9',    name:'Dom 7 sharp 9',     rank:3 },
-  { intervals:[0,4,6,10],    deg:[0,2,4,6],   sp:['n','n','f','f'],     symbol:'7b5',    name:'Dom 7 flat 5',      rank:3 },
+  { intervals:[0,4,7,10,13], deg:[0,2,4,6,1], sp:['n','n','n','f','f'], symbol:'7b9',    name:'Dom 7 flat 9', nameIt:'Settima di Dom. con 9ª bemolle',      rank:3 },
+  { intervals:[0,4,7,10,15], deg:[0,2,4,6,2], sp:['n','n','n','f','s'], symbol:'7#9',    name:'Dom 7 sharp 9', nameIt:'Settima di Dom. con 9ª diesis',     rank:3 },
+  { intervals:[0,4,6,10],    deg:[0,2,4,6],   sp:['n','n','f','f'],     symbol:'7b5',    name:'Dom 7 flat 5', nameIt:'Settima di Dom. con 5ª bemolle',      rank:3 },
   // Altered extended
-  { intervals:[0,4,6,7,10],    deg:[0,2,3,4,6],     sp:['n','n','s','n','f'],     symbol:'7#11',    name:'Dom 7 Sharp 11',    rank:3 },
-  { intervals:[0,4,6,7,11],    deg:[0,2,3,4,6],     sp:['n','n','s','n','n'],     symbol:'maj7#11', name:'Lydian (maj7#11)',   rank:3 },
-  { intervals:[0,4,7,8,10],    deg:[0,2,4,5,6],     sp:['n','n','n','f','f'],     symbol:'7b13',    name:'Dom 7 flat 13',     rank:3 },
+  { intervals:[0,4,6,7,10],    deg:[0,2,3,4,6],     sp:['n','n','s','n','f'],     symbol:'7#11',    name:'Dom 7 Sharp 11', nameIt:'Settima di Dom. con 11ª diesis',    rank:3 },
+  { intervals:[0,4,6,7,11],    deg:[0,2,3,4,6],     sp:['n','n','s','n','n'],     symbol:'maj7#11', name:'Lydian (maj7#11)', nameIt:'Lidio (maj7#11)',   rank:3 },
+  { intervals:[0,4,7,8,10],    deg:[0,2,4,5,6],     sp:['n','n','n','f','f'],     symbol:'7b13',    name:'Dom 7 flat 13', nameIt:'Settima di Dom. con 13ª bemolle',     rank:3 },
   // Extended 11ths
-  { intervals:[0,4,7,10,14,17],deg:[0,2,4,6,1,3],   sp:['n','n','n','f','n','n'], symbol:'11',      name:'Dominant 11th',     rank:2 },
-  { intervals:[0,4,7,11,14,17],deg:[0,2,4,6,1,3],   sp:['n','n','n','n','n','n'], symbol:'maj11',   name:'Major 11th',        rank:2 },
-  { intervals:[0,3,7,10,14,17],deg:[0,2,4,6,1,3],   sp:['n','f','n','f','n','n'], symbol:'m11',     name:'Minor 11th',        rank:2 },
+  { intervals:[0,4,7,10,14,17],deg:[0,2,4,6,1,3],   sp:['n','n','n','f','n','n'], symbol:'11',      name:'Dominant 11th', nameIt:'Undicesima di Dominante',     rank:2 },
+  { intervals:[0,4,7,11,14,17],deg:[0,2,4,6,1,3],   sp:['n','n','n','n','n','n'], symbol:'maj11',   name:'Major 11th', nameIt:'Undicesima Maggiore',        rank:2 },
+  { intervals:[0,3,7,10,14,17],deg:[0,2,4,6,1,3],   sp:['n','f','n','f','n','n'], symbol:'m11',     name:'Minor 11th', nameIt:'Undicesima Minore',        rank:2 },
   // Add chords
-  { intervals:[0,4,5,7],       deg:[0,2,3,4],       sp:['n','n','n','n'],         symbol:'add4',    name:'Add 4',             rank:3 },
+  { intervals:[0,4,5,7],       deg:[0,2,3,4],       sp:['n','n','n','n'],         symbol:'add4',    name:'Add 4', nameIt:'Add 4',             rank:3 },
   // Quartal / open
-  { intervals:[0,5,10],        deg:[0,3,6],         sp:['n','n','f'],             symbol:'qrt',     name:'Quartal',           rank:3 },
+  { intervals:[0,5,10],        deg:[0,3,6],         sp:['n','n','f'],             symbol:'qrt',     name:'Quartal', nameIt:'Quartale',           rank:3 },
   // Power chord
-  { intervals:[0,7],           deg:[0,4],           sp:['n','n'],                 symbol:'5',       name:'Power Chord',       rank:2 },
+  { intervals:[0,7],           deg:[0,4],           sp:['n','n'],                 symbol:'5',       name:'Power Chord', nameIt:'Power Chord',       rank:2 },
   // Cluster / special
-  { intervals:[0,1],           deg:[0,0],           sp:['n','s'],                 symbol:'m2',      name:'Minor 2nd (Cluster)',rank:4 },
-  { intervals:[0,2],           deg:[0,1],           sp:['n','n'],                 symbol:'M2',      name:'Major 2nd',         rank:4 },
-  { intervals:[0,6],           deg:[0,3],           sp:['n','s'],                 symbol:'tt',      name:'Tritone',           rank:4 },
+  { intervals:[0,1],           deg:[0,0],           sp:['n','s'],                 symbol:'m2',      name:'Minor 2nd (Cluster)', nameIt:'Seconda Minore (Cluster)',rank:4 },
+  { intervals:[0,2],           deg:[0,1],           sp:['n','n'],                 symbol:'M2',      name:'Major 2nd', nameIt:'Seconda Maggiore',         rank:4 },
+  { intervals:[0,6],           deg:[0,3],           sp:['n','s'],                 symbol:'tt',      name:'Tritone', nameIt:'Tritono',           rank:4 },
   // ── Completeness pass (v0.99.9): "anything can be a chord" ──────────────────
   // Common colors the identifier previously had no name for.
-  { intervals:[0,4,7,9,14],    deg:[0,2,4,5,1],     sp:['n','n','n','n','n'],     symbol:'6/9',     name:'Six Nine',          rank:2 },
-  { intervals:[0,3,7,9,14],    deg:[0,2,4,5,1],     sp:['n','f','n','n','n'],     symbol:'m6/9',    name:'Minor Six Nine',    rank:3 },
-  { intervals:[0,3,7,14],      deg:[0,2,4,1],       sp:['n','f','n','n'],         symbol:'madd9',   name:'Minor Add 9',       rank:3 },
-  { intervals:[0,5,7,10,14],   deg:[0,3,4,6,1],     sp:['n','n','n','f','n'],     symbol:'9sus4',   name:'Dom 9 Sus4',        rank:3 },
-  { intervals:[0,2,7,10],      deg:[0,1,4,6],       sp:['n','n','n','f'],         symbol:'7sus2',   name:'Dom 7 Sus2',        rank:3 },
-  { intervals:[0,4,7,10,14,21],deg:[0,2,4,6,1,5],   sp:['n','n','n','f','n','n'], symbol:'13',      name:'Dominant 13th',     rank:2 },
-  { intervals:[0,4,7,11,14,21],deg:[0,2,4,6,1,5],   sp:['n','n','n','n','n','n'], symbol:'maj13',   name:'Major 13th',        rank:2 },
-  { intervals:[0,3,7,10,14,21],deg:[0,2,4,6,1,5],   sp:['n','f','n','f','n','n'], symbol:'m13',     name:'Minor 13th',        rank:3 },
+  { intervals:[0,4,7,9,14],    deg:[0,2,4,5,1],     sp:['n','n','n','n','n'],     symbol:'6/9',     name:'Six Nine', nameIt:'Sesta Nona',          rank:2 },
+  { intervals:[0,3,7,9,14],    deg:[0,2,4,5,1],     sp:['n','f','n','n','n'],     symbol:'m6/9',    name:'Minor Six Nine', nameIt:'Sesta Nona Minore',    rank:3 },
+  { intervals:[0,3,7,14],      deg:[0,2,4,1],       sp:['n','f','n','n'],         symbol:'madd9',   name:'Minor Add 9', nameIt:'Minore Add 9',       rank:3 },
+  { intervals:[0,5,7,10,14],   deg:[0,3,4,6,1],     sp:['n','n','n','f','n'],     symbol:'9sus4',   name:'Dom 9 Sus4', nameIt:'Nona di Dominante Sosp. 4ª',        rank:3 },
+  { intervals:[0,2,7,10],      deg:[0,1,4,6],       sp:['n','n','n','f'],         symbol:'7sus2',   name:'Dom 7 Sus2', nameIt:'Settima di Dominante Sosp. 2ª',        rank:3 },
+  { intervals:[0,4,7,10,14,21],deg:[0,2,4,6,1,5],   sp:['n','n','n','f','n','n'], symbol:'13',      name:'Dominant 13th', nameIt:'Tredicesima di Dominante',     rank:2 },
+  { intervals:[0,4,7,11,14,21],deg:[0,2,4,6,1,5],   sp:['n','n','n','n','n','n'], symbol:'maj13',   name:'Major 13th', nameIt:'Tredicesima Maggiore',        rank:2 },
+  { intervals:[0,3,7,10,14,21],deg:[0,2,4,6,1,5],   sp:['n','f','n','f','n','n'], symbol:'m13',     name:'Minor 13th', nameIt:'Tredicesima Minore',        rank:3 },
   // Shell voicings: sevenths with the fifth omitted, tapped constantly by
   // guitarists and jazz players; previously "no standard name".
-  { intervals:[0,4,10],        deg:[0,2,6],         sp:['n','n','f'],             symbol:'7(no5)',  name:'Dom 7 (no 5th)',    rank:4 },
-  { intervals:[0,3,10],        deg:[0,2,6],         sp:['n','f','f'],             symbol:'m7(no5)', name:'Minor 7 (no 5th)',  rank:4 },
-  { intervals:[0,4,11],        deg:[0,2,6],         sp:['n','n','n'],             symbol:'maj7(no5)',name:'Major 7 (no 5th)', rank:4 },
+  { intervals:[0,4,10],        deg:[0,2,6],         sp:['n','n','f'],             symbol:'7(no5)',  name:'Dom 7 (no 5th)', nameIt:'Settima di Dom. (senza 5ª)',    rank:4 },
+  { intervals:[0,3,10],        deg:[0,2,6],         sp:['n','f','f'],             symbol:'m7(no5)', name:'Minor 7 (no 5th)', nameIt:'Settima Minore (senza 5ª)',  rank:4 },
+  { intervals:[0,4,11],        deg:[0,2,6],         sp:['n','n','n'],             symbol:'maj7(no5)',name:'Major 7 (no 5th)', nameIt:'Settima Maggiore (senza 5ª)', rank:4 },
   // Lydian triad.
-  { intervals:[0,4,6],         deg:[0,2,4],         sp:['n','n','f'],             symbol:'Mb5',     name:'Major flat 5',      rank:4 },
+  { intervals:[0,4,6],         deg:[0,2,4],         sp:['n','n','f'],             symbol:'Mb5',     name:'Major flat 5', nameIt:'Maggiore con 5ª bemolle',      rank:4 },
   // Dyads: every interval gets a root-position name, so two taps always read as
   // the interval they are rather than an inversion of something else.
-  { intervals:[0,3],           deg:[0,2],           sp:['n','f'],                 symbol:'(m3)',    name:'Minor Third',       rank:4 },
-  { intervals:[0,4],           deg:[0,2],           sp:['n','n'],                 symbol:'(M3)',    name:'Major Third',       rank:4 },
-  { intervals:[0,5],           deg:[0,3],           sp:['n','n'],                 symbol:'(P4)',    name:'Perfect Fourth',    rank:4 },
-  { intervals:[0,8],           deg:[0,5],           sp:['n','f'],                 symbol:'(m6)',    name:'Minor Sixth',       rank:4 },
-  { intervals:[0,9],           deg:[0,5],           sp:['n','n'],                 symbol:'(M6)',    name:'Major Sixth',       rank:4 },
-  { intervals:[0,10],          deg:[0,6],           sp:['n','f'],                 symbol:'(m7)',    name:'Minor Seventh',     rank:4 },
-  { intervals:[0,11],          deg:[0,6],           sp:['n','n'],                 symbol:'(M7)',    name:'Major Seventh',     rank:4 },
+  { intervals:[0,3],           deg:[0,2],           sp:['n','f'],                 symbol:'(m3)',    name:'Minor Third', nameIt:'Terza Minore',       rank:4 },
+  { intervals:[0,4],           deg:[0,2],           sp:['n','n'],                 symbol:'(M3)',    name:'Major Third', nameIt:'Terza Maggiore',       rank:4 },
+  { intervals:[0,5],           deg:[0,3],           sp:['n','n'],                 symbol:'(P4)',    name:'Perfect Fourth', nameIt:'Quarta Giusta',    rank:4 },
+  { intervals:[0,8],           deg:[0,5],           sp:['n','f'],                 symbol:'(m6)',    name:'Minor Sixth', nameIt:'Sesta Minore',       rank:4 },
+  { intervals:[0,9],           deg:[0,5],           sp:['n','n'],                 symbol:'(M6)',    name:'Major Sixth', nameIt:'Sesta Maggiore',       rank:4 },
+  { intervals:[0,10],          deg:[0,6],           sp:['n','f'],                 symbol:'(m7)',    name:'Minor Seventh', nameIt:'Settima Minore',     rank:4 },
+  { intervals:[0,11],          deg:[0,6],           sp:['n','n'],                 symbol:'(M7)',    name:'Major Seventh', nameIt:'Settima Maggiore',     rank:4 },
 ];
 
 const CHORD_QUALITY_GROUPS = [
@@ -55408,7 +55476,7 @@ function progBuildPresetGrid() {
   if (orphans.length) {
     const header = document.createElement('div');
     header.className = 'prog-preset-section-label';
-    header.textContent = 'OTHER';
+    header.textContent = _tf('lbl_other','OTHER');
     grid.appendChild(header);
     orphans.forEach(p => {
       const card = document.createElement('button');
@@ -60639,7 +60707,7 @@ function scaleToggleDrone() { scaleSetDroneMode(!scaleDroneMode); }
 function scaleSetOct(delta) {
   scaleOct = Math.max(2, Math.min(6, scaleOct + delta));
   const el = document.getElementById('scaleOctVal');
-  if (el) el.textContent = 'OCT ' + scaleOct;
+  if (el) el.textContent = _tf('lbl_oct','OCT ') + scaleOct;
   if (scaleDroneMode) {
     scaleRestartDrone();
     if (scaleLatchIdx != null) { const i = scaleLatchIdx; scaleClearLatch(); scalePipTap(i); }
@@ -64479,11 +64547,11 @@ const PR_RATIOS = [
 ];
 
 const PR_MODES = [
-  { key: 'both',  label: 'BOTH',   group: 'listen' },
-  { key: 'soloa', label: 'SOLO A', group: 'listen' },
-  { key: 'solob', label: 'SOLO B', group: 'listen' },
-  { key: 'tapa',  label: 'TAP A',  group: 'tap' },
-  { key: 'tapb',  label: 'TAP B',  group: 'tap' },
+  { key: 'both',  label: 'BOTH',   labelIt: 'ENTRAMBI', group: 'listen' },
+  { key: 'soloa', label: 'SOLO A', labelIt: 'SOLO A',   group: 'listen' },
+  { key: 'solob', label: 'SOLO B', labelIt: 'SOLO B',   group: 'listen' },
+  { key: 'tapa',  label: 'TAP A',  labelIt: 'BATTI A',  group: 'tap' },
+  { key: 'tapb',  label: 'TAP B',  labelIt: 'BATTI B',  group: 'tap' },
   { key: 'tapcombo', label: 'TAP BOTH', labelIt: 'BATTI ENTRAMBI', group: 'tap' },
   { key: 'taptwo', label: '2 HANDS', labelIt: '2 MANI', group: 'tap' },
 ];
@@ -66405,7 +66473,7 @@ function rrRenderDiffPickerContent() {
     optBar.style.cssText = 'display:flex;align-items:center;gap:6px;padding:0 14px 10px;';
     var optToggle = document.createElement('button');
     optToggle.style.cssText = 'font-size:9px;letter-spacing:1.5px;color:var(--text-dim);background:var(--bg-0);border:1px solid var(--border-soft);border-radius:5px;cursor:pointer;padding:4px 9px;transition:border-color .15s,color .15s;';
-    optToggle.textContent = 'OPTIONS \u25be';
+    optToggle.textContent = _tf('lbl_options','OPTIONS') + ' \u25be';
     optBar.appendChild(optToggle);
     card.appendChild(optBar);
 
@@ -77391,7 +77459,7 @@ function ceBuildPool() {
         chip.className = 'ce-pool-chip' + (isOn ? ' active' : '');
         chip.title = def.name;
         chip.innerHTML = '<span class="ce-pool-chip-sym">' + (def.symbol || 'maj') + '</span>'
-                       + '<span class="ce-pool-chip-name">' + def.name + '</span>';
+                       + '<span class="ce-pool-chip-name">' + _cdName(def) + '</span>';
         chip.onclick = () => ceToggleChord(def.symbol);
         chips.appendChild(chip);
       });
@@ -77598,7 +77666,7 @@ function ceRenderAnswerGrid() {
     btn.className = 'ce-answer-btn';
     btn.id = 'ceAns_' + (def.symbol === '' ? '__maj' : def.symbol);
     btn.innerHTML =
-      '<span class="ce-btn-name">' + def.name + '</span>' +
+      '<span class="ce-btn-name">' + _cdName(def) + '</span>' +
       '<span class="ce-btn-formula">' + ceChordFormula(def) + '</span>';
     btn.onclick = () => ceAnswer(def.symbol);
     grid.appendChild(btn);
@@ -83834,6 +83902,12 @@ const STRINGS = {
     gtool_play_asc:'▶︎ PLAY ASCENDING', gtool_play_desc:'◀ PLAY DESCENDING',
     inst_guitar:'GUITAR', inst_bass:'BASS', inst_uke:'UKE', inst_mandolin:'MANDOLIN', inst_banjo:'BANJO', inst_lute:'LUTE', inst_bouzouki:'BOUZOUKI', inst_piano:'PIANO', inst_organ:'ORGAN', inst_melodica:'MELODICA', inst_harp:'HARP', inst_mallet:'MALLET', inst_trumpet:'TRUMPET', inst_flugelhorn:'FLUGELHORN', inst_frenchhorn:'FRENCH HORN', inst_euphonium:'EUPHONIUM', inst_tuba:'TUBA', inst_trombone:'TROMBONE', inst_ww_flute:'FLUTE', inst_ww_clarinet:'CLARINET', inst_ww_oboe:'OBOE', inst_ww_bassoon:'BASSOON', inst_ww_sax:'SAX', inst_ww_recorder:'RECORDER', inst_ww_whistle:'TIN WHISTLE', inst_ww_ocarina:'OCARINA', inst_harmonica:'HARMONICA', inst_ww_chrom_harp:'CHROM. HARP', inst_didgeridoo:'DIDGERIDOO', inst_bowed_violin:'VIOLIN', inst_bowed_viola:'VIOLA', inst_bowed_cello:'CELLO', inst_bowed_doublebass:'DBL BASS', csfam_fretted:'Fretted', csfam_chromperc:'Chrom.', csfam_brass:'Brass', csfam_woodwind:'Woodwind', csfam_freereed:'Free Reed', csfam_bowed:'Bowed',
     hdr_back_to:'back to ',
+    lbl_other:'OTHER', lbl_oct:'OCT ', lbl_options:'OPTIONS', btn_close:'CLOSE', lbl_to:'to:', lbl_bass:'BASS', pn_tap_start:'tap a key to start', trp_sounds:'Sounds: ', trp_written:'Written: ', photo_loading:'LOADING PHOTO…', photo_offline:'PHOTO UNAVAILABLE — NEEDS INTERNET',
+    folder_rhythm:'Rhythm', folder_ear:'Ear Training', folder_games:'Games', folder_reading:'Reading',
+    ui_easy:'EASY', ui_med:'MED', ui_hard:'HARD', ui_custom:'CUSTOM', ui_custom:'Custom', ui_streak:'STREAK', ui_set:'SET', ui_key:'KEY', ui_strobe:'STROBE', ui_vibrato:'VIBRATO', ui_tuner:'TUNER', ui_play_in_tune:'play in tune',
+    ui_range_map:'Range Map', ui_comfortable_range:'Comfortable range', ui_extended_range:'Extended range', ui_tessitura_center:'Tessitura center', ui_closest_adjacent_type:'Closest adjacent type', ui_singers_in_your_range:'Singers in your range', ui_retake:'Retake', ui_most_comfortable:'most comfortable', ui_right_for_higher_pitch:'right for higher pitch', ui_note_grid:'NOTE GRID', ui_snap_to_scale:'SNAP TO SCALE', ui_try_a_sound:'TRY A SOUND', ui_tap_any_string_row:'Tap any string row', ui_low_to_high_from_the_bot:'low to high from the bottom up', ui_test_your_music_knowledg:'Test your music knowledge', ui_exit:'EXIT',
+    ui_rhythm_cards:'RHYTHM CARDS', ui_tap_mode:'TAP MODE', ui_soft:'SOFT', ui_deep:'DEEP', ui_bright:'BRIGHT', ui_warm:'WARM', ui_accent:'accent', ui_clear:'clear', ui_silent:'silent', ui_interval_reference:'INTERVAL REFERENCE', ui_hear_it:'HEAR IT', ui_long_press:'Long-press',
+    mq_now_playing:'NOW PLAYING', mq_quick_play:'QUICK PLAY', mq_select_a_pack_set_question:'Select a pack, set question count', mq_instant_start:'INSTANT START', mq_custom:'CUSTOM', mq_choose_packs_difficulty_an:'Choose packs, difficulty, and length', mq_your_rules:'YOUR RULES', mq_survival:'SURVIVAL', mq_endless:'ENDLESS', mq_quiz_in_progress:'QUIZ IN PROGRESS', mq_discard:'DISCARD', mq_packs:'Packs', mq_all_8_packs_selected:'All 8 packs selected', mq_deselect_all:'DESELECT ALL', mq_questions:'Questions', mq_difficulty:'Difficulty', mq_familiar:'Familiar', mq_some_digging:'Some digging', mq_deep_cuts:'Deep cuts', mq_casual:'CASUAL', mq_timed:'TIMED', mq_mode:'Mode', mq_normal:'NORMAL', mq_fixed_count:'FIXED COUNT', mq_correct_answer:'CORRECT ANSWER', mq_did_you_know:'DID YOU KNOW', mq_every_question_answered:'every question answered', mq_score:'SCORE', mq_correct:'CORRECT', mq_streak:'STREAK', mq_play_again:'PLAY AGAIN', mq_done:'DONE', mq_game_over:'GAME OVER', mq_pts:'PTS', mq_best_streak:'BEST STREAK', mq_xp_earned:'XP EARNED', mq_accuracy:'ACCURACY', mq_missed_questions:'MISSED QUESTIONS', mq_select_a_pack_or_play_all:'select a pack or play all', mq_questions:'QUESTIONS', mq_stats:'STATS', mq_your_lifetime_quiz_perform:'your lifetime quiz performance', mq_reset_stats:'RESET STATS',
     tonegrp_keys:'KEYBOARD', tonegrp_waves:'WAVES', tonegrp_pluck:'PLUCKED', tonegrp_brass:'BRASS', tonegrp_wood:'WOODWIND',
     bowed_sub_notes:'NOTES', gcc_hint_browse:'Tap dot to hear · use arrows to browse · EXPAND shows all', gcc_hint_scale:'Tap dot to hear · root orange · grayed = outside position',
     pn_lid_closed:'CLOSED', pn_lid_stick:'STICK', pn_lid_open:'OPEN', pn_lid:'LID', pn_ped_soft:'SOFT', pn_ped_damper:'DAMPER', pn_hold:'HOLD',
@@ -84913,6 +84987,81 @@ const STRINGS = {
     gtool_play_asc:'▶︎ SUONA ASCENDENTE', gtool_play_desc:'◀ SUONA DISCENDENTE',
     inst_guitar:'CHITARRA', inst_bass:'BASSO', inst_uke:'UKULELE', inst_mandolin:'MANDOLINO', inst_banjo:'BANJO', inst_lute:'LIUTO', inst_bouzouki:'BOUZOUKI', inst_piano:'PIANOFORTE', inst_organ:'ORGANO', inst_melodica:'MELODICA', inst_harp:'ARPA', inst_mallet:'PERCUSSIONI', inst_trumpet:'TROMBA', inst_flugelhorn:'FLICORNO', inst_frenchhorn:'CORNO', inst_euphonium:'EUFONIO', inst_tuba:'TUBA', inst_trombone:'TROMBONE', inst_ww_flute:'FLAUTO', inst_ww_clarinet:'CLARINETTO', inst_ww_oboe:'OBOE', inst_ww_bassoon:'FAGOTTO', inst_ww_sax:'SAX', inst_ww_recorder:'FLAUTO DOLCE', inst_ww_whistle:'TIN WHISTLE', inst_ww_ocarina:'OCARINA', inst_harmonica:'ARMONICA', inst_ww_chrom_harp:'ARMONICA CROM.', inst_didgeridoo:'DIDGERIDOO', inst_bowed_violin:'VIOLINO', inst_bowed_viola:'VIOLA', inst_bowed_cello:'VIOLONCELLO', inst_bowed_doublebass:'CONTRABBASSO', csfam_fretted:'Corde', csfam_chromperc:'Crom.', csfam_brass:'Ottoni', csfam_woodwind:'Legni', csfam_freereed:'Ance libere', csfam_bowed:'Arco',
     hdr_back_to:'torna a ',
+    // Italian help content. showHelp() looks up STRINGS[lang].help[key] and
+    // falls back to the English HELP_CONTENT when it misses — and this table did
+    // not exist at all, so every help popup in the app was English regardless of
+    // the language setting. Terminology follows Italian teaching rather than a
+    // literal rendering: calante/crescente for flat/sharp, battere for downbeat,
+    // semiminima/croma/semicroma for the note values, bordone for drone,
+    // rullante/cassa/charleston for the kit. Markup is preserved exactly.
+    help: {
+    intervalref: { title: "Riferimento Intervalli", body: "<strong>Una carta per ogni intervallo.</strong> Tocca ASCOLTA per sentirlo, e passa fra ascendente, discendente e INSIEME (le due note come accordo). Sfoglia le carte con le frecce, e usa i pulsanti in alto per scegliere quali intervalli stanno nel mazzo. Ogni carta cita canzoni che si aprono con quell’intervallo, così hai un motivo da canticchiare quando provi a riconoscerlo a orecchio.<br><br>Questo è un riferimento, quindi qui non c’è punteggio. Quando vuoi esercitarti e seguire i progressi, apri <strong>Allenamento Intervalli</strong> nella sezione Esercizi." },
+    ivpool: { title: "Gruppo di Intervalli", body: "Scegli quali intervalli compaiono nei turni casuali. <strong>FACILE</strong> resta sugli intervalli consonanti (terze, quinte, ottava), il meglio per iniziare. <strong>MEDIO</strong> aggiunge quarte, seste e settime. <strong>TUTTI</strong> comprende ogni intervallo entro l’ottava, dissonanti inclusi." },
+    scales: { title: "Scale", body: "Scegli una tonica e una scala. Il nastro disegna la scala su un righello cromatico: gli spazi fra i punti SONO il disegno degli intervalli, e i numeri sotto contano i semitoni. <strong>SU / GIÙ / LOOP</strong> la suonano; tocca un punto qualsiasi per sentire quel grado da solo. Il <strong>BORDONE</strong> tiene ferma la tonica così puoi toccare i gradi sopra di essa: il modo più rapido per imparare com’è fatto ciascuno. <strong>CONFRONTA</strong> mostra in cosa la scala differisce dalla sua scala madre (il dorico è un minore naturale con la sesta alzata), detto a parole e disegnato come movimento." },
+    ce_play: { title: "Esecuzione dell’Accordo", body: "<strong>Accordo</strong> suona tutte le note insieme, come le sentiresti nella musica vera. <strong>Arpeggio</strong> le suona in successione dal grave all’acuto, e così i singoli intervalli si distinguono meglio. Passa ad Accordo quando l’orecchio è allenato, e appoggiati all’Arpeggio mentre ci arrivi." },
+    ss_auto: { title: "Avanzamento Automatico", body: "<strong>Manuale</strong> vuol dire che tocchi NUOVO TURNO quando sei pronto. <strong>Automatico</strong> aspetta un momento dopo che hai centrato una nota, poi passa da solo alla successiva. Tiene viva la sessione senza un tocco fra una nota e l’altra, comodo per le sedute lunghe." },
+    ce_auto: { title: "Avanzamento Automatico", body: "<strong>Manuale</strong> vuol dire che tocchi tu per l’accordo successivo quando sei pronto. <strong>Automatico</strong> aspetta un attimo dopo la tua risposta, poi suona da solo l’accordo dopo, così l’esercizio prosegue senza un tocco fra un turno e l’altro." },
+    ss_voice: { title: "Estensione Vocale", body: "Imposta l’ottava da cui vengono pescate le note obiettivo, così le proposte stanno comode nella tua voce. Scegli la fascia che corrisponde alla tua estensione, più grave per basso o baritono e più acuta per contralto o soprano, e l’app terrà ogni proposta cantabile." },
+    ss_note: { title: "Gruppo di Note", body: "Decide quali note possono essere scelte come obiettivo. Un gruppo ristretto (per esempio pochi gradi della scala) è più facile da riprodurre a orecchio; allargandolo fino all’intero cromatico l’esercizio diventa via via più difficile." },
+    ss_mode: { title: "Modalità di Esercizio", body: "Cambia come viene valutato e mostrato un turno, dal riprodurre una singola nota tenuta al lavorare su una breve sequenza. Comincia dalla nota singola per costruire precisione, poi sali di livello quando sei costante." },
+    interval: { title: "Allenamento Intervalli", body: "Senti due note (o un accordo) e riconosci l’<strong>intervallo</strong> fra loro: la distanza musicale, come una terza maggiore o una quinta giusta. Tocca la tua risposta; l’app ti dice se hai ragione e riascolti quante volte vuoi. Usa il <strong>Gruppo di Intervalli</strong> qui sotto per scegliere quali compaiono: comincia con pochi e allarga man mano che l’orecchio si affina." },
+    tempo: { title: "Tempo Lock", body: "Il metronomo suona per qualche battuta, poi diventa <strong>silenzioso</strong>, e il tuo compito è continuare a battere a tempo attraverso il silenzio. L’app misura di quanti millisecondi sei andato alla deriva e tiene il conto della tua serie. Allena l’orologio interno, quello che tiene insieme una band quando nessuno sta contando. Attiva <strong>CASUALE</strong> per avere un tempo a sorpresa a ogni turno." },
+    tempoguess: { title: "Indovina il Tempo", body: "Parte un tempo e tu <strong>dici i BPM a orecchio</strong>: trascina il cursore fino alla tua stima e conferma. L’app valuta quanto ci sei andato vicino. Costruisce la capacità di riconoscere il tempo in termini assoluti, utile per attaccare un brano o per impostare un click senza riferimenti." },
+    poly: { title: "Poliritmo", body: "Due ritmi suonano insieme, come 3 contro 2 o 4 contro 3, e tu impari a <strong>sentire entrambi gli strati</strong> nello stesso momento. I due anelli mostrano i due strati: quello esterno è un ritmo, quello interno l’altro, con i punti a segnare dove cade ogni pulsazione.<br><br><strong>ASCOLTA</strong> suona il poliritmo così puoi sentire e vedere come gli strati si incastrano.<br><br><strong>ESERCIZIO</strong> è dove batti anche tu. Scegli quale strato battere: <em>BATTI A</em> (esterno), <em>BATTI B</em> (interno), <em>BATTI ENTRAMBI</em> (la combinazione)." },
+    chordle: { title: "Chordle", body: "Un gioco in stile Wordle sulle <strong>progressioni di accordi</strong>. Parte una progressione nascosta e tu indovini gli accordi una casella alla volta. Dopo ogni tentativo i colori ti dicono quali accordi sono giusti, quali ci sono ma nel posto sbagliato, e quali non fanno parte della progressione. Usa <strong>ARP</strong> per sentire gli accordi spezzati in note singole, il controllo di velocità per rallentare, e ⚙ per regolare la difficoltà." },
+    diadle: { title: "Diadle", body: "Un gioco in stile Wordle sul <strong>dettato melodico</strong>. Una breve melodia suona sopra una tonica e tu indovini una nota alla volta. Dopo ogni tentativo i colori ti dicono quali note sono giuste, quali ci sono ma nel posto sbagliato, e per quali il grado è giusto ma l’alterazione no. Riascolta quante volte vuoi, e imposta velocità e difficoltà dai comandi in alto." },
+    tonale: { title: "Tónale", body: "Un gioco d’orecchio quotidiano incentrato sul <strong>centro tonale e sui gradi della scala</strong>. Ascolti e riconosci le note in rapporto a una tonalità, con indizi che si svelano man mano che ti avvicini. Rafforza il senso della <em>funzione</em>: sentire come una nota tira verso la tonica o se ne allontana, non solo darle un nome." },
+    rhythmread: { title: "Lettura Ritmica", body: "Esercizio di ritmo sulla notazione: compare un ritmo scritto e tu lo <strong>ribatti</strong> a tempo. L’app controlla ogni colpo rispetto al valore scritto e mostra dove hai affrettato o trascinato. Colma la distanza fra <em>vedere</em> la notazione e <em>sentirla</em>, che è il cuore della lettura ritmica a prima vista." },
+    musicquiz: { title: "Quiz Musicale", body: "Un quiz di teoria e curiosità che pesca da oltre mille domande divise in diciannove pacchetti. <strong>Partita Veloce</strong> ti porta dritto dentro un pacchetto con il numero di domande che scegli. <strong>Personalizzata</strong> ti lascia mescolare i pacchetti, impostare la difficoltà, scegliere un timer e decidere quante domande affrontare. <strong>Sopravvivenza</strong> ti dà tre vite e va avanti finché non le esaurisci.<br><br>Ogni risposta giusta vale XP, e c’è una <strong>sfida quotidiana</strong> uguale per tutti. Il pulsante delle statistiche segue la tua precisione e le tue serie nel tempo." },
+    progression: { title: "Costruttore di Progressioni", body: "Costruisci e suona <strong>progressioni di accordi</strong> battuta per battuta. Scegli una tonalità, aggiungi o togli battute, scegli gli accordi di ciascuna, poi manda in loop il risultato per sentire come si muovono. Usalo per studiare come funzionano le progressioni, per provare idee, o per costruire una base su cui esercitarti. I comandi ↺ e play/loop gestiscono la riproduzione." },
+    swing: { title: "Swing", body: "Ritarda il “e” di ogni coppia di movimenti per un’andatura rilassata da jazz, blues o funk. Funziona con le suddivisioni in <strong>crome</strong> e <strong>semicrome</strong> (le terzine hanno già la loro andatura). Allo 0% le note sono equidistanti (dritte). Al 100% il rapporto diventa 2:1, swing di terzina pieno. Prova 40–60% per il jazz, 70–85% per lo shuffle blues, 30–50% per le semicrome funk." },
+    chord_player: { title: "Lettore di Accordi", body: "Scegli una tonica (la lettera) poi una qualità (maj, m7, dim, aug e così via). L’accordo suona con il timbro selezionato. <strong>ARP</strong> suona le note una alla volta salendo, invece che tutte insieme." },
+    chord_builder: { title: "Costruttore di Accordi", body: "Tocca le note in qualsiasi ordine: l’app riconosce in tempo reale il nome dell’accordo e il suo rivolto. Tocca più volte la stessa nota per aggiungerla nelle ottave superiori (per le posizioni aperte di chitarra o per il pianoforte). <strong>⌫</strong> toglie l’ultimo tocco, <strong>CANC</strong> azzera tutto." },
+    cof: { title: "Circolo delle Quinte", body: "Le tonalità vicine condividono 6 note su 7, e per questo sono armonicamente vicine. Andando in senso orario si aggiunge un diesis, in senso antiorario un bemolle. L’anello esterno mostra le tonalità dell’impostazione scelta. Usa l’interruttore <strong>MAGGIORE / MINORE</strong> per scambiare quale sta fuori, con la relativa di ogni tonalità sull’anello interno (stessa armatura di chiave, centro tonale diverso). Tocca una tonalità per vederne le alterazioni, poi tocca le note della scala o <strong>SUONA SCALA</strong> per sentirla al pianoforte. I pulsanti <strong>♭ / ♯</strong> evidenziano le tonalità con bemolli o diesis." },
+    scaledrone: { title: "Modalità Bordone", body: "Dentro lo strumento Scale, tocca <strong>BORDONE</strong>: l’app tiene ferma la tonica, e toccando un grado qualsiasi sul nastro lo senti contro il bordone. Tocca di nuovo lo stesso grado per lasciarlo, o un altro per cambiare. Cantare o suonare i gradi sopra un bordone è una tecnica di base per l’orecchio; qui è la stessa idea, con il nastro che ti mostra dove sta ciascun grado." },
+    transpose_inst: { title: "Riferimento Strumenti", body: "Scegli la tua tonalità di trasposizione dal menù: gli strumenti sono raggruppati per l’intervallo di cui traspongono. Uno <strong>strumento in Si♭</strong> (tromba, clarinetto, sax tenore…) suona una seconda maggiore sotto lo scritto, quindi quando la band è in Do reale tu leggi in Re. Uno <strong>strumento in Mi♭</strong> (sax contralto, genis…) suona una sesta maggiore sotto. Gli <strong>strumenti in Fa</strong> (corno, corno inglese, flauto contralto) suonano una quinta giusta sotto.<br><br>Tocca una tonalità reale per vedere subito in che tonalità suoni tu." },
+    transpose_chords: { title: "Trasporto Accordi", body: "Imposta lo strumento DA (la tonalità in cui gli accordi sono scritti adesso) e lo strumento A (quella che ti serve). Incolla i nomi degli accordi separati da spazi: il trasportatore gestisce diesis, bemolli e tutte le qualità. Nota: i nomi degli accordi usano sempre la notazione letterale (C, F#, Bb…) indipendentemente dall’impostazione dei nomi delle note." },
+    reftone: { title: "Timbro di Riferimento", body: "Scegli il timbro sintetizzato usato per le note di riferimento. I timbri sono raggruppati per famiglia.<br><br><strong>Generali:</strong> Sinusoide (accordatore pulito), Piano (con decadimento), Organo (tenuto, con il click del tasto), Campana (brillio metallico), Pad (bordone morbido).<br><br><strong>Pizzicati:</strong> Chitarra, Basso, Mandolino, Banjo, Uke Bass, ognuno con il proprio attacco.<br><br><strong>Ottoni:</strong> Tromba, Trombone, Corno, Tuba, sintetizzati apposta con attacco e colore fedeli. Ottoni è un timbro brillante generico." },
+    metrosound: { title: "Suono del Metronomo", body: "Scegli il suono del click. <strong>Click</strong> è il tono standard con un po’ di corpo. <strong>Legno</strong> è un woodblock a doppia risonanza, asciutto e cavo. <strong>Campanaccio</strong> è un colpo metallico brillante che passa sopra un suono forte. <strong>Rim</strong> è un rimshot secco, molto nitido. <strong>Charleston</strong> è un brillio metallico, ottimo per l’andatura jazz. <strong>Marimba</strong> ha un attacco caldo di mazzuolo. <strong>Clave</strong> passa attraverso qualsiasi mix con il suo schiocco. <strong>Cassa</strong> è un colpo grave e profondo." },
+    tllock: { title: "Tempo Lock", body: "Imposta un tempo obiettivo, premi AVVIA, e il click suona per qualche battuta poi sparisce. Continua a battere sul pad seguendo la pulsazione attraverso il silenzio; quando il click torna scopri quanto l’hai tenuto. Il risultato mostra il tempo che hai battuto rispetto all’obiettivo e la deriva fra i due. AUTO passa dritto al turno successivo; disattivandolo ogni turno si ferma così puoi leggere il risultato prima di ripartire. NUOVO estrae un obiettivo casuale." },
+    tllocktempo: { title: "Tempo Obiettivo", body: "Il tempo che stai cercando di tenere. Comincia lento (60–80) e sali. I tempi lenti sono più difficili da tenere fermi attraverso il silenzio, ed è lì che un time incerto viene fuori." },
+    tllockpattern: { title: "Schema e Metro", body: "Lo schema imposta quante battute suona il click prima di tacere, e quanto dura il silenzio. <strong>2/2</strong> è un buon punto di partenza. <strong>4/8</strong> è il più difficile: un silenzio lungo richiede una pulsazione interna vera, e oltre le otto battute mute quasi tutti vanno alla deriva. Il metro imposta i movimenti per battuta." },
+    tgdiff: { title: "Indovina il Tempo — Difficoltà", body: "<strong>FACILE</strong> resta su BPM tondi (multipli di 5) fra 60 e 140, la fascia più comune. <strong>NORMALE</strong> copre 50–180 con qualsiasi numero intero. <strong>DIFFICILE</strong> apre tutta la gamma 40–220, compresi i tempi lentissimi da marcia funebre e i prestissimi sfrenati che quasi nessuno frequenta." },
+    prratio: { title: "Rapporto del Poliritmo", body: "N:M vuol dire che N pulsazioni stanno nello stesso tempo di M pulsazioni. <strong>3:2</strong> (l’emiolia) è il più comune: una sensazione di terzina sopra un tempo binario. <strong>4:3</strong> compare in Chopin e in “Clocks” dei Coldplay. <strong>5:4</strong> è iconico nel jazz (Dave Brubeck). Più il rapporto sale, più diventa difficile tenerlo in testa." },
+    prtempo: { title: "Tempo del Ciclo", body: "Imposta la velocità dello <strong>Strato A</strong> (l’anello esterno) in BPM. Lo Strato B riempie lo stesso tempo con il proprio conteggio. Comincia lento (40–60): i poliritmi sembrano confusione finché l’orecchio non smette di contare i due strati separatamente e comincia a sentirli come un unico groove." },
+    prmode: { title: "Modalità Poliritmo", body: "<strong>ENTRAMBI</strong> suona tutti e due gli strati: parti da qui, ascolta e basta finché la pulsazione incrociata non “si aggancia” nel tuo orecchio.<br><br><strong>SOLO A / SOLO B</strong> suona un solo strato. Utile per sentire ciascun ritmo pulito, o per suonare sopra uno mentre l’app ti tiene l’altro in testa.<br><br><strong>BATTI A / BATTI B</strong> è il gioco: l’app suona lo strato che NON stai battendo, e tu batti l’altro. Il punteggio si aggiorna a ogni ciclo in millisecondi. Punta a <strong>AGGANCIATO</strong> (sotto 25ms). La precisione del tocco è compensata in automatico per la latenza dello schermo." },
+    strings: { title: "Guida Corde / Note", body: "Mostra le corde (o le note di riferimento) dello strumento scelto, ordinate <strong>dal grave all’acuto, dal basso verso l’alto</strong>, come su una tablatura. La corda più vicina a ciò che stai suonando si illumina in <strong>ciano</strong> con la lettura in cent, e diventa <strong>verde</strong> con “INTONATO” quando rientri entro 5 cent.<br><br><strong>Tocca una riga</strong> per sentire quella corda. Il timbro segue la famiglia dello strumento: pizzicato per chitarra e basso, pad per gli archi, ottoni per i corni. Tocca di nuovo per fermare." },
+    piano: { title: "Confronto al Pianoforte", body: "Confronto visivo dell’intonazione. <strong>Tocca un tasto</strong> per suonarlo come riferimento. <strong>Bagliore ambra</strong> = la nota di riferimento. <strong>Bagliore verde</strong> = quello che stai cantando o suonando. Quando entrambi cadono sullo stesso tasto diventa <strong>giallo</strong>: hai centrato la nota. Sopra la tastiera compaiono il nome dell’intervallo e una descrizione in parole semplici." },
+    refpitch: { title: "Note di Riferimento", body: "Pulsanti rapidi per le corde o le note più usate dello strumento scelto. Tocca una volta per suonare (si ferma da solo dopo circa 3 secondi), tocca di nuovo per fermare prima. Con il <strong>BORDONE</strong> attivo la nota resta ferma e continua, utile per accordare a orecchio e per lavorare sull’armonia." },
+    note: { title: "Nota Rilevata", body: "La lettera grande è la nota che stai suonando o cantando. Il numero piccolo è l’ottava (4 = ottava centrale, La4 = il La di riferimento a 440 Hz). L’indicatore mostra i <strong>cent</strong>: 0 vuol dire perfettamente intonato, valori positivi vogliono dire crescente (troppo alta), negativi calante (troppo bassa)." },
+    beat: { title: "Visualizzazione della Pulsazione", body: "L’anello grande pulsa a ogni movimento. <strong>Il primo movimento lampeggia rosa</strong> (il battere). I punti sotto seguono la tua posizione nella battuta, e il loro numero cambia con l’indicazione di tempo. Comodo per tenere orientati gli allievi in tutto ciò che non è un 4/4." },
+    timesig: { title: "Indicazione di Tempo", body: "Il numero in alto = quanti movimenti ci sono in una battuta (il 4/4 ne ha 4, il valzer in 3/4 ne ha 3, i tempi composti arrivano a 24). Il numero in basso = quale valore di nota vale un movimento (4 = semiminima, 8 = croma). Il numero in basso serve solo alla lettura e non cambia il click; per quello usa la Suddivisione." },
+    subdiv: { title: "Suddivisione", body: "Aggiunge click più sommessi fra i movimenti principali. <strong>Semiminime</strong> = solo i movimenti. <strong>Crome</strong> = aggiunge il “e”. <strong>Terzine</strong> = tre per movimento. <strong>Semicrome</strong> = quattro per movimento. Usa lo <strong>Swing</strong> insieme alle crome per un’andatura jazz o blues." },
+    livetempo: { title: "Analisi del Tempo dal Vivo", body: "Attiva il <strong>microfono</strong> in basso, poi suona o batti a tempo. L’app riconosce gli attacchi e calcola la tua velocità. Il verdetto ti dice se stai <strong>affrettando</strong> (sei avanti), <strong>trascinando</strong> (sei indietro) o se sei <strong>a tempo</strong>. Utile per lavorare sul time." },
+    strobe: { title: "Accordatore Stroboscopico", body: "Un’alternativa all’ago. Un disegno rotante viene generato alla frequenza obiettivo: se la tua nota è <strong>crescente</strong> lo strobo ruota in senso orario, se è <strong>calante</strong> in senso antiorario. Quando si ferma del tutto sei intonato.<br><br>Gli accordatori stroboscopici sono estremamente sensibili: i professionisti li usano per accordature da concerto e per regolare l’intonazione dello strumento. Più difficili da leggere al volo, ma più precisi di un ago sulle deviazioni fini." },
+    vibrato: { title: "Misuratore di Vibrato", body: "Misura la <strong>frequenza</strong> (quanto è veloce, in Hz) e l’<strong>ampiezza</strong> (quanto è largo, in cent) dell’oscillazione mentre tieni una nota. Il vibrato classico degli archi sta di solito fra 5 e 7 Hz con 20–50¢ di ampiezza. Quello vocale sta sui 5–7 Hz con valori simili.<br><br>Usalo per rendere il vibrato uniforme fra i registri, o per controllare che quello di un allievo non sia troppo veloce (nervoso) o troppo lento (faticoso). La lettura resta visibile per un istante dopo che hai smesso." },
+    pitchhistory: { title: "Grafico di Stabilità", body: "Traccia la tua deviazione in cent negli ultimi 5 secondi come un grafico che scorre. La <strong>fascia verde</strong> è ±10 cent (ben intonato). Il giallo è leggermente fuori, il rosso è oltre 25 cent.<br><br>Una linea piatta e orizzontale = intonazione solida. Curve che vanno alla deriva = instabilità. Utile per gli esercizi di suoni filati, per controllare il sostegno del fiato, o per capire la deriva d’intonazione dei fiati mentre si scaldano." },
+    capo: { title: "Capotasto Mobile", body: "Alza tutte le note di riferimento delle corde del numero di tasti indicato. Impostalo dove hai messo il capotasto e la Guida Corde mostrerà l’altezza reale di ogni corda, con l’accordatore che punta a quelle frequenze.<br><br>Tasto 0 = nessun capotasto (accordatura normale). Tasto 1 = un semitono sopra, e così via." },
+    temperament: { title: "Sistema di Accordatura", body: "Il <strong>temperamento equabile</strong> divide l’ottava in 12 semitoni esattamente uguali. Ogni strumento accordato così va d’accordo con tutti gli altri. È lo standard per pianoforte, chitarra e quasi tutta la musica occidentale.<br><br>L’<strong>intonazione naturale</strong> usa rapporti di frequenza matematicamente puri (come 3:2 per la quinta giusta). Gli intervalli suonano più risonanti presi da soli, ma l’accordatura regge una tonalità alla volta. Utile per l’armonia vocale e per sentire come gli intervalli “si incastrano” rispetto al temperamento equabile." },
+    chroma: { title: "Striscia Cromatica", body: "Tutte e 12 le note della scala cromatica disposte da sinistra a destra. La nota che stai suonando si accende, e si vede a colpo d’occhio quanto sei vicino ai semitoni accanto. Utile quando un allievo sta fra due note e deve capire da che parte andare." },
+    teaching: { title: "Modalità Didattica", body: "Aggiunge spiegazioni in parole semplici, in corsivo verde, sotto ogni pannello, scritte per gli allievi e non per i musicisti. Ognuna spiega cosa fa un comando senza dare per scontata nessuna nozione di teoria.<br><br>Si attiva e si disattiva dal pulsante ⚙ Impostazioni in alto." },
+    guitar_chords: { title: "Accordi e Scale per Chitarra", body: "Sfoglia le diteggiature degli accordi e i disegni delle scale per chitarra, ukulele, mandolino e banjo. Scegli lo strumento in alto, poi una tonica e una qualità.<br><br>Il diagramma del manico mostra i pallini dove vanno le dita. Un cerchio vuoto sul capotasto indica una corda a vuoto, una X indica una corda da non suonare. Tocca l’accordo per sentirlo. Usa la scheda delle scale per vedere il disegno completo lungo il manico." },
+    guitar_fretboard: { title: "Scale sul Manico", body: "Mostra una scala o un modo su tutto il manico, per qualsiasi tonica. Le toniche sono evidenziate in modo diverso dagli altri gradi. Il manico si aggiorna in tempo reale quando cambi tonica o tipo di scala.<br><br>Utile per vedere dove vive una scala lungo il manico attraverso le posizioni, e non soltanto dentro un’unica diteggiatura." },
+    dbmeter: { title: "Misuratore di Volume / dB", body: "Mostra in tempo reale il livello in ingresso del microfono. La scala <strong>dBFS</strong> va dal silenzio fino a 0 dBFS (il segnale digitale più forte possibile). Le zone colorate seguono le linee guida <strong>NIOSH</strong> per la protezione dell’udito: il verde è sicuro, il giallo merita attenzione, il rosso è al livello in cui un’esposizione prolungata danneggia l’udito.<br><br>Utile per parlare di protezione dell’udito con gli allievi, per misurare il rumore di fondo di una stanza, o per sistemare il guadagno del microfono prima di un esercizio." },
+    rhythmcards: { title: "Carte Ritmiche", body: "Un mazzo di figure ritmiche comuni, le piccole celle che compongono quasi ogni ritmo che leggerai o suonerai. Ogni carta è una singola battuta in 2/4 mostrata in notazione, con il suo nome e il conteggio da dire ad alta voce.<br><br>Tocca <strong>PLAY</strong> per sentire la figura. Con <strong>CLICK</strong> attivo parte con una battuta di introduzione e suona su una pulsazione regolare; disattiva CLICK per sentirla asciutta e immediata, comodo per sfogliare in fretta. Usa le frecce per passare da una carta all’altra e le pillole in alto per filtrare per categoria (Base, Semicrome, Puntate, Terzine, Sincopi).<br><br>Il <strong>MODO TOCCO</strong> la trasforma in una prova di precisione. Premi <strong>PLAY</strong> per una battuta di introduzione; il click prosegue e tu batti la figura sul pad (tenuto in basso per usarlo con una mano sola) restando a tempo. Alla fine della battuta la carta valuta quanto sono caduti vicini i tuoi colpi e ti dice cosa correggere: se hai affrettato, trascinato, o quale colpo preciso è arrivato presto o tardi.<br><br>Il <strong>BPM</strong> è la tua manopola della difficoltà: i tempi lenti perdonano, quelli veloci no." },
+    theremin: { title: "Theremin", body: "Uno strumento a intonazione continua modellato sul classico Moog Etherwave. Trascina il dito sulla superficie scura: <strong>da sinistra a destra l’altezza sale</strong> lungo l’estensione scelta, e <strong>dal basso verso l’alto sale il volume</strong> (porta il dito in alto per un crescendo, scendi in fondo per sfumare).<br><br><strong>PURO / CALDO / ANCIA / OTTONI</strong> cambiano il timbro, da una sinusoide pulita a un suono ricco di armonici. Le manopole controllano <strong>BRILLANTE</strong> (apertura del filtro), <strong>VIBRATO</strong> (aggiunge un’oscillazione cantabile) e <strong>ESTENSIONE</strong> (quante ottave copre la superficie)." },
+    vocalrange: { title: "Analisi dell’Estensione Vocale", body: "Una prova guidata al microfono che traccia le note che riesci a cantare con comodità. Tocca <strong>AVVIA</strong> e l’app suona una sequenza di note; conferma quelle che riesci a riprodurre. Alla fine la tua estensione compare sul pentagramma, insieme al tuo <strong>tipo vocale</strong> stimato (Basso, Baritono, Tenore, Contralto, Mezzosoprano, Soprano).<br><br>I risultati vengono salvati, così puoi seguire i progressi nel tempo. Il pannello <strong>Riferimento</strong> ti permette di suonare qualsiasi nota per sentirla prima di cantarla." },
+    groove: { title: "Modalità Groove", body: "Cambia il metronomo da un click uniforme a un <strong>disegno di accenti su 16 step</strong>. Invece di avere ogni movimento uguale agli altri, decidi quali step sono accentati, sommessi o silenziosi, costruendo un vero impasto ritmico invece di una pulsazione piatta.<br><br>Scegli un groove predefinito (Son Clave, Bossa, Funk e altri) per caricare un disegno pronto, oppure tocca i singoli step per personalizzarlo. Un tocco per un colpo sommesso, un secondo tocco per un accento, un terzo per svuotare lo step." },
+    groove_steps: { title: "Sequencer a Step", body: "Ogni quadrato è uno step da una semicroma. Tocca per passare fra tre stati: <strong>spento</strong> → <strong>sommesso</strong> (opaco) → <strong>accento</strong> (acceso). Tieni premuto uno step per aprire l’editor di precisione di quella traccia, con una griglia più grande e le opzioni ghost e flam.<br><br>Trascina il pulsante <strong>BATTUTE</strong> verso l’alto per estendere il disegno a 2, 3 o 4 battute. Usa le frecce ‹ › per spostarti fra le battute. <strong>UMANIZZA</strong> aggiunge piccoli scarti casuali di tempo perché il disegno suoni meno meccanico; tocca di nuovo per annullare." },
+    drumkit: { title: "Sequencer di Batteria", body: "Un sequencer a step su 10 tracce con cassa, rullante, charleston, tom e altro. Ogni traccia ha la sua riga di step: tocca per accendere o spegnere un colpo, tieni premuto per ghost note o flam.<br><br><strong>KIT</strong> sceglie il set di suoni (Standard, Elettronico, Jazz, Latin). <strong>PRESET</strong> carica disegni completi su più tracce, organizzati per stile. <strong>PULISCI</strong> svuota tutte le tracce. Il cursore <strong>BPM</strong> e i comandi del tempo in alto sono condivisi con il metronomo principale." },
+    tonal_center: { title: "Centro Tonale", body: "Un bordone tiene ferma una tonica mentre tu canti o suoni sopra, per costruire l’orecchio su dove sta ogni nota dentro una tonalità.<br><br>Scegli una <strong>tonica</strong> sulla tastiera, poi una <strong>scala</strong> e un’<strong>ottava</strong>, quindi tocca <strong>AVVIA BORDONE</strong>. Lo schermo mostra tre cose insieme: l’<strong>intervallo</strong> fra la tua nota e la tonica, la tua intonazione in <strong>cent</strong> sulla barra di aggancio, e il nome della nota nella coppia <strong>BORDONE / TU</strong>.<br><br>Il colore ti dice l’intonazione a colpo d’occhio: <strong>blu</strong> = calante (troppo bassa), <strong>rosso</strong> = crescente (troppo alta), <strong>verde</strong> = intonato." }
+    },
+    lbl_other:'ALTRO', lbl_oct:'OTT ', lbl_options:'OPZIONI', btn_close:'CHIUDI', lbl_to:'a:', lbl_bass:'BASSO', pn_tap_start:'tocca un tasto per iniziare', trp_sounds:'Suona: ', trp_written:'Scritto: ', photo_loading:'CARICAMENTO FOTO…', photo_offline:'FOTO NON DISPONIBILE — SERVE INTERNET',
+    folder_rhythm:'Ritmo', folder_ear:'Orecchio', folder_games:'Giochi', folder_reading:'Lettura',
+    ui_easy:'FACILE', ui_med:'MEDIO', ui_hard:'DIFFICILE', ui_custom:'PERSONALIZZATO', ui_custom:'Personalizzato', ui_streak:'SERIE', ui_set:'IMPOSTA', ui_key:'TONALITÀ', ui_strobe:'STROBO', ui_vibrato:'VIBRATO', ui_tuner:'ACCORDATORE', ui_play_in_tune:'suona intonato',
+    ui_range_map:'Mappa Estensione', ui_comfortable_range:'Estensione comoda', ui_extended_range:'Estensione estesa', ui_tessitura_center:'Centro di tessitura', ui_closest_adjacent_type:'Tipo vocale più vicino', ui_singers_in_your_range:'Cantanti nella tua estensione', ui_retake:'Ripeti', ui_most_comfortable:'più comoda', ui_right_for_higher_pitch:'a destra per note più acute', ui_note_grid:'GRIGLIA NOTE', ui_snap_to_scale:'AGGANCIA ALLA SCALA', ui_try_a_sound:'PROVA UN SUONO', ui_tap_any_string_row:'Tocca una riga di corda', ui_low_to_high_from_the_bot:'dal grave all’acuto, dal basso', ui_test_your_music_knowledg:'Metti alla prova le tue conoscenze', ui_exit:'ESCI',
+    ui_rhythm_cards:'CARTE RITMICHE', ui_tap_mode:'MODO TOCCO', ui_soft:'DOLCE', ui_deep:'PROFONDO', ui_bright:'BRILLANTE', ui_warm:'CALDO', ui_accent:'accento', ui_clear:'pulisci', ui_silent:'muto', ui_interval_reference:'RIFERIMENTO INTERVALLI', ui_hear_it:'ASCOLTA', ui_long_press:'Tieni premuto',
+    mq_now_playing:'IN CORSO', mq_quick_play:'PARTITA VELOCE', mq_select_a_pack_set_question:'Scegli un pacchetto e quante domande', mq_instant_start:'INIZIA SUBITO', mq_custom:'PERSONALIZZATA', mq_choose_packs_difficulty_an:'Scegli pacchetti, difficoltà e lunghezza', mq_your_rules:'LE TUE REGOLE', mq_survival:'SOPRAVVIVENZA', mq_endless:'SENZA FINE', mq_quiz_in_progress:'QUIZ IN CORSO', mq_discard:'SCARTA', mq_packs:'Pacchetti', mq_all_8_packs_selected:'Tutti gli 8 pacchetti scelti', mq_deselect_all:'DESELEZIONA TUTTO', mq_questions:'Domande', mq_difficulty:'Difficoltà', mq_familiar:'Familiari', mq_some_digging:'Un po’ di ricerca', mq_deep_cuts:'Per intenditori', mq_casual:'LIBERA', mq_timed:'A TEMPO', mq_mode:'Modalità', mq_normal:'NORMALE', mq_fixed_count:'NUMERO FISSO', mq_correct_answer:'RISPOSTA CORRETTA', mq_did_you_know:'LO SAPEVI', mq_every_question_answered:'tutte le domande completate', mq_score:'PUNTEGGIO', mq_correct:'CORRETTE', mq_streak:'SERIE', mq_play_again:'GIOCA ANCORA', mq_done:'FATTO', mq_game_over:'PARTITA FINITA', mq_pts:'PTI', mq_best_streak:'SERIE MIGLIORE', mq_xp_earned:'XP GUADAGNATI', mq_accuracy:'PRECISIONE', mq_missed_questions:'DOMANDE SBAGLIATE', mq_select_a_pack_or_play_all:'scegli un pacchetto o gioca tutti', mq_questions:'DOMANDE', mq_stats:'STATISTICHE', mq_your_lifetime_quiz_perform:'il tuo rendimento complessivo', mq_reset_stats:'AZZERA STATISTICHE',
     tonegrp_keys:'TASTIERE', tonegrp_waves:'ONDE', tonegrp_pluck:'PIZZICATE', tonegrp_brass:'OTTONI', tonegrp_wood:'LEGNI',
     bowed_sub_notes:'NOTE', gcc_hint_browse:'Tocca un punto per ascoltare · frecce per sfogliare · ESPANDI mostra tutto', gcc_hint_scale:'Tocca un punto per ascoltare · tonica arancione · grigio = fuori posizione',
     pn_lid_closed:'CHIUSO', pn_lid_stick:'ASTA', pn_lid_open:'APERTO', pn_lid:'COPERCHIO', pn_ped_soft:'UNA CORDA', pn_ped_damper:'SMORZ.', pn_hold:'TIENI',
@@ -85482,11 +85631,162 @@ function buildScaleRootPicker() {
 }
 
 /* Set language, persist, rebuild dynamic content */
+
+// ── Relabel registry ────────────────────────────────────────────────────────
+// The problem this replaces: setLang() carried a hand-written list of ~30
+// builder functions to re-run on a language change. Anything not on that list
+// kept the previous language until its screen was rebuilt some other way. The
+// list failed twice in one session — the drum preset list was missing, and the
+// chart buttons had no builder on it at all — and it fails silently, which is
+// the worst property a list like that can have.
+//
+// Why not just re-enter the current screen instead? Because enterTool() and
+// enterExercise() run each module's init, and init resets state: a vocal range
+// test in progress, a quiz mid-question, a recorded take. Losing someone's work
+// to relabel a button is a worse bug than the stale label.
+//
+// So: a screen registers a RELABEL function — cheap, idempotent, re-renders text
+// only. setLang runs the registered relabels whose element is actually on screen.
+// Off-screen ones are skipped because they will re-render when opened anyway,
+// and running them all would be work nobody sees.
+//
+// The maintenance problem does not vanish; it becomes DETECTABLE. Category G of
+// intonare_i18n_audit.py flags any builder that emits translated text and is
+// neither registered here nor called by setLang, so an omission shows up in a
+// gate run rather than in a screenshot three weeks later.
+const _RELABELERS = [];
+// Builders found to append rather than replace. Populated at runtime by the
+// check in runRelabelers; read it in the console to see which need fixing.
+const _RELABEL_LEAKS = [];
+function registerRelabel(elId, fn) {
+  if (typeof fn !== 'function') return;
+  _RELABELERS.push({ elId: elId, fn: fn });
+}
+function runRelabelers() {
+  for (let i = 0; i < _RELABELERS.length; i++) {
+    const r = _RELABELERS[i];
+    if (r.disabled) continue;
+    try {
+      if (r.elId) {
+        const el = document.getElementById(r.elId);
+        // Skip anything not currently rendered. checkVisibility covers a hidden
+        // ancestor, which offsetParent alone misses for position:fixed screens.
+        if (!el) continue;
+        const shown = el.checkVisibility ? el.checkVisibility()
+                                         : !!(el.offsetParent || el.getClientRects().length);
+        if (!shown) continue;
+      }
+      // SELF-DEFENDING: a builder that APPENDS instead of replacing will leak
+      // nodes every time the language changes. Several in this file do exactly
+      // that — buildSequencer adds ~846 nodes per call — and they are latent bugs
+      // regardless of language, because calling any of them twice leaks.
+      //
+      // Rather than trusting every registered builder to be idempotent, measure.
+      // The first run of each is checked; if the document grew, that relabeler is
+      // disabled permanently and recorded. So a non-idempotent builder can leak
+      // at most once, ever, and a future registration is protected automatically
+      // without anyone having to remember this rule.
+      if (r.checked) { r.fn(); }
+      else {
+        const before = document.getElementsByTagName('*').length;
+        r.fn();
+        const grew = document.getElementsByTagName('*').length - before;
+        r.checked = true;
+        if (grew > 0) {
+          r.disabled = true;
+          _RELABEL_LEAKS.push({ elId: r.elId, grew: grew });
+        }
+      }
+    } catch (e) { /* one bad relabeler must not stop the rest */ }
+  }
+}
+
+
+// Registered relabelers. Each is cheap, idempotent and text-only — safe to run
+// at any moment, including mid-exercise. Registration happens once at load; the
+// registry itself skips anything not on screen.
+try {
+  // Chart play buttons: labelled programmatically, so applyLang cannot see them.
+  registerRelabel(null, function () { _chartBtnsRelabel(); });
+  // Drum preset list: names come from a data table with nameIt twins.
+  registerRelabel('dkPresetPanel', function () { if (typeof buildPresets === 'function') buildPresets(); });
+  // Groove tray: category tabs plus the cards themselves.
+  registerRelabel('grooveScreen', function () {
+    if (typeof grooveBuildCategoryTabs === 'function') grooveBuildCategoryTabs();
+    if (typeof grooveBuildCards === 'function') grooveBuildCards();
+  });
+  // Progression: the BPM pill's groove name and the preset cards.
+  registerRelabel('toolProgression', function () {
+    if (typeof progRenderModal === 'function') progRenderModal();
+    if (typeof progUpdateBpmDisplay === 'function') progUpdateBpmDisplay();
+  });
+  // Chord Ear: pool chips and answer buttons render chord quality names.
+  registerRelabel('exChordEar', function () { if (typeof ceInit === 'function') ceInit(); });
+
+  // The 27 builders category G found. Each is text-only and idempotent, so they
+  // are safe mid-session; the registry skips any whose screen is not on show.
+  // `render` and the photo-zone builders are deliberately NOT here: `render` is
+  // the tuner's per-frame draw and re-runs constantly on its own, and the photo
+  // builders fetch over the network, which is not something a language toggle
+  // should trigger.
+  registerRelabel('sfSetup',        function(){ if (typeof buildSfSetup==='function') buildSfSetup(); });
+  registerRelabel('stringsGrid',    function(){ if (typeof buildStringGrid==='function') buildStringGrid(); });
+  registerRelabel('csPickerDrawer', function(){ if (typeof buildFamilyTabs==='function') buildFamilyTabs();
+                                                if (typeof buildInstList==='function') buildInstList(); });
+  registerRelabel('toolChords',     function(){ if (typeof buildChordRootGrid==='function') buildChordRootGrid();
+                                                if (typeof buildChordQualityGroups==='function') buildChordQualityGroups(); });
+  registerRelabel('toolTonal',      function(){ if (typeof buildScaleTypePicker==='function') buildScaleTypePicker();
+                                                if (typeof buildScaleRootPicker==='function') buildScaleRootPicker(); });
+  registerRelabel('metroScreen',    function(){ if (typeof buildTSPresets==='function') buildTSPresets();
+                                                if (typeof buildBeatDots==='function') buildBeatDots();
+                                                if (typeof buildBeatNums==='function') buildBeatNums(); });
+  registerRelabel('toolDrumkit',    function(){ if (typeof buildSequencer==='function') buildSequencer(); });
+  registerRelabel('achievementsScreen', function(){ if (typeof renderAchievements==='function') renderAchievements(); });
+  registerRelabel('favSheet',       function(){ if (typeof renderFavSheet==='function') renderFavSheet(); });
+  registerRelabel('setlistPanel',   function(){ if (typeof renderSetlist==='function') renderSetlist(); });
+  registerRelabel(null,             function(){ if (typeof buildAutoChips==='function') buildAutoChips(); });
+
+  // Module header: title, subtitle and the "torna a" back label. Rendered once by
+  // setHeaderModule when a screen opens, so before this it kept whatever language
+  // it was drawn in — which is why the live sweep saw STRUMENTI and CERCHIO DELLE
+  // QUINTE still showing with the app set to English.
+  registerRelabel(null, function(){
+    if (typeof _rerenderHeader === 'function') _rerenderHeader();
+  });
+  // Section header (the TOOLS / TRAIN hub title and its subtitle). Same root
+  // cause as the module header: setHeaderSection is handed t('mode_tools'),
+  // already resolved, so the title froze in whatever language was live when the
+  // tab was opened. Re-derived from `mode`, which is already tracked.
+  registerRelabel(null, function(){
+    if (typeof _rerenderSection === 'function') _rerenderSection();
+  });
+  registerRelabel(null, function(){ if (typeof buildChromaStrip==='function') buildChromaStrip(); });
+  registerRelabel('toolChords', function(){ if (typeof buildChordBuilderGrid==='function') buildChordBuilderGrid(); });
+  registerRelabel(null, function(){ if (typeof initSliderToggles==='function') initSliderToggles(); });
+  registerRelabel('thereminOverlay', function(){ if (typeof renderKbdControls==='function') renderKbdControls(); });
+  registerRelabel('smRampPanel', function(){ if (typeof renderRampPresets==='function') renderRampPresets(); });
+  // Left out on purpose, with reasons, so the audit's remainder is a decision
+  // rather than an oversight:
+  //   render                    - the tuner's per-frame draw; re-runs constantly
+  //   buildPhotoZone(WithCalib) - fetches over the network; a language toggle
+  //                               must not kick off downloads
+  //   buildChordToneBank        - rebuilt by its own open handler every time
+  //   buildSfPips               - pips are numeric, no translated text on them
+  //   buildCustomDropdown       - takes its labels from the caller, which is
+  //                               already covered wherever it is used
+
+
+} catch (e) {}
+
 function setLang(lang) {
   progState.lang = lang;
   progSave();
   document.body.classList.toggle('lang-it', lang === 'it');
   applyLang();
+  // Registered relabelers run FIRST, before the legacy builder list below, so a
+  // screen that has registered one gets the cheap path and the old call becomes
+  // redundant rather than conflicting.
+  try { runRelabelers(); } catch (e) {}
   try { applyAppearance && applyAppearance(); } catch(e) {}  // re-localize the dynamic appearance-mode label
   buildScaleDropdown();
   buildScaleRootDropdown();
@@ -85513,6 +85813,10 @@ function setLang(lang) {
   try { pccInit && pccInit(); } catch(e) {}
   try { pssInit && pssInit(); } catch(e) {}
   try { dkBuildPresetCategoryTabs && dkBuildPresetCategoryTabs(); } catch(e) {}
+  // The tabs were rebuilt but not the LIST, so preset names kept the previous
+  // language until the panel was reopened. That is what "nothing updated when I
+  // switched" looked like on the drum tray.
+  try { buildPresets && buildPresets(); } catch(e) {}
   try { progRenderModal && progRenderModal(); } catch(e) {}
   try { scaleRenderTape && scaleRenderTape(false); } catch(e) {}
   try { buildTcScaleDropdown && buildTcScaleDropdown(); } catch(e) {}
@@ -88918,8 +89222,22 @@ function backupExport() {
   // This is the only path that puts the file somewhere the person chose, in
   // visible storage that survives uninstalling the app. Everything below is a
   // fallback for builds that predate the plugin.
-  if (P && P.FileSaver && P.FileSaver.save) {
-    P.FileSaver.save({ filename: name, data: txt, mimeType: 'application/json' })
+  // Capacitor.Plugins.X is only auto-populated for plugins that ALSO have a
+  // JS-side definition. A native-only plugin registered in MainActivity needs
+  // Capacitor.registerPlugin('Name') to build the bridge proxy — exactly what
+  // the mic plugin does a few hundred lines up. Without it this check was always
+  // undefined and export fell silently through to the share sheet, which looked
+  // like the native plugin had failed to install when it had never been asked.
+  var _fileSaver = null;
+  try {
+    _fileSaver = (P && P.FileSaver) ? P.FileSaver : null;
+    if (!_fileSaver && window.Capacitor && typeof window.Capacitor.registerPlugin === 'function') {
+      _fileSaver = window.Capacitor.registerPlugin('FileSaver');
+    }
+  } catch (e) { _fileSaver = null; }
+
+  if (_fileSaver && _fileSaver.save) {
+    _fileSaver.save({ filename: name, data: txt, mimeType: 'application/json' })
       .then(function (r) {
         // Backing out of the picker is a deliberate choice, not an error.
         if (r && r.saved) { try { svcToast(t('backup_saved')); } catch (e) {} }
@@ -91354,14 +91672,14 @@ function vrRenderResults(r) {
     <div style="padding:13px 15px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);display:flex;align-items:center;gap:12px;">
       <span style='display:inline-flex;color:var(--accent);'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:middle'><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></svg></span>
       <div>
-        <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;">Closest adjacent type</div>
+        <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;" data-i18n="ui_closest_adjacent_type">Closest adjacent type</div>
         <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:19px;letter-spacing:2px;color:var(--accent);">${adj ? `${adjSemi} <span style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">semitones from ${adj.name}</span>` : '—'}</div>
       </div>
     </div>
 
     <div class="card warm">
       <div class="card-glow"></div>
-      <div class="card-label">Singers in your range</div>
+      <div class="card-label" data-i18n="ui_singers_in_your_range">Singers in your range</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
         ${vt.singers.slice(0,4).map(s=>`<span style="padding:5px 11px;background:var(--panel);border:1px solid var(--border-soft);border-radius:16px;font-size:9.5px;color:var(--text-dim);">${s}</span>`).join('')}
       </div>
@@ -91371,7 +91689,7 @@ function vrRenderResults(r) {
     <div style="font-family:'Fraunces','GlyphFix',serif;font-style:italic;font-size:10.5px;color:var(--muted);line-height:1.6;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-sm);">Voice type classification by a vocal coach also considers timbre, passaggio, and vocal weight — factors pitch detection alone can't assess. Treat this as a useful starting point.</div>
 
     <div style="display:flex;gap:8px;">
-      <button class="iv-btn" onclick="vrShowGenderSelect()" style="flex:1">Retake</button>
+      <button class="iv-btn" onclick="vrShowGenderSelect()" style="flex:1" data-i18n="ui_retake">Retake</button>
       <button class="iv-btn primary" id="vrBtnSave" onclick="vrSaveResult()" style="flex:2;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3)">Save to History →</button>
     </div>`;
 
@@ -91400,7 +91718,7 @@ function vrRenderRangeStrip(r, containerId) {
   if (!wrap) return;
   const vt = r.voiceType;
 
-  let html = '<div class="vr-strip-title">Range Map</div>';
+  let html = '<div class="vr-strip-title" data-i18n="ui_range_map">Range Map</div>';
   html += `<div style="position:relative;padding-left:66px;">`;
   VR_VOICE_TYPES.forEach(v => {
     const lPct = vrMidiPct(v.lowMidi);
@@ -91443,9 +91761,9 @@ function vrRenderRangeStrip(r, containerId) {
   // Legend
   const vtColor = vt ? vt.color : 'var(--accent)';
   html += `<div class="vr-strip-legend">
-    <div class="vr-legend-item"><div class="vr-legend-dot" style="background:${vtColor};border:2px solid ${vtColor}88"></div><span class="vr-legend-text">Comfortable range</span></div>
-    <div class="vr-legend-item"><div class="vr-legend-dot" style="background:transparent;border:1px dashed ${vtColor}66"></div><span class="vr-legend-text">Extended range</span></div>
-    <div class="vr-legend-item"><div class="vr-legend-dot" style="background:${vtColor};width:2px;border-radius:1px"></div><span class="vr-legend-text">Tessitura center</span></div>
+    <div class="vr-legend-item"><div class="vr-legend-dot" style="background:${vtColor};border:2px solid ${vtColor}88"></div><span class="vr-legend-text" data-i18n="ui_comfortable_range">Comfortable range</span></div>
+    <div class="vr-legend-item"><div class="vr-legend-dot" style="background:transparent;border:1px dashed ${vtColor}66"></div><span class="vr-legend-text" data-i18n="ui_extended_range">Extended range</span></div>
+    <div class="vr-legend-item"><div class="vr-legend-dot" style="background:${vtColor};width:2px;border-radius:1px"></div><span class="vr-legend-text" data-i18n="ui_tessitura_center">Tessitura center</span></div>
   </div>`;
 
   wrap.innerHTML = html;
@@ -91601,7 +91919,7 @@ function vrRenderReference() {
     html += `<span class="vr-axis-label${m===60?' c4':''}" style="left:${pct(m)}%">${lbl}</span>`;
   });
   html += `</div></div>
-    <div class="teach-hint" data-i18n-html="hint_vr_overlap">Ranges overlap significantly. Voice type is determined by where the voice is <em>most comfortable</em>, not by its extremes.</div>
+    <div class="teach-hint" data-i18n-html="hint_vr_overlap">Ranges overlap significantly. Voice type is determined by where the voice is <em data-i18n="ui_most_comfortable">most comfortable</em>, not by its extremes.</div>
   </div>`;
 
   // Combined discover-more row: Artist Reference + Extended Types toggle
@@ -93718,7 +94036,7 @@ const PRESET_CATS = [
         'kick':    [2,0,0,2, 2,0,0,0],
       },
       {
-        name:'8th Rock', ts:4, dk_bpm:110, kit:'standard', globalSub:2,
+        name:'8th Rock', nameIt:'Rock in Ottavi', ts:4, dk_bpm:110, kit:'standard', globalSub:2,
         'hihat-c': [2,2,2,2, 2,2,2,2],
         'snare':   [0,0,2,0, 0,0,2,0],
         'kick':    [2,0,2,0, 0,2,2,0],
@@ -93972,7 +94290,7 @@ const PRESET_CATS = [
         'kick':       [2,0,2,0, 0,0,2,0, 2,0,2,0, 0,0,0,0],
       },
       {
-        name:'Bossa (Alt)', ts:4, dk_bpm:120, kit:'latin',
+        name:'Bossa (Alt)', nameIt:'Bossa (Alt.)', ts:4, dk_bpm:120, kit:'latin',
         'cross':   [2,0,0,2, 0,2,0,0, 2,0,0,2, 0,2,0,0],
         'snare':   [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
         'kick':    [2,0,0,0, 0,0,2,0, 2,0,0,0, 0,0,0,0],
@@ -94024,13 +94342,13 @@ const PRESET_CATS = [
         'kick':    [2,0,0,0, 0,0,0,0, 0,0,0,0],
       },
       {
-        name:'5/4 Groove', ts:5, dk_bpm:96, kit:'standard', globalSub:2,
+        name:'5/4 Groove', nameIt:'Groove in 5/4', ts:5, dk_bpm:96, kit:'standard', globalSub:2,
         'hihat-c': [2,0,2,0,2,0,2,0,2,0],
         'snare':   [0,0,2,0,0,0,2,0,0,0],
         'kick':    [2,0,0,0,2,0,0,2,0,0],
       },
       {
-        name:'5/4 Odd Rock', ts:5, dk_bpm:104, kit:'standard', globalSub:2,
+        name:'5/4 Odd Rock', nameIt:'Rock Dispari in 5/4', ts:5, dk_bpm:104, kit:'standard', globalSub:2,
         'hihat-c': [2,0,2,0,2, 2,0,2,0,2],
         'snare':   [0,0,2,0,0, 0,0,2,0,0],
         'kick':    [2,0,0,2,0, 2,0,0,0,0],
@@ -94100,7 +94418,7 @@ const PRESET_CATS = [
         'kick':    [2,0,0,0,0,0, 2,0,0,0,0,0],
       },
       {
-        name:'7/8 Groove', ts:7, dk_bpm:110, kit:'standard', globalSub:2,
+        name:'7/8 Groove', nameIt:'Groove in 7/8', ts:7, dk_bpm:110, kit:'standard', globalSub:2,
         'hihat-c': [2,1,2,1,2,1,2, 2,1,2,1,2,1,2],
         'snare':   [0,0,2,0,0,0,0, 0,0,2,0,0,0,0],
         'kick':    [2,0,0,0,2,0,0, 2,0,0,0,2,0,0],
@@ -94112,13 +94430,13 @@ const PRESET_CATS = [
         'kick':    [2,0,0,0,0,2,0, 2,0,0,0,0,2,0],
       },
       {
-        name:'9/8 Groove', ts:9, dk_bpm:200, kit:'standard', globalSub:1,
+        name:'9/8 Groove', nameIt:'Groove in 9/8', ts:9, dk_bpm:200, kit:'standard', globalSub:1,
         'hihat-c': [2,1,1,2,1,1,2,1,1],
         'snare':   [0,0,0,2,0,0,0,0,0],
         'kick':    [2,0,0,0,0,2,0,0,0],
       },
       {
-        name:'9/8 Funk', ts:9, dk_bpm:180, kit:'standard', globalSub:1, swing:30,
+        name:'9/8 Funk', nameIt:'Funk in 9/8', ts:9, dk_bpm:180, kit:'standard', globalSub:1, swing:30,
         'hihat-c': [2,1,2,1,2,2,1,2,1],
         'snare':   [0,0,0,0,2,0,0,0,2],
         'kick':    [2,0,0,2,0,0,2,0,0],
@@ -94180,7 +94498,7 @@ const PRESET_CATS = [
       },
       {
         // Trap 32nds — hi-hat at 32nd resolution shows the subdivision students hear in trap
-        name:'Trap 32nds', ts:4, dk_bpm:140, kit:'electronic', globalSub:8,
+        name:'Trap 32nds', nameIt:'Trap in Trentaduesimi', ts:4, dk_bpm:140, kit:'electronic', globalSub:8,
         'hihat-c': [2,1,0,1, 2,0,1,0, 2,1,0,1, 2,0,1,0, 2,0,1,0, 2,1,0,0, 2,0,1,0, 2,1,0,1],
         'snare':   [0,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0],
         'kick':    [2,0,0,0, 0,0,0,0, 0,0,2,0, 0,0,0,0, 2,0,0,0, 2,0,0,0, 0,0,0,0, 0,0,0,0],
@@ -94239,7 +94557,7 @@ const PRESET_CATS = [
       },
       {
         // Clyde Stubblefield - Funky Drummer: the turnaround snare figure
-        name:'Funky Drummer Fill', ts:4, dk_bpm:98, kit:'standard',
+        name:'Funky Drummer Fill', nameIt:'Fill Funky Drummer', ts:4, dk_bpm:98, kit:'standard',
         'snare':  [0,0,2,0, 2,1,0,2, 0,1,2,0, 2,0,2,0],
         'hihat-c':[2,0,2,0, 2,0,2,0, 2,0,2,0, 2,0,0,0],
         'kick':   [2,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0],
@@ -94265,7 +94583,7 @@ const PRESET_CATS = [
       },
       {
         // Stewart Copeland: syncopated hi-hat/snare Police-style
-        name:'Copeland Style', ts:4, dk_bpm:132, kit:'standard',
+        name:'Copeland Style', nameIt:'Stile Copeland', ts:4, dk_bpm:132, kit:'standard',
         'hihat-c':[2,0,1,2, 0,2,1,0, 2,1,0,2, 1,0,2,0],
         'snare':  [0,0,0,0, 2,0,2,0, 0,2,0,0, 2,0,0,2],
         'kick':   [2,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0],
@@ -94286,7 +94604,7 @@ const PRESET_CATS = [
       {
         // Carter Beauford style: dense polyrhythmic DMB-era fill over 2 bars
         // Bar 1: sparse setup — toms enter gradually | Bar 2: full density payoff
-        name:'Beauford Style', ts:4, dk_bpm:108, kit:'standard', barCount:2,
+        name:'Beauford Style', nameIt:'Stile Beauford', ts:4, dk_bpm:108, kit:'standard', barCount:2,
         'tom-hi': [3,0,0,0, 0,0,0,0, 3,0,0,3, 0,0,0,0,
                    3,0,0,3, 0,0,3,0, 0,0,0,0, 0,0,0,0],
         'tom1':   [0,0,0,0, 0,0,3,0, 0,3,0,0, 3,0,0,0,
@@ -94491,7 +94809,10 @@ function buildPresets() {
 
     const name = document.createElement('span');
     name.className = 'dk-item-name';
-    name.textContent = p.name;
+    // Used p.name raw, so the drum preset list stayed English even for the 24
+    // presets that already had a nameIt. Every other preset surface in the app
+    // (progression cards, groove cards) already picks the twin; this one did not.
+    name.textContent = ((progState.lang === 'it') && p.nameIt) ? p.nameIt : p.name;
     btn.appendChild(name);
 
     const meta = document.createElement('span');
@@ -94949,7 +95270,7 @@ function _openAudioDiag() {
     'overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.85)';
 
   const close = document.createElement('button');
-  close.textContent = 'CLOSE';
+  close.textContent = _tf('btn_close','CLOSE');
   close.style.cssText =
     'float:right;background:#1f2d3a;color:#9fb3c8;border:0;border-radius:6px;' +
     'padding:6px 12px;font:12px ui-monospace,monospace;cursor:pointer';
@@ -106755,7 +107076,7 @@ function fluteTrillBuildGrid() {
         octBar.appendChild(b);
       };
       mkTab('ALL', null);
-      octLabels.forEach(o => mkTab('OCT '+o, o));
+      octLabels.forEach(o => mkTab(_tf('lbl_oct','OCT ')+o, o));
     }
   }
   grid.innerHTML = '';
@@ -106785,7 +107106,7 @@ function fluteTrillBuildGrid() {
       if (opts.length > 1) {
         const lbl = document.createElement('span');
         lbl.style.cssText = 'font-size:9px;color:var(--text-muted,#9ecfc4);margin-right:2px;white-space:nowrap';
-        lbl.textContent = 'to:';
+        lbl.textContent = _tf('lbl_to','to:');
         optRow.appendChild(lbl);
         opts.forEach(({tr,i}) => {
           const b = document.createElement('button');
@@ -107118,9 +107439,9 @@ function trpDrawNoteCard(noteIdx) {
       // In concert mode: headline = concert (pc), subtitle = written
       // In written mode: headline = written (displayPc), subtitle = concert (pc)
       if (windWrittenPitch) {
-        subEl.textContent = 'Sounds: ' + gccRootDisplayName(pc);
+        subEl.textContent = _tf('trp_sounds','Sounds: ') + gccRootDisplayName(pc);
       } else {
-        subEl.textContent = 'Written: ' + gccRootDisplayName(writtenPc);
+        subEl.textContent = _tf('trp_written','Written: ') + gccRootDisplayName(writtenPc);
       }
       subEl.style.display = '';
     } else {
@@ -107493,8 +107814,8 @@ function trpDraw() {
       else { const t = wwTransposition(); writtenOffset = t !== 0 ? -t : 0; }
       const writtenPc = (note.pc + writtenOffset + 12) % 12;
       navSubEl.textContent = windWrittenPitch
-        ? ('Sounds: ' + gccRootDisplayName(note.pc))
-        : ('Written: ' + gccRootDisplayName(writtenPc));
+        ? (_tf('trp_sounds','Sounds: ') + gccRootDisplayName(note.pc))
+        : (_tf('trp_written','Written: ') + gccRootDisplayName(writtenPc));
       navSubEl.style.display = '';
     } else {
       navSubEl.textContent = ''; navSubEl.style.display = 'none';
@@ -111480,6 +111801,14 @@ const BOWED_INTERVALS = [
 ];
 
 const _BN = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+// The bowed charts wrote _BN[pc] straight into the note pills, so they stayed in
+// letter names while the rest of the app followed the Solfège setting. The
+// guitar-chord charts already route everything through getDisplayNote(); this
+// gives the bowed ones the same treatment in one place rather than three.
+function _bnDisp(pc) {
+  try { return (typeof getDisplayNote === 'function') ? getDisplayNote(_BN[pc]) : _BN[pc]; }
+  catch (e) { return _BN[pc]; }
+}
 function bowedMidiName(midi) { return _BN[midi % 12]; }
 
 // ── Bow synth ─────────────────────────────────────────────────
@@ -111804,9 +112133,9 @@ function _bowedRenderNote() {
   const maxSemi=Math.min(17,Math.max(meta.isBass?9:13,maxHiSemi));
   const ctx=_bowedDrawNeck('bowedNeckSvg',maxSemi,meta); if(!ctx) return;
   const lbl=document.getElementById('bowedNoteLabel');
-  if(lbl){lbl.className='gcc-chord-name';lbl.textContent=_BN[bowedNotePC];}
+  if(lbl){lbl.className='gcc-chord-name';lbl.textContent=_bnDisp(bowedNotePC);}
   const pills=document.getElementById('bowedNotesPills');
-  if(pills){pills.innerHTML='';const p=document.createElement('div');p.className='gss-note-pill root';p.textContent=_BN[bowedNotePC];pills.appendChild(p);}
+  if(pills){pills.innerHTML='';const p=document.createElement('div');p.className='gss-note-pill root';p.textContent=_bnDisp(bowedNotePC);pills.appendChild(p);}
 
   // Position subtitle
   const sub=document.getElementById('bowedNoteSub');
@@ -111930,7 +112259,7 @@ function _bowedRenderDstop() {
   if(pills){
     pills.innerHTML='';
     [{pc:bowedDsRootPC,root:true},{pc:upperPC,root:false}].forEach(({pc,root})=>{
-      const p=document.createElement('div');p.className='gss-note-pill'+(root?' root':'');p.textContent=_BN[pc];pills.appendChild(p);
+      const p=document.createElement('div');p.className='gss-note-pill'+(root?' root':'');p.textContent=_bnDisp(pc);pills.appendChild(p);
     });
   }
 
@@ -112106,7 +112435,7 @@ function _bowedRenderScale() {
     const st=GSS_SCALE_TYPES.find(s=>s.id===bowedScaleType);
     pe.innerHTML='';
     if(st) st.intervals.forEach(iv=>{
-      const p=document.createElement('div');p.className='gss-note-pill'+(iv===0?' root':'');p.textContent=_BN[(bowedScaleRoot+iv)%12];pe.appendChild(p);
+      const p=document.createElement('div');p.className='gss-note-pill'+(iv===0?' root':'');p.textContent=_bnDisp((bowedScaleRoot+iv)%12);pe.appendChild(p);
     });
   }
 
@@ -112333,6 +112662,20 @@ const CHART_BTNS = {
 // literal '■ STOP' both here and in the comparison below, so in Italian the
 // button showed English AND _chartBtnIdle's equality check never matched, which
 // meant it silently refused to restore any label.
+
+// Small helper for JS-built labels: t() returns the KEY when a string is missing,
+// so a bad key would print itself on screen. Treat that as a miss and fall back.
+// Chord quality names in the current language. CHORD_DICT had no Italian at all,
+// so even the display sites that DID check for nameIt fell back to English, and
+// the Chord Ear pool chips and buttons used def.name raw on top of that.
+function _cdName(def) {
+  if (!def) return '';
+  return ((progState && progState.lang === 'it') && def.nameIt) ? def.nameIt : def.name;
+}
+function _tf(key, fallback) {
+  try { const v = (typeof t === 'function') ? t(key) : null; return (v && v !== key) ? v : fallback; }
+  catch (e) { return fallback; }
+}
 function _chartBtnHaltText() {
   try { return (typeof t === 'function' && t('btn_stop')) || '■ STOP'; } catch (e) { return '■ STOP'; }
 }
@@ -114860,7 +115203,7 @@ function buildPhotoZone(imgSrc, zones, tipEl) {
   // Loading placeholder
   var loader = document.createElement('div');
   loader.className = 'photo-loading';
-  loader.textContent = 'LOADING PHOTO…';
+  loader.textContent = _tf('photo_loading','LOADING PHOTO…');
   wrap.appendChild(loader);
 
   var img = document.createElement('img');
@@ -114872,7 +115215,7 @@ function buildPhotoZone(imgSrc, zones, tipEl) {
     wrap.style.minHeight = '';
   };
   img.onerror = function() {
-    loader.textContent = 'PHOTO UNAVAILABLE — NEEDS INTERNET';
+    loader.textContent = _tf('photo_offline','PHOTO UNAVAILABLE — NEEDS INTERNET');
     loader.style.padding = '30px 20px';
   };
   img.src = imgSrc;
@@ -116126,12 +116469,12 @@ function buildPhotoZoneWithCalib(imgSrc, zonesDefault, tipEl, calibKey) {
   wrap.style.minHeight = '180px';
 
   if (!imgSrc) {
-    var ld=document.createElement('div');ld.className='photo-loading';ld.style.padding='40px 20px';ld.textContent='PHOTO UNAVAILABLE — NEEDS INTERNET';wrap.appendChild(ld);return wrap;
+    var ld=document.createElement('div');ld.className='photo-loading';ld.style.padding='40px 20px';ld.textContent=_tf('photo_offline','PHOTO UNAVAILABLE — NEEDS INTERNET');wrap.appendChild(ld);return wrap;
   }
   var loader=document.createElement('div');loader.className='photo-loading';loader.style.padding='40px 20px';loader.textContent=t('sg_loading')||'LOADING2026';wrap.appendChild(loader);
   var img=document.createElement('img');img.alt='';img.style.cssText='width:100%;height:auto;display:none;opacity:.93';
   img.onload=function(){loader.style.display='none';img.style.display='block';wrap.style.minHeight='';};
-  img.onerror=function(){loader.textContent='PHOTO UNAVAILABLE — NEEDS INTERNET';};
+  img.onerror=function(){loader.textContent=_tf('photo_offline','PHOTO UNAVAILABLE — NEEDS INTERNET');};
   img.src=imgSrc;wrap.appendChild(img);
 
   var zoneLayer=document.createElement('div');zoneLayer.className='photo-zones';zoneLayer.style.cssText='position:absolute;inset:0;pointer-events:none';wrap.appendChild(zoneLayer);
@@ -117648,7 +117991,7 @@ function render(dir){
       var bassModel = page.bass_model || 'precision';
       var bassItems = [['precision','Fender Precision'],['jazz','Fender Jazz'],['stingray','Music Man StingRay'],['rickenbacker','Rickenbacker 4003'],['hofner','Höfner 500/1']];
       var bSelRow = document.createElement('div'); bSelRow.className = 'sel-row';
-      var bLbl = document.createElement('span'); bLbl.className = 'sel-lbl'; bLbl.textContent = 'BASS';
+      var bLbl = document.createElement('span'); bLbl.className = 'sel-lbl'; bLbl.textContent = _tf('lbl_bass','BASS');
       var bTipEl = document.createElement('div'); bTipEl.className = 'photo-tip'; bTipEl.innerHTML = '<div class="tip-name"></div><div class="tip-desc"></div>';
       var bPhotoContainer = document.createElement('div');
       var bInfoEl = document.createElement('div'); bInfoEl.className = 'pg-body'; bInfoEl.style.marginTop = '6px';
@@ -118129,7 +118472,7 @@ function openPedalPlugin(){
     pt.appendChild(btn);
   });
   body.appendChild(pt);
-  var ps=document.createElement('div');ps.className='pedal-status';ps.id='pst';ps.textContent='tap a key to start';body.appendChild(ps);
+  var ps=document.createElement('div');ps.className='pedal-status';ps.id='pst';ps.textContent=_tf('pn_tap_start','tap a key to start');body.appendChild(ps);
   document.getElementById('overlay').classList.add('open');
 }
 
@@ -118640,14 +118983,14 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
         <div class="mq-screen active" id="mqScreenLanding">
           <!-- Global difficulty strip -->
           <div class="mq-global-diff" id="mqGlobalDiff">
-            <button class="mq-gd-chip easy"   id="mqgd-easy"   onclick="mqSetGlobalDiff('easy')">EASY</button>
-            <button class="mq-gd-chip medium selected" id="mqgd-medium" onclick="mqSetGlobalDiff('medium')">MED</button>
-            <button class="mq-gd-chip hard"   id="mqgd-hard"   onclick="mqSetGlobalDiff('hard')">HARD</button>
+            <button class="mq-gd-chip easy"   id="mqgd-easy"   onclick="mqSetGlobalDiff('easy')" data-i18n="ui_easy">EASY</button>
+            <button class="mq-gd-chip medium selected" id="mqgd-medium" onclick="mqSetGlobalDiff('medium')" data-i18n="ui_med">MED</button>
+            <button class="mq-gd-chip hard"   id="mqgd-hard"   onclick="mqSetGlobalDiff('hard')" data-i18n="ui_hard">HARD</button>
           </div>
           <div class="mq-hero">
             <div class="mq-hero-pill"><div class="mq-hero-dot"></div>INTONARE</div>
             <div class="mq-hero-title">MUSIC<br>QUIZ</div>
-            <div class="mq-hero-sub">Test your music knowledge</div>
+            <div class="mq-hero-sub" data-i18n="ui_test_your_music_knowledg">Test your music knowledge</div>
             <button class="mq-daily-badge" id="mqDailyBadge" onclick="mqOpenDailyPopup()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               <span id="mqDailyBadgeLabel">DAILY</span>
@@ -118660,7 +119003,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
             </div>
             <div class="mq-np-info">
-              <div class="mq-np-label">NOW PLAYING</div>
+              <div class="mq-np-label" data-i18n="mq_now_playing">NOW PLAYING</div>
               <div class="mq-np-title" id="mqNpTitle">—</div>
             </div>
             <div class="mq-np-controls">
@@ -118677,27 +119020,27 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
             <div class="mq-mode-card mqc-quick" onclick="mqShowQuickSheet()">
               <div class="mq-card-icon" style="color:var(--accent-soft)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg></div>
               <div class="mq-card-info">
-                <div class="mq-card-name">QUICK PLAY</div>
-                <div class="mq-card-desc">Select a pack, set question count</div>
-                <div class="mq-card-badge">INSTANT START</div>
+                <div class="mq-card-name" data-i18n="mq_quick_play">QUICK PLAY</div>
+                <div class="mq-card-desc" data-i18n="mq_select_a_pack_set_question">Select a pack, set question count</div>
+                <div class="mq-card-badge" data-i18n="mq_instant_start">INSTANT START</div>
               </div>
               <div class="mq-card-arrow">›</div>
             </div>
             <div class="mq-mode-card mqc-custom" onclick="mqGoCustom()">
               <div class="mq-card-icon" style="color:var(--accent)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M10 5H3" /> <path d="M12 19H3" /> <path d="M14 3v4" /> <path d="M16 17v4" /> <path d="M21 12h-9" /> <path d="M21 19h-5" /> <path d="M21 5h-7" /> <path d="M8 10v4" /> <path d="M8 12H3" /></svg></div>
               <div class="mq-card-info">
-                <div class="mq-card-name">CUSTOM</div>
-                <div class="mq-card-desc">Choose packs, difficulty, and length</div>
-                <div class="mq-card-badge">YOUR RULES</div>
+                <div class="mq-card-name" data-i18n="mq_custom">CUSTOM</div>
+                <div class="mq-card-desc" data-i18n="mq_choose_packs_difficulty_an">Choose packs, difficulty, and length</div>
+                <div class="mq-card-badge" data-i18n="mq_your_rules">YOUR RULES</div>
               </div>
               <div class="mq-card-arrow">›</div>
             </div>
             <div class="mq-mode-card mqc-survival" onclick="mqSurvivalPlay()">
               <div class="mq-card-icon" style="color:var(--sharp)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="m12.5 17-.5-1-.5 1h1z" /> <path d="M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z" /> <circle cx="15" cy="12" r="1" /> <circle cx="9" cy="12" r="1" /></svg></div>
               <div class="mq-card-info">
-                <div class="mq-card-name">SURVIVAL</div>
+                <div class="mq-card-name" data-i18n="mq_survival">SURVIVAL</div>
                 <div class="mq-card-desc">3 lives · select packs · no end</div>
-                <div class="mq-card-badge">ENDLESS</div>
+                <div class="mq-card-badge" data-i18n="mq_endless">ENDLESS</div>
               </div>
               <div class="mq-card-arrow">›</div>
             </div>
@@ -118705,11 +119048,11 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
           <!-- In-progress resume banner — shown/hidden by mqMaybeShowResumeBanner() -->
           <div id="mqResumeBanner" style="display:none;margin:0 0 12px;background:var(--surface-2,rgba(255,255,255,.06));border:1px solid var(--border-soft,rgba(255,255,255,.12));border-radius:12px;padding:12px 14px;gap:10px;align-items:center;flex-direction:row;">
             <div style="flex:1;min-width:0;">
-              <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-bottom:3px;">QUIZ IN PROGRESS</div>
+              <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-bottom:3px;" data-i18n="mq_quiz_in_progress">QUIZ IN PROGRESS</div>
               <div id="mqResumeBannerDesc" style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:11px;color:var(--fg,#fff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
             </div>
             <div style="display:flex;gap:8px;flex-shrink:0;">
-              <button onclick="mqResumeBannerDiscard()" style="background:none;border:1px solid var(--border-soft,rgba(255,255,255,.18));border-radius:8px;padding:6px 11px;font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);cursor:pointer;">DISCARD</button>
+              <button onclick="mqResumeBannerDiscard()" style="background:none;border:1px solid var(--border-soft,rgba(255,255,255,.18));border-radius:8px;padding:6px 11px;font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);cursor:pointer;" data-i18n="mq_discard">DISCARD</button>
               <button onclick="mqResumeBannerResume()" style="background:var(--accent,#7f5af0);border:none;border-radius:8px;padding:6px 13px;font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:1px;color:#fff;cursor:pointer;font-weight:600;">RESUME →</button>
             </div>
           </div>
@@ -118721,39 +119064,39 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
               BACK
             </button>
             <div class="mq-section">
-              <div class="mq-section-label">Packs</div>
+              <div class="mq-section-label" data-i18n="mq_packs">Packs</div>
               <div id="mqPackTabs"></div>
               <div class="mq-pack-grid" id="mqPackGrid"></div>
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span id="mqPackHint" style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:8px;color:var(--muted)">All 8 packs selected</span>
-                <button onclick="mqToggleAllPacks()" id="mqAllPacksBtn" style="background:none;border:1px solid var(--border-soft);border-radius:6px;padding:4px 10px;color:var(--muted);font-family:'JetBrains Mono','GlyphFix',monospace;font-size:8px;letter-spacing:1px;cursor:pointer;">DESELECT ALL</button>
+                <span id="mqPackHint" style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:8px;color:var(--muted)" data-i18n="mq_all_8_packs_selected">All 8 packs selected</span>
+                <button onclick="mqToggleAllPacks()" id="mqAllPacksBtn" style="background:none;border:1px solid var(--border-soft);border-radius:6px;padding:4px 10px;color:var(--muted);font-family:'JetBrains Mono','GlyphFix',monospace;font-size:8px;letter-spacing:1px;cursor:pointer;" data-i18n="mq_deselect_all">DESELECT ALL</button>
               </div>
               <!-- Online category chips -->
               <div style="display:none;flex-direction:column;gap:6px;" id="mqOnlineChips"></div>
             </div>
             <div class="mq-section">
-              <div class="mq-section-label">Questions</div>
+              <div class="mq-section-label" data-i18n="mq_questions">Questions</div>
               <div class="mq-chip-row" id="mqQCountRow"></div>
             </div>
             <div class="mq-section">
-              <div class="mq-section-label">Difficulty</div>
+              <div class="mq-section-label" data-i18n="mq_difficulty">Difficulty</div>
               <div class="mq-chip-row">
-                <div class="mq-diff-chip easy"   id="mqdchip-easy"   onclick="mqSetDiff('easy')"><div class="mq-diff-name">EASY</div><div class="mq-diff-sub">Familiar</div></div>
-                <div class="mq-diff-chip medium selected" id="mqdchip-medium" onclick="mqSetDiff('medium')"><div class="mq-diff-name">MED</div><div class="mq-diff-sub">Some digging</div></div>
-                <div class="mq-diff-chip hard"   id="mqdchip-hard"   onclick="mqSetDiff('hard')"><div class="mq-diff-name">HARD</div><div class="mq-diff-sub">Deep cuts</div></div>
+                <div class="mq-diff-chip easy"   id="mqdchip-easy"   onclick="mqSetDiff('easy')"><div class="mq-diff-name" data-i18n="ui_easy">EASY</div><div class="mq-diff-sub" data-i18n="mq_familiar">Familiar</div></div>
+                <div class="mq-diff-chip medium selected" id="mqdchip-medium" onclick="mqSetDiff('medium')"><div class="mq-diff-name" data-i18n="ui_med">MED</div><div class="mq-diff-sub" data-i18n="mq_some_digging">Some digging</div></div>
+                <div class="mq-diff-chip hard"   id="mqdchip-hard"   onclick="mqSetDiff('hard')"><div class="mq-diff-name" data-i18n="ui_hard">HARD</div><div class="mq-diff-sub" data-i18n="mq_deep_cuts">Deep cuts</div></div>
               </div>
             </div>
             <div class="mq-section">
               <div class="mq-section-label">Timer</div>
               <div class="mq-chip-row">
-                <div class="mq-chip selected" id="mqtimer-off" onclick="mqSetTimer(false)"><div class="mq-chip-val">OFF</div><div class="mq-chip-lbl">CASUAL</div></div>
-                <div class="mq-chip"          id="mqtimer-on"  onclick="mqSetTimer(true)"><div class="mq-chip-val">15s</div><div class="mq-chip-lbl">TIMED</div></div>
+                <div class="mq-chip selected" id="mqtimer-off" onclick="mqSetTimer(false)"><div class="mq-chip-val">OFF</div><div class="mq-chip-lbl" data-i18n="mq_casual">CASUAL</div></div>
+                <div class="mq-chip"          id="mqtimer-on"  onclick="mqSetTimer(true)"><div class="mq-chip-val">15s</div><div class="mq-chip-lbl" data-i18n="mq_timed">TIMED</div></div>
               </div>
             </div>
             <div class="mq-section">
-              <div class="mq-section-label">Mode</div>
+              <div class="mq-section-label" data-i18n="mq_mode">Mode</div>
               <div class="mq-chip-row">
-                <div class="mq-surv-chip selected" id="mqcs-off" onclick="mqSetCustomSurvival(false)"><div class="mq-chip-val">NORMAL</div><div class="mq-chip-lbl">FIXED COUNT</div></div>
+                <div class="mq-surv-chip selected" id="mqcs-off" onclick="mqSetCustomSurvival(false)"><div class="mq-chip-val" data-i18n="mq_normal">NORMAL</div><div class="mq-chip-lbl" data-i18n="mq_fixed_count">FIXED COUNT</div></div>
                 <div class="mq-surv-chip"          id="mqcs-on"  onclick="mqSetCustomSurvival(true)"><div class="mq-chip-val">💀 SURVIVAL</div><div class="mq-chip-lbl">3 LIVES · ENDLESS</div></div>
               </div>
             </div>
@@ -118775,7 +119118,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               QUIT
             </button>
-            <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:7.5px;letter-spacing:1.5px;color:var(--muted);" id="mqModeLabel">QUICK PLAY</div>
+            <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:7.5px;letter-spacing:1.5px;color:var(--muted);" id="mqModeLabel" data-i18n="mq_quick_play">QUICK PLAY</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:5px;">
             <div class="mq-progress-bar"><div class="mq-progress-fill" id="mqProgressFill" style="width:0%"></div></div>
@@ -118815,11 +119158,11 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
               </div>
             </div>
             <div class="mq-fb-answer-block correct-ans" id="mqFbCorrectBlock">
-              <div class="mq-fb-answer-label">CORRECT ANSWER</div>
+              <div class="mq-fb-answer-label" data-i18n="mq_correct_answer">CORRECT ANSWER</div>
               <div class="mq-fb-answer-text" id="mqFbCorrectText"></div>
             </div>
             <div class="mq-fb-fact-block" id="mqFbFactBlock" style="display:none">
-              <div class="mq-fb-fact-label">DID YOU KNOW</div>
+              <div class="mq-fb-fact-label" data-i18n="mq_did_you_know">DID YOU KNOW</div>
               <div id="mqFbFact"></div>
             </div>
             <button class="mq-fb-next" id="mqFbNextBtn">NEXT →</button>
@@ -118832,17 +119175,17 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
           <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 0 8px;text-align:center;">
             <div style="font-size:52px;animation:mqSkullIn .4s cubic-bezier(.34,1.56,.64,1)">🏆</div>
             <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:32px;letter-spacing:3px;background:linear-gradient(135deg,var(--metro),var(--in-tune));-webkit-background-clip:text;background-clip:text;color:transparent;">CLEARED!</div>
-            <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:8.5px;letter-spacing:1.5px;color:var(--muted);margin-top:2px;">every question answered</div>
+            <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:8.5px;letter-spacing:1.5px;color:var(--muted);margin-top:2px;" data-i18n="mq_every_question_answered">every question answered</div>
             <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:1px;color:var(--text-dim);padding:5px 14px;background:var(--panel);border:1px solid var(--border-soft);border-radius:20px;margin-top:4px;" id="mqWinPackName"></div>
           </div>
           <div class="mq-stats-grid">
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqWinScore" style="color:var(--metro)">—</div><div class="mq-stat-lbl">SCORE</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqWinCorrect" style="color:var(--in-tune)">—</div><div class="mq-stat-lbl">CORRECT</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqWinBest" style="color:var(--accent-warm)">—</div><div class="mq-stat-lbl">STREAK</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqWinScore" style="color:var(--metro)">—</div><div class="mq-stat-lbl" data-i18n="mq_score">SCORE</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqWinCorrect" style="color:var(--in-tune)">—</div><div class="mq-stat-lbl" data-i18n="mq_correct">CORRECT</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqWinBest" style="color:var(--accent-warm)">—</div><div class="mq-stat-lbl" data-i18n="mq_streak">STREAK</div></div>
           </div>
           <div class="mq-res-btns">
-            <button class="mq-res-btn primary" onclick="mqPlayAgain()">PLAY AGAIN</button>
-            <button class="mq-res-btn secondary" onclick="mqGoLanding()">DONE</button>
+            <button class="mq-res-btn primary" onclick="mqPlayAgain()" data-i18n="mq_play_again">PLAY AGAIN</button>
+            <button class="mq-res-btn secondary" onclick="mqGoLanding()" data-i18n="mq_done">DONE</button>
           </div>
         </div>
 
@@ -118851,7 +119194,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
           <div id="mqSurvivalEnd" style="display:none">
             <div class="mq-survival-end">
               <div class="mq-skull">💀</div>
-              <div class="mq-survival-title" id="mqSurvivalTitle">GAME OVER</div>
+              <div class="mq-survival-title" id="mqSurvivalTitle" data-i18n="mq_game_over">GAME OVER</div>
               <div class="mq-survival-count" id="mqSurvivalCount">0</div>
               <div class="mq-survival-count-label" id="mqSurvivalLabel">CORRECT OUT OF 50</div>
             </div>
@@ -118865,7 +119208,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
               </svg>
               <div class="mq-ring-text">
                 <div class="mq-ring-score" id="mqRingScore">0</div>
-                <div class="mq-ring-label">PTS</div>
+                <div class="mq-ring-label" data-i18n="mq_pts">PTS</div>
               </div>
             </div>
             <div class="mq-grade-block" style="margin-top:10px">
@@ -118874,15 +119217,15 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
             </div>
           </div>
           <div class="mq-stats-grid">
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqResCorrect" style="color:var(--in-tune)">—</div><div class="mq-stat-lbl">CORRECT</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqResBest" style="color:var(--accent-warm)">—</div><div class="mq-stat-lbl">BEST STREAK</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqResXP" style="color:var(--accent-soft)">—</div><div class="mq-stat-lbl">XP EARNED</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqResCorrect" style="color:var(--in-tune)">—</div><div class="mq-stat-lbl" data-i18n="mq_correct">CORRECT</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqResBest" style="color:var(--accent-warm)">—</div><div class="mq-stat-lbl" data-i18n="mq_best_streak">BEST STREAK</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqResXP" style="color:var(--accent-soft)">—</div><div class="mq-stat-lbl" data-i18n="mq_xp_earned">XP EARNED</div></div>
           </div>
           <div id="mqPBBanner" class="mq-pb-banner" style="display:none"></div>
           <div class="mq-bk-list" id="mqBreakdownList"></div>
           <div class="mq-res-btns">
-            <button class="mq-res-btn primary" onclick="mqPlayAgain()">PLAY AGAIN</button>
-            <button class="mq-res-btn secondary" onclick="mqGoLanding()">DONE</button>
+            <button class="mq-res-btn primary" onclick="mqPlayAgain()" data-i18n="mq_play_again">PLAY AGAIN</button>
+            <button class="mq-res-btn secondary" onclick="mqGoLanding()" data-i18n="mq_done">DONE</button>
           </div>
           <button class="mq-review-btn" id="mqReviewBtn" onclick="mqShowMissReview()" style="display:none">REVIEW MISSES →</button>
         </div>
@@ -118897,13 +119240,13 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
           <div class="mq-daily-score-denom" id="mqDailyResDenom">/ 10 correct</div>
           <div class="mq-daily-emoji-grid" id="mqDailyResEmoji"></div>
           <div class="mq-stats-grid" style="margin-bottom:12px;">
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResPct" style="color:var(--accent-warm)">—</div><div class="mq-stat-lbl">ACCURACY</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResStreak" style="color:var(--accent-soft)">—</div><div class="mq-stat-lbl">BEST STREAK</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResXP" style="color:var(--in-tune)">—</div><div class="mq-stat-lbl">XP EARNED</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResPct" style="color:var(--accent-warm)">—</div><div class="mq-stat-lbl" data-i18n="mq_accuracy">ACCURACY</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResStreak" style="color:var(--accent-soft)">—</div><div class="mq-stat-lbl" data-i18n="mq_best_streak">BEST STREAK</div></div>
+            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResXP" style="color:var(--in-tune)">—</div><div class="mq-stat-lbl" data-i18n="mq_xp_earned">XP EARNED</div></div>
           </div>
           <button class="mq-daily-share-btn" onclick="mqDailyShare()">&#128203;  SHARE RESULT</button>
           <div class="mq-res-btns" style="margin-top:12px;">
-            <button class="mq-res-btn secondary" onclick="mqGoLanding()">DONE</button>
+            <button class="mq-res-btn secondary" onclick="mqGoLanding()" data-i18n="mq_done">DONE</button>
           </div>
         </div>
 
@@ -118914,7 +119257,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               BACK
             </button>
-            <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--sharp)">MISSED QUESTIONS</div>
+            <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--sharp)" data-i18n="mq_missed_questions">MISSED QUESTIONS</div>
           </div>
           <div id="mqReviewList" style="display:flex;flex-direction:column;gap:12px;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:24px;"></div>
         </div>
@@ -118927,8 +119270,8 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
   <div class="mq-sheet-overlay" id="mqQuickSheet" onclick="if(event.target===this)mqHideQuickSheet()">
     <div class="mq-sheet">
       <div class="mq-sheet-handle"></div>
-      <div class="mq-sheet-title">QUICK PLAY</div>
-      <div class="mq-sheet-sub">select a pack or play all</div>
+      <div class="mq-sheet-title" data-i18n="mq_quick_play">QUICK PLAY</div>
+      <div class="mq-sheet-sub" data-i18n="mq_select_a_pack_or_play_all">select a pack or play all</div>
       <button class="mq-sheet-all-btn" onclick="mqQuickPlayAll()">ALL PACKS — 10 QUESTIONS →</button>
       <div id="mqSheetPackTabs"></div>
       <div class="mq-sheet-pack-grid" id="mqSheetPackGrid"></div>
@@ -118948,7 +119291,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
         </div>
       </div>
       <div id="mqPopupDesc" style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;color:var(--text-dim);line-height:1.5;padding:8px 0 10px;border-bottom:1px solid var(--border-soft);margin-bottom:10px;"></div>
-      <div style="font-size:8px;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;">QUESTIONS</div>
+      <div style="font-size:8px;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;" data-i18n="mq_questions">QUESTIONS</div>
       <div class="mq-sheet-pack-grid" id="mqPopupQCount" style="grid-template-columns:repeat(4,1fr)"></div>
       <button class="mq-sheet-all-btn" id="mqPopupPlayBtn" style="margin-top:12px" onclick="mqPopupPlay()">PLAY →</button>
     </div>
@@ -118958,7 +119301,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
   <div class="mq-sheet-overlay" id="mqSurvivalSheet" onclick="if(event.target===this)mqHideSurvivalSheet()">
     <div class="mq-sheet">
       <div class="mq-sheet-handle"></div>
-      <div class="mq-sheet-title">SURVIVAL</div>
+      <div class="mq-sheet-title" data-i18n="mq_survival">SURVIVAL</div>
       <div class="mq-sheet-sub">select packs · 3 lives · questions keep coming</div>
       <div id="mqSurvivalPackTabs"></div>
       <div class="mq-sheet-pack-grid" id="mqSurvivalPackGrid"></div>
@@ -118989,10 +119332,10 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
   <div class="mq-sheet-overlay" id="mqStatsSheet" onclick="if(event.target===this)mqHideStats()">
     <div class="mq-sheet" style="max-height:85vh;overflow-y:auto;">
       <div class="mq-sheet-handle"></div>
-      <div class="mq-sheet-title">STATS</div>
-      <div class="mq-sheet-sub">your lifetime quiz performance</div>
+      <div class="mq-sheet-title" data-i18n="mq_stats">STATS</div>
+      <div class="mq-sheet-sub" data-i18n="mq_your_lifetime_quiz_perform">your lifetime quiz performance</div>
       <div id="mqStatsContent" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"></div>
-      <button class="mq-sheet-all-btn" style="margin-top:14px;background:color-mix(in srgb,var(--sharp) 10%,var(--surface));border-color:color-mix(in srgb,var(--sharp) 30%,transparent);color:var(--sharp);font-size:11px;" onclick="mqResetStats(this)">RESET STATS</button>
+      <button class="mq-sheet-all-btn" style="margin-top:14px;background:color-mix(in srgb,var(--sharp) 10%,var(--surface));border-color:color-mix(in srgb,var(--sharp) 30%,transparent);color:var(--sharp);font-size:11px;" onclick="mqResetStats(this)" data-i18n="mq_reset_stats">RESET STATS</button>
     </div>
   </div>
 
@@ -122644,13 +122987,13 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       <span class="rhodes-ctrl-label">TREM</span>
       <div class="piano-lid-seg-wrap">
         <button class="piano-lid-seg" data-rt="off"  onclick="setRhodesTremolo('off')">OFF</button>
-        <button class="piano-lid-seg active" data-rt="soft" onclick="setRhodesTremolo('soft')">SOFT</button>
-        <button class="piano-lid-seg" data-rt="deep" onclick="setRhodesTremolo('deep')">DEEP</button>
+        <button class="piano-lid-seg active" data-rt="soft" onclick="setRhodesTremolo('soft')" data-i18n="ui_soft">SOFT</button>
+        <button class="piano-lid-seg" data-rt="deep" onclick="setRhodesTremolo('deep')" data-i18n="ui_deep">DEEP</button>
       </div>
       <span class="rhodes-ctrl-label" style="margin-left:6px">VIBE</span>
       <div class="piano-lid-seg-wrap">
-        <button class="piano-lid-seg" data-rv="bright" onclick="setRhodesVibe('bright')">BRIGHT</button>
-        <button class="piano-lid-seg active" data-rv="warm" onclick="setRhodesVibe('warm')">WARM</button>
+        <button class="piano-lid-seg" data-rv="bright" onclick="setRhodesVibe('bright')" data-i18n="ui_bright">BRIGHT</button>
+        <button class="piano-lid-seg active" data-rv="warm" onclick="setRhodesVibe('warm')" data-i18n="ui_warm">WARM</button>
       </div>
       <div style="flex:1"></div>
       <button class="piano-oct-btn" onclick="shiftRhodesOctave(-1)" style="width:30px;height:26px">◀</button>

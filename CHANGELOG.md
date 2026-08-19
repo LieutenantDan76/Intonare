@@ -82,6 +82,389 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.150.65 — The help popups now exist in Italian
+
+All 60 entries. `showHelp()` looks up `STRINGS[lang].help[key]` and falls back to
+the English table when it misses; `STRINGS.it.help` did not exist, so every help
+popup had always been English regardless of the setting.
+
+Terminology follows Italian teaching rather than literal translation. The
+distinctions that matter, checked against Italian sources rather than assumed:
+
+- **calante / crescente** for flat and sharp when talking about TUNING. A written
+  accidental is a *diesis* or a *bemolle*, but a note sounding too high is
+  *crescente*. English blurs these; Italian does not, and using the notation word
+  for the pitch would read as a mistake.
+- **battere** for the downbeat, **pulsazione** for the underlying pulse.
+- **semiminima / croma / semicroma / terzina** for the note values, rather than
+  "quarto" and "ottavo" which read as arithmetic.
+- **bordone** for drone, **tonica** for root, **grado** for scale degree,
+  **armatura di chiave** for key signature, **rivolto** for inversion.
+- **rullante / cassa / charleston** for the kit. Italian drummers say charleston,
+  not hi-hat.
+- **capotasto** for the nut, **capotasto mobile** for the capo, **corda a vuoto**
+  for an open string, **tasto** for a fret.
+- Left as-is because Italian players use them unchanged: swing, groove, step,
+  ghost note, flam, shuffle, rimshot, clave, XP.
+
+The markup is preserved exactly — same `<strong>`, `<br>` and entities — because
+the popup renders it and the layout depends on it.
+
+Verified live: 60 of 60 present, popups render Italian with the app in Italian
+and English with it in English, no page errors.
+
+## v0.150.64 — What the last dangling strings actually were
+
+Chased the Circle of Fifths and Polyrhythm reports to the bottom. The header was
+never the problem: verified live, `TOOL_NAME('cof')` returns CERCHIO DELLE QUINTE
+with Italian set and CIRCLE OF FIFTHS with English, and `EXERCISE_NAME('poly')`
+returns POLIRITMO. The re-render added in v0.150.63 works.
+
+The giveaway was the CASING. The sweep reported "Circle of Fifths" in title case;
+the header renders caps. Different element entirely.
+
+It is the **help popups**. `HELP_CONTENT` holds 60 entries, `showHelp()` looks up
+`STRINGS[lang].help[key]` and falls back to the English table when it misses —
+and `STRINGS.it.help` does not exist at all. So every help popup in the app has
+always been English, in both languages, and it looked like a header bug because
+the panel sits on the screen it describes.
+
+Not fixed here, and deliberately not started: 60 titles and 172 body fields, most
+a paragraph of teaching prose with markup embedded. That is a translation job of
+real size, and doing it badly would be worse than leaving it — these are the
+explanations someone reads when they do not understand something, which is
+exactly where clumsy Italian does damage.
+
+The lookup already prefers the Italian table, so it needs only content. Logged
+with the numbers.
+
+**Everything else is clean:** 0 mismatched across all 35 screens, and the strings
+the sweep still reports (SOLO A, SOLO B, hemiola) are identical in Italian by
+nature.
+
+## v0.150.63 — Hub titles, and two bugs the sweep exposed in my own fixes
+
+**The TOOLS and TRAIN hub titles now follow the language.** Same root cause as
+the module header: `setHeaderSection` is handed `t('mode_tools')`, already
+resolved, so the title froze in whatever language was live when the tab opened.
+Re-derived from `mode` instead.
+
+**Caught before shipping: I guarded on a variable that does not exist.** The
+first version tested `typeof currentMode`, but the variable is `mode`. A typeof
+guard on a wrong name fails SILENTLY — no error, just a function that quietly
+never does anything, which is the worst kind of wrong and precisely the class of
+bug this whole exercise is meant to eliminate.
+
+**The sweep was reporting a bug that was not there.** `setHeaderModule` fades the
+old text out and writes the new one on a timer, so probing immediately after a
+language change caught the PREVIOUS language. The sweep now waits past that
+animation. Worth knowing for anyone reading its output: it measures what is on
+screen, so anything animated needs settling time or it lies.
+
+Down to 31 strings across 4 screens, 0 mismatched.
+
+**Still open, and honestly not understood yet:** with the timing corrected, the
+Circle of Fifths and Polyrhythm module headers show ENGLISH in both languages.
+So `_rerenderHeader` is running and re-deriving, but landing on English even with
+Italian set. That is a different bug from the one it replaced, and it is being
+left for fresh eyes rather than guessed at. Everything else on those screens
+translates; it is the title and subtitle only.
+
+## v0.150.62 — Exercise headers and the Polyrhythm labels
+
+**Four exercise folder names were hardcoded English** in `_exBackLabels`, so
+Polyrhythm read "back to Rhythm" above a title reading POLIRITMO. Now
+folder_rhythm / folder_ear / folder_games / folder_reading: torna a Ritmo,
+Orecchio, Giochi, Lettura.
+
+**`PR_MODES` had labelIt on some rows and not others** — TAP BOTH had one, BOTH
+and the SOLO and TAP rows did not. All five filled: ENTRAMBI, BATTI A, BATTI B.
+SOLO A and SOLO B keep their text because *solo* is an Italian word; the sweep
+still reports them as identical in both languages, which for those two is the
+correct answer rather than a finding.
+
+**Correction to v0.150.61's header fix.** It stored setHeaderModule's arguments
+and replayed them, which achieved nothing: those arguments arrive already
+translated, because enterTool calls `setHeaderModule(TOOL_NAME(name), ...)` and
+TOOL_NAME resolves at call time. Replaying them redrew the same Italian. It now
+re-derives from `currentTool` / `currentExercise`, which are already tracked, so
+the label functions run again and pick up the new language.
+
+That is the same class of mistake as the original bug — assuming a stored value
+is a key when it is actually a resolved string — and it is worth noting that the
+live sweep caught it immediately, while reading the code twice did not.
+
+## v0.150.61 — A sweep that proves it, instead of me claiming it
+
+`intonare_lang_sweep.py` drives a real browser into all 35 screens, renders each
+in English AND in Italian, and reports any visible string that is IDENTICAL in
+both. That last part is what makes it usable: reporting every untagged string
+buried the real findings under correctly-translated Italian. A string that does
+not change between languages is either a proper noun or genuinely untranslated,
+and that is a list short enough to read.
+
+It also checks every tagged element's text against its key, catching the case a
+file-reading audit cannot see: something rebuilt the element after the language
+changed and lost the translation.
+
+It found three real bugs on its first run:
+
+**A key collision I introduced in v0.150.59.** `ui_key` was tagged onto the
+tuner's reference-pitch label, which JS overwrites with "TONO". applyLang and the
+live value then fought each other. Tag removed.
+
+**The module header never re-rendered.** `setHeaderModule` draws the title,
+subtitle and back label once when a screen opens, so it kept whatever language it
+was drawn in. Category G had missed it because the function is not named
+build*/render*. It now remembers its last arguments and a registered relabeler
+redraws it.
+
+Mismatches went from 3 to 0.
+
+**38 untagged strings remain across 5 screens**, and they are listed by screen
+rather than by line number: the Tools and Exercises hub titles and subtitles, the
+Circle of Fifths header, and Polyrhythm's BOTH / SOLO A / SOLO B and its
+dropdowns. Named, located, and no longer something to hunt for.
+
+## v0.150.60 — Relabel registry: making the omission detectable instead of invisible
+
+`setLang()` carried a hand-written list of ~30 builders to re-run on a language
+change. Anything not on it kept the old language until its screen was rebuilt
+some other way. That list failed twice in one session — the drum preset list was
+missing, the chart buttons had no builder on it at all — and it fails SILENTLY,
+which is the worst property such a list can have.
+
+**Why not just re-enter the current screen?** Because `enterTool()` and
+`enterExercise()` run each module's init, and init resets state: a vocal range
+test in progress, a quiz mid-question. Losing someone's work to relabel a button
+is worse than the stale label.
+
+**What was built instead.** Screens register a RELABEL function — cheap,
+idempotent, text-only. `runRelabelers()` executes the ones whose element is
+actually on screen; off-screen ones are skipped because they re-render when
+opened anyway. 21 registered, covering everything category G found.
+
+**The audit now catches omissions.** New category G lists any builder that emits
+translated text and is covered by neither `setLang` nor a registration. It found
+27. Six remain, each a documented decision rather than an oversight: `render` is
+the tuner's per-frame draw and re-runs constantly; the photo-zone builders fetch
+over the network and a language toggle must not start downloads; the tone bank is
+rebuilt by its own open handler; the pips carry no text.
+
+**The registry defends itself.** Blanket-registering builders surfaced that
+several APPEND rather than replace — `buildSequencer` adds ~846 nodes per call.
+Those are latent bugs regardless of language, since calling them twice leaks.
+Rather than trusting each to be idempotent, the first run of every relabeler is
+measured; if the document grew, that relabeler is disabled permanently and
+recorded in `_RELABEL_LEAKS`. A non-idempotent builder can therefore leak at most
+once ever, and future registrations are protected without anyone remembering the
+rule.
+
+**Found while testing: setLang has been leaking all along.** With the registry
+fully disabled, 20 language switches still add 2,679 nodes. `applyLang()` alone
+is clean. So the leak is in the ORIGINAL builder list and predates all of
+tonight's work. Not fixed here — migrating those calls into the registry would
+put them behind the same leak check, and that is the right next step, but it is a
+larger change than belongs at the end of a long session. Recorded with the
+measurement so it can be picked up cold.
+
+## v0.150.59 — Finishing the sweep, and a bug in my own audit
+
+**Category B was inflated nine-fold by a bug in the audit itself.** It looked
+back 3000 characters to decide whether a match was inside a `<script>` block.
+That window is far too small in a file with script blocks tens of thousands of
+lines long, so HTML built inside JS template strings — organ drawbars, Leslie
+controls, chart internals around line 110k — was being counted as static markup.
+It is not: `applyLang()` can never reach it, because it is regenerated on every
+render. Those need `_tf()` at the point of construction instead.
+
+Searching the whole preceding text rather than a window: **B drops from 1362 to
+137**, which is a list someone can actually work through.
+
+Translated in this pass: the vocal range panel (Mappa Estensione, Estensione
+comoda, Centro di tessitura, Cantanti nella tua estensione), the Theremin's grid
+and snap controls, the strings-grid hints, the difficulty ladder wherever it
+appears (FACILE / MEDIO / DIFFICILE), INDIETRO, SERIE, IMPOSTA, TONALITÀ, STROBO,
+ACCORDATORE and the tuner's "suona intonato".
+
+**What the remaining 137 are, so nobody chases them again:**
+- Product and brand names: Intonare, Rhodes, moog, ETHERWAVE THEREMIN, Grand
+  Piano, Chordle.
+- Terms identical in Italian or printed on real gear: SOST, SUST, TREM, VIBE,
+  VOLUME, CLICK, TAP, AUTO, Allegro.
+- Licences and credits: CC BY 4.0, CC0 1.0, Mutopia Project, Bret Pimentel.
+- JS-filled placeholders: A MAJOR, PERFECT 5TH, SON CLAVE 3-2, OCT 4. Tagging
+  these would let applyLang overwrite live content with the placeholder — a worse
+  bug than the English it fixes.
+
+Verified in a running browser, both languages: **1010 elements, 829 unique keys,
+zero unresolved in either direction.**
+
+## v0.150.58 — Rhythm Cards, Rhodes, Sound Bank, Theremin, Interval Reference
+
+Twelve more keys across five modules: CARTE RITMICHE, MODO TOCCO, the Rhodes
+voice controls (DOLCE / PROFONDO / BRILLANTE / CALDO), the Sound Bank editor
+(piano / accento / pulisci), the Theremin's volume state, RIFERIMENTO INTERVALLI
+and ASCOLTA, and the drumkit's long-press hint.
+
+Deliberately skipped, so a later pass does not "fix" them:
+- **Rhodes** and **ETHERWAVE THEREMIN** are product names.
+- **TREM, SUST, PRESET, VOLUME, CLICK, TAP** are identical in Italian or are what
+  is printed on real gear.
+- **CC BY 4.0, CC0 1.0, Mutopia Project, Bret Pimentel** are licences and credits.
+  Translating a licence name would be wrong.
+- **PERFECT 5TH, C MAJOR, OCT 4** are JS-filled placeholders. Tagging those would
+  let `applyLang()` overwrite live content with the placeholder text — a worse
+  bug than the English it would fix.
+
+Verified in a running browser: **819 unique keys across 986 elements, zero
+unresolved.** That check is worth keeping, since it catches a key that exists in
+markup but in neither table, which is how a raw key name ends up on screen.
+
+## v0.150.57 — The Music Quiz was almost entirely untranslated
+
+Grouping category B by screen showed the Music Quiz as by far the biggest
+cluster: its landing, custom setup, in-quiz, results, win and review screens were
+almost all raw English markup with no data-i18n anywhere.
+
+43 keys added across 52 elements, covering the whole flow — PARTITA VELOCE,
+SOPRAVVIVENZA, SENZA FINE, LE TUE REGOLE, the difficulty ladder (Familiari, Un
+po' di ricerca, Per intenditori), the results screen (PUNTEGGIO, SERIE MIGLIORE,
+PRECISIONE, DOMANDE SBAGLIATE) and the stats panel.
+
+Some judgement in the wording rather than literal translation:
+- "Deep cuts" is idiomatic English, not a difficulty level. "Per intenditori" is
+  what an Italian would actually call the hardest tier.
+- "Timer" and "XP" stay: both are used unchanged in Italian.
+- CASUAL became LIBERA rather than a false friend — "casuale" means RANDOM in
+  Italian, which would have described the wrong thing entirely.
+
+## v0.150.56 — Chord quality names, all 55
+
+Filtering the audit's category D by which table each entry lives in turned 860
+findings into something reviewable. Most are correctly untranslatable — Chordle's
+roman numerals (I - IV - V - I), the vocal range artist references (Johnny Cash,
+Tom Waits), city names. `CHORD_DICT` was the real gap.
+
+**It had no Italian at all.** Two of its four display sites already checked for
+`nameIt` and fell back to English because there was none to find; the Chord Ear
+pool chips and buttons used `def.name` raw on top of that. So chord qualities
+read English on every screen regardless.
+
+All 55 now have Italian: Minore, Diminuito, Aumentato, Semidiminuito, Settima di
+Dominante, Sospeso 4ª, Terza Maggiore, Quarta Giusta and so on. Italian names
+sevenths and ninths by degree — "Settima di Dominante" rather than a literal
+"Dominante 7", which is how the theory is taught there.
+
+Power Chord keeps its name: Italian guitarists say it unchanged, and Quartal
+becomes Quartale, which is the real term rather than a coinage.
+
+Added `_cdName(def)` so the four display sites share one path instead of two
+checking and two not.
+
+## v0.150.55 — Working through the audit's category C
+
+Nineteen JS-built labels were writing English straight to the DOM, invisible to
+`applyLang()` because they never touch a data-i18n attribute.
+
+Translated: OTHER, OPTIONS, CLOSE, BASS, "to:", "tap a key to start",
+"Sounds:" / "Written:" on the wind transposition card, and both photo states
+(LOADING PHOTO, PHOTO UNAVAILABLE — NEEDS INTERNET).
+
+**The octave abbreviation, at seven separate sites.** `'OCT '` was concatenated
+inline in the Rhodes keyboard, the piano keyboard, the scale tool and the harp
+octave tabs. All seven now go through one key, so Italian reads OTT (ottava) and
+a future language needs one string rather than seven edits.
+
+Added `_tf(key, fallback)` for JS-built labels. It exists because `t()` returns
+the KEY when a string is missing, so a typo prints itself on screen — the bug
+that put the literal text "gcc_play_note" on a chart button in v0.150.38. `_tf`
+treats result-equals-key as a miss and uses the fallback, so the worst case is
+English rather than gibberish.
+
+Deliberately left in English: the leg tuner's "Show untuned only" and bar count.
+Those are the dev-only tuning panel, reached by long-pressing a title, and are
+not part of the app anyone else sees.
+
+## v0.150.54 — Built an audit instead of chasing strings
+
+Stopped fixing untranslated text one screenshot at a time and wrote
+`intonare_i18n_audit.py`, which checks all six places a string can hide:
+A) data-i18n keys missing from a table, B) markup text with no data-i18n,
+C) JS writing English literals to the DOM, D) content tables with `name` but no
+`nameIt`, E) `t()` keys in neither table, F) note names bypassing
+`getDisplayNote`.
+
+**A: 0. E: 0. F: 0** after this build — those three are unambiguous and now
+clean. B and C are large but mostly dev surfaces and symbols; they need
+judgement per item rather than a sweep.
+
+What it caught:
+
+**The drum preset list ignored `nameIt` entirely.** `name.textContent = p.name`,
+raw. Twenty-four presets already HAD Italian names that were never being shown.
+Every other preset surface in the app picks the twin; this one did not.
+
+**`setLang` rebuilt the preset category tabs but not the preset list.** So
+switching language relabelled the tabs and left the beat names in the old
+language — exactly the "nothing updated when I switched to English" report.
+
+**Eleven presets genuinely needed Italian names:** 8th Rock, the 5/4, 7/8 and 9/8
+grooves, Trap 32nds, Bossa (Alt), Funky Drummer Fill, Copeland and Beauford
+Style. The other 28 without a twin are proper nouns and genre names — Motown,
+Bebop, Trap, Amen Break, Bonham, Porcaro. Translating those would be wrong, not
+thorough, so they stay.
+
+**Last Solfège gap closed.** `_bowedRenderNote` wrote `_BN[pc]` straight to the
+chord label. Category F now reads zero.
+
+**Regression fixed from v0.150.53:** moving the groove name out of the BPM pill
+put a 100%-wide block inside `.prog-transport-strip`, a horizontal flex row,
+which shoved the KIT button out of shape. The name is back inside the pill, and
+the pill is now a column with `min-width: 0` so the name gets the pill's full
+width and the ellipsis actually engages instead of forcing the pill wider.
+
+## v0.150.53 — Solfège on the bowed charts, and the groove name given room
+
+**Solfège stopped at the guitar-chord charts.** Only the `gcc*` functions routed
+note names through `getDisplayNote()`. The bowed charts wrote `_BN[pc]` straight
+into their note pills, so those stayed in letter names while the rest of the app
+followed the setting. Three sites, now all going through one `_bnDisp()` helper
+placed next to the `_BN` table so the next person writing a bowed pill finds it
+first.
+
+Worth noting the scale, plucked and wind charts show fret positions rather than
+note names in their pills, so they were never affected — the gap was specific to
+bowed.
+
+**The groove name was ellipsised to nothing.** It lived INSIDE the BPM pill,
+sharing a small fixed-width box with the number and the BPM unit, so on a phone
+anything longer than a word or two vanished. It now sits on its own full-width
+line under the row, centred, with the ellipsis kept only as a backstop for an
+unusually long custom kit name.
+
+## v0.150.52 — FileSaver was never actually called
+
+The plugin installed correctly. The JS never asked for it.
+
+`Capacitor.Plugins.X` is only auto-populated for plugins that also have a
+JS-side definition. A native-only plugin registered in `MainActivity` needs
+`Capacitor.registerPlugin('Name')` to build the bridge proxy. The check was
+`P.FileSaver && P.FileSaver.save`, which is always undefined for a native-only
+plugin, so export fell silently through to tier 1 and showed the share sheet —
+looking exactly like the plugin had failed to install.
+
+The mic plugin in this same file already does it correctly, a few hundred lines
+up:
+
+```js
+let p = Capacitor.Plugins.IntonareMic;
+if (!p && Capacitor.registerPlugin) p = Capacitor.registerPlugin('IntonareMic');
+```
+
+That pattern is now used for FileSaver too. No Java change; the Android side was
+right the whole time.
+
 ## v0.150.51 — Backup export gets a real Save dialog
 
 A backup you cannot retrieve is not a backup, which the share-sheet approach
