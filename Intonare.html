@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.27 -->
+<!-- INTONARE_VERSION: 0.150.48 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -664,6 +664,27 @@ html,body{background:#000000!important;transition:none!important}
 #toolSurvivalGuide .sg-sym-g{font-family:'Bravura';line-height:0;display:block;white-space:nowrap}
 #toolSurvivalGuide .sg-sym-draw{display:inline-block;color:currentColor}
 #toolSurvivalGuide .sg-sym-draw svg{width:100%;height:auto;display:block}
+#toolSurvivalGuide .sg-sym{cursor:pointer}
+#toolSurvivalGuide .sg-sym:active{border-color:var(--accent-soft)}
+/* Tap-to-enlarge sheet. Lives on <body>, not inside the Guide, so it sits above
+   the card and is not clipped by the page's own overflow. */
+.sg-symz{position:fixed;inset:0;z-index:9200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);opacity:0;transition:opacity .2s}
+.sg-symz.up{opacity:1}
+.sg-symz-card{display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:30px 34px 22px;border-radius:16px;background:var(--panel);
+  border:1px solid var(--border-soft);transform:scale(.94);transition:transform .2s cubic-bezier(.22,.9,.3,1)}
+.sg-symz.up .sg-symz-card{transform:scale(1)}
+.sg-symz-glyph{display:flex;align-items:center;justify-content:center;min-height:120px;color:var(--text)}
+.sg-symz-lbl{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.sg-symz-draw{display:inline-block;color:currentColor}
+.sg-symz-draw svg{width:100%;height:auto;display:block}
+/* The zoom sheet lives on <body>, OUTSIDE #toolSurvivalGuide, so the scoped
+   glyph rules above do not reach it. Without these the popup rendered its label
+   and nothing else: no Bravura face, no sizing box, so the glyph was invisible.
+   Same declarations, unscoped to the sheet. */
+.sg-symz .sg-sym-gb{display:inline-flex;align-items:center;justify-content:center;overflow:visible}
+.sg-symz .sg-sym-g{font-family:'Bravura';line-height:0;display:block;white-space:nowrap}
 
 /* ── TRY IT OUT BUTTON ── */
 #toolSurvivalGuide .try-inst-wrap{margin-top:12px}
@@ -961,6 +982,9 @@ html,body{background:#000000!important;transition:none!important}
     padding: 7px 11px; display: inline-flex; align-items: center; gap: 6px;
     font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 9px; letter-spacing: 1.5px;
     transition: all .14s; z-index: 3;
+    /* Hard ceiling so a long translation truncates instead of growing into the
+       card beside it. Sized against the longest label expected to fit whole. */
+    max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .mq-daily-badge:hover { background: color-mix(in srgb, var(--accent-warm) 14%, var(--surface)); border-color: var(--accent-warm); }
   .mq-daily-badge:active { transform: scale(.96); }
@@ -4945,6 +4969,18 @@ html,body{background:#000000!important;transition:none!important}
     font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: clamp(18px,5.2vw,24px);
     letter-spacing: .11em; color: var(--text); line-height: 1; position: relative;
   }
+  /* Italian names are far longer than the English ones — ACCORDATORE is eleven
+     characters against TUNER's five, STRUMENTI nine against TOOLS' five — so at
+     the base size they overran the card and clipped mid-word. Long labels step
+     down and tighten their tracking instead of truncating. Length-driven, not
+     language-driven, so any future translation is covered. */
+  .lnch-cell .lnch-nm.lnch-nm-long { font-size: clamp(14px,4.1vw,19px); letter-spacing: .05em; }
+  /* .lnch-txt is padded 42px left (to clear the pin button) against 12px right,
+     so its box sits 30px off-centre in the card. Short English names never
+     showed it; ACCORDATORE and STRUMENTI did, sitting right and running past the
+     edge. The title pulls that 30px back so it centres on the CARD, while the
+     sub-line keeps the padding it needs to clear the pin. */
+  .lnch-cell .lnch-nm { text-align: center; margin-left: -30px; }
   /* Sub is deliberately quiet — three tiers per card (icon, name, description) is what
      stops four tiles reading as one flat sheet. */
   /* Clamped to two lines: the Tools description is long enough to run to three, which
@@ -5590,12 +5626,30 @@ html,body{background:#000000!important;transition:none!important}
        ~110ms after the tap produced no visible movement - a stall before the card
        committed, which is what read as jitter. Touch-triggered motion should
        leave immediately and settle. */
+    /* 380/300 stay as they are: the .3s opacity is matched to T_LAUNCHER_FADE in
+       lnchGo, so these finish fading at the exact moment the launcher clears.
+       Stretching them to 450 to match the morph left them mid-fade when the
+       chooser vanished. */
     transition: transform .38s cubic-bezier(.22,.61,.36,1),
                 opacity .3s cubic-bezier(.22,.61,.36,1) !important; }
 
   #lnchMorph{
     position: fixed; z-index: 950; display: none; overflow: hidden;
     border-radius: 17px; pointer-events: none;
+    /* PERF: this element animates while holding a full clone of a card.
+       will-change promotes it to its own compositor layer so the repaint stays
+       inside this element; contain tells the engine nothing outside can be
+       affected; backface-visibility forces the layer on engines that ignore
+       will-change alone. display:none when idle, so the layer costs nothing
+       between morphs.
+       NOTE for anyone profiling this again: measured across 5 runs, the morph
+       holds 60fps (0 frames over 20ms, worst 18ms) WITH or WITHOUT
+       overflow:hidden. Only the FIRST morph of a session stalls, and that is
+       one-time lazy init elsewhere in the app, not this animation. Single-run
+       frame timings here are extremely noisy; do not trust one sample. */
+    will-change: transform, opacity, border-radius;
+    backface-visibility: hidden;
+    contain: layout paint;
     /* Scale about the card's own center. With the default 0 0 origin the growth
        pushes the box down and right, so the translate meant to center it lands
        progressively further off the more it grows. */
@@ -5606,8 +5660,24 @@ html,body{background:#000000!important;transition:none!important}
     /* No delay on opacity: the fade begins when JS adds .lnch-morph-fade. A CSS
        delay here raced the teardown timer and the card was hidden before its own
        fade had started, so it vanished instead of fading. */
-    transition: transform .42s cubic-bezier(.22,.61,.36,1),
-                border-radius .34s ease,
+    /* All three land together at 450ms.
+       This is a container transform in Material terms — a card expanding into a
+       full screen — and M3 specifies long1 (450ms) for exactly that, with the
+       corner radius animating alongside the movement.
+       Transform and border-radius used to finish at 420ms and 340ms, so the
+       corners settled while the card was still travelling — the movement never
+       resolved as one thing. They now land together.
+       Opacity stays at .3s ON PURPOSE. It is not part of the arrival; it drives
+       the EXIT fade when .lnch-morph-fade is added, and CARD_FADE_MS in lnchGo
+       is documented as having to match it. Changing it here without changing
+       that constant schedules the teardown before the fade ends, which is the
+       bug the comment in lnchGo describes.
+       The CURVE is deliberately NOT M3's `emphasized` (0.2, 0.0, 0, 1.0). That
+       curve has y1 = 0, so it genuinely sits still for the first fraction —
+       the dead ~110ms after the tap that was diagnosed here before. Motion the
+       finger started should move when the finger moves, so the ease-out stays. */
+    transition: transform .45s cubic-bezier(.22,.61,.36,1),
+                border-radius .45s cubic-bezier(.22,.61,.36,1),
                 opacity .3s cubic-bezier(.4,0,.2,1) !important;
   }
   #lnchMorphCard{ position: absolute; inset: 0; }
@@ -7862,7 +7932,12 @@ html,body{background:#000000!important;transition:none!important}
   .ppc-pedal.damper.on .ppc-pad { background: linear-gradient(180deg,#cfe8b0 0%,#aacf80 45%,#7fae55 80%); box-shadow: 0 0 8px rgba(140,210,90,0.5); }
   .ppc-pedal .ppc-lbl { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 6px; font-weight: 800; letter-spacing: 0.5px; color: rgba(40,42,48,0.6); }
   .ppc-pedal .ppc-name { margin-top: 4px; font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 10px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: clip; color: rgba(255,255,255,0.38); }
-  .ppc-pedal.soft   .ppc-name { color: rgba(184,163,255,0.65); }
+  .ppc-pedal.soft   /* Italian pedal names are longer than the English ones (SMORZ. for DAMPER,
+     UNA CORDA for SOFT) and UNA CORDA contains a space that could wrap onto two
+     lines in a box built for one. Hold it on one line and let it shrink to fit
+     rather than overflow or reflow the pedal row. */
+  .ppc-name { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .ppc-name { color: rgba(184,163,255,0.65); }
   .ppc-pedal.sost   .ppc-name { color: rgba(94,226,255,0.65); }
   .ppc-pedal.damper .ppc-name { color: rgba(182,242,91,0.65); }
 
@@ -23791,9 +23866,11 @@ try {
         if (window._enforceImmersive) window._enforceImmersive();
       });
 
-      // Notification permission — doesn't need user gesture, fire immediately
-      const notifPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
-      if (notifPlugin) notifPlugin.requestPermissions().catch(() => {});
+      // Notification permission is NOT requested here any more. It fired on every
+      // first launch, so a new user met a permission prompt before seeing a single
+      // screen. Reminders now default off and the permission is requested from the
+      // Settings toggle instead, at the moment someone asks for reminders.
+      // See the notifications defaults in progState for the full reasoning.
 
       // RevenueCat (Pro purchases) — configure the SDK and silently sync any
       // existing entitlement. No user gesture needed; safe if it fails.
@@ -25566,7 +25643,7 @@ try {
           <div class="card-glow"></div>
           <!-- Hold pedal + mute sit top-left; expand stays top-right absolute -->
           <div style="position:absolute;top:7px;left:12px;z-index:7;display:flex;align-items:center;gap:8px">
-            <div class="sustain-pedal" id="organPedal" title="Press to latch held notes"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">HOLD</span></div></div>
+            <div class="sustain-pedal" id="organPedal" title="Press to latch held notes"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl" data-i18n="pn_hold">HOLD</span></div></div>
             <button class="piano-drone-mute" id="organDroneMute" onclick="_organStopAll();organHoldMode=0;_organRefreshControls();(function(){var p=document.getElementById('organPedal');if(p&&p._refresh)p._refresh();})()" title="Stop all held notes">✕</button>
           </div>
           <button class="pto-expand-btn pto-expand-btn-top" onclick="openPtoOrganOverlay()">⛶ EXPAND</button>
@@ -25616,11 +25693,11 @@ try {
 
         <!-- Lid control -->
         <div class="piano-lid-bar">
-          <span class="piano-lid-label">LID</span>
+          <span class="piano-lid-label" data-i18n="pn_lid">LID</span>
           <div class="piano-lid-seg-wrap">
-            <button class="piano-lid-seg" data-lid="closed" onclick="setPianoLid('closed')">CLOSED</button>
-            <button class="piano-lid-seg active" data-lid="stick" onclick="setPianoLid('stick')">STICK</button>
-            <button class="piano-lid-seg" data-lid="open" onclick="setPianoLid('open')">OPEN</button>
+            <button class="piano-lid-seg" data-lid="closed" onclick="setPianoLid('closed')" data-i18n="pn_lid_closed">CLOSED</button>
+            <button class="piano-lid-seg active" data-lid="stick" onclick="setPianoLid('stick')" data-i18n="pn_lid_stick">STICK</button>
+            <button class="piano-lid-seg" data-lid="open" onclick="setPianoLid('open')" data-i18n="pn_lid_open">OPEN</button>
           </div>
           <div class="piano-lid-icon" id="pianoLidIcon">
             <svg viewBox="0 0 36 18" fill="none" xmlns="http://www.w3.org/2000/svg" id="pianoLidSvg">
@@ -25660,9 +25737,9 @@ try {
 
         <!-- Three pedals below the keyboard: soft · sostenuto · damper -->
         <div class="piano-pedal-cluster"><div class="ppc-inner">
-          <div class="ppc-pedal soft"   id="pianoSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOFT</span></div></div><div class="ppc-name">SOFT</div></div>
+          <div class="ppc-pedal soft"   id="pianoSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOFT</span></div></div><div class="ppc-name" data-i18n="pn_ped_soft">SOFT</div></div>
           <div class="ppc-pedal sost"   id="pianoSostPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOST</span></div></div><div class="ppc-name">SOST</div></div>
-          <div class="ppc-pedal damper" id="pianoPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SUST</span></div></div><div class="ppc-name">DAMPER</div></div>
+          <div class="ppc-pedal damper" id="pianoPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SUST</span></div></div><div class="ppc-name" data-i18n="pn_ped_damper">DAMPER</div></div>
         </div></div>
 
         <div class="pto-riff-bar">
@@ -27149,60 +27226,60 @@ try {
     <div class="cs-picker-handle"></div>
     <div class="cs-picker-body">
       <div class="cs-picker-families" id="csPickerFamTabs">
-        <button class="cs-picker-fam-tab active" data-fam="fretted"   onclick="csPickerSelectFamily('fretted')">Fretted</button>
-        <button class="cs-picker-fam-tab"         data-fam="chromperc" onclick="csPickerSelectFamily('chromperc')">Chrom.</button>
-        <button class="cs-picker-fam-tab"         data-fam="brass"     onclick="csPickerSelectFamily('brass')">Brass</button>
-        <button class="cs-picker-fam-tab"         data-fam="woodwind"  onclick="csPickerSelectFamily('woodwind')">Woodwind</button>
-        <button class="cs-picker-fam-tab"         data-fam="freereed"  onclick="csPickerSelectFamily('freereed')">Free Reed</button>
-        <button class="cs-picker-fam-tab"         data-fam="bowed"     onclick="csPickerSelectFamily('bowed')">Bowed</button>
+        <button class="cs-picker-fam-tab active" data-fam="fretted"   onclick="csPickerSelectFamily('fretted')" data-i18n="csfam_fretted">Fretted</button>
+        <button class="cs-picker-fam-tab"         data-fam="chromperc" onclick="csPickerSelectFamily('chromperc')" data-i18n="csfam_chromperc">Chrom.</button>
+        <button class="cs-picker-fam-tab"         data-fam="brass"     onclick="csPickerSelectFamily('brass')" data-i18n="csfam_brass">Brass</button>
+        <button class="cs-picker-fam-tab"         data-fam="woodwind"  onclick="csPickerSelectFamily('woodwind')" data-i18n="csfam_woodwind">Woodwind</button>
+        <button class="cs-picker-fam-tab"         data-fam="freereed"  onclick="csPickerSelectFamily('freereed')" data-i18n="csfam_freereed">Free Reed</button>
+        <button class="cs-picker-fam-tab"         data-fam="bowed"     onclick="csPickerSelectFamily('bowed')" data-i18n="csfam_bowed">Bowed</button>
       </div>
       <div class="cs-picker-panels" id="csPickerPanels">
         <div class="cs-picker-panel active" id="csPanelFretted" data-fam="fretted">
-          <button class="cs-picker-inst active" data-inst="guitar"   onclick="pickInst('guitar')">GUITAR</button>
-          <button class="cs-picker-inst" data-inst="bass"     onclick="pickInst('bass')">BASS</button>
-          <button class="cs-picker-inst" data-inst="uke"      onclick="pickInst('uke')">UKE</button>
-          <button class="cs-picker-inst" data-inst="mandolin" onclick="pickInst('mandolin')">MANDOLIN</button>
-          <button class="cs-picker-inst" data-inst="banjo"    onclick="pickInst('banjo')">BANJO</button>
-          <button class="cs-picker-inst" data-inst="lute"     onclick="pickInst('lute')">LUTE</button>
-          <button class="cs-picker-inst" data-inst="bouzouki" onclick="pickInst('bouzouki')">BOUZOUKI</button>
+          <button class="cs-picker-inst active" data-inst="guitar"   onclick="pickInst('guitar')" data-i18n="inst_guitar">GUITAR</button>
+          <button class="cs-picker-inst" data-inst="bass"     onclick="pickInst('bass')" data-i18n="inst_bass">BASS</button>
+          <button class="cs-picker-inst" data-inst="uke"      onclick="pickInst('uke')" data-i18n="inst_uke">UKE</button>
+          <button class="cs-picker-inst" data-inst="mandolin" onclick="pickInst('mandolin')" data-i18n="inst_mandolin">MANDOLIN</button>
+          <button class="cs-picker-inst" data-inst="banjo"    onclick="pickInst('banjo')" data-i18n="inst_banjo">BANJO</button>
+          <button class="cs-picker-inst" data-inst="lute"     onclick="pickInst('lute')" data-i18n="inst_lute">LUTE</button>
+          <button class="cs-picker-inst" data-inst="bouzouki" onclick="pickInst('bouzouki')" data-i18n="inst_bouzouki">BOUZOUKI</button>
         </div>
         <div class="cs-picker-panel" id="csPanelChromperc" data-fam="chromperc">
-          <button class="cs-picker-inst" data-inst="piano" onclick="pickInst('piano')">PIANO</button>
-          <button class="cs-picker-inst" data-inst="organ" onclick="pickInst('organ')">ORGAN</button>
-          <button class="cs-picker-inst" data-inst="melodica" onclick="pickInst('melodica')">MELODICA</button>
-          <button class="cs-picker-inst" data-inst="harp"  onclick="pickInst('harp')">HARP</button>
-          <button class="cs-picker-inst" data-inst="mallet" onclick="pickInst('mallet')">MALLET</button>
+          <button class="cs-picker-inst" data-inst="piano" onclick="pickInst('piano')" data-i18n="inst_piano">PIANO</button>
+          <button class="cs-picker-inst" data-inst="organ" onclick="pickInst('organ')" data-i18n="inst_organ">ORGAN</button>
+          <button class="cs-picker-inst" data-inst="melodica" onclick="pickInst('melodica')" data-i18n="inst_melodica">MELODICA</button>
+          <button class="cs-picker-inst" data-inst="harp"  onclick="pickInst('harp')" data-i18n="inst_harp">HARP</button>
+          <button class="cs-picker-inst" data-inst="mallet" onclick="pickInst('mallet')" data-i18n="inst_mallet">MALLET</button>
         </div>
         <div class="cs-picker-panel" id="csPanelBrass" data-fam="brass">
-          <button class="cs-picker-inst" data-inst="trumpet"    onclick="pickInst('trumpet')">TRUMPET</button>
-          <button class="cs-picker-inst" data-inst="flugelhorn" onclick="pickInst('flugelhorn')">FLUGELHORN</button>
-          <button class="cs-picker-inst" data-inst="frenchhorn" onclick="pickInst('frenchhorn')">FRENCH HORN</button>
-          <button class="cs-picker-inst" data-inst="euphonium"  onclick="pickInst('euphonium')">EUPHONIUM</button>
-          <button class="cs-picker-inst" data-inst="tuba"       onclick="pickInst('tuba')">TUBA</button>
-          <button class="cs-picker-inst" data-inst="trombone"   onclick="pickInst('trombone')">TROMBONE</button>
+          <button class="cs-picker-inst" data-inst="trumpet"    onclick="pickInst('trumpet')" data-i18n="inst_trumpet">TRUMPET</button>
+          <button class="cs-picker-inst" data-inst="flugelhorn" onclick="pickInst('flugelhorn')" data-i18n="inst_flugelhorn">FLUGELHORN</button>
+          <button class="cs-picker-inst" data-inst="frenchhorn" onclick="pickInst('frenchhorn')" data-i18n="inst_frenchhorn">FRENCH HORN</button>
+          <button class="cs-picker-inst" data-inst="euphonium"  onclick="pickInst('euphonium')" data-i18n="inst_euphonium">EUPHONIUM</button>
+          <button class="cs-picker-inst" data-inst="tuba"       onclick="pickInst('tuba')" data-i18n="inst_tuba">TUBA</button>
+          <button class="cs-picker-inst" data-inst="trombone"   onclick="pickInst('trombone')" data-i18n="inst_trombone">TROMBONE</button>
         </div>
         <div class="cs-picker-panel" id="csPanelWoodwind" data-fam="woodwind">
-          <button class="cs-picker-inst" data-inst="ww_flute"       onclick="pickInst('ww_flute')">FLUTE</button>
-          <button class="cs-picker-inst" data-inst="ww_clarinet"    onclick="pickInst('ww_clarinet')">CLARINET</button>
+          <button class="cs-picker-inst" data-inst="ww_flute"       onclick="pickInst('ww_flute')" data-i18n="inst_ww_flute">FLUTE</button>
+          <button class="cs-picker-inst" data-inst="ww_clarinet"    onclick="pickInst('ww_clarinet')" data-i18n="inst_ww_clarinet">CLARINET</button>
 
-          <button class="cs-picker-inst" data-inst="ww_oboe"       onclick="pickInst('ww_oboe')">OBOE</button>
+          <button class="cs-picker-inst" data-inst="ww_oboe"       onclick="pickInst('ww_oboe')" data-i18n="inst_ww_oboe">OBOE</button>
 
-          <button class="cs-picker-inst" data-inst="ww_bassoon"    onclick="pickInst('ww_bassoon')">BASSOON</button>
-          <button class="cs-picker-inst" data-inst="ww_sax"        onclick="pickInst('ww_sax')">SAX</button>
-          <button class="cs-picker-inst" data-inst="ww_recorder"   onclick="pickInst('ww_recorder')">RECORDER</button>
-          <button class="cs-picker-inst" data-inst="ww_whistle"    onclick="pickInst('ww_whistle')">TIN WHISTLE</button>
-          <button class="cs-picker-inst" data-inst="ww_ocarina"    onclick="pickInst('ww_ocarina')">OCARINA</button>
+          <button class="cs-picker-inst" data-inst="ww_bassoon"    onclick="pickInst('ww_bassoon')" data-i18n="inst_ww_bassoon">BASSOON</button>
+          <button class="cs-picker-inst" data-inst="ww_sax"        onclick="pickInst('ww_sax')" data-i18n="inst_ww_sax">SAX</button>
+          <button class="cs-picker-inst" data-inst="ww_recorder"   onclick="pickInst('ww_recorder')" data-i18n="inst_ww_recorder">RECORDER</button>
+          <button class="cs-picker-inst" data-inst="ww_whistle"    onclick="pickInst('ww_whistle')" data-i18n="inst_ww_whistle">TIN WHISTLE</button>
+          <button class="cs-picker-inst" data-inst="ww_ocarina"    onclick="pickInst('ww_ocarina')" data-i18n="inst_ww_ocarina">OCARINA</button>
         </div>
         <div class="cs-picker-panel" id="csPanelFreereed" data-fam="freereed">
-          <button class="cs-picker-inst" data-inst="harmonica"  onclick="pickInst('harmonica')">HARMONICA</button>
-          <button class="cs-picker-inst" data-inst="ww_chrom_harp" onclick="pickInst('ww_chrom_harp')">CHROM. HARP</button>
-          <button class="cs-picker-inst" data-inst="didgeridoo" onclick="pickInst('didgeridoo')">DIDGERIDOO</button>
+          <button class="cs-picker-inst" data-inst="harmonica"  onclick="pickInst('harmonica')" data-i18n="inst_harmonica">HARMONICA</button>
+          <button class="cs-picker-inst" data-inst="ww_chrom_harp" onclick="pickInst('ww_chrom_harp')" data-i18n="inst_ww_chrom_harp">CHROM. HARP</button>
+          <button class="cs-picker-inst" data-inst="didgeridoo" onclick="pickInst('didgeridoo')" data-i18n="inst_didgeridoo">DIDGERIDOO</button>
         </div>
         <div class="cs-picker-panel" id="csPanelBowed" data-fam="bowed">
-          <button class="cs-picker-inst" data-inst="bowed_violin"     onclick="pickInst('bowed_violin')">VIOLIN</button>
-          <button class="cs-picker-inst" data-inst="bowed_viola"      onclick="pickInst('bowed_viola')">VIOLA</button>
-          <button class="cs-picker-inst" data-inst="bowed_cello"      onclick="pickInst('bowed_cello')">CELLO</button>
-          <button class="cs-picker-inst" data-inst="bowed_doublebass" onclick="pickInst('bowed_doublebass')">DBL BASS</button>
+          <button class="cs-picker-inst" data-inst="bowed_violin"     onclick="pickInst('bowed_violin')" data-i18n="inst_bowed_violin">VIOLIN</button>
+          <button class="cs-picker-inst" data-inst="bowed_viola"      onclick="pickInst('bowed_viola')" data-i18n="inst_bowed_viola">VIOLA</button>
+          <button class="cs-picker-inst" data-inst="bowed_cello"      onclick="pickInst('bowed_cello')" data-i18n="inst_bowed_cello">CELLO</button>
+          <button class="cs-picker-inst" data-inst="bowed_doublebass" onclick="pickInst('bowed_doublebass')" data-i18n="inst_bowed_doublebass">DBL BASS</button>
         </div>
       </div>
     </div>
@@ -27731,7 +27808,7 @@ try {
     <!-- ── NOTES + DOUBLE STOPS section ── -->
     <div id="bowedNotesSection">
       <div id="bowedSubTabs" style="display:flex;gap:6px;margin-bottom:8px">
-        <button id="bowedSubNotes"  class="cs-sub-pill active" style="flex:1" onclick="bowedSubMode('notes')">NOTES</button>
+        <button id="bowedSubNotes"  class="cs-sub-pill active" style="flex:1" onclick="bowedSubMode('notes')" data-i18n="bowed_sub_notes">NOTES</button>
         <button id="bowedSubDstops" class="cs-sub-pill"        style="flex:1" onclick="bowedSubMode('dstops')" data-i18n="cs_bowed_dstops_tab">DOUBLE STOPS</button>
       </div>
       <div class="card warm" style="padding:16px 14px 14px">
@@ -27739,8 +27816,8 @@ try {
         <div class="gcc-display" style="padding:0;gap:8px;position:relative">
           <!-- Expand button top-right -->
           <div class="gcc-corner-tools">
-            <button id="bowedNoteExpandBtn"  class="gcc-zoom-btn" onclick="bowedNoteToggleExpand()"  style="display:none">EXPAND</button>
-            <button id="bowedDsExpandBtn"    class="gcc-zoom-btn" onclick="bowedDsToggleExpand()"    style="display:none">EXPAND</button>
+            <button id="bowedNoteExpandBtn"  class="gcc-zoom-btn" onclick="bowedNoteToggleExpand()"  style="display:none" data-i18n="gtool_expand">EXPAND</button>
+            <button id="bowedDsExpandBtn"    class="gcc-zoom-btn" onclick="bowedDsToggleExpand()"    style="display:none" data-i18n="gtool_expand">EXPAND</button>
           </div>
           <div class="gcc-chord-name idle" id="bowedNoteLabel" style="width:100%;text-align:center">SELECT A NOTE</div>
           <div class="gss-pos-label" id="bowedNoteSub" style="text-align:center;min-height:16px"></div>
@@ -27762,7 +27839,7 @@ try {
             <div class="gcc-voicing-dots"    id="bowedDsDots"      style="display:none"></div>
           </div>
           <div class="gss-notes-row" id="bowedNotesPills" style="margin-top:6px"></div>
-          <div class="gcc-play-hint">Tap dot to hear · use arrows to browse · EXPAND shows all</div>
+          <div class="gcc-play-hint" data-i18n="gcc_hint_browse">Tap dot to hear · use arrows to browse · EXPAND shows all</div>
         </div>
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
         <!-- Play buttons: notes plays single, dstops plays simultaneous -->
@@ -27789,7 +27866,7 @@ try {
         <div class="card-glow"></div>
         <div class="gcc-display" style="padding:0;gap:8px;position:relative">
           <div class="gcc-corner-tools">
-            <button id="bowedScaleExpandBtn" class="gcc-zoom-btn" onclick="bowedScaleToggleExpand()">EXPAND</button>
+            <button id="bowedScaleExpandBtn" class="gcc-zoom-btn" onclick="bowedScaleToggleExpand()" data-i18n="gtool_expand">EXPAND</button>
           </div>
           <div class="gss-scale-name idle" id="bowedScaleName" style="width:100%;text-align:center">SELECT ROOT + SCALE</div>
           <div class="gss-pos-label" id="bowedScalePosLabel" style="text-align:center"></div>
@@ -27805,7 +27882,7 @@ try {
             <div class="gcc-voicing-dots"    id="bowedScaleDots"></div>
           </div>
           <div class="gss-notes-row" id="bowedScalePills" style="margin-top:6px"></div>
-          <div class="gcc-play-hint">Tap dot to hear · root orange · grayed = outside position</div>
+          <div class="gcc-play-hint" data-i18n="gcc_hint_scale">Tap dot to hear · root orange · grayed = outside position</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px">
             <button class="pss-interval-btn" id="bowedScaleNamesBtn" onclick="bowedToggleNoteNames()" data-i18n="gtool_fingering">FINGERING</button>
           </div>
@@ -29684,9 +29761,9 @@ try {
     <div class="piano-overlay-lid-wrap">
       <span class="piano-overlay-lid-label">LID</span>
       <div class="piano-lid-seg-wrap">
-        <button class="piano-lid-seg" data-lid="closed" onclick="setPianoLid('closed')">CLOSED</button>
-        <button class="piano-lid-seg active" data-lid="stick" onclick="setPianoLid('stick')">STICK</button>
-        <button class="piano-lid-seg" data-lid="open" onclick="setPianoLid('open')">OPEN</button>
+        <button class="piano-lid-seg" data-lid="closed" onclick="setPianoLid('closed')" data-i18n="pn_lid_closed">CLOSED</button>
+        <button class="piano-lid-seg active" data-lid="stick" onclick="setPianoLid('stick')" data-i18n="pn_lid_stick">STICK</button>
+        <button class="piano-lid-seg" data-lid="open" onclick="setPianoLid('open')" data-i18n="pn_lid_open">OPEN</button>
       </div>
     </div>
     <div class="piano-overlay-ref-note" id="pianoFullRefNote">—</div>
@@ -29713,9 +29790,9 @@ try {
 
   <!-- Three pedals below the keyboard: soft · sostenuto · damper -->
   <div class="piano-pedal-cluster"><div class="ppc-inner">
-    <div class="ppc-pedal soft"   id="pianoFullSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOFT</span></div></div><div class="ppc-name">SOFT</div></div>
+    <div class="ppc-pedal soft"   id="pianoFullSoftPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOFT</span></div></div><div class="ppc-name" data-i18n="pn_ped_soft">SOFT</div></div>
     <div class="ppc-pedal sost"   id="pianoFullSostPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SOST</span></div></div><div class="ppc-name">SOST</div></div>
-    <div class="ppc-pedal damper" id="pianoFullPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SUST</span></div></div><div class="ppc-name">DAMPER</div></div>
+    <div class="ppc-pedal damper" id="pianoFullPedal"><div class="ppc-slot"><div class="ppc-pad"><span class="ppc-lbl">SUST</span></div></div><div class="ppc-name" data-i18n="pn_ped_damper">DAMPER</div></div>
   </div></div>
 
   <!-- Controls row: clear-all · now-playing · songs -->
@@ -31009,7 +31086,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.27</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.48</span>
     </div>
   </div>
 </div>
@@ -31017,7 +31094,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.27';
+const INTONARE_VERSION = '0.150.48';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -39739,7 +39816,10 @@ function enterTool(name, restoreState) {
 
   // Module header — same pattern as enterExercise
   var _toolFolder = TOOL_FOLDER_MAP[name];
-  var _toolBackLabel = _toolFolder ? ('back to ' + TOOL_FOLDER_NAME(_toolFolder)) : ('back to ' + (t('mode_tools') || 'Tools'));
+  // 'back to ' was concatenated in English, so the header read "back to ARMONIA"
+  // in Italian: half translated, half not.
+  var _backTo = (t('hdr_back_to') !== 'hdr_back_to') ? t('hdr_back_to') : 'back to ';
+  var _toolBackLabel = _toolFolder ? (_backTo + TOOL_FOLDER_NAME(_toolFolder)) : (_backTo + (t('mode_tools') || 'Tools'));
   setHeaderModule(TOOL_NAME(name), TOOL_SUB(name), null, _toolBackLabel);
   _headerBackFn = exitTool; // must be set AFTER setHeaderModule (which nulls it)
   // Force layout tight (inline beats CSS for first-paint timing)
@@ -39878,13 +39958,15 @@ const TC_IV_IT = ['Unisono','2ª minore','2ª maggiore','3ª minore','3ª maggio
 
 // Scale dropdown groups for the custom (non-native) picker. Values map 1:1 to SCALE_DEFS.
 const TC_SCALE_GROUPS = [
+  // Same family order as GSS_SCALE_TYPES, so the tonal-centre picker and the
+  // instrument charts present scales in the same shape.
   { g:'MAJOR FAMILY', items:[['major','Major (Ionian)'],['lydian','Lydian'],['mixolydian','Mixolydian'],['harmmaj','Harmonic Major']] },
   { g:'MINOR FAMILY', items:[['natminor','Natural Minor'],['dorian','Dorian'],['phrygian','Phrygian'],['locrian','Locrian'],['harmminor','Harmonic Minor'],['melminor','Melodic Minor']] },
   { g:'PENTATONIC & BLUES', items:[['majpent','Major Pentatonic'],['minpent','Minor Pentatonic'],['blues','Blues'],['inscale','In'],['yo','Yo'],['egyptian','Egyptian']] },
   { g:'JAPANESE', items:[['hirajoshi','Hirajoshi'],['iwato','Iwato'],['kumoi','Kumoi'],['insen','Insen']] },
-  { g:'INDIAN THAATS', items:[['purvi','Purvi'],['marwa','Marwa'],['todi','Todi']] },
   { g:'JAZZ · MELODIC MODES', items:[['lyddom','Lydian Dominant'],['altered','Altered'],['locrian2','Locrian nat2']] },
   { g:'WORLD & EXOTIC', items:[['dblharm','Double Harmonic'],['phrygdom','Phrygian Dominant'],['hungmin','Hungarian Minor'],['hungmaj','Hungarian Major'],['ukrdorian','Ukrainian Dorian']] },
+  { g:'INDIAN THAATS', items:[['purvi','Purvi'],['marwa','Marwa'],['todi','Todi']] },
   { g:'SYMMETRIC', items:[['dimwh','Diminished W-H'],['dimhw','Diminished H-W'],['augmented','Augmented'],['wholetone','Whole Tone'],['chromatic','Chromatic']] },
 ];
 
@@ -51036,7 +51118,7 @@ function enterExercise(name) {
   };
   var _exBackKey = _exBackMap[name] || 'practice';
   var _exBackLabels = {
-    practice: 'back to ' + (t('mode_train') || 'Train'),
+    practice: ((t('hdr_back_to') !== 'hdr_back_to') ? t('hdr_back_to') : 'back to ') + (t('mode_train') || 'Train'),
     rhythm: 'back to Rhythm',
     ear_training: 'back to Ear Training',
     games: 'back to Games',
@@ -51919,9 +52001,15 @@ function ivApplyMode() {
   });
 
   if (ivMode === 'manual') {
-    // Grid is always present (grayed until first play). No reference row, no feedback bar.
+    // Grid is always present (grayed until first play). No reference row.
     if (refRow) refRow.style.display = 'none';
-    if (fb) fb.style.display = 'none';
+    // The feedback box STAYS in the layout, empty. This line used to hide it,
+    // which is why v0.150.9's fix appeared not to work: the markup default and
+    // the round reset were both corrected, but the mode switch hid it again on
+    // every entry. An empty box holding its space beats a box that appears on
+    // first answer and shoves the grid down.
+    if (fb) { fb.style.display = ''; fb.className = 'iv-feedback'; }
+    try { ivFbText(''); } catch (e) {}
     if (nextBtn) { nextBtn.style.display = ''; nextBtn.textContent = t('iv_play') || '▶︎ PLAY'; }
     if (replayBtn) replayBtn.style.display = '';
     var _rlab = document.getElementById('ivRetryLabel'); var _rlin = document.getElementById('ivRetryLine');
@@ -52541,7 +52629,7 @@ function ivAnswerTap(sem, btn) {
     });
     var tn = document.getElementById('ivTargetName');
     if (tn) { tn.textContent = (getIVNames()[correctSem] || ''); tn.className = 'iv-target-name' + (isRight ? '' : ' iv-target-miss'); }
-    if (isRight) { ivStreak++; ivCorrect++; ivRecordCorrect(correctSem); hapticCorrect(); playCueCorrect(); }
+    if (isRight) { ivStreak++; ivCorrect++; ivRecordCorrect(correctSem); hapticCorrect(); playCueCorrect(); checkStreakMilestone(ivStreak); }
     else { ivStreak = 0; hapticWrong(); playCueWrong(); }
     ivUpdateStats();
     if (typeof ivtAfterAnswer === 'function') ivtAfterAnswer(isRight, correctSem);
@@ -52554,6 +52642,10 @@ function ivAnswerTap(sem, btn) {
     if (btn) btn.classList.add('correct');
     if (grid) grid.querySelectorAll('.iv-answer-btn').forEach(function(b){ b.disabled = true; });
     ivStreak++; ivCorrect++; ivRecordCorrect(correctSem);
+    // Only Sing mode called this. Tap and Test both counted the streak and
+    // never fired the milestone, so Interval Training showed no toast in the
+    // mode most people actually use.
+    checkStreakMilestone(ivStreak);
     hapticCorrect(); playCueCorrect(); ivUpdateStats();
     ivManualReveal(true);
     // Wrong answers already got a feedback box (below); correct never did —
@@ -57802,7 +57894,7 @@ function lnchBuild() {
     b.innerHTML =
       '<span class="lnch-face">'
       + '<span class="lnch-peek lnch-pk-' + m.id + '">' + (LNCH_PEEKS[m.id] || '') + '</span>'
-      + '<span class="lnch-txt"><span class="lnch-nm">' + nm + '</span>'
+      + '<span class="lnch-txt"><span class="lnch-nm' + (nm.length > 8 ? ' lnch-nm-long' : '') + '">' + nm + '</span>'
       + '<span class="lnch-sb">' + sub + '</span></span></span>'
       + '<span class="lnch-pin' + (LNCH_PIN === m.id ? ' lnch-on' : '') + '" '
       + 'role="button" aria-label="Pin" onclick="lnchPin(event,\'' + m.id + '\')">'
@@ -57818,6 +57910,8 @@ function lnchGo(m) {
   // Update check rides the same gate: only once past the launcher, and then on
   // its own delay, so it can never appear over the splash or the chooser.
   try { iuScheduleCheck(); } catch(e) {}
+  // Same gate as the update check: first module entry, not boot.
+  try { scheduleNotificationsDeferred(); } catch(e) {}
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Hold the palette swap while the launcher is still on screen. Without this the
   // body recolours the instant a card is tapped, so the next module's background
@@ -60685,6 +60779,16 @@ function updateScale() {
   try { updateDroneDisplay(); } catch(e) {}
   try { droneUpdateScale(); } catch(e) {}
   scaleRenderTape(true);
+  // playScale() snapshots scaleTapeData() once when it starts, so a scale or
+  // root changed mid-playback updated the tape and the name while the audio kept
+  // running the OLD sequence. That also made every new scale sound identical:
+  // you were hearing whatever was already looping, not what you had just picked.
+  // Restart in the same direction so the change is audible immediately.
+  if (typeof scalePlaying !== 'undefined' && scalePlaying && scaleMode) {
+    const dir = scaleMode;
+    try { scaleStop(); } catch (e) {}
+    try { playScale(dir); } catch (e) {}
+  }
 }
 
 function setScaleSpeed(v) {
@@ -62979,12 +63083,16 @@ function buildRefToneBank(hostId, hooks) {
   _toneBankWarm(_get());
   container.innerHTML = '';
 
+  // Labels go through t() so the tone bank switches with the app. They were plain
+  // English literals, so these category tabs stayed KEYBOARD / WAVES / PLUCKED
+  // while everything around them was Italian.
+  const _tg = (k, fb) => { try { const v = t(k); return (v && v !== k) ? v : fb; } catch (e) { return fb; } };
   const TONE_GROUPS = [
-    { label: 'KEYBOARD', keys: ['grand_piano','honky_tonk','harpsichord','vibraphone','marimba','xylophone'] },
-    { label: 'WAVES',    keys: ['sine','organ','bell','pad'] },
-    { label: 'PLUCKED',  keys: ['nylon_guitar','guitar','harp','banjo','mandolin','bass','ukebass'] },
-    { label: 'BRASS',    keys: ['trumpet','trombone','frenchhorn','tuba'] },
-    { label: 'WOODWIND', keys: ['flute','reed','reed_conical','harmonica','melodica'] },
+    { label: _tg('tonegrp_keys',  'KEYBOARD'), keys: ['grand_piano','honky_tonk','harpsichord','vibraphone','marimba','xylophone'] },
+    { label: _tg('tonegrp_waves', 'WAVES'),    keys: ['sine','organ','bell','pad'] },
+    { label: _tg('tonegrp_pluck', 'PLUCKED'),  keys: ['nylon_guitar','guitar','harp','banjo','mandolin','bass','ukebass'] },
+    { label: _tg('tonegrp_brass', 'BRASS'),    keys: ['trumpet','trombone','frenchhorn','tuba'] },
+    { label: _tg('tonegrp_wood',  'WOODWIND'), keys: ['flute','reed','reed_conical','harmonica','melodica'] },
   ];
 
   // Any ungrouped tones get appended to GENERAL for future-proofing
@@ -63615,11 +63723,35 @@ function tlEvaluateRound(_activePhaseStartTime) {
   });
   const avgAbsMs = (absTotal / tlTaps.length) * 1000;
 
+  // Grade on TEMPO, not on distance from an absolute grid.
+  //
+  // The old metric compared every tap to its nearest expected beat. That
+  // punishes a steady tempo error enormously: hold a rock-solid 123 against a
+  // target of 120 and each tap lands further ahead than the last, so the average
+  // error grows with the length of the round. +3bpm graded red while sounding
+  // fine, which is the opposite of what the exercise is teaching.
+  //
+  // Deriving BPM from the gaps between taps measures what a musician would
+  // actually hear: are you at the right tempo. Someone steady at 123 now reads
+  // as 3bpm out, whatever the round length. Drift within the round still shows
+  // up, because an unsteady pulse gives an unstable average interval.
+  let tlBpmErr = null;
+  if (tlTaps.length >= 2) {
+    const sorted = tlTaps.slice().sort(function (a, b) { return a - b; });
+    const span = sorted[sorted.length - 1] - sorted[0];
+    const avgGap = span / (sorted.length - 1);
+    if (avgGap > 0.05) tlBpmErr = Math.abs((60 / avgGap) - tlBpm);
+  }
+  // One tap gives no interval to measure, so fall back to the grid distance.
+  const useBpm = (tlBpmErr !== null);
+
   let grade, gradeClass;
   const prevStreak = tlStats.streak;
-  if (avgAbsMs < 25)       { grade = t('tl_grade_locked');    gradeClass = 'great'; tlStats.streak++; }
-  else if (avgAbsMs < 50)  { grade = t('tl_grade_close');     gradeClass = 'good';  tlStats.streak++; }
-  else if (avgAbsMs < 100) { grade = t('tl_grade_needs_work'); gradeClass = 'meh';   tlStats.streak = 0; }
+  // Thresholds in BPM: 2 is tighter than most people can hear, 5 is the point a
+  // tempo starts sounding wrong against a reference.
+  if (useBpm ? (tlBpmErr < 2)  : (avgAbsMs < 40))  { grade = t('tl_grade_locked');    gradeClass = 'great'; tlStats.streak++; }
+  else if (useBpm ? (tlBpmErr < 5)  : (avgAbsMs < 75))  { grade = t('tl_grade_close');     gradeClass = 'good';  tlStats.streak++; }
+  else if (useBpm ? (tlBpmErr < 10) : (avgAbsMs < 100)) { grade = t('tl_grade_needs_work'); gradeClass = 'meh';   tlStats.streak = 0; }
   else                     { grade = t('tl_grade_off');        gradeClass = 'bad';   tlStats.streak = 0; }
   checkStreakMilestone(tlStats.streak);
 
@@ -68898,7 +69030,11 @@ function rlpReduced() {
 
 /* One note through the app's own player, so the module inherits the soundfont
    and the master volume instead of growing a second audio path. */
+var _rlpToneTimer = null;   // pending delayed question tone, see rlpNewRung
 function rlpSound(midi) {
+  // Cancel any question tone still waiting to fire. Without this, tapping A440
+  // (or replay) during the delay let both sound together.
+  try { clearTimeout(_rlpToneTimer); _rlpToneTimer = null; } catch (e) {}
   // Swap the app's reference tone in for the length of one note and put it back,
   // so the drill can have its own voice without changing the setting everywhere
   // else in the app. Same trick Staff Notes uses.
@@ -69119,11 +69255,20 @@ function rlpNewCard(silent) {
   var pool = rlpPool();
   rlpTarget = rlpCfg().oct + pool[Math.floor(Math.random() * pool.length)];
   rlpDone = false; rlpWrong = []; _rlpHeartJustLost = -1;
-  if (!silent && rlpCfg().autoplay) setTimeout(function() {
-    var panel = document.getElementById('exRelPitch');
-    if (!panel || panel.classList.contains('hidden')) return;
-    rlpSound(rlpTarget);
-  }, 350);
+  // Practice mode has its OWN delayed tone, separate from the climb's. v0.150.30
+  // tracked the climb timer and left this one bare, which is why tapping next
+  // quickly still stacked tones: each tap queued another 350ms tone and none of
+  // them cancelled the ones before. Same handle as the climb, so whichever fires
+  // last is the only one heard.
+  if (!silent && rlpCfg().autoplay) {
+    try { clearTimeout(_rlpToneTimer); } catch (e) {}
+    _rlpToneTimer = setTimeout(function() {
+      _rlpToneTimer = null;
+      var panel = document.getElementById('exRelPitch');
+      if (!panel || panel.classList.contains('hidden')) return;
+      rlpSound(rlpTarget);
+    }, 350);
+  }
 }
 
 function rlpPracticeHTML() {
@@ -69242,11 +69387,21 @@ function rlpNewRung(silent) {
   for (var i = 0; i < inBand.length && picks.length < 4; i++) picks.push(inBand[i].pc);
   rlpShuffle(picks);
   rlpOpts = picks; rlpPicked = null; rlpElim = [];
-  if (!silent) setTimeout(function() {
-    var panel = document.getElementById('exRelPitch');
-    if (!panel || panel.classList.contains('hidden')) return;
-    rlpSound(rlpCTarget);
-  }, rlpRung === 1 ? 620 : 350);
+  // The question tone is delayed 350-620ms so it does not land on top of the
+  // rung transition. That delay was untracked, so anything played during the
+  // window (the A440 reference, a replay, the next rung starting early) sounded
+  // UNDER it: chordPlayMidi stops what is currently ringing, but it cannot stop
+  // a note that has not started yet. The handle is kept now and cleared by
+  // rlpSound, so the last thing asked for is the only thing that plays.
+  if (!silent) {
+    try { clearTimeout(_rlpToneTimer); } catch (e) {}
+    _rlpToneTimer = setTimeout(function() {
+      _rlpToneTimer = null;
+      var panel = document.getElementById('exRelPitch');
+      if (!panel || panel.classList.contains('hidden')) return;
+      rlpSound(rlpCTarget);
+    }, rlpRung === 1 ? 620 : 350);
+  }
 }
 
 /* ══ THE ENTRANCE ══
@@ -82910,6 +83065,10 @@ const PROG_DEFAULTS = {
                vols: { correct:100, wrong:100, milestone:100, levelup:100, achievement:100, gameover:100, win:100 } },
   streak: { count: 0, lastDate: null, longest: 0 },
   dailyChallengeStreak: { count: 0, lastDate: null, longest: 0 },
+  // Reminders stay ON by default: the practice nudge is most of their value and
+  // most people never open a notification settings screen to switch it on.
+  // Scheduling is DEFERRED instead of disabled — see the deferred scheduler
+  // below for why the boot-time schedule had to go.
   notifications: { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00', timeFormat: '24' },
   history: {},  // { 'YYYY-MM-DD': { interval: sec, chords: sec, ... } }
   secret_chime_unlocked: false,   // unlocked at 100-day streak
@@ -82993,7 +83152,7 @@ const STRINGS = {
     mqd_meta_fresh:'10 questions \u00b7 one attempt',
     mqd_view_result:'VIEW RESULT', mqd_in_progress:'IN PROGRESS \u00b7 Q',
     mqd_resume:'RESUME \u2192', mqd_start:'START \u2192',
-    chordle_daily:'DAILY',
+    chordle_daily:'DAILY', mq_daily_badge:'DAILY',
     chordle_play_daily:'PLAY THE DAILY',
     chordle_daily_ready:'Same progression for everyone today',
     chordle_daily_done:'Done today ·',
@@ -83288,8 +83447,8 @@ const STRINGS = {
     settings_data:'Your Data', backup_export:'⬇ Back Up Progress', backup_import:'⬆ Restore From Backup',
     backup_confirm_title:'Restore this backup?', backup_from:'FROM THE BACKUP', backup_now:'ON THIS DEVICE NOW',
     backup_warn:'Everything on this device is replaced by the backup. Anything you have done here since it was made is lost. Pro and your tap calibration stay as they are.',
-    backup_cancel:'Cancel', backup_replace:'Replace', backup_saved:'Backup saved', backup_restored:'Backup restored',
-    backup_save_to:'Save backup',
+    backup_cancel:'Cancel', backup_replace:'Replace', backup_saved:'Backup ready to send', backup_restored:'Backup restored',
+    backup_save_to:'Send your backup somewhere safe',
     backup_out_title:'This backup will contain', backup_go:'Back Up',
     backup_out_note:'Pro and your tap calibration are not included. Pro comes back through Restore Purchase on a new device.',
     backup_row_streak:'Streak', backup_row_xp:'XP', backup_row_ach:'Achievements', backup_row_days:'Days practiced',
@@ -83352,6 +83511,7 @@ const STRINGS = {
     ],
     scale_grp_major:'Major Family · Bright', scale_grp_minor:'Minor Family · Dark',
     scale_grp_pent:'Pentatonic & Blues', scale_grp_jazz:'Jazz · Melodic Modes', scale_grp_world:'World & Exotic', scale_grp_sym:'Symmetric',
+    scale_grp_japan:'Japanese', scale_grp_thaat:'Indian Thaats',
     scale_opts:{
       major:'Major (Ionian)', lydian:'Lydian', mixolydian:'Mixolydian', harmmaj:'Harmonic Major',
       natminor:'Natural Minor (Aeolian)', dorian:'Dorian', phrygian:'Phrygian', locrian:'Locrian',
@@ -83611,6 +83771,11 @@ const STRINGS = {
     gtool_fingering:'FINGERING', gtool_notes:'NOTES', gtool_intervals:'INTERVALS',
     gtool_expand:'EXPAND', gtool_slow:'SLOW', gtool_fast:'FAST', gtool_rh:'RH',
     gtool_play_asc:'▶︎ PLAY ASCENDING', gtool_play_desc:'◀ PLAY DESCENDING',
+    inst_guitar:'GUITAR', inst_bass:'BASS', inst_uke:'UKE', inst_mandolin:'MANDOLIN', inst_banjo:'BANJO', inst_lute:'LUTE', inst_bouzouki:'BOUZOUKI', inst_piano:'PIANO', inst_organ:'ORGAN', inst_melodica:'MELODICA', inst_harp:'HARP', inst_mallet:'MALLET', inst_trumpet:'TRUMPET', inst_flugelhorn:'FLUGELHORN', inst_frenchhorn:'FRENCH HORN', inst_euphonium:'EUPHONIUM', inst_tuba:'TUBA', inst_trombone:'TROMBONE', inst_ww_flute:'FLUTE', inst_ww_clarinet:'CLARINET', inst_ww_oboe:'OBOE', inst_ww_bassoon:'BASSOON', inst_ww_sax:'SAX', inst_ww_recorder:'RECORDER', inst_ww_whistle:'TIN WHISTLE', inst_ww_ocarina:'OCARINA', inst_harmonica:'HARMONICA', inst_ww_chrom_harp:'CHROM. HARP', inst_didgeridoo:'DIDGERIDOO', inst_bowed_violin:'VIOLIN', inst_bowed_viola:'VIOLA', inst_bowed_cello:'CELLO', inst_bowed_doublebass:'DBL BASS', csfam_fretted:'Fretted', csfam_chromperc:'Chrom.', csfam_brass:'Brass', csfam_woodwind:'Woodwind', csfam_freereed:'Free Reed', csfam_bowed:'Bowed',
+    hdr_back_to:'back to ',
+    tonegrp_keys:'KEYBOARD', tonegrp_waves:'WAVES', tonegrp_pluck:'PLUCKED', tonegrp_brass:'BRASS', tonegrp_wood:'WOODWIND',
+    bowed_sub_notes:'NOTES', gcc_hint_browse:'Tap dot to hear · use arrows to browse · EXPAND shows all', gcc_hint_scale:'Tap dot to hear · root orange · grayed = outside position',
+    pn_lid_closed:'CLOSED', pn_lid_stick:'STICK', pn_lid_open:'OPEN', pn_lid:'LID', pn_ped_soft:'SOFT', pn_ped_damper:'DAMPER', pn_hold:'HOLD',
     harp_tap_hint:'TAP A HOLE TO PLAY',
     gcc_strum:'▶︎ STRUM CHORD', gcc_play_chord:'▶︎ PLAY CHORD',
     gcc_tap_dot:'Tap a dot to hear that string',
@@ -83639,6 +83804,7 @@ const STRINGS = {
     settings_help_tips_off:'Hidden',
     settings_help_tips_on:'Show ? buttons',
     trp_play_note:'▶︎ PLAY NOTE',
+    bowed_play_ds:'▶︎ PLAY DOUBLE STOP',
     settings_haptics:'Haptic Feedback',
     settings_splash_sound:'Launch Sound',
     pw_title:'INTONARE PRO',
@@ -84063,6 +84229,10 @@ const STRINGS = {
     mqd_view_result:'VEDI RISULTATO', mqd_in_progress:'IN CORSO \u00b7 D',
     mqd_resume:'RIPRENDI \u2192', mqd_start:'INIZIA \u2192',
     chordle_daily:'GIORNALIERA',
+    // The badge is absolutely positioned with fixed padding, and GIORNALIERA is
+    // eleven characters against DAILY's five, so it ran into the card beside it.
+    // OGGI reads naturally on a once-a-day challenge and fits the same box.
+    mq_daily_badge:'OGGI',
     chordle_play_daily:'GIOCA LA GIORNALIERA',
     chordle_daily_ready:'Stessa progressione per tutti oggi',
     chordle_daily_done:'Fatta oggi ·',
@@ -84356,8 +84526,8 @@ const STRINGS = {
     settings_data:'I Tuoi Dati', backup_export:'⬇ Salva i Progressi', backup_import:'⬆ Ripristina da Backup',
     backup_confirm_title:'Ripristinare questo backup?', backup_from:'DAL BACKUP', backup_now:'SU QUESTO DISPOSITIVO ORA',
     backup_warn:'Tutto quello che c\'è su questo dispositivo viene sostituito dal backup. Quello che hai fatto qui da quando è stato creato andrà perso. Pro e la calibrazione del tap restano come sono.',
-    backup_cancel:'Annulla', backup_replace:'Sostituisci', backup_saved:'Backup salvato', backup_restored:'Backup ripristinato',
-    backup_save_to:'Salva il backup',
+    backup_cancel:'Annulla', backup_replace:'Sostituisci', backup_saved:'Backup pronto da inviare', backup_restored:'Backup ripristinato',
+    backup_save_to:'Invia il backup in un posto sicuro',
     backup_out_title:'Questo backup conterrà', backup_go:'Salva',
     backup_out_note:'Pro e la calibrazione del tap non sono inclusi. Pro torna con Ripristina Acquisto su un nuovo dispositivo.',
     backup_row_streak:'Serie', backup_row_xp:'XP', backup_row_ach:'Obiettivi', backup_row_days:'Giorni di pratica',
@@ -84420,6 +84590,7 @@ const STRINGS = {
     ],
     scale_grp_major:'Famiglia Maggiore · Brillanti', scale_grp_minor:'Famiglia Minore · Scure',
     scale_grp_pent:'Pentatonica & Blues', scale_grp_jazz:'Jazz · Modi Melodici', scale_grp_world:'Mondo & Esotiche', scale_grp_sym:'Simmetriche',
+    scale_grp_japan:'Giapponesi', scale_grp_thaat:'Thaat Indiani',
     scale_opts:{
       major:'Maggiore (Ionico)', lydian:'Lidio', mixolydian:'Misolidio', harmmaj:'Maggiore Armonica',
       natminor:'Minore Naturale (Eolio)', dorian:'Dorico', phrygian:'Frigio', locrian:'Locrio',
@@ -84679,8 +84850,16 @@ const STRINGS = {
     gtool_fingering:'DITEGGIATURA', gtool_notes:'NOTE', gtool_intervals:'INTERVALLI',
     gtool_expand:'ESPANDI', gtool_slow:'LENTO', gtool_fast:'VELOCE', gtool_rh:'MD',
     gtool_play_asc:'▶︎ SUONA ASCENDENTE', gtool_play_desc:'◀ SUONA DISCENDENTE',
+    inst_guitar:'CHITARRA', inst_bass:'BASSO', inst_uke:'UKULELE', inst_mandolin:'MANDOLINO', inst_banjo:'BANJO', inst_lute:'LIUTO', inst_bouzouki:'BOUZOUKI', inst_piano:'PIANOFORTE', inst_organ:'ORGANO', inst_melodica:'MELODICA', inst_harp:'ARPA', inst_mallet:'PERCUSSIONI', inst_trumpet:'TROMBA', inst_flugelhorn:'FLICORNO', inst_frenchhorn:'CORNO', inst_euphonium:'EUFONIO', inst_tuba:'TUBA', inst_trombone:'TROMBONE', inst_ww_flute:'FLAUTO', inst_ww_clarinet:'CLARINETTO', inst_ww_oboe:'OBOE', inst_ww_bassoon:'FAGOTTO', inst_ww_sax:'SAX', inst_ww_recorder:'FLAUTO DOLCE', inst_ww_whistle:'TIN WHISTLE', inst_ww_ocarina:'OCARINA', inst_harmonica:'ARMONICA', inst_ww_chrom_harp:'ARMONICA CROM.', inst_didgeridoo:'DIDGERIDOO', inst_bowed_violin:'VIOLINO', inst_bowed_viola:'VIOLA', inst_bowed_cello:'VIOLONCELLO', inst_bowed_doublebass:'CONTRABBASSO', csfam_fretted:'Corde', csfam_chromperc:'Crom.', csfam_brass:'Ottoni', csfam_woodwind:'Legni', csfam_freereed:'Ance libere', csfam_bowed:'Arco',
+    hdr_back_to:'torna a ',
+    tonegrp_keys:'TASTIERE', tonegrp_waves:'ONDE', tonegrp_pluck:'PIZZICATE', tonegrp_brass:'OTTONI', tonegrp_wood:'LEGNI',
+    bowed_sub_notes:'NOTE', gcc_hint_browse:'Tocca un punto per ascoltare · frecce per sfogliare · ESPANDI mostra tutto', gcc_hint_scale:'Tocca un punto per ascoltare · tonica arancione · grigio = fuori posizione',
+    pn_lid_closed:'CHIUSO', pn_lid_stick:'ASTA', pn_lid_open:'APERTO', pn_lid:'COPERCHIO', pn_ped_soft:'UNA CORDA', pn_ped_damper:'SMORZ.', pn_hold:'TIENI',
     harp_tap_hint:'TOCCA UN FORO PER SUONARE',
-    gcc_strum:'▶︎ RASCHIA ACCORDO', gcc_play_chord:'▶︎ SUONA ACCORDO',
+    // "Raschiare" is to scrape or scratch; no guitarist would read it as strumming.
+    // "Pennata" is the standard Italian term for a plectrum stroke across the
+    // strings, and keeps this distinct from gcc_play_chord below.
+    gcc_strum:'▶︎ PENNATA', gcc_play_chord:'▶︎ SUONA ACCORDO',
     gcc_tap_dot:'Tocca un punto per sentire quella corda',
     gcc_swipe_hint:'← scorri per altri voicing →',
     gss_dot_hint_asc:'▶︎ alterna ascendente / discendente · tocca un punto per sentire',
@@ -84707,6 +84886,7 @@ const STRINGS = {
     settings_help_tips_off:'Nascosti',
     settings_help_tips_on:'Mostra pulsanti ?',
     trp_play_note:'▶︎ SUONA NOTA',
+    bowed_play_ds:'▶︎ SUONA BICORDO',
     settings_haptics:'Feedback Aptico',
     settings_splash_sound:'Suono d\u2019Avvio',
     pw_title:'INTONARE PRO',
@@ -85149,9 +85329,15 @@ function buildScaleTypePicker() {
   const groups = [
     { label: s.scale_grp_major, keys: ['major','lydian','mixolydian','harmmaj'] },
     { label: s.scale_grp_minor, keys: ['natminor','dorian','phrygian','locrian','harmminor','melminor'] },
-    { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues','inscale','egyptian'] },
+    { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues','inscale','yo','egyptian'] },
     { label: s.scale_grp_jazz,  keys: ['lyddom','altered','locrian2'] },
-    { label: s.scale_grp_world, keys: ['dblharm','phrygdom','hungmin','hungmaj','hirajoshi'] },
+    // FIFTH place a scale must be listed, and the one that actually renders
+    // this picker. SCALE_DEFS holds the data; TC_SCALE_GROUPS, GSS_SCALE_TYPES
+    // and GSS_SCALE_GROUPS each drive a different surface; this local array
+    // drives the scales tool. A new scale has to be added to all of them.
+    { label: s.scale_grp_world, keys: ['dblharm','phrygdom','hungmin','hungmaj','ukrdorian'] },
+    { label: s.scale_grp_japan, keys: ['hirajoshi','iwato','kumoi','insen'] },
+    { label: s.scale_grp_thaat, keys: ['purvi','marwa','todi'] },
     { label: s.scale_grp_sym,   keys: ['dimwh','dimhw','augmented','wholetone','chromatic'] },
   ];
   wrap.innerHTML = '';
@@ -85186,9 +85372,15 @@ function buildTcScaleDropdown() {
   const groups = [
     { label: s.scale_grp_major, keys: ['major','lydian','mixolydian','harmmaj'] },
     { label: s.scale_grp_minor, keys: ['natminor','dorian','phrygian','locrian','harmminor','melminor'] },
-    { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues','inscale','egyptian'] },
+    { label: s.scale_grp_pent,  keys: ['majpent','minpent','blues','inscale','yo','egyptian'] },
     { label: s.scale_grp_jazz,  keys: ['lyddom','altered','locrian2'] },
-    { label: s.scale_grp_world, keys: ['dblharm','phrygdom','hungmin','hungmaj','hirajoshi'] },
+    // FIFTH place a scale must be listed, and the one that actually renders
+    // this picker. SCALE_DEFS holds the data; TC_SCALE_GROUPS, GSS_SCALE_TYPES
+    // and GSS_SCALE_GROUPS each drive a different surface; this local array
+    // drives the scales tool. A new scale has to be added to all of them.
+    { label: s.scale_grp_world, keys: ['dblharm','phrygdom','hungmin','hungmaj','ukrdorian'] },
+    { label: s.scale_grp_japan, keys: ['hirajoshi','iwato','kumoi','insen'] },
+    { label: s.scale_grp_thaat, keys: ['purvi','marwa','todi'] },
     { label: s.scale_grp_sym,   keys: ['dimwh','dimhw','augmented','wholetone','chromatic'] },
   ];
   sel.innerHTML = '';
@@ -85269,20 +85461,31 @@ function setLang(lang) {
   try { dkInit && dkInit(true); } catch(e) {}
   try { buildPianoFullToneBank && buildPianoFullToneBank(); } catch(e) {}
   try { _updateTransposePill && _updateTransposePill(); } catch(e) {}
-  // Re-render VR artist modal if currently open
+  // Chart play buttons are labelled programmatically, not through data-i18n, so
+  // applyLang() cannot see them and they kept their English text until the button
+  // was pressed or the instrument swapped. Relabelling them here covers all 13 at
+  // once, including the wind and bowed charts, which have no init function in the
+  // list above to rebuild them.
+  try { _chartBtnsRelabel(); } catch(e) {}
+
+  // Re-render VR artist modal if currently open.
+  // This block used to `return` when #vrArtistModal was absent — an early return
+  // in the MIDDLE of setLang, so on any screen without that element everything
+  // below it silently never ran.
   try {
     const vrModal = document.getElementById('vrArtistModal');
-    if (!vrModal) return;
     if (vrModal && vrModal.classList.contains('open')) {
       vrRenderArtistModalBody(vrModal._filterId || null);
     }
   } catch(e) {}
   try { vrRenderReference && vrRenderReference(); } catch(e) {}
-  const tooltipText = document.getElementById('tooltipText');
-  if (!tooltipText) return;
-  if (tooltipText && tooltipText.parentElement.classList.contains('silent')) {
-    tooltipText.textContent = t('tooltip_play');
-  }
+  try {
+    const tooltipText = document.getElementById('tooltipText');
+    if (tooltipText && tooltipText.parentElement &&
+        tooltipText.parentElement.classList.contains('silent')) {
+      tooltipText.textContent = t('tooltip_play');
+    }
+  } catch(e) {}
 }
 
 
@@ -85593,6 +85796,22 @@ async function scheduleNotifications() {
       title: t('notif_practice_toast_title'),
       body: t('notif_practice_toast_body'),
       schedule: { on: _notifTimeToOn(ns.practiceTime || '19:00') },
+      // @capacitor/local-notifications 8.3.0 (the Kotlin rewrite) changed this:
+      // isExactNotification defaults to TRUE, and schedule() now checks
+      // canScheduleExactAlarms() and OPENS the "Alarms & reminders" settings
+      // screen itself when the permission is missing. The older Java version
+      // just fell back to an inexact alarm with a log warning.
+      //
+      // That is why the screen appeared out of nowhere: a plain `npm install`
+      // pulled 8.3.0 through the ^8.2.0 caret in package.json. Nothing in this
+      // app changed, and no manifest edit could have fixed it — removing the
+      // permission makes canScheduleExactAlarms() false, which guarantees the
+      // prompt rather than preventing it.
+      //
+      // A daily practice reminder does not need second-accurate delivery, so it
+      // opts out. The notification still fires, just inexactly, and Android is
+      // never asked for special access.
+      isExactNotification: false,
       sound: null,
       smallIcon: 'ic_stat_intonare',
       actionTypeId: '',
@@ -85608,6 +85827,7 @@ async function scheduleNotifications() {
       title: t('notif_streak_toast_title').replace('{n}', count),
       body: t('notif_streak_toast_body'),
       schedule: { on: _notifTimeToOn(ns.streakTime || '20:00') },
+      isExactNotification: false,   // see the practice reminder above
       sound: null,
       smallIcon: 'ic_stat_intonare',
       actionTypeId: '',
@@ -87521,14 +87741,24 @@ function checkStreakMilestone(streak) {
   // Mythic (×40) gets the special card + fanfare
   if (hit === 40) { dtFireMythicCard(); return; }
 
-  hapticMilestone(); playCueMilestone();
+  // Guarded: these run BEFORE the toast is built, so a throw in either (a haptics
+  // plugin that is missing, an audio context that is suspended) would silently
+  // kill the toast on device while working fine in a browser. The toast is the
+  // point; the feedback is the garnish.
+  try { hapticMilestone(); } catch (e) {}
+  try { playCueMilestone(); } catch (e) {}
   var m = _MS_DATA[hit] || { color:'#5ee2ff', bg:'rgba(94,226,255,.1)', glow:'rgba(94,226,255,.25)' };
   var toast = document.getElementById('streakMilestoneToast');
   var inner = document.getElementById('streakMilestoneInner');
   var label = document.getElementById('streakMilestoneText');
   var quip  = document.getElementById('streakMilestoneQuip');
   if (!toast || !inner) return;
-  inner.style.cssText = 'background:linear-gradient(135deg,' + m.bg + ',var(--panel));border-color:' + m.color + 'aa;box-shadow:0 6px 28px rgba(0,0,0,.5),0 0 20px ' + m.glow + ';color:' + m.color;
+  // background-color + background-image, not the `background` shorthand with a
+  // gradient alone. The milestone tint (m.bg) is translucent, so as the only
+  // layer it let whatever sat behind the toast read straight through it, and the
+  // screen title underneath made the text hard to read. An opaque --panel base
+  // under the same gradient keeps the tint and stops the bleed.
+  inner.style.cssText = 'background-color:var(--panel);background-image:linear-gradient(135deg,' + m.bg + ',var(--panel));border-color:' + m.color + 'aa;box-shadow:0 6px 28px rgba(0,0,0,.5),0 0 20px ' + m.glow + ';color:' + m.color;
   if (label) { label.textContent = (t('iv_streak')||'STREAK').toUpperCase() + ' ' + hit + '!'; label.style.color = m.color; }
   if (quip)  { quip.textContent = m.quip; quip.style.color = m.color; }
   toast.style.display = 'block';
@@ -88881,7 +89111,28 @@ function _isVisiblyOpen(el) {
   return true;
 }
 
+// The launcher, the tour and the module picker are known full-screen overlays and
+// they are also the elements whose CLASSES change most: the launcher entrance
+// alone toggles lnch-gone / lnch-entering / lnch-in / lnch-nosplash-in across 13
+// call sites. Each of those woke the observer, and the answer was a 97-node scan
+// with getBoundingClientRect, getComputedStyle and a hit test on every one — for
+// a question that a single display check on #lnch already answers. Checking the
+// cheap known cases first turns the launcher's entrance from ~13 full scans into
+// ~13 lookups. The full scan still runs when none of these is up, so nothing
+// stops being detected; it just is not the first thing tried.
+const _FAST_OVERLAYS = ['lnch', 'tourOverlay', 'modulePicker'];
+function _fastOverlayOpen() {
+  for (let i = 0; i < _FAST_OVERLAYS.length; i++) {
+    const el = document.getElementById(_FAST_OVERLAYS[i]);
+    if (!el) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) > 0.01) return true;
+  }
+  return false;
+}
+
 function _anyOverlayOpen() {
+  if (_fastOverlayOpen()) return true;
   const nodes = _overlayCandidates();
   for (let i = 0; i < nodes.length; i++) {
     const n = nodes[i];
@@ -89749,8 +90000,27 @@ applyLang();
 initSliderToggles();
 // Reflect saved Pro state: toggle body.is-pro and stamp lock badges on locked cards.
 try { refreshProUI(); } catch (e) {}
-// Schedule notifications based on saved prefs (runs after progLoad)
-if (window.Capacitor) setTimeout(() => scheduleNotifications(), 2000);
+// Notification scheduling is DEFERRED, not run at boot.
+//
+// This used to fire 2s after load. Scheduling a calendar-based reminder makes
+// the plugin check canScheduleExactAlarms(); on Android 13+ that is denied by
+// default, and Android's own guidance is then to send the user to the
+// "Alarms & reminders" special-access screen. So a brand new user met that
+// screen on their first tap, before seeing anything.
+//
+// Reminders themselves are fine and stay on by default. Per Capacitor's docs,
+// without SCHEDULE_EXACT_ALARM notifications still fire, just inexactly, which
+// is correct for a 7pm practice nudge. The problem was purely WHEN the
+// scheduling ran.
+//
+// It now waits until the person has actually entered a module, so anything the
+// system asks for arrives after they have seen the app rather than instead of it.
+let _notifScheduled = false;
+function scheduleNotificationsDeferred() {
+  if (_notifScheduled || !window.Capacitor) return;
+  _notifScheduled = true;
+  setTimeout(() => { try { scheduleNotifications(); } catch (e) {} }, 1200);
+}
 
 // Tuner face — restore the saved layout (runs after progLoad)
 try { setTunerFace(progState.tunerFace === 'simple' ? 'simple' : 'full'); } catch(e) {}
@@ -102807,11 +103077,18 @@ const GCC_QUALITY_GROUPS = [
 const GSS_SCALE_GROUPS = [
   { id:'majmodes', label: 'Major modes',  labelIt: 'Modi Maggiori', ids: ['major','dorian','phrygian','lydian','mixolydian','aeolian','locrian'] },
   { id:'minor',    label: 'Minor',        labelIt: 'Minore',         ids: ['harmmin','melmin','harmmaj'] },
-  { id:'pent',     label: 'Pentatonic',   labelIt: 'Pentafonica',    ids: ['majpent','minpent','inscale','egyptian'] },
+  { id:'pent',     label: 'Pentatonic',   labelIt: 'Pentafonica',    ids: ['majpent','minpent','inscale','yo','egyptian'] },
   { id:'blues',    label: 'Blues',        labelIt: 'Blues',          ids: ['blues'] },
   { id:'meldom',   label: 'Melodic/Dom.', labelIt: 'Mel./Dom.',      ids: ['lyddom','altered','locrian2'] },
   { id:'sym',      label: 'Symmetric',    labelIt: 'Simmetriche',    ids: ['dimwh','dimhw','augmented','wholetone'] },
-  { id:'world',    label: 'World',        labelIt: 'Mondo',          ids: ['phrygdom','dblharm','hungmin','hungmaj','hirajoshi'] },
+  // THIRD list of scales, missed when the eight world scales landed in
+  // v0.150.22: SCALE_DEFS holds the data, TC_SCALE_GROUPS drives the tonal-centre
+  // picker, and this one drives the scales module and the chart menus. It sat at
+  // 28 of 36 until now. Anything added to SCALE_DEFS has to appear here too or it
+  // simply never shows up in the module.
+  { id:'world',    label: 'World',        labelIt: 'Mondo',          ids: ['phrygdom','dblharm','hungmin','hungmaj','ukrdorian'] },
+  { id:'japan',    label: 'Japanese',     labelIt: 'Giapponesi',     ids: ['hirajoshi','iwato','kumoi','insen'] },
+  { id:'thaat',    label: 'Indian Thaats',labelIt: 'Thaat Indiani',  ids: ['purvi','marwa','todi'] },
 ];
 
 // Per-instrument scale-group ordering. Each instrument (or family) can promote a
@@ -102823,9 +103100,9 @@ const GSS_SCALE_GROUPS = [
 // only the ordering and the open/collapsed split changes.
 const GSS_INSTRUMENT_SCALE_ORDER = {
   // default: Western order, world scales tucked away
-  default:  { lead: ['majmodes','minor','pent','blues'], collapsed: ['world'] },
+  default:  { lead: ['majmodes','minor','pent','blues'], collapsed: ['world','japan','thaat'] },
   // bouzouki: Greek/Eastern modes are idiomatic -> promote World, then Western
-  bouzouki: { lead: ['world','majmodes'], collapsed: ['minor','pent','blues'] },
+  bouzouki: { lead: ['world','majmodes'], collapsed: ['minor','pent','blues','japan','thaat'] },
 };
 
 // Returns the ordered, labeled group list for the current instrument, each group
@@ -103576,8 +103853,11 @@ function gccStop() {
   gccNodes = [];
   const cont = document.getElementById('gccDiagramContainer');
   if (cont) cont.classList.remove('playing');
-  const _gsb = document.getElementById('gccStrumBtn');
-  if (_gsb && _gsb.textContent === '■ STOP') _gsb.textContent = (typeof t === 'function') ? (t('gcc_strum') || '▶︎ STRUM CHORD') : '▶︎ STRUM CHORD';
+  // Was a hand-rolled copy of _chartBtnIdle that compared against the English
+  // literal '■ STOP', so it did nothing in Italian and the button stayed reading
+  // STOP after playback ended. All four charts use the shared helper now, which
+  // reads its idle label from CHART_BTNS and is locale-aware.
+  try { _chartBtnIdle('gccStrumBtn'); } catch(e){}
   try { _chartBtnIdle('gccStrumBtnFb'); } catch(e){}
 }
 
@@ -103653,40 +103933,52 @@ const GSS_STRING_MIDI = [40, 45, 50, 55, 59, 64]; // low E → high e
 // drifted: different ids for the same scales, four scales missing from one side.)
 const GSS_SCALE_ALIAS = { aeolian:'natminor', harmmin:'harmminor', melmin:'melminor' };
 const GSS_SCALE_TYPES = [
+  // Ordered by family, not by when each was added. The eight world scales added
+  // in v0.150.22 were appended to the end, so they read as a random tail in the
+  // chart pickers and in the scales tool's next/prev cycling. Grouped now, and
+  // the groups match TC_SCALE_GROUPS so the two lists present the same shape.
+  // ── MAJOR ──
   { id:'major',      name:'Major',             nameIt:'Maggiore' },
-  { id:'dorian',     name:'Dorian',            nameIt:'Dorico' },
-  { id:'phrygian',   name:'Phrygian',          nameIt:'Frigio' },
   { id:'lydian',     name:'Lydian',            nameIt:'Lidio' },
   { id:'mixolydian', name:'Mixolydian',        nameIt:'Misolidio' },
+  { id:'harmmaj',    name:'Harmonic Major',    nameIt:'Maggiore Armonica' },
+  // ── MINOR ──
   { id:'aeolian',    name:'Natural Minor',     nameIt:'Minore Naturale' },
+  { id:'dorian',     name:'Dorian',            nameIt:'Dorico' },
+  { id:'phrygian',   name:'Phrygian',          nameIt:'Frigio' },
   { id:'locrian',    name:'Locrian',           nameIt:'Locrio' },
   { id:'harmmin',    name:'Harmonic Minor',    nameIt:'Minore Armonica' },
   { id:'melmin',     name:'Melodic Minor',     nameIt:'Minore Melodica' },
-  { id:'harmmaj',    name:'Harmonic Major',    nameIt:'Maggiore Armonica' },
+  // ── PENTATONIC & BLUES ──
   { id:'majpent',    name:'Maj Pentatonic',    nameIt:'Pentafonica Magg.' },
   { id:'minpent',    name:'Min Pentatonic',    nameIt:'Pentafonica Min.' },
   { id:'blues',      name:'Blues',             nameIt:'Blues' },
-  { id:'phrygdom',   name:'Phrygian Dominant', nameIt:'Frigio Dominante' },
-  { id:'dblharm',    name:'Double Harmonic',   nameIt:'Doppia Armonica' },
-  { id:'hungmin',    name:'Hungarian Minor',   nameIt:'Minore Ungherese' },
-  { id:'hungmaj',    name:'Hungarian Major',   nameIt:'Maggiore Ungherese' },
-  { id:'hirajoshi',  name:'Hirajoshi',         nameIt:'Hirajoshi' },
+  { id:'inscale',    name:'In',                nameIt:'In' },
   { id:'yo',         name:'Yo',                nameIt:'Yo' },
+  { id:'egyptian',   name:'Egyptian',          nameIt:'Egizia' },
+  // ── JAPANESE ──
+  { id:'hirajoshi',  name:'Hirajoshi',         nameIt:'Hirajoshi' },
   { id:'iwato',      name:'Iwato',             nameIt:'Iwato' },
   { id:'kumoi',      name:'Kumoi',             nameIt:'Kumoi' },
   { id:'insen',      name:'Insen',             nameIt:'Insen' },
-  { id:'ukrdorian',  name:'Ukrainian Dorian',  nameIt:'Dorico Ucraino' },
-  { id:'purvi',      name:'Purvi',             nameIt:'Purvi' },
-  { id:'marwa',      name:'Marwa',             nameIt:'Marwa' },
-  { id:'todi',       name:'Todi',              nameIt:'Todi' },
+  // ── JAZZ / MELODIC MINOR MODES ──
   { id:'lyddom',     name:'Lydian Dominant',   nameIt:'Lidio Dominante' },
   { id:'altered',    name:'Altered',           nameIt:'Alterata' },
   { id:'locrian2',   name:'Locrian ♮2',        nameIt:'Locrio ♮2' },
+  // ── WORLD ──
+  { id:'dblharm',    name:'Double Harmonic',   nameIt:'Doppia Armonica' },
+  { id:'phrygdom',   name:'Phrygian Dominant', nameIt:'Frigio Dominante' },
+  { id:'hungmin',    name:'Hungarian Minor',   nameIt:'Minore Ungherese' },
+  { id:'hungmaj',    name:'Hungarian Major',   nameIt:'Maggiore Ungherese' },
+  { id:'ukrdorian',  name:'Ukrainian Dorian',  nameIt:'Dorico Ucraino' },
+  // ── INDIAN THAATS ──
+  { id:'purvi',      name:'Purvi',             nameIt:'Purvi' },
+  { id:'marwa',      name:'Marwa',             nameIt:'Marwa' },
+  { id:'todi',       name:'Todi',              nameIt:'Todi' },
+  // ── SYMMETRIC ──
   { id:'dimwh',      name:'Diminished W-H',    nameIt:'Diminuita T-S' },
   { id:'dimhw',      name:'Diminished H-W',    nameIt:'Diminuita S-T' },
   { id:'augmented',  name:'Augmented',         nameIt:'Aumentata' },
-  { id:'inscale',    name:'In',                nameIt:'In' },
-  { id:'egyptian',   name:'Egyptian',          nameIt:'Egizia' },
   { id:'wholetone',  name:'Whole Tone',        nameIt:'Esatonale' },
 ].map(s => ({ ...s, intervals: scaleDefIntervals(GSS_SCALE_ALIAS[s.id] || s.id) }));
 
@@ -105213,6 +105505,7 @@ function euphoniumSynth(ctx, freq, when, dur, master, vol, tonguing) {
 }
 
 let trpLastTapNode = null; // track most recent single-note tap for trumpet
+let _trpCardNoteTimer = null; // label reset for the Notes-view one-shot preview
 let trpCardMidi    = null; // midi of the note the wind card is currently showing
 
 // Play the note the wind note-card is showing. gccPlayString already knows how to
@@ -105220,6 +105513,17 @@ let trpCardMidi    = null; // midi of the note the wind card is currently showin
 // is only about giving that capability a button.
 function trpPlayCardNote() {
   if (trpCardMidi == null) return;
+  // Tapping while it reads STOP has to STOP. _chartBtnPlay flips the label to
+  // "■ STOP", but this handler had no stop branch, so a second tap replayed the
+  // note and restarted the label timer: the button said STOP and did PLAY, on a
+  // loop. A one-shot preview still deserves a working stop.
+  if (typeof trpLastTapNode !== 'undefined' && trpLastTapNode) {
+    try { trpLastTapNode.stop(); } catch (e) {}
+    trpLastTapNode = null;
+    clearTimeout(_trpCardNoteTimer);
+    _chartBtnIdle('trpCardPlayBtn');
+    return;
+  }
   gccPlayString(trpCardMidi);
   // trpCardPlayBtn (Notes view) and trpPlayBtn (Scale view) used to share the
   // id "trpPlayBtn". getElementById always resolves the first match in the
@@ -105230,7 +105534,13 @@ function trpPlayCardNote() {
   // instrument/subfamily switch, which fires chordScaleStopAllAudio. The
   // visible Scale button, meanwhile, never updated at all. Split into two ids.
   _chartBtnPlay('trpCardPlayBtn');
-  setTimeout(function(){ _chartBtnIdle('trpCardPlayBtn'); }, 1500);
+  // Tracked so the stop branch above can cancel it; otherwise a stale timer
+  // would reset the label of a note started afterwards.
+  clearTimeout(_trpCardNoteTimer);
+  _trpCardNoteTimer = setTimeout(function(){
+    trpLastTapNode = null;
+    _chartBtnIdle('trpCardPlayBtn');
+  }, 1500);
 }
 
 function gccPlayString(midi) {
@@ -105267,8 +105577,7 @@ function gssStop() {
   });
   const cont = document.getElementById('gssDiagramContainer');
   if (cont) cont.classList.remove('playing');
-  const _gsb = document.getElementById('gssPlayBtn');
-  if (_gsb && _gsb.textContent === '■ STOP') _gsb.textContent = (typeof t === 'function') ? (t('gtool_play_asc') || '▶︎ PLAY ASCENDING') : '▶︎ PLAY ASCENDING';
+  try { _chartBtnIdle('gssPlayBtn'); } catch(e){}
 }
 
 // Play a single note (called when tapping a dot)
@@ -105652,9 +105961,21 @@ function switchChordScaleInstrument(inst) {
   else if (inst === 'melodica') { selectedRefTone = 'melodica'; }
   else if (isPianoRenderInst(inst) && typeof setRefToneForInst === 'function') setRefToneForInst(inst);
 
-  // Update family button label
+  // Update family button label. It used meta.label, the English roster name, so
+  // the pill stayed "VIOLIN" while the picker behind it read VIOLINO. The
+  // inst_<id> keys added in v0.150.40 already carry every instrument in both
+  // languages, so the pill reuses them and falls back to the roster name only
+  // for an instrument that has no key.
   const lbl = document.getElementById('csFamilyLabel');
-  if (lbl) lbl.textContent = meta.label || inst.toUpperCase();
+  if (lbl) {
+    let _nm = meta.label || inst.toUpperCase();
+    try {
+      const k = 'inst_' + inst;
+      const tr = (typeof t === 'function') ? t(k) : null;
+      if (tr && tr !== k) _nm = tr;
+    } catch (e) {}
+    lbl.textContent = _nm;
+  }
 
   // Show/hide wraps
   const isPiano    = isPianoRenderInst(inst);
@@ -107343,7 +107664,11 @@ function trpPlay() {
         if (ib) { ib.textContent = t('harp_tap_hint'); ib.style.color = 'var(--muted)'; }
       }
     }
-  }, notes.length * trpStepDelay * 1000 + 400);
+    // +400ms used to be the whole tail allowance, measured from when the LAST
+    // note STARTS. Each note runs `dur` seconds, so on slower instruments the
+    // button flipped back to PLAY while the final note was still sounding.
+    // Waiting for the note itself plus a short tail matches what is audible.
+  }, notes.length * trpStepDelay * 1000 + dur * 1000 + 250);
   timers.push(clearT);
   trpPlayTimers = timers;
   trpPlayTimer  = clearT;
@@ -109219,8 +109544,7 @@ function pssStop() {
   // default light fill). Rebuilding regenerates every key at its correct color,
   // black and white alike, with no per-flash state to get out of sync.
   if (typeof pssRender === 'function') pssRender();
-  const _psb = document.getElementById('pssPlayBtn');
-  if (_psb && _psb.textContent === '■ STOP') _psb.textContent = (typeof t === 'function') ? (t('gtool_play_asc') || '▶︎ PLAY ASCENDING') : '▶︎ PLAY ASCENDING';
+  try { _chartBtnIdle('pssPlayBtn'); } catch(e){}
 }
 
 
@@ -109862,8 +110186,7 @@ function pccStop() {
   // Restore the button label, matching gccStop / pssStop. This chart's button
   // previously had no id at all, so there was nothing to update and the piano
   // chord chart was the one instrument that never showed a stop state.
-  const _pcb = document.getElementById('pccPlayBtn');
-  if (_pcb && _pcb.textContent === '■ STOP') _pcb.textContent = (typeof t === 'function') ? (t('gcc_play_chord') || '▶︎ PLAY CHORD') : '▶︎ PLAY CHORD';
+  try { _chartBtnIdle('pccPlayBtn'); } catch(e){}
 }
 
 function pccPlay() {
@@ -111442,6 +111765,7 @@ function bowedNoteNavigate(delta) {
   bowedNoteOccIdx=Math.max(0,Math.min(bowedNoteOccs.length-1,bowedNoteOccIdx+delta));
   _bowedStopAll(); _bowedRenderNote();
 }
+let _bowedNoteBtnTimer = null, _bowedDsBtnTimer = null; // tracked label resets
 function bowedNotePlayCurrent() {
   // Bowed notes sustain 1.8s, long enough that the button should reflect it.
   if (bowedActiveNodes.length) { _bowedStopAll(); return; }
@@ -111450,7 +111774,11 @@ function bowedNotePlayCurrent() {
   const grp=svg?.querySelector(`g[data-play-str="${occ.sIdx}"][data-play-semi="${occ.semi}"]`);
   _bowedPlaySingle(occ.midi,grp);
   _chartBtnPlay('bowedNotePlayBtn');
-  setTimeout(function(){ _chartBtnIdle('bowedNotePlayBtn'); }, 1900);
+  // Tracked, so stopping early and replaying cannot leave a stale timer that
+  // resets the label of the note started afterwards. Same fix as the wind
+  // Notes button.
+  clearTimeout(_bowedNoteBtnTimer);
+  _bowedNoteBtnTimer = setTimeout(function(){ _chartBtnIdle('bowedNotePlayBtn'); }, 1900);
 }
 function bowedNoteToggleExpand() {
   bowedNoteExpand=!bowedNoteExpand;
@@ -111578,7 +111906,8 @@ function bowedDsPlayCurrent() {
   const pair=bowedDsPairs[bowedDsPairIdx]; if(!pair) return;
   _bowedPlayDouble(pair.loMidi,pair.hiMidi);
   _chartBtnPlay('bowedDsPlayBtn');
-  setTimeout(function(){ _chartBtnIdle('bowedDsPlayBtn'); }, 1900);
+  clearTimeout(_bowedDsBtnTimer);
+  _bowedDsBtnTimer = setTimeout(function(){ _chartBtnIdle('bowedDsPlayBtn'); }, 1900);
 }
 function bowedDsToggleExpand() {
   bowedDsExpand=!bowedDsExpand;
@@ -111910,31 +112239,75 @@ const CHART_BTNS = {
   trpPlayBtn:        { key: 'gtool_play_asc',   fallback: '▶︎ PLAY ASCENDING' },
   trpCardPlayBtn:    { key: 'trp_play_note',    fallback: '▶︎ PLAY NOTE' },
   bowedScalePlayBtn: { key: 'gtool_play_asc',   fallback: '▶︎ PLAY ASCENDING' },
-  bowedNotePlayBtn:  { key: 'gcc_play_note',    fallback: '▶︎ PLAY NOTE' },
-  bowedDsPlayBtn:    { key: 'gcc_play_note',    fallback: '▶︎ PLAY' },
+  // Both pointed at gcc_play_note, which does not exist in either language, so
+  // t() returned nothing and they fell through to the English fallback forever.
+  // trp_play_note already carries its Italian twin; the double-stop gets its own.
+  bowedNotePlayBtn:  { key: 'trp_play_note',    fallback: '▶︎ PLAY NOTE' },
+  bowedDsPlayBtn:    { key: 'bowed_play_ds',    fallback: '▶︎ PLAY' },
   fluteTrillPlayBtn: { key: 'gcc_play_trill',   fallback: '▶︎ PLAY TRILL' },
   didiPlayBtn:       { key: 'drone_start',      fallback: '▶︎ DRONE' },
 };
 
 // Show the stop state on a chart button.
+// The STOP label goes through t() rather than a hardcoded English string. It was
+// literal '■ STOP' both here and in the comparison below, so in Italian the
+// button showed English AND _chartBtnIdle's equality check never matched, which
+// meant it silently refused to restore any label.
+function _chartBtnHaltText() {
+  try { return (typeof t === 'function' && t('btn_stop')) || '■ STOP'; } catch (e) { return '■ STOP'; }
+}
 function _chartBtnPlay(id) {
   const b = document.getElementById(id);
-  if (b) b.textContent = '■ STOP';
+  if (b) b.textContent = _chartBtnHaltText();
 }
 
 // Restore a chart button's idle label. Only touches buttons currently reading
 // STOP, so it can't clobber a label some other code has legitimately changed.
 function _chartBtnIdle(id) {
   const b = document.getElementById(id);
-  if (!b || b.textContent.trim() !== '■ STOP') return;
+  // Accept the translated label and the English literal: older code paths still
+  // write '■ STOP' directly.
+  const cur = b ? b.textContent.trim() : '';
+  if (!b || (cur !== _chartBtnHaltText() && cur !== '■ STOP')) return;
   const meta = CHART_BTNS[id];
   if (!meta) return;
-  b.textContent = (typeof t === 'function' && t(meta.key)) ? t(meta.key) : meta.fallback;
+  // t() returns the KEY ITSELF when a string is missing, so a bad key put the
+  // literal text 'gcc_play_note' on the button instead of a label. Treat a
+  // result identical to the key as a miss and use the fallback.
+  var lbl = meta.fallback;
+  try {
+    var tr = (typeof t === 'function') ? t(meta.key) : null;
+    if (tr && tr !== meta.key) lbl = tr;
+  } catch (e) {}
+  b.textContent = lbl;
 }
 
 // Restore every chart button. Called from chordScaleStopAllAudio so that
 // instrument switches, subfamily switches and tab switches can never strand a
 // button reading STOP, regardless of which chart was playing.
+// Force every chart button to its idle label in the current language. Unlike
+// _chartBtnIdle this does not require the button to be showing STOP; it is for a
+// language change, where a button sitting idle in English has to become Italian.
+// A button that IS playing keeps its STOP label, so this cannot interrupt audio
+// feedback mid-playback.
+function _chartBtnsRelabel() {
+  const stopTxt = _chartBtnHaltText();
+  Object.keys(CHART_BTNS).forEach(function (id) {
+    const b = document.getElementById(id);
+    if (!b) return;
+    const cur = b.textContent.trim();
+    if (cur === stopTxt || cur === '■ STOP') return;   // mid-playback, leave it
+    const meta = CHART_BTNS[id];
+    if (!meta) return;
+    let lbl = meta.fallback;
+    try {
+      const tr = (typeof t === 'function') ? t(meta.key) : null;
+      if (tr && tr !== meta.key) lbl = tr;
+    } catch (e) {}
+    b.textContent = lbl;
+  });
+}
+
 function _chartBtnsResetAll() {
   Object.keys(CHART_BTNS).forEach(function(id) {
     // hpPlayBtn is owned by hpUpdatePlayBtn, which picks its label from
@@ -116123,7 +116496,24 @@ function sgPlayTermDemo(term) {
 // Bravura subset already ships these. Legato, glissando and vibrato are drawn
 // SVG in NC_CARDS too, not font glyphs, so they carry markup instead of a code.
 // `subito` is deliberately absent: it is a direction, not a written symbol.
-var SG_TERM_GLYPHS = {"forte":{"g":"E522","fs":50.0,"dy":7.3,"h":30.0,"w":25.0},"marcato":{"g":"E4AC","fs":50.0,"dy":6.3,"h":13.0,"w":12.0},"fermata":{"g":"E4C0","fs":50.0,"dy":8.2,"h":17.0,"w":30.0},"decrescendo":{"g":"E53F","fs":50.0,"dy":11.2,"h":13.0,"w":37.0},"tremolo":{"g":"E222","fs":50.0,"dy":-0.1,"h":28.0,"w":15.0},"legato":{"svg":"<svg viewBox=\"0 0 92 48\"><circle cx=\"30\" cy=\"30\" r=\"4\" fill=\"currentColor\"/><circle cx=\"62\" cy=\"30\" r=\"4\" fill=\"currentColor\"/><path d=\"M30 23 Q46 11 62 23\" stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg>"},"glissando":{"svg":"<svg viewBox=\"0 0 60 48\"><circle cx=\"12\" cy=\"34\" r=\"4\" fill=\"currentColor\"/><circle cx=\"48\" cy=\"14\" r=\"4\" fill=\"currentColor\"/><line x1=\"18\" y1=\"30\" x2=\"42\" y2=\"18\" stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg>"},"vibrato":{"svg":"<svg viewBox=\"0 0 92 48\"><path d=\"M10 24 q5 -6 10 0 t10 0 t10 0 t10 0 t10 0 t10 0\" stroke=\"currentColor\" stroke-width=\"1.8\" fill=\"none\"/></svg>"}};
+var SG_TERM_GLYPHS = {"forte":{"g":"E522","fs":50.0,"dy":7.3,"h":30.0,"w":25.0},"marcato":{"g":"E4AC","fs":50.0,"dy":6.3,"h":13.0,"w":12.0},"fermata":{"g":"E4C0","fs":50.0,"dy":8.2,"h":17.0,"w":30.0},"decrescendo":{"g":"E53F","fs":50.0,"dy":11.2,"h":13.0,"w":37.0},"tremolo":{"g":"E222","fs":50.0,"dy":-0.1,"h":28.0,"w":15.0},"legato":{"svg":"<svg viewBox=\"0 0 92 48\"><circle cx=\"30\" cy=\"30\" r=\"4\" fill=\"currentColor\"/><circle cx=\"62\" cy=\"30\" r=\"4\" fill=\"currentColor\"/><path d=\"M30 23 Q46 11 62 23\" stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg>"},"glissando":{"svg":"<svg viewBox=\"0 0 60 48\"><circle cx=\"12\" cy=\"34\" r=\"4\" fill=\"currentColor\"/><circle cx=\"48\" cy=\"14\" r=\"4\" fill=\"currentColor\"/><line x1=\"18\" y1=\"30\" x2=\"42\" y2=\"18\" stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg>"},"vibrato":{"svg":"<svg viewBox=\"0 0 92 48\"><path d=\"M10 24 q5 -6 10 0 t10 0 t10 0 t10 0 t10 0 t10 0\" stroke=\"currentColor\" stroke-width=\"1.8\" fill=\"none\"/></svg>"},
+// Added after the first build showed one badge on a three-term page. The first
+// version of this map was built from SG_TERM_DEMOS (the audio demos) instead of
+// from the data-term values actually present in the Guide copy, so it covered 8
+// of the 17 terms in use and missed most of the dynamics and articulations.
+// The DYNAMICS page carries crescendo/decrescendo/diminuendo and only
+// decrescendo was mapped, which is exactly the one badge that appeared.
+"crescendo":{"g":"E53E","fs":50.0,"dy":11.2,"h":13.0,"w":37.0},
+"diminuendo":{"g":"E53F","fs":50.0,"dy":11.2,"h":13.0,"w":37.0},
+"piano":{"g":"E520","fs":50.0,"dy":3.3,"h":21.0,"w":23.0},
+"fp":{"g":"E534","fs":50.0,"dy":7.3,"h":30.0,"w":38.0},
+"sforzando":{"g":"E539","fs":50.0,"dy":7.3,"h":30.0,"w":37.0},
+"accent":{"g":"E4A0","fs":50.0,"dy":6.2,"h":12.0,"w":17.0},
+"staccato":{"g":"E4A2","fs":50.0,"dy":2.1,"h":4.0,"w":4.0},
+"tenuto":{"g":"E4A4","fs":50.0,"dy":1.2,"h":3.0,"w":17.0}
+// `subito` stays unmapped on purpose: it is a direction ("suddenly"), not a
+// mark that appears on the page.
+};
 
 // Built at render time from the data-term values already in the body HTML,
 // rather than written into each page's copy. Two reasons: the body strings are
@@ -116150,16 +116540,54 @@ function sgBuildSymbolStrip(card) {
         + '<span class="sg-sym-g" style="font-size:' + (d.fs * K).toFixed(1) + 'px;transform:translate(0,'
         + (d.dy * K).toFixed(1) + 'px)">&#x' + d.g + ';</span></span>';
     }
-    html += '<div class="sg-sym"><div class="sg-sym-box">' + g + '</div>'
+    html += '<div class="sg-sym" data-symterm="' + term + '"><div class="sg-sym-box">' + g + '</div>'
           + '<div class="sg-sym-lbl">' + term + '</div></div>';
   });
   var strip = document.createElement('div');
   strip.className = 'sg-symstrip';
   strip.innerHTML = html;
+  // Tap a badge for a large version. The badges have to stay small to sit on one
+  // row without pushing the body copy down, which makes the finer marks (a
+  // staccato dot is 4px tall in Bravura's own metrics) hard to read on a phone.
+  strip.addEventListener('click', function (ev) {
+    var cell = ev.target.closest && ev.target.closest('.sg-sym');
+    if (cell && cell.dataset.symterm) sgSymZoom(cell.dataset.symterm);
+  });
   // Sits above the first body block, below the heading/subhead.
   var firstBody = card.querySelector('.pg-body');
   if (firstBody && firstBody.parentNode) firstBody.parentNode.insertBefore(strip, firstBody);
   else card.appendChild(strip);
+}
+
+// Large view of a single symbol. Reuses the same glyph data and the same
+// scaling maths as the strip, just at 3.4x, so the two can never disagree about
+// what a mark looks like.
+function sgSymZoom(term) {
+  var d = SG_TERM_GLYPHS[term];
+  if (!d) return;
+  try { hapticLight(); } catch (e) {}
+  var K = 3.4, g;
+  if (d.svg) {
+    g = '<span class="sg-symz-draw" style="width:' + Math.round(48 * K) + 'px">' + d.svg + '</span>';
+  } else {
+    g = '<span class="sg-sym-gb" style="height:' + (d.h * K).toFixed(1) + 'px;width:' + (d.w * K).toFixed(1) + 'px">'
+      + '<span class="sg-sym-g" style="font-size:' + (d.fs * K).toFixed(1) + 'px;transform:translate(0,'
+      + (d.dy * K).toFixed(1) + 'px)">&#x' + d.g + ';</span></span>';
+  }
+  var old = document.getElementById('sgSymZoom');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  var wrap = document.createElement('div');
+  wrap.id = 'sgSymZoom';
+  wrap.className = 'sg-symz';
+  wrap.innerHTML = '<div class="sg-symz-card">'
+    + '<div class="sg-symz-glyph">' + g + '</div>'
+    + '<div class="sg-symz-lbl">' + term + '</div></div>';
+  wrap.addEventListener('click', function () {
+    wrap.classList.remove('up');
+    setTimeout(function () { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 220);
+  });
+  document.body.appendChild(wrap);
+  requestAnimationFrame(function () { wrap.classList.add('up'); });
 }
 
 function sgAttachTermListeners(card) {
@@ -121795,7 +122223,7 @@ function mqSyncDailyCard() {
     badge.classList.remove('mq-daily-done-badge');
     // Same bug as the RESUME branch above, missed at the time: hardcoded English
     // on the daily badge. chordle_daily already exists with its twin (GIORNALIERA).
-    if (label) label.textContent = (typeof t === 'function') ? t('chordle_daily') : 'DAILY';
+    if (label) label.textContent = (typeof t === 'function') ? (t('mq_daily_badge') || t('chordle_daily')) : 'DAILY';
     if (dot) dot.classList.add('show');     // pulse: not played yet today
   }
 }
@@ -122065,7 +122493,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     <div class="pto-organ-overlay-head">
       <span class="pto-organ-overlay-title">⛪ HAMMOND B-3</span>
       <div style="display:flex;align-items:center;gap:8px">
-        <div class="sustain-pedal" id="organFullPedal" title="Press to latch held notes"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl">HOLD</span></div></div>
+        <div class="sustain-pedal" id="organFullPedal" title="Press to latch held notes"><div class="sustain-pedal-pad"><span class="sustain-pedal-lbl" data-i18n="pn_hold">HOLD</span></div></div>
         <button class="piano-drone-mute" id="organDroneMuteFull" onclick="_organStopAll();organHoldMode=0;_organRefreshControls();(function(){var p=document.getElementById('organFullPedal');if(p&&p._refresh)p._refresh();})()" title="Stop all held notes">✕ ALL</button>
         <div class="np-screen np-screen-stack np-screen-compact" id="organNowPlayingFull">
           <div class="np-screen-top">

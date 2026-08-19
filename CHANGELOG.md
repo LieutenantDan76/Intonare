@@ -4,38 +4,40 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS (as of v0.104.0)
+## OPEN ITEMS (as of v0.150.42)
 
 Not a release entry. A standing list so these survive outside anyone's memory.
 
-**Road Trip: 21 songs need their legs tuned on device**
+**Road Trip leg tuning: DONE.** All 39 legs are tuned and signed off; `RT_TUNED`
+holds 21 entries, which is every perf leg, and no leg still carries the
+converter's default hook spacing. Completed across v0.150.18 to v0.150.27. The
+earlier version of this section said 21 songs still needed tuning and that
+`RT_TUNED` was empty; that has not been true since v0.150.27.
 
-clair_de_lune, prelude_em, moonlight, liebestraum, fuer_elise, moonlight_3,
-prelude_c, alla_turca, barcarolle, butterfly, fantaisie_impromptu, moonlight_2,
-prelude_csharp, prelude_op23, raindrop, sonata_facile, to_spring, traumerei,
-troika, waldstein_1, wedding_day.
+**Housekeeping — audit scripts must be re-uploaded to project knowledge.**
+`/mnt/project/` does not persist edits made during a session. The regression
+sentinel has been changed several times since (Relative Pitch band-change pin,
+plus pins for the six legs tuned in v0.150.21) and now holds 247 pins. If the
+copy in project knowledge is not replaced, a fresh session runs an older sentinel
+and either misses pins or reports drift on values that are correct.
+`intonare_groove_audit.py` has the same problem and has already had to be rebuilt
+from scratch once for exactly this reason.
 
-That is exactly the set with a perf: block, and it is not a coincidence. Hooks
-were placed as beat positions against the grid; converting to performance mode
-replaced the timing wholesale, so every one of them is either analytic or stale.
-RT_TUNED is still empty. Long-press the ROAD TRIP title to open the Leg Tuner,
-tune, then add the id to RT_TUNED and pin its line in the sentinel.
+**Relative Pitch tone overlap.** Parked, not fixed. The delayed question tone is
+tracked and cancelled in both the climb and practice mode, and tones still
+overlap on rapid next, so a second voice comes from somewhere not yet found.
+Needs a trace rather than another guess.
 
-The 17 grid songs were hand-tuned by ear and are now pinned (v0.104.0), so a
-silent drift becomes a build failure rather than a lucky catch.
+**Charts Italian sweep.** Instrument picker (39 strings) and piano console done.
+A few interval-reference labels remain, several of which are JS-filled
+placeholders rather than static text and so cannot simply be tagged.
 
-**Housekeeping**
+**On-device listening, from the v0.102.x groove work — LARGELY SETTLED.**
+`intonare_groove_audit.py` now vets 57 of 60 grooves and the patterns are pinned
+in the sentinel, so the "did this silently revert" worry is handled. The list
+below is kept because the musical judgements in it are still open questions, not
+because the code is unverified.
 
-`intonare_groove_audit.py` still needs copying into `/mnt/project/`. It ships to
-outputs on every build but does not persist, and it already had to be rebuilt
-from scratch once for exactly this reason. The same now applies to the sentinel:
-v0.104.0 added 17 pins, so the copy in the project must be replaced or those
-pins vanish on the next fresh chat.
-
-RESOLVED: groove patterns are pinned. The Toussaint six, maqsum and the flamenco
-pair went into the sentinel, which is why Bulería cannot silently revert again.
-
-**On-device listening, ordered by how much actually changed**
 
 - JOROPO — accents moved so the three-against-two hemiola is audible. Should read
   as a cross-rhythm, not as lopsided.
@@ -79,6 +81,530 @@ feel and its sources contradict each other on accents.
 ---
 
 ---
+
+## v0.150.48 — Morph timings, measured against the spec
+
+The card morph is a "container transform" in Material terms — a card expanding
+into a full screen. M3 specifies **long1 (450ms)** for exactly that, with the
+corner radius animating alongside the movement.
+
+Transform was 420ms and border-radius 340ms, so the corners finished settling
+while the card was still travelling. Two halves of one gesture resolving 80ms
+apart is the kind of thing that reads as unfinished rather than wrong. Both are
+now 450ms and land together.
+
+**Deliberately NOT adopted: M3's `emphasized` curve (0.2, 0.0, 0, 1.0).** Its
+`y1` is 0, so it genuinely sits still at the start — which is the dead ~110ms
+after the tap already diagnosed and commented on in this file. Motion a finger
+started should move when the finger moves. The ease-out stays.
+
+**Two timing contracts nearly broken while doing this**, both caught by reading
+the surrounding comments rather than by any test:
+
+- The morph's `opacity` is not part of the arrival. It drives the EXIT fade, and
+  `CARD_FADE_MS` in `lnchGo` is documented as having to match it. Raising it to
+  450ms would have scheduled the teardown before the fade finished — precisely
+  the bug the comment there describes. Left at 300ms.
+- The sibling cards' 300ms opacity is matched to `T_LAUNCHER_FADE`, so they stop
+  fading at the same instant the launcher clears. Stretching them to 450ms left
+  them mid-fade over an empty screen. Left at 380/300.
+
+So the change is narrow on purpose: only the two properties that genuinely belong
+to the same movement were touched.
+
+Also of note for later: M3 replaced easing-and-duration with a spring system in
+May 2025 (spatial springs overshoot slightly and settle). That is the current
+standard, but it needs a physics implementation rather than CSS transitions, so
+it is a post-1.0 consideration rather than a tweak.
+
+## v0.150.47 — Module picker morph: what is actually slow
+
+Promoted `#lnchMorph` to its own compositor layer (`will-change`, `contain`,
+`backface-visibility`), which improved the median frame from 23ms to ~17ms.
+
+The more useful result is the diagnosis, and it corrects two wrong turns taken
+on the way:
+
+**Measured across 5 runs each, the morph holds 60fps — 0 frames over 20ms,
+worst 18ms — with or without `overflow: hidden`.** An earlier single-run sample
+showed 19 slow frames with it and 0 without, which looked conclusive and was
+noise. `overflow: hidden` is restored; removing it bought nothing and it was
+there for a reason.
+
+**Only the FIRST morph of a session stalls.** Subsequent ones are clean. That is
+one-time lazy initialisation elsewhere in the app warming up under the
+animation, not the animation itself — the same pattern already seen in
+`chordScaleStopAllAudio`, which costs 42ms on its first call and 8ms after.
+
+So the fix, when it is worth doing, is pre-warming that work during the splash
+or the launcher, before anything is tapped, rather than optimising the morph.
+Noted rather than done: it means moving initialisation earlier in the boot
+sequence, which is not a change to make immediately before a device test pass.
+
+A note is left in the CSS warning that single-run frame timings here are
+extremely noisy, so the next person does not repeat the same wrong turn.
+
+## v0.150.46 — Selected-instrument pill and tone bank categories
+
+**The picker pill stayed English while the menu behind it was Italian.** It used
+`meta.label`, the English roster name, so it read VIOLIN over a list reading
+VIOLINO. It now reuses the `inst_<id>` keys added in v0.150.40, falling back to
+the roster name only for an instrument with no key.
+
+**Tone bank category tabs were English literals** — KEYBOARD / WAVES / PLUCKED /
+BRASS / WOODWIND — built inline rather than through `t()`. Now TASTIERE / ONDE /
+PIZZICATE / OTTONI / LEGNI.
+
+**PENNATA confirmed correct** rather than assumed. Italian guitar teaching
+material titles the technique "Strumming (o «pennata»)", and *strimpellare*, the
+literal translation, carries a sense of playing badly — which is why the earlier
+RASCHIA ACCORDO was wrong in a different way. The only other thing Italian
+guitarists actually say is the English loanword, which would read as unfinished
+in an Italian interface.
+
+## v0.150.45 — Charts Italian pass, part 3
+
+From the device screenshots:
+
+**"back to ARMONIA"** — `'back to '` was concatenated in English against a
+translated folder name, so the header was half and half. Now `hdr_back_to`, used
+by both the tool header and the exercise header.
+
+**Bowed sub-mode pills** NOTES / SCALES had no keys at all → NOTE / SCALE.
+
+**Three bowed EXPAND buttons** were untagged; they reuse the existing
+`gtool_expand` key, so they read ESPANDI like every other expand button.
+
+**Two chart hint lines** were English: "Tap dot to hear · use arrows to browse ·
+EXPAND shows all" and "Tap dot to hear · root orange · grayed = outside
+position". Both translated, matching the phrasing of the six hint lines that
+were already Italian.
+
+Verified in a running browser: sub-pills, hints and expand buttons all render
+Italian, and `hdr_back_to` resolves in both languages.
+
+Note for the next pass: the ordinal position labels on the fingerboard (1st,
+2nd, 3rd, 6th) and the "fr" fret abbreviation are still English. They are
+generated, not static markup, so they need locating in the drawing code rather
+than tagging.
+
+## v0.150.44 — Language switching now refreshes the chart buttons, and an early return that ate half of setLang
+
+**Chart buttons kept their English labels after switching to Italian.** Their
+text is set programmatically, not through `data-i18n`, so `applyLang()` cannot
+see them; they only corrected themselves when pressed or when the instrument was
+swapped. `setLang()` rebuilds 35 surfaces by hand, and the wind and bowed charts
+have no init function in that list. Added `_chartBtnsRelabel()`, which relabels
+all 13 from `CHART_BTNS` in one pass. A button currently reading STOP keeps it,
+so a language change cannot interrupt playback feedback.
+
+**`setLang()` had an early `return` in the middle of it.**
+
+```js
+const vrModal = document.getElementById('vrArtistModal');
+if (!vrModal) return;
+```
+
+On any screen where that element is absent, `setLang` bailed there and never
+reached `vrRenderReference()` or the tooltip relabel. The same pattern sat at the
+end for `#tooltipText`. Both are now guarded conditions rather than returns, so
+nothing downstream can be skipped by an element simply not existing.
+
+**Translation fix: `gcc_strum` read "RASCHIA ACCORDO".** *Raschiare* is to scrape
+or scratch; no guitarist would read that as strumming. Now `PENNATA`, the
+standard Italian term for a plectrum stroke across the strings, which also keeps
+it distinct from `gcc_play_chord` ("SUONA ACCORDO") next to it.
+
+Verified by switching languages in a running browser with the charts loaded: all
+13 buttons flip immediately, none stay English, no page errors.
+
+## v0.150.43 — Fast path for the known full-screen overlays
+
+The launcher's entrance is driven by class changes on `#lnch` itself — 13 call
+sites toggling lnch-gone / lnch-entering / lnch-in / lnch-nosplash-in. `#lnch` is
+also an overlay candidate, so every one of those woke the scroll-lock observer,
+and the answer was a 97-node walk calling `getBoundingClientRect`,
+`getComputedStyle` and `elementFromPoint` — to answer a question a single display
+check on `#lnch` already settles.
+
+`_anyOverlayOpen()` now checks the launcher, the tour overlay and the module
+picker first. Measured in a browser: 2.7ms against 10.1ms per 50 calls, and the
+97-node walk is skipped entirely while one of them is up. The full scan still
+runs when none is, so nothing stops being detected.
+
+Honest caveat: those absolute numbers are small in desktop Chrome. This is a real
+saving and it is the right shape, but it may not be the whole cause of the
+launcher feeling slower in the built app than in a preview. WebView also
+composites gradients, shadows and staggered opacity transitions more slowly than
+Chrome, and the launcher has four large cards doing all three at once.
+
+## v0.150.42 — Guarding the Italian labels against overflow
+
+Could not render the piano console in the headless harness to measure it, so the
+risk was removed rather than assumed away.
+
+`SMORZATORE` is ten characters in a box built for `DAMPER`'s six. Shortened to
+`SMORZ.`, which matches the English width exactly. `UNA CORDA` stays — it is the
+correct name for that pedal — but it contains a space that could wrap onto two
+lines and reflow the pedal row, so `.ppc-name` now holds one line and shrinks
+with an ellipsis instead of overflowing or wrapping.
+
+Still worth a glance on device: the pedal row and the lid segments are the two
+places where a longer Italian word could look cramped even without overflowing.
+
+## v0.150.41 — Charts Italian pass, part 2: the piano console
+
+Translated what genuinely differs and deliberately left what an Italian musician
+would already see in English or in Italian:
+
+**Translated:** LID → COPERCHIO, CLOSED/STICK/OPEN → CHIUSO/ASTA/APERTO,
+DAMPER → SMORZATORE, HOLD → TIENI, and the soft pedal → UNA CORDA, which is the
+standard Italian name for that pedal rather than a literal rendering of "soft".
+
+**Left alone on purpose**, so a future pass does not "fix" them back:
+- `SOST` is already Italian — sostenuto.
+- `TREM` is already Italian — tremolo. Same for VIBE/vibrato.
+- `PIANO` is the Italian word.
+- `SUST`, `VOL` and `OFF` are the abbreviations Italian players read on real gear.
+- `RHODES` is a brand. `Grand Piano` is lettering on the instrument graphic, a
+  prop rather than interface text; real pianos carry it in English everywhere.
+
+Both instances of the console (the tuner's and the Tools one) are covered —
+tagging was done by attribute rather than by position, so neither was missed.
+Verified by switching to Italian in a running browser and reading both back.
+
+## v0.150.40 — Charts Italian pass, part 1: the instrument picker
+
+The whole instrument picker drawer was English. 33 instrument buttons and 6
+family tabs, all static markup with no `data-i18n` at all, so `applyLang()` never
+touched them.
+
+All 39 now carry keys generated from their existing `data-inst` / `data-fam`
+values, with Italian for each: CHITARRA, BASSO, UKULELE, MANDOLINO, LIUTO,
+PIANOFORTE, ORGANO, ARPA, PERCUSSIONI, TROMBA, FLICORNO, CORNO, EUFONIO,
+FLAUTO, CLARINETTO, FAGOTTO, FLAUTO DOLCE, ARMONICA, ARMONICA CROM., VIOLINO,
+VIOLONCELLO, CONTRABBASSO, and family tabs Corde / Crom. / Ottoni / Legni /
+Ance libere / Arco. Names that are the same in both languages (BANJO, TUBA,
+TROMBONE, OBOE, SAX, OCARINA, VIOLA, MELODICA, BOUZOUKI, DIDGERIDOO, TIN
+WHISTLE) keep their spelling rather than being forced.
+
+Verified by switching the app to Italian in a running browser and reading every
+button back: zero remain English.
+
+**Still to do in this pass:** the piano console (LID, TONE, VIBE, DAMPER, SUST,
+SOST, VOL, TREM and their values) has 22 untranslated strings, and the interval
+reference has a handful. Counted, not yet done.
+
+## v0.150.39 — A missing i18n key printed itself on a button
+
+**Stopping a bowed note showed a raw text string.** `t()` returns the KEY ITSELF
+when a string is missing, so the two bowed buttons pointing at the non-existent
+`gcc_play_note` had `_chartBtnIdle` write the literal text "gcc_play_note" onto
+them. The keys were fixed in v0.150.38; `_chartBtnIdle` now also treats a result
+identical to the key as a miss and uses the fallback, so no future bad key can
+print itself on a button.
+
+**Module card titles were 30px off-centre.** `.lnch-txt` is padded 42px on the
+left to clear the pin button against 12px on the right, so its box never sat
+centred in the card. Short English names hid it; ACCORDATORE and STRUMENTI did
+not, sitting right and running past the edge. The title now pulls that 30px back
+and centres on the card, while the sub-line keeps the padding it needs.
+
+**Streak milestone cues guarded.** `hapticMilestone()` and `playCueMilestone()`
+run before the toast is built, so a throw in either — a missing haptics plugin, a
+suspended audio context — would kill the toast on device while working in a
+browser. Both wrapped.
+
+On Interval Training's missing toast: verified the whole path in a running
+browser — `enterExercise('interval')` resets the guard, five correct taps reach
+`checkStreakMilestone(5)`, and the toast renders "STREAK 5!". The wiring landed
+in v0.150.38, which is AFTER the build that test ran against.
+
+## v0.150.38 — Interval Training's streak toast, and two dead bowed labels
+
+**Interval Training never showed a streak toast in Tap or Test mode.** Only Sing
+mode called `checkStreakMilestone()`. The other two incremented `ivStreak` and
+stopped, so the mode most people use counted a streak it never celebrated. Both
+now fire it.
+
+**Two bowed chart buttons pointed at an i18n key that does not exist.**
+`bowedNotePlayBtn` and `bowedDsPlayBtn` both used `gcc_play_note`, which is in
+neither language, so `t()` returned nothing and they fell through to the English
+fallback permanently — the placeholder seen on device. The note button now uses
+`trp_play_note`, which already has its Italian twin; the double-stop gets its own
+key, `bowed_play_ds` (SUONA BICORDO).
+
+**Confirmed the new scales reach every instrument.** Measured in a running
+browser across fretted, plucked and bowed families plus a wind and a re-entrant
+instrument: all 35 scales and 9 groups on each. `gssGroupsForInstrument()` also
+has a safety net that appends any group missing from the per-instrument config,
+so a future group cannot be silently dropped from one chart.
+
+Relative Pitch tone overlap remains. Two attempts fixed the delayed-tone timers
+in both the climb and practice mode, and it still overlaps, so something else is
+producing the second voice. Parked deliberately rather than guessed at again.
+
+## v0.150.37 — Changing scale mid-loop kept playing the old one
+
+Reported as two things — the new scales all sounding alike, and the loop not
+updating when the scale changed. They are one bug.
+
+`playScale()` snapshots `scaleTapeData()` once when it starts. Changing the
+scale or root while it was running redrew the tape and the name but never
+touched the audio, so the OLD sequence kept looping under the NEW label. Every
+scale picked while a loop was running therefore sounded identical, because it
+was: you were hearing whatever started first.
+
+`updateScale()` now restarts playback in the same direction when a change lands
+mid-loop. Root changes route through the same function, so they are covered too.
+
+**Verified the data was never wrong.** Measured in a running browser at every
+layer: `scaleDefIntervals`, `GSS_SCALE_TYPES.intervals` and the scales tool's own
+`getScaleData` each return distinct, correct pitches for all eight new scales.
+Also confirmed all eight are present in every registry that matters —
+`SCALE_DEFS`, `GSS_SCALE_TYPES`, `GSS_SCALE_GROUPS`, `TC_SCALE_GROUPS`,
+`SCALE_SHORT_NAMES` and `SCALE_GHOST_OVERRIDE` — with English and Italian names
+on each.
+
+## v0.150.36 — The fifth scale list, tempo graded on tempo, and long Italian labels
+
+**The scales tool still showed 28.** There is a FIFTH place a scale must be
+listed. `SCALE_DEFS` holds the data; `TC_SCALE_GROUPS`, `GSS_SCALE_TYPES` and
+`GSS_SCALE_GROUPS` each drive a different surface; and `buildScaleTypePicker`
+holds its own local array — twice, once per view — which is what actually
+renders. All updated, with Japanese and Indian Thaat groups and both EN/IT
+labels. Adding a scale touches five lists; that is worth knowing before the
+next one.
+
+**Tempo Lock graded distance from a grid, not tempo.** Every tap was compared to
+its nearest expected beat, so a steady tempo error compounds: hold a rock-solid
+123 against a target of 120 and each tap lands further ahead than the last. +3bpm
+measured 43ms average and graded red while sounding fine. It now derives BPM from
+the gaps between taps and grades the difference: LOCKED IN under 2bpm, CLOSE
+under 5, NEEDS WORK under 10. A steady +3 now reads as 3bpm out whatever the
+round length. Drift within a round still shows, because an unsteady pulse gives
+an unstable average interval. Falls back to the old metric on a single tap, since
+one tap gives no interval to measure.
+
+**Relative Pitch still stacked tones on rapid next.** v0.150.30 tracked the
+climb's delayed tone and missed that practice mode has its own, so each tap
+queued another 350ms tone with nothing cancelling the previous. Both use the same
+handle now.
+
+**Italian launcher cards clipped mid-word.** ACCORDATORE is eleven characters
+against TUNER's five, at a font size tuned for the English labels. Names over
+eight characters now step down a size and tighten their tracking. Length-driven
+rather than language-driven, so future translations are covered.
+
+## v0.150.35 — A third scale list, and empty symbol popups
+
+**The scales module showed 28 of 36.** There is a THIRD list of scales:
+`SCALE_DEFS` holds the data, `TC_SCALE_GROUPS` drives the tonal-centre picker,
+and `GSS_SCALE_GROUPS` drives the scales module and the chart menus. v0.150.22
+updated the first two. Anything absent from the third simply never appears in
+the module, which is why the count sat at 28.
+
+Added `yo` to Pentatonic, `ukrdorian` to World, and two new groups — Japanese
+(hirajoshi, iwato, kumoi, insen) and Indian Thaats (purvi, marwa, todi). Both
+also registered in `GSS_INSTRUMENT_SCALE_ORDER`, without which a group exists
+but is never rendered. Module now lists 35; `chromatic` stays out on purpose.
+
+**Survival Guide symbol popups were empty.** They showed the label and nothing
+else. The glyph rules are scoped to `#toolSurvivalGuide`, but the zoom sheet is
+appended to `<body>` to avoid being clipped by the card — so it sat outside that
+scope with no Bravura face and no sizing box, rendering an invisible glyph.
+Added unscoped copies for the sheet.
+
+## v0.150.34 — Backup copy stops promising a download
+
+Decided for 1.0: backup export stays share-sheet only. Android has no guaranteed
+"save to device" share target — the sheet lists whatever apps accept a .json, so
+Drive or email is the realistic destination. Both are legitimate backups, and
+arguably better than a local file that dies with the phone.
+
+The copy said "Backup saved", which implied a file had landed somewhere on the
+device. It now reads "Backup ready to send", and the sheet title asks you to send
+it somewhere safe. EN and IT both.
+
+A true local "Save as…" needs the Storage Access Framework. No Capacitor plugin
+exposes `ACTION_CREATE_DOCUMENT`, so it means a small custom native plugin per
+platform. Recorded as post-1.0 rather than left as an unexplained gap.
+
+## v0.150.33 — Scale lists sorted by family, daily badge no longer overlaps
+
+**Scales looked incomplete because they were unsorted, not missing.** Both lists
+were verified complete: all 36 in the tonal-centre picker, 35 in the instrument
+charts (`chromatic` is deliberately absent there — every note on a fingering
+chart is not a scale). The eight world scales added in v0.150.22 were appended
+to the END of the chart list, so they read as a random tail and were easy to
+scroll past.
+
+Both lists are now ordered by family, and the families match each other:
+Major / Minor / Pentatonic & Blues / Japanese / Jazz · Melodic Modes / World /
+Indian Thaats / Symmetric. The chart list also drives next/prev cycling, so this
+makes stepping through scales follow a musical order instead of an
+edit-history one.
+
+**The Music Quiz daily badge overlapped in Italian.** GIORNALIERA is eleven
+characters against DAILY's five, in an absolutely-positioned badge with fixed
+padding. Added `mq_daily_badge` — OGGI in Italian, which reads naturally on a
+once-a-day challenge and fits the same box. The badge also has a `max-width`
+with ellipsis now, so no future translation can grow into the card beside it.
+
+## v0.150.32 — Chart button parity pass
+
+Went through all 13 buttons in `CHART_BTNS` rather than fixing the one that was
+reported, since the same patterns were repeated across the charts.
+
+**Four charts had a hand-rolled copy of `_chartBtnIdle`.** Guitar strum, guitar
+scale, plucked scale and plucked chord each reset their own label with
+`if (btn.textContent === '■ STOP')` — comparing against the English literal, so
+in Italian the check never matched and the button stayed reading STOP after
+playback finished. All four now call the shared helper, which reads its idle
+label from the registry and is locale-aware.
+
+**Two bowed buttons had untracked label timers.** Bowed note and double-stop
+both set a bare 1900ms `setTimeout` to restore their label. Stopping early and
+replaying left the old timer running, so it could reset the label of the note
+started afterwards. Both tracked and cleared now, same as the wind Notes button
+in v0.150.31.
+
+Renamed `_chartBtnStopLabel` to `_chartBtnHaltText`: the stopAll audit matches
+function names containing "Stop" and was flagging a label getter as an unwired
+stop function.
+
+Final state, all 13 buttons: every one has an idle path, every timer that
+restores a label is tracked, and there are no hardcoded '■ STOP' comparisons
+left anywhere in the file.
+
+## v0.150.31 — The STOP button that played, and Tempo Lock's unreachable streak
+
+**Wind Notes button said STOP and did PLAY, in a loop.** `_chartBtnPlay()` flips
+the label to "■ STOP", but `trpPlayCardNote()` had no stop branch. Tapping it
+again just replayed the note and restarted the 1500ms label timer, so the label
+bounced between STOP and PLAY while the note fired every tap. It now stops the
+ringing note, cancels the timer and restores the label. The timer is tracked too,
+so a stale one cannot reset the label of a note started after it.
+
+**Same helpers had a locale bug.** `_chartBtnPlay` wrote the literal string
+'■ STOP' and `_chartBtnIdle` compared against that literal. In Italian the
+button showed English AND the equality check never matched, so it silently
+refused to restore any chart button's label. Both go through `t('btn_stop')`
+now, still accepting the English literal for older code paths that write it
+directly.
+
+**Tempo Lock: 25/50ms to 40/75ms.** A streak needs LOCKED IN or CLOSE, and 50ms
+is inside normal touchscreen jitter, so holding a streak on a phone was close to
+impossible and the grade stopped carrying information. 40/75 still rewards
+accuracy without being unreachable.
+
+## v0.150.30 — Test-pass fixes: symbols, feedback box, overlapping tones, toast opacity
+
+**Survival Guide showed one symbol on a three-symbol page.** The glyph map was
+built from `SG_TERM_DEMOS` (the audio demos) instead of from the `data-term`
+values actually in the Guide copy, so it covered 8 of the 17 terms in use. The
+DYNAMICS page carries crescendo/decrescendo/diminuendo and only decrescendo was
+mapped — exactly the one badge that appeared, and the fp/sforzando/subito page
+got none at all. Added crescendo, diminuendo, piano, fp, sforzando, accent,
+staccato and tenuto. `subito` stays unmapped on purpose: it is a direction, not
+a mark. Coverage is now 16 of 17.
+
+**Symbols are tappable for a large view.** They have to stay small to sit on one
+row without pushing the body copy down, and some marks are tiny by nature (a
+staccato dot is 4px tall in Bravura's own metrics). Tapping one opens it at 3.4x
+using the same glyph data and the same scaling maths, so the two views cannot
+disagree.
+
+**Interval Training's feedback box still appeared only after answering.**
+v0.150.9 fixed the markup default and the round reset, but missed a third place:
+the manual/sing mode switch hid it again on every entry. That is why the layout
+still shifted. All three now agree.
+
+**Relative Pitch tones overlapped.** The question tone is deliberately delayed
+350–620ms so it does not land on the rung transition, but the timer was
+untracked. `chordPlayMidi` stops what is currently ringing; it cannot stop a
+note that has not started yet, so tapping A440 during the window let both
+sound. The handle is kept now and cleared by `rlpSound`.
+
+**The streak toast let the screen read through it.** Its background was a single
+`linear-gradient` starting from a translucent milestone tint, so whatever sat
+behind the toast bled into the text. Split into `background-color: var(--panel)`
+plus the same gradient as `background-image`: same tint, opaque base.
+
+**Wind chart button flipped back to PLAY early.** The reset timer allowed 400ms
+after the LAST note STARTS, but each note runs `dur` seconds, so on slower
+instruments the button reverted while the final note still sounded. It now waits
+for the note plus a short tail.
+
+Chart button audit: all 13 buttons in `CHART_BTNS` have a registry entry and a
+matching element, and none plays without a reset path.
+
+## v0.150.29 — The alarms screen, found in the plugin source
+
+Read the installed plugin's code instead of guessing a fourth time.
+
+`@capacitor/local-notifications` **8.3.0** is a Kotlin rewrite, and it changed
+behaviour. `schedule()` now does this:
+
+```kotlin
+val honorExact = notifications.any { it.isExactNotification }   // default: true
+if (honorExact && SDK >= S && !canScheduleExactAlarms()) {
+    startActivityForResult(... ACTION_REQUEST_SCHEDULE_EXACT_ALARM ...)
+    return
+}
+```
+
+`schedule()` opens the "Alarms & reminders" screen itself. The older Java
+version silently fell back to an inexact alarm and logged a warning; the new
+one prompts. `isExactNotification` is documented `@default true`, `@since
+8.3.0`.
+
+That explains everything that did not add up:
+- **Why it appeared from nowhere.** Nothing in this app changed. A plain
+  `npm install` pulled 8.3.0 through the `^8.2.0` caret in package.json.
+- **Why two manifest fixes failed.** No manifest edit could work — removing the
+  permission makes `canScheduleExactAlarms()` return false, which *guarantees*
+  the prompt.
+- **Why the toggle on that screen was inert.** It was `SCHEDULE_EXACT_ALARM`
+  denied by default at targetSdk 36, exactly as Android intends.
+
+Both reminders now set `isExactNotification: false`. A daily practice nudge does
+not need second-accurate delivery. The notification still fires, just inexactly,
+and Android is never asked for special access.
+
+The v0.150.28 deferral of scheduling to first module entry is kept. It was not
+the fix, but it is still correct: nothing system-level should run before someone
+has seen the app.
+
+## v0.150.28 — The alarms screen, actually diagnosed
+
+Two manifest fixes failed before this one. The merge report settled it: the
+permission was never the mechanism.
+
+`scheduleNotifications()` ran 2 seconds after load. Scheduling a calendar-based
+reminder makes the plugin call `canScheduleExactAlarms()`; on Android 13+ that
+is denied by default, and Android's own documentation then prescribes firing an
+intent to the "Alarms & reminders" special-access screen. So the plugin was
+behaving correctly and the app was asking at the worst possible moment: a brand
+new user met a system permission screen on their first tap, before seeing
+anything.
+
+Stripping the permission could not fix that, and made it worse in principle:
+removing it guarantees `canScheduleExactAlarms()` returns false, which
+guarantees the redirect.
+
+**Reminders stay ON by default.** The practice nudge is most of their value and
+most people never go looking for a notifications screen to switch one on. Per
+Capacitor's own docs, without `SCHEDULE_EXACT_ALARM` notifications still fire —
+they are just inexact, which is right for a 7pm nudge and easier on the battery.
+
+What changed is only WHEN scheduling runs. It now waits for first module entry,
+riding the same launcher gate as the update check, and is guarded so it can only
+run once per session. The boot-time `requestPermissions()` call went too: it
+fired on every first launch for the same reason.
+
+Net effect: nothing system-level is requested until the person has actually
+entered a module.
 
 ## v0.150.27 — Road Trip leg tuning complete: 39 of 39
 
