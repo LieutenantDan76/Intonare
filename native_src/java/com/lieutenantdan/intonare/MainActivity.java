@@ -36,6 +36,13 @@ public class MainActivity extends BridgeActivity {
         // So plugins must be in the builder list before super.onCreate runs, or they
         // miss the create() call and JS throws "not implemented on android".
         registerPlugin(IntonareMicPlugin.class);
+        // FileSaver: wraps ACTION_CREATE_DOCUMENT so Back Up Progress opens a real
+        // system Save dialog. Without this line the class still COMPILES — javac
+        // builds every .java in the source folder whether or not anything uses it —
+        // so FileSaverPlugin.class appeared in the APK while the plugin was never
+        // registered, and JS reported "not implemented on Android". The build gave
+        // no warning at any point.
+        registerPlugin(FileSaverPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Sticky immersive: hide status + nav bars. "Sticky" = a reveal swipe

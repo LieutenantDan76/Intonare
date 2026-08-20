@@ -116,6 +116,56 @@ feel and its sources contradict each other on accents.
 
 ---
 
+## v0.150.74 — FileSaver was never registered, and nothing said so
+
+Two hours to find one missing line. Worth writing down properly.
+
+`MainActivity.java` in `native_src` never had `registerPlugin(FileSaverPlugin.class)`.
+The edited copy had been placed in `android\app\...` instead, and `go.bat` step
+[4c] restores that file FROM `native_src` on every run — so each build faithfully
+overwrote the fix with the version that lacked it.
+
+**What made it so hard to see:** `FileSaverPlugin.class` was in the APK the whole
+time. javac compiles every .java in the source folder whether or not anything
+references it, so the class was present and simply never registered. Finding it
+in the compiled output looked like proof the plugin was wired up. It was not.
+
+Nothing warned at any point. The build succeeded, the class shipped, Capacitor
+registered the plugins it was told about, and the JS reported "not implemented on
+Android" — which reads like a missing file rather than a missing line.
+
+**What actually located it:** the mic plugin logging `NATIVE path active`. Both
+plugins are registered in the same file one line apart, so a working mic proved
+`registerPlugin` itself was fine and the problem had to be the call, not the
+mechanism.
+
+Dead ends ruled out along the way, all verified against the real Capacitor 8
+source rather than assumed: the `startActivityForResult` String overload exists;
+`@ActivityCallback` on a private method is fine because the invoker calls
+`setAccessible(true)`; R8 does not strip the plugin, since Capacitor sets
+`consumerProguardFiles` and its rule keeps public `@CapacitorPlugin` classes;
+plugins load eagerly during `super.onCreate`, so activity launchers register
+before the Activity starts.
+
+No HTML change. Bumping so this build is distinguishable from v0.150.73, which is
+byte-identical apart from the version and was built without the registration.
+
+## v0.150.73 — Version bump so the FileSaver build is distinguishable
+
+No code change. The `MainActivity.java` and `go.bat` fixes are native-side and
+did not touch the HTML, so a build with the plugin registered and one without
+both reported v0.150.72. That made it impossible to tell from the footer whether
+a given install actually had the fix, and a Play update delivering an older
+build looked identical to a local build that had not picked it up.
+
+Bumping so the two are distinguishable. **A build showing v0.150.73 or later has
+the FileSaver registration; anything earlier does not**, regardless of what the
+backup does.
+
+Worth remembering: the version stamp tracks the HTML, not the APK. When a fix
+lives only in native source, bump anyway or there is no way to tell builds apart
+on device.
+
 ## v0.150.72 — A partial backup has to say it is partial
 
 v0.150.71 recorded skipped fields inside the file and said nothing on screen.
