@@ -4,7 +4,41 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS (as of v0.150.42)
+## OPEN ITEMS (as of v0.150.72)
+
+**Device state: v0.150.65 is built and running.** Only .66 to .72 are untested,
+which is the update card being tappable, the download size readout, and the
+backup work. Everything else — the Italian sweep, the 60 help translations, chord
+quality names, solfège on the bowed charts, the relabel registry — shipped at or
+before .65 and has been in use.
+
+**Backup is the one that matters.** The round trip (back up, restore, Reset All
+Progress, confirm Pro and settings survive) has still never been run end to end.
+It is the only remaining bug class that costs someone their data rather than
+annoying them.
+
+**Tooling to re-upload to project knowledge**, none of which survives a session:
+`intonare_regression_sentinel.py` (247 pins), `intonare_i18n_audit.py` (seven
+categories, A/E/F/G are the unambiguous ones) and `intonare_lang_sweep.py`
+(drives a browser through 35 screens and reports only strings identical in both
+languages).
+
+**Deferred with measurements, so they can be picked up cold:**
+- First module open compiles the module-building JS. Repeated reloads go smooth
+  because of V8's bytecode cache. Needs the file split; v1.1.
+- `setLang` leaks ~2,679 DOM nodes over 20 language switches, in the legacy
+  builder list rather than the relabel registry. Fix is migrating those calls
+  into `registerRelabel`, which puts them behind its leak check.
+- Relative Pitch tone overlap. Two attempts tracked the delayed-tone timers in
+  both the climb and practice mode; it still overlaps, so a second voice comes
+  from somewhere not yet found. Needs a trace, not another guess.
+- Drum samples: all five kits sourceable under CC0 (Versilian Virtuosity for
+  standard/jazz/brushes/latin, tidalcycles/sounds-tr808-fischer for electronic).
+  ~70 samples, ~2MB, lives in assets rather than the HTML. All five or none.
+
+---
+
+## OPEN ITEMS (superseded — as of v0.150.42)
 
 Not a release entry. A standing list so these survive outside anyone's memory.
 
@@ -81,6 +115,175 @@ feel and its sources contradict each other on accents.
 ---
 
 ---
+
+## v0.150.72 — A partial backup has to say it is partial
+
+v0.150.71 recorded skipped fields inside the file and said nothing on screen.
+That was the wrong call, and it was pointed out immediately: someone would
+believe they had a complete backup and discover otherwise at restore time, which
+is the one moment they cannot afford it. Quiet data loss is worse than loud
+failure.
+
+Both ends now speak up:
+
+- **On export**, if anything was dropped the toast says so and calls it a bug
+  rather than a normal outcome.
+- **On restore**, an incomplete file warns BEFORE it is applied. The export
+  warning is not enough on its own — the file may have been made months ago on
+  another device by someone who never saw it. Restore is where the gap costs
+  something, so restore mentions it.
+
+Worth being clear about why anything would ever be skipped: **nothing should be.**
+`JSON.stringify` throws on exactly two things, a circular reference and a BigInt,
+and neither occurs through normal use. Both mean the app wrote something
+malformed into saved state. So a skipped field is an alarm, not a footnote, and
+the wording says so instead of hiding behind "some items".
+
+With dev tools unlocked both messages name the fields outright.
+
+## v0.150.71 — One bad field can no longer take the whole backup down
+
+`backupBuild()` did `JSON.parse(JSON.stringify(prog))` in a single shot, so one
+unserialisable value threw and the caller reported total failure. Someone with
+years of progress got NOTHING because of one bad field. Losing a setting is
+survivable; losing the backup is not.
+
+Each field is now serialised on its own. Anything that throws is skipped, logged,
+and listed in a `skipped` array that travels inside the backup file, so the file
+explains itself rather than leaving a support conversation to guesswork.
+
+Tested by poisoning `progState.stats` with a circular reference: the old path
+threw, the new one produces a backup with 36 of 37 fields and
+`skipped: ["stats"]`.
+
+Restore ignores the field, so an older build reading a newer file is unaffected.
+
+Static analysis of the live app could not find the offending value — nothing in
+progState holds a DOM node, an audio node or a self-reference, and a clean state
+serialises fine. So the failure depends on real saved data. This change means
+that no longer matters: whatever it is, the backup now completes and names it.
+
+## v0.150.70 — The backup error was never about the plugin
+
+Chased this properly instead of waiting on a build.
+
+**Verified the native side against the real Capacitor 8 source**, pulled from the
+npm tarball: the `String` overload of `startActivityForResult` exists,
+`@ActivityCallback` registers launchers by method NAME, and the invoker calls
+`setAccessible(true)` so a private callback is fine. `FileSaverPlugin.java` is
+correct as written.
+
+**And the plugin must be installed anyway.** `MainActivity.java` references
+`FileSaverPlugin.class` directly, so if that class were missing the build would
+FAIL rather than quietly succeed. A successful build means it is registered.
+
+**The real culprit is the first three lines of `backupExport()`:**
+
+```js
+try { txt = JSON.stringify(backupBuild(), null, 2); }
+catch (e) { svcToast(t('backup_err_writefail')); return; }
+```
+
+That catch fires BEFORE any plugin is touched, and it was showing
+`backup_err_writefail` — restore wording about running out of disk space. So a
+failure to BUILD the backup object presented as a storage problem, which sent us
+looking at free space and native plugins for something neither had caused.
+
+`backupBuild()` runs clean here — 6 keys, 2.6KB — so the failure is
+data-dependent: something in a real saved state that will not serialise, most
+likely a circular reference or a value that became undefined.
+
+All three failure paths now say different things, so the next build names the
+culprit rather than pointing at the phone:
+- **build failed** — the object could not be created (a bug, and it says so)
+- **FileSaver rejected** — falls back to sharing, and logs why
+- **share failed** — its own message, no disk-space claim
+
+With dev tools unlocked each one shows the underlying exception text.
+
+## v0.150.69 — Make the plugin tell us why it refused
+
+The FileSaver rejection was being swallowed, so a build where the save dialog
+never appears looks identical to one where it failed for an unrelated reason.
+The message is now logged always, and shown on screen when dev tools are
+unlocked.
+
+It distinguishes two cases that need opposite fixes:
+
+- **"not implemented on android"** or **"does not have web implementation"** —
+  the plugin is not in the APK. Either the .java never landed in
+  `android/app/src/main/java/com/lieutenantdan/intonare/`, its `package` line
+  does not match that path, or the build reused a cached APK.
+- **anything else** (ActivityNotFoundException, an IO error, a permission
+  refusal) — the plugin IS there and the save itself failed, which is a
+  different problem entirely.
+
+Normal users are unaffected: they still just get the share sheet.
+
+## v0.150.68 — Backup reported a disk-space failure on a phone with 30GB free
+
+Two of my own bugs stacked, both introduced in v0.150.52.
+
+**The fallback stopped falling back.** `Capacitor.registerPlugin()` returns a
+proxy whether or not the native plugin exists — it only rejects when you CALL it.
+So adding that fallback silently broke the "plugin missing, use the share sheet"
+check: the FileSaver path is now ALWAYS taken, and a build without
+FileSaver.java installed reached the catch and reported failure instead of
+sharing. The catch now calls the share path rather than giving up, so a missing
+plugin degrades exactly as it did before.
+
+**And it reported the wrong failure.** The catch used `backup_err_writefail`,
+which is RESTORE wording about running out of space. Telling someone with 30GB
+free to clear room, for a backup that failed because a plugin was not installed,
+is wrong twice in one sentence. Backup now has its own message, and it describes
+what actually happened.
+
+The share tiers are split into `_backupShareFallback()` so both entry points use
+one path instead of the FileSaver branch having nowhere to go.
+
+Worth remembering about Capacitor: a registered plugin proxy is never falsy.
+Feature-detecting one by truthiness always passes. The only way to know it is
+really there is to call it and handle the rejection.
+
+## v0.150.67 — Download size on the update card
+
+Play hands over `bytesDownloaded` and `totalBytesToDownload` with every progress
+event, so showing them costs nothing. The subtitle now reads "12.4 / 40 MB" while
+downloading.
+
+Worth having: on a slow connection a bar that moves a pixel a second is hard to
+tell apart from a bar that has stopped. A number that keeps climbing is not.
+
+MB rather than MiB (dividing by 1,000,000, not 1,048,576) because that is what
+the Play listing quotes, and the two disagreeing by 5% reads as a bug rather than
+a unit convention. One decimal below 10MB, whole numbers above, so it does not
+jitter through four digits as it climbs.
+
+Confirmed while checking: every string on this card already had an Italian twin —
+available, downloading, ready, restart and retry. The card did not escape the
+translation work, only the pointer-events bug.
+
+## v0.150.66 — The update card could not be tapped
+
+It sits inside `#achToastStack`, which is `pointer-events: none` so achievement
+toasts never block a tap on the app underneath them. The card inherited that. It
+appeared, looked correct, and swallowed every press — DOWNLOAD, LATER and the
+close X alike.
+
+`pointer-events: auto` on `.iu-card` re-enables the card without re-enabling the
+stack around it, which is the whole reason the stack is transparent.
+
+Verified: both buttons reachable by hit test, and a click fires the handler.
+
+Worth recording for anyone adding to that stack later: it is a TOAST layer.
+Anything interactive placed in it has to opt back in, or it is decoration.
+
+Also worth being clear about how these updates work, since the card looking
+in-app is confusing: Play's in-app update API has two modes. **Immediate** hands
+over a full-screen Play-owned screen. **Flexible**, which this uses, downloads in
+the background through Play while the app stays usable, then leaves the prompt
+and the restart to the app. So Play does the downloading and this card is
+correctly ours.
 
 ## v0.150.65 — The help popups now exist in Italian
 

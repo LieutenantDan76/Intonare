@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.65 -->
+<!-- INTONARE_VERSION: 0.150.72 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -16732,6 +16732,13 @@ html,body{background:#000000!important;transition:none!important}
     position: fixed; left: 12px; right: 12px;
     bottom: calc(76px + env(safe-area-inset-bottom));
     z-index: 8800; display: none;
+    /* This card lives inside #achToastStack, which is pointer-events:none so
+       achievement toasts cannot block taps on the app underneath them. The card
+       inherited that and was completely untappable — it appeared, looked right,
+       and swallowed every press on DOWNLOAD, LATER and the close X.
+       Restoring pointer-events here re-enables the card WITHOUT re-enabling the
+       stack around it, which is the whole reason the stack is transparent. */
+    pointer-events: auto;
     background: var(--panel); border: 1px solid var(--border);
     border-radius: 14px; padding: 14px 15px 13px;
     box-shadow: 0 10px 34px rgba(0,0,0,.45);
@@ -31097,7 +31104,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.65</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.72</span>
     </div>
   </div>
 </div>
@@ -31105,7 +31112,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.65';
+const INTONARE_VERSION = '0.150.72';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -82438,6 +82445,13 @@ function iuGo() {
         if (st && st.installStatus === 2 && st.bytesDownloaded && st.totalBytesToDownload) {
           var pct = Math.max(2, Math.min(100, Math.round(st.bytesDownloaded / st.totalBytesToDownload * 100)));
           if (bar) bar.style.width = pct + '%';
+          // Show the actual size alongside the bar. Play hands us both byte
+          // counts, so this costs nothing and turns a bar that can look stuck on
+          // a slow connection into something you can read: a 40MB download
+          // sitting at 12% is clearly working, whereas a still bar is not.
+          // MB rather than MiB, because that is what the Play listing quotes and
+          // the two disagreeing by 5% looks like a bug.
+          _iuSet('iuSub', _iuMB(st.bytesDownloaded) + ' / ' + _iuMB(st.totalBytesToDownload) + ' MB');
         } else if (st && st.installStatus === 11) {
           if (bar) bar.style.width = '100%';
           _iuBusy = false;
@@ -82455,6 +82469,12 @@ function iuGo() {
   }
   try { P.startFlexibleUpdate().catch(function () { _iuBusy = false; }); }
   catch (e) { _iuBusy = false; }
+}
+
+// Bytes to MB, one decimal. Kept next to the only thing that uses it.
+function _iuMB(bytes) {
+  var mb = (bytes || 0) / 1000000;
+  return (mb < 10) ? mb.toFixed(1) : Math.round(mb);
 }
 
 function iuInstall() {
@@ -83903,6 +83923,10 @@ const STRINGS = {
     inst_guitar:'GUITAR', inst_bass:'BASS', inst_uke:'UKE', inst_mandolin:'MANDOLIN', inst_banjo:'BANJO', inst_lute:'LUTE', inst_bouzouki:'BOUZOUKI', inst_piano:'PIANO', inst_organ:'ORGAN', inst_melodica:'MELODICA', inst_harp:'HARP', inst_mallet:'MALLET', inst_trumpet:'TRUMPET', inst_flugelhorn:'FLUGELHORN', inst_frenchhorn:'FRENCH HORN', inst_euphonium:'EUPHONIUM', inst_tuba:'TUBA', inst_trombone:'TROMBONE', inst_ww_flute:'FLUTE', inst_ww_clarinet:'CLARINET', inst_ww_oboe:'OBOE', inst_ww_bassoon:'BASSOON', inst_ww_sax:'SAX', inst_ww_recorder:'RECORDER', inst_ww_whistle:'TIN WHISTLE', inst_ww_ocarina:'OCARINA', inst_harmonica:'HARMONICA', inst_ww_chrom_harp:'CHROM. HARP', inst_didgeridoo:'DIDGERIDOO', inst_bowed_violin:'VIOLIN', inst_bowed_viola:'VIOLA', inst_bowed_cello:'CELLO', inst_bowed_doublebass:'DBL BASS', csfam_fretted:'Fretted', csfam_chromperc:'Chrom.', csfam_brass:'Brass', csfam_woodwind:'Woodwind', csfam_freereed:'Free Reed', csfam_bowed:'Bowed',
     hdr_back_to:'back to ',
     lbl_other:'OTHER', lbl_oct:'OCT ', lbl_options:'OPTIONS', btn_close:'CLOSE', lbl_to:'to:', lbl_bass:'BASS', pn_tap_start:'tap a key to start', trp_sounds:'Sounds: ', trp_written:'Written: ', photo_loading:'LOADING PHOTO…', photo_offline:'PHOTO UNAVAILABLE — NEEDS INTERNET',
+    backup_partial_restore:'This backup was saved with %n item(s) missing. Everything else will be restored.',
+    backup_partial:'Backup saved, but %n item(s) could not be included. This is a bug \u2014 please report it.',
+    backup_err_build:'Could not build the backup. Please report this \u2014 it is a bug, not a problem with your phone.',
+    backup_err_sharefail:'Could not share the backup. Try again, or use a different app from the share sheet.',
     folder_rhythm:'Rhythm', folder_ear:'Ear Training', folder_games:'Games', folder_reading:'Reading',
     ui_easy:'EASY', ui_med:'MED', ui_hard:'HARD', ui_custom:'CUSTOM', ui_custom:'Custom', ui_streak:'STREAK', ui_set:'SET', ui_key:'KEY', ui_strobe:'STROBE', ui_vibrato:'VIBRATO', ui_tuner:'TUNER', ui_play_in_tune:'play in tune',
     ui_range_map:'Range Map', ui_comfortable_range:'Comfortable range', ui_extended_range:'Extended range', ui_tessitura_center:'Tessitura center', ui_closest_adjacent_type:'Closest adjacent type', ui_singers_in_your_range:'Singers in your range', ui_retake:'Retake', ui_most_comfortable:'most comfortable', ui_right_for_higher_pitch:'right for higher pitch', ui_note_grid:'NOTE GRID', ui_snap_to_scale:'SNAP TO SCALE', ui_try_a_sound:'TRY A SOUND', ui_tap_any_string_row:'Tap any string row', ui_low_to_high_from_the_bot:'low to high from the bottom up', ui_test_your_music_knowledg:'Test your music knowledge', ui_exit:'EXIT',
@@ -85057,6 +85081,10 @@ const STRINGS = {
     tonal_center: { title: "Centro Tonale", body: "Un bordone tiene ferma una tonica mentre tu canti o suoni sopra, per costruire l’orecchio su dove sta ogni nota dentro una tonalità.<br><br>Scegli una <strong>tonica</strong> sulla tastiera, poi una <strong>scala</strong> e un’<strong>ottava</strong>, quindi tocca <strong>AVVIA BORDONE</strong>. Lo schermo mostra tre cose insieme: l’<strong>intervallo</strong> fra la tua nota e la tonica, la tua intonazione in <strong>cent</strong> sulla barra di aggancio, e il nome della nota nella coppia <strong>BORDONE / TU</strong>.<br><br>Il colore ti dice l’intonazione a colpo d’occhio: <strong>blu</strong> = calante (troppo bassa), <strong>rosso</strong> = crescente (troppo alta), <strong>verde</strong> = intonato." }
     },
     lbl_other:'ALTRO', lbl_oct:'OTT ', lbl_options:'OPZIONI', btn_close:'CHIUDI', lbl_to:'a:', lbl_bass:'BASSO', pn_tap_start:'tocca un tasto per iniziare', trp_sounds:'Suona: ', trp_written:'Scritto: ', photo_loading:'CARICAMENTO FOTO…', photo_offline:'FOTO NON DISPONIBILE — SERVE INTERNET',
+    backup_partial_restore:'Questo backup \u00e8 stato salvato con %n elemento/i mancante/i. Tutto il resto verr\u00e0 ripristinato.',
+    backup_partial:'Backup salvato, ma %n elemento/i non \u00e8 stato possibile includerlo. \u00c8 un bug: segnalalo pure.',
+    backup_err_build:'Non \u00e8 stato possibile creare il backup. Segnalalo pure: \u00e8 un bug dell\u2019app, non un problema del telefono.',
+    backup_err_sharefail:'Non \u00e8 stato possibile condividere il backup. Riprova, o scegli un\u2019altra app dal men\u00f9 di condivisione.',
     folder_rhythm:'Ritmo', folder_ear:'Orecchio', folder_games:'Giochi', folder_reading:'Lettura',
     ui_easy:'FACILE', ui_med:'MEDIO', ui_hard:'DIFFICILE', ui_custom:'PERSONALIZZATO', ui_custom:'Personalizzato', ui_streak:'SERIE', ui_set:'IMPOSTA', ui_key:'TONALITÀ', ui_strobe:'STROBO', ui_vibrato:'VIBRATO', ui_tuner:'ACCORDATORE', ui_play_in_tune:'suona intonato',
     ui_range_map:'Mappa Estensione', ui_comfortable_range:'Estensione comoda', ui_extended_range:'Estensione estesa', ui_tessitura_center:'Centro di tessitura', ui_closest_adjacent_type:'Tipo vocale più vicino', ui_singers_in_your_range:'Cantanti nella tua estensione', ui_retake:'Ripeti', ui_most_comfortable:'più comoda', ui_right_for_higher_pitch:'a destra per note più acute', ui_note_grid:'GRIGLIA NOTE', ui_snap_to_scale:'AGGANCIA ALLA SCALA', ui_try_a_sound:'PROVA UN SUONO', ui_tap_any_string_row:'Tocca una riga di corda', ui_low_to_high_from_the_bot:'dal grave all’acuto, dal basso', ui_test_your_music_knowledg:'Metti alla prova le tue conoscenze', ui_exit:'ESCI',
@@ -89085,7 +89113,26 @@ function backupBuild() {
   // serialised immediately, and a trap anywhere else -- a build-now-apply-later
   // flow would silently restore the present instead of the snapshot. One JSON
   // round trip cuts it loose.
-  const snapshot = JSON.parse(JSON.stringify(prog));
+  // Serialise field by field rather than in one shot.
+  //
+  // One unserialisable field used to take the WHOLE backup down: JSON.stringify
+  // throws on a circular reference, and the catch upstream turned that into
+  // "could not be saved", so someone with years of progress got nothing at all
+  // because of one bad value. Losing a setting is survivable; losing the backup
+  // is not.
+  //
+  // Each field is tried on its own. Anything that throws is skipped and recorded
+  // in _skipped, which travels WITH the backup — so the file itself says what is
+  // missing, and a support conversation starts from a fact instead of a guess.
+  const snapshot = {};
+  const _skipped = [];
+  Object.keys(prog).forEach(function (k) {
+    try { snapshot[k] = JSON.parse(JSON.stringify(prog[k])); }
+    catch (e) {
+      _skipped.push(k);
+      try { console.error('[backup] field could not be serialised, skipped:', k, e); } catch (e2) {}
+    }
+  });
   const keys = {};
   _backupTravelKeys().forEach(k => {
     try { const v = localStorage.getItem(k); if (v !== null) keys[k] = v; } catch (e) {}
@@ -89093,6 +89140,9 @@ function backupBuild() {
   return {
     app: 'intonare', schema: BACKUP_SCHEMA, appVersion: INTONARE_VERSION,
     exported: new Date().toISOString(), prog: snapshot, keys: keys,
+    // Present only when something had to be dropped. Restore ignores it; it is
+    // there so the file can explain itself.
+    skipped: _skipped.length ? _skipped : undefined,
   };
 }
 
@@ -89136,6 +89186,19 @@ function backupSummary(src) {
 function backupApply(b) {
   const why = backupValidate(b);
   if (why) return why;
+
+  // Say so BEFORE restoring an incomplete file. The export warns too, but the
+  // file may have been made on another device, months ago, by someone who never
+  // saw that warning. Restore is the moment the gap actually costs something,
+  // so it is the moment worth mentioning it.
+  if (b && b.skipped && b.skipped.length) {
+    try { console.warn('[backup] restoring a file that is missing:', b.skipped); } catch (e) {}
+    try {
+      svcToast((typeof INTONARE_DEV !== 'undefined' && INTONARE_DEV)
+        ? ('Restoring INCOMPLETE backup — missing: ' + b.skipped.join(', '))
+        : (t('backup_partial_restore') || '').replace('%n', b.skipped.length), 6000);
+    } catch (e) {}
+  }
 
   // Stage the new progState in full before touching anything.
   const incoming = {};
@@ -89187,9 +89250,45 @@ function _backupFilename() {
   return 'intonare-backup-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '.json';
 }
 function backupExport() {
-  let txt;
-  try { txt = JSON.stringify(backupBuild(), null, 2); }
-  catch (e) { try { svcToast(t('backup_err_writefail')); } catch (e2) {} return; }
+  let txt, _built;
+  try {
+    _built = backupBuild();
+    txt = JSON.stringify(_built, null, 2);
+    // TELL the person if anything was dropped. Recording it only inside the file
+    // was a bad call: they would believe they had a complete backup and find out
+    // otherwise at restore time, which is the worst possible moment.
+    //
+    // Nothing should EVER be skipped. JSON.stringify only throws on a circular
+    // reference or a BigInt, and neither happens through normal use — both mean
+    // the app wrote something malformed into saved state. So this is an alarm,
+    // not a footnote, and it says so.
+    if (_built && _built.skipped && _built.skipped.length) {
+      try { console.error('[backup] fields skipped:', _built.skipped); } catch (e3) {}
+      try {
+        svcToast((typeof INTONARE_DEV !== 'undefined' && INTONARE_DEV)
+          ? ('INCOMPLETE — skipped: ' + _built.skipped.join(', '))
+          : (t('backup_partial') || '').replace('%n', _built.skipped.length), 6000);
+      } catch (e3) {}
+    }
+  }
+  catch (e) {
+    // This fires BEFORE any plugin is involved: the backup could not even be
+    // BUILT. It was showing backup_err_writefail, which is restore wording about
+    // disk space, so a failure here sent everyone looking at storage and native
+    // plugins instead of at backupBuild(). Two hours went that way once.
+    //
+    // Most likely causes: something in progState that JSON cannot serialise (a
+    // circular reference, or a value that became undefined), or backupBuild()
+    // itself throwing on a missing field.
+    var _m = (e && (e.message || e)) + '';
+    try { console.error('[backup] could not build the backup:', _m, e); } catch (e3) {}
+    try {
+      svcToast((typeof INTONARE_DEV !== 'undefined' && INTONARE_DEV)
+        ? ('Backup build failed: ' + _m.slice(0, 90))
+        : t('backup_err_build'));
+    } catch (e2) {}
+    return;
+  }
   const name = _backupFilename();
   try { hapticLight(); } catch (e) {}
 
@@ -89242,11 +89341,51 @@ function backupExport() {
         // Backing out of the picker is a deliberate choice, not an error.
         if (r && r.saved) { try { svcToast(t('backup_saved')); } catch (e) {} }
       })
-      .catch(function () {
-        try { svcToast(t('backup_err_writefail')); } catch (e) {}
+      .catch(function (err) {
+        // Surface WHY, rather than swallowing it. The rejection message tells
+        // you which of two very different things happened, and they need
+        // opposite fixes:
+        //   "not implemented on android" / "does not have web implementation"
+        //       -> the plugin is not in the APK. The .java is missing from
+        //          android/app/src/main/java/com/lieutenantdan/intonare/, or its
+        //          package line does not match, or the build did not recompile.
+        //   anything else (ActivityNotFound, IO, permission)
+        //       -> the plugin IS there and the save itself failed.
+        // Console-logged always; shown on screen only with dev tools unlocked,
+        // so a normal user still just sees the share sheet.
+        var _m = (err && (err.message || err.errorMessage || err)) + '';
+        try { console.warn('[backup] FileSaver rejected:', _m); } catch (e) {}
+        try {
+          if (typeof INTONARE_DEV !== 'undefined' && INTONARE_DEV) {
+            svcToast('FileSaver: ' + _m.slice(0, 90));
+          }
+        } catch (e) {}
+        // FALL BACK, do not report failure.
+        //
+        // Capacitor.registerPlugin() hands back a proxy whether or not the
+        // native plugin exists — it only rejects when you CALL it. So the old
+        // "plugin missing, use the share sheet" check stopped working the moment
+        // that fallback was added in v0.150.52: this path is always taken, and a
+        // build without FileSaver.java installed landed here and showed an error
+        // instead of sharing.
+        //
+        // Worse, the error shown was backup_err_writefail, which is RESTORE
+        // wording about running out of space. On a phone with 30GB free, telling
+        // someone to free up space for a failed backup is nonsense twice over.
+        try { _backupShareFallback(name, txt); } catch (e) {}
       });
     return;
   }
+
+  _backupShareFallback(name, txt);
+}
+
+// Tiers 1-3: write to cache and hand the FILE to the share sheet; if that is not
+// available, share the JSON as text; if that fails too, a browser download.
+// Split out so the FileSaver path can fall back into it instead of reporting a
+// failure when the native plugin is not installed.
+function _backupShareFallback(name, txt) {
+  var P = (window.Capacitor && window.Capacitor.Plugins) || {};
 
   if (P && P.Filesystem && P.Share) {
     P.Filesystem.writeFile({ path: name, data: txt, directory: 'CACHE', encoding: 'utf8' })
@@ -89264,7 +89403,10 @@ function backupExport() {
         var msg = (err && (err.message || err)) + '';
         if (/cancel|dismiss|abort/i.test(msg)) return;
         try { intonareNativeShare(txt, null, 'Intonare'); }
-        catch (e) { try { svcToast(t('backup_err_writefail')); } catch (e2) {} }
+        // backup_err_writefail is RESTORE wording about disk space, and using it
+        // here told people with 30GB free to clear room for a backup that failed
+        // for an entirely different reason. Backup gets its own message.
+        catch (e) { try { svcToast(t('backup_err_sharefail')); } catch (e2) {} }
       });
     return;
   }
