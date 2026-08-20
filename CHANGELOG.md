@@ -4,7 +4,48 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS (as of v0.150.72)
+## OPEN ITEMS (as of v0.150.77)
+
+**Device state: v0.150.74 built, installed and verified.** Backup is DONE. The
+Save dialog opens, the file lands where you choose, and the full round trip —
+back up, restore, Reset All Progress, Pro and settings survive — has been run and
+passed.
+
+**No blocking items remain.** That was the last thing that could cost someone
+their data, and it was the only item standing between this and a production
+release.
+
+**Tooling that does not survive a session — re-upload to project knowledge:**
+`intonare_regression_sentinel.py` (247 pins; a stale copy reports false drift).
+`intonare_i18n_audit.py` and `intonare_lang_sweep.py` are already in there and
+current.
+
+**Native source lives in `native_src`, NOT `android/app`.** go.bat restores from
+native_src on every run, so anything placed directly in android/app is silently
+overwritten on the next build. This cost two hours: the FileSaver registration
+was placed in android/app, go.bat kept restoring the version without it, and
+because javac compiles every .java in the folder whether or not it is referenced,
+FileSaverPlugin.class appeared in the APK the whole time while never being
+registered. Nothing warned at any stage.
+
+**Deferred, with measurements so they can be picked up cold:**
+- First module open compiles the module-building JS; repeated reloads go smooth
+  because of V8's bytecode cache. Needs the file split. v1.1.
+- `setLang` leaks ~2,679 DOM nodes over 20 language switches, in the legacy
+  builder list rather than the relabel registry. Fix is migrating those calls
+  into `registerRelabel`, which puts them behind its leak check.
+- Relative Pitch tone overlap. Two attempts tracked the delayed-tone timers in
+  both modes; it still overlaps, so a second voice comes from somewhere unfound.
+  Needs a trace, not another guess.
+- Drum samples: all five kits sourceable under CC0 — Versilian Virtuosity for
+  standard/jazz/brushes/latin, tidalcycles/sounds-tr808-fischer for electronic.
+  ~70 samples, ~2MB, lives in assets rather than the HTML. All five or none.
+- Update card shows a build number rather than a version name; Play is not
+  returning `availableVersionName` on the early access track. Check on production.
+
+---
+
+## OPEN ITEMS (superseded — as of v0.150.72)
 
 **Device state: v0.150.65 is built and running.** Only .66 to .72 are untested,
 which is the update card being tappable, the download size readout, and the
@@ -115,6 +156,101 @@ feel and its sources contradict each other on accents.
 ---
 
 ---
+
+## v0.150.77 — Immersive mode was a no-op on Android 15 and 16
+
+No HTML change. The version moves so this build is distinguishable from v0.150.76,
+which is byte-identical apart from the stamp. Two native files changed.
+
+**`MainActivity.hideSystemBars()` did nothing on a current phone.** It used
+`setSystemUiVisibility` with the `SYSTEM_UI_FLAG_*` constants. Android deprecated
+that API, and it is ignored outright when an app targets API 35 or higher. This
+app targets 36, so on Android 15 and 16 the status bar and the navigation bar
+stayed on screen and the layout drew underneath them. On older devices the call
+still worked, which is why it looked fine for so long.
+
+`WindowInsetsControllerCompat` replaces it. Three calls cover what the six flags
+did: `setDecorFitsSystemWindows(false)` for the LAYOUT_ flags,
+`BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE` for IMMERSIVE_STICKY, and
+`hide(Type.systemBars())` for FULLSCREEN plus HIDE_NAVIGATION. The
+`onWindowFocusChanged` re-assert is unchanged and still necessary. The now-unused
+`android.view.View` import went with it.
+
+**`allowMixedContent` is now false in `capacitor.config.json`.** It permitted a
+secure page to load insecure sub-resources. Nothing in the app loads over plain
+HTTP: the page is served from localhost, and the only outbound request is the
+OpenTDB call over HTTPS. The Wikipedia image lookup was the last remote resource
+and it went in v0.150.75. The setting described a capability the app never uses,
+which is exactly what a security scanner flags.
+
+## v0.150.76 — The online quiz blamed your connection for its own problems
+
+`mqRunOnlineFetch` accepted `response_code: 0` from OpenTDB and treated every
+other answer as a network failure. OpenTDB uses that code to say what actually
+happened, and two of them are ordinary:
+
+`1` means not enough questions match the filter. Survival asks for 50 from one
+category at one difficulty, and Musicals and Bands are small pools, so this is
+the normal case rather than the rare one. `5` is the rate limit: one request per
+IP every five seconds, which two quick taps will hit.
+
+Both showed "Could not connect to opentdb.com. Check your connection." Their
+connection was fine, so the advice sent people to restart their router over a
+category that simply ran short.
+
+Now the request retries instead of surrendering. On a rate limit it waits out the
+window once. On a short pool it drops the difficulty filter, then halves the ask,
+and only then gives up. Each failure has its own message, and the connection
+message is reserved for the one case that is about the connection: a request that
+never completed.
+
+The round length follows what arrived rather than what was requested, so a
+category with 23 questions runs a 23-question round instead of walking off the
+end of the array.
+
+Also added Open Trivia Database to the credits with its CC BY-SA 4.0 licence.
+The questions already carried a "via opentdb.com" line, which is attribution of a
+sort; naming the licence is the part that was missing.
+
+## v0.150.75 — Unlock codes hashed, Wikipedia photo lookup removed
+
+Two things from the 1.0 readiness pass, both about what ships rather than what
+the app does.
+
+**Unlock codes are now SHA-256 hashes.** `INTONARE_AMICI` and `INTONARE_OFFICINA`
+were plain string constants, so anyone reading the repo or unzipping the APK
+could find them by searching for a quoted word. Neither string appears in the
+file now; the entered code is hashed and the digest compared. Behaviour is
+unchanged: still case-insensitive, still trims surrounding spaces, dev code still
+grants Pro before enabling dev mode.
+
+The hash function is a self-contained synchronous SHA-256. `crypto.subtle` is
+async, and making the unlock path async would have changed its caller for no
+benefit. It was verified byte-for-byte against Node's crypto over empty input,
+multi-block input, the 55/56/64-byte padding boundaries and non-ASCII text.
+
+This hides the codes, not the door. Anyone who edits the client can still grant
+themselves Pro, as was always true. What it stops is someone finding a working
+code by reading the public source.
+
+**The Survival Guide no longer calls Wikipedia.** Guitar and bass models without
+an embedded photo used to fetch the lead image from the Wikipedia summary API and
+lay the tap zones over it. Three problems with that, and they compound: the
+request carried the user's IP to a third party in an app whose whole claim is
+that nothing leaves the device; those pages were blank without a connection; and
+the images came with licence terms a paid app cannot meet, since guitar articles
+usually carry manufacturer photos that are non-free, and the free ones need
+visible attribution that was never shown.
+
+Those models now show PHOTO COMING SOON, in both languages, and the
+tap-to-identify hint is hidden where there is nothing behind the zones to tap.
+`GUITAR_ARTICLES`, `BASS_ARTICLES` and `_imgCache` went with it. The
+`photo_offline` copy lost its "needs internet" half, since a failed load now
+means a broken embedded image rather than a missing connection.
+
+The app makes no outbound requests at all now, apart from the store and the
+in-app update check. The two remaining XHR calls read local audio through the
+iOS custom scheme, which is what they were always for.
 
 ## v0.150.74 — FileSaver was never registered, and nothing said so
 

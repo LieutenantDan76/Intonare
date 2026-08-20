@@ -7,13 +7,15 @@ import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebChromeClient;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 public class MainActivity extends BridgeActivity {
 
@@ -189,15 +191,25 @@ public class MainActivity extends BridgeActivity {
         if (hasFocus) hideSystemBars();
     }
 
+    // Hides the status bar and the navigation bar.
+    //
+    // The previous version used setSystemUiVisibility with the SYSTEM_UI_FLAG_*
+    // constants. Android deprecated that API, and it does nothing at all when the
+    // app targets API 35 or higher. This app targets 36, so the call was ignored:
+    // both bars stayed on screen and the layout drew under them.
+    //
+    // WindowInsetsControllerCompat is the replacement. The three calls do what the
+    // six flags used to do:
+    //   setDecorFitsSystemWindows(false)      == the LAYOUT_* flags (draw edge to edge)
+    //   BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE == IMMERSIVE_STICKY (swipe reveals,
+    //                                            then Android hides them again)
+    //   hide(Type.systemBars())               == FULLSCREEN + HIDE_NAVIGATION
     private void hideSystemBars() {
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-              View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            | View.SYSTEM_UI_FLAG_FULLSCREEN            // status bar
-            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION       // nav bar
-            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        );
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        WindowInsetsControllerCompat controller =
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.setSystemBarsBehavior(
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        controller.hide(WindowInsetsCompat.Type.systemBars());
     }
 }

@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.74 -->
+<!-- INTONARE_VERSION: 0.150.77 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -29986,6 +29986,10 @@ try {
         <div class="credits-item"><a href="https://www.piano-midi.de" target="_blank">Bernd Kr&uuml;ger</a> &mdash; Prelude in C, Clair de lune, F&uuml;r Elise, Moonlight Sonata (I, II &amp; III), Raindrop Pr&eacute;lude, Pr&eacute;lude in E minor, Fantaisie-Impromptu, Liebestraum No. 3, Barcarolle, Troika, Alla Turca, Sonata Facile, To Spring, Wedding Day at Troldhaugen, Butterfly, Tr&auml;umerei, Pr&eacute;lude in C-sharp minor, Pr&eacute;lude Op. 23 No. 5, Waldstein Sonata (I) &mdash; <a href="https://creativecommons.org/licenses/by-sa/3.0/de/deed.en" target="_blank">CC BY-SA</a> &mdash; <a href="https://lieutenantdan76.github.io/Intonare/credits/midi-sources/" target="_blank" data-i18n="credits_adapted">adapted files</a></div>
       </div>
       <div class="credits-group">
+        <div class="credits-group-title" data-i18n="credits_quiz">Online quiz questions</div>
+        <div class="credits-item"><a href="https://opentdb.com" target="_blank">Open Trivia Database</a> &mdash; <span data-i18n="credits_quiz_packs">Bands, Musicals &amp; Video Games question packs</span> &mdash; <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">CC BY-SA 4.0</a></div>
+      </div>
+      <div class="credits-group">
         <div class="credits-group-title" data-i18n="credits_fingering">Fingering diagrams</div>
         <div class="credits-item"><a href="https://fingering.bretpimentel.com" target="_blank">Bret Pimentel</a> &mdash; Bassoon &amp; Contrabassoon body diagrams &mdash; <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></div>
       </div>
@@ -31104,7 +31108,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.74</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.77</span>
     </div>
   </div>
 </div>
@@ -31112,7 +31116,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.74';
+const INTONARE_VERSION = '0.150.77';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -39440,20 +39444,82 @@ function exitToolFolder() {
 // as a taste of Pro. Everything else in Tools/Train is Pro-locked. Pro is unlocked
 // by a one-time purchase (layer 2, RevenueCat) OR a local unlock code (layer 1).
 //
-// SECURITY NOTE: the unlock code lives in this client file and is therefore
-// readable by anyone who unzips the APK. It is a convenience lock for friends/
-// family/testers, NOT a security barrier. Real purchases are validated by the
-// store/RevenueCat and cannot be forged by reading this file.
+// SECURITY NOTE: the codes are stored as SHA-256 hashes, not as text, so the
+// strings do not appear anywhere in this file or in the shipped APK. That stops
+// someone finding them by reading or grepping the source. It is still a
+// convenience lock for friends/family/testers, NOT a security barrier: anyone
+// who edits the client can grant themselves Pro whatever we do here. Real
+// purchases are validated by the store/RevenueCat and cannot be forged.
 // ═══════════════════════════════════════════════════════════════════════════
 const FREE_TOOLS = ['cof'];          // Circle of Fifths — free taste tool
 const FREE_TRAIN = ['poly'];         // Polyrhythm — free taste Train module
-const UNLOCK_CODE = 'INTONARE_AMICI'; // friends/family/tester code (case-insensitive)
+// SHA-256 of the friends/family/tester code, uppercased. The code itself is not
+// in this file. Entered in the Settings unlock field; case-insensitive, because
+// the input is uppercased before hashing.
+const UNLOCK_CODE_HASH = '6bc798dc5a52d618f1188b3964bcfe7106842e315560df66dc06ac4840db1976';
 
-// Separate code for the DEVELOPER TOOLS. Deliberately not the same as
-// UNLOCK_CODE: testers are given that one, and they should get Pro without also
-// getting a button that revokes it, a bulk achievement unlocker and the Road Trip
-// leg tuner. Entered in the same Settings field; case-insensitive.
-const DEV_CODE = 'INTONARE_OFFICINA';
+// SHA-256 of the DEVELOPER TOOLS code. Deliberately not the same code as the
+// tester one: testers get Pro without also getting a button that revokes it, a
+// bulk achievement unlocker and the Road Trip leg tuner. Same Settings field.
+const DEV_CODE_HASH = 'bdbf5615622ed6287f9b97721ea09800e2208f0122cf59e046581df8acfe2cf8';
+
+// Synchronous SHA-256, hex out. Self-contained on purpose: crypto.subtle is
+// async, and making the unlock path async would change every caller for no gain.
+// Verified byte-for-byte against Node's crypto across empty input, multi-block
+// input and non-ASCII input.
+function _sha256Hex(str) {
+  var K = [
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ];
+  var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var bytes = [], i, c;
+  for (i = 0; i < str.length; i++) {
+    c = str.charCodeAt(i);
+    if (c < 0x80) bytes.push(c);
+    else if (c < 0x800) { bytes.push(0xc0 | (c >> 6), 0x80 | (c & 63)); }
+    else if (c < 0xd800 || c >= 0xe000) { bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63)); }
+    else { i++; c = 0x10000 + (((c & 0x3ff) << 10) | (str.charCodeAt(i) & 0x3ff));
+           bytes.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 63), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63)); }
+  }
+  var bitLen = bytes.length * 8;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  for (i = 7; i >= 0; i--) bytes.push((bitLen / Math.pow(2, i * 8)) & 0xff);
+  var w = new Array(64), a, b, cc, d, e, f, g, h, t1, t2, j, off;
+  function rotr(x, n) { return (x >>> n) | (x << (32 - n)); }
+  for (off = 0; off < bytes.length; off += 64) {
+    for (j = 0; j < 16; j++) {
+      w[j] = (bytes[off+j*4] << 24) | (bytes[off+j*4+1] << 16) | (bytes[off+j*4+2] << 8) | bytes[off+j*4+3];
+    }
+    for (j = 16; j < 64; j++) {
+      var s0 = rotr(w[j-15],7) ^ rotr(w[j-15],18) ^ (w[j-15] >>> 3);
+      var s1 = rotr(w[j-2],17) ^ rotr(w[j-2],19) ^ (w[j-2] >>> 10);
+      w[j] = (w[j-16] + s0 + w[j-7] + s1) | 0;
+    }
+    a=H[0];b=H[1];cc=H[2];d=H[3];e=H[4];f=H[5];g=H[6];h=H[7];
+    for (j = 0; j < 64; j++) {
+      var S1 = rotr(e,6) ^ rotr(e,11) ^ rotr(e,25);
+      var ch = (e & f) ^ (~e & g);
+      t1 = (h + S1 + ch + K[j] + w[j]) | 0;
+      var S0 = rotr(a,2) ^ rotr(a,13) ^ rotr(a,22);
+      var maj = (a & b) ^ (a & cc) ^ (b & cc);
+      t2 = (S0 + maj) | 0;
+      h=g; g=f; f=e; e=(d+t1)|0; d=cc; cc=b; b=a; a=(t1+t2)|0;
+    }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+cc)|0;H[3]=(H[3]+d)|0;
+    H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+  }
+  var out = '';
+  for (i = 0; i < 8; i++) out += ('00000000' + (H[i] >>> 0).toString(16)).slice(-8);
+  return out;
+}
 
 // Single source of truth for Pro access.
 // ── iOS BETA IAP BYPASS (temporary; remove when StoreKit IAP lands) ──────────
@@ -39582,7 +39648,7 @@ function tryUnlockCode(raw) {
   if (!code) return false;
   // Developer tools. Checked first so it can't be shadowed if the codes are ever
   // made similar. Grants Pro as well, since every dev tool assumes access.
-  if (code === DEV_CODE.toUpperCase()) {
+  if (_sha256Hex(code) === DEV_CODE_HASH) {
     // ORDER MATTERS: grant Pro BEFORE enabling dev mode. setDevMode() recomputes
     // which dev controls are visible, and the Reset Pro button's condition is
     // "dev mode AND Pro" — enabling dev first meant that check ran while Pro was
@@ -39598,7 +39664,7 @@ function tryUnlockCode(raw) {
     showDevUnlocked();
     return true;
   }
-  if (code === UNLOCK_CODE.toUpperCase()) {
+  if (_sha256Hex(code) === UNLOCK_CODE_HASH) {
     grantPro();
     return true;
   }
@@ -83274,6 +83340,8 @@ const STRINGS = {
   en: {
     mq_fetching:'Fetching',
     mq_no_connect:'Could not connect to opentdb.com. Check your connection.',
+    mq_no_questions:'Not enough questions in this category right now. Try another one.',
+    mq_too_fast:'Too many requests. Wait a few seconds and try again.',
     mq_question:'QUESTION',
     mq_correct_out_of:'CORRECT OUT OF',
     mq_grade_perfect:'PERFECT PITCH', mq_grade_perfect_sub:'Hard to fault.',
@@ -83409,6 +83477,8 @@ const STRINGS = {
     credits_ded_mother:"Made possible by my mother Linda, who always believes in my dreams even when I don't.",
     credits_arrangements:'Sheet music arrangements',
     credits_performances:'Performance sequences',
+    credits_quiz:'Online quiz questions',
+    credits_quiz_packs:'Bands, Musicals & Video Games question packs',
     credits_fingering:'Fingering diagrams',
     credits_adapted:'adapted files',
     scale_up:'UP', scale_down:'DOWN', scale_loop:'LOOP',
@@ -83922,7 +83992,7 @@ const STRINGS = {
     gtool_play_asc:'▶︎ PLAY ASCENDING', gtool_play_desc:'◀ PLAY DESCENDING',
     inst_guitar:'GUITAR', inst_bass:'BASS', inst_uke:'UKE', inst_mandolin:'MANDOLIN', inst_banjo:'BANJO', inst_lute:'LUTE', inst_bouzouki:'BOUZOUKI', inst_piano:'PIANO', inst_organ:'ORGAN', inst_melodica:'MELODICA', inst_harp:'HARP', inst_mallet:'MALLET', inst_trumpet:'TRUMPET', inst_flugelhorn:'FLUGELHORN', inst_frenchhorn:'FRENCH HORN', inst_euphonium:'EUPHONIUM', inst_tuba:'TUBA', inst_trombone:'TROMBONE', inst_ww_flute:'FLUTE', inst_ww_clarinet:'CLARINET', inst_ww_oboe:'OBOE', inst_ww_bassoon:'BASSOON', inst_ww_sax:'SAX', inst_ww_recorder:'RECORDER', inst_ww_whistle:'TIN WHISTLE', inst_ww_ocarina:'OCARINA', inst_harmonica:'HARMONICA', inst_ww_chrom_harp:'CHROM. HARP', inst_didgeridoo:'DIDGERIDOO', inst_bowed_violin:'VIOLIN', inst_bowed_viola:'VIOLA', inst_bowed_cello:'CELLO', inst_bowed_doublebass:'DBL BASS', csfam_fretted:'Fretted', csfam_chromperc:'Chrom.', csfam_brass:'Brass', csfam_woodwind:'Woodwind', csfam_freereed:'Free Reed', csfam_bowed:'Bowed',
     hdr_back_to:'back to ',
-    lbl_other:'OTHER', lbl_oct:'OCT ', lbl_options:'OPTIONS', btn_close:'CLOSE', lbl_to:'to:', lbl_bass:'BASS', pn_tap_start:'tap a key to start', trp_sounds:'Sounds: ', trp_written:'Written: ', photo_loading:'LOADING PHOTO…', photo_offline:'PHOTO UNAVAILABLE — NEEDS INTERNET',
+    lbl_other:'OTHER', lbl_oct:'OCT ', lbl_options:'OPTIONS', btn_close:'CLOSE', lbl_to:'to:', lbl_bass:'BASS', pn_tap_start:'tap a key to start', trp_sounds:'Sounds: ', trp_written:'Written: ', photo_loading:'LOADING PHOTO…', photo_offline:'PHOTO UNAVAILABLE', photo_soon:'PHOTO COMING SOON',
     backup_partial_restore:'This backup was saved with %n item(s) missing. Everything else will be restored.',
     backup_partial:'Backup saved, but %n item(s) could not be included. This is a bug \u2014 please report it.',
     backup_err_build:'Could not build the backup. Please report this \u2014 it is a bug, not a problem with your phone.',
@@ -84360,6 +84430,8 @@ const STRINGS = {
   it: {
     mq_fetching:'Recupero',
     mq_no_connect:'Impossibile connettersi a opentdb.com. Controlla la connessione.',
+    mq_no_questions:'Non ci sono abbastanza domande in questa categoria al momento. Provane un\u2019altra.',
+    mq_too_fast:'Troppe richieste. Aspetta qualche secondo e riprova.',
     mq_question:'DOMANDA',
     mq_correct_out_of:'CORRETTE SU',
     mq_grade_perfect:'ORECCHIO ASSOLUTO', mq_grade_perfect_sub:'Quasi impeccabile.',
@@ -84499,6 +84571,8 @@ const STRINGS = {
     credits_ded_mother:'Grazie a mia mamma Linda, che crede sempre nei miei sogni anche quando non ci credo io.',
     credits_arrangements:'Arrangiamenti musicali',
     credits_performances:'Sequenze di esecuzione',
+    credits_quiz:'Domande quiz online',
+    credits_quiz_packs:'Pacchetti domande Band, Musical e Videogiochi',
     credits_fingering:'Diagrammi di diteggiatura',
     credits_adapted:'file adattati',
     scale_up:'SU', scale_down:'GIÙ', scale_loop:'LOOP',
@@ -85080,7 +85154,7 @@ const STRINGS = {
     drumkit: { title: "Sequencer di Batteria", body: "Un sequencer a step su 10 tracce con cassa, rullante, charleston, tom e altro. Ogni traccia ha la sua riga di step: tocca per accendere o spegnere un colpo, tieni premuto per ghost note o flam.<br><br><strong>KIT</strong> sceglie il set di suoni (Standard, Elettronico, Jazz, Latin). <strong>PRESET</strong> carica disegni completi su più tracce, organizzati per stile. <strong>PULISCI</strong> svuota tutte le tracce. Il cursore <strong>BPM</strong> e i comandi del tempo in alto sono condivisi con il metronomo principale." },
     tonal_center: { title: "Centro Tonale", body: "Un bordone tiene ferma una tonica mentre tu canti o suoni sopra, per costruire l’orecchio su dove sta ogni nota dentro una tonalità.<br><br>Scegli una <strong>tonica</strong> sulla tastiera, poi una <strong>scala</strong> e un’<strong>ottava</strong>, quindi tocca <strong>AVVIA BORDONE</strong>. Lo schermo mostra tre cose insieme: l’<strong>intervallo</strong> fra la tua nota e la tonica, la tua intonazione in <strong>cent</strong> sulla barra di aggancio, e il nome della nota nella coppia <strong>BORDONE / TU</strong>.<br><br>Il colore ti dice l’intonazione a colpo d’occhio: <strong>blu</strong> = calante (troppo bassa), <strong>rosso</strong> = crescente (troppo alta), <strong>verde</strong> = intonato." }
     },
-    lbl_other:'ALTRO', lbl_oct:'OTT ', lbl_options:'OPZIONI', btn_close:'CHIUDI', lbl_to:'a:', lbl_bass:'BASSO', pn_tap_start:'tocca un tasto per iniziare', trp_sounds:'Suona: ', trp_written:'Scritto: ', photo_loading:'CARICAMENTO FOTO…', photo_offline:'FOTO NON DISPONIBILE — SERVE INTERNET',
+    lbl_other:'ALTRO', lbl_oct:'OTT ', lbl_options:'OPZIONI', btn_close:'CHIUDI', lbl_to:'a:', lbl_bass:'BASSO', pn_tap_start:'tocca un tasto per iniziare', trp_sounds:'Suona: ', trp_written:'Scritto: ', photo_loading:'CARICAMENTO FOTO…', photo_offline:'FOTO NON DISPONIBILE', photo_soon:'FOTO IN ARRIVO',
     backup_partial_restore:'Questo backup \u00e8 stato salvato con %n elemento/i mancante/i. Tutto il resto verr\u00e0 ripristinato.',
     backup_partial:'Backup salvato, ma %n elemento/i non \u00e8 stato possibile includerlo. \u00c8 un bug: segnalalo pure.',
     backup_err_build:'Non \u00e8 stato possibile creare il backup. Segnalalo pure: \u00e8 un bug dell\u2019app, non un problema del telefono.',
@@ -115300,14 +115374,6 @@ var BASS_ZONES = {
   ]
 };
 
-var BASS_ARTICLES = {
-  precision:     'Fender_Precision_Bass',
-  jazz:          'Fender_Jazz_Bass',
-  stingray:      'Music_Man_StingRay',
-  rickenbacker:  'Rickenbacker_4000_series',
-  hofner:        'H%C3%B6fner_500%2F1'
-};
-
 var BASS_MODEL_INFO = {
   precision:    { t:'Fender Precision Bass', b:'The first mass-produced electric bass, introduced in 1951. Split single-coil pickup, maple neck. James Jamerson, Duck Dunn, Pino Palladino.', b_it:'Il primo basso elettrico prodotto in serie, introdotto nel 1951. Pickup split single-coil, manico in acero. James Jamerson, Duck Dunn, Pino Palladino.' },
   jazz:         { t:'Fender Jazz Bass', b:'Introduced 1960. Two single-coil pickups, narrower neck. Jaco Pastorius, Marcus Miller, John Paul Jones.', b_it:'Introdotto nel 1960. Due pickup single-coil, manico più stretto. Jaco Pastorius, Marcus Miller, John Paul Jones.' },
@@ -115322,12 +115388,8 @@ var GUITAR_EMBEDDED={strat:{
   headstock:{photo:'',
     zones:[[65,4,10,16,'#b8a3ff','String 6 — Low E','Lowest-pitched string (82.4 Hz). Tighten to raise pitch, loosen to lower it. Nearest the headstock tip.'],[55,11,10,16,'#a3c4ff','String 5 — A','Tuned to 110 Hz. Along with Low E forms the bass foundation of most chords and riffs.'],[44,18,10,16,'#8ab8ff','String 4 — D','Tuned to 146.8 Hz. Wound string. Drop-D tunes this one whole step lower.'],[33,26,10,16,'#7aaeff','String 3 — G','Tuned to 196 Hz. Thinnest wound string on most sets. Bends more easily than lower strings.'],[22,33,10,16,'#9bb8e0','String 2 — B','Tuned to 246.9 Hz. Plain unwound string.'],[13,40,10,16,'#b8a3ff','String 1 — High e','Highest-pitched string (329.6 Hz). Thinnest and most prone to breaking. The lead melody string.'],[18,56,64,28,'#d8c0a0','Fender Stratocaster Headstock','Designed by Freddie Tavares in 1954. The 6-in-line layout keeps all machine heads on one side. The Fender script was drawn by Francis Hall in the early 1950s.']]}
 }};
-var GUITAR_ARTICLES = {
-  strat:'Fender_Stratocaster', tele:'Fender_Telecaster', lp:'Gibson_Les_Paul',
-  sg:'Gibson_SG', es335:'Gibson_ES-335', jazzmaster:'Fender_Jazzmaster',
-  acoustic:'Acoustic_guitar'
-};
-var _imgCache = {};
+// GUITAR_ARTICLES, BASS_ARTICLES and _imgCache were deleted with the Wikipedia
+// photo lookup they served.
 
 function buildPhotoZone(imgSrc, zones, tipEl) {
   var wrap = document.createElement('div');
@@ -115357,7 +115419,7 @@ function buildPhotoZone(imgSrc, zones, tipEl) {
     wrap.style.minHeight = '';
   };
   img.onerror = function() {
-    loader.textContent = _tf('photo_offline','PHOTO UNAVAILABLE — NEEDS INTERNET');
+    loader.textContent = _tf('photo_offline','PHOTO UNAVAILABLE');
     loader.style.padding = '30px 20px';
   };
   img.src = imgSrc;
@@ -116611,12 +116673,12 @@ function buildPhotoZoneWithCalib(imgSrc, zonesDefault, tipEl, calibKey) {
   wrap.style.minHeight = '180px';
 
   if (!imgSrc) {
-    var ld=document.createElement('div');ld.className='photo-loading';ld.style.padding='40px 20px';ld.textContent=_tf('photo_offline','PHOTO UNAVAILABLE — NEEDS INTERNET');wrap.appendChild(ld);return wrap;
+    var ld=document.createElement('div');ld.className='photo-loading';ld.style.padding='40px 20px';ld.textContent=_tf('photo_soon','PHOTO COMING SOON');wrap.appendChild(ld);return wrap;
   }
   var loader=document.createElement('div');loader.className='photo-loading';loader.style.padding='40px 20px';loader.textContent=t('sg_loading')||'LOADING2026';wrap.appendChild(loader);
   var img=document.createElement('img');img.alt='';img.style.cssText='width:100%;height:auto;display:none;opacity:.93';
   img.onload=function(){loader.style.display='none';img.style.display='block';wrap.style.minHeight='';};
-  img.onerror=function(){loader.textContent=_tf('photo_offline','PHOTO UNAVAILABLE — NEEDS INTERNET');};
+  img.onerror=function(){loader.textContent=_tf('photo_offline','PHOTO UNAVAILABLE');};
   img.src=imgSrc;wrap.appendChild(img);
 
   var zoneLayer=document.createElement('div');zoneLayer.className='photo-zones';zoneLayer.style.cssText='position:absolute;inset:0;pointer-events:none';wrap.appendChild(zoneLayer);
@@ -118016,20 +118078,19 @@ function render(dir){
         viewRow.style.display=emb?'':'none';
         if(emb&&emb[guitarView]){
           var vd=emb[guitarView];
+          hint.style.display='';
           photoContainer.appendChild(buildPhotoZoneWithCalib(vd.photo,vd.zones,tipEl,'g_'+model+'_'+guitarView));
           infoEl.textContent='';
         } else {
+          // No photo for this model yet. This branch used to pull the lead image
+          // from the Wikipedia summary API. That is gone: it needed a connection
+          // in an app that works offline, and the images carry licence terms a
+          // paid app cannot meet. The tap-to-identify hint is hidden here because
+          // there is nothing to tap without a photo behind the zones.
           if(guitarView==='headstock')guitarView='body';
           infoEl.textContent=(_il&&MODEL_INFO[model].b_it)?MODEL_INFO[model].b_it:MODEL_INFO[model].b;
-          var ldiv=document.createElement('div');ldiv.className='photo-loading';ldiv.style.padding='40px 20px';ldiv.textContent=t('sg_loading')||'LOADING2026';
-          photoContainer.appendChild(ldiv);
-          var art=GUITAR_ARTICLES[model]||'Electric_guitar';
-          if(_imgCache[art]!==undefined){photoContainer.innerHTML='';photoContainer.appendChild(buildPhotoZoneWithCalib(_imgCache[art],GUITAR_ZONES[model]||GUITAR_ZONES.strat,tipEl,'g_'+model));return;}
-          fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(art))
-            .then(function(r){return r.json();}).then(function(d){
-              var url=(d.originalimage&&d.originalimage.source)||(d.thumbnail&&d.thumbnail.source)||null;
-              _imgCache[art]=url;photoContainer.innerHTML='';photoContainer.appendChild(buildPhotoZoneWithCalib(url,GUITAR_ZONES[model]||GUITAR_ZONES.strat,tipEl,'g_'+model));
-            }).catch(function(){_imgCache[art]=null;photoContainer.innerHTML='';photoContainer.appendChild(buildPhotoZoneWithCalib(null,[],tipEl,'g_'+model));});
+          hint.style.display='none';
+          photoContainer.appendChild(buildPhotoZoneWithCalib(null,[],tipEl,'g_'+model));
         }
       }
       var ddGuitar=buildCustomDropdown(guitarItems,guitarModel,function(val){guitarModel=val;guitarView='body';setViewBtns();loadGuitarPhoto(val);});
@@ -118144,23 +118205,10 @@ function render(dir){
         var bm = BASS_MODEL_INFO[model] || {};
         var _bil = (progState && progState.lang) === 'it';
         bInfoEl.textContent = (_bil && bm.b_it) ? bm.b_it : (bm.b || '');
-        var art = BASS_ARTICLES[model] || 'Bass_guitar';
-        if (_imgCache[art] !== undefined) {
-          bPhotoContainer.appendChild(buildPhotoZoneWithCalib(_imgCache[art], BASS_ZONES[model] || [], bTipEl, 'b_' + model));
-          return;
-        }
-        var ldiv = document.createElement('div'); ldiv.className = 'photo-loading'; ldiv.style.padding = '40px 20px'; ldiv.textContent = t('sg_loading') || 'LOADING';
-        bPhotoContainer.appendChild(ldiv);
-        fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(art))
-          .then(function(r) { return r.json(); })
-          .then(function(d) {
-            var url = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source) || null;
-            _imgCache[art] = url; bPhotoContainer.innerHTML = '';
-            bPhotoContainer.appendChild(buildPhotoZoneWithCalib(url, BASS_ZONES[model] || [], bTipEl, 'b_' + model));
-          }).catch(function() {
-            _imgCache[art] = null; bPhotoContainer.innerHTML = '';
-            bPhotoContainer.appendChild(buildPhotoZoneWithCalib(null, [], bTipEl, 'b_' + model));
-          });
+        // No bass photos are embedded yet, and the Wikipedia lookup that used to
+        // fill this space is gone; see the guitar branch for why.
+        bHint.style.display = 'none';
+        bPhotoContainer.appendChild(buildPhotoZoneWithCalib(null, [], bTipEl, 'b_' + model));
       }
       var ddBass = buildCustomDropdown(bassItems, bassModel, function(val) { bassModel = val; loadBassPhoto(val); });
       bSelRow.appendChild(bLbl); bSelRow.appendChild(ddBass);
@@ -121613,27 +121661,60 @@ async function mqRunOnlineFetch(catId, mode) {
   if (spinner) spinner.style.display = '';
   var count = mode === 'survival' ? 50 : 20;
   var qs = [];
+  // OpenTDB answers with a response_code that says WHY a request came back empty,
+  // and the reasons need different handling:
+  //   0  success
+  //   1  not enough questions for this filter. Musicals and Bands are small
+  //      pools, and survival asks for 50 at one difficulty, so this is the
+  //      common one. Widen the filter rather than give up.
+  //   2  bad parameter
+  //   5  rate limit. One request per IP every 5 seconds; tapping two categories
+  //      in a row hits it. Wait it out once.
+  // Everything used to collapse into "check your connection", which blamed the
+  // user's network for a full pool or a fast thumb.
+  var lastCode = null;
+  function mqTdbUrl(amount, difficulty) {
+    return 'https://opentdb.com/api.php?amount=' + amount + '&category=' + catCfg.catId +
+           '&type=multiple&encode=url3986' + (difficulty ? '&difficulty=' + difficulty : '');
+  }
+  async function mqTdbTry(amount, difficulty) {
+    var resp = await fetch(mqTdbUrl(amount, difficulty));
+    var data = await resp.json();
+    lastCode = data.response_code;
+    if (data.response_code !== 0 || !data.results) return [];
+    return data.results.map(function(r) {
+      var dec = decodeURIComponent;
+      var opts = r.incorrect_answers.map(dec);
+      var correct = dec(r.correct_answer);
+      var pos = Math.floor(Math.random() * (opts.length + 1));
+      opts.splice(pos, 0, correct);
+      return { q: dec(r.question), opts: opts, ans: pos,
+               fact: 'via opentdb.com \u00b7 ' + dec(r.category),
+               pack: catId, idx: Math.random() };
+    });
+  }
   try {
     var diff = MQ.diff || 'medium';
-    var url = 'https://opentdb.com/api.php?amount=' + count + '&category=' + catCfg.catId + '&type=multiple&encode=url3986&difficulty=' + diff;
-    var resp = await fetch(url);
-    var data = await resp.json();
-    if (data.response_code === 0 && data.results) {
-      qs = data.results.map(function(r) {
-        var dec = decodeURIComponent;
-        var opts = r.incorrect_answers.map(dec);
-        var correct = dec(r.correct_answer);
-        var pos = Math.floor(Math.random() * (opts.length + 1));
-        opts.splice(pos, 0, correct);
-        return { q: dec(r.question), opts: opts, ans: pos,
-                 fact: 'via opentdb.com · ' + dec(r.category),
-                 pack: catId, idx: Math.random() };
-      });
+    qs = await mqTdbTry(count, diff);
+    // Rate limited: one wait-and-retry, then give up rather than hammer it.
+    if (!qs.length && lastCode === 5) {
+      await new Promise(function(r){ setTimeout(r, 5200); });
+      qs = await mqTdbTry(count, diff);
     }
-  } catch(e) { qs = []; }
+    // Pool too small at this difficulty: drop the difficulty, then halve the ask.
+    if (!qs.length && lastCode === 1) {
+      qs = await mqTdbTry(count, null);
+      if (!qs.length && lastCode === 1 && count > 10) qs = await mqTdbTry(10, null);
+    }
+  } catch(e) { qs = []; lastCode = null; }
 
   if (!qs.length) {
-    if (loadTxt) loadTxt.textContent = t('mq_no_connect');
+    // lastCode null means the request itself failed, which is the only case that
+    // is really about the connection.
+    var msg = (lastCode === 5) ? (t('mq_too_fast') || 'Too many requests. Wait a few seconds and try again.')
+            : (lastCode !== null) ? (t('mq_no_questions') || 'Not enough questions in this category right now. Try another one.')
+            : t('mq_no_connect');
+    if (loadTxt) loadTxt.textContent = msg;
     if (spinner) spinner.style.display = 'none';
     if (loadBack) loadBack.style.display = 'block';
     return;
@@ -121645,7 +121726,7 @@ async function mqRunOnlineFetch(catId, mode) {
   MQ.current = 0; MQ.score = 0; MQ.correct = 0;
   MQ.streak = 0; MQ.bestStreak = 0; MQ.xp = 0;
   MQ.lives = 3; MQ.answered = false; MQ.packStats = {}; MQ.misses = [];
-  MQ.qCount = mode === 'survival' ? 50 : 10;
+  MQ.qCount = mode === 'survival' ? Math.min(50, qs.length) : Math.min(10, qs.length);
   setTimeout(function() { mqShowScreen('mqScreenQuiz'); mqRenderQ(); }, 380);
 }
 
