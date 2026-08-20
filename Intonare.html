@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.80 -->
+<!-- INTONARE_VERSION: 0.150.81 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -31137,7 +31137,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.80</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.81</span>
     </div>
   </div>
 </div>
@@ -31145,7 +31145,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.80';
+const INTONARE_VERSION = '0.150.81';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -123258,6 +123258,19 @@ function _backTopOverlay() {
     if (_BACK_SKIP_IDS.indexOf(el.id) !== -1) return;
     if (el.classList && el.classList.contains('intonare-splash')) return;
     if (!_isVisiblyOpen(el)) return;
+    // CLICK-THROUGH MEANS CLOSED. Several modules park a full-viewport wrapper on
+    // the page permanently and slide the real panel inside it: the Progression
+    // tool alone has three (progChordSheetDrawer, progPresetModal, progSyncTray),
+    // all display:flex, opacity 1, 412x915, z-index 200, all shut. Every measure
+    // _isVisiblyOpen() takes says open, because the wrapper IS on screen; the
+    // only thing that says otherwise is pointer-events: none.
+    //
+    // This is what killed back across the whole Tools tab. The step found one of
+    // those wrappers, stripped classes that changed nothing anybody could see,
+    // and returned as though it had closed something. closeAllOverlays() has
+    // always touched them too, but it runs on navigation and does no harm, so
+    // nothing ever showed it.
+    if (getComputedStyle(el).pointerEvents === 'none') return;
     var z = parseInt(getComputedStyle(el).zIndex, 10);
     if (isNaN(z)) z = 0;
     // >= keeps the later element on a tie, which is the one painted on top.

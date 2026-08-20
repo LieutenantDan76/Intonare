@@ -4,7 +4,7 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS (as of v0.150.80)
+## OPEN ITEMS (as of v0.150.81)
 
 **Device state: v0.150.74 built, installed and verified.** Backup is DONE. The
 Save dialog opens, the file lands where you choose, and the full round trip —
@@ -156,6 +156,36 @@ feel and its sources contradict each other on accents.
 ---
 
 ---
+
+## v0.150.81 — Back was dead on the whole Tools tab, and three invisible sheets did it
+
+Reported as "back works on every tab but nothing in Tools". It was not the Tools
+tab. It was three full-viewport wrappers that are on the page permanently.
+
+The Progression tool parks `progChordSheetDrawer`, `progPresetModal` and
+`progSyncTray` in the DOM at all times and slides the real panel inside each one.
+Closed, all three are `display: flex`, `opacity: 1`, `visibility: visible`, 412 by
+915, `position: fixed`, `z-index: 200`. Every measure `_isVisiblyOpen()` takes
+says open, and it is not wrong: the wrapper genuinely is on screen. Only
+`pointer-events: none` says otherwise.
+
+So step 4 of the back ladder found one, stripped classes that changed nothing
+anybody could see, and returned as though it had closed something. Every press.
+On the hub, in a folder, inside a tool. `closeAllOverlays()` has been touching
+those three for as long as it has existed, but it runs on navigation and does no
+harm there, so nothing ever showed it.
+
+The fix is one line: an element that cannot be clicked is not open, and back skips
+it. Click-through is the only signal that separates a parked wrapper from a real
+overlay, since every other property is identical.
+
+Found by loading the app in a headless browser and asking `_backTopOverlay()` what
+it could see on the Tools tab, rather than by reading the markup. Reading it would
+not have shown this; the three elements look shut in the source and are shut on
+screen.
+
+Verified after the fix: the hub opens the launcher, a folder returns to the hub, a
+tool returns to its folder, and a real modal still closes first.
 
 ## v0.150.80 — Pulling the headphones out no longer fills the room
 
