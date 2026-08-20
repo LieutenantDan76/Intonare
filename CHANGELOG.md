@@ -4,7 +4,7 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS (as of v0.150.81)
+## OPEN ITEMS (as of v0.150.82)
 
 **Device state: v0.150.74 built, installed and verified.** Backup is DONE. The
 Save dialog opens, the file lands where you choose, and the full round trip —
@@ -156,6 +156,35 @@ feel and its sources contradict each other on accents.
 ---
 
 ---
+
+## v0.150.82 — The web version has been playing synthesised piano the whole time
+
+Found while testing the service worker, not while looking for it.
+
+The app fetches samples from `audio/<instrument>/`. In the repo the folder is
+`audio_assets/`, and both build scripts rename it on the way into the bundle:
+go.bat step 4g copies each folder into `assets/public/audio/`, and codemagic does
+`cp -r audio_assets/* www/audio/`. Native builds are therefore correct.
+
+GitHub Pages has no build step. It serves the repo as it stands, so on the web
+version `audio/` does not exist and every sampled instrument 404s. The sample
+engine catches that and falls back to synthesis, which is the right behaviour and
+also the reason nobody noticed: no error, no broken screen, just a piano that
+sounds synthetic. One console warning per instrument was the only trace.
+
+`_assetRoot()` now returns `audio/` under Capacitor and `audio_assets/` elsewhere.
+Native keeps the exact path it already had. Only the web build looks anywhere new,
+and it looks where the files actually are.
+
+The alternative was renaming the folder in the repo, which is one move and also
+means editing go.bat and codemagic.yaml. This changes no build script, which
+matters more than elegance in the week before a launch.
+
+Also covers the loose whip one-shot, which had the same hard-coded root.
+
+Verified by serving the repo layout over HTTP and watching the requests: the web
+build asks for `audio_assets/grand_piano/piano060v100.mp3` and gets 200, and with
+Capacitor faked present the same call returns the `audio/` path.
 
 ## v0.150.81 — Back was dead on the whole Tools tab, and three invisible sheets did it
 
