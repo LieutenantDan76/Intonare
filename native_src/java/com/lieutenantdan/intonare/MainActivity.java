@@ -1,9 +1,13 @@
 package com.lieutenantdan.intonare;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -78,6 +82,48 @@ public class MainActivity extends BridgeActivity {
                 new String[]{ Manifest.permission.RECORD_AUDIO },
                 MIC_PERMISSION_CODE);
         }
+
+        registerNoisyReceiver();
+    }
+
+    // ── Headphones pulled out ───────────────────────────────────────────────
+    // Android does not stop anything when the jack is pulled or the Bluetooth
+    // link drops. It re-routes to the speaker, at whatever the media volume
+    // happens to be, and playback continues. A sustained drone or a running
+    // metronome therefore fills the room. In a lesson or a practice room that is
+    // the worst moment for it to happen.
+    //
+    // ACTION_AUDIO_BECOMING_NOISY is the broadcast Android sends just BEFORE the
+    // route change, which is why every media app can stop in time. The WebView
+    // never sees it, so it has to be caught here and handed to the JS layer.
+    //
+    // stopAllAudio() is the app's existing panic stop, already used on
+    // backgrounding, so nothing new decides what "stop everything" means. The
+    // toast exists because sound stopping for no visible reason reads as a fault.
+    private BroadcastReceiver noisyReceiver;
+
+    private void registerNoisyReceiver() {
+        noisyReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (!AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) return;
+                runOnUiThread(() -> {
+                    try {
+                        getBridge().getWebView().evaluateJavascript(
+                            "try{ if(typeof intonareAudioBecomingNoisy==='function')"
+                          + " intonareAudioBecomingNoisy(); else stopAllAudio(); }catch(e){}",
+                            null);
+                    } catch (Exception ignored) {}
+                });
+            }
+        };
+        // ContextCompat, not registerReceiver directly: from API 34 a runtime
+        // receiver must declare whether it is exported, and an undeclared one
+        // throws at registration. NOT_EXPORTED is correct here; the broadcast is
+        // a system one and no other app needs to reach this.
+        ContextCompat.registerReceiver(this, noisyReceiver,
+            new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY),
+            ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     // ── Splash sound ────────────────────────────────────────────────────────
@@ -157,6 +203,10 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onDestroy() {
         releaseSplashPlayer();
+        if (noisyReceiver != null) {
+            try { unregisterReceiver(noisyReceiver); } catch (Exception ignored) {}
+            noisyReceiver = null;
+        }
         super.onDestroy();
     }
 
