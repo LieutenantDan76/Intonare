@@ -65,6 +65,20 @@ fc /b native_src\java\com\lieutenantdan\intonare\IntonareMicPlugin.java android\
 if errorlevel 1 set NATIVE_CHANGED=1
 copy /Y native_src\java\com\lieutenantdan\intonare\IntonareMicPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\IntonareMicPlugin.java
 
+echo [4c3] Restoring FileSaverPlugin.java...
+REM Added after the plugin silently vanished from a build. It was dropped straight
+REM into android\app\... by hand, which works exactly once: step 4c restores
+REM MainActivity.java from native_src on EVERY run, so the registerPlugin line was
+REM overwritten the next time this script ran, and the plugin was never registered.
+REM JS then reported "FileSaver plugin is not implemented on Android" while the file
+REM was sitting right there in the tree.
+REM
+REM Anything native must live in native_src and be restored here, or go.bat will
+REM undo it. That is the same trap the header of this file warns about.
+fc /b native_src\java\com\lieutenantdan\intonare\FileSaverPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\FileSaverPlugin.java >nul 2>&1
+if errorlevel 1 set NATIVE_CHANGED=1
+copy /Y native_src\java\com\lieutenantdan\intonare\FileSaverPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\FileSaverPlugin.java
+
 echo [4d] Restoring styles.xml...
 copy /Y native_src\res\values\styles.xml android\app\src\main\res\values\styles.xml
 
