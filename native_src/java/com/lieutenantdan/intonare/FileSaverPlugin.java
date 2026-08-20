@@ -1,136 +1,265 @@
 package com.lieutenantdan.intonare;
 
-import android.app.Activity;
+import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.media.AudioManager;
+import android.media.AudioAttributes;
+import android.media.MediaPlayer;
+import android.os.Bundle;
+import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
+import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
-import androidx.activity.result.ActivityResult;
+public class MainActivity extends BridgeActivity {
 
-import com.getcapacitor.JSObject;
-import com.getcapacitor.Plugin;
-import com.getcapacitor.PluginCall;
-import com.getcapacitor.PluginMethod;
-import com.getcapacitor.annotation.ActivityCallback;
-import com.getcapacitor.annotation.CapacitorPlugin;
+    private static final int MIC_PERMISSION_CODE = 1001;
 
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
+    // Splash sound: stored in SharedPreferences so this native layer can read the
+    // user's mute choice (the WebView's localStorage isn't visible to Java). The JS
+    // toggle writes it via the "Android" bridge below.
+    private static final String PREFS = "intonare_prefs";
+    private static final String KEY_SPLASH_SOUND = "splashSound"; // "1" on (default), "0" muted
+    private static final float SPLASH_VOLUME = 0.55f; // hard playback multiplier (0..1)
+    private MediaPlayer splashPlayer;
 
-/**
- * A real "Save as..." dialog on Android.
- *
- * WHY THIS EXISTS
- * ---------------
- * Android has no API for silently writing a non-media file somewhere the person
- * can find it. Capacitor's Filesystem plugin can only reach app-scoped storage,
- * which is invisible in a file manager AND deleted when the app is uninstalled —
- * the worst possible place for a backup, because it disappears at exactly the
- * moment it is needed. The share sheet works but only offers apps that accept the
- * file; it has no guaranteed "save to this phone" target.
- *
- * The Storage Access Framework is the sanctioned answer: ACTION_CREATE_DOCUMENT
- * shows the system file picker, the person chooses the folder and filename, and
- * the app writes through the returned URI. No storage permission is required,
- * because the person granted access by picking the location themselves. Nothing
- * in the Capacitor ecosystem wraps it, hence this file.
- *
- * INSTALL
- * -------
- * 1. Drop this file in android/app/src/main/java/com/lieutenantdan/intonare/
- * 2. Register it in MainActivity.java:
- *
- *        import com.getcapacitor.BridgeActivity;
- *        public class MainActivity extends BridgeActivity {
- *            @Override
- *            public void onCreate(android.os.Bundle savedInstanceState) {
- *                registerPlugin(FileSaverPlugin.class);
- *                super.onCreate(savedInstanceState);
- *            }
- *        }
- *
- *    registerPlugin MUST come before super.onCreate, or the bridge starts
- *    without it and the JS side sees no plugin.
- * 3. npx cap sync android
- *
- * If the package name ever changes, the `package` line at the top of this file
- * has to change with it.
- */
-@CapacitorPlugin(name = "FileSaver")
-public class FileSaverPlugin extends Plugin {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // Register our app-embedded native plugin(s) BEFORE super.onCreate.
+        // Verified against Capacitor 8 BridgeActivity source: registerPlugin() only
+        // appends to bridgeBuilder (which exists from activity construction); the
+        // bridge itself is create()d at the END of super.onCreate (inside load()).
+        // So plugins must be in the builder list before super.onCreate runs, or they
+        // miss the create() call and JS throws "not implemented on android".
+        registerPlugin(IntonareMicPlugin.class);
+        // FileSaver: wraps ACTION_CREATE_DOCUMENT so Back Up Progress opens a real
+        // system Save dialog. Without this line the class still COMPILES — javac
+        // builds every .java in the source folder whether or not anything uses it —
+        // so FileSaverPlugin.class appeared in the APK while the plugin was never
+        // registered, and JS reported "not implemented on Android". The build gave
+        // no warning at any point.
+        registerPlugin(FileSaverPlugin.class);
+        super.onCreate(savedInstanceState);
 
-    /**
-     * Opens the system save dialog.
-     *
-     * @param call  filename  suggested name, e.g. "intonare-backup-2026-08-18.json"
-     *              data      the file contents as a string
-     *              mimeType  optional, defaults to application/json
-     *
-     * Resolves { saved: true, uri: "content://..." } once written,
-     * or { saved: false } if the person backed out of the picker.
-     * Rejects only on a genuine write failure.
-     */
-    @PluginMethod
-    public void save(PluginCall call) {
-        String filename = call.getString("filename", "backup.json");
-        String mimeType = call.getString("mimeType", "application/json");
+        // Sticky immersive: hide status + nav bars. "Sticky" = a reveal swipe
+        // shows them transiently, then Android auto-hides again on its own.
+        hideSystemBars();
 
-        if (call.getString("data") == null) {
-            call.reject("No data provided");
-            return;
+        // Expose a tiny JS bridge: the in-app settings toggle persists the mute
+        // preference, and the splash sequence calls playSplashSound() at the exact
+        // instant the animation clock starts (so audio + visual stay locked even
+        // though the WebView waits for viewport stabilisation before animating).
+        getBridge().getWebView().addJavascriptInterface(new SplashSoundBridge(), "IntonareNative");
+
+        // Prepare the launch sound now (decodes ahead) so the JS trigger can start it
+        // with no prepare latency. Playback itself is fired by the bridge, not here.
+        prepareSplashSound();
+
+        // Grant WebView mic requests
+        getBridge().getWebView().setWebChromeClient(
+            new BridgeWebChromeClient(getBridge()) {
+                @Override
+                public void onPermissionRequest(PermissionRequest request) {
+                    runOnUiThread(() -> request.grant(request.getResources()));
+                }
+            }
+        );
+
+        // Request mic permission natively if not already granted
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                new String[]{ Manifest.permission.RECORD_AUDIO },
+                MIC_PERMISSION_CODE);
         }
 
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType(mimeType);
-        intent.putExtra(Intent.EXTRA_TITLE, filename);
-
-        // The call is saved so its data survives the trip through the picker;
-        // startActivityForResult hands it back to the callback below.
-        startActivityForResult(call, intent, "saveResult");
+        registerNoisyReceiver();
     }
 
-    @ActivityCallback
-    private void saveResult(PluginCall call, ActivityResult result) {
-        if (call == null) return;
+    // ── Headphones pulled out ───────────────────────────────────────────────
+    // Android does not stop anything when the jack is pulled or the Bluetooth
+    // link drops. It re-routes to the speaker, at whatever the media volume
+    // happens to be, and playback continues. A sustained drone or a running
+    // metronome therefore fills the room. In a lesson or a practice room that is
+    // the worst moment for it to happen.
+    //
+    // ACTION_AUDIO_BECOMING_NOISY is the broadcast Android sends just BEFORE the
+    // route change, which is why every media app can stop in time. The WebView
+    // never sees it, so it has to be caught here and handed to the JS layer.
+    //
+    // stopAllAudio() is the app's existing panic stop, already used on
+    // backgrounding, so nothing new decides what "stop everything" means. The
+    // toast exists because sound stopping for no visible reason reads as a fault.
+    private BroadcastReceiver noisyReceiver;
 
-        // Backing out of the picker is a normal choice, not a failure. Resolving
-        // with saved:false lets the JS side stay quiet instead of showing an
-        // error for something the person did on purpose.
-        if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) {
-            JSObject cancelled = new JSObject();
-            cancelled.put("saved", false);
-            call.resolve(cancelled);
-            return;
-        }
+    private void registerNoisyReceiver() {
+        noisyReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (!AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) return;
+                runOnUiThread(() -> {
+                    try {
+                        getBridge().getWebView().evaluateJavascript(
+                            "try{ if(typeof intonareAudioBecomingNoisy==='function')"
+                          + " intonareAudioBecomingNoisy(); else stopAllAudio(); }catch(e){}",
+                            null);
+                    } catch (Exception ignored) {}
+                });
+            }
+        };
+        // ContextCompat, not registerReceiver directly: from API 34 a runtime
+        // receiver must declare whether it is exported, and an undeclared one
+        // throws at registration. NOT_EXPORTED is correct here; the broadcast is
+        // a system one and no other app needs to reach this.
+        ContextCompat.registerReceiver(this, noisyReceiver,
+            new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY),
+            ContextCompat.RECEIVER_NOT_EXPORTED);
+    }
 
-        Uri uri = result.getData().getData();
-        if (uri == null) {
-            JSObject cancelled = new JSObject();
-            cancelled.put("saved", false);
-            call.resolve(cancelled);
-            return;
-        }
+    // ── Splash sound ────────────────────────────────────────────────────────
+    // prepareSplashSound() decodes the clip ahead of time in onCreate. The actual
+    // start is triggered from JS (window.IntonareNative.playSplashSound) at the exact
+    // frame the splash animation begins, so the sound lines up with the visual.
+    private boolean splashPlayed = false;
 
+    private void prepareSplashSound() {
         try {
-            String data = call.getString("data", "");
-            OutputStream out = getContext().getContentResolver().openOutputStream(uri, "wt");
-            if (out == null) {
-                call.reject("Could not open the chosen file for writing");
-                return;
-            }
-            try {
-                out.write(data.getBytes(StandardCharsets.UTF_8));
-                out.flush();
-            } finally {
-                out.close();
-            }
+            SharedPreferences prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            // Default ON: only skip if explicitly set to "0".
+            if ("0".equals(prefs.getString(KEY_SPLASH_SOUND, "1"))) return;
 
-            JSObject ok = new JSObject();
-            ok.put("saved", true);
-            ok.put("uri", uri.toString());
-            call.resolve(ok);
+            splashPlayer = MediaPlayer.create(this, R.raw.intonare_splash);
+            if (splashPlayer == null) return; // resource missing — fail silent
+            splashPlayer.setAudioAttributes(
+                new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            );
+            // Hard playback-level multiplier. Independent of the clip's internal gain
+            // and not subject to sonification loudness compensation — this is the
+            // reliable lever for how loud the launch sound actually is on device.
+            try { splashPlayer.setVolume(SPLASH_VOLUME, SPLASH_VOLUME); } catch (Exception ignored) {}
+            // Release as soon as it finishes so it never lingers.
+            splashPlayer.setOnCompletionListener(mp -> releaseSplashPlayer());
+            // Pre-warm the audio pipeline: a prepared MediaPlayer still spins up the
+            // underlying AudioTrack the first time start() is called, which adds a
+            // small variable delay. Briefly start at zero volume, immediately pause,
+            // then restore volume and seek to 0 — the pipeline is now hot so the real
+            // start() (fired from JS at the animation moment) plays with no spin-up.
+            try {
+                splashPlayer.setVolume(0f, 0f);
+                splashPlayer.start();
+                splashPlayer.pause();
+                splashPlayer.seekTo(0);
+                splashPlayer.setVolume(SPLASH_VOLUME, SPLASH_VOLUME);
+            } catch (Exception ignored) {
+                try { splashPlayer.seekTo(0); } catch (Exception ignored2) {}
+            }
         } catch (Exception e) {
-            call.reject("Could not write the file: " + e.getMessage(), e);
+            releaseSplashPlayer();
         }
+    }
+
+    // JS-callable: window.IntonareNative.playSplashSound()
+    private void startSplashSound() {
+        if (splashPlayed) return;          // never fire twice (e.g. resume)
+        if (splashPlayer == null) return;  // muted or unprepared
+        splashPlayed = true;
+        try {
+            splashPlayer.start();
+        } catch (Exception e) {
+            releaseSplashPlayer();
+        }
+    }
+
+    private void releaseSplashPlayer() {
+        if (splashPlayer != null) {
+            try { splashPlayer.release(); } catch (Exception ignored) {}
+            splashPlayer = null;
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Only stop if the sound has actually started playing. On first launch the
+        // permission dialog fires an onPause BEFORE the splash triggers playback —
+        // releasing here would destroy the primed player and the sound would never
+        // play. So we leave a not-yet-started player alone and let it fire on resume.
+        if (splashPlayed) releaseSplashPlayer();
+    }
+
+    @Override
+    public void onDestroy() {
+        releaseSplashPlayer();
+        if (noisyReceiver != null) {
+            try { unregisterReceiver(noisyReceiver); } catch (Exception ignored) {}
+            noisyReceiver = null;
+        }
+        super.onDestroy();
+    }
+
+    // JS-callable bridge: toggle persists the mute pref; playSplashSound() starts
+    // the prepared clip at the exact moment the splash animation begins.
+    public class SplashSoundBridge {
+        @JavascriptInterface
+        public void setSplashSound(boolean on) {
+            getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_SPLASH_SOUND, on ? "1" : "0")
+                .apply();
+        }
+
+        @JavascriptInterface
+        public void playSplashSound() {
+            // Fire directly on the bridge's binder thread. MediaPlayer.start() is
+            // thread-safe and doesn't need the UI thread; queuing onto the UI thread
+            // (runOnUiThread) added several frames of latency at cold launch when that
+            // thread is congested with layout + the permission dialog, which is what
+            // made the sound start late and drift relative to the animation.
+            startSplashSound();
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // Re-assert immersive whenever the window regains focus. This fires after
+        // a bar reveal, a permission dialog, or returning from background — the
+        // hook the WebView/JS layer can't see, which is why JS-only hiding fails.
+        if (hasFocus) hideSystemBars();
+    }
+
+    // Hides the status bar and the navigation bar.
+    //
+    // The previous version used setSystemUiVisibility with the SYSTEM_UI_FLAG_*
+    // constants. Android deprecated that API, and it does nothing at all when the
+    // app targets API 35 or higher. This app targets 36, so the call was ignored:
+    // both bars stayed on screen and the layout drew under them.
+    //
+    // WindowInsetsControllerCompat is the replacement. The three calls do what the
+    // six flags used to do:
+    //   setDecorFitsSystemWindows(false)      == the LAYOUT_* flags (draw edge to edge)
+    //   BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE == IMMERSIVE_STICKY (swipe reveals,
+    //                                            then Android hides them again)
+    //   hide(Type.systemBars())               == FULLSCREEN + HIDE_NAVIGATION
+    private void hideSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        WindowInsetsControllerCompat controller =
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.setSystemBarsBehavior(
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        controller.hide(WindowInsetsCompat.Type.systemBars());
     }
 }

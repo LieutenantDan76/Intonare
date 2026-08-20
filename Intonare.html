@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.77 -->
+<!-- INTONARE_VERSION: 0.150.80 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -5614,6 +5614,35 @@ html,body{background:#000000!important;transition:none!important}
      Scoped under #lnch on purpose: the entry reveal sets `#lnch .lnch-cell
      { transform: none }` at specificity 1-1-0, and a plain `.lnch-cell.lnch-other`
      rule is 0-2-0 and loses to it. */
+  /* ── RETURN, the exit run backwards ────────────────────────────────────────
+     Reopening the launcher used to replay the ordinary entrance: a rise and a
+     fade. The cards leave along four arcs with a rotation, so coming back by a
+     different route read as a different screen arriving rather than the same one
+     returning. lnch-back-park pins each card at the exact position lnch-other
+     flings it to, with no transition; one forced reflow makes the browser accept
+     that as the starting point; lnch-back-in then releases them home.
+
+     The curve is slower than the exit (.46s against .3s) and lands rather than
+     stops. Leaving is a decision and should be quick; returning is arriving
+     somewhere and should settle. */
+  body #lnch .lnch-cell.lnch-back-park { opacity: 0; transition: none !important; }
+  body #lnch .lnch-cell.lnch-back-park:nth-child(1){ transform: translate(-128%,-38%) rotate(-20deg); }
+  body #lnch .lnch-cell.lnch-back-park:nth-child(2){ transform: translate(128%,-44%)  rotate(19deg);  }
+  body #lnch .lnch-cell.lnch-back-park:nth-child(3){ transform: translate(-124%,50%)  rotate(17deg);  }
+  body #lnch .lnch-cell.lnch-back-park:nth-child(4){ transform: translate(126%,56%)   rotate(-22deg); }
+  body #lnch .lnch-cell.lnch-back-in {
+    opacity: 1; transform: none;
+    transition: transform .46s cubic-bezier(.16,.84,.34,1), opacity .3s ease !important;
+  }
+  body #lnch .lnch-cell.lnch-back-in:nth-child(2){ transition-delay: .04s !important; }
+  body #lnch .lnch-cell.lnch-back-in:nth-child(3){ transition-delay: .08s !important; }
+  body #lnch .lnch-cell.lnch-back-in:nth-child(4){ transition-delay: .12s !important; }
+  @media (prefers-reduced-motion: reduce) {
+    /* No travel and no park: the cards are simply there. Parking without a
+       transition to release them would leave them off screen. */
+    body #lnch .lnch-cell.lnch-back-park { opacity: 1; transform: none; }
+    body #lnch .lnch-cell.lnch-back-in   { transition: none !important; transition-delay: 0s !important; }
+  }
   #lnch .lnch-cell.lnch-picked { opacity: 0; }
   #lnch .lnch-cell.lnch-other  { opacity: 0; }
   #lnch .lnch-cell.lnch-other:nth-child(1){ transform: translate(-128%,-38%) rotate(-20deg); }
@@ -31108,7 +31137,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.77</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.80</span>
     </div>
   </div>
 </div>
@@ -31116,7 +31145,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.77';
+const INTONARE_VERSION = '0.150.80';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -58441,14 +58470,33 @@ function lnchReopen() {
     // line, pinned row) around an empty space where the grid should be. The
     // classes were invisible to a container-level check, which is how this
     // shipped.
-    document.querySelectorAll('.lnch-cell').forEach(function(c){
-      c.classList.remove('lnch-picked', 'lnch-other');
+    var cells = document.querySelectorAll('.lnch-cell');
+    cells.forEach(function(c){
+      c.classList.remove('lnch-picked', 'lnch-other', 'lnch-back-in');
+      c.classList.add('lnch-back-park');
     });
     document.body.classList.remove('lnch-settled');
     document.body.classList.add('lnch-open');
     lc.style.display = 'flex';
     lc.classList.remove('lnch-gone', 'lnch-entering');
     lc.classList.add('lnch-in');
+    // ONE FORCED REFLOW, and it has to be here. Setting the parked position and
+    // the home position in the same frame lets the browser collapse both into the
+    // final one, and nothing moves. Reading offsetHeight makes it commit the
+    // parked position first, so the release actually has somewhere to travel from.
+    void lc.offsetHeight;
+    cells.forEach(function(c){
+      c.classList.remove('lnch-back-park');
+      c.classList.add('lnch-back-in');
+    });
+    // Strip the return classes once the travel is over. They carry per-card
+    // transition delays, and lnchGo() needs the cards to leave together.
+    clearTimeout(window._lnchBackTO);
+    window._lnchBackTO = setTimeout(function(){
+      document.querySelectorAll('.lnch-cell').forEach(function(c){
+        c.classList.remove('lnch-back-in', 'lnch-back-park');
+      });
+    }, 700);
     return true;
   } catch(e) { return false; }
 }
@@ -83342,6 +83390,8 @@ const STRINGS = {
     mq_no_connect:'Could not connect to opentdb.com. Check your connection.',
     mq_no_questions:'Not enough questions in this category right now. Try another one.',
     mq_too_fast:'Too many requests. Wait a few seconds and try again.',
+    back_exit:'PRESS BACK AGAIN TO EXIT',
+    audio_noisy:'HEADPHONES DISCONNECTED',
     mq_question:'QUESTION',
     mq_correct_out_of:'CORRECT OUT OF',
     mq_grade_perfect:'PERFECT PITCH', mq_grade_perfect_sub:'Hard to fault.',
@@ -84432,6 +84482,8 @@ const STRINGS = {
     mq_no_connect:'Impossibile connettersi a opentdb.com. Controlla la connessione.',
     mq_no_questions:'Non ci sono abbastanza domande in questa categoria al momento. Provane un\u2019altra.',
     mq_too_fast:'Troppe richieste. Aspetta qualche secondo e riprova.',
+    back_exit:'PREMI DI NUOVO PER USCIRE',
+    audio_noisy:'CUFFIE SCOLLEGATE',
     mq_question:'DOMANDA',
     mq_correct_out_of:'CORRETTE SU',
     mq_grade_perfect:'ORECCHIO ASSOLUTO', mq_grade_perfect_sub:'Quasi impeccabile.',
@@ -114195,6 +114247,21 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+// ── HEADPHONES PULLED OUT ───────────────────────────────────────────────────
+// Called from MainActivity when Android broadcasts ACTION_AUDIO_BECOMING_NOISY,
+// which it sends just before it re-routes audio to the speaker. Nothing stops on
+// its own: a drone or a running metronome would carry on, out loud, in whatever
+// room you are in.
+//
+// stopAllAudio() is the same panic stop used on backgrounding, so there is one
+// definition of "stop everything" rather than two. The toast is not decoration:
+// sound ending with no visible cause reads as a fault, and the next thing
+// somebody does is close the app.
+function intonareAudioBecomingNoisy() {
+  try { stopAllAudio(); } catch (e) {}
+  try { showMiniNotif(t('audio_noisy') || 'HEADPHONES DISCONNECTED', 'ses-complete', 2600); } catch (e) {}
+}
+
 // Capacitor background listener
 try {
   if (window.Capacitor?.Plugins?.App) {
@@ -123130,6 +123197,179 @@ function mqShowXP(msg){
   t.textContent=msg; t.classList.add('show');
   setTimeout(function(){t.classList.remove('show');},1800);
 }
+
+// ══ ANDROID HARDWARE BACK BUTTON ═══════════════════════════════════════════
+// Nothing handled the back button before this. Capacitor's default walks the
+// WebView history and then finishes the activity, and a single-page app has no
+// history, so back closed the app from any screen, with a modal open, mid
+// exercise, mid quiz. Android users press back constantly; that reads as a crash.
+//
+// The rule throughout: back does what the visible back control on that screen
+// does. It calls the same functions, so anything they clean up still gets
+// cleaned up. Nothing here re-implements a close.
+
+// Overlays whose own closer does more than hide a div: stopping audio, releasing
+// keys, saving state. Everything not listed falls through to the generic close,
+// which is what closeAllOverlays() does to one element instead of all of them.
+const _BACK_CLOSERS = {
+  tonePopup:            'closeTonePopup',
+  pianoOverlay:         'closePianoOverlay',
+  thereminOverlay:      'closeThereminOverlay',
+  ptoRhodesOverlay:     'closeRhodesOverlay',
+  ptoOrganOverlay:      'closePtoOrganOverlay',
+  settingsModal:        'closeSettings',
+  creditsModal:         'closeCreditsModal',
+  helpModal:            'closeHelp',
+  ivPeekModal:          'closeIvPeek',
+  progressModal:        'closeProgress',
+  paywallModal:         'closePaywall',
+  codeModal:            'closeCodeModal',
+  proUnlockedModal:     'closeProUnlocked',
+  flashOverlay:         'closeFlash',
+  setlistSheet:         'closeSetlist',
+  favSheet:             'closeFavSheet',
+  favOverlay:           'closeFavSheet',
+  rampPresetSheet:      'closeRampPresets',
+  tsPopup:              'closeTsPicker',
+  tsPopupScrim:         'closeTsPicker',
+  tunerRefPitchPopover: 'closeRefPitchPopover',
+  tunerTransposePopover:'closeTransposePopover',
+  gsPulsePopover:       'closePulsePopover',
+  backupSheet:          'backupCloseSheet',
+  backupOutSheet:       'backupCloseOutSheet',
+  riffPopup:            'riffClosePopup',
+  csPickerSheet:        'closeInstPicker',
+  csPickerScrim:        'closeInstPicker',
+  overlay:              'closePedalPlugin'
+};
+
+// Left alone. The splash and the module launcher run their own animation and
+// lifecycle; yanking either mid-flight is the bug closeAllOverlays() documents.
+// The tour is handled a step earlier, by endTour().
+const _BACK_SKIP_IDS = ['lnch', 'tourOverlay'];
+
+// The visibly open overlay nearest the front. Stacking is real here: the tone
+// popup opens over the piano overlay, so closing "all" would take both and one
+// press would undo two steps.
+function _backTopOverlay() {
+  var best = null, bestZ = -1;
+  document.querySelectorAll(_OVERLAY_SEL).forEach(function(el) {
+    if (!el.id && !el.className) return;
+    if (_BACK_SKIP_IDS.indexOf(el.id) !== -1) return;
+    if (el.classList && el.classList.contains('intonare-splash')) return;
+    if (!_isVisiblyOpen(el)) return;
+    var z = parseInt(getComputedStyle(el).zIndex, 10);
+    if (isNaN(z)) z = 0;
+    // >= keeps the later element on a tie, which is the one painted on top.
+    if (z >= bestZ) { bestZ = z; best = el; }
+  });
+  return best;
+}
+
+function _backCloseOverlay(el) {
+  var fn = el.id && _BACK_CLOSERS[el.id];
+  if (fn && typeof window[fn] === 'function') { try { window[fn](); return true; } catch (e) {} }
+  ['active','open','show','visible'].forEach(function(c){ el.classList.remove(c); });
+  if (el.style && el.style.display && el.style.display !== 'none') el.style.display = 'none';
+  try { _scrollLockSync(); } catch (e) {}
+  return true;
+}
+
+// The quiz keeps its own screen stack inside one modal, so back follows the
+// mq-back-btn on each screen rather than closing the whole thing.
+function _backQuizStep() {
+  var open = ['mqQuickSheet','mqSurvivalSheet','mqStatsSheet','mqPackPopup',
+              'mqFbSheet','mqFbSheetOverlay','mqDailyPop'];
+  for (var i = 0; i < open.length; i++) {
+    var s = document.getElementById(open[i]);
+    if (s && s.classList.contains('active')) { s.classList.remove('active'); return; }
+  }
+  var scr = document.querySelector('.mq-screen.active');
+  var id  = scr ? scr.id : '';
+  if (id === 'mqScreenQuiz' || id === 'mqScreenLoading') { mqQuitQuiz(); return; }
+  if (id === 'mqScreenReview' || id === 'mqScreenDailyResult') { mqShowScreen('mqScreenResults'); return; }
+  if (id === 'mqScreenCustom' || id === 'mqScreenResults' || id === 'mqScreenWin') { mqGoLanding(); return; }
+  mqClose();
+}
+
+var _backExitArmed = 0;
+
+function intonareHandleBack() {
+  try {
+    // 1. Splash. It owns the screen for a fixed time; back does nothing.
+    var splash = document.querySelector('.intonare-splash');
+    if (splash && _isVisiblyOpen(splash)) return;
+
+    // 2. Tour. Ending it is what its own skip control does.
+    var tour = document.getElementById('tourOverlay');
+    if (tour && tour.classList.contains('active')) {
+      if (typeof endTour === 'function') { endTour(); return; }
+    }
+    var prompt = document.getElementById('autoTourPrompt');
+    if (prompt && prompt.classList.contains('active')) {
+      prompt.classList.remove('active'); return;
+    }
+
+    // 3. Music Quiz, which has screens of its own inside one modal.
+    var mq = document.getElementById('mqModal');
+    if (mq && mq.classList.contains('active')) { _backQuizStep(); return; }
+
+    // 4. Any other overlay, front one first.
+    var top = _backTopOverlay();
+    if (top) { _backCloseOverlay(top); return; }
+
+    // 5. Whatever the header's back arrow would do: leave the exercise, leave
+    //    the tool, leave the folder or sub-hub. headerBack() already holds that
+    //    logic and already falls back to exitExercise/exitTool.
+    if (_headerBackFn || currentExercise || currentTool ||
+        (typeof currentToolFolder !== 'undefined' && currentToolFolder)) {
+      headerBack();
+      return;
+    }
+
+    // 6. Not on the launcher: open it. The launcher is the home screen, so back
+    //    from any module lands on the chooser with the cards dealt back in.
+    //    Pinned users get it too: pinning skips the launcher at BOOT, which is a
+    //    statement about where to start, not a refusal to ever see the chooser.
+    if (!document.body.classList.contains('lnch-open')) {
+      if (typeof lnchReopen === 'function' && lnchReopen()) return;
+      // The launcher could not open. Rather than exit from a module, fall back to
+      // the old behaviour and go to the Tuner tab.
+      if (mode !== 'tuner') { setMode('tuner'); return; }
+    }
+
+    // 7. On the launcher: ask once, exit on a second press.
+    var now = Date.now();
+    if (now - _backExitArmed < 2000) {
+      try { window.Capacitor.Plugins.App.exitApp(); } catch (e) {}
+      return;
+    }
+    _backExitArmed = now;
+    try { showMiniNotif(t('back_exit') || 'PRESS BACK AGAIN TO EXIT', 'ses-complete', 2000); } catch (e) {}
+  } catch (e) {
+    // A thrown handler would leave back dead for the rest of the session, which
+    // is worse than any single mishandled press.
+    try { if (window._intonareDiag) window._intonareDiagBack = String(e); } catch (e2) {}
+  }
+}
+
+// Registration. Same polling shape as the deep-link wiring: the Capacitor bridge
+// is injected by the native shell and is not guaranteed to exist while this
+// script runs. One check with no retry is how the deep links silently died.
+(function _wireBackButton() {
+  var tries = 0;
+  (function wait() {
+    var App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    if (App && App.addListener) {
+      // Capacitor suppresses its own default once a backButton listener exists.
+      App.addListener('backButton', intonareHandleBack);
+      return;
+    }
+    if (++tries > 100) return;   // web build: there is no hardware back button
+    setTimeout(wait, 100);
+  })();
+})();
+
 document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(); mqRenderSurvivalPackGrid(); mqRenderOnlineChips(); });
 
 </script>

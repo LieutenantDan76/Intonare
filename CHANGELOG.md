@@ -4,7 +4,7 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS (as of v0.150.77)
+## OPEN ITEMS (as of v0.150.80)
 
 **Device state: v0.150.74 built, installed and verified.** Backup is DONE. The
 Save dialog opens, the file lands where you choose, and the full round trip —
@@ -156,6 +156,108 @@ feel and its sources contradict each other on accents.
 ---
 
 ---
+
+## v0.150.80 — Pulling the headphones out no longer fills the room
+
+Android does not stop playback when the jack is pulled or the Bluetooth link
+drops. It re-routes to the speaker at whatever the media volume happens to be and
+carries on. A drone or a running metronome therefore comes out of the phone, at
+full level, in whatever room you are standing in. Nothing in the app noticed.
+
+`ACTION_AUDIO_BECOMING_NOISY` is the broadcast Android sends just BEFORE the
+route change; it is how every media app manages to stop in time. The WebView
+never sees it, so `MainActivity` now registers a receiver and hands it to the JS
+layer, which calls `stopAllAudio()`: the same panic stop used on backgrounding,
+so there is one definition of stop everything rather than two.
+
+A toast says HEADPHONES DISCONNECTED, in both languages. Sound ending with no
+visible cause reads as a fault, and the next thing somebody does about a fault is
+close the app.
+
+The receiver is registered through `ContextCompat.registerReceiver` with
+`RECEIVER_NOT_EXPORTED`. From API 34 a runtime receiver must declare whether it
+is exported, and one that does not throws at registration. It is unregistered in
+`onDestroy`.
+
+Nothing changes the volume. The level is not touched at any point; the sound
+simply stops, and the user starts it again when they are ready.
+
+## v0.150.79 — The chooser is the home screen
+
+Back used to reach the Tuner tab and offer to exit from there. It now reaches the
+launcher, and the cards travel back along the arcs they left by.
+
+**The return animation.** `lnchReopen()` already dealt the cards back in, but it
+replayed the ordinary entrance: a rise and a fade. The cards leave along four
+arcs with a rotation, so returning by a different route read as a different
+screen arriving rather than the same one coming back. Each card is now parked at
+the exact position it was flung to, with no transition, and released home from
+there. The curve is slower than the exit, .46s against .3s, and it lands rather
+than stops: leaving is a decision and should be quick, arriving somewhere should
+settle. Cards are staggered 40ms apart, which reads as one gesture.
+
+One forced reflow sits between parking and releasing, and it is load-bearing.
+Setting both positions in the same frame lets the browser collapse them into the
+final one and nothing moves at all.
+
+The return classes are stripped 700ms later. They carry per-card transition
+delays, and `lnchGo()` needs the cards to leave together.
+
+Reduced motion is handled: no park and no travel, the cards are simply there.
+Parking without releasing would have left them off screen.
+
+**Back, step 6.** Not on the launcher now means open the launcher. The
+double-press exit warning moved with it, so leaving takes two presses from the
+chooser rather than one from the Tuner tab.
+
+Pinned users see the chooser too. Pinning skips the launcher at boot, which says
+where to start, not that the chooser should never appear. If `lnchReopen()` ever
+fails, back falls through to the old Tuner-tab behaviour rather than exiting from
+inside a module.
+
+Three variants were prototyped: the exact reverse, a deal-in from below, and a
+small settle in place. The reverse won because it is the only one where the same
+object appears to come back.
+
+## v0.150.78 — The back button does something now
+
+Nothing handled the hardware back button. Capacitor's default walks the WebView
+history and then finishes the activity, and a single page app has no history, so
+back closed the app from anywhere: with a modal open, mid exercise, mid quiz. On
+Android that reads as a crash, because back is the control people reach for
+without thinking.
+
+The rule is that back does what the visible back control on that screen does. It
+calls the same functions, so everything they stop or save still gets stopped and
+saved. Nothing here re-implements a close.
+
+The order, first match wins:
+
+1. Splash on screen. Back does nothing; the splash owns its own duration.
+2. Tour running. `endTour()`, the same call as its skip control.
+3. Music Quiz open. Its own screen stack is followed: a sheet closes first, the
+   quiz screen quits to the landing screen, review and daily results go back to
+   results, and the landing screen closes the quiz.
+4. Any other overlay. The front one only, chosen by z-index. Stacking is real
+   here: the tone popup opens over the piano overlay, and closing both on one
+   press would undo two steps at once. 29 overlays with cleanup of their own get
+   their real closer; everything else gets the generic hide that
+   `closeAllOverlays()` already uses.
+5. `headerBack()`, which already holds the leave-exercise, leave-tool,
+   leave-folder logic and already falls back to `exitExercise` and `exitTool`.
+6. Not on the Tuner tab: go to the Tuner tab. Android expects back to reach the
+   start destination before it offers to leave.
+7. On the Tuner tab: "PRESS BACK AGAIN TO EXIT", and a second press within two
+   seconds exits.
+
+The listener registration polls for the Capacitor bridge rather than checking
+once, for the reason written on the deep-link wiring: the bridge is injected by
+the native shell and a single early check can lose that race. On the web build
+the poll simply expires, since there is no hardware back button there.
+
+Tested by extracting the handler and running all thirteen branches against a
+stubbed DOM. The whole handler is inside one try/catch: a throw would leave back
+dead for the rest of the session, which is worse than one mishandled press.
 
 ## v0.150.77 — Immersive mode was a no-op on Android 15 and 16
 
