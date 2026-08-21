@@ -4,7 +4,7 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS (as of v0.150.91)
+## OPEN ITEMS (as of v0.150.97)
 
 **Device state: v0.150.74 built, installed and verified.** Backup is DONE. The
 Save dialog opens, the file lands where you choose, and the full round trip —
@@ -156,6 +156,189 @@ feel and its sources contradict each other on accents.
 ---
 
 ---
+
+## v0.150.97 — Favourites, and the sentinel catching a whitespace edit
+
+The favourites list was 6 of 30 translated. Now all 30: CIRCOLO 5TE, MISUR. VOL.,
+TRASPOSITORE, ESTENS. VOCALE, CARTE RITMICHE, INDOVINA TEMPO, POLIRITMIA,
+LETTURA RITMICA, ORECCHIO ACCORDI, INTONA LA NOTA, CARTE NOTAZIONE, NOTE SUL
+PENTAGRAMMA, ORECCHIO RELATIVO, QUIZ MUSICALE. Module names keep theirs.
+
+**And the sentinel caught something subtle.** The regex that inserted the twins
+also collapsed the alignment whitespace on every row, and one pin quotes the
+Scales row verbatim from `label:` through `type: 'TOOL',` to guard the fact that
+its key is still `exercise:scales` while it lives in Tools. Restoring the spacing
+was not enough because the insertion sat inside the quoted span; the twin now
+goes after `type`.
+
+That is the second time this session a pin has caught an edit that changed
+nothing functional. Both times the pin was right to complain: a quoted span is a
+contract, and reformatting inside one is how a guard quietly stops guarding.
+
+**Two more audit rows ruled out.** `SCALE_DICE_FACES` is dice pip COORDINATES,
+not text, and `_FAST_OVERLAYS` is a list of element IDs. Both were flagged
+because the search window caught a neighbouring table's strings.
+
+## v0.150.96 — Woodwind fingerings, in the Italian that Italian actually uses
+
+73 alternate-fingering labels across clarinet, bass clarinet, oboe, cor anglais,
+flute, sax, recorder, bassoon and trombone. Looked up rather than guessed,
+because I had earlier claimed Italian players use the English terms and that was
+simply wrong.
+
+What the sources say:
+
+- **Forked fingering is "a forcella".** The Museo Internazionale della Musica in
+  Bologna describes baroque oboe technique as "diteggiatura a forcella", and
+  Italian oboe spec sheets list "Chiave di risonanza del Fa a forcella" as a
+  feature. So Forked F is **Fa a forcella**.
+- **"Chiave del Fa mano sinistra"** appears verbatim on Italian oboe spec
+  sheets, which settles LH F.
+- **The clarinet's register key is a portavoce, not a chiave di ottava.**
+  Italian sources are explicit that "chiave di ottava" is correct for oboe and
+  sax and wrong for clarinet, because the clarinet overblows a twelfth. Worth
+  knowing before labelling anything on that instrument.
+- Cross fingering is "diteggiatura incrociata"; the clarinet's throat register is
+  "note di gola", giving Si♭ di gola.
+- The flute's thumb B♭ is the Briccialdi key, named after Giulio Briccialdi, so
+  Italian says either that or Si♭ del pollice.
+
+Both readers go through `csSubLabel()`, and Basic / Alt / Pos are keyed as Base /
+Alt. / Pos.
+
+The measure sits at 77 because these labels only appear once an alternate
+fingering is selected, which is a state the language diff never enters. That is
+the same blind spot the twin audit exists to cover, and this batch came entirely
+from the audit rather than from looking at screens.
+
+## v0.150.95 — The piano pedals, and two audit results that were wrong
+
+The three piano pedals were English: SOFT, SOSTENUTO, DAMPER, with left / middle
+/ right underneath. Italian names them after what they do rather than where they
+sit: UNA CORDA, SOSTENUTO (the same word, since Italian is where it came from),
+RISONANZA, with sinistro / centrale / destro.
+
+**Two candidates from the twin audit turned out not to be defects.** `LNCH_MODS`
+carries `k:'mode_tuner'` and has been going through the i18n table all along.
+`PROG_PRESETS` names are roman numerals and genre words: I–IV–V Rock reads the
+same in both languages. `MQ_TRACKS` and `RIFF_META` are song titles.
+
+That is the audit working as intended rather than failing. It lists every table
+whose display fields lack a twin, and a human decides which of those are actually
+wrong. A tool that only listed real defects would need to already know the answer.
+
+## v0.150.94 — Working the twin audit, and three things it taught me
+
+91 Italian twins added across fifteen data tables that the source audit named,
+several of them on surfaces no visual pass had opened: rhythm card categories
+(TUTTE, BASI, SEDICESIMI, PUNTATE, TERZINE, SINCOPI, PAUSE), Diadle degrees,
+bowed intervals, banjo rolls, interval difficulties and ranges, singing and Road
+Trip difficulties, polyrhythm ratio names and sound names, metronome pulse
+sounds, favourite categories, and the woodwind sub-tabs.
+
+Left alone on purpose: PR_BPM_PRESETS. Largo, adagio, andante, moderato, allegro
+and presto are the Italian words English borrowed.
+
+**Three things went wrong, and each is worth writing down.**
+
+**Script blocks evaluate in order.** I put the two shared readers next to the
+table they were written for, in block 5, and called them from block 4. The app
+threw "csSubLabel is not defined" at load. They live at the top of the first
+block now, with a note saying why.
+
+**The sentinel caught two pins I broke**, and it was right both times.
+`RLP_BANDS` already carried `key:'rlp_band_wide'`, so it has been translated
+through the i18n system all along and my twins were redundant as well as
+pin-breaking. `SR_FRETS` has two rows quoted word for word to guard `written:12`,
+so its Italian lives in a side map rather than inside the row. Reverted and
+rerouted; 247 pins hold.
+
+**An insertion landed between `const` and its name**, producing
+`var // comment ... SR_FRETS = {`. Caught by `node --check` on the block, which
+is the entire reason that step exists.
+
+The language measure is 77. What is left is chord symbols, proper nouns, the
+Japanese and Indian scale names, and words identical in both languages.
+
+## v0.150.93 — Reading the source instead of the screen
+
+Daniele's point, and it was the right one: the strings are all in the file, so
+find the ones with no Italian twin rather than walking screens hoping to trip
+over them. Visual passes keep missing menus, drawers and settings because a
+drawer nobody opened has no DOM to compare.
+
+`intonare_twin_audit.py` does that. It finds every display-shaped field (name,
+label, title, sub, desc) with an English-looking value, checks whether a twin
+(nameIt, labelIt, titleIt, it) sits near it, and groups the result BY TABLE.
+Grouping is the whole point: 806 loose entries is noise, while "THMN_DEMOS: 10
+entries, 0 twins" is a decision.
+
+**Its first version lied and was corrected.** It matched object literals with a
+600-character cap, which split the long HELP_CONTENT entries and reported 22
+missing twins. HELP_CONTENT is 106 titles and 106 titleIt. It now looks for a
+twin in a window around each field, which can pair a field with a neighbour's
+twin. That is the safer error: a false "already done" costs a second look, a
+false "missing" costs an afternoon translating something that was never broken.
+
+**The audit finds candidates; only the app confirms them.** RR_PATTERNS with 237
+untwinned names and RC_CARDS with 29 sound alarming and never reach the screen:
+those names are internal, and the UI shows notation. THMN_DEMOS, ten entries,
+does reach the screen, in a drawer no visual pass had opened.
+
+**So the theremin demo drawer was entirely English.** Sci-Fi Swoop, Spooky Wail,
+Siren, Laser Zap. Now Lamento spettrale, Sirena, Raggio laser, Inno alla gioia.
+Twinkle, Greensleeves and Ave Maria keep their names.
+
+Its builder also latched on a boolean: `cont._built = true` meant the drawer was
+built once and never again, so even correct labels would have stayed in the first
+language used. It latches on the LANGUAGE now, and the theremin relabeler calls
+it.
+
+The two tools do different jobs and neither replaces the other. The twin audit
+reads every table including screens nobody opened; the language diff proves what
+a user actually sees. Candidates from the first, confirmation from the second.
+
+## v0.150.92 — Charts tool: the pill, the tabs, an empty chord, and solfège
+
+Four things, reported from a device after I had called the Italian finished. The
+measurement said done and the app said otherwise, so the measurement was wrong:
+`lang_diff.py` renders each screen in its DEFAULT state. It never opened the
+instrument picker, never selected a chord, never turned solfège on. Strings that
+only exist in a particular state are invisible to it, which is why "find all the
+strings" is not a search over a file. It is a search over states.
+
+**1. The instrument pill said Guitar above a list saying CHITARRA.**
+`CS_INSTRUMENTS` holds English labels for the pill and the tuning tabs; the picker
+sheet is built from a different source that was already translated. Thirty-five
+instruments and thirty-nine tuning tabs now carry `labelIt`, read through
+`csInstLabel()` and `csSubLabel()`. BARITONO, TENORE, 12 CORDE, FLAUTO CONTRALTO,
+CONTRAFAGOTTO. Tunings spelled in note letters are left alone.
+
+**2. The tool opened on "PICK ROOT + QUALITY" instead of a C major chord, and
+that one was mine.** `gccInit()` does render the default chord. The
+`applyLang()` on tool entry I added in v0.150.91 runs afterwards and overwrote it
+with the placeholder, because the placeholder element carries `data-i18n`.
+
+That is a real flaw in the mechanism, not just a bad call order: several modules
+keep their idle text in the markup with a `data-i18n` on it and then replace it
+with live content. A blind language pass writes the placeholder back over
+whatever you are looking at. Those elements now carry `data-i18n-when-idle`, and
+applyLang skips them unless the module still has its `idle` class. Five elements:
+the chord name in Charts and the chord player, the scale name in Charts, the
+scale player and the harp view.
+
+**3. Solfège did not reach the chart tools.** `refreshAllNoteDisplays()` covers
+the tuner, piano, drone, intervals, transposer and Circle of Fifths, and stops
+there. The chart tools draw note names on every chord, voicing and scale degree,
+so switching to solfège left all of Charts, the chord player and the scale player
+in letter names until the tool was reopened. Added, guarded on the current tool
+so a setting change on the tuner does not run the chart renderer. Verified live:
+C becomes Do and the root grid follows, and back again.
+
+**4.** The chord name element carried `data-i18n` twice. Cleaned up.
+
+The language measure went 81 to 78, but that number was never the point here:
+three of these four were behaviour, not vocabulary.
 
 ## v0.150.91 — Italian done. The one string left is a chord symbol.
 

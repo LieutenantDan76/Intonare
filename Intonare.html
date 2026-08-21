@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.91 -->
+<!-- INTONARE_VERSION: 0.150.97 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -26489,7 +26489,7 @@ try {
         <div class="chd-card">
           <button class="help-btn chd-help" onclick="showHelp('chord_player')">?</button>
           <div class="chd-hdr">
-            <div class="chord-name-big idle" id="cpChordName" data-i18n="pcc_pick">PICK ROOT + QUALITY</div>
+            <div class="chord-name-big idle" id="cpChordName" data-i18n="pcc_pick" data-i18n-when-idle>PICK ROOT + QUALITY</div>
             <div class="chd-sub" id="cpChordSub"></div>
           </div>
           <div class="chd-row"><div class="chd-k"><span data-i18n="chd_notes">NOTES</span></div>
@@ -27450,7 +27450,7 @@ try {
             ZOOM
           </button>
           </div>
-          <div class="gcc-chord-name idle" id="gccChordName" data-i18n="pcc_pick" style="width:100%;text-align:center" data-i18n="pcc_pick">PICK ROOT + QUALITY</div>
+          <div class="gcc-chord-name idle" id="gccChordName" data-i18n="pcc_pick" data-i18n-when-idle style="width:100%;text-align:center">PICK ROOT + QUALITY</div>
           <div class="gcc-chord-sub" id="gccChordSub" style="text-align:center"></div>
           <div class="gcc-diagram-wrap">
             <button class="gcc-nav-btn" id="gccPrev" onclick="gccNavigate(-1)" disabled>‹</button>
@@ -27580,7 +27580,7 @@ try {
           <button class="svc-save-star" onclick="svcOpenSaveBar()" title="Save this view" aria-label="Save this view">★</button>
           <button class="gss-fb-expand-btn" id="gssFbBtn" onclick="gssToggleFretboard()" data-i18n="gtool_expand">EXPAND</button>
           </div>
-          <div class="gss-scale-name idle" id="gssScaleName" style="width:100%;text-align:center" data-i18n="gss_pick">PICK ROOT + SCALE</div>
+          <div class="gss-scale-name idle" id="gssScaleName" style="width:100%;text-align:center" data-i18n="gss_pick" data-i18n-when-idle>PICK ROOT + SCALE</div>
           <div class="gss-pos-label" id="gssPosLabel" style="text-align:center"></div>
           <div class="gcc-diagram-wrap">
             <button class="gcc-nav-btn" id="gssPrev" onclick="gssNavigate(-1)" disabled>‹</button>
@@ -27680,7 +27680,7 @@ try {
       <div class="card warm" style="padding:16px 14px 14px">
         <div class="card-glow"></div>
         <div style="display:flex;align-items:baseline;justify-content:center;gap:8px;margin-bottom:10px">
-          <div class="pss-name idle" id="pssScaleName" data-i18n="gss_pick">PICK ROOT + SCALE</div>
+          <div class="pss-name idle" id="pssScaleName" data-i18n="gss_pick" data-i18n-when-idle>PICK ROOT + SCALE</div>
           <div class="gss-pos-label" id="pssPosLabel"></div>
         </div>
         <div class="kbd-controls hidden" id="pssKbdControls"></div>
@@ -27771,7 +27771,7 @@ try {
         <div class="card-glow"></div>
         <div style="display:grid;grid-template-columns:1fr minmax(0,auto) 1fr;align-items:center;margin-bottom:10px;gap:8px">
           <button class="svc-save-star" onclick="svcOpenSaveBar()" title="Save this view" aria-label="Save this view" style="justify-self:start">★</button>
-          <div class="pss-name idle" id="hpScaleName" style="text-align:center;min-width:0" data-i18n="gss_pick">PICK ROOT + SCALE</div>
+          <div class="pss-name idle" id="hpScaleName" style="text-align:center;min-width:0" data-i18n="gss_pick" data-i18n-when-idle>PICK ROOT + SCALE</div>
           <button class="gss-fb-expand-btn" id="hpScaleExpandBtn" onclick="hpToggleExpand()" data-i18n="cs_tab_expand" style="justify-self:end">EXPAND</button>
         </div>
         <div class="hp-wrap">
@@ -31142,7 +31142,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.91</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.97</span>
     </div>
   </div>
 </div>
@@ -31150,7 +31150,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.91';
+const INTONARE_VERSION = '0.150.97';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -34514,14 +34514,14 @@ function grooveBuildUI() {
 // ── Count-in / pulse ──
 const PULSE_SOUNDS = [
   { id: 'click',   label: 'CLICK',   icon: '◉' },
-  { id: 'wood',    label: 'WOOD',    icon: '🪵' },
+  { id: 'wood',    label: 'WOOD', labelIt:'LEGNO',    icon: '🪵' },
   { id: 'marimba', label: 'MARIMBA', icon: '♩' },
-  { id: 'hihat',   label: 'HAT',     icon: '✕' },
-  { id: 'rim',     label: 'RIM',     icon: '◇' },
+  { id: 'hihat',   label: 'HAT', labelIt:'HI-HAT',     icon: '✕' },
+  { id: 'rim',     label: 'RIM', labelIt:'CERCHIO',     icon: '◇' },
   { id: 'clave',   label: 'CLAVE',   icon: '╱' },
   { id: 'cowbell', label: 'COWBELL', icon: '🔔' },
   { id: 'conga',   label: 'CONGA',   icon: '🥁' },
-  { id: 'kick',    label: 'KICK',    icon: '◎' },
+  { id: 'kick',    label: 'KICK', labelIt:'CASSA',    icon: '◎' },
 ];
 
 function grooveBuildCountIn() {
@@ -34568,7 +34568,7 @@ function _updatePulsePick() {
   const el = document.getElementById('gsPulsePick');
   if (!el) return;
   const s = PULSE_SOUNDS.find(x => x.id === grooveCountInSound) || PULSE_SOUNDS[0];
-  el.textContent = s.label + ' ▾';
+  el.textContent = csSubLabel(s) + ' \u25be';
 }
 
 function togglePulsePopover() {
@@ -41209,13 +41209,18 @@ function thmnInit() {
 function _thmnBuildDemos() {
   ['thmnDemosOv'].forEach(function(contId){
     var cont = document.getElementById(contId);
-    if (!cont || cont._built) return;
-    cont._built = true;
+    // _built latched forever, so switching language never rebuilt these buttons.
+    // Latch on the language instead: rebuild when it differs from last time.
+    var _lang = (progState && progState.lang) || 'en';
+    if (!cont || cont._built === _lang) return;
+    cont._built = _lang;
+    cont.innerHTML = '';
     THMN_DEMOS.forEach(function(d){
       var b = document.createElement('button');
       b.className = 'thmn-demo-btn';
       b.type = 'button';
-      b.innerHTML = (d.icon ? '<span class="thmn-demo-ic">' + d.icon + '</span>' : '') + '<span class="thmn-demo-tx">' + d.label + '</span>';
+      var _dl = ((progState && progState.lang === 'it') && d.labelIt) ? d.labelIt : d.label;
+      b.innerHTML = (d.icon ? '<span class="thmn-demo-ic">' + d.icon + '</span>' : '') + '<span class="thmn-demo-tx">' + _dl + '</span>';
       b.onclick = function(){ thmnPlayDemo(d.id); };
       cont.appendChild(b);
     });
@@ -41261,35 +41266,35 @@ function thmnStop() {
 //           br=brightness 0..1, art=true → re-articulate with a quick vol dip.
 var THMN_DEMOS = [
   // ── SCI-FI / FX ──
-  { id:'swoop', icon:'', label:'Sci-Fi Swoop', wave:'sine', vib:1.0, glideMs:320, bright:0,
+  { id:'swoop', icon:'', label:'Sci-Fi Swoop', labelIt:'Sci-Fi Swoop', wave:'sine', vib:1.0, glideMs:320, bright:0,
     notes:[ {m:78,v:0,d:80},{m:78,v:0.9,d:600,g:200,vib:1.0},
             {m:90,v:0.9,d:1000,vib:1.0},{m:78,v:0.9,d:1250,vib:1.0},
             {m:90,v:0.9,d:1000,vib:1.0},{m:78,v:0.9,d:1250,vib:1.0},
             {m:90,v:0.9,d:1000,vib:1.0},{m:78,v:0.85,d:1300,vib:1.0},
             {m:78,v:0,d:450,g:280} ] },
-  { id:'wobble', icon:'', label:'Spooky Wail', wave:'warm', vib:1.0, glideMs:90, bright:0,
+  { id:'wobble', icon:'', label:'Spooky Wail', labelIt:'Lamento spettrale', wave:'warm', vib:1.0, glideMs:90, bright:0,
     notes:[ {m:72,v:0,d:90},{m:72,v:0.85,d:260,g:50,vib:1.0},
             {m:84,v:0.92,d:1100,g:12,vib:1.0},
             {m:83,v:0.9,d:480,g:60,vib:1.0},{m:82,v:0.9,d:620,g:70,vib:1.0},
             {m:81,v:0.9,d:900,g:90,vib:1.0},
             {m:81,v:0,d:500,g:200} ] },
-  { id:'siren', icon:'', label:'Siren', wave:'reedy', vib:0, glideMs:70, bright:0.6,
+  { id:'siren', icon:'', label:'Siren', labelIt:'Sirena', wave:'reedy', vib:0, glideMs:70, bright:0.6,
     notes:[ {m:76,v:0,d:40},{m:76,v:0.92,d:70,g:20},
             {m:88,v:0.92,d:420},{m:76,v:0.92,d:420},{m:88,v:0.92,d:420},
             {m:76,v:0.92,d:420},{m:88,v:0.92,d:420},{m:76,v:0.92,d:420},
             {m:76,v:0,d:220,g:50} ] },
-  { id:'laser', icon:'', label:'Laser Zap', wave:'reedy', vib:0, glideMs:8, bright:0.95,
+  { id:'laser', icon:'', label:'Laser Zap', labelIt:'Raggio laser', wave:'reedy', vib:0, glideMs:8, bright:0.95,
     notes:[ {m:100,v:0,d:20},{m:100,v:1,d:30,g:5},{m:64,v:1,d:150,g:8,br:0.5},{m:64,v:0,d:140,g:20},
             {m:100,v:0,d:60},{m:100,v:1,d:30,g:5},{m:64,v:1,d:150,g:8,br:0.5},{m:64,v:0,d:160,g:20} ] },
   // ── TECHNIQUE ──
-  { id:'vibrato', icon:'', label:'Vibrato Demo', wave:'warm', vib:0, glideMs:20, bright:0.55,
+  { id:'vibrato', icon:'', label:'Vibrato Demo', labelIt:'Vibrato', wave:'warm', vib:0, glideMs:20, bright:0.55,
     notes:[ {m:81,v:0,d:50},{m:81,v:0.85,d:300,vib:0},{m:81,v:0.85,d:900,vib:0},
             {m:81,v:0.85,d:1800,vib:0.95} ] },
-  { id:'swell', icon:'', label:'Dynamics Swell', wave:'warm', vib:0.3, glideMs:40, bright:0.5,
+  { id:'swell', icon:'', label:'Dynamics Swell', labelIt:'Crescendo', wave:'warm', vib:0.3, glideMs:40, bright:0.5,
     notes:[ {m:76,v:0,d:80},{m:76,v:0.03,d:160},{m:76,v:0.98,d:1500,br:0.85},
             {m:76,v:0.03,d:1500,br:0.35},{m:76,v:0,d:350} ] },
   // ── PUBLIC-DOMAIN MELODIES (articulated) ──
-  { id:'twinkle', icon:'', label:'Twinkle', wave:'warm', vib:0.3, glideMs:45, bright:0.55,
+  { id:'twinkle', icon:'', label:'Twinkle', labelIt:'Twinkle', wave:'warm', vib:0.3, glideMs:45, bright:0.55,
     notes:[ {m:72,v:0,d:40},
             {m:72,v:0.82,d:340,art:true},{m:72,v:0.82,d:340,art:true},
             {m:79,v:0.88,d:340,art:true},{m:79,v:0.88,d:340,art:true},
@@ -41299,7 +41304,7 @@ var THMN_DEMOS = [
             {m:76,v:0.84,d:340,art:true},{m:76,v:0.84,d:340,art:true},
             {m:74,v:0.83,d:340,art:true},{m:74,v:0.83,d:340,art:true},
             {m:72,v:0.82,d:680,art:true,vib:0.55},{m:72,v:0,d:220} ] },
-  { id:'ode', icon:'', label:'Ode to Joy', wave:'warm', vib:0.32, glideMs:45, bright:0.58,
+  { id:'ode', icon:'', label:'Ode to Joy', labelIt:'Inno alla gioia', wave:'warm', vib:0.32, glideMs:45, bright:0.58,
     notes:[ {m:76,v:0,d:40},
             {m:76,v:0.84,d:340,art:true},{m:76,v:0.84,d:340,art:true},
             {m:77,v:0.86,d:340,art:true},{m:79,v:0.9,d:340,art:true},
@@ -41309,7 +41314,7 @@ var THMN_DEMOS = [
             {m:74,v:0.84,d:340,art:true},{m:76,v:0.86,d:340,art:true},
             {m:76,v:0.88,d:520,art:true},{m:74,v:0.82,d:200,art:true},
             {m:74,v:0.82,d:720,art:true,vib:0.6},{m:74,v:0,d:220} ] },
-  { id:'greensleeves', icon:'', label:'Greensleeves', wave:'warm', vib:0.35, glideMs:40, bright:0.55,
+  { id:'greensleeves', icon:'', label:'Greensleeves', labelIt:'Greensleeves', wave:'warm', vib:0.35, glideMs:40, bright:0.55,
     notes:[ {m:81,v:0,d:50},
             {m:81,v:0.82,d:420,art:true},
             {m:84,v:0.84,d:840,art:true,vib:0.4},{m:86,v:0.84,d:420,art:true},
@@ -41318,7 +41323,7 @@ var THMN_DEMOS = [
             {m:79,v:0.8,d:630,art:true},{m:81,v:0.82,d:210,art:true},{m:83,v:0.84,d:420,art:true},
             {m:84,v:0.85,d:840,art:true,vib:0.5},{m:81,v:0.82,d:630,art:true},{m:80,v:0.82,d:210,art:true},
             {m:81,v:0.82,d:420,art:true},{m:76,v:0.8,d:1500,art:true,vib:0.6},{m:76,v:0,d:400} ] },
-  { id:'avemaria', icon:'', label:'Ave Maria', wave:'warm', vib:0.4, glideMs:70, bright:0.55,
+  { id:'avemaria', icon:'', label:'Ave Maria', labelIt:'Ave Maria', wave:'warm', vib:0.4, glideMs:70, bright:0.55,
     notes:[ {m:72,v:0,d:60},
             // PHRASE 1 (m1-3): rise from soft, peak on the high E, ease back on C
             {m:72,v:0.3,d:1400,art:true,vib:0.3},{m:72,v:0.5,d:600,vib:0.4},
@@ -51484,10 +51489,10 @@ function exitExercise() {
 
 // ─── INTERVAL TRAINING ───
 const IV_DIFFICULTIES = {
-  easy:   { name: 'EASY',   intervals: [0, 5, 7, 12] },              // Unison, P4, P5, Octave
-  medium: { name: 'MEDIUM', intervals: [0, 1, 2, 5, 7, 10, 11, 12] }, // + m2, M2, m7, M7
-  hard:   { name: 'HARD',   intervals: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12] }, // + m3, M3, m6, M6
-  all:    { name: 'ALL',    intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] }, // + tritone, m9, M9
+  easy:   { name: 'EASY', nameIt:'FACILE',   intervals: [0, 5, 7, 12] },              // Unison, P4, P5, Octave
+  medium: { name: 'MEDIUM', nameIt:'MEDIO', intervals: [0, 1, 2, 5, 7, 10, 11, 12] }, // + m2, M2, m7, M7
+  hard:   { name: 'HARD', nameIt:'DIFFICILE',   intervals: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12] }, // + m3, M3, m6, M6
+  all:    { name: 'ALL', nameIt:'TUTTI',    intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] }, // + tritone, m9, M9
 };
 let ivDifficulty  = 'easy';   // restored by ivLoadPrefs() from progState.ivPrefs
 let ivCustomPool  = null;   // null = use difficulty, Set<semitones> = custom
@@ -51525,9 +51530,9 @@ let ivAnswered    = false;    // manual/test: has the user answered the current 
 
 const IV_RANGES = {
   // ascAnchor: sing UP from here (floor, so +M9 fits). descAnchor: sing DOWN from here (ceiling, so -M9 fits).
-  bass:    { label: 'BASS',    midi: [40, 60], ascAnchor: 43, descAnchor: 57 },   // E2–C4
-  tenor:   { label: 'TENOR',   midi: [48, 69], ascAnchor: 50, descAnchor: 67 },   // C3–A4
-  alto:    { label: 'ALTO',    midi: [55, 74], ascAnchor: 55, descAnchor: 74 },   // G3–D5
+  bass:    { label: 'BASS', labelIt:'BASSO', labelIt:'BASSO',    midi: [40, 60], ascAnchor: 43, descAnchor: 57 },   // E2–C4
+  tenor:   { label: 'TENOR', labelIt:'TENORE', labelIt:'TENORE',   midi: [48, 69], ascAnchor: 50, descAnchor: 67 },   // C3–A4
+  alto:    { label: 'ALTO', labelIt:'CONTRALTO', labelIt:'CONTRALTO',    midi: [55, 74], ascAnchor: 55, descAnchor: 74 },   // G3–D5
   soprano: { label: 'SOPRANO', midi: [60, 81], ascAnchor: 62, descAnchor: 79 },   // C4–A5
 };
 let ivStreak = 0, ivCorrect = 0, ivTotal = 0;
@@ -58390,7 +58395,7 @@ function lnchBuildPins() {
   favs.forEach(key => {
     const meta = (typeof FAV_META !== 'undefined') ? FAV_META[key] : null;
     if (!meta) return;   // roster changed under a stale pin: skip quietly
-    add(meta.icon, meta.label,
+    add(meta.icon, csSubLabel(meta),
         meta.type === 'TOOL' ? '#5ee2ff' : '#b8a3ff',
         () => meta.launch());
   });
@@ -64780,18 +64785,18 @@ const PR_CLIMB_BPM = 90;       // fixed tempo for climb/endless base
 // the user actively presses START or re-enters the exercise).
 
 const PR_RATIOS = [
-  { a: 3, b: 2, name: 'hemiola · gateway' },
-  { a: 4, b: 3, name: 'chopin · clocks' },
+  { a: 3, b: 2, name: 'hemiola · gateway', nameIt:'emiolia · porta d\u2019ingresso' },
+  { a: 4, b: 3, name: 'chopin · clocks', nameIt:'chopin · orologi' },
   { a: 5, b: 4, name: 'take five · jazz' },
-  { a: 6, b: 5, name: 'minor third feel' },
+  { a: 6, b: 5, name: 'minor third feel', nameIt:'senso di 3ª minore' },
   { a: 7, b: 4, name: 'prog rock' },
-  { a: 7, b: 6, name: 'sept. minor' },
-  { a: 5, b: 3, name: 'asymmetric' },
-  { a: 7, b: 5, name: 'cross-pulse' },
-  { a: 8, b: 5, name: 'fibonacci adj.' },
-  { a: 7, b: 3, name: 'wide stretch' },
-  { a: 9, b: 8, name: 'complex' },
-  { a: 11, b: 8, name: 'advanced' },
+  { a: 7, b: 6, name: 'sept. minor', nameIt:'settima minore' },
+  { a: 5, b: 3, name: 'asymmetric', nameIt:'asimmetrico' },
+  { a: 7, b: 5, name: 'cross-pulse', nameIt:'pulsazioni incrociate' },
+  { a: 8, b: 5, name: 'fibonacci adj.', nameIt:'fibonacci adiac.' },
+  { a: 7, b: 3, name: 'wide stretch', nameIt:'ampia estensione' },
+  { a: 9, b: 8, name: 'complex', nameIt:'complesso' },
+  { a: 11, b: 8, name: 'advanced', nameIt:'avanzato' },
 ];
 
 const PR_MODES = [
@@ -64806,12 +64811,12 @@ const PR_MODES = [
 
 const PR_SOUNDS = [
   { key: 'click',   label: 'CLICK',   icon: '◉' },
-  { key: 'wood',    label: 'WOOD',    icon: '⬡' },
-  { key: 'rim',     label: 'RIM',     icon: '◌' },
+  { key: 'wood',    label: 'WOOD', labelIt:'LEGNO',    icon: '⬡' },
+  { key: 'rim',     label: 'RIM', labelIt:'CERCHIO',     icon: '◌' },
   { key: 'hihat',   label: 'HI-HAT',  icon: '✦' },
   { key: 'clave',   label: 'CLAVE',   icon: '▸' },
   { key: 'marimba', label: 'MARIMBA', icon: '◆' },
-  { key: 'kick',    label: 'KICK',    icon: '●' },
+  { key: 'kick',    label: 'KICK', labelIt:'CASSA',    icon: '●' },
   { key: 'cowbell', label: 'COWBELL', icon: '🔔' },
 ];
 
@@ -64979,7 +64984,7 @@ function prInit() {
   document.getElementById('prRatioA').textContent = prRatioA;
   document.getElementById('prRatioB').textContent = prRatioB;
   const r = PR_RATIOS.find(x => x.a === prRatioA && x.b === prRatioB);
-  if (r) document.getElementById('prRatioName').textContent = r.name;
+  if (r) document.getElementById('prRatioName').textContent = _itName(r);
   prUpdateBpmDisplay();
   prRenderRings();
   prGameUpdateUI();
@@ -65122,7 +65127,7 @@ function prUpdateRatioBtn() {
   if (v) v.textContent = `${prRatioA}:${prRatioB}`;
   if (s) {
     const r = PR_RATIOS.find(x => x.a === prRatioA && x.b === prRatioB);
-    s.textContent = (r ? r.name.split(' · ')[0] : 'custom') + ' ▾';
+    s.textContent = (r ? _itName(r).split(' \u00b7 ')[0] : (t('pr_custom') || 'custom')) + ' \u25be';
   }
 }
 
@@ -65130,7 +65135,7 @@ function prUpdateSoundBtn() {
   const sub = document.getElementById('prSoundBtnSub');
   if (!sub) return;
   const s = PR_SOUNDS.find(x => x.key === prSoundA);
-  sub.textContent = (s ? s.label.toLowerCase() : prSoundA) + ' ▾';
+  sub.textContent = (s ? csSubLabel(s).toLowerCase() : prSoundA) + ' \u25be';
 }
 
 // ─── Sound grid builder ───
@@ -68469,6 +68474,16 @@ function srRenderAcc() {
 // asking for E4 is answered where E3 sounds on a guitar.
 var SR_FRET_NECK = 24;
 var SR_FRET_SLICES = [{ lo:1, hi:12, open:true }, { lo:12, hi:24, open:false }];
+// Beside the table, not inside it: the sentinel pins two of these rows word for
+// word to guard `written:12`, and an inline labelIt breaks the pin.
+const SR_FRET_LABELS_IT = { guitar:'CHITARRA', bass:'BASSO', bass5:'BASSO 5',
+  ukulele:'UKULELE', mandolin:'MANDOLINO', banjo:'BANJO' };
+function srFretLabel(key, o) {
+  try { if ((progState && progState.lang === 'it') && SR_FRET_LABELS_IT[key]) return SR_FRET_LABELS_IT[key]; }
+  catch (e) {}
+  return (o && o.label) || key;
+}
+
 var SR_FRETS = {
   guitar:   { label:'GUITAR',   open:[40,45,50,55,59,64], written:12 },
   bass:     { label:'BASS',     open:[28,33,38,43],       written:12 },
@@ -68784,7 +68799,7 @@ function srRenderFretInstBtn() {
   var it = SR_FRETS[srFretInst];
   var btn = document.createElement('button');
   btn.className = 'piano-overlay-voice-btn';
-  btn.innerHTML = '<span class="pov-name">' + it.label + '</span>'
+  btn.innerHTML = '<span class="pov-name">' + srFretLabel(srFretInst, it) + '</span>'
     + '<span class="sr-inst-strings">' + it.open.length + '</span>'
     + '<span class="pov-caret">\u25be</span>';
   btn.onclick = srOpenFretInst;
@@ -72411,13 +72426,13 @@ var RC_CARDS = [
 ];
 
 var RC_CATS = [
-  { key:'all',        label:'ALL' },
-  { key:'basics',     label:'BASICS' },
-  { key:'sixteenths', label:'16THS' },
-  { key:'dotted',     label:'DOTTED' },
-  { key:'triplets',   label:'TRIPLETS' },
-  { key:'synco',      label:'SYNCO' },
-  { key:'rests',      label:'RESTS' },
+  { key:'all',        label:'ALL', labelIt:'TUTTE' },
+  { key:'basics',     label:'BASICS', labelIt:'BASI' },
+  { key:'sixteenths', label:'16THS', labelIt:'SEDICESIMI' },
+  { key:'dotted',     label:'DOTTED', labelIt:'PUNTATE' },
+  { key:'triplets',   label:'TRIPLETS', labelIt:'TERZINE' },
+  { key:'synco',      label:'SYNCO', labelIt:'SINCOPI' },
+  { key:'rests',      label:'RESTS', labelIt:'PAUSE' },
 ];
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -72774,7 +72789,7 @@ function rcRenderCats() {
     var b = document.createElement('button');
     var on = (c.key === 'all') ? (activeKeys.length === 0) : !!rcCatSel[c.key];
     b.className = 'rc-cat-pill' + (on ? ' active' : '');
-    b.textContent = c.label;
+    b.textContent = csSubLabel(c);
     b.onclick = function(){ rcPickCat(c.key); };
     wrap.appendChild(b);
   });
@@ -75118,9 +75133,9 @@ let ssPlayMode  = prefGet('ssPlayMode', 'single', _inList(['single','string','ar
 // maxLeap:   largest leap in scale-degrees when a leap happens.
 // len:       melody note count.
 const SS_DIFFICULTIES = {
-  easy:   { name: 'EASY',   scale: [0,2,4,7,9],            stepRatio: 0.85, maxLeap: 2, len: 3 },  // major pentatonic
-  medium: { name: 'MEDIUM', scale: [0,2,4,5,7,9,11],       stepRatio: 0.70, maxLeap: 3, len: 4 },  // major
-  hard:   { name: 'HARD',   scale: [0,1,2,3,4,5,6,7,8,9,10,11], stepRatio: 0.55, maxLeap: 5, len: 5 }, // chromatic
+  easy:   { name: 'EASY', nameIt:'FACILE',   scale: [0,2,4,7,9],            stepRatio: 0.85, maxLeap: 2, len: 3 },  // major pentatonic
+  medium: { name: 'MEDIUM', nameIt:'MEDIO', scale: [0,2,4,5,7,9,11],       stepRatio: 0.70, maxLeap: 3, len: 4 },  // major
+  hard:   { name: 'HARD', nameIt:'DIFFICILE',   scale: [0,1,2,3,4,5,6,7,8,9,10,11], stepRatio: 0.55, maxLeap: 5, len: 5 }, // chromatic
 };
 // Sequence difficulty for STRING mode. SS_DIFFICULTIES was fully implemented — a real
 // curve from major pentatonic (no semitones, easy to sing) through major to full
@@ -75801,9 +75816,9 @@ const RT_ZONE_CENTS = 35;
 // (proximity, the strongest knob), how dense it is, how many home-pitch replays
 // you get, and how tight the scoring band is.
 const RT_DIFF = {
-  easy:   { label:'EASY', proxLo:7, proxHi:10, density:1.35, replays:2, zone:45 },
-  medium: { label:'MED',  proxLo:5, proxHi:8,  density:1.0,  replays:1, zone:35 },
-  hard:   { label:'HARD', proxLo:3, proxHi:5,  density:0.7,  replays:0, zone:22 },
+  easy:   { label:'EASY', labelIt:'FACILE', proxLo:7, proxHi:10, density:1.35, replays:2, zone:45 },
+  medium: { label:'MED', labelIt:'MEDIO',  proxLo:5, proxHi:8,  density:1.0,  replays:1, zone:35 },
+  hard:   { label:'HARD', labelIt:'DIFFICILE', proxLo:3, proxHi:5,  density:0.7,  replays:0, zone:22 },
 };
 let rtDiff = prefGet('rtDiff', 'medium', _inList(['easy','medium','hard']));
 function rtDiffCfg(){ return RT_DIFF[rtDiff] || RT_DIFF.medium; }
@@ -81269,18 +81284,18 @@ const DIADLE_DIFF = {
 // Scale-degree catalog. st = semitones above the root (0..11 within the octave).
 // id is the degree token shown on the button; name is the interval translation for the popup.
 const DIADLE_DEGREES = [
-  { id:'1',  st:0,  name:'unison / root',   deg:1 },
-  { id:'♭2', st:1,  name:'minor 2nd',       deg:2 },
-  { id:'2',  st:2,  name:'major 2nd',       deg:2 },
-  { id:'♭3', st:3,  name:'minor 3rd',       deg:3 },
-  { id:'3',  st:4,  name:'major 3rd',       deg:3 },
-  { id:'4',  st:5,  name:'perfect 4th',     deg:4 },
-  { id:'TT', st:6,  name:'tritone',         deg:0 },
-  { id:'5',  st:7,  name:'perfect 5th',     deg:5 },
-  { id:'♭6', st:8,  name:'minor 6th',       deg:6 },
-  { id:'6',  st:9,  name:'major 6th',       deg:6 },
-  { id:'♭7', st:10, name:'minor 7th',       deg:7 },
-  { id:'7',  st:11, name:'major 7th',       deg:7 },
+  { id:'1',  st:0,  name:'unison / root', nameIt:'unisono / fondamentale',   deg:1 },
+  { id:'♭2', st:1,  name:'minor 2nd', nameIt:'2ª minore',       deg:2 },
+  { id:'2',  st:2,  name:'major 2nd', nameIt:'2ª maggiore',       deg:2 },
+  { id:'♭3', st:3,  name:'minor 3rd', nameIt:'3ª minore',       deg:3 },
+  { id:'3',  st:4,  name:'major 3rd', nameIt:'3ª maggiore',       deg:3 },
+  { id:'4',  st:5,  name:'perfect 4th', nameIt:'4ª giusta',     deg:4 },
+  { id:'TT', st:6,  name:'tritone', nameIt:'tritono',         deg:0 },
+  { id:'5',  st:7,  name:'perfect 5th', nameIt:'5ª giusta',     deg:5 },
+  { id:'♭6', st:8,  name:'minor 6th', nameIt:'6ª minore',       deg:6 },
+  { id:'6',  st:9,  name:'major 6th', nameIt:'6ª maggiore',       deg:6 },
+  { id:'♭7', st:10, name:'minor 7th', nameIt:'7ª minore',       deg:7 },
+  { id:'7',  st:11, name:'major 7th', nameIt:'7ª maggiore',       deg:7 },
 ];
 function diadleDeg(id){ for (var i=0;i<DIADLE_DEGREES.length;i++) if (DIADLE_DEGREES[i].id===id) return DIADLE_DEGREES[i]; return null; }
 function diadleDegBySt(st){ st=((st%12)+12)%12; for (var i=0;i<DIADLE_DEGREES.length;i++) if (DIADLE_DEGREES[i].st===st) return DIADLE_DEGREES[i]; return null; }
@@ -84442,7 +84457,8 @@ const STRINGS = {
     oct_lo:'LO', oct_mid:'MID', oct_hi:'HI', oct_low:'LOW', oct_mid_full:'MID', oct_high:'HIGH',
     piano_nameplate:'Grand Piano', tl_on_off_arrow:'on \u00b7 off \u25be',
     iv_desc:'DESC', tp_no_transposition:'no transposition',
-    tl_on:'on', tl_off:'off', tl_bar:'bar', tl_of:'of', rc_stop:'STOP',
+    ww_basic:'Basic', ww_alt:'Alt', tb_pos:'Pos',
+    tl_on:'on', tl_off:'off', tl_bar:'bar', tl_of:'of', rc_stop:'STOP', pr_custom:'custom',
     nc_grp_arpeggio:'arpeggio', nc_grp_bar_repeat:'bar repeat', nc_grp_barline:'barline', nc_grp_bowing:'bowing', nc_grp_brass_shape:'brass shape', nc_grp_clef:'clef', nc_grp_csym_accidental:'chord accidental', nc_grp_csym_quality:'chord quality', nc_grp_duration:'duration', nc_grp_grace:'grace note', nc_grp_gtr_bend:'bend', nc_grp_gtr_extra:'guitar extra', nc_grp_gtr_hand:'hand', nc_grp_gtr_read:'guitar reading', nc_grp_gtr_slide:'slide', nc_grp_gtr_tone:'guitar tone', nc_grp_gtr_vib:'vibrato', nc_grp_hairpin:'hairpin', nc_grp_harmonic:'harmonic', nc_grp_jump:'jump', nc_grp_loudness:'loudness', nc_grp_meter:'meter', nc_grp_mute:'mute', nc_grp_note_shape:'note shape', nc_grp_octave:'octave', nc_grp_ornament:'ornament', nc_grp_pause:'pause', nc_grp_pedal:'pedal', nc_grp_pitch:'pitch', nc_grp_pizz:'pizzicato', nc_grp_silence:'silence', nc_grp_span:'span', nc_grp_string_tone:'string tone', nc_grp_sudden:'sudden', nc_grp_tremolo:'tremolo', nc_grp_wind_hole:'wind hole',
     tg_groove_straight:'straight', tg_groove_swing:'swing', tg_groove_shuffle:'shuffle',
     rr_show:'SHOW', rr_hide:'HIDE', rr_mix:'MIX', rr_1bar:'1 BAR', rr_2bar:'2 BAR',
@@ -85640,7 +85656,8 @@ const STRINGS = {
     oct_lo:'BAS', oct_mid:'MED', oct_hi:'ALT', oct_low:'BASSA', oct_mid_full:'MEDIA', oct_high:'ALTA',
     piano_nameplate:'Gran Pianoforte', tl_on_off_arrow:'s\u00ec \u00b7 no \u25be',
     iv_desc:'DISC', tp_no_transposition:'nessuna trasposizione',
-    tl_on:'s\u00ec', tl_off:'no', tl_bar:'battuta', tl_of:'di', rc_stop:'STOP',
+    ww_basic:'Base', ww_alt:'Alt.', tb_pos:'Pos.',
+    tl_on:'s\u00ec', tl_off:'no', tl_bar:'battuta', tl_of:'di', rc_stop:'STOP', pr_custom:'personalizzato',
     nc_grp_arpeggio:'arpeggio', nc_grp_bar_repeat:'ripetizione battuta', nc_grp_barline:'stanghetta', nc_grp_bowing:'arcata', nc_grp_brass_shape:'ottoni', nc_grp_clef:'chiave', nc_grp_csym_accidental:'alterazione accordo', nc_grp_csym_quality:'qualità accordo', nc_grp_duration:'durata', nc_grp_grace:'abbellimento', nc_grp_gtr_bend:'bending', nc_grp_gtr_extra:'chitarra extra', nc_grp_gtr_hand:'mano', nc_grp_gtr_read:'lettura chitarra', nc_grp_gtr_slide:'slide', nc_grp_gtr_tone:'timbro chitarra', nc_grp_gtr_vib:'vibrato', nc_grp_hairpin:'forcella', nc_grp_harmonic:'armonico', nc_grp_jump:'salto', nc_grp_loudness:'intensità', nc_grp_meter:'metro', nc_grp_mute:'sordina', nc_grp_note_shape:'forma nota', nc_grp_octave:'ottava', nc_grp_ornament:'abbellimento', nc_grp_pause:'pausa', nc_grp_pedal:'pedale', nc_grp_pitch:'altezza', nc_grp_pizz:'pizzicato', nc_grp_silence:'silenzio', nc_grp_span:'estensione', nc_grp_string_tone:'timbro archi', nc_grp_sudden:'improvviso', nc_grp_tremolo:'tremolo', nc_grp_wind_hole:'foro fiati',
     tg_groove_straight:'dritto', tg_groove_swing:'swing', tg_groove_shuffle:'shuffle',
     tg_sub_quarter_arrow:'quarti \u25be', tg_sub_straight_arrow:'dritto \u25be',
@@ -85866,6 +85883,15 @@ function applyLang() {
   try { if (typeof ncRelabel === 'function') ncRelabel(); } catch (e) {}
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
+    // PLACEHOLDER, NOT LABEL. Several modules keep their idle text in the markup
+    // with a data-i18n on it and then replace it with live content: the chord
+    // name, the scale name. A blind pass puts "PICK ROOT + QUALITY" back over the
+    // C major chord you are looking at, which is exactly what happened when
+    // applyLang started running on tool entry.
+    //
+    // Those elements carry data-i18n-when-idle and keep the class `idle` only
+    // while the placeholder is what should be showing.
+    if (el.hasAttribute('data-i18n-when-idle') && !el.classList.contains('idle')) return;
     const val = t(key);
     if (val !== undefined && val !== key) el.textContent = val;
   });
@@ -86100,7 +86126,12 @@ try {
   // The theremin rebuilds its own controls on open, after applyLang has run, so
   // tagged elements inside it revert to their markup defaults. Re-running
   // applyLang for that screen is enough; nothing there is built from a data table.
-  registerRelabel('toolTheremin', function () { try { applyLang(); } catch (e) {} });
+  registerRelabel('toolTheremin', function () {
+    try { applyLang(); } catch (e) {}
+    // The demo drawer is built once from a data table, so applyLang cannot reach
+    // its labels. Its builder now latches on the language rather than a boolean.
+    try { if (typeof _thmnBuildDemos === 'function') _thmnBuildDemos(); } catch (e) {}
+  });
 
   registerRelabel('mqModal', function () {
     if (typeof mqRenderSheetPackGrid === 'function') mqRenderSheetPackGrid();
@@ -88644,6 +88675,30 @@ function refreshAllNoteDisplays() {
   const noteEl = document.getElementById('noteName');
   if (!noteEl) return;
   if (noteEl && noteEl.dataset.rawNote) noteEl.textContent = getDisplayNote(noteEl.dataset.rawNote).replace('#','♯');
+  // MODULES THAT DRAW NOTE NAMES AND WERE NOT IN THIS LIST.
+  //
+  // The list above covers the tuner, the piano, the drone, intervals, the
+  // transposer and the Circle of Fifths. The chart tools draw note names on
+  // every chord, voicing and scale degree and were never refreshed, so switching
+  // to solfège left the whole of Charts, the chord player and the scale player
+  // in letter names until the tool was reopened.
+  //
+  // Guarded by currentTool: these are expensive redraws and there is no reason to
+  // run the chart renderer because someone changed a setting while on the tuner.
+  try {
+    if (currentTool === 'guitarchords') {
+      if (typeof gccBuildRootGrid === 'function') gccBuildRootGrid();
+      if (typeof gccBuildQualityRow === 'function') gccBuildQualityRow();
+      if (typeof gccRender === 'function') gccRender();
+      if (typeof gssRender === 'function') gssRender();
+    }
+    if (typeof pccRender === 'function' && document.getElementById('toolChords')
+        && !document.getElementById('toolChords').classList.contains('hidden')) pccRender();
+    if (typeof pssRender === 'function' && document.getElementById('toolScales')
+        && !document.getElementById('toolScales').classList.contains('hidden')) pssRender();
+    if (typeof nctRender === 'function' && currentExercise === 'notationcards') nctRender();
+  } catch (e) {}
+
   // Rebuild scale root dropdown to reflect note naming change
   try { buildScaleRootDropdown && buildScaleRootDropdown(); } catch(e) {}
 }
@@ -90388,6 +90443,25 @@ HELP_CONTENT.prmode = {
 // isCapacitor() returns true when running inside a Capacitor native shell.
 // Use this to gate any native-only features.
 // ═══════════════════════════════════════════════
+// ── Italian twins, shared ─────────────────────────────────────────────────
+// Declared HERE, in the first script block, on purpose. Script blocks evaluate
+// in order, so a helper declared in block 5 does not exist while block 4 is
+// still running; putting these next to the table they were written for threw
+// "csSubLabel is not defined" at load.
+//
+// Many data tables in this file carry an English display field and an Italian
+// twin beside it. These are the two readers.
+function csSubLabel(s) {
+  if (!s) return '';
+  try { return ((progState && progState.lang === 'it') && s.labelIt) ? s.labelIt : (s.label || ''); }
+  catch (e) { return s.label || ''; }
+}
+function _itName(o) {
+  if (!o) return '';
+  try { return ((progState && progState.lang === 'it') && o.nameIt) ? o.nameIt : (o.name || ''); }
+  catch (e) { return o.name || ''; }
+}
+
 function isCapacitor() {
   return typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
 }
@@ -100084,12 +100158,12 @@ const BANJO_STRING_NAMES = ['D','G','B','d','g'];
 // Resolved dynamically per voicing so rolls adapt to any chord shape.
 // Using 4–5 distinct positions keeps patterns musically varied across voicings.
 const BANJO_ROLLS = {
-  forward:   { name:'FORWARD',    pattern:[4,2,3,4,2,3,4,2] }, // classic: drone-mid-high
-  backward:  { name:'BACKWARD',   pattern:[3,2,4,3,1,4,3,2] }, // descending + bass dip
-  alt_thumb: { name:'ALT THUMB',  pattern:[4,2,0,3,4,2,0,3] }, // thumb walks bass↔drone
-  square:    { name:'SQUARE',     pattern:[4,1,3,1,4,2,3,2] }, // symmetric, uses 4 positions
+  forward:   { name:'FORWARD', nameIt:'AVANTI',    pattern:[4,2,3,4,2,3,4,2] }, // classic: drone-mid-high
+  backward:  { name:'BACKWARD', nameIt:'INDIETRO',   pattern:[3,2,4,3,1,4,3,2] }, // descending + bass dip
+  alt_thumb: { name:'ALT THUMB', nameIt:'POLLICE ALT',  pattern:[4,2,0,3,4,2,0,3] }, // thumb walks bass↔drone
+  square:    { name:'SQUARE', nameIt:'QUADRATO',     pattern:[4,1,3,1,4,2,3,2] }, // symmetric, uses 4 positions
   foggy_mtn: { name:'FOGGY MTN',  pattern:[4,3,4,2,3,4,1,3] }, // treble-heavy, bass visit
-  thumb_in:  { name:'THUMB IN',   pattern:[2,4,3,1,4,3,2,4] }, // starts mid, descends
+  thumb_in:  { name:'THUMB IN', nameIt:'POLLICE DENTRO',   pattern:[2,4,3,1,4,3,2,4] }, // starts mid, descends
   lick:      { name:'LICK',       pattern:[3,2,4,3,2,0,3,1] }, // bass emphasis, 5 positions
 };
 
@@ -100345,7 +100419,7 @@ function banjoInitRollUI() {
     const btn = document.createElement('button');
     btn.className    = 'gss-type-btn';
     btn.dataset.roll = key;
-    btn.textContent  = r.name;
+    btn.textContent  = _itName(r);
     btn.onclick      = () => banjoToggleRoll(key);
     row.appendChild(btn);
   });
@@ -100656,17 +100730,17 @@ const WW_SUBS = {
     { key:'bb',   label:'B♭',       transposition:-2  }, // sounds M2 lower than written
     { key:'a',    label:'A',         transposition:-3  }, // sounds m3 lower than written
     { key:'eb',   label:'E♭',       transposition:+3  }, // sounds m3 HIGHER than written
-    { key:'bass', label:'BASS',      transposition:-14 }, // sounds M9 lower than written
+    { key:'bass', label:'BASS', labelIt:'BASSO',      transposition:-14 }, // sounds M9 lower than written
   ],
   ww_oboe: [
     { key:'oboe',      label:'OBOE',       transposition:0  }, // concert pitch
-    { key:'coranglais',label:'COR ANGLAIS',transposition:-7 }, // sounds P5 lower
+    { key:'coranglais',label:'COR ANGLAIS', labelIt:'CORNO INGLESE',transposition:-7 }, // sounds P5 lower
   ],
   ww_sax: [
-    { key:'alto',    label:'ALTO',    transposition:-9  }, // Eb: M6 lower than written
-    { key:'tenor',   label:'TENOR',   transposition:-14 }, // Bb: M9 lower than written
+    { key:'alto',    label:'ALTO', labelIt:'CONTRALTO',    transposition:-9  }, // Eb: M6 lower than written
+    { key:'tenor',   label:'TENOR', labelIt:'TENORE',   transposition:-14 }, // Bb: M9 lower than written
     { key:'soprano', label:'SOPRANO', transposition:-2  }, // Bb: M2 lower than written
-    { key:'bari',    label:'BARI',    transposition:-21 }, // Eb: M13 lower than written
+    { key:'bari',    label:'BARI', labelIt:'BARITONO',    transposition:-21 }, // Eb: M13 lower than written
   ],
   // Flute family — ONE instrument, three sub-types (matches recorder/sax pattern).
   //   • Flute:  concert C flute, full Boehm 18-slot layout, no transposition.
@@ -100678,25 +100752,25 @@ const WW_SUBS = {
   //   octave  — added octave offset (semitones) on top of transposition (piccolo).
   //   noFoot  — true ⇒ drop the foot-joint keys in the diagram + fingering.
   ww_flute: [
-    { key:'flute',   label:'FLUTE',      transposition: 0                          },
-    { key:'piccolo', label:'PICCOLO',    transposition: 0, octave: 12, noFoot:true  }, // sounds 8va up: written = sounding − 12
-    { key:'alto',    label:'ALTO FLUTE', transposition:-5                          }, // sounds P4 lower
+    { key:'flute',   label:'FLUTE', labelIt:'FLAUTO',      transposition: 0                          },
+    { key:'piccolo', label:'PICCOLO', labelIt:'OTTAVINO',    transposition: 0, octave: 12, noFoot:true  }, // sounds 8va up: written = sounding − 12
+    { key:'alto',    label:'ALTO FLUTE', labelIt:'FLAUTO CONTRALTO', transposition:-5                          }, // sounds P4 lower
   ],
   ww_bassclarinet:[{ key:'bb', label:'B♭', transposition:-14 }], // sounds M9 lower (same as tenor sax)
   ww_coranglais: [{ key:'f',  label:'F',  transposition:-7  }], // sounds P5 lower than written
   ww_recorder: [
     { key:'soprano', label:'SOPRANO', transposition: 0  }, // C5 concert, no offset
-    { key:'alto',    label:'ALTO',    transposition: 5  }, // F4: sounds P4 lower than written
-    { key:'tenor',   label:'TENOR',   transposition: 0  }, // C4 concert (octave below soprano)
-    { key:'bass',    label:'BASS',    transposition:-5  }, // F3: sounds P5 lower than soprano
+    { key:'alto',    label:'ALTO', labelIt:'CONTRALTO',    transposition: 5  }, // F4: sounds P4 lower than written
+    { key:'tenor',   label:'TENOR', labelIt:'TENORE',   transposition: 0  }, // C4 concert (octave below soprano)
+    { key:'bass',    label:'BASS', labelIt:'BASSO',    transposition:-5  }, // F3: sounds P5 lower than soprano
   ],
   ww_whistle: [
     { key:'d',     label:'D',     transposition:0 }, // high D, concert pitch
     { key:'low_d', label:'LOW D', transposition:0 }, // low D, concert pitch — same fingerings, lower range
   ],
   ww_bassoon: [
-    { key:'bassoon', label:'BASSOON',      transposition:0 }, // concert pitch (non-transposing)
-    { key:'contra',  label:'CONTRA',       transposition:0 }, // contrabassoon: same fingerings, sounds 8va lower (handled as range shift, not transposition)
+    { key:'bassoon', label:'BASSOON', labelIt:'FAGOTTO',      transposition:0 }, // concert pitch (non-transposing)
+    { key:'contra',  label:'CONTRA', labelIt:'CONTRAFAGOTTO',       transposition:0 }, // contrabassoon: same fingerings, sounds 8va lower (handled as range shift, not transposition)
   ],
   ww_ocarina: [
     { key:'12hole', label:'12-HOLE', transposition:0 },
@@ -100837,8 +100911,8 @@ const FLUTE_MIDI_FINGERINGS = {
   68:{p:[0,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0]}, // G#4  T 123G#|---Eb
   69:{p:[0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0]}, // A4   T 12-|---Eb
   70:{p:[0,1,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0],   // Bb4  T 1--|1--Eb  (1-and-1)
-      alts:[{ label:'Thumb Bb', p:[1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0] },   // Briccialdi thumb key
-            { label:'Side Bb',  p:[0,1,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0] }]}, // Bb side lever — chromatic-friendly
+      alts:[{ label:'Thumb Bb', labelIt:'Si♭ del pollice', p:[1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0] },   // Briccialdi thumb key
+            { label:'Side Bb', labelIt:'Si♭ laterale',  p:[0,1,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0] }]}, // Bb side lever — chromatic-friendly
   71:{p:[0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]}, // B4   B 1--|---Eb
   72:{p:[0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]}, // C5   1--|---Eb
   73:{p:[0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]}, // C#5  ---|---Eb
@@ -100852,8 +100926,8 @@ const FLUTE_MIDI_FINGERINGS = {
   80:{p:[0,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0]}, // G#5  T 123G#|---Eb
   81:{p:[0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0]}, // A5   T 12-|---Eb
   82:{p:[0,1,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0],   // Bb5  T 1--|1--Eb  (1-and-1)
-      alts:[{ label:'Thumb Bb', p:[1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0] },   // Briccialdi thumb key
-            { label:'Side Bb',  p:[0,1,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0] }]}, // Bb side lever
+      alts:[{ label:'Thumb Bb', labelIt:'Si♭ del pollice', p:[1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0] },   // Briccialdi thumb key
+            { label:'Side Bb', labelIt:'Si♭ laterale',  p:[0,1,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0] }]}, // Bb side lever
   83:{p:[0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]}, // B5   B 1--|---Eb
   84:{p:[0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]}, // C6   1--|---Eb
   85:{p:[0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]}, // C#6  ---|---Eb
@@ -101331,32 +101405,32 @@ const CLARINET_LAYOUT = {
 // [T, R, LH1, LH2, LH3,  LH-E/B, LH-F/C, LH-F#/C#, LH-C#/G#,  RH1, RH2, RH3,  RH-E/B, RH-F/C, RH-F#/C#, RH-G#/D#]
 const CLARINET_FINGERINGS = {
   4:  { p:[1,0,1,1,1,  1,0,0,0,  1,1,1,  0,0,0,0],
-       alts:[{ label:'RH E key',  p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  1,0,0,0] }] }, // E — smooth from D without LH pinky shift
+       alts:[{ label:'RH E key', labelIt:'Chiave Mi mano destra',  p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  1,0,0,0] }] }, // E — smooth from D without LH pinky shift
   5:  { p:[1,0,1,1,1,  0,1,0,0,  1,1,1,  0,0,0,0],
-       alts:[{ label:'RH F key',  p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,1,0,0] }] }, // F — smooth from E
+       alts:[{ label:'RH F key', labelIt:'Chiave Fa mano destra',  p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,1,0,0] }] }, // F — smooth from E
   6:  { p:[1,0,1,1,1,  0,0,1,0,  1,1,1,  0,0,0,0],
-       alts:[{ label:'RH F# key', p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,0,1,0] }] }, // F#
+       alts:[{ label:'RH F# key', labelIt:'Chiave Fa♯ mano destra', p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,0,1,0] }] }, // F#
   7:  { p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,0,0,0] },
   8:  { p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,0,0,1],
        alts:[
-         { label:'LH G# key',  p:[1,0,1,1,1,  0,0,0,1,  1,1,1,  0,0,0,0] },
-         { label:'Both G# keys',p:[1,0,1,1,1,  0,0,0,1,  1,1,1,  0,0,0,1] }, // extra stable in fast passages
+         { label:'LH G# key', labelIt:'Chiave Sol♯ mano sinistra',  p:[1,0,1,1,1,  0,0,0,1,  1,1,1,  0,0,0,0] },
+         { label:'Both G# keys', labelIt:'Entrambe le chiavi del Sol♯',p:[1,0,1,1,1,  0,0,0,1,  1,1,1,  0,0,0,1] }, // extra stable in fast passages
        ]},
   9:  { p:[1,0,1,1,1,  0,0,0,0,  1,1,0,  0,0,0,0] },
   10: { p:[1,0,1,1,1,  0,0,0,0,  1,0,0,  0,0,0,0],
        alts:[
-         { label:'Throat Bb', p:[0,0,1,0,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
-         { label:'Side Bb',   p:[1,0,1,0,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
+         { label:'Throat Bb', labelIt:'Si♭ di gola', p:[0,0,1,0,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
+         { label:'Side Bb', labelIt:'Si♭ laterale',   p:[1,0,1,0,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
        ]},
   11: { p:[1,0,1,1,1,  0,0,0,0,  0,1,0,  0,0,0,0] },
   0:  { p:[1,0,1,1,1,  0,0,0,0,  0,0,0,  0,0,0,0] },
   1:  { p:[1,0,1,1,1,  0,0,0,1,  0,0,0,  0,0,0,0],
-       alts:[{ label:'RH G#', p:[1,0,1,1,1,  0,0,0,0,  0,0,0,  0,0,0,1] }] },
+       alts:[{ label:'RH G#', labelIt:'Sol♯ mano destra', p:[1,0,1,1,1,  0,0,0,0,  0,0,0,  0,0,0,1] }] },
   2:  { p:[1,0,1,1,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
   3:  { p:[1,0,1,1,0,  0,0,0,0,  0,0,0,  0,0,0,0],
        alts:[
-         { label:'Side Eb',  p:[1,0,1,1,0,  0,0,0,0,  0,0,0,  0,0,0,1] },
-         { label:'Fork Eb',  p:[1,0,1,0,0,  0,0,0,0,  1,0,0,  0,0,0,0] },
+         { label:'Side Eb', labelIt:'Mi♭ laterale',  p:[1,0,1,1,0,  0,0,0,0,  0,0,0,  0,0,0,1] },
+         { label:'Fork Eb', labelIt:'Mi♭ a forcella',  p:[1,0,1,0,0,  0,0,0,0,  1,0,0,  0,0,0,0] },
        ]},
 };
 
@@ -101367,11 +101441,11 @@ const CLARINET_FINGERINGS = {
 // Note: G4 (wm67) is genuinely all-open; F#4 (wm66) has no thumb key.
 // Side key 4 (Eb4/Bb5) mapped to RH_G# slot as closest available.
 const CLARINET_MIDI_FINGERINGS = {
-  52: { p:[1,0,1,1,1,1,0,0,0,1,1,1,0,0,0,0], alts:[{label:'RH E',p:[1,0,1,1,1,0,0,0,0,1,1,1,1,0,0,0]}] },  // E3: T 123E|123
-  53: { p:[1,0,1,1,1,0,0,0,0,1,1,1,0,1,0,0], alts:[{label:'LH F',p:[1,0,1,1,1,0,1,0,0,1,1,1,0,0,0,0]}] },  // F3: T 123|123F
-  54: { p:[1,0,1,1,1,0,0,1,0,1,1,1,0,0,0,0], alts:[{label:'RH F♯',p:[1,0,1,1,1,0,0,0,0,1,1,1,0,0,1,0]}] },  // F#3: T 123F#|123
+  52: { p:[1,0,1,1,1,1,0,0,0,1,1,1,0,0,0,0], alts:[{label:'RH E', labelIt:'Mi mano destra',p:[1,0,1,1,1,0,0,0,0,1,1,1,1,0,0,0]}] },  // E3: T 123E|123
+  53: { p:[1,0,1,1,1,0,0,0,0,1,1,1,0,1,0,0], alts:[{label:'LH F', labelIt:'Fa mano sinistra',p:[1,0,1,1,1,0,1,0,0,1,1,1,0,0,0,0]}] },  // F3: T 123|123F
+  54: { p:[1,0,1,1,1,0,0,1,0,1,1,1,0,0,0,0], alts:[{label:'RH F♯', labelIt:'Fa♯ mano destra',p:[1,0,1,1,1,0,0,0,0,1,1,1,0,0,1,0]}] },  // F#3: T 123F#|123
   55: { p:[1,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0] },  // G3: T 123|123
-  56: { p:[1,0,1,1,1,0,0,0,0,1,1,1,0,0,0,1], alts:[{label:'LH G♯',p:[1,0,1,1,1,0,0,0,1,1,1,1,0,0,0,0]}] },  // G#3: T 123|123G#
+  56: { p:[1,0,1,1,1,0,0,0,0,1,1,1,0,0,0,1], alts:[{label:'LH G♯', labelIt:'Sol♯ mano sinistra',p:[1,0,1,1,1,0,0,0,1,1,1,1,0,0,0,0]}] },  // G#3: T 123|123G#
   57: { p:[1,0,1,1,1,0,0,0,0,1,1,0,0,0,0,0] },  // A3: T 123|12-
   58: { p:[1,0,1,1,1,0,0,0,0,1,0,0,0,0,0,0] },  // Bb3: T 123|1--
   59: { p:[1,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0] },  // B3: T 123|-2-
@@ -101387,10 +101461,10 @@ const CLARINET_MIDI_FINGERINGS = {
   69: { p:[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },  // A4: A spatula only
   70: { p:[0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0] },  // Bb4: R + A spatula (no T!)
   71: { p:[1,1,1,1,1,1,0,0,0,1,1,1,0,0,0,0] },  // B4: RT 123E|123
-  72: { p:[1,1,1,1,1,0,0,0,0,1,1,1,0,1,0,0], alts:[{label:'LH F',p:[1,1,1,1,1,0,1,0,0,1,1,1,0,0,0,0]}] },  // C5: RT 123|123F
-  73: { p:[1,1,1,1,1,0,0,1,0,1,1,1,0,0,0,0], alts:[{label:'RH F♯',p:[1,1,1,1,1,0,0,0,0,1,1,1,0,0,1,0]}] },  // C#5: RT 123F#|123
+  72: { p:[1,1,1,1,1,0,0,0,0,1,1,1,0,1,0,0], alts:[{label:'LH F', labelIt:'Fa mano sinistra',p:[1,1,1,1,1,0,1,0,0,1,1,1,0,0,0,0]}] },  // C5: RT 123|123F
+  73: { p:[1,1,1,1,1,0,0,1,0,1,1,1,0,0,0,0], alts:[{label:'RH F♯', labelIt:'Fa♯ mano destra',p:[1,1,1,1,1,0,0,0,0,1,1,1,0,0,1,0]}] },  // C#5: RT 123F#|123
   74: { p:[1,1,1,1,1,0,0,0,0,1,1,1,0,0,0,0] },  // D5: RT 123|123
-  75: { p:[1,1,1,1,1,0,0,0,0,1,1,1,0,0,0,1], alts:[{label:'LH G♯',p:[1,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0]}] },  // Eb5: RT 123|123G#
+  75: { p:[1,1,1,1,1,0,0,0,0,1,1,1,0,0,0,1], alts:[{label:'LH G♯', labelIt:'Sol♯ mano sinistra',p:[1,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0]}] },  // Eb5: RT 123|123G#
   76: { p:[1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,0] },  // E5: RT 123|12-
   77: { p:[1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,0] },  // F5: RT 123|1--
   78: { p:[1,1,1,1,1,0,0,0,0,0,1,0,0,0,0,0] },  // F#5: RT 123|-2-
@@ -101420,20 +101494,20 @@ const SAX_FINGERINGS_WRITTEN = {
   3:  { p:[0,1,1,1,  0,0,0,0,  1,1,1,  1,0] },  // Eb3 — LH123 RH123 + Eb key
   4:  { p:[0,1,1,1,  0,0,0,0,  1,1,0,  0,0] },  // E3  — LH123 RH12
   5:  { p:[0,1,1,1,  0,0,0,0,  1,0,0,  0,0],
-       alts:[{ label:'Bright F', p:[0,1,1,1,  0,0,0,0,  1,0,0,  1,0] }] },  // F3 — adds Eb key for brighter tone
+       alts:[{ label:'Bright F', labelIt:'Fa brillante', p:[0,1,1,1,  0,0,0,0,  1,0,0,  1,0] }] },  // F3 — adds Eb key for brighter tone
   6:  { p:[0,1,1,1,  0,0,0,0,  0,1,0,  0,0] }, // F#3 — fork: LH123 + RH2 (standard)
   7:  { p:[0,1,1,1,  0,0,0,0,  0,0,0,  0,0] },  // G3
   8:  { p:[0,1,1,1,  1,0,0,0,  0,0,0,  0,0],
        alts:[
-         { label:'via C# key', p:[0,1,1,1,  0,1,0,0,  0,0,0,  0,0] },
-         { label:'via B key',  p:[0,1,1,1,  0,0,1,0,  0,0,0,  0,0] },
-         { label:'via Bb key', p:[0,1,1,1,  0,0,0,1,  0,0,0,  0,0] },
+         { label:'via C# key', labelIt:'con chiave del Do♯', p:[0,1,1,1,  0,1,0,0,  0,0,0,  0,0] },
+         { label:'via B key', labelIt:'con chiave del Si',  p:[0,1,1,1,  0,0,1,0,  0,0,0,  0,0] },
+         { label:'via Bb key', labelIt:'con chiave del Si♭', p:[0,1,1,1,  0,0,0,1,  0,0,0,  0,0] },
        ]},  // G#3 — any spatula key sounds G# (C#/B/Bb spatulas all work)
   9:  { p:[0,1,1,0,  0,0,0,0,  0,0,0,  0,0] },  // A3  — LH12
   10: { p:[0,1,0,0,  0,0,0,1,  0,0,0,  0,0],    // Bb3 — bis: LH1 + bis key (most-taught primary)
        alts:[
          { label:'1-and-1',  p:[0,1,0,0,  0,0,0,0,  1,0,0,  0,0] }, // LH1 + RH1 (chromatic-friendly)
-         { label:'Long Bb',  p:[0,1,1,1,  0,0,0,1,  1,1,1,  0,1] }, // full-body resonance Bb
+         { label:'Long Bb', labelIt:'Si♭ lungo',  p:[0,1,1,1,  0,0,0,1,  1,1,1,  0,1] }, // full-body resonance Bb
        ]},
   11: { p:[0,1,0,0,  0,0,0,0,  0,0,0,  0,0],
        alts:[{ label:'G# connect', p:[0,1,0,0,  1,0,0,0,  0,0,0,  0,0] }] },  // B3 — adds G# key for smooth connection from/to G#
@@ -101445,7 +101519,7 @@ const SAX_UPPER_WRITTEN = {
   86: { p:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0] },
   87: { p:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0] },
   88: { p:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,0,0],
-        alts:[{ label:'Fork E', p:[1,0,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0] }] },
+        alts:[{ label:'Fork E', labelIt:'Mi a forcella', p:[1,0,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0] }] },
   89: { p:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,0,0],
         alts:[{ label:'Front F', p:[1,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0] }] },
   90: { p:[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,0],
@@ -101476,7 +101550,7 @@ const RECORDER_FINGERINGS = {
   6:  { p:[1,1,1,1,  0,1,1,0] }, 7:  { p:[1,1,1,1,  0,0,0,0] },
   8:  { p:[1,1,1,0,  1,1,1,0] }, 9:  { p:[1,1,1,0,  0,0,0,0] },
   10: { p:[1,1,0,1,  1,0,0,0],
-       alts:[{ label:'Cross Bb', p:[1,1,1,0,  1,1,1,1] }] }, // Bb — cross-fingering alt
+       alts:[{ label:'Cross Bb', labelIt:'Si♭ incrociato', p:[1,1,1,0,  1,1,1,1] }] }, // Bb — cross-fingering alt
   11: { p:[1,1,0,0,  0,0,0,0] },  // B
 };
 
@@ -101512,20 +101586,20 @@ const WHISTLE_FINGERINGS = {
 const RECORDER_FINGERINGS_OCT2 = {
   0:  { p:[1, 0, 1, 0,  0, 0, 0, 0] }, // C5  — T -2-|----
   1:  { p:[0, 1, 1, 0,  0, 0, 0, 0],   // C#5 — 12-|----
-       alts:[{ label:'Open thumb', p:[0, 0, 0, 0,  0, 0, 0, 0] }] }, // ---|----
+       alts:[{ label:'Open thumb', labelIt:'Pollice aperto', p:[0, 0, 0, 0,  0, 0, 0, 0] }] }, // ---|----
   2:  { p:[0, 0, 1, 0,  0, 0, 0, 0] }, // D5  — -2-|----
   3:  { p:[0, 0, 1, 1,  1, 1, 1, 0],
-       alts:[{ label:'Full fork', p:[0, 1, 1, 1,  1, 1, 1, 0] }] }, // Eb5 — adds LH1 for fuller tone
+       alts:[{ label:'Full fork', labelIt:'Forcella piena', p:[0, 1, 1, 1,  1, 1, 1, 0] }] }, // Eb5 — adds LH1 for fuller tone
   4:  { p:[0.5, 1, 1, 1,  1, 1, 0, 0] }, // E5
   5:  { p:[0.5, 1, 1, 1,  1, 0, 1, 0],
        alts:[{ label:'German F', p:[0.5, 1, 1, 1,  1, 0, 0, 0] }] }, // F5 — German alt (easier but flatter)
   6:  { p:[0.5, 1, 1, 1,  0, 1, 0, 0],
-       alts:[{ label:'Alt F#', p:[0.5, 1, 1, 1,  1, 1, 0, 0] }] }, // F#5 — adds hole 5 for different color
+       alts:[{ label:'Alt F#', labelIt:'Fa♯ alt.', p:[0.5, 1, 1, 1,  1, 1, 0, 0] }] }, // F#5 — adds hole 5 for different color
   7:  { p:[0.5, 1, 1, 1,  0, 0, 0, 0] }, // G5
   8:  { p:[0.5, 1, 1, 0,  1, 0, 0, 0] }, // Ab5
   9:  { p:[0.5, 1, 1, 0,  0, 0, 0, 0] }, // A5
   10: { p:[0.5, 1, 1, 0,  1, 1, 1, 0],
-       alts:[{ label:'Alt Bb5', p:[0.5, 1, 1, 0,  1, 1, 0, 1] }] }, // Bb5 — holes 456 alt: 45-7
+       alts:[{ label:'Alt Bb5', labelIt:'Si♭5 alt.', p:[0.5, 1, 1, 0,  1, 1, 0, 1] }] }, // Bb5 — holes 456 alt: 45-7
   11: { p:[0.5, 1, 1, 0,  1, 1, 0, 0] }, // B5
 };
 
@@ -101559,24 +101633,24 @@ const OBOE_FINGERINGS = {
   // pc maps to the LOWER octave note; upper notes (Bb4, B4, C5) via MIDI override below
   // [OctI, OctII, half, LH1, LH2, LH3,  G#, Eb, B, Bb, LHF,  RH1, RH2, RH3, RF,  RC, RC#, REb]
   10: { p:[0,0,1, 1,1,1,  0,0,0,1,0,  1,1,1,0,  1,0,0],
-       alts:[{ label:'Side Bb',  p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // Bb3 — 123Bb|123C; alt: 12-|1-- (avoids Bb key, smoother from A)
+       alts:[{ label:'Side Bb', labelIt:'Si♭ laterale',  p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // Bb3 — 123Bb|123C; alt: 12-|1-- (avoids Bb key, smoother from A)
   11: { p:[0,0,1, 1,1,1,  0,0,1,0,0,  1,1,1,0,  1,0,0] }, // B3  — 123B|123C
   0:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  1,0,0] }, // C4  — 123|123C
   1:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,1,0],
-       alts:[{ label:'C key only', p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  1,0,0] }] }, // C#4 — 123|123C#; alt: C key alone (trills/connections)
+       alts:[{ label:'C key only', labelIt:'Solo chiave del Do', p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  1,0,0] }] }, // C#4 — 123|123C#; alt: C key alone (trills/connections)
   2:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,0,0] }, // D4  — 123|123
   3:  { p:[0,0,1, 1,1,1,  0,1,0,0,0,  1,1,1,0,  0,0,0],
-       alts:[{ label:'Fork Eb',   p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,1] }] }, // Eb4 — 123Eb|123; alt: 12-|1--REb (side key approach)
+       alts:[{ label:'Fork Eb', labelIt:'Mi♭ a forcella',   p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,1] }] }, // Eb4 — 123Eb|123; alt: 12-|1--REb (side key approach)
   4:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }, // E4  — 123|12-
   5:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,1,  0,0,0],
-       alts:[{ label:'Forked F',  p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }] }, // F4 — 123|12F; alt: forked (no RF key)
+       alts:[{ label:'Forked F', labelIt:'Fa a forcella',  p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }] }, // F4 — 123|12F; alt: forked (no RF key)
   6:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0],
-       alts:[{ label:'Short F#',  p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // F#4 — 123|1--; alt: 12-|1-- shorter
+       alts:[{ label:'Short F#', labelIt:'Fa♯ corto',  p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // F#4 — 123|1--; alt: 12-|1-- shorter
   7:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  0,0,0,0,  0,0,0] }, // G4
   8:  { p:[0,0,1, 1,1,1,  1,0,0,0,0,  0,0,0,0,  0,0,0],
-       alts:[{ label:'Fork G#',   p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // G#4 — 123G#|---; alt: forked (RH1 instead of G# key)
+       alts:[{ label:'Fork G#', labelIt:'Sol♯ a forcella',   p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // G#4 — 123G#|---; alt: forked (RH1 instead of G# key)
   9:  { p:[0,0,1, 1,1,0,  0,0,0,0,0,  0,0,0,0,  0,0,0],
-       alts:[{ label:'Fork A',    p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // A4 — 12-|---; alt: adds RH1 fork/brighter
+       alts:[{ label:'Fork A', labelIt:'La a forcella',    p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // A4 — 12-|---; alt: adds RH1 fork/brighter
 };
 // Second octave overrides applied via MIDI in wwGetFingering register logic.
 // C#5-Eb5: half-hole vent; E5-G#5: OctI; A5-C6: OctII (same holes otherwise)
@@ -101588,19 +101662,19 @@ const OBOE_FINGERINGS_OCT2 = {
   0:  { p:[0,0,1, 1,0,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }, // C5  — 1--|1--
   // 2nd octave proper (C#5=73+): half-hole primary, OctI key as alt
   1:  { p:[0,0,0.5, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,1,0],
-       alts:[{ label:'Oct I key', p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,1,0] }] }, // C#5 — half-hole+123|123C#; alt: OctI key
+       alts:[{ label:'Oct I key', labelIt:'1ª chiave di ottava', p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,1,0] }] }, // C#5 — half-hole+123|123C#; alt: OctI key
   2:  { p:[0,0,0.5, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,0,0],
-       alts:[{ label:'Oct I key', p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,0,0] }] }, // D5  — half-hole+123|123; alt: OctI key
+       alts:[{ label:'Oct I key', labelIt:'1ª chiave di ottava', p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,0,0] }] }, // D5  — half-hole+123|123; alt: OctI key
   3:  { p:[0,0,0.5, 1,1,1,  0,1,0,0,0,  1,1,1,0,  0,0,0],
-       alts:[{ label:'Oct I key', p:[1,0,1, 1,1,1,  0,1,0,0,0,  1,1,1,0,  0,0,0] }] }, // Eb5 — half-hole+123Eb|123; alt: OctI key
+       alts:[{ label:'Oct I key', labelIt:'1ª chiave di ottava', p:[1,0,1, 1,1,1,  0,1,0,0,0,  1,1,1,0,  0,0,0] }] }, // Eb5 — half-hole+123Eb|123; alt: OctI key
   4:  { p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }, // E5  — OctI+123|12-
   5:  { p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,1,  0,0,0],
-       alts:[{ label:'Forked F',  p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }] }, // F5  — OctI+123|12F; alt: forked
+       alts:[{ label:'Forked F', labelIt:'Fa a forcella',  p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }] }, // F5  — OctI+123|12F; alt: forked
   6:  { p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0],
-       alts:[{ label:'Short F#',  p:[1,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // F#5 — OctI+123|1--; alt: short
+       alts:[{ label:'Short F#', labelIt:'Fa♯ corto',  p:[1,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // F#5 — OctI+123|1--; alt: short
   7:  { p:[1,0,1, 1,1,1,  0,0,0,0,0,  0,0,0,0,  0,0,0] }, // G5  — OctI+123|---
   8:  { p:[1,0,1, 1,1,1,  1,0,0,0,0,  0,0,0,0,  0,0,0],
-       alts:[{ label:'Fork G#',   p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // G#5 — OctI+123G#|---; alt: forked
+       alts:[{ label:'Fork G#', labelIt:'Sol♯ a forcella',   p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // G#5 — OctI+123G#|---; alt: forked
   9:  { p:[0,1,1, 1,1,0,  0,0,0,0,0,  0,0,0,0,  0,0,0] }, // A5  — OctII+12-|---
   // (pc=10 and pc=11 are now Bb5 and B5 in this oct2 context)
   // Bb5: OctII+12-|1--
@@ -101631,32 +101705,32 @@ const BASS_CLARINET_LAYOUT = {
 // Same fingering array format as CLARINET_FINGERINGS (16 values)
 const BASS_CLARINET_FINGERINGS = {
   4:  { p:[1,0,1,1,1,  1,0,0,0,  1,1,1,  0,0,0,0],
-        alts:[{ label:'RH E key', p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  1,0,0,0] }] },
+        alts:[{ label:'RH E key', labelIt:'Chiave Mi mano destra', p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  1,0,0,0] }] },
   5:  { p:[1,0,1,1,1,  0,1,0,0,  1,1,1,  0,0,0,0],
-        alts:[{ label:'RH F key', p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,1,0,0] }] },
+        alts:[{ label:'RH F key', labelIt:'Chiave Fa mano destra', p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,1,0,0] }] },
   6:  { p:[1,0,1,1,1,  0,0,1,0,  1,1,1,  0,0,0,0],
-        alts:[{ label:'RH F# key',p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,0,1,0] }] },
+        alts:[{ label:'RH F# key', labelIt:'Chiave Fa♯ mano destra',p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,0,1,0] }] },
   7:  { p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,0,0,0] },
   8:  { p:[1,0,1,1,1,  0,0,0,0,  1,1,1,  0,0,0,1],
         alts:[
-          { label:'LH G# key',   p:[1,0,1,1,1,  0,0,0,1,  1,1,1,  0,0,0,0] },
-          { label:'Both G# keys',p:[1,0,1,1,1,  0,0,0,1,  1,1,1,  0,0,0,1] },
+          { label:'LH G# key', labelIt:'Chiave Sol♯ mano sinistra',   p:[1,0,1,1,1,  0,0,0,1,  1,1,1,  0,0,0,0] },
+          { label:'Both G# keys', labelIt:'Entrambe le chiavi del Sol♯',p:[1,0,1,1,1,  0,0,0,1,  1,1,1,  0,0,0,1] },
         ]},
   9:  { p:[1,0,1,1,1,  0,0,0,0,  1,1,0,  0,0,0,0] },
   10: { p:[1,0,1,1,1,  0,0,0,0,  1,0,0,  0,0,0,0],
         alts:[
-          { label:'Throat Bb', p:[0,0,1,0,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
-          { label:'Side Bb',   p:[1,0,1,0,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
+          { label:'Throat Bb', labelIt:'Si♭ di gola', p:[0,0,1,0,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
+          { label:'Side Bb', labelIt:'Si♭ laterale',   p:[1,0,1,0,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
         ]},
   11: { p:[1,0,1,1,1,  0,0,0,0,  0,1,0,  0,0,0,0] },
   0:  { p:[1,0,1,1,1,  0,0,0,0,  0,0,0,  0,0,0,0] },
   1:  { p:[1,0,1,1,1,  0,0,0,1,  0,0,0,  0,0,0,0],
-        alts:[{ label:'RH G#', p:[1,0,1,1,1,  0,0,0,0,  0,0,0,  0,0,0,1] }] },
+        alts:[{ label:'RH G#', labelIt:'Sol♯ mano destra', p:[1,0,1,1,1,  0,0,0,0,  0,0,0,  0,0,0,1] }] },
   2:  { p:[1,0,1,1,0,  0,0,0,0,  0,0,0,  0,0,0,0] },
   3:  { p:[1,0,1,1,0,  0,0,0,0,  0,0,0,  0,0,0,0],
         alts:[
-          { label:'Side Eb',  p:[1,0,1,1,0,  0,0,0,0,  0,0,0,  0,0,0,1] },
-          { label:'Fork Eb',  p:[1,0,1,0,0,  0,0,0,0,  1,0,0,  0,0,0,0] },
+          { label:'Side Eb', labelIt:'Mi♭ laterale',  p:[1,0,1,1,0,  0,0,0,0,  0,0,0,  0,0,0,1] },
+          { label:'Fork Eb', labelIt:'Mi♭ a forcella',  p:[1,0,1,0,0,  0,0,0,0,  1,0,0,  0,0,0,0] },
         ]},
 };
 
@@ -101678,24 +101752,24 @@ const COR_ANGLAIS_LAYOUT = {
 const COR_ANGLAIS_FINGERINGS = {
   // [OctI, OctII, half, LH1, LH2, LH3,  G#, Eb, B, Bb, LHF,  RH1, RH2, RH3, RF,  RC, RC#, REb]
   10: { p:[0,0,1, 1,1,1,  0,0,0,1,0,  1,1,1,0,  1,0,0],
-        alts:[{ label:'Side Bb',   p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // Bb (written Eb)
+        alts:[{ label:'Side Bb', labelIt:'Si♭ laterale',   p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // Bb (written Eb)
   11: { p:[0,0,1, 1,1,1,  0,0,1,0,0,  1,1,1,0,  1,0,0] }, // B  (written E)
   0:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  1,0,0] }, // C  (written F)
   1:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,1,0],
-        alts:[{ label:'C key only', p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  1,0,0] }] }, // C# (written F#)
+        alts:[{ label:'C key only', labelIt:'Solo chiave del Do', p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  1,0,0] }] }, // C# (written F#)
   2:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,0,0] }, // D  (written G)
   3:  { p:[0,0,1, 1,1,1,  0,1,0,0,0,  1,1,1,0,  0,0,0],
-        alts:[{ label:'Fork Eb',    p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,1] }] }, // Eb (written Ab)
+        alts:[{ label:'Fork Eb', labelIt:'Mi♭ a forcella',    p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,1] }] }, // Eb (written Ab)
   4:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }, // E  (written A)
   5:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,1,  0,0,0],
-        alts:[{ label:'Forked F',   p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }] }, // F  (written Bb)
+        alts:[{ label:'Forked F', labelIt:'Fa a forcella',   p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }] }, // F  (written Bb)
   6:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0],
-        alts:[{ label:'Short F#',   p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // F# (written B)
+        alts:[{ label:'Short F#', labelIt:'Fa♯ corto',   p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // F# (written B)
   7:  { p:[0,0,1, 1,1,1,  0,0,0,0,0,  0,0,0,0,  0,0,0] }, // G  (written C)
   8:  { p:[0,0,1, 1,1,1,  1,0,0,0,0,  0,0,0,0,  0,0,0],
-        alts:[{ label:'Fork G#',    p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // G# (written C#)
+        alts:[{ label:'Fork G#', labelIt:'Sol♯ a forcella',    p:[0,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // G# (written C#)
   9:  { p:[0,0,1, 1,1,0,  0,0,0,0,0,  0,0,0,0,  0,0,0],
-        alts:[{ label:'Fork A',     p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // A  (written D)
+        alts:[{ label:'Fork A', labelIt:'La a forcella',     p:[0,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // A  (written D)
 };
 // Second octave overrides identical to oboe — applied via MIDI threshold in wwGetFingering
 const COR_ANGLAIS_FINGERINGS_OCT2 = {
@@ -101704,19 +101778,19 @@ const COR_ANGLAIS_FINGERINGS_OCT2 = {
   11: { p:[0,0,1, 1,0,0,  0,0,0,0,0,  0,0,0,0,  0,0,0] }, // B4
   0:  { p:[0,0,1, 1,0,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }, // C5
   1:  { p:[0,0,0.5, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,1,0],
-        alts:[{ label:'Oct I key', p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,1,0] }] }, // C#5
+        alts:[{ label:'Oct I key', labelIt:'1ª chiave di ottava', p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,1,0] }] }, // C#5
   2:  { p:[0,0,0.5, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,0,0],
-        alts:[{ label:'Oct I key', p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,0,0] }] }, // D5
+        alts:[{ label:'Oct I key', labelIt:'1ª chiave di ottava', p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,0,0] }] }, // D5
   3:  { p:[0,0,0.5, 1,1,1,  0,1,0,0,0,  1,1,1,0,  0,0,0],
-        alts:[{ label:'Oct I key', p:[1,0,1, 1,1,1,  0,1,0,0,0,  1,1,1,0,  0,0,0] }] }, // Eb5
+        alts:[{ label:'Oct I key', labelIt:'1ª chiave di ottava', p:[1,0,1, 1,1,1,  0,1,0,0,0,  1,1,1,0,  0,0,0] }] }, // Eb5
   4:  { p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }, // E5
   5:  { p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,1,  0,0,0],
-        alts:[{ label:'Forked F',  p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }] }, // F5
+        alts:[{ label:'Forked F', labelIt:'Fa a forcella',  p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,1,0,0,  0,0,0] }] }, // F5
   6:  { p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0],
-        alts:[{ label:'Short F#',  p:[1,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // F#5
+        alts:[{ label:'Short F#', labelIt:'Fa♯ corto',  p:[1,0,1, 1,1,0,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // F#5
   7:  { p:[1,0,1, 1,1,1,  0,0,0,0,0,  0,0,0,0,  0,0,0] }, // G5
   8:  { p:[1,0,1, 1,1,1,  1,0,0,0,0,  0,0,0,0,  0,0,0],
-        alts:[{ label:'Fork G#',   p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // G#5
+        alts:[{ label:'Fork G#', labelIt:'Sol♯ a forcella',   p:[1,0,1, 1,1,1,  0,0,0,0,0,  1,0,0,0,  0,0,0] }] }, // G#5
   9:  { p:[0,1,1, 1,1,0,  0,0,0,0,0,  0,0,0,0,  0,0,0] }, // A5
 };
 
@@ -101742,7 +101816,7 @@ const BASSOON_FINGERINGS = {
   11: { p:[1, 1,1,1,  1,0,0,0,0,  1,1,1,1,  0,0,0,0] }, // B1
   0:  { p:[1, 1,1,1,  1,0,0,0,0,  1,1,1,0,  0,0,0,0] }, // C2
   1:  { p:[1, 1,1,1,  0,0,1,0,0,  1,1,1,0,  0,0,0,0],
-        alts:[{ label:'Db key alt', p:[1, 1,1,1,  0,0,1,0,0,  1,1,0,0,  0,0,0,0] }] }, // C#2
+        alts:[{ label:'Db key alt', labelIt:'Chiave del Re♭ alt.', p:[1, 1,1,1,  0,0,1,0,0,  1,1,0,0,  0,0,0,0] }] }, // C#2
   2:  { p:[1, 1,1,1,  0,1,0,0,0,  1,1,1,0,  0,0,0,0] }, // D2
   3:  { p:[1, 1,1,1,  0,0,0,1,0,  1,1,1,0,  0,0,0,0] }, // Eb2
   4:  { p:[1, 1,1,1,  0,0,0,0,0,  1,1,1,0,  0,1,0,0] }, // E2  — W 123|123 +E/F key (all holes closed)
@@ -101796,10 +101870,10 @@ const BASSOON_FINGERINGS_OCT3 = {
 // Primary positions for common playing range (2nd–4th partials):
 // Alt positions for smoother technique in passages
 const TROMBONE_ALT_POSITIONS = {
-  10: [{ label:'softer/higher partial', pos:4, minMidi:70 }],  // Bb: pos 4 via 5th partial (Bb3+)
-  5:  [{ label:'brighter/3rd partial',  pos:1, minMidi:65 }],  // F:  pos 1 via 3rd partial (F3+)
-  3:  [{ label:'alternate partial',     pos:6, minMidi:75 }],  // Eb: pos 6 via 7th partial (Eb4+)
-  0:  [{ label:'alternate partial',     pos:1, minMidi:72 }],  // C:  pos 1 via 4th partial (C4+)
+  10: [{ label:'softer/higher partial', labelIt:'più dolce / armonico acuto', pos:4, minMidi:70 }],  // Bb: pos 4 via 5th partial (Bb3+)
+  5:  [{ label:'brighter/3rd partial', labelIt:'più brillante / 3° armonico',  pos:1, minMidi:65 }],  // F:  pos 1 via 3rd partial (F3+)
+  3:  [{ label:'alternate partial', labelIt:'armonico alternativo',     pos:6, minMidi:75 }],  // Eb: pos 6 via 7th partial (Eb4+)
+  0:  [{ label:'alternate partial', labelIt:'armonico alternativo',     pos:1, minMidi:72 }],  // C:  pos 1 via 4th partial (C4+)
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -103583,7 +103657,8 @@ function wwDrawAltNav(containerEl, concertPc, onChangeCb) {
   containerEl.style.display = '';
   const total = ww.totalAlts + 1;
   const cur   = wwGetAltIdx(concertPc) + 1;
-  const label = cur === 1 ? 'Basic' : (ww.alts[cur - 2]?.label || `Alt ${cur - 1}`);
+  const label = cur === 1 ? (t('ww_basic') || 'Basic')
+    : (csSubLabel(ww.alts[cur - 2]) || `${t('ww_alt') || 'Alt'} ${cur - 1}`);
   containerEl.innerHTML = `
     <div class="ww-alt-nav">
       <button class="ww-alt-btn" onclick="wwCycleAlt(${concertPc},-1)">◀</button>
@@ -104132,7 +104207,7 @@ function gccInit(keepState) {
   // first open (enterTool direct) the switcher is never called.
   const _meta = CS_INSTRUMENTS[chordScaleInstrument] || {};
   const _lbl = document.getElementById('csFamilyLabel');
-  if (_lbl) _lbl.textContent = _meta.label || chordScaleInstrument.toUpperCase();
+  if (_lbl) _lbl.textContent = csInstLabel(_meta, chordScaleInstrument.toUpperCase());
   _buildSubRow(chordScaleInstrument, _meta.subs);
 
   // Show/hide chord diagram vs trumpet note card
@@ -104961,7 +105036,7 @@ function gssInit() {
   // Ensure sub-row and family label are always in sync on init.
   const _meta = CS_INSTRUMENTS[chordScaleInstrument] || {};
   const _lbl = document.getElementById('csFamilyLabel');
-  if (_lbl) _lbl.textContent = _meta.label || chordScaleInstrument.toUpperCase();
+  if (_lbl) _lbl.textContent = csInstLabel(_meta, chordScaleInstrument.toUpperCase());
   _buildSubRow(chordScaleInstrument, _meta.subs);
 
   // Show/hide trumpet vs fretboard scale display
@@ -106633,59 +106708,68 @@ let chordScaleInstrument = prefGet('chordScaleInstrument', 'guitar'); // your in
 // ── Instrument family navigation ─────────────────────────────────────────────
 
 // Family metadata — drives the picker sheet and sub-row
+// The pill and the tuning tabs read through these. The picker SHEET is built
+// from a different source that was already translated, which is how the pill
+// ended up saying Guitar above a list saying CHITARRA.
+function csInstLabel(meta, fallback) {
+  if (!meta) return fallback || '';
+  return ((progState && progState.lang === 'it') && meta.labelIt) ? meta.labelIt : (meta.label || fallback || '');
+}
+// _itName and csSubLabel are declared near the top of the file; see the note there.
+
 const CS_INSTRUMENTS = {
-  guitar:      { label:'🎸 Guitar',     family:'fretted', subs:[{key:'standard',label:'STANDARD'},{key:'baritone',label:'BARITONE'},{key:'tenor',label:'TENOR'},{key:'12string',label:'12-STR'}] },
-  bass:        { label:'🎸 Bass',       family:'fretted', subs:[{key:'4string',label:'4-STRING'},{key:'5string',label:'5-STRING'},{key:'6string',label:'6-STRING'}] },
-  uke:         { label:'🪕 Uke',        family:'fretted', subs:[{key:'soprano',label:'SOPRANO'},{key:'tenor',label:'TENOR'},{key:'baritone',label:'BARITONE'},{key:'ukebass',label:'BASS'}] },
-  mandolin:    { label:'🪕 Mandolin',   family:'fretted', subs:[{key:'mandolin',label:'MANDOLIN'},{key:'mandola',label:'MANDOLA'},{key:'mandocello',label:'CELLO'},{key:'octave',label:'OCTAVE'}] },
-  banjo:       { label:'🪕 Banjo',      family:'fretted', subs:null },
-  lute:        { label:'🎸 Lute',       family:'fretted', subs:[{key:'renaissance_6',label:'RENN. 6'},{key:'renaissance_7',label:'RENN. 7'},{key:'baroque',label:'BAROQUE'},{key:'theorbo',label:'THEORBO'},{key:'mandore',label:'MANDORE'}] },
-  bouzouki:    { label:'🪕 Bouzouki',   family:'fretted', subs:[{key:'irish_gdad',label:'IRISH GDAD'},{key:'irish_gdae',label:'IRISH GDAE'},{key:'irish_adad',label:'IRISH ADAD'},{key:'greek_3',label:'GREEK 3-CRS'},{key:'greek_4',label:'GREEK 4-CRS'},{key:'cittern',label:'CITTERN'}] },
-  piano:       { label:'🎹 Piano',      family:'chromperc',    subs:null },
-  organ:       { label:'⛪ Organ',      family:'chromperc',    subs:null },
-  melodica:    { label:'🎹 Melodica',   family:'chromperc',    subs:null },
-  harp:        { label:'🪗 Harp',       family:'chromperc',    subs:null },
-  mallet:      { label:'🎵 Mallet',     family:'chromperc',
-    subs:[ {key:'glockenspiel',label:'GLOCK'}, {key:'xylophone',label:'XYLO'},
+  guitar:      { label:'🎸 Guitar', labelIt:'🎸 Chitarra',     family:'fretted', subs:[{key:'standard',label:'STANDARD'},{key:'baritone',label:'BARITONE', labelIt:'BARITONO'},{key:'tenor',label:'TENOR', labelIt:'TENORE'},{key:'12string',label:'12-STR', labelIt:'12 CORDE'}] },
+  bass:        { label:'🎸 Bass', labelIt:'🎸 Basso',       family:'fretted', subs:[{key:'4string',label:'4-STRING', labelIt:'4 CORDE'},{key:'5string',label:'5-STRING', labelIt:'5 CORDE'},{key:'6string',label:'6-STRING', labelIt:'6 CORDE'}] },
+  uke:         { label:'🪕 Uke', labelIt:'🪕 Uke',        family:'fretted', subs:[{key:'soprano',label:'SOPRANO'},{key:'tenor',label:'TENOR', labelIt:'TENORE'},{key:'baritone',label:'BARITONE', labelIt:'BARITONO'},{key:'ukebass',label:'BASS', labelIt:'BASSO'}] },
+  mandolin:    { label:'🪕 Mandolin', labelIt:'🪕 Mandolino',   family:'fretted', subs:[{key:'mandolin',label:'MANDOLIN', labelIt:'MANDOLINO'},{key:'mandola',label:'MANDOLA'},{key:'mandocello',label:'CELLO', labelIt:'VIOLONCELLO'},{key:'octave',label:'OCTAVE', labelIt:'OTTAVA'}] },
+  banjo:       { label:'🪕 Banjo', labelIt:'🪕 Banjo',      family:'fretted', subs:null },
+  lute:        { label:'🎸 Lute', labelIt:'🎸 Liuto',       family:'fretted', subs:[{key:'renaissance_6',label:'RENN. 6', labelIt:'RINASC. 6'},{key:'renaissance_7',label:'RENN. 7', labelIt:'RINASC. 7'},{key:'baroque',label:'BAROQUE', labelIt:'BAROCCO'},{key:'theorbo',label:'THEORBO', labelIt:'TIORBA'},{key:'mandore',label:'MANDORE', labelIt:'MANDORA'}] },
+  bouzouki:    { label:'🪕 Bouzouki', labelIt:'🪕 Bouzouki',   family:'fretted', subs:[{key:'irish_gdad',label:'IRISH GDAD'},{key:'irish_gdae',label:'IRISH GDAE'},{key:'irish_adad',label:'IRISH ADAD'},{key:'greek_3',label:'GREEK 3-CRS'},{key:'greek_4',label:'GREEK 4-CRS'},{key:'cittern',label:'CITTERN', labelIt:'CETRA'}] },
+  piano:       { label:'🎹 Piano', labelIt:'🎹 Pianoforte',      family:'chromperc',    subs:null },
+  organ:       { label:'⛪ Organ', labelIt:'⛪ Organo',      family:'chromperc',    subs:null },
+  melodica:    { label:'🎹 Melodica', labelIt:'🎹 Melodica',   family:'chromperc',    subs:null },
+  harp:        { label:'🪗 Harp', labelIt:'🪗 Arpa',       family:'chromperc',    subs:null },
+  mallet:      { label:'🎵 Mallet', labelIt:'🎵 Percussioni',     family:'chromperc',
+    subs:[ {key:'glockenspiel',label:'GLOCK'}, {key:'xylophone',label:'XYLO', labelIt:'XILO'},
            {key:'marimba',label:'MARIMBA'}, {key:'vibraphone',label:'VIBES'} ] },
-  trumpet:     { label:'🎺 Trumpet',      family:'wind', subFamily:'brass',
-    subs:[{key:'standard',label:'B♭'},{key:'piccolo',label:'PICCOLO'}] },
-  flugelhorn:  { label:'🎺 Flugelhorn',   family:'wind', subFamily:'brass', subs:null },
-  frenchhorn:  { label:'🎺 French Horn',  family:'wind', subFamily:'brass', subs:null },
-  euphonium:   { label:'🎺 Euphonium',    family:'wind', subFamily:'brass', subs:null },
-  tuba:        { label:'🎺 Tuba',         family:'wind', subFamily:'brass',
+  trumpet:     { label:'🎺 Trumpet', labelIt:'🎺 Tromba',      family:'wind', subFamily:'brass',
+    subs:[{key:'standard',label:'B♭'},{key:'piccolo',label:'PICCOLO', labelIt:'OTTAVINO'}] },
+  flugelhorn:  { label:'🎺 Flugelhorn', labelIt:'🎺 Flicorno',   family:'wind', subFamily:'brass', subs:null },
+  frenchhorn:  { label:'🎺 French Horn', labelIt:'🎺 Corno',  family:'wind', subFamily:'brass', subs:null },
+  euphonium:   { label:'🎺 Euphonium', labelIt:'🎺 Eufonio',    family:'wind', subFamily:'brass', subs:null },
+  tuba:        { label:'🎺 Tuba', labelIt:'🎺 Tuba',         family:'wind', subFamily:'brass',
     subs:[{key:'standard',label:'BB♭'},{key:'contrabass',label:'CB'}] },
-  ww_flute:    { label:'🪈 Flute',        family:'wind', subFamily:'woodwind',
-    subs:[{key:'flute',label:'FLUTE'},{key:'piccolo',label:'PICCOLO'},{key:'alto',label:'ALTO FLUTE'}] },
-  ww_clarinet: { label:'🪈 Clarinet',     family:'wind', subFamily:'woodwind',
-    subs:[{key:'bb',label:'B♭'},{key:'a',label:'A'},{key:'eb',label:'E♭'},{key:'bass',label:'BASS'}] },
-  ww_bassclarinet:{ label:'🪈 Bass Clarinet', family:'wind', subFamily:'woodwind', subs:null },
-  ww_sax:      { label:'🪈 Saxophone',    family:'wind', subFamily:'woodwind',
-    subs:[{key:'alto',label:'ALTO'},{key:'tenor',label:'TENOR'},{key:'soprano',label:'SOPRANO'},{key:'bari',label:'BARI'}] },
-  ww_oboe:     { label:'🪈 Oboe',         family:'wind', subFamily:'woodwind',
-    subs:[{key:'oboe',label:'OBOE'},{key:'coranglais',label:'COR ANG.'}] },
-  ww_coranglais:{ label:'🪈 Cor Anglais', family:'wind', subFamily:'woodwind', subs:null },
-  ww_recorder: { label:'🪈 Recorder',     family:'wind', subFamily:'woodwind',
-    subs:[{key:'soprano',label:'SOPRANO'},{key:'alto',label:'ALTO'},{key:'tenor',label:'TENOR'},{key:'bass',label:'BASS'}] },
-  ww_whistle:  { label:'🪈 Tin Whistle',  family:'wind', subFamily:'woodwind',
-    subs:[{key:'d',label:'D (high)'},{key:'low_d',label:'D (low)'}] },
-  ww_bassoon:  { label:'🪈 Bassoon',      family:'wind', subFamily:'woodwind',
-    subs:[{key:'bassoon',label:'BASSOON'},{key:'contra',label:'CONTRA'}] },
-  ww_ocarina:  { label:'🎵 Ocarina',      family:'wind', subFamily:'woodwind', subs:[
-    {key:'12hole', label:'12-HOLE'},
-    {key:'7hole',  label:'7-HOLE'},
+  ww_flute:    { label:'🪈 Flute', labelIt:'🪈 Flauto',        family:'wind', subFamily:'woodwind',
+    subs:[{key:'flute',label:'FLUTE', labelIt:'FLAUTO'},{key:'piccolo',label:'PICCOLO', labelIt:'OTTAVINO'},{key:'alto',label:'ALTO FLUTE', labelIt:'FLAUTO CONTRALTO'}] },
+  ww_clarinet: { label:'🪈 Clarinet', labelIt:'🪈 Clarinetto',     family:'wind', subFamily:'woodwind',
+    subs:[{key:'bb',label:'B♭'},{key:'a',label:'A'},{key:'eb',label:'E♭'},{key:'bass',label:'BASS', labelIt:'BASSO'}] },
+  ww_bassclarinet:{ label:'🪈 Bass Clarinet', labelIt:'🪈 Clarinetto basso', family:'wind', subFamily:'woodwind', subs:null },
+  ww_sax:      { label:'🪈 Saxophone', labelIt:'🪈 Sassofono',    family:'wind', subFamily:'woodwind',
+    subs:[{key:'alto',label:'ALTO', labelIt:'CONTRALTO'},{key:'tenor',label:'TENOR', labelIt:'TENORE'},{key:'soprano',label:'SOPRANO'},{key:'bari',label:'BARI', labelIt:'BARITONO'}] },
+  ww_oboe:     { label:'🪈 Oboe', labelIt:'🪈 Oboe',         family:'wind', subFamily:'woodwind',
+    subs:[{key:'oboe',label:'OBOE'},{key:'coranglais',label:'COR ANG.', labelIt:'CORNO INGL.'}] },
+  ww_coranglais:{ label:'🪈 Cor Anglais', labelIt:'🪈 Corno inglese', family:'wind', subFamily:'woodwind', subs:null },
+  ww_recorder: { label:'🪈 Recorder', labelIt:'🪈 Flauto dolce',     family:'wind', subFamily:'woodwind',
+    subs:[{key:'soprano',label:'SOPRANO'},{key:'alto',label:'ALTO', labelIt:'CONTRALTO'},{key:'tenor',label:'TENOR', labelIt:'TENORE'},{key:'bass',label:'BASS', labelIt:'BASSO'}] },
+  ww_whistle:  { label:'🪈 Tin Whistle', labelIt:'🪈 Tin whistle',  family:'wind', subFamily:'woodwind',
+    subs:[{key:'d',label:'D (high)', labelIt:'RE (acuto)'},{key:'low_d',label:'D (low)', labelIt:'RE (grave)'}] },
+  ww_bassoon:  { label:'🪈 Bassoon', labelIt:'🪈 Fagotto',      family:'wind', subFamily:'woodwind',
+    subs:[{key:'bassoon',label:'BASSOON', labelIt:'FAGOTTO'},{key:'contra',label:'CONTRA', labelIt:'CONTRAFAGOTTO'}] },
+  ww_ocarina:  { label:'🎵 Ocarina', labelIt:'🎵 Ocarina',      family:'wind', subFamily:'woodwind', subs:[
+    {key:'12hole', label:'12-HOLE', labelIt:'12 FORI'},
+    {key:'7hole',  label:'7-HOLE', labelIt:'7 FORI'},
   ]},
-  trombone:    { label:'🎺 Trombone',     family:'wind', subFamily:'brass',
-    subs:[{key:'tenor',label:'TENOR'},{key:'soprano',label:'SOPRANO'},{key:'bass',label:'BASS'}] },
-  didgeridoo:  { label:'🎵 Didgeridoo', family:'wind', subFamily:'freereed', subs:null },
-  harmonica:   { label:'🎵 Harmonica',  family:'wind', subFamily:'harmonica',
+  trombone:    { label:'🎺 Trombone', labelIt:'🎺 Trombone',     family:'wind', subFamily:'brass',
+    subs:[{key:'tenor',label:'TENOR', labelIt:'TENORE'},{key:'soprano',label:'SOPRANO'},{key:'bass',label:'BASS', labelIt:'BASSO'}] },
+  didgeridoo:  { label:'🎵 Didgeridoo', labelIt:'🎵 Didgeridoo', family:'wind', subFamily:'freereed', subs:null },
+  harmonica:   { label:'🎵 Harmonica', labelIt:'🎵 Armonica',  family:'wind', subFamily:'harmonica',
     subs: HARMONICA_KEYS.map(k => ({ key: k.key, label: k.label })) },
-  ww_chrom_harp: { label:'🎵 Chrom. Harp', family:'wind', subFamily:'harmonica', subs:null },
+  ww_chrom_harp: { label:'🎵 Chrom. Harp', labelIt:'🎵 Armonica crom.', family:'wind', subFamily:'harmonica', subs:null },
   // ── BOWED STRINGS ──────────────────────────────────────────────────────────
-  bowed_violin:     { label:'🎻 Violin',      family:'bowed', subs:null },
-  bowed_viola:      { label:'🎻 Viola',       family:'bowed', subs:null },
-  bowed_cello:      { label:'🎻 Cello',       family:'bowed', subs:null },
-  bowed_doublebass: { label:'🎻 Double Bass', family:'bowed', subs:null },
+  bowed_violin:     { label:'🎻 Violin', labelIt:'🎻 Violino',      family:'bowed', subs:null },
+  bowed_viola:      { label:'🎻 Viola', labelIt:'🎻 Viola',       family:'bowed', subs:null },
+  bowed_cello:      { label:'🎻 Cello', labelIt:'🎻 Violoncello',       family:'bowed', subs:null },
+  bowed_doublebass: { label:'🎻 Double Bass', labelIt:'🎻 Contrabbasso', family:'bowed', subs:null },
 };
 
 // Map instrument key → family tab id
@@ -106880,7 +106964,7 @@ function switchChordScaleInstrument(inst) {
   // for an instrument that has no key.
   const lbl = document.getElementById('csFamilyLabel');
   if (lbl) {
-    let _nm = meta.label || inst.toUpperCase();
+    let _nm = csInstLabel(meta, inst.toUpperCase());
     try {
       const k = 'inst_' + inst;
       const tr = (typeof t === 'function') ? t(k) : null;
@@ -106969,7 +107053,7 @@ function _buildSubRow(inst, subs) {
   subs.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'cs-sub-pill' + (s.key === currentSub ? ' active' : '');
-    btn.textContent = s.label;
+    btn.textContent = csSubLabel(s);
     btn.dataset.subKey = s.key;
     btn.onclick = () => switchSubType(inst, s.key);
     row.appendChild(btn);
@@ -107162,7 +107246,7 @@ function tromboneDrawAltNav(containerEl, pc, midi) {
   const primaryPos = tromboneSlidePos(pc, midi);
   const label = cur === 1
     ? `Pos ${primaryPos}`
-    : `Pos ${alts[cur - 2]?.pos} · ${alts[cur - 2]?.label ?? ''}`;
+    : `${t('tb_pos') || 'Pos'} ${alts[cur - 2]?.pos} \u00b7 ${csSubLabel(alts[cur - 2])}`;
   containerEl.innerHTML = `
     <div class="ww-alt-nav">
       <button class="ww-alt-btn" onclick="tromboneCycleAlt(${pc},-1,${midi ?? 'undefined'})">◀</button>
@@ -111229,100 +111313,100 @@ if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
 
 const FAV_META = {
   // ── Tools ──
-  'tool:piano':        { label: 'PIANO',       type: 'TOOL',
+  'tool:piano':        { label: 'PIANO', labelIt:'PIANOFORTE',       type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="1.5"/><line x1="7" y1="5" x2="7" y2="19"/><line x1="12" y1="5" x2="12" y2="19"/><line x1="17" y1="5" x2="17" y2="19"/><rect x="4.5" y="5" width="3" height="8" rx="0.5" fill="currentColor" stroke="none"/><rect x="9.5" y="5" width="3" height="8" rx="0.5" fill="currentColor" stroke="none"/><rect x="14.5" y="5" width="3" height="8" rx="0.5" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('tools'); enterTool('piano'); } },
-  'tool:tonal':        { label: 'TONAL CTR',   type: 'TOOL',
+  'tool:tonal':        { label: 'TONAL CTR', labelIt:'CENTRO TON.',   type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c1.5-5 3-5 4.5 0s3 5 4.5 0 3-5 4.5 0 3 5 4.5 0"/><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('tools'); enterTool('tonal'); } },
-  'tool:chords':       { label: 'CHORDS',      type: 'TOOL',
+  'tool:chords':       { label: 'CHORDS', labelIt:'ACCORDI',      type: 'TOOL',
     icon: '<svg viewBox="0 0 36 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:30px;height:20px"><line x1="3" y1="5" x2="3" y2="19"/><line x1="9" y1="5" x2="9" y2="19"/><line x1="13" y1="5" x2="16" y2="19"/><line x1="19" y1="5" x2="16" y2="19"/><line x1="23" y1="5" x2="26" y2="19"/><line x1="29" y1="5" x2="26" y2="19"/></svg>',
     launch: () => { setMode('tools'); enterTool('chords'); } },
-  'tool:guitarchords': { label: 'CHARTS',      type: 'TOOL',
+  'tool:guitarchords': { label: 'CHARTS', labelIt:'DIAGRAMMI',      type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="16" rx="2"/><line x1="5" y1="6" x2="19" y2="6"/><line x1="5" y1="10" x2="19" y2="10"/><line x1="5" y1="14" x2="19" y2="14"/><line x1="9" y1="2" x2="9" y2="18"/><line x1="15" y1="2" x2="15" y2="18"/><circle cx="9" cy="8" r="1.8" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.8" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('tools'); enterTool('guitarchords'); } },
-  'tool:progression':  { label: 'PROGRESSION', type: 'TOOL',
+  'tool:progression':  { label: 'PROGRESSION', labelIt:'PROGRESSIONE', type: 'TOOL',
     icon: '<svg viewBox="0 0 36 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:30px;height:20px"><rect x="1" y="6" width="7" height="12" rx="1.5"/><rect x="11" y="6" width="7" height="12" rx="1.5"/><rect x="21" y="6" width="7" height="12" rx="1.5"/><rect x="31" y="6" width="4" height="12" rx="1.5" fill="currentColor" stroke="none" opacity="0.5"/></svg>',
     launch: () => { setMode('tools'); enterTool('progression'); } },
-  'tool:drumkit':      { label: 'DRUM KIT',    type: 'TOOL',
+  'tool:drumkit':      { label: 'DRUM KIT', labelIt:'BATTERIA',    type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="9" rx="9" ry="4"/><path d="M3 9v6c0 2.2 4 4 9 4s9-1.8 9-4V9"/></svg>',
     launch: () => { setMode('tools'); enterTool('drumkit'); } },
-  'tool:cof':          { label: 'CIRCLE 5TH',  type: 'TOOL',
+  'tool:cof': { label: 'CIRCLE 5TH', labelIt:'CIRCOLO 5TE',  type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" opacity="0.6"/><line x1="12" y1="2" x2="12" y2="8"/><line x1="19.2" y1="7" x2="15.5" y2="10"/><line x1="4.8" y1="7" x2="8.5" y2="10"/></svg>',
     launch: () => { setMode('tools'); enterTool('cof'); } },
-  'tool:intervalref':  { label: 'INTERVALS',   type: 'TOOL',
+  'tool:intervalref': { label: 'INTERVALS', labelIt:'INTERVALLI',   type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="2.4" fill="currentColor" stroke="none" opacity="0.85"/><circle cx="19" cy="7" r="2.4" fill="currentColor" stroke="none" opacity="0.85"/><path d="M6.6 15.2 Q12 8 17.4 8.4"/><line x1="5" y1="14.6" x2="5" y2="6"/><line x1="19" y1="9.4" x2="19" y2="18"/></svg>',
     launch: () => { setMode('tools'); enterTool('intervalref'); } },
-  'tool:volume':       { label: 'VOL METER',   type: 'TOOL',
+  'tool:volume': { label: 'VOL METER', labelIt:'MISUR. VOL.',   type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="4" height="10" rx="1" fill="currentColor" stroke="none" opacity="0.9"/><rect x="10" y="6" width="4" height="15" rx="1" fill="currentColor" stroke="none" opacity="0.9"/><rect x="17" y="14" width="4" height="7" rx="1" fill="currentColor" stroke="none" opacity="0.9"/></svg>',
     launch: () => { setMode('tools'); enterTool('volume'); } },
-  'tool:transpose':    { label: 'TRANSPOSER',  type: 'TOOL',
+  'tool:transpose': { label: 'TRANSPOSER', labelIt:'TRASPOSITORE',  type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8l3-3M5 8l3 3M19 16H5M19 16l-3-3M19 16l-3 3"/></svg>',
     launch: () => { setMode('tools'); enterTool('transpose'); } },
-  'tool:vocalrange':   { label: 'VOCAL RANGE', type: 'TOOL',
+  'tool:vocalrange': { label: 'VOCAL RANGE', labelIt:'ESTENS. VOCALE', type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3"/><path d="M6 8a6 6 0 0 0 12 0"/><line x1="12" y1="14" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>',
     launch: () => { setMode('tools'); enterTool('vocalrange'); } },
-  'tool:theremin':     { label: 'THEREMIN',    type: 'TOOL',
+  'tool:theremin': { label: 'THEREMIN', labelIt:'THEREMIN',    type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="16" height="9" rx="1.5"/><line x1="20" y1="3" x2="20" y2="18"/><path d="M5 14c1-2.5 2-2.5 3 0s2 2.5 3 0"/></svg>',
     launch: () => { setMode('tools'); enterTool('theremin'); } },
-  'tool:rhythmcards':  { label: 'RHYTHM CARDS', type: 'TOOL',
+  'tool:rhythmcards': { label: 'RHYTHM CARDS', labelIt:'CARTE RITMICHE', type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M7 9h6M7 13h4"/><path d="M17 7l3 1.2v8.3a1.8 1.8 0 0 1-2.5 1.7"/></svg>',
     launch: () => { setMode('tools'); enterTool('rhythmcards'); } },
   // ── Exercises ──
-  'exercise:tempo':      { label: 'TEMPO LOCK',  type: 'EXERCISE',
+  'exercise:tempo': { label: 'TEMPO LOCK', labelIt:'TEMPO LOCK',  type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l6 18H6L12 3z"/><line x1="12" y1="12" x2="17" y2="7"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('practice'); enterExercise('tempo'); } },
-  'exercise:tempoguess': { label: 'TEMPO GUESS', type: 'EXERCISE',
+  'exercise:tempoguess': { label: 'TEMPO GUESS', labelIt:'INDOVINA TEMPO', type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3.5"/><circle cx="12" cy="17" r="0.8" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('practice'); enterExercise('tempoguess'); } },
-  'exercise:poly':       { label: 'POLYRHYTHM',  type: 'EXERCISE',
+  'exercise:poly': { label: 'POLYRHYTHM', labelIt:'POLIRITMIA',  type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/></svg>',
     launch: () => { setMode('practice'); enterExercise('poly'); } },
-  'exercise:rhythmread': { label: 'RHYTHM READING', type: 'EXERCISE',
+  'exercise:rhythmread': { label: 'RHYTHM READING', labelIt:'LETTURA RITMICA', type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="11" x2="21" y2="11"/><ellipse cx="7" cy="11" rx="2" ry="1.7" fill="currentColor" stroke="none"/><line x1="9" y1="11" x2="9" y2="5"/><ellipse cx="13" cy="11" rx="2" ry="1.7" fill="currentColor" stroke="none"/><line x1="15" y1="11" x2="15" y2="5"/></svg>',
     launch: () => { setMode('practice'); enterExercise('rhythmread'); } },
-  'exercise:interval':   { label: 'INTERVALS',   type: 'EXERCISE',
+  'exercise:interval': { label: 'INTERVALS', labelIt:'INTERVALLI',   type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('practice'); enterExercise('interval'); } },
-  'exercise:chords':     { label: 'CHORD EAR',   type: 'EXERCISE',
+  'exercise:chords': { label: 'CHORD EAR', labelIt:'ORECCHIO ACCORDI',   type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="3" height="12" rx="1.5"/><rect x="10" y="3" width="3" height="18" rx="1.5"/><rect x="17" y="8" width="3" height="10" rx="1.5"/></svg>',
     launch: () => { setMode('practice'); enterExercise('chords'); } },
-  'exercise:singsing':   { label: 'PITCH MATCH',  type: 'EXERCISE',
+  'exercise:singsing': { label: 'PITCH MATCH', labelIt:'INTONA LA NOTA',  type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
     launch: () => { setMode('practice'); enterExercise('singsing'); } },
-  'exercise:notationcards': { label: 'NOTATION CARDS', type: 'EXERCISE',
+  'exercise:notationcards': { label: 'NOTATION CARDS', labelIt:'CARTE NOTAZIONE', type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="14" height="17" rx="2.5" opacity=".4"/><rect x="3" y="5" width="14" height="17" rx="2.5" fill="var(--surface)"/><path d="M6.4 15.6a3.6 3.6 0 0 1 7.2 0" stroke-width="1.6"/><circle cx="10" cy="14.5" r="1.15" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('practice'); enterExercise('notationcards'); } },
-  'exercise:staffread':  { label: 'STAFF NOTES', type: 'EXERCISE',
+  'exercise:staffread': { label: 'STAFF NOTES', labelIt:'NOTE SUL PENTAGRAMMA', type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="11" x2="21" y2="11"/><line x1="3" y1="15" x2="21" y2="15"/><ellipse cx="14" cy="15" rx="2.2" ry="1.7" fill="currentColor" stroke="none"/><line x1="16.2" y1="15" x2="16.2" y2="5"/></svg>',
     launch: () => { setMode('practice'); enterExercise('staffread'); } },
-  'exercise:relpitch':   { label: 'RELATIVE PITCH', type: 'EXERCISE',
+  'exercise:relpitch': { label: 'RELATIVE PITCH', labelIt:'ORECCHIO RELATIVO', type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="12" width="3" height="7" rx="1"/><rect x="7" y="8" width="3" height="11" rx="1"/><rect x="12" y="4" width="3" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="17" y="10" width="3" height="9" rx="1"/></svg>',
     launch: () => { setMode('practice'); enterExercise('relpitch'); } },
   // Key stays 'exercise:scales' so existing pins keep working; Scales itself is a
   // tool as of v0.132.3 and launches through the Tools tab.
-  'exercise:scales':     { label: 'SCALES',      type: 'TOOL',
+  'exercise:scales':     { label: 'SCALES',      type: 'TOOL', labelIt:'SCALE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3" fill="currentColor" stroke="none"/><circle cx="18" cy="16" r="3" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('tools'); enterTool('scales'); } },
-  'tool:survivalguide': { label: 'GUIDE',    type: 'TOOL',
+  'tool:survivalguide': { label: 'GUIDE', labelIt:'GUIDA',    type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d=\"M4 19.5A2.5 2.5 0 0 1 6.5 17H20\"/><path d=\"M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z\"/></svg>',
     launch: () => { setMode('tools'); enterTool('survivalguide'); } },
-  'tool:musicquiz':    { label: 'MUSIC QUIZ', type: 'TOOL',
+  'tool:musicquiz': { label: 'MUSIC QUIZ', labelIt:'QUIZ MUSICALE', type: 'TOOL',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
     launch: () => { mqOpen(); } },
-  'exercise:chordle':   { label: 'CHORDLE',  type: 'EXERCISE',
+  'exercise:chordle': { label: 'CHORDLE', labelIt:'CHORDLE',  type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d=\"M12 2a7 7 0 0 1 7 7c0 4-3 5-3 8H8c0-3-3-4-3-8a7 7 0 0 1 7-7z\"/><path d=\"M9 21h6\"/><path d=\"M9 17h6\"/></svg>',
     launch: () => { setMode('practice'); enterExercise('chordle'); } },
-  'exercise:tonale':    { label: 'TÓNALE',  type: 'EXERCISE',
+  'exercise:tonale': { label: 'TÓNALE', labelIt:'TÓNALE',  type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d=\"M2 12h3l2-7 4 14 3-9 2 4h6\"/></svg>',
     launch: () => { setMode('practice'); enterExercise('tonale'); } },
-  'exercise:diadle':    { label: 'DIADLE',  type: 'EXERCISE',
+  'exercise:diadle': { label: 'DIADLE', labelIt:'DIADLE',  type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 3\"/></svg>',
     launch: () => { setMode('practice'); enterExercise('diadle'); } },
   // Road Trip carried data-fav-id since it shipped but had no entry here, so
   // favoriting it produced a row with no label, no type and no icon: the star
   // worked and led nowhere. Icon matches the card in the Train hub.
-  'exercise:roadtrip':  { label: 'ROAD TRIP', type: 'EXERCISE',
+  'exercise:roadtrip': { label: 'ROAD TRIP', labelIt:'ROAD TRIP', type: 'EXERCISE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 L9 5 L15 19 L21 5"/><circle cx="9" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="21" cy="5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('practice'); enterExercise('roadtrip'); } },
 };
@@ -112302,13 +112386,13 @@ function bowedBestDsFingers(loSemi, hiSemi, isBass) {
 }
 
 const BOWED_INTERVALS = [
-  { semis:3,  key:'m3',  label:'Minor 3rd' },
-  { semis:4,  key:'M3',  label:'Major 3rd' },
-  { semis:5,  key:'P4',  label:'Perf. 4th' },
-  { semis:7,  key:'P5',  label:'Perf. 5th' },
-  { semis:8,  key:'m6',  label:'Minor 6th' },
-  { semis:9,  key:'M6',  label:'Major 6th' },
-  { semis:12, key:'oct', label:'Octave'     },
+  { semis:3,  key:'m3',  label:'Minor 3rd', labelIt:'3ª minore' },
+  { semis:4,  key:'M3',  label:'Major 3rd', labelIt:'3ª maggiore' },
+  { semis:5,  key:'P4',  label:'Perf. 4th', labelIt:'4ª giusta' },
+  { semis:7,  key:'P5',  label:'Perf. 5th', labelIt:'5ª giusta' },
+  { semis:8,  key:'m6',  label:'Minor 6th', labelIt:'6ª minore' },
+  { semis:9,  key:'M6',  label:'Major 6th', labelIt:'6ª maggiore' },
+  { semis:12, key:'oct', label:'Octave', labelIt:'Ottava'     },
 ];
 
 const _BN = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
@@ -112725,7 +112809,7 @@ function _bowedBuildIntRow() {
   BOWED_INTERVALS.forEach((iv,idx)=>{
     const btn=document.createElement('button');
     btn.className='gss-type-btn'+(idx===bowedDsopIdx?' active':'');
-    btn.textContent=t('cs_bowed_'+iv.key)||iv.label;
+    btn.textContent=t('cs_bowed_'+iv.key)||csSubLabel(iv);
     btn.onclick=()=>{ bowedDsopIdx=idx; bowedDsPairIdx=0; _bowedBuildIntRow(); _bowedComputeDsPairs(); _bowedRenderDstop(); };
     row.appendChild(btn);
   });
@@ -113953,7 +114037,7 @@ function svcApplyRestore() {
   chordScaleInstrument = snap.inst;
   const meta = CS_INSTRUMENTS[snap.inst] || {};
   const lbl = document.getElementById('csFamilyLabel');
-  if (lbl) lbl.textContent = meta.label || snap.inst.toUpperCase();
+  if (lbl) lbl.textContent = csInstLabel(meta, snap.inst.toUpperCase());
 
   // Sub-variant
   if (snap.inst === 'uke'                                          && snap.sub) ukeSubType    = snap.sub;
@@ -114953,7 +115037,7 @@ function renderFavSheet() {
       card.className = 'fav-mini-card';
       card.innerHTML = `
         <div class="fav-mini-icon">${meta.icon}</div>
-        <div class="fav-mini-label">${meta.label}</div>
+        <div class="fav-mini-label">${csSubLabel(meta)}</div>
         <div class="fav-mini-type">${meta.type === 'TOOL' ? t('fav_type_tool') : t('fav_type_exercise')}</div>`;
       _favBindCardGestures(card, () => meta.launch(), () => favRemove(key));
       grid.appendChild(card);
@@ -115442,7 +115526,7 @@ function buildInteractiveAmpPanel(model, tipEl) {
   var brt = el('text',{x:27,y:H/2+5,'text-anchor':'middle','font-family':'Bebas Neue,sans-serif','font-size':12,fill:d.accent,'letter-spacing':'0.1',transform:'rotate(-90,27,'+(H/2)+')'},s);
   brt.textContent = d.t.split(' ')[0];
   var subt = el('text',{x:27,y:H/2+18,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':5,fill:'#4a4a6a',transform:'rotate(-90,27,'+(H/2+14)+')'},s);
-  subt.textContent = d.sub;
+  subt.textContent = ((progState && progState.lang === 'it') && d.subIt) ? d.subIt : d.sub;
   var activeZone = null;
   d.controls.forEach(function(c) {
     var cx = c.x + 54, cy = H/2 - 4;
@@ -118947,9 +119031,11 @@ function openPedalPlugin(){
   var kb=document.createElement('div');kb.style.cssText='overflow-x:auto;padding:4px 0 8px;text-align:center;touch-action:none;';body.appendChild(kb);
   buildPedalsKB(kb);
   var pt=document.createElement('div');pt.className='pedal-toggles';
-  [{id:'ptS',key:'soft',cls:'sp',label:'SOFT',sub:'left'},{id:'ptSo',key:'sostenuto',cls:'pp',label:'SOSTENUTO',sub:'middle'},{id:'ptD',key:'damper',cls:'',label:'DAMPER',sub:'right'}].forEach(function(d){
+  // The three piano pedals. Italian names them after what they do: una corda,
+  // sostenuto (same word), risonanza. The sub is the physical position.
+  [{id:'ptS',key:'soft',cls:'sp',label:'SOFT',labelIt:'UNA CORDA',sub:'left',subIt:'sinistro'},{id:'ptSo',key:'sostenuto',cls:'pp',label:'SOSTENUTO',labelIt:'SOSTENUTO',sub:'middle',subIt:'centrale'},{id:'ptD',key:'damper',cls:'',label:'DAMPER',labelIt:'RISONANZA',sub:'right',subIt:'destro'}].forEach(function(d){
     var btn=document.createElement('div');btn.className='pedal-btn'+(d.cls?' '+d.cls:'');btn.id=d.id;
-    btn.innerHTML='<span class="pedal-nm">'+d.label+'</span><span class="pedal-sub">'+d.sub+' pedal</span>';
+    btn.innerHTML='<span class="pedal-nm">'+csSubLabel(d)+'</span><span class="pedal-sub">'+(((progState && progState.lang === 'it') && d.subIt) ? ('pedale '+d.subIt) : (d.sub+' pedal'))+'</span>';
     // USE pointerdown (not click) so it fires immediately even while holding piano keys
     btn.style.touchAction='manipulation';
     (function(key,id){
