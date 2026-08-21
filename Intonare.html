@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.150.82 -->
+<!-- INTONARE_VERSION: 0.150.91 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -5386,9 +5386,14 @@ html,body{background:#000000!important;transition:none!important}
      hidden and nothing else held the row's height. Pin it to the row's own
      28px in both faces. */
   /* Fixed width, not content width. The label alternates between "Full" and
-     "Simple" (and "Completo"/"Base" in Italian), so a content-sized button
-     changes width on every swap and shoves the entire row 14px sideways. Sizing
-     it for the longest label keeps every other control still. */
+     "Simple" (and "Piena"/"Base" in Italian), so a content-sized button changes
+     width on every swap and shoves the entire row 14px sideways. Sizing it for
+     the longest label keeps every other control still.
+
+     The Italian was "Completo", which needs 55px inside the 48px the label gets
+     and rendered as "COMP…". Shortened rather than widened: the button width is
+     what stops the row moving, so growing it to fit one word would undo the
+     reason it is fixed. */
   .tuner-face-swap { height: 28px; width: 84px; flex: 0 0 84px; justify-content: center; }
   .tuner-face-swap-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -25260,7 +25265,7 @@ try {
         <!-- Fork -->
         <button class="tuner-fork-btn" id="tunerForkBtn" onclick="playTunerFork()">
           <span class="tuner-fork-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v7.5a4 4 0 0 0 8 0V3"/><path d="M12 14.5V21"/><path d="M9.5 21h5"/></svg></span>
-          <span>FORK</span>
+          <span data-i18n="tuner_fork">FORK</span>
         </button>
 
         <!-- A reference pitch -->
@@ -25733,7 +25738,7 @@ try {
         <!-- Nameplate (expand button sits top-right) -->
         <div class="piano-nameplate">
           <div class="piano-nameplate-oval">
-            <span class="piano-nameplate-text">Grand Piano</span>
+            <span class="piano-nameplate-text" data-i18n="piano_nameplate">Grand Piano</span>
           </div>
           <button class="piano-expand-btn piano-expand-btn-np" onclick="openPianoOverlay()" title="Open fullscreen piano" data-i18n="tuner_expand">⛶ EXPAND</button>
         </div>
@@ -25815,7 +25820,7 @@ try {
         <!-- Tone picker (now below the now-playing bar to match organ/rhodes) -->
         <div style="height:1px;background:rgba(255,255,255,0.06);margin:12px -14px 10px"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
-          <div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.25);text-transform:uppercase;font-weight:700">TONE</div>
+          <div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.25);text-transform:uppercase;font-weight:700" data-i18n="tone_label">TONE</div>
           <button class="help-btn" onclick="showHelp('reftone')">?</button>
         </div>
         <div class="tone-picker" id="refToneBank"></div>
@@ -25930,7 +25935,7 @@ try {
         <span id="tcDroneScaleName"></span>
         <select id="tcScaleType" onchange="tcUpdateScale()">
           <optgroup label="Major Family · Bright">
-            <option value="major">Major (Ionian)</option>
+            <option value="major" data-i18n="tonal_major_ionian">Major (Ionian)</option>
             <option value="lydian">Lydian</option>
             <option value="mixolydian">Mixolydian</option>
             <option value="harmmaj">Harmonic Major</option>
@@ -26022,7 +26027,7 @@ try {
           <div class="tc-inline-col">
             <div class="tc-strip-lab" data-i18n="label_scale">SCALE</div>
             <div class="tc-dd" id="tcScaleDD">
-              <button class="tc-dd-btn" id="tcDdBtn" onclick="tcToggleDD(event)"><span id="tcDdLabel">Major (Ionian)</span><span class="tc-car">▾</span></button>
+              <button class="tc-dd-btn" id="tcDdBtn" onclick="tcToggleDD(event)"><span id="tcDdLabel" data-i18n="tonal_major_ionian">Major (Ionian)</span><span class="tc-car">▾</span></button>
               <div class="tc-dd-panel" id="tcDdPanel"></div>
             </div>
           </div>
@@ -26158,7 +26163,7 @@ try {
           <div class="thmn-console-top">
             <div class="thmn-console-brand">
               <div class="thmn-logo">moog</div>
-              <div class="thmn-led-row"><span class="thmn-led on"></span><span class="thmn-led-lbl">POWER</span></div>
+              <div class="thmn-led-row"><span class="thmn-led on"></span><span class="thmn-led-lbl" data-i18n="thmn_power">POWER</span></div>
             </div>
             <div class="thmn-badge">ETHERWAVE THEREMIN</div>
             <button class="thmn-expand-btn" onclick="openThereminOverlay()" data-i18n="tuner_expand">⛶ EXPAND</button>
@@ -26174,7 +26179,7 @@ try {
               <div class="thmn-knob-cell">
                 <div class="thmn-knob" id="thmnKnobRange" data-thmn-knob="range"></div>
                 <div class="thmn-knob-label" data-i18n="thmn_k_range">PITCH RANGE</div>
-                <div class="thmn-knob-val" id="thmnKnobRangeVal">5 oct</div>
+                <div class="thmn-knob-val" id="thmnKnobRangeVal"><span data-i18n="thmn_5oct">5 oct</span></div>
               </div>
               <div class="thmn-knob-cell">
                 <div class="thmn-knob" id="thmnKnobWave" data-thmn-knob="wave"></div>
@@ -26217,7 +26222,7 @@ try {
       <!-- top bar: category selector (left) · test mode (right) -->
       <div class="rc-topbar">
         <button class="rc-cat-btn" id="rcCatBtn" onclick="rcToggleCatSheet()">
-          <span class="rc-cat-btn-lbl" id="rcCatBtnLbl">ALL</span>
+          <span class="rc-cat-btn-lbl" id="rcCatBtnLbl" data-i18n="rc_all">ALL</span>
           <span class="rc-cat-btn-caret">▾</span>
         </button>
         <button class="rc-test-btn" onclick="rctStart()" data-i18n="rc_test_btn">▶︎ TEST</button>
@@ -26259,7 +26264,7 @@ try {
       <!-- transport -->
       <div class="rc-transport">
         <button class="rc-nav-btn" onclick="rcPrev()" aria-label="Previous card">‹</button>
-        <button class="rc-play-btn" id="rcPlayBtn" onclick="rcPlay()">▶︎ PLAY</button>
+        <button class="rc-play-btn" id="rcPlayBtn" onclick="rcPlay()">&#9654;&#xFE0E; <span data-i18n="rc_play">PLAY</span></button>
         <button class="rc-nav-btn" onclick="rcNext()" aria-label="Next card">›</button>
       </div>
       <div class="rc-pos" id="rcPos">0 / 0</div>
@@ -29144,7 +29149,7 @@ try {
             <button class="tg-popup-btn" id="tlPatternBtn" onclick="tlTogglePopup('pattern')">
               <span class="tg-popup-label" data-i18n="tl_pattern">Pattern</span>
               <span class="tg-popup-value" id="tlPatternValue">2·2</span>
-              <span class="tg-popup-sub" id="tlPatternSub">on · off ▾</span>
+              <span class="tg-popup-sub" id="tlPatternSub" data-i18n="tl_on_off_arrow">on · off ▾</span>
             </button>
             <div class="tg-popup" id="tlPatternPopup" style="display:none;left:0">
               <div class="tg-popup-section" style="display:flex;align-items:center;gap:6px"><span data-i18n="tl_pattern">Pattern</span><button class="help-btn" onclick="showHelp('tllockpattern')" style="margin:0">?</button></div>
@@ -29237,7 +29242,7 @@ try {
           <div class="tg-toolbar-cell">
             <button class="tg-popup-btn" id="tgClickBtn" onclick="tgTogglePopup('click')">
               <span class="tg-popup-label" data-i18n="tg_click">Click</span>
-              <span class="tg-popup-value" id="tgClickValue">QTR</span>
+              <span class="tg-popup-value" id="tgClickValue" data-i18n="tg_qtr">QTR</span>
               <span class="tg-popup-sub" id="tgClickSub">quarter ▾</span>
             </button>
             <div class="tg-popup" id="tgClickPopup" style="display:none;left:0">
@@ -29248,7 +29253,7 @@ try {
           <div class="tg-toolbar-cell">
             <button class="tg-popup-btn" id="tgFeelBtn" onclick="tgTogglePopup('feel')">
               <span class="tg-popup-label" data-i18n="tg_feel">Feel</span>
-              <span class="tg-popup-value" id="tgFeelValue">STRT</span>
+              <span class="tg-popup-value" id="tgFeelValue" data-i18n="tg_strt">STRT</span>
               <span class="tg-popup-sub" id="tgFeelSub">straight ▾</span>
             </button>
             <div class="tg-popup" id="tgFeelPopup" style="display:none;right:0">
@@ -29804,7 +29809,7 @@ try {
   <!-- Header: close · nameplate · lid · ref note · tone chips -->
   <div class="piano-overlay-head">
     <button class="piano-overlay-close" onclick="closePianoOverlay()">✕</button>
-    <div class="piano-overlay-nameplate"><span class="piano-overlay-nameplate-text">Grand Piano</span></div>
+    <div class="piano-overlay-nameplate"><span class="piano-overlay-nameplate-text" data-i18n="piano_nameplate">Grand Piano</span></div>
     <div class="piano-overlay-lid-wrap">
       <span class="piano-overlay-lid-label">LID</span>
       <div class="piano-lid-seg-wrap">
@@ -31137,7 +31142,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.82</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.150.91</span>
     </div>
   </div>
 </div>
@@ -31145,7 +31150,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.150.82';
+const INTONARE_VERSION = '0.150.91';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -39897,11 +39902,17 @@ async function paywallRestore() {
   }
 }
 
+// A tool that rebuilds its own controls does so after applyLang() has run, so any
+// data-i18n inside it reverts to the English default. One pass on entry costs a
+// single querySelectorAll and removes a whole class of "tagged and still English".
+function _langRefresh() { try { applyLang(); } catch (e) {} }
+
 function enterTool(name, restoreState) {
   // ── Pro gate ── locked tools divert to the paywall instead of opening.
   if (!isToolFree(name) && !isPro()) { showPaywall('tool', name); return; }
   sesEnter();
   sesTrackModule('t:' + name);
+  setTimeout(_langRefresh, 0);   // after this tool has built its own controls
   // Stash any saved-view snapshot so the tool's init can apply it.
   _pendingChartRestore = (name === 'guitarchords' && restoreState) ? restoreState : null;
   const MIC_TOOLS = ['piano', 'tonal', 'volume', 'vocalrange', 'scales'];
@@ -40070,6 +40081,38 @@ const TC_IV_IT = ['Unisono','2ª minore','2ª maggiore','3ª minore','3ª maggio
                'tritono','5ª giusta','6ª minore','6ª maggiore','7ª minore','7ª maggiore','Ottava'];
 
 // Scale dropdown groups for the custom (non-native) picker. Values map 1:1 to SCALE_DEFS.
+// Title-case Italian for the drone dropdown. SCALES holds `it:` for the same keys
+// but in the uppercase form the scale chips use, and mixing the two would put
+// DORICO in a list of Title Case entries.
+const TC_SCALE_IT = {
+  major:'Maggiore (ionico)', lydian:'Lidio', mixolydian:'Misolidio', harmmaj:'Maggiore armonica',
+  natminor:'Minore naturale', dorian:'Dorico', phrygian:'Frigio', locrian:'Locrio',
+  harmminor:'Minore armonica', melminor:'Minore melodica',
+  majpent:'Pentatonica maggiore', minpent:'Pentatonica minore', blues:'Blues',
+  inscale:'In', yo:'Yo', egyptian:'Egizia',
+  hirajoshi:'Hirajoshi', iwato:'Iwato', kumoi:'Kumoi', insen:'Insen',
+  lyddom:'Lidia dominante', altered:'Alterata', locrian2:'Locria nat2',
+  dblharm:'Doppia armonica', phrygdom:'Frigia dominante', hungmin:'Minore ungherese',
+  hungmaj:'Maggiore ungherese', ukrdorian:'Dorica ucraina',
+  purvi:'Purvi', marwa:'Marwa', todi:'Todi',
+  dimwh:'Diminuita T-S', dimhw:'Diminuita S-T', augmented:'Aumentata',
+  wholetone:'Esatonale', chromatic:'Cromatica'
+};
+const TC_GROUP_IT = {
+  'MAJOR FAMILY':'FAMIGLIA MAGGIORE', 'MINOR FAMILY':'FAMIGLIA MINORE',
+  'PENTATONIC & BLUES':'PENTATONICHE E BLUES', 'JAPANESE':'GIAPPONESI',
+  'JAZZ · MELODIC MODES':'JAZZ · MODI MELODICI', 'WORLD & EXOTIC':'DAL MONDO',
+  'INDIAN THAATS':'THAAT INDIANI', 'SYMMETRIC':'SIMMETRICHE'
+};
+function tcOptLabel(val, label) {
+  try { return ((progState && progState.lang === 'it') && TC_SCALE_IT[val]) ? TC_SCALE_IT[val] : label; }
+  catch (e) { return label; }
+}
+function tcGroupLabel(g) {
+  try { return ((progState && progState.lang === 'it') && TC_GROUP_IT[g]) ? TC_GROUP_IT[g] : g; }
+  catch (e) { return g; }
+}
+
 const TC_SCALE_GROUPS = [
   // Same family order as GSS_SCALE_TYPES, so the tonal-centre picker and the
   // instrument charts present scales in the same shape.
@@ -40107,7 +40150,7 @@ function tcInit() {
   const octSeg = document.getElementById('tcOctSeg');
   if (octSeg) {
     octSeg.innerHTML = '';
-    ['LO','MID','HI'].forEach((label, i) => {
+    [t('oct_lo') || 'LO', t('oct_mid') || 'MID', t('oct_hi') || 'HI'].forEach((label, i) => {
       const btn = document.createElement('button');
       btn.className = (i === tcOctaveIdx ? 'tc-on' : '');
       btn.textContent = label;
@@ -40137,15 +40180,15 @@ function tcBuildDropdown() {
   }
   panel.innerHTML = '';
   TC_SCALE_GROUPS.forEach(grp => {
-    const gl = document.createElement('div'); gl.className = 'tc-dd-group'; gl.textContent = grp.g; panel.appendChild(gl);
+    const gl = document.createElement('div'); gl.className = 'tc-dd-group'; gl.textContent = tcGroupLabel(grp.g); panel.appendChild(gl);
     grp.items.forEach(([val, label]) => {
       const o = document.createElement('div');
       o.className = 'tc-dd-opt' + (val === tcScaleTypeVal ? ' tc-sel' : '');
-      o.dataset.val = val; o.textContent = label;
+      o.dataset.val = val; o.textContent = tcOptLabel(val, label);
       o.onclick = () => {
         tcScaleTypeVal = val;
         const sel = document.getElementById('tcScaleType'); if (sel) sel.value = val;
-        document.getElementById('tcDdLabel').textContent = label;
+        document.getElementById('tcDdLabel').textContent = label;   // already localised: the option text it copies is translated by applyLang
         panel.querySelectorAll('.tc-dd-opt').forEach(x => x.classList.remove('tc-sel'));
         o.classList.add('tc-sel');
         tcCloseDD();
@@ -40759,6 +40802,11 @@ var thmnState = {
 // WAVEFORM knob sweeps these four timbres left→right.
 var THMN_WAVE_ORDER = ['sine','warm','reedy','brass'];
 var THMN_WAVE_LABEL = { sine:'PURE', warm:'WARM', reedy:'REEDY', brass:'BRASS' };
+// Read through a key so the knob keeps its language after a wave change.
+function thmnWaveLabel(w) {
+  try { return t('thmn_wave_' + w) || THMN_WAVE_LABEL[w] || w; }
+  catch (e) { return THMN_WAVE_LABEL[w] || w; }
+}
 function _thmnWaveFrom01(v) {
   var i = Math.round(Math.max(0, Math.min(1, v)) * (THMN_WAVE_ORDER.length - 1));
   return THMN_WAVE_ORDER[i];
@@ -41052,7 +41100,7 @@ function thmnToggleSnap() {
 function thmnSetWave(w) {
   thmnState.wave = w;
   if (thmnOsc && thmnCtx) thmnOsc.setPeriodicWave(_thmnPeriodicWave(thmnCtx, w));
-  var lbl = THMN_WAVE_LABEL[w] || w;
+  var lbl = thmnWaveLabel(w);
   ['thmnKnobWaveVal','thmnOvKnobWaveVal'].forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent = lbl; });
 }
 
@@ -50996,7 +51044,7 @@ function ncRender() {
   var el;
   if ((el = document.getElementById('ncName')))  el.textContent = ncName(c);
   if ((el = document.getElementById('ncDef')))   el.textContent = ncDef(c);
-  if ((el = document.getElementById('ncGrp')))   el.textContent = c.grp;
+  if ((el = document.getElementById('ncGrp')))   el.textContent = (t('nc_grp_' + String(c.grp).toLowerCase().replace(/[^a-z0-9]+/g,'_')) || c.grp);
   if ((el = document.getElementById('ncCountTxt'))) {
     var pos = (ncShuffled && ncOrder && ncOrder.length === d.length)
       ? ncOrder.indexOf(ncIdx) : ncIdx;
@@ -51276,6 +51324,7 @@ function enterExercise(name) {
   if (!isTrainFree(name) && !isPro()) { showPaywall('train', name); return; }
   sesEnter();
   sesTrackModule('e:' + name);
+  setTimeout(_langRefresh, 0);   // same reason as enterTool
   // Swap app header to show module name with contextual back label
   var _exBackMap = {
     tempo: 'rhythm', tempoguess: 'rhythm', poly: 'rhythm', rhythmread: 'rhythm',
@@ -52716,7 +52765,7 @@ function ivGpos(semi) {
 function ivBuildGauge() {
   var g = document.getElementById('ivGauge'); if (!g) return;
   var dir = (ivCurrentRound && ivCurrentRound.direction < 0) ? -1 : 1;
-  var h = '<div class="iv-gauge-base"></div><div class="iv-gauge-dir">' + (dir > 0 ? 'ASC \u2192' : '\u2190 DESC') + '</div>';
+  var h = '<div class="iv-gauge-base"></div><div class="iv-gauge-dir">' + (dir > 0 ? ((t('iv_asc') || 'ASC') + ' \u2192') : ('\u2190 ' + (t('iv_desc') || 'DESC'))) + '</div>';
   for (var i = 0; i <= 12; i++) {
     h += '<div class="iv-gauge-grad' + (i === 0 || i === 12 ? ' oct' : '') + '" style="left:' + (i / 12 * 100) + '%"></div>';
   }
@@ -57524,6 +57573,19 @@ function _tpWireDdListeners() {
   }, { passive: true, capture: true });
 }
 
+// Only the two Concert Pitch rows differ in Italian; every other entry names an
+// instrument key (B♭ trumpet, E♭ alto sax) that reads the same either way.
+const TP_LABELS_IT = {
+  'Concert Pitch': 'Suono reale',
+  'Concert Pitch (piano, flute, oboe, bassoon, violin\u2026)':
+    'Suono reale (pianoforte, flauto, oboe, fagotto, violino\u2026)',
+  'Bb Instruments \u2014 sounds a M2 lower': 'Strumenti in Si\u266d \u2014 suonano una 2\u00aa magg. sotto'
+};
+function tpLabel(s) {
+  try { return ((progState && progState.lang === 'it') && TP_LABELS_IT[s]) ? TP_LABELS_IT[s] : s; }
+  catch (e) { return s; }
+}
+
 function _tpBuildInstDrop(containerId, items, currentVal, onChange) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
@@ -57547,7 +57609,7 @@ function _tpBuildInstDrop(containerId, items, currentVal, onChange) {
   list._tpBtn = btn;
 
   const cur = items.find(i => i[0] === currentVal);
-  valEl.textContent = cur ? cur[1] : (items.find(i => i[0] !== null)?.[1] || '\u2014');
+  valEl.textContent = cur ? tpLabel(cur[1]) : tpLabel(items.find(i => i[0] !== null)?.[1] || '\u2014');
 
   function positionList() {
     const r = btn.getBoundingClientRect();
@@ -57572,10 +57634,10 @@ function _tpBuildInstDrop(containerId, items, currentVal, onChange) {
     const opt = document.createElement('div');
     if (item[0] === null) {
       opt.className = 'sg-dd-item group-header';
-      opt.textContent = item[1];
+      opt.textContent = tpLabel(item[1]);
     } else {
       opt.className = 'sg-dd-item' + (item[0] === currentVal ? ' active' : '');
-      opt.textContent = item[1];
+      opt.textContent = tpLabel(item[1]);
       // Tap vs. drag: record where the finger went down; only select if it
       // lifts in roughly the same spot (a tap), so dragging to scroll the list
       // doesn't fire a selection.
@@ -57754,7 +57816,7 @@ function tpUpdate() {
     if (bridgeInt)   bridgeInt.textContent   = 'P1';
     if (bridgeArrow) bridgeArrow.textContent = '=';
     if (bridgeDir)   bridgeDir.textContent   = '';
-    if (summary)     summary.innerHTML = '<span class="c-concert">concert pitch</span> \u00b7 no transposition';
+    if (summary)     summary.innerHTML = '<span class="c-concert">' + (t('concert_pitch') || 'concert pitch') + '</span> \u00b7 ' + (t('tp_no_transposition') || 'no transposition');
     return;
   }
   // interval is the concert-minus-written shift; a negative value means the
@@ -59886,7 +59948,7 @@ function droneInit() {
   const octRow = document.getElementById('droneOctRow');
   if (octRow) {
     octRow.innerHTML = '';
-    ['LOW','MID','HIGH'].forEach((label, i) => {
+    [t('oct_low') || 'LOW', t('oct_mid_full') || 'MID', t('oct_high') || 'HIGH'].forEach((label, i) => {
       const btn = document.createElement('button');
       btn.className = 'drone-oct-btn' + (i === droneOctaveIdx ? ' active' : '');
       btn.textContent = label;
@@ -60279,7 +60341,7 @@ function getScaleSemitones() {
 
 // Abbreviated scale names. Hoisted out of buildScaleTypePicker so the GHOST
 // button and the type chips share one source — add a scale, both update.
-const SCALE_SHORT_NAMES = {
+const SCALE_SHORT_NAMES_EN = {
   major:'MAJOR', lydian:'LYDIAN', mixolydian:'MIXOLYD.', harmmaj:'HARM. MAJ',
   natminor:'NATURAL', dorian:'DORIAN', phrygian:'PHRYGIAN', locrian:'LOCRIAN',
   harmminor:'HARM. MIN', melminor:'MELODIC',
@@ -60291,6 +60353,33 @@ const SCALE_SHORT_NAMES = {
   yo:'YO', iwato:'IWATO', kumoi:'KUMOI', insen:'INSEN',
   ukrdorian:'UKR DORIAN', purvi:'PURVI', marwa:'MARWA', todi:'TODI'
 };
+
+// The Italian side needs its OWN abbreviations rather than a translation of the
+// long names: these are chips a few characters wide, which is why an abbreviated
+// table exists at all. MISOLIDIO is already at the limit; MODO MISOLIDIO is not.
+//
+// Untranslated on purpose: BLUES, and the Japanese and Indian scales (HIRAJOSHI,
+// YO, IWATO, KUMOI, INSEN, PURVI, MARWA, TODI, IN). Italian uses those as they
+// are, the same way English does.
+const SCALE_SHORT_NAMES_IT = {
+  major:'MAGGIORE', lydian:'LIDIO', mixolydian:'MISOLIDIO', harmmaj:'MAGG. ARM.',
+  natminor:'NATURALE', dorian:'DORICO', phrygian:'FRIGIO', locrian:'LOCRIO',
+  harmminor:'MIN. ARM.', melminor:'MELODICA',
+  majpent:'PENT. MAGG.', minpent:'PENT. MIN.', blues:'BLUES',
+  dblharm:'DOPPIA ARM.', phrygdom:'FRIGIA DOM.', hungmin:'UNGH. MIN.', hungmaj:'UNGH. MAGG.',
+  hirajoshi:'HIRAJOSHI', lyddom:'LIDIA DOM.', altered:'ALTERATA', locrian2:'LOCRIA ♮2',
+  dimwh:'DIM. T-S', dimhw:'DIM. S-T', augmented:'AUMENTATA', inscale:'IN', egyptian:'EGIZIA',
+  wholetone:'ESATONALE', chromatic:'CROMATICA',
+  yo:'YO', iwato:'IWATO', kumoi:'KUMOI', insen:'INSEN',
+  ukrdorian:'DORICA UCR.', purvi:'PURVI', marwa:'MARWA', todi:'TODI'
+};
+
+// A getter rather than a variable: the language can change while the tool is open,
+// and the chips are rebuilt on relabel, so this has to read the current language
+// at call time rather than at load.
+function scaleShortNames() {
+  return (progState && progState.lang === 'it') ? SCALE_SHORT_NAMES_IT : SCALE_SHORT_NAMES_EN;
+}
 
 const STP_X0 = 20, STP_XU = 28;
 const stpX = semi => STP_X0 + semi * STP_XU;
@@ -60678,7 +60767,7 @@ function scaleRenderGhost(animate) {
     cap.classList.toggle('show', !!cap.textContent);
   }
   scaleMaybeNote();
-  if (lbl) lbl.textContent = (progState.lang === 'it' ? 'VS ' : 'VS ') + (SCALE_SHORT_NAMES[gk] || '');
+  if (lbl) lbl.textContent = (t('scale_vs') || 'VS ') + (scaleShortNames()[gk] || '');
 }
 
 /* Some scales carry a practice note (melodic minor's descending form). Shown in
@@ -60863,7 +60952,7 @@ function scaleBuildToneBank() {
   TONE_GROUPS_DEF.forEach((g, i) => {
     const b = document.createElement('button');
     b.className = 'stb-tab' + (i === scaleToneGroup ? ' active' : '') + (groupSustains(g) ? '' : ' nosus');
-    b.textContent = g.label;
+    b.textContent = groupLabel(g);
     b.onclick = () => { scaleToneGroup = i; scaleBuildToneBank(); };
     tabs.appendChild(b);
   });
@@ -61856,13 +61945,27 @@ function _noiseSource(ctx, durSec) {
 
 // Shared tone-family grouping, used by both the compact tone picker and the
 // expanded-mode tone popup so they stay consistent.
+// key, not label: the tone popup at the other end of the file builds the same
+// five groups through _tg('tonegrp_keys','KEYBOARD') and gets TASTIERE, ONDE,
+// PIZZICATE, OTTONI, LEGNI in Italian. This copy was hard-coded English, so the
+// scales tool showed KEYBOARD and WAVES while the popup showed the translations.
+// Same five groups, two lists, one of them forgotten.
+//
+// Resolved through groupLabel() at render rather than stored, because the
+// language can change while a tool is open.
 const TONE_GROUPS_DEF = [
-  { label: 'KEYBOARD', keys: ['grand_piano','honky_tonk','harpsichord','vibraphone','marimba','xylophone'] },
-  { label: 'WAVES',    keys: ['sine','organ','bell','pad'] },
-  { label: 'PLUCKED',  keys: ['nylon_guitar','guitar','harp','banjo','mandolin','bass','ukebass'] },
-  { label: 'BRASS',    keys: ['trumpet','trombone','frenchhorn','tuba'] },
-  { label: 'WOODWIND', keys: ['flute','reed','reed_conical','harmonica','melodica'] },
+  { key: 'tonegrp_keys',  label: 'KEYBOARD', keys: ['grand_piano','honky_tonk','harpsichord','vibraphone','marimba','xylophone'] },
+  { key: 'tonegrp_waves', label: 'WAVES',    keys: ['sine','organ','bell','pad'] },
+  { key: 'tonegrp_pluck', label: 'PLUCKED',  keys: ['nylon_guitar','guitar','harp','banjo','mandolin','bass','ukebass'] },
+  { key: 'tonegrp_brass', label: 'BRASS',    keys: ['trumpet','trombone','frenchhorn','tuba'] },
+  { key: 'tonegrp_wood',  label: 'WOODWIND', keys: ['flute','reed','reed_conical','harmonica','melodica'] },
 ];
+// Falls back to the English label if the key is missing, so a typo shows a word
+// rather than a key name.
+function groupLabel(g) {
+  try { return (g && g.key && t(g.key)) || (g && g.label) || ''; }
+  catch (e) { return (g && g.label) || ''; }
+}
 const TONE_EXCLUDED = new Set(['piano','brass','mandocello','electric_piano']);
 
 const REF_TONES = {
@@ -62251,7 +62354,7 @@ const REF_TONES = {
   },
   bell: {
     sustain: false,
-    name: 'BELL', icon: '✦',
+    name: 'BELL',   it: 'CAMPANA', icon: '✦',
     synth(ctx, freq, when, dur, master, vol) {
       const partials = [
         { m: 1, a: 0.24, d: 3 }, { m: 2.01, a: 0.15, d: 2.5 },
@@ -62395,7 +62498,7 @@ const REF_TONES = {
   },
   pad: {
     sustain: true,
-    name: 'PAD', icon: '⌇',
+    name: 'PAD',    it: 'PAD', icon: '⌇',
     synth(ctx, freq, when, dur, master, vol) {
       const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = freq; o1.detune.value = -7;
       const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = freq; o2.detune.value = 7;
@@ -63706,9 +63809,9 @@ function tlUpdateBarLabel(currentBarIdx) {
   const label = document.getElementById('tlBarLabel');
   if (!label) return;
   if (!tlPlaying || currentBarIdx === null) {
-    label.textContent = `${tlPattern.active} on · ${tlPattern.silent} off · ${tlTsTopVal}/4`;
+    label.textContent = `${tlPattern.active} ${t('tl_on') || 'on'} \u00b7 ${tlPattern.silent} ${t('tl_off') || 'off'} \u00b7 ${tlTsTopVal}/4`;
   } else {
-    label.textContent = `bar ${currentBarIdx + 1} of ${total}`;
+    label.textContent = `${t('tl_bar') || 'bar'} ${currentBarIdx + 1} ${t('tl_of') || 'of'} ${total}`;
   }
 }
 
@@ -64047,17 +64150,20 @@ let tgRoundSubdiv = null;   // this round's subdivision override; null = user's 
 let tgPatternPos = 0;
 let tgBarStartTime = 0;
 
+// labelIt: the trigger button has always read it and none of these had one, so
+// the reader worked and found nothing. Italian note-value abbreviations are the
+// fractions themselves, which is also what fits the button.
 const TG_SUBDIVS = {
-  whole:    { label: 'WHOLE',  mult: 4      },
-  half:     { label: 'HALF',   mult: 2      },
-  quarter:  { label: 'QTR',   mult: 1      },
-  eighth:   { label: '8TH',   mult: 0.5    },
-  triplet:  { label: 'TRIP',  mult: 1/3    },
-  sixteenth:{ label: '16TH',  mult: 0.25   },
+  whole:    { label: 'WHOLE',  labelIt: '1/1',  mult: 4      },
+  half:     { label: 'HALF',   labelIt: '1/2',  mult: 2      },
+  quarter:  { label: 'QTR',    labelIt: '1/4',  mult: 1      },
+  eighth:   { label: '8TH',    labelIt: '1/8',  mult: 0.5    },
+  triplet:  { label: 'TRIP',   labelIt: 'TERZ', mult: 1/3    },
+  sixteenth:{ label: '16TH',   labelIt: '1/16', mult: 0.25   },
 };
 // Pattern hits are beat fractions (1 = one quarter note); barBeats = bar length in beats
 const TG_GROOVES = {
-  straight: { label: 'STRT',  hits: null,                                       barBeats: 4 },
+  straight: { label: 'STRT',  labelIt: 'DRITTO', hits: null,                    barBeats: 4 },
   swing:    { label: 'SWING', hits: [0,0.667,1,1.667,2,2.667,3,3.667],          barBeats: 4 },
   shuffle:  { label: 'SHFL',  hits: [0,0.75,1,1.75,2,2.75,3,3.75],             barBeats: 4 },
   clave:    { label: 'CLAV',  hits: [0,0.75,1.5,2.5,3.5],                       barBeats: 4 },
@@ -64105,7 +64211,8 @@ function tgBuildSubdivChips() {
   const subEl = document.getElementById('tgClickSub');
   const sd = TG_SUBDIVS[tgSubdiv];
   if (valEl) valEl.textContent = isGroove ? '—' : (((progState.lang === 'it') && sd.labelIt) ? sd.labelIt : sd.label);
-  if (subEl) subEl.textContent = (isGroove ? t('tg_per_feel') || 'set by feel' : tgSubdiv) + ' ▾';
+  if (subEl) subEl.textContent = (isGroove ? (t('tg_per_feel') || 'set by feel')
+    : (t('tg_sub_' + tgSubdiv) || tgSubdiv)) + ' \u25be';
 }
 
 function tgBuildGrooveChips() {
@@ -64123,7 +64230,7 @@ function tgBuildGrooveChips() {
   const subEl = document.getElementById('tgFeelSub');
   const gr = TG_GROOVES[tgGroove];
   if (valEl) valEl.textContent = ((progState.lang === 'it') && gr.labelIt) ? gr.labelIt : gr.label;
-  if (subEl) subEl.textContent = tgGroove + ' ▾';
+  if (subEl) subEl.textContent = (t('tg_groove_' + tgGroove) || tgGroove) + ' \u25be';
 }
 
 function tgCloseAllPopups() {
@@ -64218,7 +64325,7 @@ function tgUpdateDiffDisplay() {
   const diffEl  = document.getElementById('tgHudDiff');
   const rangeEl = document.getElementById('tgHudRange');
   if (diffEl)  diffEl.textContent  = t('tg_' + tgDifficulty.toLowerCase()) || d.label;
-  if (rangeEl) rangeEl.textContent = d.min + '–' + d.max + ' bpm';
+  if (rangeEl) rangeEl.textContent = d.min + '\u2013' + d.max + ' bpm';
   const hudLeft = document.querySelector('.tg-hud-left');
   if (hudLeft) hudLeft.dataset.diff = tgDifficulty;
 }
@@ -66564,7 +66671,7 @@ function rrRenderDiffPickerContent() {
       if (d.key === 'easy') {
         var note = document.createElement('div');
         note.style.cssText = 'font-size:9px;color:' + d.color + ';opacity:.55;letter-spacing:.5px;';
-        note.textContent = '4/4 only';
+        note.textContent = t('rr_44_only') || '4/4 only';
         meterRow.appendChild(note);
         return;
       }
@@ -66627,11 +66734,13 @@ function rrRenderDiffPickerContent() {
       optPanel.innerHTML = '';
       var row = document.createElement('div');
       row.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;padding-bottom:10px;';
-      [['hideBars','BARS',[['show','SHOW','false'],['hide','HIDE','true']],'danger'],
-       ['barFilter','LENGTH',[['mixed','MIX'],['1','1 BAR'],['2','2 BAR']],''],
-       ['noReplay','REPLAY',[['on','ON','false'],['off','OFF','true']],'danger']
+      // Second element of each group and of each pair is now a translation key.
+      // ON and OFF stay as they are: both read as English in Italian on a chip.
+      [['hideBars','rr_opt_bars',   [['show','rr_show','false'],['hide','rr_hide','true']],'danger'],
+       ['barFilter','rr_opt_length',[['mixed','rr_mix'],['1','rr_1bar'],['2','rr_2bar']],''],
+       ['noReplay','rr_opt_replay', [['on','rr_on','false'],['off','rr_off','true']],'danger']
       ].forEach(function(grpDef) {
-        var key2 = grpDef[0], label2 = grpDef[1], pairs = grpDef[2], cls = grpDef[3];
+        var key2 = grpDef[0], label2 = t(grpDef[1]) || grpDef[1], pairs = grpDef[2], cls = grpDef[3];
         var g = document.createElement('div'); g.className = 'rr-opt-group';
         var l = document.createElement('div'); l.className = 'rr-opt-label'; l.textContent = label2;
         var c = document.createElement('div'); c.className = 'rr-opt-chips';
@@ -66641,7 +66750,7 @@ function rrRenderDiffPickerContent() {
                        key2 === 'noReplay'  ? opts.noReplay  === (pair[0]==='off')  :
                        opts[key2] === pair[0];
           ch.className = 'rr-opt-chip' + (cls ? ' '+cls : '') + (active ? ' active' : '');
-          ch.textContent = pair[1];
+          ch.textContent = t(pair[1]) || pair[1];
           ch.addEventListener('click', function(e){
             e.stopPropagation();
             if (key2==='hideBars') rrOpts[d.key].hideBars = pair[0]==='hide';
@@ -66700,10 +66809,10 @@ function rrRenderDiffPickerContent() {
   var _survCS = getComputedStyle(document.body);
   var _survAmber = (_survCS.getPropertyValue('--surv-amber').trim() || '#fbbf24');
   survLbl.style.cssText = "font-size:13px;letter-spacing:2px;margin-bottom:2px;color:" + _survAmber + ";display:flex;align-items:center;gap:6px;";
-  survLbl.innerHTML = '<svg width="10" height="14" viewBox="0 0 11 15" fill="' + _survAmber + '" style="flex-shrink:0;"><path d="M6.5 0 L0 8.5 H4.2 L3.2 15 L11 5.8 H6.2 Z"/></svg><span>SURVIVAL</span>';
+  survLbl.innerHTML = '<svg width="10" height="14" viewBox="0 0 11 15" fill="' + _survAmber + '" style="flex-shrink:0;"><path d="M6.5 0 L0 8.5 H4.2 L3.2 15 L11 5.8 H6.2 Z"/></svg><span>' + (t('rr_survival') || 'SURVIVAL') + '</span>';
   var survSub = document.createElement('div');
   survSub.style.cssText = 'font-size:9px;color:var(--muted);line-height:1.4;';
-  survSub.textContent = '3 lives \u00b7 no preview \u00b7 rapid fire';
+  survSub.textContent = t('rr_surv_sub') || '3 lives \u00b7 no preview \u00b7 rapid fire';
   survInfo.appendChild(survLbl); survInfo.appendChild(survSub);
   survTopRow.appendChild(survBar); survTopRow.appendChild(survInfo);
   survCard.appendChild(survTopRow);
@@ -66718,7 +66827,10 @@ function rrRenderDiffPickerContent() {
                        hard:_tok('--surv-hard','#f59e0b'), extreme:_tok('--surv-extreme','#ef4444') };
     var _survInk = _tok('--surv-ink','rgba(251,191,36,.9)');
     var _survInkDim = _tok('--surv-ink-dim','rgba(251,191,36,.35)');
-    var labels = { easy:'EASY', normal:'NORMAL', hard:'HARD', extreme:'EXTREME' };
+    // Fifth copy of these four words in this file. rrDiffName() reads the keys
+    // that already hold FACILE, NORMALE, DIFFICILE, ESTREMO.
+    var labels = { easy:rrDiffName('easy'), normal:rrDiffName('normal'),
+                   hard:rrDiffName('hard'), extreme:rrDiffName('extreme') };
     var bestVal = rrSurvBestFor(key);
     var btn = document.createElement('button');
     btn.style.cssText = 'flex:1;padding:10px 6px;background:var(--surv-cell,rgba(251,191,36,.07));border:1px solid var(--surv-edge,rgba(251,191,36,.22));border-radius:8px;cursor:pointer;transition:all .15s;';
@@ -71915,16 +72027,16 @@ function rrClosePopups(evt) {
 
 // ─── Difficulty ───────────────────────────────────────────────────────────────
 var RR_DIFFS = [
-  { key:'easy',   color:'#4ade80', label:'EASY',
+  { key:'easy',   color:'#4ade80', label:'EASY', labelIt:'FACILE',
     sub:'whole · half · quarter',
     desc:'Whole, half, and quarter notes. No subdivisions — focus on counting beats and holding long notes.' },
-  { key:'normal', color:'#60a5fa', label:'NORMAL',
+  { key:'normal', color:'#60a5fa', label:'NORMAL', labelIt:'NORMALE',
     sub:'eighths · dotted · triplets',
     desc:'Eighth notes, dotted rhythms, and occasional triplet groups. Eighth-note subdivision required.' },
-  { key:'hard',   color:'#f59e0b', label:'HARD',
+  { key:'hard',   color:'#f59e0b', label:'HARD', labelIt:'DIFFICILE',
     sub:'16ths · syncopation · triplets',
     desc:'Sixteenth notes, syncopation, triplets, clave patterns, and shuffle rhythms. All note values in play.' },
-  { key:'extreme', color:'#ef4444', label:'EXTREME',
+  { key:'extreme', color:'#ef4444', label:'EXTREME', labelIt:'ESTREMO',
     sub:'dense 16ths, synco, fast',
     desc:'Relentless sixteenths, heavy syncopation, frequent triplets, and a faster default tempo. No transport bar; read it cold.' },
 ];
@@ -71951,7 +72063,7 @@ function rrUpdateDiffBtn() {
   var d = RR_DIFFS.find(function(x){ return x.key === rrDiff; }) || RR_DIFFS[0];
   var h = document.getElementById('rrDiffHeaderBtn');
   if (h) {
-    h.textContent = (rrSurv.active ? '⚡ SURVIVAL' : t('rr_diff_' + d.key + '_label') + ' ▾');
+    h.textContent = (rrSurv.active ? ('\u26a1 ' + (t('rr_survival') || 'SURVIVAL')) : t('rr_diff_' + d.key + '_label') + ' \u25be');
     var btnColor = rrSurv.active ? '#f87171' : d.color;
     h.style.color = btnColor;
     h.style.borderColor = 'color-mix(in srgb,' + btnColor + ' 35%,transparent)';
@@ -72018,10 +72130,17 @@ function rrEnterFocus() {
   }
   var best = rrSurvBestFor(rrDiff);
   var bl = document.getElementById('rrSurvBestLine');
-  if (bl) bl.textContent = best>0 ? ('BEST '+best) : 'NO RECORD';
+  if (bl) bl.textContent = best>0 ? ((t('rr_best') || 'BEST') + ' ' + best) : (t('rr_no_record') || 'NO RECORD');
   var dl = document.getElementById('rrSurvDiffLbl');
-  if (dl) { var _nm={easy:'EASY',normal:'NORMAL',hard:'HARD',extreme:'EXTREME'}[rrDiff]||rrDiff.toUpperCase(); dl.textContent = _nm; }
+  if (dl) dl.textContent = rrDiffName(rrDiff);
 }
+// One reader for the four difficulty names. They already exist as keys; the two
+// callers of this used to carry their own English copies.
+function rrDiffName(key) {
+  try { return t('rr_diff_' + key + '_label') || String(key).toUpperCase(); }
+  catch (e) { return String(key).toUpperCase(); }
+}
+
 function rrExitFocus() {
   var ex = document.getElementById('exRhythmRead');
   var bar = document.getElementById('rrSurvBar');
@@ -72108,7 +72227,7 @@ function rrSurvGameOver() {
   try { _wasRecord ? playCueWin() : playCueGameOver(); } catch(e) {}
   var bar = document.getElementById('rrSurvBar');
   if (bar) bar.classList.remove('active');
-  var _diffName = {easy:'EASY',normal:'NORMAL',hard:'HARD',extreme:'EXTREME'}[rrDiff] || rrDiff.toUpperCase();
+  var _diffName = rrDiffName(rrDiff);
   var titleEl = document.getElementById('rrSurvEndTitle');
   if (titleEl) { titleEl.textContent = _wasRecord ? 'NEW BEST!' : 'GAME OVER'; titleEl.classList.toggle('record', _wasRecord); }
   var scoreEl = document.getElementById('rrSurvEndScore');
@@ -72611,10 +72730,10 @@ function rcRenderCard() {
 
 function rcCatLabel() {
   var keys = Object.keys(rcCatSel).filter(function(k){ return rcCatSel[k]; });
-  if (!keys.length) return 'ALL';
+  if (!keys.length) return t('rc_all') || 'ALL';
   if (keys.length === 1) {
     var c = RC_CATS.find(function(x){ return x.key === keys[0]; });
-    return c ? c.label : 'ALL';
+    return c ? c.label : (t('rc_all') || 'ALL');
   }
   return 'CUSTOM';   // blend of 2+ categories
 }
@@ -72685,7 +72804,8 @@ function rcStopPlayback() {
 function rcSetPlayBtn(playing) {
   var b = document.getElementById('rcPlayBtn');
   if (!b) return;
-  b.textContent = playing ? '■ STOP' : '▶︎ PLAY';
+  b.textContent = playing ? ('\u25a0 ' + (t('rc_stop') || 'STOP'))
+                          : ('\u25b6\ufe0e ' + (t('rc_play') || 'PLAY'));
   b.classList.toggle('rc-playing', !!playing);
 }
 
@@ -72695,11 +72815,20 @@ function rcToggleClick() {
   if (b) { b.classList.toggle('active', rcClickOn); b.textContent = rcClickOn ? 'CLICK: ON' : 'CLICK: OFF'; }
 }
 
+// ON and OFF stay as they are: both are read as English in Italian on a toggle,
+// and MODALITÀ TAP: ACCESO is longer than the button.
+function rcTapModeLabel() {
+  return (t('rc_tap_mode') || 'TAP MODE') + ': ' + (rcTapMode ? 'ON' : 'OFF');
+}
+function rcClickLabel() {
+  return (t('rc_click') || 'CLICK') + ': ' + (rcClickOn ? 'ON' : 'OFF');
+}
+
 function rcToggleTapMode() {
   rcStopPlayback();
   rcTapMode = !rcTapMode;
   var b = document.getElementById('rcTapModeToggle');
-  if (b) { b.classList.toggle('active', rcTapMode); b.textContent = rcTapMode ? 'TAP MODE: ON' : 'TAP MODE: OFF'; }
+  if (b) { b.classList.toggle('active', rcTapMode); b.textContent = rcTapModeLabel(); }
   // In tap mode the PAD IS THE TRANSPORT.
   //
   // rcOnTap() already routed an idle tap to rcStartTap(), so the pad has always been
@@ -73100,9 +73229,9 @@ function rcInit() {
   // returns skip this (the deck/index were already positioned by rctPracticeCard).
   if (!rctPracticeReturn) rcReshuffle(rcFilteredCards().length);
   var cb = document.getElementById('rcClickToggle');
-  if (cb) { cb.classList.toggle('active', rcClickOn); cb.textContent = rcClickOn ? 'CLICK: ON' : 'CLICK: OFF'; }
+  if (cb) { cb.classList.toggle('active', rcClickOn); cb.textContent = rcClickLabel(); }
   var tb = document.getElementById('rcTapModeToggle');
-  if (tb) { tb.classList.toggle('active', rcTapMode); tb.textContent = rcTapMode ? 'TAP MODE: ON' : 'TAP MODE: OFF'; }
+  if (tb) { tb.classList.toggle('active', rcTapMode); tb.textContent = rcTapModeLabel(); }
   var tzw = document.getElementById('rcTapZoneWrap'); if (tzw) tzw.style.display = rcTapMode ? '' : 'none';
   var cardEl = document.querySelector('#toolRhythmCards .rc-card');
   if (cardEl) cardEl.classList.toggle('rc-tapmode', rcTapMode);
@@ -75639,13 +75768,20 @@ function ssStop() {
 // Map stage + HOME (hybrid arc, lock once) → DRIVE → blind RECALL per stop.
 // Distractor audio lands in a later session; drives are silent gaps for now.
 // ═══════════════════════════════════════════════
+// Only Barcelona differs in Italian; the rest carry name_it anyway so the field
+// is uniform and a city added later cannot be missed by accident.
+function rtCityName(c) {
+  if (!c) return '';
+  return ((progState && progState.lang === 'it') && c.name_it) ? c.name_it : (c.name || '');
+}
+
 const RT_CITIES = [
-  { name:'San Francisco', x:319.9,  y:773.1, arrive:'start', dur:0 },
-  { name:'Las Vegas',     x:360.3,  y:784.2, arrive:'car',   dur:2200, via:[{x:338.8,y:788.8},{x:349.9,y:792.1}] },
-  { name:'New Orleans',   x:499.6,  y:825.5, arrive:'car',   dur:3200, via:[{x:366.4,y:790.1},{x:379.7,y:790.0},{x:407.5,y:790.8},{x:434.3,y:789.9},{x:458.2,y:788.2},{x:462.2,y:806.9},{x:479.2,y:808.6}] },
-  { name:'New York',      x:588.8,  y:752.0, arrive:'car',   dur:4200, via:[{x:517.7,y:801.7},{x:531.2,y:800.1},{x:550.9,y:789.8},{x:563.1,y:786.0},{x:569.8,y:773.7},{x:569.7,y:768.4},{x:572.0,y:764.2},{x:582.4,y:756.9}] },
-  { name:'Barcelona',     x:1012.1, y:747.0, arrive:'plane', dur:5200 },
-  { name:'Lucca',         x:1058.3, y:728.5, arrive:'euro',  dur:6200,
+  { name:'San Francisco', name_it:'San Francisco', x:319.9,  y:773.1, arrive:'start', dur:0 },
+  { name:'Las Vegas',     name_it:'Las Vegas', x:360.3,  y:784.2, arrive:'car',   dur:2200, via:[{x:338.8,y:788.8},{x:349.9,y:792.1}] },
+  { name:'New Orleans',   name_it:'New Orleans', x:499.6,  y:825.5, arrive:'car',   dur:3200, via:[{x:366.4,y:790.1},{x:379.7,y:790.0},{x:407.5,y:790.8},{x:434.3,y:789.9},{x:458.2,y:788.2},{x:462.2,y:806.9},{x:479.2,y:808.6}] },
+  { name:'New York',      name_it:'New York', x:588.8,  y:752.0, arrive:'car',   dur:4200, via:[{x:517.7,y:801.7},{x:531.2,y:800.1},{x:550.9,y:789.8},{x:563.1,y:786.0},{x:569.8,y:773.7},{x:569.7,y:768.4},{x:572.0,y:764.2},{x:582.4,y:756.9}] },
+  { name:'Barcelona',     name_it:'Barcellona', x:1012.1, y:747.0, arrive:'plane', dur:5200 },
+  { name:'Lucca',         name_it:'Lucca', x:1058.3, y:728.5, arrive:'euro',  dur:6200,
     via:[{x:1015.6,y:742.8},{x:1016.1,y:737.8},{x:1016.6,y:734.5},{x:1021.5,y:731.5},{x:1029.8,y:733.6},{x:1040.3,y:730.8},{x:1049.7,y:725.9},{x:1054.6,y:728.0}] }
 ];
 const RT_ICONS = {"car": "<svg viewBox=\"0 0 24 24\" width=\"30\" height=\"30\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 14h20v3a1 1 0 0 1-1 1h-1\"/><path d=\"M8 18h8\"/><path d=\"M2 14V9a1 1 0 0 1 1-1h2l2-2.5A1 1 0 0 1 8 5h7a1 1 0 0 1 .8.4L18 8h2a2 2 0 0 1 2 2v4\"/><path d=\"M4 8V6M20 8V6\"/><path d=\"M2 11h20\"/><circle cx=\"7\" cy=\"18\" r=\"2.2\"/><circle cx=\"17\" cy=\"18\" r=\"2.2\"/></svg>", "plane": "<svg viewBox=\"0 0 24 24\" width=\"28\" height=\"28\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12h15\"/><path d=\"M18 12c1.5 0 3-.6 3-1.2S19.5 9.6 18 9.6h-2l-1.5 2.4L16 14.4h2c1.5 0 3-.6 3-1.2\"/><path d=\"M5 9h11\"/><path d=\"M4 15h12\"/><path d=\"M7 9v6M13 9v6\"/><path d=\"M3 10.5v3M2 11v2\"/><path d=\"M18 10.5l2-1.5M18 13.5l2 1.5\"/></svg>", "pin": "<svg viewBox=\"0 0 24 24\" width=\"30\" height=\"30\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\" /> <circle cx=\"12\" cy=\"10\" r=\"3\" /></svg>", "flag": "<svg viewBox=\"0 0 24 24\" width=\"30\" height=\"30\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528\" /></svg>"};
@@ -75795,7 +75931,7 @@ function rtBuildOverlay(){
     p.setAttribute('class','rt-pin'); p.id='rtPin'+i; pinsG.appendChild(p);
     const t=document.createElementNS('http://www.w3.org/2000/svg','text');
     t.setAttribute('x',c.x); t.setAttribute('y',c.y+5.5); t.setAttribute('text-anchor','middle');
-    t.setAttribute('class','rt-citylabel'); t.textContent=c.name; labG.appendChild(t);
+    t.setAttribute('class','rt-citylabel'); t.textContent=rtCityName(c); labG.appendChild(t);
   });
 }
 function rtPaintPins(){
@@ -76790,7 +76926,7 @@ function rtShowPassport(){
   rtRecordTrip(avg, rtGradeIdx(avg));   // persist lifetime stats
   const stamps=RT_CITIES.slice(1).map((c,i)=>{
     const d=rtResults[i], cls=d<15?'g':d<35?'a':'r';
-    return `<div class="rt-st ${cls}"><div class="c">${c.name.split(' ').join('<br>')}</div><div class="v">±${Math.round(d)}¢</div></div>`;
+    return `<div class="rt-st ${cls}"><div class="c">${rtCityName(c).split(' ').join('<br>')}</div><div class="v">±${Math.round(d)}¢</div></div>`;
   }).join('');
   rtCzEl().innerHTML = `<div class="rt-passport"><div class="rt-pp-in">
       <div class="rt-pp-h"><div><div class="rt-pp-t">${t('rt_city_start')} → ${t('rt_city_end')}</div><div class="rt-pp-s">${t('rt_voyage')} · ${({easy:t('rt_diff_easy'),medium:t('rt_diff_med'),hard:t('rt_diff_hard')})[rtDiff]||''} · ${({notes:t('rt_tier_notes'),melody:t('rt_tier_melody'),song:t('rt_tier_song')})[rtTier]||''}</div></div><div class="rt-pp-g">${letter}</div></div>
@@ -83408,6 +83544,10 @@ const STRINGS = {
   en: {
     mq_fetching:'Fetching',
     mq_no_connect:'Could not connect to opentdb.com. Check your connection.',
+    scale_vs:'VS ', mq_grp_general:'GENERAL', mq_grp_instrument:'INSTRUMENT', mq_grp_decades:'DECADES', mq_grp_online:'ONLINE',
+    mq_all_packs:'ALL PACKS \u2014 10 QUESTIONS \u2192', mq_start_survival:'START SURVIVAL \u2192', mq_start:'START \u2192',
+    mq_survival_sub:'select packs \u00b7 3 lives \u00b7 questions keep coming',
+    mq_survival_card_sub:'3 lives \u00b7 select packs \u00b7 no end',
     mq_no_questions:'Not enough questions in this category right now. Try another one.',
     mq_too_fast:'Too many requests. Wait a few seconds and try again.',
     back_exit:'PRESS BACK AGAIN TO EXIT',
@@ -83842,7 +83982,7 @@ const STRINGS = {
     lnch_desc_pinned:'Opens straight into {}. The grid is skipped.',
     lnch_hint:'Pin a module here · star tools for quick access',
     lnch_pinned:'PINNED',
-    tuner_face_simple:'Simple', tuner_face_full:'Full',
+    tuner_face_simple:'Simple', sf_fam_guitar:'GUITAR', sf_fam_bass:'BASS', sf_fam_uke:'UKULELE', sf_ex_strings:'violin \u00b7 cello', sf_ex_folk:'mandolin \u00b7 banjo', tuner_face_full:'Full',
     sf_play:'PLAY A STRING', sf_hold:'HOLD IT…', sf_locked:'LOCKED',
     sf_low:'TOO LOW · TIGHTEN', sf_high:'TOO HIGH · LOOSEN',
     sf_low_g:'TOO LOW', sf_high_g:'TOO HIGH', sf_in_tune:'IN TUNE',
@@ -84289,6 +84429,29 @@ const STRINGS = {
     rr_repeat_label:'REPEAT', rr_repeat_off:'off', rr_repeat_on:'same pattern',
     rr_vol_label:'VOL',
     rr_choose_diff:'CHOOSE DIFFICULTY',
+    rr_survival:'SURVIVAL', rr_best:'BEST', rr_no_record:'NO RECORD',
+    thmn_power:'POWER', thmn_5oct:'5 oct', thmn_warm:'WARM', thmn_try_sound:'TRY A SOUND',
+    tg_qtr:'QTR', tg_strt:'STRT', tg_quarter:'quarter', tg_straight:'straight',
+    rc_all:'ALL', rc_play:'PLAY', rc_test:'TEST', rc_tap_mode:'TAP MODE', rc_click:'CLICK',
+    rr_opt_bars:'BARS', rr_opt_length:'LENGTH', rr_opt_replay:'REPLAY',
+    tg_sub_whole:'whole', tg_sub_half:'half', tg_sub_quarter:'quarter', tg_sub_eighth:'eighth',
+    tg_sub_triplet:'triplet', tg_sub_sixteenth:'sixteenth',
+    tonal_major_ionian:'Major (Ionian)', thmn_try:'TRY A SOUND',
+    iv_asc:'ASC', tg_range:'50\u2013180 bpm',
+    thmn_wave_sine:'PURE', thmn_wave_warm:'WARM', thmn_wave_reedy:'REEDY', thmn_wave_brass:'BRASS',
+    oct_lo:'LO', oct_mid:'MID', oct_hi:'HI', oct_low:'LOW', oct_mid_full:'MID', oct_high:'HIGH',
+    piano_nameplate:'Grand Piano', tl_on_off_arrow:'on \u00b7 off \u25be',
+    iv_desc:'DESC', tp_no_transposition:'no transposition',
+    tl_on:'on', tl_off:'off', tl_bar:'bar', tl_of:'of', rc_stop:'STOP',
+    nc_grp_arpeggio:'arpeggio', nc_grp_bar_repeat:'bar repeat', nc_grp_barline:'barline', nc_grp_bowing:'bowing', nc_grp_brass_shape:'brass shape', nc_grp_clef:'clef', nc_grp_csym_accidental:'chord accidental', nc_grp_csym_quality:'chord quality', nc_grp_duration:'duration', nc_grp_grace:'grace note', nc_grp_gtr_bend:'bend', nc_grp_gtr_extra:'guitar extra', nc_grp_gtr_hand:'hand', nc_grp_gtr_read:'guitar reading', nc_grp_gtr_slide:'slide', nc_grp_gtr_tone:'guitar tone', nc_grp_gtr_vib:'vibrato', nc_grp_hairpin:'hairpin', nc_grp_harmonic:'harmonic', nc_grp_jump:'jump', nc_grp_loudness:'loudness', nc_grp_meter:'meter', nc_grp_mute:'mute', nc_grp_note_shape:'note shape', nc_grp_octave:'octave', nc_grp_ornament:'ornament', nc_grp_pause:'pause', nc_grp_pedal:'pedal', nc_grp_pitch:'pitch', nc_grp_pizz:'pizzicato', nc_grp_silence:'silence', nc_grp_span:'span', nc_grp_string_tone:'string tone', nc_grp_sudden:'sudden', nc_grp_tremolo:'tremolo', nc_grp_wind_hole:'wind hole',
+    tg_groove_straight:'straight', tg_groove_swing:'swing', tg_groove_shuffle:'shuffle',
+    rr_show:'SHOW', rr_hide:'HIDE', rr_mix:'MIX', rr_1bar:'1 BAR', rr_2bar:'2 BAR',
+    rr_on:'ON', rr_off:'OFF', rr_44_only:'4/4 only',
+    rr_surv_sub:'3 lives \u00b7 no preview \u00b7 rapid fire',
+    tl_on_off:'on \u00b7 off', tl_2on2off:'2 on \u00b7 2 off \u00b7 4/4',
+    dk_save:'SAVE', nc_loudness:'loudness',
+    tonal_mid:'MID', concert_pitch:'concert pitch',
+    sg_swipe_begin:'swipe to begin',
     rr_diff_easy_label:'EASY',   rr_diff_easy_sub:'whole · half · quarter',
     rr_diff_easy_desc:'No subdivisions — count beats and hold long notes. Best place to start.',
     rr_diff_normal_label:'NORMAL', rr_diff_normal_sub:'eighths · dotted · triplets · shuffles',
@@ -84319,7 +84482,7 @@ const STRINGS = {
     // Tuner labels
     tuner_freq_label:'FREQ', tuner_to_ref:'→ REF',
     tuner_pitch_stab:'PITCH STABILITY · LAST 5s',
-    tuner_strobe:'STROBE', tuner_vibrato_btn:'VIBRATO',
+    tuner_strobe:'STROBE', tuner_fork:'FORK', tuner_vibrato_btn:'VIBRATO',
     tuner_rate:'RATE', tuner_depth:'DEPTH', tuner_capo:'CAPO',
     tuner_hold:'HOLD', tuner_clear_all:'✕ ALL', tuner_expand:'⛶ EXPAND', lbl_sust:'SUST',
     rr_playing:'PLAYING', rr_pause:'PAUSE', rr_resume:'RESUME', chip_all:'ALL',
@@ -84500,6 +84663,10 @@ const STRINGS = {
   it: {
     mq_fetching:'Recupero',
     mq_no_connect:'Impossibile connettersi a opentdb.com. Controlla la connessione.',
+    scale_vs:'VS ', mq_grp_general:'GENERALE', mq_grp_instrument:'STRUMENTO', mq_grp_decades:'DECENNI', mq_grp_online:'ONLINE',
+    mq_all_packs:'TUTTE LE RACCOLTE \u2014 10 DOMANDE \u2192', mq_start_survival:'INIZIA SOPRAVVIVENZA \u2192', mq_start:'INIZIA \u2192',
+    mq_survival_sub:'scegli le raccolte \u00b7 3 vite \u00b7 le domande non finiscono',
+    mq_survival_card_sub:'3 vite \u00b7 scegli le raccolte \u00b7 senza fine',
     mq_no_questions:'Non ci sono abbastanza domande in questa categoria al momento. Provane un\u2019altra.',
     mq_too_fast:'Troppe richieste. Aspetta qualche secondo e riprova.',
     back_exit:'PREMI DI NUOVO PER USCIRE',
@@ -84693,7 +84860,7 @@ const STRINGS = {
     ss_phrase_nailed:'FRASE CENTRATA', ss_in_tune:'INTONATO', ss_keep_at_it:'CONTINUA COSÌ', ss_almost_there:'CI SEI QUASI', ss_in_tune_count:'intonate',
     iv_next:'▶︎ AVANTI', iv_auto_on:'Sì', iv_auto_off:'No',
     iv_singdir_label:'DIREZIONE CANTO', iv_sing_above:'cantalo SOPRA il riferimento', iv_sing_below:'cantalo SOTTO il riferimento', iv_listen_first:'ascolta…', iv_now_sing:'ora canta', iv_hold_it:'tienila…',
-    iv_test:'TEST', iv_test_sing_hint:'canta l’intervallo nel microfono', iv_test_sing_prompt:'cantalo', iv_test_mic:'TOCCA PER ATTIVARE IL MICROFONO',
+    iv_test:'VERIFICA', iv_test_sing_hint:'canta l’intervallo nel microfono', iv_test_sing_prompt:'cantalo', iv_test_mic:'TOCCA PER ATTIVARE IL MICROFONO',
     iv_test_drill:'RIPASSA ERRORI', iv_test_done:'FATTO', iv_test_drill_label:'RIPASSA I TUOI ERRORI',
     iv_test_missed:'Sbagliati', iv_test_perfect:'Perfetto!', iv_test_drill_done:'tutto risolto',
     iv_test_grade_great:'ECCELLENTE', iv_test_grade_good:'BEN FATTO', iv_test_grade_ok:'CONTINUA', iv_test_grade_keep:'CONTINUA AD ALLENARTI',
@@ -84725,7 +84892,7 @@ const STRINGS = {
     settings_about:'Informazioni', support_title:'Sostieni Intonare', support_copy:'Copia',
     ex_notationcards_title:'CARTE DI NOTAZIONE', ex_notationcards_sub:'simboli, indicazioni e cosa ti dicono di fare',
     nc_pack_dynamics:'Dinamica', nc_pack_beginner:'Principiante',
-    nc_test_btn:'\u25b6\ufe0e TEST', nc_again:'Ancora', nc_drill:'Ripassa gli errori',
+    nc_test_btn:'\u25b6\ufe0e VERIFICA', nc_again:'Ancora', nc_drill:'Ripassa gli errori',
     nc_quit:'\u2715 ESCI', nc_to_work_on:'da rivedere', nc_close:'Chiudi',
     nc_what_is_this:'CHE COS\u2019\u00c8?', nc_right_word:'giuste', nc_contents:'Indice',
     nc_pool_title:'Scegli un gruppo', nc_kind_curated:'Per il tuo strumento',
@@ -84855,7 +85022,7 @@ const STRINGS = {
     teach_on:"SÌ", teach_on_sub:"Spiegazioni integrate",
     lat_start:'INIZIA', calib_unit:'ms ritardo',
     sm_footer_tag:'suona in sintonia',
-    metro_tab_ramp:'RAMP', metro_ramp_from:'DA', metro_ramp_to:'A',
+    metro_tab_ramp:'RAMPA', metro_ramp_from:'DA', metro_ramp_to:'A',
     metro_ramp_start:'AVVIA RAMP', metro_ramp_stop:'FERMA RAMP', ramp_play_btn:'▶︎ AVVIA RAMP', ramp_presets_title:'Preset Ramp',
     metro_ramp_complete:'RAMP COMPLETATA',
     metro_setlist:'SETLIST', metro_setlist_empty:'Nessun preset salvato',
@@ -84937,7 +85104,7 @@ const STRINGS = {
     lnch_desc_pinned:'Si apre direttamente su {}. La griglia viene saltata.',
     lnch_hint:'Fissa un modulo · stella per l\'accesso rapido',
     lnch_pinned:'FISSATI',
-    tuner_face_simple:'Base', tuner_face_full:'Completo',
+    tuner_face_simple:'Base', sf_fam_guitar:'CHITARRA', sf_fam_bass:'BASSO', sf_fam_uke:'UKULELE', sf_ex_strings:'violino \u00b7 violoncello', sf_ex_folk:'mandolino \u00b7 banjo', tuner_face_full:'Piena',
     sf_play:'SUONA UNA CORDA', sf_hold:'MANTIENILA…', sf_locked:'ACCORDATA',
     sf_low:'TROPPO BASSA · TENDI', sf_high:'TROPPO ALTA · ALLENTA',
     sf_low_g:'TROPPO BASSO', sf_high_g:'TROPPO ALTO', sf_in_tune:'INTONATO',
@@ -85108,7 +85275,7 @@ const STRINGS = {
     rc_late:'in ritardo', rc_early:'in anticipo', rc_hit:'colpo',
     rc_diff_easy:'facile', rc_diff_med:'medio', rc_diff_hard:'difficile',
     rc_tap_zone_hint:'TOCCA IL RITMO', rc_tap_to_start:'TOCCA PER INIZIARE', rc_get_ready:'PRONTO',
-    rc_test_btn:'▶︎ TEST', rc_test_done:'TEST COMPLETATO', rc_test_retry:'▶︎ ANCORA', rc_test_exit:'FATTO',
+    rc_test_btn:'▶︎ VERIFICA', rc_test_done:'TEST COMPLETATO', rc_test_retry:'▶︎ ANCORA', rc_test_exit:'FATTO',
     rc_tl_target:'OBIETTIVO', rc_tl_yours:'TUOI',
     rc_practice:'esercitati', rc_back_results:'TORNA AI RISULTATI',
     rcd_drill_btn:'◎ ALLENA I TUOI ERRORI', rcd_skip:'SALTA ›', rcd_right:'GIUSTO', rcd_wrong:'SBAGLIATO',
@@ -85456,6 +85623,31 @@ const STRINGS = {
     rr_repeat_label:'RIPETI', rr_repeat_off:'off', rr_repeat_on:'stesso pattern',
     rr_vol_label:'VOL',
     rr_choose_diff:'SCEGLI LA DIFFICOLTÀ',
+    rr_survival:'SOPRAVVIVENZA', rr_best:'RECORD', rr_no_record:'NESSUN RECORD',
+    thmn_power:'ACCENSIONE', thmn_5oct:'5 ott', thmn_warm:'CALDO', thmn_try_sound:'PROVA UN SUONO',
+    tg_qtr:'1/4', tg_strt:'DRITTO', tg_quarter:'quarti', tg_straight:'dritto',
+    rc_all:'TUTTE', rc_play:'AVVIA', rc_test:'VERIFICA', rc_tap_mode:'MODALIT\u00c0 TAP', rc_click:'CLICK',
+    rr_opt_bars:'BATTUTE', rr_opt_length:'DURATA', rr_opt_replay:'RIASCOLTA',
+    rr_show:'MOSTRA', rr_hide:'NASCONDI', rr_mix:'MISTO', rr_1bar:'1 BATT.', rr_2bar:'2 BATT.',
+    rr_on:'ON', rr_off:'OFF', rr_44_only:'solo 4/4',
+    rr_surv_sub:'3 vite \u00b7 senza anteprima \u00b7 a raffica',
+    tl_on_off:'s\u00ec \u00b7 no', tl_2on2off:'2 s\u00ec \u00b7 2 no \u00b7 4/4',
+    tg_range:'50\u2013180 bpm',
+    tg_sub_whole:'intero', tg_sub_half:'met\u00e0', tg_sub_quarter:'quarti', tg_sub_eighth:'ottavi',
+    tg_sub_triplet:'terzine', tg_sub_sixteenth:'sedicesimi',
+    tonal_major_ionian:'Maggiore (ionico)',
+    thmn_wave_sine:'PURO', thmn_wave_warm:'CALDO', thmn_wave_reedy:'ANCIA', thmn_wave_brass:'OTTONI',
+    oct_lo:'BAS', oct_mid:'MED', oct_hi:'ALT', oct_low:'BASSA', oct_mid_full:'MEDIA', oct_high:'ALTA',
+    piano_nameplate:'Gran Pianoforte', tl_on_off_arrow:'s\u00ec \u00b7 no \u25be',
+    iv_desc:'DISC', tp_no_transposition:'nessuna trasposizione',
+    tl_on:'s\u00ec', tl_off:'no', tl_bar:'battuta', tl_of:'di', rc_stop:'STOP',
+    nc_grp_arpeggio:'arpeggio', nc_grp_bar_repeat:'ripetizione battuta', nc_grp_barline:'stanghetta', nc_grp_bowing:'arcata', nc_grp_brass_shape:'ottoni', nc_grp_clef:'chiave', nc_grp_csym_accidental:'alterazione accordo', nc_grp_csym_quality:'qualità accordo', nc_grp_duration:'durata', nc_grp_grace:'abbellimento', nc_grp_gtr_bend:'bending', nc_grp_gtr_extra:'chitarra extra', nc_grp_gtr_hand:'mano', nc_grp_gtr_read:'lettura chitarra', nc_grp_gtr_slide:'slide', nc_grp_gtr_tone:'timbro chitarra', nc_grp_gtr_vib:'vibrato', nc_grp_hairpin:'forcella', nc_grp_harmonic:'armonico', nc_grp_jump:'salto', nc_grp_loudness:'intensità', nc_grp_meter:'metro', nc_grp_mute:'sordina', nc_grp_note_shape:'forma nota', nc_grp_octave:'ottava', nc_grp_ornament:'abbellimento', nc_grp_pause:'pausa', nc_grp_pedal:'pedale', nc_grp_pitch:'altezza', nc_grp_pizz:'pizzicato', nc_grp_silence:'silenzio', nc_grp_span:'estensione', nc_grp_string_tone:'timbro archi', nc_grp_sudden:'improvviso', nc_grp_tremolo:'tremolo', nc_grp_wind_hole:'foro fiati',
+    tg_groove_straight:'dritto', tg_groove_swing:'swing', tg_groove_shuffle:'shuffle',
+    tg_sub_quarter_arrow:'quarti \u25be', tg_sub_straight_arrow:'dritto \u25be',
+    thmn_try:'PROVA UN SUONO', iv_asc:'ASC',
+    dk_save:'SALVA', nc_loudness:'intensit\u00e0',
+    tonal_mid:'MEDIO', concert_pitch:'suono reale',
+    sg_swipe_begin:'scorri per iniziare',
     rr_diff_easy_label:'FACILE',   rr_diff_easy_sub:'intera · metà · quarto',
     rr_diff_easy_desc:'Nessuna suddivisione — conta i tempi e tieni le note lunghe.',
     rr_diff_normal_label:'NORMALE', rr_diff_normal_sub:'ottavi · puntati · terzine · shuffle',
@@ -85486,7 +85678,7 @@ const STRINGS = {
     // Tuner labels
     tuner_freq_label:'FREQ', tuner_to_ref:'→ RIF',
     tuner_pitch_stab:'STABILITÀ INTONAZIONE · ULTIMI 5s',
-    tuner_strobe:'STROBOSCOPIO', tuner_vibrato_btn:'VIBRATO',
+    tuner_strobe:'STROBO', tuner_fork:'DIAPASON', tuner_vibrato_btn:'VIBRATO',
     tuner_rate:'VEL.', tuner_depth:'AMP.', tuner_capo:'CAPOTASTO',
     tuner_hold:'TIENI', tuner_clear_all:'✕ TUTTI', tuner_expand:'⛶ ESPANDI', lbl_sust:'SOST',
     rr_playing:'IN RIPRODUZIONE', rr_pause:'PAUSA', rr_resume:'RIPRENDI', chip_all:'TUTTI',
@@ -85500,7 +85692,7 @@ const STRINGS = {
     // Tonal center
     tc_what_singing:'Cosa Sto Cantando?', tc_set_root_hint:'imposta una tonica e avvia il bordone',
     // Volume meter
-    vol_peak:'PICCO', vol_reset:'RESET',
+    vol_peak:'PICCO', vol_reset:'AZZERA',
     vol_danger:'PERICOLO', vol_danger_desc:'forte — rischio di danno uditivo',
     vol_warn:'AVVISO', vol_warn_desc:'molto forte — limitare il tempo di esposizione',
     vol_caution:'ATTENZIONE', vol_caution_desc:'moderato — sicuro per durate ragionevoli',
@@ -85533,7 +85725,7 @@ const STRINGS = {
     tg_subdiv:'Suddivisione', tg_groove:'Groove', tg_guess_cap:'la tua stima · bpm',
     tg_you_short:'tu', tg_per_feel:'dal feel',
     tl_pattern:'Schema', tl_meter:'Metro',
-    tl_bpm_cap:'target · bpm', tl_beats_bar:'battiti/bat ▾', tl_no_taps:'nessun tocco', tl_new:'↯ NUOVO',
+    tl_bpm_cap:'obiettivo · bpm', tl_beats_bar:'battiti/bat ▾', tl_no_taps:'nessun tocco', tl_new:'↯ NUOVO',
     vr_ex_1_title:'Esercizio 1 di 3 — Canticchio Leggero',
     vr_ex_1_desc:"Ronza a bocca chiusa su una nota comoda. Lascia che la vibrazione si diffonda nel viso.",
         tg_rnd:'RND', tg_easy:'FACILE', tg_normal:'NORMALE', tg_hard:'DIFFICILE', tg_insane:'FOLLE', tg_locked:'bloccato', tg_auto_label:'AUTO',
@@ -85709,7 +85901,7 @@ function buildScaleTypePicker() {
   const wrap = document.getElementById('scaleTypePicker');
   if (!wrap) return;
   const s = STRINGS[(progState && progState.lang) || 'en'] || STRINGS.en;
-  const SHORT = SCALE_SHORT_NAMES;
+  const SHORT = scaleShortNames();
   const groups = [
     { label: s.scale_grp_major, keys: ['major','lydian','mixolydian','harmmaj'] },
     { label: s.scale_grp_minor, keys: ['natminor','dorian','phrygian','locrian','harmminor','melminor'] },
@@ -85897,6 +86089,25 @@ try {
   // Chord Ear: pool chips and answer buttons render chord quality names.
   registerRelabel('exChordEar', function () { if (typeof ceInit === 'function') ceInit(); });
 
+  // Music Quiz: the three pack grids are built once at DOMContentLoaded and were
+  // never rebuilt, so switching to Italian mid-session left every pack title,
+  // description and group header in English until the app restarted. The titles
+  // themselves are translated; nothing was re-rendering them.
+  //
+  // Keyed on the modal rather than each grid: all three live inside it, and the
+  // registry skips a screen that is not on show, so a language change with the
+  // quiz closed costs nothing.
+  // The theremin rebuilds its own controls on open, after applyLang has run, so
+  // tagged elements inside it revert to their markup defaults. Re-running
+  // applyLang for that screen is enough; nothing there is built from a data table.
+  registerRelabel('toolTheremin', function () { try { applyLang(); } catch (e) {} });
+
+  registerRelabel('mqModal', function () {
+    if (typeof mqRenderSheetPackGrid === 'function') mqRenderSheetPackGrid();
+    if (typeof mqRenderSurvivalPackGrid === 'function') mqRenderSurvivalPackGrid();
+    if (typeof mqRenderOnlineChips === 'function') mqRenderOnlineChips();
+  });
+
   // The 27 builders category G found. Each is text-only and idempotent, so they
   // are safe mid-session; the registry skips any whose screen is not on show.
   // `render` and the photo-zone builders are deliberately NOT here: `render` is
@@ -86025,6 +86236,16 @@ function setLang(lang) {
       tooltipText.textContent = t('tooltip_play');
     }
   } catch(e) {}
+
+  // SECOND PASS, and it is not redundant. applyLang() runs at the TOP of this
+  // function, and two dozen builders run after it. Several of them rewrite
+  // elements that carry data-i18n, putting the English default back: the tempo
+  // guess value chips did exactly that, so a tagged element read QTR in Italian
+  // and calling applyLang() by hand afterwards fixed it.
+  //
+  // Cheap: one querySelectorAll over the tagged elements, on a language switch,
+  // which happens rarely and never in a loop.
+  try { applyLang(); } catch (e) {}
 }
 
 
@@ -86857,11 +87078,13 @@ function _sfResetHold() { _sfHoldStart = null; _sfLocked = false; _sfHeldIdx = -
 // reaches for their case; the subtitle carries the members so the category is
 // self-explaining without needing the jargon.
 const SF_FAMS = [
-  { fam:'guitar',  lbl:'GUITAR',  ex:'' },
-  { fam:'bass',    lbl:'BASS',    ex:'' },
-  { fam:'uke',     lbl:'UKULELE', ex:'' },
-  { fam:'bowed',   lbl:'STRINGS', key:'sf_fam_strings', ex:'violin · cello' },
-  { fam:'plucked', lbl:'FOLK',    key:'sf_fam_folk',    ex:'mandolin · banjo' },
+  { fam:'guitar',  lbl:'GUITAR',  key:'sf_fam_guitar', ex:'' },
+  { fam:'bass',    lbl:'BASS',    key:'sf_fam_bass',   ex:'' },
+  { fam:'uke',     lbl:'UKULELE', key:'sf_fam_uke',    ex:'' },
+  // exKey, not ex: the member lists were hard-coded English sitting under
+  // translated titles, so the Italian screen read "ARCHI / violin · cello".
+  { fam:'bowed',   lbl:'STRINGS', key:'sf_fam_strings', ex:'violin · cello',   exKey:'sf_ex_strings' },
+  { fam:'plucked', lbl:'FOLK',    key:'sf_fam_folk',    ex:'mandolin · banjo', exKey:'sf_ex_folk' },
 ];
 // Fretted instruments only: a capo on a violin is meaningless.
 const SF_CAPO_FAMS = ['guitar','bass','uke','plucked'];
@@ -86885,7 +87108,7 @@ function buildSfSetup() {
     b.className = 'sf-inst-btn';
     // Tuning-shaped families count their tunings; instrument-shaped ones name a
     // couple of members instead, since "4 tunings" tells a cellist nothing.
-    const sub = f.ex ? f.ex
+    const sub = f.ex ? (f.exKey ? (t(f.exKey) || f.ex) : f.ex)
       : (n + ' ' + t(n === 1 ? 'sf_tuning_one' : 'sf_tuning_many'));
     const lbl = f.key ? t(f.key) : f.lbl;
     b.innerHTML = lbl + '<small>' + sub + '</small>';
@@ -90328,7 +90551,7 @@ function openTonePopup(owner) {
   TONE_GROUPS_DEF.forEach(group => {
     const keys = group.keys.filter(k => REF_TONES[k] && !TONE_EXCLUDED.has(k));
     if (!keys.length) return;
-    h += '<div class="tone-pop-group">' + group.label + '</div>';
+    h += '<div class="tone-pop-group">' + groupLabel(group) + '</div>';
     h += '<div class="tone-pop-grid">';
     keys.forEach(key => {
       const t = REF_TONES[key];
@@ -95149,7 +95372,7 @@ function _buildCustomTabUI(wrap) {
   // ── Save current button ──
   const saveBtn = document.createElement('button');
   saveBtn.className = 'preset-chip custom-save-btn';
-  saveBtn.textContent = '+ SAVE';
+  saveBtn.textContent = '+ ' + (t('dk_save') || 'SAVE');
   saveBtn.title = 'Save current beat';
   saveBtn.onclick = () => _promptSave(wrap);
   wrap.appendChild(saveBtn);
@@ -117055,6 +117278,14 @@ var SG_TERM_DEMOS = {
     {f:392.0,v:0.62,t:1.42,d:0.38},{f:392.0,v:0.62,t:1.80,d:0.38}] }
 };
 
+// Four places render a section title and each carried its own copy of the same
+// language check. The chapter pill strip was the one that did not, which is why
+// the contents strip stayed English while the page header beside it did not.
+function sgSecTitle(sec) {
+  if (!sec) return '';
+  return ((progState && progState.lang === 'it') && sec.title_it) ? sec.title_it : (sec.title || '');
+}
+
 function sgPlayTermDemo(term) {
   var demo = SG_TERM_DEMOS[term.toLowerCase()];
   if (!demo) return;
@@ -117499,7 +117730,7 @@ function updateChapterDrawer(){
     var pill=document.createElement('div');
     pill.className='ch-pill'+(i===state.sec?' active':'');
     pill.style.setProperty('--tab-ac',accent);
-    var nm=document.createElement('span');nm.className='ch-pill-name';nm.textContent=sec.title;pill.appendChild(nm);
+    var nm=document.createElement('span');nm.className='ch-pill-name';nm.textContent=sgSecTitle(sec);pill.appendChild(nm);
     var dots=document.createElement('div');dots.className='ch-pill-dots';
     var mp=maxPg[state.tab+':'+i]||0;
     sec.pages.forEach(function(p,pi){
@@ -117663,7 +117894,7 @@ function render(dir){
       var ttDesc = document.createElement('div'); ttDesc.className = 'tt-desc';
       ttDesc.textContent = _ttDesc;
       var ttHint = document.createElement('div'); ttHint.className = 'tt-hint';
-      ttHint.textContent = '\u25b6 swipe to begin';
+      ttHint.textContent = '\u25b6 ' + (t('sg_swipe_begin') || 'swipe to begin');
       ttWrap.appendChild(ttGlow);
       ttWrap.appendChild(ttTitle);
       // Fit the hero to the card. .tt-title is a fixed 52px Bebas; single-word
@@ -118657,13 +118888,13 @@ function updateNav(){
   var pct=totPg>1?globalPage()/(totPg-1)*100:100;
 
   var _lang=(progState&&progState.lang)||'en';
-  var _secTitle=(_lang==='it'&&sec.title_it)?sec.title_it:sec.title;
+  var _secTitle=sgSecTitle(sec);
   document.getElementById('navSection').textContent=_secTitle+' \u00B7 '+(state.pg+1)+'/'+sec.pages.length;
   document.getElementById('navFill').style.width=pct.toFixed(1)+'%';
 
   var nextLabel='';
   if(state.pg<sec.pages.length-1)nextLabel='pg '+(state.pg+2);
-  else if(state.sec<secs.length-1){var _ns=secs[state.sec+1];nextLabel=(_lang==='it'&&_ns.title_it)?_ns.title_it:_ns.title;}
+  else if(state.sec<secs.length-1){var _ns=secs[state.sec+1];nextLabel=sgSecTitle(_ns);}
   var nx=document.getElementById('navNext');
   if(nextLabel){nx.innerHTML='Next: <span>'+nextLabel+'</span>';nx.style.display='';}
   else nx.style.display='none';
@@ -119016,7 +119247,7 @@ window.sgInit = function() {
         // ── Section row ──────────────────────────────────────────────────────
         var row=document.createElement('div');row.className='toc-item-row';
         var nameEl=document.createElement('span');nameEl.className='toc-item-name';
-        nameEl.textContent=(_tl&&sec.title_it)?sec.title_it:sec.title;
+        nameEl.textContent=sgSecTitle(sec);
         var dotsEl=document.createElement('div');dotsEl.className='toc-item-pgdots';
         var maxP=maxPg[tabKey+':'+si]||0;
         sec.pages.forEach(function(p,pi){
@@ -119316,7 +119547,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
               <div class="mq-card-icon" style="color:var(--sharp)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="m12.5 17-.5-1-.5 1h1z" /> <path d="M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z" /> <circle cx="15" cy="12" r="1" /> <circle cx="9" cy="12" r="1" /></svg></div>
               <div class="mq-card-info">
                 <div class="mq-card-name" data-i18n="mq_survival">SURVIVAL</div>
-                <div class="mq-card-desc">3 lives · select packs · no end</div>
+                <div class="mq-card-desc" data-i18n="mq_survival_card_sub">3 lives · select packs · no end</div>
                 <div class="mq-card-badge" data-i18n="mq_endless">ENDLESS</div>
               </div>
               <div class="mq-card-arrow">›</div>
@@ -119549,7 +119780,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
       <div class="mq-sheet-handle"></div>
       <div class="mq-sheet-title" data-i18n="mq_quick_play">QUICK PLAY</div>
       <div class="mq-sheet-sub" data-i18n="mq_select_a_pack_or_play_all">select a pack or play all</div>
-      <button class="mq-sheet-all-btn" onclick="mqQuickPlayAll()">ALL PACKS — 10 QUESTIONS →</button>
+      <button class="mq-sheet-all-btn" onclick="mqQuickPlayAll()" data-i18n="mq_all_packs">ALL PACKS &mdash; 10 QUESTIONS &rarr;</button>
       <div id="mqSheetPackTabs"></div>
       <div class="mq-sheet-pack-grid" id="mqSheetPackGrid"></div>
       <div id="mqSheetOnlineChips" style="display:none;flex-direction:column;gap:6px;"></div>
@@ -119579,11 +119810,11 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
     <div class="mq-sheet">
       <div class="mq-sheet-handle"></div>
       <div class="mq-sheet-title" data-i18n="mq_survival">SURVIVAL</div>
-      <div class="mq-sheet-sub">select packs · 3 lives · questions keep coming</div>
+      <div class="mq-sheet-sub" data-i18n="mq_survival_sub">select packs · 3 lives · questions keep coming</div>
       <div id="mqSurvivalPackTabs"></div>
       <div class="mq-sheet-pack-grid" id="mqSurvivalPackGrid"></div>
       <div id="mqSurvivalOnlineChips" style="display:none;flex-direction:column;gap:6px;"></div>
-      <button class="mq-sheet-all-btn" style="margin-top:11px;margin-bottom:0" onclick="mqStartSurvival()">START SURVIVAL →</button>
+      <button class="mq-sheet-all-btn" style="margin-top:11px;margin-bottom:0" onclick="mqStartSurvival()" data-i18n="mq_start_survival">START SURVIVAL &rarr;</button>
     </div>
   </div>
 
@@ -119622,11 +119853,27 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
 <script>
 
 // MUSIC QUIZ
+//
+// Pack titles and descriptions are shown to the user, so they carry name_it and
+// desc_it alongside the English. Read them through packName()/packDesc() rather
+// than reaching for .name directly: nine places render a pack title and they all
+// have to agree, which is exactly the kind of thing that ends up half translated.
+function packName(pack, fallback) {
+  if (!pack) return fallback || '';
+  const it = (progState && progState.lang === 'it');
+  return (it && pack.name_it) ? pack.name_it : (pack.name || fallback || '');
+}
+function packDesc(pack) {
+  if (!pack) return '';
+  const it = (progState && progState.lang === 'it');
+  return (it && pack.desc_it) ? pack.desc_it : (pack.desc || '');
+}
+
 const PACKS = {
 
 guitar_gods: {
-  group:'general', name:'Guitar Gods', emoji:'\uD83C\uDFB8', color:'var(--accent)',
-  desc:'Guitar technique, tone, and the stories behind the playing',
+  group:'general', name:'Guitar Gods', name_it:'Chitarristi leggendari', emoji:'\uD83C\uDFB8', color:'var(--accent)',
+  desc:'Guitar technique, tone, and the stories behind the playing', desc_it:'Tecnica, suono e le storie dietro chi ha suonato',
   questions:[
     {q:"Jimi Hendrix was predominantly left-handed but played a right-handed guitar — how?",opts:["He restrung it upside down","He played it upside down without restringing","He used a mirror technique","He played right-handed only"],ans:0,fact:"He flipped a right-handed Stratocaster and restrung it, which left the headstock upside down."},
     {q:"What guitar is most associated with Eric Clapton's 'Cream' era?",opts:["Gibson Les Paul","Fender Stratocaster","Gibson SG","ES-335"],ans:0,fact:"He played a 1960 Les Paul Standard nicknamed 'Beano' after the comic he was reading on the Bluesbreakers album cover."},
@@ -119693,8 +119940,8 @@ guitar_gods: {
 },
 
 beatles: {
-  group:'general', name:'The Beatles', emoji:'🪲', color:'var(--accent-soft)',
-  desc:'Catalog, history, and the details most people miss',
+  group:'general', name:'The Beatles', name_it:'The Beatles', emoji:'🪲', color:'var(--accent-soft)',
+  desc:'Catalog, history, and the details most people miss', desc_it:'Discografia, storia e i dettagli che quasi nessuno nota',
   questions:[
     {q:"What was The Beatles' first UK number one single?",opts:["Love Me Do","Please Please Me","From Me to You","She Loves You"],ans:1,fact:"\'Please Please Me\' topped NME, Melody Maker, and the BBC chart in January 1963. It only reached No.2 on Record Retailer (which later became the official chart); \'From Me to You\' was technically their first on that chart."},
     {q:"Which Beatle played bass?",opts:["John Lennon","George Harrison","Ringo Starr","Paul McCartney"],ans:3,fact:"McCartney switched to bass when Stuart Sutcliffe left the band in Hamburg. He became one of rock's most melodic and inventive bass players."},
@@ -119761,8 +120008,8 @@ beatles: {
 },
 
 jazz_legends: {
-  group:'general', name:'Jazz Legends', emoji:'🎷', color:'var(--warm)',
-  desc:'Players, recordings, and movements from swing to the present',
+  group:'general', name:'Jazz Legends', name_it:'Leggende del jazz', emoji:'🎷', color:'var(--warm)',
+  desc:'Players, recordings, and movements from swing to the present', desc_it:'Musicisti, incisioni e correnti dallo swing a oggi',
   questions:[
     {q:"Which Miles Davis album is the best-selling instrumental jazz album of all time?",opts:["Bitches Brew","Kind of Blue","Sketches of Spain","Birth of the Cool"],ans:1,fact:"Kind of Blue (1959) pioneered modal jazz and is certified 4x Platinum in the US with over 5 million copies sold there alone. It is the best-selling instrumental jazz album of all time."},
     {q:"What does 'bebop' refer to?",opts:["A slow, lyrical ballad style that emerged as a reaction against the speed of swing", "A fast, complex style developed in 1940s New York, emphasizing virtuosity and fast tempos", "A relaxed, sparse dance style that preceded swing, popular in Harlem in the 1930s", "An electronic jazz style developed in the 1970s by Miles Davis and Herbie Hancock"],ans:1,fact:"Charlie Parker, Dizzy Gillespie, and Thelonious Monk developed bebop in Harlem after-hours sessions, deliberately making it too complex to be commercialized or easily copied."},
@@ -119825,8 +120072,8 @@ jazz_legends: {
 },
 
 rock_metal: {
-  group:'general', name:'Rock & Metal', emoji:'🤘', color:'var(--sharp)',
-  desc:'Bands, albums, and the history of rock and metal',
+  group:'general', name:'Rock & Metal', name_it:'Rock e metal', emoji:'🤘', color:'var(--sharp)',
+  desc:'Bands, albums, and the history of rock and metal', desc_it:'Gruppi, album e la storia del rock e del metal',
   questions:[
     {q:"Which band's debut album is widely considered the first heavy metal record?",opts:["Led Zeppelin","Deep Purple","Black Sabbath","Cream"],ans:2,fact:"Black Sabbath's self-titled debut (released Friday 13th February 1970) deliberately set out to be as dark and heavy as possible. Tony Iommi's detuned riff on 'Black Sabbath' launched a genre."},
     {q:"What makes the opening riff of Deep Purple's 'Smoke on the Water' distinctive?",opts:["It is built on parallel perfect fourths rather than power chords","It uses a seven-string guitar tuned to drop A","It was the first riff recorded with a wah pedal","It is played entirely with two-handed tapping"],ans:0,fact:"Ritchie Blackmore\'s riff uses perfect fourths, which gives it a stark, heavy quality. It\'s one of the first riffs most guitarists learn."},
@@ -119894,8 +120141,8 @@ rock_metal: {
 },
 
 theory_fundamentals: {
-  group:'general', name:'Theory Fundamentals', emoji:'📖', color:'var(--accent-soft)',
-  desc:'Scales, intervals, chords, and how music is structured',
+  group:'general', name:'Theory Fundamentals', name_it:'Fondamenti di teoria', emoji:'📖', color:'var(--accent-soft)',
+  desc:'Scales, intervals, chords, and how music is structured', desc_it:'Scale, intervalli, accordi e come è costruita la musica',
   questions:[
     {q:"What are the seven note names in Western music?",opts:["A B C D E F G","Do Re Mi Fa Sol La Ti","A B C D E F G H","1 2 3 4 5 6 7"],ans:0,fact:"Western music uses letters A through G, then repeats. The same pitch class an octave higher shares the same letter name."},
     {q:"What does a time signature tell you?",opts:["How many beats are in each bar and which note value gets the beat","The speed at which the music should be played","Which sharps or flats belong to the key","The order of notes in the scale"],ans:0,fact:"4/4 means 4 beats per bar, quarter note gets the beat. The top number = beats per bar; the bottom number = which note value gets the beat."},
@@ -119962,8 +120209,8 @@ theory_fundamentals: {
 },
 
 studio_recording: {
-  group:'general', name:'Studio & Recording', emoji:'🎚️', color:'var(--in-tune)',
-  desc:'Recording techniques, signal chain, and production fundamentals',
+  group:'general', name:'Studio & Recording', name_it:'Studio e registrazione', emoji:'🎚️', color:'var(--in-tune)',
+  desc:'Recording techniques, signal chain, and production fundamentals', desc_it:'Tecniche di ripresa, catena del segnale e basi di produzione',
   questions:[
     {q:"What does a mixing console primarily do?",opts:["Routes, mixes, and balances multiple audio signals into a final mix","Converts analog signals to digital for the computer","Generates phantom power for condenser microphones","Stores recorded takes on a hard drive"],ans:0,fact:"A mixing console is the central routing hub, setting levels, EQ, and dynamics per channel and combining them. Modern DAWs do the same thing in software."},
     {q:"What is 'overdubbing'?",opts:["Recording new parts on top of an existing recording","Recording several musicians live at the same time","Boosting the gain of a quiet recording after the fact","Erasing and re-recording over a previous take"],ans:0,fact:"Les Paul worked out practical overdubbing in the late 1940s by bouncing between tape machines. The Beatles took it much further, letting one musician build up a full arrangement."},
@@ -120040,8 +120287,8 @@ studio_recording: {
 },
 
 gear_equipment: {
-  group:'general', name:'Gear & Equipment', emoji:'🎛️', color:'var(--warm)',
-  desc:'Instruments, signal flow, formats, and how gear actually works',
+  group:'general', name:'Gear & Equipment', name_it:'Strumentazione', emoji:'🎛️', color:'var(--warm)',
+  desc:'Instruments, signal flow, formats, and how gear actually works', desc_it:'Strumenti, percorso del segnale, formati e come funziona davvero',
   questions:[
     {q:"What is the difference between a guitar's neck and bridge pickup tone?",opts:["The neck pickup is brighter and more cutting; the bridge pickup is warmer and rounder","The neck pickup is warmer and fuller; the bridge pickup is brighter and more cutting","There is no tonal difference; the position only affects output volume","The neck pickup is louder; the bridge pickup is quieter but clearer"],ans:1,fact:"String vibration is wider near the neck (more low-frequency content) and tighter near the bridge (more high-frequency content). Same strings, dramatically different tones."},
     {q:"What is a 'humbucker' pickup?",opts:["A type of volume knob","Two single-coil pickups wired to cancel hum — producing a warmer, thicker tone","A type of guitar bridge","A bass-only pickup"],ans:1,fact:"Seth Lover invented the humbucker for Gibson in 1955. Two coils wound in opposite directions cancel 60Hz hum. The result is quieter and tonally fuller than single coils."},
@@ -120108,8 +120355,8 @@ gear_equipment: {
 },
 
 music_history: {
-  group:'general', name:'Music History', emoji:'📻', color:'var(--in-tune)',
-  desc:'Movements, composers, and turning points in music history',
+  group:'general', name:'Music History', name_it:'Storia della musica', emoji:'📻', color:'var(--in-tune)',
+  desc:'Movements, composers, and turning points in music history', desc_it:'Correnti, compositori e momenti di svolta nella storia della musica',
   questions:[
     {q:"What period is associated with Bach, Handel, and Vivaldi?",opts:["The Baroque period","The Classical period","The Romantic period","The Medieval period"],ans:0,fact:"Baroque (c.1600–1750) featured ornate counterpoint, the development of tonality as a system, and forms like the fugue and concerto. Bach's Well-Tempered Clavier helped establish equal temperament."},
     {q:"Which composer expanded the symphony beyond what Haydn and Mozart had established?",opts:["Schubert","Brahms","Beethoven","Berlioz"],ans:2,fact:"Beethoven\'s Third Symphony (Eroica, 1803) ran nearly twice as long as a typical Haydn symphony and reached for far more emotional weight, pushing the form from Classical restraint toward Romantic scale."},
@@ -120179,8 +120426,8 @@ music_history: {
 
 ,
 guitar_technique: {
-  group:'instrument', name:'Guitar', emoji:'\uD83C\uDFB8', color:'var(--accent)',
-  desc:'Technique, setup, gear, and the mechanics of playing guitar',
+  group:'instrument', name:'Guitar', name_it:'Chitarra', emoji:'\uD83C\uDFB8', color:'var(--accent)',
+  desc:'Technique, setup, gear, and the mechanics of playing guitar', desc_it:'Tecnica, setup, strumentazione e meccanica dello strumento',
   questions:[
     {q:"What does \'action\' refer to on a guitar?",opts:["The height of the strings above the fretboard","The tension of the strings from nut to bridge","The distance between the nut and the first fret","The angle of the neck relative to the body"],ans:0,fact:"Low action makes playing easier but risks fret buzz. High action improves tone and sustain but demands more effort. Most players find a middle ground suited to their style."},
     {q:"What is the purpose of the truss rod?",opts:["To adjust neck relief by counteracting string tension","To anchor the strings at the body end of the guitar","To set the intonation of each string individually","To adjust the pickup height relative to the strings"],ans:0,fact:"String tension pulls the neck forward, and the truss rod, a steel rod running through the neck, counteracts it. Tightening straightens or back-bows the neck; loosening allows more forward relief."},
@@ -120246,8 +120493,8 @@ guitar_technique: {
 },
 
 bass: {
-  group:'instrument', name:'Bass', emoji:'\uD83C\uDFB5', color:'var(--accent-warm)',
-  desc:'Bass technique, notable players, bass lines, and bass-specific gear',
+  group:'instrument', name:'Bass', name_it:'Basso', emoji:'\uD83C\uDFB5', color:'var(--accent-warm)',
+  desc:'Bass technique, notable players, bass lines, and bass-specific gear', desc_it:'Tecnica, bassisti importanti, linee di basso e strumentazione',
   questions:[
     {q:"What is the standard tuning of a four-string bass guitar?",opts:["E A D G from lowest to highest","B E A D from lowest to highest","E A D G B from lowest to highest","A D G C from lowest to highest"],ans:0,fact:"Standard bass tuning matches the lowest four strings of a guitar but an octave lower. The E string vibrates at 41Hz. Five-string basses add a low B below the E."},
     {q:"What is \'playing in the pocket\'?",opts:["Locking tightly with the kick drum and rhythm section to create a deep groove","Playing bass lines that sit in the low-mid frequency pocket of the mix","Keeping the bass line simple and minimal to leave space for other instruments","Matching the guitarist\'s chord voicings precisely on every beat"],ans:0,fact:"\'In the pocket\' describes bass playing that feels locked, deep, and settled. James Jamerson, Rocco Prestia, and Pino Palladino are universally cited examples."},
@@ -120313,8 +120560,8 @@ bass: {
 },
 
 drums: {
-  group:'instrument', name:'Drums', emoji:'\uD83E\uDD41', color:'var(--sharp)',
-  desc:'Drumming technique, famous drummers, kit setup, and recording drums',
+  group:'instrument', name:'Drums', name_it:'Batteria', emoji:'\uD83E\uDD41', color:'var(--sharp)',
+  desc:'Drumming technique, famous drummers, kit setup, and recording drums', desc_it:'Tecnica, batteristi famosi, montaggio del kit e ripresa in studio',
   questions:[
     {q:"What is a \'backbeat\' in drumming?",opts:["Accents on beats 2 and 4 in a 4/4 bar","The kick drum pattern that drives the tempo","The hi-hat pattern that defines the subdivision","The rimshot on beat 3 that defines rock drumming"],ans:0,fact:"The backbeat, with the snare on 2 and 4, is a core feature of rock, pop, R&B, and most Western popular music. Take it away and the music loses much of its drive."},
     {q:"What is a \'paradiddle\'?",opts:["A rudiment with the pattern RLRR LRLL","A rapid alternating stroke between kick and snare","A four-note phrase ending on the beat it started","A double stroke roll played at a slow tempo"],ans:0,fact:"The paradiddle is foundational for developing hand independence. Its alternating lead hand means it can be played indefinitely. It\'s also the basis of many drum fills."},
@@ -120380,8 +120627,8 @@ drums: {
 },
 
 keys: {
-  group:'instrument', name:'Keys', emoji:'\uD83C\uDFB9', color:'var(--metro)',
-  desc:'Piano, organ, synth technique, players, and instrument history',
+  group:'instrument', name:'Keys', name_it:'Tastiere', emoji:'\uD83C\uDFB9', color:'var(--metro)',
+  desc:'Piano, organ, synth technique, players, and instrument history', desc_it:'Pianoforte, organo e synth: tecnica, interpreti e storia',
   questions:[
     {q:"What is a \'chord voicing\' on keyboard?",opts:["The specific arrangement of notes across the hands in a chord","The loudness at which a chord is played","The pedal technique used while sustaining a chord","The rhythmic pattern used to play a repeated chord"],ans:0,fact:"The same chord in different voicings can sound completely different. Voice leading, moving between voicings with as little motion as possible, is one of the core skills of keyboard harmony."},
     {q:"What is the \'sustain pedal\' on a piano?",opts:["A pedal that lifts the dampers so notes ring after the keys are released","A pedal that reduces the volume of notes played while held","A pedal that shifts the mechanism to create a softer tone","A pedal that locks specific notes so they sustain indefinitely"],ans:0,fact:"The sustain pedal is the most used of the three piano pedals. By lifting all dampers, it allows notes to ring and blend. Overuse produces mud; sensitive use creates bloom and harmonic color."},
@@ -120447,8 +120694,8 @@ keys: {
 },
 
 vocals: {
-  group:'instrument', name:'Vocals', emoji:'\uD83C\uDFA4', color:'var(--in-tune)',
-  desc:'Vocal technique, famous singers, vocal production, and microphones',
+  group:'instrument', name:'Vocals', name_it:'Voce', emoji:'\uD83C\uDFA4', color:'var(--in-tune)',
+  desc:'Vocal technique, famous singers, vocal production, and microphones', desc_it:'Tecnica vocale, grandi cantanti, produzione della voce e microfoni',
   questions:[
     {q:"What is \'vocal range\'?",opts:["The span from a singer\'s lowest to highest comfortable pitch","The total volume from a singer\'s quietest to loudest note","The register in which a singer performs most of their material","The number of octaves a singer can access in full voice"],ans:0,fact:"Most untrained adults have roughly 1.5 to 2 octaves of comfortable range; trained classical singers often have 3 or more. Range expands with training and contracts with fatigue or illness."},
     {q:"What is \'chest voice\'?",opts:["The lower register where the chest resonates and the sound is fuller and stronger","The voice produced when singing with the chest cavity fully expanded","A singing technique where the voice is projected forward into the chest","The register below the speaking voice, also called the modal voice"],ans:0,fact:"Chest voice is the register most people use when speaking and singing at lower pitches. The full length and mass of the vocal cords vibrate, producing a rich, powerful sound."},
@@ -120515,8 +120762,8 @@ vocals: {
 },
 
 sixties: {
-  group:'decades', name:'The 60s', emoji:'\uD83C\uDFB8', color:'#f9a8d4',
-  desc:'Songs, artists, and moments that defined the 1960s',
+  group:'decades', name:'The 60s', name_it:'Anni \'60', emoji:'\uD83C\uDFB8', color:'#f9a8d4',
+  desc:'Songs, artists, and moments that defined the 1960s', desc_it:'Canzoni, artisti e momenti che hanno definito gli anni Sessanta',
   questions:[
     {q:"Which band had a number one hit with \'Like a Rolling Stone\' in 1965?",opts:["Bob Dylan","The Rolling Stones","The Byrds","The Kinks"],ans:0,fact:"\'Like a Rolling Stone\' reached #2 in the US, with some stations reluctant to play a six-minute single. It\'s one of the most influential rock recordings and is often named among the greatest rock songs."},
     {q:"What year did The Beatles appear on The Ed Sullivan Show, launching Beatlemania in the US?",opts:["1964","1963","1965","1966"],ans:0,fact:"About 73 million Americans, roughly 40% of the population, watched the Beatles\' Ed Sullivan debut on 9 February 1964. It was one of the largest TV audiences in US history and marked the start of the British Invasion."},
@@ -120582,8 +120829,8 @@ sixties: {
 },
 
 seventies: {
-  group:'decades', name:'The 70s', emoji:'\u270C\uFE0F', color:'var(--metro)',
-  desc:'Songs, artists, and moments that defined the 1970s',
+  group:'decades', name:'The 70s', name_it:'Anni \'70', emoji:'\u270C\uFE0F', color:'var(--metro)',
+  desc:'Songs, artists, and moments that defined the 1970s', desc_it:'Canzoni, artisti e momenti che hanno definito gli anni Settanta',
   questions:[
     {q:"Which album became the best-selling rock album of the 1970s?",opts:["Fleetwood Mac\'s Rumours","Led Zeppelin IV","Eagles\' Hotel California","Pink Floyd\'s Dark Side of the Moon"],ans:3,fact:"Dark Side of the Moon (1973) spent a record 741 consecutive weeks on the Billboard 200 and has sold over 45 million copies. Its themes of money, madness, and mortality kept finding new listeners."},
     {q:"What was ABBA\'s nationality?",opts:["Swedish","Norwegian","Danish","Finnish"],ans:0,fact:"ABBA, made up of Agnetha, Björn, Benny, and Anni-Frid, won Eurovision in 1974 with \'Waterloo\'. They became one of the best-selling acts in history with a strong run of singles from 1974 to 1982."},
@@ -120649,8 +120896,8 @@ seventies: {
 },
 
 eighties: {
-  group:'decades', name:'The 80s', emoji:'\uD83D\uDCFC', color:'#a78bfa',
-  desc:'Songs, artists, and moments that defined the 1980s',
+  group:'decades', name:'The 80s', name_it:'Anni \'80', emoji:'\uD83D\uDCFC', color:'#a78bfa',
+  desc:'Songs, artists, and moments that defined the 1980s', desc_it:'Canzoni, artisti e momenti che hanno definito gli anni Ottanta',
   questions:[
     {q:"Which Michael Jackson album became the best-selling album of all time?",opts:["Thriller","Bad","Off the Wall","Dangerous"],ans:0,fact:"Thriller (1982) has sold between 66 and 70 million copies and produced seven top 10 singles. The 14-minute title-track video, directed by John Landis, helped push the music video from a promo clip toward a creative form in its own right."},
     {q:"What was MTV and when did it launch?",opts:["A US cable channel launched in 1981 for music videos","A radio network airing music-video audio from 1979","A British TV channel launched after Channel 4 in 1982","A US public-broadcasting music-education service from 1980"],ans:0,fact:"MTV launched August 1, 1981 with \'Video Killed the Radio Star\' by the Buggles. Michael Jackson\'s \'Billie Jean\' broke the early whites-only programming in 1983, reportedly after CBS threatened to pull all their acts."},
@@ -120716,8 +120963,8 @@ eighties: {
 },
 
 fifties: {
-  group:'decades', name:'The 50s', emoji:'\uD83C\uDFB5', color:'var(--in-tune)',
-  desc:'Rock and roll, doo-wop, and the icons who started it all',
+  group:'decades', name:'The 50s', name_it:'Anni \'50', emoji:'\uD83C\uDFB5', color:'var(--in-tune)',
+  desc:'Rock and roll, doo-wop, and the icons who started it all', desc_it:'Rock and roll, doo-wop e le icone che hanno iniziato tutto',
   questions:[
     {q:"Who is often called the \'King of Rock and Roll\'?",opts:["Elvis Presley","Chuck Berry","Little Richard","Jerry Lee Lewis"],ans:0,fact:"Elvis Presley blended gospel, country, and R&B into a charged, physical performance style that made him a central figure of early rock and roll. His 1954 Sun recordings with Sam Phillips were the spark, and his 1956 RCA debut was where it broke wide open."},
     {q:"Which guitarist wrote \'Johnny B. Goode\' and pioneered the rock and roll guitar style?",opts:["Chuck Berry","Buddy Holly","Bo Diddley","Carl Perkins"],ans:0,fact:"Chuck Berry built the foundations of rock guitar: the double-stop riffs, the duck walk, the narrative songs about teenage life. Keith Richards said learning Chuck Berry was his entire early musical education."},
@@ -120783,8 +121030,8 @@ fifties: {
 },
 
 nineties: {
-  group:'decades', name:'The 90s', emoji:'\uD83D\uDCBF', color:'var(--sharp)',
-  desc:'Songs, artists, and moments that defined the 1990s',
+  group:'decades', name:'The 90s', name_it:'Anni \'90', emoji:'\uD83D\uDCBF', color:'var(--sharp)',
+  desc:'Songs, artists, and moments that defined the 1990s', desc_it:'Canzoni, artisti e momenti che hanno definito gli anni Novanta',
   questions:[
     {q:"Which Nirvana album made grunge mainstream and knocked which artist from #1?",opts:["Nevermind knocked Michael Jackson\'s Dangerous from #1 in January 1992","Nevermind knocked Metallica\'s Black Album from #1 in October 1991","In Utero knocked Pearl Jam\'s Vs. from #1 in September 1993","Bleach knocked Guns N\' Roses\' Use Your Illusion from #1 in 1991"],ans:0,fact:"Nevermind reaching #1 in January 1992, replacing Michael Jackson\'s Dangerous, is often treated as a symbolic turning point in rock, with the hair metal era fading fast after it. Kurt Cobain reportedly disliked the album\'s polished production and wished they\'d used Steve Albini."},
     {q:"What was \'Britpop\' and which two bands defined its rivalry?",opts:["A mid-1990s British guitar-pop revival — Oasis and Blur were its defining rivalry","A 1990s movement of British artists taking American hip-hop and applying it to British subject matter","A reaction to grunge that stripped British rock back to its 1960s roots","A marketing term for any British guitar band that achieved mainstream success after 1993"],ans:0,fact:"The Oasis and Blur chart battle of August 1995, when both released singles on the same day, became a real cultural event. Blur\'s \'Country House\' narrowly beat Oasis\'s \'Roll with It\', though Oasis\'s What\'s the Story Morning Glory (1995) became the bigger album. The rivalry tapped into a genuine class and cultural divide."},
@@ -120850,8 +121097,8 @@ nineties: {
 },
 
 noughties: {
-  group:'decades', name:'The 00s', emoji:'\uD83D\uDCF1', color:'#60a5fa',
-  desc:'Songs, artists, and moments that defined the 2000s',
+  group:'decades', name:'The 00s', name_it:'Anni 2000', emoji:'\uD83D\uDCF1', color:'#60a5fa',
+  desc:'Songs, artists, and moments that defined the 2000s', desc_it:'Canzoni, artisti e momenti che hanno definito gli anni Duemila',
   questions:[
     {q:"Which Amy Winehouse album launched her to international fame?",opts:["Back to Black","Frank","Lioness: Hidden Treasures","The Amy Winehouse Collection"],ans:0,fact:"Back to Black (2006), produced by Mark Ronson and Salaam Remi, sold over 16 million copies. Its retro soul-pop sound stood apart from most contemporary pop. \'Rehab\', \'Valerie\', and the title track were highlights of a short career cut off by Winehouse\'s death in July 2011, aged 27."},
     {q:"Which Arctic Monkeys debut album (2006) broke UK sales records?",opts:["Whatever People Say I Am, That\'s What I\'m Not","Favorite Worst Nightmare (their second, 2007)","Humbug (their third album, 2009)","Suck It and See (their fourth album, 2011)"],ans:0,fact:"Whatever People Say I Am became the fastest-selling debut album in UK chart history, selling 363,000 copies in its first week. Its Sheffield working-class narratives, Alex Turner\'s sharp lyrics, and the band\'s DIY internet-era rise (distributing demo CDs at gigs) made it a template for the digital era."},
@@ -121912,9 +122159,10 @@ function mqMaybeShowResumeBanner() {
   var snap = mqGetInProgress();
   if (!snap) { banner.style.display = 'none'; return; }
   // Build a human-readable description: mode label + pack names + progress
-  var modeLabel = snap.mode === 'survival' ? 'SURVIVAL' : snap.mode === 'quick' ? 'QUICK PLAY' : 'CUSTOM';
+  var modeLabel = snap.mode === 'survival' ? (t('mq_survival') || 'SURVIVAL')
+    : snap.mode === 'quick' ? (t('mq_quick_play') || 'QUICK PLAY') : (t('mq_custom') || 'CUSTOM');
   var packNames = (snap.packs || []).map(function(p) {
-    return (PACKS[p] && PACKS[p].name) ? PACKS[p].name : p;
+    return packName(PACKS[p], p);
   }).join(', ');
   var progress = snap.mode === 'survival'
     ? snap.correct + ' correct'
@@ -121999,7 +122247,7 @@ function mqShowStats() {
       html += '<div style="display:flex;align-items:center;gap:8px;">'
         + '<span style="font-size:12px">' + pack.emoji + '</span>'
         + '<div style="flex:1;min-width:0">'
-        + '<div style="font-size:8px;letter-spacing:1px;color:var(--text-dim)">' + (pack.name||k).toUpperCase() + '</div>'
+        + '<div style="font-size:8px;letter-spacing:1px;color:var(--text-dim)">' + packName(pack, k).toUpperCase() + '</div>'
         + '<div style="height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden;margin-top:3px">'
         + '<div style="height:100%;width:' + pct + '%;background:' + col2 + ';border-radius:2px;transition:width .6s ease"></div>'
         + '</div></div>'
@@ -122166,11 +122414,17 @@ function mqPackIcon(packId, size) {
 }
 
 var MQ_GROUPS = [
-  { id:'general',    label:'GENERAL',    emoji:'\uD83C\uDFB5' },
-  { id:'instrument', label:'INSTRUMENT', emoji:'\uD83C\uDFB8' },
-  { id:'decades',    label:'DECADES',    emoji:'\uD83D\uDCC5' },
-  { id:'online',     label:'ONLINE',     emoji:'\uD83C\uDF10' },
+  { id:'general',    key:'mq_grp_general',    label:'GENERAL',    emoji:'\uD83C\uDFB5' },
+  { id:'instrument', key:'mq_grp_instrument', label:'INSTRUMENT', emoji:'\uD83C\uDFB8' },
+  { id:'decades',    key:'mq_grp_decades',    label:'DECADES',    emoji:'\uD83D\uDCC5' },
+  { id:'online',     key:'mq_grp_online',     label:'ONLINE',     emoji:'\uD83C\uDF10' },
 ];
+// Three builders render these headers. Reading the label through one function
+// keeps them from drifting apart, which is how half of a list ends up translated.
+function mqGroupLabel(grp) {
+  try { return (grp && grp.key && t(grp.key)) || (grp && grp.label) || ''; }
+  catch (e) { return (grp && grp.label) || ''; }
+}
 // Track expanded state at runtime
 var MQ_GROUP_EXPANDED = { general:true, instrument:false, decades:false, online:false };
 
@@ -122207,7 +122461,7 @@ function mqGroupTabs() {
     var tab = document.createElement('div');
     tab.className = 'mq-group-tab' + (MQ_GROUP_EXPANDED[grp.id] ? ' active' : '');
     tab.innerHTML = '<div class="mq-group-tab-emoji">' + (mqIconSVG(MQ_GROUP_ICONS[grp.id],16) || grp.emoji) + '</div>'
-      + '<div>' + grp.label + '</div>';
+      + '<div>' + mqGroupLabel(grp) + '</div>';
     (function(id){ tab.onclick = function() { mqSetGroup(id); }; })(grp.id);
     wrap.appendChild(tab);
   });
@@ -122245,7 +122499,7 @@ function mqRenderSurvivalPackGrid() {
       var qCount = pack.questions ? pack.questions.filter(function(q){return q&&q.q;}).length : 0;
       var countLabel = qCount > 0 ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:7.5px;color:'+(sel?col:'var(--muted)')+';margin-left:auto;flex-shrink:0;">'+qCount+'Q</span>' : '';
       btn.innerHTML = '<span class="mq-sheet-pack-emoji">'+mqPackIcon(id,18)+'</span>'
-        + '<span class="mq-sheet-pack-name" style="'+(sel?'color:'+col:'')+'">'+pack.name+'</span>'
+        + '<span class="mq-sheet-pack-name" style="'+(sel?'color:'+col:'')+'">'+packName(pack)+'</span>'
         + countLabel;
       (function(pid){ btn.onclick = function() { mqToggleSurvivalPack(pid); }; })(id);
       subGrid.appendChild(btn);
@@ -122280,8 +122534,8 @@ function mqRenderPackGrid() {
       if (sel) btn.style.cssText = 'border-color:'+col+';background:color-mix(in srgb,'+col+' 6%,var(--surface));';
       btn.innerHTML = '<span class="mq-pack-emoji">'+mqPackIcon(id,18)+'</span>'
         + '<div class="mq-pack-info">'
-        + '<div class="mq-pack-name" style="color:'+col+'">'+pack.name+'</div>'
-        + '<div class="mq-pack-desc">'+pack.desc+'</div></div>'
+        + '<div class="mq-pack-name" style="color:'+col+'">'+packName(pack)+'</div>'
+        + '<div class="mq-pack-desc">'+packDesc(pack)+'</div></div>'
         + '<div class="mq-pack-check" style="'+(sel?'background:'+col+';border-color:'+col+';':'')+'"></div>';
       (function(pid){ btn.onclick = function() { mqTogglePack(pid); }; })(id);
       grid.appendChild(btn);
@@ -122315,7 +122569,7 @@ function mqRenderSheetPackGrid() {
       var btn = document.createElement('div');
       btn.className = 'mq-sheet-pack-btn';
       btn.innerHTML = '<span class="mq-sheet-pack-emoji">'+mqPackIcon(id,18)+'</span>'
-        + '<span class="mq-sheet-pack-name" style="color:'+col+'">'+pack.name+'</span>';
+        + '<span class="mq-sheet-pack-name" style="color:'+col+'">'+packName(pack)+'</span>';
       (function(packId){ btn.onclick = function() { mqShowPackPopup(packId); }; })(id);
       subGrid.appendChild(btn);
     });
@@ -122385,7 +122639,8 @@ function mqSetCustomSurvival(on) {
   var qRow = document.getElementById('mqQCountRow');
   if (qRow) { qRow.style.opacity=on?'0.35':'1'; qRow.style.pointerEvents=on?'none':''; }
   var btn = document.getElementById('mqCustomStartBtn');
-  if (btn) btn.querySelector('.mq-start-inner').textContent = on ? 'START SURVIVAL \u2192' : 'START \u2192';
+  if (btn) btn.querySelector('.mq-start-inner').textContent =
+    on ? (t('mq_start_survival') || 'START SURVIVAL \u2192') : (t('mq_start') || 'START \u2192');
 }
 async function mqStartCustom() {
   if (MQ.onlineCatSelected) {
@@ -122462,7 +122717,7 @@ function mqRenderQ() {
   // Persist quiz state so a background-kill can offer a resume
   mqSaveInProgress();
   var isSurv = MQ.mode==='survival';
-  var labels = {quick:'QUICK PLAY',custom:'CUSTOM',survival:'SURVIVAL'};
+  var labels = {quick:(t('mq_quick_play')||'QUICK PLAY'), custom:(t('mq_custom')||'CUSTOM'), survival:(t('mq_survival')||'SURVIVAL')};
   if (MQ.mode === 'daily') {
     var _dp = PACKS[MQ.dailyPackId] || {};
     document.getElementById('mqModeLabel').textContent = 'DAILY \u00b7 ' + (_dp.name || 'QUIZ').toUpperCase();
@@ -122484,7 +122739,7 @@ function mqRenderQ() {
   if (isSurv) mqUpdateHearts();
   var pack = PACKS[q.pack];
   var col = MQ_PACK_COLORS[q.pack]||'var(--accent-soft)';
-  document.getElementById('mqCatLabel').textContent = pack?pack.name:q.pack;
+  document.getElementById('mqCatLabel').textContent = pack ? packName(pack) : q.pack;
   document.getElementById('mqCatDot').style.background = col;
   var qCard = document.getElementById('mqQCard');
   var existLine = qCard.querySelector('.mqcard-line');
@@ -122701,7 +122956,7 @@ function mqShowWin() {
   mqClearInProgress();
   mqCommitSessionStats();
   mqShowScreen('mqScreenWin');
-  var packNames = [...MQ.selectedPacks].map(function(p){ return PACKS[p].name; }).join(', ');
+  var packNames = [...MQ.selectedPacks].map(function(p){ return packName(PACKS[p], p); }).join(', ');
   document.getElementById('mqWinPackName').textContent = packNames;
   document.getElementById('mqWinScore').textContent = MQ.score;
   document.getElementById('mqWinCorrect').textContent = MQ.correct;
@@ -122781,7 +123036,7 @@ function mqShowResults() {
     var row=document.createElement('div');
     row.className='mq-bk-row';
     row.innerHTML='<div class="mq-bk-dot" style="background:'+col+'"></div>'
-      +'<div class="mq-bk-name"><span class="mq-bk-ic">'+(mqPackIcon(packId,13)||pack.emoji)+'</span> '+pack.name.toUpperCase()+'</div>'
+      +'<div class="mq-bk-name"><span class="mq-bk-ic">'+(mqPackIcon(packId,13)||pack.emoji)+'</span> '+packName(pack).toUpperCase()+'</div>'
       +'<div class="mq-bk-bar-wrap"><div class="mq-bk-bar" style="width:0%;background:'+col+'" data-p="'+pct+'"></div></div>'
       +'<div class="mq-bk-score">'+got+'/'+tot+'</div>';
     bd.appendChild(row);
@@ -122809,7 +123064,7 @@ function mqShowMissReview() {
     // We don't store which wrong option they picked — just show all options with correct highlighted
     var card = document.createElement('div');
     card.className = 'mq-miss-card';
-    var packLabel = pack ? (pack.emoji + ' ' + pack.name) : q.pack;
+    var packLabel = pack ? (pack.emoji + ' ' + packName(pack)) : q.pack;
     var reviewOpts = miss.dispOpts || q.opts;
     var reviewAns  = (miss.dispAns !== undefined) ? miss.dispAns : q.ans;
     var optsHtml = reviewOpts.map(function(opt, i) {
@@ -122839,10 +123094,10 @@ function mqShowPackPopup(packId) {
   var col = MQ_PACK_COLORS[packId] || 'var(--accent-soft)';
   var qTotal = pack.questions ? pack.questions.filter(function(q){return q&&q.q;}).length : 0;
   document.getElementById('mqPopupEmoji').innerHTML = mqPackIcon(packId,28) || pack.emoji;
-  document.getElementById('mqPopupName').textContent = pack.name;
+  document.getElementById('mqPopupName').textContent = packName(pack);
   document.getElementById('mqPopupName').style.color = col;
   document.getElementById('mqPopupCount').textContent = qTotal + ' QUESTIONS IN PACK';
-  document.getElementById('mqPopupDesc').textContent = pack.desc;
+  document.getElementById('mqPopupDesc').textContent = packDesc(pack);
   document.getElementById('mqPopupPlayBtn').style.borderColor = col;
   document.getElementById('mqPopupPlayBtn').style.color = col;
   mqRenderPopupQCount();
@@ -123149,7 +123404,7 @@ function mqShowDailyResult(data) {
   document.getElementById('mqDailyResPct').textContent    = pct + '%';
   document.getElementById('mqDailyResStreak').textContent = data.bestStreak || 0;
   document.getElementById('mqDailyResXP').textContent     = '+' + (data.xp || 0);
-  document.getElementById('mqDailyResDate').textContent   = (pack.emoji || '') + '  ' + (pack.name || 'Daily Quiz').toUpperCase() + '  \u00b7  ' + mqDailyDate();
+  document.getElementById('mqDailyResDate').textContent   = (pack.emoji || '') + '  ' + (packName(pack) || 'Daily Quiz').toUpperCase() + '  \u00b7  ' + mqDailyDate();
   var answers = data.answers || [];
   var emoji = answers.map(function(a) { return a ? '\uD83D\uDFE9' : '\uD83D\uDFE5'; }).join('');
   document.getElementById('mqDailyResEmoji').textContent  = emoji;

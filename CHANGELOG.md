@@ -4,7 +4,7 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS (as of v0.150.82)
+## OPEN ITEMS (as of v0.150.91)
 
 **Device state: v0.150.74 built, installed and verified.** Backup is DONE. The
 Save dialog opens, the file lands where you choose, and the full round trip —
@@ -156,6 +156,307 @@ feel and its sources contradict each other on accents.
 ---
 
 ---
+
+## v0.150.91 — Italian done. The one string left is a chord symbol.
+
+The last three had one cause between them, and the fix is general rather than
+three patches.
+
+**A tool that rebuilds its own controls does so after `applyLang()` has run**, so
+any `data-i18n` inside it reverts to the English default. That is why the drone
+dropdown, the theremin trigger and the rhythm cards transport stayed English
+while being correctly tagged with correct values in both tables. The theremin got
+a relabeler for this in v0.150.90; registering one per tool would be the same
+patch over and over.
+
+`_langRefresh()` now runs on `enterTool` and `enterExercise`, deferred a tick so
+the tool has finished building. One `querySelectorAll` over tagged elements when
+a screen opens, which removes the whole class rather than three instances of it.
+
+Also in this pass:
+
+The drone tool's scale dropdown builds from `TC_SCALE_GROUPS`, which holds
+English names. `SCALES` already carries `it:` for the same keys, but in the
+uppercase form the scale chips use, and putting DORICO in a list of Title Case
+entries would look like a bug. It has its own title-case map, and the eight group
+headers are translated: FAMIGLIA MAGGIORE, PENTATONICHE E BLUES, THAAT INDIANI.
+
+`rcSetPlayBtn` rewrote the transport on every play and stop with English
+literals; both now read keys.
+
+**Where the whole pass ends up.** 167 identical strings when this started, 81 now,
+and exactly one of those is arguably wrong: `9sus4`, which is a chord symbol and
+should stay. The rest are proper names, module names, Japanese and Indian scale
+names, and words that are the same in both languages.
+
+The pattern behind nearly every defect, stated once more because it held from the
+first fix to the last: the translation existed. What showed English was a second
+copy of the same list, a render site reaching past the translated field, or a
+builder that ran after the tags were applied.
+
+## v0.150.90 — Italian finished, bar three
+
+97 identical strings down to 85, and of those only three are arguably wrong.
+
+Wired this pass: the notation card group names, all 36 of them, from `arpeggio`
+to `wind-hole`; the transposer, both the summary line and the instrument
+dropdown, where only the two Concert Pitch rows differ and every other entry
+names an instrument key that reads the same either way; the tempo training bar
+label, which built its text with template literals around bare English words; the
+rhythm reading survival banner; the quiz resume banner and mode header; the
+drone tool's scale dropdown; and the notation card TEST button, whose Italian
+value was the English string.
+
+**The theremin needed a relabeler.** Its controls are rebuilt when the tool
+opens, after applyLang has run, so tagged elements reverted to their markup
+defaults. Registered against `toolTheremin`, and all it does is re-run applyLang
+for that screen; nothing there comes from a data table.
+
+**Three left, and they share one cause.** `Major (Ionian)` on the drone dropdown,
+`TRY A SOUND` on the theremin trigger, and `▶︎ PLAY` in the rhythm cards
+transport. All three are tagged, all three have correct Italian in both tables,
+and all three are rewritten by JavaScript after the tag has been applied. Each
+needs its specific setter found, which is the same fix as the other twenty in
+this session and simply was not worth another hour tonight. They are on the
+buglist with this diagnosis so the next pass starts from the cause rather than
+the symptom.
+
+What remains beyond those three is chord symbols, Japanese and Indian scale
+names, proper nouns and words identical in both languages.
+
+## v0.150.89 — setLang translated the page, then twenty-four builders untranslated it
+
+The find of the session, and it explains a whole class of "the key exists and the
+screen is still English".
+
+`setLang()` calls `applyLang()` at the TOP, then runs about two dozen builders.
+Several of those rewrite elements that carry `data-i18n`, putting the English
+default straight back. A tagged element could therefore read QTR in Italian while
+`t('tg_qtr')` returned 1/4, and calling `applyLang()` by hand afterwards fixed it.
+That is exactly what happened when I tested it.
+
+`applyLang()` now runs again at the END of setLang. One querySelectorAll over the
+tagged elements, on a language switch, which happens rarely and never in a loop.
+
+**Fifth copy of the difficulty names.** The survival cell builder in rhythm
+reading carried its own `{ easy:'EASY', normal:'NORMAL', ... }`. Reads through
+`rrDiffName()` now, like the other four.
+
+**Raw object keys printed as labels.** Two tempo-guess subtitles did
+`subEl.textContent = tgSubdiv + ' ▾'` and `tgGroove + ' ▾'`. Those are variable
+names, so they were always going to be English whatever the language. Keyed.
+
+Also wired: the theremin wave labels (a JS setter overwrote the tagged element on
+every wave change, so the tag had never survived a click), the octave rows in the
+tuner and the drone tool, both piano nameplates, the drum kit save chip, the
+interval direction arrow, the transposer summary, and the static defaults on the
+tempo guess and rhythm card controls.
+
+98 left on the measure. Around 18 of those are still arguably wrong and are listed
+in the buglist; the rest are chord symbols, proper names and words identical in
+both languages.
+
+**A working note, since it cost time.** Several edit scripts in this session wrote
+the file only at the end, so when a later assertion failed the earlier successful
+edits were discarded silently while their strings had already landed elsewhere.
+That produced two rounds of "this is fixed" followed by a measurement saying it was
+not. Write each edit as it succeeds, or verify by measuring rather than by reading
+the ok lines.
+
+## v0.150.88 — Rhythm reading options, tempo guess, and a duplicate-key problem
+
+119 down to 105, and of what remains only 26 are arguably wrong.
+
+**Rhythm reading options panel.** The whole panel is built from one table of
+literals, group labels and chip labels together, so BARS / SHOW / HIDE / LENGTH /
+MIX / 1 BAR / 2 BAR / REPLAY were all English. Second element of each entry is now
+a key. ON and OFF stay as they are: both read as English in Italian on a chip that
+size. Also the 4/4-only note and the survival subtitle.
+
+**Tempo guess.** The trigger button has always read `sd.labelIt`, and none of the
+six subdivisions had one, so the reader worked and found nothing to read. In
+Italian the note-value abbreviations are the fractions themselves, which is also
+what fits: 1/4, 1/8, 1/16, TERZ. The subtitle underneath printed the raw object
+KEY, so it read "quarter" because that is a variable name.
+
+**A duplicate-key problem, mostly not mine.** Both language tables contain keys
+defined twice. In a JavaScript object literal the later definition wins silently,
+so the earlier is dead. 17 keys in English, 18 in Italian, and several disagree:
+
+    IT  scale_loop      'CICLO'      then 'LOOP'
+    IT  mq_game_over    'GAME OVER'  then 'PARTITA FINITA'
+    IT  sub_label       'SUB'        then 'SUDD'
+
+`scale_loop` is the one that matters: the Italian translation exists and is dead,
+which is why LOOP appears untranslated in the scales tool. Not fixed here, because
+choosing between two values someone wrote deliberately is not a change to make
+blind. On the buglist.
+
+Five of those duplicates WERE mine, added in earlier batches of this session: the
+key already existed and its VALUE was wrong, and adding a second entry only worked
+because the later one wins. Removed, and the existing entries corrected in place:
+vol_reset is AZZERA, tone_label is TIMBRO, iv_test is VERIFICA, metro_tab_ramp is
+RAMPA, tl_bpm_cap is "obiettivo · bpm".
+
+Both tables now carry every key added this session. A key present in one table
+only falls back to the key NAME in the other language, which is worse than English.
+
+## v0.150.87 — The Survival Guide contents strip, and the pattern named
+
+Fourth time, same shape, and now it is worth naming properly.
+
+Every Survival Guide section already carries `title_it`, and THREE render sites
+already read it: the page header, the next-section label and the contents list.
+The chapter pill strip is the fourth and read `sec.title` directly. So the
+contents strip along the top of your reference section sat in English while the
+page header beside it said NOTAZIONE. One reader now, `sgSecTitle()`.
+
+**The pattern, stated plainly, because it has produced every Italian defect this
+session:** the translation almost always exists. What shows English is a SECOND
+COPY of the same list, or a render site that reaches past the translated field.
+Scale chips, tone groups, quiz packs, rhythm reading difficulties, and now this.
+Five for five. When something looks untranslated, look for the duplicate before
+writing a new string.
+
+**Rhythm cards.** The TAP MODE and CLICK toggles are rewritten by JavaScript on
+every press, so tagging the markup did nothing; I tried it and reverted it in the
+same pass. Keyed at the two setters instead, through `rcTapModeLabel()` and
+`rcClickLabel()`. ON and OFF stay English: both read as English in Italian on a
+toggle, and MODALITÀ TAP: ACCESO does not fit the button.
+
+Theremin POWER is ACCENSIONE, its range reads 5 ott, and strings are in place for
+the remaining scattered singles.
+
+129 down to 119.
+
+## v0.150.86 — Rhythm reading, cities, and two tones nobody had translated
+
+**The same shape as the scales tool, a third time.** Rhythm reading's four
+difficulty names already exist as keys and already say FACILE, NORMALE,
+DIFFICILE, ESTREMO. Two places rebuilt them as a hard-coded English map instead,
+so the difficulty picker said FACILE while the survival bar and the game-over
+screen underneath said EASY. Four words, three sources. There is one reader now,
+`rrDiffName()`.
+
+SURVIVAL, BEST and NO RECORD in the same screen were plain literals and are keyed:
+SOPRAVVIVENZA, RECORD, NESSUN RECORD. The Survival Guide's "swipe to begin" hint
+too.
+
+**Cities.** Only Barcelona has an Italian name anyone actually says, so this is
+one string rather than the cluster it looked like. The other five carry `name_it`
+anyway, so the field is uniform and a city added later cannot be missed by
+accident. Both render sites, the map label and the passport stamp, read through
+`rtCityName()`.
+
+**Two tones out of fifty-five had no `it:`.** BELL is CAMPANA. PAD stays PAD,
+which is what it is called in Italian too.
+
+129 left, and the composition has changed: what remains is chord symbols, the
+Japanese and Indian scale names, module names and words that are the same in both
+languages. The clusters are gone.
+
+## v0.150.85 — Italian: scales, tone groups and the whole Music Quiz
+
+Measured rather than grepped. Every screen rendered in English and in Italian and
+the visible text compared element by element. A source grep for `label:` had
+suggested 618 untranslated strings; on screen it was 167, because most of those
+entries are internal data a user never sees.
+
+**Two lists that already had translations, and a second copy that did not.**
+
+`SCALES` carries `it:` for every scale, so DORIAN has said DORICO for a long time.
+The scales tool does not use it: the chips read from a separate abbreviated table,
+`SCALE_SHORT_NAMES`, which was English only. Same data, two lists, one forgotten.
+The Italian side now has its own abbreviations rather than translations of the
+long names, because these chips are a few characters wide, and it is read through
+a getter so a mid-session language change takes effect.
+
+`TONE_GROUPS_DEF` was the same story. The tone popup builds the identical five
+groups through `_tg('tonegrp_keys','KEYBOARD')` and shows TASTIERE, ONDE,
+PIZZICATE, OTTONI, LEGNI. The scales tool's copy was hard-coded English. It now
+carries the same keys and resolves them at render.
+
+**All 19 quiz packs have Italian names and descriptions.** Nine places render a
+pack title and two render a description; they now all go through `packName()` and
+`packDesc()`, which is the only way a list like that stays consistent. The Beatles
+stays The Beatles. Guitar Gods became Chitarristi leggendari rather than a literal
+rendering, which would read like a bad subtitle.
+
+Group headers, the survival subtitles and the two big buttons are keyed:
+GENERALE, STRUMENTO, DECENNI, TUTTE LE RACCOLTE — 10 DOMANDE, INIZIA
+SOPRAVVIVENZA.
+
+**And a bug that was hiding behind all of it.** The three quiz pack grids are
+built once at DOMContentLoaded and were never rebuilt. Switching to Italian
+mid-session left every pack title in English until the app restarted, even after
+the strings existed. Registered with the relabel registry, keyed on the modal so a
+language change with the quiz closed costs nothing.
+
+Cities: only six exist in Road Trip and only Barcelona has an Italian name anyone
+uses. That is one string, not a cluster, and it is on the list below rather than
+done here.
+
+167 down to 131. What remains is mostly chord symbols (add9, 7sus4), proper names
+and single words that are identical in both languages.
+
+**The measuring tool needed a fix too.** It counted the closed Music Quiz modal as
+visible: full size, fully opaque, `pointer-events:none` until it opens. Exactly the
+trap that killed the back button on the Tools tab in v0.150.81. Anything inside a
+click-through subtree is skipped now, which is what took the count from 154 to 131.
+
+## v0.150.84 — The last two hard-coded strings on the Simple face
+
+`SF_FAMS` carried its member lists as plain literals: `ex:'violin · cello'` and
+`ex:'mandolin · banjo'`. The titles above them were translated in .83, so the
+Italian screen read "ARCHI / violin · cello", which is worse than leaving both in
+English.
+
+Both entries now carry an `exKey` and the builder prefers it, falling back to the
+literal if the key is missing. Italian gets "violino · violoncello" and
+"mandolino · banjo". The counted subtitles ("12 accordature") were always built
+from a key and were never affected.
+
+FOLK and UKULELE stay as they are: both are the words Italians use. "Popolare"
+would be the literal translation of folk and means something else.
+
+**A sweep for the same pattern elsewhere.** 92 hard-coded literals sit in data
+tables that reach the screen, and after reading them they are all technical
+fingering and voicing labels: "Barre 3", "Side Bb", "RH E key", "Forked F",
+"Rootless", "Pos 4". Italian players use those terms as they are, the same way
+English players use "barré". Translating them would be a large job with a
+debatable result, so they stay. Recorded here so the next person to run that
+search knows it was looked at rather than missed.
+
+## v0.150.83 — Four Italian defects on the one screen being photographed
+
+Found while taking screenshots for the Italian store listing, which is the only
+reason anybody looks hard at a screen in a second language.
+
+**Two labels overran their button.** The face swap is a fixed-width control on
+purpose: the label alternates between two words, and a content-sized button would
+shove the whole row sideways on every swap. "Completo" needs 55px in the 48px the
+label gets, so it rendered as "COMP…". It is "Piena" now. Shortened rather than
+widened, because the fixed width is what stops the row moving; growing it to fit
+one word would undo the reason it is fixed.
+
+"STROBOSCOPIO" was the same problem in a wider button. It is "STROBO", which is
+what the word gets shortened to in Italian studio use anyway, and it now measures
+the same as the English "STROBE".
+
+**FORK was never tagged.** A bare `<span>FORK</span>` with no `data-i18n`, so it
+stayed English in every language. Tagged, and Italian gets "DIAPASON", which is
+the correct term and fits the control row with room left.
+
+**Three Simple-face cards had English titles over Italian subtitles.** `SF_FAMS`
+gave STRINGS and FOLK translation keys and left GUITAR, BASS and UKULELE as
+literals, so the Italian screen read "GUITAR / 12 accordature". All three are
+keyed now: CHITARRA, BASSO, UKULELE.
+
+One thing that looked like a fifth defect and was not: a width check flags the
+strobe pill in BOTH languages, because the button has `overflow: visible` and the
+trailing letter-spacing inflates scrollWidth past clientWidth. Rendered side by
+side, English and Italian are identical and the text sits inside the pill. The
+measurement was wrong, not the button.
 
 ## v0.150.82 — The web version has been playing synthesised piano the whole time
 
