@@ -4,7 +4,7 @@ A human-readable record of what changed, when,
 
 ---
 
-## OPEN ITEMS (as of v0.150.97)
+## OPEN ITEMS (as of v0.150.115)
 
 **Device state: v0.150.74 built, installed and verified.** Backup is DONE. The
 Save dialog opens, the file lands where you choose, and the full round trip —
@@ -156,6 +156,672 @@ feel and its sources contradict each other on accents.
 ---
 
 ---
+
+## v0.150.115 — The pages that read as machine-written
+
+`sg_style.py` scores every page on the markers the detection literature actually
+measures: sentence-length variance, type-token ratio, tricolons, hedge openers,
+resolution closers and phrase frames. It ranks them; it does not judge them.
+
+**The guide was in better shape than expected.** Median sentence-length SD is
+10.3, which is human range, against the 12-to-18-word low-variance clustering
+that marks model output. Hedge openers: zero. Phrase frames: near zero. The
+em-dash and AI-speak passes did their job.
+
+**Two patterns did give it away, and both are now largely gone.**
+
+GENRE LIST PADDING was the loud one. 69 tricolons in the guide and 63 were
+adjective piles or genre lists rather than real enumerations: "popular, rock,
+jazz, and funk", "bright, clear, and defined", "warmer, thicker, and quieter". A
+person names one example, or two if they contrast. Down to 49, and the ones fixed
+were the worst offenders.
+
+RESOLUTION CLOSERS were the quiet one. The CAGED page ended "once it clicks, you
+stop thinking in isolated positions and start seeing the shapes connect into one
+continuous map of the fretboard": aspirational, no new information, pure closing
+move. It now says what a player actually needs, which is that all five shapes
+have to be solid before any of it helps, and that most people learn E and A
+properly and fake the other three for a year.
+
+Rewritten: Electric Piano, String Counts, Palm Mute & Tapping, Hammer-On &
+Pull-Off, Root Position & Inversions, The Same Keys, The CAGED System, Parts of
+the Ukulele, Alto Flute & Piccolo, Cymbal Types, Pickups & Controls.
+
+**Where a rewrite added rather than cut**, it added the thing an expert would
+have said and a summariser leaves out: that a hammered note is quieter than a
+picked one, so long legato runs fade; that single-coils hum, which is what the
+word humbucker refers to; that the alto flute's breathiness is the point, and
+composers write for it when they want the air audible.
+
+**One note on the tool.** It flags SHAPE, not emptiness, so it now scores some of
+the replacements higher than the originals. "That is most of what separates
+keyboard writing that sounds arranged from keyboard writing that sounds typed"
+trips the closer test and is a better sentence than the one it replaced. Half
+Step & Whole Step scores badly for uniform rhythm and is correct as written,
+because short declaratives are right for a definitions page. Chasing the number
+down would make the guide worse. Read the list, do not obey it.
+
+## v0.150.114 — The people-claims, and the didgeridoo age hedged properly
+
+The last category in the fact pass: 31 sentences attributing something to a named
+person or product.
+
+**The didgeridoo claim was at the aggressive end of the evidence.** The page said
+"developed by Aboriginal Australians over at least 1,500 years". The rock art in
+Arnhem Land and Kakadu showing a player dates to roughly 1,500 years ago, and
+that is the oldest firm evidence there is; Wikipedia's own wording is the more
+cautious "at least 1,000 years". Saying "at least 1,500" quietly turns the
+ceiling of the evidence into its floor.
+
+Rewritten to say what is actually known, and it now also handles the myth the
+reader is most likely to have met: claims of 40,000 years get repeated
+constantly and nothing found so far supports them. That is a better paragraph
+than the one it replaced, because a reference page that corrects a popular error
+earns more trust than one that dodges it.
+
+**Two verified and unchanged.** Miles Davis did play flugelhorn on Sketches of
+Spain: the session personnel list him as "trumpet, flugelhorn". The Hohner 270
+Super Chromonica does cover three full octaves, per Hohner's own product copy.
+
+**Left as they are, on strong general knowledge rather than a search:** the
+attributions of players to instruments and styles. Charlie Parker and Cannonball
+Adderley on alto; Hawkins, Young, Rollins, Coltrane and Henderson on tenor; Earl
+Scruggs and three-finger banjo; Bill Monroe and the bluegrass mandolin template;
+Jethro Burns and David Grisman on jazz mandolin; Toots Thielemans and Howard
+Levy on harmonica; Willie Dixon in blues; Vaughan Williams and John Williams
+tuba concertos; the pickup and hardware brand examples. These are the kind of
+attribution that is repeated in every method book for the instrument, and none
+of them is a priority claim of the sort that caught out the bouzouki page.
+
+**Fact pass complete: 81 of 81 checkable sentences reviewed, 7 errors found and
+corrected across .110 to .114.** They were the Irish bouzouki attribution,
+Chiotis's name and date, the ukulele scale figures, the trombone slide spacing,
+the clarinet chalumeau boundary, the trombone valve absolute, and the didgeridoo
+age. Six of the seven were in instrument pages rather than theory, which is
+where the specific numbers live.
+
+## v0.150.113 — The absolutes, and a clarinet register that was off by a fifth
+
+Working the 17 absolute claims. Most are safety advice ("never push through
+pain"), hedged opinion, or simply true ("C is always the white key just left of
+any group of two black keys"). Two were not.
+
+**The clarinet chalumeau register was wrong by about a fifth.** The page put it
+"below approximately E4". The chalumeau runs from written E3 up to around G4;
+above that sit the throat tones, G4 to B flat 4, and the clarion starts at B4.
+Putting the boundary at E4 places it near the bottom of the staff, which is
+inside the register rather than at its top.
+
+Corrected, and the page gained the two things that make the register map worth
+having: the throat tones as a named fourth region and the thinnest part of the
+range, and the reason the break is hard. The register key sends the note up a
+TWELFTH, not an octave, because a cylindrical bore closed at one end favours odd
+partials, so the fingering changes completely. A clarinettist would have spotted
+the old version immediately. (ResearchGate register chart; Martin Freres; Jenny
+Maclay; Sheet Music Plus.)
+
+**"The only common brass instrument with no valves" has counterexamples.** The
+bugle has no valves and is common enough. What is actually unique about the
+trombone is the SLIDE, so both places that made the claim now say that instead:
+it changes pitch with a slide rather than valves, which no other common brass
+instrument does. Same fact, no hole in it.
+
+**Checked and left alone:** fret 12 always taking a double marker; C sitting left
+of every pair of black keys; horn parts almost always written in F; the theremin
+hedged as "one of the only" instruments played without touching it; the gamelan
+tuning claim, verified in v0.150.110.
+
+Fact pass total: 36 of 81 checkable sentences verified, six errors found and
+fixed. What remains is the 31 people-claims, which are mostly attributions of
+technique and repertoire to named players.
+
+## v0.150.112 — Measurements checked, two wrong
+
+Continuing the fact pass through the 15 measurement claims. Two were wrong, both
+in ways a player of that instrument would catch on sight.
+
+**Ukulele sizes were overall lengths labelled as scale lengths.** The page listed
+soprano 53cm, concert 58cm, tenor 66cm and baritone 73cm+ as SCALE, and those are
+the figures for the whole instrument end to end. Scale is nut to saddle, which is
+about 33, 38, 43 and 50cm, and scale is the number that decides fret spacing,
+which is exactly what those sentences go on to discuss. So the page was quoting
+one measurement while explaining the other. Both figures are given now. (Barnes &
+Mullins; UkuTabs; Ukulele Magazine; Deering.)
+
+**Trombone slide positions are neither 6cm nor evenly spaced.** The page said
+"seven slide positions, each extending approximately 6cm". Each semitone needs
+about 6% more tubing than the last, so the gaps GROW as the slide goes out: about
+8cm between first and second, over 10cm between sixth and seventh. That is a
+better fact than the one it replaced, because it explains why the outer positions
+are the ones players miss. (LibreTexts Brass Techniques; Playing Brass.)
+
+**Verified and unchanged:** 88 keys as 52 white and 36 black over just over seven
+octaves. A0 at 27.5Hz, C8 at 4186Hz, A4 at 440Hz. Bass long scale at 34 inches.
+Concert pedal harp at 47 strings and six and a half octaves in C flat. Lever
+harps at 22 to 40 strings. Note values and dotted values.
+
+Running total for the fact pass: 19 of 81 checkable sentences verified against
+sources, four errors found and fixed. The remaining 62 are the 31 people-claims
+and the absolutes, still in sg_claims.json.
+
+## v0.150.111 — Fact pass across the guide, and one real error found
+
+`sg_claims.py` extracts every sentence in the guide that asserts something
+CHECKABLE, sorted by how badly a mistake would read: dates, named people,
+invention and priority claims, measurements, and absolutes. Opinion and
+instruction are excluded, because "hold the stick loosely" cannot be wrong the
+way a date can.
+
+164 English bodies produce 81 checkable sentences: 15 dates, 31 named people, 15
+measurements, 17 absolutes, 3 priority claims.
+
+**One real error, in the Irish bouzouki page.** It credited the instrument to
+"Donal Lunny and Andy Irvine" and left out Johnny Moynihan entirely, and every
+source puts Moynihan first: he brought a Greek bouzouki into Irish music with
+Sweeney's Men in the mid-1960s and retuned it to GDAD to match the fiddle. Irvine
+took it up next. Lunny made the two changes that actually define the instrument,
+replacing the octave strings on the low courses with unisons and commissioning
+the first flat-backed bouzouki built for Irish music from luthier Peter Abnett.
+The page says all of that now, in both languages.
+
+That is the exact failure mode of writing from memory: the two most famous names
+attached to the instrument today are the two that surface, and the person who
+started it does not.
+
+**One correction of precision.** Manolis Chiotis is the standard spelling, not
+Hiotis, and sources say the four-course tetrachordo came in during the MID-1950s
+rather than the 1956 the page asserted. Fixed in the prose and in the tuning
+table's comment.
+
+**Verified and unchanged:** saxophone patented 1846 by Adolphe Sax (28 June,
+a family of eight). Theremin invented 1920 by Lev Termen. Gibson A-style and
+F-style mandolins as early 20th century archetypes, with Lloyd Loar's F-5 from
+1922. Greek trichordo in Piraeus rebetiko. Cittern in the 1970s folk revival.
+Van Halen's "Eruption", 1978. Plus everything re-checked in v0.150.110.
+
+**Still unverified, and listed so it is not mistaken for done:** the 31
+people-claims and 15 measurements have not each been searched individually. The
+dates and priority claims were the priority because they are the most quotable
+and the most often wrong. `sg_claims.json` holds the full extraction, so the
+remainder can be worked through without repeating the analysis.
+
+## v0.150.110 — Percussion, checked against sources this time
+
+Daniele asked whether the new percussion content was researched. It was not. The
+slap bass section in .103 was researched because he asked for that one
+specifically; the thirteen percussion pages in .109 were written from memory and
+shipped without a single search. That is the honest answer and it should not have
+needed asking for.
+
+Checked afterwards, the claims held. But memory produces the VAGUE version of a
+fact, and a reference page is only worth reading for the specific one. Every
+correction below is the difference between those two.
+
+**Taiko.** Memory: "the modern concert form dates from the 1950s". Source: 1951,
+Daihachi Oguchi, a JAZZ drummer who found an old shrine score, wondered why taiko
+were never played together, and arranged drums of different sizes the way a jazz
+kit is arranged. Almost every group performing today works from that template.
+(Stanford Taiko; Osuwa Daiko; Wikipedia.)
+
+**Rudiments.** Memory: "forty in the standard list". Source: the Percussive Arts
+Society International Drum Rudiments, forty, built out from an older set of
+twenty-six. (pas.org.)
+
+**Clave.** Memory: "differ by a single stroke, the third one". Source: son puts
+that stroke ON beat 4 and rumba puts it on the AND of 4. Naming the displacement
+is the whole point, and the page now says why it matters: rumba rolls where son
+walks. (Berklee PULSE; Soundbrenner; artdrum.)
+
+**Teentaal.** The page said sixteen beats in four groups and stopped. It was
+missing the thing that makes the cycle usable: the name means THREE CLAPS, and it
+describes how you keep your place. Clap on 1, clap on 5, wave on 9, clap on 13.
+The wave marks the khali, the empty section, and one weak point in the cycle is
+what stops sixteen even beats turning into mush. (Wikipedia; Grokipedia.)
+
+**Maqsum.** Correct as written, and its neighbour was missing: baladi is the same
+rhythm with the opening changed from dum tek to dum dum. One stroke apart, heard
+as separate rhythms, which is the clave lesson again in another tradition.
+(Wikipedia, Maqsoum.)
+
+**Gamelan** held exactly as written. A gatra's final beat, the seleh, dominates
+it, so gatras are Western bars in reverse with the strong beat at the end.
+(Wikipedia, Gatra.)
+
+The rule this should have followed, and now does: content about a tradition gets
+checked before it ships, not after someone asks.
+
+## v0.150.109 — Percussion goes from 4 pages to 17, and the guide can start a groove
+
+Percussion was the thinnest tab in the guide and the only one with a single
+section. It now has six, shaped like the bass tab, which is the fullest.
+
+**ANATOMY.** Shell woods and what they do, batter head against resonant head and
+why removing the resonant one kills the drum, hoop and tension rods. Then cymbal
+types, with the point that weight matters more than diameter: a thin 20 inch ride
+washes out under heavy playing and a heavy 18 inch crash never opens up under
+light playing.
+
+**TECHNIQUE.** Matched against traditional grip and where traditional came from.
+The fulcrum, and why a tight stick cannot rebound. Then stroke types: ghost
+notes, rimshot, cross-stick. Then the five rudiments that carry the other
+thirty-five.
+
+**TUNING.** The section that was missing entirely, and the most common reason a
+beginner sounds bad through no fault of their playing. Star pattern, quarter turns,
+tapping an inch in from each rod, and the note that you are matching those taps to
+each other rather than to any particular pitch.
+
+**LATIN and WORLD PERCUSSION, and these hook into the metronome.** The groove
+library already holds 60 researched patterns across latin, african, funk and
+world, and describing a clave in words while the app can play it was the weaker
+half of the lesson. `_sgLaunch` accepts a `groove` option now, the same way it
+already accepted a progression `preset`: the button switches the metronome to
+groove mode and loads the named pattern.
+
+Seven pages carry one. Clave and why 3-2 and 2-3 are not interchangeable, with
+son and rumba differing by a single stroke. Tresillo and habanera. Samba against
+bossa as the clearest demonstration that a rhythm and a groove are different
+things. West African bell patterns, including the caveat that an even grid is an
+approximation, because the subdivisions in Mali and northern Ghana are
+deliberately uneven. Tabla and tala, with bol: every stroke has a spoken syllable
+and you learn the rhythm as language first. Taiko and gamelan, where the strong
+beat falls at the END of a phrase. Maqsum and the doumbek, dum and tek.
+
+Every groove id was checked against GROOVE_PRESETS before the pages were written,
+because a link to a pattern that does not exist fails silently: the button
+appears, does nothing, and nobody finds out until a user taps it. Verified again
+end to end afterwards by walking the guide to the clave page and clicking: the
+metronome opens on son32 and the guide's body lock releases.
+
+No Try the Drum Kit page was added. The overview section already ends with an
+OPEN DRUM KIT link and a second identical button four sections later is clutter.
+
+63 sections, 198 pages.
+
+## v0.150.108 — The symbol strip keeps its own gesture
+
+Dragging the symbol row turned the page instead of scrolling the row. The page
+swipe already stands aside for the two horizontal strips that existed when it was
+written, `.ch-pills` and `.nav-tabs-scroll`; the symbol strip is a third one,
+added later, and nobody put it on the list. It is exempt now in both the
+touchstart and the touchmove handler.
+
+A fade on the right edge marks a row that continues, since the scrollbar is
+hidden and a clipped cell otherwise reads as a layout fault. The fade is measured
+away when the row fits, so a three-badge page does not look truncated.
+
+## v0.150.107 — Repairing .106, then the heading and register work
+
+**Three faults, all mine, all from the same script.** The em-dash pass in .106
+used regexes that were meant for prose inside JS strings and ran over the whole
+guide region, which includes real markup and real code.
+
+1. `hd.innerHTML=_head.replace(/\n/g,'<br>')` lost its `<br>`, so every two-line
+   heading rendered with the words fused: "Speed ofthe Music". The tab-title
+   builder had the same wound. Both restored, and the file swept for any other
+   `replace(..., '')` that should emit something: the rest are legitimate strips.
+
+2. **24 stray `<br>` tags loose in the body.** The comment-stripper replaced HTML
+   comments sitting between top-level `<div>`s with two breaks each, which is
+   about 490px of empty document on the tuner tab and 446 on the metronome. That
+   is the phantom scroll. Removed; the tuner now measures 58px of over-scroll,
+   exactly what the pre-.106 build measured, so it is pre-existing and small.
+
+3. `re.sub` expands escapes in its REPLACEMENT string, so the heading rewrite
+   turned every `\n` into a real newline and broke 16 Italian headings mid-string.
+   Two more were mangled where the original contained an escaped apostrophe.
+   All repaired.
+
+The lesson is in the changelog rather than in a comment because it applies to
+every future pass: a regex written for prose must be scoped to the prose, and a
+syntax check belongs after EVERY step, not at the end of a batch.
+
+**Headings read as a reference now.** 16 were questions or slogans while the
+other 169 were topic names, which is why the set felt informal without an obvious
+culprit. "How Loud, How Soft" is Dynamic Markings. "What Is a Mode" is Modes
+Defined. "The Seven Colors" is The Seven Modes. "The Roadmap" is Repeats & Jumps.
+"Air, Reed, and Resonance" and "Lips, Air, and Metal" are both Sound Production.
+A reader scanning the contents strip now learns what a page covers without
+opening it.
+
+**The dynamics and tempo pages rewritten in the guide's proper register.** Both
+opened by arguing that their subject matters ("one of the most powerful
+expressive tools in music, and one of the most neglected by beginners") and then
+worked toward the information. They now open with what the thing is. Dynamics
+gained the point that was missing entirely: the marks are relative, and forte
+means louder than the mf before it, on your instrument, in that room.
+
+Both are written to the rules the rest of the guide should follow, which are set
+out at the top of `sg_ste.py`: state the fact before its importance, one idea per
+sentence, active voice, no intensifiers, no throat-clearing, and keep the
+concrete detail, because plain does not mean thin.
+
+Subtitles lost their eight remaining em-dashes to the middle dot the guide
+already uses for the same job.
+
+## v0.150.106 — Survival Guide, whole-thing pass
+
+58 sections, 185 pages, read as a structure rather than a screen at a time.
+`sg_full_audit.py` checks five things that fail differently: structure and
+ordering, wiring, language parity, copy tells, and which instruments offer a way
+into the chart tool.
+
+**Copy: 106 bodies rewritten to remove every em-dash.** Two shapes, handled
+differently, because a blind replace produces either a run-on or a stack of
+stubs. A definition dash after a bolded term becomes a COLON, which is how a
+glossary line reads: "Rallentando (rall.): gradually slow down." A dash joining
+two clauses becomes a semicolon, the house preference: "smooth, connected; no
+audible gap between notes." The first attempt used a full stop for definitions
+and read as fence posts, which is the failure mode the copy rules warn about, so
+it was redone.
+
+Zero em-dashes left in guide prose. Also checked and clean: no "not just X, it's
+Y", no rhetorical openers, no sass, no exclamation marks. One "seamless" survives
+and should: it describes trombone slurs, where it is the technical word.
+
+**43 stale PHOTO OPPORTUNITY comments removed** from the prose, left behind when
+the placeholders came out in .101. Invisible to a reader, but they were carrying
+stray line breaks around them, which is why some pages had an odd gap.
+
+**Five Try the Charts pages added**, guitar first. The instrument the chart tool
+was built around had no way into it from its own section. Also lute, bouzouki,
+the bowed strings, and the chromatic harmonica. 18 becomes 23, and every target
+was checked against CS_INSTRUMENTS: all valid.
+
+The twelve chart instruments still without a page of their own are variants
+reachable from a sibling: cello and viola from the strings page, cor anglais from
+oboe, bass clarinet from clarinet, flugelhorn from trumpet. Coverage is complete
+in practice.
+
+**Wiring.** All 29 page types have a renderer. The audit first reported six
+without one (beat, whole, half, quarter, eighth, b) and every one was a false
+positive: those are note durations, key-signature accidentals and metronome
+events matching the same pattern, not page types. Every link target resolves to a
+real tool.
+
+**Parity.** The first run reported 106 missing Italian bodies, which was also
+false: HELP_CONTENT uses `bodyIt` where the guide uses `body_it`, and the counts
+were pooled. Scoped to the guide, every eye, head, sub and body has its twin.
+
+**Ordering** reads correctly: theory first (dynamics, tempo, articulation,
+notation, intervals, harmony, cadences, modulation, modes), then instrument
+families, then voice, percussion and theremin. Nothing to move.
+
+**Thin sections, flagged rather than changed:** CADENCES, MODULATION, TUNING &
+REENTRANT and VOICE TYPES are one page each. That may be right for a survival
+guide, but they are the four places where a reader could want more, and it is
+Daniele's call whether they grow.
+
+## v0.150.105 — Six from a device pass, and three of them were mine from .104
+
+**Raw HTML on the Italian dynamics page.** The insertion script found the closing
+quote of the wrong field and appended 842 characters of markup to the EYEBROW of
+the NEXT page, so the screen showed `DYNAMICS<br><br><strong>La scala...` as
+literal text above the heading. Repaired, and the Italian moved to the body it was
+written for. Swept the file afterwards for any other markup in an eyebrow, head or
+sub field: none.
+
+**"Train your ear" opened nothing and "Try the metronome" would not come back.**
+The sg-open guard added in .102 went into `enterTool` only. `_sgLaunch` also
+reaches `enterExercise` and `setMode`, and neither cleared the class, so an
+exercise or a mode launched from the guide ran with `position:fixed` still on the
+body. Both have the guard now. Verified across all four transitions: guide,
+exercise, guide, metronome, guide.
+
+**The symbol strip wrapped onto two lines** and pushed the heading off screen on
+the dynamics page, which has nine markings. It is one row now and scrolls
+sideways; it is a reference band, not the content. Wide glyphs like fff had been
+stretching their cells and making the row ragged, so cells are capped.
+
+**Terms that promised a sound and had none.** The `sg-term-play` class carries a
+dashed underline and a small play triangle, and 16 of the 35 symbols have a glyph
+but no audio demo, 15 of them added by me in .103 and .104. Tapping them did
+nothing, which reads as broken rather than as silent by design. The builder now
+adds `sg-term-mute` to any term with no demo: it keeps the badge and the zoom and
+drops the triangle.
+
+**The Roadmap page's symbols are gone**, as Daniele asked. D.C., the segno, the
+coda and both repeat barlines are explained in the prose right below, and the
+badges added nothing but silence. The five glyphs came out of the table with
+them, since nothing reaches them now. 35 glyphs, 35 tagged, still balanced.
+
+**The clef staff was too narrow for its own notes.** The ninth note sat at x=222
+against a staff ending at 214, so the top of each scale hung off the end. Staff
+widened and spacing tightened; the last note now sits 26px inside it.
+
+## v0.150.104 — Symbols audited properly, one Try It button per instrument, and the Rumble drawn
+
+**The symbol work in .103 was half done and I did not notice.** Twenty glyphs went
+into the table and none were wired into the prose. The symbol strip is built from
+`data-term` spans on each page, so a glyph nobody has tagged is a glyph nobody can
+reach: the table grew and the guide looked exactly the same. That is why the
+symbols still felt missing.
+
+`intonare_symbol_audit.py` now reports both directions — terms discussed with no
+glyph, and glyphs present with no way to reach them. It started at 22 unreachable
+and finishes at 0, with 40 glyphs and 40 tagged.
+
+Getting there needed content, not tags. The dynamics page named p and f and
+stopped, so it now has the full ladder from ppp to fff with mp and mf explained as
+the undecided middle, plus niente. The articulation section gained a paragraph on
+ornaments (trill, mordent, turn) and one on breath mark, caesura and
+staccatissimo. Note values gained the tie, and the difference between a tie and a
+slur, which the guide had never stated. The Roadmap page tags its repeat barlines
+and D.C.
+
+Seven more glyphs measured and added: augmentation dot, slur, tie, ottava bassa,
+da capo, una corda, and arpeggio as inline SVG since no codepoint in this font
+subset renders it. Three were removed again — ottava bassa and both pedal marks —
+because no page covers octave signs or pedalling notation, and a glyph with
+nowhere to live is dead weight. `sforzato` went too: it is the same marking as
+`sforzando`, which was already there.
+
+**One Try It Out per instrument.** Bass, ukulele, mandolin and banjo each had a
+button on the note-player page AND a dedicated "Try the Charts" page a few pages
+later. The landing page is the better of the two: it explains what the chart tool
+gives you before sending you there, and it sits where the reading is finished
+rather than interrupting it. The button is gone; notes_inst still drives the
+note-player itself.
+
+**The Rumble is drawn now, like every other amp.** Its ten photoZones already
+described the real front panel in the real order — input, gain, voice buttons,
+drive, level, four-band EQ, master — and had nothing to draw on, because
+`photo:''` meant no image ever arrived. Those became a `controls` array, so it
+renders as a panel with working hotspots instead of a list.
+
+Routing is now three-way and reads in the order the data actually implies: photo
+if there is one, drawn panel if there are controls, list only if there is neither.
+
+## v0.150.103 — Nine notes per clef, 21 more symbols, and slap did not start in funk
+
+**The clef diagram drew two notes.** One on the G4 line, one in the space above,
+to illustrate "on a line" versus "in a space". Fine as an illustration, useless as
+a reference: the page names nine notes per stave and showed you two of them, so
+the sayings had nothing to point at. Both staves now carry all nine positions,
+each labelled and each playable, with line notes in the clef's accent and space
+notes in plain ink so the two interleaved sequences stay separable. That is the
+whole reason they get separate sayings.
+
+Mnemonics are Daniele's: Every Good Burger Deserves Fries, FACE, Good Burritos
+Don't Fall Apart, All Cows Eat Grass. Italian has no equivalent, since DO RE MI
+are not initials, so it gives the sequences and says why there is nothing to
+recite.
+
+**Twenty-one symbols added, and seven rejected before they could ship.** A wrong
+SMuFL codepoint does not fail loudly: it renders .notdef, a blank or a box, and
+reads as a broken glyph rather than a bad constant. So every candidate was
+measured against the embedded Bravura first, and seven of thirty failed —
+including four I would have sworn were right.
+
+The fs/dy/h/w values are ink boxes. First attempt used SVG getBBox, which returns
+the LAYOUT box in Chromium: every glyph came back 202 tall against a stored 30 for
+forte. Caught because the script calibrates against three entries already in the
+file before trusting itself with new ones. Second attempt scans canvas pixels and
+reproduces forte, fermata and decrescendo to within a pixel.
+
+New: pp, ppp, mp, mf, ff, fff, sfz, niente, staccatissimo, breath mark, caesura,
+trill, mordent, turn, segno, coda, both repeat barlines, and both pedal marks.
+`subito` had a data-term in the prose and no glyph, so tapping it did nothing; it
+has no SMuFL codepoint either, being a word, so it is drawn as inline SVG text the
+way `legato` already was.
+
+**Slap bass did not originate in funk, and the page said it did.** It was worked
+out on the UPRIGHT bass in New Orleans jazz in the 1910s and 20s, and the reason
+was volume: nothing was amplified and a plucked double bass could not be heard
+over a band. No single inventor; enough players arrived at it independently that
+several claimed it afterwards. Steve Brown with the New Orleans Rhythm Kings in
+the early 1920s, then Pops Foster, Bill Johnson and Milt Hinton.
+
+The page now also notes that the MECHANISM is inverted: on upright the string is
+pulled away and released so it snaps back onto the fingerboard, while on electric
+the thumb strikes it down onto the frets. Same idea, opposite direction.
+
+And where it went: once microphones arrived jazz stopped needing the volume and
+moved to Walter Page's and Jimmy Blanton's smoother pizzicato, while slap survived
+in western swing, bluegrass, blues and above all rockabilly. Larry Graham brought
+the idea to electric bass with Sly and the Family Stone in the late 1960s.
+Sourced rather than recalled: Stanford's Riverwalk Jazz archive, the Art of Slap
+Bass history, and the International Society of Bassists article on rockabilly bass.
+
+## v0.150.102 — The Rumble threw, and the guide's lock followed you out
+
+Both from device screenshots, and neither was what it looked like.
+
+**The Rumble dropdown was not broken; selecting it threw.** The screenshot shows
+the "SOMETHING WENT WRONG. THAT SCREEN WAS RESET." toast, so an exception was
+being caught and the screen rebuilt.
+
+`buildInteractiveAmpPanel` routed on `d.photo && d.photoZones`. The Rumble is a
+photo entry with `photo:''`, and an empty string is falsy, so it fell through to
+the SVG branch — which reads `d.controls`, an array the Rumble does not have,
+because it is a photo entry. Every other amp has controls, so only this one
+model threw. It now routes on `photoZones`, which is what actually determines the
+layout, and lands on the parts list added in .101.
+
+**The in-guide chart tools could not scroll because they were wearing the guide's
+body lock.** `body.sg-open` is `overflow:hidden; position:fixed`: the guide pins
+the page and scrolls its own #pageArea instead. The class is added by enterTool
+for 'survivalguide' and removed by exitTool ONLY when currentTool is still
+'survivalguide'.
+
+`_sgLaunch` does not exit the guide. It calls enterTool straight over the top, so
+currentTool became 'guitarchords', the removal never ran, and the class stayed on
+the body — pinning the Charts tool at viewport height with about 1080px of chord
+diagram inside it. Nothing was wrong with Charts; it had inherited a lock meant
+for a screen that was no longer showing. `_scrollLockSync` could not correct it
+either, because it bails out early whenever it sees sg-open on the reasonable
+assumption that the guide is handling its own scrolling.
+
+Cleared in `_sgLaunch`, and guarded at tool entry as well so deep links and the
+back ladder cannot land somewhere with the lock still set. The return pill calls
+enterTool('survivalguide'), which puts it back.
+
+Verified: guide → fixed, charts → relative and scrollable, guide → fixed, piano →
+relative.
+
+## v0.150.101 — Coming Soon is gone, and the Rumble has an anatomy again
+
+**The placeholder card is removed.** Eleven pages carried a bordered box reading
+COMING SOON with a pencil icon. It promises an illustration on pages that read
+perfectly well without one, and it dates the app the moment a user notices the
+illustration never arrived. Those pages now render their text and stop. The page
+TYPE is left in the data rather than rewritten across eleven entries, so a
+diagram can still be dropped in later.
+
+**The Fender Rumble was not broken so much as empty.** Its entry carries
+`photo:''`, and the no-image branch rendered a grey panel reading PHOTO
+UNAVAILABLE. Selecting it from the amp dropdown therefore looked like the
+dropdown had failed: you picked a thing and got a dead box.
+
+The hotspot data was never the problem. Every zone carries a NAME and a
+paragraph explaining the part; only the pixel coordinates are useless without a
+picture. So `sgZoneList()` renders those zones as a list: coloured dot, part
+name, description. The page teaches the same thing without pointing at it. Both
+no-image branches use it, which also covers the two guitar views that share the
+same empty field.
+
+Three entries have `photo:''` in total. If a photo is added later the zones go
+back to being hotspots and nothing else changes.
+
+## v0.150.100 — Survival Guide: tempo demos you can tell apart, and the lines named
+
+**The tempo table played rows two BPM apart.** The last number in each row is the
+tempo it demonstrates, and those sat near the middle of each printed range. That
+put Moderato at 114 and Allegretto at 116, which no ear can separate, so tapping
+one row after another sounded like nothing had happened. Andante/Andantino and
+Vivace/Presto were nearly as close.
+
+Each demo now sits at whichever end of its own range spreads it furthest from its
+neighbours, while staying inside the range printed beside it. The smallest step is
+11%, which is audible; most are 12% or more. Moderato and Allegretto stay closest
+because their ranges genuinely overlap in the literature, so 108 and 120 is the
+widest honest spread available.
+
+**The staff page named two lines out of nine.** It explained that treble names G4
+and bass names F3 and stopped, so a beginner learned the anchor and not the
+alphabet. Both clefs now list their lines and spaces: EGBDF / FACE and GBDFA /
+ACEG, with the usual sayings, and a note that a sentence you invent yourself
+sticks better than one you were handed.
+
+The Italian is not a translation of that. Italian has no equivalent rhymes,
+because DO RE MI are not initials, so it gives the sequences and says why there is
+nothing to recite.
+
+Remaining Survival Guide notes need decisions rather than code and are on the
+buglist: which chart popup will not scroll, which photo placeholders to remove,
+whether the guide should use samples, and the upright-bass slap origins.
+
+## v0.150.99 — The rest of the tone setters, found by asking
+
+.98 fixed `pickTonePopup` and I described it as fixed. Daniele asked whether
+tones were right app-wide, which was the correct question, because I had patched
+one call site rather than checked the others.
+
+An audit of every assignment to `selectedRefTone` and `chordToolTone` found
+ELEVEN sites and four more with the same fault:
+
+- `setRefToneForInst` — the tuner picking a reference voice for an instrument
+- `_riffRestoreState` — a saved riff restoring the voice it was written with
+- `chordSetTone` — the Chords tool's own setter, reached from restore paths as
+  well as from the picker
+- `enterTool` — restoring a tool's saved tone on open, so REOPENING the piano on
+  honky tonk put you straight back into the synth fallback even after .98
+
+Two transient sites (`srRevealSound`, `rlpSound`) swap the tone to play a cue and
+put the old one back. They warm now too. The first cue may still fall back
+because loading is async, but every one after it is the real sample instead of
+the synth forever.
+
+Selecting a tone IS the request for its audio, so the load belongs in the setters
+rather than in whatever happened to call them. Re-audited: zero assignments left
+without a load.
+
+## v0.150.98 — Picking a piano tone never loaded its samples
+
+**Honky tonk, Rhodes and harpsichord all sounded like the grand piano**, and the
+reason is worse than it looks: they were never loading at all.
+
+The full sample set is started by `_syncToneUI`, and `pickTonePopup` only calls
+that on the branch where NO module owns the picker. The piano owns it, and so do
+Chords and Chordle. Picking a tone in any of them set the tone and asked for no
+audio, so the only buffer that ever arrived was the single A4 the preview warms.
+The note you auditioned sounded correct and every other key fell back to the
+synth.
+
+And the fallback for honky tonk, Rhodes and harpsichord is
+`REF_TONES.piano.synth` — the same function for all three. So switching between
+them changed nothing audible, which is exactly what it looked like from the
+outside: a picker that did nothing.
+
+`_toneBankWarm(key)` now runs on both branches, before the ownership check.
+
+**The chooser wears its own palette again.** Nothing reset the theme on the way
+back, so the launcher appeared tinted by the module you had just left, and
+picking a different one swapped the palette part-way through the morph: the card
+looked like it changed colour in mid-flight, from where you were to where you
+were going. `lnchReopen` applies the tuner palette, which is what the launcher is
+designed against. Skipped while `_themeHold` is set, since `lnchGo` owns the
+palette during its own animation.
 
 ## v0.150.97 — Favourites, and the sentinel catching a whitespace edit
 
