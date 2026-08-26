@@ -4,7 +4,338 @@ A human-readable record of what changed, when,
 
 ---
 
-## v0.185.1 — A theory stem that read as a follow-up
+## v0.197.0 — The quiz music tracks take Italian too
+
+The nine instrumentals had no Italian names at all. Ritorno al bossa, Turno di
+notte, Giro di domenica, La strada lunga, L'ultimo giro, Alisei, Quartieri alti,
+Ora blu, Aeroplanini di carta. Italy keeps English song titles, but these are
+mood labels rather than works, so they translate the way a chapter heading does.
+
+**The picker already honoured `nameIt` and nothing else did.** The now-playing
+line, the up-next line and the deck readout each read `.name` directly, so an
+Italian player would have seen the name translated in the track list and English
+everywhere else. All four now go through `mqTrackName()`, which falls back to the
+English name, so an untranslated track behaves exactly as before.
+
+Same fault as the classical pieces two versions ago, in a different place, and
+worth noting that adding the field alone would have looked correct in testing:
+the track list is the screen you would check.
+
+---
+
+## v0.196.1 — Classical before Studio
+
+Swapped so the general group runs theory, then artists, then Classical, then
+Studio. Classical sits with the music; Studio is craft and belongs last.
+
+---
+
+## v0.196.0 — Gear removed, Music History becomes Classical
+
+**Gear & Equipment is gone**, 56 questions and all three references: the pack,
+its colour and its icon path. The instrument packs were eating it from
+underneath. Guitar already covers pickups, action, cables, buffers and string
+gauge; Bass covers pickups and strings; Drums and Keys will take kit hardware
+and synth architecture when they are rewritten. What was left for Gear to own
+was speakers, formats and cables, which is not a pack. Anyone looking for gear
+is filtering by instrument anyway.
+
+**Music History becomes Classical.** History was defined by exclusion: every
+other pack in the app is history, so it held whatever had not been claimed, and
+its questions ran from Motown to Napster to Northern Soul with nothing in common
+but that.
+
+Classical is bounded, and it is the pack that matches what the app already is.
+**Sixty-three performance pieces already ship**, and the composer list is
+Beethoven, Chopin, Debussy, Grieg, Satie, Bach, Mozart, Tchaikovsky, Schubert
+and Schumann. A player can learn Für Elise in the piano module and not be asked
+a single thing about Beethoven anywhere else. Bravura notation and two theory
+packs are already there to support it.
+
+Considered and rejected: **Genre History**, which would summarise packs that
+already exist. **Music Business**, a real subject nobody covers but about the
+industry rather than about music. **Songs-to-bands**, which is one question shape
+repeated and is really a separate game mode with audio, not a pack.
+
+Nineteen packs now. Seven ready, twelve to go.
+
+**The 57 questions still sitting under Classical are the old Music History
+ones** and most are about popular music. They stay until the rewrite, which will
+replace them, but nothing serves them meanwhile since the pack is not in
+MQ_PACK_READY.
+
+---
+
+## v0.195.0 — Pack order, and six decade descriptions that were not doing their job
+
+General group reordered: Theory Fundamentals, Advanced Theory, Guitar Gods, The
+Beatles, Rock & Metal, Jazz Legends, Gear & Equipment, Studio & Recording, Music
+History.
+
+**Four pack descriptions said "telly".** British, sitting in user-facing text on
+the pack picker, and no check looks at pack metadata: every spelling and
+vocabulary sweep in the toolchain reads question and blurb fields only.
+
+**The decade descriptions were two pairs of twins.** The 60s and 70s were word
+for word identical, and so were the 80s and 90s, which makes a column of six
+cards read as one repeated card. Each decade says something about itself now.
+
+---
+
+## v0.194.0 — Pack order
+
+Decades run in order now: 50s, 60s, 70s, 80s, 90s, 00s. They were 60, 70, 80,
+50, 90, 00. Instruments run Guitar, Bass, Vocals, Keys, Drums.
+
+Checked before moving anything: nothing indexes PACKS by position. The only
+positional read is the daily pack picker, and that filters MQ_PACK_READY rather
+than PACKS, so a reorder cannot change which pack the daily serves. Confirmed
+over 365 simulated dates.
+
+---
+
+## v0.193.0 — Bass gets a third generator and blurbs that rotate
+
+**The octave shape.** A bass is tuned in straight fourths with no exception, so
+the octave is always two strings up and two frets up, anywhere on the neck. It
+is the most used shape in bass playing and the exact opposite of what the guitar
+generator drills, where the G-to-B gap breaks every shape. Hard tier sits on the
+five-string, where the same move has to clear the low B.
+
+12,000 sampled answers verified against MIDI arithmetic, no dot outside its own
+fret window, no nulls.
+
+**Blurbs rotate**, four per kind, picked from a hash of the gkey so a question
+always carries the same one. Distinct blurbs 2 to 12; unique questions 672 to
+818.
+
+**Two calibration passes, and the second was chasing noise.**
+
+The first cut gave eight distinct positions at easy, because both the string
+choice and the fret window were narrow. Widened, and then widened again by
+letting the five-string appear at medium, since a four-string only has two roots
+that can reach two strings up and the string choice cannot grow otherwise.
+
+Between those passes the repeat rate read 13%, then 15.5%, then 17%, and I very
+nearly kept tuning against it. Measured properly over 40 sessions of 20 rounds
+it is **12.9% for Bass and 13.1% for Guitar, unchanged from before the generator
+existed**. Twenty rounds is far too small a sample to steer by, and the earlier
+readings were noise.
+
+Tier spread unchanged: easy 74/26/1, medium 21/59/20, hard 1/25/73.
+
+---
+
+## v0.192.0 — A generator-only pack could not fill a hard round
+
+**Advanced Theory hard rounds measured 1/41/58 against a 0/25/75 target.**
+`mqGenBatch` always built its batch at 40/40/20, which is right for a pack that
+also has authored questions but cannot fill a round wanting 75% tier 3. The
+batch ran out of hard questions and the top-up quietly filled the gap with
+mediums.
+
+The batch now takes an optional mix. A pack with authored questions of its own
+keeps 40/40/20 so its generated share matches the written one; a generator-only
+pack IS the round, so it is built to the round's mix directly. Advanced Theory
+now measures 0/26/74 on hard and hits target on all three settings.
+
+**Two things I went looking for turned out not to be faults, and one of those
+was my own bad test.**
+
+`mqServeKey` looked like it was keying generated questions by slot index. It is
+not: they carry `gen: true` and the guard fires correctly. I had tested it with
+a hand-made object that lacked the field. Worth recording because the code
+already documents that keying generated questions WAS tried and measured worse,
+repeats inside forty questions going 18 to 23, so the change I was about to make
+had already been made and reverted once.
+
+**Theory Fundamentals returning null on 42% of easy requests is by design.**
+Five of its generators decline at tier 1 outright: degree, function, enharmonic,
+cadence and minor scale are not easy questions. The batch absorbs it by retrying
+and fills every time, at every size tested. Wasted work, not a fault.
+
+Tier spread across all seven rewritten packs, 300 rounds each: exact on the five
+authored packs at all three settings, and Bass and Guitar within 1 to 2 points,
+which is the shape cap swapping across a tier when it refuses a third question
+of the same shape.
+
+---
+
+## v0.191.0 — The difficulty blend never hit its own targets
+
+**Every question in every rewritten pack is tagged**, no gaps: 90/90/60/113/104/104
+across the six authored packs, and the generators honour the tier they are asked
+for in 3600 of 3600 samples.
+
+**The blend was the problem, and it was asking for eleven questions to fill a
+round of ten.** `Math.round(10 * 0.75)` is 8 and `Math.round(10 * 0.25)` is 3.
+The pool shuffle then dropped one at random, so an easy round came out 73/27
+against a 75/25 target. Only ever at qCount 10, which is why it survived.
+
+Two fixes went in and both were wrong before the third:
+
+- **Capping at what is left** fixes the count but freezes the mix: 7.5 always
+  rounds to 8, so every easy round is exactly 8 and 2 forever.
+- **Rounding each fraction stochastically** skews the other way, to 77.5/22.5,
+  because the top-up loop refills from the first tier in the order and quietly
+  hands it the slack.
+- **Largest remainder with the leftovers raffled** is right. The quota splits
+  exactly, the spare seats go to the tiers with a real fraction in random order,
+  and the long-run ratio lands on target while the mix still moves round to
+  round.
+
+Measured over 8000 rounds: easy 75.1/24.9/0.0, medium 20.0/60.0/20.0, hard
+0.0/24.9/75.1. Always exactly ten questions, at every count from 5 to 25.
+
+**And the new unison generator was returning null 4% of the time it was asked
+for an easy question.** With the answer at fret 1, dropping anything below fret
+1 left only two distractors. The easy bucket came up short and the top-up pulled
+harder questions in. Pool widened; 0 nulls in 3000, and all 3000 answers still
+verify against MIDI.
+
+Bass and Guitar still sit 1 to 3 points off on easy and hard. That is the shape
+cap doing its job: when it refuses a third question of the same shape it swaps
+from the spare pool, and the swap can cross a tier. Correct behaviour, and worth
+more than a perfect ratio.
+
+---
+
+## v0.190.0 — A third guitar generator, and blurbs that stop repeating
+
+**Both things reported after testing checked out, and neither was a bug.**
+
+Drawing one generated question in a round is ordinary: the pack averages 2.9
+generated per ten, so one happens often. And the answers clustering on A is
+chance, not bias. Every pack ships `ans:0` on every row and the position is
+randomised at render by a Fisher-Yates shuffle; run 200,000 times it puts the
+answer in A/B/C/D at 24.9 / 25.1 / 24.9 / 25.1 percent.
+
+**What testing did expose was thin generator coverage.** Theory has eight
+generator kinds. Guitar and Bass had two each, with exactly one blurb apiece, so
+a player drawing three generated questions read the same two did-you-knows.
+
+**Third kind: the unison shape.** The same note on the next string up sits five
+frets back, except across the G and B strings where it sits four. That single
+exception is what this whole pack is built around, and a generated question
+drills it in a way an authored one cannot because the position moves every time.
+Hard tier sits on the G-to-B pair by construction, 103 of 103. All 540 sampled
+answers verified against MIDI arithmetic, no dot outside its own fret window.
+
+**Blurbs rotate now**, four per generator kind, picked from a hash of the gkey
+rather than at random so a given question always carries the same blurb and
+nothing shifts between renders. Ten distinct blurbs where there were two.
+
+817 unique generated questions, up from 664, tier spread still exactly 40/40/20.
+
+---
+
+## v0.189.0 — Guitar ships, bilingual
+
+**104 questions, 40/43/21, plus 16 shared in from Guitar Gods and a generator
+producing 664 unique fretboard questions at a 40/40/20 spread.** Seventh
+rewritten pack, and the second in the instrument tab.
+
+**What this pack taught, which the others had not.**
+
+An instrument pack wants ORIGINS where a people pack wants anecdotes. The easy
+tier came back with 33 of 40 rewritten, and the measurable reason was that I had
+carried the Beatles voice across without asking whether the subject had changed:
+blurbs resting on a named player went 9 to 1 in Daniele's edits, blurbs about
+where the thing came from went 2 to 10.
+
+Avoiding definition-style stems, I turned 14 of 40 questions into riddles, and
+he rewrote 20 of 25 back toward a plain question word. The check that counted
+"What is X?" had been driving that, and after his edits it read 15% and was
+calling his direction a fault. It now flags only the bare glossary entry.
+
+**Italian.** 104 stems, 416 options, 104 blurbs. Note names go to Do-Re-Mi, and
+imperial converts to metric because an Italian reader has no feel for pounds.
+The trap in this pack is that **nut and capo are the same word**: the nut is
+`il capotasto` and the capo `il capotasto mobile`.
+
+The read caught five things no check sees, the worst being **"ricordare" used
+for re-stringing a guitar in two places, which means "to remember"**. The verb
+is "rincordare". Also "Quale è" where Italian elides to "Qual è", and two
+missing apostrophes.
+
+**Three checker faults found by running the tools that had been skipped.**
+
+`intonare_quiz_livecheck.py` reported 12 answer-longest tells where the draft
+checker reported none: the draft check only ever looked at English, and half of
+them were Italian. Every option list at 1.6x or worse is padded now, in both
+languages.
+
+The Italian sweep flagged 16 drifts against the draft checker's 4, because it
+predates the metric-conversion and worded-decade calibrations. Ported across.
+
+And **the English used curly quotes while the Italian used straight ones**, so
+three pairs of twins looked different on screen. Only visible reading the
+installed file, since the draft JSON normalises them.
+
+**One leak found in Italian that existed in English too.** Blurb 102 said "a
+25.5-inch scale" while question 41's answer is "25.5 inches" — the omega pass
+compares whole option strings, so the different wrapper never matched. There is
+now a check for an answer restated in another form.
+
+---
+
+## v0.188.0 — The daily was serving unrewritten packs
+
+**`mqGetDailyPack` picked from every pack in `PACKS`.** Fifteen of the twenty
+are still awaiting a rewrite, so most days the daily quiz was handing out
+questions nobody had checked. It now draws from `MQ_PACK_READY` only, minus the
+generated-only packs, which have no authored questions for a seeded shuffle to
+work on. Over 365 simulated dates it lands on five packs and no others.
+
+**The hero content sits below the daily badge.** The badge is absolutely
+positioned, and an absolutely positioned child is placed against the padding
+box, so padding on `.mq-hero` moves the pill, title and subtitle down and leaves
+the badge alone. Measured: at 320px with the Italian label the badge's left edge
+and the pill's right edge met at exactly the same pixel. Now 7px of vertical
+clearance at every width in both languages.
+
+**Song titles take Italian.** `riffLabel()` follows the same rule as everything
+else: a work with a real Italian title takes it, one without keeps the original.
+Per Elisa, Sonata al chiaro di luna, Preludio in Do maggiore, Minuetto in Sol,
+Chiaro di luna, Sogno d'amore. Maple Leaf Rag and The Entertainer stay as they
+are. The fallback is the English label, so an untranslated entry behaves exactly
+as before.
+
+An apostrophe in "Sogno d'amore" inside a single-quoted string broke a script
+block, which `node --check` caught before it went anywhere.
+
+---
+
+## v0.187.0 — Guitar generators, and a script that reported success while writing nothing
+
+Groundwork for the Guitar pack. The fretboard renderer already carries
+`guitar: { open:[40,45,50,55,59,64] }`, so no new renderer was needed: the two
+Bass generators port across with the tuning table swapped.
+
+**What a bass cannot have is the major third between the G and B strings.**
+Every shape a guitarist drills changes when it crosses that gap, so the hard
+tier is built to sit on it: hard interval questions place the two marked notes
+on either side by construction, 116 of 116, and hard note questions sit on the
+two strings above the break where lower-position shapes stop transferring.
+
+662 unique questions, tier spread 40/40/20, all 1200 sampled answers verified
+against MIDI arithmetic, no dot outside its own fret window.
+
+**The install script reported success and wrote nothing.** It asserted on three
+anchors while replacing, and threw on the third, so the file was never written.
+The two lines it had already printed made it look done, and the audit I ran next
+returned a plausible 969 unique questions for a pack with no generators.
+
+The spec already warns about exactly this: `assert count == 1` catches a miss, it
+does not catch a script that applies one substitution then throws on the next.
+The rebuilt installer **checks every anchor before writing anything, writes once,
+then reads the file back off disk and confirms each edit is present.** That last
+step is the only proof that matters and it is now how generator installs are
+done.
+
+---
+
+## v0.186.0 — A theory stem that read as a follow-up
 
 **"Where does mezzo forte sit between the other two?"** refers to nothing. It
 reads as the second half of a pair, and the quiz deals questions in isolation.
