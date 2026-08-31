@@ -4,6 +4,3114 @@ A human-readable record of what changed, when,
 
 ---
 
+## v0.201.97 — The surface redistribution is reverted
+
+The even-step surfaces from the last two versions are removed. Spacing them
+evenly was the right diagnosis and the wrong execution: the steps were derived
+from `--bg-0` and `--bg-1`, which are blue-based, so evening them out amplified
+the blue and pushed the whole quiz off the app's violet scheme. It fixed the
+flatness by breaking the identity, which is a worse trade.
+
+The measurement still stands and is worth keeping for whoever picks this up:
+
+    DARK    surfaces span .013   steps .004, .005, .004
+    LIGHT   surfaces span .485   steps .032, .376, .078
+
+Light has one long jump and two crowded pairs, and that is why the picker tiles,
+the pack popup and the sheets all read flat. The fix is to redistribute those
+four values while holding the violet hue the app actually uses, rather than the
+hue the current tokens happen to carry. That is a palette pass with a before and
+after across the tools, not a scoped override.
+
+---
+
+## v0.201.96 — The four sheets outside the modal get the same surfaces
+
+`#mqQuickSheet`, `#mqSurvivalSheet`, `#mqStatsSheet` and `#mqPackPopup` are
+siblings of the quiz modal rather than children, so the previous version left
+them on the old light surfaces while everything inside the modal moved. All five
+now carry the scope. Verified: the five report the new surface, the body still
+reports the old one, and a tool screen outside the quiz is untouched.
+
+---
+
+## v0.201.95 — Light mode gets its steps back, inside the quiz
+
+Light had its four surfaces at luminance .413, .444, .820 and .898: one long jump
+and two crowded pairs. Three of them sat near white with nothing in between, so
+anything built from two of those three came out flat and bright. That is the
+picker tiles, the pack popup and the sheets, all showing the same gap from
+different angles.
+
+Dark reads as layered because its four steps are even, at about .004 each. The
+quiz surfaces are evenly spaced now at about .16 a step, hue and saturation
+untouched:
+
+    --bg-0      #8eaedc   .412
+    --bg-1      #b3caea   .578
+    --surface   #cce1ff   .739
+    --surface-2 #ebf3ff   .890
+
+The sheets and the popup are siblings of the modal rather than children, so
+scoping to `#mqModal` alone left four surfaces on the old values: both pickers,
+the stats sheet and the pack popup. All five carry the scope now.
+
+**Scoped to the quiz on purpose.** The same redistribution belongs app-wide, and
+it should be its own pass with a before and after across the tools. Confined here,
+nothing outside the quiz can move: the body still reports the old surface and
+only the modal reports the new one.
+
+The pack popup was the clearest case. It is a real sheet, so being lighter than
+its ground is right, but both colours in its gradient were from the crowded three
+and it landed at the very top of the range. It has somewhere to sit now.
+
+---
+
+## v0.201.94 — The packs keep their colour in light mode
+
+The previous pass lifted the light inks by blending each one toward its
+dark-mode colour. Blending toward another colour pulls saturation out, so every
+pack came back a muted version of itself and the identities went with it: the 80s
+and the 70s were both a brownish red, the two theory packs were the same violet.
+
+They are built from the dark colour now by keeping its hue and its saturation and
+lowering only the lightness, with a little extra chroma to survive the darkening.
+The 80s reads as the same pink in both themes, the 70s the same orange, the
+Beatles the same blue.
+
+Saturation across the nineteen packs went up rather than down: the 80s from 0.61
+to 1.00, the Beatles 0.63 to 0.89, Theory Fundamentals 0.43 to 0.92, vocals 0.54
+to 0.98. All of them sit between 4.6 and 4.9 against the light surface, so the
+contrast that pass was aiming at is still there. It was the method that was
+wrong, not the target.
+
+---
+
+## v0.201.93 — Hover cannot stick to a finger any more
+
+A mouse leaves a button; a finger does not. Android applies `:hover` when you tap
+and holds it until you tap something else, so the last thing touched keeps its
+hover appearance for as long as you look at the screen. That is what the stray
+box on the DECADES tab was, and the file had 241 hover selectors of which 195
+changed something visible and 2 were guarded.
+
+All 235 remaining rules are wrapped in `@media (hover: hover) and (pointer: fine)`.
+Both conditions matter: the first asks whether the device can hover at all, the
+second whether the pointer is precise. A phone fails both, so the rules never
+apply and nothing is left behind.
+
+Verified from both sides: a mouse context matches the query and a touch context
+does not, no hover selector is left unguarded, all four style blocks still close
+evenly, and 7060 rules load with no console errors. The sentinel holds at 123
+fixes and 250 pins.
+
+Nothing changes on a desktop. On a phone a whole class of leftover marks stops
+happening, including ones nobody had reported yet.
+
+---
+
+## v0.201.92 — The picker tiles carry their pack colour
+
+Custom tinted a tile with its pack colour and the two sheets did not, so the same
+pack looked like three different things depending on which picker you opened.
+Quick Play was the worst case because it never selects anything, so nothing ever
+triggered the colour at all.
+
+A ready pack now carries its colour in all three: the border mixed 55 percent
+toward the pack and the fill at 5 percent. Survival keeps its stronger selected
+state on top of that, so a chosen pack still reads as chosen rather than merely
+present. Packs that are not ready stay grey, which is the one case where the
+absence of colour is the message.
+
+---
+
+## v0.201.91 — A gradient nobody could see, and hover stuck on a touch screen
+
+**Three attempts at the picker background failed because a rule further down was
+winning and I never looked for it.** `body.light .mq-sheet` paints a near-white
+gradient with `!important`, so Quick Play and Survival ignored every value I set
+while Custom, which is a screen rather than a sheet, was unaffected. That is the
+whole difference between them.
+
+The two full-screen pickers now paint `--bg-0`, which is what Custom's panel
+actually shows. Verified in both themes: sheet and panel report the same colour.
+
+`--panel` is worth recording as a trap. It reads like the panel's colour and it
+is a near-white surface token; the element paints `--bg-0`. Pointing the sheets
+at it last version made them lighter rather than matching.
+
+**And the stray box on a tab was `:hover`.** A touch screen leaves it applied to
+whatever was last tapped, so an inactive tab kept a fill and read as a second
+active state. The file has 241 hover rules and none were guarded. The two on the
+pack tabs and the pack tiles are now behind `@media (hover: hover) and
+(pointer: fine)`; the rest are a separate pass.
+
+---
+
+## v0.201.90 — Two boxes, and two picker backgrounds
+
+**The tab row was showing two active boxes at once.** The pill, and the tab's own
+`.active` background underneath it. The rule setting that background ran after
+the rule clearing it, so it won, and the newly tapped tab lit up instantly while
+the pill was still travelling. That is the box arriving early. The active tab
+only changes colour now, and the pill carries the surface and the shadow, so
+there is one indicator that moves rather than two that disagree.
+
+**And the three pickers did not match.** Quick Play and Survival painted `--bg-1`
+where Custom paints `--panel`, which is a shade darker. All three take the panel.
+
+---
+
+## v0.201.89 — The tab row stops being rebuilt
+
+The pill jitter had a cause underneath the one fixed last version. Every picker
+threw its tab row away and built a new one on each group change, so the pill was
+a brand new element every time with no position to travel from. Placing it where
+the old tab had been and releasing it was a workaround, and it still sat still
+for three frames and then jumped.
+
+The row is built once and only its active state changes after that, so the pill
+is the same element throughout and simply moves. Measured in the Quick Play
+sheet: 4, 4, 18, 48, 118, 144, 163, 177, 187, 194, 199, 201. It starts where the
+previous tab is rather than snapping to the left edge first.
+
+**Not reproduced: the light background difference between the pickers.** Quick
+Play and Survival look brighter than Custom on the device. Sampling the painted
+pixels in the gaps between tiles returns identical values for all three here,
+and the screens do not switch cleanly in the harness, so this needs looking at on
+a real device rather than guessed at from a measurement I do not trust.
+
+---
+
+## v0.201.88 — The pill stops restarting, and light mode stops darkening
+
+**The tab pill looked like it began at the first tab on every change.** It did.
+`mqGroupTabs` queues a placement on the next frame, and that fired after
+`mqSetGroup` had already started the pill moving, snapping it back with no
+transition and then letting it travel from there. It skips any row a group change
+has already positioned. Measured across a change: 4, 15, 45, 83, 117, 143, 162,
+177, 194, 202, one smooth run.
+
+**And the light accents come up.** The default light theme's accent measured
+9.18:1 against the surface where 4.5 is the requirement, so it read as near-black
+rather than blue. Nine colours across the four light themes now sit at about
+4.75:1, the same target the pack inks use: the blue, its two lifts and its
+gradient, plus the amber, green and purple themes and their lifts.
+
+This is the last of the same fault: the wash, the rule, the NEXT button, the pack
+inks, and now the accents. Light mode had been built by darkening a colour until
+it felt safe rather than until it met a ratio, and there was a lot of room under
+the bar in every case.
+
+---
+
+## v0.201.87 — its, not it's, and a translation check worth trusting
+
+Three possessives corrected: "came with it's own cartoon", "after it's launch"
+and "loving it's sound".
+
+**The translation check across all 134 took three attempts and the first two were
+wrong.** The first flagged 32 rows as Italian blurbs written in English; every one
+was a false positive, caused by matching English words inside quoted titles like
+A Deal with God and Hungry Like the Wolf. The second flagged 17 English blurbs as
+reading Italian, because the word list I was matching against contained a, e, i,
+in, so and la, which are ordinary English words.
+
+With only unambiguously Italian words and quoted titles excluded, the pack comes
+back with one row to read and it is correct: a blurb that is mostly two
+proper names and two numbers, so there is little grammar in it either way.
+
+What the check now covers per row: both languages present and distinct, four
+Italian options with none empty or duplicated, every number in an English blurb
+present in its Italian twin, neither blurb wildly shorter or longer than the
+other, and no Italian stem containing its own answer.
+
+Recorded because it has now happened three times in this work: a tool that
+reports many failures at once is usually wrong about the data and right about
+itself. Both bad versions of this check looked authoritative.
+
+---
+
+## v0.201.86 — The 80s pack is complete at 134
+
+Thirty-three rows translated: the twenty-two hard-tier questions and the eleven
+locale additions. Every one of the 134 now carries a stem, four options and a
+blurb in both languages.
+
+134 questions: 55 easy, 53 medium, 26 hard. Locale 91 both, 22 English, 21
+Italian, which is exactly the 70s split with twenty-one more questions on top.
+English players see 113, Italian players 112.
+
+Checked row by row rather than in aggregate: no number present in an English
+blurb missing from its Italian twin, no Italian blurb under 55 percent the length
+of its English, no stem left identical to the English, and every Italian option
+set complete at four.
+
+Italian release titles are used where an option is a title, so an Italian player
+reads Una poltrona per due and I Robinson rather than a literal translation of
+Trading Places and The Cosby Show, which would read as wrong to them.
+
+Known and deliberate, recorded so the next pass does not report them again: the
+word "the" inside Welcome to the Jungle in an Italian blurb, Thriller answering
+two questions, and three cross-question name overlaps Daniele has already ruled
+on. The omega pass also flags "Wall Street" in the Batman blurb, which is The
+Wall Street Journal.
+
+---
+
+## v0.201.85 — Light mode gets its colour back
+
+The light pack inks were darkened far past what contrast asks for, so a pack read
+as near-black with a hint of hue rather than as its colour. Advanced Theory sat
+at 10.14:1 where 4.5 is the requirement, bass at 8.56, nineties at 8.52.
+
+Every pack now sits at about 4.75:1 against the light surface. Fifteen come up:
+Advanced Theory from #3a2578 to #6a56b8, bass from #3a2c9e to #6353cc, the
+nineties from #7a1f1f to #b04040.
+
+**And four were failing.** The sixties read 3.75:1, the seventies 4.06, jazz
+4.16, music history 4.32, all under the 4.5 that normal text needs. Those go the
+other way, down to the same target. One number for the table rather than a spread
+from 3.75 to 10.14, which is what let both faults sit there at once.
+
+The NEXT button that started this is on the same principle: light mode had been
+treating every colour as something to darken until it was safe, when the bar is a
+ratio and there is a lot of room under it.
+
+---
+
+## v0.201.84 — The NEXT button was near-black on dark green in light mode
+
+A light-mode contrast pass over every quiz surface changed in this work found
+one real fault. After a correct answer the NEXT button painted `#0a0a12` on
+`#224700`, which measures 1.85:1. That is `--in-tune` again: a bright green on a
+dark ground, and a dark ink on a pale one, and the button had been written for
+the first case only.
+
+It uses the feedback green with white text in light mode, 4.41:1, and keeps the
+near-black in dark, where it measures 14.87:1 because the green there is bright.
+This is the third place `--in-tune` has been wrong in light: the wash, the rule
+and now the button. Anywhere it is used as a fill rather than as text is worth
+checking.
+
+Two other things the pass reported and neither was a fault. A dimmed distractor
+tile reads 1.79:1, which is the deliberate 30 percent fade on the answers you did
+not pick. And the correct tile reported 1.96:1 on the first pass but 93:1 on the
+second: the probe cannot read a `color-mix` background reliably, so that number
+was the tool failing rather than the tile.
+
+Recording the tooling lesson too, because it cost two passes. The first sweep
+returned 35 failures, almost all of them elements sitting behind an opaque sheet.
+Checking `elementFromPoint` at each node's own centre cut that to three. A
+computed style says nothing about whether anyone can see the element.
+
+---
+
+## v0.201.83 — The Vamos a la playa blurb moves off the song
+
+Two attempts at it both described the lyric, and the stem already tells you the
+song is about a bomb, so both were answering the question a second time. That is
+why it read as disjointed rather than as a fact: it was a restatement with an
+extra clause bolted on.
+
+It is about the band instead. Righeira were two men from Turin, both called
+Stefano, and they sang in Spanish because it made the record sound like it had
+come from somewhere warmer. One thread, and nothing the question already said.
+
+Also verified, after the triage merge and reinstall: no row missing a translated
+field, none where the Italian is identical to the English, every Italian option
+set complete at four, and every number and name in an English blurb present in
+its Italian twin. 101 of 101 bilingual.
+
+---
+
+## v0.201.82 — Batch three triaged, and a warning about the triage export
+
+Thirteen of the fourteen edited, one flagged. All applied.
+
+**#2 was the flagged one.** The blurb explained the joke, that the song sounds
+like a beach record but the lyric is about fallout, and explaining it is what made
+it awkward. It states the fact and stops: the bomb has gone off by the second
+line and the sea is radioactive, and they sang it over a beach rhythm.
+
+**The triage export drops every Italian field.** The returned rows carry only
+`ans`, `d`, `fact`, `opts` and `q`: no `q_it`, no `opts_it`, no `fact_it`. All
+fourteen rows came back with the Italian gone, and applying that file directly
+would have wiped the translation out of the pack without any error.
+
+The English edits were merged over the existing rows instead, with the Italian
+kept and then brought in line where the English had moved: eleven blurbs and four
+stems retranslated to match. Verified 101 of 101 rows still bilingual after the
+merge and after the install.
+
+Worth knowing for the hard tier, which will go through the same tool: triage the
+English first, translate afterwards, or the round trip costs the Italian every
+time.
+
+---
+
+## v0.201.81 — The pack pills settle at one height
+
+Taking the count off left a grid that stepped up and down: 40px for a short name,
+51 with COMING SOON under it, 53 where the name wrapped to two lines. Three
+heights in one grid, which is more restless than the extra line ever was.
+
+The wrapped case is the floor now, so every pill is at least that tall and a row
+of them reads as one row. 53px is that case measured rather than a number picked
+to look right.
+
+---
+
+## v0.201.80 — The question count comes off the pack pills
+
+The popup you open next leads with it, "90 QUESTIONS IN PACK", so the pill was
+saying the same number twice and paying a second line of height to do it. Both
+places that emitted it, the Quick Play grid and the Survival grid, now show the
+pack name alone. COMING SOON stays, because that is not a count and it is the
+only thing telling you the pack is not playable yet.
+
+With one line of text the tile does not need the height it had: padding comes
+down from 10px to 9 and the floor from 44 to 40, which takes a pill from 66px to
+53. Six pills fit where four and a half did.
+
+---
+
+## v0.201.79 — The Online chips stop starting low
+
+Entering the Online tab hides the pack grid and shows the chip lists in its
+place. The grid's container was holding its height for the length of the move,
+so the chips rendered below that reserved space and jumped up when it released.
+
+A page that is hidden on the tab being moved to gives its space back at once
+rather than at the end. The reservation exists to stop the container collapsing
+mid-slide, and a page that is not going to be there has nothing to hold open.
+
+Measured through the move in both directions: the chips sit at 238 across all
+fourteen frames going in, and the pack grid sits at 238 across all twelve coming
+back out.
+
+---
+
+## v0.201.78 — Timings from the guidance, a guard on fast taps, and the Online tab
+
+**The durations were wrong in a specific way.** Material's numbers: mobile
+transitions sit around 300ms, large full-screen ones at 375, and past 400 they
+read as slow. Distance scales it, and entrances should run 30 to 50 percent
+longer than exits, because what arrives matters more than what leaves.
+
+Mine ran the same 378ms in both directions. They are now 315ms in and 237ms out,
+a ratio of 1.33, both inside the range rather than either side of it.
+
+Getting there exposed a mistake in how I was deriving them. I had been using a
+spring's full settle time as the CSS duration, which put the first attempt at
+466ms in and 398ms out: past the point where a transition reads as slow, purely
+because the last fraction of a percent of a spring is being waited for. The
+cutoff is a perceptual one now.
+
+**Tapping faster than the move broke it.** A second change started on top of the
+first, so leaving copies stacked up, the held height was never released and the
+pill chased a target that had already moved. A change during a move is queued and
+runs once at the end. Hammering four tabs in one frame now ends on the last one
+tapped, with no copies left behind and no heights still locked.
+
+**And the Online tab was the odd one out.** It hides every pack grid and shows
+chip lists instead, so it had nothing to slide and nothing to swipe on: the one
+tab of four that behaved differently. The chip lists are wired as pages in their
+own right. Caught mid-flight: going in, the chips run the entrance while the pack
+grid runs the exit; coming out, the reverse.
+
+---
+
+## v0.201.77 — Three faults behind the jank
+
+Not one problem. Three, and the patching had been treating symptoms.
+
+**A swipe was changing two tabs.** `mq2WireSwipe` was attached to
+`grid.parentElement`, and the wrapper added for the transition changes what that
+parent is, so a second listener landed on the wrapper while the first was still
+on the old one. Both fired. It attaches to the grid itself now, which never
+moves in the tree. Measured: one swipe moves exactly one tab.
+
+**The container collapsed mid-slide.** The moment the outgoing grid was taken out
+of the flow, the container snapped to the incoming grid's height and everything
+below jumped while the pages were still travelling. The height is held for the
+length of the move, at whichever of the two is taller. Measured across twelve
+frames of a tall-to-short change: 366px throughout, no shift.
+
+**And the pages were cross-fading as well as moving**, which reads as two things
+dissolving into each other rather than one replacing the other. That was the
+muddiness. Pure translate now, and a full width each way rather than a quarter,
+so one page is off the screen before the other is on it.
+
+---
+
+## v0.201.76 — The sheet stops re-running its own entrance on a tab change
+
+The jank was a second animation on top of the slide: `.mq-sheet` was running
+`mq2PageIn` for 420ms every time a tab changed, so the entire sheet crossfaded
+while the grid was travelling.
+
+The cause was the host. The leaving copy needs a positioned, clipping container,
+and I had used the grid's `parentElement` for it, which in the Quick Play sheet
+is `.mq-sheet` itself. Adding and removing classes there disturbed the sheet's
+own entrance animation.
+
+The grid now gets a wrapper of its own, created once and reused, so nothing
+outside the grid is touched at any point. Checked across all three pickers: the
+sheet no longer animates during a tab change, and the header, the ALL PACKS
+button and the tab row hold still through every frame while the grid slides.
+
+---
+
+## v0.201.75 — The leaving grid stops crossing the whole screen
+
+The copy that travels away was absolutely positioned inside whatever the grid's
+parent happened to be. In the Quick Play sheet that parent is the sheet itself,
+880px tall, so the outgoing packs slid across the header, the ALL PACKS button
+and the tabs on their way out, over the top of everything.
+
+Two things fixed it. The copy is now pinned to the grid's own box, its top, left,
+width and height taken from the grid rather than stretched to the parent.
+And the container clips while a transition is running, so nothing travels outside
+the area the grid occupies. Both are set only for the length of the move and
+removed afterwards, so nothing else on the sheet is affected.
+
+Verified mid-transition in the Quick Play sheet: the copy sits 0px from the
+grid's top, matches its width exactly, and its container reports overflow hidden.
+
+---
+
+## v0.201.74 — The pack tabs slide, and the pill travels
+
+All three pickers share `mqGroupTabs` and `mqSetGroup`, so Custom, Quick Play and
+Survival get this together.
+
+**A sliding pill sits behind the active tab.** It travels rather than the active
+state switching on, which is what makes four tabs read as one control instead of
+four buttons.
+
+**The grid slides in the direction you moved**, and swiping the grid left or
+right changes tab. The swipe locks direction once, on the first eight pixels, so
+a diagonal drag is either a scroll or a page change and never both.
+
+**The curves are real springs, not a bezier that resembles one.** Apple's model
+takes a duration and a bounce, and the same two numbers drive springs in UIKit
+and Core Animation as well as SwiftUI, so that is the thing to match. CSS cannot
+express a spring, so each is solved and sampled into `linear()`, with a
+`cubic-bezier` above it as the fallback. The page runs duration .36 bounce .10;
+the pill runs .30 bounce .22, bouncier because it is the thing you touched, while
+a grid of text overshooting reads as a glitch.
+
+Apple's duration is perceptual rather than the settle time: a .36 spring is still
+moving at 378ms. The CSS durations are the measured settle, so no curve is cut
+off mid-overshoot.
+
+**Two things needed continuity that was not there.** Every picker throws its grid
+away and builds a new one on a group change, so there was nothing to animate out;
+the outgoing grid is cloned and the clone leaves while the real one arrives. The
+tab row is rebuilt too, so a fresh pill had no position to travel from and simply
+appeared in place: it is now put where the previous tab was and then released.
+
+And the pill is positioned by measuring against the row rather than computing
+from `offsetLeft`, which landed a few pixels out because the row has both a
+border and padding.
+
+---
+
+## v0.201.73 — Only Survival keeps a line, and the streak rules do not agree
+
+Quick Play said "Select a pack, set question count" and Custom said "Choose
+packs, difficulty, and length", which is the same sentence twice and explains
+neither. Both are gone. Survival keeps a line because it is the only card with
+rules you cannot guess from the title, and it is now "3 lives, endless" rather
+than three clauses separated by dots.
+
+The three-emoji line the toast used before the flame was still in the file,
+unread. Removed.
+
+**And the streak system is not global.** The same flame means different things
+depending on where you are:
+
+    chord ear training   lit at 3    glow at 5    blaze at 10
+    quiz streak toast    lit at 5    glow at 10   blaze at 20
+
+There is a third scale as well: the chord module's own tier count steps at 5, 10
+and 25. So a player who hits a blazing flame in ear training at ten answers meets
+a flame in the quiz at ten that has only just started glowing.
+
+Not changed here, because picking one set of numbers changes how a module that
+was not part of this work feels, and that is a decision rather than a fix. The
+quiz numbers follow its own multiplier tiers, which step at 3, 5, 10 and 20, so
+there is an argument for either.
+
+---
+
+## v0.201.72 — One flame, three states
+
+The toast was swapping between a flame, a lightning bolt and a crown depending on
+how long the streak was: three emoji doing one flame's job, added straight after
+the rest of the module had been cleared of them.
+
+It uses the flame the chord and interval racks already use, with the same three
+states. Lit at five, glow at ten, blaze at twenty. The treatment escalates, not
+the symbol, so a streak looks the same everywhere in the app.
+
+`mqShowXP` only ever set `textContent`, so a flame with its own classes had
+nowhere to live. It takes markup as a second argument now and the old call sites
+are untouched.
+
+---
+
+## v0.201.71 — The streak toast becomes a milestone again
+
+It was firing on every answer past a three streak, which is most of a good run
+and turns a reward into a tic. It fires on multiples of five, the way the rest of
+the app marks a streak: 5, 10, 15, 20 and on.
+
+The milestone haptic and cue were on 5, 10 and 20 only, so a fifteen streak got
+nothing and a twenty-five got nothing either. They run on the same rule now, so
+the sound, the buzz and the toast arrive together.
+
+**And the multiplier comes out of the toast.** It already sits beside the score
+in the feedback block, so the toast said it twice. It carries the streak alone:
+the icon changes at ten and at twenty, which is the only thing marking how far in
+you are.
+
+---
+
+## v0.201.70 — The streak toast comes back
+
+The chip beside the multiplier is retired and the toast returns. It was dropped
+because it would have repeated the points the feedback block already counts up,
+which was a fair objection to the old toast and the wrong fix: the toast now
+leaves the points out and carries only the streak and the multiplier, which
+nothing else on the screen says.
+
+`mq2ToastPlace` already positioned it under the band rather than over the
+answers, so the machinery was there the whole time. Measured: band ends at 179,
+toast opens at 195.
+
+---
+
+## v0.201.69 — The landing badges go
+
+INSTANT START, YOUR RULES and ENDLESS are removed. Each card already carries a
+description that says the same thing better: Quick Play selects a pack and sets a
+question count, Custom chooses packs and difficulty and length, Survival is three
+lives and no end. The badge was a second, vaguer version of the line above it.
+
+Two things reported alongside this that turned out not to be faults, recorded so
+they are not chased again.
+
+**The streak message is present.** It is a chip beside the multiplier rather than
+a toast: on a five streak `mq2Streak` reads "5 STREAK" next to a ×1.5. The toast
+was v1, and it was dropped deliberately because under v2 the feedback block
+already shows the points, so the toast said the same thing twice and landed on
+the answers while doing it.
+
+**The pack counts are right, but they are per language.** The 70s reads 92 and
+holds 113; the 80s reads 87 and holds 101. The difference is the locale-tagged
+questions the other language sees. The number is what you can actually play,
+which is the useful one, but it will never match a pack total quoted from the
+build file.
+
+---
+
+## v0.201.68 — The v1 guards come out
+
+`MQ_V2` sites drop from 46 to 11. Every inline guard is collapsed to its v2
+branch: the screen switches, the holdover, the picker sheets, the custom rows,
+the reveal, the feedback, the pack labels, the review and daily paths. The dead
+v1 half of each is gone.
+
+Walked from a clean browser context in both languages after the cut: landing,
+Quick Play sheet, Survival sheet with its pack labels, Custom, a survival
+question with three hearts, a fatal answer that reveals and says OUT OF LIVES,
+and the results screen. No console errors in either language.
+
+**Three orphaned `else` branches were left behind on the way**, each one a
+substring replacement that removed an `if` without understanding the structure
+attached to it. Every one broke the file outright and was caught by
+`node --check` before it went anywhere. Worth recording because it is the
+argument for doing the rest slowly: text replacement does not know what an else
+belongs to.
+
+**The sentinel earned its keep twice.** It flagged the topbar holdover pin and
+the fatal-answer pin, both of which I had deliberately changed by collapsing the
+guard inside them. Those are the "intentional? update the pin" case and the pins
+were updated. Had either been an accident, the same alarm would have caught it.
+
+**What is left, and deliberately not done here:** three functions still open with
+`if (MQ_V2) { ... return; }` and carry a v1 tail after it, `mqShowWin`,
+`mqShowResults` and `mqShowDailyResult`. Removing those means deleting whole
+function bodies rather than single lines, and they are tied to the v1 markup, the
+feedback sheet, the heart bar, the skull and the win screen. The dev toggle in
+settings also still expects to be able to turn v2 off, which stops being true the
+moment those tails go.
+
+That is a deletion pass rather than an edit pass, and this file is clean right
+now. Better to start it from a clean state than to continue from a long one.
+
+---
+
+## v0.201.67 — Survival's last question, and a net under the v1 cut
+
+**The fatal answer never revealed.** Losing the last life called
+`mqShowFeedback` and returned before `mq2Reveal` ran, so the final question of a
+survival round showed no tile states, no wash and no rule: you answered, nothing
+happened, and the only sign the run had ended was the next button's label
+changing to RESULTS. It reveals like every other question now, and the band says
+OUT OF LIVES, with the spent hearts dimmed behind it. Both languages.
+
+**And the quiz v2 work is pinned before any of v1 is cut.** The sentinel tracked
+97 fixes, none of which covered anything built here: the transition, the pack
+marks, the palette, the feedback sequence, the score count, the hearts, the
+Custom overlay, the picker scrim. It tracks 123 now.
+
+The pins were tested by breaking the file nine ways, each a plausible slip while
+removing v1: dropping a `MQ_V2` guard, renaming a function, cutting an element,
+losing a CSS override, flipping the default back. All nine are caught.
+
+Three of those pins only exist because the first version of them failed the test.
+`function mq2RenderHearts` is a prefix of `function mq2RenderHeartsOLD`, so a
+rename walked straight through; the signature is pinned instead of the name.
+Defining the hearts renderer is not the same as calling it, so the call site is
+pinned separately. And pinning the CSS is no use if the element it styles is cut
+with the markup around it, which is precisely how the hearts container came to be
+shown and empty. The markup is pinned too.
+
+v1 has not been removed. The net is in place first, which is the point.
+
+---
+
+## v0.201.66 — v2 becomes the quiz
+
+`MQ_V2` defaulted to false and only turned on if `localStorage.intonare_mq2` was
+set to '1' by hand. **A fresh install got the old quiz.** Everything built in this
+work, the question transition, the pack marks, the palette, the answer feedback,
+the survival hearts and the Custom overlay, was invisible to anyone who had not
+set that key. Confirmed from a clean browser context: the v2 band, grid and marks
+all hidden, the v1 answer buttons rendering.
+
+The default is on. The key still works in reverse, so setting it to '0' turns v2
+off from the console if something turns up on a device.
+
+**The fork is narrower than it looked.** Only `mqScreenQuiz` has separate v2
+markup, 26 elements against 1 v1 leftover. The landing, Custom, results, review
+and the daily screens are the same DOM restyled through `body.mq2on`. So this is
+one screen rebuilt plus a lot of CSS, not a parallel application.
+
+Walked from a clean context in both languages: landing, Custom, survival picker,
+a survival question with hearts, an answered question with the wash and the rule,
+and results. No console errors in either language, and the v1 answer buttons stay
+hidden throughout.
+
+**This also explains the empty hearts.** `mqUpdateHearts` writes to the v1 heart
+bar because v1 was the live path; v2 was the branch that had not been wired up.
+That class of fault should now stop appearing, since there is one live path
+rather than two.
+
+Still open, and now visible to everyone rather than to whoever set a key: the
+survival game over announces itself only by relabelling the next button.
+
+---
+
+## v0.201.65 — Survival gets its lives back
+
+**The v2 quiz showed an empty hearts container.** `mqRenderQ` sets
+`mq2Hearts` to display flex for a survival round and never puts anything in it,
+so it collapsed to zero height, while `mqUpdateHearts` faithfully updated the v1
+heart bar that v2 does not show. Survival has been running with no visible lives
+and no way to learn that you get three.
+
+They render now, using the same mask, the same fill and spent states and the same
+pop as the chord ear training rack, so a heart means the same thing in both
+places. The one just spent pops as it goes.
+
+**And the emoji I reported are not on screen.** A sweep found a skull, a trophy, a
+clipboard and a tick, and I reported them as live in the quiz UI. Driving a real
+survival game over and reading only what is actually painted returns none of
+them: the skull and the trophy are both hidden in the v2 path. The sweep queried
+elements without checking visibility, and when that was challenged I confirmed
+the element existed rather than that it rendered. Presence in the DOM is not
+presence on screen, which is the same mistake that reported two blank pack marks
+as fine earlier in this work.
+
+Still open: the game over moment itself. Losing the last life sets lives to zero
+and changes the next button's label to RESULTS, and that is the whole event.
+
+---
+
+## v0.201.64 — The spread lands sooner, and the score stops jumping
+
+The correct-answer spread runs in 400ms instead of 500, on a slightly firmer
+curve.
+
+**The score was the one thing in the answer sequence that jumped.** Everything
+around it eases: the tiles dim over about 300ms, the rule opens, the wash fades,
+the next button arrives. The number went from 300 to 400 in a single frame. It
+counts up over 420ms on an ease-out, so it lands rather than stopping, and it is
+short enough not to hold up the next question. Measured at 22 distinct values
+across the run. Reduced motion sets it directly.
+
+A sweep of the rest of the quiz for anything that changes without moving turned
+up three things that need a decision rather than a fix:
+
+**The results ring reads zero in the harness**, so whether it animates is still
+unknown. Driving that screen from the console does not reproduce a real round,
+and I would rather say so than report a clean result I did not actually get.
+
+**The per-pack bars on the stats sheet appear at their final width.** Growing
+them from zero is the obvious treatment, and the sheet is a moment of rest where
+it would be welcome, but it is a change to a screen that was not part of this
+work.
+
+**Four emoji are still in the quiz UI**: a skull on the survival game-over
+screen, a trophy, a clipboard on the share control, and a tick on the feedback
+verdict. The earlier emoji removal covered the stats sheet only.
+
+---
+
+## v0.201.63 — The wash stops travelling
+
+Sliding the gradient up from below the band dragged a hard edge through it and
+finished as a large coloured field behind the question. It fades in where it
+already sits and reaches only 34 percent up the band, so nothing moves across the
+text and the question stays on its own background.
+
+---
+
+## v0.201.62 — The band stops recolouring on an answer
+
+Tinting the whole band toward the answer colour is the largest signal available
+for a message the answer tiles have already delivered, and it makes the question
+harder to read past while you are still looking at it. It is replaced by two
+smaller things.
+
+A wash sits at the bottom of the band, behind the question and the beat strip
+rather than over them. It fades in where it already is: animating it upward
+dragged a visible edge through the band, and by 300ms it had climbed behind the
+question and become a large coloured field, which is the recolour it replaced
+wearing a different shape. It stops at 34 percent of the band height, well below
+the text. And the rule carries the outcome: it opens from a point at
+the centre over 500ms for a right answer, and blinks in hard steps for a wrong
+one. Both start from an empty rule, so the difference is entirely in what happens
+next. **The two outcomes differ in rhythm as well as in hue**, which means neither
+depends on telling green from red.
+
+**Answer feedback gets its own two colours.** `--in-tune` and `--sharp` are used
+229 and 125 times across the tuner and the exercises, and in light mode they are
+inks meant for text on a pale ground: 8.8:1 and 9.7:1 against the quiz band. Used
+as a fill they read as bottle green and brown, which is what "muddy" was.
+`--fb-ok` and `--fb-no` are mid tones in light, 3.7:1 and 4.7:1, still past the
+3:1 a coloured indicator needs. Dark keeps the existing pair, which already works
+against a dark ground.
+
+Two faults on the way in, both mine. A rule written for the motif, "everything in
+the band sits above the mark", was sweeping `position: relative` onto the new
+layers: the wash collapsed to zero height and the rule effect dropped into the
+text flow at the top of the band. And the mockup had been carrying a hand-written
+light palette rather than the app's, so its background and its blue were both
+wrong; the values are read out of the running file now.
+
+---
+
+## v0.201.61 — The four recheck edits reverted
+
+The duplicate Thriller answer and the three cross-question name overlaps are
+Daniele's call and go back as they were. Thriller answers both the album question
+and the Landis video question; the Nintendo stem, the Reagan stem and the Indiana
+Jones blurb all read as written.
+
+The two Italian rhythm fixes stay, since those were faults introduced in
+translation rather than choices.
+
+---
+
+## v0.201.60 — Medium finished, and four faults the recheck found
+
+**Rechecking the installed pack surfaced four things the per-batch tools could
+not see**, because each of them only ever looked at fifteen rows at a time, and
+all four were then reverted as deliberate.
+
+*Thriller* answers two questions, the 1982 album and the 1983 video. Three
+questions name another question's answer: a stem reading "Which **Nintendo**
+character", a stem naming **Ronald Reagan**, and a blurb naming **Indiana
+Jones**. Recorded here so the next pass does not report them again as new.
+
+The check itself was worth adding and stays: duplicate answers and cross-question
+leaks are now measured across all 101 rows in both languages rather than inside a
+batch of fifteen. It just does not get to decide.
+
+Two Italian blurbs had landed as balanced sentence pairs in translation where the
+English did not. Fixed. The English pair at 56 and the pronoun opening at 57 are
+Daniele's own edits and stay.
+
+**Medium is finished at 47**, which matches the 70s. Fourteen new questions, ten
+of them locale-tagged, which takes the locale spread from 8 and 9 to 13 English
+and 14 Italian.
+
+101 questions, all bilingual: 54 easy, 47 medium. English players see 87, Italian
+players 88.
+
+The new Italian rows are the ones an English-language pack cannot carry: Battiato
+being the first million-seller, what Vamos a la playa is actually about, how
+Canale 5 broadcast nationally before it was allowed to by posting the same tapes
+to dozens of local stations, the cacao meravigliao, Gianna Nannini in Berlin.
+
+---
+
+## v0.201.59 — The 80s pack was English only
+
+All 87 questions installed in the last version carried no Italian at all: no
+`q_it`, no `opts_it`, no `fact_it`. The 70s, Beatles and Guitar Gods packs carry
+them on every single row. An Italian player opening the 80s pack was reading
+"Which car did Doc Brown turn into a time machine in Back to the Future" in
+English, on a pack marked playable.
+
+All 87 are translated: stem, four options and blurb each. Italian players see 79
+questions, English players 78.
+
+**And I had the `loc` field wrong.** I had taken `loc: 'it'` to mean the row is
+written in Italian. It does not: it controls who is shown the row, and every
+locale-tagged question in the shipped packs still carries both languages in full.
+An Italian-only question in the 70s pack has complete English text sitting in
+`q` and `fact` that no English player will ever see.
+
+The Italian check reports one error and four reads. The error is the word "the"
+inside Welcome to the Jungle, which is a song title. The four reads are quoted
+material rendered into Italian rather than kept verbatim: a banner at a Naples
+cemetery, Fred Astaire on the telephone, and two sets of song titles.
+
+---
+
+## v0.201.58 — The 80s pack goes in, and two dead fields come out
+
+**Everything written for the 80s this session was sitting in JSON, not in the
+app.** The pack in the file was an old draft of 68 questions, 59 of them with no
+difficulty tier at all, opening with stems that did not survive triage: "What did
+a Sony Walkman let you do", "What is a Rubik's Cube?", "What happened to the
+Berlin Wall". It was also not marked playable.
+
+The 87 triaged questions are in, through the builder's round trip: every field
+read back out of the written file and compared against the draft. 54 easy, 33
+medium, locale split 70 both / 8 EN / 9 IT, all answer-first, all four options,
+all with a blurb. The pack is playable, which takes the app from seven packs to
+eight.
+
+**And the pack colour was defined in two places that disagreed.** Every pack
+carried its own `color`, left over from before `MQ_PACK_COLORS` existed, and four
+of them no longer matched: the 80s said violet where the table says leg warmer
+pink. Nothing reads the field. `mqPackCol` goes through the table as a CSS
+variable, verified by watching the property at runtime rather than by reading the
+code. Removed from all 19, along with the `emoji` field, which nothing has read
+since the stats sheet moved to `mqPackIcon`.
+
+That leaves one source for a pack's colour, which matters because the next person
+to change one would have had a coin flip on where to do it.
+
+---
+
+## v0.201.57 — Two measured faults in accidental spacing
+
+The stacking itself is correct. Accidentals in a chord are packed into columns,
+anything within a vertical threshold moves one column further left, and across
+every case tested there were no collisions. What was wrong was both of the
+constants it uses, neither of which cleared the glyphs they were meant to.
+
+Measured glyph boxes: a flat is 8.14 by 22.1, a sharp 8.96 by 25.13, a double
+flat 14.8 by 22.03, a natural 6.05 by 24.34.
+
+**The clash threshold was 25 and a sharp is 25.13 tall.** Two sharps exactly 25
+apart passed as clear while their glyphs touched. It is 28 now, which clears the
+tallest sign with a little air.
+
+**The column step was 12.5 and a double flat is 14.8 wide.** Two double flats in
+adjacent columns overlapped by more than 2px. The step is 17, which clears the
+widest sign; a plain flat simply gets more room.
+
+Verified with three flats, three sharps and three double flats: three columns
+each, 17px apart, zero overlapping pairs.
+
+**Not reproduced: the misalignment in the reported screenshot.** Every stacked
+case renders correctly here, so whatever is in that shot is either one of these
+two constants in a case I did not think to build, or something else entirely. The
+exact question would settle it.
+
+---
+
+## v0.201.56 — The first round of a session stops tearing down a question that was never there
+
+Starting a round ran the transition's exit path first: 190ms of fading out an
+empty band before the question was built. It only showed on the first launch,
+because after that the timing happens to hide it.
+
+The check for a fresh start was `!root.classList.contains('mq2') || MQ._v2first`,
+and on a cold app the root already carries `mq2`, so this read as a mid-round
+change. `mq2-fresh` is the honest signal: `mqShowScreen` sets it every time the
+quiz screen is entered and it means the band is empty. Nothing to fade out, so
+nothing is faded out.
+
+Verified across three consecutive rounds from a cold load: no tear-down path,
+entrance begins at 1ms rather than 190. And question to question inside a round
+still uses the exit path, which is what makes the band hold still while the
+question turns over.
+
+---
+
+## v0.201.55 — No fade on the way back from any of the three
+
+The replayed entrance added last version is reverted, and Custom no longer fades
+the landing either. All three routes simply reveal it.
+
+**The last flash was caused by the fix for it.** Custom suppressed the landing's
+`mqFadeUp` with a class and then removed that class 80ms later, which restarted
+the very animation it was suppressing: the landing dropped to opacity 0 and
+climbed back while fully on screen. Traced frame by frame, it was at 0 at 412ms,
+0.08 at 445, 0.26 at 462, back to 1 by 520.
+
+The suppression is cleared when a screen is next hidden instead, where there is
+nothing visible to animate. The landing still gets its normal entrance
+everywhere else, verified by leaving and returning through the quiz screen.
+
+Measured across three runs of each route, sampling actual pixels: worst dip 0.12
+for Custom, 0.04 for both pickers, against a settled 20.6.
+
+Also recorded: the landing is now made active behind Custom before Custom starts
+leaving, so it is uncovered rather than swapped in. Two earlier orderings of that
+handoff both left a frame where neither was painted.
+
+---
+
+## v0.201.54 — The landing fades back in from the pickers too
+
+Coming back from Custom, the landing is re-shown from hidden, so it replays its
+own `mqFadeUp` entrance and arrives rather than appearing. Quick Play and
+Survival never hide it: it sits untouched behind the sheet the whole time, so
+the return has no fade at all and the landing is simply revealed as the sheet
+clears. That is the difference between the three routes.
+
+The landing replays that entrance explicitly on the way back from a picker,
+starting at 170ms so it comes forward as the sheet gets out of the way rather
+than behind it. Opacity and an 8px rise over 380ms, with a reduced-motion path.
+
+The three routes now read the same on the way out and on the way back.
+
+---
+
+## v0.201.53 — The flash was the sheet's own scrim, not the landing
+
+`.mq-sheet-overlay` carries a `rgba(0,0,0,.6)` scrim in its base style, and the
+v2 rule that clears it was written against `.active`. Removing that class at the
+end of the exit reverted the background to black at 60 percent instantly, while
+the overlay's own opacity took 200ms to fade out. So a dark sheet painted across
+the landing for a fifth of a second, after the picker had already slid away.
+
+The scrim is cleared whether or not the overlay is active.
+
+**This took four attempts because I kept measuring the wrong thing.** The landing's
+opacity, `#mqBody`'s opacity and the panel's classes are all unchanged through the
+entire return, which is why every trace came back clean while the flash was
+plainly there on device. Sampling actual pixels found it immediately: mean
+luminance across the top of the screen dropped to 13.4 for one frame against a
+settled 20.5.
+
+Measured now, frame by frame on both pickers: no dip at all. When a computed
+style says nothing is happening and the screen disagrees, the screen is right and
+the property being watched is the wrong one.
+
+---
+
+## v0.201.52 — Quick Play and Survival stop flashing on the way back
+
+The difference between Custom and the two pickers was the dim, not its timing.
+Custom dims the landing while the page rises and lets go after 460ms. The pickers
+held the landing at 45 percent for as long as the sheet was open, so coming back
+always meant brightening something, and that brightening is the flash.
+
+The sheet is opaque and covers the panel once it has arrived, so holding the
+landing down underneath achieves nothing. The pickers release the dim after the
+entrance now, exactly as Custom does.
+
+Measured on both: the landing sits at 1 while the sheet is open, and the return
+shows a single value rather than a ramp. Custom reads the same, which is the
+point. The 150ms delay added in the last version is gone, since there is no
+longer anything to delay.
+
+---
+
+## v0.201.51 — Custom is an overlay now, not a screen imitating one
+
+Quick Play and Survival cover the panel because they are children of it. Custom
+sat inside `#mqBody` and imitated them: reaching over the topbar by a measured
+offset, re-padding its own content to compensate, and hiding the bar behind it.
+Three workarounds to make one kind of thing behave like another, and it still
+stopped short on device.
+
+It is moved to the panel on first open and styled like the two pickers. Measured:
+parent is `mqPanel`, starts at 0, 880px tall against an 880px panel, with its own
+BACK at 8px from the top. The topgap variable, the compensating padding and the
+rule that hid the topbar are all gone with it.
+
+**And the landing was brightening while the sheet was still sliding out over it**,
+which is the flicker. The sheet takes 340ms to clear and the dim came off at
+frame zero. It comes off at 150ms instead, so the landing arrives as the sheet
+gets out of the way: at 136ms the sheet is 60px down and the landing is still at
+45 percent, at 269ms the sheet is at 390 and the landing is at 89.
+
+---
+
+## v0.201.50 — Custom becomes a full page, and the landing stops blinking
+
+**Custom stopped 42px short of the top.** Quick Play and Survival are overlays
+sitting on the panel, while Custom is a screen inside `#mqBody`, which begins
+below the topbar. It reaches over the bar now by the gap `mq2CustomEnter`
+measures, so the figure lives in one place rather than being written into the
+stylesheet twice.
+
+Two things fell out of that. The topbar's stats button ended up sitting on top of
+the page, so the bar goes invisible while Custom is open while keeping its 42px,
+which is what stops the landing behind from reflowing. And extending the page
+upward took its content with it, putting Custom's own BACK above the screen, so
+the scroller carries the same offset as padding. BACK measures 48px from the top
+of the panel, where it was.
+
+**Coming back from Quick Play and Survival, the landing blinked.** `mq2-picking`
+dims it to 45 percent, and removing the class snapped it to full instantly while
+the sheet was still sliding out over it. The opacity eases now on a 340ms curve
+that matches the exit. Measured across the return: ten intermediate values rather
+than a jump.
+
+Custom never had the blink because it holds the landing with `mq2-holdover`
+rather than dimming it, which is why the two routes felt different.
+
+---
+
+## v0.201.49 — The stats sheet drops its emoji and comes up to the type floor
+
+The per-pack breakdown used `pack.emoji`, falling back to a music note for any
+pack without one, which is every pack since the emoji field was removed. It uses
+`mqPackIcon` instead: the app's own line icon in the pack's own colour, the same
+mark the pack grid and the quiz band already use.
+
+**And the sheet was still typeset below the floor the quiz uses.** One label at
+7px, two at 8 and two at 9, against the 11px minimum set for the quiz screens.
+All five lifted, labels to 11 and figures to 12. Nothing on the sheet is under
+11px now.
+
+The emoji was the reported problem and the type was the one underneath it. Worth
+noting the type floor pass covered the quiz module only; the stats sheet sits
+outside it and was never swept.
+
+---
+
+## v0.201.48 — The empty band no longer shows, and the marks fit their box
+
+**A blank band with the previous pack's rule colour was still flashing up.**
+Choosing the Beatles showed an empty band with a red line across the bottom,
+which is Guitar Gods, until the question built. The rule I wrote to clear it
+targeted the root rather than `.mq2-band`, which is where the border actually
+lives, so it did nothing at all. The whole band is hidden until the question is
+ready and fades in with it. Measured across six frames of entry: band opacity 0
+throughout.
+
+**And the artwork was still being scaled past its own layer**, which is what kept
+cutting the top off the bass headstock. It is no longer scaled at all: the layer
+is 150px, the drawing fits inside it, and the bleed comes from the layer hanging
+off the right edge rather than from blowing the drawing up beyond its box. Every
+mark is now whole.
+
+---
+
+## v0.201.47 — A round starts from nothing, and the headstock keeps its tuners
+
+**The mark is solid from the top.** It starts 46px down, below the top row, so
+there was nothing up there to protect and the fade was taking the tuners off the
+bass headstock, which is the part that identifies it as one.
+
+**A new round now builds the whole band, not just the question.** Blanking the
+question alone left the previous round's pack name, score, beat strip, band
+colour and mark sitting on screen while the new one built, so a fresh game opened
+on the tail of the last one. The band is held completely empty on the way in and
+everything arrives together: score and difficulty first, then the pack name at
+60ms, the mark at 120, and the beat strip at 200. Measured across the first six
+frames of entry: pack, mark and beats all at zero, and the band rule transparent.
+
+The staggered arrival applies only to a fresh round. Question to question inside
+a round, the band holds still, which is what the anchoring work established
+earlier.
+
+---
+
+## v0.201.46 — The topbar, the stale question, and two mark faults
+
+**The shift was the topbar, exactly as reported.** `mqShowScreen` hides the BACK
+and stats bar the moment another screen becomes active, and under v2 the landing
+is still on screen underneath as a holdover, so pulling 34px out from over it
+reflowed it upward. The bar stays while a holdover is showing. The landing's hero
+measures 106px before and during, where it was 106 then 64.
+
+**Entering a round showed the previous question**, complete with its revealed
+answer, until `mqRenderQ` ran a few frames later. Measured at eight stale frames.
+The quiz screen is blanked on the way in and held invisible until the new
+question is built: zero stale frames now.
+
+**The marks were being clipped by their own layer.** The artwork was scaled to
+1.7 inside a 112px box, so its top was sliced off by the layer's overflow rather
+than by the mask. The layer is 152px and the scale is 1.25, and the mask fades
+into the top rather than meeting it.
+
+**And Guitar Gods was almost invisible.** A deep red at 20 percent on a near-black
+band has very little to work with. The mark now takes its pack colour mixed 72
+percent toward white in dark mode and 80 percent toward black in light, so the
+dark colours come up without the bright ones blowing out.
+
+---
+
+## v0.201.45 — Custom's padding, the mark's height, and a clearer unison question
+
+**Custom lost its side padding and the landing shifted behind it**, and both were
+the same cause: making a screen `position: absolute` takes it out of `#mqBody`,
+which is where the 16px came from. Custom's scroller and the held-over landing
+both carry it themselves now, and the START bar is inset to match. Verified: the
+landing's hero does not move when Custom opens, 86px before and during.
+
+**The mark started at the very top of the band**, which is where the score sits,
+so the segno was drawn across the 500. It starts 52px down and stands 112px tall,
+which clears the score by 6px on every pack. It still holds its position when a
+question brings a diagram and the band grows.
+
+**The unison question said "the next string up"**, where up can mean higher in
+pitch or higher on the diagram and the player should not have to work out which.
+It names the target string outright now: the marked note is on string 3, which
+fret on string 2 gives the same note. Both languages.
+
+**Not fixed: the accidentals in a stacked chord.** In a B flat major progression
+the flats sit on top of each other. The renderer does stack them into columns,
+12.5px apart, treating anything within 25px vertically as a clash, so the
+machinery is there and something about it is not firing on this case. The
+accidentals are drawn as paths rather than text, so it needs its own look rather
+than a guess at the end of a long session.
+
+---
+
+## v0.201.44 — The pack mark becomes an edge bleed, and the column goes
+
+The reserved column is gone. The mark hangs off the right edge at 1.7x, cropped,
+at 20 percent in dark and 26 in light. It reads as texture rather than as a
+picture that has to fit, and that removes the entire class of problem the column
+created.
+
+**The question gets its full width back** in every pack and both languages: 372px
+against 268. The extra line a long Italian question cost is gone with it. Nine
+packs stop paying for an empty column.
+
+**Nothing needs tuning per mark any more.** `fit`, `ink` and `drop` are deleted
+along with the table that held them. A cropped mark does not need to be sized,
+weighted or dropped, because it was never going to fit in the first place. That
+is a dozen versions of per-mark adjustment removed in one edit.
+
+**And it holds still.** The mark is positioned against the band's top and its own
+132px height rather than against whatever the question contains, so a generated
+question with a fretboard under it does not move it. Measured across six cases
+including one where the band grows from 187px to 338: mark top 0, height 132,
+stem width 372, every time.
+
+**The alignment sweep asserted that the stem must never reach the mark**, which
+was right when a column kept them apart and is now a test for the thing we chose,
+since an edge bleed sits behind the text on purpose. That is the second check my
+own edit has invalidated, so rather than delete it, it is replaced with the one
+the guidance actually gives: contrast against the worst pixel rather than the
+average, computed by compositing the mark at full strength over the band. Worst
+case across six packs and both themes is 6.73:1 against the 4.5:1 body text
+needs, and dark mode never drops below 9.61.
+
+---
+
+## v0.201.43 — One table for size, weight and position
+
+Every mark had its own box, its own scale and its own baked opacity, which is
+why the bass looked cut off and too large while the piano overwhelmed everything
+around it. They go through one table now:
+
+  fit    how much of the column the artwork fills
+  ink    how present it is, because a solid silhouette at the same alpha as line
+         art reads far heavier
+  drop   the mark is tall enough to reach the score, so it starts lower
+
+The piano runs at 0.68 fit and 0.62 ink because it is a large solid shape; the
+guitar cabinet runs at 0.92 and full ink because it is thin outlines. That is the
+adjustment that was missing, and no amount of tuning a shared opacity was going
+to find it.
+
+Removing the top fade in the last version exposed something it had been hiding:
+the Abbey Road crossing reaches the top of the band and was running behind the
+score. It drops now, like the headstock and the cabinet.
+
+---
+
+## v0.201.42 — The top fade goes, and marks for Vocals and Keys
+
+**The bass headstock was faded across its top**, which is where the tuners are,
+so the one part that identifies it was the part being hidden. The mask faded the
+top 20 percent to protect the mark from a top bar it no longer touches, since the
+layer already starts 30px down and tall marks start 56. It is solid from the top
+now and fades only as it approaches the beats.
+
+**Vocals is a microphone by Uswa KDT and Keys is a grand piano by dinnerchief**,
+both from the Noun Project, both credited in Credits and Thanks. The credit text
+is stripped from each file so it does not render inside the mark, and every fill
+is rewritten to the pack colour so they take the theme like the rest.
+
+Worth flagging: the microphone is 105 paths and about 60KB, against 3KB for the
+piano. It carries the file from 11.50 to 11.57MB and it is the most detailed
+thing in the module by a wide margin. It reads well at this size, but a flatter
+silhouette would cost a twentieth of the bytes if one turns up.
+
+---
+
+## v0.201.41 — The headstock and the cabinet sit lower
+
+Both are tall enough that their tops were reaching the score. They start 56px
+down now instead of 30, and the floor comes up to 46px with them, because moving
+only the top pushed the artwork into the beat strip instead.
+
+Recording a run of measurement mistakes, because four in a row on one small
+question is a pattern rather than bad luck. `svg.getBoundingClientRect()` returns
+the layer box, not the drawing, so with `preserveAspectRatio="meet"` it reports a
+shape far larger than the ink. Sampling pixels instead then caught the score digit
+and the beat strip, which live in the same column as the mark. The reliable check
+here was a zoomed screenshot and a pair of eyes, which is how the problem was
+reported in the first place.
+
+---
+
+## v0.201.40 — A real bass headstock
+
+The supplied Noun Project icon by Studio TROISQUATRE is in, and it is what a
+headstock should look like, which my freehand attempt was not.
+
+The file is a 100x125 box: the artwork occupies the top 100x100 and the credit
+sits underneath as two lines of text. The viewBox crops to the artwork so the
+credit does not render inside the mark, and the attribution goes where it belongs,
+in Credits and Thanks alongside Bret Pimentel's diagrams. New `credits_icons`
+heading in both languages.
+
+Verified there are no text nodes left inside the mark.
+
+---
+
+## v0.201.39 — A wave for Bass, and the segno sized down
+
+The segno filled more of its box than a clef does, so at the same nominal size it
+read much larger. `mq2Glyph` takes an optional scale and the segno runs at 0.74,
+which puts it in step with the treble clef beside it.
+
+**Bass is a long, low wave**, one and a half slow cycles across the column with a
+second pass behind it. Bass is the bottom of the spectrum, so a low frequency says
+it without drawing an instrument.
+
+Worth naming the pattern, because it explains which of these have worked. The
+marks that landed are geometric: a perspective grid, a sunset of straight bands, a
+crossing of parallel stripes, a rectangle of speaker circles. The ones that did
+not were organic objects drawn freehand: a headstock, a grand piano, a
+microphone. A waveform is geometry.
+
+The reference sent for the headstock was a watermarked stock illustration, so
+tracing it was not an option regardless.
+
+---
+
+## v0.201.38 — Reverted to the seven marks that were actually asked for
+
+The icon reuse is out, and so are the hand-drawn headstock, grand piano and
+microphone. Seven marks remain, all of them ones Daniele picked by name: the 80s
+grid, the 70s sunset, the Abbey Road crossing, the wall of amps, the pick, the
+treble clef and the segno.
+
+Twelve packs run on colour alone, which is where they should sit until the packs
+themselves exist. Keys and Vocals are not playable yet, so drawing marks for them
+was work done ahead of the thing it was for.
+
+The `mq2IconMark` helper is gone with them rather than left behind unused.
+
+---
+
+## v0.201.37 — Stop hand-drawing vectors and use the icons that already exist
+
+The headstock was a blob, the grand piano was a shape with a diagonal line
+through it, and the microphone was a lollipop. Hand-drawing a vector of an
+instrument is the wrong tool, and what came out looked hand-traced because it
+was.
+
+Every pack already has a properly drawn line icon in `mqPackIcon`, all nineteen
+of them, in the visual language the rest of the app uses. Seven marks are that
+icon at size now, with the stroke thinned from 1.7 to 0.85 so it does not turn
+into a woodcut on the way from 20px to 104.
+
+Four keep a drawing of their own, because they are things an icon set has no
+entry for: the 80s grid, the 70s sunset, the Abbey Road crossing and the wall of
+amps. Those were worth the effort. A microphone was not, because a good one
+already existed twelve feet away.
+
+---
+
+## v0.201.36 — Four marks that are the instrument, not a symbol for it
+
+**The circle of fifths was an answer key.** It sat beside the question with every
+note name on it, on the pack whose questions are about note names. Theory
+Fundamentals is a treble clef, which says the same thing about the pack and gives
+nothing away.
+
+Bass is a headstock with three tuners one side and two the other. Keys is a grand
+seen from above, the bent side against the straight spine, with the bench. Vocals
+is a stage mic.
+
+The clef, the pedal mark and the breath mark were all defensible as symbols and
+none of them was the instrument. A pedal mark says a piano is involved somewhere;
+a grand piano says Keys.
+
+Recording an error worth not repeating: I sliced the motif table by searching the
+whole file for its keys, and `advanced_theory` appears earlier in the file than
+the table does, so the slice came back empty and the edit silently did nothing.
+The assertion caught it. Slice inside the block, not the document.
+
+---
+
+## v0.201.35 — Eight glyphs removed for saying nothing about their pack
+
+I filled every empty column with a notation glyph, and eight of them were
+notation for its own sake rather than a mark that means anything.
+
+Gone: a quarter note for Drums, a bend for Jazz, a marcato for Rock & Metal, a
+fermata for Studio, and a coda, a trill, an fff and an end repeat for the four
+decades. None of those symbols says anything about the pack it was standing in
+for. A decade in particular cannot be said by a notation glyph at all, which is
+why the Seventies and Eighties have a sunset and a grid.
+
+Four are kept because the glyph IS the thing. The F clef is what bass music is
+written in. The pedal mark belongs to a piano and to nothing else. The breath
+mark is literally where a singer breathes. The C clef is the one you meet in old
+scores, which is what Music History is about.
+
+Eleven packs carry a mark and eight run on colour alone, which is the right
+answer until those eight earn something drawn.
+
+---
+
+## v0.201.34 — Every pack has a mark
+
+Twelve packs had an empty column. All twelve have one now, and since Bravura is
+already loaded the useful ones are real notation rather than something I would
+have had to invent: an F clef for Bass, a pedal mark for Keys, a breath mark for
+Vocals, a bend for Jazz, a marcato for Rock & Metal, a fermata for Studio, a C
+clef for Music History, a coda for the Fifties, a trill for the Sixties, an fff
+for the Nineties, an end repeat for the Noughties, and a quarter note for Drums.
+Nineteen of nineteen.
+
+**Hand-tuned baselines do not survive contact with a music font.** Glyphs sit at
+wildly different heights inside their em box, and a percussion symbol drawn high
+landed outside the visible area entirely. Each mark measures its own ink through
+the canvas metrics and centres on that, which also removed twelve pairs of
+hand-picked numbers.
+
+**And a codepoint can be present in a subset font with its outline stripped.**
+The snare drum and the sforzando both measured as present, reported a sensible
+advance width, and drew nothing at all. Two marks would have shipped blank. They
+are a quarter note and an fff now, and `mq2Glyph` returns empty rather than an
+invisible mark when the ink box comes back with no height, so this fails loudly
+next time instead of quietly.
+
+Worth recording that my own blank-detector then reported three false positives,
+because it sampled the red channel and the fermata, the coda and the pick are all
+green or teal. The render is the check; a one-channel threshold is not.
+
+---
+
+## v0.201.33 — The real segno, and a pick that is actually pick-shaped
+
+**Bravura is already loaded** for the notation elsewhere in the app, so the segno
+is the real glyph at U+E047 rather than my approximation of one. Verified that
+the font resolves before drawing it.
+
+**And the pick was symmetrical top to bottom**, which is what made it read as a
+leaf. A 351 has broad rounded shoulders in the top third and sides that fall away
+to a small rounded tip. Redrawn to that shape.
+
+---
+
+## v0.201.32 — A pick and a segno, and the rule that is no longer needed
+
+The simpler answer to two staves on one screen was not a rule that hides one of
+them. It was to stop drawing a staff.
+
+Guitar Technique is a plectrum. Advanced Theory is a segno. Neither duplicates
+anything a question can render, so both can stay up while a fretboard or a staff
+is on screen underneath, and the two read as different objects rather than as one
+thing drawn twice.
+
+**The suppression rule is gone with them.** It existed only to stop the
+duplication, and duplication is not possible now. That removes a class toggle
+from the render path, a pair of CSS overrides, and a behaviour where the layout
+changed shape depending on the question, which was its own small unpleasantness.
+
+Verified on four cases: the pick and the segno both hold their column with a
+diagram present and without, and the stem keeps the same width either way.
+
+---
+
+## v0.201.31 — The mark stands down when the question brings its own drawing
+
+A question with a `vis` renders a real staff, a real fretboard or a real rhythm
+line. The marks for Advanced Theory and Guitar are a staff and a fretboard, so
+on those questions there were two staves and two necks on the screen at once,
+and the decorative one was competing with the one the player has to read.
+
+The rule is automatic rather than per pack: if `q.vis` is set, the mark is hidden
+and the question takes the full width back, so the diagram gets the whole band.
+It covers every pack and every future one without a list to maintain.
+
+Verified across three cases: a staff question and a fret question both drop the
+mark and widen the stem from 268px to 372px, and a question with no diagram keeps
+its mark and its column.
+
+This also answers the earlier complaint that the marks looked wrong on generated
+questions. Generated questions are exactly the ones that carry diagrams.
+
+---
+
+## v0.201.30 — The cabinet was upside down, and Advanced Theory gets its own mark
+
+**The amp was inverted.** The control panel belongs along the top of a head with
+the grille below it, and I had drawn it the other way round. Flipped.
+
+**Advanced Theory had no mark at all**, so its column was empty. It gets a stack
+of thirds climbing off the staff with a 13 above, which is the thing that
+separates it from the fundamentals, rather than the circle of fifths a second
+time. Noteheads a third apart sit on adjacent staff positions, so they alternate
+either side of the stem the way they do on paper; stacked in a single column they
+read as a blob.
+
+**And the 56px drop applied to everything.** It was added to stop the cabinet
+running under the score, and the cabinet is the only mark tall enough to reach
+it. It is a `.tall` class on that one mark now, so the other five sit 26px higher
+and use the room they have.
+
+---
+
+## v0.201.29 — The mark clears the score, and the two themes meet nearer the middle
+
+**The mark started at the very top of the band**, so on a short question the amp
+ran under the score. It starts 56px down now and the smallest gap between the two
+across every pack and both themes is 10px.
+
+**Light was much louder than dark.** The layer ran at 53 percent on dark against
+100 on light, because I had boosted the baked strength for light and dialled dark
+back to compensate. That is a big gap to leave in place: 72 and 86 now.
+
+**The colours were correct all along.** Every pack's label and mark match their
+table entry exactly in both themes, checked across four packs. My earlier
+measurement said otherwise and it was the harness: the transition defers a render
+by 190ms, and reading immediately after `mqRenderQ` picks up whatever the
+previous pending timeout writes. Waiting for the transition to land before
+reading gives an exact match every time.
+
+Third time this session that measuring during an animation has produced a fault
+that was not there. Worth a rule: never read computed style in the same tick as a
+render that goes through `mq2Transition`.
+
+---
+
+## v0.201.28 — Soft on every side, and the sun stops being sliced
+
+The bottom fade starts earlier and runs longer, so nothing in the column ends on
+a line. Paired with the horizontal fade from the last version, the mark now
+dissolves on all four sides rather than meeting a rectangle.
+
+**The 70s sun had a hard cut I put there myself.** It was clipped flat at the
+horizon with a `clipPath`, which is a straight edge wherever the mask does not
+happen to reach. It fades out through a radial mask instead, so the shape ends
+where it should rather than where the rectangle did.
+
+**What the hero guidance says about all this**, which is worth writing down since
+it settles two arguments we have been having:
+
+Text left, visual right is a named standard pattern, not an improvisation. The
+reserved column is the split hero.
+
+And on scrims: a flat overlay dulls the whole image to protect the corner where
+the text sits, which costs you the image to save the copy, while a gradient
+darkens only where it is needed. That is exactly the trap the opacity tuning was
+in. The reserved column solves it better than either, because there is no text
+over the mark at all, so nothing has to be dulled to protect anything.
+
+---
+
+## v0.201.27 — The marks fade out at every edge
+
+The mark stopped at a hard rectangular boundary, which showed worst on the 80s
+grid: a perspective drawing that should recede into nothing instead ended on a
+straight vertical cut. Two gradients intersected now, so it fades on all four
+sides. The right side fades sooner because that edge meets the screen.
+
+**Checked in Italian at the narrowest width.** The longest real Italian question
+in the shipped packs is 150 characters, and at 360px it runs five lines and takes
+the band to 259px where English runs four. The clearance between the question and
+the mark holds at 8px, the mark grows with the band rather than being stranded,
+and the answer tiles are unaffected at 129px.
+
+That extra line is the price of the reserved column and it is worth stating
+plainly: a long Italian question in a narrow column is the worst case this layout
+has, and it costs about 26px of band height against English.
+
+---
+
+## v0.201.26 — The marks get their own space instead of more opacity
+
+The published guidance says two things I had been ignoring while tuning alpha
+values. Take advantage of white space, because without it a composition looks
+busy and confusing. And prefer simple patterns behind text, because a repeating
+one competes with reading.
+
+The band had no white space at all: a centred stem runs the full width, so every
+mark was forced underneath the text and the only lever left was making it
+fainter, which is a choice between invisible and in the way.
+
+**The stem keeps to the left now and a column is reserved on the right.** The
+mark lives there and crosses nothing. Measured: 8px of clearance between the
+right edge of the question and the left edge of the mark.
+
+**And the wall of amps is one cabinet.** A three by two grid of speaker cones is
+exactly the repeating pattern the guidance warns about, and it was the busiest
+thing on the screen by some distance.
+
+Two mechanical faults surfaced on the way. The marks were set to stretch to
+whatever box they were given, which was fine across a wide band and turned a
+circle into an egg in a narrow column. Switching to crop kept the proportions
+but then cut most of the artwork away, because it had been drawn to sit at the
+right-hand end of a wide box. All six are redrawn for a portrait column,
+centred, one simple shape each.
+
+The circle of fifths now carries all twelve names rather than six, because it
+finally has the room.
+
+**A note on the alignment sweep, because weakening a check that your own edit
+broke is exactly the move to be suspicious of.** It asserted that the stem's
+right edge lines up with the beat strip's, which was the edge that mattered when
+the stem ran the full width. The stem now stops short by design, so that check
+fails on all 21 cases by construction. It checks the LEFT edges instead, which
+still have to agree, and adds a new assertion that the question never runs into
+the mark. Both pass at 360, 384 and 412px across all seven content cases.
+
+---
+
+## v0.201.25 — The pack colours, and the marks stop fighting the beat strip
+
+**The palette was designed and never applied.** Theory Fundamentals, Advanced
+Theory and Guitar Gods sat at 247, 249 and 252 degrees, which is one colour with
+three names, and the screen showed it: three identical purples in both themes.
+Both tables are updated, 38 entries across the dark set and the ink set.
+
+Colour by association rather than by a system, with separation enforced only
+inside a tab, since two packs in different tabs never appear side by side.
+Beatles blue, Guitar Gods a deep stage red, the 80s leg warmer pink, the 70s
+burnt orange, the 90s a grunge red, Rock & Metal cold steel, Keys ivory. Theory
+and Advanced Theory stay close on purpose and the harder one is darker.
+
+Measured: nothing inside a tab is under 22 apart perceptually except that family,
+and every colour clears 3:1 on its own ground in both themes.
+
+**And the marks were at full strength exactly where the beat strip sits.** The
+layer ran the whole height of the band, so the amp wall and the 70s sun were
+drawn straight through the beats and the two fought. The layer stops 30px short
+of the bottom now and fades out as it approaches, so the strip has the band to
+itself.
+
+---
+
+## v0.201.24 — The marks stopped being sliced in half
+
+The mask was a hard cut through the reading column, so any mark that spanned the
+band lost its middle. The circle of fifths was a top arc and a bottom arc with no
+ring between them, the crossing was two sets of stripe ends, and the amp wall was
+a row of cabinets above a row of cabinets. They did not read as marks sitting
+behind the text; they read as broken.
+
+It fades now rather than cutting. A shape carries through the reading column at
+about a third of its strength and stays whole, which is the difference between
+something behind the text and something with a hole in it.
+
+The text still reads. Sampled across the stem rows: 14.8:1 in dark and 10.6:1 in
+light, against the 4.5:1 body text needs.
+
+---
+
+## v0.201.23 — The pack marks read in light mode
+
+The marks were drawn at 11 to 34 percent opacity, tuned against a dark ground
+where a bright colour at low alpha still glows. In light mode the same alpha of
+a dark ink has nothing to glow against and goes grey, so the 80s grid was a
+smudge and the circle of fifths was invisible.
+
+They are baked at roughly double strength now and the whole layer is dialled
+back to 53 percent in dark mode, which leaves dark exactly where it was and
+gives light the full drawing. Thirteen baked opacities boosted, capped at 0.78
+so nothing turns into a solid block.
+
+The accent colours themselves needed nothing. Measured on the real screen rather
+than on swatches: the pack label, the band rule and the tile keys all sit
+between 7.0 and 8.2 against their backgrounds in light mode, because
+`MQ_PACK_INK` already swaps a dark ink in and the bright dark-mode colour never
+touches the pale surface. A light-mode contrast problem I had spent a while
+solving did not exist.
+
+---
+
+## v0.201.22 — Polish pass on the quiz module
+
+Audited the module for the class of fault that caused the last three bugs:
+something with higher precedence quietly winning, and animation state left
+switched on.
+
+**`will-change` was promoting five elements for the life of every question.** It
+tells the browser to give an element its own compositor layer and keep it there,
+which is worth doing for the frames that are actually animating and is pure cost
+the rest of the time. It is scoped to the transition classes now, and `q-in` is
+released once the last tile lands, so the promotion goes with it. Measured: 0
+promoted at rest, 5 during the transition, 0 after it settles.
+
+Releasing `q-in` is safe again because `mq2-anim` no longer sits underneath it.
+That was the thing that replayed last time. Verified: **0 replays** after the
+tiles land.
+
+**Reduced motion is clean.** Rendered the quiz with the preference set and
+checked every element on the screen: nothing animating at all.
+
+Two things checked and found correct rather than fixed. The band's colour change
+on an answer runs 24 frames and settles at 347ms, in step with the question's
+340ms rather than snapping. And the module declares 8 keyframe sets, all
+`mq2`-prefixed, with no collisions against the rest of the app.
+
+A note for the next audit: reading `transitionDuration` by looking up
+`background-color` returns the wrong entry when the rule declares the
+`background` shorthand, because the computed property list keeps the shorthand.
+Two of my probes reported a 60ms transition on things that actually take 280.
+
+---
+
+## v0.201.21 — The answers were animating twice
+
+**Reported: the answers wipe in, flash out, and wipe in again.** The tiles still
+carried `mq2-anim`, the entrance from the original v2 build. Releasing `q-in`
+after 1100ms handed the animation-name back to that class, which then replayed
+from the start. Two entrances on the same elements, the second one arriving a
+second after the tile had settled.
+
+The transition owns the entrance now, so `mq2-anim` is gone from the tiles and
+`q-in` is no longer released on a timer. Verified across 91 frames after the
+tiles settle: **zero frames that clip again**.
+
+Releasing it on a timer was also hiding a second fault. `.mq2.q-in .mq2-opt` sets
+`opacity: 1`, which outranks the dimming on the two options nobody picked, so
+whether the reveal looked right depended on whether the timer had fired yet.
+`q-in` is released in `mq2Reveal` instead, which is the moment it stops being
+wanted. Measured after answering: 0.3, 1, 0.3, 1.
+
+**And the marks were being scaled to the wrong box.** Most of the SVGs had no
+`preserveAspectRatio`, so they defaulted to fitting the width and overflowing a
+band that is wider in proportion than the viewBox. The artwork ended up shifted
+and clipped, which is the jank in the amp stacks. All ten now map exactly to the
+band.
+
+The first question of a round also gets an entrance now. It used to render with
+no animation at all, because the path that skips the fade-out skipped the
+fade-in with it.
+
+---
+
+## v0.201.20 — Two things the ship gate caught
+
+**`intonare_mq2` was an unclassified storage key.** The backup audit exists to
+make sure every persisted key is deliberately either exported or skipped, and
+the quiz redesign switch had never been put in either list. It is on the skip
+list now, for the same reason as `intonare_dev`: an export carrying it would
+turn an unfinished redesign on for whoever restored it. 52 keys and 43
+progState fields all classified again.
+
+**The alignment sweep was measuring stale tiles.** `mq2Transition` defers the
+render by 190ms, and the sweep measures synchronously, so from the second case
+onward it was reading the previous question's grid, and eventually an empty one.
+The harness renders through the same immediate path the first question of a
+round uses. Seven content cases at three widths, all clean.
+
+Both were mine, both from the transition work, and neither was visible without
+running the gate.
+
+---
+
+## v0.201.19 — The question transition, and a mark for each pack
+
+**The transition.** The question fades out on a symmetric curve with a whisper of
+scale, the band holds completely still, the question fades back in, and then the
+four answers wipe in left to right, 70ms apart. Measured in the app: question
+gone at 171ms, back up at 521ms, answers at 671 / 737 / 821 / 887, everything
+settled at 887ms, with a **150ms beat between the question landing and the first
+tile**. That beat is the whole effect: the question gets a moment on its own
+before the options arrive.
+
+The band is anchored on purpose. A container that moves while its contents change
+leaves nothing steady to look at, and it was the thing that made the slower
+settings feel disjointed. Pack name, difficulty pill, score, beat strip and
+motif all hold at full opacity throughout.
+
+**Four bugs on the way in, three of them the same class of mistake.**
+
+An entrance with `animation-fill-mode: both` pins its final keyframe, and an
+animation beats a transition in the cascade, so the exit ran against something
+holding opacity at 1 and did nothing at all. The question was not fading; it held
+solid and vanished when the markup was replaced. The class is released before
+the exit now.
+
+Rendering new markup and starting its animation in the same frame means the
+browser is laying out when the first keyframe is due, and that frame is dropped.
+It renders into a held-invisible state, forces the layout, and starts on the
+next frame.
+
+The option tiles carried an inline `animationDelay`, which beats any stylesheet
+rule, so the wipe was running on the original entrance's timing and the answers
+arrived before the question. Both sets of delays are in CSS now.
+
+And `position: absolute` with `inset: 0` on the motif resolved against the
+nearest positioned ancestor rather than the band, so the layer came out 531px
+tall against a 180px band and the mask cut the wrong region. `.mq2-band` is the
+containing block now, and the mask is measured: the stem occupies 46 to 76
+percent of the band, so the mark is cleared from 40 to 82 and lives above and
+below it.
+
+**Six marks**, drawn in the pack colour: the 80s perspective grid, the Abbey Road
+crossing, the circle of fifths, guitar frets and inlays, a wall of stacks, and
+the 70s sunset. Each is the thing its pack is about rather than a texture with a
+music theme. Packs without a real association get none.
+
+---
+
+## v0.201.18 — The review screen, which the type pass could not reach
+
+The stats sheet, the daily popup and the loading screen all came out clean on
+inspection: zero elements below the floor, because they were built from classes
+the type block already covers.
+
+**The miss review did not**, because its card is assembled with inline sizes in
+JavaScript, which the stylesheet cannot reach. Fifteen elements below the floor:
+the pack label at 7.5px and every answer option at 9px. The label is 11px now
+and the options 12px, with the padding and radius opened to suit.
+
+**And it held the last emoji in the module.** The pack label was built as
+`pack.emoji + ' ' + packName(pack)`, so the review was the one screen still
+using the emoji field as an icon. It draws `mqPackIcon` instead, the same mark
+the pack grids use.
+
+The empty state was a hardcoded English string at 10px, "No misses to review."
+It is 12px and translated.
+
+Verified with three real misses: zero below the floor, zero emoji, the drawn
+icon present in the label.
+
+---
+
+## v0.201.17 — Custom's grid joins the other two, and the hint stops guessing
+
+**The pack hint said "All 8 packs selected" on first paint.** It was the static
+markup string with a hardcoded 8, left alone until something else happened to
+refresh it. `mqGoCustom` calls `mqUpdatePackHint` now, so it reads the real
+count from the moment the screen opens: All 7, against 7 playable packs.
+
+**And Custom's tiles were the third presentation of one component.** The two
+picker pages were unified earlier; Custom kept a shorter tile with a 7px
+description where the others carry the question count. It takes the same rule
+now, measured at 85px against 87 on the pickers, with the same name size, the
+same count line and the tick in the corner rather than floating in the row.
+
+That closes the pack grid: one construction, one wording for a pack's size
+through `mq2PackCountLabel`, across all three screens that show it.
+
+---
+
+## v0.201.16 — The type floor, and the last emoji standing in for an icon
+
+**49 quiz rules sat below 11px**, the smallest at 7px, against an 11pt platform
+minimum. Every one is lifted, grouped by what it is rather than flattened onto a
+single value: labels, badges and chips to 11px, and the things that are read
+rather than scanned — card descriptions, pack descriptions, the miss review, the
+fact block — to 12px. Letter-spacing set for 7px is far too loose at 11, so the
+six worst offenders get that corrected too.
+
+Two of them were inline `font-size:8px` in the markup, which beat the stylesheet:
+the pack hint and the DESELECT ALL button. Those are fixed at source, so the old
+path gets them as well.
+
+Measured across landing, custom, both pickers, the quiz, results and review:
+**zero elements below 11px**, from 24 on Custom alone before.
+
+**And the emoji.** A sweep of what actually renders under the flag found one:
+`🏆` and `⚡` in front of the personal-best lines on the results screen. They are
+gone. The banner is already gold and already says what it is, so they were
+decoration standing in for icons.
+
+The rest of the module's emoji are on screens the flag replaces or in the
+instrument pickers elsewhere in the app, which are outside this work.
+
+Worth recording for the audit tooling: my first sweep reported six, because it
+tested each element's own computed style and not its hidden ancestors. Five were
+a `✓` inside the old feedback sheet, which is inert under the flag and never
+seen.
+
+---
+
+## v0.201.15 — BACK was unreachable on the landing
+
+The landing was covering the whole panel, top bar included. `position: absolute`
+with `inset: 0` resolves against the nearest POSITIONED ancestor, and `#mqBody`
+is not positioned, so it anchored to the panel instead and sat over the top bar.
+`elementFromPoint` at the BACK button returned `.mq-hero`: the title was on top
+of it, so the press went to the hero and nothing happened.
+
+`#mqBody` becomes the containing block. Measured after: the landing starts at
+42px rather than 0, BACK and the stats button are both the topmost element at
+their own coordinates, pressing BACK closes the modal, and Custom's BACK still
+returns to the landing.
+
+Custom had the same fault. It went unnoticed only because Custom hides the top
+bar, so there was nothing underneath to block.
+
+---
+
+## v0.201.14 — The landing holds still, the title grows, and the daily joins the hero
+
+**The page you are leaving no longer moves.** It was scaling to 94 percent and
+taking a 2px blur while it faded, which pulls the eye back to it at the exact
+moment the arriving page is asking for attention. Movement should belong to the
+thing entering. It holds its position and only fades: measured mid-takeover,
+transform `none`, filter `none`, opacity falling.
+
+**The wordmark was too small.** The clamp was 34 to 60px against a viewport
+share of 6.4vh; it is 40 to 70 at 7.6vh. On a 660px frame that is 50px against
+42 before, and on 880 it is 67 against 58.
+
+**And the daily chip moves into the hero.** It was absolutely positioned over
+the top right of the title, belonging to neither the title nor the mode list,
+which is what made it read as something stuck on rather than placed. Centred
+under the strapline it becomes the last line of one block, so the top of the
+screen reads as a single composition that ends on the thing you can act on, and
+the eye runs title, strapline, daily, player, modes without a detour.
+
+It stays a chip rather than becoming a card. The three cards are modes you
+configure; the daily is one fixed round. Giving it the same weight as a mode
+would say they are the same kind of thing.
+
+Verified at 660 and 880: cards pinned 16px off the bottom, nothing scrolling,
+the badge static and in flow.
+
+---
+
+## v0.201.13 — The landing goes bottom weighted
+
+The mode cards are anchored to the foot and the hero takes whatever height is
+left over, so the empty space ends up ABOVE the content instead of below it. The
+hero can afford to be generous and the three things you tap sit where the thumb
+already is.
+
+The hero scales rather than being one fixed size: its padding, its gaps and the
+wordmark itself all move with the viewport. Measured in the app with the cards
+pinned, 16px clear of the bottom at every height:
+
+| frame | wordmark | scrolls |
+|---|---|---|
+| 640 | 41px | no |
+| 700 | 45px | no |
+| 780 | 50px | no |
+| 900 | 58px | no |
+
+Against the fixed-height version, which left 286px of dead space at 930 and the
+same cards stranded across the middle at every size.
+
+Quick Play takes the larger box and the larger name, because it is the one used
+most. Hierarchy by frequency rather than by decoration.
+
+**Three faults on the way in.** `margin-top:auto` cannot push if there is no
+slack, and the screen was sizing to its content inside a taller body, so nothing
+moved. Filling the body then left the body's own padding behind and the cards
+ran edge to edge. And the DAILY badge is absolutely positioned at `top:4px`
+inside the hero, which with the hero now starting at the top of a full-height
+screen put it straight on top of the stats button.
+
+Nothing was removed: the stats button, the DAILY chip, the Now Playing player
+with both transport controls and the wordmark are all where they were.
+
+---
+
+## v0.201.12 — Three sentinel pins so the locked-pack mistake cannot come back
+
+`Object.keys(PACKS)` counts packs that cannot be dealt from, and the same line
+written in three places caused three separate bugs: the survival guard let you
+deselect every playable pack, the tile counts overstated what a language would
+be served, and select-all highlighted coming-soon packs that then dealt nothing.
+
+Rather than a new tool, three pins in the sentinel that already runs on every
+build, one per call site. Each asserts the `mqPackReady` filter is present and
+names the exact wrong line it replaced, so reintroducing the old code is what
+trips it rather than some approximation of it.
+
+Proved by putting the select-all bug back in a scratch copy: the pin reports
+DRIFTED and names the site. The real file passes at 250 pins.
+
+---
+
+## v0.201.11 — Select all could pick packs that cannot be played
+
+`mqTogglePack` already refuses to select a coming-soon pack by hand. Select all
+went round it: it set the selection to every key in `PACKS`, locked ones
+included, so those tiles highlighted, the hint counted them, and the round then
+dealt nothing from any of them. The screen was already disagreeing with itself
+about it, since the hint said "All 8 packs selected" while the run summary said
+7.
+
+Select all now takes only playable packs, and its own on/off test counts
+playable packs too, so a full selection still reads as full. The hint counts and
+totals the same way, which is why it reads "All 7 packs selected" against 19
+packs in the file.
+
+Verified: after select all, 7 selected of 7 playable, **0 locked packs in the
+selection**, and the hint, the button label and the run summary all agree.
+
+This is the third instance of one mistake: `Object.keys(PACKS)` counts packs
+that cannot be dealt from. It caused the survival guard to let you empty the
+selection, the pack counts to overstate, and now this. Worth a sentinel pin so a
+new use has to justify itself.
+
+---
+
+## v0.201.10 — The pinned START was not pinned
+
+It landed in the middle of the page with the setting rows continuing below it,
+and the reason is worth writing down: **`position: absolute` does not pin inside
+a scrolling container.** It anchors to the bottom of the scrollable CONTENT, not
+to the viewport, so the footer sat wherever the content happened to end and
+everything after it carried on underneath.
+
+The screen is a flex column now. The content is the scrolling child and the
+footer is simply the last one, so it cannot move. Verified at the top of the
+page and scrolled to the bottom: the footer sits at 725 to 820 in both, flush
+with the bottom of the screen, and the last setting row ends above it at 682.
+
+The bottom padding that existed only to clear the floating footer is gone with
+it, and the footer takes a hairline top border instead of a gradient fade, since
+it is now a real edge rather than something hovering over the content.
+
+---
+
+## v0.201.9 — Custom rebuilt: four rows, a real timer, and scoring that runs the right way
+
+**Four setting rows replace four banks of chips.** Each reads: what it is, what
+it is set to, and the control. No section headings and no explanations, because
+Custom is the screen you reach by choosing to configure something. Difficulty
+reads MEDIUM while its control keeps EASY/MED/HARD; length reads 10 QUESTIONS or
+ENDLESS; timer reads OFF or 5/10/15 SECONDS; mode reads NORMAL or SURVIVAL. On
+survival the length control greys out rather than lying about a number that will
+not be used.
+
+**The timer is a duration now.** It was a boolean pinned to 15 seconds, with the
+progress bar computed as `timerVal / 15`. 5 and 10 are real options rather than
+labels, and the bar scales to whichever window is running.
+
+**And the scoring ran backwards.** Points were `100 + timerVal * 6`, where
+timerVal is the seconds LEFT. An instant answer on a 15 second timer paid 190;
+the same answer on a 5 second timer paid 130. Choosing the harder setting paid
+less, and adding 5 and 10 would have made that visible. It scores the share of
+the window you did not use: full speed is 190 at any duration, half the window
+is 145 at any duration, and the shorter windows are simply harder to hit.
+
+**START is pinned** to the bottom with a summary reading `7 packs · MED · 10
+questions`, so it does not drift down the page as the grid grows and the run is
+described before you commit to it.
+
+The pack tiles carry the question count instead of a 7px description, through
+`mq2PackCountLabel`, which is now the single place that decides how a pack's
+size is worded across all three grids.
+
+Two faults caught in testing: the pinned footer duplicated the in-flow button,
+so the screen briefly had two STARTs, and I wrote CSS for a selection tick that
+already existed as `.mq-pack-check`.
+
+**Still below the floor: 24 elements**, worst being BACK at 9px and the COMING
+SOON tags at 8.5px. Those are shared components rather than Custom's own, so
+they want one pass across the module.
+
+---
+
+## v0.201.8 — Custom was dimming itself on the way in
+
+The rise looked transparent because it was. The drop-back rule was written for
+the two overlay pickers, where the active screen is the landing behind the page.
+Custom IS the active screen, and it sits inside `#mqBody`, which the same rule
+also dims, so the page arriving was being taken to 50 percent opacity and put
+through a 2px blur by the effect meant for the thing behind it.
+
+The held-over landing carries the drop-back itself now and Custom never touches
+the panel class. Verified mid-rise: Custom at opacity 1 with no filter, the
+landing at 0.52.
+
+A second cause underneath it: `min-height: 100%` did not resolve against the
+flex-sized body, so the page stopped 129px short of the bottom and the landing
+showed underneath as it moved. It fills the body outright now, measured at 880
+against 880, and scrolls if the content needs it.
+
+---
+
+## v0.201.7 — Survival loses its all-packs button, Custom joins the page move
+
+**The START SURVIVAL button under the grid is hidden under the flag.** Survival
+picks one pack now, so a button meaning "all of them" under the grid was a
+second and contradictory way to start the same mode.
+
+**Custom shares the move.** It is a screen rather than an overlay, so it cannot
+sit over the landing the way the two pickers do; instead the screen rises while
+the landing is held rendered behind it and drops back, and leaving plays it in
+reverse. Verified in both directions: entering runs `mq2PageIn` with the landing
+held and the panel in its picking state, and 700ms later the hold is released;
+leaving runs `mq2PageOut` and lands on the landing with both classes cleared.
+The exit hangs off `mqGoLanding`, which is the only route out of Custom, and is
+gated so the other screens that call it are unaffected.
+
+**What the audit of Custom found.** Nine distinct type sizes on one screen, and
+23 elements below the 11px floor: the pack descriptions at 7px, the section
+labels at 8px, the back button at 9px. The pack tiles are 54px against the 87px
+tiles on the two picker pages, so `mqPackGrid` is a third presentation of the
+grid the other two now share. Every pack is selected by default, which is the
+same thing Daniele objected to on Survival, and the hint reads "All 8 packs
+selected" while showing one tab of four. And difficulty now appears both here
+and in the pack popup.
+
+None of that is fixed yet; it needs decisions rather than edits.
+
+**A false alarm worth recording.** The Questions row looked empty and I nearly
+reported it as a bug. It renders from `mqGoCustom`, and my test had called
+`mqShowScreen('mqScreenCustom')` directly with only `mqRenderPackGrid`. Opened
+through its real entry point it has all four chips. Third time this session that
+driving the app from the side has produced a fault that was not there.
+
+---
+
+## v0.201.6 — The survival guard counted the wrong packs, and the pool selection goes
+
+**You could deselect every playable pack.** There was a guard against emptying
+the selection, but it counted the whole set, and the default selection is every
+key in `PACKS` including the coming-soon ones. Those can never be toggled off,
+so once you deselected the last playable pack the set still held four or five
+locked ones, the guard saw more than one and let it through. The result was a
+screen with nothing highlighted and a pool that could not deal a question. It
+counts only selectable packs now: verified that toggling every ready pack off
+leaves exactly one standing.
+
+**And the pool selection itself goes, under the flag.** Highlighting every pack
+by default asked people to notice a selection they never made, spread across
+four tabs most will never open. Survival picks one pack the way Quick Play does,
+and everything is the button at the bottom, asked for rather than assumed.
+
+Both pages now share one grid, one page treatment and one popup. Survival's
+popup drops the question count, because the mode has no end, and its button
+reads START SURVIVAL. The summary line was still promising "10 questions" on an
+endless mode; it reads "3 lives, no end" there.
+
+Copy in both languages: the subtitle said "select packs" for a screen that is
+now single-pick.
+
+**The pool stays in Custom**, where a multi-pack run is the point of the screen.
+
+The old behaviour is untouched with the flag off: the toggle path is still
+wired, and only the guard fix applies to both.
+
+---
+
+## v0.201.5 — Survival becomes the same page, through one helper
+
+Survival had its own bottom sheet and its own pack grid, which made it the last
+place carrying a third copy of the component. It inherits the Quick Play page
+rather than getting a second design: same takeover, same reverse exit, same BACK
+button, same tiles, same locale-aware counts.
+
+**Both pages now open and close through one pair of functions**, `mq2PageOpen`
+and `mq2PageClose`, so the two cannot drift apart the way three pack grids did.
+`mqShowQuickSheet` and `mqShowSurvivalSheet` are one line each now.
+
+**Two things folded back in while porting.**
+
+The count filter I wrote by hand for the Quick grid already existed as
+`mqPackQuestions`, which filters by locale. Both grids and the popup use the
+helper now instead of three spellings of the same rule.
+
+Survival's tile carried a 7.5px "90Q" badge floated to the right, below the 11px
+floor and saying less than the words do. It reads "90 questions" on a second
+line, matching Quick, with the same `+` for generator packs and "endless,
+generated" for a pack with no authored questions.
+
+Verified: two columns, 87px tiles, BACK present, the entry keyframe running, no
+overflow on the start button, and Quick Play still opening and closing correctly
+through the shared helper.
+
+---
+
+## v0.201.4 — Going back plays the move backwards
+
+The page slid up on the way in and then vanished on the way out, so the landing
+arrived from nowhere. BACK now runs the same move in reverse: the page slides
+down over 340ms on a curve that starts slower and ends faster, which is the
+right shape for a dismissal, while the landing comes forward at the same time
+rather than waiting for the page to finish.
+
+Verified mid-flight: the exit keyframe is running, the landing is part-way back
+through its scale, and the panel has already dropped its picking class so the two
+halves of the move happen together. Verified settled: both classes cleared, and
+the page reopens cleanly afterwards.
+
+Under `prefers-reduced-motion` it closes immediately, with no timer.
+
+---
+
+## v0.201.3 — The pack counts were wrong in both directions, and the ALL PACKS button overflowed
+
+**No crossover.** Checked every question in every pack for text appearing in more
+than one: zero. That part was clean.
+
+**But the number was `pack.questions.length`, which is wrong twice over.**
+
+The decades packs tag questions by locale. The Seventies holds 113, of which an
+English player can be served **92** and an Italian **91**: the tile was promising
+twenty-one questions the reader's language would never show them. The count is
+filtered by the current language now, on the tile and in the popup, and it moves
+when the language does.
+
+A generator pack's authored total is a floor rather than a total, because the
+round adds generated questions on top of it. Those read `60+`, `104+`.
+
+Measured after, English then Italian: Theory 60+, Guitar 104+, Bass 104+, Guitar
+Gods 90, Beatles 90, The 70s **92 in English and 91 in Italian**, and Advanced
+Theory keeps "endless, generated" since it has no authored questions at all.
+
+**The ALL PACKS button ran 15px past the sheet.** It resolves to `width: 412px`
+and the 15px margins I added in the rework were applied on top of that, so it
+was 442px wide in a 412px sheet. Auto width lets the margins do their job.
+Measured at 23px of clearance now.
+
+---
+
+## v0.201.2 — Three faults in the Quick Play rework, one of them a trap
+
+Found on device.
+
+**There was no way back.** The old sheet was dismissed by tapping the area
+outside it. Turned into a full page there is no outside, so the only control on
+the screen was ALL PACKS and the only exit was leaving the quiz. A BACK button
+sits above the title now, and it restores the landing: verified that the sheet
+closes, the panel drops its picking class and the landing returns to full
+opacity.
+
+**The animation never played.** The sheet had no transition of its own beyond
+`background 0.06s`, so the opaque page appeared instantly and covered the
+landing before the landing could be seen dropping back. It uses a keyframe
+rather than a transition, because the overlay starts from `display:none` and a
+transition will not run from there.
+
+**The tile was half empty.** 96px tall holding one line of text, bottom aligned.
+It carries the question count as a second line now, the way the mockup did, and
+comes down to 87px, which is the height the content needs.
+
+That last fix exposed a fourth: a generator-only pack has no authored questions
+to count, so its tile came out blank beside a counted neighbour and read as a
+fault. Those say "endless, generated" instead.
+
+---
+
+## v0.201.1 — Quick Play takes the page, and difficulty moves to where it applies
+
+Three changes, all behind the flag. The landing keeps its shape.
+
+**The difficulty chips leave the landing.** Difficulty is a property of a run,
+and it was being set on a screen two steps away from where it took effect, then
+offered again inside Custom: one setting, two controls, neither next to the run
+it governed. It now lives in the pack popup, above the question count, with the
+meanings Custom already carried: Familiar, Some digging, Deep cuts. A summary
+line under PLAY reads back the whole decision.
+
+**The Quick Play sheet becomes the page.** The landing drops back, dims and
+blurs behind it over 420ms rather than being covered, so it reads as a layer you
+will come straight back from rather than as a new place. The panel carries the
+state, so every route in and out goes through one class.
+
+**The pack grid becomes tiles** in the same language as the answer grid: two
+columns, same radius, same padding, the icon and name reading down the tile.
+
+Two faults found while porting, both in my own new code. The tile drew a badge
+box in the corner for an icon that renders inline with the name, so every tile
+carried an empty square. And difficulty landed below the question count when it
+is the larger of the two decisions and the one that just moved there.
+
+Survival still has its own sheet and its own pack grid. That is the next one,
+and it should get the same treatment rather than a second design.
+
+---
+
+## v0.201.0 — Slice 2: the feedback comes out of the drawer
+
+The bottom sheet is gone. The blurb sits in the flow under the answers, so the
+question, the answer you gave, the one that was right and the blurb are all on
+screen together. A sheet covers the thing it is talking about and reads as
+transient; the blurb is what the pack work is for.
+
+**Three things are cut, because the reveal already said them.** By the time the
+feedback opens, the band has gone green or red, the tick is on the right answer
+and the beat has filled. So the verdict word was the fourth way of saying it, the
+"DID YOU KNOW" label was announcing something that no longer needed announcing,
+and "The correct answer was" was restating what the tick already marks.
+
+What replaces the verdict is the points: **an italic "Did you know?" on the left,
+`+150` with a multiplier pill on the right.** The number counts up rather than
+appearing.
+
+**The XP toast is suppressed under the flag.** It was saying what the block now
+says and landing on the answers while doing it. The milestone moves into the
+head as a chip, so a five-in-a-row round reads `+150  x1.5  5 STREAK` on one
+line. `hapticMilestone` and `playCueMilestone` are untouched, so the milestone
+still has a felt moment.
+
+**Colour is one event, disclosure is a sequence.** Every state colour now moves
+on a single 280ms beat: the band, the tile borders and backgrounds, the dim on
+the two you did not pick, the answer keys and the beat strip. They were at 450,
+150, 200, 300 and instant, which is five things starting together and finishing
+at five different moments. The reveal stays deliberately staggered on top of it:
+the rule draws, the label and points fade in behind it, the blurb lifts, and
+NEXT arrives last so it does not invite a skip before the blurb is readable.
+
+One i18n key, both languages: `mq_did_you_know_q`.
+
+---
+
+## v0.200.2 — The record ending stops saying it twice, and the gold stops being mud
+
+Three faults on the survival record screen, all found on device.
+
+**Yellow does not survive being mixed into a dark navy.** Green and red stay
+recognisable at a 40 and 24 percent mix; `--metro` at 34 percent came out khaki,
+so the most rewarding screen in the module read as dirt. The band carries 15
+percent now and the gold lives in the headline and the rule, which is where it
+reads as gold.
+
+**`--metro` in light mode is `#503600`, a dark brown**, so the reward button was
+mud there too. Light gets a real gold, `#f0b429` with `#3a2a00` text, at 7.5:1.
+Dark is `#ffd166` on `#1a1206` at 12.9:1. Same shape in both, rather than one
+being the other's opposite.
+
+**And the screen said the same thing twice.** The headline reads NEW RECORD and
+the banner underneath read "New survival best". The banner drops that line when
+the headline already carries it, and hides entirely when nothing else is left in
+it, which on a plain record run is the usual case. That takes two lines off the
+screen.
+
+---
+
+## v0.200.1 — Survival gets a third ending, and light mode stops diluting dark ink
+
+**Beating your own survival record now ends the run differently.** It used to
+read GAME OVER with a line in the personal-best banner underneath, which is the
+wrong way round in the one mode whose entire point is your own record. There are
+three endings now:
+
+- **NEW RECORD**, gold band, with how far past your best you got
+- **GAME OVER**, muted red, with how far short you fell
+- **CLEARED**, green, for surviving the whole pack with lives left
+
+On a first run there is no number to beat, so it reads "your first survival run,
+that is the mark to beat" instead of a comparison against zero.
+
+**A real bug came out of building it, and it predates the redesign.**
+`mqShowResults` calls `mqCommitSessionStats()` before anything reads the stats,
+so every later `mqGetStats()` already includes the run being reported. The
+record check compared 31 against 31. **The old screen's "New survival best" and
+"New streak record" banners have the same fault and could never have fired.**
+The snapshot is taken before the commit now and both paths read it.
+
+**Light mode bands were dark ink diluted into white.** `color-mix(--in-tune 40%,
+--surface)` takes #224700, a dark green, and thins it, which gives sage; the
+same treatment gave the failing state a dusty pink. Light mode has its own pale
+washes with a saturated ink for the rule, so the band reads as tinted paper
+rather than thinned paint: #d9ecd3, #f7e7ce, #f4dcd7, #fbeec2.
+
+The primary button on a good result was dark green text on dark green. It is
+light text on dark green now.
+
+---
+
+## v0.200.0 — Slice 3: one results screen for every ending
+
+The module had two results screens that shared no visual language, plus a third
+for a cleared pack. Behind the flag they are one.
+
+A normal round, survival, the daily and a cleared pack all render into one
+block. The band is the same object as the question screen, neutral until the
+outcome colours it, and the record under it is the same beats the player watched
+fill. That replaces three notations for one fact: the bars on the old results
+screen, the emoji grid on the daily, and nothing at all on the pack-clear
+screen. Everything leads with correct out of total; points are off the headline.
+
+**The round replays on arrival.** The beats land in the order they were answered
+and the headline counts up underneath, timed to finish together. It is the one
+thing that happens here and nowhere else, which is what makes it read as an
+arrival rather than another question screen.
+
+Survival keeps its own headline, because it is not graded on accuracy: 27
+CORRECT and GAME OVER rather than a percentage band. The breakdown only appears
+with more than one pack, since on a single pack it is one full-width row
+repeating the header. The daily keeps its share button and swaps PLAY AGAIN for
+DONE.
+
+Four new i18n keys, both languages: `mq_pack_cleared`, `mq_every_q_answered`,
+`mq_pb_survival`, `mq_pb_streak`.
+
+**Four faults on the way in, each found by measuring rather than looking.**
+
+The two hide-siblings rules both matched any `.mq-screen.v2`, so on the results
+screen one hid everything that was not `.mq2` and the other hid everything that
+was not `.mq2r`. Between them they hid the lot. Each is scoped to its own screen
+now.
+
+The new block was inserted BETWEEN two screens, so it is a sibling of them
+rather than a child of the results screen, and the parentage selector never
+matched. The rules address it as a sibling.
+
+`.mq-panel` does not exist; the element is `#mqPanel`. That selector matched
+nothing at all.
+
+And the one worth remembering: **the module's screens are split across two
+containers.** The landing, setup and quiz screens live inside `#mqBody`, while
+the results, win, daily and review screens are direct children of `#mqPanel`.
+Hiding `#mqBody` therefore did nothing to the results screen, which is 860px
+tall and pushed the new block off the bottom of the panel. Both containers are
+hidden now.
+
+---
+
+## v0.199.15 — Light mode on the quiz screens that are staying
+
+A contrast audit of all seven quiz screens in light mode, then fixes only where
+the screen survives the redesign.
+
+The panel behind the landing and setup screens composites to rgb(143,174,220), a
+mid periwinkle, and two shared tokens fail on it: `--accent-soft` (#5238a5) at
+3.75:1 and `--accent-warm` (#b34a18) at 2.37:1. Both are used for the first
+things you read. Darker members of the same hue, chosen by measuring against
+that exact background: **#3a2578 at 5.39:1** and **#6b2909 at 4.76:1**.
+
+Fixed: the MUSIC QUIZ wordmark gradient, the INTONARE pill, the mode card names
+and badges, the XP toast, the selected question-count chip, the selected global
+difficulty chip, the difficulty names on the setup chips, the DAILY badge, and
+the medium pill on the new quiz screen, which was sitting at 4.45 and needed a
+nudge rather than a rescue.
+
+Every override is scoped to the quiz. The global tokens are shared with every
+other tool and are not touched.
+
+| screen | before | after |
+|---|---|---|
+| landing | 6 | **0** |
+| custom | 3 | **0** |
+| quiz (v2) | 2 | **0** |
+| review | 1 | **0** |
+| results | 3 | 2 |
+| cleared | 3 | 2 |
+| daily | 4 | 3 |
+| **total** | **22** | **7** |
+
+The seven left are all on the results, cleared and daily screens, which slice 3
+replaces. Painting them now means painting screens that are about to be deleted,
+so they stay on the list instead. The numbers to beat when those are rebuilt:
+`mq-res-btn` at 3.75, `mq-stat-val` at 4.45, the daily label at 2.37 and the
+daily's big score at 2.37 against a 3.0 threshold.
+
+A coherence note that matters more than any single number: the module currently
+holds three visual languages. The new quiz screen is flat band and ink rule. The
+results and cleared screens are rings, trophy emoji and gradient text. The
+landing is a third, a large gradient wordmark over glass cards. In dark that
+reads as variety; in light it reads as unfinished, because the old screens lean
+on glow and gradient and neither survives a pale ground.
+
+---
+
+## v0.199.14 — Pack colours become theme-aware everywhere, and the light-mode audit that should have run first
+
+Daniele asked whether the whole quiz was checked for light mode. It was not.
+v0.199.13 fixed one screen and left the pattern open, which was said at the time
+and should not have been left there.
+
+**Ten places write a pack colour into an inline style**: the stats rows, the pack
+icons, the survival grid, the sheet grid, the quiz category badge, the results
+breakdown, the miss review, the daily popup and the question-count chips. Every
+one wrote the DARK colour whatever the theme was.
+
+All ten now ask for `var(--pk-<pack>)`. The two tables are published as one
+custom property per pack, defined for both grounds, so the browser picks. Every
+use is a plain CSS value (background, color, border-color, `color-mix`,
+`linear-gradient`), all of which take a variable, and the side effect is that a
+theme switch now recolours the module live instead of waiting for a re-render.
+Raw `MQ_PACK_COLORS[...]` reads are down to the table's own definition.
+
+**And the audit that should have come first is now a tool.**
+`intonare_mq_light_audit.py` walks every visible text element on all seven quiz
+screens in light mode and reports foreground against composited background,
+against the WCAG AA thresholds. It composites translucent layers rather than
+returning the first one it finds, which the first version got wrong: a chip with
+a 7 percent tint over a card was being compared against its own tint and scoring
+1.0.
+
+**121 text elements checked, 22 below AA.** They collapse to eight classes:
+`mq-xp-toast`, `mq-hero-pill`, `mq-card-name`, `mq-card-badge`, `mq-chip-val`,
+`mq-res-btn`, `mq-gd-chip` and `mq-diff-name`, plus `mq-stat-val` and `mq2-diff`
+sitting marginally under at 4.45. The worst are at 2.37. **These are not fixed.**
+Most of them are on screens the redesign is going to replace, and guessing at
+them would mean touching a light palette the whole app shares. The numbers are
+in the tool; the call is Daniele's.
+
+---
+
+## v0.199.13 — The quiz gets a real light palette instead of dimmed dark colours
+
+Daniele: the light mode schemes never look good, and does the quiz even match
+the rest of the app? No, and the numbers say so plainly.
+
+**The app has 783 `body.light` overrides.** The tuner has 30, the metronome 39,
+the piano 31, exercises 34, PTO 41. **The Music Quiz has 8.** It is the least
+adapted tool in the app for light mode, and it shows.
+
+**And every light-mode pack colour was a dark-mode colour muddied down.**
+`MQ_PACK_COLORS` is nineteen brights chosen for a dark ground, with no light
+counterpart, so the redesign had been mixing them toward navy to stop them
+glowing. That is compensation, not design, which is exactly why it came out
+muddy. Measured: those nineteen colours sit at 1.3:1 to 3.4:1 against the light
+surface. Most of them fail plain legibility before anything aesthetic is
+considered.
+
+The app's own light system is not dimmed brights, it is deep saturated ink on
+pale ground. Its most used light values are #004a60, #5238a5, #095c3a, #8f2344,
+#8f2215 and #664700.
+
+**`MQ_PACK_INK` gives every pack a real light colour** in the same hue family,
+drawn from that palette. All nineteen sit between 6.5:1 and 8.5:1 on the light
+surface, against 1.3 to 3.4 before. It is used for the band rule, the pack name,
+the answer keys and the streak ramp, and the ramp's top two tiers warm through
+#8a3d0b and #b8430c rather than through `--metro`, which is a dark brown in
+light mode.
+
+The glows stay off in light. A coloured shadow on a pale ground is a smudge.
+
+---
+
+## v0.199.12 — The streak tiers, rebuilt for light mode
+
+Daniele: the ember is dark in light mode and feels weird. Two reasons, both
+mine.
+
+**A glow is a light-on-dark idea.** A coloured box-shadow on a near-white
+surface reads as a smudge, not as heat. The glows come off in light mode
+entirely, and height plus colour carry the tiers on their own.
+
+**`--metro` in light mode is `#7a5200`**, a dark brown. The top tier was being
+painted with it, so the hottest state in the app came out as the deadest colour
+on the screen. Light mode warms through `--accent-warm` instead, which is a
+burnt orange built to sit on a pale ground.
+
+Two faults came out of fixing it, both found by measuring rather than looking.
+
+Tier 3 was mixed toward black and came out DARKER than tier 4, so the ramp ran
+backwards at the top. The ramp is built off one variable now and the tiers
+cannot cross.
+
+Tiers 1 and 2 came out **identical** in light mode. In dark they differ only by
+the halo, so removing the halo removed the difference. Light mode gives each
+tier its own colour and escalates through hue and saturation rather than
+brightness, which is what works on a pale ground: purple, deeper purple, red,
+orange. Measured separation between steps is 59, 119 and 37 in RGB distance,
+against 0, 96 and 79 in dark, where the first step was carrying no colour
+difference at all.
+
+Contrast against the band, light mode: 3.4, 6.4, 5.6, 4.1. The pack colours are
+chosen for a dark ground and go pale on white, so the lower tiers are mixed down
+before they are used.
+
+---
+
+## v0.199.11 — The slot on deck, and the empty beats made visible
+
+**The question you are answering now is cut to the tier it would reach, and left
+hollow.** A streak visibly reserves its next place before you have earned it: on
+a run of four the empty slot is already standing at the height of five, waiting.
+Get it right and it fills; get it wrong and everything settles flat. Verified
+across six states, and the band stays at 157px through all of them.
+
+| run | live beats | slot on deck |
+|---|---|---|
+| nothing | none | 5px, plain |
+| 2 | none | 8px hollow |
+| 4 | 4 at 8px | 10px hollow |
+| 9 | 9 at 10px | 12px hollow |
+| 19 | 19 at 12px | 13px hollow |
+| after a miss | none | 5px, plain |
+
+The slot breathes on a 2.4 second cycle, so a waiting slot reads as waiting
+rather than as an empty one. It is off under `prefers-reduced-motion`.
+
+**The unanswered beats were invisible.** They were `--surface-2` sitting on
+`--surface`, which is almost no contrast, so the row stopped saying how many
+questions were left as soon as you looked at it on a real screen. They are
+`--text-dim` at 22 percent now.
+
+Three further animations are built but NOT shipped: a landing pop on a newly
+answered beat, a ripple that runs along the streak when it crosses a tier, and a
+cascade that collapses a broken run right to left instead of dropping it all at
+once. They are in the mockup with individual toggles, because that is a judgement
+best made with a thumb.
+
+---
+
+## v0.199.10 — The streak rises out of the bar, and only while you hold it
+
+The joined-run bar is out. Merging the beats read as one long shape rather than
+a run of separate answers, which is not what a record is.
+
+**The live run rises.** Consecutive right answers grow out of the row and take
+colour, on the same tiers as the score multiplier, so what rises and what pays
+change on the same question: 8px at three, 10px and a halo at five, 12px and
+warming at ten, 13px and amber at twenty.
+
+**Only the LIVE run.** A run that has already been broken drops back to plain
+ink. A coloured run you no longer hold is the bar claiming something untrue, and
+it also meant a bar full of old colour said nothing about how you are playing
+now. Get one wrong and everything settles back to a flat row of marks; start
+again and only the new run lifts.
+
+**Nothing else moves.** The row reserves its tallest height, so a streak growing
+from nothing to twenty and dying again leaves the band at exactly 187px
+throughout. Verified across seven states.
+
+The rise uses the spring curve, which is the one place a spring is allowed on
+this screen besides the right answer, and it is the same gesture: something
+arriving rather than something changing.
+
+---
+
+## v0.199.9 — Points multiply with the streak; XP does not
+
+The streak used to pay a flat bonus: 100 points, or 120 from three in a row, and
+nothing more after that. A streak of 3, 5, 10 and 20 all paid 120, so the
+milestones announced themselves with a haptic and a cue and were worth nothing.
+
+Points now multiply, on the same tiers `hapticMilestone` already fires on, so
+the thing you feel and the thing you are paid change on the same question:
+
+| streak | multiplier | points |
+|---|---|---|
+| 0-2 | 1 | 100 |
+| 3-4 | 1.2 | 120 |
+| 5-9 | 1.5 | 150 |
+| 10-19 | 2 | 200 |
+| 20+ | 3 | 300 |
+
+**XP is untouched**, deliberately: 10, or 15 from three in a row. Points are the
+round's own currency and can swing; XP is the long-term progression and should
+not be distorted by one hot round.
+
+The multiplier applies to the timed score too, which is `100 + timerVal * 6`,
+so answering fast and holding a streak compound rather than one replacing the
+other.
+
+The toast leads with the points now instead of the XP, because points are the
+number that changed: "+150  fire  x1.5  5 STREAK". Under a multiplier of 1 it
+still reads "+10 XP".
+
+Verified end to end over a 22 question run: 100 at streak 1, 120 at 3, 150 at 5,
+200 at 10, 300 at 20, with XP climbing 10 then 15 a question throughout.
+
+---
+
+## v0.199.8 — The toast was firing under the fold, and the bar now shows the streak
+
+**The streak toast was invisible, and it was my fault.** When the screen was
+ported I moved the toast to `bottom: 96px` to stop it landing on the question.
+It is `position: fixed`, so the bottom of the viewport is exactly where there is
+least screen, and it was firing below the fold. The band's height cannot be
+known in CSS, because it changes with the stem length and with whether the
+question carries a diagram, so it is measured now and the toast is placed ten
+pixels under the band. Checked at 915px and at 620px: on screen in both.
+
+**Runs join in the bar.** Consecutive right answers lose the gap between them
+and square off their inner corners, so a streak reads as one long bar instead of
+three separate marks. From three in a row the run takes the pack colour. That
+gives the streak a permanent home in the thing that was already on screen, which
+is the job the removed pill was doing.
+
+**Survival gets a moving window.** It used to grow one segment per question
+without limit, so every segment was thinner than it had been on the question
+before and the bar was a different shape each time you looked at it. It grows to
+twenty and then holds, keeping the most recent twenty. Verified: an eight
+question run draws ten segments, a thirty question run draws twenty.
+
+Still open, and it needs a decision rather than a fix: **the streak pays a flat
+bonus, not a building one.** `mqAnswer` gives 100 points and 10 XP, or 120 and
+15 from three in a row, and it stops there. A streak of 3, 5, 10 and 20 all pay
+120. The milestones fire `hapticMilestone` and `playCueMilestone` and change the
+toast, but they are worth nothing extra.
+
+---
+
+## v0.199.7 — The streak pill goes, the difficulty sits on the centre line
+
+**The streak pill is gone from the header.** The beats under the question
+already show the run, so the pill was saying the same thing twice and taking the
+room that made the header overflow in the first place. Nothing else changed
+about streaks: `mqAnswer` still counts them, still pays 120 points and 15 XP from
+three in a row, still fires `hapticMilestone` and `playCueMilestone` at 3, 5, 10
+and 20, and still throws the toast. The signal moved from a permanent readout to
+the moment it happens, which is when it means something.
+
+**The top row is a three-column grid now**, so the difficulty pill sits on the
+exact centre line whatever the two sides weigh. Measured at 0px offset from
+centre at 360 and 412, with a five-figure score and the Italian DIFFICILE label.
+Header overflow is gone with it, so the narrow-screen workaround the pill needed
+came out too.
+
+Removal was checked by count rather than by eye: `mq2Streak`, `mq2-streak`,
+`mq2-goal`, `mq2-track`, `MQ2_TIERS` and `mq2-right` are all at zero
+occurrences. The alignment sweep is still clean, seven cases at three widths.
+
+---
+
+## v0.199.6 — The round's difficulty, colour-coded, in the header
+
+Daniele asked for the chosen difficulty where the pack name used to sit. It is a
+small pill in the top row, and it uses the three colours the difficulty chips on
+the hub already use rather than inventing new ones: easy is in-tune green,
+medium is accent-warm, hard is sharp red. Both languages, both themes:
+
+| | dark | light |
+|---|---|---|
+| EASY / FACILE | `#b6f25b` | `#224700` |
+| MED / MEDIO | `#ffa07a` | `#b34a18` |
+| HARD / DIFFICILE | `#ff5252` | `#6e1810` |
+
+**Adding it overflowed the header, which the measurement caught.** Four items in
+one row is too many for a 360px phone once the Italian label meets a streak pill
+and a five-figure score: the score ran 15px past the band edge. Under 400px the
+streak's target number is dropped and the gaps tighten. The target is the least
+load-bearing thing in that row, because the bar beside it already shows how
+close the milestone is. Worst case now clears the edge by 18px at every width.
+
+A note on the first test run of this, because it wasted a round: it reported the
+pill as green for all three difficulties and the Italian labels as English. Both
+were the test being wrong. It set `localStorage.intonare_lang`, which is not
+where the language lives (`progState.lang` is), and it read the colour before
+the theme class had been applied. The code was correct the whole time.
+
+---
+
+## v0.199.5 — Two alignment faults found by measuring instead of looking
+
+Daniele asked for a thorough check, so this was done by reading bounding boxes
+rather than by eye: seven content cases at 360, 384 and 412 CSS pixels, checking
+edges, first-line positions, key positions, tile heights and text overflow.
+
+**Answers in a row did not line up when one of them wrapped.** The text was
+centred in its tile, which looks right until one answer in a row takes two lines
+and the other takes one. At 360px "Diminished triad" wraps and its first line
+then sat 10px above the one-line answer beside it. It is top-aligned now, so the
+first line of every answer in a row starts on the same pixel whatever the wrap.
+This only appeared at 360 and 384; at 412 nothing wrapped, which is why looking
+at the wide preview never showed it.
+
+**The pack name truncated to "THEORY ..." whenever the streak pill appeared.**
+It shared the top row with QUIT, the pill and the score, and there was not room
+for four things. It has its own line under the header now, centred, and the stem
+margin came down to pay for the height.
+
+The sweep is clean at all three widths for: one-word answers, a mixed set where
+one answer wraps, four long answers, the longest option set in the library, a
+long stem, a two-digit streak, and survival mode.
+
+---
+
+## v0.199.4 — One layout for the answers, always
+
+The quiz screen used two layouts: a grid when every answer was short, a list
+when any answer was long. Daniele read the switch as a bug, and he is right.
+Two shapes for the same control look like something went wrong, not like a
+rule.
+
+**The grid is now the only layout. The text scales instead.** Measured over
+every option set in the shipped packs, including the eighties draft: the longest
+answer in the whole library is 65 characters, and it is Italian, which runs
+longer than the English throughout. 65 characters is three lines at 11px in a
+half-width tile, so there is room.
+
+| longest answer | size | share of questions |
+|---|---|---|
+| up to 20 chars | 15px | 61% |
+| up to 28 | 13.5px | 78% |
+| up to 40 | 12px | 93% |
+| over 40 | 11px | 7% |
+
+11px is the floor and it is only reached by 7 percent of questions. Nothing
+overflows its tile at any step, checked against the three worst cases in the
+library.
+
+The cost is honest: a long answer is smaller in a tile than it would be across
+the full width. The gain is that the answers are the same shape on every
+question, which is what a control should be.
+
+---
+
+## v0.199.3 — Two alignment faults in the new quiz screen
+
+Both found by Daniele on device, both real.
+
+**The pack name moved between questions.** The top row was `space-between` with
+three children, so the label's position depended on how wide the right-hand
+group happened to be. At streak 0 there is no streak pill, and the label sat
+near the centre. At streak 3 the pill appeared, and the same label jumped left
+and truncated. QUIT and the pack name are one left group now and the rest is
+pushed right, so the label starts at the same place every time. Measured at
+x=91 in both states.
+
+**A one-word answer floated in the tile.** The tile put the key at the top and
+the answer at the bottom with `space-between`, which reads fine for two lines of
+text and looks broken for "ii" or "One": a letter, a large hole, then two
+characters. The key is out of flow now, pinned to the corner, so the answer
+centres in the whole tile rather than in what is left underneath the key.
+Measured: the text centre and the tile centre are the same pixel for both a
+one-word answer and a two-line one, with 15px of clearance under the key.
+
+A note on the layout question this came from, because it reads as a rule and is
+not one: the grid is chosen by ANSWER LENGTH, not by question type. Four answers
+of twenty characters or fewer get the grid; anything longer gets the list. A
+notation question with long answers gets the list, and a written question with
+short answers gets the grid.
+
+---
+
+## v0.199.2 — A way to reach the switch without a code
+
+The quiz redesign switch was in the app Settings, under the developer tools. The
+developer tools only appear after you enter the developer code. That is two
+gates in front of a preview switch, and Daniele hit both.
+
+**Press and hold the version number in Settings for one second.** That toggles
+the redesign and reloads. It needs no code and no console. A short tap does
+nothing, so it cannot fire by accident. Tested both ways: a 1000ms hold flips
+the flag and writes the key, a 150ms tap leaves it alone.
+
+The Settings button stays for anyone already in developer mode. It shows the
+current state, so you can read the mode without turning anything on.
+
+---
+
+## v0.199.1 — The redesign was drawing underneath the old screen, and you could not turn it on
+
+Two faults, both mine, both found on the first device run.
+
+**The v2 block was visible with the flag off.** `.mq2` carried `display: flex`
+unconditionally, so the new band rendered underneath the old question screen
+whether the switch was on or not: an empty QUIT row and a score of 0 sitting
+below the answers. It is `display: none` by default now and only becomes a flex
+column under `.mq-screen.v2`.
+
+The reason the automated check missed it is worth writing down. The flag-off
+test asserted that the OLD answer wrapper was still visible and that there were
+zero v2 buttons. Both were true. It never asserted that the v2 ROOT was hidden,
+which is the thing that was wrong. The test now reads the computed display and
+the bounding box of `#mq2Root` in both states: off gives `none` and 0x0, on
+gives `flex` and 408x459, with the old wrapper going to `none`.
+
+**And the switch was not reachable.** It read `localStorage` only, and there is
+no console on a Capacitor build, so a localStorage-only switch is the same as no
+switch. There is a button in Settings now, under the other developer tools, that
+reads "Quiz redesign: ON/OFF" and reloads. It is only rendered while developer
+mode is on, so a normal user never sees it.
+
+---
+
+## v0.199.0 — The quiz redesign lands behind a switch
+
+Slice 1 of 3: the question screen. Turn it on with
+`localStorage.setItem('intonare_mq2','1')` and reload; `removeItem` puts it back.
+Off by default, so a half-ported screen never reaches a tester.
+
+**Nothing in the old path was rewritten.** The v2 elements live inside
+`mqScreenQuiz` with their own ids and are hidden unless the screen carries `.v2`.
+`mqRenderQ` and `mqAnswer` keep every line they had, and a single call is
+appended to the end of each. So with the flag off, the two functions behave
+exactly as before and the flag is a real off switch rather than a branch that
+has to be trusted. Verified both ways in the live app: flag off gives no `.v2`
+class, zero v2 buttons and a visible original answer wrapper; flag on gives four
+v2 tiles, a hidden original wrapper, and no console errors either way.
+
+**What the screen does now.**
+
+Six type sizes with an 11px floor. The module has 21 classes below that floor,
+the smallest at 7px, against Apple's HIG minimum of 11pt.
+
+Neutral at rest. The band is plain surface with the pack colour reduced to a
+rule underneath, so answering is the only colour event on the screen. A right
+answer fills the band; a wrong one mutes it rather than flooding it, because a
+full red wash over a third of the screen was louder than the mistake.
+
+Answer keys are lettered, and the reveal swaps the letter for a tick or a cross.
+WCAG 1.4.1 is Level A: colour must not be the only visual means of conveying
+information, and roughly one in twelve men has some colour vision deficiency. The
+right answer is legible with no colour perception at all.
+
+The grid adapts. Measured across 1,208 question and language pairs in the real
+packs, the median option is 14 characters, the 90th percentile 31 and the longest
+65, and only 32.5 percent of questions have all four options short enough for a
+tile. A fixed two-by-two would truncate two thirds of the material, so four short
+options get tiles and anything longer gets a single column.
+
+The streak pill shows the count, a bar, and the next milestone. The quiz already
+escalates at 3, 5, 10 and 20 with `hapticMilestone`, so the bar fills toward
+whichever of those is next instead of only counting up. It hides under 2, the
+way the old chip already did.
+
+Under the band is the record: one beat per question, solid for a hit, hollow for
+a miss, pack colour on the one you are answering. It replaces the progress bar,
+and in slice 3 it becomes what the results screen ends on, which is where the
+module currently has three different notations for the same fact.
+
+Motion is ease-out at 150 to 340ms, since past 400 feels slow and under 100 goes
+unnoticed. There is exactly one spring, on the right answer, because overshoot
+reads as instability when it is spent on routine actions. A 260ms beat sits
+between the tap and the reveal.
+
+**Two faults found on the first render and fixed.** The pack label carried the
+question counter and truncated to "THE BEATLES · 4…" once the streak pill sat
+beside it; the beats already are the counter, so the label is just the pack now.
+And the XP toast is pinned 70px from the top, which used to clear the old
+progress bar and now landed on the question, so under v2 it comes up from the
+bottom instead.
+
+Slice 2 is the reveal sheet, which still uses the old bottom sheet. Slice 3 is
+the unified results screen.
+
+---
+
+## v0.198.3 — Two Daniele found on device: a Daily with no staff on it, and alto clef on medium
+
+**A Daily on a generator pack served zero generated questions.** Theory
+Fundamentals is a generator pack whose whole identity is reading a staff, and
+its Daily was authored questions only, so it did not look like the pack it
+claimed to be. `mqBuildDailyQuestions` built its pool straight from
+`pack.questions` and never called `mqGenBatch`.
+
+The reason it never did is real rather than an oversight: the generators run on
+`Math.random`, and a Daily has to come out the same on a resume and the same for
+everybody. So the batch now runs with `Math.random` swapped for today's seeded
+stream and put back afterwards, which makes the generated questions exactly as
+deterministic as the shuffle already was. Measured: a Theory Daily is 7 authored
+and 3 generated, identical across repeated builds, and `Math.random` is its own
+self again on the way out.
+
+**Alto and tenor clefs on medium, and there were two separate causes.**
+
+The defect first. `mqGenInversion` called `mqPickClef(3)` with the tier
+hardcoded, so inversions rolled for an advanced clef whatever their difficulty.
+Over 5,000 generated questions, inversions came out **28.1 percent alto or
+tenor** while every other generator sat between 2.4 and 11.4. It takes the
+question's own tier now.
+
+Then the judgement. Alto and tenor were gated on the QUESTION's tier, and a
+medium round is 40/40/20, so a fifth of it is tier 3 and the two clefs a player
+is least likely to read arrived in a round they never asked for. ABRSM sets alto
+at Grade 4 and tenor at Grade 5, which is not medium. They are gated on the
+ROUND now, so picking hard is what puts them on screen.
+
+Measured after, 4,000 generated questions per difficulty:
+
+| round | alto | tenor | bass | treble |
+|---|---|---|---|---|
+| easy | 0 | 0 | 45% | 42% |
+| medium | 0 | 0 | 45% | 46% |
+| hard | 9.2% | 9.1% | 37% | 36% |
+
+---
+
+## v0.198.2 — Every game mode now ends the same way
+
+Daniele suspected the Daily was missing its ending. It was, and so was the
+pack-clear screen, and the cause was one `return`.
+
+`mqShowResults` handed the Daily off on its second line, **before** it reached
+`mqAmbStop()` and the stinger a few lines below. So finishing a Daily left the
+background music still playing underneath a result screen that made no sound at
+all. `mqShowWin`, the screen you get for clearing an entire pack, never called
+either one: the rarest thing in the module was the only ending with nothing
+attached to it.
+
+**One closing sequence now, shared by all of them.** `mqEndRound()` stops the
+music, resyncs the Now Playing widget, and fires the sting and its haptic after
+the fade has cleared. Quick Play, Custom, Survival, the Daily and the pack-clear
+screen all call it. They used to do three different things and two of them did
+nothing.
+
+**The ending is graded, the way the streak already was.** In-quiz celebration
+has been rationed properly since the streak tiers went in: 3, 5, 10 and 20 each
+get their own emoji and `hapticMilestone` instead of `hapticCorrect`. The
+endings had no such thing. A single `won` boolean at 50 percent meant 10 out of
+10 and 6 out of 10 made exactly the same sound. There are three grades now:
+a clean sweep, a pass, and a miss. `mqStingWin` takes a flag that adds the
+triad again an octave up after the chord lands, so a perfect round and a
+cleared pack arrive on something a 6 out of 10 does not get.
+
+**Reviewing your misses works everywhere.** It was on the normal results screen
+only, though `MQ.misses` is filled on every mode. It is on the Daily and the
+pack-clear screen now, and the BACK button on the review screen knows which of
+the three sent it there.
+
+There is no pack breakdown on the Daily and that is deliberate: the Daily is a
+single pack, so the bar chart would be one full-width row repeating what the
+header already says.
+
+One correction to the audit that produced this. The first pass reported that
+the Daily skipped `mqCommitSessionStats` and `mqClearInProgress` as well. It
+does not; both run before the early return. That finding came from reading the
+body of `mqShowDailyResult` instead of the path into it, which is the same
+mistake as grepping for a function name and reporting the absence of what you
+failed to find.
+
+---
+
+## v0.198.1 — The six open findings, and a subject cap that was counting ordinary words
+
+The findings left open in v0.198.0 are closed, and the pack audit turned up two
+more of the same kind once it was run over all six packs rather than the two
+that had just been rewritten.
+
+**Two answers repeated a word from their own stem and no distractor did.**
+Theory 37 asked what it means to *accordare al diapason* and answered *il
+riferimento comune su cui accordano tutti*; the English did the same thing with
+"tune" and "tunes to". The answer now reads "The reference the whole group
+shares" and "Il riferimento comune di tutto il gruppo". Guitar Gods 33 asked
+how a talk box shapes words out of the sound and was the only option saying
+"sound", so it now runs from a small speaker instead. Both are shorter than
+what they replaced, which closes a length gap on the way past.
+
+**Theory 52 gave an Italian reader a hard question for free.** The stem says
+*un'appoggiatura* and the answer said *si appoggia*. The blurb already teaches
+where the word comes from, so the option does not need to: it reads *si posa
+sopra* now. English is untouched.
+
+**Theory 56 stays as it is.** The marking is *col legno* and the answer names
+the wood of the bow, so the Italian repeats the stem and there is no other
+correct way to write it. Fixing this would make the Italian worse to make a
+checker quieter. It goes on an allowlist with that reason instead.
+
+**Guitar 43 had two faults and the number was the smaller one.** The P-90 was
+the only option carrying a digit, and also the only option that was a pickup:
+the other three were a bridge, a vibrato and a switch, so anyone who knew what
+a P-90 is scored without knowing anything the question asks. All four are
+Gibson pickups now, the three wrong ones are humbuckers, and two of the four
+carry a number.
+
+**Beatles 28 lost one word.** "Which record label did the Beatles start in
+1968?" pointed at Apple Records. It asks "Which label" now. The Italian keeps
+*etichetta discografica*, because *etichetta* on its own is a sticker.
+
+**The subject cap was counting ordinary words as subjects.** "Play loudly" as
+an option made "play" a recurring subject of the theory pack, and "bass" was a
+recurring subject of the Bass pack. Both were the tool being wrong, and both
+cost a look on every run. A capitalized word that also appears lowercase across
+the pack is now dropped. Measured over the six packs, the ordinary words sit at
+a lowercase-to-capitalized ratio of 0.30 and up and the real subjects sit at
+0.08 and below, so the line goes at 0.25 in the middle of that gap. It is a
+ratio rather than a plain lowercase test because of Apple: blurb 77 has a green
+apple in a Magritte painting, and Apple is still a subject of that pack twelve
+times over.
+
+**And packs that legitimately trip the cap now carry their own allowlist.**
+Running the pack audit on the Beatles gave fifteen errors, every one of them
+the pack doing its job, which is how a real error hides in a wall of expected
+ones. `allow_beatles.json`, `allow_theory_fundamentals.json` and `allow_guitar_gods.json`
+are found
+automatically from the pack name, and the file is an object of finding to
+REASON rather than a bare list, because an allowlist entry with no reason rots.
+
+**All six packs now audit clean.** The last finding was a judgement rather than
+an edit and Daniele made it: Jimmy Page anchors four Guitar Gods stems against
+a cap of three, and he is the answer to none of them. Four of ninety, in a pack
+about guitarists, where he is the landmark the question is measured from rather
+than the thing being asked about. `allow_guitar_gods.json` records that.
+
+Every edit was read back out of the file afterward and diffed field by field
+against a snapshot taken before the session. Eight fields changed across four
+packs and nothing else moved.
+
+---
+
+## v0.198.0 — Five faults the rebuilt quiz tools found in shipped packs
+
+The quiz toolchain was rebuilt this session and immediately found five faults in
+packs that had already passed their own gates. Three of them were only visible
+in Italian, which is the whole reason the rebuild happened: the draft checkers
+contained no reference to `q_it`, `opts_it` or `fact_it`, so every check they
+ran was English and an Italian fault could not fail the gate no matter how bad
+it was.
+
+**The clef question asked two different things in the two languages.** English
+read "Which clef do bass guitar and cello parts normally use?" and Italian read
+"le parti di violoncello e trombone". On top of the twins disagreeing, the
+English handed over its own answer, which is "Bass". The English now matches the
+Italian and names cello and trombone, both of which the blurb already covers.
+
+**"Slides between two neighbouring pitches"** was a British spelling sitting in
+a live option. It is the only one in all seven rewritten packs; a sweep of every
+stem, option and blurb in both languages found nothing else.
+
+**Three answers stood out by length, and two of them only in Italian.** The
+appoggiatura answer carried "come dissonanza" where the English carries no such
+phrase, which made it nineteen characters longer than any distractor; the
+dissonance is in the blurb on both sides and the option now matches its twin.
+The delay-and-reverb answer ran twenty-three characters clear in Italian, and
+fret sprout sixteen. Those two were fixed the way the spec says to fix them, by
+lengthening the distractors rather than hacking words off the answer, since
+shortening gives four clipped fragments.
+
+**Fender was named in five stems against a cap of three.** Dropped from two of
+them, where the Stratocaster already says Fender and the brand was doing
+nothing: "the scale length of a standard Stratocaster", "which pickup design was
+the Stratocaster built around in 1954". The other three are about the company
+and keep it.
+
+**Both packs were installed through the new builder, which reads its own work
+back.** After writing, it re-parses the file and compares every field of every
+row against the source JSON; a mismatch restores the original and installs
+nothing. That exists because `assert count == 1` catches a miss but not a script
+that asserts on one substitution, applies it, then throws on the next and writes
+nothing, which is how three fixes silently failed in one session and were nearly
+reported as done.
+
+All seven rewritten packs now pass the gate clean in both languages.
+
+**Four findings are left and are not fixed here**, because they were in the file
+before this session and each needs a judgement rather than an edit: three
+Italian stems sharing a root with their own answer, where "appoggiatura" and
+"si appoggia" is the shape and may be unavoidable, and one guitar_technique
+question whose answer is the only option carrying a number.
+
+---
+
 ## v0.197.0 — The quiz music tracks take Italian too
 
 The nine instrumentals had no Italian names at all. Ritorno al bossa, Turno di
