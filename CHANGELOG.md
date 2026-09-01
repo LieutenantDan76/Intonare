@@ -4,6 +4,1262 @@ A human-readable record of what changed, when,
 
 ---
 
+## v0.201.143 — ALL PACKS
+
+The button said ALL PACKS with an arrow, which reads as a promise to start. It
+opens a sheet now, so it is just the name of the thing. Both languages, and the
+markup default matches so it is right before the translations load.
+
+---
+
+## v0.201.142 — ALL PACKS gets the popup too
+
+Same fault as the online categories, in the one place left with it. ALL PACKS
+started the moment you tapped it, on a hardcoded ten questions, at whatever
+difficulty happened to be set from before. Every individual pack offers a choice
+first; the button that plays all of them did not.
+
+It opens the same sheet now, and all three routes into it behave alike:
+
+    ALL PACKS   PLAY, 3 difficulties, 4 counts, "MED . 10 questions . ALL PACKS"
+    local pack  PLAY, 3 difficulties, 4 counts, "MED . 10 questions . The Beatles"
+    online cat  PLAY, 3 difficulties, 4 counts, "MED . 10 questions . BANDS"
+
+The button label loses its promise of ten, in both languages, since the count is
+now chosen rather than fixed.
+
+On the report of it starting easy: the blend is not at fault. `MQ_BLEND.medium`
+asks for 2/6/2 out of ten and the shipping packs hold 281 easy, 278 medium and
+136 hard, so nothing runs dry. The likelier explanation is that the button never
+offered a difficulty, so the last one set carried over silently. With the sheet in
+front of it that is now visible either way.
+
+---
+
+## v0.201.141 — The summary under the play button
+
+Two faults in the line that reads "MED, 10 questions, BANDS".
+
+**It was hidden when the sheet opened.** I had switched it off for online
+categories on the grounds that a fetched set has no local statistics, which was
+wrong twice: the line is a summary of the choices, not a stats readout, and
+tapping any chip called `mqRenderPopupSummary` and showed it anyway. So it
+appeared out of nowhere the first time you changed something.
+
+**And it ended on a stranded separator.** The last field is the name of what you
+are about to play, read from `PACKS[MQ_POPUP_PACK]`. An online category has no
+entry there, so the name came back empty and the line rendered as "MED, 5
+questions," with nothing after the comma. It reads the category name now, and the
+three fields are joined rather than concatenated, so an empty one can never leave
+a separator hanging whatever the reason.
+
+    on open       MED · 10 questions · BANDS
+    survival      MED · 3 lives, no end · BANDS
+    local pack    MED · 10 questions · The Beatles
+
+---
+
+## v0.201.140 — The online popup's play button had no label
+
+`mqShowPackPopup` ends by setting the button text, either PLAY or START SURVIVAL.
+The online version did not, so the button came up blank and only filled in when a
+difficulty tap happened to re-render the sheet.
+
+Two other things were missing with it. Survival hides the question count row,
+since survival sets its own length, and the online popup was showing it. And the
+survival label was never applied at all.
+
+    online quick      PLAY →
+    online survival   START SURVIVAL →, count row hidden
+    local pack        unchanged
+
+---
+
+## v0.201.139 — Online packs get the same popup every local pack gets
+
+Tapping an online category in the quick sheet started the round immediately.
+Every local pack goes through `mqShowPackPopup` first and is offered a difficulty
+and a question count; the online ones went straight past it. The odd part is that
+`mqRunOnlineFetch` already reads `MQ.diff` and already sets `MQ.qCount`. The
+choice existed the whole time and nothing ever offered it.
+
+`mqShowOnlinePopup` fills the same sheet from an online category, and
+`mqPopupPlay` finishes the job for either kind. A separate entry point rather than
+a branch inside `mqShowPackPopup`, because that function reads `PACKS[packId]` a
+dozen times and an online category is not a pack.
+
+**And a warning about the edit itself.** The original was
+`async function mqQuickPlayOnlineCat`. The replacement started at `function`, so
+the `async` keyword was left stranded in front of a comment, where it parses as a
+bare identifier and throws at runtime. `node --check` passed the file. The error
+killed the rest of that script block, which took out `MQ2_DIFFS`, the difficulty
+chips and the local pack popup as well, none of them anywhere near the edit.
+
+`intonare_boot_check.mjs` now loads the app in a real browser, fails on any error
+thrown during boot, and checks that a set of globals exist that only exist if
+their block ran to the end. It catches the fault above in about four seconds.
+
+---
+
+## v0.201.138 — A wrong date in a shipping blurb
+
+Daniele asked whether the Fundamentals blurbs had been through the same passes as
+the questions. They had not: register, tells and leaks were all done, but nothing
+had checked whether the blurbs are TRUE.
+
+Twenty of the sixty carry a checkable claim. Nineteen hold up: the 1939 London
+conference and the 1955 ISO adoption of 440, Vienna and Berlin at 443, baroque at
+415, Cristofori's gravicembalo col piano e forte, Maelzel's 1815 patent and
+Beethoven's marks on eight already-published symphonies, rubato meaning stolen,
+Chopin's left hand, BACH in the unfinished fugue of The Art of Fugue, Bernstein's
+America, Ut queant laxis.
+
+One was wrong. **Q51 said the earliest source connecting the Picardy third to
+Picardy is a French dictionary from 1703.** It is Rousseau's Dictionnaire de
+musique, 1767. The blurb now names Rousseau and the right year, and adds what the
+sources agree on: most scholars no longer believe the Picardy connection at all,
+and think the name comes from an old French word for sharp.
+
+Both languages changed together.
+
+**The lesson is the pass, not the date.** Checking that a question has one right
+answer and checking that its blurb states the truth are two different jobs, and
+only the first had been done here. Nineteen of twenty is a good rate, but the
+twentieth was live in the app.
+
+---
+
+## v0.201.137 — Reading the options against the stems, on Fundamentals this time
+
+Daniele asked whether the same pass had been run here as on Advanced Theory. It
+had not. The register work, the leak pass and the tell sweep were all done; the
+read that finds a SECOND correct answer was not, and on Advanced Theory that read
+turned up three faults every checker had passed.
+
+Sixty questions read. One real fault and two borderline, which is a cleaner
+result than 3 in 40 and reflects how much this pack has already been looked at.
+
+**Q30 asked which naming system Italy, France and Spain use, with "Ut Re Mi" as a
+distractor.** French solfege still uses ut for C, so naming France made the
+distractor defensible. Italy and Spain alone are unambiguous.
+
+**Q25 asked which pair of white keys has no black key between them.** B and C
+also qualifies. It was not among the options so the question worked, but "which
+pair" implies one and there are two. It asks "which of these pairs" now.
+
+**Q48 is left as it is, and noted.** A plain double bar marks a section change
+and the end of a piece takes a final barline, thin-thick. "At the very end" in
+the stem carries it, but the two terms are not the same and a strict reader would
+notice.
+
+Both stems changed in English and Italian together.
+
+---
+
+## v0.201.136 — Theory Fundamentals passes the AI-tell check
+
+Twenty-two of them, cleared. The checker was built earlier tonight against
+Daniele's own 194 blurbs, so a pack written before it existed was always going to
+fail it; that was the tool working, not a regression.
+
+    which is why / the / what   4       exactly what / why    3
+    the rest of the             3       everyone              3
+    and that is, at all, is what makes  6
+    rather than                 7   (done in the previous version)
+
+Worth recording: **three of my own fixes introduced a new tell.** Swapping
+"which is what makes a rhythm pull" for "and that is what pulls a rhythm" traded
+one flagged construction for another, in three separate blurbs, and the checker
+caught it on the rerun. That is the exact failure the tool exists for, and it
+happened within a minute of the edits that were meant to fix the problem.
+
+Where the packs stand on this check:
+
+    beatles             0       eighties            4
+    guitar_technique    0       guitar_gods         5
+    theory_fundamentals 0       seventies           7
+                                bass                7
+
+The two at zero are Daniele's own writing, which is what the checker is
+calibrated on. Fundamentals now joins them.
+
+---
+
+## v0.201.135 — Seven closing beats out of Theory Fundamentals
+
+Not a rewrite. The pack runs two-sentence blurbs at a median 37 words and that is
+right for it: it teaches things people half-know, so a second sentence carrying
+the part they did not know earns its place. Advanced Theory defines terms, where
+one sentence is the whole answer. Different jobs.
+
+What came out is the second sentences that were a flourish rather than
+information. A crude check flagged 13; reading them, only seven were:
+
+    52  "The tension is the point."                          cut
+    9   "...entirely up to whoever is in charge!"            the names stay, the joke goes
+    56  "an expensive bow is not built for hitting things!"  replaced with what players do
+    28  "which is why it outlived the argument"              mine, from earlier tonight
+    49  "which is the whole bargain"                         says the benefit instead
+    50  "a trade Bach clearly thought worth making"          states the other half of the trade
+    29  "That was the whole point:"                          explains the difference instead
+
+The other six the checker flagged were false positives and are untouched. Their
+second sentences teach something: the semibreve etymology, what the bass clef
+covers, that a sharp holds for the rest of the measure. One was not a two-sentence
+blurb at all, the splitter broke on the period in "D.C."
+
+All fourteen strings, seven English and seven Italian, changed together.
+
+---
+
+## v0.201.134 — The streak chip kept the last round's number
+
+It was written inline in two places and both of them run AFTER an answer. Both
+start paths already set `MQ.streak = 0`, but neither had any way to say so on
+screen, so quitting on a streak of five and starting again left the chip reading
+five until the first question of the new round was answered.
+
+One painter, `mqPaintStreak`, reading `MQ.streak` and nothing else. Called from
+the answer path, the render path, and now from both starts. Verified in a
+browser: five and visible mid-round, zero and hidden the moment a new round
+begins.
+
+---
+
+## v0.201.133 — Fretboard dot labels were near-black on a near-black dot
+
+The dot is filled with `accent`, which is `MQ_INK`, which is `var(--text)`. That
+is near-white on a dark band and near-black on a light one. The letter on top was
+a fixed `#0d0f12`, so it read at 14.8:1 in dark mode and disappeared entirely in
+light, where it was near-black type on a near-black circle.
+
+The label takes `var(--surface)` now, which is the opposite of `--text` in both
+modes by definition, so it contrasts with its own dot whichever way round the
+theme is. Measured in a browser:
+
+    dark    dot near-white   letter near-black   14.8:1
+    light   dot near-black   letter near-white   10.7:1
+
+That was the only fixed near-black left on a diagram that flips with the theme,
+and the sentinel now refuses to let another one in.
+
+---
+
+## v0.201.132 — The motif flashed at full, and the answer keys collided with the answers
+
+**Dark, then fades.** The motif's entrance ran `mq2BandIn`, which is
+`opacity: 0 -> 1` with fill-mode `both`. An animation beats a plain declaration,
+so the mark sat at FULL opacity for the whole entrance and only dropped to its
+tier value when `.mq2-arrive` came off. That drop is the fade. The wrapper carries
+its own keyframe now and the tier opacity is never touched. Measured: 0.17 during
+and 0.17 after on theory, 0.26 either side on the eighties.
+
+**The key badges were wearing the answers' letters.** Measured over 18,000
+generated questions:
+
+    an option whose text is literally A, B, C or D     12.4%
+    every option two characters or fewer               19.8%
+
+Note names run A to G, so a badge reading A beside an answer reading A is two
+different things in the same letter. On the fretboard questions it is three deep,
+because the diagram labels its dots A to D as well, and "which of the marked
+positions is an F" stops being readable at all.
+
+A badge is shorthand for a long answer. When every answer is two characters or
+fewer there is nothing left for it to be shorthand for, so it is dropped and the
+answer centres in the tile instead of sitting under the gap where a badge used to
+be. Verified in a browser: note names lose the badges, "Four / One / Two / Three"
+keeps them, because those are words.
+
+---
+
+## v0.201.131 — Eleven lines, not fifteen, and light mode stops darkening the ink
+
+**The 80s grid, against references this time.** The laser grid has a settled
+shape and the teaching versions all agree on it: one line down the middle and
+five to each side, converging on a central vanishing point, with five or six
+horizontals crowding toward the horizon. Fifteen verticals and nine horizontals
+smeared the top third into a solid band, which is the opposite failure to the one
+before it, where nine lines never converged at all and it read as slanted stripes.
+
+    v0.201.129    9 verticals, none converging      ambiguous
+    v0.201.130   15 verticals, 9 horizontals        busy
+    now          11 verticals, 6 horizontals        the convention
+
+**Light mode stops pushing the ink toward black.** On a dark band the mark is
+lifted toward white, so the obvious mirror was to push it toward black on a pale
+one. That is wrong: a mark tinted toward black reads as dirt on a pale ground
+rather than as a tint of the pack. 80% was soot, 62% was still muddy. It takes
+the pack ink as it is now, and the opacity alone decides how far back it sits.
+
+    dark    0.45 / 0.30
+    light   0.26 / 0.17,  ink undarkened
+
+**And the guitar packs were the wrong way round.** guitar_technique is the heavy
+one and belongs in the lower tier; guitar_gods goes back to 45%.
+
+---
+
+## v0.201.130 — The 80s grid had no vanishing point
+
+**Why it read as ambiguous.** The nine perspective lines ended spread across
+x=24 to x=96 at the horizon. They never met. It was not a grid going away from
+you, it was nine slanted lines, and no amount of opacity was going to fix that.
+
+Fifteen lines now, all converging on a single point at (60, 72), which is where
+the first horizontal sits. And nine rows instead of six, spaced by a power so the
+gaps widen from 2.8 at the horizon to 19.3 at the bottom, the way real ones do.
+
+**guitar_gods drops to the lower tier**, joining bass, keys, vocals and the two
+theory packs. It is a drawn object rather than line work, so it carries the same
+weight those do.
+
+**Light mode gets its own numbers rather than the dark ones reused.** The ink was
+pushed 80% toward black, so a mark was both darker AND at the same opacity, and
+it sat heavier on a pale ground than the same mark does on a dark one. 62% now,
+which holds against the surface without going to soot, and both tiers drop a step:
+
+    dark   0.45 / 0.30
+    light  0.30 / 0.20
+
+---
+
+## v0.201.129 — The motifs bleed instead of floating
+
+**Why some looked wrong.** The frame was `54% x 150px`, which on a 393px phone is
+a 212x150 landscape box. Every one of the eight SVGs is portrait, between 0.75
+and 1.00, so each letterboxed inside it: rendered at 150 tall and about 112 wide,
+marooned with 50px of dead space either side. Not squashed, stranded.
+
+They are drawn larger than the frame now and cropped by it, running off two
+edges, so a mark reads as a detail of something bigger rather than a small
+picture placed in a corner. `preserveAspectRatio` goes from `meet` to `slice` in
+`mq2Motif`, because it is an SVG attribute and no CSS rule can reach it.
+
+**Two opacity tiers.** 45% for guitar_gods, beatles, seventies, eighties and
+guitar_technique. 30% for bass, keys, vocals and the two theory packs, which
+carry far more ink at the same number: the theory marks are solid type rather
+than line work, and the other three are heavy filled shapes. The pack now goes on
+the root as a class as well as a color variable, since a rule had no way to name
+one pack before.
+
+**The 80s grid.** Its horizon is at y=72: every perspective line converges there
+and the first horizontal sits at 76.5. The gradient fill started at y=64, eight
+units above it, so its top edge floated clear of the grid it belongs to. And the
+fill ran to both sides and stopped dead. The whole mark is drawn through a
+horizontal mask now, so it fades out at the left and the right instead of ending
+on a straight edge.
+
+Both theory packs are single font glyphs rather than SVGs, so the frame moves
+them but cannot reshape them. Worth knowing if they still read differently from
+the other eight.
+
+---
+
+## v0.201.128 — The review screen was never inside the body
+
+Five attempts at this were all built on a false premise, and the premise was only
+visible in a browser:
+
+    mqScreenLanding  <  mqBody  <  mqPanel
+    mqScreenQuiz     <  mqBody  <  mqPanel
+    mqScreenReview   <  mqPanel              outside
+    mqScreenResults  <  mqPanel              outside
+
+`#mqScreenReview` is not a child of `#mqBody`. It sits directly under `#mqPanel`,
+alongside the results screen, so it has never had the body's `padding: 6px 16px`
+and its back button has always been flush against the edge of the phone. Every
+fix aimed at `.mq-body` missed it entirely, including the `height: 100%` theory
+and the `mq2-fill` class, neither of which could reach an element that is not in
+there.
+
+Reading the markup did not show this: a tag walk through the source counts the
+review as one level inside the body, and the browser's parser puts it somewhere
+else. The only way to see it was to ask the page.
+
+The review carries its own padding now, matching the body's, and `mq2-fill` is
+back to serving only the quiz.
+
+**A headless Chromium is now in the container and `intonare_mq_layout.mjs` uses
+it.** It drives the app to the review screen and asserts that the back button,
+the list and the cards all start at the same inset, across three phone widths.
+Two evenings of this screen were spent reasoning about CSS that was attached to
+the wrong element; the probe takes four seconds.
+
+---
+
+## v0.201.127 — Review misses had no box to sit in
+
+The screen carried `height: 100%`. `.mq-body` is declared `height: 0` and takes
+its real height from flex, and a percentage height resolves against the DECLARED
+value, so 100% computed to zero. The review screen had no box: its children
+spilled out of it, and nothing sat where its container said it should. That is
+why BACK ended up flush against the edge of the phone while the cards below it
+kept their inset.
+
+Filling by flex instead, which is what every other screen does and which cannot
+resolve against nothing. That needs `.mq-body` to be a flex column, since it is
+`display: block` by default and a flex request to a block parent is ignored
+silently, so the review now gets the same `mq2-fill` class the quiz uses. Its
+bottom padding comes back, because the quiz cancels that with a negative margin
+and the review has nothing to cancel it with.
+
+The header row also pads itself now rather than trusting whatever is above it.
+
+This is the third screen tonight to hit the same wall: `.mq-body` is a block, so
+anything inside it asking to fill by flex gets nothing and anything asking by
+percentage gets zero.
+
+---
+
+## v0.201.126 — A pinned Music Quiz opened in the tuner's colors
+
+Two separate faults, both on the launcher pin.
+
+**The quiz was the only one of thirty pins that did not set its mode.**
+
+    tool:piano       setMode('tools');    enterTool('piano')
+    exercise:scales  setMode('tools');    enterTool('scales')
+    tool:musicquiz   mqOpen()
+
+`setMode` is what swaps the palette class, so opening the quiz from a pin left
+whatever theme was already on. At cold start that is the tuner, which is why it
+came up blue. Every other entry in `FAV_META` had it; this one alone did not.
+
+**And the chip color was hardcoded by type rather than by mode.**
+
+    meta.type === 'TOOL' ? '#5ee2ff' : '#b8a3ff'
+
+So anything labelled TOOL came out tuner blue wherever it actually lived, and the
+pin was the wrong color before it was even tapped. It reads the mode out of the
+launcher now, which is the same string that picks the theme, so the two can no
+longer disagree. The old type test stays as a fallback for an entry with no
+`setMode` in it.
+
+With the quiz fixed, all thirty pins now resolve to a mode: 15 tools, 15 practice.
+
+---
+
+## v0.201.125 — A beat after the bar, not the same frame
+
+The drawer went the instant `animationend` fired, so it began on the frame the
+bar stopped and the two read as one continuous move. 180ms between them, which is
+long enough to register as a pause and short enough not to feel like a wait.
+
+It hangs off the same event, so it is still a beat after the bar has actually
+finished rather than a beat after a guess at when it would.
+
+The number to pull if the sequence wants tightening is the 180 in `_once`.
+
+---
+
+## v0.201.124 — Listen for the bar instead of guessing when it ends
+
+The drawer was told to wait by putting a delay in CSS and working out when the
+line under the question would finish spreading. Three versions of that were
+wrong, in three different ways: the two animations have different lengths
+(`mq2RuleSpread` 400ms, `mq2RuleFlicker` 520ms), push mode carried a transition of
+its own that overrode the delay entirely, and a number in a stylesheet cannot see
+a dropped frame.
+
+The wait is now an `animationend` listener on the bar itself. The browser says
+when it has finished and the drawer goes then, so it is right by construction and
+stays right if either animation is ever retimed. A 820ms timeout is kept as a
+floor, reached only when there was no animation to end, which is what happens
+under `prefers-reduced-motion`.
+
+Every CSS delay that existed to pad around the guess has come back out. The
+offsets inside the drawer are relative to the drawer moving again, as they were
+written to be.
+
+---
+
+## v0.201.123 — Push had its own transition, and no delay on it
+
+The 800ms wait went onto the drawer and not onto push mode, which carries its own
+`transition: height .44s` with nothing in front of it. So in push the panel opened
+the instant the class landed and climbed straight over the accent bar, which is
+what the timing work was meant to stop.
+
+It went unnoticed because push used to be rare. Shortening the cards from 152 to
+120 took the grid from 360px to 284px, which moves the switch point down by
+76px and makes push the normal case on a large screen:
+
+    viewport 640   cover on every blurb
+    viewport 780   push on everything but the longest
+
+Both modes now wait 800ms and move for 520ms on the same curve, and both leave in
+240ms with no delay.
+
+---
+
+## v0.201.122 — The drawer waits for the accent bar, which is the slow one
+
+Last version had the drawer wait for the cards. The cards are not the last thing
+to finish; the bar under the band is. It starts with the reveal at 260ms and runs
+`mq2RuleSpread` for 400ms when you are right or `mq2RuleFlicker` for 520ms when
+you are wrong, so it lands at 660 and 780. The drawer set off at 650, straight
+over the top of it.
+
+800ms clears the slower of the two with a breath after it, and everything inside
+moves back to sit behind the drawer again:
+
+    your card answers        0 - 110ms
+    the other three turn     260 - 600ms
+    accent bar, right        260 - 660ms
+    accent bar, wrong        260 - 780ms
+    drawer sets off          800ms
+    heading                  1200ms
+    blurb                    1290ms
+    drawer lands             1320ms
+    multiplier               1420ms
+    streak                   1540ms
+    NEXT                     1620ms
+
+The number to pull if the whole thing runs long is the 800ms delay on
+`.mq2-fbwrap`; everything after it is offset from that.
+
+---
+
+## v0.201.121 — One voice asking, four answering, and a sequence that queues
+
+**The answers take the question's face.** A serif stem sitting over four
+monospace tiles read as two screens stapled together. The mono is the app's data
+face, right for a fretboard readout and wrong for four sentences you are choosing
+between. Same family now, with `mq2FitOpts` still setting the size.
+
+**The drawer waits for the reveal.** It was told to move at 300ms while the other
+three cards were still turning, so it climbed over an animation in progress. It
+now carries a 650ms delay of its own, which is the moment the reveal finishes:
+110ms for the card under your thumb, 260 plus 340 for the rest.
+
+**And it arrives slower.** 520ms on Material's emphasized-decelerate curve,
+`cubic-bezier(.2, 0, 0, 1)`, which is what large surfaces coming on screen use:
+it leaves fast and lands slowly. The old 440ms on a general-purpose ease is a
+small-control speed, and a sheet crossing most of the screen at that pace reads
+as snapped into place rather than placed.
+
+Out is 240ms on an accelerate curve with no delay at all. Leaving is not an event,
+and roughly half the entry duration is the usual ratio.
+
+**Everything inside the drawer was written for a drawer that arrived at 300ms**,
+so the heading, blurb, multiplier and streak all played out while it was still
+travelling and the sheet turned up already full. They are offset from the moment
+it lands now:
+
+    you touch a card         0
+    your card answers        0 - 110ms
+    the other three turn     260 - 600ms
+    drawer sets off          650ms
+    heading                  1050ms
+    blurb                    1150ms
+    drawer lands             1170ms
+    multiplier               1300ms
+    streak                   1420ms
+    NEXT                     1500ms
+
+NEXT is last on purpose. A button that appears with the text invites a tap before
+the blurb has been read.
+
+---
+
+## v0.201.120 — The answers get measured, and the blurb stops rubber-banding
+
+**Answer text is fitted, not guessed.** The old s0..s4 buckets set the size from
+the longest option alone, so a card holding "They were cousins" was set for "They
+had played in an earlier band together" sitting beside it, and on a 120px tile
+that left most cards two thirds empty. `mq2FitOpts` walks 18px down to 11px and
+stops at the largest size every tile in the row will carry. All four stay the
+same size, because a row where one card is 17px and its neighbour is 12px reads
+as a fault rather than a fit.
+
+**Scrolling only when the panel had to clamp.** `.mq2-fb` carried
+`overflow-y: auto` at all times, so every blurb rubber-banded under the thumb
+whether there was anything below or not, which reads as hidden content when there
+is none. It is switched on only when the measured height hit the 92% ceiling,
+which on the numbers should be almost never.
+
+---
+
+## v0.201.119 — The blurbs stop scrolling, and the verdict line earns its place
+
+**The scrolling, finally.** The verdict line is `display: none` until `.go` is
+added, and `mq2PanelFit` runs before that. So it contributed nothing to the
+measurement, then appeared and pushed roughly 40px of text out the bottom of
+every panel. It is forced visible for the measurement now and put back after.
+
+**The verdict line only shows when a card is actually hidden.** Daniele's call,
+and it is right: restating the answer while the answer is sitting in plain view
+above the drawer is noise. The two cards that matter are compared against where
+the top of the drawer will land, and if both clear it the line is dropped and its
+height comes back off the panel.
+
+**Shorter answers.** 152px was a true square and too tall: most answers are two
+or three words, so the card was mostly empty and it pushed the panel down onto
+the ones below. 120px is 4:5, still a card rather than a list row, and hands the
+panel 64px it did not have. Diagram questions go 112 to 96.
+
+**A bigger font step for short answers.** A card holding "Treble" was set at the
+same size as one holding "Rage Against the Machine". Options of ten characters or
+less now take 17px, which is 12% of every question in the app.
+
+---
+
+## v0.201.118 — Measuring the box instead of the text, and answers in the wrong half
+
+Two faults from the last build, both visible on device.
+
+**Every blurb was scrolling.** `mq2PanelFit` read `wrap.scrollHeight`, but
+`.mq2-fb` is `overflow-y: auto`, so its scrolled content does not count towards
+its parent's scrollHeight. The measurement returned the height of the clipped
+box, came back short on every single blurb, and the panel opened too small.
+`max-height` was still applied during the measurement too, capping it before it
+was taken. The measurement now lifts both, reads the height, and puts them back.
+
+**The answers were centred in the stage**, so they sat in the middle of it with
+the drawer rising into them from below. The drawer covered the answers and left
+the empty half untouched. They sit up under the band now, where the drawer
+reaches them last.
+
+The verdict line has moved out of `.mq2-fb` and become its own row in the drawer.
+Inside the scrolling part it scrolled away with the blurb and came out sliced in
+half across the top.
+
+---
+
+## v0.201.117 — The panel takes what the blurb needs, and the answers never move
+
+The feedback panel measures itself and then decides where to sit. If it fits
+under the answers at their full size it takes its own row and covers nothing. If
+it does not, it becomes a drawer and carries a line naming what you picked and
+what was right, so nothing behind it is lost:
+
+    ✕ Joey Ramone  /  ✓ Johnny Ramone
+
+**The answers never resize either way**, which is the point. Earlier drafts had
+the cards giving ground to make room; the numbers say that cannot work on a
+phone. Measured over all 1,390 blurbs: median 210 characters, 90th percentile
+256, longest 434. For a median blurb to sit under the grid with nothing moving on
+a 640px screen, the cards would have to rest at 88px, which is the 1.75:1 slab
+the square grid replaced. Square answers do not come back until about 780px.
+
+So on a phone it is nearly always the drawer, and push is what happens on a
+tablet or in landscape, where there is genuinely room.
+
+**Nothing scrolls.** Height is measured off-screen at the real width rather than
+estimated from a line count, because the blurbs run from 60 characters to 434 and
+an estimate is wrong often enough to matter. The longest blurb in the app takes
+79% of the stage on a 640px phone and still leaves the top of the grid showing,
+so the 92% clamp should never be reached.
+
+`push` is cleared in `mq2FbClose`, since it is decided per question: left on, a
+short blurb followed by a long one would open at a height meant for the other.
+
+---
+
+## v0.201.116 — The fill class was set before the class it tested for
+
+v0.201.115 had the right rule and put the switch for it in the wrong place. It
+set `mq2-fill` in `mqShowScreen`, guarded by whether the quiz screen carried
+`.v2`. But `.v2` is added inside `mq2RenderQ`, which runs afterwards, so the test
+was false every time and the rule never applied to anything.
+
+The class is now added beside `.v2` in `mq2RenderQ`, which is the first moment
+the screen is actually in v2. `mqShowScreen` only removes it, on the way to any
+other screen.
+
+Three versions on one ledge, and the useful part is what each was wrong about:
+0.201.114 blamed padding that was not the cause; 0.201.115 found the cause and
+wired the switch to a class that did not exist yet.
+
+---
+
+## v0.201.115 — The ledge, found properly this time
+
+Last version blamed 24px of padding on `.mq-body` and cancelled it. The ledge
+stayed, because that was not what it was.
+
+`#mqScreenQuiz` is a direct child of `#mqBody`, and **`.mq-body` is
+`display: block`**. So `flex: 1 1 auto` on the quiz screen has been doing nothing
+whatsoever: the screen is only ever as tall as its contents, which is 196 for the
+band plus 348 for the answers. Everything below that is leftover body, which is
+the ledge, and it is far more than 24px, which is why cancelling the padding did
+not move it.
+
+`#mqBody` becomes a flex column while the quiz is up, so the chain flexes the
+whole way down and the stage reaches the bottom of the screen. Driven by a class
+set in `mqShowScreen` rather than by `:has()`, which would fail silently on an
+older WebView and look like the fix simply had not worked again.
+
+---
+
+## v0.201.114 — The lip under the drawer
+
+`.mq-body` carries 24px of bottom padding and `.mq2` cancelled only the top and
+the sides, so the quiz has always sat on a 24px strip of background. That was
+invisible for as long as the answers ended well short of the bottom. The drawer
+is pinned to the bottom of the stage, so it stopped 24px above the screen edge
+and looked like it was rising out of a ledge rather than off the bottom.
+
+Bottom margin now cancels it too.
+
+---
+
+## v0.201.113 — NEXT was scrolling away with the blurb
+
+The drawer carried `overflow-y: auto` on the whole element, so when a blurb ran
+long everything inside scrolled, including the button that had just been moved in
+there. NEXT ended up half below the drawer's own rounded bottom edge, which is
+the notch that showed up on device.
+
+The drawer is a flex column now. `.mq2-fb` scrolls and nothing else does, and
+`.mq2-foot` is `flex-shrink: 0` so the button holds the bottom whatever the blurb
+is doing. Max height went 62% to 74%, since the button now takes a fixed share of
+it.
+
+---
+
+## v0.201.112 — The answers came back
+
+`.mq2-grid` was carrying `position: absolute; inset: 0`, lifted straight out of
+the mockup where the grid is a direct child of the stage. In the app it sits
+inside `.mq2-scroll`, and out of flow in there nothing sizes it, so every answer
+disappeared. The band was fine, both locked heights were fine; there was simply
+nothing under them.
+
+The grid is in normal flow again and `.mq2-scroll` centers it with
+justify-content, which is what the absolute positioning was doing badly.
+
+Worth writing down, since it is the third time tonight the same shape of mistake
+has landed on a device: a rule that is correct in a standalone mockup is not
+correct in the app, because the mockup's DOM is two levels shallower. Copying
+geometry across needs the parent chain checked, not just the rule.
+
+---
+
+## v0.201.111 — The quiz question screen, rebuilt
+
+Worked out against a mockup rather than by shipping guesses at the phone, after
+two builds that were wrong on device.
+
+**Two locked band heights, not a range.** The diagrams draw at a fixed 118px and
+cannot shrink and stay readable, so one height cannot serve both kinds: at 250px
+a question carrying a diagram would have 20px left for its text. A question
+without one takes 196px and square answers. A question with one takes 290px and
+4:3 answers, which comes to 558 on a 620px screen. Nothing moves within either
+kind, and four of the eight packs never show a diagram at all.
+
+`mq2FitStem` now measures the stem against its own box rather than the whole
+band, so it fits whatever the diagram leaves.
+
+**Square answers on the 8-point grid.** The tiles were about 1.9:1, which reads
+as a list row rather than a card. They are 1:1 now, 154 x 152, in a grid with
+16px padding and 12px gaps, centred in what is left. Research on card sets is
+consistent on this: one ratio across a collection, and a standard one.
+
+**Lit means brighter.** The old states washed the tile in green or red, and a
+colour wash over a pale card darkens it, so on the light themes the card meant to
+stand out came back duller than the three fading behind it. The live cards now
+take the lightest surface in the set and carry their colour in the border, the
+text and a lift. The two you did not touch drop to 26% at once.
+
+**Selection lands on the frame you touch.** Three things were stacked against it.
+It listened for `click`, which waits for the finger to lift and for the browser
+to rule out a scroll. There was no `touch-action`, so the browser held every
+touch back while it decided. And `mq2Reveal` held EVERY tile behind a 260ms
+timeout, including the one under the thumb. It is `pointerdown` now, the tile
+answers in 110ms, and only the other three keep the staged timing.
+
+NEXT moved inside the drawer. It was a separate slab below it, which is why it
+looked like it was cutting the blurb off.
+
+---
+
+## v0.201.110 — The drawer was sitting in plain sight before it opened
+
+Two faults on device from the last build, and one cause behind both.
+
+`.mq-screen` is a flex child of `#mqPanel` with no flex-grow, so the quiz screen
+has always sized to its content rather than to the modal. That never showed
+while the feedback panel lived inside the scroll box at max-height 0, because a
+zero-height thing is invisible wherever it sits. An absolutely positioned drawer
+needs a stage with a real height to sit against, and it did not have one.
+
+So the closed drawer, pushed down by translateY(101%), simply hung below the
+stage in the open, an empty white box between the answers and the bottom of the
+screen. And once opened it ran past the stage and under the NEXT button, which
+clipped the blurb mid-sentence.
+
+Two lines. `.mq2-stage` gets `overflow: hidden`, which is what keeps a closed
+drawer out of sight. `#mqScreenQuiz.v2` gets `flex: 1 1 auto` so the screen fills
+the panel it is in and the stage has a height worth 62% of.
+
+---
+
+## v0.201.109 — The quiz band stops moving, and the blurb comes up as a drawer
+
+Four of Daniele's notes were one fault: the band holding the question grew with
+the question, so a long stem pushed everything down and took NEXT off the screen,
+and the blurb sat below the answers where the code scrolled you to reach it. The
+last line of `mq2Feedback` literally called `scrollTo(scrollHeight)`.
+
+**The band now has a range rather than a height.** A single number cannot serve
+both, and the measurements say why: 1,390 written stems, median 66 characters and
+longest 150, plus 18,000 generated ones at median 44, and half of those carry a
+staff or a fretboard underneath. So min-height 178px stops a short question
+hugging the top, max-height 46vh stops a long one reaching NEXT, and `mq2FitStem`
+shrinks the type between the two. Floor 15px, and it measures scrollHeight against
+clientHeight rather than guessing at line counts, the same way `_fitHeaderTitle`
+already does.
+
+**The blurb is a drawer over the answers.** It was moved out of the scrolling box
+into a new non-scrolling `.mq2-stage`, because an absolutely positioned drawer
+inside a scroller scrolls away with the content, which is the bug in the first
+place. Capped at 62% of the stage so the top of the grid stays visible behind it,
+which is the reason Daniele picked this over the blurb replacing the answers: you
+can see what you chose next to what was right while you read why.
+
+NEXT was already dimmed until you answer. That one needed nothing.
+
+**Dynamics in the Survival Guide.** The ladder was lopsided rather than subtle:
+
+    pp -> p    +7.0 dB        mf -> f    +4.6 dB
+    p  -> mf  +14.2 dB        f  -> ff   +1.4 dB
+
+Forte to fortissimo was 1.4 dB, which nobody can hear, while piano to mezzo forte
+was a 14 dB cliff. Every step is 4.0 dB now, from .038 to .95 across eight marks.
+Two of those marks did not exist: pianississimo and fortississimo were among the
+silent terms. Mezzo forte and mezzo piano were never missing at all, the table
+spelled them with a hyphen and the markup with a space.
+
+Twelve terms are still genuinely silent: arpeggio, augmentation dot, breath mark,
+caesura, mordent, niente, slur, staccatissimo, tie, trill, turn, una corda.
+
+---
+
+## v0.201.108 — Two questions in Fundamentals were handing over the answers to two others
+
+Question 31 asks what singers could do with **Guido's** staff. Question 60 then
+asked which 11th-century Italian monk gave the notes their syllables. His name
+was in the earlier stem, so the later question was free. Taking the name out of
+31 removes the context that makes it a question at all, so 60 changed instead and
+now asks where the syllables came from:
+
+    Where did Guido of Arezzo get the syllables ut, re and mi from?
+    -> The first syllable of each line of a hymn
+
+Every line of Ut queant laxis starts one step higher than the last, which is the
+whole trick and a better fact than the one it replaces. Bilingual, and the option
+lengths are balanced so the answer is not the longest on the card.
+
+Question 28's blurb ended "Beethoven's own marks are famously brisk", and
+question 33 asks which composer first wrote metronome marks into his symphonies.
+Rewritten to say why a number outlived the argument about it instead.
+
+Omega leaks in this pack went from six to one, and the one left is unavoidable:
+question 59's answer is "B flat, A, C, B natural", so its blurb has to name B
+natural, which is question 32's answer.
+
+Left alone deliberately, and worth recording as a decision rather than an
+oversight: six blurbs say "X is Italian for Y", and question 27 asks which
+language the markings are in. That is the pack teaching a thing six times and
+then testing it. Stripping the word out of six blurbs would gut all six.
+
+---
+
+## v0.201.107 — Crotchets and quavers in an English question
+
+Theory Fundamentals question 43 asked what a C with a line through it means and
+offered "Two minim beats in a bar", "Six quaver beats in a bar" and "Four
+crotchet beats in a bar". Those are the note names that genuinely are British
+rather than a spelling difference, sitting in the English options of a shipping
+pack. Now half-note, eighth-note and quarter-note, blurb to match.
+
+Twelve places said "on the stave", "in the stave", "under the stave" or "off the
+stave". American says staff. The plural staves is correct in both and is left
+alone, as in "middle C sits between the two staves".
+
+Nothing else in the app: minim was almost always "minimum", breve is Italian for
+short, and the semibreves are in the Survival Guide glossary as the Italian name
+for a whole note, which is right.
+
+Reading rows 31 to 60 of Fundamentals turned up two things for Daniele rather
+than for the gate. Question 31 names Guido in its stem, which hands over question
+60, "which 11th-century Italian monk". And questions 20, 46 and 47 rotate one set
+of options between them: how many beats in a bar, which note value gets the beat,
+how fast the beats go. Each is the answer to one and a distractor in the other two.
+
+---
+
+## v0.201.106 — British idiom, which the spelling audit could never see
+
+Spelling was half the job. These read as British but are spelled correctly in
+both dialects, so no spelling rule could ever have caught them. Six were sitting
+in the app after the audit reported it clean, three of those in shipping packs:
+
+    guitar_gods       the flames "put him in hospital"       -> in the hospital
+    bass              "nobody had got out of a bass before"  -> had gotten
+    bass              "the band have spent twenty years"     -> the band has
+    survival guide    "a full stop in the sound"             -> a complete stop
+    survival guide    "the trickiest of the lot"             -> of them
+    cadence blurb     "a comma rather than a full stop"      -> and not a period
+
+The audit now carries an idiom list and a grammar rule. The grammar one is that
+a collective noun takes a singular verb in American English: the band has, not
+the band have.
+
+Both are written to leave real English alone. "Two couples inside the band were
+splitting up" is correctly plural, because the subject is the couples. "The 2nd
+of natural minor" is a scale degree and not a date. "Its own spot on the neck"
+is not the idiom. Each of those fired once and each is now excluded by name.
+
+Nothing else outstanding: spelling 0, mangled words 0, names under two spellings
+0, idioms 0, collective-plural 0.
+
+---
+
+## v0.201.105 — American English, and the sweep that had already gone wrong once
+
+180 British spellings replaced across the whole file, copy, code and comments.
+The audit now reports zero.
+
+**The reason this needed doing twice is the interesting part.** A rule in
+`intonare_us_spelling_audit.py` read `specialis(e|es|ed|ing|t|ts)`. The `t` and
+`ts` are the fault: "specialist" and "specialists" are correct American English,
+and rewriting them produces "specializt". That same shape of rule is how
+"organist" became **organizt** and "programmer" became **programr**, and four of
+those had shipped and were sitting in the file at the start of this session.
+Repaired: three organists, one programmer, one organistica in the Italian
+Survival Guide, and an optimiztic interval description. "Baduizm" is left alone
+because Erykah Badu spells it that way.
+
+**A live break was caught during the sweep and is worth recording.** A rename
+protected `createAnalyser`, which is a Web Audio API name, by ignoring anything
+within 45 characters of it. That left `analyser` on two lines while renaming it
+to `analyzer` in 46 others, so the tuner's microphone setup read
+
+    analyser.fftSize = 4096; analyzer.smoothingTimeConstant = 0;
+
+with the second name undefined. `node --check` passed it, because an undefined
+variable is a runtime fault and not a syntax one. The mic would have failed on
+every launch.
+
+**The audit now watches for its own wreckage,** which is the only durable fix:
+
+- **mangled words** — anything ending -izt, -izm or -iztic, which real English
+  does not do. Baduizm is on an allow list.
+- **names living under two spellings at once** — a token present as both
+  `analyser` and `analyzer` means one of them is unreachable. This is the check
+  that would have caught the mic break in seconds.
+
+Proper nouns are protected by name rather than by luck: Daft Punk, Licence to
+Kill, Hapshash and the Coloured Coat, createAnalyser, userCancelled.
+
+Two other fixes in shipping packs, found before any of this: guitar_gods ended a
+B.B. King blurb on "anything that daft again", and eighties offered "a
+synthesised marimba". The -ise list had no rule for synthesise, in a music app.
+
+---
+
+## v0.201.104 — The last three tables, and rarity
+
+Exotic scales 4 to 9, jazz scales 5 to 9, chord-scale pairs 4 to 9.
+
+    exotic       Phrygian dominant, octatonic, Hungarian minor, augmented, in-sen
+    jazz         bebop dominant, half-whole diminished, Lydian augmented, Dorian \u266d2
+    chord-scale  maj7/Ionian, m7/Dorian, dim7/whole-half, m(maj7)/melodic minor,
+                 maj7\u266f11/Lydian
+
+    exotic       48 \u2192 108 cards      jazz  60 \u2192 108      chord-scale  48 \u2192 108
+
+**Rarity.** Items carry a weight, and the picker respects it, so the Hungarian
+minor and in-sen sit in the deck at roughly half the frequency of the common
+scales rather than taking an equal share. Measured across 12,000 picks the four
+rare exotic scales come out at 6\u20139% each against 14\u201315% for the others. Without
+this the choice was between leaving them out and letting them crowd the pack, and
+a set that only holds the common scales is not an advanced set.
+
+**One generator was fighting its own ratings.** `mqGenExotic` refused any request
+below tier 2 and then wrote `d: 3` onto whatever it built, so a major pentatonic
+came out rated as hard as the altered scale. The tier is on the scale now.
+
+Round quality, measured over 1,200 rounds at each stage of this work:
+
+    repeat a blurb      EASY 29% \u2192 24% \u2192 10% \u2192 6% \u2192 1%
+                        MED  30% \u2192 31% \u2192  0% \u2192 0% \u2192 0%
+                        HARD 41% \u2192 44% \u2192  0% \u2192 0% \u2192 0%
+    come up short       0% throughout
+    repeated ANSWER     4\u20136%, unchanged and still open
+
+A hard round now reads: bebop dominant, a perfect eleventh, the mediant in a hard
+key, in-sen, 12/8, a secondary dominant, the tritone substitution for F\u266f7, the
+raised seventh of D\u266f minor spelled C\u266f\u266f, a major seventh, and which scale fits
+D\u266d7\u266f11.
+
+Bass, Guitar Technique and Theory Fundamentals still fill 10 of 10 in every tier.
+
+Still open, unchanged from the last entry: about one round in twenty has two
+questions with the same answer, usually a scale name reached from two directions.
+The batcher deduplicates cards, not answers.
+
+---
+
+## v0.201.103 — Meters and progressions reach their real ceiling
+
+Two of the thin tables filled out. Both were short of what exists rather than
+short by design.
+
+**Time signatures, 9 to 14.** Added 2/2, 6/4, 3/2, 7/4 and 5/8. Every one fills a
+bar on the first try, so nothing was added that the note-value pool cannot write.
+660 cards to 1,784.
+
+6/4 mattered beyond its own card. Meters that hold the same amount of music are
+twins: they can never be offered against each other, and the blurb names the twin
+to turn that constraint into the lesson. 12/8 had no twin in the table, so on
+that card the sentence silently vanished. Three meters now hold six quarter
+notes, so the blurb names all of them and agrees its verb in both languages
+rather than naming the first and stopping.
+
+**Progressions, 4 to 10.** Added I–V–vi–IV, the doo-wop I–vi–IV–V, I–V–IV, the
+royal road IV–V–iii–vi, iii–vi–ii–V and the jazz turnaround vi–ii–V–I. 28 cards
+to 70, and the first three are rated level 1, which is where a pop loop belongs.
+
+Two of the new blurbs were written badly and caught before they shipped. One
+opened "the same four chords as the one above," which is meaningless in a round
+that shuffles. The other named I–vi–ii–V, which is the answer to a different
+card in the same pack. Both rewritten.
+
+Round quality after both:
+
+    rounds that repeat a blurb    EASY 10% → 6%    MED 0%    HARD 0%
+    rounds that come up short     0%
+
+Bass, Guitar Technique and Theory Fundamentals still fill 10 of 10 in every tier.
+
+Still short of their ceiling and not yet touched: exotic scales at four, jazz
+scales at five, and chord-scale pairs at four.
+
+---
+
+## v0.201.102 — Advanced Theory rates the card, not the generator
+
+Difficulty came from which list a generator sat on. Core meant easy, upper meant
+medium, jazz meant hard. So hard held exactly four kinds and every hard round was
+about 70% jazz, while a plain ii–V–I counted as hard because it is jazz and a
+German augmented sixth counted as medium because it is not.
+
+Measuring the generators showed five of them carried no difficulty at all. Jazz
+scales, jazz chords, tritone subs and chord-scale pairs every one reported tier 1
+whatever they built; the pack simply stamped the slot number on afterwards. Two
+more were rated wrong outright: the exotic generator called major and minor
+pentatonic hard, and the inversion generator called a plain major triad hard.
+
+`mqCardLevel` now reads what was actually built and returns 1, 2 or 3. The table
+is small and it is the whole argument:
+
+    inversions   triads 1, sevenths 2
+    exotic       pentatonics 1, blues and whole tone 2
+    chromatic    secondary dominants and Neapolitan 2, the augmented sixths 3
+    jazz scales  melodic minor and lydian dominant 2, altered and harmonic major 3
+    jazz chords  13 and 7♭9 2, 7♯9 and 7♯11 3
+    chord-scale  Mixolydian over a dominant 2, the rest 3
+    progressions I–IV–V and vi–IV–I–V 1, the two-fives 2
+    tritone sub  3, in all twelve keys
+
+Anything not listed keeps the level its generator gave it, so the kinds that
+already tier themselves properly are untouched. Advanced Theory now puts every
+generator in the pot for every slot and keeps whatever matches the slot's level.
+
+Three kinds sat on two family lists at once and therefore got two chances at
+every slot, which was the other half of why Inversion was dealt half again as
+often as anything beside it. The combined list drops the duplicates.
+
+Measured over 1,200 rounds, before and after:
+
+    rounds that repeat a blurb     EASY 24% → 10%   MED 31% → 0%   HARD 44% → 0%
+    kinds available in a hard round               4 → 20
+    rounds that come up short                     0% → 0%
+
+Theory Fundamentals, Bass and Guitar Technique are unaffected: they keep their
+own profiles and still fill 10 of 10 in every tier.
+
+One thing this did not fix, left as a note rather than a change. Roughly one
+round in ten still has two questions with the same answer, usually a scale name
+reached from two directions: what scale is this, and which scale fits this chord.
+The batcher deduplicates cards, not answers.
+
+---
+
+## v0.201.101 — One of Advanced Theory's twelve generators had never run
+
+`mqGenEnharmonic` opened with `if (d !== 2) return null`. Advanced Theory asks
+every generator for its hardest output, always tier 3, so the answer was always
+no. Measured over 9,000 generated questions the kind appeared exactly zero times
+in that pack, in any tier. It has presumably never run there.
+
+It was also the thinnest well in the app at ten cards, and both faults were the
+same fault: the table only held the five black-key pairs.
+
+The table now holds nine and each side carries its own spelling rather than a
+midi number, because midi cannot express an F flat. The pitch is E, and deriving
+the notehead from the pitch puts it on the E line where a flat sign reads as E
+flat. The staff renderer already accepted `{ l, o, a }` for exactly this reason
+and nothing was using it.
+
+    B♯ / C     the seventh of C♯ major
+    E♯ / F     the seventh of F♯ major
+    C♭ / B     the fourth of G♭ major
+    F♭ / E     the fourth of C♭ major
+
+Those four are flagged advanced, and they say something better than the shared
+line about pianos and paper: the key that forces the spelling, which is the only
+reason the note exists. Theory Fundamentals question 15 already told the player
+that C flat is B and F flat is E, and until now the generator could not ask it.
+
+18 cards, up from 10. Easy rounds now repeat a blurb 24% of the time rather than
+29%.
+
+Fixing the tier exposed the seam it was hiding. With the white pairs marked
+advanced, the easy slot rejected them, the medium slot had no Enharmonic in its
+list, and the kind was locked out of every slot again. It is now on the medium
+list as well as the core one. That is a patch, not a fix: a kind whose easy half
+and hard half belong in different slots cannot be described by one family list,
+which is the argument for rating items rather than lists.
+
+`mqEnhIt` is gone, replaced by `mqEnhName`. The old one appended " bemolle" to
+anything without a sharp sign, so a natural C would have come out as Do bemolle.
+Nothing had ever passed it a natural before.
+
+---
+
+## v0.201.100 — The dormant piano grids are closed out
+
+The pending cleanup was to strip dead `rh`, `lh` and `ctls` arrays from the seven
+piano songs that were converted to real performance captures, about 157KB. Almost
+all of it was already gone. What was actually left was four dead `tempoMap`
+arrays, and Clair de Lune held nearly all of it at 4.8KB.
+
+A tempoMap is a rubato curve for converting beats to milliseconds. A performance
+capture carries absolute ms on every note and needs no such curve, and the
+scheduler takes the perf branch and returns before it ever reads one. So this was
+a map nothing could consult, sitting beside 1,491 notes that already knew when
+they happened.
+
+Removed from clair_de_lune, liebestraum and moonlight_3. Verified by extracting
+`__riffsBuild()` into node and loading it: 42 piano songs, 21 with performance
+data, all seven of the converted set intact with their pedal data, and no perf
+song anywhere still carrying rh, lh or tempoMap.
+
+    liebestraum     1888 notes, 220 pedal      moonlight_3    6538 notes, 721 pedal
+    clair_de_lune   1491 notes, 327 pedal      prelude_em      604 notes, 133 pedal
+    moonlight       1144 notes, 308 pedal      fuer_elise     1041 notes, 150 pedal
+    prelude_c       1284 notes,  70 pedal
+
+Fourteen perf songs still carry a single 57-byte `ctls` entry that opens the lid
+and clears the pedal at beat zero. That is 800 bytes and it stays: it is the
+template every new perf song is written from, and removing it buys nothing worth
+the edit.
+
+Also in the 80s pack tooling, not the app. The duplicate-answer rule had no way
+to express a legitimate exception, so it failed on "Thriller" being both the
+album that outsold everything and the video John Landis directed. Two subjects,
+one word. That now lives in allow_answers_eighties.json and prints as a note with
+the reason instead of failing. Separately, the Italian check was reading the
+"the" in "Welcome to the Jungle" as English leaking into Italian prose; it now
+drops any run of three or more words that appears verbatim in both twins before
+scanning. Beatles, Guitar Technique, Bass, Seventies and Guitar Gods all still
+come back clean, so nothing was loosened. The 80s pack now passes every automated
+stage.
+
+---
+
+## v0.201.99 — Light bar tracks come back from the dead
+
+`--panel` moves up in all five light themes. That is the whole change.
+
+    base    #f3f3f9 -> #fdfdfe        tools   #e4faf2 -> #f9fefc
+    tuner   #ecf4ff -> #fbfdff        train   #f5f1ff -> #fdfcff
+    metro   #faf3e0 -> #fefdf9
+
+A bar track is `--surface-2` and the panel under it is `--panel`, and in light
+mode those were set to the same hex in every theme. Four tracks have no border to
+save them, so an empty one was not visible at all until it started to fill: the
+quiz progress bar, the survival timer, the by-pack stats bars, and the Pitch
+Match track. Dark mode separates the two by 2.1 L*. Light now runs 3.3, because a
+recess hides more easily on a white ground than on a black one.
+
+This replaces the palette pass proposed in v0.201.98, and it is worth writing
+down why. The measurement that pass was built on was correct and pointed at the
+wrong thing. Light does have a 20-point jump between `--bg-1` and `--surface`,
+but that pair is a sheet and the tiles sitting on it, and they are meant to be
+far apart. Redistributing the ramp to close that gap would have dropped
+`--surface` by 7 L*, and the quiz band is `--surface`: all nineteen pack ink
+colours are hand-tuned to land between 4.75 and 4.98 on it, so every one of them
+would have fallen to about 4.0. Eleven more hardcoded colours across the tuner,
+metronome and drum kit were in the same position.
+
+The real fault was the step that measured zero, not the one that measured twenty.
+It is one token per theme and it costs nothing else: background, card and track
+all keep the values they ship with, so no ink moves and no label changes.
+
+Border contrast on the new panel goes up rather than down, from about 3.3 to
+about 3.6 in every theme. Text is unaffected at 15.8.
+
+Pinned in the sentinel, one check per theme, phrased as the collision rather than
+the value: the four themes that declare the pair on one line pin that line out
+by absence, and base light pins the panel by value.
+
+---
+
+## v0.201.98 — The old quiz is cut out, and a hidden gesture goes with it
+
+The v1 quiz has been dead code since the redesign shipped. It is now gone: 212
+lines of JavaScript, 83 lines of CSS, the feedback sheet markup, and the two
+entries that kept it in the quiz back stack.
+
+The reason to do it now was not tidiness. `_bindQuizV2Hold` bound a one-second
+press on the Settings version stamp to `setQuizV2`, with no developer gate and
+nothing telling the user it was there. It reloaded the app and changed nothing,
+because turning the flag off called `removeItem` while the reader on the next
+boot looked for the string `'0'`. A user could hit it by accident and get an
+unexplained reload. Both faults left with the flag, and `MQ_V2` no longer exists.
+
+Removing the markup left `mqHideFeedbackSheet` reaching for an element that was
+no longer there, on every question. That would have thrown on the first answer.
+It was caught by a new whole-file sweep for unguarded `getElementById(...)`
+calls on ids that appear nowhere in the markup. The same sweep found a second
+one: `rrBuildDiffGrid` and `rrTogglePopup('diff')` still pointed at `rrDiffGrid`
+and `rrDiffPopup`, left behind when the Rhythm Reading picker was renamed to
+`rrDiffPicker`. Nothing called them, so nothing broke, but they are gone too.
+
+The sentinel gained an `absent` kind. It could only pin that something is
+present, which meant a deletion could be silently undone by a revert. Five
+deletions are pinned with it now.
+
+Two light pins were stale for a real reason, not a wrong one: the palette moved
+deliberately over the last several versions and nobody updated them. The accent
+pin now matches what ships. The lifted-accent pin was an exact hex on one theme,
+so any hue change fired it; it now checks the token exists in all four themes
+that carry it, which is what the description meant in the first place.
+
+One error in the 80s pack: blurb 57 opened on "He" instead of naming George
+Michael. The other one is left alone. Rows 22 and 64 both answer Thriller, and
+fixing that means rewriting a question, which is not a gate's decision to make.
+
+Not shipped, sitting alongside as a preview file: three candidate light surface
+ramps. Every light theme has `--surface-2` and `--panel` set to the identical
+hex, so the fifth surface does not exist and a panel inside a card has nothing
+to sit on. Measured in L*, all five themes run the same shape:
+
+    DARK    steps  2.7 · 3.5 · 3.7 · 2.1
+    LIGHT   steps  2.1 · 20.1 · 3.3 · 0.0
+
+The candidates hold each theme's own hue and saturation and move lightness
+only, which is what the last attempt got wrong. Worst-case text contrast goes
+up rather than down, from 4.61 today to 4.93 on all three.
+
+---
+
 ## v0.201.97 — The surface redistribution is reverted
 
 The even-step surfaces from the last two versions are removed. Spacing them
