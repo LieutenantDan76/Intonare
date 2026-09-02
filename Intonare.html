@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.201.143 -->
+<!-- INTONARE_VERSION: 0.201.182 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -1796,7 +1796,7 @@ html,body{background:#000000!important;transition:none!important}
   .mq-sheet-title { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size: 21px; letter-spacing: 2px; color: var(--text); margin-bottom: 3px; }
   .mq-sheet-sub   { font-family:'JetBrains Mono','GlyphFix',monospace; font-size: 8px; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 14px; }
   .mq-sheet-all-btn {
-    width: 100%; padding: 13px;
+    box-sizing: border-box; padding: 13px;
     background: linear-gradient(135deg,color-mix(in srgb,var(--accent-soft) 12%,var(--surface)),color-mix(in srgb,var(--accent) 7%,var(--surface)));
     border: 1px solid color-mix(in srgb,var(--accent-soft) 40%,transparent);
     border-radius: var(--r-md); color: var(--text);
@@ -1983,7 +1983,7 @@ html,body{background:#000000!important;transition:none!important}
      take 196 and square answers; diagram questions take 290 and 4:3 answers,
      which comes to 558 on a 620px screen. Nothing moves within either kind. */
   .mq2-band {
-    height: 196px;
+    height: 220px;
     display: flex; flex-direction: column;
     background: var(--surface); border-bottom: 3px solid var(--mq2-pack, var(--accent));
     padding: 12px 18px 18px; text-align: center;
@@ -2361,7 +2361,7 @@ html,body{background:#000000!important;transition:none!important}
      class landed and climbed straight over the accent bar. It waits exactly as
      long as the drawer does, and moves for exactly as long. */
   .mq2-stage.push .mq2-fbwrap { position: relative; flex-shrink: 0;
-    box-shadow: none; border-radius: 0; border-top-width: 1px;
+    box-shadow: 0 -6px 18px rgba(0,0,0,.18); border-radius: 16px 16px 0 0; border-top-width: 1px;
     height: 0; transform: none; overflow: hidden;
     transition: height .52s cubic-bezier(.2, 0, 0, 1); }
   .mq2-stage.push .mq2-fbwrap:not(.go) {
@@ -2899,10 +2899,12 @@ html,body{background:#000000!important;transition:none!important}
   body.mq2on #mqQuickSheet .mq-sheet-sub,
   body.mq2on #mqSurvivalSheet .mq-sheet-sub { text-align: left; padding: 0 16px; }
   body.mq2on #mqQuickSheet #mqSheetPackTabs,
-  body.mq2on #mqQuickSheet .mq-sheet-all-btn,
-  body.mq2on #mqSurvivalSheet #mqSurvivalPackTabs,
-  body.mq2on #mqSurvivalSheet .mq-sheet-all-btn {
+  body.mq2on #mqSurvivalSheet #mqSurvivalPackTabs {
     width: auto; margin-left: 15px; margin-right: 15px;
+  }
+  body.mq2on #mqQuickSheet .mq-sheet-all-btn,
+  body.mq2on #mqSurvivalSheet .mq-sheet-all-btn {
+    display: flex; width: calc(100% - 28px); margin-left: 14px; margin-right: 14px;
   }
 
   /* The grid, in the answer-tile language. */
@@ -12498,7 +12500,7 @@ html,body{background:#000000!important;transition:none!important}
     padding: 10px 0 4px;
   }
   .prog-timesig-btn {
-    flex-shrink: 0; min-width: 44px;
+    flex-shrink: 0; min-width: 56px; min-height: 56px;
     background: var(--panel); border: 1px solid var(--border-soft);
     border-radius: var(--r-sm); cursor: pointer;
     font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 15px;
@@ -12992,7 +12994,7 @@ html,body{background:#000000!important;transition:none!important}
   /* Transport row */
   .prog-transport-row { display: flex; align-items: center; gap: 8px; }
   .prog-play-btn {
-    padding: 0 18px; height: 44px; flex-shrink: 0;
+    padding: 0 18px; min-height: 56px; flex-shrink: 0;
     background: var(--grad-warm); border: none; border-radius: var(--r-sm);
     color: #000; font-family: 'Bebas Neue','GlyphFix', sans-serif;
     font-size: 16px; letter-spacing: 2px; cursor: pointer;
@@ -13003,7 +13005,7 @@ html,body{background:#000000!important;transition:none!important}
   .prog-play-btn:active { transform: scale(0.97); }
   .prog-play-btn.playing { background: var(--panel); color: var(--accent-warm); border: 1px solid var(--accent-warm); box-shadow: none; }
   .prog-loop-btn {
-    width: 44px; height: 44px; flex-shrink: 0;
+    width: 56px; min-height: 56px; flex-shrink: 0;
     background: var(--panel); border: 1px solid var(--border-soft);
     border-radius: var(--r-sm); color: var(--text-dim);
     font-family: 'JetBrains Mono','GlyphFix', monospace;
@@ -13014,7 +13016,7 @@ html,body{background:#000000!important;transition:none!important}
   .prog-bpm-pill {
     display: flex; align-items: center; gap: 8px;
     background: var(--panel); border: 1px solid var(--border-soft);
-    border-radius: var(--r-sm); padding: 0 12px; height: 44px;
+    border-radius: var(--r-sm); padding: 5px 12px; min-height: 56px;
     cursor: pointer; flex: 1; transition: border-color 0.15s; min-width: 0;
     /* Column so the groove name can sit under the number and use the pill's
      full width. min-width:0 lets the ellipsis actually engage inside a flex
@@ -18657,6 +18659,17 @@ html,body{background:#000000!important;transition:none!important}
   .iu-x { flex: 0 0 auto; background: none; border: none; color: var(--muted);
     font-size: 17px; line-height: 1; padding: 2px 2px 6px 8px; }
   .iu-x:active { color: var(--text); }
+  /* A link rather than a third button: the row below is where you decide, and
+     this is only for reading first. Play's listing already carries the notes, so
+     it opens the store rather than keeping a second copy in the app that would
+     drift out of step with what was actually released. */
+  .iu-notes {
+    display: inline-block; margin-top: 5px; padding: 0; border: 0; background: none;
+    font-family: 'JetBrains Mono','GlyphFix', monospace;
+    font-size: 9.5px; letter-spacing: 1.1px; color: var(--accent);
+    text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+  }
+  .iu-notes:active { opacity: .6; }
   .iu-acts { display: flex; gap: 8px; margin-top: 12px; }
   .iu-btn { flex: 1 1 0; padding: 9px 0; border-radius: 9px; font-size: 10.5px;
     letter-spacing: 1.2px; text-align: center; border: 1px solid var(--border-soft);
@@ -28118,7 +28131,7 @@ try {
         <div id="tcScaleChrome"></div>
         <div id="tcNoteGrid"></div>
         <div id="tcOctRow"></div>
-        <button id="tcToggleBtn" onclick="tcToggleDrone()">▶︎ START DRONE</button>
+        <button id="tcToggleBtn" onclick="tcToggleDrone()" data-i18n="tc_start_drone">▶︎ START DRONE</button>
       </div>
 
       <!-- Main CRT screen -->
@@ -29948,7 +29961,7 @@ try {
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <button class="pss-interval-btn" id="hpDirBtn" onclick="hpToggleDirection()" style="min-width:44px;font-size:16px" title="Toggle ascending/descending">▶︎</button>
-          <button class="gss-play-btn" id="hpPlayBtn" style="flex:1" onclick="hpPlayScale()">▶︎ PLAY ASCENDING</button>
+          <button class="gss-play-btn" id="hpPlayBtn" style="flex:1" onclick="hpPlayScale()" data-i18n="hp_play_asc">▶︎ PLAY ASCENDING</button>
         </div>
         <div class="gss-speed-row">
           <span class="gss-speed-label" data-i18n="gtool_slow">SLOW</span>
@@ -30027,7 +30040,7 @@ try {
             <button id="bowedNoteExpandBtn"  class="gcc-zoom-btn" onclick="bowedNoteToggleExpand()"  style="display:none" data-i18n="gtool_expand">EXPAND</button>
             <button id="bowedDsExpandBtn"    class="gcc-zoom-btn" onclick="bowedDsToggleExpand()"    style="display:none" data-i18n="gtool_expand">EXPAND</button>
           </div>
-          <div class="gcc-chord-name idle" id="bowedNoteLabel" style="width:100%;text-align:center">SELECT A NOTE</div>
+          <div class="gcc-chord-name idle" id="bowedNoteLabel" style="width:100%;text-align:center" data-i18n="bowed_select_note">SELECT A NOTE</div>
           <div class="gss-pos-label" id="bowedNoteSub" style="text-align:center;min-height:16px"></div>
           <!-- Nav arrows + diagram -->
           <div class="gcc-diagram-wrap">
@@ -30052,7 +30065,7 @@ try {
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
         <!-- Play buttons: notes plays single, dstops plays simultaneous -->
         <button class="gss-play-btn" id="bowedNotePlayBtn" style="width:100%;display:none" onclick="bowedNotePlayCurrent()">▶︎ PLAY NOTE</button>
-        <button class="gss-play-btn" id="bowedDsPlayBtn"   style="width:100%;display:none" onclick="bowedDsPlayCurrent()">▶︎ PLAY DOUBLE STOP</button>
+        <button class="gss-play-btn" id="bowedDsPlayBtn"   style="width:100%;display:none" onclick="bowedDsPlayCurrent()" data-i18n="bowed_play_ds">▶︎ PLAY DOUBLE STOP</button>
       </div>
       <!-- Picker card -->
       <div class="card warm">
@@ -30076,7 +30089,7 @@ try {
           <div class="gcc-corner-tools">
             <button id="bowedScaleExpandBtn" class="gcc-zoom-btn" onclick="bowedScaleToggleExpand()" data-i18n="gtool_expand">EXPAND</button>
           </div>
-          <div class="gss-scale-name idle" id="bowedScaleName" style="width:100%;text-align:center">SELECT ROOT + SCALE</div>
+          <div class="gss-scale-name idle" id="bowedScaleName" style="width:100%;text-align:center" data-i18n="bowed_select_scale">SELECT ROOT + SCALE</div>
           <div class="gss-pos-label" id="bowedScalePosLabel" style="text-align:center"></div>
           <div class="gcc-diagram-wrap">
             <button class="gcc-nav-btn" id="bowedScalePrev" onclick="bowedScaleNavigate(-1)" disabled>‹</button>
@@ -30098,7 +30111,7 @@ try {
         <div style="height:1px;background:var(--border-soft);margin:12px -14px 12px"></div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <button class="pss-interval-btn" id="bowedScaleDirBtn" onclick="bowedScaleToggleDir()" style="min-width:44px;font-size:16px">▶︎</button>
-          <button class="gss-play-btn" id="bowedScalePlayBtn" style="flex:1" onclick="bowedScalePlay()">▶︎ PLAY ASCENDING</button>
+          <button class="gss-play-btn" id="bowedScalePlayBtn" style="flex:1" onclick="bowedScalePlay()" data-i18n="hp_play_asc">▶︎ PLAY ASCENDING</button>
         </div>
         <div class="gss-speed-row">
           <span class="gss-speed-label" data-i18n="gtool_slow">SLOW</span>
@@ -31456,7 +31469,7 @@ try {
       </div>
 
       <!-- Shared START (listen + single-layer tap modes) -->
-      <button id="prGoBtn" onclick="prToggle()" class="pr-go-btn">▶︎ START</button>
+      <button id="prGoBtn" onclick="prToggle()" class="pr-go-btn" data-i18n="pr_start">▶︎ START</button>
 
       <!-- LISTEN view -->
       <div class="pr-tab-view" id="prViewListen">
@@ -31729,12 +31742,12 @@ try {
 
         <!-- Survival end screen -->
         <div class="rr-surv-end" id="rrSurvEnd">
-          <div class="rr-surv-end-title" id="rrSurvEndTitle">GAME OVER</div>
+          <div class="rr-surv-end-title" id="rrSurvEndTitle" data-i18n="rr_game_over">GAME OVER</div>
           <div class="rr-surv-end-score" id="rrSurvEndScore">0</div>
           <div class="rr-surv-end-lbl" data-i18n="ui_streak">STREAK</div>
           <div class="rr-surv-end-record" id="rrSurvEndRecord"></div>
           <div class="rr-surv-end-stats" id="rrSurvEndStats"></div>
-          <button onclick="rrSurvRestart()" class="rr-surv-end-again">PLAY AGAIN</button>
+          <button onclick="rrSurvRestart()" class="rr-surv-end-again" data-i18n="rr_play_again">PLAY AGAIN</button>
           <button onclick="rrSurvExit()" class="rr-surv-end-exit" data-i18n="ui_exit">EXIT</button>
         </div>
 
@@ -32172,6 +32185,10 @@ try {
         <div class="credits-item">dinnerchief &mdash; Piano &mdash; <a href="https://thenounproject.com" target="_blank">the Noun Project</a></div>
       </div>
       <div class="credits-group">
+        <div class="credits-group-title">Samples</div>
+        <div class="credits-item">Tobias Marberger &mdash; Mandolin (G-Town Church Sampling Project) &mdash; <a href="https://creativecommons.org/licenses/sampling+/1.0/" target="_blank">CC Sampling+ 1.0</a></div>
+      </div>
+      <div class="credits-group">
         <div class="credits-group-title" data-i18n="credits_fingering">Fingering diagrams</div>
         <div class="credits-item"><a href="https://fingering.bretpimentel.com" target="_blank">Bret Pimentel</a> &mdash; Bassoon &amp; Contrabassoon body diagrams &mdash; <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></div>
       </div>
@@ -32343,7 +32360,7 @@ try {
       <!-- top glass sheen -->
       <div style="position:absolute;top:0;left:0;right:0;height:48%;background:linear-gradient(180deg,rgba(255,255,255,.10),transparent);pointer-events:none;border-radius:11px 11px 40% 40%/11px 11px 18px 18px"></div>
       <span id="diadleStatusDot" style="position:relative;width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s,box-shadow .3s;animation:diadleLivePulse 1.4s ease-in-out infinite"></span>
-      <span id="diadleStatusText" style="position:relative;font-size:10px;font-weight:700;letter-spacing:1.8px;color:var(--text-soft,var(--muted));white-space:nowrap;transition:color .3s">NAME EACH NOTE</span>
+      <span id="diadleStatusText" style="position:relative;font-size:10px;font-weight:700;letter-spacing:1.8px;color:var(--text-soft,var(--muted));white-space:nowrap;transition:color .3s" data-i18n="diadle_name_each">NAME EACH NOTE</span>
     </div>
   </div>
   </div><!-- /diadleControls -->
@@ -32800,7 +32817,7 @@ try {
       <div class="pm-level-label" data-i18n="xp_level">Current Level</div>
       <div class="pm-level-num" id="pmLevelNum">1</div>
       <div class="pm-xp-bar"><div class="pm-xp-fill" id="pmXpFill" style="width:0%"></div></div>
-      <div class="pm-xp-text" id="pmXpText">0 / 50 XP to next level</div>
+      <div class="pm-xp-text" id="pmXpText" data-i18n="pm_xp_placeholder">0 / 50 XP to next level</div>
     </div>
     <div id="pmStreakBlock" class="pm-streak-block" style="display:none">
       <span class="pm-streak-fire">🔥</span>
@@ -32816,7 +32833,7 @@ try {
     <div class="pm-graph-wrap" id="pmGraphWrap">
       <div class="pm-graph-nav">
         <button class="pm-graph-nav-btn" onclick="pmPrevPeriod()">‹</button>
-        <span class="pm-graph-period" id="pmGraphPeriod">THIS WEEK</span>
+        <span class="pm-graph-period" id="pmGraphPeriod" data-i18n="pm_this_week">THIS WEEK</span>
         <button class="pm-graph-nav-btn" onclick="pmNextPeriod()" id="pmGraphNext">›</button>
       </div>
       <div class="pm-graph-bars" id="pmGraphBars"></div>
@@ -32850,6 +32867,8 @@ try {
       <div class="iu-body">
         <div class="iu-title" id="iuTitle" data-i18n="iu_title">Update available</div>
         <div class="iu-sub" id="iuSub"></div>
+        <button class="iu-notes" id="iuNotes" onclick="iuNotes()"
+                data-i18n="iu_patch_notes">PATCH NOTES</button>
       </div>
       <button class="iu-x" id="iuClose" onclick="iuDismiss()" aria-label="Dismiss">&#215;</button>
     </div>
@@ -33293,7 +33312,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.201.143</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.201.182</span>
     </div>
   </div>
 </div>
@@ -33301,7 +33320,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.201.143';
+const INTONARE_VERSION = '0.201.182';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -40303,7 +40322,7 @@ async function startMic(_opts) {
       const hvw = document.getElementById('headerVolWrap');
       if (hvw) hvw.classList.add('active');
       if (mode === 'tuner') pitchHistStart();
-      console.log('[IntonareMic] NATIVE path active; start result:', JSON.stringify(_lastNativeStart));
+      // console.log('[IntonareMic] NATIVE path active');
       updateDetectedBPMDisplay();
       processAudio();
       return;
@@ -58637,7 +58656,7 @@ function progSyncBpmDisplays() {
       const preset = GROOVE_PRESETS.find(p => p.id === progCurrentGrooveId());
       grooveEl.textContent = preset ? (((progState.lang === 'it')&&preset.nameIt)?preset.nameIt:preset.name) : '';
     } else if (progSyncMode === 'kit') {
-      grooveEl.textContent = progDkSelectedName || t('prog_drum_kit');
+      grooveEl.textContent = progDkSelectedName || '';
     } else {
       grooveEl.textContent = '';
     }
@@ -58814,6 +58833,7 @@ function progSwitchSyncSource(mode) {
   // Progression chords keep playing uninterrupted.
   const prev = progSyncMode;
   if (mode === prev) return;
+  if (mode === 'kit') { try { dkLoadSamples(); } catch(e) {} }
 
   progSyncMode = mode;
   ['silent','metro','kit'].forEach(m => {
@@ -59129,7 +59149,7 @@ function progRetimeForBpm(prevBpm) {
 window.progSyncDiag = function (seconds) {
   const secs = seconds || 8;
   const ctx = (typeof getAudio === 'function') ? getAudio() : null;
-  if (!ctx) { console.log('[syncdiag] no audio context'); return; }
+  if (!ctx) { return; }
 
   const log = { chord: [], drum: [], meta: {} };
   log.meta.bpm = bpm;
@@ -59154,7 +59174,7 @@ window.progSyncDiag = function (seconds) {
     return origTrig.apply(this, arguments);
   };
 
-  console.log('[syncdiag] recording ' + secs + 's — let it play');
+  // syncdiag recording
   setTimeout(function () {
     tone.synth = origSynth;
     window.triggerInstrument = origTrig;
@@ -59177,7 +59197,7 @@ window.progSyncDiag = function (seconds) {
       log.meta.drift = +(offsets[offsets.length - 1] - offsets[0]).toFixed(2);
       log.meta.spread = +(Math.max.apply(null, offsets) - Math.min.apply(null, offsets)).toFixed(2);
     }
-    console.log('[syncdiag] ' + JSON.stringify(log.meta, null, 2));
+    // syncdiag meta
     window.__syncDiag = log;
   }, secs * 1000);
 };
@@ -63645,7 +63665,7 @@ const SampleEngine = (function() {
           // Consider ready if we loaded at least 70% of notes
           if (_buffers[id].size >= notes.length * 0.7) {
             _state[id] = 'ready';
-            if (location.protocol !== 'file:') console.log('[SampleEngine]', id, 'ready —', _buffers[id].size, 'samples loaded');
+            if (false) console.log('[SampleEngine]', id, 'ready —', _buffers[id].size, 'samples loaded');
             this._notifyStatus(id);
             if (desc.onReady) desc.onReady();
             // Load release samples in background if descriptor has them (non-blocking)
@@ -63714,6 +63734,22 @@ const SampleEngine = (function() {
       src.connect(g);
       g.connect(dest);
 
+      // Doubled-course simulation (mandolin, bouzouki): a second source slightly
+      // detuned and delayed to recreate the sound of two strings per course.
+      // +7 cents detune, 4ms delay, -2dB quieter. No modulation; the effect is
+      // static, like a real pair of strings that aren't quite in tune.
+      if (desc.doubledCourse && buf) {
+        var src2 = ctx.createBufferSource();
+        src2.buffer = buf;
+        src2.playbackRate.value = src.playbackRate.value * Math.pow(2, 7/1200);
+        var g2 = ctx.createGain();
+        g2.gain.setValueAtTime(0, t0);
+        g2.gain.linearRampToValueAtTime(peak * 0.79, t0 + atk);
+        src2.connect(g2);
+        g2.connect(dest);
+        src2._isCourseDouble = true;
+      }
+
       if (dur) {
         // Finite note. Two cases:
         //  • Short dur (scale steps, ~0.1–0.35s): HONOR it tightly so notes don't
@@ -63731,18 +63767,21 @@ const SampleEngine = (function() {
           ? Math.max(0.05, Math.min(0.18, actualDur * 0.45))
           : Math.max(0.15, Math.min(0.5, sampleDur * 0.3));
         src.start(t0);
+        if (src2) { src2.start(t0 + 0.004); }
         const end = t0 + actualDur;
         // Hold to the release point, then exponential-style taper (setTargetAtTime)
         // for a natural decay instead of an abrupt linear chop.
         g.gain.setValueAtTime(peak, Math.max(t0 + atk, end - releaseTail));
         g.gain.setTargetAtTime(0, Math.max(t0 + atk, end - releaseTail), releaseTail / 3);
         src.stop(end + releaseTail + 0.08);
+        if (src2) { g2.gain.setValueAtTime(peak * 0.79, Math.max(t0 + atk, end - releaseTail)); g2.gain.setTargetAtTime(0, Math.max(t0 + atk, end - releaseTail), releaseTail / 3); src2.stop(end + releaseTail + 0.08); }
       } else {
         // Drone: loop the sample indefinitely until stop() is called.
         src.loop = true;
         src.loopStart = src.buffer.duration * 0.15;
         src.loopEnd   = src.buffer.duration * 0.95;
         src.start(t0);
+        if (src2) { src2.loop = true; src2.loopStart = src.loopStart; src2.loopEnd = src.loopEnd; src2.start(t0 + 0.004); }
       }
 
       return {
@@ -63759,6 +63798,7 @@ const SampleEngine = (function() {
           g.gain.setValueAtTime(g.gain.value, t);
           g.gain.setTargetAtTime(0, t, tau);
           try { src.stop(t + Math.max(0.18, tau * 4.5)); } catch(e) {}
+          if (src2) { g2.gain.cancelScheduledValues(t); g2.gain.setValueAtTime(g2.gain.value, t); g2.gain.setTargetAtTime(0, t, tau); try { src2.stop(t + Math.max(0.18, tau * 4.5)); } catch(e) {} }
         }
       };
     },
@@ -64091,10 +64131,17 @@ SampleEngine.register({
 });
 
 // ── Mandolin + Bell ───────────────────────────────────────────────────────────
+// G-Town Church Sampling Project by Tobias Marberger (CC Sampling+ 1.0).
+// 14 samples, G3-A6. Gaps filled by SampleEngine pitch-shift (max 4 semitones).
 SampleEngine.register({
-  id: 'mandolin', name: 'Mandolin',
+  id: 'mandolin', name: 'Mandolin', doubledCourse: true,
   assetUrl: (f) => _capacitorAssetUrl('mandolin', f),
-  noteToFile: _gleitzNoteToFile, sampledNotes: _gleitzAllNotes, gain: 3.0,
+  noteToFile: function(midi) {
+    var NAMES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+    return NAMES[midi % 12] + (Math.floor(midi / 12) - 1) + '.mp3';
+  },
+  sampledNotes: [55,57,60,64,67,69,72,74,77,81,84,86,89,93],
+  gain: 3.0,
   onFailed() { console.warn('[SampleEngine] Mandolin unavailable'); },
 });
 SampleEngine.register({
@@ -79481,7 +79528,7 @@ function rtCycleRange(dir){
   if (pill){ const v=SS_VOICES[ssVoice]; const it=(progState&&progState.lang)==='it'; pill.textContent=(it?v.labelIt:v.label); }
 }
 const RT_NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-function rtMidiLabel(m){ return RT_NOTE_NAMES[m%12] + (Math.floor(m/12)-1); }
+function rtMidiLabel(m){ return getDisplayNote(RT_NOTE_NAMES[m%12]) + (Math.floor(m/12)-1); }
 function rtUpdateRangeCard(){
   const v = SS_VOICES[ssVoice]; if(!v) return;
   const it=(progState&&progState.lang)==='it';
@@ -79942,7 +79989,7 @@ function rtTuner(){
     for(const cls in map){ if(e.target.classList.contains(cls)){ hit=map[cls]; break; } }
     if(hit){ const h=edgeEdit(id,li,hit[0],hit[1]); refreshRow(row); playLeg(id,h.b,h.s,h); }
   });
-  console.log('[rtTuner] open. Enter Road Trip first to warm audio, then ▶︎ any leg.');
+  // rtTuner open
 }
 window.rtTuner = rtTuner;
 
@@ -82138,7 +82185,7 @@ function tonaleRenderRevealKeys(box, target, guess, guessColor) {
       'display:flex;align-items:flex-end;justify-content:center;font-size:7px;padding-bottom:2px;'+
       'color:'+(lit?'#000':'var(--text-faint)')+';background:'+bg+ring+
       ';opacity:'+(black&&!lit?0.6:1);
-    cell.textContent = TONALE_NOTE_NAMES[pc].replace('#','♯');
+    cell.textContent = getDisplayNote(TONALE_NOTE_NAMES[pc]).replace('#','♯');
     row.appendChild(cell);
   }
   box.appendChild(row);
@@ -85173,6 +85220,17 @@ function iuCheck() {
   }).catch(function () {});
 }
 
+// The store listing is where the release notes live, and Play has no API that
+// hands them over: AppUpdateInfo carries a version code, a priority and a byte
+// count, and nothing else. Opening the listing is the only way to show the notes
+// that were actually published with the build, and it cannot fall out of sync
+// with them the way a bundled copy would.
+function iuNotes() {
+  var P = _iuPlugin();
+  try { hapticLight(); } catch (e) {}
+  try { if (P && P.openAppStore) P.openAppStore(); } catch (e) {}
+}
+
 function iuGo() {
   var P = _iuPlugin();
   if (!P || !_iuInfo || _iuBusy) return;
@@ -86030,7 +86088,7 @@ const STRINGS = {
     mq_fetching:'Fetching',
     mq_no_connect:'Could not connect to opentdb.com. Check your connection.',
     scale_vs:'VS ', mq_grp_general:'GENERAL', mq_no_packs:'No packs selected', mq_all_packs_selected:'All {n} packs selected', mq_n_of_packs:'{n} of {total} packs', mq_select_all:'SELECT ALL', mq_online_only:'ONLINE ONLY', mq_offline:'OFFLINE', mq_daily_quiz:'Daily Quiz', mq_share_correct:'correct', mq_grp_instrument:'INSTRUMENT', mq_grp_decades:'DECADES', mq_grp_online:'ONLINE',
-    mq_all_packs:'ALL PACKS', mq_all_packs_name:'ALL PACKS', mq_all_packs_desc:'Questions drawn from every pack you have.', mq_start_survival:'START SURVIVAL \u2192', mq_start:'START \u2192', mq_quit:'QUIT', mq_back:'\u2190 BACK', mq_daily_badge:'DAILY', mq_resume:'RESUME \u2192', mq_timer:'Timer', mq_timer_off:'OFF', mq_review_misses:'REVIEW MISSES \u2192', mq_share_result:'SHARE RESULT', mq_play_arrow:'PLAY \u2192', mq_one_attempt:'10 questions \u00b7 one attempt', mq_lives_endless:'3 LIVES \u00b7 ENDLESS', mq_building:'Building your quiz',
+    mq_all_packs:'ALL PACKS', mq_packs_unit:'packs', mq_all_packs_name:'ALL PACKS', mq_all_packs_desc:'Questions drawn from every pack you have.', mq_start_survival:'START SURVIVAL \u2192', mq_start:'START \u2192', mq_quit:'QUIT', mq_back:'BACK', mq_daily_badge:'DAILY', mq_resume:'RESUME \u2192', mq_timer:'Timer', mq_timer_off:'OFF', mq_review_misses:'REVIEW MISSES \u2192', mq_share_result:'SHARE RESULT', mq_play_arrow:'PLAY \u2192', mq_one_attempt:'10 questions \u00b7 one attempt', mq_lives_endless:'3 LIVES \u00b7 ENDLESS', mq_building:'Building your quiz',
     mq_survival_sub:'pick a pack, or take everything below',
     mq_survival_card_sub:'3 lives, endless',
     mq_no_questions:'Not enough questions in this category right now. Try another one.',
@@ -86326,7 +86384,13 @@ const STRINGS = {
     rlp_gap_wide:'a fourth or more apart', rlp_gap_open:'a third to a fourth', rlp_gap_close:'a tone to a minor third', rlp_gap_adj:'within a tone',
     rlp_new_tier:'%b reached! At least %v points, \u00d7%m multiplier',
     err_recovered:'Something went wrong. That screen was reset.',
-    iu_title:'Update available', iu_later:'LATER', iu_download:'DOWNLOAD',
+    pm_xp_to_lv:'{a} / {b} XP to LV {lv}', pm_xp_placeholder:'0 / 50 XP to LV 2',
+    bowed_play_ds:'\u25b6\ufe0e PLAY DOUBLE STOP', diadle_name_each:'NAME EACH NOTE',
+    tc_start_drone:'\u25b6\ufe0e START DRONE', hp_play_asc:'\u25b6\ufe0e PLAY ASCENDING',
+    bowed_select_note:'SELECT A NOTE', bowed_select_scale:'SELECT ROOT + SCALE',
+    pr_start:'\u25b6\ufe0e START', pm_this_week:'THIS WEEK',
+    rr_game_over:'GAME OVER', rr_play_again:'PLAY AGAIN',
+    iu_title:'Update available', iu_later:'LATER', iu_download:'DOWNLOAD', iu_patch_notes:'PATCH NOTES',
     iu_downloading:'DOWNLOADING\u2026', iu_restart:'RESTART', iu_retry:'RETRY',
     iu_open_store:'OPEN STORE',
     iu_sub_flex:'Version %v can install without leaving the app.',
@@ -87163,7 +87227,7 @@ const STRINGS = {
     mq_fetching:'Recupero',
     mq_no_connect:'Impossibile connettersi a opentdb.com. Controlla la connessione.',
     scale_vs:'VS ', mq_grp_general:'GENERALE', mq_no_packs:'Nessun pacchetto scelto', mq_all_packs_selected:'Tutti i {n} pacchetti scelti', mq_n_of_packs:'{n} di {total} pacchetti', mq_select_all:'SELEZIONA TUTTO', mq_online_only:'SOLO ONLINE', mq_offline:'NON IN LINEA', mq_daily_quiz:'Quiz del giorno', mq_share_correct:'corrette', mq_grp_instrument:'STRUMENTO', mq_grp_decades:'DECENNI', mq_grp_online:'ONLINE',
-    mq_all_packs:'TUTTE LE RACCOLTE', mq_all_packs_name:'TUTTE LE RACCOLTE', mq_all_packs_desc:'Domande prese da ogni raccolta che hai.', mq_start_survival:'INIZIA SOPRAVVIVENZA \u2192', mq_start:'INIZIA \u2192', mq_quit:'ESCI', mq_back:'\u2190 INDIETRO', mq_daily_badge:'DEL GIORNO', mq_resume:'RIPRENDI \u2192', mq_timer:'Timer', mq_timer_off:'SPENTO', mq_review_misses:'RIVEDI GLI ERRORI \u2192', mq_share_result:'CONDIVIDI IL RISULTATO', mq_play_arrow:'GIOCA \u2192', mq_one_attempt:'10 domande \u00b7 un solo tentativo', mq_lives_endless:'3 VITE \u00b7 SENZA FINE', mq_building:'Sto preparando il quiz',
+    mq_all_packs:'TUTTE LE RACCOLTE', mq_packs_unit:'raccolte', mq_all_packs_name:'TUTTE LE RACCOLTE', mq_all_packs_desc:'Domande prese da ogni raccolta che hai.', mq_start_survival:'INIZIA SOPRAVVIVENZA \u2192', mq_start:'INIZIA \u2192', mq_quit:'ESCI', mq_back:'INDIETRO', mq_daily_badge:'DEL GIORNO', mq_resume:'RIPRENDI \u2192', mq_timer:'Timer', mq_timer_off:'SPENTO', mq_review_misses:'RIVEDI GLI ERRORI \u2192', mq_share_result:'CONDIVIDI IL RISULTATO', mq_play_arrow:'GIOCA \u2192', mq_one_attempt:'10 domande \u00b7 un solo tentativo', mq_lives_endless:'3 VITE \u00b7 SENZA FINE', mq_building:'Sto preparando il quiz',
     mq_survival_sub:'scegli un pacchetto, o prendi tutto qui sotto',
     mq_survival_card_sub:'3 vite, senza fine',
     mq_no_questions:'Non ci sono abbastanza domande in questa categoria al momento. Provane un\u2019altra.',
@@ -87463,7 +87527,13 @@ const STRINGS = {
     rlp_gap_wide:'a una quarta o pi\u00f9', rlp_gap_open:'da una terza a una quarta', rlp_gap_close:'da un tono a una terza minore', rlp_gap_adj:'entro un tono',
     rlp_new_tier:'Fascia %b raggiunta! Almeno %v punti, moltiplicatore \u00d7%m',
     err_recovered:'Qualcosa \u00e8 andato storto. Quella schermata \u00e8 stata reimpostata.',
-    iu_title:'Aggiornamento disponibile', iu_later:'PI\u00d9 TARDI', iu_download:'SCARICA',
+    pm_xp_to_lv:'{a} / {b} XP al LIV {lv}', pm_xp_placeholder:'0 / 50 XP al LIV 2',
+    bowed_play_ds:'\u25b6\ufe0e SUONA BICORDO', diadle_name_each:'NOMINA OGNI NOTA',
+    tc_start_drone:'\u25b6\ufe0e AVVIA BORDONE', hp_play_asc:'\u25b6\ufe0e SUONA IN SALITA',
+    bowed_select_note:'SCEGLI UNA NOTA', bowed_select_scale:'SCEGLI TONICA + SCALA',
+    pr_start:'\u25b6\ufe0e AVVIA', pm_this_week:'QUESTA SETTIMANA',
+    rr_game_over:'PARTITA FINITA', rr_play_again:'GIOCA ANCORA',
+    iu_title:'Aggiornamento disponibile', iu_later:'PI\u00d9 TARDI', iu_download:'SCARICA', iu_patch_notes:'NOTE DI RILASCIO',
     iu_downloading:'DOWNLOAD IN CORSO\u2026', iu_restart:'RIAVVIA', iu_retry:'RIPROVA',
     iu_open_store:'APRI LO STORE',
     iu_sub_flex:'La versione %v pu\u00f2 installarsi senza uscire dall\u2019app.',
@@ -91380,69 +91450,69 @@ function _achCatColor(cat) {
 
 const ACHIEVEMENTS = [
   // CONSISTENCY
-  { id:'first_light', cond_it:'completa la tua prima sessione', cond:'complete your first session', rarity:'common',       cat:'consistency', name:'First Light',
+  { id:'first_light', cond_it:'completa la tua prima sessione', cond:'complete your first session', rarity:'common',       cat:'consistency', name:'First Light', name_it:'Prima luce',
     desc:"Take one more step, and it will be the farthest from home you've ever been",
     desc_it:"Fai ancora un passo: sarà il più lontano da casa che tu abbia mai fatto",
     // Was (s.xp||0) > 0, which fires the instant ANY xp is earned — so opening a
     // single training module unlocked an achievement whose text promises a
     // completed session. Now keyed to the cumulative session count.
     check: s => (s.sessionsCompleted||0) > 0 },
-  { id:'three_days', cond_it:'serie di pratica di 3 giorni', cond:'3-day practice streak', rarity:'common',        cat:'consistency', name:'Three Days',
+  { id:'three_days', cond_it:'serie di pratica di 3 giorni', cond:'3-day practice streak', rarity:'common',        cat:'consistency', name:'Three Days', name_it:'Tre giorni',
     desc:"Every habit starts with three days",
     desc_it:"Ogni abitudine inizia con tre giorni",
     check: s => (s.streak?.count||0) >= 3, prog: s => ({cur:(s.streak?.count||0), target:3}) },
-  { id:'week_strong', cond_it:'serie di pratica di 7 giorni', cond:'7-day practice streak', rarity:'rare',       cat:'consistency', name:'Week Strong',
+  { id:'week_strong', cond_it:'serie di pratica di 7 giorni', cond:'7-day practice streak', rarity:'rare',       cat:'consistency', name:'Week Strong', name_it:'Non è questo il giorno',
     desc:"A day may come when your strength would fail, but it is not this day",
     desc_it:"Potrebbe venire il giorno in cui le forze ti manchino, ma non è oggi",
     check: s => (s.streak?.count||0) >= 7, prog: s => ({cur:(s.streak?.count||0), target:7}) },
-  { id:'creature_of_habit', cond_it:'serie di pratica di 21 giorni', cond:'21-day practice streak', rarity:'rare', cat:'consistency', name:'Creature of Habit',
+  { id:'creature_of_habit', cond_it:'serie di pratica di 21 giorni', cond:'21-day practice streak', rarity:'rare', cat:'consistency', name:'Creature of Habit', name_it:'Creatura abitudinaria',
     desc:"Science says it's official now!",
     desc_it:"La scienza lo conferma: è ufficiale!",
     check: s => (s.streak?.count||0) >= 21, prog: s => ({cur:(s.streak?.count||0), target:21}) },
-  { id:'committed', cond_it:'serie di pratica di 50 giorni', cond:'50-day practice streak', rarity:'legendary',         cat:'consistency', name:'Committed',
+  { id:'committed', cond_it:'serie di pratica di 50 giorni', cond:'50-day practice streak', rarity:'legendary',         cat:'consistency', name:'Committed', name_it:'Sempre',
     desc:"After all this time? Always",
     desc_it:"Dopo tutto questo tempo? Sempre",
     check: s => (s.streak?.count||0) >= 50, prog: s => ({cur:(s.streak?.count||0), target:50}) },
 
   // ACCURACY
-  { id:'great_ears', cond_it:'100% di precisione nel training degli intervalli', cond:'100% accuracy in an interval session', rarity:'rare',    cat:'accuracy', name:"Great Ears Kid, Don't Get Cocky!",
+  { id:'great_ears', cond_it:'100% di precisione nel training degli intervalli', cond:'100% accuracy in an interval session', rarity:'rare',    cat:'accuracy', name:"Great Ears Kid, Don't Get Cocky!", name_it:'Orecchio fino',
     desc:"Never tell me the odds",
-    desc_it:"Non dirmi le probabilità",
+    desc_it:"Non t'ho chiesto pronostici",
     check: s => !!(s.stats?.interval?.perfectSession) },
-  { id:'i_have_you', cond_it:'colpisci esattamente 0ms nel training del tempo', cond:'hit exactly 0ms in tempo training', rarity:'legendary',    cat:'accuracy', name:'I Have You Now',
+  { id:'i_have_you', cond_it:'colpisci esattamente 0ms nel training del tempo', cond:'hit exactly 0ms in tempo training', rarity:'legendary',    cat:'accuracy', name:'I Have You Now', name_it:'Ora ti tengo',
     desc:"Impressive. Most impressive.",
     desc_it:"Impressionante. Davvero impressionante.",
     check: s => s.stats?.tempo?.bestMs !== undefined && s.stats.tempo.bestMs === 0 },
   /* The climb's ceiling. 24 rungs with the wrong answers closing in the whole
      way, no lifeline taken, so the multiplier is still on 2.0 at the summit and
      the payout settles at 200,000. There is exactly one way to earn it. */
-  { id:'clean_summit', cond_it:'raggiungi la vetta della scalata senza usare aiuti', cond:'summit the climb without taking a single lifeline', rarity:'legendary', cat:'accuracy', name:'The Force Is With You',
+  { id:'clean_summit', cond_it:'raggiungi la vetta della scalata senza usare aiuti', cond:'summit the climb without taking a single lifeline', rarity:'legendary', cat:'accuracy', name:'The Force Is With You', name_it:'Che la Forza sia con te',
     desc:"You switched off your targeting computer",
-    desc_it:"Hai spento il computer di mira",
+    desc_it:"Ha spento il computer di bordo",
     check: s => (s.stats?.relpitch?.ch?.best||0) >= 200000 && (s.stats?.relpitch?.ch?.bestMult||0) >= 2,
     prog: s => ({cur: Math.min(s.stats?.relpitch?.ch?.furthest||0, 24), target:24}) },
-  { id:'chord_scholar', cond_it:'serie di 30 nell\u2019ear training degli accordi', cond:'chord ear training streak of 30', rarity:'rare', cat:'accuracy', name:'Chord Scholar',
+  { id:'chord_scholar', cond_it:'serie di 30 nell\u2019ear training degli accordi', cond:'chord ear training streak of 30', rarity:'rare', cat:'accuracy', name:'Chord Scholar', name_it:'Studioso di accordi',
     desc:"Chords are words, and now you're learning to read",
     desc_it:"Gli accordi sono parole, e ora stai imparando a leggerle",
     check: s => Math.max(s.stats?.chords?.bestStreak||0, s.stats?.chords?.streak||0) >= 30, prog: s => ({cur:Math.max(s.stats?.chords?.bestStreak||0, s.stats?.chords?.streak||0), target:30}) },
-  { id:'perfect_pitch', cond_it:'serie di 30 in intonazione', cond:'pitch match streak of 30', rarity:'rare', cat:'accuracy', name:'Perfect Pitch',
+  { id:'perfect_pitch', cond_it:'serie di 30 in intonazione', cond:'pitch match streak of 30', rarity:'rare', cat:'accuracy', name:'Perfect Pitch', name_it:'Orecchio assoluto',
     desc:"You must believe in the heart of the pitch",
     desc_it:"Devi credere nel cuore dell'intonazione",
     check: s => Math.max(s.stats?.singsing?.bestStreak||0, s.stats?.singsing?.streak||0) >= 30, prog: s => ({cur:Math.max(s.stats?.singsing?.bestStreak||0, s.stats?.singsing?.streak||0), target:30}) },
-  { id:'flawless', cond_it:'punteggio perfetto in qualsiasi esercizio', cond:'perfect score in any exercise', rarity:'legendary',      cat:'accuracy', name:'Flawless Victory',
+  { id:'flawless', cond_it:'punteggio perfetto in qualsiasi esercizio', cond:'perfect score in any exercise', rarity:'legendary',      cat:'accuracy', name:'Flawless Victory', name_it:'Flawless Victory',
     desc:"Inconceivable!",
     desc_it:"Inconcepibile!",
     check: s => !!(s.stats?.anyPerfect) },
 
   // EXPLORATION
-  { id:'curious', cond_it:'usa 10 strumenti o esercizi diversi', cond:'use 10 different tools or exercises', rarity:'rare',        cat:'exploration', name:'Curious',
+  { id:'curious', cond_it:'usa 10 strumenti o esercizi diversi', cond:'use 10 different tools or exercises', rarity:'rare',        cat:'exploration', name:'Curious', name_it:'Curioso',
     desc:"Not all those who wander are lost",
-    desc_it:"Non tutti coloro che vagano sono perduti",
+    desc_it:"Né gli erranti sono perduti",
     check: s => _achModuleCount(s) >= 10,
     prog: s => ({cur:_achModuleCount(s), target:10}) },
-  { id:'explorer', cond_it:'completa una sessione in tutti e 6 gli esercizi', cond:'complete a session in all 6 exercises', rarity:'rare',       cat:'exploration', name:'Explorer',
+  { id:'explorer', cond_it:'completa una sessione in tutti e 6 gli esercizi', cond:'complete a session in all 6 exercises', rarity:'rare',       cat:'exploration', name:'Explorer', name_it:'Esploratore',
     desc:"Where we're going, we don't need roads",
-    desc_it:"Dove stiamo andando, non abbiamo bisogno di strade",
+    desc_it:"Strade? Dove stiamo andando non c’è bisogno di strade!",
     check: s => {
       const used = new Set();
       Object.values(s.history||{}).forEach(day => Object.keys(day).forEach(k => used.add(k)));
@@ -91451,126 +91521,126 @@ const ACHIEVEMENTS = [
       });
       return ['interval','chords','singsing','tempo','tempoguess','poly','chordle'].every(k => used.has(k));
     }},
-  { id:'rhythm_curious', cond_it:'raggiungi la vetta in Poliritmia', cond:'reach the summit in Polyrhythm', rarity:'rare', cat:'exploration', name:'The Climb',
+  { id:'rhythm_curious', cond_it:'raggiungi la vetta in Poliritmia', cond:'reach the summit in Polyrhythm', rarity:'rare', cat:'exploration', name:'The Climb', name_it:'La scalata',
     desc:"I will find my way, I can go the distance.",
-    desc_it:"Troverò la mia strada, posso arrivare lontano.",
+    desc_it:"Posso farcela, posso andare lontano",
     check: s => !!(s.summitReached) },
 
   // MILESTONES (sorted by level)
-  { id:'apprentice', cond_it:'raggiungi il livello 5', cond:'reach level 5', rarity:'common',  cat:'milestones', name:'Apprentice',
+  { id:'apprentice', cond_it:'raggiungi il livello 5', cond:'reach level 5', rarity:'common',  cat:'milestones', name:'Apprentice', name_it:'Apprendista',
     desc:"You have taken your first step into a larger world",
     desc_it:"Hai fatto il tuo primo passo verso un mondo più grande",
     check: s => (s.level||0) >= 5, prog: s => ({cur:(s.level||0), target:5}) },
-  { id:'practitioner', cond_it:'raggiungi il livello 10', cond:'reach level 10', rarity:'common',cat:'milestones', name:'Practitioner',
+  { id:'practitioner', cond_it:'raggiungi il livello 10', cond:'reach level 10', rarity:'common',cat:'milestones', name:'Practitioner', name_it:'Praticante',
     desc:"Wax on, wax off",
     desc_it:"Dai la cera, togli la cera",
     check: s => (s.level||0) >= 10, prog: s => ({cur:(s.level||0), target:10}) },
-  { id:'musician', cond_it:'raggiungi il livello 20', cond:'reach level 20', rarity:'rare',    cat:'milestones', name:'Musician',
+  { id:'musician', cond_it:'raggiungi il livello 20', cond:'reach level 20', rarity:'rare',    cat:'milestones', name:'Musician', name_it:'Musicista',
     desc:"I pledge allegiance, to the band",
     desc_it:"Giuro fedelt\u00e0, alla band",
     check: s => (s.level||0) >= 20, prog: s => ({cur:(s.level||0), target:20}) },
-  { id:'master', cond_it:'raggiungi il livello 30', cond:'reach level 30', rarity:'legendary',      cat:'milestones', name:'Master',
+  { id:'master', cond_it:'raggiungi il livello 30', cond:'reach level 30', rarity:'legendary',      cat:'milestones', name:'Master', name_it:'Maestro',
     desc:"The student has now become the teacher",
     desc_it:"Lo studente è diventato il maestro",
     check: s => (s.level||0) >= 30, prog: s => ({cur:(s.level||0), target:30}) },
-  { id:'maestro', cond_it:'raggiungi il livello 50', cond:'reach level 50', rarity:'legendary',     cat:'milestones', name:'Maestro',
+  { id:'maestro', cond_it:'raggiungi il livello 50', cond:'reach level 50', rarity:'legendary',     cat:'milestones', name:'Maestro', name_it:'Gran Maestro',
     desc:"When 900 years old you reach, look as good you will not!",
     desc_it:"Quando 900 anni avrai, bello così non sembrerai!",
     check: s => (s.level||0) >= 50, prog: s => ({cur:(s.level||0), target:50}) },
 
   // SECRETS
-  { id:'zelda', cond_it:'serie di pratica di 100 giorni', cond:'100-day practice streak', rarity:'secret',       cat:'secrets', name:"It's Dangerous to Go Alone",
+  { id:'zelda', cond_it:'serie di pratica di 100 giorni', cond:'100-day practice streak', rarity:'secret',       cat:'secrets', name:"It's Dangerous to Go Alone", name_it:"It's Dangerous to Go Alone",
     desc:"Take this!",
     desc_it:"Prendi questo!",
     check: s => (s.streak?.count||0) >= 100, prog: s => ({cur:(s.streak?.count||0), target:100}) },
-  { id:'adventurer', cond_it:'completa un viaggio sulla vecchia mappa in pergamena', cond:'finish a trip on the old parchment map', rarity:'secret', cat:'secrets', name:'The Adventurer',
+  { id:'adventurer', cond_it:'completa un viaggio sulla vecchia mappa in pergamena', cond:'finish a trip on the old parchment map', rarity:'secret', cat:'secrets', name:'The Adventurer', name_it:'L\u2019avventuriero',
     desc:"You chose... wisely",
-    desc_it:"Hai scelto... saggiamente",
+    desc_it:"Hai scelto... bene",
     check: s => !!s.rt_parchment_done },
-  { id:'night_owl', cond_it:'pratica tra mezzanotte e le 4 di mattina', cond:'practice between midnight and 4am', rarity:'secret',   cat:'secrets', name:'Night Owl',
+  { id:'night_owl', cond_it:'pratica tra mezzanotte e le 4 di mattina', cond:'practice between midnight and 4am', rarity:'secret',   cat:'secrets', name:'Night Owl', name_it:'Nottambulo',
     desc:"Moonlight drowns out all but the brightest stars",
     desc_it:"La luce della luna oscura tutto tranne le stelle più brillanti",
     check: s => !!(s.nightOwl) },
-  { id:'full_house', cond_it:'carica ogni preset della batteria almeno una volta', cond:'load every drum preset at least once', rarity:'secret',  cat:'secrets', name:'Full House',
+  { id:'full_house', cond_it:'carica ogni preset della batteria almeno una volta', cond:'load every drum preset at least once', rarity:'secret',  cat:'secrets', name:'Full House', name_it:'Gli amici di papà',
     desc:"Everywhere you looked",
     desc_it:"Ovunque tu guardassi",
     check: s => !!(s.allPresetsLoaded) },
-  { id:'dedicated', cond_it:'10 ore totali di pratica', cond:'10 hours total practice time', rarity:'secret',   cat:'secrets', name:'Dedicated',
+  { id:'dedicated', cond_it:'10 ore totali di pratica', cond:'10 hours total practice time', rarity:'secret',   cat:'secrets', name:'Dedicated', name_it:'Devoto',
     desc:"Get busy living, or get busy dying",
-    desc_it:"Datti da fare per vivere, o datti da fare per morire",
+    desc_it:"O fai di tutto per vivere, o fai di tutto per morire",
     check: s => _achTotalTime(s) >= 36000, prog: s => ({cur:Math.floor(_achTotalTime(s)/3600), target:10}) },
   // SPECIAL TRIGGERS
   { id:'more_cowbell',   cond_it:'modalità groove con groove E pulse impostati su cowbell',
     cond:'use groove mode with both groove and pulse set to cowbell', rarity:'secret', cat:'secrets',
-    name:'I Got a Fever',
+    name:'I Got a Fever', name_it:'I Got a Fever',
     desc:"And the only prescription... is more cowbell",
     desc_it:"E l'unica cura... è più cowbell",
     check: s => !!(s.cowbellUsed) },
   { id:'hard_days_night', cond_it:'completa una sessione da 60 minuti',
     cond:'complete a 60-minute session', rarity:'secret', cat:'secrets',
-    name:"Hard Day's Night",
+    name:"Hard Day's Night", name_it:"Tutti per uno",
     desc:"It's been a hard day's night, and I've been working like a dog",
     desc_it:"È stata una dura notte di lavoro, e ho faticato come un cane",
     check: s => !!(s.hardDaysNight) },
   { id:'everything_right_place', cond_it:'usa ogni strumento ed esercizio in una sola sessione',
     cond:'use every tool and exercise in a single session', rarity:'legendary', cat:'exploration',
-    name:'Everything, Everywhere',
+    name:'Everything, Everywhere', name_it:'Everything Everywhere All at Once',
     desc:"All at once",
     desc_it:"Tutto in una volta",
     check: s => !!(s.everythingRightPlace) },
 
   // CHORDLE
   { id:'first_chord',  cond_it:'risolvi il tuo primo Chordle', cond:'solve your first Chordle', rarity:'common', cat:'accuracy',
-    name:'First Blood',  desc:"It's pronounced Chord-le, alright?",
+    name:'First Blood', name_it:'First Blood',  desc:"It's pronounced Chord-le, alright?",
     desc_it:"Si pronuncia Chord-le, chiaro?",
     check: s => (s.stats?.chordle?.correct||0) >= 1 },
   { id:'harmonic_ear', cond_it:'risolvi un Chordle al primo tentativo', cond:'solve a Chordle on the first try', rarity:'rare', cat:'accuracy',
-    name:'Boom',  desc:"Headshot",
-    desc_it:"Colpo alla testa",
+    name:'Boom', name_it:'Boom',  desc:"Headshot",
+    desc_it:"Headshot",
     check: s => (s.stats?.chordle?.firstTry||0) >= 1 },
   { id:'giant_steps',  cond_it:'risolvi 5 Chordle in V.Hard', cond:'solve 5 V.Hard Chordles', rarity:'legendary', cat:'accuracy',
-    name:'Giant Steps',  desc:"If you're not living on the edge, you're taking up space",
+    name:'Giant Steps', name_it:'Giant Steps',  desc:"If you're not living on the edge, you're taking up space",
     desc_it:"Se non vivi sul filo del rasoio, stai solo occupando spazio",
     check: s => (s.stats?.chordle?.vhardSolved||0) >= 5, prog: s => ({cur:(s.stats?.chordle?.vhardSolved||0), target:5}) },
   { id:'deaf_composer', cond_it:'risolvi un Chordle senza mai premere play', cond:'solve a Chordle without pressing play', rarity:'secret', cat:'secrets',
-    name:'Dead Composer', desc:"Music is like a dream... one that I cannot hear",
+    name:'Deaf Composer', name_it:'Compositore sordo', desc:"Music is like a dream... one that I cannot hear",
     desc_it:"La musica è come un sogno... che non riesco a sentire",
     check: s => !!(s.stats?.chordle?.solvedNoPlay) },
 
   { id:'crikey', cond_it:"apri il didgeridoo", cond:'open the didgeridoo', rarity:'secret', cat:'secrets',
-    name:"Crikey!",
-    desc:"Let's Didgeridon't and Say We Didgeridid",
-    desc_it:"Facciamo finta di averlo fatto e diciamo che l'abbiamo fatto",
+    name:"Crikey!", name_it:"Crikey!",
+    desc:"That's not an instrument... THAT'S an instrument",
+    desc_it:"Quello uno strumento? Questo è uno strumento!",
     check: s => !!(s.didgeridooUsed) },
-  { id:'addicted', cond_it:'6 ore di pratica in un singolo giorno', cond:'6 hours of practice in a single day', rarity:'secret',    cat:'secrets', name:'Addicted',
+  { id:'addicted', cond_it:'6 ore di pratica in un singolo giorno', cond:'6 hours of practice in a single day', rarity:'secret',    cat:'secrets', name:'Addicted', name_it:'Assuefatto',
     desc:"It's not the days, it's the mileage",
     desc_it:"Non contano i giorni, contano i chilometri",
     check: s => _achMaxDayTime(s) >= 21600 },
-  { id:'the_summit', cond_it:'raggiungi la vetta nella scalata Hardcore', cond:'summit the Hardcore climb in Polyrhythm', rarity:'legendary', cat:'milestones', name:'The Mountain King',
+  { id:'the_summit', cond_it:'raggiungi la vetta nella scalata Hardcore', cond:'summit the Hardcore climb in Polyrhythm', rarity:'legendary', cat:'milestones', name:'The Mountain King', name_it:'Nell’antro del re della montagna',
     desc:"Well you're not hardcore, unless you live hardcore",
     desc_it:"Non sei hardcore, a meno che tu non viva hardcore",
     check: s => !!(s.hardcoreSummit) },
-  { id:'know_it_all', cond_it:'punteggio perfetto in una Sfida Quiz Giornaliera', cond:'perfect score in a Music Quiz Daily run', rarity:'rare', cat:'accuracy', name:'Know-It-All',
+  { id:'know_it_all', cond_it:'punteggio perfetto in una Sfida Quiz Giornaliera', cond:'perfect score in a Music Quiz Daily run', rarity:'rare', cat:'accuracy', name:'Know-It-All', name_it:'Sapientona',
     desc:"It's leviOsa, not levioSA",
     desc_it:"È leviOsa, non levioSA",
     check: s => !!(s.mqDailyPerfect) },
-  { id:'last_standing', cond_it:'raggiungi una serie di 20+ in Sopravvivenza Quiz', cond:'reach a Survival run of 20+ in Music Quiz', rarity:'legendary', cat:'milestones', name:'Last One Standing',
+  { id:'last_standing', cond_it:'raggiungi una serie di 20+ in Sopravvivenza Quiz', cond:'reach a Survival run of 20+ in Music Quiz', rarity:'legendary', cat:'milestones', name:'Last One Standing', name_it:'L\u2019ultimo in piedi',
     desc:"Are you not entertained?",
-    desc_it:"Non siete forse divertiti?",
+    desc_it:"Non vi siete divertiti?!",
     check: s => (s.mqBestSurvival||0) >= 20, prog: s => ({cur:(s.mqBestSurvival||0), target:20}) },
-  { id:'trivia_night', cond_it:'rispondi correttamente a 500 domande del quiz', cond:'answer 500 quiz questions correctly', rarity:'legendary', cat:'milestones', name:'Trivia Night',
+  { id:'trivia_night', cond_it:'rispondi correttamente a 500 domande del quiz', cond:'answer 500 quiz questions correctly', rarity:'legendary', cat:'milestones', name:'Trivia Night', name_it:'Serata quiz',
     desc:"Phone a friend? I AM the friend. I am the one who answers",
     desc_it:"Telefonata a un amico? L'amico sono IO. Sono io quello che risponde",
     check: s => (s.mqTotalCorrect||0) >= 500, prog: s => ({cur:(s.mqTotalCorrect||0), target:500}) },
-  { id:'golden_ear', cond_it:'punteggio perfetto 50/50 in Tónale a difficoltà normale o superiore', cond:'score a perfect 50/50 in Tónale at normal difficulty or higher', rarity:'secret', cat:'secrets', name:'Golden Ear',
+  { id:'golden_ear', cond_it:'punteggio perfetto 50/50 in Tónale a difficoltà normale o superiore', cond:'score a perfect 50/50 in Tónale at normal difficulty or higher', rarity:'secret', cat:'secrets', name:'Golden Ear', name_it:'Orecchio d’oro',
     desc:"Feel, don't think. Use your instincts",
     desc_it:"Senti, non pensare. Usa l'istinto",
     check: s => !!(s.tonalePerfect) },
-  { id:'completionist', cond_it:'sblocca ogni achievement non segreto', cond:'unlock every non-secret achievement', rarity:'legendary', cat:'milestones', name:'Completionist',
+  { id:'completionist', cond_it:'sblocca ogni achievement non segreto', cond:'unlock every non-secret achievement', rarity:'legendary', cat:'milestones', name:'Completionist', name_it:'Completista',
     desc:"Gotta catch 'em all!",
     desc_it:"Acchiappali tutti!",
     check: s => _achCompletionist(s), prog: s => _achCompletionistProg(s) },
-  { id:'daily_grind', cond_it:'completa una sfida giornaliera per 7 giorni di fila', cond:'complete a daily challenge 7 days in a row', rarity:'rare', cat:'consistency', name:'Daily Grind',
+  { id:'daily_grind', cond_it:'completa una sfida giornaliera per 7 giorni di fila', cond:'complete a daily challenge 7 days in a row', rarity:'rare', cat:'consistency', name:'Daily Grind', name_it:'Tran tran quotidiano',
     desc:"Same time tomorrow?",
     desc_it:"Stessa ora domani?",
     check: s => (s.dailyChallengeStreak?.count||0) >= 7,
@@ -91812,6 +91882,16 @@ function _achShowNextToast() {
   }, 3800);
 }
 
+// Achievement names in Italian. The descriptions have had desc_it since they
+// were written; the names never had a twin and shipped English inside the
+// Italian app. Where a name is a quote the Italian is the actual dubbed line,
+// not a translation of the English. A few stay English on purpose, because that
+// is what Italians say: Headshot, Flawless Victory, the Zelda line, More
+// Cowbell, Crikey, Giant Steps, Everything Everywhere.
+function achName(a) {
+  return (progState.lang === 'it' && a.name_it) ? a.name_it : a.name;
+}
+
 function renderAchievements() {
   const wrap = document.getElementById('pmAchievements');
   if (!wrap) return;
@@ -91867,7 +91947,7 @@ function renderAchievements() {
         const dateStr = new Date(unlocked.unlockedAt).toLocaleDateString(_lang === 'it' ? 'it-IT' : 'en-GB', { day:'numeric', month:'short', year:'numeric' });
         card.innerHTML = `
           <div class="pm-ach-icon" style="color:${iconColor}">${iconSvg}</div>
-          <div class="pm-ach-name">${a.name}</div>
+          <div class="pm-ach-name">${achName(a)}</div>
           <div class="pm-ach-cond">${(progState.lang === 'it' && a.cond_it) ? a.cond_it : (a.cond || '')}</div>
           <div class="pm-ach-desc">${(progState.lang === 'it' && a.desc_it) ? a.desc_it : a.desc}</div>
           <div class="pm-ach-date">${t('ach_unlocked_label')} · <b>${dateStr}</b></div>
@@ -91891,7 +91971,7 @@ function renderAchievements() {
         }
         card.innerHTML = `
           <div class="pm-ach-icon" style="color:${iconColor}">${lockedIcon}</div>
-          <div class="pm-ach-name">${a.rarity === 'secret' ? '???' : a.name}</div>
+          <div class="pm-ach-name">${a.rarity === 'secret' ? '???' : achName(a)}</div>
           ${a.rarity === 'secret' ? '' : `<div class="pm-ach-cond">${(progState.lang === 'it' && a.cond_it) ? a.cond_it : (a.cond || '')}</div>`}
           <div class="pm-ach-rarity">${a.rarity ? t('ach_rarity_' + a.rarity) : ''}</div>
           ${progHtml}`;
@@ -92827,7 +92907,10 @@ function progRenderModal() {
   const span = nextThreshold - curThreshold;
   const pct = Math.max(0, Math.min(100, (into / span) * 100));
   document.getElementById('pmXpFill').style.width = pct + '%';
-  document.getElementById('pmXpText').textContent = `${into} / ${span} XP to LV ${progState.level + 1}`;
+  // Built in a template literal, so the English sat inside the string where no
+  // data-i18n attribute could reach it and no sweep would find it.
+  document.getElementById('pmXpText').textContent =
+    t('pm_xp_to_lv').replace('{a}', into).replace('{b}', span).replace('{lv}', progState.level + 1);
 
   // Render streak block
   const streakBlock = document.getElementById('pmStreakBlock');
@@ -93488,6 +93571,21 @@ buildScaleDropdown();
 buildScaleRootDropdown();
 document.body.classList.toggle('lang-it', progState.lang === 'it');
 applyLang();
+// AND AGAIN ONCE THE DOCUMENT IS FINISHED.
+// This script is inline, so it runs while the parser is still working. Roughly
+// 29,000 lines of markup come after it, including the whole Music Quiz, and
+// applyLang can only relabel what has been parsed by the time it runs. An
+// Italian user booted into a quiz whose QUIT button, "Did you know?" heading,
+// results labels and Quick Play titles were all still English, while everything
+// a function drew later with t() came out correctly, which is what made it look
+// like scattered missing translations rather than one ordering fault.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function () {
+    try { applyLang(); } catch (e) {}
+  }, { once: true });
+} else {
+  try { applyLang(); } catch (e) {}
+}
 initSliderToggles();
 // Warm the first module open. Not tied to the splash or the launcher: a pinned
 // module or a deep link skips both, and those users need it most.
@@ -93959,13 +94057,13 @@ function vrFreqToMidi(freq) {
   const cents = Math.round((midi - mr) * 100);
   const idx = ((mr % 12) + 12) % 12;
   const oct = Math.floor(mr / 12) - 1;
-  return { midi, midiRound:mr, noteName:VR_DISPLAY_NOTES[idx], octave:oct, cents, freq };
+  return { midi, midiRound:mr, noteName:getDisplayNote(VR_DISPLAY_NOTES[idx]), octave:oct, cents, freq };
 }
 
 function vrMidiToName(midi) {
   const idx = ((midi % 12) + 12) % 12;
   const oct = Math.floor(midi / 12) - 1;
-  return VR_DISPLAY_NOTES[idx] + oct;
+  return getDisplayNote(VR_DISPLAY_NOTES[idx]) + oct;
 }
 
 function vrMidiPct(midi) {
@@ -94098,7 +94196,7 @@ function vrAutoLock(target, midi) {
   const ringEl = document.getElementById({low:'vrRing-low',high:'vrRing-high',extlow:'vrRing-extlow',exthigh:'vrRing-exthigh'}[target]);
   if (ringEl) { ringEl.className = 'vr-ring-fill locked'; ringEl.style.strokeDashoffset = '0'; }
   const noteEl = document.getElementById({low:'vrNote-low',high:'vrNote-high',extlow:'vrNote-extlow',exthigh:'vrNote-exthigh'}[target]);
-  if (noteEl) { noteEl.textContent = VR_DISPLAY_NOTES[((midi%12)+12)%12]; noteEl.className = 'vr-note-big locked'; }
+  if (noteEl) { noteEl.textContent = getDisplayNote(VR_DISPLAY_NOTES[((midi%12)+12)%12]); noteEl.className = 'vr-note-big locked'; }
 
   // Show locked confirm
   const confirmEl = document.getElementById({low:'vrConfirm-low',high:'vrConfirm-high',extlow:'vrConfirm-extlow',exthigh:'vrConfirm-exthigh'}[target]);
@@ -95627,8 +95725,8 @@ function progSetGrooveChoice(id) {
 // The setup belonging to the Drums module, stowed while another module borrows
 // the engine. Null means nothing is borrowed and the globals are the Drums
 // module's own.
-let _rcStashed = null;
-let _rcHolder  = null;
+var _rcStashed = null;
+var _rcHolder  = null;
 
 // Borrow the engine for `who`, loading that module's saved setup.
 // `scope` limits what gets applied. 'groove' applies only the groove selection
@@ -96132,10 +96230,140 @@ function synthTambourine(time, vel) {
   });
 }
 
+// ── DRUM SAMPLE ENGINE ──
+// Loads one-shot MP3 samples per kit piece. Falls back to synth if not loaded.
+// Files live in audio/drums/ under the Capacitor asset root.
+var _dkSamples = {};        // kit:piece → AudioBuffer  (e.g. 'standard:kick')
+var _dkSampleState = 'idle'; // 'idle' | 'loading' | 'ready' | 'failed'
+
+// Kit → piece → filename mapping. Jazz shares most pieces with standard.
+var _DK_SAMPLE_MAP = {
+  standard: {
+    kick:'kick_std', snare:'snare_std', cross:'rim', ride:'ride_std',
+    bell:'bell', 'hihat-c':'hihat_closed', 'hihat-o':'hihat_open',
+    'hihat-p':'hihat_closed',  // pitch-shifted at playback
+    crash:'crash', 'tom-hi':'tom_hi', tom1:'tom_mid', tom2:'tom_mid',
+    floor:'tom_floor', cowbell:'cowbell', shaker:'shaker',
+    tambourine:'tambourine',
+    clave:'rim',               // placeholder until real clave
+    clap:'clap',
+  },
+  jazz: {
+    kick:'kick_jazz', snare:'snare_jazz', cross:'rim', ride:'ride_jazz',
+    bell:'bell', 'hihat-c':'hihat_closed', 'hihat-o':'hihat_open',
+    'hihat-p':'hihat_closed',
+    crash:'crash', 'tom-hi':'tom_hi', tom1:'tom_mid', tom2:'tom_mid',
+    floor:'tom_floor', cowbell:'cowbell', shaker:'shaker',
+    tambourine:'tambourine', clave:'rim', clap:'clap',
+  }
+};
+
+// Pieces that need pitch-shifting when played from a shared sample
+var _DK_PITCH_SHIFT = {
+  'hihat-p': 0.85,    // pedal hat: pitch down from closed
+  'tom2':    0.80,     // low tom: pitch down from mid tom
+};
+
+// Jazz kit: high-shelf filter darkens all samples
+var _dkJazzFilter = null;
+function _dkGetJazzFilter(ctx) {
+  if (_dkJazzFilter && _dkJazzFilter.context === ctx) return _dkJazzFilter;
+  _dkJazzFilter = ctx.createBiquadFilter();
+  _dkJazzFilter.type = 'highshelf';
+  _dkJazzFilter.frequency.value = 5000;
+  _dkJazzFilter.gain.value = -6;
+  _dkJazzFilter.connect(dk_masterGain);
+  return _dkJazzFilter;
+}
+
+function _dkSampleUrl(fname) {
+  try {
+    return new URL(
+      _assetRoot() + 'drums/' + encodeURIComponent(fname + '.mp3'),
+      document.baseURI
+    ).href;
+  } catch (e) { return null; }
+}
+
+function dkLoadSamples() {
+  if (_dkSampleState !== 'idle') return;
+  _dkSampleState = 'loading';
+  var ctx = getCtx();
+  // Collect unique filenames across all kits
+  var files = {};
+  Object.keys(_DK_SAMPLE_MAP).forEach(function(kit) {
+    Object.values(_DK_SAMPLE_MAP[kit]).forEach(function(fname) {
+      files[fname] = true;
+    });
+  });
+  var names = Object.keys(files);
+  var loaded = 0;
+  var failed = 0;
+  names.forEach(function(fname) {
+    var url = _dkSampleUrl(fname);
+    if (!url) { failed++; return; }
+    fetch(url)
+      .then(function(r) { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(function(ab) { return ctx.decodeAudioData(ab); })
+      .then(function(buf) {
+        _dkSamples[fname] = buf;
+        loaded++;
+        if (loaded + failed >= names.length) {
+          _dkSampleState = loaded > 0 ? 'ready' : 'failed';
+        }
+      })
+      .catch(function() {
+        failed++;
+        if (loaded + failed >= names.length) {
+          _dkSampleState = loaded > 0 ? 'ready' : 'failed';
+        }
+      });
+  });
+}
+
+function _dkPlaySample(id, time, vel, kit) {
+  var kitMap = _DK_SAMPLE_MAP[kit];
+  if (!kitMap) return false;
+  var fname = kitMap[id];
+  if (!fname) return false;
+  var buf = _dkSamples[fname];
+  if (!buf) return false;
+
+  var ctx = getCtx();
+  var src = ctx.createBufferSource();
+  src.buffer = buf;
+
+  // Pitch-shift for derived pieces
+  var shift = _DK_PITCH_SHIFT[id];
+  if (shift) src.playbackRate.value = shift;
+
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(vel, time);
+
+  src.connect(g);
+
+  // Jazz kit routes through a darkening filter
+  if (kit === 'jazz') {
+    g.connect(_dkGetJazzFilter(ctx));
+  } else {
+    g.connect(dk_masterGain);
+  }
+
+  _dkRegister(src, time).start(time);
+  var dur = buf.duration / (shift || 1);
+  src.stop(time + dur + 0.05);
+  return true;
+}
+
 // ── DISPATCHER ──
 function triggerInstrument(id, time, vel, ghost, kit) {
   if (dk_mutedTracks.has(id)) return;
   const v = vel * dk_trackVols[id];
+  // Try real samples first for standard and jazz kits.
+  // Electronic and brush kits stay fully synthesized.
+  if (_dkSampleState === 'ready' && (kit === 'standard' || kit === 'jazz' || kit === 'latin')) {
+    if (_dkPlaySample(id, time, v, kit === 'latin' ? 'standard' : kit)) return;
+  }
   switch(id) {
     case 'kick':       synthKick(time, v, kit); break;
     case 'snare':      synthSnare(time, v, ghost, kit); break;
@@ -98183,6 +98411,7 @@ function loadPreset(p) {
 }
 
 function dkInit(fromLangSwitch) {
+  dkLoadSamples();
   buildBeatNums();
   _buildBarDots();
   buildSequencer();
@@ -104549,7 +104778,7 @@ function harmonicaDraw(containerEl, concertPc, scaleNotes, onHoleTap, primaryPat
   const blowRow = document.createElement('div'); blowRow.className = 'harp-row harp-blow-row';
   const holeRow = document.createElement('div'); holeRow.className = 'harp-row harp-num-row';
   const drawRow = document.createElement('div'); drawRow.className = 'harp-row harp-draw-row';
-  const noteName = n => ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'][n];
+  const noteName = n => getDisplayNote(['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'][n]);
 
   for (let h = 0; h < 10; h++) {
     const blowPc = blow[h] % 12;
@@ -110786,7 +111015,7 @@ function trpDrawFull() {
       gccPlayString(midi);
       const pc = midi % 12;
       const slideLabel = chordScaleInstrument === 'ww_chrom_harp' && chromHarpSlide ? ' · slide' : '';
-      infoBar.textContent = `Hole ${hole} · ${noteNames[pc]} · ${dir === 'blow' ? '↑ blow' : '↓ draw'}${slideLabel}`;
+      infoBar.textContent = `Hole ${hole} · ${getDisplayNote(noteNames[pc])} · ${dir === 'blow' ? '↑ blow' : '↓ draw'}${slideLabel}`;
       infoBar.style.color = 'var(--accent)';
       harmonicaDraw(diagHost, null, scaleSet, onTap, pathSet, `${hole}:${dir}`);
     };
@@ -114287,7 +114516,7 @@ function hpDrawStrings(svgEl, activePcs, rootPc, startIdx, count, pedalPositions
       lbl.setAttribute('font-family','JetBrains Mono,monospace'); lbl.setAttribute('font-weight','700');
       lbl.setAttribute('fill', isRoot ? 'rgba(255,160,122,0.9)' : 'rgba(52,211,153,0.8)');
       lbl.setAttribute('pointer-events','none');
-      lbl.textContent = pedalPositions ? hpStringLabel(basePc, pedalPositions, useSharpSpelling) : NOTE_NAMES[pc];
+      lbl.textContent = pedalPositions ? getDisplayNote(hpStringLabel(basePc, pedalPositions, useSharpSpelling)) : getDisplayNote(NOTE_NAMES[pc]);
       svgEl.appendChild(lbl);
     }
 
@@ -119905,7 +120134,13 @@ function buildPhotoZoneWithCalib(imgSrc, zonesDefault, tipEl, calibKey) {
 }
 
 // ── TAPPABLE TERM DEMOS ────────────────────────────────────────────────────
-var SG_TERM_DEMOS = {
+// WORKAROUND. var SG_TERM_DEMOS assigns correctly (36 keys, verified with a
+// log right after the closing brace) and then vanishes from global scope in
+// Chrome. No let/const shadow, no IIFE wrapper, no SVG namespace, balanced
+// braces, node --check passes. The block IS a child of <body> in the XHTML
+// namespace. The variable is placed on window explicitly so whatever is
+// eating it cannot reach it there.
+window.SG_TERM_DEMOS = {
   // ── Dynamics ──────────────────────────────────────────────────────────────
   // Crescendo: 8-note ascending scale, each note louder than the last (pp to ff)
   'crescendo':   { dur:3400, env:{f:293.7, pts:[[0,0],[0.05,0.03],[0.55,0.07],[1.1,0.14],[1.65,0.25],[2.2,0.40],[2.75,0.60],[3.2,0.88]]} },
@@ -120016,7 +120251,7 @@ function sgSecTitle(sec) {
 }
 
 function sgPlayTermDemo(term) {
-  var demo = SG_TERM_DEMOS[term.toLowerCase()];
+  var demo = window.SG_TERM_DEMOS[term.toLowerCase()];
   if (!demo) return;
   try {
     var ctx = ensureRefCtx();
@@ -120164,6 +120399,10 @@ function sgPlayTermDemo(term) {
   } catch(e) {}
 }
 
+// Same scoping workaround. The function declaration is invisible outside this
+// block in Chrome, so onclick handlers in the Survival Guide cannot reach it.
+window.sgPlayTermDemo = sgPlayTermDemo;
+
 // Notation symbols for the Guide's interactive terms. Glyph codes and their
 // per-glyph sizing are lifted verbatim from NC_CARDS (the Notation Cards deck)
 // so weight and baseline match that deck rather than being re-guessed; the
@@ -120212,7 +120451,7 @@ function sgBuildSymbolStrip(card) {
     // A term with no audio demo keeps the badge and the zoom, and loses the play
     // triangle. Otherwise it advertises a sound it does not have, which is what
     // made the Coda page read as broken rather than silent by design.
-    if (term && !SG_TERM_DEMOS[term]) span.classList.add('sg-term-mute');
+    if (term && !window.SG_TERM_DEMOS[term]) span.classList.add('sg-term-mute');
     if (!term || !SG_TERM_GLYPHS[term]) return;      // no symbol for this term
     if (seen.indexOf(term) === -1) seen.push(term);  // one badge per term per card
   });
@@ -120290,7 +120529,7 @@ function sgAttachTermListeners(card) {
     span.addEventListener('click', function(e) {
       e.stopPropagation();
       var term = span.dataset.term;
-      var _d = SG_TERM_DEMOS[term.toLowerCase()];
+      var _d = window.SG_TERM_DEMOS[term.toLowerCase()];
       if (_d && _d.clip) {
         // Placeholder — real audio clip to be added later
         // fall through to synth version if accent mode exists, otherwise skip
@@ -122417,7 +122656,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
   <div class="mq-screen mq-loading" id="mqScreenLoading">
           <div class="mq-spinner" id="mqSpinner"></div>
           <div class="mq-loading-txt" id="mqLoadingTxt" data-i18n="mq_building">Building your quiz<span class="mq-dots"></span></div>
-          <button id="mqLoadingBackBtn" style="display:none;margin-top:16px;" class="mq-loading-back" onclick="mqGoLanding()" data-i18n="mq_back">← BACK</button>
+          <button id="mqLoadingBackBtn" style="display:none;margin-top:16px;" class="mq-loading-back" onclick="mqGoLanding()" data-i18n="mq_back">BACK</button>
         </div>
   <div class="mq-screen" id="mqScreenQuiz">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:-4px;">
@@ -122605,7 +122844,6 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
 
       </div>
     </div>
-  </div>
   <div class="mq-sheet-overlay" id="mqQuickSheet" onclick="if(event.target===this)mqHideQuickSheet()">
     <div class="mq-sheet">
       <div class="mq-sheet-handle"></div>
@@ -122613,7 +122851,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
         <span aria-hidden="true">&#8592;</span> <span data-i18n="mq_back">BACK</span></button>
       <div class="mq-sheet-title" data-i18n="mq_quick_play">QUICK PLAY</div>
       <div class="mq-sheet-sub" data-i18n="mq_select_a_pack_or_play_all">select a pack or play all</div>
-      <button class="mq-sheet-all-btn" onclick="mqQuickPlayAll()" data-i18n="mq_all_packs">ALL PACKS</button>
+      <button class="mq-sheet-all-btn" onclick="mqQuickPlayAll()" style="text-align:left;display:flex;align-items:center;gap:8px"><span data-i18n="mq_all_packs" style="flex:1">ALL PACKS</span><span id="mqAllPackCount" style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:.8px;color:var(--muted);border:1px solid color-mix(in srgb,var(--accent-soft) 35%,transparent);border-radius:11px;padding:3px 10px;white-space:nowrap"></span><span style="font-size:18px;color:var(--accent-soft);line-height:1">&#x2192;</span></button>
       <div id="mqSheetPackTabs"></div>
       <div class="mq-sheet-pack-grid" id="mqSheetPackGrid"></div>
       <div id="mqSheetOnlineChips" style="display:none;flex-direction:column;gap:6px;"></div>
@@ -122775,7 +123013,47 @@ advanced_theory: {
   desc:'Chromatic harmony, altered chords and the jazz end of the syllabus',
   desc_it:'Armonia cromatica, accordi alterati e la parte jazz della teoria',
   questions:[
-],
+    {q:"What is the motion of two voices moving in opposite directions called?", q_it:"Come si chiama il moto di due voci che si muovono in direzioni opposte?", opts:["Contrary motion", "Similar motion", "Parallel motion", "Oblique motion"], opts_it:["Moto contrario", "Moto retto", "Moto parallelo", "Moto obliquo"], ans:0, d:1, fact:"Contrary motion will not produce a parallel harmony, so many four-part exercises lean heavily into this type of harmony writing. ", fact_it:"Il moto contrario non produce armonie parallele, per cui molti esercizi di scrittura a quattro parti lo sfruttano ampiamente."},
+    {q:"Why are parallel fifths avoided in four-part writing?", q_it:"Perché le quinte parallele sono evitate nella scrittura a quattro parti?", opts:["The two voices stop sounding separate", "They are impossible to sing", "They put the chord in the wrong inversion", "They make the key ambiguous"], opts_it:["Le due voci smettono di suonare separate", "Sono impossibili da cantare", "Mettono l'accordo nel rivolto sbagliato", "Rendono la tonalità ambigua"], ans:0, d:1, fact:"Two voices a fifth apart moving the same way tend to fuse into one thickened line, making it more difficult for the ear to follow the four voices separately. ", fact_it:"Due voci a distanza di quinta che si muovono nella stessa direzione tendono a fondersi in un'unica linea ispessita, rendendo più difficile per l'orecchio seguire le quattro voci separatamente."},
+    {q:"Which of the four voices tends to leap the most?", q_it:"Quale delle quattro voci tende a procedere più per salti?", opts:["The bass", "The alto", "The tenor", "The soprano"], opts_it:["Il basso", "Il contralto", "Il tenore", "Il soprano"], ans:0, d:1, fact:"The bass tends to jump between chord roots acting as an anchor for the other harmonies, while the inner voices move less to smooth out the chord changes. ", fact_it:"Il basso tende a saltare tra le fondamentali degli accordi fungendo da ancora per le altre armonie, mentre le voci interne si muovono meno per ammorbidire i cambi di accordo."},
+    {q:"Which note of a dominant seventh should you try not to double?", q_it:"Quale nota dell'accordo è meglio evitare di raddoppiare in un accordo maggiore?", opts:["The leading tone", "The root", "The fifth", "The seventh"], opts_it:["La sensibile", "La fondamentale", "La quinta", "La terza"], ans:0, d:2, fact:"The leading tone wants to resolve to the tonic, so doubling it puts two voices on the same move and gives you a parallel octave.", fact_it:"La sensibile vuole risolvere sulla tonica, quindi raddoppiarla mette due voci sullo stesso percorso e produce un'ottava parallela."},
+    {q:"How far apart are soprano, alto and tenor notes typically written?", q_it:"Quale grado della scala minore armonica tende a non essere raddoppiato?", opts:["No more than an octave apart", "No more than a fifth apart", "As far apart as possible", "Exactly a third apart"], opts_it:["Il settimo grado", "Il quinto grado", "Il primo grado", "Il quarto grado"], ans:0, d:2, fact:"Opening up more than an octave between two upper voices makes the chord stop sounding like one thing, so voice leading rules recommend otherwise. ", fact_it:"Il settimo grado innalzato della scala minore armonica funziona come una sensibile: vuole risolvere verso l'alto sulla tonica, e raddoppiarlo mette due voci sullo stesso vincolo."},
+    {q:"What is the term for two voices moving the same way onto a perfect fifth, with the upper one arriving by leap? ", q_it:"Come si chiama il moto di due voci nella stessa direzione verso una quinta giusta, con la voce superiore che arriva per salto?", opts:["A hidden fifth", "A parallel fifth", "A cross relation", "An unequal fifth"], opts_it:["Quinta nascosta", "Quinta parallela", "Quinta diretta", "Quinta diminuita"], ans:0, d:2, fact:"The upper voice arrives by leap, so the parallel fifth that using stepwise motion would have made never actually sounds.", fact_it:"La voce superiore che salta è ciò che la nasconde: se avesse proceduto per grado, le due parti avrebbero prodotto quinte parallele, e il salto le copre."},
+    {q:"What describes when the tenor voice is written above the Alto? ", q_it:"Come si definisce quando il tenore è scritto sopra il contralto?", opts:["The voices have crossed", "The voices have overlapped", "The chord is in first inversion", "The spacing has opened up"], opts_it:["Incrocio delle parti", "Voce sovrapposta", "Raddoppio dell'unisono", "Movimento obliquo"], ans:0, d:2, fact:"The tenor can sometimes cross above the Alto to help alleviate what would be undesirable motion. ", fact_it:"Con le parti incrociate, la voce che normalmente suona più in basso si trova sopra l'altra, e le due linee diventano più difficili da distinguere all'ascolto, anche se ciascuna è scritta correttamente."},
+    {q:"What term describes this example: a voice sings F natural and the next chord puts F sharp in a different voice?", q_it:"Come si chiama quando una nota cromatica appare in una voce e la sua versione naturale in un'altra simultaneamente?", opts:["A cross relation", "A hidden fifth", "A voice exchange", "An augmented sixth"], opts_it:["Relazione cromatica", "Modulazione cromatica", "Armonia cromatica", "Passaggio cromatico"], ans:0, d:3, fact:"Cross relation is when a chromatic step happens between two voices instead of inside one, so no single line seems to move and create a contradiction. ", fact_it:"La relazione cromatica avviene quando un passo cromatico si verifica tra due voci anziché all'interno di una sola, così nessuna singola linea sembra muoversi e l'orecchio percepisce una contraddizione."},
+    {q:"Why do writers often avoid an augmented second in a melodic line?", q_it:"Perché i compositori tendono a evitare la seconda aumentata nella linea melodica?", opts:["It is awkward to sing", "It sounds out of tune", "It implies the wrong key", "It cannot be notated"], opts_it:["Sembra un salto ma è scritta come un grado", "È un intervallo dissonante in ogni contesto", "Non si trova in nessuna scala", "Richiede un accidente non presente in chiave"], ans:0, d:3, fact:"The interval is three half steps written as a second, so it looks like a step on the page but has to be sung like a leap.", fact_it:"La seconda aumentata copre tre semitoni, la stessa distanza di una terza minore, quindi sembra un grado sulla pagina ma suona come un salto quando la si canta."},
+    {q:"In a deceptive resolution from V to vi, which note of the vi chord is usually doubled?", q_it:"In una risoluzione d'inganno da V a vi, quale nota dell'accordo di vi viene di solito raddoppiata?", opts:["The third", "The root", "The fifth", "The seventh"], opts_it:["La terza", "La fondamentale", "La quinta", "La settima"], ans:0, d:3, fact:"The leading tone resolves up to the tonic while the bass moves to the sixth degree, so two voices land on the third of the vi chord.", fact_it:"La sensibile sale alla tonica, e nell'accordo di vi la tonica è la terza, così due voci vi arrivano sopra e la terza finisce per essere raddoppiata."},
+    {q:"When a dominant seventh resolves to the tonic, what do its third and seventh usually do?", q_it:"Quando un accordo di settima di dominante risolve sulla tonica, cosa fanno di solito la terza e la settima?", opts:["The third rises, the seventh falls", "Both rise", "Both fall", "The third falls, the seventh rises"], opts_it:["La terza sale e la settima scende", "Entrambe salgono", "Entrambe scendono", "La terza scende e la settima sale"], ans:0, d:2, fact:"The third and the seventh are a tritone apart and the chord resolves by opening that interval outward, with the third rising to the tonic and the seventh falling to the third.", fact_it:"Le due note formano il tritono che dà all'accordo la sua tensione, e l'intervallo si apre verso l'esterno: la terza sale di un semitono alla tonica e la settima scende di un semitono alla terza."},
+    {q:"What makes a note a non-chord tone?", q_it:"Cosa rende una nota un'appoggiatura non accordale?", opts:["It isn't part of the chord under it", "It falls on a weak beat", "It is written smaller than the rest", "It belongs to a different key"], opts_it:["Non fa parte dell'accordo sottostante", "Cade sempre sul tempo debole", "È sempre dissonante", "Dura sempre meno di un quarto"], ans:0, d:1, fact:"A non-chord tone is defined only by the harmony under it, so the same pitch can be a chord tone in one measure and a non-chord tone in the next.", fact_it:"La definizione dipende solo dall'armonia sottostante. La stessa nota può essere un suono accordale in una battuta e un suono non accordale nella successiva."},
+    {q:"What is the term for a non-chord tone approached by step and left by step in the same direction?", q_it:"Come si chiama una nota raggiunta per grado e lasciata per grado nella stessa direzione?", opts:["A passing tone", "A neighbor tone", "A suspension", "An anticipation"], opts_it:["Nota di passaggio", "Nota di volta", "Ritardo", "Anticipazione"], ans:0, d:1, fact:"It steps in from one chord tone and out to another a third away, so the gap is filled without the harmony changing.", fact_it:"Riempie lo spazio tra due suoni accordali a distanza di terza, entrando da un lato e uscendo dall'altro. Nella maggior parte dei casi cade sul tempo debole, dato che serve solo a portarti dall'altra parte."},
+    {q:"What is the term for a note that steps away from a chord tone and steps straight back?", q_it:"Come si chiama una nota che si allontana di grado da un suono accordale e torna subito indietro?", opts:["A neighbor tone", "A passing tone", "A retardation", "An escape tone"], opts_it:["Nota di volta", "Nota di passaggio", "Appoggiatura", "Nota di sfuggita"], ans:0, d:1, fact:"The line steps away and returns to the note it left, so nothing has moved by the end of the figure while adding melodic complexity. ", fact_it:"La linea si allontana di un grado e torna alla nota di partenza, quindi alla fine della figura nulla nell'armonia si è mosso."},
+    {q:"What is the term for a note held over from the previous chord that then falls by step?", q_it:"Come si chiama una nota tenuta dall'accordo precedente che poi scende per grado?", opts:["A suspension", "A retardation", "An anticipation", "A passing tone"], opts_it:["Ritardo", "Nota di passaggio", "Appoggiatura", "Nota di volta"], ans:0, d:2, fact:"A chord tone is held while the harmony changes underneath it, so it becomes a dissonance and falls a step to fit the new chord.", fact_it:"Un suono accordale del vecchio accordo resta fermo mentre l'armonia cambia sotto di lui, così diventa una dissonanza e scende di un grado per adattarsi al nuovo accordo."},
+    {q:"What is the term for a note that arrives early, before the chord it belongs to?", q_it:"Come si chiama una nota che arriva in anticipo, prima dell'accordo a cui appartiene?", opts:["An anticipation", "A suspension", "A passing tone", "A neighbor tone"], opts_it:["Anticipazione", "Ritardo", "Nota di passaggio", "Appoggiatura"], ans:0, d:2, fact:"The note belongs to a chord that has not arrived yet, so it sounds against the old harmony until the new one catches up.", fact_it:"L'anticipazione funziona al contrario del ritardo, arrivando prima della propria armonia anziché restare oltre, e i cantanti la fanno spesso senza pensarci alla fine di una frase."},
+    {q:"What is the term for a held-over note that resolves upward by step instead of downward?", q_it:"Come si chiama una nota tenuta che risolve salendo per grado anziché scendendo?", opts:["A retardation", "A suspension", "An anticipation", "An escape tone"], opts_it:["Ritardo ascendente", "Ritardo discendente", "Nota di sfuggita", "Appoggiatura"], ans:0, d:3, fact:"It is prepared and held in the same way as a suspension, and the only difference is that the resolution rises instead of falling.", fact_it:"Ha le stesse tre fasi del ritardo, e la differenza è la risoluzione, che va verso l'alto per grado anziché verso il basso."},
+    {q:"What is the term for a note approached by step and left by leap in the other direction?", q_it:"Come si chiama una nota raggiunta per grado e lasciata per salto nella direzione opposta?", opts:["An escape tone", "An appoggiatura", "A neighbor tone", "A passing tone"], opts_it:["Nota di sfuggita", "Nota di passaggio", "Nota di volta", "Anticipazione"], ans:0, d:3, fact:"The line steps out of the chord and then leaps back the other way, so it escapes instead of resolving where the step was heading.", fact_it:"La linea esce dall'accordo per grado e poi salta indietro dall'altra parte, così sfugge anziché risolvere dove il grado la stava portando."},
+    {q:"When a suspension is marked 4-3 under the bass, what are those numbers counting?", q_it:"Quando un ritardo è indicato con 4-3 sotto il basso, cosa contano quei numeri?", opts:["Intervals above the bass", "Beats in the bar", "Scale degrees", "Voices in the texture"], opts_it:["Gli intervalli sopra il basso", "I gradi della scala", "I numeri di battuta", "I rivolti dell'accordo"], ans:0, d:3, fact:"The numbers are intervals above the bass, so a 4-3 is a note a fourth above the bass falling to a third above it.", fact_it:"I numeri sono intervalli sopra il basso: in un 4-3 la nota tenuta è una quarta sopra il basso e scende a una terza."},
+    {q:"What is the term for a chord that belongs to both the old key and the new one, creating a key change?", q_it:"Come si chiama un accordo che appartiene sia alla vecchia tonalità che alla nuova, su cui la musica gira?", opts:["A pivot chord", "A secondary dominant", "A Neapolitan", "A borrowed chord"], opts_it:["Accordo perno", "Accordo di dominante", "Accordo cadenzale", "Accordo di passaggio"], ans:0, d:2, fact:"The chord is diatonic in both keys, so the music can change key on it without anything sounding like a break.", fact_it:"L'accordo è diatonico in entrambe le tonalità, così la musica può cambiare tonalità attraverso di esso senza che nulla suoni come un'interruzione."},
+    {q:"Which key is most closely related to C major?", q_it:"Quale tonalità è più strettamente imparentata con Do maggiore?", opts:["G major", "E major", "A major", "D major"], opts_it:["Sol maggiore", "Re bemolle maggiore", "La bemolle maggiore", "Fa diesis maggiore"], ans:0, d:2, fact:"Closely related keys differ by one accidental, which gives C major five of them: G, F, and the relative minors A, E and D.", fact_it:"Le tonalità strettamente imparentate differiscono per un'alterazione, il che dà a Do maggiore cinque parenti: Sol, Fa e le relative minori La, Mi e Re."},
+    {q:"What is usually the first sign on the page that a piece is heading for the dominant key?", q_it:"Qual è di solito il primo segno sulla pagina che un brano si sta dirigendo verso la dominante?", opts:["The fourth degree is raised", "The seventh degree is lowered", "The third degree is lowered", "The sixth degree is raised"], opts_it:["Il quarto grado viene innalzato", "Il settimo grado viene abbassato", "Compare una nuova armatura di chiave", "Il tempo cambia"], ans:0, d:2, fact:"The dominant likes having a leading tone of its own, so the fourth degree of the old key is raised to supply it.", fact_it:"La dominante ha bisogno di una propria sensibile, così il quarto grado della vecchia tonalità viene innalzato per fornirla."},
+    {q:"What is the term for a passage that borrows a secondary dominant and returns to the home key at once?", q_it:"Come si chiama un passaggio che prende in prestito una dominante secondaria e torna subito alla tonalità d'impianto?", opts:["Tonicization", "Modulation", "Transposition", "Modal interchange"], opts_it:["Tonicizzazione", "Modulazione", "Cadenza d'inganno", "Progressione"], ans:0, d:3, fact:"A tonicization never cadences in the new key, so the music is home again before the change has settled.", fact_it:"Una tonicizzazione non raggiunge mai una cadenza nella nuova tonalità, così la musica torna a casa prima che il cambio si sia stabilizzato."},
+    {q:"What is the term for when a song jumps up a half step for the last chorus with no preparation?", q_it:"Come si chiama quando una canzone sale di mezzo tono per l'ultimo ritornello senza preparazione?", opts:["A direct modulation", "A pivot modulation", "A tonicization", "A sequence"], opts_it:["Modulazione diretta", "Modulazione per accordo perno", "Modulazione enarmonica", "Tonicizzazione"], ans:0, d:3, fact:"There is no pivot chord and no preparation, so the new key simply starts, creating a strong upward movement. ", fact_it:"Non c'è accordo perno e nessuna preparazione, così la nuova tonalità semplicemente inizia."},
+    {q:"What is the term for a diminished seventh respelled so that it belongs to a distant key?", q_it:"Come si chiama una settima diminuita riscritto enarmonicamente in modo da appartenere a una tonalità lontana?", opts:["An enharmonic modulation", "A direct modulation", "A pivot modulation", "A tonicization"], opts_it:["Modulazione enarmonica", "Modulazione cromatica", "Tonicizzazione", "Sequenza"], ans:0, d:3, fact:"A diminished seventh divides the octave evenly, so respelling one note turns it into the dominant seventh of a new, distant key.", fact_it:"Una settima diminuita divide l'ottava in parti uguali e suona uguale in qualsiasi grafia, così riscrivere una nota la trasforma nella settima di dominante di una tonalità lontana."},
+    {q:"Where does the F minor chord usually come from during a song in C major?", q_it:"Da dove viene di solito l'accordo di Fa minore in una canzone in Do maggiore?", opts:["The parallel minor", "The relative minor", "The dominant key", "The Neapolitan"], opts_it:["Dallo scambio modale con Do minore", "Dalla dominante secondaria", "Dalla scala blues", "Da una tonicizzazione"], ans:0, d:2, fact:"F minor is the fourth chord of C minor, so a song in C major that uses it is borrowing from its parallel key.", fact_it:"Fa minore è il quarto grado di Do minore, il minore parallelo di Do maggiore, e prendere un accordo dalla tonalità parallela in quel modo si chiama scambio modale."},
+    {q:"C major has both a parallel minor and a relative minor. Which one is C minor?", q_it:"Do maggiore ha sia un minore parallelo che un minore relativo. Qual è il Do minore?", opts:["C minor is the parallel", "C minor is the relative", "They are the same thing", "Neither, that is G minor"], opts_it:["Do minore è il parallelo", "Do minore è il relativo", "Sono la stessa cosa", "Nessuno dei due, è Sol minore"], ans:0, d:2, fact:"Parallel keys share a tonic and relative keys share a key signature, so C minor is the parallel of C major and A minor is its relative.", fact_it:"Le tonalità parallele condividono la tonica, le tonalità relative condividono l'armatura di chiave, quindi Do minore è il parallelo di Do maggiore e La minore è il suo relativo."},
+    {q:"Which degree is an A flat major chord in a song in C major?", q_it:"Che grado è l'accordo di La bemolle maggiore in una canzone in Do maggiore?", opts:["Flat six", "Flat three", "Flat seven", "Flat two"], opts_it:["Sesto grado abbassato", "Secondo grado", "Quarto grado", "Settimo grado"], ans:0, d:3, fact:"A flat is the sixth degree of C minor, so the chord has been borrowed from the parallel minor.", fact_it:"La bemolle è il sesto grado di Do minore, quindi l'accordo è di solito preso in prestito dal minore parallelo, e il percorso dal sesto grado abbassato al settimo abbassato alla tonica è comune nel rock."},
+    {q:"What is usually happening when a major-key song uses a half-diminished chord on its second degree?", q_it:"Cosa succede di solito quando una canzone in modo maggiore usa un accordo semidiminuito sul secondo grado?", opts:["It is borrowing from the parallel minor", "It is modulating to the relative minor", "It is using a secondary dominant", "It is writing a Neapolitan"], opts_it:["Sta prendendo in prestito dal minore parallelo", "Sta modulando alla dominante", "Sta usando un accordo di passaggio", "Sta preparando una cadenza frigia"], ans:0, d:3, fact:"The second chord of a minor key comes out half-diminished, so a major key using it has borrowed from its parallel minor.", fact_it:"L'accordo sul secondo grado nel modo minore è semidiminuito, così una canzone in maggiore che lo usa ha preso in prestito dal minore parallelo."},
+    {q:"What is the term for two phrases where the first is left hanging and the second answers it?", q_it:"Come si chiama la struttura di due frasi in cui la prima resta sospesa e la seconda la conclude?", opts:["A period", "A sequence", "A sentence", "A cadence"], opts_it:["Periodo", "Frase", "Sequenza", "Cadenza"], ans:0, d:1, fact:"The first phrase ends on a half cadence and the second on an authentic one, so the two only close as a pair.", fact_it:"La prima frase di solito finisce su una semicadenza e la seconda su una cadenza autentica, così le due si chiudono solo come coppia."},
+    {q:"What is the term for a song form that goes A, then B, then A again?", q_it:"Che forma ha un brano che va A, poi B, poi di nuovo A?", opts:["Ternary", "Binary", "Rondo", "Through-composed"], opts_it:["Forma ternaria", "Forma binaria", "Rondò", "Forma sonata"], ans:0, d:1, fact:"The third section is a return of the first, so the music leaves and comes back inside one movement.", fact_it:"La terza sezione è un ritorno della prima, così la musica parte e torna a casa. Il minuetto e trio ne è un esempio classico."},
+    {q:"What form has a theme that keeps returning between contrasting episodes?", q_it:"Che forma ha un brano con un tema che torna tra episodi contrastanti?", opts:["Rondo", "Ternary", "Binary", "Sonata"], opts_it:["Rondò", "Forma ternaria", "Tema e variazioni", "Forma sonata"], ans:0, d:2, fact:"The theme returns after every episode, so the form is heard as one tune with contrasting music between its statements.", fact_it:"Il tema ritorna dopo ogni episodio, così la forma si sente come un'unica melodia con musica contrastante tra le sue esposizioni."},
+    {q:"In sonata form, which section usually takes the themes apart and moves them through different keys?", q_it:"Nella forma sonata, quale sezione di solito smonta i temi e li porta attraverso varie tonalità?", opts:["The development", "The exposition", "The recapitulation", "The coda"], opts_it:["Lo sviluppo", "L'esposizione", "La ripresa", "La coda"], ans:0, d:2, fact:"The exposition leaves the home key and the recapitulation restates everything in it, which makes the development the section where the themes travel.", fact_it:"L'esposizione lascia la tonalità d'impianto e la ripresa riespone tutto in essa, il che rende lo sviluppo la sezione dove i temi viaggiano."},
+    {q:"What is the term for a phrase built from a short idea, the same idea again, then a longer continuation?", q_it:"Come si chiama una frase costruita su un'idea breve, la stessa idea ripetuta, poi una continuazione più lunga?", opts:["A sentence", "A period", "A rondo", "A sequence"], opts_it:["Frase-periodo (Satz)", "Periodo", "Sequenza", "Forma binaria"], ans:0, d:3, fact:"The idea is stated, repeated, then extended, so the phrase grows out of its own opening rather than answering it.", fact_it:"L'idea viene esposta, ripetuta, poi estesa, così la frase cresce dalla propria apertura anziché risponderle. Schoenberg diede alla struttura il suo nome."},
+    {q:"What form has two sections where the first one does not usually come back?", q_it:"Che forma ha un brano con due sezioni in cui la prima di solito non ritorna?", opts:["Binary", "Ternary", "Rondo", "Sonata"], opts_it:["Forma binaria", "Forma ternaria", "Forma strofica", "Rondò"], ans:0, d:1, fact:"Neither section returns to the other, so the music ends where the second half finishes.", fact_it:"Nessuna delle due sezioni torna all'altra, così la musica finisce dove la seconda metà si conclude."},
+    {q:"What is the term for a short figure that repeats immediately at a higher pitch?", q_it:"Come si chiama una breve figura che si ripete subito a un'altezza diversa?", opts:["A sequence", "A period", "An ostinato", "An imitation"], opts_it:["Sequenza", "Ostinato", "Imitazione", "Canone"], ans:0, d:2, fact:"The figure keeps its shape at a new pitch, so one measure of material can carry several forms of the same phrase. ", fact_it:"La figura mantiene la sua forma a un'altezza diversa, così un solo battuta di materiale può portarne quattro."},
+    {q:"What texture is a single melody with chords underneath it?", q_it:"Che tipo di texture ha una singola melodia con gli accordi sotto?", opts:["Homophonic", "Polyphonic", "Monophonic", "Heterophonic"], opts_it:["Omofonica", "Polifonica", "Monofonica", "Eterofonica"], ans:0, d:1, fact:"One line carries the melody and the rest support it, so the ear follows a single voice.", fact_it:"Una linea porta la melodia e tutto il resto la sostiene, così l'orecchio segue una sola voce."},
+    {q:"What texture has two or more melodies of equal weight sounding at once?", q_it:"Che tipo di texture ha due o più melodie di uguale importanza che suonano contemporaneamente?", opts:["Polyphonic", "Homophonic", "Monophonic", "Heterophonic"], opts_it:["Polifonica", "Omofonica", "Monofonica", "Eterofonica"], ans:0, d:2, fact:"Every line is a melody in its own right, so no voice is accompanying another.", fact_it:"Ogni linea è una melodia a pieno titolo e nessuna accompagna le altre, così nessuna voce è subordinata a un'altra."},
+    {q:"What texture has several players performing the same melody with small differences at the same time?", q_it:"Che tipo di texture ha più esecutori che suonano la stessa melodia con piccole differenze contemporaneamente?", opts:["Heterophonic", "Polyphonic", "Homophonic", "Monophonic"], opts_it:["Eterofonica", "Polifonica", "Omofonica", "Monofonica"], ans:0, d:3, fact:"The same melody is played in several versions at once, so the parts differ without being fully independent.", fact_it:"La stessa melodia viene eseguita in più versioni contemporaneamente, così le parti differiscono senza essere indipendenti."},
+    {q:"What texture is a single line with nothing sounding underneath it?", q_it:"Che tipo di texture ha una singola linea senza nulla che suona sotto?", opts:["Monophonic", "Homophonic", "Polyphonic", "Heterophonic"], opts_it:["Monofonica", "Omofonica", "Polifonica", "Eterofonica"], ans:0, d:1, fact:"There is nothing sounding under the line, and doubling it at the octave still technically leaves it as one part.", fact_it:"Non c'è nulla sotto la linea, e raddoppiarla all'ottava è comunque una sola parte."}
+  ],
 },
 
 guitar_gods: {
@@ -126266,6 +126544,12 @@ function mqRenderSheetPackGrid() {
     });
     grid.appendChild(subGrid);
   });
+  // stamp the ALL PACKS pill with the count of ready packs
+  var _apc = document.getElementById('mqAllPackCount');
+  if (_apc) {
+    var _n = MQ_PACK_READY.length;
+    _apc.textContent = _n + ' ' + (_n === 1 ? 'pack' : t('mq_packs_unit') || 'packs');
+  }
 }
 function mqGoCustom() {
   mqSetHeader('CUSTOM','pick your packs');
@@ -126679,7 +126963,10 @@ function mqPackQuestions(packId) {
 var MQ_GEN_PACKS = ['theory_fundamentals', 'advanced_theory', 'bass', 'guitar_technique'];
 // Packs with no authored tier at all, whose written questions must not be dealt.
 // Advanced Theory is generated by design, not as a stopgap.
-var MQ_GEN_ONLY  = ['advanced_theory'];
+// Advanced Theory now has 40 written questions (voice leading, non-chord tones,
+// modulation, modal interchange, form, texture) that the generators cannot
+// produce. It was gen-only before those were written.
+var MQ_GEN_ONLY  = [];
 
 var MQ_IT_LETTER = { C:'Do', D:'Re', E:'Mi', F:'Fa', G:'Sol', A:'La', B:'Si' };
 // Italian names keys Do Re Mi, so an English option array translated word for
@@ -129370,8 +129657,15 @@ function mq2PanelFit() {
   var gridH  = grid.scrollHeight;
   // clamp so the panel can never swallow the screen whole
   want = Math.min(want, Math.round(stageH * 0.92));
-  var push = gridH + want <= stageH;
-  stage.classList.toggle('push', push);
+  // Push mode (position:relative, height animation) was for screens tall enough
+  // to fit the blurb under the answers without covering them. The animation used
+  // height transitions, which trigger layout recalc every frame and stutter on
+  // mid-range phones. The overlay (position:absolute, transform animation) is
+  // GPU-composited and always smooth. The verdict line already restates the
+  // answer when the overlay covers it, so the overlay handles every case push
+  // did. Always overlay now; one animation path, one visual.
+  var push = false;
+  stage.classList.remove('push');
 
   // THE VERDICT LINE ONLY EARNS ITS PLACE WHEN A CARD IS ACTUALLY HIDDEN.
   // Restating the answer while the answer is sitting in plain view above the
@@ -129973,6 +130267,17 @@ function mq2Results(d) {
   if (d.review) rev.textContent = t('mq_review_misses');
   document.getElementById('mq2rShare').style.display = d.share ? 'block' : 'none';
   document.getElementById('mq2rPrimary').textContent = d.primary || t('mq_play_again');
+  // The daily result hides the DONE button and points the primary at the
+  // landing. Every SUBSEQUENT result inherits that hidden state, so quick play
+  // after a daily had no way out except PLAY AGAIN, which is why it looked like
+  // PLAY AGAIN was going to the menu: the primary was still wired to mqGoLanding
+  // from the daily. Reset both for non-daily results.
+  var _done = document.getElementById('mq2rDone');
+  if (!d.primary) {
+    // Normal quiz: show DONE, point primary at replay
+    if (_done) _done.style.display = '';
+    document.getElementById('mq2rPrimary').setAttribute('onclick', 'mqPlayAgain()');
+  }
 
   // The round replays. The beats arrive in the order they were answered and the
   // headline counts up underneath, timed to finish together, so the screen
@@ -130353,7 +130658,7 @@ function mqBuildDailyQuestions() {
   var pool = [];
   for (var i = 0; i < pack.questions.length; i++) {
     var q = pack.questions[i];
-    if (q && q.q && q.opts && q.opts.length === 4) {
+    if (q && q.q && q.opts && q.opts.length === 4 && mqQInLocale(q)) {
       pool.push(Object.assign({}, q, { pack: packId, idx: i }));
     }
   }

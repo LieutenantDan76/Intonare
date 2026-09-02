@@ -4,6 +4,508 @@ A human-readable record of what changed, when,
 
 ---
 
+## v0.201.182 — Real tambourine sample
+
+Tambourine track now uses a real sample instead of the shaker placeholder.
+`tambourine.mp3` (8.5KB) added to the drums folder. Both standard and jazz
+kit maps updated.
+
+---
+
+## v0.201.181 — Real drum samples
+
+Sample-based drum playback for Standard and Jazz kits. 17 MP3 files (292KB
+total) from the Real Drums Vol. 1 pack replace the oscillator-based synthesis.
+Electronic and Brush kits stay synthesized until dedicated sample sets are found.
+
+`dkLoadSamples()` fetches and decodes all samples on first use (drum kit open or
+Progression kit mode). `triggerInstrument` tries the sample path first and falls
+through to the synth if the buffer is not ready.
+
+Jazz kit routes through a BiquadFilterNode high-shelf (-6dB at 5kHz) that
+darkens every hit without needing separate samples for shared pieces (toms,
+hats, crash, cowbell). Distinct jazz kick, snare, and ride samples give the
+kit its own character on top of the filter.
+
+Derived pieces by pitch-shift: hi-hat pedal (closed hat at 0.85x), low tom
+(mid tom at 0.80x). Placeholders: clave uses rim, tambourine uses shaker.
+
+Latin kit maps to the standard sample set (same acoustic sounds, different
+patterns).
+
+---
+
+## v0.201.180 — Bugfixes, progression BPM block, mandolin samples
+
+**DONE button after daily (v0.201.159).** The daily result hid the DONE button
+and rewired the primary to `mqGoLanding`. Neither was ever reset, so every
+quick play result after a daily had no way out.
+
+**Daily quiz locale filter (v0.201.160).** `mqBuildDailyQuestions` skipped the
+`mqQInLocale` check entirely, serving Italian-tagged questions to English users.
+
+**Drawer always GPU-composited (v0.201.163).** Push mode animated `height`
+(layout recalc every frame); overlay animated `transform` (GPU). Push mode
+removed; one animation path, always smooth.
+
+**Question band taller (v0.201.159).** 196px to 220px for longer questions.
+
+**Double back arrow (v0.201.162).** `mq_back` string carried `←` while markup
+already had its own arrow. Stripped from both languages.
+
+**Solfege in all charts (v0.201.165).** Seven display paths routed through
+`getDisplayNote`: harmonica, Road Trip, Tonale, vocal range, harp pedals.
+
+**ALL PACKS button (v0.201.167-173).** Name left, pack count pill, arrow right.
+Full width aligned with the grid below via `display: flex; width: calc(100% - 28px)`.
+
+**Console.logs cleaned (v0.201.164).** Six removed; two kept (fallback toast,
+mock data injector). Orphan `</div>` between mqModal and mqQuickSheet removed.
+Markup balanced at 2783/2783.
+
+**TDZ crash fixed (v0.201.175).** `_rcHolder` was `let` at line 95699 but
+`_rcActive()` was called during boot 38,000 lines earlier via `setBPM` →
+`progSyncBpmDisplays`. Changed to `var` to avoid the temporal dead zone. This
+crash interrupted Pro status restore and version stamp handler wiring.
+
+**Progression BPM block (v0.201.174-178).** Groove/beat name in the BPM pill
+only shows when metro or kit mode is active. Transport row buttons all 56px.
+
+**Mandolin samples (v0.201.179-180).** G-Town Church Sampling Project (Tobias
+Marberger, CC Sampling+ 1.0). 14 WAV samples converted to MP3 (356KB total).
+SampleEngine registration with custom `sampledNotes` list. Doubled-course
+simulation: second source at +7 cents, 4ms delay, -2dB for the paired-string
+mandolin sound. Credit added to Credits & Thanks.
+
+---
+
+## v0.201.165 — Solfege mode reaches every chart and tool
+
+Seven display paths were using hardcoded English note-name arrays instead of
+going through `getDisplayNote`, so switching to solfege mode in settings changed
+the tuner and some tools but left the rest showing C D E. All seven now route
+through the same function:
+
+    Harmonica chart       inline arrow fn → getDisplayNote wrapper
+    Harmonica info bar    noteNames[pc] → getDisplayNote(noteNames[pc])
+    Road Trip labels      RT_NOTE_NAMES → getDisplayNote(RT_NOTE_NAMES)
+    Tonale reveal keys    TONALE_NOTE_NAMES → getDisplayNote(TONALE_NOTE_NAMES)
+    Vocal Range (3 sites) VR_DISPLAY_NOTES → getDisplayNote(VR_DISPLAY_NOTES)
+    Harp pedal labels     NOTE_NAMES[pc] → getDisplayNote(NOTE_NAMES[pc])
+
+Verified in headless Chrome: C→Do, D→Re, F#→Fa♯, Bb→Si♭ in solfege mode,
+unchanged in english mode. The chord/scale charts already went through
+`gccRootDisplayName` which calls `getDisplayNote`, so those were fine.
+
+---
+
+## v0.201.164 — Cleanup: console.logs, orphan div, double back arrow
+
+**6 console.logs removed.** Mic debug, sync diagnostic (3), sample engine ready,
+road trip tuner. Two kept: the fallback toast error path (last resort) and the
+mock data injector (console-only dev tool).
+
+**1 orphan `</div>` removed.** Sat between mqModal closing and mqQuickSheet
+opening. The initial count of 4 extras was wrong: 3 were inside JS template
+strings where the regex counted `</div>` in a return statement without seeing
+the matching `<div` concatenated on the same line. Markup is now balanced:
+2783 opens, 2783 closes.
+
+**Double back arrow fixed in v0.201.162.** The `mq_back` string carried its own
+`← ` while the markup already had an SVG or entity arrow. Every back button
+rendered two arrows.
+
+---
+
+## v0.201.163 — Blurb drawer always uses the smooth path
+
+The blurb panel after a quiz answer had two animation modes: an overlay that
+slides up with `transform: translateY` (GPU-composited, always smooth) and a
+push mode that grows with `height` transitions (triggers layout recalc every
+frame, stutters on mid-range phones). Push mode fired when the blurb was short
+enough to fit under the answers without covering them. The two modes had
+different corners and shadows until v0.201.161, and different animation
+smoothness that v0.201.161 could not fix because the issue was the animation
+engine itself, not the timing or the curve.
+
+Push mode is now disabled. The overlay handles every case push did: the verdict
+line restates the answer when the overlay covers it, and the drawer scrolls if
+the blurb is tall. One animation path, one visual, always GPU-composited.
+
+The three push-specific CSS rules are left in place (dead but harmless) so they
+do not need to be found and removed in a file this size.
+
+---
+
+## v0.201.161 — Push drawer matches the overlay drawer visually
+
+The blurb panel has two modes: an overlay drawer (slides up over the answers)
+and a push panel (sits under them when there is room). The overlay had rounded
+top corners and a shadow; the push had flat corners and no shadow. They looked
+like two different UI elements doing the same job.
+
+Push now gets `border-radius: 16px 16px 0 0` and a lighter shadow (18px spread
+at 18% rather than 32px at 42%, since it is not floating over content).
+
+The animation smoothness difference (overlay slides, push might snap) still
+needs device investigation. The CSS transitions are structurally identical:
+both run the same cubic-bezier over 520ms. The measurement and timing are
+correct on paper. A screen recording from device shows the fault; reproducing
+it in headless Chrome has not been possible.
+
+---
+
+## v0.201.160 — Daily quiz skipped the locale filter
+
+The regular round builder calls `mqQInLocale` on every question, so a question
+tagged `loc:'it'` never appears for an English user. The daily builder did not
+call it at all: it checked `q.q && q.opts && q.opts.length === 4` and nothing
+else. An English user playing a daily 70s round could get Guccini and Celentano
+questions that are tagged Italian-only.
+
+One line: added `&& mqQInLocale(q)` to the daily's pool filter.
+
+---
+
+## v0.201.159 — DONE button vanishes after a daily, question band taller
+
+**The DONE button.** The daily result hides it (`display: none`) and points the
+primary button at the landing page. Neither was ever reset. So every quick play
+result after a daily showed only PLAY AGAIN, which was still wired to
+`mqGoLanding` from the daily rather than to `mqPlayAgain`. It looked like PLAY
+AGAIN was taking you to the menu because it was: it was the daily's button
+wearing the wrong label.
+
+Non-daily results now restore both: DONE is shown and the primary is rewired to
+`mqPlayAgain`.
+
+**Question band height.** Was 196px, now 220px. Long Beatles and 70s questions
+were cramped at 24px Fraunces over four lines, and the auto-shrink floor meant
+the text dropped to 15px before the container gave any more room.
+
+---
+
+## v0.201.158 — Advanced Theory goes live
+
+Three things that were blocking it:
+
+**Removed from MQ_GEN_ONLY.** The list told the app this pack has no written
+questions and must never deal one. It was true before the 40 were written and
+never updated. The list is now empty.
+
+**No blend floor needed.** With 40 written questions across tiers 11/16/13,
+MQ_GEN_SHARE at 34% means a 10-question medium round asks for about 7 written
+and 3 generated, so the written ones are not buried. The existing cap handles it.
+
+**Italian translation of all 40.** Questions, options, and blurbs, all installed
+via pack_build with a clean round trip. Italian check, draft check and spelling
+audit all pass.
+
+The pack now serves six topics the generators cannot produce: voice leading,
+non-chord tones, modulation, modal interchange, form and phrase, and texture.
+
+---
+
+## v0.201.157 — The Survival Guide term audio has never worked
+
+`SG_TERM_DEMOS` (36 demo entries) and `sgPlayTermDemo` (the function that plays
+them) are defined inside a script block that is a plain `<script>` child of
+`<body>`, with no module type, no IIFE wrapper, no SVG namespace and balanced
+braces. `node --check` passes. The `var` assigns correctly inside the block:
+a log placed right after the closing brace shows an object with 36 keys.
+
+And then it vanishes from global scope. Every function declaration in the same
+block is also invisible to the rest of the page. `typeof SG_TERM_DEMOS` returns
+`undefined` from any other script block and from the console. `typeof
+sgPlayTermDemo` returns `undefined`. The onclick handlers in the Survival Guide
+markup could never reach either one, so tappable term sounds have never played.
+
+The root cause is not identified. The workaround is to assign both onto `window`
+explicitly: `window.SG_TERM_DEMOS = {` instead of `var SG_TERM_DEMOS = {`, and
+`window.sgPlayTermDemo = sgPlayTermDemo` right after the function definition.
+All three read sites updated to `window.SG_TERM_DEMOS[...]`.
+
+The boot check now passes clean for the first time this session.
+
+---
+
+## v0.201.156 — One more Vader quote in a name slot
+
+Master's Italian name was "Ora sono io il maestro", which is the Vader line from
+the description. Every other rank in the ladder is a plain word: Apprendista,
+Praticante, Musicista, Gran Maestro. This one was a sentence sitting in the
+middle of them. Now "Maestro", and the ladder reads as a ladder.
+
+Found by printing all 240 fields and reading them, which is the sixth time
+tonight that the check which caught the fault was reading the output rather than
+running a test.
+
+---
+
+## v0.201.155 — Boom/Headshot was backwards
+
+The English is: name Boom, quote Headshot. Two gaming words for the same hit.
+Both are universal, both are what Italian gamers say. The Italian had the quote
+in the name slot (Headshot) and an invented replacement in the quote slot
+("Primo colpo, centro!"). The fix is the simplest one tonight: Boom / Headshot,
+the same words, because they are the same in both languages.
+
+Checked whether the same fault existed on any other entry: it did not. This was
+the only one where I had moved an English quote into the Italian name and then
+written something to fill the gap I created.
+
+---
+
+## v0.201.154 — Last achievement fix: Boom had Headshot twice
+
+Name and description were both "Headshot", so the card showed the same word
+twice. The English has two different words for the same hit: Boom / Headshot.
+The Italian desc is now "Primo colpo, centro!" which carries the same energy
+without repeating the name.
+
+All 40 achievements verified clean by automated sweep: no name that is a quote,
+no name identical to its description, no empty Italian description, no
+untranslated name that should have been, no sentence punctuation in a name.
+
+---
+
+## v0.201.153 — Crikey! gets the Dundee knife scene
+
+The didgeridoo pun did not survive translation: "Let's Didgeridon't and Say We
+Didgeridid" is English syllable play with no Italian equivalent. Three attempts
+at an Italian version (a literal meaning, a didgeri-no/si flip, a spelling joke)
+all died on contact.
+
+The Crocodile Dundee knife scene is the most repeated Australian quote in Italian
+pop culture. The dubbed line is "Quello un coltello? Questo e un coltello!" and
+an Italian blog noted it has been repeated by "every single Italian for years."
+Swapping knife for instrument:
+
+    EN  That's not an instrument... THAT'S an instrument
+    IT  Quello uno strumento? Questo e uno strumento!
+
+An Italian reads that and immediately hears Dundee, which gets you to Australia,
+which is the whole joke. And the didgeridoo is exactly the instrument you would
+hold up doing the bit.
+
+---
+
+## v0.201.152 — Eight descriptions were my translations, not the real dub lines
+
+The research found the actual dubbed wording. The descriptions were written
+before the research, and nobody went back to install it. Eight swapped to the
+sourced lines:
+
+     6  "Non dirmi le probabilità"         ->  "Non t'ho chiesto pronostici"
+     8  "Hai spento il computer di mira"    ->  "Ha spento il computer di bordo"
+    12  "Non tutti coloro che vagano..."    ->  "Né gli erranti sono perduti"
+    13  "Dove stiamo andando, non abbiamo"  ->  "Strade? Dove stiamo andando non
+                                                 c'è bisogno di strade!"
+    14  "Troverò la mia strada..."          ->  "Posso farcela, posso andare lontano"
+    21  "Hai scelto... saggiamente"         ->  "Hai scelto... bene"
+    24  "Datti da fare per vivere..."        ->  "O fai di tutto per vivere..."
+    36  "Non siete forse divertiti?"         ->  "Non vi siete divertiti?!"
+
+Two more:
+
+    29  "Colpo alla testa" -> "Headshot". Italian gamers say it in English, and
+        the name is already Headshot, so "Colpo alla testa" underneath it was the
+        only translated gaming term in the whole set.
+
+    32  "Facciamo finta di averlo fatto..." -> "Didgeri-no e poi Didgeri-sì".
+        The English pun is did-geri-DON'T / did-geri-DID. The literal Italian
+        had no joke. The Italian keeps the didgeridoo root and flips no to sì.
+
+---
+
+## v0.201.151 — Daily Grind was still a quote
+
+"Stessa ora domani?" is "Same time tomorrow?", which is the description, not a
+name. Every other name in the list is a noun phrase; this was a question. Now
+"Tran tran quotidiano", which is the Italian for the daily grind.
+
+All 40 achievement names audited against their unlock conditions. Every name is
+either a plain Italian word matching its English counterpart, an established
+title (film, piece, show), or kept in English where that is authentic Italian
+usage. No quotes pretending to be names remain.
+
+---
+
+## v0.201.150 — Four more quotes where names belong
+
+Same fault as the previous thirteen, caught by Daniele on a second read.
+
+    Addicted             Assuefatto          (was "Sono i chilometri")
+    Last One Standing    L'ultimo in piedi   (was "Non vi siete divertiti?")
+    The Adventurer       L'avventuriero      (was "Hai scelto bene")
+    Great Ears Kid...    Orecchio fino       (was the full nine-word dub line)
+
+The dub lines stay in the descriptions.
+
+---
+
+## v0.201.149 — Thirteen achievement names had the quote where the name goes
+
+The English structure is: the NAME says what you did, the DESCRIPTION carries the
+joke. Apprentice is a rank; "You have taken your first step into a larger world"
+is the Obi-Wan line underneath it. Thirteen of the Italian names were the quote
+from the description stuffed into the name slot, so the name stopped describing
+anything and the level ladder collapsed into five unrelated film quotes.
+
+Fixed:
+
+    Perfect Pitch    Orecchio assoluto    (was the Yu-Gi-Oh quote)
+    Curious          Curioso              (was the Tolkien sentence)
+    Explorer         Esploratore          (was the BTTF quote)
+    The Climb        La scalata           (was the Hercules song)
+    Apprentice       Apprendista          (was the Obi-Wan quote)
+    Practitioner     Praticante           (was the Karate Kid quote)
+    Musician         Musicista            (was the pledge quote)
+    Maestro          Gran Maestro         (was the Yoda fragment)
+    Dedicated        Devoto               (was the Shawshank quote)
+    First Blood      First Blood          (was "Rambo"; it is a Halo callout)
+    Trivia Night     Serata quiz          (was the Millionaire lifeline)
+    Golden Ear       Orecchio d'oro       (was the Qui-Gon quote)
+    Completionist    Completista          (was the Pokemon slogan)
+
+The sourced dub lines stay in the descriptions where they belong.
+
+---
+
+## v0.201.148 — Achievement names in Italian, sourced rather than translated
+
+All 40 have a `name_it` now, read through one helper, `achName`. The descriptions
+have had `desc_it` since they were written; the names never had a twin.
+
+Where a name is a quote, the Italian is the line that was actually dubbed, taken
+from Italian Wikiquote, the 1977 Guerre stellari transcript, Pokemon Central Wiki
+and the rest, not a translation of the English:
+
+    I Have You Now        Ora ti tengo
+    Great Ears Kid...     Sei grande, ma non ti montare la testa
+    Master                Ora sono io il maestro
+    Maestro               Bello non sembrerai
+    Practitioner          Dai la cera, togli la cera
+    The Adventurer        Hai scelto bene
+    Explorer              Non c'e bisogno di strade
+    Last One Standing     Non vi siete divertiti?
+    Completionist         Acchiappali tutti!
+    Know-It-All           Sapientona
+    Perfect Pitch         Il cuore delle carte
+    The Climb             Posso farcela
+
+Seven stay English on purpose, because that is what Italians say: Flawless
+Victory, Headshot, Giant Steps, Crikey!, I Got a Fever, It's Dangerous to Go
+Alone, and Everything Everywhere All at Once, which is the Italian release title.
+Two use the Italian release title instead: Rambo for First Blood, Tutti per uno
+for Hard Day's Night, and Gli amici di papa for Full House.
+
+**Four entries write their name in double quotes** because the name contains an
+apostrophe. A bulk pass matching single quotes skipped those four, then inserted
+their value into the NEXT entry along, giving three achievements two `name_it`
+keys where the second silently won. Caught by listing all forty and reading them,
+which is the only check that would have found it.
+
+---
+
+## v0.201.147 — Deaf Composer
+
+The id is `deaf_composer`, the unlock is solving a Chordle without ever pressing
+play, and the description is Beethoven on music being a dream he cannot hear. The
+name said "Dead Composer", which is a different and much worse joke. Confirmed
+with Daniele and corrected.
+
+Achievement names in Italian are still open. The descriptions have been localised
+with real dub lines since they were written; the 40 names have not. Draft and
+sourcing notes are in ACHIEVEMENTS_TRIAGE.md.
+
+---
+
+## v0.201.146 — Twelve strings that were never wired for translation at all
+
+The previous version fixed elements that HAD a `data-i18n` attribute and were not
+being relabeled. This is the other half: text that had no attribute, so no sweep
+was ever going to find it and no relabel could ever reach it.
+
+    tcToggleBtn         START DRONE          AVVIA BORDONE
+    hpPlayBtn           PLAY ASCENDING       SUONA IN SALITA
+    bowedScalePlayBtn   PLAY ASCENDING       SUONA IN SALITA
+    bowedNoteLabel      SELECT A NOTE        SCEGLI UNA NOTA
+    bowedScaleName      SELECT ROOT + SCALE  SCEGLI TONICA + SCALA
+    bowedDsPlayBtn      PLAY DOUBLE STOP     SUONA BICORDO
+    prGoBtn             START                AVVIA
+    pmGraphPeriod       THIS WEEK            QUESTA SETTIMANA
+    pmXpText            XP to LV             XP al LIV
+    diadleStatusText    NAME EACH NOTE       NOMINA OGNI NOTA
+    rrSurvEndTitle      GAME OVER            PARTITA FINITA
+    rr-surv-end-again   PLAY AGAIN           GIOCA ANCORA
+
+The rhythm survival panel was the clearest case: GAME OVER and PLAY AGAIN in
+English, SERIE and ESCI in Italian, in the same box, because two of the four
+happened to have been wired and two had not.
+
+The XP line was hidden differently. It was built in a template literal, with the
+English sitting inside the string where no attribute could reach it, so it read
+"120 / 300 XP to LV 4" in both languages. It takes a key with placeholders now.
+
+Boot measured at zero stale in both languages.
+
+Two things deliberately left in English: the credits, where Open Trivia Database
+and the Noun Project are proper names, and the achievement titles, which are
+jokes that do not survive translation. Say the word if the achievements should be
+Italian and they can be done properly rather than literally.
+
+---
+
+## v0.201.145 — 106 English strings inside the Italian app, one ordering fault
+
+Not missing translations. Every one of them existed: ESCI, Lo sapevi?,
+PRECISIONE, FATTO, PARTITA VELOCE were all sitting in the Italian dictionary and
+resolving correctly when asked. They were simply never applied.
+
+`applyLang()` at boot is an inline script, so it runs while the parser is still
+working, and roughly 29,000 lines of markup come after it, the whole Music Quiz
+among them. It relabeled a document that did not contain those elements yet.
+
+That is why it looked like scattered random leaks. Anything a function drew later
+with `t()` came out in Italian; anything sitting in static markup with a
+`data-i18n` attribute stayed English. Same screen, both behaviours, which sent
+several searches looking for missing strings that were never missing.
+
+One more pass on DOMContentLoaded. Measured on a boot with Italian saved:
+
+    before   106 stale of 1059
+    after      0 stale of 1058
+
+English boots clean, Italian boots clean, and switching language mid-session is
+unaffected. Pinned, since the fault is invisible in the file and only appears on
+a cold start in the second language.
+
+---
+
+## v0.201.144 — PATCH NOTES on the update card
+
+A link under the subtitle, opening the store listing, where the release notes
+already are.
+
+**There is no way to read the notes from Play directly.** `AppUpdateInfo` carries
+an availability flag, a version code, a priority, staleness in days and a byte
+count, and nothing else; release-note text is not in the API at all. The Play
+Developer API does hold the listing, but it needs a service-account key, and a key
+shipped inside a client gives anyone who unzips the APK write access to the
+listing. So the store page is the only honest source, and pointing at it means the
+notes can never fall out of step with what was actually published, which a copy
+bundled in the app would.
+
+A link rather than a third button, since the row underneath is where the decision
+happens and this is only for reading first. It reuses `openAppStore` from the same
+plugin the card already uses. Both languages.
+
+On iOS it will open the App Store listing once there is one; TestFlight builds
+carry their notes in the TestFlight app instead.
+
+---
+
 ## v0.201.143 — ALL PACKS
 
 The button said ALL PACKS with an arrow, which reads as a promise to start. It
