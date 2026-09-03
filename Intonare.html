@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.201.182 -->
+<!-- INTONARE_VERSION: 0.201.191 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -19368,7 +19368,7 @@ html,body{background:#000000!important;transition:none!important}
     font-family:'JetBrains Mono','GlyphFix',monospace; font-size:12px;
     letter-spacing:.1em; color:var(--muted);
   }
-  .nc-card-browse { position:relative; }
+  .nc-card-browse { position:relative; overflow:hidden; }
   .nc-shuf {
     position:absolute; top:10px; left:10px; width:34px; height:34px;
     display:flex; align-items:center; justify-content:center;
@@ -19536,6 +19536,7 @@ html,body{background:#000000!important;transition:none!important}
   }
   .nc-test-btn:active { transform:scale(.96); }
   .nc-opts { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+  .nc-result-opts { margin-top:16px; }
   .nc-opt {
     padding:14px 8px; background:var(--panel);
     border:1px solid var(--border); border-radius:10px;
@@ -19545,8 +19546,68 @@ html,body{background:#000000!important;transition:none!important}
   }
   .nc-opt:active { transform:scale(.975); }
   .nc-opt.nc-right { border-color:var(--in-tune); color:var(--in-tune); }
-  .nc-opt.nc-wrong { border-color:var(--bad); color:var(--bad); opacity:.85; }
+  .nc-opt.nc-wrong { border-color:var(--bad, #ff6b6b); color:var(--bad, #ff6b6b); opacity:.85; }
   .nc-opt.nc-dim   { opacity:.35; }
+  .nc-next-btn {
+    grid-column:1/-1; background:var(--accent); color:var(--bg-0);
+    border-color:var(--accent); font-weight:700; font-size:14px;
+    margin-top:4px;
+  }
+  .nc-next-btn:active { transform:scale(.97); opacity:.9; }
+  /* ── Animations ── */
+  @keyframes nc-swipe-left {
+    from { opacity:0; transform:translateX(60px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  @keyframes nc-swipe-right {
+    from { opacity:0; transform:translateX(-60px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  @keyframes nc-pop {
+    0%   { transform:scale(.85); opacity:0; }
+    60%  { transform:scale(1.04); }
+    100% { transform:scale(1); opacity:1; }
+  }
+  @keyframes nc-fade-in {
+    from { opacity:0; }
+    to   { opacity:1; }
+  }
+  @keyframes nc-slide-up {
+    from { opacity:0; transform:translateY(10px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .nc-fade-in { animation:nc-fade-in .25s ease-out both; }
+  /* Swipe track: holds old + new card during transition */
+  .nc-track { position:relative; overflow:hidden; }
+  .nc-ghost {
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+  }
+  .nc-enter-fwd { animation:nc-enter-right .3s cubic-bezier(.25,.46,.45,.94) both; }
+  .nc-enter-bwd { animation:nc-enter-left  .3s cubic-bezier(.25,.46,.45,.94) both; }
+  .nc-exit-fwd  { animation:nc-exit-left   .3s cubic-bezier(.25,.46,.45,.94) both; }
+  .nc-exit-bwd  { animation:nc-exit-right  .3s cubic-bezier(.25,.46,.45,.94) both; }
+  @keyframes nc-enter-right {
+    from { transform:translateX(100%); opacity:.3; }
+    to   { transform:translateX(0);    opacity:1; }
+  }
+  @keyframes nc-enter-left {
+    from { transform:translateX(-100%); opacity:.3; }
+    to   { transform:translateX(0);     opacity:1; }
+  }
+  @keyframes nc-exit-left {
+    from { transform:translateX(0);     opacity:1; }
+    to   { transform:translateX(-100%); opacity:0; }
+  }
+  @keyframes nc-exit-right {
+    from { transform:translateX(0);     opacity:1; }
+    to   { transform:translateX(100%);  opacity:0; }
+  }
+  .nc-reveal.nc-shown { animation:nc-slide-up .22s ease-out both; }
+  .nc-result .nc-ring-wrap { animation:nc-pop .5s cubic-bezier(.22,1,.36,1) both; }
+  .nc-result .nc-result-pct { animation:nc-fade-in .4s .3s ease-out both; }
+  .nc-result .nc-result-xp { animation:nc-fade-in .4s .45s ease-out both; }
+/* nc-missed-chip: merged below */
+  .nc-opt.nc-right { animation:nc-pop .3s ease-out both; }
   .nc-progress {
     display:flex; justify-content:space-between; align-items:center;
     margin-bottom:10px;
@@ -19572,39 +19633,54 @@ html,body{background:#000000!important;transition:none!important}
     letter-spacing:1.5px; color:var(--accent);
   }
   .nc-reveal-def { font-size:12px; line-height:1.55; color:var(--text-dim); margin-top:5px; }
-  .nc-result { text-align:center; padding:18px 12px 16px; }
-  .nc-ring-wrap { position:relative; width:120px; height:120px; margin:0 auto 12px; }
-  .nc-ring { width:120px; height:120px; transform:rotate(-90deg); }
-  .nc-ring-bg { fill:none; stroke:var(--border-soft); stroke-width:7; }
+  .nc-result { text-align:center; padding:24px 16px 20px; }
+  .nc-ring-wrap { position:relative; width:140px; height:140px; margin:0 auto 16px; }
+  .nc-ring { width:140px; height:140px; transform:rotate(-90deg); }
+  .nc-ring-bg { fill:none; stroke:var(--border-soft); stroke-width:6; }
   .nc-ring-fg {
-    fill:none; stroke:var(--accent); stroke-width:7; stroke-linecap:round;
-    stroke-dasharray:327; stroke-dashoffset:327;
+    fill:none; stroke:var(--accent); stroke-width:6; stroke-linecap:round;
+    stroke-dasharray:377; stroke-dashoffset:377;
     transition:stroke-dashoffset .9s cubic-bezier(.22,1,.36,1);
   }
   .nc-ring-txt {
     position:absolute; inset:0; display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
+    align-items:center; justify-content:center; gap:0;
+  }
+  .nc-result-big {
+    font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:52px;
+    line-height:1; color:var(--text); letter-spacing:2px;
+  }
+  .nc-result-of {
+    font-family:'JetBrains Mono','GlyphFix',monospace; font-size:12px;
+    color:var(--muted); letter-spacing:1px; margin-top:2px;
   }
   .nc-result-pct {
-    font-family:'JetBrains Mono','GlyphFix',monospace; font-size:11px;
-    letter-spacing:2px; color:var(--muted); margin-top:2px;
+    font-family:'JetBrains Mono','GlyphFix',monospace; font-size:12px;
+    letter-spacing:2px; color:var(--muted); margin-top:6px;
   }
   .nc-result-xp {
-    font-family:'JetBrains Mono','GlyphFix',monospace; font-size:11px;
-    letter-spacing:2px; color:var(--in-tune); margin-top:8px;
+    font-family:'JetBrains Mono','GlyphFix',monospace; font-size:12px;
+    letter-spacing:2px; color:var(--in-tune); margin-top:12px;
   }
   .nc-missed {
-    display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:14px;
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px;
   }
   .nc-missed-chip {
-    font-size:10px; letter-spacing:1px; padding:5px 9px;
-    border:1px solid var(--border-soft); border-radius:999px;
-    color:var(--text-dim); background:var(--surface);
+    font-size:11px; letter-spacing:1px; padding:6px 12px;
+    border:1px solid var(--bad, #ff6b6b); border-radius:999px;
+    color:var(--bad, #ff6b6b); background:var(--surface);
+    animation:nc-slide-up .25s ease-out both;
   }
+  .nc-missed-chip:nth-child(1) { animation-delay:.35s; }
+  .nc-missed-chip:nth-child(2) { animation-delay:.4s; }
+  .nc-missed-chip:nth-child(3) { animation-delay:.45s; }
+  .nc-missed-chip:nth-child(4) { animation-delay:.5s; }
+  .nc-missed-chip:nth-child(5) { animation-delay:.55s; }
+  .nc-missed-chip:nth-child(n+6) { animation-delay:.6s; }
   /* A bare <button> with no press state reads as dead on a touch screen even
      when the handler is firing. */
   .nc-quit { background:var(--panel); color:var(--muted); border:1px solid var(--border-soft); }
-  .nc-quit:active { color:var(--bad); border-color:var(--bad); }
+  .nc-quit:active { color:var(--bad, #ff6b6b); border-color:var(--bad, #ff6b6b); }
   .nc-name-slot {
     color:var(--muted); font-size:20px; letter-spacing:.12em;
     height:56px; display:flex; align-items:center; justify-content:center;
@@ -19669,11 +19745,8 @@ html,body{background:#000000!important;transition:none!important}
     font-family:'JetBrains Mono','GlyphFix',monospace; font-size:11px;
     letter-spacing:2px; text-transform:uppercase; cursor:pointer;
   }
-  .nc-result-score {
-    font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:44px;
-    letter-spacing:2px; color:var(--accent);
-  }
-  .nc-result-sub { font-size:12px; color:var(--text-dim); margin-top:4px; }
+  /* nc-result-score replaced by nc-result-big + nc-result-of */
+  .nc-result-sub { font-size:13px; color:var(--text-dim); margin-top:8px; }
 
   /* ── ABOUT LIST ──────────────────────────────────────────────────────────
      The tail of Settings had grown to five identical full-width boxes doing
@@ -25168,6 +25241,16 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 .rct-dot-cur { background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
 .rct-dot-pass { background: #38d39f; }
 .rct-dot-fail { background: #d35038; }
+/* Swipe track for rhythm browse cards */
+.rc-track { position:relative; overflow:hidden; }
+.rc-ghost {
+  position:absolute; inset:0; z-index:2; pointer-events:none;
+}
+.rc-enter-fwd { animation:nc-enter-right .3s cubic-bezier(.25,.46,.45,.94) both; }
+.rc-enter-bwd { animation:nc-enter-left  .3s cubic-bezier(.25,.46,.45,.94) both; }
+.rc-exit-fwd  { animation:nc-exit-left   .3s cubic-bezier(.25,.46,.45,.94) both; }
+.rc-exit-bwd  { animation:nc-exit-right  .3s cubic-bezier(.25,.46,.45,.94) both; }
+
 .rct-card {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 10px; border: 1px solid var(--border, rgba(255,255,255,0.10)); border-radius: 14px;
@@ -25204,10 +25287,36 @@ body.ov-portrait-rotate .thmn-overlay.active { width: 100dvh; height: 100dvw; to
 .rct-results { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
 .rct-results-head { text-align: center; flex-shrink: 0; }
 .rct-results-title { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 11px; letter-spacing: .2em; color: var(--text-dim); }
-.rct-score { font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 48px; line-height: 1; color: var(--text); }
+.rct-ring-wrap { position:relative; width:140px; height:140px; margin:8px auto 4px; }
+.rct-ring { width:140px; height:140px; transform:rotate(-90deg); }
+.rct-ring-bg { fill:none; stroke:var(--border, rgba(255,255,255,.12)); stroke-width:6; }
+.rct-ring-fg {
+  fill:none; stroke:var(--accent); stroke-width:6; stroke-linecap:round;
+  stroke-dasharray:377; stroke-dashoffset:377;
+  transition:stroke-dashoffset .9s cubic-bezier(.22,1,.36,1);
+}
+.rct-ring-txt {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+}
+.rct-score { font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 52px; line-height: 1; color: var(--text); }
+.rct-score-of { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:12px; color:var(--muted, rgba(255,255,255,.4)); letter-spacing:1px; margin-top:2px; }
 .rct-score-pct { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 14px; color: var(--accent); letter-spacing: .1em; }
+.rct-results-head .rct-ring-wrap { animation:nc-pop .5s cubic-bezier(.22,1,.36,1) both; }
+.rct-results-head .rct-score-pct { animation:nc-fade-in .4s .3s ease-out both; }
 .rct-breakdown { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px; }
-.rct-row { border: 1px solid var(--border, rgba(255,255,255,0.10)); border-radius: 10px; padding: 10px 12px; }
+.rct-row {
+  border: 1px solid var(--border, rgba(255,255,255,0.10)); border-radius: 10px; padding: 10px 12px;
+  animation: nc-slide-up .3s ease-out both;
+}
+.rct-row:nth-child(1) { animation-delay:.05s; }
+.rct-row:nth-child(2) { animation-delay:.1s; }
+.rct-row:nth-child(3) { animation-delay:.15s; }
+.rct-row:nth-child(4) { animation-delay:.2s; }
+.rct-row:nth-child(5) { animation-delay:.25s; }
+.rct-row:nth-child(6) { animation-delay:.3s; }
+.rct-row:nth-child(7) { animation-delay:.35s; }
+.rct-row:nth-child(n+8) { animation-delay:.4s; }
 .rct-row-pass { border-color: color-mix(in srgb, #38d39f 40%, transparent); }
 .rct-row-fail { border-color: color-mix(in srgb, #d35038 40%, transparent); }
 .rct-row-head { display: flex; justify-content: space-between; align-items: center; }
@@ -28402,6 +28511,7 @@ try {
       </div>
 
       <!-- the card -->
+      <div class="rc-track" id="rcBrowseTrack">
       <div class="rc-card">
         <div class="rc-card-head">
           <div class="rc-name" id="rcName">—</div>
@@ -28412,6 +28522,7 @@ try {
         <div class="rc-blurb" id="rcBlurb"></div>
         <div class="rc-tap-feedback" id="rcTapFeedback"></div>
         <div class="rc-diag" id="rcDiag"></div>
+      </div>
       </div>
 
       <!-- Tap zone. Sits ABOVE the transport and the tempo slider, not at the bottom of
@@ -28482,7 +28593,16 @@ try {
         <div class="rct-results" id="rctResults" style="display:none">
           <div class="rct-results-head">
             <div class="rct-results-title" data-i18n="rc_test_done">TEST COMPLETE</div>
-            <div class="rct-score" id="rctScore">0 / 0</div>
+            <div class="rct-ring-wrap">
+              <svg class="rct-ring" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="60" class="rct-ring-bg"/>
+                <circle cx="70" cy="70" r="60" class="rct-ring-fg" id="rctResRing"/>
+              </svg>
+              <div class="rct-ring-txt">
+                <div class="rct-score" id="rctScore">0</div>
+                <div class="rct-score-of" id="rctScoreOf">/ 0</div>
+              </div>
+            </div>
             <div class="rct-score-pct" id="rctScorePct"></div>
           </div>
           <div class="rct-breakdown" id="rctBreakdown"></div>
@@ -30803,6 +30923,7 @@ try {
         <button class="nc-test-btn" id="ncTestBtn" onclick="nctStart()" data-i18n="nc_test_btn">&#9654;&#xFE0E; TEST</button>
         <button class="nc-test-btn nc-quit hidden" id="ncQuitBtn" onclick="nctQuit()" data-i18n="nc_quit">&#10005; QUIT</button>
       </div>
+      <div class="nc-track" id="ncBrowseTrack">
       <div class="nc-card nc-card-browse">
         <button class="nc-shuf" id="ncShuffleBtn" onclick="ncToggleShuffle()"
                 aria-pressed="false" aria-label="Shuffle">
@@ -30813,6 +30934,7 @@ try {
         <div class="nc-stage"><div class="nc-glyph-wrap" id="ncGlyph"></div></div>
         <div class="nc-def" id="ncDef"></div>
         <div class="nc-grp" id="ncGrp"></div>
+      </div>
       </div>
       <div class="nc-nav" id="ncNav">
         <button class="nc-nav-btn" onclick="ncPrev()" aria-label="Previous card">&#8249;</button>
@@ -30842,10 +30964,12 @@ try {
 
       <!-- TEST MODE -->
       <div id="ncTest" class="hidden">
+        <div class="nc-track" id="ncTestTrack">
         <div class="nc-card">
           <div class="nc-name nc-name-slot" id="nctPrompt">&mdash;</div>
           <div class="nc-stage"><div class="nc-glyph-wrap" id="nctGlyph"></div></div>
           <div class="nc-reveal" id="nctReveal"></div>
+        </div>
         </div>
         <div class="nc-opts" id="nctOpts"></div>
       </div>
@@ -30854,26 +30978,24 @@ try {
       <div id="ncResult" class="hidden">
         <div class="nc-card nc-result">
           <div class="nc-ring-wrap">
-            <svg class="nc-ring" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="52" class="nc-ring-bg"/>
-              <circle cx="60" cy="60" r="52" class="nc-ring-fg" id="ncResRing"/>
+            <svg class="nc-ring" viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="60" class="nc-ring-bg"/>
+              <circle cx="70" cy="70" r="60" class="nc-ring-fg" id="ncResRing"/>
             </svg>
             <div class="nc-ring-txt">
-              <div class="nc-result-score" id="ncResScore">0 / 10</div>
-              <div class="nc-result-pct" id="ncResPct">0%</div>
+              <div class="nc-result-big" id="ncResBig">0</div>
+              <div class="nc-result-of" id="ncResOf">/ 10</div>
             </div>
           </div>
-          <div class="nc-result-sub" id="ncResSub"></div>
+          <div class="nc-result-pct" id="ncResPct">0%</div>
           <div class="nc-result-xp" id="ncResXp"></div>
           <div id="ncResMissed" class="nc-missed"></div>
         </div>
-        <div class="nc-opts">
+        <div class="nc-opts nc-result-opts" id="ncResOpts">
           <button class="nc-opt" onclick="nctStart()" data-i18n="nc_again">Again</button>
           <button class="nc-opt" id="ncDrillBtn" onclick="nctStartDrill()" data-i18n="nc_drill">Drill your misses</button>
         </div>
-        <div class="nc-nav" style="margin-top:8px">
-          <button class="nc-nav-btn" style="flex:1" onclick="ncExitTest()" data-i18n="nc_back_browse">Back to browsing</button>
-        </div>
+        <button class="nc-opt" style="width:100%;margin-top:8px;opacity:.6" onclick="ncExitTest()" data-i18n="nc_back_browse">Back to browsing</button>
       </div>
     </div>
 
@@ -32185,10 +32307,6 @@ try {
         <div class="credits-item">dinnerchief &mdash; Piano &mdash; <a href="https://thenounproject.com" target="_blank">the Noun Project</a></div>
       </div>
       <div class="credits-group">
-        <div class="credits-group-title">Samples</div>
-        <div class="credits-item">Tobias Marberger &mdash; Mandolin (G-Town Church Sampling Project) &mdash; <a href="https://creativecommons.org/licenses/sampling+/1.0/" target="_blank">CC Sampling+ 1.0</a></div>
-      </div>
-      <div class="credits-group">
         <div class="credits-group-title" data-i18n="credits_fingering">Fingering diagrams</div>
         <div class="credits-item"><a href="https://fingering.bretpimentel.com" target="_blank">Bret Pimentel</a> &mdash; Bassoon &amp; Contrabassoon body diagrams &mdash; <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></div>
       </div>
@@ -33312,7 +33430,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.201.182</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.201.191</span>
     </div>
   </div>
 </div>
@@ -33320,7 +33438,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.201.182';
+const INTONARE_VERSION = '0.201.191';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -35224,7 +35342,7 @@ const GROOVE_PRESETS = [
     steps: [1,0,0, 2,0,1, 1,0,0, 2,0,1],
   },
   {
-    id: 'blueshuffle', cat: 'funk', beats: 4, suggestedBpm: 88,
+    id: 'blueshuffle', cat: 'funk', beats: 4, suggestedBpm: 96,
     name: 'BLUES SHUFFLE',   origin: 'Chicago / Texas blues',      originIt: 'Blues Chicago / Texas',
     // Shuffle: long-short swung pair on every beat (beat + its triplet "and").
     // VERIFIED. Every source gives the same rule. Drum Beats Online: "In a shuffle,
@@ -35262,7 +35380,7 @@ const GROOVE_PRESETS = [
   },
   // ── WORLD ──
   {
-    id: 'flamenco', cat: 'world', beats: 6, suggestedBpm: 110,
+    id: 'flamenco', cat: 'world', beats: 6, pulse: 6, suggestedBpm: 110,
     name: 'FLAMENCO BULERÍA', origin: 'Andalusian flamenco',        originIt: 'Flamenco andaluso',
     // NOTES CORRECTED. The comment had the right idea and the wrong arithmetic. It
     // said "accents on 12,3,6,8,10 -> steps 0,2,5,7,9", but if step 0 is count 12
@@ -35297,7 +35415,7 @@ const GROOVE_PRESETS = [
     steps: [2,0,0,2,0,0,2,0,2,0,2,0],
   },
   {
-    id: 'compas',   cat: 'world', beats: 6, suggestedBpm: 48,
+    id: 'compas',   cat: 'world', beats: 6, pulse: 6, suggestedBpm: 48,
     name: 'COMPÁS SOLEÁ',    origin: 'Flamenco soleares',          originIt: 'Flamenco soleares',
     // VERIFIED, no change. 12-beat compás counted from 1, so step 0 is count 1 and
     // the accents on counts 3, 6, 8, 10, 12 land on steps 2, 5, 7, 9, 11. They do.
@@ -36074,7 +36192,12 @@ const GROOVE_PRESETS = [
 
   // ── 9/8 GROOVES (9 steps, one per 8th note) ──
   {
-    id: 'eskista',     cat: 'world', beats: 9, pulseBeats: 3, suggestedBpm: 176,
+    id: 'eskista',     cat: 'world', beats: 9, pulseBeats: 3, pulse: 9, suggestedBpm: 176,
+    // pulse:9 states what the tempo comment already says: this one is quoted PER
+    // EIGHTH, so its felt unit is the eighth and there are nine to the bar. Without
+    // it the meter default read 9/8 as three dotted beats and the chords ran three
+    // times fast against the groove. pulseBeats:3 is the ACCENT grouping (2+2+2+3
+    // lives there); pulse is the tempo unit. Different questions, both needed.
     name: 'KARŞILAMA',       origin: '9/8 — Turkish folk dance',   originIt: '9/8 — danza popolare turca',
     // 2+2+2+3 — the Turkish karşılama. (Previously labeled ESKISTA; the
     // characteristic Ethiopian groove is the 6/8 chikchika, not 9/8 — this
@@ -37269,8 +37392,8 @@ const INST_TONE_MAP = {
   violin: 'bowed_violin', viola: 'bowed_viola', cello: 'bowed_cello', doublebass: 'bowed_doublebass',
   bowed_violin: 'bowed_violin', bowed_viola: 'bowed_viola', bowed_cello: 'bowed_cello', bowed_doublebass: 'bowed_doublebass',
   // Plucked
-  mandolin: 'mandolin', banjo5: 'banjo', banjo: 'banjo', harp: 'harp',
-  bouzouki: 'mandolin', lute: 'nylon_guitar',
+  mandolin: 'banjo', banjo5: 'banjo', banjo: 'banjo', harp: 'harp',
+  bouzouki: 'banjo', lute: 'nylon_guitar',
   // Bass (CS alias)
   bass: 'bass',
   // Uke bass
@@ -38950,22 +39073,24 @@ const REF_SYNTH_TRIM = {
   trumpet: 1.79, tuba: 2.07, ukebass: 1.51, vibraphone: 3.38, xylophone: 2.18,
 };
 
+// Mandolin and bouzouki have doubled courses (two strings per note).
+var _DOUBLED_COURSE_TONES = { mandolin:1, bouzouki:1, lute:1 };
 function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
   const t = when ?? ctx.currentTime;
+  // The selected INSTRUMENT determines doubled-course, not the sample set.
+  // Mandolin maps to banjo samples but still needs the paired-string effect.
+  const _dc = !!(typeof selectedInstrument !== 'undefined' &&
+    _DOUBLED_COURSE_TONES[selectedInstrument]);
   if (SampleEngine.isReady(toneId)) {
     const delay = t - ctx.currentTime;
     if (delay > 0.005) {
-      // Future note: schedule via setTimeout so SampleEngine.play fires at the right time
       let liveNode = null;
       const handle = setTimeout(() => {
-        // Exact MIDI (no rounding) so playbackRate tracks true freq, e.g. 432 Hz refPitch
-        liveNode = SampleEngine.play(toneId, freqToMidiExact(freq), ctx, dest, vol, dur);
+        liveNode = SampleEngine.play(toneId, freqToMidiExact(freq), ctx, dest, vol, dur, undefined, _dc);
       }, delay * 1000);
-      // Proxy: cancel the pending timer AND stop the note if it already started
       return { stop() { clearTimeout(handle); if (liveNode && liveNode.stop) { try { liveNode.stop(); } catch(e){} } } };
     }
-    // Exact MIDI (no rounding) so playbackRate tracks true freq, e.g. 432 Hz refPitch
-    const node = SampleEngine.play(toneId, freqToMidiExact(freq), ctx, dest, vol, dur);
+    const node = SampleEngine.play(toneId, freqToMidiExact(freq), ctx, dest, vol, dur, undefined, _dc);
     if (node) return node;
   }
   const tone = REF_TONES[toneId] || REF_TONES.sine;
@@ -39616,36 +39741,140 @@ function detectPitch(buf, sr) {
 }
 
 // ═══════════════════════════════════════════════
-// LIVE TEMPO (ONSET DETECTION)
+// LIVE TEMPO (SPECTRAL-FLUX ONSET DETECTION)
 // ═══════════════════════════════════════════════
+// Previous version used RMS energy with a fixed gate. That only caught loud
+// transients and missed softer hits, legato attacks, and timbral changes.
+// This version uses half-wave-rectified spectral flux (positive magnitude
+// increases across frequency bins), which is the standard onset-detection
+// function in aubio, BTrack, Essentia, and the academic literature (Dixon,
+// "Onset Detection Revisited," DAFx 2006). An adaptive threshold (running
+// mean + k * running deviation) replaces the fixed gate so it adjusts to
+// room noise and playing volume automatically.
+
+// Spectral flux state
+let _sfPrevMag   = null;         // previous frame magnitude spectrum
+let _sfHistory   = [];           // recent flux values for adaptive threshold
+const _SF_HIST   = 12;           // frames of history (~0.5s at ~22fps)
+const _SF_K      = 1.4;          // threshold = mean + k * stddev
+const _SF_MINIOI = 100;          // minimum inter-onset interval (ms)
+const _SF_WINDOW = 5000;         // onset memory window (ms)
+const _SF_MAX_ONSETS = 16;       // max onsets to keep
+// Frequency-domain buffer (allocated once, reused)
+let _sfFreqBuf = null;
+
+// Tempo estimation state
+let _tempoConfidence = 0;        // 0-1, rises as more onsets arrive
+const _TEMPO_MIN_ONSETS = 3;     // minimum onsets for a reading
+const _TEMPO_SETTLE_MS = 3000;   // show "listening" for this long
+
+// Perceptual tempo prior: log-Gaussian centered at 120 BPM.
+// Candidates near 120 get a boost; extreme values are penalized.
+// This is the standard octave-error defense (aubio, librosa, etc.).
+function _tempoPrior(bpm) {
+  const logRatio = Math.log2(bpm / 120);
+  return Math.exp(-0.5 * logRatio * logRatio / (0.5 * 0.5));
+}
+
 function detectOnset(buf) {
-  let energy = 0;
-  for (let i = 0; i < buf.length; i++) energy += buf[i] * buf[i];
-  energy = Math.sqrt(energy / buf.length);
-
   const now = performance.now();
-  // Absolute gate, like detectPitch's RMS floor, has to account for the native path:
-  // AudioRecord with AGC off is rawer/quieter than the WebView analyzer, so a fixed
-  // 0.04 is a MUCH higher bar on native and quiet taps simply never register.
-  const _onsetGate = _nativeMicActive ? 0.012 : 0.04;
-  if (energy > _onsetGate && energy > lastEnergy * 1.6 && (onsetTimes.length === 0 || now - onsetTimes[onsetTimes.length-1] > 120)) {
-    onsetTimes.push(now);
-    if (onsetTimes.length > 12) onsetTimes.shift();
-  }
-  // Trim onsets older than 4 seconds — shorter window = more responsive to tempo changes
-  while (onsetTimes.length > 0 && now - onsetTimes[0] > 4000) onsetTimes.shift();
-  lastEnergy = energy * 0.7 + lastEnergy * 0.3;
 
-  if (onsetTimes.length >= 2) {
-    // Use only the most recent 6 intervals for responsiveness
-    const recent = onsetTimes.slice(-7);
-    const intervals = [];
-    for (let i = 1; i < recent.length; i++) intervals.push(recent[i] - recent[i-1]);
-    intervals.sort((a,b) => a - b);
-    const median = intervals[Math.floor(intervals.length / 2)];
-    const bpmVal = 60000 / median;
-    if (bpmVal >= 40 && bpmVal <= 240) detectedBPM = Math.round(bpmVal);
-    else detectedBPM = null;
+  // ── Spectral flux ──────────────────────────────────────────────────
+  // Use the analyser's frequency data (magnitude spectrum in dB).
+  // Convert to linear magnitude, compute half-wave-rectified flux.
+  if (!_sfFreqBuf && typeof analyzer !== 'undefined') {
+    _sfFreqBuf = new Float32Array(analyzer.frequencyBinCount);
+  }
+  if (!_sfFreqBuf || typeof analyzer === 'undefined') return;
+
+  analyzer.getFloatFrequencyData(_sfFreqBuf);
+  const nBins = _sfFreqBuf.length;
+
+  // Convert dB to linear magnitude and compute flux
+  let flux = 0;
+  if (!_sfPrevMag) _sfPrevMag = new Float32Array(nBins);
+  for (let i = 0; i < nBins; i++) {
+    // getFloatFrequencyData returns dB; convert to linear (clamped)
+    const db = _sfFreqBuf[i];
+    const mag = db > -100 ? Math.pow(10, db / 20) : 0;
+    // Half-wave rectification: only count increases
+    const diff = mag - _sfPrevMag[i];
+    if (diff > 0) flux += diff;
+    _sfPrevMag[i] = mag;
+  }
+
+  // ── Adaptive threshold ─────────────────────────────────────────────
+  _sfHistory.push(flux);
+  if (_sfHistory.length > _SF_HIST) _sfHistory.shift();
+
+  let mean = 0;
+  for (let i = 0; i < _sfHistory.length; i++) mean += _sfHistory[i];
+  mean /= _sfHistory.length;
+  let variance = 0;
+  for (let i = 0; i < _sfHistory.length; i++) {
+    const d = _sfHistory[i] - mean;
+    variance += d * d;
+  }
+  const stddev = Math.sqrt(variance / _sfHistory.length);
+  const threshold = mean + _SF_K * stddev;
+
+  // ── Peak pick ──────────────────────────────────────────────────────
+  const lastOnset = onsetTimes.length ? onsetTimes[onsetTimes.length - 1] : 0;
+  if (flux > threshold && flux > mean * 1.3 && (now - lastOnset) > _SF_MINIOI) {
+    onsetTimes.push(now);
+    if (onsetTimes.length > _SF_MAX_ONSETS) onsetTimes.shift();
+  }
+
+  // Trim old onsets
+  while (onsetTimes.length > 0 && now - onsetTimes[0] > _SF_WINDOW) onsetTimes.shift();
+
+  // ── Tempo estimation ───────────────────────────────────────────────
+  if (onsetTimes.length < _TEMPO_MIN_ONSETS) {
+    _tempoConfidence = onsetTimes.length / _TEMPO_MIN_ONSETS;
+    detectedBPM = null;
+    return;
+  }
+
+  // Compute all inter-onset intervals from the last 10 onsets
+  const recent = onsetTimes.slice(-10);
+  const intervals = [];
+  for (let i = 1; i < recent.length; i++) intervals.push(recent[i] - recent[i - 1]);
+
+  // Outlier rejection: discard intervals deviating >40% from the median
+  intervals.sort((a, b) => a - b);
+  const rawMedian = intervals[Math.floor(intervals.length / 2)];
+  const filtered = intervals.filter(iv => Math.abs(iv - rawMedian) < rawMedian * 0.4);
+  if (filtered.length < 2) { detectedBPM = null; return; }
+
+  // Median of the filtered set
+  filtered.sort((a, b) => a - b);
+  const cleanMedian = filtered[Math.floor(filtered.length / 2)];
+  let bpmVal = 60000 / cleanMedian;
+
+  // Octave-error correction: check half and double tempo against the prior
+  if (bpmVal >= 40 && bpmVal <= 240) {
+    const candidates = [bpmVal];
+    if (bpmVal * 2 <= 240) candidates.push(bpmVal * 2);
+    if (bpmVal / 2 >= 40) candidates.push(bpmVal / 2);
+    // Pick the candidate with the strongest prior weight
+    let best = bpmVal, bestScore = _tempoPrior(bpmVal);
+    for (const c of candidates) {
+      const score = _tempoPrior(c);
+      if (score > bestScore) { best = c; bestScore = score; }
+    }
+    bpmVal = best;
+  }
+
+  if (bpmVal >= 40 && bpmVal <= 240) {
+    // Smooth: EMA so the display doesn't jump around
+    if (detectedBPM != null) {
+      detectedBPM = Math.round(detectedBPM * 0.6 + bpmVal * 0.4);
+    } else {
+      detectedBPM = Math.round(bpmVal);
+    }
+    _tempoConfidence = Math.min(1, filtered.length / 6);
+  } else {
+    detectedBPM = null;
   }
 }
 
@@ -39654,11 +39883,21 @@ function updateDetectedBPMDisplay() {
   const verdict = document.getElementById('tempoVerdict');
   if (!el) return;
   if (!detectedBPM) {
-    el.textContent = '—';
-    el.className = 'live-tempo-big idle';
-    if (verdict) {
-      verdict.textContent = isListening ? t('tempo_verdict_mic_on') || 'TAP OR PLAY RHYTHMICALLY' : t('tempo_verdict_idle') || 'MIC OFF · TAP MIC TO START';
-      verdict.className = 'tempo-verdict' + (isListening ? ' mic-on' : '');
+    // Show settling state when we have some onsets but not enough
+    if (isListening && _tempoConfidence > 0 && _tempoConfidence < 1) {
+      el.textContent = '...';
+      el.className = 'live-tempo-big settling';
+      if (verdict) {
+        verdict.textContent = t('tempo_verdict_settling') || 'listening...';
+        verdict.className = 'tempo-verdict settling';
+      }
+    } else {
+      el.textContent = '—';
+      el.className = 'live-tempo-big idle';
+      if (verdict) {
+        verdict.textContent = isListening ? t('tempo_verdict_mic_on') || 'TAP OR PLAY RHYTHMICALLY' : t('tempo_verdict_idle') || 'MIC OFF · TAP MIC TO START';
+        verdict.className = 'tempo-verdict' + (isListening ? ' mic-on' : '');
+      }
     }
     return;
   }
@@ -40480,7 +40719,7 @@ function stopMic() {
   smoothedCents = 0;
   _pitchHistIdx = 0;   // clear the median window on mic stop
   _detectCandidate = null; _detectCandidateFrames = 0;
-  detectedBPM = null; onsetTimes = []; lastEnergy = 0;
+  detectedBPM = null; onsetTimes = []; lastEnergy = 0; _sfPrevMag = null; _sfHistory = []; _tempoConfidence = 0;
   const _mbStop = document.getElementById('micBtn');
   _mbStop.className = 'head-btn mic-head-btn';
   _mbStop.style.boxShadow = '';
@@ -49820,7 +50059,11 @@ function riffStart(inst, id) {
           if (isGrace) {
             _riffEvents.push({ t: end + 10 + i * roll, fn: function(){
               if (!_riffActive) return;
-              if (isPiano) _riffPianoNoteOff(mid, true);
+              // Grace notes play through pianoCardPlay (refOscs), not
+              // _riffPianoNoteOn (_riffVoices). The off must match the on:
+              // _riffPianoNoteOff would kill whatever regular note now occupies
+              // _riffVoices[mid], producing a 10ms blip then a hard pop.
+              if (isPiano && typeof pianoCardRelease === 'function') pianoCardRelease(mid);
               else if (inst === 'organ') _riffOrganNoteOff(mid, n.man);
               else if (inst === 'rhodes' && typeof rhodesCardRelease === 'function') rhodesCardRelease(mid);
             }});
@@ -50437,8 +50680,15 @@ function tapTempo() {
   if (tapTimes.length >= 4) {
     const intervals = [];
     for (let i = 1; i < tapTimes.length; i++) intervals.push(tapTimes[i] - tapTimes[i-1]);
-    const avg = intervals.reduce((a,b) => a+b) / intervals.length;
-    const newBPM = Math.round(60000 / avg);
+    // Median filtering: robust to a single mistap (the mean is not)
+    const sorted = intervals.slice().sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    // Outlier rejection: discard intervals deviating >40% from the median
+    const clean = intervals.filter(iv => Math.abs(iv - median) < median * 0.4);
+    const useMedian = clean.length >= 2
+      ? clean.sort((a, b) => a - b)[Math.floor(clean.length / 2)]
+      : median;
+    const newBPM = Math.round(60000 / useMedian);
     if (newBPM >= 30 && newBPM <= 300) {
       // Update BPM live — scheduler reads bpm on every advanceNote so it shifts naturally
       // No beat reset, no queue flush — tempo changes smoothly between notes
@@ -53146,8 +53396,12 @@ function ncToggleShuffle() {
   try { hapticLight(); } catch (e) {}
 }
 function ncStep(dir) {
+  if (_ncSwiping) return;
   var d = ncDeck();
   if (!d.length) return;
+  var bc = document.querySelector('.nc-card-browse');
+  _ncSnapshot = bc ? bc.cloneNode(true) : null;
+  if (_ncSnapshot) { _ncSnapshot.removeAttribute('id'); _ncSnapshot.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id');}); }
   if (!ncShuffled || !ncOrder || ncOrder.length !== d.length) {
     ncIdx = (ncIdx + dir + d.length) % d.length;
   } else {
@@ -53155,7 +53409,28 @@ function ncStep(dir) {
     if (pos < 0) pos = 0;
     ncIdx = ncOrder[(pos + dir + ncOrder.length) % ncOrder.length];
   }
+  _ncLastDir = dir;
   ncRender();
+}
+var _ncLastDir = 1;
+var _ncSnapshot = null;
+var _ncSwiping = false;
+
+function _ncSwipe(trackId, cardEl, dir) {
+  if (!cardEl) return;
+  var track = document.getElementById(trackId);
+  if (!track || !_ncSnapshot) { _ncSnapshot = null; return; }
+  _ncSwiping = true;
+  var snap = _ncSnapshot;
+  snap.classList.add('nc-ghost');
+  snap.classList.add(dir >= 0 ? 'nc-exit-fwd' : 'nc-exit-bwd');
+  track.appendChild(snap);
+  snap.addEventListener('animationend', function() { snap.remove(); _ncSwiping = false; });
+  setTimeout(function() { if (snap.parentNode) snap.remove(); _ncSwiping = false; }, 400);
+  cardEl.classList.remove('nc-enter-fwd','nc-enter-bwd');
+  void cardEl.offsetWidth;
+  cardEl.classList.add(dir >= 0 ? 'nc-enter-fwd' : 'nc-enter-bwd');
+  _ncSnapshot = null;
 }
 function ncSelectedPacks() { return Object.keys(ncSel).filter(function (k) { return ncSel[k]; }); }
 // Card text follows the app language. `nameIt` is the same convention the
@@ -53275,10 +53550,10 @@ function ncRender() {
   var c = d[ncIdx];
   var wrap = document.getElementById('ncGlyph');
   if (wrap) {
-    // Fixed-height inner box or the per-glyph translateY leaks into the layout
-    // and drags whatever sits beside it out of position.
     wrap.innerHTML = ncGlyphHtml(c, NC_SCALE);
   }
+  var browseCard = wrap && wrap.closest('.nc-card');
+  if (_ncSnapshot) _ncSwipe('ncBrowseTrack', browseCard, _ncLastDir);
   var el;
   if ((el = document.getElementById('ncName')))  el.textContent = ncName(c);
   if ((el = document.getElementById('ncDef')))   el.textContent = ncDef(c);
@@ -53355,8 +53630,9 @@ function nctStartDrill() {
 
 function ncShowPhase(p) {
   var ids = { browse: ['ncNav'], test: ['ncTest'], result: ['ncResult'] };
-  var card = document.querySelector('#exNotationCards > .nc-card');
-  if (card) card.classList.toggle('hidden', p !== 'browse');
+  // The browse card is inside .nc-track, so hide the track wrapper
+  var browseTrack = document.getElementById('ncBrowseTrack');
+  if (browseTrack) browseTrack.classList.toggle('hidden', p !== 'browse');
   Object.keys(ids).forEach(function (k) {
     ids[k].forEach(function (id) {
       var el = document.getElementById(id);
@@ -53451,10 +53727,15 @@ function nctRender() {
   var c = nctQueue[nctIdx];
   if (!c) return;
   nctLocked = false;
+  if (!_ncSnapshot) { var tc = document.querySelector('#ncTestTrack .nc-card'); if (tc) { _ncSnapshot = tc.cloneNode(true); _ncSnapshot.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id');}); } }
   var g = document.getElementById('nctGlyph');
   if (g) g.innerHTML = ncGlyphHtml(c, NC_SCALE);
+  var card = g && g.closest('.nc-card');
+  if (_ncSnapshot) _ncSwipe('ncTestTrack', card, 1);
   var rv = document.getElementById('nctReveal');
   if (rv) { rv.innerHTML = ''; rv.classList.remove('nc-shown'); }
+  var oldNext = document.getElementById('nctNextBtn');
+  if (oldNext) oldNext.remove();
   var pr = document.getElementById('nctPrompt');
   if (pr) pr.textContent = t('nc_what_is_this') || 'WHAT IS THIS?';
   var el;
@@ -53496,10 +53777,26 @@ function nctAnswer(picked, card, btn) {
   }
   var el = document.getElementById('nctScore');
   if (el) el.textContent = String(nctScore);
+  // Show a Next button below the answers so the user can read the
+  // definition at their own pace. Correct answers get a short delay
+  // first so the green flash lands before the button appears.
   setTimeout(function () {
-    nctIdx++;
-    if (nctIdx >= nctQueue.length) nctFinish(); else nctRender();
-  }, right ? 900 : 2100);
+    var existing = document.getElementById('nctNextBtn');
+    if (existing) return;  // already shown
+    var nextBtn = document.createElement('button');
+    nextBtn.className = 'nc-opt nc-next-btn nc-fade-in';
+    nextBtn.id = 'nctNextBtn';
+    nextBtn.textContent = t('nc_next');
+    nextBtn.onclick = function () {
+      var tc = document.querySelector('#ncTestTrack .nc-card');
+      _ncSnapshot = tc ? tc.cloneNode(true) : null;
+      if (_ncSnapshot) _ncSnapshot.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id');});
+      nctIdx++;
+      if (nctIdx >= nctQueue.length) nctFinish(); else nctRender();
+    };
+    var optBox = document.getElementById('nctOpts');
+    if (optBox) optBox.appendChild(nextBtn);
+  }, right ? 700 : 100);
 }
 
 // Leaving mid-run. Without this the only way out of a test was to finish it,
@@ -53516,14 +53813,11 @@ function nctFinish() {
   var total = nctQueue.length || 1;
   var pct = Math.round((nctScore / total) * 100);
   var el;
-  if ((el = document.getElementById('ncResScore'))) el.textContent = nctScore + ' / ' + nctQueue.length;
-  if ((el = document.getElementById('ncResPct')))   el.textContent = pct + '%';
-  if ((el = document.getElementById('ncResSub')))
-    el.textContent = nctMissed.length
-      ? (nctMissed.length + ' ' + (t('nc_to_work_on') || 'to work on'))
-      : (t('nc_clean') || 'Every one.');
-  // Name what was missed. "8 to work on" tells you nothing; the eight names tell
-  // you whether you are confusing a family or just guessed badly once.
+  if ((el = document.getElementById('ncResBig')))  el.textContent = nctScore;
+  if ((el = document.getElementById('ncResOf')))   el.textContent = '/ ' + nctQueue.length;
+  if ((el = document.getElementById('ncResPct')))  el.textContent = pct + '%';
+  // The missed chips already name what went wrong; a count line above them
+  // was redundant.
   var box = document.getElementById('ncResMissed');
   if (box) {
     box.innerHTML = '';
@@ -53535,7 +53829,9 @@ function nctFinish() {
     });
   }
   var drill = document.getElementById('ncDrillBtn');
+  var resOpts = document.getElementById('ncResOpts');
   if (drill) drill.style.display = nctMissed.length ? '' : 'none';
+  if (resOpts) resOpts.style.gridTemplateColumns = nctMissed.length ? '1fr 1fr' : '1fr';
   // XP on the test only. Browsing earns nothing, so the deck cannot be farmed by
   // flipping cards, and a drill run pays the same per answer as a clean one.
   var xp = nctScore * 2;
@@ -53548,10 +53844,10 @@ function nctFinish() {
   // Ring fills after paint or the transition has nothing to animate from.
   var ring = document.getElementById('ncResRing');
   if (ring) {
-    ring.style.strokeDashoffset = '327';
+    ring.style.strokeDashoffset = '377';
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
-        ring.style.strokeDashoffset = String(327 - (327 * nctScore / total));
+        ring.style.strokeDashoffset = String(377 - (377 * nctScore / total));
       });
     });
   }
@@ -56715,7 +57011,7 @@ const PROG_PRESETS = [
       [{r:'A', q:'7',  dur:4}],
       [{r:'E', q:'7',  dur:4}],
     ],
-    groove: 'blueshuffle',   drumPreset: 'Shuffle',       bpm: 92,
+    groove: 'blueshuffle',   drumPreset: 'Shuffle',       bpm: 96,
   },
   {
     id: 'jazz_blues', cat:'blues',    label: 'Jazz Blues',          desc: '12-bar with jazz substitutions, in Bb',
@@ -57141,7 +57437,10 @@ const PROG_PRESETS = [
     ],
     // Soleá is the slow, grave end of the same 12-count family — deliberately about
     // half the bulerías rate, giving a ~6s compás.
-    groove: 'compas',     drumPreset: 'Flamenco Compás',    bpm: 108,
+    // 108 is the value the compas groove already documents as wrong: it puts 216
+    // counts a minute through a palo that sits nearer 96. The groove was corrected
+    // to 48 and this preset kept the old number, so loading it overrode the fix.
+    groove: 'compas',     drumPreset: 'Flamenco Compás',    bpm: 48,
   },
   {
     id: 'slow_blues_128', cat:'blues', label: 'Slow Blues 12/8',     desc: 'I7 IV7 V7 in 12/8',
@@ -57441,7 +57740,11 @@ const PROG_PRESETS = [
       [{r:'C', q:'maj7', dur:9}],
       [{r:'D', q:'m7',   dur:5},{r:'G', q:'7',   dur:4}],
     ],
-    groove: 'nine_eight',  drumPreset: '9/8 Funk',      bpm: 160,
+    // 160 was an eighth-note reading: 160/3 = 53, which is what the groove has
+    // carried all along. With the chord scheduler now counting 9/8 in three
+    // dotted beats like the groove always did, 160 would run three times fast.
+    // Same tempo in sound as before the fix; only the unit changed.
+    groove: 'nine_eight',  drumPreset: '9/8 Funk',      bpm: 53,
   },
 
   // ── DEMO ─────────────────────────────────────────────────────────────
@@ -57488,6 +57791,11 @@ const PROG_TIME_SIGS = [
   [7, 8,  '7/8'],
   [9, 8,  '9/8'],
   [11, 8, '11/8'],
+  // 12/8 was missing, so progLoadPreset's findIndex returned -1 for the three
+  // 12/8 presets and skipped the whole time-signature block: they loaded with
+  // whatever meter the previous preset left set, laying 12-beat bars against a
+  // 4-beat bar. TIME_SIGS already carried a 12 entry; only this list lacked it.
+  [12, 8, '12/8'],
 ];
 let progTimeSigIdx = 2; // default 4/4
 
@@ -58501,6 +58809,64 @@ function progCycleTimeSig() {
   hapticLight();
 }
 
+// ── Felt pulse ───────────────────────────────
+// In a compound meter the tempo number a musician reads is the DOTTED beat, not
+// the eighth: 6/8 at 100 is 100 dotted quarters, so the bar lasts 2 * (60/100),
+// not 6 * (60/100). The groove engine already knew this and read a per-preset
+// `pulse` field; the chord scheduler and the kit did not, so they laid out a bar
+// three times too long and the drums ran three bars to every chord bar. That is
+// the whole of the compound-meter sync fault, and no amount of bar-boundary
+// alignment could fix it, because the two sides disagreed on what a bar was.
+//
+// Derived from the METER rather than from the loaded groove, so the BPM number
+// keeps one meaning in every sync mode and does not shift when a groove changes.
+// Compound = eighth denominator with a numerator in threes (6/8, 9/8, 12/8).
+// 7/8 and 11/8 are additive, not compound: they have no even dotted pulse, so
+// their beat stays the eighth and they are unaffected.
+function _progFeltPulses(beats, denom) {
+  const b = (beats != null) ? beats : progBeatsPerBar;
+  const d = (denom != null) ? denom : (PROG_TIME_SIGS[progTimeSigIdx] || [4,4])[1];
+  // A groove that declares its own pulse wins, because the 6/8 slot holds two
+  // genuinely different things: Irish Jig is compound duple and felt in two,
+  // while Bulería and Soleá are twelve-count flamenco cycles whose bar is six
+  // app beats. Reading the meter alone would have to be wrong for one of them.
+  // Consulted in every sync mode, not just metro, so the tempo number keeps one
+  // meaning when the backing source changes.
+  if (typeof progCurrentGrooveId === 'function' && typeof GROOVE_PRESETS !== 'undefined') {
+    try {
+      const gid = progCurrentGrooveId();
+      const gp  = gid ? GROOVE_PRESETS.find(p => p.id === gid) : null;
+      if (gp && gp.pulse && gp.beats === b) return gp.pulse;
+    } catch (e) {}
+  }
+  if (d === 8 && b % 3 === 0 && b >= 6) return b / 3;
+  return b;
+}
+
+// Seconds per progression bar at the current tempo, and the length of one grid
+// beat inside it. Chord durations are written in grid beats (a 6/8 bar holds six),
+// so a grid beat is the bar divided by the grid, not 60/bpm.
+function _progBarSec()  { return (60.0 / progBpm) * _progFeltPulses(); }
+function _progGridSec() { return _progBarSec() / (progBeatsPerBar || 1); }
+
+// The kit and the metronome both compute their step lengths from the shared `bpm`
+// using the raw numerator, so in a compound meter they need a tempo scaled up by
+// three to produce the same bar length the felt pulse gives.
+function _progEngineBpm() {
+  // Derived from the kit's OWN table, not from a fixed factor. TIME_SIGS is not
+  // self-consistent across compound meters: 6/8 holds 12 steps at sub 2, so its
+  // `bpm` counts eighths and needs tripling; 9/8 and 12/8 hold one step per
+  // eighth at sub 3, so their `bpm` is already the dotted beat and must be left
+  // alone. Assuming a blanket x3 made 9/8 and 12/8 run three times too fast.
+  //
+  // A kit bar is (steps / sub) beats of dk_bpm. Setting that equal to the felt
+  // bar length and solving gives the tempo below; it comes out to 1x for every
+  // meter in the table except 6/8, which is the one that genuinely needs 3x.
+  const ts = (typeof TIME_SIGS !== 'undefined') ? TIME_SIGS[progBeatsPerBar] : null;
+  if (!ts || !ts.steps || !ts.sub) return progBpm;
+  return progBpm * ((ts.steps / ts.sub) / _progFeltPulses());
+}
+
 function progApplyTimeSig() {
   const [beats, , label] = PROG_TIME_SIGS[progTimeSigIdx];
   progBeatsPerBar = beats;
@@ -58629,15 +58995,15 @@ function progSyncBpmDisplays() {
   const drawer = document.getElementById('progDrawerBpm');
   if (drawer) drawer.textContent = bpmShown;
   const drawerName = document.getElementById('progDrawerBpmName');
-  if (drawerName) drawerName.textContent = getTempoName(bpm);
+  if (drawerName) drawerName.textContent = getTempoName(bpmShown);
   const slider = document.getElementById('progBpmSlider');
-  if (slider) slider.value = bpm;
+  if (slider) slider.value = bpmShown;
   const silentBpm = document.getElementById('progSilentDrawerBpm');
-  if (silentBpm) silentBpm.textContent = bpm;
+  if (silentBpm) silentBpm.textContent = bpmShown;
   const silentName = document.getElementById('progSilentDrawerBpmName');
-  if (silentName) silentName.textContent = getTempoName(bpm);
+  if (silentName) silentName.textContent = getTempoName(bpmShown);
   const silentSlider = document.getElementById('progSilentBpmSlider');
-  if (silentSlider) silentSlider.value = bpm;
+  if (silentSlider) silentSlider.value = bpmShown;
   progDkSyncBpm();
   // BPM pill groove label
   const grooveEl = document.getElementById('progBpmGroove');
@@ -58701,10 +59067,14 @@ let progBarsElapsed = 0;
 // what made progressions skip their first bar.
 //
 // Updates the readouts too, so the metronome's display still tracks the value.
-function _setBpmNoRetime(v) {
+function _setBpmNoRetime(v, kitBpm) {
   const n = Math.max(30, Math.min(300, Math.round(v)));
   bpm = n;
-  try { dk_bpm = n; } catch (e) {}
+  // The kit derives its step length from the raw meter numerator, so in a
+  // compound meter it needs the scaled engine tempo rather than the felt one.
+  // Callers outside the progression pass nothing and keep the old behavior.
+  const k = (kitBpm != null) ? Math.max(30, Math.min(300, Math.round(kitBpm))) : n;
+  try { dk_bpm = k; } catch (e) {}
   try {
     const num = document.getElementById('bpmNumber'); if (num) num.textContent = n;
     const nm  = document.getElementById('bpmName');   if (nm)  nm.textContent = getTempoName(n);
@@ -58723,15 +59093,35 @@ function progStartSyncSource() {
   // _rcApply only writes what the saved setup actually contains.
   if (progSyncMode === 'metro') {
     _rcLoad('progression', progRhythmState, 'groove');
+    // Belt and braces: if progRhythmState carried a groove, make sure the global
+    // is set. _rcApply checks `!== undefined` and a stale or never-set state could
+    // leave grooveModeActive false even when a groove was loaded.
+    if (progGrooveEnabled && progRhythmState && progRhythmState.groovePresetId) {
+      grooveModeActive = true;
+      if (progRhythmState.groovePattern) groovePattern = [...progRhythmState.groovePattern];
+    }
   } else if (progSyncMode === 'kit') {
     _rcLoad('progression', progRhythmState);
+    // _rcApply sets individual fields from the saved state, but that can miss
+    // timing fields (dk_numSteps, dk_globalSub) or carry stale ones from a
+    // different meter. A named drum preset is the authoritative source: load it
+    // through the real loader so the kit runs with a complete, consistent setup.
+    // This is what manual kit selection does, and it's why manual works when
+    // auto-switch didn't.
+    if (progDkSelectedName) {
+      const _dkp = progFindDkPreset(progDkSelectedName);
+      if (_dkp) loadPreset(_dkp);
+    }
   }
   // Whatever the saved setup carried, the engine runs at PROGRESSION's tempo
   // while Progression holds it, so the click and the kit line up with the chord
   // scheduler (which reads progBpm). The metronome's own tempo is stashed in the
   // context and restored on handback.
   if (progSyncMode === 'metro' || progSyncMode === 'kit') {
-    _setBpmNoRetime(progBpm);
+    // The groove engine applies the preset's own pulse on top of `bpm`, so it
+    // wants the felt tempo. The kit counts raw numerator steps, so it wants the
+    // scaled one. In simple meters the two are equal and this is a no-op.
+    _setBpmNoRetime(progBpm, _progEngineBpm());
   }
   if (progSyncMode === 'metro') {
     startMetroAt(progNextAudioTime);
@@ -58750,7 +59140,7 @@ function progStartSyncSource() {
   }
 }
 
-function progStopSyncSource(mode) {
+function progStopSyncSource(mode, skipSave) {
   const m = mode || progSyncMode;
   if (m === 'metro' && metroPlaying) stopMetro();
   if (m === 'kit' && dk_playing) {
@@ -58765,14 +59155,13 @@ function progStopSyncSource(mode) {
     document.querySelectorAll('.step.cursor').forEach(e => e.classList.remove('cursor'));
     progDkUpdatePlayBtn();
   }
-  // Hand the engine back, unconditionally and outside the dk_playing branch.
-  // If this is ever skipped the Drums module silently shows Progression's kit,
-  // so it must not depend on playback having ended tidily. _rcRestore is a no-op
-  // when nothing was borrowed. What Progression ended with is saved as its own
-  // setup for next time.
+  // Hand the engine back so the Drums module gets its own state.
+  // skipSave: when called from a MODE SWITCH, the Progression is about to
+  // re-borrow immediately and the captured state would be the Drums module's
+  // setup (wrong) rather than Progression's (right). Only save on a real stop.
   if (_rcActive() === 'progression') {
     const used = _rcRestore();
-    if (used) progSaveRhythmState(used);
+    if (used && !skipSave) progSaveRhythmState(used);
   }
 }
 
@@ -58845,36 +59234,32 @@ function progSwitchSyncSource(mode) {
 
   if (!progPlaying) return;
 
-  // Stop old source
-  progStopSyncSource(prev);
+  // Stop old source. This hands the engine back via _rcRestore so the Drums
+  // module gets its own state back. We must re-borrow before starting the new
+  // source, or the new source runs against Drums' state instead of Progression's.
+  progStopSyncSource(prev, true);
 
-  // Find the next bar boundary using the tracked bar start time
+  // Re-borrow the engine for the new mode. progStartSyncSource uses
+  // progNextAudioTime as its start point, but mid-play that is wherever the
+  // chord scheduler last advanced to (likely in the future). Snap it to the
+  // next bar line so the new source aligns with the chords.
   const ctx = ensureMetroCtx();
-  const beatSec = 60.0 / progBpm;
-  const barSec  = beatSec * progBeatsPerBar;
-  const now     = ctx.currentTime;
-  // progCurrentBarStartTime is the audio time when the current bar began (scheduled ahead)
-  // Add multiples of barSec until we're past now
-  let nextBarTime = progCurrentBarStartTime;
-  while (nextBarTime <= now + 0.02) nextBarTime += barSec; // 20ms tolerance
-
-  // Start new source aligned to next bar
-  if (mode === 'metro') {
-    startMetroAt(nextBarTime);
-  } else if (mode === 'kit') {
-    dk_bpm = bpm;
-    getCtx();
-    if (dk_playing) { clearInterval(dk_schedTimer); dk_playing = false; }
-    dk_playing      = true;
-    dk_currentStep  = 0;
-    dk_notesInQueue = [];
-    dk_autoFollow   = true;
-    _initTrackScheduler(nextBarTime);
-    dk_schedTimer = setInterval(dk_scheduler, TICK_MS);
-    requestAnimationFrame(drawLoop);
-    progDkUpdatePlayBtn();
+  if (ctx && mode !== 'silent') {
+    const barSec = _progBarSec();
+    const now    = ctx.currentTime;
+    let nextBar  = progCurrentBarStartTime || now;
+    while (nextBar <= now + 0.02) nextBar += barSec;
+    // Temporarily set progNextAudioTime so progStartSyncSource uses it
+    const savedNext = progNextAudioTime;
+    progNextAudioTime = nextBar;
+    progStartSyncSource();
+    progNextAudioTime = savedNext;  // restore for the chord scheduler
+  } else if (mode === 'silent') {
+    // Nothing to start, but still re-borrow so groove state is preserved
+    if (progSyncMode === 'metro') {
+      _rcLoad('progression', progRhythmState, 'groove');
+    }
   }
-  // silent: nothing to start
 }
 
 // Restart the progression from the top after a beat or groove swap.
@@ -58903,27 +59288,20 @@ let _progSwapRestartTimer = null;
 
 function progRestartForSwap() {
   if (!progPlaying) return;
-  // Stop immediately, pause briefly, then start clean.
-  //
-  // Restarting instantly was tried and glitched: the chord scheduler runs a 0.2s
-  // lookahead, so a new pass beginning 0.16s out had its FIRST chord immediately
-  // followed by the second being queued in the same tick — the progression
-  // appeared to skip straight to the next chord. Pushing the lead out further
-  // just moves the collision rather than removing it, because the lookahead
-  // window travels with it.
-  //
-  // A short silence sidesteps the whole class of problem. Everything from the
-  // old pass — chords, and drum hits already scheduled inside SCHEDULE_AHEAD
-  // (0.12s) — has finished before the new one begins, so there is nothing left
-  // to overlap with and no timing to get right. A quarter second is long enough
-  // to clear both and short enough to read as a deliberate reset rather than a
-  // stall.
+  // Restart from the top. Four attempts at phase-aligned hot swaps have all
+  // failed on device (counter disagreement, phase offset errors, audio clock
+  // timing). Restart is audible but reliable. The 250ms gap clears any notes
+  // still scheduled in the lookahead window.
+  _progFallbackRestart();
+}
+
+function _progFallbackRestart() {
+  // Restart from the top. Used when the context isn't available or the math
+  // can't produce a sensible phase (meter changed, no bar reference).
   if (_progSwapRestartTimer) { clearTimeout(_progSwapRestartTimer); _progSwapRestartTimer = null; }
   progStop();
   _progSwapRestartTimer = setTimeout(() => {
     _progSwapRestartTimer = null;
-    // Only resume if nothing else has started or stopped playback in the gap —
-    // swapping again during the pause restarts this timer rather than stacking.
     if (!progPlaying) progStart();
   }, 250);
 }
@@ -58974,7 +59352,9 @@ function progSchedulerTick() {
   // Nothing in a headless container reproduces that stall, which is why every
   // measurement here has looked perfect.
   const lookahead = 0.2;
-  const beatSec   = 60.0 / progBpm;
+  // One grid beat, not 60/bpm: in a compound meter the tempo is the dotted pulse,
+  // so a 6/8 bar is two beats long and each of its six grid slots is a third of one.
+  const beatSec   = _progGridSec();
 
 
   // One shared limiter chain for the entire tick — prevents graph node explosion
@@ -59353,15 +59733,29 @@ try {
 function progSetBpm(v) {
   const n = Math.max(30, Math.min(240, Math.round(+v || 0)));
   if (!n) return;
+  const _prev = progBpm;
   progBpm = n;
   try { prefSet('progBpm', String(n)); } catch (e) {}
   // While Progression holds the engine its tempo IS the live tempo, so the
   // metro click and kit retime immediately rather than waiting for a restart.
   if (typeof _rcActive === 'function' && _rcActive() === 'progression') {
-    // No retime here either: the progression is mid-flight and re-anchoring
-    // would restart it. The scheduler reads progBpm every tick, so the new
-    // tempo takes effect on the next scheduled note without a restart.
-    _setBpmNoRetime(n);
+    _setBpmNoRetime(n, _progEngineBpm());
+    // ...and then re-anchor, which this deliberately did not do.
+    //
+    // "The scheduler reads progBpm every tick" is true and not sufficient. All
+    // three engines queue ahead by different amounts (chords 0.2s, kit 0.12s,
+    // metro 0.1s), so each one switches to the new tempo at a different moment
+    // and the gap between them survives as a fixed offset. One drag through a
+    // dozen intermediate values banks a dozen of them, which is the drift that
+    // appears only after touching the tempo.
+    //
+    // progRetimeForBpm puts every voice back on one shared restart point, and
+    // the same 140ms debounce the metronome's own slider uses keeps a drag from
+    // re-anchoring on every pixel. Chords resume from the step they were on, so
+    // this is a re-anchor and not a restart from the top.
+    if (progPlaying && typeof _scheduleRetime === 'function' && _prev !== n) {
+      try { _scheduleRetime(_prev); } catch (e) {}
+    }
   }
   progSyncBpmDisplays();
 }
@@ -59501,17 +59895,20 @@ function progSwitchTray(mode) {
 }
 
 function progDkSyncBpm() {
+  const _bpm = (typeof progBpm !== 'undefined') ? progBpm : bpm;
   const bpmEl = document.getElementById('progDkDrawerBpm');
   const nameEl = document.getElementById('progDkDrawerBpmName');
   const slider = document.getElementById('progDkBpmSlider');
-  if (bpmEl) bpmEl.textContent = bpm;
-  if (nameEl) nameEl.textContent = getTempoName(bpm);
-  if (slider) slider.value = bpm;
+  if (bpmEl) bpmEl.textContent = _bpm;
+  if (nameEl) nameEl.textContent = getTempoName(_bpm);
+  if (slider) slider.value = _bpm;
 }
 
 function progDkSetBpm(v) {
-  setBPM(v);   // re-anchors every voice; dk_bpm is synced inside
-  progDkSyncBpm();
+  // Route through progSetBpm so progBpm stays in sync. The old path called
+  // setBPM directly, which left progBpm at the old value. The debounced retime
+  // then read progBpm and snapped the tempo back, so the slider couldn't move.
+  progSetBpm(v);
 }
 function progDkAdjBpm(delta) { progSetBpm(progBpm + delta); }
 
@@ -63701,7 +64098,7 @@ const SampleEngine = (function() {
     // main thread took to get around to it. That is audible jitter, not tightness.
     //
     // Defaults to currentTime, so every existing caller is unaffected.
-    play(id, midi, ctx, dest, vol, dur, at) {
+    play(id, midi, ctx, dest, vol, dur, at, dc) {
       // A note reads exactly one buffer and pitch-shifts it. Gating on the whole
       // instrument being ready made a single preview wait for every file in the
       // set, so hold the gate only when there is nothing at all to play from.
@@ -63738,7 +64135,9 @@ const SampleEngine = (function() {
       // detuned and delayed to recreate the sound of two strings per course.
       // +7 cents detune, 4ms delay, -2dB quieter. No modulation; the effect is
       // static, like a real pair of strings that aren't quite in tune.
-      if (desc.doubledCourse && buf) {
+      // Triggered by the `dc` option, not the descriptor, because mandolin maps
+      // to banjo samples and the banjo itself has single strings.
+      if (dc && buf) {
         var src2 = ctx.createBufferSource();
         src2.buffer = buf;
         src2.playbackRate.value = src.playbackRate.value * Math.pow(2, 7/1200);
@@ -64131,19 +64530,9 @@ SampleEngine.register({
 });
 
 // ── Mandolin + Bell ───────────────────────────────────────────────────────────
-// G-Town Church Sampling Project by Tobias Marberger (CC Sampling+ 1.0).
-// 14 samples, G3-A6. Gaps filled by SampleEngine pitch-shift (max 4 semitones).
-SampleEngine.register({
-  id: 'mandolin', name: 'Mandolin', doubledCourse: true,
-  assetUrl: (f) => _capacitorAssetUrl('mandolin', f),
-  noteToFile: function(midi) {
-    var NAMES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-    return NAMES[midi % 12] + (Math.floor(midi / 12) - 1) + '.mp3';
-  },
-  sampledNotes: [55,57,60,64,67,69,72,74,77,81,84,86,89,93],
-  gain: 3.0,
-  onFailed() { console.warn('[SampleEngine] Mandolin unavailable'); },
-});
+// Mandolin and bouzouki map to 'banjo' in INST_TONE_MAP (closest gleitz
+// instrument). No dedicated mandolin samples exist in the gleitz/FatBoy set.
+// Doubled-course simulation is handled by the callers, not here.
 SampleEngine.register({
   id: 'bell', name: 'Bell',
   assetUrl: (f) => _capacitorAssetUrl('bell', f),
@@ -75203,12 +75592,51 @@ function rcRenderCats() {
 }
 
 // ── Navigation ────────────────────────────────────────────────────────────────
+var _rcSnapshot = null;
+var _rcSwiping = false;
+var _rcLastDir = 1;
+
+function _rcSwipe(cardEl, dir) {
+  if (!cardEl || !_rcSnapshot) { _rcSnapshot = null; return; }
+  var track = document.getElementById('rcBrowseTrack');
+  if (!track) { _rcSnapshot = null; return; }
+  _rcSwiping = true;
+  var snap = _rcSnapshot;
+  snap.classList.add('rc-ghost');
+  snap.classList.add(dir >= 0 ? 'rc-exit-fwd' : 'rc-exit-bwd');
+  track.appendChild(snap);
+  snap.addEventListener('animationend', function() { snap.remove(); _rcSwiping = false; });
+  setTimeout(function() { if (snap.parentNode) snap.remove(); _rcSwiping = false; }, 400);
+  cardEl.classList.remove('rc-enter-fwd','rc-enter-bwd');
+  void cardEl.offsetWidth;
+  cardEl.classList.add(dir >= 0 ? 'rc-enter-fwd' : 'rc-enter-bwd');
+  _rcSnapshot = null;
+}
+
 function rcAfterCardChange() {
   rcRenderCard();
+  // Swipe the browse card
+  var card = document.querySelector('#rcBrowseTrack > .rc-card');
+  if (_rcSnapshot && card) _rcSwipe(card, _rcLastDir);
+  else _rcSnapshot = null;
   if (rcTapMode) rcArmTap();
 }
-function rcNext() { rcStopPlayback(); rcIdx++; rcAfterCardChange(); }
-function rcPrev() { rcStopPlayback(); rcIdx--; rcAfterCardChange(); }
+function rcNext() {
+  if (_rcSwiping) return;
+  var card = document.querySelector('#rcBrowseTrack > .rc-card');
+  _rcSnapshot = card ? card.cloneNode(true) : null;
+  if (_rcSnapshot) _rcSnapshot.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id');});
+  _rcLastDir = 1;
+  rcStopPlayback(); rcIdx++; rcAfterCardChange();
+}
+function rcPrev() {
+  if (_rcSwiping) return;
+  var card = document.querySelector('#rcBrowseTrack > .rc-card');
+  _rcSnapshot = card ? card.cloneNode(true) : null;
+  if (_rcSnapshot) _rcSnapshot.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id');});
+  _rcLastDir = -1;
+  rcStopPlayback(); rcIdx--; rcAfterCardChange();
+}
 
 // ── Playback ──────────────────────────────────────────────────────────────────
 function rcStopPlayback() {
@@ -75947,9 +76375,15 @@ function rctGradeCard(card, beatDur) {
 function rctShowCard(card) {
   var nameEl = document.getElementById('rctName');
   if (nameEl) nameEl.textContent = card.name;
-  // Reuse the single-card notation renderer, pointed at the test SVG.
   rcRenderStaffInto('rctStaff', card);
   var pip = document.getElementById('rctCountPip'); if (pip) { pip.textContent=''; pip.style.opacity='0.18'; }
+  // Slide the test card in from the right
+  var testCard = nameEl && nameEl.closest('.rct-card');
+  if (testCard) {
+    testCard.classList.remove('rc-enter-fwd');
+    void testCard.offsetWidth;
+    testCard.classList.add('rc-enter-fwd');
+  }
 }
 
 function rctFlashCount(beat, total) {
@@ -76009,9 +76443,21 @@ function rctFinish() {
   // was the only graded test in the app awarding nothing.
   if (passed > 0) progAddXp(Math.max(3, passed * 2));
   var scoreEl = document.getElementById('rctScore');
-  if (scoreEl) scoreEl.textContent = passed + ' / ' + total;
+  if (scoreEl) scoreEl.textContent = passed;
+  var ofEl = document.getElementById('rctScoreOf');
+  if (ofEl) ofEl.textContent = '/ ' + total;
   var pctEl = document.getElementById('rctScorePct');
   if (pctEl) pctEl.textContent = total ? Math.round(100*passed/total) + '%' : '';
+  // Ring fill animation
+  var ring = document.getElementById('rctResRing');
+  if (ring && total) {
+    ring.style.strokeDashoffset = '377';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        ring.style.strokeDashoffset = String(377 - (377 * passed / total));
+      });
+    });
+  }
 
   rctRenderBreakdown();
 
@@ -81545,7 +81991,7 @@ function tonaleEnsureOutBus() {
     tonaleOutBass = ctx.createBiquadFilter();
     tonaleOutBass.type = 'lowshelf';
     tonaleOutBass.frequency.value = 300;
-    tonaleOutBass.gain.value = 5;
+    tonaleOutBass.gain.value = 10;
     tonaleOutLim = ctx.createDynamicsCompressor();
     tonaleOutLim.threshold.value = -3;
     tonaleOutLim.knee.value = 6;
@@ -81593,14 +82039,14 @@ function tonaleEnsureVoice() {
 function _tonaleOctGainFor(freq) {
   // Crossfade: full (0.12) below 130 Hz, gone above 220 Hz, linear between
   if (freq >= 220) return 0;
-  if (freq <= 130) return 0.07;
-  return 0.07 * (220 - freq) / (220 - 130);
+  if (freq <= 130) return 0.10;
+  return 0.10 * (220 - freq) / (220 - 130);
 }
 function tonaleVoiceOn(freq) {
   tonaleEnsureVoice();
   var now = tonaleCtx.currentTime;
   tonaleOsc.frequency.setTargetAtTime(freq, now, 0.012);
-  tonaleGain.gain.setTargetAtTime(0.16, now, 0.02);
+  tonaleGain.gain.setTargetAtTime(0.32, now, 0.02);
   tonaleOctOsc.frequency.setTargetAtTime(freq * 2, now, 0.012);
   tonaleOctGain.gain.setTargetAtTime(_tonaleOctGainFor(freq), now, 0.02);
 }
@@ -81619,7 +82065,7 @@ function tonaleVoiceOff() {
 }
 
 // play the target tone for the listen window
-function tonalePlayTarget() {
+function tonalePlayTarget(isReplay) {
   if (tonaleState === 'listening') return;
   tonaleState = 'listening';
   var f = tonaleTargets[tonaleRound];
@@ -81652,11 +82098,11 @@ function tonalePlayTarget() {
       //    tones plays (clearly not the target) to crowd your memory before
       //    you answer. Reads as competing notes, not a smeared artifact. ──
       tonaleVoiceOff();                       // cut the target cleanly first
-      tonalePlayInterference(f, function(){ tonaleBeginAnswer(); });
+      tonalePlayInterference(f, function(){ tonaleBeginAnswer(isReplay); });
     } else {
       tonaleVoiceOff();
       tonaleSetStatus('');
-      tonaleBeginAnswer();
+      tonaleBeginAnswer(isReplay);
     }
   }, tonaleMode.listenMs);
 }
@@ -81697,13 +82143,15 @@ function tonalePlayInterference(targetF, done) {
   tonaleDecoyTO = setTimeout(playNext, 160);
 }
 
-function tonaleBeginAnswer() {
+function tonaleBeginAnswer(keepSlider) {
   tonaleState = 'answering';
   tonaleHolding = false;     // no sustained tone until the player grabs the slider
   tonaleSetStatus('');
-  // reset slider to middle each round
-  tonalePos = 0.5;
-  tonaleGuessFreq = tonalePosToFreq(0.5);
+  if (!keepSlider) {
+    // reset slider to middle on a fresh round; replay preserves the guess
+    tonalePos = 0.5;
+    tonaleGuessFreq = tonalePosToFreq(0.5);
+  }
   tonaleUpdateSlider();
 }
 
@@ -81956,7 +82404,7 @@ function tonaleReplay() {
   if (tonaleReplaysLeft <= 0) return;
   tonaleReplaysLeft--;
   tonaleUpdateReplayBtn();
-  tonalePlayTarget();
+  tonalePlayTarget(true);
 }
 function tonaleUpdateReplayBtn() {
   var btn = document.getElementById('tonaleReplayBtn');
@@ -86256,7 +86704,7 @@ const STRINGS = {
     flash_close:'✕ CLOSE', flash_hint:'TAP ANYWHERE TO CLOSE',
     tempo_you:'You', tempo_target:'Target',
     tempo_verdict_idle:'MIC OFF · TAP MIC TO START',
-    tempo_verdict_mic_on:'TAP OR PLAY RHYTHMICALLY',
+    tempo_verdict_mic_on:'TAP OR PLAY RHYTHMICALLY', tempo_verdict_settling:'listening...',
     hub_title:'PRACTICE LAB', hub_sub:'exercises · scales · coming soon',
     card_interval_title:'INTERVAL TRAINING',
     card_interval_sub:'Ear training · sing or play a target interval from a reference',
@@ -86337,7 +86785,7 @@ const STRINGS = {
     nc_pack_notes:'Note values', nc_pack_rests:'Rests', nc_pack_staff:'Staff',
     nc_pack_navigation:'Navigation', nc_pack_spans:'Spans', nc_pack_guitar:'Guitar',
     nc_pack_strings:'Strings', nc_pack_winds:'Winds & brass', nc_pack_chords:'Chord symbols',
-    nc_back_browse:'Back to browsing', nc_clean:'Every one.',
+    nc_back_browse:'Back to browsing', nc_next:'Next', nc_clean:'Every one.',
     hsub_notationcards:'know the marks',
     support_contact:'Get in touch', support_contact_sub:'Bugs, requests, or anything that looks wrong.',
     support_share:'Share Intonare', support_share_sub:'Send it to someone who\u2019d use it.',
@@ -87399,7 +87847,7 @@ const STRINGS = {
     flash_close:'✕ CHIUDI', flash_hint:'TOCCA OVUNQUE PER CHIUDERE',
     tempo_you:'Tu', tempo_target:'Obiettivo',
     tempo_verdict_idle:'MIC SPENTO · TOCCA IL MIC PER INIZIARE',
-    tempo_verdict_mic_on:'SUONA O BATTI A TEMPO',
+    tempo_verdict_mic_on:'SUONA O BATTI A TEMPO', tempo_verdict_settling:'ascolto...',
     hub_title:'LABORATORIO', hub_sub:'esercizi · scale · in arrivo',
     card_interval_title:'INTERVALLI',
     card_interval_sub:"Allenamento all'ascolto · canta o suona un intervallo bersaglio",
@@ -87480,7 +87928,7 @@ const STRINGS = {
     nc_pack_notes:'Valori', nc_pack_rests:'Pause di valore', nc_pack_staff:'Pentagramma',
     nc_pack_navigation:'Navigazione', nc_pack_spans:'Estensioni', nc_pack_guitar:'Chitarra',
     nc_pack_strings:'Archi', nc_pack_winds:'Fiati e ottoni', nc_pack_chords:'Sigle accordi',
-    nc_back_browse:'Torna a sfogliare', nc_clean:'Tutte.',
+    nc_back_browse:'Torna a sfogliare', nc_next:'Avanti', nc_clean:'Tutte.',
     hsub_notationcards:'i segni',
     support_contact:'Scrivimi', support_contact_sub:'Bug, richieste, o qualsiasi cosa non torni.',
     support_share:'Condividi Intonare', support_share_sub:'Mandala a qualcuno a cui servirebbe.',
@@ -96237,24 +96685,50 @@ var _dkSamples = {};        // kit:piece → AudioBuffer  (e.g. 'standard:kick')
 var _dkSampleState = 'idle'; // 'idle' | 'loading' | 'ready' | 'failed'
 
 // Kit → piece → filename mapping. Jazz shares most pieces with standard.
+// AVL Drumkits: Black Pearl (standard), Blonde Bop (jazz). GPL.
+// Each voice maps to { n: normal sample, g: ghost sample (optional) }.
+// When ghost is present, triggerInstrument picks the layer by velocity value.
+// Voices without a ghost entry use the normal sample gain-scaled for ghosts.
 var _DK_SAMPLE_MAP = {
   standard: {
-    kick:'kick_std', snare:'snare_std', cross:'rim', ride:'ride_std',
-    bell:'bell', 'hihat-c':'hihat_closed', 'hihat-o':'hihat_open',
-    'hihat-p':'hihat_closed',  // pitch-shifted at playback
-    crash:'crash', 'tom-hi':'tom_hi', tom1:'tom_mid', tom2:'tom_mid',
-    floor:'tom_floor', cowbell:'cowbell', shaker:'shaker',
-    tambourine:'tambourine',
-    clave:'rim',               // placeholder until real clave
-    clap:'clap',
+    kick:     { n:'bp_kick',   g:'bp_kick_g' },
+    snare:    { n:'bp_snare',  g:'bp_snare_g' },
+    cross:    { n:'bp_cross' },
+    'hihat-c':{ n:'bp_hatc',   g:'bp_hatc_g' },
+    'hihat-o':{ n:'bp_hato',   g:'bp_hato_g' },
+    'hihat-p':{ n:'bp_hatp' },
+    ride:     { n:'bp_ride',   g:'bp_ride_g' },
+    bell:     { n:'bp_bell' },
+    crash:    { n:'bp_crash' },
+    'tom-hi': { n:'bp_tomhi' },
+    tom1:     { n:'bp_tomhi' },   // pitch-shifted at playback
+    tom2:     { n:'bp_floor' },   // pitch-shifted at playback
+    floor:    { n:'bp_floor' },
+    cowbell:  { n:'bp_cowbell' },
+    shaker:   { n:'bp_shaker', g:'bp_shaker_g' },
+    tambourine:{ n:'bp_tamb' },
+    clave:    { n:'bp_cross' },   // sidestick as clave placeholder
+    clap:     { n:'bp_snare' },   // snare as clap placeholder
   },
   jazz: {
-    kick:'kick_jazz', snare:'snare_jazz', cross:'rim', ride:'ride_jazz',
-    bell:'bell', 'hihat-c':'hihat_closed', 'hihat-o':'hihat_open',
-    'hihat-p':'hihat_closed',
-    crash:'crash', 'tom-hi':'tom_hi', tom1:'tom_mid', tom2:'tom_mid',
-    floor:'tom_floor', cowbell:'cowbell', shaker:'shaker',
-    tambourine:'tambourine', clave:'rim', clap:'clap',
+    kick:     { n:'bb_kick',   g:'bb_kick_g' },
+    snare:    { n:'bb_snare',  g:'bb_snare_g' },
+    cross:    { n:'bb_cross' },
+    'hihat-c':{ n:'bb_hatc',   g:'bb_hatc_g' },
+    'hihat-o':{ n:'bb_hato',   g:'bb_hato_g' },
+    'hihat-p':{ n:'bb_hatp' },
+    ride:     { n:'bb_ride',   g:'bb_ride_g' },
+    bell:     { n:'bb_bell' },
+    crash:    { n:'bb_crash' },
+    'tom-hi': { n:'bb_tomhi' },
+    tom1:     { n:'bb_tomhi' },
+    tom2:     { n:'bb_floor' },
+    floor:    { n:'bb_floor' },
+    cowbell:  { n:'bb_cowbell' },
+    shaker:   { n:'bb_shaker', g:'bb_shaker_g' },
+    tambourine:{ n:'bb_tamb' },
+    clave:    { n:'bb_cross' },
+    clap:     { n:'bb_snare' },
   }
 };
 
@@ -96262,6 +96736,28 @@ var _DK_SAMPLE_MAP = {
 var _DK_PITCH_SHIFT = {
   'hihat-p': 0.85,    // pedal hat: pitch down from closed
   'tom2':    0.80,     // low tom: pitch down from mid tom
+};
+
+// Per-sample gain correction so the kit balances properly.
+// Measured RMS of each file against a target mix where kick is loudest,
+// snare sits 2dB under, hats/cymbals 7dB under, toms 4dB under,
+// percussion 8-9dB under. Without these the ride and crash are buried
+// and the cowbell overpowers everything.
+var _DK_SAMPLE_GAIN = {
+  // AVL Drumkits: balanced on attack RMS (first 50ms).
+  // These are starting values; tune on-device.
+  // Black Pearl (standard)
+  bp_kick:1.0, bp_kick_g:1.0, bp_snare:0.9, bp_snare_g:0.9,
+  bp_cross:1.1, bp_hatc:1.0, bp_hatc_g:1.0, bp_hato:1.0, bp_hato_g:1.0,
+  bp_hatp:1.0, bp_ride:0.9, bp_ride_g:0.9, bp_bell:0.9,
+  bp_crash:0.85, bp_tomhi:0.8, bp_floor:0.8,
+  bp_cowbell:0.7, bp_shaker:0.9, bp_shaker_g:0.9, bp_tamb:0.8,
+  // Blonde Bop (jazz)
+  bb_kick:1.0, bb_kick_g:1.0, bb_snare:0.9, bb_snare_g:0.9,
+  bb_cross:1.1, bb_hatc:1.0, bb_hatc_g:1.0, bb_hato:1.0, bb_hato_g:1.0,
+  bb_hatp:1.0, bb_ride:0.9, bb_ride_g:0.9, bb_bell:0.9,
+  bb_crash:0.85, bb_tomhi:0.8, bb_floor:0.8,
+  bb_cowbell:0.7, bb_shaker:0.9, bb_shaker_g:0.9, bb_tamb:0.8,
 };
 
 // Jazz kit: high-shelf filter darkens all samples
@@ -96292,8 +96788,12 @@ function dkLoadSamples() {
   // Collect unique filenames across all kits
   var files = {};
   Object.keys(_DK_SAMPLE_MAP).forEach(function(kit) {
-    Object.values(_DK_SAMPLE_MAP[kit]).forEach(function(fname) {
-      files[fname] = true;
+    Object.values(_DK_SAMPLE_MAP[kit]).forEach(function(entry) {
+      if (typeof entry === 'string') { files[entry] = true; }
+      else if (entry && entry.n) {
+        files[entry.n] = true;
+        if (entry.g) files[entry.g] = true;
+      }
     });
   });
   var names = Object.keys(files);
@@ -96310,21 +96810,29 @@ function dkLoadSamples() {
         loaded++;
         if (loaded + failed >= names.length) {
           _dkSampleState = loaded > 0 ? 'ready' : 'failed';
+          if (failed > 0) console.warn('[drums] ' + loaded + ' loaded, ' + failed + ' failed');
         }
       })
-      .catch(function() {
+      .catch(function(e) {
         failed++;
         if (loaded + failed >= names.length) {
           _dkSampleState = loaded > 0 ? 'ready' : 'failed';
+          if (failed > 0) console.warn('[drums] ' + loaded + ' loaded, ' + failed + ' failed');
         }
       });
   });
 }
 
-function _dkPlaySample(id, time, vel, kit) {
+function _dkPlaySample(id, time, vel, kit, isGhost) {
   var kitMap = _DK_SAMPLE_MAP[kit];
   if (!kitMap) return false;
-  var fname = kitMap[id];
+  var entry = kitMap[id];
+  if (!entry) return false;
+  // New format: { n:'normal', g:'ghost' }. Old format: plain string.
+  var fname;
+  if (typeof entry === 'string') { fname = entry; }
+  else if (isGhost && entry.g) { fname = entry.g; }
+  else { fname = entry.n; }
   if (!fname) return false;
   var buf = _dkSamples[fname];
   if (!buf) return false;
@@ -96338,7 +96846,8 @@ function _dkPlaySample(id, time, vel, kit) {
   if (shift) src.playbackRate.value = shift;
 
   var g = ctx.createGain();
-  g.gain.setValueAtTime(vel, time);
+  var sampleGain = _DK_SAMPLE_GAIN[fname] || 1.0;
+  g.gain.setValueAtTime(vel * sampleGain, time);
 
   src.connect(g);
 
@@ -96362,7 +96871,7 @@ function triggerInstrument(id, time, vel, ghost, kit) {
   // Try real samples first for standard and jazz kits.
   // Electronic and brush kits stay fully synthesized.
   if (_dkSampleState === 'ready' && (kit === 'standard' || kit === 'jazz' || kit === 'latin')) {
-    if (_dkPlaySample(id, time, v, kit === 'latin' ? 'standard' : kit)) return;
+    if (_dkPlaySample(id, time, v, kit === 'latin' ? 'standard' : kit, ghost)) return;
   }
   switch(id) {
     case 'kick':       synthKick(time, v, kit); break;
@@ -104767,9 +105276,9 @@ function harmonicaPrimaryPath(scaleNotesMidi) {
 // onHoleTap: optional callback(hole, dir, midi)
 // primaryPath: Set of 'hole:dir' strings marking the primary ascending path
 // activeHole: specific 'hole:dir' key to light as active (overrides concertPc matching)
-function harmonicaDraw(containerEl, concertPc, scaleNotes, onHoleTap, primaryPath, activeHole) {
+function harmonicaDraw(containerEl, concertPc, scaleNotes, onHoleTap, primaryPath, activeHole, targetMidi) {
   // Store args so slide button can trigger a redraw without knowing the call site
-  containerEl._harpDrawArgs = { concertPc, scaleNotes, onHoleTap, primaryPath, activeHole };
+  containerEl._harpDrawArgs = { concertPc, scaleNotes, onHoleTap, primaryPath, activeHole, targetMidi };
   containerEl.innerHTML = '';
   const { blow, draw } = harmonicaNotes();
   const wrap = document.createElement('div');
@@ -104786,14 +105295,20 @@ function harmonicaDraw(containerEl, concertPc, scaleNotes, onHoleTap, primaryPat
     const blowKey = `${h+1}:blow`;
     const drawKey = `${h+1}:draw`;
 
-    // Active: either the specific activeHole key, or (notes mode) any hole matching concertPc
+    // When targetMidi is provided (notes mode with octave selector), the exact
+    // MIDI match gets full highlight; other holes on the same pitch class get a
+    // soft hint so you can see where that note lives across the harp.
     const isBlowActive = activeHole ? activeHole === blowKey
+                       : targetMidi != null ? blow[h] === targetMidi
                        : concertPc !== null ? blowPc === concertPc : false;
     const isDrawActive = activeHole ? activeHole === drawKey
+                       : targetMidi != null ? draw[h] === targetMidi
                        : concertPc !== null ? drawPc === concertPc : false;
 
-    const blowInScale  = scaleNotes ? scaleNotes.has(blowPc) : false;
-    const drawInScale  = scaleNotes ? scaleNotes.has(drawPc) : false;
+    const blowInScale  = scaleNotes ? scaleNotes.has(blowPc)
+                       : (targetMidi != null && !isBlowActive && blowPc === concertPc) ? true : false;
+    const drawInScale  = scaleNotes ? scaleNotes.has(drawPc)
+                       : (targetMidi != null && !isDrawActive && drawPc === concertPc) ? true : false;
     const blowDim      = scaleNotes && !blowInScale && !isBlowActive;
     const drawDim      = scaleNotes && !drawInScale && !isDrawActive;
     const blowPrimary  = primaryPath ? primaryPath.has(blowKey) : false;
@@ -104844,7 +105359,7 @@ function harmonicaDraw(containerEl, concertPc, scaleNotes, onHoleTap, primaryPat
     const redraw = () => {
       chromHarpSlide = !chromHarpSlide;
       const args = containerEl._harpDrawArgs;
-      if (args) harmonicaDraw(containerEl, args.concertPc, args.scaleNotes, args.onHoleTap, args.primaryPath, args.activeHole);
+      if (args) harmonicaDraw(containerEl, args.concertPc, args.scaleNotes, args.onHoleTap, args.primaryPath, args.activeHole, args.targetMidi);
     };
 
     const assembly = document.createElement('div');
@@ -110799,7 +111314,7 @@ function trpDrawNoteCard(noteIdx) {
       // Tapping a hole plays that hole's exact midi (preserving octave).
       harmonicaDraw(valveRow, pc, null, (hole, dir, holeMidi) => {
         gccPlayString(holeMidi);
-      });
+      }, undefined, undefined, midi);
     } else {
       const valves = WIND_FINGERINGS[brassWrittenPc(pc)] || [];
       trpValveDraw(valveRow, valves, true);

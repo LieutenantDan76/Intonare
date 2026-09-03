@@ -4,6 +4,118 @@ A human-readable record of what changed, when,
 
 ---
 
+## v0.201.191 — AVL drum samples, spectral-flux tempo detector, tap tempo upgrade
+
+- Drum samples: replaced Real Drums Vol. 1 with AVL Drumkits (GPL). Black Pearl
+  for Standard kit, Blonde Bop for Jazz kit. 40 MP3 files (656KB total) at 192kbps
+  mono, trimmed with per-voice fade-outs. Ghost notes use real soft velocity layers
+  (layer 1) instead of gain-scaled normal hits. Electronic and brush kits stay
+  synthesized. Synth fallback still fires if samples haven't loaded.
+- Sample map restructured: entries are now { n:'normal', g:'ghost' } per voice.
+  triggerInstrument passes ghost flag to _dkPlaySample which picks the right layer.
+  Pitch-shift for tom1 (from tomhi) and tom2 (from floor) preserved.
+- Tempo detector rewritten: spectral-flux onset detection replaces RMS energy gate.
+  Half-wave-rectified flux across all frequency bins with adaptive threshold (running
+  mean + 1.4x stddev). Outlier rejection (40% from median) on inter-onset intervals.
+  Log-Gaussian octave-error prior centered at 120 BPM. EMA smoothing on final BPM.
+  Settling state shows "listening..." while gathering first 3 onsets. 5-second onset
+  window with 16-onset cap.
+- Tap tempo upgraded: median filtering replaces simple average, 40% outlier rejection
+  on intervals. Single mistap no longer shifts the reading.
+- Tonale volume boost (main gain 0.16 to 0.32, octave doubler 0.07 to 0.10, low-shelf
+  +5 dB to +10 dB). Replay preserves slider position.
+- Drum BPM slider routed through progSetBpm (was calling setBPM directly, leaving
+  progBpm stale so the debounced retime snapped the slider back).
+
+## v0.201.190 — Notation/rhythm card polish, Tonale fixes, drum slider, full audit
+
+- Notation Cards: horizontal swipe transitions (old card slides out, new slides in,
+  direction-aware in browse and test modes). Two-element approach: snapshot cloned
+  before content update, both animate simultaneously.
+- Notation Cards: Next button after every answer (appears below options, not replacing
+  them). Correct answers show after 700ms delay; wrong answers immediately.
+- Notation Cards: result screen redesigned. Ring enlarged (140px, r=60), score split
+  into big number + "/ total". Percentage moved outside ring. Subtext removed. Missed
+  chips in red (var(--bad, #ff6b6b)). Result buttons: Again spans full width when
+  Drill is hidden. Staggered entrance animations on ring, XP, and missed chips.
+- Notation Cards: nc_next i18n key added (EN/IT). var(--bad) fallback #ff6b6b added
+  to all notation card CSS rules (the variable was never defined; every other usage
+  had the fallback, these didn't). Phase visibility fixed for track wrapper.
+- Rhythm Cards: horizontal swipe in browse mode (same two-element pattern as notation
+  cards, direction-aware from prev/next arrows).
+- Rhythm Cards: test card slides in from right on each new question.
+- Rhythm Cards: result breakdown rows cascade in with staggered slide-up animation.
+- Tonale: volume boost (main gain 0.16 to 0.32, octave doubler 0.07 to 0.10,
+  low-shelf +5 dB to +10 dB). Replay preserves slider position.
+- Progression: drum BPM slider routed through progSetBpm (was calling setBPM directly,
+  leaving progBpm stale; the debounced retime snapped the slider back on every drag).
+- Full audit: all gate scripts pass. No dead code found. _rh song variants confirmed
+  live (Rhodes voicings, dynamically loaded).
+
+## v0.201.189 — Kit auto-play on mode switch, groove swap, blues shuffle tempo
+
+- Fixed kit not auto-playing when switching from groove to drums mid-playback:
+  mode switch now loads the named drum preset through the real loader (loadPreset)
+  instead of relying on progRhythmState field-by-field apply, which missed timing
+  fields and carried stale values from a different meter.
+- Fixed mode switch overwriting progRhythmState with Drums module's state: added
+  skipSave flag to progStopSyncSource so a mode switch hands the engine back
+  without clobbering the Progression's saved drum and groove setup.
+- Added explicit groove-mode guard in progStartSyncSource to force grooveModeActive
+  and groovePattern when the preset has a groove, preventing straight-metronome
+  playback from stale progRhythmState.
+- Reverted groove/kit swap to restart-from-top (attempt 4 at phase-aligned hot swap
+  failed on device, same as the previous three).
+- Blues Shuffle tempo bumped from 88 to 96 BPM (groove and progression preset).
+
+## v0.201.188 — Compound-meter sync, grace note pop, harmonica octave, BPM slider
+
+- Fixed grace note pop in riff playback: grace note-offs were killing regular notes
+  through the wrong voice pool (refOscs vs _riffVoices). Routed to pianoCardRelease.
+  Affected Minuet in G, Ave Maria, Gnossienne, St. Louis Blues.
+- Harmonica octave selector now highlights the specific hole at the selected octave;
+  other holes on the same pitch class get a soft in-scale hint.
+- Fixed BPM slider not tracking in progression sync tray: sliders and tempo name
+  labels read the global bpm instead of progBpm.
+- Fixed compound-meter sync between chords, groove, and kit. Root cause: the chord
+  scheduler counted eighths while the groove engine counted dotted beats, producing a
+  3:1 bar-length mismatch in 6/8, 9/8, and 12/8. All three engines now derive bar
+  length from a shared felt-pulse helper. Flamenco, compas, and eskista pulse values
+  declared in groove data. Kit tempo derived from TIME_SIGS table.
+- Added 12/8 to PROG_TIME_SIGS (was missing; three 12/8 presets loaded with whatever
+  meter the previous preset left behind).
+- Corrected preset tempos: compound_jazz 160 to 53 (same speed, unit changed from
+  eighths to dotted beats), solea 108 to 48 (previous groove fix was being overridden).
+- progSetBpm now re-anchors all three engines through debounced retime, fixing tempo
+  drift that accumulated when dragging the progression BPM slider.
+- Groove/kit swap rewritten from restart-from-top to clock-based phase alignment.
+  Falls back to restart when audio context is unavailable.
+
+## v0.201.187 — Mandolin reverted to gleitz, lute doubled-course, drum gain fix
+
+**Mandolin samples reverted to gleitz/FatBoy banjo** (v0.201.185-186). The
+G-Town Church samples had too much reverb and the 14-note coverage caused
+pitch-shift artifacts. Mandolin, bouzouki, and lute now map to the gleitz banjo
+sample set via INST_TONE_MAP. Full chromatic coverage, no gaps. G-Town Church
+credit removed.
+
+**Doubled-course simulation made instrument-aware** (v0.201.186). The `dc`
+flag is now passed by the caller based on `selectedInstrument`, not baked into
+the SampleEngine descriptor. Banjo samples play as single strings for banjo,
+doubled for mandolin/bouzouki/lute. All sub-types verified: mandolin (4),
+bouzouki (6), lute (5), 12-string guitar (handled separately in chord tool).
+
+**Lute added to doubled-course list** (v0.201.187). All five lute sub-types
+(renaissance 6, renaissance 7, baroque, theorbo, mandore) now get the paired-
+string simulation.
+
+**Drum sample gain corrected** (v0.201.184). The original gain table used
+full-sample RMS, which is meaningless for cymbals (3-second decay pulls the
+average down 15dB). Corrected to attack RMS (first 50ms). Ride and crash
+no longer boosted 2-3x; cowbell and tambourine pulled back.
+
+---
+
 ## v0.201.182 — Real tambourine sample
 
 Tambourine track now uses a real sample instead of the shaker placeholder.
