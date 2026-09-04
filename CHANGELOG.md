@@ -4,6 +4,24 @@ A human-readable record of what changed, when,
 
 ---
 
+## v0.201.193 — Hybrid drum engine: synthesis + samples where each excels
+
+- Drum engine rewritten as hybrid: synthesis for kick, snare, toms, hats, and
+  percussion; AVL samples only for ride, crash, bell, and tambourine (the voices
+  synthesis genuinely can't reproduce). Sample count dropped from 40 to 8 (256KB).
+- WaveShaperNode saturation added to drum bus (tanh curve, 1.8x drive, 2x
+  oversample). Generates upper harmonics so kicks and toms are audible on phone
+  speakers that roll off at ~800 Hz and can't reproduce the 50 Hz fundamentals.
+- Beater click added to kick synthesis: 8ms bandpass noise burst at 2.2 kHz gives
+  the transient attack that makes a kick cut through on small speakers.
+- Velocity-dependent timbre: harder hits are brighter (higher HP cutoff on snare
+  noise), longer decay, and start at higher pitch. Ghost notes are darker and shorter,
+  not just quieter. This is how real drums work and the single biggest realism
+  improvement.
+- Micro-randomization on every synth voice: ±2% pitch, ±2ms timing, ±5% gain per
+  hit. Prevents the machine-gun effect of identical waveforms repeating.
+- Hi-hat pedal pitch shift removed from sample map (now fully synthesized).
+
 ## v0.201.192 — Hi-hat choke group, ghost sample fix, drum gain rebalance
 
 - Hi-hat choke group: closing the hi-hat (closed or pedal) now kills any ringing
