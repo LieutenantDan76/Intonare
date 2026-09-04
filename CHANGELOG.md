@@ -4,6 +4,20 @@ A human-readable record of what changed, when,
 
 ---
 
+## v0.201.192 — Hi-hat choke group, ghost sample fix, drum gain rebalance
+
+- Hi-hat choke group: closing the hi-hat (closed or pedal) now kills any ringing
+  open hi-hat with a 15ms fade-out. Tracked per source; works on both sample and
+  synth paths.
+- Ghost note double-reduction fixed: ghost samples (velocity layer 1) were being
+  played at 0.4x volume on top of already being a soft articulation. Now played
+  at 0.85x, letting the sample provide the dynamics. Flam ghost bumped to 0.55x.
+- Clave removed from sample map (was mapped to cross stick, sounded wrong). Falls
+  through to synth clave which sounds correct.
+- Drum gain rebalance: kick boosted (1.0 to 1.4), cymbals pulled back, hierarchy
+  set to kick > snare > toms > cymbals > percussion. Starting values for on-device
+  tuning.
+
 ## v0.201.191 — AVL drum samples, spectral-flux tempo detector, tap tempo upgrade
 
 - Drum samples: replaced Real Drums Vol. 1 with AVL Drumkits (GPL). Black Pearl

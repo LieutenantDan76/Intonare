@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.201.191 -->
+<!-- INTONARE_VERSION: 0.201.192 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -33430,7 +33430,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.201.191</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.201.192</span>
     </div>
   </div>
 </div>
@@ -33438,7 +33438,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.201.191';
+const INTONARE_VERSION = '0.201.192';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -96681,7 +96681,8 @@ function synthTambourine(time, vel) {
 // ── DRUM SAMPLE ENGINE ──
 // Loads one-shot MP3 samples per kit piece. Falls back to synth if not loaded.
 // Files live in audio/drums/ under the Capacitor asset root.
-var _dkSamples = {};        // kit:piece → AudioBuffer  (e.g. 'standard:kick')
+var _dkSamples = {};
+var _dkOpenHatSrc = null;        // kit:piece → AudioBuffer  (e.g. 'standard:kick')
 var _dkSampleState = 'idle'; // 'idle' | 'loading' | 'ready' | 'failed'
 
 // Kit → piece → filename mapping. Jazz shares most pieces with standard.
@@ -96707,7 +96708,7 @@ var _DK_SAMPLE_MAP = {
     cowbell:  { n:'bp_cowbell' },
     shaker:   { n:'bp_shaker', g:'bp_shaker_g' },
     tambourine:{ n:'bp_tamb' },
-    clave:    { n:'bp_cross' },   // sidestick as clave placeholder
+    // clave: falls through to synth (no sample)
     clap:     { n:'bp_snare' },   // snare as clap placeholder
   },
   jazz: {
@@ -96727,7 +96728,7 @@ var _DK_SAMPLE_MAP = {
     cowbell:  { n:'bb_cowbell' },
     shaker:   { n:'bb_shaker', g:'bb_shaker_g' },
     tambourine:{ n:'bb_tamb' },
-    clave:    { n:'bb_cross' },
+    // clave: falls through to synth
     clap:     { n:'bb_snare' },
   }
 };
@@ -96746,18 +96747,19 @@ var _DK_PITCH_SHIFT = {
 var _DK_SAMPLE_GAIN = {
   // AVL Drumkits: balanced on attack RMS (first 50ms).
   // These are starting values; tune on-device.
-  // Black Pearl (standard)
-  bp_kick:1.0, bp_kick_g:1.0, bp_snare:0.9, bp_snare_g:0.9,
-  bp_cross:1.1, bp_hatc:1.0, bp_hatc_g:1.0, bp_hato:1.0, bp_hato_g:1.0,
-  bp_hatp:1.0, bp_ride:0.9, bp_ride_g:0.9, bp_bell:0.9,
-  bp_crash:0.85, bp_tomhi:0.8, bp_floor:0.8,
-  bp_cowbell:0.7, bp_shaker:0.9, bp_shaker_g:0.9, bp_tamb:0.8,
-  // Blonde Bop (jazz)
-  bb_kick:1.0, bb_kick_g:1.0, bb_snare:0.9, bb_snare_g:0.9,
-  bb_cross:1.1, bb_hatc:1.0, bb_hatc_g:1.0, bb_hato:1.0, bb_hato_g:1.0,
-  bb_hatp:1.0, bb_ride:0.9, bb_ride_g:0.9, bb_bell:0.9,
-  bb_crash:0.85, bb_tomhi:0.8, bb_floor:0.8,
-  bb_cowbell:0.7, bb_shaker:0.9, bb_shaker_g:0.9, bb_tamb:0.8,
+  // Black Pearl (standard) — kick is loudest, snare 2dB under,
+  // cymbals 5-7dB under, toms 3dB under, perc 8dB under.
+  bp_kick:1.4, bp_kick_g:1.2, bp_snare:1.1, bp_snare_g:0.9,
+  bp_cross:1.3, bp_hatc:0.9, bp_hatc_g:0.8, bp_hato:0.85, bp_hato_g:0.8,
+  bp_hatp:0.85, bp_ride:0.8, bp_ride_g:0.7, bp_bell:0.8,
+  bp_crash:0.75, bp_tomhi:0.95, bp_floor:0.95,
+  bp_cowbell:0.6, bp_shaker:0.7, bp_shaker_g:0.7, bp_tamb:0.7,
+  // Blonde Bop (jazz) — same hierarchy, slightly softer overall
+  bb_kick:1.3, bb_kick_g:1.1, bb_snare:1.1, bb_snare_g:0.9,
+  bb_cross:1.3, bb_hatc:0.9, bb_hatc_g:0.8, bb_hato:0.85, bb_hato_g:0.8,
+  bb_hatp:0.85, bb_ride:0.8, bb_ride_g:0.7, bb_bell:0.8,
+  bb_crash:0.75, bb_tomhi:0.95, bb_floor:0.95,
+  bb_cowbell:0.6, bb_shaker:0.7, bb_shaker_g:0.7, bb_tamb:0.7,
 };
 
 // Jazz kit: high-shelf filter darkens all samples
@@ -96861,6 +96863,25 @@ function _dkPlaySample(id, time, vel, kit, isGhost) {
   _dkRegister(src, time).start(time);
   var dur = buf.duration / (shift || 1);
   src.stop(time + dur + 0.05);
+
+  // Hi-hat choke group: closing the hat kills any ringing open hat.
+  // Track the open-hat source so closed/pedal can stop it.
+  if (id === 'hihat-o') {
+    _dkOpenHatSrc = { src: src, gain: g, time: time };
+  } else if (id === 'hihat-c' || id === 'hihat-p') {
+    if (_dkOpenHatSrc) {
+      try {
+        var oG = _dkOpenHatSrc.gain;
+        var ct = ctx.currentTime;
+        oG.gain.cancelScheduledValues(ct);
+        oG.gain.setValueAtTime(oG.gain.value, ct);
+        oG.gain.setTargetAtTime(0, ct, 0.015);
+        _dkOpenHatSrc.src.stop(ct + 0.08);
+      } catch(e) {}
+      _dkOpenHatSrc = null;
+    }
+  }
+
   return true;
 }
 
@@ -96879,6 +96900,7 @@ function triggerInstrument(id, time, vel, ghost, kit) {
     case 'cross':      synthCrossStick(time, v); break;
     case 'hihat-c':    synthHihat(time, v, false, kit); break;
     case 'hihat-o':    synthHihat(time, v, true, kit); break;
+    // Synth choke: closed/pedal kills open hat ring (sample path handles its own)
     case 'hihat-p':    synthHihatPedal(time, v); break;
     case 'ride':       synthRide(time, v, kit); break;
     case 'crash':      synthCrash(time, v); break;
@@ -97231,10 +97253,17 @@ function dk_scheduler() {
       if (val > 0) {
         const v = dk_trackVols[t.id];
         if (val === 3) {
-          triggerInstrument(t.id, nextTime, v * 0.4, false, dk_currentKit, true);
-          triggerInstrument(t.id, nextTime + 0.03, v, false, dk_currentKit, false);
+          // Flam: ghost hit then normal hit 30ms apart
+          triggerInstrument(t.id, nextTime, v * 0.55, true, dk_currentKit);
+          triggerInstrument(t.id, nextTime + 0.03, v, false, dk_currentKit);
+        } else if (val === 1) {
+          // Ghost note: if real ghost sample exists, play at ~0.85x
+          // (the sample IS the soft articulation; 0.4x made it inaudible).
+          // If no ghost sample, the synth path still gets ghost=true and
+          // its own internal scaling handles it.
+          triggerInstrument(t.id, nextTime, v * 0.85, true, dk_currentKit);
         } else {
-          triggerInstrument(t.id, nextTime, v, val === 1, dk_currentKit, false);
+          triggerInstrument(t.id, nextTime, v, false, dk_currentKit);
         }
       }
       // Push cursor event for every visible track
