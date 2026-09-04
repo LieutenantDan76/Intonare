@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.201.192 -->
+<!-- INTONARE_VERSION: 0.201.193 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -33430,7 +33430,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.201.192</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.201.193</span>
     </div>
   </div>
 </div>
@@ -33438,7 +33438,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.201.192';
+const INTONARE_VERSION = '0.201.193';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -95998,6 +95998,7 @@ let dk_playing    = false;
 let dk_currentKit = 'standard';
 let dk_audioCtx   = null;
 let dk_masterGain = null;
+let _dkSaturator = null;
 let dk_precTrackId = null;  // currently open precision track
 
 // Scheduler state
@@ -96237,10 +96238,23 @@ function getCtx() {
     // failed before: correcting the chords aligned them to the drums while knocking
     // them off the groove.
     try {
+      // Saturation stage: generates upper harmonics so kicks and toms are
+      // audible on phone speakers (which roll off at ~800 Hz and can't
+      // reproduce the 50-100 Hz fundamentals). A gentle tanh curve adds
+      // even/odd harmonics without obvious distortion. Placed before the
+      // limiter so the compressor catches any peaks the shaper creates.
+      _dkSaturator = dk_audioCtx.createWaveShaper();
+      const n = 256; const curve = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        const x = (i / (n - 1)) * 2 - 1;
+        curve[i] = Math.tanh(x * 1.8);  // 1.8 = gentle drive
+      }
+      _dkSaturator.curve = curve;
+      _dkSaturator.oversample = '2x';
       const _dkChain = buildLimiterChain(dk_audioCtx, 0.8);
-      dk_masterGain.connect(_dkChain.gain);
+      dk_masterGain.connect(_dkSaturator);
+      _dkSaturator.connect(_dkChain.gain);
     } catch (e) {
-      // Chain unavailable for any reason — still make sound rather than going silent.
       dk_masterGain.connect(_getMasterOut(dk_audioCtx));
     }
   }
@@ -96280,53 +96294,74 @@ function dk_cancelPendingAfter(t) {
 
 function synthKick(time, vel, kit) {
   const ctx = getCtx();
+  // Micro-randomize: ±2% pitch, ±0.002s timing
+  const t = time + (Math.random() - 0.5) * 0.004;
+  const pRand = 1 + (Math.random() - 0.5) * 0.04;
+  const v = vel * (0.95 + Math.random() * 0.1);
+
   const g = ctx.createGain(); g.connect(dk_masterGain);
   const osc = ctx.createOscillator(); osc.connect(g); osc.type = 'sine';
 
+  // Velocity → timbre: harder hits start higher and decay longer
+  const vScale = 0.7 + v * 0.6;  // 0.7-1.3
+
   if (kit === 'electronic') {
-    osc.frequency.setValueAtTime(180, time);
-    osc.frequency.exponentialRampToValueAtTime(40, time + 0.08);
-    osc.frequency.exponentialRampToValueAtTime(30, time + 0.25);
-    g.gain.setValueAtTime(vel * 1.4, time);
-    g.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
-    _dkRegister(osc, time).start(time); osc.stop(time + 0.3);
-    const cg = ctx.createGain(); cg.connect(dk_masterGain);
-    const co = ctx.createOscillator(); co.connect(cg); co.frequency.value = 800;
-    cg.gain.setValueAtTime(vel * 0.6, time); cg.gain.exponentialRampToValueAtTime(0.001, time + 0.012);
-    _dkRegister(co, time).start(time); co.stop(time + 0.015);
+    osc.frequency.setValueAtTime(180 * pRand, t);
+    osc.frequency.exponentialRampToValueAtTime(40, t + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(30, t + 0.25);
+    g.gain.setValueAtTime(v * 1.4, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    _dkRegister(osc, t).start(t); osc.stop(t + 0.3);
   } else if (kit === 'jazz') {
-    osc.frequency.setValueAtTime(100, time);
-    osc.frequency.exponentialRampToValueAtTime(45, time + 0.06);
-    g.gain.setValueAtTime(vel * 0.8, time); g.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
-    _dkRegister(osc, time).start(time); osc.stop(time + 0.2);
+    osc.frequency.setValueAtTime(100 * pRand, t);
+    osc.frequency.exponentialRampToValueAtTime(45, t + 0.06 * vScale);
+    g.gain.setValueAtTime(v * 0.9, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.18 * vScale);
+    _dkRegister(osc, t).start(t); osc.stop(t + 0.22);
   } else {
-    osc.frequency.setValueAtTime(155, time);
-    osc.frequency.exponentialRampToValueAtTime(52, time + 0.07);
-    osc.frequency.exponentialRampToValueAtTime(38, time + 0.22);
-    g.gain.setValueAtTime(vel * 1.2, time); g.gain.exponentialRampToValueAtTime(0.001, time + 0.33);
-    _dkRegister(osc, time).start(time); osc.stop(time + 0.36);
-    const cg = ctx.createGain(); cg.connect(dk_masterGain);
-    const co = ctx.createOscillator(); co.connect(cg); co.type='square'; co.frequency.value = 180;
-    cg.gain.setValueAtTime(vel * 0.22, time); cg.gain.exponentialRampToValueAtTime(0.001, time + 0.010);
-    _dkRegister(co, time).start(time); co.stop(time + 0.012);
+    osc.frequency.setValueAtTime(155 * pRand, t);
+    osc.frequency.exponentialRampToValueAtTime(52, t + 0.07 * vScale);
+    osc.frequency.exponentialRampToValueAtTime(38, t + 0.22);
+    g.gain.setValueAtTime(v * 1.3, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.33 * vScale);
+    _dkRegister(osc, t).start(t); osc.stop(t + 0.36);
   }
+
+  // Beater click: a short noise burst at 1.5-3 kHz that makes the kick
+  // audible on phone speakers. Without this, phone speakers can't reproduce
+  // the 50 Hz body and the kick disappears.
+  const clickBuf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 0.008), ctx.sampleRate);
+  const cd = clickBuf.getChannelData(0);
+  for (let i = 0; i < cd.length; i++) cd[i] = Math.random() * 2 - 1;
+  const clickSrc = ctx.createBufferSource(); clickSrc.buffer = clickBuf;
+  const clickHP = ctx.createBiquadFilter(); clickHP.type = 'bandpass';
+  clickHP.frequency.value = 2200 * pRand; clickHP.Q.value = 1.5;
+  const clickG = ctx.createGain();
+  clickG.gain.setValueAtTime(v * 0.35, t);
+  clickG.gain.exponentialRampToValueAtTime(0.001, t + 0.012);
+  clickSrc.connect(clickHP); clickHP.connect(clickG); clickG.connect(dk_masterGain);
+  _dkRegister(clickSrc, t).start(t); clickSrc.stop(t + 0.015);
 }
 
 // ── SNARE ──
 function synthSnare(time, vel, ghost, kit) {
   const ctx = getCtx();
-  const noiseDur = kit==='brush' ? (ghost?0.12:0.38) : (ghost ? 0.07 : 0.17);
+  // Micro-randomize
+  const t = time + (Math.random() - 0.5) * 0.004;
+  const v = vel * (0.95 + Math.random() * 0.1);
+  const pRand = 1 + (Math.random() - 0.5) * 0.04;
+  // Velocity → timbre: harder = brighter noise, longer decay
+  const vBright = ghost ? 800 : (1100 + v * 600);  // HP cutoff: ghost=darker
+  const noiseDur = kit==='brush' ? (ghost?0.12:0.38) : (ghost ? 0.06 : (0.12 + v * 0.08));
 
-  // Noise: hp → peaking boost → gain envelope
   const nBuf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate*(noiseDur+0.04)), ctx.sampleRate);
   const nd = nBuf.getChannelData(0); for (let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
   const nSrc = ctx.createBufferSource(); nSrc.buffer = nBuf;
-  const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = 1100; hp.Q.value=0.5;
-  const pk = ctx.createBiquadFilter(); pk.type='peaking'; pk.frequency.value=3500; pk.gain.value=8; pk.Q.value=1.2;
+  const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = vBright; hp.Q.value=0.5;
+  const pk = ctx.createBiquadFilter(); pk.type='peaking'; pk.frequency.value=3500 * pRand; pk.gain.value= ghost ? 4 : 8; pk.Q.value=1.2;
   const ng = ctx.createGain();
   nSrc.connect(hp); hp.connect(pk); pk.connect(ng); ng.connect(dk_masterGain);
 
-  // Body oscillator — short, drops fast so it doesn't warble
   const bo = ctx.createOscillator(); bo.type='sine';
   const bg = ctx.createGain(); bo.connect(bg); bg.connect(dk_masterGain);
 
@@ -96398,6 +96433,9 @@ function synthCrossStick(time, vel) {
 // ── HI-HAT ──
 function synthHihat(time, vel, open, kit) {
   const ctx = getCtx();
+  const t = time + (Math.random() - 0.5) * 0.003;
+  const v = vel * (0.95 + Math.random() * 0.1);
+  const pRand = 1 + (Math.random() - 0.5) * 0.03;
   const decay = open
     ? (kit==='jazz'?0.60 : kit==='brush'?0.50 : 0.40)
     : (kit==='jazz'?0.075 : kit==='brush'?0.055 : 0.048);
@@ -96691,51 +96729,25 @@ var _dkSampleState = 'idle'; // 'idle' | 'loading' | 'ready' | 'failed'
 // When ghost is present, triggerInstrument picks the layer by velocity value.
 // Voices without a ghost entry use the normal sample gain-scaled for ghosts.
 var _DK_SAMPLE_MAP = {
+  // Hybrid engine: only the voices synthesis genuinely can't do.
+  // Ride, crash, and tambourine need real recordings for their inharmonic
+  // complexity and natural tails. Everything else is synthesized with
+  // velocity-dependent timbre and micro-randomization.
   standard: {
-    kick:     { n:'bp_kick',   g:'bp_kick_g' },
-    snare:    { n:'bp_snare',  g:'bp_snare_g' },
-    cross:    { n:'bp_cross' },
-    'hihat-c':{ n:'bp_hatc',   g:'bp_hatc_g' },
-    'hihat-o':{ n:'bp_hato',   g:'bp_hato_g' },
-    'hihat-p':{ n:'bp_hatp' },
-    ride:     { n:'bp_ride',   g:'bp_ride_g' },
+    ride:     { n:'bp_ride' },
     bell:     { n:'bp_bell' },
     crash:    { n:'bp_crash' },
-    'tom-hi': { n:'bp_tomhi' },
-    tom1:     { n:'bp_tomhi' },   // pitch-shifted at playback
-    tom2:     { n:'bp_floor' },   // pitch-shifted at playback
-    floor:    { n:'bp_floor' },
-    cowbell:  { n:'bp_cowbell' },
-    shaker:   { n:'bp_shaker', g:'bp_shaker_g' },
     tambourine:{ n:'bp_tamb' },
-    // clave: falls through to synth (no sample)
-    clap:     { n:'bp_snare' },   // snare as clap placeholder
   },
   jazz: {
-    kick:     { n:'bb_kick',   g:'bb_kick_g' },
-    snare:    { n:'bb_snare',  g:'bb_snare_g' },
-    cross:    { n:'bb_cross' },
-    'hihat-c':{ n:'bb_hatc',   g:'bb_hatc_g' },
-    'hihat-o':{ n:'bb_hato',   g:'bb_hato_g' },
-    'hihat-p':{ n:'bb_hatp' },
-    ride:     { n:'bb_ride',   g:'bb_ride_g' },
+    ride:     { n:'bb_ride' },
     bell:     { n:'bb_bell' },
     crash:    { n:'bb_crash' },
-    'tom-hi': { n:'bb_tomhi' },
-    tom1:     { n:'bb_tomhi' },
-    tom2:     { n:'bb_floor' },
-    floor:    { n:'bb_floor' },
-    cowbell:  { n:'bb_cowbell' },
-    shaker:   { n:'bb_shaker', g:'bb_shaker_g' },
     tambourine:{ n:'bb_tamb' },
-    // clave: falls through to synth
-    clap:     { n:'bb_snare' },
   }
 };
-
 // Pieces that need pitch-shifting when played from a shared sample
 var _DK_PITCH_SHIFT = {
-  'hihat-p': 0.85,    // pedal hat: pitch down from closed
   'tom2':    0.80,     // low tom: pitch down from mid tom
 };
 
@@ -96745,21 +96757,8 @@ var _DK_PITCH_SHIFT = {
 // percussion 8-9dB under. Without these the ride and crash are buried
 // and the cowbell overpowers everything.
 var _DK_SAMPLE_GAIN = {
-  // AVL Drumkits: balanced on attack RMS (first 50ms).
-  // These are starting values; tune on-device.
-  // Black Pearl (standard) — kick is loudest, snare 2dB under,
-  // cymbals 5-7dB under, toms 3dB under, perc 8dB under.
-  bp_kick:1.4, bp_kick_g:1.2, bp_snare:1.1, bp_snare_g:0.9,
-  bp_cross:1.3, bp_hatc:0.9, bp_hatc_g:0.8, bp_hato:0.85, bp_hato_g:0.8,
-  bp_hatp:0.85, bp_ride:0.8, bp_ride_g:0.7, bp_bell:0.8,
-  bp_crash:0.75, bp_tomhi:0.95, bp_floor:0.95,
-  bp_cowbell:0.6, bp_shaker:0.7, bp_shaker_g:0.7, bp_tamb:0.7,
-  // Blonde Bop (jazz) — same hierarchy, slightly softer overall
-  bb_kick:1.3, bb_kick_g:1.1, bb_snare:1.1, bb_snare_g:0.9,
-  bb_cross:1.3, bb_hatc:0.9, bb_hatc_g:0.8, bb_hato:0.85, bb_hato_g:0.8,
-  bb_hatp:0.85, bb_ride:0.8, bb_ride_g:0.7, bb_bell:0.8,
-  bb_crash:0.75, bb_tomhi:0.95, bb_floor:0.95,
-  bb_cowbell:0.6, bb_shaker:0.7, bb_shaker_g:0.7, bb_tamb:0.7,
+  bp_ride:0.9, bp_bell:0.9, bp_crash:0.8, bp_tamb:0.75,
+  bb_ride:1.2, bb_bell:1.1, bb_crash:0.8, bb_tamb:0.85,
 };
 
 // Jazz kit: high-shelf filter darkens all samples
@@ -96892,7 +96891,7 @@ function triggerInstrument(id, time, vel, ghost, kit) {
   // Try real samples first for standard and jazz kits.
   // Electronic and brush kits stay fully synthesized.
   if (_dkSampleState === 'ready' && (kit === 'standard' || kit === 'jazz' || kit === 'latin')) {
-    if (_dkPlaySample(id, time, v, kit === 'latin' ? 'standard' : kit, ghost)) return;
+    if (_dkPlaySample(id, time, v, kit === 'latin' ? 'standard' : kit, false)) return;
   }
   switch(id) {
     case 'kick':       synthKick(time, v, kit); break;
