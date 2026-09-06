@@ -2,7 +2,1344 @@
 
 A human-readable record of what changed, when,
 
+## v0.209.23 — Preset BPM corrections (6 presets)
+
+Cross-referenced all 78 drum presets against real songs using BPM databases
+(GetSongBPM, SongBPM, Tunebat, Musicstax) and genre-standard ranges. Six
+presets were off:
+
+New Jack Swing: 96 to 112. Bobby Brown "My Prerogative" is 110-112, Bell Biv
+DeVoe "Poison" is 111-112. The genre lives at 108-114; 96 was noticeably
+sluggish and would not have felt like new jack swing to anyone familiar with it.
+
+Neo-Soul: 72 to 83. D'Angelo's "Brown Sugar" is 83. The genre sits 80-95; 72
+dragged below the genre floor.
+
+Funky Drummer: 102 to 99. The actual Clyde Stubblefield break (recorded Nov 20
+1969 at King Studios, Cincinnati) clocks at 96-99 depending on the source. 102
+was slightly hot.
+
+Ska: 140 to 155. 2-tone ska (The Specials "Gangsters" 130, Madness "Baggy
+Trousers" 145, "One Step Beyond" 166) clusters 130-165. 140 sat at the floor of
+the range and felt slow for the driving energy the pattern communicates. 155
+puts it in the energetic center.
+
+Afrobeat: 105 to 110. Fela Kuti's catalog clusters 110-120. 105 was at the
+bottom edge.
+
+Purdie Shuffle: 96 to 115. The canonical Purdie shuffle recording is Steely
+Dan's "Babylon Sisters" at approximately 120. Bernard Purdie's half-time shuffle
+feel sits 110-120; 96 was well below the idiom.
+
+Progression pairings that reference these presets carry their own bpm field that
+overrides the preset's dk_bpm, so composed progressions keep their original
+tempos. The preset BPM only applies when loading the preset standalone.
+
+
+## v0.209.22 — Subdivision picker replaces grid/triplet cycle
+
+The grid subdivision button (which cycled 4 → 8 → 16 → 32) and the triplet
+button (which cycled T → T8 → T16) are replaced by a single picker that matches
+the time signature dropdown pattern.
+
+Tapping the subdivision button opens a popover showing all six options in a
+grid: 4, 8, 16, 32, T8, T16. Triplet options are visually distinct in cyan.
+Tap one and the picker closes. One tap from T16 back to 16, instead of cycling
+through three states.
+
+The setSubdivision function handles both straight and triplet modes in one call.
+Straight modes (4/8/16/32) clear triplet and scale patterns. Triplet modes
+(T8/T16) override all tracks. The old cycleGlobalSub and cycleGlobalTriplet
+functions are kept for backward compatibility (presets and workspace restore
+may call them) but new interactions go through the picker.
+
+The picker opens upward from the dock (same as the time-sig dropdown), closes
+on outside tap, and has light-mode overrides. The old pinned width for
+dkTripBtn is removed.
+
+
+## v0.209.21 — Per-track subdivision crash, faster drawers
+
+Tapping a per-track subdivision chip (e.g. 32) in the track settings drawer
+crashed the screen. The chip's onclick called _buildTrackRow(t, ...) where t
+was the i18n translation function, not the track object. The function then read
+t.id (undefined), looked up dk_patterns[undefined], and threw "Cannot read
+properties of undefined (reading '0')". Fixed: t changed to trk.
+
+Drawer animation timing tightened: open 250ms (was 350ms), close 180ms (was
+280ms). Measured at 60fps: settings drawer settles in ~5 frames, preset tray in
+~6 frames. Close is 2-3 frames faster than open. Same curves, just shorter
+durations.
+
+
+## v0.209.20 — Drawer animations: root cause found and fixed
+
+The drawers were never going to animate, no matter what CSS or JS was written
+for them. A global rule for the theme cross-fade system,
+`*, *::before, *::after { transition: <nine color/transform properties> !important }`,
+pins every element's transition list app-wide. Height, max-height and padding
+are not in that list, so no drawer in the app can animate its height unless it
+opts back in with its own !important. The launcher already does this for its
+opacity fade (and the comment there records the same discovery). The drumkit
+drawers never had.
+
+Diagnosed by measuring the drawers frame by frame in headless Chromium against
+the real file: the computed transition-property on a settings drawer mid-open
+read "background, background-color, border-color, color, fill, box-shadow,
+transform, opacity, filter" with height nowhere in it, while the inline style
+said "height 350ms". The inline style was being discarded.
+
+Fix: three opt-in rules under #toolDrumkit that set a height/padding transition
+with !important, applied via .dk-sliding-open / .dk-sliding-close classes that
+the slide helper adds only for the duration of the animation. The helper still
+does the two-frame setup (paint the collapsed state, then set the target) which
+is required regardless.
+
+Measured after the fix: settings drawer 0 to 66px over 10 intermediate frames
+with the iOS spring shape; preset tray 0 to 180px over 10 frames; instrument
+group rows 0 to 42px over 8 frames. Close direction accelerates as intended.
+
+Instrument group expand/collapse now goes through the same slider instead of
+flipping display, so rows slide in and out rather than popping.
+
+
+## v0.209.19 — Drawer animations, for real this time
+
+CSS max-height transitions were silently failing because the browser never had a
+painted "from" state to transition from. The elements were created by JS and
+immediately had their class toggled, so both endpoints existed in the same
+rendering frame and the browser skipped the transition.
+
+Replaced with a JS helper (_dkSlide) that forces a reflow between setting
+max-height to zero and setting it to the element's scrollHeight. The browser now
+always has two distinct painted states to interpolate between. Opening uses the
+iOS spring curve (cubic-bezier 0.2, 0.8, 0.2, 1.0) at 350ms. Closing uses an
+accelerating curve (cubic-bezier 0.4, 0.0, 1.0, 1.0) at 280ms, which feels
+faster on the way out.
+
+After the open transition completes, max-height is set to 'none' so the content
+can reflow freely (e.g. if a subdivision chip row wraps to a second line).
+
+Applied to all three drawers: track settings (gear panel), preset tray, and the
+close direction of both. The CSS max-height transitions have been removed from
+these elements since the JS now owns the animation.
+
+
+## v0.209.18 — Drawer animations, BPM slider desync
+
+Settings drawer: was snapping because the transition values from the iOS pass
+never landed (the earlier script threw mid-write). Now uses the iOS spring curve
+at 350ms. The border-top was rendering at max-height zero because display:flex
+still paints borders. Border color is now transparent when closed, transitions
+to visible with the panel.
+
+Preset tray: was snapping because the panel INSIDE the tray had its own
+max-height:0 + transition from before the tray was added. Two nested
+max-height animations fought each other. Removed the panel's own max-height
+and let the tray handle the entire slide. iOS curve at 350ms.
+
+BPM slider desync: the slider showed 120 (from the metronome) but tapping +/-
+jumped to 91 because dk_bpm was still at its init value of 90. The workspace
+restore sets dk_bpm but never called _dkSyncBpmUI because the drumkit module is
+hidden at restore time. Added the sync call to dkInit so the slider, readout,
+and dk_bpm all agree on module open.
+
+BPM slider range: min changed from 40 to 10 so common tempos (90-120) sit
+closer to the middle of the slider track instead of bunched at the left end.
+The stepBpm clamp and edit-field validation updated to match.
+
+
+## v0.209.17 — iOS-standard animation curves
+
+Every transition in the drumkit module now uses the same iOS spring curve:
+cubic-bezier(0.2, 0.8, 0.2, 1.0) at 350ms for drawers and panels, 250ms for
+chips and interactive states, 120ms for step tap feedback. This replaces the mix
+of ease, ease-in-out, and linear timings that made the module feel inconsistent.
+
+Track settings drawer: the border-top was showing at max-height zero because
+display:flex still renders borders. Border is now removed at closed state and
+transitions in with the panel.
+
+Play button breathe: slowed to 2.4s cycle with narrower glow range (10-16px
+instead of 12-22px). Less flashy, more like a heartbeat.
+
+Step tap: scale reduced from 0.88 to 0.9 for a subtler press feel.
+
+Kit chip active scale: removed. Color change is enough; the scale was a gimmick.
+
+BPM stepper press: reduced from 0.88 to 0.92, background flash removed.
+
+Bar dot active: scale reduced from 1.3 to 1.15.
+
+Group expand arrow and preset chevron: both on the iOS curve at 350ms.
+
+
+## v0.209.16 — CLEAR confirmation, micro-animations
+
+CLEAR now requires two taps. First tap changes the button to SURE? (SICURO? in
+Italian) in red with a scale pulse. Second tap within 2.5 seconds clears. After
+2.5 seconds or if the user taps elsewhere, the button resets to CLEAR. No modal,
+no interruption to flow.
+
+Micro-animations added across the module:
+
+Step cells: scale to 88% on touch, snaps back on release. Gives a tactile press
+feel without adding latency to the toggle.
+
+Play button: breathes while playing. A gentle glow pulse on a 1.8s loop. The
+existing playing-state box-shadow was a static halo; this replaces it with a
+slow sine-wave between 12px and 22px spread.
+
+Track settings drawer: the gear panel now slides open with a 250ms cubic-bezier
+transition instead of snapping from display:none to display:flex. Padding
+animates alongside max-height so the content doesn't jump.
+
+Mute: the whole row fades to 40% with a 200ms ease transition instead of an
+instant opacity change.
+
+Bar dots: the active dot scales up 30% with a 100ms transition.
+
+Kit chips: active chip scales up 3% for a subtle lift.
+
+BPM steppers: scale to 88% on press with a background flash.
+
+
+## v0.209.15 — Mute fix
+
+The mute desync: toggleMute added a .muted class to the track row, but
+_buildTrackRow never reapplied it. Any of the 13 call sites that rebuild the
+grid (time sig, subdivision, preset, kit, etc.) would wipe the class, so the
+track looked unmuted while dk_mutedTracks still held it silent. Fixed by
+checking dk_mutedTracks in _buildTrackRow.
+
+Mute visibility: previously only the track name dimmed to 0.5 opacity. Now the
+entire row dims to 0.4, so a muted track is unmistakable.
+
+Mute moved to track settings: tapping the track label no longer toggles mute.
+That was undocumented and easy to trigger by accident. Mute is now a MUTE /
+UNMUTE button in the gear panel (track settings drawer), next to volume. The
+button turns red when muted. i18n entries added for EN (MUTE / UNMUTE) and IT
+(MUTO / RIATTIVA).
+
+Hint text was already accurate after the move since it only documented hold for
+precision.
+
+
+## v0.209.14 — BPM edit field no longer crashes the screen
+
+Tapping the BPM number opens a text field by replacing the #bpmVal span with an
+input. While that field is open the span does not exist, so anything calling
+document.getElementById('bpmVal').textContent throws on null and trips the error
+boundary, which is the screen-reset dialog.
+
+Moving the slider was the reported path, but it was not the only one. Four call
+sites wrote the BPM readout without a guard: setBpm, the snapshot restore, and
+two preset-apply paths. Loading a preset or restoring a workspace with the field
+open would have crashed the same way.
+
+All four now route through one helper, _dkSyncBpmUI, which null-checks the
+readout, the edit field and the slider. The edit field also gained an id, so it
+stays in sync while open: drag the slider mid-edit and the field tracks it
+rather than holding the value it opened with, and committing then writes the
+current tempo instead of a stale one.
+
+The metronome's own bpmVal write is untouched; it was already null-checked
+inside a try/catch.
+
+
+## v0.209.13 — Swing slider width, for real this time
+
+The v0.209.12 swing fix never reached disk. An assertion later in the same
+script threw before the file write, so only the group-dot change landed. The
+changelog claimed otherwise. Corrected here, and verified on disk this time.
+
+Three separate things were pinning the slider short, which is why it looked
+untouched:
+
+The base .mini-slider rule carried max-width 120px. That alone caps it
+regardless of flex.
+
+The override meant to lift that cap targeted .dk-settings-bot, but the swing
+slider moved into .dk-settings-top when the dock was rebuilt in v0.209.8, so it
+had been matching nothing since. Retargeted.
+
+The settings row used justify-content space-between, which distributes slack as
+gaps between items rather than letting a flex child grow.
+
+The swing arrow is gone. It appeared once swing was engaged and pointed at the
+grid to suggest off-beat notes, which the text hint underneath already states in
+words. It also held its layout width while invisible, which was the dead space
+at the right end of the row. All four JS references removed, including two that
+would have thrown on a null element once the markup was deleted.
+
+
+## v0.209.12 — Swing slider width, quieter group headers
+
+Swing slider: two things were holding it back. The settings row used
+space-between, which distributed slack as gaps between items instead of letting
+the slider grow, and the slider itself carried max-width 120px. Both removed, so
+it now fills the row. The swing arrow hint also reserved its width while
+invisible, leaving a gap at the right edge; it collapses to zero width when
+hidden and animates open when swing is engaged.
+
+Group headers no longer show a colour dot. Every track inside a group already
+carries its own dot on its row, so the header dot was a duplicate cue on a row
+that has no grid of its own. Track rows are unchanged, including permanent ones
+like kick and snare and any child revealed by expanding a group.
+
+
+## v0.209.11 — Dock layout stability
+
+Three things in the dock reflowed while you used it.
+
+BPM readout: min-width 36px was not enough for three digits, so the slider
+shrank every time the tempo crossed 100. Now a fixed 34px box with tabular
+figures, so 72 and 226 occupy the same space and the slider never moves. The
+tap-to-type input was 52px and matches the readout now, so editing does not
+shift the row either.
+
+Grid and triplet chips: the grid button cycles 4 / 8 / 16 / 32 and the triplet
+button cycles T / T8 / T16, and each label change resized the button and pushed
+the rest of the row. Both are pinned to the width of their widest state, along
+with the bars button.
+
+Time-signature popover: the dock panel had overflow hidden for its rounded
+corners, which clipped the menu at the panel edge. The panel now allows
+overflow and the transport row and preset tray carry the corner radii instead.
+The menu opens upward from the button so it clears the dock entirely, with a
+viewport-width guard for narrow screens. The preset tray has its own overflow
+clip, so its slide animation is unchanged.
+
+
+## v0.209.10 — Drumkit light mode, done properly
+
+Every track now carries a `light` color alongside its dark one, exposed to CSS
+as --tcl. The dark-mode palette was built to glow on near-black and ranged from
+mid-value (kick #8b5cf6) to nearly white (bell #ffe066, ride #a3e4ff), so no
+single darkening rule could rescue it. Each light color keeps the track's hue
+and is solved to clear 3:1 against the white grid card. The earlier
+filter/color-mix attempts, which turned everything grey or near-black, are gone.
+
+Step states in light mode: hits and flams fill in the track color with a
+darkened edge and no glow; ghosts are a 26% tint of the track color; hit and
+flam indicator dots flip to white on the filled cell; the ghost dot is the track
+color darkened 35% so it reads on its own tint; the playhead is a dark ring
+instead of the dark-mode white one. Barlines and beat starts use the light
+border tokens.
+
+The same treatment is applied to the precision editor steps.
+
+Remaining dark-only surfaces fixed: playing-state ring, time-signature dropdown
+and its active option, subdivision chips, preset toggle / panel / loaded item,
+variant track rows, and the number-row barlines.
+
+Beat number pips: the middle dot at 9px was a two-pixel mark on a phone screen
+regardless of contrast. Now 12px in the darkest ink.
+
+
+## v0.209.9 — Dock layout polish
+
+Bar dots (page navigation) moved below the grid, above the hint text, so the
+beat numbers sit directly on top of the step cells they label. A bottom border
+on the beat-nums row creates a visual top edge for the grid.
+
+PRESETS button moved into the dock's actions row (far left, before HUMANIZE).
+The preset panel is now inside the dock as a collapsible tray: tapping PRESETS
+slides the dock's bottom edge down with a 350ms cubic-bezier animation to
+reveal the category tabs and preset list. Tapping again closes it.
+
+Kit chips remain below the dock as a separate row.
+
+
+## v0.209.8 — Drumkit layout: grid-first with bottom dock
+
+Moved all transport and settings controls below the grid into a dock panel.
+The grid is now the first thing visible after the app header.
+
+Page flow: app chrome, bar dots, beat numbers (adjacent to grid for alignment),
+sequencer grid, hint text, transport+settings dock, presets, kit chips.
+
+The dock panel has three rows: play+BPM (transport), pattern settings + swing
+(4/4, 16, T, 1 bar, swing slider), and actions (HUMANIZE, CLEAR, ?). It sits
+in the normal scroll flow above presets, so the preset dropdown opens below it
+with no interference.
+
+Beat numbers and bar navigation dots swapped: beat numbers are now directly
+above the grid so the column labels align with the step cells.
+
+
+## v0.209.7 — Drumkit UI redesign
+
+Transport and settings reorganized into card containers with rounded corners
+and inset backgrounds.
+
+Transport card: play button + BPM slider + steppers + tap-to-type value, all in
+one rounded panel. Play button is the largest element on screen.
+
+Settings card, two rows: top row holds TIME, GRID, T, and BARS spread evenly
+across the width with vertical dividers. Bottom row holds the SWING slider
+(full remaining width), HUMANIZE, CLEAR, and help button. CLEAR and ? moved
+here from the header, which is now just the back button and title.
+
+
+## v0.209.6 — BPM precision + track visibility
+
+### BPM tap-to-type and steppers
+
+The BPM slider covers 40 to 300 on a phone screen, so dialing in an exact
+tempo was difficult. The BPM number is now tappable: tap it, type the exact
+value, hit Enter or tap away to confirm. Escape cancels. Two stepper buttons
+(- and +) flank the value for single-BPM nudges. The slider still works for
+rough positioning; the steppers and tap-to-type handle the fine tuning.
+
+### Track visibility via group expand
+
+Previously only tracks with active steps showed in the sequencer. Crash, ride,
+toms, and percussion were invisible unless a preset happened to use them.
+
+The group expand toggle now shows ALL tracks in the group when expanded,
+including empty ones. Tap the CYMBALS header and crash, ride, and bell all
+appear as rows you can tap steps into. Tap it again to collapse back to just
+the tracks with data. Every group works this way: expand HI-HAT to get open
+and pedal rows, expand TOMS to get all four, expand PERC to get clave, shaker,
+and tambourine.
+
+### BPM area polish
+
+Stepper buttons cleaned up: transparent background with accent-colored text,
+slightly larger (26px), scale-down feedback on tap. The value field has a
+subtle highlight tap state and the edit input matches the Bebas Neue font.
+
+
+## v0.209.5 — Brush sweep look-ahead, brush EQ tuning
+
+### Dynamic sweep duration
+
+The brush sweep was a fixed-length envelope per ghost note regardless of
+context. A real brush sweep runs continuously until the player lifts to strike,
+so it should fill the gap between accents rather than repeat a rigid shape.
+
+The scheduler now looks ahead when it hits a brush ghost snare: it walks
+forward through the pattern to find the next accent (val >= 2), sums the step
+durations across that gap, and passes the total as sweepDur. The sweep envelope
+stretches to fill exactly the time until the next strike. If no accent follows
+(all ghosts), it falls back to the per-step multiplier.
+
+### Brush snare EQ (tuned on-device)
+
+Sweep: HP 800 -> 1366 Hz (tighter, less low mud), peak EQ 2200 -> 3265 Hz at
+gain 4.0 (was 1.5), rise fraction 30 -> 28%, peak level 0.16 -> 0.15.
+Strike values confirmed as-is: 12ms attack, HP 550, peak 1800, shell 145 Hz.
+
+
+## v0.209.4 — Cymbal and brush overhaul
+
+Two changes, both tuned on-device.
+
+### Cymbals: FM/noise blend
+
+The acoustic metal engine now supports blending FM oscillators with bandpassed
+noise per voice. Each cymbal voice was tuned by ear on a phone speaker:
+
+Hi-hat: pure noise, no FM at all. The oscillators were the source of the
+pitched "ding" that no amount of filtering could remove. Wash centered at
+8.2kHz gives it a bright, tight character without any tonal content.
+
+Ride: 47% FM at double pitch, subtle 39ms ping, bright thin tail. Enough
+structure to sound like metal but not enough to ring as a pitch.
+
+Crash: 68% FM at double pitch, punchy 58ms ping, very wide bright wash.
+The attack is defined but the tail is noise-heavy spread.
+
+Bell: pure FM, no ping at all, slight pitch raise (1.16x). The bell is the
+one voice that should ring as pitched; removing the ping attack just leaves
+the sustain, which is what a bell ride hit sounds like.
+
+Per-voice parameters: oscMix, pingLevel, pingMaxDur, pingQ, tailLevel,
+tailBrMul, washLevel, washFreq, washQ, fmPitchMul. Kit character multipliers
+(brush, jazz, latin) still apply on top of all of these.
+
+### Brush snare: wire press, not stick crack
+
+The brush "strike" was still using the stick snare's sharp noise burst with a
+triangle click transient. That is the sound of a hard point hitting a drum
+head; wires pressed into a coated surface do not produce that.
+
+Replaced with a wire-press articulation: 12ms linear attack ramp instead of
+instant onset, no click transient, wider and lower noise band (HP 550Hz, peak
+1800Hz), gentler shell tone (145Hz, no pitch sweep). The difference is audible
+immediately: it sounds like pressing wires, not cracking a stick.
+
+Brush sweep shortened: 1.2x step duration instead of 1.7x, 0.8s max instead
+of 1.4s, peaks at 30% of the step instead of 45%. Still overlaps enough to
+merge into a continuous bed, but each ghost note no longer sounds like its own
+event.
+
+
+## v0.209.3 — Four progression drum pairings upgraded
+
+Neo-Soul (extended) and Slow Ballad were both using Half-Time, a straight rock
+beat on the standard kit. Neo-Soul (extended) is ninth chords at 82 bpm; Slow
+Ballad is jazz voicings at 66 bpm. Both now use the Neo-Soul drum preset, which
+is brush kit with swing. Brushes at ballad tempo is what these want.
+
+Both Salsa presets were using Son Clave, which is the minimal clave-and-shaker
+pattern. Salsa progressions use the montuno groove, which represents the chorus
+section. The Mambo drum preset has the full chorus ensemble: bell on eighths,
+clave, cross-stick for the conga slap, pedal hat, and kick tumbao. Switched both.
+
+
+## v0.209.2 — 9/8 drum preset swap
+
+The two 9/8 progression presets had their drum presets backwards.
+
+The karsilama progression (2+2+2+3 aksak groove) was paired with "9/8 Groove,"
+which is 3+3+3 compound triple. The compound jazz progression (3+3+3 groove) was
+paired with "9/8 Funk," which is 2+2+2+3 aksak. Swapped them: aksak groove now
+gets the aksak drum preset, compound groove gets the compound drum preset.
+
+Found by cross-auditing all 65 progression drum pairings against the grouping
+each drum preset actually plays.
+
+
+## v0.209.1 — Beat pattern accuracy audit
+
+Full audit of all 139 beat patterns: 78 drum presets and 61 groove presets.
+Cross-verified every clave pattern between the two systems, checked BPMs against
+sourced tempos, and confirmed kit assignments.
+
+Three fixes came out of it:
+
+- The Rosanna Groove closing triplet was nudged wrong. The comment said steps 29
+  and 30 should be pushed a third and two thirds of a step late, but only step 30
+  was nudged, and by 0.5 instead of 2/3. Both steps now have correct nudges:
+  snare step 29 at +1/3, kick step 30 at +2/3.
+- The drum preset audit script did not recognize `nudge` as a valid meta key and
+  flagged it as an unknown track name. Added to META_KEYS.
+- The Descending Toms comment said "72 BPM kept" while the actual value was 100.
+  The comment was stale from when the preset was renamed from "Bonham – Levee";
+  corrected to match the value.
+
+Ten drum presets were missing Italian names: JB Funk, Hip-Hop, Neo-Soul, Disco,
+Tech House, Trap, Breakbeat, D'n'B, UK Garage, and Bonham – Moby Dick. All are
+international genre names that stay as-is in Italian, except JB Funk which
+becomes Funk JB for word order.
+
+No pattern accuracy errors. The previous sourcing pass was thorough.
+
+
+## v0.209.0 — PhISEM for the particle percussion
+
+Research pass on how other apps generate drum sounds turned up one thing that
+applies immediately and costs nothing: Perry Cook's Physically Informed
+Stochastic Event Modeling, the canonical model for any instrument whose sound
+is a crowd of small objects colliding. Shakers, tambourine jingles, cabasa
+beads, sleigh bells are all one algorithm with different particle counts,
+decay times and resonances.
+
+Three parts: a system energy decaying from the strike, a stochastic collision
+test per sample so particles hit at random rather than on a grid, and a
+two-pole resonator standing in for the body they rattle inside. Cook notes it
+costs about as much as playing back a wavetable.
+
+The tambourine and shaker now use it. The tambourine dropped from 35 audio
+nodes per hit to 4, because a particle cloud that decays from one energy
+replaces ten separately scheduled and filtered noise bursts. It also stops
+being something I invented and becomes something with a citation.
+
+One correction to Cook's published constants: his per-sample decay values
+assume a 22kHz rate and collapse to a click at 48kHz. They are expressed here
+as time constants in seconds instead, which holds at any sample rate. Verified
+the envelope shape matches at 44.1k and 48k.
+
+
+## v0.208.1 — One FM pair is a pitch
+
+Still too pitched, and there was a reason I should have caught before shipping.
+
+A single FM pair puts its sidebands at carrier plus or minus whole multiples of
+the modulator. That is an arithmetic progression with one constant spacing, and
+the ear hears a constant spacing as a pitch at that spacing regardless of
+whether the ratio is simple. Reid's 2500 over 1000 gives twelve partials sitting
+exactly 1000Hz apart, so the voice rang at 1000Hz no matter how the filters
+moved. I took his numbers without working out what the ratio does.
+
+Three fixes:
+
+- Three FM pairs instead of one, at spacings with no common factor, using
+  irrational multipliers so no pair lines up with another at any harmonic.
+  Measured, that turns twelve partials at a dead constant 1000Hz gap into about
+  thirty whose gaps scatter, with nothing regular for the ear to lock onto.
+- Per-hit scatter on every pair, so repeats are not identical and no fixed
+  interval survives from one stroke to the next.
+- The ping band widened from Q 0.7 to 0.35. Two cascaded filters multiply their
+  sharpness, and a narrow band parked on a fixed endpoint sings that endpoint by
+  itself, which was adding a second pitch on top of the first.
+
+
+## v0.208.0 — Two engines, because four of the five kits are not drum machines
+
+Daniele: it is not all 808, and everything sounds techno. Both true, and the
+second follows from the first. I had built one architecture, a drum machine's,
+and given all five kits the same one with the filters moved around. Of course
+they all sounded electronic. They were all the same electronic instrument.
+
+There are now two metal engines and the kit chooses between them.
+
+### Electronic keeps the 808
+
+Six square oscillators, two bands, saturation, noise. That is the right sound
+for that kit and it stays exactly as it was.
+
+### The other four get an acoustic model
+
+Built from Gordon Reid's cymbal patch in the Synth Secrets series, which
+differs from the drum machine in two ways that matter.
+
+The source is FM rather than tuned oscillators: a pulse modulating a square at
+high index throws hundreds of partials across the band without clumping them,
+where six oscillators give six partials no matter how they are filtered. Reid's
+published values for the ride are used directly: carrier near 2.5kHz, modulator
+near 1kHz, ping band settling at 1kHz, tail highpass based at 2.64kHz.
+
+The filters move, and this is the part that actually reads as acoustic. The
+ping band starts high and sweeps down over a fifth of a second as the impact
+dies. The tail highpass opens to four and a half times its base over the first
+200ms and then closes again across the decay, which models energy migrating
+from the strike into the higher modes and then fading. A fixed filter with a
+falling amplitude cannot do that, and a fixed filter is what every voice had.
+The tail is mixed louder than the ping, as in the source.
+
+Hi-hat, ride and crash all route by kit. The bell stays on the tuned model in
+both engines, because a bell genuinely is pitched and modal.
+
+Reid is candid that his own result still lands close to a good analogue drum
+machine, so this is not a claim of realism. It is a much better starting point
+than six squares, and it is the first time the acoustic kits have been built
+as something other than an electronic one.
+
+
+## v0.207.1 — The brush sweep was marching
+
+Daniele: the brush kit sounded like an army marching. Correct, and the reason
+was in the research I had already quoted and then not followed.
+
+Every brush reference describes the sweep as continuous: one unbroken circular
+motion holding a sustained texture under the music. I built a discrete swell
+that retriggered on every ghost note, so it came out as shh-shh-shh-shh in
+strict time. A sweep that restarts every beat is not a sweep, it is a footstep.
+
+Fixed by making the sweep outlast its own step. The step duration is now
+threaded from the scheduler through triggerInstrument into the snare, and a
+brush sweep runs 1.7 steps, so each one is still sounding when the next starts
+and they overlap into one bed. The envelope rises across most of the step and
+falls across the rest with no peak sharp enough to read as an event. Verified
+the overlap holds from 83 to 160 bpm across the subdivisions the presets use.
+
+### A live bug this exposed
+
+Three preview call sites were already passing a sixth argument that the
+function never declared, so it was being silently discarded. Adding stepDur in
+that position turned dead arguments into live ones, and the `true` one would
+have become a 1.4 second sweep every time somebody tapped a step. Removed.
+
+
+## v0.207.0 — Metal stops ringing, brushes start sweeping
+
+Two faults, both researched rather than guessed at this time.
+
+### The ringing
+
+The cymbals were six oscillators through one filter, which is a chord, not a
+cymbal. Sound On Sound describes a real cymbal as a dense fog of enharmonic
+partials dominated by no particular mode; six tuned oscillators are the
+opposite of that. Three changes, all from how the TR-808 actually works:
+
+- Two parallel bands instead of one. The 808 splits its oscillator hash into a
+  short bright band for the strike and a lower, longer band for the body, each
+  with its own envelope and filtering, and mixes them. The decay control on the
+  real machine acts on the lower band only. Collapsing that into a single band
+  was most of the problem.
+- A saturation stage on the oscillator sum. The McGill percussion-synthesis
+  notes point out that a nonlinear operation is the cheap way to get inharmonic
+  density: every pair of partials breeds sum and difference tones, so six
+  oscillators start behaving like sixty.
+- A band of noise under each voice, tuned per voice. Noise alone cannot make a
+  cymbal, which is why filtered white noise never works, but noise between the
+  partials is what turns a chord into metal. The bell keeps almost none, since
+  it is the one metal voice that should read as pitched.
+
+### The brushes
+
+Brush was a set of slightly darker, slightly quieter versions of the stick
+sounds, which is not what a brush is.
+
+On cymbals the references are unanimous and blunt: you hear almost nothing.
+Drum Helper says you get a bit of wash and that is about it, most of all on the
+hi-hats. Brush metal is now mostly air, with the tuned content pulled well down
+and the noise well up.
+
+On the snare the defining sound is the sweep, wires dragged in a circle across
+a coated head, described everywhere as a sustained shhh sitting under the
+music. A sweep is not a strike: it has no transient and it swells before it
+fades, so an instant attack with an exponential tail reads as a tap however
+soft it is. That is exactly what the old brush snare was. A ghost note now
+renders as a sweep, swelling over 90ms with no shell tone and no stick click at
+all, and a full hit renders as a wire strike, thin and dry because wires do not
+drive a head the way a stick tip does.
+
+That gives the brush kit the two articulations real brush playing is built on,
+and it means a jazz pattern with ghost notes now sweeps under the accents
+instead of tapping alongside them.
+
+
+## v0.206.1 — Second pass on the cymbal work
+
+Checked the previous build by running every voice against a stubbed audio
+context rather than trusting the diff. Thirty voice and kit combinations run
+clean. Two real faults came out of it.
+
+### Bell was filtering out its own partials
+
+The new bell had a highpass at 1800Hz while its four partials sit between 512
+and 1536, so every fundamental was above the cutoff and the voice survived on
+upper harmonics alone. Highpass lowered to 900Hz.
+
+### Noise buffers were being rebuilt on every hit
+
+A crash filled a fresh 1.2 second buffer, 57,600 Math.random() calls, each
+time it sounded. The rebuilt tambourine added ten more buffers per hit on top
+of that. All noise layers now read random slices of one half-second buffer
+generated once and cached, so nothing is regenerated per hit and the reuse is
+inaudible. Per-hit buffer count across the whole kit is now zero.
+
+The tambourine scatter also drops from fourteen jingles to ten with lower
+per-voice gain, since several land near the attack and were summing hot.
+
+
+## v0.206.0 — Cymbals stop being the same instrument
+
+Every metal voice shared one set of six oscillator frequencies. The hi-hat,
+the ride and the crash were literally the same sound behind different filters,
+which is why the cymbals read as pitched and as variations on each other.
+
+### Distinct voices
+
+Each metal voice now has its own inharmonic partial set, chosen the way a real
+cymbal's partials fall with size and mass: small and tight up top for the
+hi-hat, lower and denser for the crash, four strong partials for the bell so
+it reads as pitched where a crash should not. The ride also gains a short
+bright noise tick at the front, the sound of a stick landing on metal, which
+is the definition it was missing.
+
+### Kit character
+
+A kit selection now changes the whole cymbal set rather than only the hi-hat
+filter. Each kit carries brightness, decay length, partial stretch and level:
+jazz is darker and rings longer, brush is softer and duller, electronic is
+tighter and more metallic, latin is brighter and crisper. Crash and bell were
+never handed the kit at all; the dispatcher passes it now.
+
+### Tambourine
+
+Rebuilt. It was four noise bursts filtered at 7kHz, the same band a closed
+hi-hat lives in, so the two were siblings. It is now a wooden shell knock at
+the front, fourteen jingle impacts scattered over the first 90ms with random
+timing and pitch, and a shimmer tail lasting well past where a hat would have
+stopped. The irregular scatter is the rattle; evenly spaced bursts read as a
+flam instead.
+
+
+## v0.205.1 — Rosanna swing corrected to 100
+
+The score marks two 16ths as a triplet pair, which is a full 2:1 swing. The
+preset was set to 60, a number I picked by feel rather than from the source.
+At 60 the off-beats land at 0.30 and 0.80 of the beat; the marking calls for
+0.333 and 0.833, which is swing 100. Every off-beat note in the groove was in
+the wrong place.
+
+With the swing correct, the second note of the closing triplet now falls on a
+grid step by itself, so only the third needs an offset: the kick on the third
+16th of beat 4, half a step late, which puts it at 482ms into the beat.
+
+Still unverified: the kick and snare placements through the body of the bar.
+Those are being read off a photo of a screen and I would rather leave them
+flagged than guess a third time.
+
+
+## v0.205.0 — Per-step timing offsets
+
+The step grid could only ever place hits on its own slots, so a true triplet
+inside a bar of swung 16ths was impossible. Hits can now carry a timing offset.
+
+### Engine
+
+Each track keeps an optional map of step index to a fraction of one step,
+positive for late and negative for early. The scheduler applies it to the
+moment a hit sounds and leaves the clock alone, so bars stay exactly the
+length they claim, the playhead stays on the grid, and nothing drifts. Presets
+declare offsets with a `nudge` field; the custom workspace saves and restores
+them alongside the patterns.
+
+### Interface
+
+Precision mode, opened by holding a track label, now has HITS and TIMING tabs.
+It always opens on HITS, so nobody lands in timing without asking for it. In
+TIMING, a tap cycles a step through a third late, two thirds late and a third
+early, and a long press puts it back to straight. The offset shows as a small
+mark in the corner of the step, and the panel border warms up so the mode is
+obvious at a glance. Nothing was added to the main grid.
+
+### Rosanna
+
+The closing figure is now a real triplet: snare on beat 4, snare a third of a
+step late, kick two thirds late. Measured against the source tempo those land
+at 241ms and 482ms, which is exactly where the triplet falls.
+
+### Gate
+
+The drum preset audit now rejects an offset that points at a step with no hit,
+at a step outside the pattern, or at a value of one step or more.
+
+
+## v0.204.8 — Rosanna counted on 2 and 4
+
+Kept 83 BPM but moved the backbeat off the half-time 3 and onto 2 and 4, so
+the groove reads at the speed a listener expects rather than feeling like it
+is crawling. Kick sits on 1 and the and-of-3. Bar 2 closes snare-snare-kick.
+
+
+## v0.204.7 — Rosanna on the swung 16th grid
+
+The transcription's equivalence is two 16ths played as a triplet, not
+triplet eighths. Rebuilt on sub 4 with swing 60 instead of trackSub 3.
+
+- Hi-hat: 16ths across the bar, accent on the downbeat and the plus,
+  ghost on the e and the a. That density is what makes the groove sound
+  like the record; the 12-step triplet grid could not carry it.
+- Snare: ghosts on the e and the a, accent on beat 3.
+- Bar 2 ends with the ghost fill on beat 4.
+- Kick: beat 1, the plus of 2, beat 4.
+- Swing 60 pushes the e and the a late, giving the shuffle feel.
+
+Known approximation: the written triplet on beat 4 is rendered as the last
+three 16ths. A 16th grid cannot place a true triplet, and mixing a triplet
+track with a swung 16th track puts the two on lattices that do not line up.
+
+
+## v0.204.6 — Rosanna: correct pattern from transcription
+
+Read the transcription properly this time. The shuffle notation (two beamed
+eighths = triplet 1st+3rd) means the hi-hat plays ONLY on the 1st and 3rd
+triplet partials (8 per bar, not 12). The 2nd partial is where the snare ghost
+goes, not a hi-hat ghost.
+
+Pattern: v0.204.4's hi-hat [2,0,2] + v0.204.5's tempo (83 BPM).
+
+If 83 still plays at half speed on device, the engine has a trackSub:3 timing
+bug that affects every triplet preset and needs on-device debugging.
+
+
+## v0.204.5 — Rosanna: transcription says 83, pattern restored
+
+Daniele provided a note-for-note transcription screenshot showing quarter = 83.
+Previous versions overshot: 82 -> 88 -> 176. Now set to 83 from the source.
+
+Hi-hat pattern restored to all three triplet partials (accent-ghost-ghost per
+beat), matching the transcription notation: x (x) (x). The v0.204.4 pattern
+incorrectly removed the 2nd partial hits.
+
+If 83 still sounds like half speed on device, there is an engine bug in how
+_stepDurationForTrack handles trackSub:3 that needs to be debugged on device,
+not worked around with doubled BPMs.
+
+
+## v0.204.4 — Rosanna: 176 BPM + sourced pattern
+
+Daniele confirmed on device: Rosanna sounds correct at double the database BPM.
+Set dk_bpm to 176.
+
+Pattern rebuilt from DrumsTheWord note-for-note transcription:
+- Hi-hat: 1st and 3rd partial of each triplet ONLY (the shuffle). Previous
+  pattern had ghost hits on all 12 triplet positions; the real groove only
+  plays 8, with the 2nd partial left for snare ghosts.
+- Snare: ghost on 2nd partial of each beat, accent on beat 3. Bar 2 adds
+  turnaround ghosts on 2nd+3rd partial of beat 4 (per DrumsTheWord: "two
+  ghost notes at the end of the second bar").
+- Kick: Bo Diddley pattern: beat 1, 3rd partial of beat 2, beat 4.
+- Porcaro fill also set to 176.
+
+
+## v0.204.3 — Rosanna two-bar phrase
+
+Rosanna Groove expanded to barCount:2. The single-bar loop was missing the
+second bar's ghost variation that gives the groove its forward motion.
+
+Bar 1 snare has a ghost on the a-of-2 (leaning into the beat-3 accent).
+Bar 2 moves that ghost to the a-of-4 (pushing into the next bar).
+Hi-hat and kick stay consistent across both bars.
+
+
+## v0.204.2 — Half-note BPM misread fix
+
+Root cause found for recurring "sounds too slow" reports: BPM databases return
+the half-note pulse for half-time grooves. I was feeding that number into
+dk_bpm, which expects the quarter-note pulse. Every "correction" from a higher
+number down to the database reading made the preset slower than the song.
+
+### Changed
+
+- Rosanna Groove 82 -> 88. MusicRadar says the quarter note is "circa 88BPM."
+  SkillzDrumLessons explicitly says 82 is "the half note tempo." 88 is the
+  quarter note, which is what dk_bpm represents.
+- Porcaro fill 82 -> 88. Same song.
+- 2/4 Polka 120 -> 140. Not a half-note issue; 120 was simply the genre floor.
+  A solo drum polka needs to be at the center of the range (130-160) to sound
+  alive without a band.
+
+### Process fix
+
+For half-time presets, BPM database readings must be cross-referenced with
+instructor transcriptions or drum lesson analyses, not taken at face value.
+Automated BPM detection is ambiguous for half-time grooves and consistently
+returns the half-note reading.
+
+### Still open
+
+- Rosanna needs barCount:2 for the proper two-bar phrase. The second bar has
+  different ghost placement that gives the groove its forward motion.
+- Tambourine synth sounds like hihat (same spectral range, same noise source).
+- Ride, crash, hihat share identical oscillator frequencies (pure synth, no
+  samples). Need distinct tonal identities.
+- Kit differentiation: electronic/brush/latin kits have no unique cymbal
+  voicing in the synth path.
+
+
+## v0.204.1 — Felt-tempo omega pass
+
+Full omega pass: every preset evaluated by what the listener actually hears,
+not just whether the BPM number is in the genre's published range.
+
+### Changed
+
+- 12/8 Blues 52 -> 60. At 52 dotted-quarter BPM, the triplet eighths ran at
+  2.6/sec; even Stormy Monday (the slowest famous slow blues, 60-65 BPM) is
+  faster. 60 gives a four-second bar and 3 eighths/sec.
+
+### Verified correct (no change needed)
+
+Half-time presets (Half-Time 90, Metal Double Kick 140, Rosanna 82): the snare
+gap (1.7-2.9 seconds) sounds long in isolation, but the sixteenth or triplet
+surface rhythm fills the space. That IS what half-time feels like.
+
+Triplet presets (Shuffle 112, Slow Blues 72, Purdie 96, Gospel Shout 170,
+Bebop 200): BPM is the quarter-note pulse; the ear locks onto the triplet
+hats/ride at 3x that rate. All sound like their genre.
+
+Swing presets (Lo-Fi 75/sw55, Neo-Soul 72/sw45, NJS 96/sw35, UK Garage
+132/sw40): swing stretches pairs into quasi-triplets. The felt groove matches
+the genre in each case.
+
+Compound meters (6/8 Feel 96, Flamenco 108, 6/8 March 100, 9/8 Groove 100,
+9/8 Funk 120, 12/8 Gospel 75): all verified after the v0.204.0 engine fix.
+BPM now equals dotted-quarter pulse; tempos are musically correct.
+
+### Flagged for on-device listen
+
+Compressed-bar Latin presets (Mambo, Songo, Cascara, Son Clave, Baiao): the
+16-step one-bar grid represents a two-bar clave cycle. The engine plays each
+step as a sixteenth, so the musical content runs at double the dk_bpm. At
+dk_bpm=100, mambo is at an effective 200 musical BPM (the ceiling of the
+genre). This was intentional for the grid representation, but the tempos may
+feel fast on device. Listen for these specifically.
+
+7/8 presets (Groove 110, Balkan 112): BPM = eighth-note rate, giving 3.8-second
+bars. That is slow, but 7/8 is a teaching preset for an unusual meter, and
+Lesnoto (the Balkan 3+2+2 dance) is specifically described as "slow." A
+practice track at 100 BPM exists. The BPM slider lets users speed up when ready.
+
+
+## v0.204.0 — Compound meter engine fix
+
+Compound meters (6/8, 9/8, 12/8) had a fundamental timing bug: the engine
+treated dk_bpm as the eighth-note pulse rate instead of the dotted-quarter beat.
+A 6/8 march at BPM 100 was playing at 33 dotted-quarter beats per minute; a
+funeral, not a march.
+
+### Engine changes
+
+Added `pulse` property to TIME_SIGS for 6/8 (pulse:2), 9/8 (pulse:3), and
+12/8 (pulse:4). This tells the engine how many felt beats per bar. Two functions
+fixed:
+
+- `_stepDurationForTrack` (drum kit scheduler): now divides step duration by
+  the compound factor (beats/pulse = 3 for all three meters).
+- `_grooveFeltPulses` (groove/metro scheduler): uses ts.pulse instead of
+  defaulting to tsTop for compound meters.
+
+After the fix, dk_bpm represents the dotted-quarter pulse for compound meters,
+matching what musicians expect. Simple meters (4/4, 3/4, 5/4, 7/8, 11/8) are
+unchanged.
+
+### BPM adjustments
+
+Compound meter preset BPMs updated to be proper dotted-quarter values:
+
+- 9/8 Groove 160 -> 100 (moderate teaching tempo)
+- 9/8 Funk 180 -> 120 (energetic)
+- 12/8 Blues 144 -> 52 (slow blues shuffle, Stormy Monday territory)
+- 12/8 Gospel 180 -> 75 (brisk praise break)
+- 6/8 presets (96, 108, 100) already reasonable as dotted-quarter BPMs; unchanged.
+
 ---
+
+## v0.203.3 — BPM audit: two fixes remaining
+
+Checked all 78 preset tempos against sourced genre ranges and specific-track
+BPM databases. Most had already been fixed in the earlier batch. Two remained:
+
+- **D'n'B** 165 -> 174. Standard range is 170-180; 165 was below the genre floor.
+- **12/8 Gospel** 192 -> 180. Praise break sources say 150-190; 192 was over the
+  top of the range.
+
+All other tempos verified correct against their sources (see v0.202.3 changelog
+for the eleven that were fixed there: Rosanna 95->82, Descending Toms 72->100,
+Phil Collins 96->94, Funky Drummer 98->102, Disco 115->120, Afrobeat 92->105,
+9/8 Groove 200->160, Bebop 160->200, Porcaro 95->82, Be My Baby 105->130,
+Whole Lotta Love 90->92).
+
+## v0.203.2 — The last five gaps, and a verification pass over the previous ten
+
+First, checked the ten presets from v0.203.1 machine-against-intent: category,
+tempo, kit, Italian name and every onset position of every row, compared to what
+the research actually said. Ten out of ten correct, comments and citations all
+intact. Then built the five that were left scoped in the handoff.
+
+**Drill** — 140 BPM, snare on beat 3 in half time, and a hi-hat that turns out to
+be the tresillo yet again. Attack Magazine describes drill hats as borrowed from
+grime, "two spaces, two spaces and one space repeated" on a 16th grid; gaps of
+two means a hit every third sixteenth, which is 3+3+2. BandLab's tutorial says
+the same thing from the other side. So the drill hat is the same cell as
+Reggaeton, Bossa, Baião and the Second Line bass drum. The kick reads sparse
+because it should: in drill the low end is a sliding 808, a bass instrument with
+a pitch envelope, and this engine has none.
+
+**Surf Beat** — the doubled backbeat that gives surf its tumble, at 165.
+Graded MEDIUM in the file and the reason is written next to it: only one
+reachable source describes the pattern, and it is a music-history piece rather
+than a drumming reference. It is a reconstruction around one sourced detail, not
+a transcription, and the comment says which note to check first if a proper chart
+ever turns up.
+
+**Tango** — written in 2/4, which is how early tango was notated. The kick is the
+habanera cell, given identically by three sources: a dotted eighth, a sixteenth,
+then two eighths. Cross-stick plays marcato, the accented quarter notes that are
+tango's main rhythmic mode. Only two voices, and deliberately so; every source
+says tango rhythm is an ensemble feel built from articulation, accent and
+silence. Filling it in would make it less like tango. The habanera reached tango
+from Cuba by way of the milonga, so this cell and the Son Clave preset are
+cousins.
+
+**Gospel Shout** — the praise break. Relentless ride, strong 2 and 4,
+four-on-the-floor kick, 170 BPM with a real triplet feel. On the triplet grid
+rather than swung with the slider, for the same reason the shuffle presets are:
+the slider works on pairs of sixteenths and cannot make three notes to a beat.
+It is the 4/4 counterpart to 12/8 Gospel, and they are close relatives on
+purpose.
+
+**Lo-Fi** — added with a caveat written into the file. Lo-fi is not a distinct
+rhythm. Its identity is production: vinyl crackle, filtered highs, off-grid
+timing, detuned samples, none of which is a drum pattern. What separates it from
+boom bap on the page is tempo and swing. It earns a preset anyway, because
+playing along at 75 swung is a different exercise from 88 straight, and that is
+what this app is for.
+
+78 presets across seven categories. Every preset name referenced by the
+progression tool still resolves, and every clave-family row in the app still
+matches a canonical timeline.
+
+## v0.203.1 — Ten new drum presets, sourced from scratch
+
+63 presets to 73. These fill the biggest genre holes: rhythms a student would go
+looking for and find nothing close to. Every one was built from published sources
+rather than from memory, and the sources are cited in the file next to the
+pattern.
+
+**Reggaeton** — the dembow, and the biggest single gap in the app. Kick on all
+four quarters, snare on steps 3, 6, 11 and 14. Three sources give those exact
+four positions, and it checks out against the theory too: the kick on 0 plus
+snares on 3 and 6 is a tresillo, which is what Wikipedia calls the dembow. That
+puts it on the same cell as the Baião and Bossa presets, arriving from Jamaica by
+way of Panama rather than from Africa by way of Cuba.
+
+**Ska** — the ancestor of the reggae presets already in the app. Kick on 2 and 4,
+cross-stick on 2 and 4, snare head only on 4, open hat on every upbeat.
+Wikipedia's Ska article says the bass drum was accented on the third beat and
+cites Britannica for it. Britannica says the second and fourth. Wikipedia
+contradicts its own source, so this follows Britannica, Musical U (drawing on Gil
+Sharone's Jamaican drumming course) and fifteen ska tracks recorded by a Jamaican
+session drummer, all of which agree on 2 and 4.
+
+**Reggae Steppers** — the one drop with the kick pushed onto every beat, Sly
+Dunbar's answer to disco reaching Jamaica. Wikipedia and Bass Culture swap the
+labels for steppers and rockers between them; a kick on every eighth at reggae
+tempo is a machine gun, so the quarter-note reading is what is here and the
+conflict is written down next to it.
+
+**Mambo** and **Salsa Cáscara** — the loud half and the quiet half of a salsa
+arrangement. Mambo gets the big bell for the chorus and montuno; cáscara is what
+the timbalero plays on the shells during verses. Both share the bass tumbao on
+the "and" of 2 and beat 4, which two sources give identically. The cáscara's
+seven strokes contain all five of the son clave and add two, which is worth
+hearing by loading the two presets back to back.
+
+**Songo** — the one Afro-Cuban style invented ON a kit rather than adapted onto
+one. Changuito, Los Van Van, early seventies. Bell on the half-note pulse,
+deliberately straight hi-hat to make the syncopated kick read, rumba 2-3 clave.
+The hands are properly linear: bell, hat and conga slap lay a continuous eighth
+stream without ever landing together.
+
+**Punk** — the skank beat, snare on every upbeat. That is what makes it punk
+rather than Basic Rock played fast, which is why it needed its own preset.
+
+**Metal Double Kick** and **Metal Gallop** — sixteenths on the feet under a
+half-time snare, and the eighth-plus-two-sixteenths gallop that Wikipedia defines
+outright. Nothing in the app used a double-kick figure before.
+
+**Country Train Beat** — unbroken sixteenths on the snare with the backbeat
+accented and everything else ghosted. The oldest groove in country; variations on
+it were played when the first snare was allowed on the Grand Ole Opry stage.
+
+All new Latin presets use the file's existing compressed-bar convention, where
+one 16-step bar holds a whole two-bar clave cycle and a step is an eighth. Every
+timeline row in the app now resolves to a canonical pattern: son 3-2 and 2-3,
+rumba 2-3, bossa 3-2, cáscara 3-2.
+
+Ceilings marked where they were hit: the songo snare figure is a placeholder, not
+a transcription.
+
+## v0.202.3 — Second pass: fills, odd-meter groupings, two wrong attributions
+
+Checked the previous build's work, then went after the presets it had left
+flagged. Everything from v0.202.2 verified as landed; the progression tool's 40
+links to drum presets all still resolve.
+
+**Two presets were named after records they had nothing to do with**
+
+- **"Bonham – Levee"** was a descending quarter-note tom fill. "When the Levee
+  Breaks" is famous for a groove, not a fill: a half-time pocket with heavy
+  eighth-note hats, a doubled kick and a deliberately late snare. Nothing in the
+  preset resembled it. The fill is fine and stays as **Descending Toms**; the
+  attribution is gone. If the Levee groove is wanted it belongs in ROCK / POP,
+  and sources still split over whether its snare reads as 2 and 4 or as one
+  half-time backbeat on 3.
+- **"11/8 Tool"** named a band without naming anything they played, and the
+  pattern marked no grouping at all: the hi-hat alternated accent and ghost until
+  the phase flipped halfway through the bar. Now **11/8 Prog**, grouped 3+3+3+2.
+
+**Funky Drummer was in the wrong category playing the wrong thing**
+
+It sat in FILLS as "Funky Drummer Fill" with an invented snare figure, a hi-hat
+that stopped before the end of the bar and a kick on 1 and 3. It is a groove, and
+the most sampled one there is. Rebuilt from four sources that agree and moved to
+FUNK / R&B: single-handed sixteenths on the hat, open hats on the "e" of 2 and
+the "e" of 4 with the pedal closing each one, kick on 1, the "+" of 1, the "+" of
+3 and the "e" of 4, and the ghost-into-accent snare that is the other hard part
+of the groove.
+
+**In the Air Tonight**
+
+Collins has said outright that most people play it wrong because there is no kick
+between the last few tom hits. The old kick row had hits at the "+" and "a" of 3,
+right in among them. The toms also stalled: the third and fourth pairs were both
+on the low tom, so the descent stopped halfway. It is a ten-note descending
+break, and it is single strokes; the thickness is gated reverb, not flams.
+
+**Every odd meter now shows its grouping**
+
+A 7/8 preset that does not mark 2+2+3 or 3+2+2 teaches nothing, because the
+grouping is the meter. None of them did.
+
+- 5/4 Groove is 3+2, 5/4 Odd Rock is 2+3, so the pair covers both divisions.
+- 7/8 Groove is 2+2+3 (Rachenitsa), 7/8 Balkan is 3+2+2 (Devr-i Hindi).
+- 9/8 Funk is 2+2+2+3, the aksak nine, against 9/8 Groove's 3+3+3.
+- 11/8 Prog is 3+3+3+2.
+
+Each of these now matches the figure in the app's own GROOVE_PRESETS entry that
+the progression tool pairs it with. That side had already been fixed for exactly
+this fault and the drum side had been left contradicting it.
+
+**Ceilings marked rather than guessed**
+
+Whole Lotta Love and Moby Dick keep their patterns but no longer claim to be
+transcriptions. Moby Dick is a multi-minute drum solo, so there is no canonical
+two bars to transcribe at all. WLL's tempo moved 90 to 92, which is what the
+published notation gives, and its comment no longer places the fill before the
+guitar solo; it comes at the end of the psychedelic midsection.
+
+**New audit check:** every `drumPreset` named in PROG_PRESETS must resolve to a
+preset in PRESET_CATS. Preset names are the join key between the two and nothing
+enforced it, so a rename could silently break a progression. Verified by breaking
+it on purpose.
+
+## v0.202.2 — Omega pass: 24 drum presets rebuilt, five engine faults fixed
+
+Every one of the 63 drum presets was read against sourced references. Twenty-four
+were wrong. Five faults were in the engine itself.
+
+**Engine**
+
+- **Pattern rows were half the size they needed to be.** Steps per bar is
+  `beats * sub`, so 12/8 at a 32nd grid is 96 steps and BARS goes to 4: 384. The
+  arrays were 128, which only ever covered 4/4. Pick 11/8 or 12/8, press SUB and
+  BARS up, and every step past 128 read undefined, so it neither sounded nor
+  could be edited.
+- **Muting a track froze its clock.** The scheduler returned before touching the
+  track's phase or next-note time, so unmuting after thirty seconds left the
+  clock thirty seconds in the past. The catch-up loop then scheduled every missed
+  hit at a timestamp already gone, and Web Audio plays those immediately: the
+  track came back as a burst of everything it had missed. Muted tracks now keep
+  running and just do not sound.
+- **`_upscalePatterns` capped at index 64 on a 128-slot array.** Four bars of
+  sixteenths is already 64 steps, so switching to a 32nd grid dropped everything
+  from bar 2 on.
+- **The custom workspace lost work on every save.** It forced all rows to a
+  one-bar 16th grid while still storing `barCount`, so bars 2 to 4 vanished and a
+  4-bar workspace came back as bar 1 four times. Triplet and 8th-grid rows were
+  resampled onto sixteenths, which does not divide evenly, and the restore path
+  had no way back. Rows are now stored as they are; the snapshot already carried
+  the sub and bar information needed to read them.
+- **Swing on compound meters produced a limp, not a shuffle.** It stretched even
+  step indices and shrank odd ones, which comes apart on a grid grouped in
+  threes: in 12/8, beats 1 and 3 ran 6% long and 2 and 4 ran 6% short. In 9/8 it
+  was worse, because nine steps is an odd count and every bar ran 1.1% long, so
+  the kit drifted away from the chord scheduler for as long as a progression
+  looped. Swing is now 16th-grid only, and 9/8 Funk and 12/8 Blues drop their
+  swing values. Both meters are already compound.
+
+**One miscount behind a dozen broken patterns**
+
+A tresillo is 3+3+2 and opens on steps 0, 3, 6. Rows all through this file opened
+0, 3, 5, which is 3+2+3, and the same wrong array had been copied into four
+presets. That single error accounts for every broken clave, the Bossa Nova surdo
+kick, the Cumbia and Baião kicks, and the Tech House open hats. The audit script
+now detects the shape.
+
+**Presets rebuilt**
+
+- **Reggae** was not a one drop. It had the snare on 2 and 4, which is the thing
+  a one drop exists to avoid, and its own comment said so in the same sentence as
+  "one-drop". Kick and cross-stick now land together on beat 3, beat 1 is bare,
+  and the hats are swung on the triplet grid with the open-hat lead-in.
+- **Motown** had a plain backbeat, which made it Basic Rock with a tambourine. It
+  also contradicted this file: the DISCO groove entry explains that Earl Young
+  built the disco beat from "the quarter notes Motown put on the SNARE". Snare is
+  on all four now, which is the Pistol Allen groove people mean by Motown drums.
+- **Be My Baby** played the backbeat the record is famous for not playing. It is
+  three kicks and a single snare on beat 4.
+- **Amen Break** was missing the snare pickup on the "e" of 3 in bars 1 and 2,
+  had bar 4's kick late instead of pulled to the front, and put crashes on beat 1
+  of bars 1 and 4. Coleman played one crash, on the "+" of 3 in bar 4.
+- **Purdie Shuffle, Rosanna Groove, Porcaro fill, Shuffle, Slow Blues** all had
+  triplet hats over straight-16th snare and kick, or tried to shuffle a 16th grid
+  with the swing slider. Neither works: every track runs its own clock, so the
+  first is a literal 4-against-3, and swing stretches pairs of sixteenths and can
+  never make three notes to a beat. All on the triplet grid now.
+- **Jazz Ride, Bell Time, Bebop, Jazz Waltz, 3/4 Jazz** had rides hitting every
+  triplet, which is a continuous roll rather than a ride pattern. Spang-a-lang is
+  quarters plus the swung "and" of 2 and 4 only, and that asymmetry is the feel.
+  Kicks are feathered ghosts now, not accents on beat 1.
+- **Second Line**'s bass drum is the son clave 3-2, which Preservation Hall's own
+  lesson states outright, with the snare in eighths accented into each kick.
+- **Son Clave, Bossa Nova, Bossa (Alt), JB Funk, Cha-Cha-Chá, Afrobeat, Cumbia**:
+  claves fixed or, where the style has none, removed. The cha-cha has no defined
+  clave; its identity is the small bell on a quarter pulse.
+- **Samba**'s kick was four equal hits. The surdo pendulum puts the weight on
+  beat 2 of the 2/4 bar and answers underneath on beat 1.
+- **Merengue** had a tambourine hitting all sixteen steps at full weight. Split
+  into the sourced roles: güira on the shaker, tambora across cross-stick and
+  floor tom, steady pulse on kick and hats.
+- **6/8 Feel and 6/8 March** had their hi-hat and snare written for a grid of
+  twelve eighths. A step in 6/8 here is a sixteenth, so those rows landed on
+  sixteenth offbeats and ran three against the two of the meter.
+- **3/4 Rock** had its second backbeat on the "+" of 3 instead of beat 3.
+
+Italian names added for eighteen presets. Two new audit checks: the 3+2+3
+miscount shape, and any 16th-grid row placed against triplet tracks.
+
+## v0.202.1 — Drum preset audit: real claves, real shuffles, Trap 32nds unbroken
+
+- **Trap 32nds plays its own pattern again.** `loadPreset()` was calling
+  `_upscalePatterns()` on any preset that declared its own `globalSub`. That
+  function is for the SUB button, where a 16th pattern already on screen has to
+  keep its musical positions when the grid changes. On load it multiplied every
+  step index by 2 and dropped everything past the end of the row, so the only
+  32nd-grid preset in the app lost half its hi-hat roll every time it loaded and
+  played a plain 16th pattern instead.
+- **Every clave in the app was wrong, and now is not.** Son clave 3-2 falls on
+  steps 0, 3, 6, 10, 12 of a 16-step bar. Nothing in the file matched that or any
+  other clave. Four presets shared one six-stroke array that was a three-hit
+  half-bar shape repeated, and a clave has five strokes. The fault behind all of
+  them is a mis-remembered tresillo: the figure is 3+3+2 and the data used 3+2+3.
+  Fixed in Son Clave (son 3-2), JB Funk (son 3-2), Bossa Alt (son 2-3) and Bossa
+  Nova, which gets the bossa nova clave proper: steps 0, 3, 6, 10, 13, one pulse
+  different from son on the two-side. That is the same timeline the app's own
+  `bossa` groove preset already carried, sourced there to Toussaint, so the drum
+  side no longer contradicts the groove side inside one app.
+- **Bossa Nova rebuilt.** Ride was straight eighths with two stray sixteenths in
+  it. The surdo kick sat a sixteenth early on every stroke and is now the proper
+  dotted-quarter figure. The snare row is gone: bossa on the kit is hi-hat,
+  cross-stick and kick.
+- **Cha-Cha-Chá lost its clave, which it never had.** The cha-cha has no defined
+  clave, and the row that claimed to be one held four strokes at positions that
+  match nothing. What actually drives the style is the small high-pitched bell on
+  a quarter-note pulse with unaccented eighths between, so that is the cowbell
+  row now.
+- **The Purdie Shuffle is a shuffle now.** Hi-hat was on triplets while snare and
+  kick were on straight sixteenths, and every track runs its own clock, so the
+  preset was a literal 4-against-3 polyrhythm. Ghost notes on the "e" and "a" of
+  a 16th grid is the Steve Gadd flutter, a different groove, and the old row put
+  ghosts on both inner sixteenths so it was not a clean flutter either. All three
+  voices are on the triplet grid, ghosts on the middle triplet of each beat,
+  backbeat on 3.
+- **Rosanna Groove and the Porcaro fill, same fix.** Both were a 16th grid with
+  `swing:55`. Swing stretches adjacent pairs of steps, so four sixteenths become
+  long-short-long-short. That is still four notes to a beat and a shuffle has
+  three. No slider value gets you there. Both now sit on the triplet grid, and
+  the `swing` values are dropped since the scheduler ignores swing on any track
+  with its own `trackSub` anyway.
+- Italian names added for Son Clave, Bossa Nova, Rosanna Groove, Purdie Shuffle
+  and the Porcaro fill.
+- New audit script `intonare_drum_preset_audit.py`: checks all 63 presets for
+  step count against meter and subdivision, track ids, value ranges, kit ids,
+  BPM range, `barCount`, `trackSub`, duplicate names, missing Italian twins, and
+  whether `loadPreset` still upscales on load.
+
+## v0.201.195 — Voice limiting, crash ring-out, filter-compensated levels
+
+- Per-track voice limiting on ride, crash, bell, open hat, and tambourine. New
+  hits fade out the previous tail in 15ms, preventing cumulative wash from
+  overlapping decays. Crash rings naturally for ~2.5s (a full bar at most tempos)
+  unless re-hit.
+- All voice levels recomputed to compensate for measured filter attenuation. The
+  bandpass+highpass chain on metallic voices was eating 8-16 dB; envelope gains
+  now pre-boost to land at the target mix position after filtering.
+- Remaining 9 synth voices (tom, cross-stick, cowbell, clave, shaker, tambourine,
+  pedal hat, crash, bell) completed with timing/gain jitter, pitch randomization,
+  and velocity-to-timbre where musically appropriate.
+
+## v0.201.194 — Pure synth drums, full mix tuning, zero samples
+
+- Switched to pure synthesis: no drum samples at all. Delete the audio/drums/
+  folder entirely. Every voice is synthesized with the TR-808 metallic oscillator
+  model (cymbals), pitch-sweep body + noise burst (kick/snare/toms), and
+  per-hit micro-randomization.
+- Full mix ratio tuning pass against professional standards (Owsinski): kick at
+  reference 0 dB, snare -2, hats/ride/bell -7, crash -5, toms -3, cross-stick -5,
+  percussion -9 to -10, ghosts -10 below their normal hit.
+- Saturation drive increased (1.8x to 2.2x) for better phone-speaker presence.
+- All five kit characters (standard, electronic, jazz, brush, latin) benefit from
+  the velocity-to-timbre mapping, micro-randomization, and beater click.
 
 ## v0.201.193 — Hybrid drum engine: synthesis + samples where each excels
 
