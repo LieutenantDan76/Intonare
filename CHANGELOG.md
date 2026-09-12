@@ -2,6 +2,780 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.19 — YIN pitch detection in AudioWorklet, all pitch consumers wired
+
+YIN pitch detection (the same FFT-based O(N log N) algorithm the tuner already
+uses) now runs inside the AudioWorklet on the audio render thread. A second
+ring buffer (4096 samples, hop 2048, ~21.5 Hz at 44.1kHz) feeds the YIN
+computation, which posts { type:'pitch', freq, rms } to the main thread.
+
+Both pitch consumers (tuner and vocal range detector) now check for worklet
+output first and fall back to the main-thread detectPitch when the worklet is
+not available. The main thread still handles the median pre-filter, adaptive
+EMA smoothing, instrument detection, display updates, and all downstream
+consumers. The worklet just replaces the source of raw pitch data.
+
+Benefits: pitch detection no longer drops frames when the main thread is busy
+rendering, animating, or scrolling. The audio thread delivers a reading every
+~46ms regardless of UI load. On browsers without AudioWorklet support, the
+existing AnalyserNode path continues to work identically.
+
+Also fixed in v0.210.18: worklet per-frame allocations eliminated (pre-allocated
+arrays), HPSS uses a fixed circular buffer instead of push/shift, Float32Array
+sort comparator added, double _tempoEstimate call removed.
+
+## v0.210.18 — Professional-grade tempo analyzer: AudioWorklet, complex-domain ODF, SuperFlux, HPSS
+
+Full rebuild of the tempo detection pipeline. Four upgrades shipped together:
+
+1. SuperFlux vibrato suppression (Böck & Widmer DAFx-13): a 40-band mel
+   filterbank maps the whitened spectrum to log-frequency bands, then a
+   3-band max filter on the previous frame suppresses vibrato-driven
+   spectral movement. Up to 60% false positive reduction on pitched
+   instruments in the original paper. Added to both the AnalyserNode
+   fallback path and the worklet.
+
+2. AudioWorklet onset detector: a new IntonareAnalysisProcessor runs on
+   the audio render thread in fixed 128-sample quanta (~2.9ms). It
+   contains a radix-2 Cooley-Tukey FFT (2048-point, hop 512), the full
+   onset detection pipeline (log compression, whitening, mel bands,
+   SuperFlux, adaptive threshold, peak picking), and posts onset times to
+   the main thread via MessagePort. The existing AnalyserNode stays
+   connected in parallel (the tuner and other pitch consumers still read
+   from it). Falls back to the AnalyserNode-based detection on browsers
+   without AudioWorklet support. Inlined as a Blob URL for the
+   single-file architecture.
+
+3. Complex-domain ODF (Duxbury 2003, Bello 2004): the worklet's FFT
+   outputs full complex data (real + imaginary), so the predicted-phase
+   deviation is computed per bin and combined with the SuperFlux output
+   (weighted 0.3). This catches soft pitched onsets (legato transitions,
+   bowed attacks) that magnitude-only flux misses.
+
+4. HPSS front end (Fitzgerald DAFx-10): a 15-frame circular buffer of mel
+   bands feeds per-band median filters across time (harmonic estimate).
+   A soft Wiener mask isolates the percussive component before SuperFlux
+   runs. In a live band mix, sustained harmonics (organ, vocals, pad) no
+   longer compete with transients.
+
+Tempo estimation (prior, octave correction, hysteresis) stays on the main
+thread and consumes onsetTimes from whichever path feeds them. The worklet
+disconnect is wired into both stopMic paths.
+
+INSANE tempo guess: groove weighting raised to 70%, quarter notes removed
+from the subdivision pool.
+
+## v0.210.17 — Tempo analyzer overhaul, INSANE groove weighting
+
+Tempo analyzer rebuilt against Bello 2005, Dixon 2006, Stowell & Plumbley
+2007, and OBTAIN (Mottaghi 2017). Changes:
+  - Log-magnitude compression (log(1+100·|X|)) replaces raw linear. A quiet
+    clap and a loud drum hit now produce comparable flux, so the adaptive
+    threshold works across a wide dynamic range.
+  - Adaptive whitening per Stowell & Plumbley: each FFT bin is normalized by
+    its decaying-maximum, so a sustained drone or room resonance does not
+    dominate the flux. This is the single biggest improvement for live room
+    audio (>10 point F-measure gain in the paper).
+  - Threshold history lengthened from 12 frames (~200ms) to 40 (~700ms),
+    matching Dixon's recommendation.
+  - Onset window extended from 5s/16 onsets to 8s/24, so slow tempos (40-60
+    BPM) have enough beats to estimate from.
+  - Minimum onsets raised from 3 to 4 to prevent premature readings.
+  - Tempo hysteresis: harmonic jumps (half/double within 8%) now require
+    persistence (~130ms) before committing. This prevents the octave-error
+    bounce (120 to 60 to 90 averaged) that made the display feel stuck on a
+    wrong number. Non-harmonic changes still use EMA for responsiveness.
+
+Tempo Guess INSANE: groove weighting raised from 50% to 70%, and quarter
+notes removed from the subdivision pool. Straight quarters on INSANE was
+identical to HARD, so ~8% of rounds felt like a downgrade. Now most rounds
+are grooves (swing, shuffle, clave, bossa, waltz, dotted) and the
+subdivision rounds are always non-quarter (whole, half, eighth, triplet,
+sixteenth).
+
+## v0.210.16 — Tempo analyzer staleness fix, tempo guess INSANE shows subdivision
+
+Live tempo analyzer: the display used to freeze on its last reading when
+the player stopped. Stale onsets lingered in the 5-second window, keeping
+the count above the 3-onset minimum, so detectedBPM never cleared. A 2s
+staleness check now resets the reading when no onset arrives, and the EMA
+smoothing was loosened from 0.6/0.4 to 0.4/0.6 so tempo changes register
+in about 2 readings instead of 4.
+
+Tempo Guess INSANE: the subdivision and groove are now shown, just locked.
+Hiding them tested rhythm identification (is this eighths or sixteenths?),
+which is a different skill from tempo estimation. In real music you always
+know the subdivision from the score, the conductor, or the drum pattern.
+The tempo is the mystery; the feel is the curveball; the subdivision is
+context. The buttons still cannot be tapped on INSANE.
+
+## v0.210.14 — Level curve rebalanced (40·n^1.3)
+
+Level curve changed from 50·n^1.5 to 40·n^1.3. Modeled against Duolingo's
+actual per-level XP table and the gamification research on front-loaded
+dopamine: quick early wins build the habit, then the slower pace feels
+earned. The first four levels cost 40, 98, 167, 243 (a casual first session
+reaches L2; a real 30-minute session reaches L3). By L10 each level takes
+about 3 sessions, by L20 about a week, by L30 about 11 days.
+
+Milestone estimates at 300 XP/session, 5 days/week:
+  1 week L8, 1 month L14, 3 months L21, 1 year L35
+
+Every level costs less than before (checked to L300), so no user is demoted.
+Reward proportions verified: a quiz round is 21% of L5, the session goal is
+5% of L15, a 1 XP read is 2.5% of L2, and nothing becomes invisible.
+
+## v0.210.13 — Survival Guide: remove play button from non-auditory terms, revert pinky labels
+
+Breath mark, caesura, una corda, augmentation dot: demos removed. With eyes
+closed none of them teach you something identifiable, so the play triangle
+was misleading. Those terms now get the mute class (dotted underline, no
+triangle).
+
+Reverted the woodwind pinky label fix from v0.210.10. It was premature
+without the Bret fingering charts in place; will revisit after that work.
+
+## v0.210.12 — Survival Guide: every tappable term now plays, dynamics ladder audible
+
+Twelve underlined terms had no demo and stayed silent on tap: trill, mordent,
+turn, tie, slur, staccatissimo, niente, caesura, breath mark, augmentation
+dot, una corda, arpeggio. Each has a short demo now. Every data-term in the
+guide is covered; a check against the demo table returns no gaps.
+
+The dynamics ladder started at 0.038 for ppp and 0.06 for pp, which a phone
+speaker cannot reproduce, so the two quietest marks played nothing. The floor
+is raised and the steps evened to about 1.45x each, still strictly ordered:
+ppp 0.07, pp 0.10, p 0.15, mp 0.22, mf 0.32, f 0.46, ff 0.66, fff 0.95.
+
+## v0.210.11 — Solfège switch reaches the rest of Charts
+
+Audited every chart family in Solfège mode by rendering each one headless and
+dumping the visible labels still in letter names. Fixed: fretboard string
+names on every fretted instrument, bowed neck string names, the harp's pedal
+names, title root and both root grids (the harp built its own from the raw
+tables), the wind full-range note names, and the instrument-key sub-pills
+(B-flat clarinet, harmonica in C, alto sax in E-flat now read Si-flat, Do,
+Mi-flat). Key names inside the clarinet and sax fingering diagrams are key
+names, not pitches, and stay as they are. One "C4" caption in the piano and
+mallet charts remains.
+
+## v0.210.10 — Mandolin samples, woodwind pinky labels, share feedback, Road Trip on wide screens
+
+Mandolin chart never played samples. _frettedToneId() returned 'mandolin',
+which is not a registered sample set; the preload fetched the banjo set via
+INST_TONE_MAP but _chartPlay then asked isReady('mandolin'), always false, so
+every note fell to synth. It now returns 'banjo', and the mandocello fallback
+does the same. The doubled-course effect also keyed on the tuner's instrument
+rather than the chart's, so a mandolin chart only got paired strings when the
+tuner happened to be on mandolin; it now checks chordScaleInstrument when the
+charts tool is open.
+
+Woodwind pinky keys are always labeled. The pinky column only drew a key's
+name when pressed, so on the flute E-flat, C-sharp, C, B and the gizmo were
+anonymous rectangles until a note used them. Muted when open, dark when
+pressed, matching the main columns.
+
+Daily share COPIED flash landed on the hidden v1 share button, so on the
+website (no native share sheet) a tap copied silently and read as a dud. The
+flash now targets whichever share button is visible.
+
+Road Trip on wide viewports: the drive map is a square at full width, so at
+1280x800 it was 1280px tall and the control zone sat 500px below the fold.
+Capped at min(100%, 100dvh - 320px); phones still get full width.
+
+## v0.210.9 — XP audit and rebalance
+
+Every grant site read against one target: 20 to 40 XP a minute for honest
+work, tests and games above that, browsing at zero. The level curve
+(50·n^1.5) was tuned in August for about 78 XP a day from a light user; the
+old numbers paid several modules at 75 to 150 a minute, which made the
+milestone estimate meaningless.
+
+Music Quiz never paid the level chip. The results screen said "+N XP EARNED"
+but MQ.xp only went into quiz-local stats. It now grants through
+mqCommitSessionStats, the one place every finished round passes. Per
+question drops from 10 / 15 to 3 / 5 (streak of 3+) so a ten-question round
+lands 30 to 50.
+
+Rebalanced: Interval sing 5 / 10 / 20 to 3 / 5 / 8; Interval tap mode, which
+paid nothing, now pays 1 / 2 / 3 on a first-try answer; Tempo Guess
+25 / 15 / 8 / 3 / 1 to 10 / 6 / 3 / 1 / 0; Tempo Lock 15 / 8 / 3 / 1 to
+8 / 4 / 1 / 0; Rhythm Reading now pays round(score / 10) instead of
+perfect*4 + good*2 + ok*1, so a perfect pattern is 10 regardless of density;
+Staff Notes 1 flat (ledger lines paid 2); Chord ear streak bonus capped at
++2, the +3 tier at 25 is gone; Polyrhythm 8 per four-cycle run;
+Chordle and Diadle 25 - 3×guesses (min 8), up from 15 - 2×guesses;
+Tonale score/2 (min 5, max 25), up from score/3.
+
+Unchanged: interval test, notation card test, rhythm card test and drill,
+relative pitch, Sing Sing, climb and hardcore summits, session goal.
+
+Also removed a stale comment describing a passive-listen XP cap in polyrhythm
+that no code implements.
+
+## v0.210.8 — XP toast count-up, XP throttle, quiz beat bar, interval note fade, brush ghost
+
+XP toast now stacks in place. The fade-out used to lift the toast to -14px, so
+a second award landing mid-fade removed .out and the transform sprang back
+down to -3px; that spring was the re-pop. Fade-out is opacity only now. On a
+stacked award the number tweens from the last shown value to the new total
+over 320ms (ease-out cubic) and the toast gets a 0.22s scale punch, so a burst
+of awards reads as one figure climbing. Hold time went from 1100ms to 1400ms.
+
+Polyrhythm XP farm closed at the source. Per-cycle pay (20 / 10 / 3, about
+400 XP a minute on a 3:2 lock) is gone. It now pays the way the two-hand mode
+always has: every fourth locked or close cycle in a row is worth 10, an off
+cycle breaks the run and pays nothing, and a miss no longer pays 1. Summiting
+Climb pays 40, Hardcore 60. A global rolling-window throttle was tried first
+and pulled: it punished speed in every module (a fast interval player was
+halved after twelve questions) and the rate felt random as grants aged out.
+
+Quiz beat bar did not reset when quitting an online round and starting a new
+one. The online start path cleared streak and score but not MQ._v2marks,
+which is what the bar draws from. Cleared now, along with _v2streakMsg.
+
+Interval training root note no longer snaps down on reveal. It started at
+20px and slid to its slot with an overshoot curve, and since the previous
+round had left it in that slot the reset dragged it up first. It is now
+parked at its final top with transitions off for one frame and only fades.
+
+Train Beat reworked: BPM raised from 120 to 130, snare accent moved from
+beats 2 and 4 to the "and" of every beat (steps 3, 7, 11, 15), sixteenth
+note ghosts fill every other step. Hi-hat pedal moved from beats 2 and 4
+to beats 2 and 4, the standard position.
+
+## v0.209.43 — Launcher background tint
+
+When you tap a card, the launcher ground fades from neutral to a subtle wash of
+the chosen module's color, easing the eye from the chooser into the module's
+palette. The tint is a ::after pseudo on #lnch with a radial gradient keyed off
+a data-tint attribute that lnchGo sets before the first class change and
+finish() clears. It transitions on the same 650ms spring as the card.
+
+Dark mode: tuner 18%, metro 15%, tools 16%, train 18%. Light mode: transparent overlays on an opaque cream ground were invisible at
+every opacity tried (5%, 12%, 22%). Fixed by tinting the background itself:
+each module gets its own gradient (sky blue for tuner, warm gold for metro,
+mint for tools, lavender for train) that replaces the neutral cream via a CSS
+background transition on the same 650ms spring. The ::after pseudo is hidden
+in light mode since it's not needed.
+
+The tint no longer snaps off before the launcher fades. Previously finish()
+deleted data-tint immediately, so the background jumped from tinted → neutral
+→ module. Now the tint stays while #lnch.lnch-gone fades the whole launcher
+(tint included) to opacity 0, and data-tint is only cleared in the display:none
+timeout at +320ms when the launcher is already invisible.
+
+Also in this version: the header text swap inside setHeaderSection used a 60ms
+timeout to wait for the old text to fade out before swapping the new text in.
+During a morph the header is hidden behind the opaque launcher and card, so the
+delay serves no purpose and causes a visible stagger when the launcher fades:
+the tab bar slides up, then 60ms later the header text pops in. When
+_lnchMorphing is true the delay is now 0, so the text is already in place
+before anything fades. The non-morph path keeps 60ms.
+
+The tint is compositor-friendly (opacity transition on a pseudo, no filter, no
+blur) and respects prefers-reduced-motion. Verified on all four modules and both color schemes.
+
+Dark mode tints: replaced transparent overlay approach (invisible at dark
+luminance levels) with full background swap using each module's actual --bg-0
+and its body::before atmosphere pattern (same three radial gradients at
+32%/18%/12% mix ratios). When the launcher fades, the ground underneath is
+identical, so there is no color jump.
+
+Dark mode card face: the morph clone's face now mixes 28% accent (was 9%) into
+--bg-1 (was --panel) so the card harmonizes with the tinted atmosphere rather
+than reading as a grey panel on a colored ground. Glow border in the accent.
+Light mode cards get a stronger border glow. Only on #lnchMorphCard, so the
+chooser's normal state is untouched.
+
+Content reveal: module content (header, mode screen) starts at opacity 0 during
+the morph (.lnch-morphing) and transitions to 1 (.lnch-reveal) over 400ms when
+finish() fires. The card dissolves 200ms before the launcher fades, so it
+disappears into the tinted ground first, then the ground fades and the module
+content materializes. Previously the card and launcher faded simultaneously, and
+the semi-transparent card at 1.7x scale with its glow effects read as a foggy
+layer over the appearing module.
+
+Header text swap: setHeaderSection's 60ms delay is skipped when _lnchMorphing
+is true, eliminating a visible stagger where the tab bar slid up 60ms before
+the header text appeared.
+
+Light mode tints: transparent overlays on opaque cream were invisible at every
+opacity tried. Fixed by swapping the entire launcher background gradient to a
+tinted version per module (sky blue, warm gold, mint, lavender). The white
+radial wash is dropped when tinted.
+
+Per-card surface tokens: in dark mode, all four chooser cards shared the
+default palette (blue-grey #30304c panel). Against the colored atmosphere, the
+blue cast was visible. Fixed by setting --bg-0 through --panel and --border-soft
+per card via CSS attribute selectors (body:not(.light) .lnch-cell[data-id=...]).
+Each card now reads its module's own surface colors at rest, and the clone
+inherits them during the morph. The morph's inline token override (set in JS) is
+kept as a safety net since #lnchMorph doesn't inherit from the cell.
+
+Light mode was already at parity: each card had per-module gradient tokens
+(--lf-top/mid/low/foot) from the start.
+
+Tint lifecycle: data-tint is set before the first class change in lnchGo, NOT
+cleared in finish() (so the tint fades with the launcher via lnch-gone
+opacity:0), and only deleted in the display:none timeout at +320ms when the
+launcher is invisible.
+
+## v0.209.42 — Kill the last morph stutter
+
+The intermittent one-frame stutter on some openings (not reproducible every
+time, sometimes triggered by the welcome tour) was _scrollLockSync, a
+MutationObserver callback that watches class/style on the whole subtree. During
+the morph, the six class changes (picked, other ×3, lnch-gone, body theme)
+each fired it, and each rAF callback scanned ~133 overlay candidates with
+getBoundingClientRect, forcing synchronous layout on a frame that was supposed
+to be compositor-only.
+
+Fix: a window._lnchMorphing flag, set at the very top of lnchGo (before any
+DOM work), cleared at the top of finish(). Both _scrollLockSync and
+closeAllOverlays check it and skip the scan while it's true.
+
+The remaining 4ms rAF callback in the profiler is a _scrollLockSync that was
+already scheduled before lnchGo ran. It's under the 16ms frame budget and
+doesn't produce a visible stutter.
+
+Five consecutive runs under 6x throttle (Train, heaviest path): every frame
+from first movement through the hold is 17ms. The 2-3 frames of build cost
+at the start (100-150ms under throttle, ~17-25ms real) are the module's first
+layout, which is irreducible and happens before the card starts moving.
+
+## v0.209.41 — Launcher morph: the front door
+
+The flight was smooth after v0.209.40 but still read as snappy. Retuned to feel
+weighty and deliberate, modeled on the iOS app-open spring and Material's
+container transform:
+
+  Travel  500 → 650ms on cubic-bezier(.32,.72,0,1), the Apple spring curve:
+          gentle lift, long settle. Replaces the emphasized curve, which does
+          80% of its move in the first 20% of the time.
+  Hold    520 → 600ms so the moment has room for a full damped cycle.
+  Fade    300 → 400ms ease-in-out, card and launcher together.
+  Dealt   the other three cards leave over 500ms on the same spring, scale to
+          .92 as they go (Material does this to the tiles left behind), and
+          stagger 40ms apart so they leave in sequence instead of as a block.
+
+Signature moments are now one damped cycle each, ease-in-out so the reversals
+read as physical:
+  needle  -14 → +5 → -2 → 0 (was a one-way sweep with overshoot)
+  beam    15 → -15 → 9 → -4 → 0 (was a sweep that ended off-center)
+  bars    .15 → 1.14 → .94 → 1 (bounce past, dip, settle)
+  notes   -10 → +3 → -1.5 → 0 (drop, bounce, settle)
+All start on arrival at .65s.
+
+Probed timeline: scale 1.52 at 200, 1.69 at 500, 1.70 at 650; needle held at
+-14 through the flight then -4.6 / +4.5 / -2.0 / 0 across the hold; fade
+1250-1700; teardown 1850. Theme-hold failsafe (1600) still clears finish()
+at 1250.
+
+Frames under 6x throttle: tuner worst 50ms, train worst 133ms, all in the
+build before any motion; every frame from first movement through the hold is
+17ms on both paths.
+
+## v0.209.40 — Launcher morph: smooth flight
+
+The flight stuttered on the phone. Profiled under 6x CPU throttle, the worst
+frame of the flight was 450ms. It is now 17ms from the moment the card starts
+moving through the end of the hold, on both the tuner and train paths. Eight
+causes, in the order they were found:
+
+1. The flying clone carried the chooser's glow pool: a ::before radial gradient
+   with filter: blur(20px) and an infinite breathe animation. Scaling a blurred
+   layer re-rasterizes it every frame. The clone drops the pool and flattens its
+   three-layer box-shadow to one. The three dealt-away cards drop their pools
+   the moment they leave, so there are no longer four blur layers moving at
+   once.
+2. border-radius was in the morph's transition and will-change. It is not a
+   compositor property; every frame paid a paint. Transform and opacity only
+   now; the radius scales visually with the transform.
+3. Curve and duration: Material's emphasized cubic-bezier(.2,0,0,1) at 500ms
+   replaces the old ease-out at 450. Signature moments re-timed to fire on
+   arrival at .5s.
+4. The module now builds one full frame BEFORE the transform starts (double
+   rAF), so its first layout does not land on the flight's first frame.
+5. stopAllAudio's 70-function sweep ran on the first entry from the launcher,
+   when nothing had ever played. Most of those stop functions redraw a hidden
+   panel (flute SVG, keyboard, harp strings), each forcing layout. Gated behind
+   _everEnteredModule, set at the end of the first successful setMode; fully
+   active for every switch after. Same gate on the direct stop row in
+   exitExercise, which setMode('practice') calls unconditionally as its hub
+   reset.
+6. The global `*, *::before, *::after` crossfade rule transitioned `filter`
+   for 200ms with !important on every element. Every theme-tinted drop-shadow
+   in the document (logo, hub folder icons, toast icon) repainted for 200ms on
+   each color change, including under the morph. `filter` removed from that
+   rule; elements that want a filter transition declare their own, and those
+   declarations now actually apply.
+7. The theme-hold failsafe was 600ms, sized for the old 300ms fade. With the
+   hold at 1020 it fired mid-flight and flushed the palette under the card,
+   which was the second stall cluster. Now 1600.
+8. closeAllOverlays ran a raw querySelectorAll on the overlay selector
+   (substring matches, whole document) on every setMode. It now uses the
+   _overlayCandidates() cache, which invalidates on childList mutations.
+
+Also: the achievement toast idled at opacity 0 with its shimmer (2s) and ring
+(3s) animations running forever, on every screen. Paused until .show, and the
+hidden toast no longer transitions its box-shadow on theme change.
+
+Signature-moment children in the clone are promoted (will-change) from the
+start so the compositor does not rebuild layers on arrival.
+
+Remaining, not changed: .tuner-bpm-card carries backdrop-filter: blur(24px)
+saturate(1.6) across ~171k px². The tuner path measures clean in Chromium, but
+that declaration is the one the WebView research flags for black-box rendering
+and lag on Android. Worth a real-device check; if it stutters there, a tonal
+surface with a hairline is the fallback.
+
+Measured (6x throttle, frames from tap): before, [338, 450, 350, 33, 183, ...];
+after, tuner [53, 67, 50, 67, 33, 17, 17, 17, ...], train [69, 67, 150, 50,
+150, 17, 17, 17, ...]. The train build is heavier and still costs ~40ms real
+at tap, before the card moves.
+
+## v0.209.39 — Morph hold, first-entry stall, idle revert, tour note
+
+Launcher morph: the card used to start fading at 300ms, before its 450ms
+travel had finished, so the signature moment never registered on a phone. It
+now travels (450), HOLDS at center while the moment plays (520), then fades
+with the launcher (300). The four signature animations are delayed .45s in
+CSS so they start on arrival, not mid-flight. Sequence verified by probe:
+scale reaches 1.7 at 450, needle swings in with overshoot 450-950, launcher
+and card fade together 970-1350, teardown at 1450.
+
+First-entry stall: the module was built on frame 2 of the flight, and
+setMode('practice') costs ~50ms on a mid-range phone on its first call. That
+was the stall. The build now runs BEFORE the transform is set, while the
+launcher is still opaque and the clone sits on the real card's rect, so it is
+invisible and the flight starts with nothing heavy on the main thread. Theme
+release is unaffected: setMode holds the palette (_themeHold) until finish()
+flushes it, as before.
+
+Exercise idle states: the waveform read as ridiculous. Reverted both panels to
+the original resting line (interval dash, chord dash) with READY under it.
+Interval zone keeps the gauge visible while resting and puts READY just under
+the dash; chord CRT keeps READY at the bottom. The .resting class, i18n string
+and toggle wiring are unchanged.
+
+Tour: the replay note ("To see this again any time: press and hold the title")
+hardcoded a mint accent that vanished on the mint tour card in light mode. It
+now inherits the card's pinned --text-dim (7.2:1 on every theme surface) with
+the <strong> phrase in the light --theme deep tone.
+
+## v0.209.38 — Wider tonal elevation steps (dark ramps)
+
+Verified in the same pass, no code change: the exercise resting states
+(waveform + READY on the interval and chord panels, gated by a .resting class
+that the round-start/stop handlers toggle) and the launcher entry morph (the
+tapped card is cloned into #lnchMorph, flies to center at 1.7x, plays its
+module's signature moment under .lnch-live, fades through to the module built
+beneath it, other cards tilt away) are both live and correct. Screenshots
+could not catch the morph because Playwright's still capture drops the
+will-change compositor layer; a 25fps video recording shows the full flight.
+
+
+The five dark surface ramps (default, tuner, tools, metro, train) had luminance
+steps of 2-4% between each layer, below the 5-8% the dark-theme research
+recommends. Cards, chip rows and inputs sat nearly flush with the ground.
+
+Each ramp keeps its --bg-0 black point exactly and pushes the four steps above
+it further apart, 1.35x at --bg-1 rising to 1.55x at --panel, capped so --panel
+stays dark. Hue and saturation preserved per theme. @property initial-values
+updated to match so the mode crossfade still interpolates cleanly.
+
+  default:  --bg-1 #10101c→#12121f  --surface #181826→#1d1d2f
+            --surface-2 #1f1f30→#28283e  --panel #232338→#30304c
+  tuner, tools, metro, train: same treatment on their own hues.
+
+Light mode untouched; it runs a different design principle (OKLCH-based
+saturated grounds) and its steps were already wider. Signature .keep-dark
+surfaces (tuner LCD, CRT, Road Trip) carry their own colors and are unchanged.
+
+Result on screen: every card lifts off the ground, chip rows read at rest
+without a border, the paywall and other modals separate from the blurred page.
+
+Verification pass (Sep 11): all 25 ramp values and 5 @property fallbacks match
+the intended set; light mode and .keep-dark untouched; three stranded fallbacks
+(two var(--surface, #181826), one canvas cofRGBcss('--bg-1','#10101c')) moved to
+the new hexes; JS syntax clean, CSS braces balanced, sentinel 403/0, backup and
+stopall audits green, all eight ready packs at their row counts; light-mode
+screens rendered and checked (the light tuner is a brushed-metal casing by an
+earlier decision, not a regression).
+
+## v0.209.37 — Bass pack: Italian read-through, 19 fixes
+
+Read all 104 Italian blurbs against the English. Nineteen were too literal
+or used the wrong register:
+
+  "in modo paludoso" (swampy) → "in modo più sporco"
+  "Andare in diretta" (means going on air) → "Entrare diretti nel mixer"
+  "la stessa scatola" (pentatonic box) → "lo stesso box", which is what
+    Italian players say
+  "strimpellare" (to strum badly) → "fare la pennata"
+  "schiaffeggiavano le corde" (literal slap) → "facevano slap"
+  "sillaba l'accordo" (spells out) → "scandisce l'accordo"
+  "in fino a quattro punti" (broken grammar) → "in quattro punti diversi"
+  "lo avvolse così caldo" (wound it hot) → "con un avvolgimento così
+    potente"
+  "ne tagliò una versione" (cut a record) → "ne registrò una versione"
+
+Plus ten smaller ones: word order on the octave-position blurb, a wrong
+preposition on Higher Ground, "intralciare" → "rubare spazio," "lo fecero
+andare via" → "lo spinsero ad andarsene," and so on.
+
+## v0.209.36 — Bass pack: full triage installed, translated
+
+Daniele's complete triage of all 104 bass questions. 70 kept, 31 edited,
+3 flagged and rewritten, 0 cut. Rows 1-55 were his edits on the first
+rewrite pass; 56-104 were his edits on the second pass built from the
+blurb guide (one sentence, no tails, no echoes, no opinions).
+
+Four rewrites on the flagged rows:
+  #69: stem "Which effect gets a bass closest to a synth line" existed
+       only to say the answer. Now "Which pedal lets a bass double itself
+       higher or lower?"
+  #70: "fretless" in the stem pointed at the answer. Now "Which effect
+       was all over bass tones in the eighties?"
+  #80: blurb was about chord symbols in general; question asks about A7.
+       Now explains why the third of A7 is C sharp.
+  #103: blurb was generic interval counting; the notes shown are D and B.
+       Now explains the sixth from D to B.
+
+Typo fixes on Daniele's edits: "payers" → "players" (#1), double space
+(#36), "almsoy" → "almost" (#44), "two sixteenth" → "two sixteenths" (#79),
+"it's length" → "its length" (#78), "kept... and uses" → "used" (#81), and
+#81's stem needed a possessive ("Which player's").
+
+Five blurbs opened with a pronoun and the gate flagged them. Named the
+subject where the subject is not the answer (Kaye, Burton, Barrett) and
+used "the band's" / "the doubling" where it is.
+
+All 104 translated to Italian. Existing Italian carried over where the
+English question or options were unchanged (71 questions, 102 option sets);
+fresh translation for 33 questions, 2 option sets, and all 104 blurbs.
+
+Install note: the first install attempt matched the tuner's `bass: {`
+instrument table instead of the quiz pack and overwrote the wrong
+questions array. Caught by the post-install stem check, restored from the
+v0.209.35 build, reinstalled against the block that carries
+group:'instrument', name:'Bass'. Every ready pack verified at its correct
+row count afterward.
+
+## v0.209.35 — Fix null analyzer crash on metro open
+
+The dB meter function accessed analyzer.frequencyBinCount without checking
+whether analyzer was null. analyzer is only created when the mic starts, but
+the meter can run from the metro visualizer before the mic is ever turned on.
+The first call site (detectOnset, line 40273) already had a typeof guard; the
+second site (the A-weighting branch of the dB calculation) did not. Added a
+null check that returns DB_MIN early, same pattern as the native-mic branch.
+
+This is the crash in the error log: "Cannot read properties of null (reading
+'frequencyBinCount')" on metro open, seen twice on v0.209.23.
+
+## v0.209.34 — Artist names on album options: seventies and eighties
+
+Same treatment as v0.209.33, applied to three more questions where the options
+were bare album titles from different artists and the stem did not name who:
+
+  Seventies #47 (Aja, Bat Out of Hell, Rumours, Hotel California)
+  Seventies #59 (Sticky Fingers and Exile on Main St. got Rolling Stones;
+    Led Zeppelin III and The Velvet Underground and Nico already carry the name)
+  Eighties #88 (La voce del padrone, Rimmel, La donna cannone, Banana Republic)
+
+Both languages.
+
+## v0.209.33 — 80s quiz: artist names on album/video options
+
+Four eighties questions had bare album or video titles as options with no artist
+attached. If you don't already know who made "Sports" or "1984," the option
+tells you nothing. Added "Album – Artist" to each option in both languages:
+
+  #22 (Thriller, Bad, Purple Rain, Born in the USA)
+  #64 (Thriller, Take On Me, Sledgehammer, Money for Nothing)
+  #71 (Appetite for Destruction, The Joshua Tree, Faith, Bad)
+  #77 (Born in the U.S.A., Purple Rain, Sports, 1984)
+
+Single-artist questions (#46, all Prince albums) left alone since the stem
+already names who it is.
+
+## v0.209.32 — Theory Fundamentals: three Italian fixes
+
+Row 10: "Risuonare quella sezione" (to resonate) replaced with "Ripetere quella
+sezione" (to repeat). Risuonare means to ring out, not to play again.
+
+Row 45: "collocando le note fuori dal battito in battere" was tangled. Replaced
+with "collocando le note fuori dai tempi forti" (off the strong beats).
+
+Row 56: "Col legno (col legno)" was redundant. The term is already Italian and
+does not need translating for an Italian reader. Dropped the parenthetical.
+
+## v0.209.31 — Theory Fundamentals: triage pass installed
+
+Daniele's triage of all 60 theory_fundamentals questions. Every blurb was
+rewritten shorter and more direct. The originals carried stories and tangents
+(Tchaikovsky's six pianissimos, Chopin's rubato left hand, copyists' lost
+afternoons); the new versions say what the thing is and stop.
+
+Six fixes applied on top of the triage:
+  #5:  Daniele supplied the blurb (ritardando as a targeted slowdown).
+  #18: Fixed a garbled sentence ("gets its name comes from").
+  #26: Fixed "abstandard" typo.
+  #31: Rewritten from "What could singers do with Guido's staff" to "What did
+       the invention of the musical staff make possible?" with a new blurb
+       giving the before-and-after.
+  #38: Fixed its/it's.
+  #54: Fixed double space and changed the answer option from "Which intervals
+       to play above the bass" (giveaway) to "Which intervals to stack above
+       each note."
+
+All 60 rows translated to Italian. Existing Italian carried over where the
+English was unchanged (questions and options that only reordered). Fresh
+translation for all 60 blurbs, 11 questions, and 5 option sets.
+
+## v0.209.30 — Pin nudge: G style
+
+Replaced the v0.209.29 nudge (8.5px, barely different) with something that
+actually reads. On visits 2 and 3 the hint row switches to 10px at 55% opacity
+with the text "Tap ◎ on a card to skip this screen next time," the ◎ rendered
+in the module cyan. Same position, no new elements, goes back to the quiet
+7.5px version after two appearances.
+
+## v0.209.29 — Louder pin hint on the launcher
+
+The launcher hint that tells people about pinning is 7.5px uppercase gray at
+the bottom of the screen. It is correct and nobody reads it. On the second and
+third time the launcher appears (page loads, not in-session returns), the hint
+is replaced with a warmer line at 8.5px: "Hold ◎ on a card to skip straight
+to it next time." After the third visit it goes back to the quiet version
+forever. Both languages.
+
+Counter increments at parse time (survives applyLang resetting the text).
+Display runs from applyLang's end, which is the only moment that is guaranteed
+to be after i18n has written the hint and before the user reads it.
+
+## v0.209.28 — Dead-screen guards, honest quiz count
+
+Three things found walking the whole app in a phone viewport.
+
+enterTool and enterExercise accepted any name. Every panel is shown or hidden
+by comparing against a fixed set, so an unknown name hid all of them: the hub
+went away, the header swapped to the bad name in capitals, and the user sat on
+an empty screen with only the tab bar to escape. setMode has had this guard
+since v0.150; these two never did. Both now reject anything not in their
+canonical list (TOOL_FOLDER_MAP for tools, a new EXERCISE_BACK_MAP for
+exercises, hoisted out of enterExercise so the guard can read it). Reachable
+from favorites and deep links, where a stale id is possible.
+
+The Games card said "1,152 questions · 19 packs". At launch a player gets the
+READY packs: 8 of them, 735 questions. The number was also stale as a total
+(the file holds 1,389). The card now counts what MQ_PACK_READY actually holds,
+in both languages, and refills whenever the language changes. Add a pack to
+READY and the card follows.
+
+## v0.209.27 — Guard async functions against unhandled rejections
+
+Six async functions ran without try/catch. An unhandled promise rejection on some
+Android WebView builds can crash the renderer process rather than just logging a
+console error, which is the likely cause of the unreproducible screen crash on
+fresh boot into Metro.
+
+Wrapped in try/catch:
+  startMetro, startMetroAt — AudioContext.resume() can reject if the audio
+    session is not ready. On a fresh boot the context has never been touched, and
+    the first tap on play is the first user gesture hitting the audio system.
+  toggleMic — awaits startMic(), which has its own internal try/catch, but a
+    rejection from the outer await was unhandled.
+  toggleNotif — awaits notifRequestPermission(), which can reject on web/PWA
+    where the plugin does not exist.
+  mqStartSurvival, mqStartCustom — await mqRunOnlineFetch(), which does a
+    network fetch that can reject.
+
+Also null-guarded the metroPlay button access in startMetro and startMetroAt.
+getElementById without a null check on a missing element is a TypeError, not
+just a no-op.
+
+## v0.209.26 — Brush ghost snare: wire tap, not mini-sweep
+
+The brush ghost snare was a scaled-down version of the sweep articulation: a
+rise-then-fall noise swell that sounded like a pile of sand moving no matter how
+short you made it. A sweep is the wrong articulation for a ghost note. Brush
+ghosts are a quick flick of the wires against the head, not a tiny circle.
+
+Replaced the envelope entirely. The ghost now fires at full level with a fast
+exponential decay (70ms), like the other kits' ghost snares but with a lower,
+wider noise band and a tiny shell thud for body. The highpass is at 700 Hz
+instead of 1366, the peaking filter is at 2800 instead of 3265, and there is no
+rise phase at all.
+
+The sweep articulation is still there for the accent, which is where brushes
+actually sweep.
+
+## v0.209.25 — Brush ghost snare shorter, track settings centered
+
+Two drumkit tweaks.
+
+The brush font snare ghost sweep was capped at 0.8 seconds, which at neosoul
+tempos turned each ghost into a full swish that competed with the groove. Pulled
+the cap down to 0.35s so the ghosts stay a texture wash underneath the music
+instead of drawing attention to themselves. The rise/fall shape is unchanged,
+just shorter.
+
+The per-track settings row (volume slider, subdivision picker) was left-aligned
+inside its container. Added justify-content: center so it sits in the middle of
+the row.
+
+## v0.209.24 — Quiz pack triage: EN/IT drift in advanced_theory
+
+Read the five packs still sitting in MQ_PACK_READY without a triage pass:
+guitar_gods, advanced_theory, seventies, bass, guitar_technique. Every
+automated stage came back clean on all five, which is exactly the problem the
+spec warns about, because advanced_theory was carrying faults no tool looks for.
+
+Row 4 held two completely different questions, one per language. The English
+asked how far apart soprano, alto and tenor sit; the Italian asked which degree
+of the harmonic minor scale you avoid doubling. Both blurbs were correct for
+their own half. The Italian half also duplicated row 3, so an Italian player
+could meet the same answer twice in one pack. The English question was kept and
+the Italian rewritten to match it.
+
+Row 3: the Italian stem asked about a major chord while the English asked about
+a dominant seventh, and the Italian offered "La terza" where the English offered
+"The seventh".
+
+Row 5: "quinta diretta" is what most Italian texts call a hidden fifth, so it sat
+in the option list as a second correct answer next to "quinta nascosta".
+
+Row 21: "Compare una nuova armatura di chiave" is a better answer to "first sign
+on the page that a piece is heading for the dominant" than the option marked
+correct.
+
+Row 27: only the correct Italian option carried "abbassato". The answer was
+findable by shape without reading it.
+
+Row 20: the blurb defined closely related keys as differing by one accidental,
+which excludes the relative minor. It is no more than one. The Italian
+distractors were three distant keys, making the Italian a much easier question
+than the English.
+
+Rows 24 and 35: "riscritto" for a feminine noun, and "un solo battuta". Row 35
+also claimed a bar of material could carry four forms of a phrase, a number
+nothing supports, and its English stem said a sequence repeats at a higher pitch
+when it moves either way.
+
+Rows 11 and 34: an appoggiatura is one kind of non-chord tone, not the category.
+And a binary blurb that said neither section returns to the other, which is not
+something sections do.
+
+guitar_technique row 69: the blurb answered a question nobody asked. The stem
+asks why strings go dull and the blurb talked about how often to change them,
+with the two languages giving different intervals (1 to 4 weeks against one or
+two). Rewritten to explain the mechanism.
+
+guitar_gods, seventies and bass came back clean.
+
 ## v0.209.23 — Preset BPM corrections (6 presets)
 
 Cross-referenced all 78 drum presets against real songs using BPM databases
