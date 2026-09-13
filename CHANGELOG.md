@@ -2,6 +2,653 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.44 — Vocal range copy pass and song bank instrument fixes
+
+Vocal range module: six strings rewritten in both languages. The
+tessitura description replaced "where your voice sits most easily, which
+is what voice type is mainly classified from, rather than the extreme
+notes" with two plain sentences. The overlap hint lost "determined by
+where the voice is most comfortable." The siren and trill warmup
+instructions lost "gently" (twice) and "keeping it easy and connected."
+The subtitle stopped saying it "maps" and "tracks over time" and now
+says results are saved to the history. The artist reference known fields
+(115 entries) are song lists, not prose, and needed no changes.
+
+Song bank instrument references: three notes rewritten across piano and
+organ. Canon in D changed "three violins" to "three voices" since the
+player hears piano. Ave Maria added "the melody is in the right hand
+here." Air on the G String added Wilhelmj's name and explained why the
+arrangement put the melody on one string.
+
+## v0.210.43 — Song bank notes: full rewrite across all three banks
+
+37 notes rewritten across piano (42 songs), organ (5), and Rhodes (16).
+This was a proper pass, not a word-swap: each note was read for what it
+says about the piece and rewritten to carry one or two facts the player
+would want to know while listening.
+
+What changed by category:
+
+Dates and origins added where they were missing: Arabesque 1 (1891, the
+2:3 polyrhythm named), Canon in D (three violins, twenty-eight repeats
+of the ground bass), Carol of the Bells (Ukrainian chant Shchedryk,
+1916), Ode to Joy (1824, EU anthem 1985), Brahms Lullaby (1868, written
+for a friend's newborn), Greensleeves (first published 1580), Bella Ciao
+(partisans in the 1940s), Clair de Lune (1890), Prelude in C (1722),
+Ave Maria (1825, originally for voice), Gymnopedie (1888, the marking
+lent et douloureux, the possible Knossos etymology), The Entertainer
+(1902, the 1973 Sting film), Liebestraum (started as a song, reworked
+1850), Hungarian Dance No. 5 (borrowed from Bela Keler).
+
+Opinion adjectives removed and replaced with musical facts: Moonlight I
+("hushed" triplets became "triplet arpeggios in the right hand over
+sustained bass octaves"), Moonlight III ("stormy" became "fast arpeggios
+from the first bar"), Clair de Lune ("luminous, impressionistic, fixture
+of the repertoire" became "wide-spaced chords with heavy pedal"), Maple
+Rag ("the rag that made Joplin's name" became "published in 1899 and
+Joplin's first major seller"), Hallelujah ("monumental final cadence"
+became "final cadence"), Lacrimosa ("solemn weeping Adagio" became the
+fact that it was the last movement Mozart completed).
+
+Rhodes notes trimmed: "warm electric-piano voice," "glow on the electric
+piano," "warms up on the electric-piano voice" all replaced with plain
+"on the Rhodes voice." The Liebestraum Rhodes note now carries the song
+origin fact. The St. Louis Blues Rhodes note just names the piece.
+
+## v0.210.42 — Song bank copy pass: piano, organ, Rhodes
+
+21 song notes rewritten across all three instrument banks (42 piano, 5
+organ, 16 Rhodes). Emdashes replaced with periods or commas (four in
+piano). Opinion adjectives cut: luminous, serene, tender, defiant, fiery,
+soaring, stately, brooding. Stock phrases cut: "fixture of the
+repertoire," "borrowed endlessly ever since," "came to define the genre,"
+"widely known as any melody ever written," "holiday staple." Repeated
+"warm electric-piano voice" and "sits naturally on the [instrument]"
+across the Rhodes and organ banks cut. Facts kept or substituted where an
+adjective was removed. Zero remaining hits on the full pattern scan.
+
+## v0.210.41 — Share links land on a popup instead of dumping into the game
+
+Tapping a shared Chordle, Tonale or Diadle result used to skip the splash
+and go straight into the daily puzzle with no pause, which meant audio
+could fire the instant the app opened and the player had no idea what was
+happening. Now a landing popup appears first: the game name, today's
+date, a one-line description of the rules, and a START button. If the
+player has already finished today's daily, the button reads VIEW RESULT;
+if they backed out mid-game, it reads RESUME.
+
+The popup reuses the MQ daily popup's visual language (same fonts, same
+card shape, same gradient button, same pop-in animation) and sits above
+everything at z-index 2090. Tapping outside dismisses it without starting
+the game. Music Quiz already had its own daily popup and keeps it.
+
+The deep link handler in openFromUrl still opens the module shell behind
+the popup (so the game is ready the instant the player taps START) but no
+longer calls chordleStartDaily / tonaleStartDaily / diadleStartDaily
+directly. Instead it calls showShareLanding(target), which reads the
+daily state, picks the right button label, and waits. If the landing
+popup is somehow missing, it falls back to the old direct entry.
+
+i18n: six new keys in both languages (three game descriptions, START,
+RESUME, VIEW RESULT).
+
+## v0.210.40 — Quiz triage: Guitar Gods
+
+Ninety questions read row by row against the blurb guide and the AI copy
+guide, in both languages, with the pack gate run before and after.
+
+Four blurbs gave away other questions: 13 named T-Bone Walker doing the
+splits (Q76), 34 and 56 named Led Zeppelin (Q8), 71 restated Johnny
+Ramone's downstrokes (Q62). All rewritten; 13 now carries Berry's own
+story about hiding a wrinkled rayon suit. Two stems carried "celebrated"
+and one "famously"; cut. A garbled sentence in 26 (the Beano Les Paul)
+and a broken one in 77 (Mayfield) repaired. "Rumble is the only
+instrumental ever banned from American radio" is now the checkable
+version: banned by stations in New York and Boston. "Half of London" went
+looking for a sitar is now the Stones on Paint It Black within six
+months. Seven "rather than" and two "roughly" converted. Nine opinion
+tails cut ("nobody has copied properly since," "long before the rest of
+the world caught up," "most fingerstyle playing since has grown from what
+he achieved," "almost every country and folk player since has borrowed
+it"). The Italian answer on Q35 was fifteen characters longer than its
+distractors; the distractors were lengthened to match.
+
+## v0.210.39 — Quiz triage: The 70s
+
+113 questions read row by row, both languages, gate before and after.
+
+Two distractors were reused across questions (The Trammps in 6 and 72,
+Rischiatutto as a distractor in 75 and the answer in 81); swapped for
+Earth, Wind & Fire and Studio Uno. Blurb 9 gave away Q71 (Harrison
+mortgaging his house, the same Idle line word for word); it now carries
+the Norway ban and the Swedish poster. Blurb 67 gave away Q62
+(Esperance); now "Western Australia." The Eno line about everyone who
+bought the record starting a band was applied to the Ramones, where it
+does not belong; cut. Four unverifiable superlatives tightened: Aloha
+from Hawaii's billion viewers is attributed to Parker and marked as
+never checked, "more Americans than the Moon landing" is gone, the
+bicentennial fireworks superlative is gone, Secretariat's "before or
+since" is "still the record," and Apollo's "three more missions built
+and paid for" is "the rockets for two." British prose (rather than,
+roughly, in the sixties, cinema) converted. One of two exclamation marks
+kept (the pet rock). Ten opinion tails cut ("the most effective bedtime
+instruction ever devised," "every cartoon that followed was chasing it,"
+"the argument outside was the more interesting event," "nothing on
+Italian television has replaced it").
+
+## v0.210.38 — AI Copy Guide scan: 12 remaining tells fixed
+
+Wrote AI_COPY_GUIDE.md from the research and scanned every copy surface
+against its full pattern list: tours (155 bodies), interval blurbs (15),
+vocal range steps and i18n (40+), piano song notes (29), vocal range
+artist entries (110), and survival guide pages (141).
+
+24 raw hits, 12 false positives (song titles matching "Beautiful," a
+person named Foster, literal piano keys, drum notation). 12 real:
+
+Tours (3): "so you can watch and hear" on the theremin, "which helps
+younger students" on the tuner verdict, "so you can see how close" on
+the chromatic strip. All cut or restructured.
+
+Piano notes (3): "hypnotic" twice (Gymnopédie and Gnossienne), "one of
+Chopin's most haunting miniatures" (Prelude Op. 28 No. 4). Adjectives
+replaced with facts: "slow and spare," "no bar lines," "one of his
+shortest preludes."
+
+Survival guide (6): five "where X lives/sits" constructions (guitar
+midrange, left-hand position, clarinet writing, stroke placement, and
+one figurative "in context"). All rewritten as plain statements.
+
+After this pass, zero hits remain on the scanned patterns across all
+surfaces.
+
+## v0.210.37 — 20 new tour steps across 14 tours
+
+Every tour was surveyed against its module's controls, and 20 steps were
+missing: features a first-timer would need that the tour walked past.
+
+Progression: The Grid (how to add a chord: tap a bar, pick root and
+quality), Groove & BPM (drum pairing, tempo slider), Save (personal
+presets). Drum kit: Presets (the tray of ready-made beats), Subdivision
+(8th/16th/triplet grid). Tuner: Reference Tone (fork, A 440 calibration,
+KEY for transposing instruments). Piano: Song Bank (the library of
+playable pieces with transport). Interval training: Difficulty (four
+levels), Test Mode (scored ten-question challenge). Charts: Chords &
+Scales toggle, Instrument Variants (sub-types: clarinet A/Bb, the four
+saxes, alto flute). Survival Guide: Audio Demos (the tappable terms play
+sounds). Road Trip: How a Leg Works (home tone, second note, name the
+interval, limited replays). Tempo Guess: Difficulty (EASY through INSANE).
+Polyrhythm: Three Tabs (Listen, Practice, Challenge). Diadle: Difficulty
+(root drone on easy, once on medium, none on hard). Rhythm Reading: Tempo
+(BPM slider).
+
+TOUR_NAV entries added for progression (loads a preset so the grid and
+groove row are populated), drumkit (shows the subdivision picker at its
+step), and guitarchords (ensures the sub-row is visible). Poly nav fixed:
+LISTEN tab on the tabs step, PRACTICE on Start and Feel It First.
+
+All 20 steps written in both English and Italian, with the blurb guide
+voice: facts, flowing sentences, no opinions, no emdashes.
+
+## v0.210.36 — Tours: spotlight on the real control, silent navigation, and the scroll lock that broke both
+
+Rhythm reading's tour played the pattern. The navigation picked a
+difficulty, and rrPickDiff -> rrNew -> preview or count-in both schedule
+audio. The tour now swaps rrBeginPreview and rrBeginCountIn for no-ops for
+the duration of the pick, so the pattern is drawn on the staff and nothing
+sounds. Verified: zero audio sources during the tour, lands back on the
+picker. Every other navigating tour was already silent; the counts that
+remain (Music Quiz's hub groove) are the modules' own behavior on open.
+
+Module tours now point at the real thing. They used a centered card with
+a scaled clone of the target, because the target was often on another
+screen. TOUR_NAV brings the real control on screen for every step, so the
+clone is gone and module tours use the same treatment as the section
+tours: dim everything, cut the live element out of the dim, anchor the
+card beside it with a caret. That is the coach-mark pattern the guidance
+agrees on (Material feature discovery, Appcues, the coach-mark design
+systems): point at the element, never at a copy of it; one short card,
+one action; tap outside to dismiss. Verified on screen for the transposer
+(CHORD tab, live chord box lit, card hanging under it) and the piano.
+
+The bug underneath: a global scroll-lock observer pins the body with
+position:fixed whenever any overlay is open, and #tourOverlay was on its
+fast list. While a tour was up, scrollHeight collapsed to the viewport, so
+no target below the fold could ever be reached; section tours only worked
+because their targets happened to fit. The tour blocks the user's own
+scroll gestures itself, so it is now exempt from the lock, and the step
+scroll also handles a target inside its own scroll container. Chordle now
+scrolls 649px to its targets and the page returns to top at the end.
+
+Progression tour: its first step pointed at #progKeyDisplay, a transpose
+readout that is empty until a chord exists, and described a key-and-scale
+picker that filters chords to the key. The tool has no such thing; the
+picker offers all twelve roots and every quality. The step is now
+"Presets," on the presets button, and describes what is there: named
+progressions or an empty grid, the title flipping to CUSTOM on the first
+change, the flat and sharp buttons transposing. The chord-tool tour's
+"scale-aware picker" line was the same false claim and is fixed too.
+
+Piano "Three Pedals" spotlights the whole pedal cluster, not only DAMPER.
+
+Verified headless through the real boot path, all 36 tours: every step's
+target in view, spotlight aligned to it, card inside the viewport, module
+back on its landing screen with the overlay closed, page scroll back to
+top, zero audio from tour navigation, no page errors.
+
+## v0.210.35 — Tours navigate the module, then land back where they started
+
+Survey first: every one of the 36 tours was entered headless and each
+step's selector tested for visibility on the module's landing screen. 22
+steps across 13 tours pointed at controls that were not on screen when
+the tour started, because the module lands on a picker, a first tab, a
+closed modal, or a menu:
+
+  interval (tone bank lives in the settings modal), chord ear (tone bank
+  in the pool modal), polyrhythm (mode row is on the PRACTICE tab),
+  chordle (all four steps are on the game screen, behind the difficulty
+  picker), diadle (controls behind the picker), tonale (listen bar is in
+  the game), rhythm reading (all three steps are past the picker),
+  road trip (trip meter and stage only exist mid-trip), circle of fifths
+  (the scale row appears once a key is tapped), transposer (chord line is
+  on the CHORD tab), tuner (the verdict bar is opacity 0 until the mic
+  hears a pitch), music quiz (the global difficulty row is hidden for
+  good under the current quiz UI).
+
+TOUR_NAV: one idempotent state(idx) per tour that needs it. showStep calls
+it before rendering and waits 240ms for the screen to settle; endTour
+calls state(-1), the landing state. Because it is a state function rather
+than a one-way "go," stepping backwards also puts the module back
+(transposer step 3 to 2 returns to the KEY tab, verified). Nothing in it
+starts audio or the mic: chordle opens a game with no autoplay, diadle's
+autoplay timer is cleared and the drone stopped, tonale's countdown is
+cleared, the road trip stage is revealed without starting a trip, the
+tuner verdict shows a sample "Tune higher" and clears afterward.
+
+Music Quiz lost its Difficulty step: #mqGlobalDiff is display:none under
+body.mq2on, so the step described a control nobody can see. Difficulty
+now lives in each pack's popup and in Custom, which the tour already
+covers.
+
+Verified headless, all 36 tours: every step's target visible at its step,
+every module back on its landing screen with the overlay closed at the
+end, no page errors.
+
+## v0.210.34 — Tours: the last twelve claim-checked, and a voice pass
+
+v0.210.33 claim-checked 24 of the 36 tours. This finishes the other
+twelve (overview, tuner, metronome, tools, practice, launcher, theremin,
+piano, scales, progression, vocal range, interval training) against the
+code: five bottom-bar sections, Teaching Mode and latency in Settings,
+AUTO as a tuner family and the capo next to String Guide, three metronome
+tabs and a 300 BPM ceiling, tap tempo needing four taps, the theremin's
+SNAP TO SCALE and PURE/WARM/REEDY/BRASS, three piano tabs and the
+Keyboard/Waves/Plucked/Brass/Woodwind tone groups, the scale tool's Loop,
+Drone and dice, the vocal range's three tabs. All hold.
+
+Voice pass over all 135 tour steps with the blurb rules. "So you can" and
+the "Don't know the BPM?" openers are the genre and stay. Ten flourishes
+cut, in both languages: "stops being a definition and starts being a
+sound," "the weak joins announce themselves," "arrives as a single color,"
+"only get you so far; the sound is the part you are actually learning,"
+"which is how you find out what a rehearsal room actually does," "which is
+how you will meet it inside a chord," "the harder and more useful half,"
+"the theory behind why it does," "is a useful comparison," "the classic
+jazz shuffle."
+
+## v0.210.33 — Tours checked against the code, not the selectors
+
+v0.210.30 verified that every tour selector exists. It did not verify that
+the words match what the module does, which is how the piano pedal step
+slipped through. This pass read every step of all 36 tours against the
+code behind it. Seven were wrong.
+
+Chord ear training said "name its root and quality." You name the quality;
+the root is shown or hidden by difficulty (ceRootMode). Rewritten.
+
+Diadle said six guesses per melody. Every difficulty is maxGuesses: 5;
+the six was the board's row count. Now five.
+
+Survival Guide said "Search if you know what you're after." There is no
+search. Now points at the contents panel.
+
+Chordle: "use the config button to change which chord qualities appear in
+the daily puzzle" and "tap the config button for the daily puzzle."
+chordleToggleCfg switches you into a custom game; the daily is its own
+button on the difficulty screen and cannot be configured. Both steps
+rewritten. "Replays the chord" is now "replays the whole progression."
+
+Road Trip said "leaving the module keeps your position, so a long drive
+can be picked up later," and the route step said long routes "take several
+sittings." roadtripStop drops to the menu and only lifetime stats are
+saved; a trip is one sitting. Both rewritten.
+
+Interval Reference said "from the unison to the octave." The deck runs to
+the major ninth. Fixed.
+
+Confirmed correct against the code: tempo lock's ±2 BPM (LOCKED grade is
+under 2), Tonale's one go per day, The Climb's twenty-four rungs and tries
+per card, Rhythm Cards' 2/4 bars, eight-card test and three passes to
+clear a drill, Notation Cards' ten-symbol test, Tonal Context's EQUAL/JUST
+switch, Circle of Fifths' Play Scale, the Volume Meter's NIOSH zones,
+Staff Read's ledger toggle, Sight Singing's voice pill, Polyrhythm's
+locked challenge modes, and Music Quiz's three lives and fifty questions.
+
+## v0.210.32 — Copy pass, second read: joined the fragments
+
+The v0.210.29 and v0.210.31 rewrites cut the opinions and the AI shapes
+but came out clipped: two and three short sentences where the blurb
+guide says one flowing one ("Three half steps. The bottom of a minor
+chord."). Forty-five of those joined with a comma, a semicolon or an
+"and," across the interval blurbs (all fifteen, both languages), the
+vocal range step and intro copy, the piano song notes, the Survival
+Guide replacements and the piano tour's pedal step. Meaning unchanged.
+
+## v0.210.31 — Vocal range: assessment process brought in line with the spec
+
+Applies section 5 of VOCAL_MODULE_SPEC.md (range assessment upgrades) and
+the safety rules of section 7, for the parts that are process and copy.
+Falsetto-flip detection, strain detection and passaggio estimation need
+new signal analysis and are not in this build.
+
+Copy: the module no longer says "highest note" or "lowest note" anywhere,
+and never asks the user to push. Steps read "Sing as high as is
+comfortable," "This is your comfortable top for today, not your maximum,"
+"Go as high as your voice will go with a clear pitch" for the extended
+steps, with "Stop at the first sign of strain." Emdashes and the sales
+lines ("low effort, high impact," "will meaningfully improve your
+accuracy," "sweet spot," "key diagnostic tool") are gone from the intro,
+warmup, step, tessitura and passaggio copy, in both languages. The high
+step's tip now tells the user what to do if the voice flips to a lighter
+register: try once more with the same fullness, or take the note before
+it as the top.
+
+Warmup gate: on the first run (no saved session) there is no Skip All;
+the warmup is required. After a saved session, Skip All returns with the
+reason under it: "A warmed-up voice and a cold one measure differently.
+Results are most reliable after a warmup."
+
+Result confidence: when the tessitura center is within two semitones of
+the next voice type's center, the result reads "Likely Tenor" with
+"possibly Baritone · your tessitura center sits near the boundary" under
+it, instead of a verdict. vrMatchVoiceType is unchanged; only the display
+changed, as the spec says.
+
+Safety: "Stop if anything hurts, feels scratchy, or sounds hoarse" now
+sits under the tip on every singing step, not only on the warmup intro.
+The results note is now the not-medical-advice line: an estimate from
+what the mic heard, not a clinical assessment; a teacher also weighs
+timbre, passaggio and vocal weight; see a specialist for persistent
+problems.
+
+History: the Range Over Time chart carries the stability note. Day-to-day
+readings of the same voice vary by about 3.5% in frequency (Printz et al.
+2018), a bit over half a semitone, so a one-semitone move is inside
+normal variation.
+
+Verified headless: first-run gate, later-run note, safety line on a
+singing step, likely/possibly rendering at a boundary, disclaimer.
+
+## v0.210.30 — Tours: smooth motion, piano pedals step, missing preview target
+
+Motion: the spotlight already glided between steps (0.45s transition) but
+the page scroll was instant and the card and caret had no transition, so
+the page and the card teleported while the spotlight glided. That
+mismatch was the jerk. Section tours now smooth-scroll the window and
+position the spotlight, card and caret from the rect the target WILL have
+once the scroll lands, so all three glide in step with the page. A settle
+pass on scrollend (650ms fallback) re-measures and corrects any drift.
+The old 120ms delay before positioning is gone. Verified headless on the
+tuner and metronome tours: spotlight top equals target top minus padding
+on every step after settle, card always inside the viewport.
+
+Piano tour: the pedal step still described the old one-tap-sustain,
+two-taps-drone pedal. The piano has three pedals now, so the step is
+"Three Pedals": DAMPER lets every note ring until you lift it, SOST holds
+only what you are already pressing when you tap it, SOFT is una corda,
+quieter and darker. Italian rewritten to match.
+
+Drum kit tour: the swing step's preview pointed at #dkSwingRow, which did
+not exist. The settings row that holds the swing slider now carries that
+id. Every other selector across all 36 tours (139 unique) verified present.
+
+## v0.210.29 — Copy pass: vocal range references, interval references, Survival Guide, piano song notes
+
+Applied the quiz blurb rules (QUIZ_BLURB_GUIDE.md) to the reference copy:
+facts stay, opinions go, no emdashes, no teacher voice, no "not X but Y"
+reversals, no "which is why."
+
+Vocal range artist references: 52 of 110 entries carried an emdash tail
+and almost every tail was an opinion ("haunting bass-baritone,"
+"extraordinary high tenor," "one of the most celebrated coloraturas,"
+"towering Finnish bass"). All tails cut. Structural emdashes (band: songs,
+composer: opera) became colons. Separators standardized on " · ". Facts
+kept: whistle register, the Guinness record, nicknames (La Divina, La
+Stupenda, Bubbles), "worked directly with the composer," "revived the
+countertenor voice." Chris Martin's duplicate "The Scientist" removed.
+The Italian translator was rebuilt as a phrase map for the facts that
+remain; the 50-entry opinion map is gone.
+
+Interval references: each of the fifteen cards was a paragraph of
+adjectives ("warm, slightly heavy," "yearning," "romantic, aching," "sweet
+and open") wrapped around the song examples. Each is now one or two
+factual sentences (semitone count, what chord it sits in) plus the songs
+as their own UP and DOWN lines. Examples checked and a few added:
+Greensleeves and Frère Jacques up, Frosty the Snowman and Beethoven's 5th
+down, Also sprach Zarathustra, NBC chimes, Watermelon Man, Cole Porter's
+I Love You for the descending major seventh. The Italian keeps Fra
+Martino and the Giorgia example. iv_blurbs entries are objects now
+({b, up, down}); ivCardBlurb still returns the text for any older caller.
+
+Survival Guide: scanned all 141 English pages (about 17,000 words) for
+the rule patterns. 39 sentences rewritten. The recurring shapes were
+"which is why" (5), "defines/defining" (9), "one of the most" (3), the
+"isn't X; it's Y" reversal (3), "not just X" (4), "essentially /
+fundamentally / crucially" (5), and opinion adjectives on tone ("eerie,"
+"beautifully," "melancholic," "remarkable"). Reader instruction removed
+("Listen to any great bass recording and notice..."). One emdash and one
+double "so" fixed. Legitimate shorthand left alone (tab symbols, valve
+combinations, "the bottom line of the staff"). Italian bodies not
+touched in this pass.
+
+Piano song notes: 13 of 29 rewritten. "Stride romp," "glows," "dreamy,"
+"hazy," "heartfelt," "sits beautifully," "whole new personality" and
+"Few organ pieces are better known" replaced with facts a student can
+use: the Arabesque's two-against-three, the Waldstein's Allegro con brio,
+the disputed authorship of BWV 565, where the Air's nickname comes from
+(Wilhelmj's 1871 G-string arrangement), Liebestraum's origin as a song,
+Kinderszenen 1838, the Gnossienne's missing bar lines, the Nocturne's
+12/8, Schwanengesang 1829, the Gymnopédie's "Lent et douloureux."
+
+## v0.210.28 — Custom mode difficulty pool; online question filter
+
+Custom mode: difficulty is a pool, not a single pick. Tap any combination
+of Easy, Medium and Hard; the last one standing cannot be turned off. A
+single pick keeps its existing curve (Easy is still 75/25/0 across tiers);
+two or three picks split evenly across the tiers chosen, so Easy+Hard is
+half tier 1, half tier 3 and nothing from the middle. MQ.diff carries a
+compound key ('easy+hard'), which the snapshot already persists. Everything
+that only understands three levels (the in-round badge, the clef gate, the
+popup chips, OpenTDB's difficulty parameter) reads a primary level derived
+from the pool; the round badge shows MIXED / EASY+HARD etc. when it is one.
+
+Online packs: OpenTDB's music category is user-submitted pop trivia, and a
+fair share of it is geography or biography with a band name attached
+("Which of these bands are NOT from Australia?"). The fetch now asks for
+the maximum (50), scores every question (drop patterns: born, died,
+married, not from, which country, how old, real name, what year; keep
+patterns: song, album, instrument, genre, chart, riff, solo, producer...),
+removes the clear off-topic shapes, prefers the ones about the music
+itself, and deals the best. If the trim leaves fewer than the round needs,
+it plays the raw pool rather than a thin round. Verified on a synthetic
+batch: kept six music questions, dropped six off-topic ones.
+
+Honest limit: there is no theory or instrument-technique content in that
+category. This trims the drift; it does not turn the source into music
+education.
+
+## v0.210.27 — Sforzando with teeth: a real strike voice
+
+v0.210.26's sforzando was still a volume bump on a synth pad, because the
+sustained voice has no attack character and the piano synth has no velocity
+brightness and no hammer transient (removed on purpose for chords). A loud
+note was the same tone, louder.
+
+New strike voice (_sgStrike): piano-like partials whose upper harmonics
+come up with velocity (a hard strike is much brighter than a soft one),
+plus at high velocity a 14ms bandpassed noise burst around 3 kHz (the
+hammer / bow bite) and a 4ms broadband click at the very front. All three
+scale with vol, so the same voice plays the soft context notes cleanly.
+
+Sforzando / sfz: a mezzo-forte phrase on the strike voice with one note hit
+at full force. Accent and marcato moved to the strike voice too; they are
+about attack, and the piano synth could not show it.
+
+## v0.210.26 — Sforzando, subito piano and fp on one continuous voice
+
+The legato engine now carries per-note dynamics on its single sustained
+voice: a target level per note, an optional spike (an instant bite that
+settles to the note's level in about 130ms, with the filter opening and
+closing with it) and a snap flag (reach the level in 12ms instead of 40ms).
+
+Sforzando / sfz: one connected phrase at mezzo-forte; the fourth note bites
+to fortissimo and settles back within the note. The line never stops. The
+old version played context notes and then a separate guitar pluck, which
+read as a click rather than an accent.
+
+Subito piano: one connected phrase at forte that drops to piano on the fifth
+note in 12ms, mid-line, with no breath and no ramp. The old version released
+each loud note and attacked each soft one, so there was a seam where the
+suddenness should be.
+
+fp: one note that bites and drops to piano and holds, on the same engine.
+
+All three re-rendered and checked at 25ms resolution.
+
+## v0.210.25 — Survival Guide demos: room and brightness
+
+The Guide now has its own output bus: a dry path plus a small synthetic room
+(0.9s decaying-noise impulse, the Diadle recipe, high-passed at 180 Hz so the
+room stays off the low end), feeding the reference master. Demos used to play
+bone dry off the oscillator; a little room makes them read as a
+demonstration rather than a test tone. Ornaments, pizzicato, fermata and
+niente benefit most.
+
+Brightness follows level on the sustained voices. The lowpass cutoff runs
+from 2.5x the fundamental at silence to 9x at full, and in the envelope
+engine it tracks the gain curve breakpoint for breakpoint. So a crescendo
+opens up and a diminuendo darkens, forte is brighter than piano, fp goes
+from bright to dark, and the dynamics ladder changes color as well as
+volume, the way real dynamics do.
+
+Levels rebalanced after re-rendering every demo: the four chord demos and the
+arpeggio's block chord sat about 2x hotter than everything else and are
+brought in line.
+
+## v0.210.24 — Survival Guide demos: measured, not guessed
+
+Every demo was rendered offline into an OfflineAudioContext and its loudness
+envelope and pitch track inspected, then fixed until each one demonstrates
+the term it names.
+
+The systemic fault: every sustained voice in the Guide used two saws detuned
+five cents apart, which beat against each other at about 1.7 Hz. Every held
+note throbbed. That is why tenuto sounded wrong, why the dynamics ladder
+pulsed instead of holding, why the "straight" second of the vibrato demo
+already wobbled, and why fermata and tie never sat still. Detune removed
+from the env engine, the legato engine and the new sustain voice. Held
+notes are now flat.
+
+New neutral sustain voice (_sgSus) for anything about how a note is held,
+joined or shaped. Not the organ (a Hammond emulation that inherits the
+organ tool's drawbars, Leslie and key click) and not the piano (re-attacks
+and decays on its own). Supports attack/release, a glide target and a
+vibrato onset time. The seq engine takes a per-note tone.
+
+Rewritten with a plain-then-marked contrast, because the contrast is the
+lesson: staccato, staccatissimo, marcato, tenuto, trill, mordent, turn,
+arpeggio (block chord, then rolled), legato and slur (detached, then one
+continuous voice), tie (two attacks, then one), vibrato (straight for a
+second, then the wobble fades in), fermata (three in tempo, then the fourth
+held far past its value with a slow release).
+
+Rewritten to be the thing: fp is ONE note that drops from loud to soft and
+holds; subito is three loud then three soft with no pause; glissando is a
+continuous slide from C4 to C5 (measured 280 to 530 Hz over one second),
+not a run of separate notes; niente fades across the whole note instead of
+vanishing in the first half second; pizzicato uses the guitar voice.
+
+Levels: sfz context notes raised so they are heard, not buried; fp's soft
+tail and subito's soft notes raised for phone speakers; staccato ticks
+punch as hard as the long notes; arpeggio's block chord tamed.
+
+Demo exceptions are now logged (console.warn) instead of swallowed.
+
+## v0.210.23 — Clarinet trills crash, solfège gaps, live refresh, Survival Guide demo pass
+
+Clarinet trills page crashed on open: it asked SampleEngine for a set named
+'clarinet_bb', which does not exist (the clarinet's samples are 'reed'). Both
+references fixed. Verified headless: page opens clean.
+
+Trills page solfège: the note grid, the upper-note options and the big
+"D–E♭" label were all hardcoded letter names. The grid and options now route
+through getDisplayNote; the label is built from the midi pair at render time
+instead of tr.label. Reads "Mi–Fa" in solfège.
+
+Bowed double stops: the second note of the title and the string names in the
+position line bypassed the switch. Both fixed ("La + Mi").
+
+Solfège refresh in place: toggling the setting only rebuilt the fretted root
+grid, quality row and renderers, so harp, bowed, wind, trills and the
+instrument-key sub-pills stayed in letter names until you tabbed out and
+back. refreshAllNoteDisplays now runs the per-family builders for the current
+instrument (sub row, pcc/pss, harp, bowed, wind notes or trills, gcc/gss)
+without calling switchChordScaleInstrument, which would reset capo and
+sub-type. Verified headless on harp pedals and clarinet pills.
+
+Survival Guide demos, full pass:
+  - Muted terms (breath mark, caesura, una corda, augmentation dot) had no
+    triangle but still dimmed on tap. The click handler now returns before
+    doing anything when a term has no demo; cursor is default on those.
+  - Legato and slur played overlapping piano notes, and piano re-attacks
+    every note, so they sounded like ordinary playing. New 'legato' demo mode:
+    the phrase plays detached first (short piano notes), then as ONE
+    continuous sustained voice whose pitch steps at each note with no new
+    attack. That is what legato is; the contrast makes it obvious.
+  - Tenuto used piano, which decays on its own, so "held for full value" was
+    inaudible. Now organ (sustains). Pizzicato now uses the guitar voice, a
+    real pluck. Added a per-demo `tone` field to the seq mode for this.
+  - Everything else audited: dynamics ladder, sfz/fp/subito, staccato,
+    staccatissimo, marcato, accent, fermata, glissando, tremolo, vibrato, tie,
+    trill, mordent, turn, arpeggio, intervals, chords, rest all demonstrate
+    the thing they name.
+
+## v0.210.22 — Online quiz qCount fix, result subtitle hidden, popup play button full width
+
+Online quiz qCount: the fetch path hardcoded MQ.qCount to 10 for quick mode,
+ignoring the user's selection from the popup (5/10/20/50). It now uses the
+value already set by mqPopupPlay. The progress bar scales to the chosen count.
+
+Result screen subtitle hidden. The grade and stats tell the story; the
+subtitle was redundant.
+
+Popup play button: added width:100% and display:block so the button spans the
+full popup width instead of shrinking to its text content.
+
+## v0.210.21 — Launcher morph: event-driven build with loading label
+
+The morph sequence is now fully event-driven instead of setTimeout-based.
+The card flies (compositor only), transitionend fires on arrival, the
+signature animation plays (compositor only), then after 620ms the module
+builds under the opaque card and the browser gets two rAFs to paint before
+the card fades. Nothing heavy runs until all animations are complete.
+
+A "NOW LOADING" label fades in under the card after the signature starts
+and fades out before the card dissolves. On a fast device it flashes for
+a fraction of a second; on a slow device it tells the user something is
+happening rather than looking frozen. Safety fallback at 2.2s if
+transitionend never fires.
+
 ## v0.210.19 — YIN pitch detection in AudioWorklet, all pitch consumers wired
 
 YIN pitch detection (the same FFT-based O(N log N) algorithm the tuner already
