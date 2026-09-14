@@ -1,6 +1,7 @@
 ---
-description: Core rules for editing Intonare. Applies to all work on this project.
-globs: ["Intonare.html", "*.bat", "*.py", "*.js", "*.json"]
+description: Core rules for editing Intonare. Always on so new chats get edit safety even before a file is open.
+globs: Intonare.html,*.bat,*.py,*.js,*.json
+alwaysApply: true
 ---
 
 # Intonare project rules
@@ -18,9 +19,32 @@ app itself. Capacitor + Vite handle native wrapping only.
 - Never use DOTALL regex on this file. It is ~10MB.
 - After any edit, run `node --check` on every script block to catch
   syntax errors.
-- The version lives in three synced spots: an HTML comment near the
-  top (grep `INTONARE_VERSION:`), a JS const, and the Settings footer
-  string. All three must be bumped together.
+- The marketing version lives in two declarations that must stay in
+  sync: the HTML comment (`INTONARE_VERSION:`) and the JS const. The
+  Settings footer reads the const; do not treat it as a third literal.
+
+## Preflight (idiot-proof)
+
+Before editing `Intonare.html`:
+- Record byte size and that the file ends with `</html>`.
+
+After editing `Intonare.html`:
+- Re-check byte size did not collapse (expect ~12MB / ~137k lines).
+- Confirm the file still ends with `</html>`.
+- Prefer Node/shell whole-file writes for tiny top-of-file inserts;
+  never treat a truncated copy as success.
+
+Before any Codemagic / TestFlight build:
+- Top `CHANGELOG.md` `## vX` must equal `INTONARE_VERSION`.
+- HTML comment and JS const must agree.
+- Codemagic auto-trigger is OFF; start the build manually.
+- Run `tools\ship_check.bat` (sentinel + changelog gate) before calling
+  it a ship.
+
+Android deploy:
+- Day-to-day: `go.bat`, then Android Studio Run, then clear device cache.
+- Play upload day only: `go.bat`, then `release.bat`, then signed AAB.
+- Native masters live in `native_src/`. Never "fix" only under `android/`.
 
 ## Language
 
@@ -69,4 +93,5 @@ app itself. Capacitor + Vite handle native wrapping only.
 - When auditing the app, do a real read of the actual screens. A
   regex count is not a finding.
 - Read docs/PROJECT_STATUS.md for current state, pending items, and
-  known gotchas.
+  known gotchas. New chats should also load the always-apply rule
+  `daniele.mdc` (who Daniele is, voice, workflow).

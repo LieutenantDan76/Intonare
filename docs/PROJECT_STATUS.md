@@ -22,9 +22,13 @@ instrument anatomy diagrams.
 
 ## Platform status
 
-- Android: Play Store closed testing. Production access questionnaire
-  submitted, under Google review.
-- iOS: live on TestFlight via Codemagic cloud Mac build.
+- Android: Play Store closed testing. Cleared for production access
+  (questionnaire approved). Still shipping through closed testing until
+  the production launch cutover.
+- iOS: live on TestFlight via Codemagic cloud Mac build. Automatic
+  builds are OFF; start a build manually in Codemagic when you want an
+  IPA. CHANGELOG.md top entry must match INTONARE_VERSION or the build
+  fails.
 - Web: GitHub Pages at lieutenantdan76.github.io.
 - IAP: RevenueCat built and shipping.
 - Backup/restore: built, shipped, verified on-device.
@@ -32,10 +36,13 @@ instrument anatomy diagrams.
 
 ## Version
 
-Check CHANGELOG.md for the current version. As of this writing it was
-v0.210.44+. The version lives in three synced spots in the HTML file:
-an HTML comment near the top, a JS const (grep `INTONARE_VERSION:`),
-and the Settings footer. All three must be bumped simultaneously.
+Check CHANGELOG.md for the current version. As of this writing it is
+v0.210.66. The marketing version lives in two declarations in the HTML
+file that must stay in sync: an HTML comment near the top (grep
+`INTONARE_VERSION:`) and a JS const. The Settings footer reads the
+const; it is not a third literal. Android Play versionCode / versionName
+are separate: go.bat for day-to-day, release.bat only on upload day.
+version.txt must match android/app/build.gradle versionCode.
 
 
 ## Architecture
@@ -68,7 +75,25 @@ and the Settings footer. All three must be bumped simultaneously.
   tombatossals chord DB structure for guitar voicing reference.
 
 
+## Active focus (verify against changelog before assuming)
+
+As of the Claude handoff (Sep 2026), recent focus areas were:
+- Drum engine (cymbal/brush synthesis, BPM per-step nudge)
+- Drumkit UI layout (grid-first + dock panel)
+- Light mode color system (OKLCH, per-theme saturated grounds)
+
+Also shipped / settled:
+- Krueger MIDI CC BY-SA publish: `credits/midi-sources/` live + linked
+- Staff Notes shipped; Melody Dictation and Score Reader still deferred
+- Android native mic is app-wide for pitch surfaces; WebView is fallback
+  on native failure and the only mic path on iOS. Do not reintroduce a
+  "half-native" capture+JS detection path.
+
+
 ## Quiz pack triage status
+
+Daniele hand-triages each pack in English first; Italian only after
+his pass. Voice reference packs: beatles and guitar_technique only.
 
 Triaged and done: beatles, eighties, guitar_technique,
 theory_fundamentals, advanced_theory, guitar_gods (90q), seventies
@@ -77,6 +102,9 @@ theory_fundamentals, advanced_theory, guitar_gods (90q), seventies
 Bass (104q): was partially triaged earlier (54% kept rate). Daniele
 believes the full triage may now be done. Verify by checking the
 changelog or asking before acting on the assumption it's incomplete.
+
+Ignore any old `QUIZ_TRIAGE_HANDOFF.md` if it reappears; it was wrong
+about advanced_theory / theory_fundamentals status.
 
 
 ## Known pending items
@@ -124,8 +152,17 @@ The go.bat file in the repo root handles the full deploy:
 After go.bat completes, open Android Studio and hit Run. Clear cache
 on the phone after install. The script does NOT build the APK.
 
-For iOS: push to GitHub triggers Codemagic, which builds and deploys
-to TestFlight automatically.
+For iOS: start a Codemagic build manually (auto-trigger is OFF).
+Push alone does not build an IPA. Top CHANGELOG version must match
+INTONARE_VERSION or the build fails.
+
+## Claude tooling (imported Sep 2026)
+
+High-value audits live under `tools/` (see `tools/README.md`). Python 3.12
+is installed. Daily ship gate: `tools\ship_check.bat` (sentinel + changelog).
+Do not treat the old August inventory as current for every script; area
+audits are on-demand. Daily edit safety still uses `.cursor/rules` preflight.
+
 
 
 ## How Daniele works
