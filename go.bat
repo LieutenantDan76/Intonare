@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 REM ============================================================
 REM  Intonare -- one-shot deploy
-REM  Downloads -> GitHub -> Capacitor -> Android assets
+REM  Project folder -> GitHub -> Capacitor -> Android assets
 REM ============================================================
 REM
 REM  NATIVE MASTERS now live under native_src\, mirroring the Android
@@ -19,10 +19,9 @@ REM  plugin registry -- that's the trap that burned a whole Phase 0 session.
 REM  Web-only deploys leave this flag at 0 and stay fast (no clean).
 set NATIVE_CHANGED=0
 
-echo [1/6] Copying latest Intonare.html from Downloads...
-copy /Y C:\Users\citti\Downloads\Intonare.html Intonare.html
-if errorlevel 1 (
-  echo  ^>^> No Intonare.html found in Downloads. Aborting.
+echo [1/6] Verifying Intonare.html is present...
+if not exist Intonare.html (
+  echo  ^>^> No Intonare.html found in project folder. Aborting.
   goto :end
 )
 

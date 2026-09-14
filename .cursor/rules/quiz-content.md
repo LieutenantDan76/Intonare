@@ -1,0 +1,42 @@
+---
+description: Rules for quiz pack content — blurbs, stems, options, triage, translation.
+globs: ["Intonare.html", "*.json"]
+---
+
+# Quiz content rules
+
+Before writing or editing any quiz pack content, read
+docs/QUIZ_BLURB_GUIDE.md in full. It contains the complete voice
+rules built from six rounds of hand-editing.
+
+## Quick reference
+
+- One sentence is the default. Join with comma or semicolon, not a
+  period. Two sentences only when the second adds a genuinely separate
+  fact.
+- Write what a player would say to another player. Teacher's voice,
+  not a critic's.
+- No opinions: cut "warm," "heavy," "iconic," "legendary," "celebrated."
+  Result descriptors are fine: "punchy," "swaying."
+- No stock AI phrases: "lives here," "nobody since," "built on," "the
+  whole trick is," "ever since," "famously."
+- Trim tails that restate, opine, instruct, or explain mechanisms.
+- The omega check is mandatory: read every row whole (stem + options +
+  blurb) and verify no blurb gives away another question's answer.
+
+## Voice references
+
+The beatles and guitar_technique packs are Daniele's own writing. They
+are the only voice reference. All other packs are approximations of
+that voice. When in doubt, match those two packs.
+
+## Italian translation
+
+- Music jargon stays English: pocket, walking, ghost note, one-drop,
+  tumbao, shuffle, box, slap, strum, pickup, setup, signature,
+  fretless, feedback, backbeat, riff.
+- Read every Italian blurb against its English twin before installing.
+  The automated gate catches structure but not wrong register.
+- When replacing a pack's questions array, match the quiz block by its
+  id plus the group/name line. A bare id regex can match unrelated data
+  structures elsewhere in the file.

@@ -1,0 +1,26 @@
+---
+description: Rules for user-facing copy — tours, reference text, survival guide, i18n strings.
+globs: ["Intonare.html"]
+---
+
+# Copy and tone rules
+
+Read docs/AI_COPY_GUIDE.md for the full guide. This is the short
+version.
+
+## Two-stage check (required before shipping)
+
+1. Strip AI-speak tells: marketing verbs, "not just X it's Y,"
+   rhetorical openers, quippy sass, em-dash overuse, "explore,"
+   "discover," "seamlessly," "where X lives/sits."
+2. Check rhythm: stripping tells can overshoot into choppy staccato.
+   Vary sentence length. Add connective tissue. Read cold.
+
+## Always
+
+- American English (see intonare.md for exceptions).
+- Sync EN/IT twins. Watch for triplicate strings: i18n value,
+  hardcoded DOM default, and JS fallback.
+- Italian music jargon stays English: pocket, walking, ghost note,
+  slap, strum, etc.
+- A teacher's voice, not a critic's, not a marketer's.
