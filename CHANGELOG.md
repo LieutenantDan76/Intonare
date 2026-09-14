@@ -2,6 +2,523 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.66 — Accordion fix, extended cards push key concepts, session sort
+
+Three fixes that landed after v0.210.65:
+
+_vrAnimDetail measurement cap: the scroll-height probe used maxHeight
+500px which was too short for the extended voice type cards wrapper (5-6
+cards at ~90px each). Raised to 9999px so the animation target is always
+correct.
+
+_vrAnimDetail open state: when the animation finished, maxHeight was
+cleared to '' (empty string). The CSS rule .vr-session-detail has
+max-height:0, which immediately snapped the card shut after the
+animation ended. Now sets maxHeight to 'none' which overrides the CSS
+and keeps the card open at natural height.
+
+Together these fix two bugs: extended voice type cards in the reference
+tab now push the key concepts section down instead of overlapping it,
+and all accordion cards (session details, reference cards, extended
+types wrapper) stay open after animating.
+
+Session card sort: history cards now explicitly sort by date descending
+before rendering, so newest sessions always appear at the top regardless
+of the array storage order.
+
+## v0.210.65 — Remove emojis, fix reference overflow, light mode voice colors
+
+Removed all emojis from the VR module. The age buttons (child, teen,
+adult), experience buttons (new, some, trained), tip boxes, intro tips,
+and safety card shield all used emoji which looked cheap on Android. Age
+and experience buttons now show just the text labels. Tip boxes show a
+"TIP" label in accent color. Intro tips use accent-colored dots. Safety
+card uses an SVG shield icon.
+
+Fixed the CSS filter:brightness approach for voice type colors in light
+mode. Replaced with vrVoiceColor(hex), the lookup-table helper from the
+July research session that maps each bright voice-type color to a deeper
+equivalent computed against the actual light card surface. Applied in all
+10 places voice type color appears as text. No more muddy filtered colors.
+
+Reference tab: added 80px bottom padding to vrReferenceContent so the
+key concepts card at the bottom isn't clipped behind the tab bar.
+
+## v0.210.64 — Light mode cleanup across the vocal range module
+
+Thorough light mode audit of every VR surface. The module had zero
+light-mode-specific CSS rules and relied entirely on CSS vars, which
+produce washed-out greens and invisible text on the light theme cards.
+
+Cards: session cards and reference cards get a light gradient
+(#f5f5fa → #eeeef4) with a visible border (#d0d0dc) in light mode.
+The dark-mode card gradient was showing through as a murky green.
+
+Timeline overlay: background changed from #e8e8f0 to #f0f0f6 for
+better contrast. Close button uses white background with a gray border
+in light mode instead of the dark panel color.
+
+Chart: stability bands use rgba(0,0,0,0.06) in light mode instead of
+the dark-mode gray. Tap selection rings use a darker green
+(rgba(20,100,60,0.5)) for visibility against the light chart background.
+
+Note heatmap: bars use rgba(20,120,70,opacity) in light mode instead of
+the accent green which was too bright against the light card.
+
+Detail cards: explicit light background and border when in light mode.
+
+Voice map strip: inherits the card light mode overrides.
+
+Reference card body text: forced to #333 in light mode so expanded
+voice type descriptions are readable.
+
+rAF animation for the voice map strip expansion (bars slide, lanes grow)
+from the previous build is also in this version.
+
+## v0.210.63 — VR module animation sweep: strip expand, screen fades, tab crossfade
+
+The voice map strip now animates when toggling extended types. All lane
+bars are always in the DOM; the extended ones start with max-height:0.
+Toggling changes every bar's left/width to the new scale (CSS transition
+on absolutely positioned elements works in Capacitor since it's just
+layout, not paint). Extended lanes slide in via max-height transition.
+Axis labels re-render at the new positions. The cards below still use the
+rAF accordion.
+
+Screen transitions: vrShowScreen now fades the current screen out (120ms)
+then fades the new one in (150ms). Every step of the assessment (gender,
+onboarding, warmup, singing steps, results) crossfades instead of
+snapping.
+
+Tab crossfade: vrSetTab fades out the current panel (100ms), renders
+content for the new tab, then fades it in (150ms). Assess, history and
+reference all crossfade.
+
+Safety card (strain/flip warning) fades in over 180ms instead of popping.
+
+All fades use _vrFadeEl, a shared rAF-driven opacity interpolator. No CSS
+transitions on opacity anywhere in the module, since those don't fire in
+the WebView.
+
+## v0.210.62 — Fix: goal reached logic, card flash, chart bounds, goal picker
+
+Goal reached: the old check (highComf >= goal) was never replaced. C2
+auto-reached because any highComf beats MIDI 36. Now direction-aware:
+goals above the tessitura center check the comfortable high, goals below
+check the comfortable low.
+
+Card expand: dropped all Web Animations API calls. The flash was from
+animate() forcing intermediate computed styles that blanked the card
+background. Now a simple style toggle: maxHeight and opacity set directly
+via JS. No transitions, no keyframes, no fill:forwards. It works.
+
+Chart Y bounds: the chart now includes the goal note in its Y range
+calculation. Setting a goal at C2 extends the chart down to show it
+instead of drawing the goal line off-screen.
+
+Goal picker: dropped the canvas wheel. The tick marks drawn on canvas
+didn't match the app's visual language. Now a horizontal scroll strip
+of styled div elements. Tap a note to select it (accent color + underline),
+the strip smooth-scrolls to center it. Preview below in Bebas Neue. SET
+GOAL button confirms. C notes are bold. Range C2 to C7.
+
+## v0.210.60 — Timeline: JS animations, goal stepper, missing vrClearGoal
+
+Animations: CSS transitions don't fire in Capacitor's WebView. Replaced
+entirely with the Web Animations API (element.animate). Session card
+details now expand and collapse via JS-driven maxHeight/opacity keyframes
+(250ms ease-out open, 200ms close). Data attribute tracks state instead
+of CSS classes.
+
+Goal picker: the note grid was ugly and overwhelming. Replaced with a
+stepper: the current note displayed large (Bebas Neue 32px) in the
+center, with left/right arrow buttons to move by semitone. Range C2 to
+C7. A "SET GOAL" button confirms the selection. When a goal is set, the
+card shows the target note large with a remove button. Reached goals
+show a congratulations line.
+
+vrClearGoal was called from two buttons but the function was deleted
+during a prior rewrite. Re-added.
+
+Timeline title: gradient text (same as module headers), rounded close
+button with panel background. Top padding uses the stored safe area
+inset instead of env() which doesn't resolve in dynamically created
+elements.
+
+## v0.210.59 — Timeline polish pass: layout, animations, goal wheel
+
+Mock data reordered newest-first to match how the app stores sessions.
+The chart was showing dates backwards.
+
+Chart reduced from 220px to 160px so data fills the space instead of
+floating in a tall empty card. Y axis padding tightened from +/-3 to
++/-2 semitones.
+
+Title row: "RANGE TIMELINE" in Bebas Neue with a round close button
+instead of the oversized rectangular X.
+
+Session card expand: CSS max-height transition (300ms cubic-bezier)
+instead of snapping. The detail section has proper padding and border
+that are part of the element, not toggled via classes that fight inline
+styles.
+
+Goal wheel: added scroll direction hint arrows above the wheel. Notes
+get an accent underline when selected instead of scaling up (which
+looked jumpy). Active state is a quick press-down scale. The card shows
+the instruction text above the wheel.
+
+Detail card in the timeline: overflow:hidden on the card to keep the
+glow clipped. Display set before innerHTML to avoid a flash.
+
+## v0.210.58 — Timeline polish: animations, tap details, scroll wheel goal picker
+
+Fix: timeline overlay created dynamically on document.body to avoid the
+Capacitor WebView fixed-positioning bug. Chart card tap now works via
+onclick attached after DOM insertion. Canvas width uses window.innerWidth.
+Background uses hard hex per theme, not CSS vars that don't resolve in
+the detached context.
+
+History session cards: tap to expand with a smooth CSS max-height
+transition (250ms ease). Expanding one closes the other (accordion).
+The detail panel shows tessitura center, extended range, and width in
+semitones. Cards have an active state (subtle background flash).
+
+Timeline overlay: slides up from the bottom on open (300ms spring
+curve). Chart tap draws accent rings around the selected session's
+high and low points and opens a detail card below.
+
+Goal picker: replaced the native dropdown with a horizontal scroll
+wheel showing every note from C2 to C7 (61 notes). Scroll-snap centers
+the selected note. Tap a note to set it as the goal. Edge-fade mask
+on both sides. When a goal is set, it shows the note large in Bebas
+Neue with a "TARGET NOTE" label and a remove button. When reached, a
+congratulations line and a "Set new goal" button.
+
+## v0.210.57 — Fix: blank page after gender select; mock data for testing
+
+The onboarding screens (age bracket, voice changing, experience) were
+never added to vrShowScreen's ID list. When vrSelectGender called
+vrShowOnboardingAge, the function toggled the five original screens
+(hiding gender) but never showed onboard-age because it wasn't in the
+list. Result: blank page. The edit was attempted in v0.210.46 but the
+assertion failed mid-run and the change didn't land.
+
+Fixed by adding 'onboard-age', 'onboard-changing', 'onboard-experience'
+to the forEach list in vrShowScreen.
+
+Mock data: vrInit now injects 8 fake baritone-to-tenor sessions spanning
+July through September if fewer than 3 real sessions exist. The data
+shows gradual range growth (A2-E4 widening to Ab2-Ab4 over two months)
+with a voice type change on the last session. This lets the timeline
+chart, note heatmap, goal line, stability bands, tap-to-detail, session
+cards, and drift detection all be tested visually without singing 8 real
+assessments. Remove the mock block before shipping.
+
+## v0.210.56 — Full-screen range timeline with heatmap and goal
+
+The history tab's small range chart now has an EXPAND button that opens
+a full-screen timeline overlay. Three sections:
+
+The chart: a proper 220px canvas with note labels on the Y axis (C, E, G
+at each octave), dates on X, filled areas for comfortable and extended
+range, the tessitura center dashed line, stability bands, and a goal
+line if set. Tap any data point to open a detail card showing that
+session's full data (voice type, comfortable range, extended range,
+tessitura center, date).
+
+Note frequency heatmap: a bar for each MIDI note in the user's range,
+height and opacity proportional to how many sessions included that note
+in the comfortable range. Dark tall bars are the reliable core of the
+range. Short faint bars are notes that come and go. Label at each end.
+This shows consistency without needing a number.
+
+Goal setter: pick a target note from a dropdown (C3 through C6) and it
+appears as a dashed amber line on the chart. When the latest session's
+high comfortable reaches or exceeds the goal, the card says "You reached
+[note]!" with a button to set a new one. The goal persists in
+progState.vrOnboarding.rangeGoal. This is user-set, not AI-predicted,
+which is the correct approach: range growth is not linear and depends on
+too many factors to project.
+
+## v0.210.55 — Retest reminders and shareable range card
+
+Two retention features on the results screen:
+
+Retest reminder: three buttons (1 week, 2 weeks, 1 month) save a
+reminder date to progState. When the user opens the module after that
+date, a green nudge appears on the landing: "Your retest reminder is
+here. Ready to check again?" The reminder clears itself once shown.
+Works for everyone, not just teens. The existing voice-changing teen
+nudge (21-day automatic) still fires separately if no manual reminder
+is set.
+
+Share button: a small upload icon next to Save that fires the native
+share sheet (Android) or web share API (browser) with a text card:
+
+  My voice: Tenor
+  Comfortable range: C3 – G4 (19 semitones)
+  Tested with Intonare
+
+Includes the full range (extLow – extHigh) if measured. Falls back to
+clipboard copy. Both languages supported.
+
+10 new i18n keys across both languages.
+
+## v0.210.54 — Fix: all remaining analyzer null guards
+
+Scanned every `analyzer.frequencyBinCount`, `analyzer.fftSize`, and
+`analyzer.getFloat*` access in the file. The v0.210.53 fix caught three
+of the six crash sites. Three more were unguarded:
+
+1. The main pitch detector loop (line ~41288): the else branch for
+   web audio read `analyzer.getFloatTimeDomainData(buf)` without
+   checking if analyzer had been torn down. Now returns null.
+2. The VR detection loop (line ~96402): same pattern. Now returns.
+3. The VR waveform canvas renderer (line ~96756): called on every
+   animation frame during a step. Now returns if analyzer is gone.
+
+All three are in detection or rendering loops that run on
+requestAnimationFrame and can fire one frame after the module teardown
+nulls the analyzer. The race window is typically one frame (16ms) but
+it fires reliably on every module switch because teardown and the next
+rAF callback are queued on the same event loop tick.
+
+Full scan confirms zero remaining unguarded analyzer property accesses
+in the file.
+
+## v0.210.53 — Fix: analyzer null crash on module switch
+
+The error log showed "Cannot read properties of null (reading
+'frequencyBinCount')" on every version since 0.209.23, triggered by
+switching modules while audio detection is still running. The analyzer
+node gets torn down on module exit, but the spectral flux and dB meter
+loops can fire one more frame before they notice.
+
+Three guards added:
+1. Spectral flux: checked `typeof analyzer !== 'undefined'` which passes
+   when analyzer is declared but set to null. Now checks `if (!analyzer)`.
+2. dB meter A-weighting loop: the second `if (_nativeMicActive)` else
+   branch accessed analyzer without a null guard. Now `else if (analyzer)`.
+3. dB meter time-domain read: wrapped in try/catch as a last resort for
+   the race where analyzer becomes null between the guard and the read.
+
+The clarinet_bb errors in the log are from v0.210.19 and were already
+fixed in a prior session.
+
+## v0.210.52 — VR module review pass: five bugs fixed, all numbers verified
+
+Full walk-through of every code path from vrInit to results.
+
+Bugs fixed:
+1. vrSelectAge and vrSelectChanging did not call progSave. If the app
+   closed between picking an age bracket and finishing experience, the
+   answer was lost. Both now save immediately.
+2. The tessitura center line on the history chart used ctx._vrTessStarted
+   on the canvas context object, which persists between renders. Reopening
+   the history tab would skip the moveTo. Replaced with a local variable.
+3. Passaggio marker width was 2.5 raw, treated as a percentage but meant
+   as semitones. Now computed properly: 2.5 / 44 * 100 = 5.7% of the
+   strip per zone.
+4. Flip detection fired on every frame where a note existed, including
+   pitch-detection jitter during silence. Now requires at least 3 entries
+   in the stability buffer before comparing, which means the user has
+   been singing for at least 150ms.
+5. No functional bug, but progSave placement confirmed: gender saves via
+   vrSetGender, age and changing now save on selection, experience saves
+   on selection. Every step persists before advancing.
+
+Research numbers verified against sources:
+- Stability band: 3.5% = 0.60 semitones (Printz 2018). Our 0.6 is exact.
+- Passaggio values: all six voice types fall within the ranges given by
+  Miller (1996) and Sundberg (1987).
+- Flip threshold: 7 semitones catches fifths and octaves, misses thirds.
+  Register breaks are typically a fifth or more.
+- Strain: 1.8x RMS + 3-semitone wobble in 400ms. Normal vibrato is 0.5
+  semitones, so the wobble threshold is 6x vibrato width.
+- Re-test nudge: 21 days. Cooksey stages average 4-6 weeks.
+- Passaggio width: 2.5 semitones. Literature gives 2-4 semitone zones.
+
+## v0.210.51 — Passaggio zone estimation on the range strip
+
+The range strip on the results screen now shows approximate transition
+zones (passaggi) as soft amber gradient markers. These are the pitches
+where the voice typically shifts between chest register and head
+register.
+
+The zones come from the matched voice type's typical passaggio values,
+drawn from vocal pedagogy (Miller 1996, Sundberg 1987). Each voice type
+carries two MIDI values: primo passaggio (chest-to-mix transition) and
+secondo passaggio (mix-to-head transition). The markers are 2.5
+percentage points wide with gradient edges, not hard lines, because the
+actual transition is a zone, not a single pitch.
+
+Bass: E3 / Bb3. Baritone: A3 / Eb4. Tenor: C4 / F4.
+Alto: D4 / Ab4. Mezzo: E4 / Bb4. Soprano: Eb4 / F5.
+
+A note below the strip says: "The amber zones are where your voice
+typically shifts between registers. Your actual transition may be a note
+or two away." The legend adds a "Transition Zone" entry with an amber
+dot.
+
+This is the last range-assessment feature from the vocal module spec.
+No competitor app shows passaggio estimation.
+
+## v0.210.50 — Stability band and tessitura tracking on the history chart
+
+The range-over-time chart now shows three things it did not before:
+
+Stability bands: a soft gray band around each data line, 0.6 semitones
+wide on each side (3.5% of frequency per Printz et al. 2018). If two
+consecutive readings fall inside the band, they are within normal
+day-to-day variation and should not be read as progress or loss. The
+existing text note about half-a-semitone variation stays.
+
+Tessitura center line: a dashed purple line tracking where the user's
+comfortable center sits across sessions. This is the number voice type
+is matched from, so seeing it move (or not move) over time is the most
+useful data the chart can show.
+
+Drift note for teens: if the tessitura center has moved 2 or more
+semitones between the first and latest session and the user is a
+voice-changing teen, a warm-amber note appears below the chart: "Your
+tessitura center has moved N semitones higher/lower. That is normal
+while your voice is changing." Does not appear for adults or teens
+whose voice is not changing.
+
+## v0.210.49 — Strain and falsetto flip detection
+
+Two safety detectors now run during the high comfortable and extended
+high steps. Both only fire on high-side steps where pushing is a risk.
+
+Strain detection watches for volume spiking (RMS rising to 1.8x the
+baseline established in the first five frames) while the pitch wobbles
+(spread of the last eight readings exceeds 3 semitones). When both
+conditions hit, detection stops and a card appears: "That's your
+comfortable top for today. No need to push further." The last stable
+note is locked and the assessment advances.
+
+Falsetto flip detection watches for a pitch jump of 7 or more semitones
+between consecutive stable readings, which usually means the voice broke
+into a lighter register. The card offers two options: Try Again (restarts
+detection on the same step with a fresh baseline) or Skip (locks the
+last stable note before the flip and advances).
+
+Both use a shared safety card overlay with the shield icon, bilingual
+copy, and the same pop-in animation as the daily landing and MQ popup.
+Each detector fires at most once per step to avoid nagging.
+
+The RMS baseline is computed from the first five frames of each step, so
+a user who starts loud gets a baseline that matches their natural volume.
+The flip threshold at 7 semitones catches octave jumps (which are 12)
+and smaller breaks into head voice without triggering on normal melodic
+movement.
+
+## v0.210.48 — Age gates on the range assessment
+
+The onboarding age bracket now drives safety behavior throughout the
+assessment:
+
+Under 13: extended range steps are skipped entirely (tessitura goes
+straight to results). Step instructions read "Sing a low note that
+feels good" instead of "Go as low as your voice will go." The "Find
+your extremes" button is hidden from results. No pushing language
+anywhere.
+
+13-17, voice changing: the high comfortable and extended high steps
+use softer language ("Sing a high note that feels comfortable today.
+No need to push, your voice is changing and that is fine."). The
+results screen already shows the amber "voice types shift during
+these years" note from v0.210.45.
+
+Re-test nudge: voice-changing teens who haven't tested in three weeks
+see a warm-amber banner on the landing: "It's been N weeks since your
+last test. Voices change, worth checking again." The last assessment
+date is saved to progState.vrOnboarding.lastAssessment on every save.
+
+Also landed in this build: the Quick Test button and function that
+were missing from v0.210.46-47 due to partial edit failures. Both are
+now verified present and syntax-clean.
+
+## v0.210.47 — Experience-aware step copy and extend-from-results
+
+The step screens now match the experience level from onboarding:
+
+Trained singers and Quick Test users get one short line per step
+("Sing your comfortable low note and hold it.") and no tip box. The
+step label reads "Step 1 of 3" in quick mode instead of "Step 2 of 6."
+
+"Some experience" users get the full body text but no tip box.
+
+"New to singing" users get everything as before: full body, tip box,
+all six step labels.
+
+The safety line ("Stop if anything hurts, feels scratchy, or sounds
+hoarse") stays on every step for everyone. That one never collapses.
+
+On the results screen in quick mode, a "Find your extremes too" button
+appears above Retake / Save if the extended range hasn't been measured.
+Tapping it runs extLow and extHigh, then returns to results. The extend
+button is hidden once both extremes are stored.
+
+Short step copy and quick-mode labels are inline with Italian twins.
+Two new i18n keys (vr_find_extremes) in both languages.
+
+## v0.210.46 — Quick Test mode for the vocal range assessment
+
+Returning users now see a "Quick Test" button on the module landing,
+right below "Begin Assessment." It skips warmup and onboarding, goes
+straight to the three core singing steps (low comfortable, high
+comfortable, tessitura scan), and shows results. The progress bar shows
+three dots instead of six. Extended range steps are not offered inline
+but can be added from the results screen later.
+
+After tessitura, quick mode goes to results instead of extended low.
+The step progress bar filters out warmup and optional steps in quick
+mode so the count matches what the user sees.
+
+This fixes the main annoyance: a professional singer who has already
+warmed up their own way no longer sits through the app's lip trills
+and three cards of instructions to get a range check. They tap Quick
+Test, sing three times, and they're done.
+
+The spec (VOCAL_MODULE_SPEC.md) is updated with a new section 4b
+covering experience-driven UX and the Quick Test path. The experience
+level from onboarding (New / Some / Trained) will drive copy density
+and hand-holding levels on the step screens in the next build.
+
+## v0.210.45 — Vocal range onboarding: age, voice changing, experience
+
+The gender screen used to be the only question before the assessment.
+Now it's step one of a three-step onboarding flow, all tappable, no
+typing:
+
+1. Voice category (existing gender screen, now persisted to progState)
+2. Age bracket: Under 13 / 13 to 17 / 18 and up
+3. Experience: New to singing / Some experience / Trained
+
+Teens who pick 13-17 get an extra question: "Is your voice changing?"
+with Yes / Not sure / No. The voice-changing description card carries
+the Cooksey-informed reassurance copy from the spec: "Voices change
+during these years, and that's completely normal. Some days it'll crack
+or feel different from yesterday. We'll keep the exercises where your
+voice is right now."
+
+All answers stored in progState.vrOnboarding and persisted via
+progSave. Existing users get the migration (null defaults). On second
+visit, onboarding is skipped entirely and the assessment starts
+directly. Gender is now backed by progState instead of a session
+variable, so it survives app restarts.
+
+On the results screen, teens with a changing voice see an extra note
+in warm amber: "Voice types shift during these years. This is where you
+are right now, not where you'll end up." This prevents a 14-year-old
+from reading "Bass" as a permanent verdict.
+
+22 new i18n keys in both languages.
+
+Song bank instrument fixes (Canon voices, Ave Maria, Air on G String)
+from the previous session folded into this build.
+
 ## v0.210.44 — Vocal range copy pass and song bank instrument fixes
 
 Vocal range module: six strings rewritten in both languages. The

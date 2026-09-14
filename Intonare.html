@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.44 -->
+<!-- INTONARE_VERSION: 0.210.66 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -21925,8 +21925,15 @@ html,body{background:#000000!important;transition:none!important}
 }
 .vr-lane-bg {
   position: absolute; height: 100%; border-radius: 3px;
-  transition: opacity 0.3s;
 }
+.vr-lane-hidden { height: 0 !important; opacity: 0; margin-bottom: 0 !important; pointer-events: none; overflow: hidden; }
+.vr-lane-hidden .vr-lane-label,
+.vr-lane-hidden .vr-lane-note { opacity: 0; }
+
+/* ── VR light mode overrides ── */
+body.light .vr-lane-bg { opacity: 0.45 !important; }
+body.light .vr-lane-label { font-weight: 700; }
+body.light .vr-lane-note { color: var(--text); }
 .vr-user-ext {
   position: absolute; height: 100%; border-radius: 3px;
   opacity: 0; transition: opacity 0.6s ease;
@@ -22006,8 +22013,32 @@ html,body{background:#000000!important;transition:none!important}
   background: linear-gradient(180deg, var(--surface) 0%, var(--bg-1) 100%);
   border: 1px solid var(--border-soft); border-radius: var(--r-lg);
 }
+
+  /* ── VR Timeline animations ── */
+  @keyframes vrSlideUp { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  @keyframes vrFadeIn { from { opacity:0; } to { opacity:1; } }
+  .vr-timeline-enter { animation: vrSlideUp .3s cubic-bezier(.2,.9,.3,1.05); }
+  .vr-session-detail {
+    overflow:hidden; max-height:0; opacity:0;
+  }
+  /* Goal picker wheel */
+  .vr-goal-wheel {
+    display:flex; flex-wrap:wrap; gap:4px; padding:4px 0; justify-content:center;
+  }
+  .vr-goal-note {
+    flex-shrink:0; width:38px; text-align:center;
+    font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; color:var(--muted);
+    padding:6px 2px; cursor:pointer; border:1px solid var(--border-soft);
+    border-radius:var(--r-sm); background:transparent;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .vr-goal-note.selected, .vr-goal-note:active {
+    color:var(--accent); border-color:var(--accent); background:rgba(52,211,153,0.08);
+  }
+  .vr-goal-note.c-note { border-left:2px solid var(--border); }
+
 .vr-session-card {
-  padding: 13px 15px;
+  padding: 16px 18px;
   background: linear-gradient(180deg, var(--surface) 0%, var(--bg-1) 100%);
   border: 1px solid var(--border-soft); border-radius: var(--r-lg);
   box-shadow: var(--shadow-soft); position: relative; overflow: hidden;
@@ -22040,11 +22071,8 @@ html,body{background:#000000!important;transition:none!important}
 }
 
 .vr-ref-card-body {
-  max-height: 0; overflow: hidden;
-  transition: max-height 0.35s ease, opacity 0.25s ease;
-  opacity: 0;
+  max-height: 0; overflow: hidden; opacity: 0;
 }
-.vr-ref-card.expanded .vr-ref-card-body { max-height: 400px; opacity: 1; }
 .vr-ref-expand { font-size: 11px; color: var(--muted); transition: transform 0.3s; }
 .vr-ref-card.expanded .vr-ref-expand { transform: rotate(180deg); }
 .vr-singer-chip {
@@ -22080,12 +22108,12 @@ html,body{background:#000000!important;transition:none!important}
 /* ─── Artist Reference Modal ─── */
 .vr-modal-overlay {
   position: fixed; inset: 0; z-index: 9000;
-  background: rgba(0,0,0,0.72);
+  background: rgba(0,0,0,0);
   display: flex; align-items: flex-end;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.28s ease;
+  pointer-events: none;
+  transition: background 0.25s ease;
 }
-.vr-modal-overlay.open { opacity: 1; pointer-events: all; }
+.vr-modal-overlay.open { background: rgba(0,0,0,0.72); pointer-events: all; }
 .vr-modal-sheet {
   width: 100%; max-height: calc(88dvh - var(--nav-bar-h, 62px));
   background: var(--bg-1);
@@ -29943,7 +29971,7 @@ try {
       <div class="card" style="text-align:center;padding:28px 20px 22px;overflow:hidden;">
         <div class="card-glow"></div>
         <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 55% at 50% 0%,rgba(52,211,153,0.10),transparent 68%);pointer-events:none;"></div>
-        <div style="font-size:42px;margin-bottom:14px;filter:drop-shadow(0 0 18px rgba(52,211,153,0.5))">🎙</div>
+        <div style="font-size:42px;margin-bottom:14px;filter:drop-shadow(0 0 18px rgba(52,211,153,0.5))"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></div>
         <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:34px;letter-spacing:4px;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;filter:drop-shadow(0 0 12px rgba(52,211,153,0.3));" data-i18n="vr_title">Vocal Range</div>
         <div style="font-family:'Fraunces','GlyphFix',serif;font-style:italic;font-size:12.5px;color:var(--text-dim);line-height:1.65;max-width:340px;margin:0 auto;" data-i18n="vr_subtitle">A guided assessment that maps your tessitura, comfortable range, and physiological extremes — and tracks them over time.</div>
       </div>
@@ -29953,19 +29981,19 @@ try {
         <div class="card-label" data-i18n="vr_before_begin">Before you begin</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
           <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
-            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))">🔇</span>
+            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))" style="font-weight:700;color:var(--accent);">●</span>
             <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;"><strong style="color:var(--text)" data-i18n="vr_quiet_room">Quiet room.</strong> <span data-i18n="vr_quiet_desc">Background noise confuses pitch detection.</span></div>
           </div>
           <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
-            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))">💧</span>
+            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))" style="font-weight:700;color:var(--accent);">●</span>
             <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;"><strong style="color:var(--text)" data-i18n="vr_hydrated">Hydrated, rested voice.</strong> <span data-i18n="vr_hydrated_desc">Don't test after a long session or when unwell.</span></div>
           </div>
           <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
-            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))">🚫</span>
+            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))" style="font-weight:700;color:var(--accent-warm);">●</span>
             <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;"><strong style="color:var(--text)" data-i18n="vr_no_forcing">No forcing.</strong> <span data-i18n="vr_no_forcing_desc">Map your real voice — stop if anything feels strained.</span></div>
           </div>
           <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
-            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))">🎤</span>
+            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))" style="font-weight:700;color:var(--accent);">●</span>
             <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;"><strong style="color:var(--text)" data-i18n="vr_consistent">Consistent distance.</strong> <span data-i18n="vr_consistent_desc">Hold your device ~20–30 cm from your mouth throughout.</span></div>
           </div>
         </div>
@@ -29973,6 +30001,7 @@ try {
       </div>
 
       <button class="iv-btn primary" onclick="vrShowGenderSelect()" style="width:100%;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3)" data-i18n="vr_begin_btn">Begin Assessment →</button>
+      <button class="iv-btn" id="vrQuickTestBtn" onclick="vrQuickTest()" style="width:100%;margin-top:8px;display:none;" data-i18n="vr_quick_test">Quick Test →</button>
     </div><!-- /vrScreen-intro -->
 
     <!-- ── GENDER SELECT ── -->
@@ -30003,6 +30032,86 @@ try {
         </button>
       </div>
     </div><!-- /vrScreen-gender -->
+
+    <!-- ── AGE BRACKET ── -->
+    <div id="vrScreen-onboard-age" class="hidden">
+      <div class="card" style="text-align:center;padding:24px 20px 20px;overflow:hidden;">
+        <div class="card-glow"></div>
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;" data-i18n="vr_step_2of3">Step 2 of 3</div>
+        <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:26px;letter-spacing:3px;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;" data-i18n="vr_age_title">How Old Are You?</div>
+        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;" data-i18n="vr_age_desc">This helps us keep the exercises safe and the results accurate.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="iv-btn vr-age-btn" data-val="under-13" onclick="vrSelectAge('under-13')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+          <div>
+            <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_age_child">Under 13</div>
+          </div>
+        </button>
+        <button class="iv-btn vr-age-btn" data-val="13-17" onclick="vrSelectAge('13-17')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+          <div>
+            <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_age_teen">13 to 17</div>
+          </div>
+        </button>
+        <button class="iv-btn vr-age-btn" data-val="18+" onclick="vrSelectAge('18+')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+          <div>
+            <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_age_adult">18 and Up</div>
+          </div>
+        </button>
+      </div>
+    </div><!-- /vrScreen-onboard-age -->
+
+    <!-- ── VOICE CHANGING (teens only) ── -->
+    <div id="vrScreen-onboard-changing" class="hidden">
+      <div class="card" style="text-align:center;padding:24px 20px 20px;overflow:hidden;">
+        <div class="card-glow"></div>
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;" data-i18n="vr_changing_step">One More Thing</div>
+        <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:26px;letter-spacing:3px;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;" data-i18n="vr_changing_title">Is Your Voice Changing?</div>
+        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;" data-i18n="vr_changing_desc">Voices change during these years, and that's completely normal. Some days it'll crack or feel different from yesterday. We'll keep the exercises where your voice is right now.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="iv-btn vr-changing-btn" data-val="yes" onclick="vrSelectChanging('yes')" style="padding:16px;text-align:center;">
+          <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_changing_yes">Yes</div>
+        </button>
+        <button class="iv-btn vr-changing-btn" data-val="unsure" onclick="vrSelectChanging('unsure')" style="padding:16px;text-align:center;">
+          <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_changing_unsure">Not Sure</div>
+        </button>
+        <button class="iv-btn vr-changing-btn" data-val="no" onclick="vrSelectChanging('no')" style="padding:16px;text-align:center;">
+          <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_changing_no">No</div>
+        </button>
+      </div>
+    </div><!-- /vrScreen-onboard-changing -->
+
+    <!-- ── EXPERIENCE LEVEL ── -->
+    <div id="vrScreen-onboard-experience" class="hidden">
+      <div class="card" style="text-align:center;padding:24px 20px 20px;overflow:hidden;">
+        <div class="card-glow"></div>
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;" data-i18n="vr_exp_step">Last Step</div>
+        <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:26px;letter-spacing:3px;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;" data-i18n="vr_exp_title">Singing Experience</div>
+        <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;" data-i18n="vr_exp_desc">This sets the starting level for exercises and how the results are presented.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="iv-btn vr-exp-btn" data-val="new" onclick="vrSelectExperience('new')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+          <div>
+            <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_exp_new">New to Singing</div>
+            <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;" data-i18n="vr_exp_new_desc">Never had lessons, just getting started</div>
+          </div>
+        </button>
+        <button class="iv-btn vr-exp-btn" data-val="some" onclick="vrSelectExperience('some')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+          <div>
+            <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_exp_some">Some Experience</div>
+            <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;" data-i18n="vr_exp_some_desc">Choir, lessons, or singing on your own</div>
+          </div>
+        </button>
+        <button class="iv-btn vr-exp-btn" data-val="trained" onclick="vrSelectExperience('trained')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+          <div>
+            <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_exp_trained">Trained</div>
+            <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;" data-i18n="vr_exp_trained_desc">Years of study or performing</div>
+          </div>
+        </button>
+      </div>
+    </div><!-- /vrScreen-onboard-experience -->
+
+
 
     <!-- ── WARMUP ── -->
     <div id="vrScreen-warmup" class="hidden">
@@ -30106,7 +30215,7 @@ try {
   <!-- ═══════ REFERENCE PANEL ═══════ -->
   <div class="metro-panel" id="vrPanel-reference">
     <!-- Populated by vrRenderReference() -->
-    <div id="vrReferenceContent"></div>
+    <div id="vrReferenceContent" style="padding-bottom:80px;"></div>
   </div>
 
 </div><!-- /toolVocalRange -->
@@ -34141,7 +34250,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.210.44</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.210.66</span>
     </div>
   </div>
 </div>
@@ -34149,7 +34258,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.44';
+const INTONARE_VERSION = '0.210.66';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -40936,10 +41045,10 @@ function detectOnset(buf) {
   // ── Spectral flux ──────────────────────────────────────────────────
   // Use the analyser's frequency data (magnitude spectrum in dB).
   // Convert to linear magnitude, compute half-wave-rectified flux.
-  if (!_sfFreqBuf && typeof analyzer !== 'undefined') {
+  if (!analyzer) return;
+  if (!_sfFreqBuf) {
     _sfFreqBuf = new Float32Array(analyzer.frequencyBinCount);
   }
-  if (!_sfFreqBuf || typeof analyzer === 'undefined') return;
 
   analyzer.getFloatFrequencyData(_sfFreqBuf);
   const nBins = _sfFreqBuf.length;
@@ -41200,8 +41309,9 @@ function processAudio() {
     buf.set(_nativeRing);            // ring is kept as a rolling 4096 window
     _sr = _nativeSampleRate;
   } else {
+    if (!analyzer) return null;
     analyzer.getFloatTimeDomainData(buf);
-    _sr = audioCtx.sampleRate;
+    _sr = audioCtx ? audioCtx.sampleRate : 44100;
   }
 
   let rms = 0;
@@ -44200,7 +44310,7 @@ function dbReadRMS() {
       _dbTimeBuf = new Float32Array(analyzer.fftSize);
       _dbFreqBuf = new Float32Array(analyzer.frequencyBinCount);
     }
-    analyzer.getFloatTimeDomainData(_dbTimeBuf);
+    try { analyzer.getFloatTimeDomainData(_dbTimeBuf); } catch(e) { return DB_MIN; }
     timeBuf = _dbTimeBuf;
     sr      = audioCtx ? audioCtx.sampleRate : _NF_SR;
     fftN    = analyzer.fftSize;
@@ -44229,7 +44339,7 @@ function dbReadRMS() {
       flatPow     += p;
       weightedPow += p * w * w;
     }
-  } else {
+  } else if (analyzer) {
     analyzer.getFloatFrequencyData(_dbFreqBuf);
     for (let i = 1; i < analyzer.frequencyBinCount; i++) {
       const freq = i * sr / fftN;
@@ -88178,6 +88288,7 @@ const PROG_DEFAULTS = {
   completionist_unlocked: false,  // unlocked via completionist achievement
   mountainking_unlocked: false,  // unlocked via the_summit achievement
   achievements: {},   // { id: { unlockedAt: ISOString } }
+  vrOnboarding: { ageBracket: null, experience: null, voiceChanging: null, gender: null },
   drumkitVisited: false,
   rcStats: {},            // rhythm flash-card test-mode per-cluster stats: { cardId: {att, acc} }
   nightOwl: false,
@@ -88965,7 +89076,7 @@ const STRINGS = {
     pw_done_title:'YOU\u2019RE PRO',
     pw_done_body:'Every tool and training module is open. Thanks for the support, it genuinely helps keep Intonare growing.',
     pw_done_btn:'Let\u2019s go',
-    pw_code_bad:'That code didn\\u2019t work.',
+    pw_code_bad:'That code didn\u2019t work.',
     pw_store_unavailable:'The store is only available in the installed app.',
     pw_no_product:'Pro is not available to purchase right now. Please try again later.',
     pw_purchase_pending:'Your purchase is being confirmed. If Pro does not unlock shortly, tap Restore.',
@@ -88992,7 +89103,39 @@ const STRINGS = {
     vr_consistent:'Consistent distance.',
     vr_consistent_desc:'Hold your device ~20–30 cm from your mouth throughout.',
     vr_duration_hint:'About 4 to 5 minutes. The two optional extended steps can be skipped for a quick result.',
+    vr_timeline_title:'Range Timeline',
+    vr_share_btn:'Share',
+    vr_remind_title:'Remind Me to Retest',
+    vr_remind_1w:'1 week',
+    vr_remind_2w:'2 weeks',
+    vr_remind_1m:'1 month',
+    vr_find_extremes:'Find your extremes too \u2192',
+    ui_passaggio:'Transition Zone',
+    vr_passaggio_note:'The amber zones are where your voice typically shifts between registers. Your actual transition may be a note or two away.',
+    vr_quick_test:'Quick Test \u2192',
     vr_begin_btn:'Begin Assessment →',
+    vr_step_2of3:'Step 2 of 3',
+    vr_age_title:'How Old Are You?',
+    vr_age_desc:'This helps keep the exercises safe and the results accurate.',
+    vr_age_child:'Under 13',
+    vr_age_teen:'13 to 17',
+    vr_age_adult:'18 and Up',
+    vr_changing_step:'One More Thing',
+    vr_changing_title:'Is Your Voice Changing?',
+    vr_changing_desc:'This adjusts the range limits so exercises stay comfortable.',
+    vr_changing_yes:'Yes',
+    vr_changing_unsure:'Not Sure',
+    vr_changing_no:'No',
+    vr_exp_step:'Last Step',
+    vr_exp_title:'Singing Experience',
+    vr_exp_desc:'This sets the starting level for exercises and how the results are presented.',
+    vr_exp_new:'New to Singing',
+    vr_exp_new_desc:'Never had lessons, just getting started',
+    vr_exp_some:'Some Experience',
+    vr_exp_some_desc:'Choir, lessons, or singing on your own',
+    vr_exp_trained:'Trained',
+    vr_exp_trained_desc:'Years of study or performing',
+    vr_voice_changing_result:'This is where your voice is right now, not where it\'ll end up.',
     vr_before_start:'Before We Start',
     vr_voice_category:'Voice Category',
     vr_voice_category_desc:"Knowing whether you're classifying a male or female voice narrows the match pool and gives you a much more accurate result.",
@@ -90215,7 +90358,39 @@ const STRINGS = {
     vr_consistent:'Distanza costante.',
     vr_consistent_desc:'Tieni il dispositivo a ~20–30 cm dalla bocca per tutta la durata.',
     vr_duration_hint:'Circa 4 o 5 minuti. I due passi facoltativi si possono saltare per un risultato rapido.',
+    vr_timeline_title:'Timeline Estensione',
+    vr_share_btn:'Condividi',
+    vr_remind_title:'Ricordami di Ritestare',
+    vr_remind_1w:'1 settimana',
+    vr_remind_2w:'2 settimane',
+    vr_remind_1m:'1 mese',
+    vr_find_extremes:'Trova anche i tuoi estremi \u2192',
+    ui_passaggio:'Zona di Passaggio',
+    vr_passaggio_note:'Le zone ambra sono dove la voce tipicamente cambia registro. Il tuo passaggio reale pu\u00f2 essere una o due note pi\u00f9 in l\u00e0.',
+    vr_quick_test:'Test Rapido \u2192',
     vr_begin_btn:'Inizia Valutazione →',
+    vr_step_2of3:'Passo 2 di 3',
+    vr_age_title:'Quanti Anni Hai?',
+    vr_age_desc:'Ci aiuta a mantenere gli esercizi sicuri e i risultati accurati.',
+    vr_age_child:'Meno di 13',
+    vr_age_teen:'Da 13 a 17',
+    vr_age_adult:'18 in su',
+    vr_changing_step:'Un\'Ultima Cosa',
+    vr_changing_title:'La Tua Voce Sta Cambiando?',
+    vr_changing_desc:'Regola i limiti dell\u2019estensione per tenere gli esercizi comodi.',
+    vr_changing_yes:'S\u00ec',
+    vr_changing_unsure:'Non Sono Sicuro/a',
+    vr_changing_no:'No',
+    vr_exp_step:'Ultimo Passo',
+    vr_exp_title:'Esperienza nel Canto',
+    vr_exp_desc:'Imposta il livello iniziale degli esercizi e come vengono presentati i risultati.',
+    vr_exp_new:'Nuovo/a al Canto',
+    vr_exp_new_desc:'Mai preso lezioni, appena agli inizi',
+    vr_exp_some:'Un Po\' di Esperienza',
+    vr_exp_some_desc:'Coro, lezioni, o cantare per conto tuo',
+    vr_exp_trained:'Con Formazione',
+    vr_exp_trained_desc:'Anni di studio o di palcoscenico',
+    vr_voice_changing_result:'Questo \u00e8 dove la tua voce \u00e8 adesso, non dove finir\u00e0.',
     vr_before_start:'Prima di Iniziare',
     vr_voice_category:'Categoria Vocale',
     vr_voice_category_desc:'Sapere se stai classificando una voce maschile o femminile restringe il gruppo di confronto e fornisce un risultato molto più accurato.',
@@ -93522,7 +93697,9 @@ function progMigrate(s) {
   // achievement doesn't wait for tomorrow to become earnable.
   if (s.sessionsCompleted === undefined) s.sessionsCompleted = s.sessionCompleted ? 1 : 0;
   if (!s.sesModulesVisited) s.sesModulesVisited = [];
+  if (!s.vrOnboarding) s.vrOnboarding = { ageBracket: null, experience: null, voiceChanging: null, gender: null };
   if (!s.metroPresets) s.metroPresets = [];
+
   if (!s.rampPresets) s.rampPresets = [];
   if (!s.favorites) s.favorites = [];
   if (!s.savedProgressions) s.savedProgressions = [];
@@ -95940,6 +96117,16 @@ const VR_STRIP_SPAN = VR_STRIP_MAX - VR_STRIP_MIN;
 const VR_STAB_FRAMES = 30;
 const VR_STAB_WINDOW = 1.2; // semitones
 
+// ── Strain and falsetto-flip detection ──
+const VR_FLIP_THRESHOLD  = 7;    // semitones jump = probable register flip
+const VR_STRAIN_RMS_RISE = 1.8;  // volume must spike to 1.8x baseline
+const VR_STRAIN_WOBBLE   = 3.0;  // semitone spread in last 8 frames
+var vrBaselineRms    = 0;
+var vrRmsHistory     = [];
+var vrLastStableMidi = null;
+var vrStrainFired    = false;
+var vrFlipFired      = false;
+
 // Tessitura scan: 15 seconds
 const VR_TESS_MS = 20000;
 
@@ -95957,12 +96144,12 @@ function vrVoiceColor(hex) {
   return VR_VOICE_COLOR_LIGHT[hex.toLowerCase()] || hex;
 }
 const VR_VOICE_TYPES = [
-  { id:'bass',     name:'Bass',          nameIt:'Basso',             gender:'male',   lowMidi:40, highMidi:64, tessCenter:52, color:'#4169e1', timbre:'Deep · dark · round',        timbreIt:'Profondo · scuro · rotondo',      singers:['Johnny Cash','Barry White','Leonard Cohen','Tom Waits'],          desc:'The lowest standard male voice. A rich, dark resonance that anchors harmony. True basses are uncommon: many singers who identify as bass are bass-baritones.',                                                                                                            descIt:'La voce maschile standard più grave. Ricca, scura, il pilastro dell\'armonia. I veri bassi sono più rari di quanto si pensi — molti che si definiscono bassi sono in realtà bassi-baritoni.' },
-  { id:'baritone', name:'Baritone',      nameIt:'Baritono',          gender:'male',   lowMidi:45, highMidi:69, tessCenter:57, color:'#6495ed', timbre:'Warm · full · versatile',     timbreIt:'Caldo · pieno · versatile',       singers:['Frank Sinatra','Elvis Presley','David Bowie','Jim Morrison'],     desc:'The most common male voice type. A warm, full tone that suits both lyrical and dramatic singing. Most male pop and rock singers are baritones.',                                                                                                                 descIt:'La voce maschile più comune. Timbro caldo e pieno, adatto al canto lirico e drammatico in quasi ogni genere. La maggior parte dei cantanti maschi pop e rock è baritonale.' },
-  { id:'tenor',    name:'Tenor',         nameIt:'Tenore',            gender:'male',   lowMidi:48, highMidi:72, tessCenter:60, color:'#34d399', timbre:'Bright · clear · powerful',   timbreIt:'Luminoso · chiaro · potente',     singers:['Michael Jackson','Stevie Wonder','Andrea Bocelli','Bruno Mars'], desc:'The highest standard male voice. Carries the melody in choral and operatic writing. The most common lead vocal range in pop and rock.',                                                                                                                                             descIt:'La voce maschile standard più acuta. Porta la melodia nella scrittura corale e operistica. L\'estensione vocale solistica più comune nel pop e nel rock.' },
-  { id:'alto',     name:'Alto',          nameIt:'Contralto',         gender:'female', lowMidi:53, highMidi:77, tessCenter:65, color:'#ffa07a', timbre:'Rich · deep · chest-forward', timbreIt:'Ricco · profondo · di petto',     singers:['Nina Simone','Shirley Bassey','Adele','Cher'],                   desc:'The lowest female voice type, with a rich chest-dominant tone in the lower register. True contraltos are rare: many choral altos are mezzos singing low.',                                                                                                                descIt:'La voce femminile più grave, con un timbro ricco e dominante di petto nel registro basso. I veri contralti sono rari — molte "contralto" corali sono in realtà mezzosoprani che cantano in basso.' },
-  { id:'mezzo',    name:'Mezzo-Soprano', nameIt:'Mezzosoprano',      gender:'female', lowMidi:57, highMidi:81, tessCenter:69, color:'#ff8aae', timbre:'Warm · dark · versatile',     timbreIt:'Caldo · scuro · versatile',       singers:['Amy Winehouse','Alicia Keys','Rihanna','Amy Lee'],               desc:'The middle female range, and the most common female voice type. Darker in timbre than a soprano, with more agility and reach than an alto.',                                                                                                                                          descIt:"L'estensione femminile media, e il tipo di voce femminile più comune. Più scura nel timbro di un soprano, ma con maggiore agilità ed estensione di un contralto." },
-  { id:'soprano',  name:'Soprano',       nameIt:'Soprano',           gender:'female', lowMidi:60, highMidi:84, tessCenter:72, color:'#b8a3ff', timbre:'Bright · clear · soaring',    timbreIt:'Luminoso · chiaro · brillante',   singers:["Beyoncé",'Mariah Carey','Ariana Grande','Hayley Williams'],      desc:'The highest standard female voice type, known for a brilliant upper register. Usually the principal voice in opera and the top part in choral SATB writing.',                                                                                                                          descIt:"La voce femminile standard più acuta. Nota per il registro superiore brillante. Spesso la voce principale nell'opera e la parte più alta nella scrittura corale SATB." },
+  { id:'bass',     name:'Bass',          nameIt:'Basso',             gender:'male',   lowMidi:40, highMidi:64, tessCenter:52, pass1:52, pass2:58, color:'#4169e1', timbre:'Deep · dark · round',        timbreIt:'Profondo · scuro · rotondo',      singers:['Johnny Cash','Barry White','Leonard Cohen','Tom Waits'],          desc:'The lowest standard male voice. A rich, dark resonance that anchors harmony. True basses are uncommon: many singers who identify as bass are bass-baritones.',                                                                                                            descIt:'La voce maschile standard più grave. Ricca, scura, il pilastro dell\'armonia. I veri bassi sono più rari di quanto si pensi — molti che si definiscono bassi sono in realtà bassi-baritoni.' },
+  { id:'baritone', name:'Baritone',      nameIt:'Baritono',          gender:'male',   lowMidi:45, highMidi:69, tessCenter:57, pass1:57, pass2:63, color:'#6495ed', timbre:'Warm · full · versatile',     timbreIt:'Caldo · pieno · versatile',       singers:['Frank Sinatra','Elvis Presley','David Bowie','Jim Morrison'],     desc:'The most common male voice type. A warm, full tone that suits both lyrical and dramatic singing. Most male pop and rock singers are baritones.',                                                                                                                 descIt:'La voce maschile più comune. Timbro caldo e pieno, adatto al canto lirico e drammatico in quasi ogni genere. La maggior parte dei cantanti maschi pop e rock è baritonale.' },
+  { id:'tenor',    name:'Tenor',         nameIt:'Tenore',            gender:'male',   lowMidi:48, highMidi:72, tessCenter:60, pass1:60, pass2:65, color:'#34d399', timbre:'Bright · clear · powerful',   timbreIt:'Luminoso · chiaro · potente',     singers:['Michael Jackson','Stevie Wonder','Andrea Bocelli','Bruno Mars'], desc:'The highest standard male voice. Carries the melody in choral and operatic writing. The most common lead vocal range in pop and rock.',                                                                                                                                             descIt:'La voce maschile standard più acuta. Porta la melodia nella scrittura corale e operistica. L\'estensione vocale solistica più comune nel pop e nel rock.' },
+  { id:'alto',     name:'Alto',          nameIt:'Contralto',         gender:'female', lowMidi:53, highMidi:77, tessCenter:65, pass1:62, pass2:68, color:'#ffa07a', timbre:'Rich · deep · chest-forward', timbreIt:'Ricco · profondo · di petto',     singers:['Nina Simone','Shirley Bassey','Adele','Cher'],                   desc:'The lowest female voice type, with a rich chest-dominant tone in the lower register. True contraltos are rare: many choral altos are mezzos singing low.',                                                                                                                descIt:'La voce femminile più grave, con un timbro ricco e dominante di petto nel registro basso. I veri contralti sono rari — molte "contralto" corali sono in realtà mezzosoprani che cantano in basso.' },
+  { id:'mezzo',    name:'Mezzo-Soprano', nameIt:'Mezzosoprano',      gender:'female', lowMidi:57, highMidi:81, tessCenter:69, pass1:64, pass2:70, color:'#ff8aae', timbre:'Warm · dark · versatile',     timbreIt:'Caldo · scuro · versatile',       singers:['Amy Winehouse','Alicia Keys','Rihanna','Amy Lee'],               desc:'The middle female range, and the most common female voice type. Darker in timbre than a soprano, with more agility and reach than an alto.',                                                                                                                                          descIt:"L'estensione femminile media, e il tipo di voce femminile più comune. Più scura nel timbro di un soprano, ma con maggiore agilità ed estensione di un contralto." },
+  { id:'soprano',  name:'Soprano',       nameIt:'Soprano',           gender:'female', lowMidi:60, highMidi:84, tessCenter:72, pass1:63, pass2:77, color:'#b8a3ff', timbre:'Bright · clear · soaring',    timbreIt:'Luminoso · chiaro · brillante',   singers:["Beyoncé",'Mariah Carey','Ariana Grande','Hayley Williams'],      desc:'The highest standard female voice type, known for a brilliant upper register. Usually the principal voice in opera and the top part in choral SATB writing.',                                                                                                                          descIt:"La voce femminile standard più acuta. Nota per il registro superiore brillante. Spesso la voce principale nell'opera e la parte più alta nella scrittura corale SATB." },
 ];
 
 // Extended / specialist voice types — toggled in the Reference section
@@ -96144,7 +96331,10 @@ const VR_ARTIST_REFERENCE = [
 let vrCurrentStep  = 'intro';
 let vrDetectTarget = null;
 let vrShowExtended = false;  // toggle for reference section
-let vrUserGender   = null;   // 'male' | 'female' | null (no filter)
+// vrUserGender reads from progState.vrOnboarding.gender so it persists.
+function vrGetGender() { return (progState.vrOnboarding && progState.vrOnboarding.gender) || null; }
+function vrSetGender(g) { if (!progState.vrOnboarding) progState.vrOnboarding = {}; progState.vrOnboarding.gender = g; progSave(); }
+let vrUserGender = null; // runtime cache, synced from progState on module entry
 
 let vrLocks = { lowComf:null, highComf:null, tessCenter:null, extLow:null, extHigh:null };
 let vrStepLocked  = { low:false, high:false, extlow:false, exthigh:false };
@@ -96169,10 +96359,36 @@ let vrCurrentResult = null;
 // ─────────────────────────────────────────────
 
 function vrInit() {
+  vrUserGender = vrGetGender();
   vrSetTab('assess');
   vrResetState();
   vrShowScreen('intro');
   vrRenderStepProgress();
+  // Show Quick Test button if onboarded
+  var qBtn = document.getElementById('vrQuickTestBtn');
+  if (qBtn) qBtn.style.display = vrOnboardingComplete() ? '' : 'none';
+  vrShowRetestNudge();
+
+  // ── MOCK DATA (remove before shipping) ──────────────────────────
+  // Injects 8 fake sessions so the timeline, heatmap, and history features
+  // can be visually tested without singing 8 real assessments.
+  (function() {
+    var existing = vrGetSessions();
+    if (existing.length >= 3) return; // don't inject if real data exists
+    var mock = [
+      { lowComf:44, highComf:68, tessCenter:57, extLow:40, extHigh:71, voiceType:{id:'tenor',name:'Tenor',nameIt:'Tenore',color:'#34d399'}, date:'2026-09-13T10:00:00Z' },
+      { lowComf:44, highComf:67, tessCenter:57, extLow:41, extHigh:70, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-09-07T10:00:00Z' },
+      { lowComf:44, highComf:67, tessCenter:57, extLow:41, extHigh:70, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-09-01T10:00:00Z' },
+      { lowComf:45, highComf:66, tessCenter:56, extLow:42, extHigh:69, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-08-25T10:00:00Z' },
+      { lowComf:44, highComf:66, tessCenter:56, extLow:41, extHigh:69, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-08-15T10:00:00Z' },
+      { lowComf:44, highComf:65, tessCenter:56, extLow:41, extHigh:68, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-08-05T10:00:00Z' },
+      { lowComf:45, highComf:65, tessCenter:55, extLow:42, extHigh:67, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-07-29T10:00:00Z' },
+      { lowComf:45, highComf:64, tessCenter:55, extLow:41, extHigh:67, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-07-15T10:00:00Z' },
+    ];
+    try { localStorage.setItem('intonare_vr_sessions', JSON.stringify(mock)); } catch(e) {}
+    console.log('[VR] mock data injected: 8 sessions');
+  })();
+  // ── END MOCK DATA ───────────────────────────────────────────────
 }
 
 function vrStop() {
@@ -96198,14 +96414,37 @@ function vrResetState() {
 // ─────────────────────────────────────────────
 
 function vrSetTab(tab) {
-  ['assess','history','reference'].forEach(t => {
-    const btn = document.getElementById('vrTab-' + t);
-    const panel = document.getElementById('vrPanel-' + t);
-    if (btn)   btn.classList.toggle('active', t === tab);
-    if (panel) panel.classList.toggle('active', t === tab);
+  var tabs = ['assess','history','reference'];
+  var currentPanel = null, targetPanel = document.getElementById('vrPanel-' + tab);
+  tabs.forEach(function(t) {
+    var btn = document.getElementById('vrTab-' + t);
+    var panel = document.getElementById('vrPanel-' + t);
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (panel && panel.classList.contains('active') && t !== tab) currentPanel = panel;
   });
-  if (tab === 'history')   vrRenderHistory();
-  if (tab === 'reference') vrRenderReference();
+  function renderTab() {
+    if (tab === 'history')   vrRenderHistory();
+    if (tab === 'reference') vrRenderReference();
+  }
+  if (currentPanel && targetPanel && currentPanel !== targetPanel) {
+    _vrFadeEl(currentPanel, 0, 100, function() {
+      currentPanel.classList.remove('active');
+      targetPanel.classList.add('active');
+      targetPanel.style.opacity = '0';
+      // Render AFTER panel is visible so canvases get real dimensions
+      requestAnimationFrame(function() {
+        renderTab();
+        _vrFadeEl(targetPanel, 1, 150);
+      });
+    });
+  } else {
+    tabs.forEach(function(t) {
+      var panel = document.getElementById('vrPanel-' + t);
+      if (panel) panel.classList.toggle('active', t === tab);
+    });
+    if (targetPanel) targetPanel.style.opacity = '';
+    renderTab();
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -96241,6 +96480,7 @@ function vrStartDetect() {
       buf.set(_nativeRing);
       _vrSr = _nativeSampleRate;
     } else {
+      if (!analyzer) return;
       buf = new Float32Array(analyzer.fftSize);
       analyzer.getFloatTimeDomainData(buf);
       _vrSr = audioCtx ? audioCtx.sampleRate : 44100;
@@ -96259,6 +96499,35 @@ function vrStartDetect() {
     const note = freq > 0 ? vrFreqToMidi(freq) : null;
 
     vrDrawWaveform(note);
+
+    // ── RMS for strain detection ──
+    var _vrRms = 0;
+    for (var _ri = 0; _ri < buf.length; _ri++) _vrRms += buf[_ri] * buf[_ri];
+    _vrRms = Math.sqrt(_vrRms / buf.length);
+    vrRmsHistory.push(_vrRms);
+    if (vrRmsHistory.length > 20) vrRmsHistory.shift();
+    if (vrRmsHistory.length >= 5 && vrBaselineRms === 0) {
+      vrBaselineRms = vrRmsHistory.reduce(function(a,b){return a+b;},0) / vrRmsHistory.length;
+    }
+    // ── Flip detection (high steps only) ──
+    if (note && vrLastStableMidi !== null && !vrFlipFired && vrStabBuf.length >= 3
+        && (vrDetectTarget === 'high' || vrDetectTarget === 'exthigh')) {
+      if (Math.abs(note.midiRound - vrLastStableMidi) >= VR_FLIP_THRESHOLD) {
+        vrFlipFired = true; vrStopDetect(); vrShowFlipWarning(); return;
+      }
+    }
+    if (note && vrStabBuf.length >= 5) vrLastStableMidi = note.midiRound;
+    // ── Strain detection (high steps only) ──
+    if (!vrStrainFired && vrBaselineRms > 0 && vrRmsHistory.length >= 10
+        && (vrDetectTarget === 'high' || vrDetectTarget === 'exthigh')) {
+      var _recentRms = vrRmsHistory.slice(-5).reduce(function(a,b){return a+b;},0) / 5;
+      if (_recentRms / vrBaselineRms >= VR_STRAIN_RMS_RISE && vrStabBuf.length >= 8) {
+        var _l8 = vrStabBuf.slice(-8);
+        if (Math.max.apply(null,_l8) - Math.min.apply(null,_l8) >= VR_STRAIN_WOBBLE) {
+          vrStrainFired = true; vrStopDetect(); vrShowStrainWarning(); return;
+        }
+      }
+    }
 
     if (vrDetectTarget === 'tess') {
       vrProcessTessNote(note);
@@ -96544,7 +96813,7 @@ function vrFinishTessitura() {
   const statusEl = document.getElementById('vrTessStatus');
   if (statusEl) statusEl.textContent = t('vr_scan_complete').replace('{n}', vrTessNotes.length);
   const btn = document.getElementById('vrBtnTessStart');
-  if (btn) { btn.textContent = t('vr_continue_btn'); btn.disabled = false; btn.onclick = () => vrShowStep('extLow'); }
+  if (btn) { btn.textContent = t('vr_continue_btn'); btn.disabled = false; btn.onclick = () => (vrQuickMode || vrIsChild()) ? vrShowResults() : vrShowStep('extLow'); }
   if (!vrLocks.tessCenter && vrTessNotes.length > 0) {
     vrLocks.tessCenter = Math.round(vrTessNotes.reduce((a,b)=>a+b,0) / vrTessNotes.length);
   }
@@ -96566,6 +96835,7 @@ function vrDrawWaveform() {
   const W = canvas.offsetWidth || 280, H = canvas.offsetHeight || 38;
   if (canvas.width !== W) canvas.width = W;
   if (canvas.height !== H) canvas.height = H;
+  if (!analyzer) return;
   const buf = new Float32Array(analyzer.fftSize);
   analyzer.getFloatTimeDomainData(buf);
   ctx.clearRect(0, 0, W, H);
@@ -96780,8 +97050,9 @@ const VR_STEPS = [
 function vrRenderStepProgress() {
   const el = document.getElementById('vrStepProgress');
   if (!el) return;
-  const activeIdx = VR_STEPS.findIndex(s => s.id === vrCurrentStep);
-  el.innerHTML = VR_STEPS.map((s, i) => {
+  const steps = vrQuickMode ? VR_STEPS.filter(s => !s.optional && s.id !== 'warmup') : VR_STEPS;
+  const activeIdx = steps.findIndex(s => s.id === vrCurrentStep);
+  el.innerHTML = steps.map((s, i) => {
     const done   = i < activeIdx;
     const active = i === activeIdx;
     const cls = 'vr-step-dot' + (s.optional?' optional':'') + (done?' done':active?' active':'');
@@ -96792,13 +97063,54 @@ function vrRenderStepProgress() {
 }
 
 function vrShowScreen(screenId) {
-  ['intro','gender','warmup','step','results'].forEach(id => {
-    const el = document.getElementById('vrScreen-' + id);
-    if (el) el.classList.toggle('hidden', id !== screenId);
+  var screens = ['intro','gender','onboard-age','onboard-changing','onboard-experience','warmup','step','results'];
+  var target = document.getElementById('vrScreen-' + screenId);
+  var current = null;
+  screens.forEach(function(id) {
+    var el = document.getElementById('vrScreen-' + id);
+    if (el && !el.classList.contains('hidden') && id !== screenId) current = el;
   });
+  if (!target) return;
+  if (current && current !== target) {
+    // Fade out current, then swap
+    _vrFadeEl(current, 0, 120, function() {
+      current.classList.add('hidden');
+      target.classList.remove('hidden');
+      target.style.opacity = '0';
+      _vrFadeEl(target, 1, 150);
+    });
+  } else {
+    screens.forEach(function(id) {
+      var el = document.getElementById('vrScreen-' + id);
+      if (el) el.classList.toggle('hidden', id !== screenId);
+    });
+    target.style.opacity = '';
+  }
+}
+
+// rAF-driven opacity fade (CSS transitions don't fire reliably in Capacitor)
+function _vrFadeEl(el, toOpacity, dur, onDone) {
+  var from = parseFloat(el.style.opacity);
+  if (isNaN(from)) from = toOpacity === 0 ? 1 : 0;
+  var startT = null;
+  function step(ts) {
+    if (!startT) startT = ts;
+    var p = Math.min(1, (ts - startT) / dur);
+    el.style.opacity = from + (toOpacity - from) * p;
+    if (p < 1) requestAnimationFrame(step);
+    else { if (toOpacity === 1) el.style.opacity = ''; if (onDone) onDone(); }
+  }
+  requestAnimationFrame(step);
 }
 
 function vrShowGenderSelect() {
+  // If already onboarded, go straight to the assessment (gender is stored).
+  // The user can change their onboarding via the gear icon.
+  if (vrOnboardingComplete()) {
+    vrUserGender = vrGetGender();
+    vrStartAssessment();
+    return;
+  }
   vrShowScreen('gender');
   // Reset button styles
   ['vrGenderMale','vrGenderFemale','vrGenderSkip'].forEach(id => {
@@ -96809,6 +97121,7 @@ function vrShowGenderSelect() {
 
 function vrSelectGender(gender) {
   vrUserGender = gender;
+  vrSetGender(gender);
   // Highlight selected
   const map = { male:'vrGenderMale', female:'vrGenderFemale', null:'vrGenderSkip' };
   const selId = map[gender] || 'vrGenderSkip';
@@ -96823,8 +97136,74 @@ function vrSelectGender(gender) {
       btn.style.background = '';
     }
   });
-  // Brief visual feedback then proceed
+  // Advance to age bracket (next onboarding step)
+  setTimeout(() => vrShowOnboardingAge(), 250);
+}
+
+// ── Onboarding step 2: Age bracket ──
+function vrShowOnboardingAge() {
+  vrShowScreen('onboard-age');
+}
+function vrSelectAge(bracket) {
+  if (!progState.vrOnboarding) progState.vrOnboarding = {};
+  progState.vrOnboarding.ageBracket = bracket;
+  progSave();
+  // Highlight
+  document.querySelectorAll('.vr-age-btn').forEach(b => {
+    b.style.borderColor = (b.dataset.val === bracket) ? 'var(--accent)' : '';
+    b.style.background = (b.dataset.val === bracket) ? 'rgba(94,226,255,0.08)' : '';
+  });
+  // If teen, show voice-changing question; otherwise go to experience
+  setTimeout(() => {
+    if (bracket === '13-17') vrShowOnboardingChanging();
+    else vrShowOnboardingExperience();
+  }, 250);
+}
+
+// ── Onboarding step 2b: Voice changing (teens only) ──
+function vrShowOnboardingChanging() {
+  vrShowScreen('onboard-changing');
+}
+function vrSelectChanging(val) {
+  progState.vrOnboarding.voiceChanging = val;
+  progSave();
+  document.querySelectorAll('.vr-changing-btn').forEach(b => {
+    b.style.borderColor = (b.dataset.val === val) ? 'var(--accent)' : '';
+    b.style.background = (b.dataset.val === val) ? 'rgba(94,226,255,0.08)' : '';
+  });
+  setTimeout(() => vrShowOnboardingExperience(), 250);
+}
+
+// ── Onboarding step 3: Experience level ──
+function vrShowOnboardingExperience() {
+  vrShowScreen('onboard-experience');
+}
+function vrSelectExperience(val) {
+  progState.vrOnboarding.experience = val;
+  document.querySelectorAll('.vr-exp-btn').forEach(b => {
+    b.style.borderColor = (b.dataset.val === val) ? 'var(--accent)' : '';
+    b.style.background = (b.dataset.val === val) ? 'rgba(94,226,255,0.08)' : '';
+  });
+  progSave();
   setTimeout(() => vrStartAssessment(), 250);
+}
+
+// Check if onboarding is complete (all required fields filled)
+function vrIsChild() {
+  return progState.vrOnboarding && progState.vrOnboarding.ageBracket === 'under-13';
+}
+function vrIsVoiceChanging() {
+  var o = progState.vrOnboarding;
+  return o && o.ageBracket === '13-17' && o.voiceChanging && o.voiceChanging !== 'no';
+}
+function vrIsTeen() {
+  return progState.vrOnboarding && progState.vrOnboarding.ageBracket === '13-17';
+}
+function vrOnboardingComplete() {
+  const o = progState.vrOnboarding;
+  if (!o || !o.gender || !o.ageBracket || !o.experience) return false;
+  if (o.ageBracket === '13-17' && o.voiceChanging === null) return false;
+  return true;
 }
 
 function vrShowStep(stepId) {
@@ -96832,6 +97211,8 @@ function vrShowStep(stepId) {
   vrDetectTarget = null;
   vrStabBuf = [];
   vrStabNudge = null; vrStabStallStart = 0; vrStabLastNoteMs = 0;
+  vrRmsHistory = []; vrBaselineRms = 0; vrLastStableMidi = null;
+  vrStrainFired = false; vrFlipFired = false;
   vrRenderStepProgress();
   window.scrollTo(0, 0);
 
@@ -96965,6 +97346,58 @@ function vrRenderSingingStep(stepId) {
     if (cfg.tipIt)     cfg.tip     = cfg.tipIt;
   }
 
+  // Experience-aware copy density. Trained singers and Quick Test users
+  // get one short line per step and no tip box. Beginners get the full
+  // explanation. "Some experience" gets the body but no tip.
+  const exp = (progState.vrOnboarding && progState.vrOnboarding.experience) || 'new';
+  const isIt = progState.lang === 'it';
+  if (vrQuickMode || exp === 'trained') {
+    const short = {
+      lowComf:   isIt ? 'Canta la tua nota grave comoda e tienila.' : 'Sing your comfortable low note and hold it.',
+      highComf:  isIt ? 'Canta la tua nota acuta comoda e tienila.' : 'Sing your comfortable high note and hold it.',
+      tessitura: isIt ? 'Canta liberamente per 20 secondi dove la voce sta pi\u00f9 comoda.' : 'Sing freely for 20 seconds where your voice sits most comfortably.',
+      extLow:    isIt ? 'Scendi finch\u00e9 la voce d\u00e0 ancora un\'altezza chiara.' : 'Go as low as you can with a clear pitch.',
+      extHigh:   isIt ? 'Sali finch\u00e9 la voce d\u00e0 ancora un\'altezza chiara.' : 'Go as high as you can with a clear pitch.',
+    };
+    if (short[stepId]) cfg.body = short[stepId];
+    cfg.tip = null;
+  } else if (exp === 'some') {
+    cfg.tip = null;
+  }
+
+  // Age-aware overrides (on top of experience level)
+  if (vrIsChild()) {
+    var childCopy = {
+      lowComf:   isIt ? 'Canta una nota bassa che ti sembra comoda e tienila.' : 'Sing a low note that feels good and hold it.',
+      highComf:  isIt ? 'Canta una nota alta che ti sembra comoda e tienila.' : 'Sing a high note that feels good and hold it.',
+      tessitura: isIt ? 'Canta quello che vuoi per 20 secondi, dove ti senti a tuo agio.' : 'Sing whatever you like for 20 seconds, wherever feels easy.',
+    };
+    if (childCopy[stepId]) cfg.body = childCopy[stepId];
+    cfg.tip = null;
+  }
+  if (vrIsVoiceChanging()) {
+    if (stepId === 'highComf') {
+      cfg.body = isIt
+        ? 'Canta una nota acuta comoda per oggi e tienila.'
+        : 'Sing a high note that feels comfortable today and hold it.';
+    }
+    if (stepId === 'extHigh') {
+      cfg.body = isIt
+        ? 'Sali finch\u00e9 ti senti comodo. Fermati quando la voce si affatica.'
+        : 'Go as high as feels comfortable. Stop when your voice feels tired.';
+    }
+  }
+
+  // Quick mode: step labels say "1 of 3" not "2 of 6"
+  if (vrQuickMode) {
+    const quickLabels = {
+      lowComf:   isIt ? 'Passo 1 di 3 \u2014 Grave Comodo' : 'Step 1 of 3 \u2014 Comfortable Low',
+      highComf:  isIt ? 'Passo 2 di 3 \u2014 Acuto Comodo' : 'Step 2 of 3 \u2014 Comfortable High',
+      tessitura: isIt ? 'Passo 3 di 3 \u2014 Tessitura' : 'Step 3 of 3 \u2014 Tessitura',
+    };
+    if (quickLabels[stepId]) cfg.label = quickLabels[stepId];
+  }
+
   const borderTop = cfg.warm
     ? 'linear-gradient(90deg,transparent 5%,var(--accent-warm) 40%,var(--accent-rose) 60%,transparent 95%)'
     : 'linear-gradient(90deg,transparent 5%,var(--theme-a) 40%,var(--theme-b) 60%,transparent 95%)';
@@ -96976,10 +97409,10 @@ function vrRenderSingingStep(stepId) {
         <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">${cfg.label}</div>
         <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:24px;letter-spacing:3px;color:var(--text);margin-bottom:6px;line-height:1.1;">${cfg.heading}</div>
         <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;margin-bottom:10px;">${cfg.body}</div>
-        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.15);border-radius:var(--r-sm);">
-          <span style="font-size:13px;flex-shrink:0;margin-top:1px;">🎵</span>
+        ${cfg.tip ? `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.15);border-radius:var(--r-sm);">
+          <span style="font-size:11px;flex-shrink:0;margin-top:2px;color:var(--accent);font-weight:700;">TIP</span>
           <div style="font-size:11px;color:var(--text-dim);line-height:1.5;">${cfg.tip}</div>
-        </div>
+        </div>` : ''}
         <div class="vr-step-safety" style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">${(typeof progState!=='undefined'&&progState.lang==='it')?'Fermati se qualcosa fa male, gratta o suona rauco.':'Stop if anything hurts, feels scratchy, or sounds hoarse.'}</div>
       </div>
       <div class="card">
@@ -97020,10 +97453,10 @@ function vrRenderSingingStep(stepId) {
       <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">${cfg.label}</div>
       <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:24px;letter-spacing:3px;color:var(--text);margin-bottom:6px;line-height:1.1;">${cfg.heading}</div>
       <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;margin-bottom:10px;">${cfg.body}</div>
-      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:${cfg.warm?'rgba(255,160,122,0.06)':'rgba(52,211,153,0.06)'};border:1px solid ${cfg.warm?'rgba(255,160,122,0.15)':'rgba(52,211,153,0.15)'};border-radius:var(--r-sm);">
+      ${cfg.tip ? `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:${cfg.warm?'rgba(255,160,122,0.06)':'rgba(52,211,153,0.06)'};border:1px solid ${cfg.warm?'rgba(255,160,122,0.15)':'rgba(52,211,153,0.15)'};border-radius:var(--r-sm);">
         <span style='flex-shrink:0;margin-top:1px;display:inline-flex;color:var(--accent-warm);'><svg viewBox='0 0 24 24' width='14' height='14' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:middle'><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg></span>
         <div style="font-size:11px;color:var(--text-dim);line-height:1.5;">${cfg.tip}</div>
-      </div>
+      </div>` : ''}
       <div class="vr-step-safety" style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">${(typeof progState!=='undefined'&&progState.lang==='it')?'Fermati se qualcosa fa male, gratta o suona rauco.':'Stop if anything hurts, feels scratchy, or sounds hoarse.'}</div>
     </div>
     <div class="vr-detect-card${cfg.warm?' warm':''}">
@@ -97054,6 +97487,104 @@ function vrRenderSingingStep(stepId) {
     </div>` : `<button class="iv-btn primary" id="${cfg.btnId}" onclick="${cfg.btnOnClick}" disabled style="width:100%;${cfg.warm ? 'background:linear-gradient(135deg,var(--accent-warm),var(--accent-rose));box-shadow:0 4px 14px rgba(255,160,122,0.3)' : 'background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3)'}">${cfg.btnLabel}</button>`}`;
 }
 
+// From results in quick mode: run the two extended steps and come back.
+function vrShowStrainWarning() {
+  var isIt = (typeof progState !== 'undefined' && progState.lang === 'it');
+  vrShowSafetyCard(
+    isIt ? "Questo \u00e8 il tuo limite comodo per oggi. Non serve forzare."
+         : "That's your comfortable top for today. No need to push further.",
+    function() {
+      if (vrStabBuf.length > 0) {
+        var avg = Math.round(vrStabBuf.reduce(function(a,b){return a+b;},0) / vrStabBuf.length);
+        vrAutoLock(vrDetectTarget || 'high', avg);
+      } else { vrAdvanceFrom(vrDetectTarget || 'high'); }
+    }
+  );
+}
+
+function vrShowFlipWarning() {
+  var isIt = (typeof progState !== 'undefined' && progState.lang === 'it');
+  vrShowSafetyCard(
+    isIt ? "Sembra che la voce sia passata a un registro pi\u00f9 leggero. Riprova con la stessa pienezza di prima, o tocca Salta se quello era il tuo limite comodo."
+         : "That sounded like it shifted to a lighter register. Try again with the same fullness you had a note ago, or tap Skip if that was your comfortable top.",
+    function() { vrFlipFired = false; vrRmsHistory = []; vrBaselineRms = 0; vrStartDetect(); },
+    function() {
+      if (vrLastStableMidi !== null) vrAutoLock(vrDetectTarget || 'high', vrLastStableMidi);
+      else vrAdvanceFrom(vrDetectTarget || 'high');
+    }
+  );
+}
+
+function vrShowSafetyCard(message, onPrimary, onSecondary) {
+  var isIt = (typeof progState !== 'undefined' && progState.lang === 'it');
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:2090;padding:24px;backdrop-filter:blur(3px);';
+  var card = document.createElement('div');
+  card.style.cssText = 'background:var(--panel);border:1px solid var(--accent-warm);border-radius:18px;padding:24px 20px;max-width:300px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.5);text-align:center;animation:mqDailyPopIn .22s cubic-bezier(.2,.9,.3,1.2);';
+  card.innerHTML = '<div style="font-size:32px;margin-bottom:12px;">\ud83d\udee1\ufe0f</div>'
+    + '<div style="font-size:12px;color:var(--text-dim);line-height:1.65;margin-bottom:16px;">' + message + '</div>'
+    + '<div style="display:flex;gap:8px;" id="_vrSafetyBtns"></div>';
+  overlay.appendChild(card);
+  var row = card.querySelector('#_vrSafetyBtns');
+  if (onSecondary) {
+    var skip = document.createElement('button'); skip.className = 'iv-btn'; skip.style.cssText = 'flex:1;padding:12px;';
+    skip.textContent = isIt ? 'Salta' : 'Skip';
+    skip.onclick = function() { overlay.remove(); onSecondary(); };
+    row.appendChild(skip);
+  }
+  var ok = document.createElement('button'); ok.className = 'iv-btn primary'; ok.style.cssText = 'flex:1;padding:12px;background:var(--theme-grad);';
+  ok.textContent = onSecondary ? (isIt ? 'Riprova' : 'Try Again') : 'OK';
+  ok.onclick = function() { overlay.remove(); onPrimary(); };
+  row.appendChild(ok);
+  overlay.style.opacity = '0';
+  document.body.appendChild(overlay);
+  _vrFadeEl(overlay, 1, 180);
+}
+
+function vrShareResult() {
+  if (!vrCurrentResult) return;
+  var r = vrCurrentResult;
+  var vt = r.voiceType;
+  var isIt = (typeof progState !== 'undefined' && progState.lang === 'it');
+  var name = vt ? (isIt && vt.nameIt ? vt.nameIt : vt.name) : '?';
+  var lo = r.lowComf ? vrMidiToName(r.lowComf) : '?';
+  var hi = r.highComf ? vrMidiToName(r.highComf) : '?';
+  var range = lo + ' – ' + hi;
+  if (r.extLow && r.extHigh) {
+    range += isIt ? ' (estesa: ' : ' (full: ';
+    range += vrMidiToName(r.extLow) + ' – ' + vrMidiToName(r.extHigh) + ')';
+  }
+  var semis = (r.lowComf && r.highComf) ? (r.highComf - r.lowComf) : 0;
+  var txt = isIt
+    ? 'La mia voce: ' + name + '\n' + 'Estensione comoda: ' + range + ' (' + semis + ' semitoni)\n' + 'Testato con Intonare'
+    : 'My voice: ' + name + '\n' + 'Comfortable range: ' + range + ' (' + semis + ' semitones)\n' + 'Tested with Intonare';
+  intonareNativeShare(txt, function(t) {
+    try { navigator.clipboard.writeText(t); } catch(e) {}
+  }, 'Intonare');
+}
+
+function vrSetReminder(days) {
+  var date = new Date();
+  date.setDate(date.getDate() + days);
+  if (!progState.vrOnboarding) progState.vrOnboarding = {};
+  progState.vrOnboarding.reminderDate = date.toISOString();
+  progSave();
+  var confirm = document.getElementById('vrReminderConfirm');
+  if (confirm) {
+    var isIt = (typeof progState !== 'undefined' && progState.lang === 'it');
+    var dateStr = date.toLocaleDateString(isIt ? 'it-IT' : 'en-US', { month: 'short', day: 'numeric' });
+    confirm.textContent = isIt
+      ? 'Promemoria impostato per il ' + dateStr
+      : 'Reminder set for ' + dateStr;
+    confirm.style.display = '';
+  }
+}
+
+function vrExtendFromResults() {
+  vrQuickMode = false;
+  vrShowStep('extLow');
+}
+
 function vrSkipExtended(which) {
   vrStopDetect();
   if (which === 'low') vrShowStep('extHigh');
@@ -97064,11 +97595,63 @@ function vrSkipExtended(which) {
 // VR ASSESSMENT START
 // ─────────────────────────────────────────────
 
+function vrShowRetestNudge() {
+  var o = progState.vrOnboarding;
+  // Check user-set reminder first (works for everyone, not just teens)
+  if (o && o.reminderDate && new Date() >= new Date(o.reminderDate)) {
+    var intro = document.getElementById('vrScreen-intro');
+    if (intro && !document.getElementById('vrRetestNudge')) {
+      var nudge = document.createElement('div');
+      nudge.id = 'vrRetestNudge';
+      nudge.style.cssText = 'font-size:11px;color:var(--accent);line-height:1.5;padding:10px 14px;border:1px solid rgba(52,211,153,0.2);border-radius:var(--r-sm);background:rgba(52,211,153,0.06);margin-bottom:10px;text-align:center;';
+      nudge.textContent = (progState.lang === 'it')
+        ? 'Il tuo promemoria per il retest è scaduto. Pronto a riprovare?'
+        : 'Your retest reminder is here. Ready to check again?';
+      var btn = intro.querySelector('.iv-btn.primary');
+      if (btn) btn.parentElement.insertBefore(nudge, btn);
+    }
+    // Clear the reminder so it doesn't show again
+    o.reminderDate = null;
+    progSave();
+    return;
+  }
+  // Voice-changing teen nudge (21-day automatic)
+  if (typeof vrIsVoiceChanging !== 'function' || !vrIsVoiceChanging()) return;
+  var o = progState.vrOnboarding;
+  if (!o || !o.lastAssessment) return;
+  var daysSince = (Date.now() - new Date(o.lastAssessment).getTime()) / 86400000;
+  if (daysSince < 21) return;
+  var intro = document.getElementById('vrScreen-intro');
+  if (!intro) return;
+  if (document.getElementById('vrRetestNudge')) return;
+  var nudge = document.createElement('div');
+  nudge.id = 'vrRetestNudge';
+  nudge.style.cssText = 'font-size:11px;color:var(--accent-warm);line-height:1.5;padding:10px 14px;border:1px solid rgba(255,160,122,0.2);border-radius:var(--r-sm);background:rgba(255,160,122,0.06);margin-bottom:10px;text-align:center;';
+  var weeks = Math.floor(daysSince / 7);
+  nudge.textContent = (progState.lang === 'it')
+    ? 'Sono passate ' + weeks + " settimane dall'ultimo test. Vale la pena riprovare."
+    : "It's been " + weeks + ' weeks since your last test. Worth checking again.';
+  var btn = intro.querySelector('.iv-btn.primary');
+  if (btn) btn.parentElement.insertBefore(nudge, btn);
+}
+
+var vrQuickMode = false;
+function vrQuickTest() {
+  vrUserGender = vrGetGender();
+  vrStopDetect();
+  if (vrWarmupTimer) { clearInterval(vrWarmupTimer); vrWarmupTimer = null; }
+  if (vrTessTimer)   { clearInterval(vrTessTimer);   vrTessTimer   = null; }
+  vrResetState();
+  vrQuickMode = true;
+  vrShowStep('lowComf');
+}
+
 function vrStartAssessment() {
   vrStopDetect();
   if (vrWarmupTimer) { clearInterval(vrWarmupTimer); vrWarmupTimer = null; }
   if (vrTessTimer)   { clearInterval(vrTessTimer);   vrTessTimer   = null; }
   vrResetState();
+  vrQuickMode = false;
   vrShowStep('warmup');
 }
 
@@ -97129,6 +97712,7 @@ function vrRenderResults(r) {
     </div>
 
     <div class="vr-strip-wrap" id="vrResStrip"></div>
+    <div id="vrPassaggioNote" style="display:none;font-size:10px;color:var(--muted);line-height:1.5;padding:6px 14px;margin-top:-4px;margin-bottom:8px;"></div>
 
     <div style="padding:13px 15px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);display:flex;align-items:center;gap:12px;">
       <span style='display:inline-flex;color:var(--accent);'><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:middle'><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></svg></span>
@@ -97147,14 +97731,30 @@ function vrRenderResults(r) {
       <div class="teach-hint" data-i18n-html="hint_vr_range">Range alone doesn't set timbre or style; these artists share your approximate range but sound very different from each other.</div>
     </div>
 
+    ${(progState.vrOnboarding && progState.vrOnboarding.voiceChanging && progState.vrOnboarding.voiceChanging !== "no") ? `<div style="font-family:'Fraunces','GlyphFix',serif;font-style:italic;font-size:10.5px;color:var(--accent-warm);line-height:1.6;padding:11px 14px;border-left:2px solid var(--accent-warm);margin-bottom:12px;">${t("vr_voice_changing_result")}</div>` : ""}
+
     <div style="font-family:'Fraunces','GlyphFix',serif;font-style:italic;font-size:10.5px;color:var(--muted);line-height:1.6;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-sm);">${(progState.lang==='it')
   ? "Questa è una stima basata su ciò che il microfono ha sentito, non una valutazione clinica. Un maestro considera anche timbro, passaggio e peso vocale. Per problemi di voce persistenti, rivolgiti a uno specialista."
   : "This is an estimate based on what the mic heard, not a clinical assessment. A teacher also weighs timbre, passaggio and vocal weight. For persistent voice problems, see a specialist."}</div>
 
+    ${vrQuickMode && !r.extLow && !r.extHigh && !vrIsChild() ? `<button class="iv-btn" onclick="vrExtendFromResults()" style="width:100%;margin-bottom:8px;">${t('vr_find_extremes')}</button>` : ''}
     <div style="display:flex;gap:8px;">
       <button class="iv-btn" onclick="vrShowGenderSelect()" style="flex:1" data-i18n="ui_retake">Retake</button>
       <button class="iv-btn primary" id="vrBtnSave" onclick="vrSaveResult()" style="flex:2;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3)">Save to History →</button>
-    </div>`;
+      <button class="iv-btn" onclick="vrShareResult()" style="flex:0.6;padding:10px;" data-i18n="vr_share_btn">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      </button>
+    </div>
+    <div style="margin-top:10px;text-align:center;">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;" data-i18n="vr_remind_title">Remind Me to Retest</div>
+      <div style="display:flex;gap:6px;justify-content:center;">
+        <button class="iv-btn" onclick="vrSetReminder(7)" style="flex:1;padding:10px;font-size:11px;" data-i18n="vr_remind_1w">1 week</button>
+        <button class="iv-btn" onclick="vrSetReminder(14)" style="flex:1;padding:10px;font-size:11px;" data-i18n="vr_remind_2w">2 weeks</button>
+        <button class="iv-btn" onclick="vrSetReminder(30)" style="flex:1;padding:10px;font-size:11px;" data-i18n="vr_remind_1m">1 month</button>
+      </div>
+      <div id="vrReminderConfirm" style="display:none;font-size:10px;color:var(--accent);margin-top:6px;"></div>
+    </div>
+  `;
 
   // Animate hero
   setTimeout(() => {
@@ -97173,7 +97773,14 @@ function vrRenderResults(r) {
   }, 80);
 
   // Range strip
-  setTimeout(() => vrRenderRangeStrip(r, 'vrResStrip'), 200);
+  setTimeout(() => {
+    vrRenderRangeStrip(r, 'vrResStrip');
+    var _pn = document.getElementById('vrPassaggioNote');
+    if (_pn && vt && vt.pass1) {
+      _pn.textContent = t('vr_passaggio_note');
+      _pn.style.display = '';
+    }
+  }, 200);
 }
 
 function vrRenderRangeStrip(r, containerId) {
@@ -97195,7 +97802,7 @@ function vrRenderRangeStrip(r, containerId) {
   });
   // User overlays — positioned over all lanes via absolute on the strip container
   if (r.lowComf && r.highComf) {
-    const vtColor = vt ? vt.color : 'var(--accent)';
+    const vtColor = vt ? vrVoiceColor(vt.color) : 'var(--accent)';
     const cLPct = vrMidiPct(r.lowComf), cWPct = vrMidiPct(r.highComf) - cLPct;
     // Extended range
     if (r.extLow || r.extHigh) {
@@ -97208,7 +97815,19 @@ function vrRenderRangeStrip(r, containerId) {
     // Tessitura line
     if (r.tessCenter) {
       const tPct = vrMidiPct(r.tessCenter);
-      html += `<div class="vr-tess-line" id="${containerId}-tess" style="top:0;bottom:0;left:${tPct}%;background:${vtColor};pointer-events:none;position:absolute;"></div>`;
+      html += `<div class="vr-tess-line" id="${containerId}-tess" style="top:0;bottom:0;left:${tPct}%;background:${vtColor};pointer-events:none;position:absolute;width:2px;border-radius:1px;opacity:0;transition:opacity .4s .3s;"></div>`;
+    }
+    // Passaggio zones: soft gradient markers where the voice transitions between registers.
+    // Based on the matched voice type's typical passaggio MIDI values from vocal pedagogy.
+    if (vt && vt.pass1) {
+      var _passW = (2.5 / (84 - 40)) * 100; // 2.5 semitones in strip-percent
+      var _p1Pct = vrMidiPct(vt.pass1);
+      var _p2Pct = vt.pass2 ? vrMidiPct(vt.pass2) : null;
+      var _passColor = 'rgba(255,200,100,0.15)';
+      html += '<div style="position:absolute;top:0;bottom:0;left:' + (_p1Pct - _passW/2) + '%;width:' + _passW + '%;background:linear-gradient(90deg,transparent,' + _passColor + ',' + _passColor + ',transparent);pointer-events:none;border-radius:2px;"></div>';
+      if (_p2Pct !== null) {
+        html += '<div style="position:absolute;top:0;bottom:0;left:' + (_p2Pct - _passW/2) + '%;width:' + _passW + '%;background:linear-gradient(90deg,transparent,' + _passColor + ',' + _passColor + ',transparent);pointer-events:none;border-radius:2px;"></div>';
+      }
     }
   }
   html += '</div>';
@@ -97222,11 +97841,12 @@ function vrRenderRangeStrip(r, containerId) {
   html += '</div>';
 
   // Legend
-  const vtColor = vt ? vt.color : 'var(--accent)';
+  const vtColor = vt ? vrVoiceColor(vt.color) : 'var(--accent)';
   html += `<div class="vr-strip-legend">
     <div class="vr-legend-item"><div class="vr-legend-dot" style="background:${vtColor};border:2px solid ${vtColor}88"></div><span class="vr-legend-text" data-i18n="ui_comfortable_range">Comfortable range</span></div>
     <div class="vr-legend-item"><div class="vr-legend-dot" style="background:transparent;border:1px dashed ${vtColor}66"></div><span class="vr-legend-text" data-i18n="ui_extended_range">Extended range</span></div>
-    <div class="vr-legend-item"><div class="vr-legend-dot" style="background:${vtColor};width:2px;border-radius:1px"></div><span class="vr-legend-text" data-i18n="ui_tessitura_center">Tessitura center</span></div>
+    <div class="vr-legend-item"><div class="vr-legend-dot" style="background:${vtColor};width:2px;border-radius:1px"></div><span class="vr-legend-text" data-i18n="ui_tess_center">Tessitura Center</span></div>
+    ${vt && vt.pass1 ? '<div class="vr-legend-item"><div class="vr-legend-dot" style="background:rgba(255,200,100,0.4);width:6px;border-radius:2px"></div><span class="vr-legend-text" data-i18n="ui_passaggio">Transition Zone</span></div>' : ''}
   </div>`;
 
   wrap.innerHTML = html;
@@ -97250,8 +97870,321 @@ function vrGetSessions() {
   try { return JSON.parse(localStorage.getItem('intonare_vr_sessions') || '[]'); } catch(e) { return []; }
 }
 
+// ── Full-screen range timeline ──────────────────────────────────────
+function vrToggleSessionDetail(card) {
+  var detail = card.querySelector('.vr-session-detail');
+  if (!detail) return;
+  var isOpen = detail._vrOpen;
+  document.querySelectorAll('.vr-session-detail').forEach(function(d) {
+    if (d !== detail && d._vrOpen) _vrAnimDetail(d, false);
+  });
+  _vrAnimDetail(detail, !isOpen);
+}
+function _vrAnimDetail(el, open) {
+  el._vrOpen = open;
+  if (el._vrRaf) cancelAnimationFrame(el._vrRaf);
+  var targetH = 0;
+  var startH = parseFloat(el.style.maxHeight) || 0;
+  if (open) {
+    el.style.maxHeight = '9999px'; el.style.opacity = '1';
+    targetH = el.scrollHeight;
+    el.style.maxHeight = startH + 'px';
+  }
+  var startT = null, dur = 200;
+  function step(ts) {
+    if (!startT) startT = ts;
+    var p = Math.min(1, (ts - startT) / dur);
+    var ep = 1 - (1 - p) * (1 - p);
+    el.style.maxHeight = (startH + (targetH - startH) * ep) + 'px';
+    el.style.opacity = open ? Math.min(1, p * 2) : Math.max(0, 1 - p * 2);
+    if (p < 1) {
+      el._vrRaf = requestAnimationFrame(step);
+    } else {
+      el._vrRaf = null;
+      // When fully open, clear maxHeight so content flows naturally
+      if (open) { el.style.maxHeight = 'none'; el.style.overflow = ''; }
+    }
+  }
+  el._vrRaf = requestAnimationFrame(step);
+}
+
+function vrOpenTimeline() {
+  // Remove any existing overlay first
+  vrCloseTimeline();
+  // Create fresh on document.body so position:fixed actually works
+  // (Capacitor WebView breaks fixed positioning inside transformed parents)
+  var overlay = document.createElement('div');
+  overlay.id = 'vrTimelineOverlay';
+  var isLt = document.body.classList.contains('light');
+  overlay.style.cssText = 'position:fixed;inset:0;background:' + (isLt ? getComputedStyle(document.body).getPropertyValue('--bg-0').trim() || '#f0f0f6' : '#0a0a12') + ';z-index:9999;overflow-y:auto;padding:' + (window.INTONARE_SAT || 44) + 'px 16px 80px 16px;';
+  overlay.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-top:8px;">'
+    + '<div><div style="font-family:\'Bebas Neue\',\'GlyphFix\',sans-serif;font-size:26px;letter-spacing:4px;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;">RANGE TIMELINE</div></div>'
+    + '<button onclick="vrCloseTimeline()" style="background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--text);font-size:15px;cursor:pointer;">\u2715</button>'
+    + '</div>'
+    + '<canvas id="vrTimelineCanvas" style="width:100%;height:320px;display:block;border-radius:var(--r-sm);background:var(--panel);border:1px solid var(--border-soft);margin-bottom:12px;"></canvas>'
+    + '<div id="vrTimelineDetail" style="display:none;margin-bottom:12px;"></div>'
+    + '<div id="vrTimelineHeatmap" style="margin-bottom:12px;"></div>'
+    + '<div id="vrTimelineGoal" style="margin-bottom:12px;"></div>';
+  document.body.appendChild(overlay);
+  overlay.classList.add('vr-timeline-enter');
+  // Two frames for layout to settle, then render
+  requestAnimationFrame(function() { requestAnimationFrame(function() { vrRenderTimeline(); }); });
+}
+function vrCloseTimeline() {
+  var overlay = document.getElementById('vrTimelineOverlay');
+  if (overlay) overlay.remove();
+}
+
+function vrRenderTimeline() {
+  var sessions = vrGetSessions();
+  if (sessions.length < 2) return;
+  var rev = sessions.slice().reverse();
+  var canvas = document.getElementById('vrTimelineCanvas');
+  if (!canvas) return;
+  var W = Math.min(window.innerWidth - 32, 600), H = 320;
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext('2d');
+  var isLt = document.body.classList.contains('light');
+  var lows = rev.map(function(s){return s.lowComf||0;});
+  var highs = rev.map(function(s){return s.highComf||0;});
+  var tess = rev.map(function(s){return s.tessCenter||0;});
+  var extLows = rev.map(function(s){return s.extLow||0;});
+  var extHighs = rev.map(function(s){return s.extHigh||0;});
+  var all = lows.concat(highs,tess,extLows,extHighs).filter(function(v){return v>0;});
+  if (all.length < 2) return;
+  var goal=progState.vrOnboarding&&progState.vrOnboarding.rangeGoal;
+  if(goal) all.push(goal);
+  var mn = Math.min.apply(null,all) - 2, mx = Math.max.apply(null,all) + 2;
+  var padL = 36, padR = 8, padT = 12, padB = 28;
+  var cW = W - padL - padR, cH = H - padT - padB;
+  var xStep = cW / Math.max(rev.length - 1, 1);
+  function xP(i) { return padL + i * xStep; }
+  function yP(midi) { return padT + cH - ((midi - mn) / (mx - mn)) * cH; }
+  var noteN = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+  ctx.fillStyle = isLt ? '#666' : '#888';
+  ctx.font = '9px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (var m = Math.ceil(mn); m <= Math.floor(mx); m++) {
+    if (m%12===0||m%12===4||m%12===7) {
+      ctx.fillText(noteN[m%12]+(Math.floor(m/12)-1), padL-4, yP(m));
+      ctx.strokeStyle = isLt?'rgba(0,0,0,0.05)':'rgba(255,255,255,0.04)';
+      ctx.lineWidth=0.5; ctx.beginPath(); ctx.moveTo(padL,yP(m)); ctx.lineTo(W-padR,yP(m)); ctx.stroke();
+    }
+  }
+  ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle=isLt?'#666':'#888';
+  rev.forEach(function(s,i) {
+    if (rev.length<=6||i%Math.ceil(rev.length/6)===0||i===rev.length-1) {
+      var d=new Date(s.date); ctx.fillText((d.getMonth()+1)+'/'+d.getDate(), xP(i), H-padB+6);
+    }
+  });
+  // Extended fill
+  if (extLows.some(function(v){return v>0;})&&extHighs.some(function(v){return v>0;})) {
+    ctx.fillStyle=isLt?'rgba(100,100,200,0.04)':'rgba(180,160,255,0.04)';
+    ctx.beginPath();
+    extHighs.forEach(function(v,i){var val=v||highs[i];i===0?ctx.moveTo(xP(i),yP(val)):ctx.lineTo(xP(i),yP(val));});
+    for(var ei=rev.length-1;ei>=0;ei--){ctx.lineTo(xP(ei),yP(extLows[ei]||lows[ei]));}
+    ctx.closePath();ctx.fill();
+  }
+  // Comfortable fill
+  ctx.fillStyle=isLt?'rgba(34,170,100,0.1)':'rgba(52,211,153,0.08)';
+  ctx.beginPath();
+  highs.forEach(function(v,i){i===0?ctx.moveTo(xP(i),yP(v)):ctx.lineTo(xP(i),yP(v));});
+  for(var li=rev.length-1;li>=0;li--)ctx.lineTo(xP(li),yP(lows[li]));
+  ctx.closePath();ctx.fill();
+  // Stability bands
+  [highs,lows].forEach(function(vals){
+    ctx.fillStyle=isLt?'rgba(0,0,0,0.06)':'rgba(128,128,128,0.05)'; ctx.beginPath();
+    vals.forEach(function(v,i){i===0?ctx.moveTo(xP(i),yP(v+0.6)):ctx.lineTo(xP(i),yP(v+0.6));});
+    for(var si=vals.length-1;si>=0;si--)ctx.lineTo(xP(si),yP(vals[si]-0.6));
+    ctx.closePath();ctx.fill();
+  });
+  // Lines and dots
+  var hiC=isLt?'rgba(184,80,50,0.85)':'rgba(255,160,122,0.65)';
+  var loC=isLt?'rgba(15,110,72,0.85)':'rgba(52,211,153,0.65)';
+  [[highs,hiC],[lows,loC]].forEach(function(p){
+    ctx.strokeStyle=p[1];ctx.lineWidth=2;ctx.beginPath();
+    p[0].forEach(function(v,i){i===0?ctx.moveTo(xP(i),yP(v)):ctx.lineTo(xP(i),yP(v));});ctx.stroke();
+    p[0].forEach(function(v,i){ctx.fillStyle=p[1];ctx.beginPath();ctx.arc(xP(i),yP(v),4,0,Math.PI*2);ctx.fill();});
+  });
+  // Tess line
+  var tC=isLt?'rgba(120,80,200,0.6)':'rgba(180,160,255,0.5)';
+  var tS=false;ctx.strokeStyle=tC;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.beginPath();
+  tess.forEach(function(v,i){if(!v)return;if(!tS){ctx.moveTo(xP(i),yP(v));tS=true;}else ctx.lineTo(xP(i),yP(v));});
+  ctx.stroke();ctx.setLineDash([]);
+  tess.forEach(function(v,i){if(!v)return;ctx.fillStyle=tC;ctx.beginPath();ctx.arc(xP(i),yP(v),3,0,Math.PI*2);ctx.fill();});
+  // Goal line
+  var goal=progState.vrOnboarding&&progState.vrOnboarding.rangeGoal;
+  if(goal&&goal>=mn&&goal<=mx){
+    ctx.strokeStyle=isLt?'rgba(220,160,30,0.5)':'rgba(255,200,100,0.4)';
+    ctx.lineWidth=1;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(padL,yP(goal));ctx.lineTo(W-padR,yP(goal));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=ctx.strokeStyle;ctx.textAlign='left';ctx.font='8px "JetBrains Mono",monospace';
+    ctx.fillText('GOAL: '+vrMidiToName(goal),padL+4,yP(goal)-6);
+  }
+  // Tap interaction
+  canvas._vrPts=rev.map(function(s,i){return{x:xP(i),s:s,i:i};});
+  canvas.onclick=function(e){
+    var r=canvas.getBoundingClientRect(),tapX=(e.clientX-r.left)*(canvas.width/r.width);
+    var best=null,bd=999;
+    canvas._vrPts.forEach(function(p){var d=Math.abs(p.x-tapX);if(d<bd){bd=d;best=p;}});
+    if(best&&bd<xStep*0.6){
+      ctx.save();ctx.strokeStyle=isLt?'rgba(20,100,60,0.5)':'rgba(52,211,153,0.6)';ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(best.x,yP(best.s.highComf||60),8,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.arc(best.x,yP(best.s.lowComf||48),8,0,Math.PI*2);ctx.stroke();
+      ctx.restore();
+      vrShowTimelineDetail(best.s,best.i,rev.length);
+    }
+  };
+  vrRenderNoteHeatmap(sessions);
+  vrRenderGoalSetter();
+}
+
+function vrShowTimelineDetail(s,idx,total) {
+  var el=document.getElementById('vrTimelineDetail'); if(!el)return;
+  var isIt=(typeof progState!=='undefined'&&progState.lang==='it');
+  var d=new Date(s.date);
+  var ds=d.toLocaleDateString(isIt?'it-IT':'en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  var vn=s.voiceType?(isIt&&s.voiceType.nameIt?s.voiceType.nameIt:s.voiceType.name):'—';
+  var lo=s.lowComf?vrMidiToName(s.lowComf):'—',hi=s.highComf?vrMidiToName(s.highComf):'—';
+  var rng=(s.lowComf&&s.highComf)?(s.highComf-s.lowComf)+(isIt?' semitoni':' semitones'):'';
+  var tc=s.tessCenter?vrMidiToName(s.tessCenter):'—';
+  var ext=(s.extLow&&s.extHigh)?vrMidiToName(s.extLow)+' – '+vrMidiToName(s.extHigh):'';
+  el.style.display='';
+  el.innerHTML='<div class="card" style="padding:14px;overflow:hidden;"><div class="card-glow"></div>'
+    +'<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">'+(isIt?'Sessione ':'Session ')+(idx+1)+'/'+total+'</div>'
+    +'<div style="font-family:\'Bebas Neue\',\'GlyphFix\',sans-serif;font-size:18px;letter-spacing:2px;color:'+(s.voiceType?vrVoiceColor(s.voiceType.color):'var(--text)')+';margin-bottom:2px;">'+vn+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-bottom:8px;">'+ds+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11px;color:var(--text-dim);">'
+    +'<div>'+(isIt?'Comoda:':'Comfortable:')+'</div><div style="color:var(--text);">'+lo+' – '+hi+' ('+rng+')</div>'
+    +(ext?'<div>'+(isIt?'Estesa:':'Extended:')+'</div><div style="color:var(--text);">'+ext+'</div>':'')
+    +'<div>Tessitura:</div><div style="color:var(--text);">'+tc+'</div>'
+    +'</div></div>';
+}
+
+function vrRenderNoteHeatmap(sessions) {
+  var el=document.getElementById('vrTimelineHeatmap'); if(!el||sessions.length<2)return;
+  var isIt=(typeof progState!=='undefined'&&progState.lang==='it');
+  var _hmLt=document.body.classList.contains('light');
+  var _hmAccent=_hmLt?'20,120,70':'52,211,153';
+  var counts={},minN=999,maxN=0;
+  sessions.forEach(function(s){
+    if(!s.lowComf||!s.highComf)return;
+    for(var m=s.lowComf;m<=s.highComf;m++){counts[m]=(counts[m]||0)+1;if(m<minN)minN=m;if(m>maxN)maxN=m;}
+  });
+  if(minN>maxN)return;
+  var noteN=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+  var maxC=Math.max.apply(null,Object.keys(counts).map(function(k){return counts[k];}));
+  var html='<div class="card" style="padding:14px;"><div class="card-glow"></div>'
+    +'<div class="card-label">'+(isIt?'Mappa delle Note':'Note Frequency')+'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.5;">'
+    +(isIt?'Le note più scure compaiono in più sessioni.':'Darker notes appeared in more sessions.')+'</div>'
+    +'<div style="display:flex;gap:1px;align-items:flex-end;height:32px;">';
+  for(var m=minN;m<=maxN;m++){
+    var c=counts[m]||0,pct=c/maxC,op=(0.1+pct*0.7).toFixed(2);
+    html+='<div style="flex:1;height:'+Math.max(4,Math.round(pct*32))+'px;background:rgba('+_hmAccent+','+op+');border-radius:1px;'
+      +(m%12===0?'border-left:1px solid var(--border-soft);':'')+'" title="'+noteN[m%12]+(Math.floor(m/12)-1)+': '+c+'/'+sessions.length+'"></div>';
+  }
+  html+='</div><div style="display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:3px;">'
+    +'<span>'+noteN[minN%12]+(Math.floor(minN/12)-1)+'</span><span>'+noteN[maxN%12]+(Math.floor(maxN/12)-1)+'</span></div></div>';
+  el.innerHTML=html;
+}
+
+function vrRenderGoalSetter() {
+  var el=document.getElementById('vrTimelineGoal'); if(!el)return;
+  var isIt=(typeof progState!=='undefined'&&progState.lang==='it');
+  var goal=progState.vrOnboarding&&progState.vrOnboarding.rangeGoal;
+  var sessions=vrGetSessions(),reached=false;
+  if(goal&&sessions.length>0){
+      var _s0=sessions[0];
+      if(_s0.tessCenter&&goal>_s0.tessCenter) reached=!!(_s0.highComf&&_s0.highComf>=goal);
+      else if(_s0.tessCenter&&goal<_s0.tessCenter) reached=!!(_s0.lowComf&&_s0.lowComf<=goal);
+    }
+  var noteN=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+  function nn(m){return noteN[m%12]+(Math.floor(m/12)-1);}
+  var h='<div class="card" style="padding:14px;"><div class="card-glow"></div>'
+    +'<div class="card-label">'+(isIt?'Obiettivo':'Goal')+'</div>';
+  if(goal&&reached){
+    h+='<div style="font-size:13px;color:var(--accent);margin-bottom:8px;text-align:center;">'
+      +(isIt?'Hai raggiunto '+nn(goal)+'!':'You reached '+nn(goal)+'!')+'</div>'
+      +'<button class="iv-btn" onclick="vrClearGoal()" style="padding:10px;font-size:11px;width:100%;">'
+      +(isIt?'Imposta nuovo obiettivo':'Set new goal')+'</button>';
+  } else if(goal){
+    h+='<div style="text-align:center;margin-bottom:6px;">'
+      +'<div style="font-family:\'Bebas Neue\',\'GlyphFix\',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent);">'+nn(goal)+'</div>'
+      +'<div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;">'+(isIt?'NOTA OBIETTIVO':'TARGET NOTE')+'</div></div>'
+      +'<button class="iv-btn" onclick="vrClearGoal()" style="padding:8px;font-size:10px;width:100%;margin-top:6px;">'
+      +(isIt?'Rimuovi':'Remove')+'</button>';
+  } else {
+    h+='<div id="vrGoalStrip" style="overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;padding:8px 0;margin:0 -14px;scrollbar-width:none;">';
+    for(var m=36;m<=96;m++){
+      var isC=(m%12===0);
+      h+='<div class="vr-gn" data-m="'+m+'" onclick="vrPickGoalNote('+m+')" style="display:inline-block;width:42px;text-align:center;padding:8px 0;font-family:\'JetBrains Mono\',monospace;font-size:'+(isC?'11':'9')+'px;color:var(--muted);cursor:pointer;'+(isC?'font-weight:bold;':'')+'">'+nn(m)+'</div>';
+    }
+    h+='</div>'
+      +'<div id="vrGoalPreview" style="text-align:center;font-family:\'Bebas Neue\',\'GlyphFix\',sans-serif;font-size:28px;letter-spacing:2px;color:var(--accent);margin:4px 0 8px;">C4</div>'
+      +'<button class="iv-btn primary" onclick="vrConfirmGoal()" style="width:100%;padding:10px;background:var(--theme-grad);font-size:11px;letter-spacing:2px;">'+(isIt?'IMPOSTA OBIETTIVO':'SET GOAL')+'</button>';
+  }
+  h+='</div>'; el.innerHTML=h;
+  // Scroll strip to C4 center
+  var _gs = document.getElementById('vrGoalStrip');
+  if (_gs) {
+    var _c4 = _gs.querySelector('[data-m="60"]');
+    if (_c4) setTimeout(function() { _gs.scrollLeft = _c4.offsetLeft - _gs.clientWidth/2 + 21; }, 30);
+  }
+}
+
+var _vrGoalNoteNames = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+function _vrNN(m) { return _vrGoalNoteNames[m%12] + (Math.floor(m/12)-1); }
+
+var _vrPickedGoalMidi = 60;
+
+function vrPickGoalNote(midi) {
+  _vrPickedGoalMidi = midi;
+  document.querySelectorAll('.vr-gn').forEach(function(el) {
+    el.style.color = (parseInt(el.dataset.m) === midi) ? 'var(--accent)' : 'var(--muted)';
+    el.style.borderBottom = (parseInt(el.dataset.m) === midi) ? '2px solid var(--accent)' : 'none';
+  });
+  var p = document.getElementById('vrGoalPreview');
+  if (p) p.textContent = _vrNN(midi);
+  // Scroll to center
+  var strip = document.getElementById('vrGoalStrip');
+  var el = strip && strip.querySelector('[data-m="' + midi + '"]');
+  if (el && strip) strip.scrollTo({ left: el.offsetLeft - strip.clientWidth/2 + 21, behavior: 'smooth' });
+}
+
+function vrConfirmGoal() {
+  if (!progState.vrOnboarding) progState.vrOnboarding = {};
+  progState.vrOnboarding.rangeGoal = _vrPickedGoalMidi;
+  progSave();
+  vrRenderTimeline();
+}
+
+function vrTapGoal(midi) {
+  document.querySelectorAll('.vr-goal-note.selected').forEach(function(n){n.classList.remove('selected');});
+  var el=document.querySelector('.vr-goal-note[data-midi="'+midi+'"]');
+  if(el)el.classList.add('selected');
+  setTimeout(function(){
+    if(!progState.vrOnboarding)progState.vrOnboarding={};
+    progState.vrOnboarding.rangeGoal=midi;
+    progSave();
+    vrRenderTimeline();
+  },200);
+}
+
+function vrClearGoal() {
+  if (progState.vrOnboarding) {
+    progState.vrOnboarding.rangeGoal = null;
+    progSave();
+  }
+  vrRenderTimeline();
+}
+
+
 function vrSaveResult() {
   if (!vrCurrentResult) return;
+  if (progState.vrOnboarding) {
+    progState.vrOnboarding.lastAssessment = new Date().toISOString();
+    progSave();
+  }
   const sessions = vrGetSessions();
   sessions.unshift(vrCurrentResult);
   if (sessions.length > 20) sessions.pop();
@@ -97280,13 +98213,29 @@ function vrRenderHistory() {
   if (sessions.length >= 2) {
     chartHtml = `<div class="card" style="margin-bottom:10px;">
       <div class="card-glow"></div>
-      <div class="card-label">Range Over Time</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div class="card-label" style="margin-bottom:0;">Range Over Time</div>
+        <div style="font-size:8px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;white-space:nowrap;">TAP TO EXPAND ›</div>
+      </div>
       <canvas id="vrProgressChart" style="width:100%;height:72px;display:block;"></canvas>
-      <div style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">${(progState.lang==='it')?'La stessa voce varia di circa mezzo semitono da un giorno all\'altro. Un cambiamento di un semitono rientra nella variazione normale.':'The same voice varies by about half a semitone from day to day. A change of one semitone is inside normal variation.'}</div>
+      <div style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;">${(progState.lang==='it')?'La stessa voce varia di circa mezzo semitono tra un giorno e l\u2019altro. Spostamenti di un semitono sono normali.':'The same voice varies by about half a semitone day to day. A one-semitone move is normal variation.'}</div>
+      ${(function(){
+        if (typeof vrIsVoiceChanging !== 'function' || !vrIsVoiceChanging()) return '';
+        var _ts = [...sessions].reverse().map(function(s){return s.tessCenter||0;}).filter(function(v){return v>0;});
+        if (_ts.length < 3) return '';
+        var _drift = Math.abs(_ts[_ts.length-1] - _ts[0]);
+        if (_drift < 2) return '';
+        var _dir = _ts[_ts.length-1] > _ts[0];
+        return '<div style="font-size:10px;color:var(--accent-warm);line-height:1.5;margin-top:4px;">' +
+          ((progState.lang==='it')
+            ? 'Il centro della tessitura si è spostato di ' + Math.round(_drift) + ' semitoni ' + (_dir?'verso l\u2019alto':'verso il basso') + '. È normale durante il cambio di voce.'
+            : 'Your tessitura center has moved ' + Math.round(_drift) + ' semitones ' + (_dir?'higher':'lower') + '. That is normal while your voice is changing.')
+          + '</div>';
+      })()}
     </div>`;
   }
 
-  const listHtml = sessions.map(s => {
+  const listHtml = sessions.slice().sort(function(a,b){ return new Date(b.date) - new Date(a.date); }).map((s, si) => {
     const vt = s.voiceType;
     const color  = vt ? vrVoiceColor(vt.color) : 'var(--accent)';
     const date   = new Date(s.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
@@ -97294,7 +98243,11 @@ function vrRenderHistory() {
     const hiStr  = s.highComf ? vrMidiToName(s.highComf) : '—';
     const mLeft  = s.lowComf  ? vrMidiPct(s.lowComf) + '%' : '0%';
     const mWidth = (s.lowComf && s.highComf) ? (vrMidiPct(s.highComf) - vrMidiPct(s.lowComf)) + '%' : '30%';
-    return `<div class="vr-session-card">
+    const isIt = (typeof progState !== 'undefined' && progState.lang === 'it');
+    const tc = s.tessCenter ? vrMidiToName(s.tessCenter) : null;
+    const ext = (s.extLow && s.extHigh) ? vrMidiToName(s.extLow) + ' – ' + vrMidiToName(s.extHigh) : null;
+    const semis = (s.lowComf && s.highComf) ? (s.highComf - s.lowComf) : 0;
+    return `<div class="vr-session-card" style="cursor:pointer;" onclick="vrToggleSessionDetail(this)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">${date}</div>
         <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:15px;letter-spacing:2px;color:${color};">${vt?vt.name.toUpperCase():'—'}</div>
@@ -97303,10 +98256,28 @@ function vrRenderHistory() {
       <div class="vr-session-mini">
         <div class="vr-session-bar" style="left:${mLeft};width:${mWidth};background:${color};"></div>
       </div>
+      <div class="vr-session-detail" style="font-size:10.5px;color:var(--text-dim);line-height:1.7;padding-top:8px;margin-top:8px;border-top:1px solid var(--border-soft);">
+        ${tc ? '<div>' + (isIt?'Tessitura: ':'Tessitura: ') + '<span style="color:var(--text);">' + tc + '</span></div>' : ''}
+        ${ext ? '<div>' + (isIt?'Estensione estesa: ':'Extended range: ') + '<span style="color:var(--text);">' + ext + '</span></div>' : ''}
+        <div>${isIt?'Ampiezza: ':'Width: '}<span style="color:var(--text);">${semis} ${isIt?'semitoni':'semitones'}</span></div>
+      </div>
     </div>`;
   }).join('');
 
   el.innerHTML = chartHtml + listHtml;
+
+  // Make the chart card tappable to open timeline
+  if (sessions.length >= 2) {
+    var chartCard = document.getElementById('vrProgressChart');
+    if (chartCard && chartCard.parentElement) {
+      chartCard.parentElement.style.cursor = 'pointer';
+      chartCard.parentElement.onclick = function(e) {
+        // Don't fire if they tapped a button inside
+        if (e.target.tagName === 'BUTTON') return;
+        vrOpenTimeline();
+      };
+    }
+  }
 
   // Draw progress chart
   if (sessions.length >= 2) {
@@ -97319,7 +98290,8 @@ function vrRenderHistory() {
       const rev = [...sessions].reverse();
       const lows  = rev.map(s => s.lowComf  || 0);
       const highs = rev.map(s => s.highComf || 0);
-      const all   = [...lows,...highs].filter(v=>v>0);
+      const tess  = rev.map(s => s.tessCenter || 0);
+      const all   = [...lows,...highs,...tess].filter(v=>v>0);
       if (all.length < 2) return;
       const mn = Math.min(...all) - 2, mx = Math.max(...all) + 2;
       const xS = W / Math.max(rev.length - 1, 1);
@@ -97329,12 +98301,33 @@ function vrRenderHistory() {
       highs.forEach((v,i) => { i===0?ctx.moveTo(i*xS,yS(v)):ctx.lineTo(i*xS,yS(v)); });
       [...lows].reverse().forEach((v,i)=>ctx.lineTo((rev.length-1-i)*xS,yS(v)));
       ctx.closePath(); ctx.fill();
+      // Stability bands: 3.5% frequency variation = ~0.6 semitones (Printz 2018).
+      // Draw a soft band around each line so users see that small changes are noise.
+      var STAB_SEMI = 0.6;
+      [highs, lows].forEach(function(vals) {
+        ctx.fillStyle = 'rgba(128,128,128,0.06)';
+        ctx.beginPath();
+        vals.forEach(function(v,i) { i===0 ? ctx.moveTo(i*xS, yS(v+STAB_SEMI)) : ctx.lineTo(i*xS, yS(v+STAB_SEMI)); });
+        for (var _si = vals.length-1; _si >= 0; _si--) ctx.lineTo(_si*xS, yS(vals[_si]-STAB_SEMI));
+        ctx.closePath(); ctx.fill();
+      });
       const _vrLt = document.body.classList.contains('light');
       [[highs, _vrLt?'rgba(184,80,50,0.85)':'rgba(255,160,122,0.6)'],[lows, _vrLt?'rgba(15,110,72,0.85)':'rgba(52,211,153,0.6)']].forEach(([vals,color])=>{
         ctx.strokeStyle=color; ctx.lineWidth=1.5;
         ctx.beginPath(); vals.forEach((v,i)=>{i===0?ctx.moveTo(i*xS,yS(v)):ctx.lineTo(i*xS,yS(v));}); ctx.stroke();
         vals.forEach((v,i)=>{ if(!v)return; ctx.fillStyle=color; ctx.beginPath(); ctx.arc(i*xS,yS(v),3,0,Math.PI*2); ctx.fill(); });
       });
+      // Tessitura center line (dashed, accent color)
+      var tessValid = tess.filter(function(v){return v>0;});
+      if (tessValid.length >= 2) {
+        ctx.strokeStyle = _vrLt ? 'rgba(120,80,200,0.6)' : 'rgba(180,160,255,0.5)';
+        ctx.lineWidth = 1; ctx.setLineDash([4,3]);
+        ctx.beginPath();
+        var _tessStarted = false;
+        tess.forEach(function(v,i) { if(!v)return; if(!_tessStarted){ctx.moveTo(i*xS,yS(v));_tessStarted=true;}else{ctx.lineTo(i*xS,yS(v));} });
+        ctx.stroke(); ctx.setLineDash([]);
+        tess.forEach(function(v,i) { if(!v)return; ctx.fillStyle=ctx.strokeStyle; ctx.beginPath(); ctx.arc(i*xS,yS(v),2,0,Math.PI*2); ctx.fill(); });
+      }
     });
   }
 }
@@ -97363,16 +98356,22 @@ function vrRenderReference() {
     : satbTypes.slice().sort((a,b) => a.tessCenter - b.tessCenter);
 
   // Strip first — it's the orienting overview
-  let html = `<div class="vr-strip-wrap" style="margin-bottom:10px;">
+  // Always render ALL types in the strip. Extended ones start hidden.
+  // The toggle animates them in/out without re-rendering.
+  const allForStrip = [...satbTypes, ...extTypes].sort((a,b) => a.tessCenter - b.tessCenter);
+
+  let html = `<div class="vr-strip-wrap" id="vrRefStrip" style="margin-bottom:10px;">
     <div class="vr-strip-title">${t('vr_voice_map')}</div>
     <div style="position:relative;padding-left:66px;">`;
 
-  allTypes.forEach(vt => {
+  allForStrip.forEach(vt => {
     const lP = pct(vt.lowMidi), wP = pct(vt.highMidi) - lP;
-    const isExt = VR_EXTENDED_TYPES.some(e => e.id === vt.id);
-    html += `<div class="vr-lane" style="${isExt ? 'opacity:0.75' : ''}">
-      <div class="vr-lane-label" style="color:${vt.color};${isExt ? 'font-style:italic' : ''}">${((progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name).split(' ')[0]}</div>
-      <div class="vr-lane-bg" style="left:${lP}%;width:${wP}%;background:${vt.color};opacity:${isExt ? '0.18' : '0.25'};${isExt ? 'border:1px dashed '+vt.color+'66' : ''}"></div>
+    const isSatb = VR_SATB_IDS.has(vt.id);
+    const isSpecialist = VR_EXTENDED_TYPES.some(e => e.id === vt.id);
+    const hidden = !isSatb && !vrShowExtended;
+    html += `<div class="vr-lane${hidden ? ' vr-lane-hidden' : ''}" data-midi-lo="${vt.lowMidi}" data-midi-hi="${vt.highMidi}" data-ext="${isSatb ? '0' : '1'}" style="${isSpecialist ? 'opacity:0.75' : ''}">
+      <div class="vr-lane-label" style="color:${vrVoiceColor(vt.color)};${isSpecialist ? 'font-style:italic' : ''}">${((progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name).split(' ')[0]}</div>
+      <div class="vr-lane-bg" style="left:${lP}%;width:${wP}%;background:${vt.color};opacity:${isSpecialist ? '0.18' : '0.25'};${isSpecialist ? 'border:1px dashed '+vt.color+'66' : ''}"></div>
       <div class="vr-lane-note">${vrMidiToName(vt.lowMidi)}–${vrMidiToName(vt.highMidi)}</div>
     </div>`;
   });
@@ -97398,12 +98397,12 @@ function vrRenderReference() {
       </div>
       <div style="font-size:14px;color:var(--accent);opacity:0.6;">→</div>
     </div>
-    <div onclick="vrToggleExtended()" style="flex:1;display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--panel);border:1px solid ${vrShowExtended ? 'var(--accent)' : 'var(--border-soft)'};border-radius:var(--r-md);cursor:pointer;transition:border-color 0.2s;gap:8px;">
+    <div onclick="vrToggleExtended()" data-vr-ext-btn style="flex:1;display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--panel);border:1px solid ${vrShowExtended ? 'var(--accent)' : 'var(--border-soft)'};border-radius:var(--r-md);cursor:pointer;transition:border-color 0.2s,color 0.2s;gap:8px;">
       <div>
-        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${vrShowExtended ? 'var(--accent)' : 'var(--text-dim)'};font-weight:600;margin-bottom:2px;">${vrShowExtended ? t('vr_all_types_check') : t('vr_all_types')}</div>
+        <div data-vr-ext-label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${vrShowExtended ? 'var(--accent)' : 'var(--text-dim)'};font-weight:600;margin-bottom:2px;transition:color 0.2s;">${vrShowExtended ? t('vr_all_types_check') : t('vr_all_types')}</div>
         <div style="font-size:10px;color:var(--muted);">${t('vr_inc_specialist')}</div>
       </div>
-      <div style="font-size:16px;color:${vrShowExtended ? 'var(--accent)' : 'var(--muted)'};transition:transform 0.3s;${vrShowExtended ? 'transform:rotate(45deg)' : ''}">+</div>
+      <div data-vr-ext-icon style="font-size:16px;color:${vrShowExtended ? 'var(--accent)' : 'var(--muted)'};transition:transform 0.3s,color 0.2s;${vrShowExtended ? 'transform:rotate(45deg)' : ''}">+</div>
     </div>
   </div>`;
 
@@ -97414,10 +98413,24 @@ function vrRenderReference() {
     ? [...satbTypes, ...extTypes].sort((a,b) => a.tessCenter - b.tessCenter)
     : satbTypes.slice().sort((a,b) => a.tessCenter - b.tessCenter);
 
-  sortedCards.forEach(vt => {
-    const isExt = !VR_SATB_IDS.has(vt.id);
-    vrAppendRefCard(el, vt, pct, isExt);
-  });
+  // SATB cards only (always shown)
+  var satbCards = sortedCards.filter(vt => VR_SATB_IDS.has(vt.id));
+  satbCards.forEach(vt => { vrAppendRefCard(el, vt, pct, false); });
+
+  // Extended cards wrapper (animated open/closed)
+  var extWrap = document.createElement('div');
+  extWrap.id = 'vrExtCardsWrap';
+  extWrap.style.overflow = 'hidden';
+  extWrap.style.maxHeight = '0';
+  extWrap.style.opacity = '0';
+  el.appendChild(extWrap);
+  if (vrShowExtended) {
+    var extCards = sortedCards.filter(vt => !VR_SATB_IDS.has(vt.id));
+    VR_EXTENDED_TYPES.forEach(vt => extCards.push(vt));
+    extCards.sort((a,b) => a.tessCenter - b.tessCenter);
+    extCards.forEach(vt => { vrAppendRefCard(extWrap, vt, pct, true); });
+    requestAnimationFrame(() => { _vrAnimDetail(extWrap, true); });
+  }
 
   // Concepts card
   const conceptsDiv = document.createElement('div');
@@ -97455,7 +98468,7 @@ function vrAppendRefCard(container, vt, pctFn, isExt) {
     <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 5%,${vt.color}88 50%,transparent 95%);"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
       <div>
-        <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:22px;letter-spacing:3px;color:${vt.color};">${(progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name}</div>
+        <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:22px;letter-spacing:3px;color:${vrVoiceColor(vt.color)};">${(progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name}</div>
         <div style="font-size:9.5px;letter-spacing:1.5px;color:var(--text-dim);font-variant-numeric:tabular-nums;">${vrMidiToName(vt.lowMidi)} – ${vrMidiToName(vt.highMidi)} · ${vrOctaveSpan(vt.lowMidi,vt.highMidi)}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
@@ -97469,22 +98482,143 @@ function vrAppendRefCard(container, vt, pctFn, isExt) {
     <div class="vr-ref-card-body">
       <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;margin-bottom:10px;">${(progState.lang === 'it')&&vt.descIt?vt.descIt:vt.desc}</div>
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Timbre</div>
-      <div style="font-size:11px;color:${vt.color};margin-bottom:10px;">${(progState.lang === 'it')&&vt.timbreIt?vt.timbreIt:vt.timbre}</div>
+      <div style="font-size:11px;color:${vrVoiceColor(vt.color)};margin-bottom:10px;">${(progState.lang === 'it')&&vt.timbreIt?vt.timbreIt:vt.timbre}</div>
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Notable singers</div>
-      <div>${vt.singers.map(s=>`<span class="vr-singer-chip" style="border-color:${vt.color}33">${s}</span>`).join('')}</div>
-      <button onclick="event.stopPropagation();vrOpenArtistReference('${vt.id}')" style="margin-top:12px;width:100%;padding:9px;background:transparent;border:1px solid ${vt.color}44;border-radius:var(--r-sm);color:${vt.color};font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='${vt.color}12'" onmouseout="this.style.background='transparent'">All ${((progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name).split(' ')[0]} Artists →</button>
+      <div>${vt.singers.map(s=>`<span class="vr-singer-chip" style="border-color:${vrVoiceColor(vt.color)}33">${s}</span>`).join('')}</div>
+      <button onclick="event.stopPropagation();vrOpenArtistReference('${vt.id}')" style="margin-top:12px;width:100%;padding:9px;background:transparent;border:1px solid ${vt.color}44;border-radius:var(--r-sm);color:${vrVoiceColor(vt.color)};font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='${vt.color}12'" onmouseout="this.style.background='transparent'">All ${((progState.lang === 'it')&&vt.nameIt?vt.nameIt:vt.name).split(' ')[0]} Artists →</button>
     </div>`;
   container.appendChild(div);
 }
 
 function vrToggleRefCard(id) {
-  const el = document.getElementById('vrRefCard-' + id);
-  if (el) el.classList.toggle('expanded');
+  var el = document.getElementById('vrRefCard-' + id);
+  if (!el) return;
+  var body = el.querySelector('.vr-ref-card-body');
+  if (!body) { el.classList.toggle('expanded'); return; }
+  var isOpen = el.classList.contains('expanded');
+  // Close all others
+  document.querySelectorAll('.vr-ref-card.expanded').forEach(function(c) {
+    if (c !== el) {
+      c.classList.remove('expanded');
+      var b = c.querySelector('.vr-ref-card-body');
+      if (b) _vrAnimDetail(b, false);
+    }
+  });
+  if (isOpen) {
+    el.classList.remove('expanded');
+    _vrAnimDetail(body, false);
+  } else {
+    el.classList.add('expanded');
+    _vrAnimDetail(body, true);
+  }
 }
 
 function vrToggleExtended() {
   vrShowExtended = !vrShowExtended;
-  vrRenderReference();
+  var isExt = vrShowExtended;
+  var sMin = isExt ? VR_STRIP_MIN_EXT : VR_STRIP_MIN;
+  var sMax = isExt ? VR_STRIP_MAX_EXT : VR_STRIP_MAX;
+  var sSpan = sMax - sMin;
+  var pct = function(m) { return Math.max(0, Math.min(100, (m - sMin) / sSpan * 100)); };
+
+  // ── Animate the strip with rAF ──
+  var strip = document.getElementById('vrRefStrip');
+  if (strip) {
+    var lanes = strip.querySelectorAll('.vr-lane[data-midi-lo]');
+    // Snapshot current bar positions
+    var snapshots = [];
+    lanes.forEach(function(lane) {
+      var bar = lane.querySelector('.vr-lane-bg');
+      snapshots.push({
+        lane: lane,
+        bar: bar,
+        oldLeft: bar ? parseFloat(bar.style.left) || 0 : 0,
+        oldWidth: bar ? parseFloat(bar.style.width) || 0 : 0,
+        oldHeight: lane.offsetHeight,
+        isExt: lane.dataset.ext === '1'
+      });
+    });
+    // Calculate new positions
+    snapshots.forEach(function(s) {
+      var lo = parseInt(s.lane.dataset.midiLo), hi = parseInt(s.lane.dataset.midiHi);
+      s.newLeft = pct(lo);
+      s.newWidth = pct(hi) - pct(lo);
+      s.newHeight = (s.isExt && !isExt) ? 0 : 17;
+      s.newOpacity = (s.isExt && !isExt) ? 0 : 1;
+      // Show extended lanes before animating in
+      if (s.isExt && isExt) {
+        s.lane.classList.remove('vr-lane-hidden');
+        s.lane.style.height = '0px';
+        s.lane.style.opacity = '0';
+        s.oldHeight = 0;
+      }
+    });
+    // Animate over 300ms
+    var startT = null, dur = 300;
+    function stepStrip(ts) {
+      if (!startT) startT = ts;
+      var p = Math.min(1, (ts - startT) / dur);
+      var ep = 1 - (1 - p) * (1 - p); // ease-out
+      snapshots.forEach(function(s) {
+        if (s.bar) {
+          s.bar.style.left = (s.oldLeft + (s.newLeft - s.oldLeft) * ep) + '%';
+          s.bar.style.width = (s.oldWidth + (s.newWidth - s.oldWidth) * ep) + '%';
+        }
+        var h = s.oldHeight + (s.newHeight - s.oldHeight) * ep;
+        s.lane.style.height = h + 'px';
+        s.lane.style.opacity = s.isExt ? (isExt ? ep : 1 - ep) : 1;
+        s.lane.style.marginBottom = (s.isExt && !isExt) ? (5 * (1 - ep)) + 'px' : '5px';
+      });
+      if (p < 1) {
+        requestAnimationFrame(stepStrip);
+      } else {
+        // Clean up: set final states and add hidden class
+        snapshots.forEach(function(s) {
+          s.lane.style.height = '';
+          s.lane.style.opacity = '';
+          s.lane.style.marginBottom = '';
+          if (s.bar) { s.bar.style.left = s.newLeft + '%'; s.bar.style.width = s.newWidth + '%'; }
+          if (s.isExt && !isExt) s.lane.classList.add('vr-lane-hidden');
+        });
+      }
+    }
+    requestAnimationFrame(stepStrip);
+    // Update axis
+    var axis = strip.querySelector('.vr-strip-axis');
+    if (axis) {
+      var marks = isExt
+        ? [[36,'C2'],[40,'E2'],[48,'C3'],[60,'C4'],[72,'C5'],[84,'C6'],[91,'G6']]
+        : [[40,'E2'],[48,'C3'],[60,'C4'],[72,'C5'],[84,'C6']];
+      axis.innerHTML = marks.map(function(mk) {
+        return '<span class="vr-axis-label' + (mk[0]===60?' c4':'') + '" style="left:' + pct(mk[0]) + '%">' + mk[1] + '</span>';
+      }).join('');
+    }
+  }
+
+  // ── Animate the extended cards ──
+  var wrap = document.getElementById('vrExtCardsWrap');
+  if (wrap) {
+    if (isExt) {
+      var extTypes = VR_VOICE_TYPES.filter(function(vt){ return !VR_SATB_IDS.has(vt.id); }).concat(VR_EXTENDED_TYPES);
+      extTypes.sort(function(a,b){ return a.tessCenter - b.tessCenter; });
+      wrap.innerHTML = '';
+      extTypes.forEach(function(vt) { vrAppendRefCard(wrap, vt, pct, true); });
+      _vrAnimDetail(wrap, true);
+    } else {
+      _vrAnimDetail(wrap, false);
+      setTimeout(function() { wrap.innerHTML = ''; }, 220);
+    }
+  }
+
+  // ── Update button ──
+  var btn = document.querySelector('[data-vr-ext-btn]');
+  if (btn) {
+    var icon = btn.querySelector('[data-vr-ext-icon]');
+    var label = btn.querySelector('[data-vr-ext-label]');
+    if (icon) { icon.style.transform = isExt ? 'rotate(45deg)' : ''; icon.style.color = isExt ? 'var(--accent)' : 'var(--muted)'; }
+    if (label) { label.style.color = isExt ? 'var(--accent)' : 'var(--text-dim)'; label.textContent = isExt ? t('vr_all_types_check') : t('vr_all_types'); }
+    btn.style.borderColor = isExt ? 'var(--accent)' : 'var(--border-soft)';
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -123148,7 +124282,7 @@ guitar: { color:'#ffa07a', sections:[
       body_it:'I segni di posizione appaiono ai tasti <strong>3, 5, 7, 9</strong> e un doppio segno al <strong>12</strong>. Il pattern si ripete poi un\'ottava più in alto ai tasti 15, 17, 19. I puntini laterali sul bordo del manico forniscono le stesse informazioni senza guardare in basso.<br><br>Strategia di navigazione per i principianti: impara prima tutte le note naturali (senza diesis o bemolle) sulla corda Mi basso, poi la corda La. I pattern si ripetono sulle altre, spostati in base all\'intervallo di accordatura. Con mesi di pratica regolare, le posizioni diventano riflesso piuttosto che calcolo.' },
     { eye:'FRETBOARD', eye_it:'TASTIERA', head:'Capo', head_it:'Capodastro', sub:'A movable nut', sub_it:'Un capotasto mobile', type:'text',
       body:'A <strong>capo</strong> is a spring or screw clamp placed across all strings at a fret, effectively raising the nut and transposing the whole instrument upward.<br><br>With a capo at fret 2, all your chord shapes sound a whole step higher. A G shape becomes A. A C shape becomes D. This is a fast way to match a singer\'s key without learning new chord shapes: you use familiar fingering in a new key.<br><br>Good capos apply even pressure across all strings without pulling them sharp. Cheap ones can cause tuning problems. After placing a capo, retune.',
-      body_it:'Un <strong>capodastro</strong> è un morsetto a molla o a vite posizionato su tutte le corde a un determinato tasto, alzando effettivamente il capotasto e trasponendo l\'intero strumento verso l\'alto.<br><br>Con un capodastro al tasto 2, tutte le tue forme di accordo suonano un tono intero più alto. Una forma di Sol diventa La. Una forma di Do diventa Re. Questo è un modo rapido per adattarsi alla tonalità di un cantante senza imparare nuove forme di accordo: usi una diteggiatura familiare in una nuova tonalità.<br><br>I buoni capodastri applicano una pressione uniforme su tutte le corde senza tirarle verso l\'acuto. Quelli economici possono causare problemi di intonazione. Dopo aver posizionato un capodastro, riaccorda.' }
+      body_it:'Un <strong>capodastro</strong> è un morsetto a molla o a vite posizionato su tutte le corde a un determinato tasto, alzando effettivamente il capotasto e trasponendo l\'intero strumento verso l\u2019alto.<br><br>Con un capodastro al tasto 2, tutte le tue forme di accordo suonano un tono intero più alto. Una forma di Sol diventa La. Una forma di Do diventa Re. Questo è un modo rapido per adattarsi alla tonalità di un cantante senza imparare nuove forme di accordo: usi una diteggiatura familiare in una nuova tonalità.<br><br>I buoni capodastri applicano una pressione uniforme su tutte le corde senza tirarle verso l\'acuto. Quelli economici possono causare problemi di intonazione. Dopo aver posizionato un capodastro, riaccorda.' }
   ]},
   { title:'READING TAB', title_it:'LEGGERE LA TAB', pages:[
     { eye:'GUITAR · TAB', eye_it:'CHITARRA · TAB', head:'Tablature\nExplained', head_it:'La Tablatura\nSpiegata', sub:'No theory required', sub_it:'Nessuna teoria necessaria', type:'text',
@@ -123391,7 +124525,7 @@ piano: { color:'#b8a3ff', sections:[
       body_it:'Un pianoforte completo ha <strong>88 tasti</strong>, 52 bianchi e 36 neri, che coprono poco più di 7 ottave. La nota più bassa è La0 (27,5 Hz, un profondo rombo), la più alta Do8 (4.186 Hz, un lieve scintillio). La maggior parte della musica scritta vive tra Do2 e Do7.<br><br>I tasti neri sono in gruppi alternati di <strong>due e tre</strong>, uno schema che si ripete identico a ogni ottava. <strong>Do è sempre il tasto bianco subito a sinistra di un gruppo di due tasti neri.</strong> Quello è il tuo riferimento. Impara a trovare Do in qualsiasi ottava senza guardare, e il resto della tastiera inizia ad avere senso.' },
     { eye:'ANATOMY', eye_it:'ANATOMIA', head:'Middle C\n& A440', head_it:'Do Centrale\ne La440', sub:'The universal reference points', sub_it:'I riferimenti universali', type:'text',
       body:'<strong>Middle C (C4)</strong> sits roughly in the center of the keyboard; the 4 means it\'s in the fourth octave counting upward from the bottom. In grand staff notation (treble and bass clef together), middle C sits on its own short ledger line between the two staves: accessible from either hand.<br><br><strong>A4</strong> (the A immediately above middle C) is the universal tuning reference at <strong>440 Hz</strong>. This is the A every orchestra tunes to before a concert. When Sonoro\'s tuner targets A, this is the note it\'s looking for.',
-      body_it:'Il <strong>Do centrale (Do4)</strong> si trova approssimativamente al centro della tastiera: il 4 significa che è nella quarta ottava contando verso l\'alto dal basso. Nella notazione a grand staff (chiave di violino e di basso insieme), il Do centrale si trova sulla propria breve linea supplementare tra i due righi: accessibile da entrambe le mani.<br><br><strong>La4</strong> (il La immediatamente sopra il Do centrale) è il riferimento universale per l\'accordatura a <strong>440 Hz</strong>. Questo è il La su cui si accorda ogni orchestra prima di un concerto. Quando il sintonizzatore di Intonare punta al La, è questa la nota che cerca.' }
+      body_it:'Il <strong>Do centrale (Do4)</strong> si trova approssimativamente al centro della tastiera: il 4 significa che è nella quarta ottava contando verso l\u2019alto dal basso. Nella notazione a grand staff (chiave di violino e di basso insieme), il Do centrale si trova sulla propria breve linea supplementare tra i due righi: accessibile da entrambe le mani.<br><br><strong>La4</strong> (il La immediatamente sopra il Do centrale) è il riferimento universale per l\'accordatura a <strong>440 Hz</strong>. Questo è il La su cui si accorda ogni orchestra prima di un concerto. Quando il sintonizzatore di Intonare punta al La, è questa la nota che cerca.' }
   ]},
   { title:'TECHNIQUE', title_it:'TECNICA', pages:[
     { eye:'PIANO · TECHNIQUE', eye_it:'PIANOFORTE · TECNICA', head:'Hand\nPosition', head_it:'Posizione\ndelle Mani', sub:'The foundation of everything', sub_it:'La base di tutto', type:'text',
@@ -123422,10 +124556,10 @@ piano: { color:'#b8a3ff', sections:[
       body_it:'La <strong>posizione fondamentale</strong> di un accordo ha la fondamentale come nota più bassa. Ma gli accordi possono essere riorganizzati; queste riorganizzazioni si chiamano <strong>rivolti</strong>.<br><br><strong>Primo rivolto:</strong> la terza è in basso (per Do maggiore: Mi–Sol–Do). <strong>Secondo rivolto:</strong> la quinta è in basso (Sol–Do–Mi).<br><br>I rivolti esistono per rendere fluido il <em>voice leading</em>: il modo in cui le singole note si muovono da accordo ad accordo. Passare da Do maggiore a Fa maggiore in posizione fondamentale fa saltare il basso di una quarta. Passare a Fa/Do (Fa nel secondo rivolto) mantiene il basso su Do del tutto: nessun movimento. Le linee di basso fluide sono uno dei tratti distintivi della scrittura idiomatica per tastiera.' },
     { eye:'CHORDS', eye_it:'ACCORDI', head:'Left Hand\nPatterns', head_it:'Pattern della\nMano Sinistra', sub:'Accompaniment building blocks', sub_it:'Mattoni dell\'accompagnamento', type:'text',
       body:'<strong>Block chords:</strong> all notes together, rhythmically driven. Forceful but can be percussive rather than flowing.<br><br><strong>Alberti bass:</strong> root · 5th · 3rd · 5th in repeating eighth notes (e.g. C–G–E–G). The Classical default; it creates rhythmic motion while keeping the harmony clear. Think Mozart sonatas and Haydn quartets.<br><br><strong>Stride:</strong> root or octave on beats 1 and 3, chord on 2 and 4. The heartbeat of ragtime and jazz piano.<br><br><strong>Broken chord:</strong> chord notes rolled upward or in a pattern. Creates a flowing, arpeggiated texture; very common in Romantic and contemporary styles.',
-      body_it:'<strong>Accordi a blocchi:</strong> tutte le note insieme, guidate dal ritmo. Potente ma può risultare percussivo piuttosto che scorrevole.<br><br><strong>Basso di Alberti:</strong> fondamentale · quinta · terza · quinta in crome ripetute (es. Do–Sol–Mi–Sol). Il riferimento classico; crea movimento ritmico mantenendo l\'armonia chiara. Pensa alle sonate di Mozart e ai quartetti di Haydn.<br><br><strong>Stride:</strong> fondamentale o ottava sui tempi 1 e 3, accordo sui tempi 2 e 4. Il battito del ragtime e del jazz pianistico.<br><br><strong>Accordo spezzato:</strong> note dell\'accordo arpeggiate verso l\'alto o in un pattern. Crea una texture fluida e arpeggiata; molto comune negli stili Romantici e contemporanei.' },
+      body_it:'<strong>Accordi a blocchi:</strong> tutte le note insieme, guidate dal ritmo. Potente ma può risultare percussivo piuttosto che scorrevole.<br><br><strong>Basso di Alberti:</strong> fondamentale · quinta · terza · quinta in crome ripetute (es. Do–Sol–Mi–Sol). Il riferimento classico; crea movimento ritmico mantenendo l\'armonia chiara. Pensa alle sonate di Mozart e ai quartetti di Haydn.<br><br><strong>Stride:</strong> fondamentale o ottava sui tempi 1 e 3, accordo sui tempi 2 e 4. Il battito del ragtime e del jazz pianistico.<br><br><strong>Accordo spezzato:</strong> note dell\'accordo arpeggiate verso l\u2019alto o in un pattern. Crea una texture fluida e arpeggiata; molto comune negli stili Romantici e contemporanei.' },
     { eye:'CHORDS', eye_it:'ACCORDI', head:'Arpeggiation\n& Scales', head_it:'Arpeggio\ne Scale', sub:'Moving through harmony', sub_it:'Muoversi nell\'armonia', type:'text',
       body:'<strong>Arpeggiation</strong> is playing chord notes one at a time in sequence; the term comes from <em>arpeggio</em>, Italian for harp. Broken-chord patterns let the left hand fill harmonic space while the right plays melody, or they can ornament a chord before a beat (a gentle roll upward).<br><br><strong>Scales</strong> are the source material for melody, improvisation, and technical development. The two-octave major scale, hands separately then together, is the foundational daily exercise in classical training. Every major key has its own fingering, and learning them all builds the hand\'s vocabulary across every position on the keyboard.',
-      body_it:'L\'<strong>arpeggio</strong> consiste nel suonare le note di un accordo una alla volta in sequenza: il termine viene da <em>arpa</em>. I pattern di accordi spezzati permettono alla mano sinistra di riempire lo spazio armonico mentre la destra suona la melodia, oppure possono ornamentare un accordo prima di un tempo (una delicata rollata verso l\'alto).<br><br>Le <strong>scale</strong> sono il materiale sorgente per la melodia, l\'improvvisazione e lo sviluppo tecnico. La scala maggiore di due ottave, prima con le mani separate poi insieme, è l\'esercizio quotidiano fondamentale nella formazione classica. Ogni tonalità maggiore ha la propria diteggiatura, e impararle tutte costruisce il vocabolario della mano in ogni posizione della tastiera.' },
+      body_it:'L\'<strong>arpeggio</strong> consiste nel suonare le note di un accordo una alla volta in sequenza: il termine viene da <em>arpa</em>. I pattern di accordi spezzati permettono alla mano sinistra di riempire lo spazio armonico mentre la destra suona la melodia, oppure possono ornamentare un accordo prima di un tempo (una delicata rollata verso l\u2019alto).<br><br>Le <strong>scale</strong> sono il materiale sorgente per la melodia, l\'improvvisazione e lo sviluppo tecnico. La scala maggiore di due ottave, prima con le mani separate poi insieme, è l\'esercizio quotidiano fondamentale nella formazione classica. Ogni tonalità maggiore ha la propria diteggiatura, e impararle tutte costruisce il vocabolario della mano in ogni posizione della tastiera.' },
     { eye:'PIANO', eye_it:'PIANOFORTE', head:'Try the\nCharts', head_it:'Prova gli\nAccordi', sub:'Open the chord & scale tool', sub_it:'Apri lo strumento accordi e scale', type:'text', try_inst:'piano', body:'The chord and scale chart tool includes a piano view for every chord quality and root. Use it alongside this section to see chord voicings on the keyboard.', body_it:'Lo strumento accordi e scale include una vista pianoforte per ogni qualità e fondamentale. Usalo insieme a questa sezione per vedere le diteggiature degli accordi sulla tastiera.' }
   ]},
   { title:'BEYOND THE GRAND', title_it:'OLTRE IL GRAN CODA', pages:[
@@ -123482,7 +124616,7 @@ bass: { color:'#ff7f5c', sections:[
   { title:'READING & THEORY', title_it:'LETTURA E TEORIA', pages:[
     { eye:'BASS · THEORY', eye_it:'BASSO · TEORIA', head:'Bass Clef\nBasics', head_it:'Basi della\nChiave di Basso', sub:'Reading for bass', sub_it:'Lettura per basso', type:'note-player', notes_label:'OPEN STRINGS — TAP TO HEAR', notes_inst:'bass', notes:[{name:'E1 · 4th string',freq:41.2},{name:'A1 · 3rd string',freq:55.0},{name:'D2 · 2nd string',freq:73.4},{name:'G2 · 1st string',freq:98.0}],
       body:'Bass guitar reads in the <strong>bass clef</strong>. Unlike classical double bass, electric bass notation is generally at concert pitch: written E1 sounds as E1. The bass clef keeps the instrument\'s range on the staff without excessive ledger lines.<br><br>The four open strings sit at the bottom of the bass clef staff: <strong>G2</strong> sits on the bottom line of the staff, <strong>D2</strong> on the second line from bottom, <strong>A1</strong> just below the staff on its own space, and <strong>E1</strong> further below on a ledger line. Learning these anchor positions and working upward is the starting strategy.<br><br>Bass guitar notation often also appears in <strong>tab</strong>: four lines representing the four strings, numbers showing fret positions. Tab gives you location but not duration; a combined notation-and-tab format gives both pitch duration and fret location.',
-      body_it:'Il basso elettrico legge in <strong>chiave di basso</strong>. A differenza del contrabbasso classico, la notazione del basso elettrico è generalmente all\'altezza reale: il Mi1 scritto suona come Mi1. La chiave di basso mantiene l\'estensione dello strumento sul rigo senza eccessive linee supplementari.<br><br>Le quattro corde aperte occupano posizioni specifiche sul rigo: <strong>Sol2</strong> (prima linea dal basso), <strong>Re2</strong> (sotto il rigo), <strong>La1</strong> e <strong>Mi1</strong>. Imparare a riconoscere queste posizioni di ancoraggio e lavorare verso l\'alto è la strategia iniziale.<br><br>La notazione del basso elettrico appare spesso anche in <strong>tab</strong>: quattro linee che rappresentano le quattro corde, numeri che mostrano le posizioni dei tasti. La tab dà la posizione ma non la durata; un formato combinato notazione-e-tab è il più utile per imparare.' },
+      body_it:'Il basso elettrico legge in <strong>chiave di basso</strong>. A differenza del contrabbasso classico, la notazione del basso elettrico è generalmente all\'altezza reale: il Mi1 scritto suona come Mi1. La chiave di basso mantiene l\'estensione dello strumento sul rigo senza eccessive linee supplementari.<br><br>Le quattro corde aperte occupano posizioni specifiche sul rigo: <strong>Sol2</strong> (prima linea dal basso), <strong>Re2</strong> (sotto il rigo), <strong>La1</strong> e <strong>Mi1</strong>. Imparare a riconoscere queste posizioni di ancoraggio e lavorare verso l\u2019alto è la strategia iniziale.<br><br>La notazione del basso elettrico appare spesso anche in <strong>tab</strong>: quattro linee che rappresentano le quattro corde, numeri che mostrano le posizioni dei tasti. La tab dà la posizione ma non la durata; un formato combinato notazione-e-tab è il più utile per imparare.' },
     { eye:'THEORY', eye_it:'TEORIA', head:'Scales for\nBassists', head_it:'Scale per\nBassisti', sub:'The working vocabulary', sub_it:'Il vocabolario di lavoro', type:'text',
       body:'Bassists need fewer scales than guitarists but need to know them better. The <strong>major scale</strong> and <strong>natural minor scale</strong> cover the vast majority of bass lines across all popular styles. The <strong>pentatonic minor</strong> (five notes, no half-step tensions) is the safest improvisational choice over rock and blues.<br><br>The <strong>mixolydian mode</strong> (major scale with a flattened 7th) is indispensable for funk and blues: it implies a dominant 7th sound and feels naturally at home over groove-based music.<br><br>More important than memorizing scales is understanding <em>why</em> each note in a scale works over a given chord. A bassist who understands chord tones and their extensions will always make better choices than one who thinks in scale patterns alone.',
       body_it:'I bassisti hanno bisogno di meno scale rispetto ai chitarristi ma devono conoscerle meglio. La <strong>scala maggiore</strong> e la <strong>scala minore naturale</strong> coprono la grande maggioranza delle linee di basso in tutti gli stili pop. La <strong>pentatonica minore</strong> (cinque note, senza tensioni di semitoni) è la scelta improvvisativa più sicura su rock e blues.<br><br>Il <strong>modo misolidio</strong> (scala maggiore con il settimo abbassato) è indispensabile per funk e blues: implica un suono di settima dominante e si trova naturalmente a suo agio sulla musica basata sul groove.<br><br>Più importante che memorizzare le scale è capire <em>perché</em> ogni nota in una scala funziona su un dato accordo. Un bassista che capisce i toni accordali e le loro estensioni farà sempre scelte migliori rispetto a uno che pensa solo in pattern di scale.' },
@@ -123663,7 +124797,7 @@ ukulele: { color:'#f7c948', sections:[
   { title:'TECHNIQUE', title_it:'TECNICA', pages:[
     { eye:'UKULELE · TECHNIQUE', eye_it:'UKULELE · TECNICA', head:'Strumming\n& Fingerstyle', head_it:'Strumming\ne Fingerstyle', sub:'The two main approaches', sub_it:'I due approcci principali', type:'text',
       body:'<strong>Strumming</strong> is the most common starting approach. On a ukulele, the index finger brushes down and up across all four strings in a relaxed, loose motion from the wrist rather than the elbow. The nail of the index finger catches the strings on the downstroke; the fleshy pad of the finger brushes upward. Keep the strumming hand relaxed; tension creates a scratchy, harsh sound.<br><br>A <strong>thumb strum</strong> (downstrokes with the thumb pad) produces a softer, rounder tone and is common in traditional Hawaiian playing.<br><br><strong>Fingerstyle</strong>, picking individual strings with thumb and fingers, opens up melody, countermelody, and independent bass-and-treble textures. The ukulele\'s small scale makes fingerstyle accessible for beginners. The low G version is particularly well-suited to solo arrangements.',
-      body_it:'Lo <strong>strumming</strong> è il punto di partenza più naturale. Su un ukulele, l\'indice spazza verso il basso e verso l\'alto su tutte e quattro le corde in un movimento rilassato e fluido dal polso anziché dal gomito. L\'unghia dell\'indice cattura le corde nella pennata verso il basso; il cuscinetto carnoso del dito spazza verso l\'alto. Mantieni la mano di strumming rilassata; la tensione crea un suono graffiante e duro.<br><br>Lo <strong>strum con il pollice</strong> (pennate verso il basso con il cuscinetto del pollice) produce un tono più morbido e rotondo ed è comune nel suonare hawaiano tradizionale.<br><br>Il <strong>fingerstyle</strong>: pizzicare le corde singole con pollice e dita: apre melodia, contromelodia e texture indipendenti basso-e-acuto. La piccola scala dell\'ukulele rende il fingerstyle sorprendentemente accessibile anche ai principianti. La versione Low G è particolarmente adatta agli arrangiamenti solisti.' },
+      body_it:'Lo <strong>strumming</strong> è il punto di partenza più naturale. Su un ukulele, l\'indice spazza verso il basso e verso l\u2019alto su tutte e quattro le corde in un movimento rilassato e fluido dal polso anziché dal gomito. L\'unghia dell\'indice cattura le corde nella pennata verso il basso; il cuscinetto carnoso del dito spazza verso l\u2019alto. Mantieni la mano di strumming rilassata; la tensione crea un suono graffiante e duro.<br><br>Lo <strong>strum con il pollice</strong> (pennate verso il basso con il cuscinetto del pollice) produce un tono più morbido e rotondo ed è comune nel suonare hawaiano tradizionale.<br><br>Il <strong>fingerstyle</strong>: pizzicare le corde singole con pollice e dita: apre melodia, contromelodia e texture indipendenti basso-e-acuto. La piccola scala dell\'ukulele rende il fingerstyle sorprendentemente accessibile anche ai principianti. La versione Low G è particolarmente adatta agli arrangiamenti solisti.' },
     { eye:'UKULELE', eye_it:'UKULELE', head:'Try the\nCharts', head_it:'Prova gli\nAccordi', sub:'Open the ukulele chord tool', sub_it:'Apri lo strumento accordi ukulele', type:'text', try_inst:'uke', body:'The chord tool generates ukulele voicings for any root and quality, accounting for reentrant tuning and all four common sizes.', body_it:'Lo strumento accordi genera diteggiature ukulele per qualsiasi fondamentale e qualità, tenendo conto dell\'accordatura reentrant e di tutte e quattro le dimensioni comuni.' }
   ]}
 ]},
@@ -123723,7 +124857,7 @@ plucked: { color:'#c084fc', sections:[
       body_it:'L\'arpa a pedali da concerto è uno degli strumenti acustici meccanicamente più complessi mai costruiti. Ha <strong>47 corde</strong> che coprono sei ottave e mezza, accordate di default alle note del Do bemolle maggiore. Ci sono sette pedali, uno per classe di altezza (Do, Re, Mi, Fa, Sol, La, Si), ciascuno con tre posizioni: bemolle, naturale e diesis. Spostare un pedale cambia l\'altezza di ogni corda in quella classe di altezza su tutte le ottave simultaneamente.<br><br>Questo meccanismo significa che l\'arpa può suonare in qualsiasi tonalità, ma i cambi di tonalità a metà brano richiedono una pedalatura attenta che deve essere pianificata in anticipo ed eseguita silenziosamente. I suonatori di arpa studiano le loro mappe dei pedali tanto quanto le loro note.<br><br>Le corde sono codificate per colore: le <strong>corde Do sono rosse, le corde Fa sono nere/blu scuro</strong>: questi riferimenti aiutano il suonatore a navigare senza distogliere lo sguardo dalla musica.' },
     { eye:'HARP', eye_it:'ARPA', head:'Technique\n& Sound', head_it:'Tecnica\ne Suono', sub:'Fingers, placement, and color', sub_it:'Dita, posizione e colore', type:'text',
       body:'The harp is played with <strong>four fingers of each hand</strong>: the pinky finger is not used. Strings are plucked with the fleshy pad of the fingertip and the string is released against the palm in a <strong>closing</strong> motion. The thumb points upward and tends to play the melody or top voice.<br><br>Placement on the string affects tone color dramatically: playing near the soundboard gives a bright, clear sound; playing further from the soundboard (toward the middle of the string) gives a rounder, warmer tone. Playing very close to the soundboard produces a nasal, edgy color sometimes called <em>près de la table</em>.<br><br><strong>Harmonics</strong> are produced by lightly touching the string at its midpoint while plucking: this produces a bell-like tone one octave above the open string pitch. They appear frequently in Romantic and Impressionist repertoire (Debussy, Ravel).',
-      body_it:'L\'arpa si suona con <strong>quattro dita di ciascuna mano</strong>: il mignolo non viene usato. Le corde vengono pizzicate con il cuscinetto carnoso della punta del dito e la corda viene rilasciata contro il palmo in un movimento di <strong>chiusura</strong>. Il pollice punta verso l\'alto e tende a suonare la melodia o la voce superiore.<br><br>Il posizionamento sulla corda influenza drammaticamente il colore timbrico: suonare vicino alla tavola armonica dà un suono brillante e chiaro; suonare più lontano dalla tavola armonica (verso il centro della corda) dà un tono più rotondo e caldo. Suonare molto vicino alla tavola armonica produce un colore nasale e tagliente a volte chiamato <em>près de la table</em>.' },
+      body_it:'L\'arpa si suona con <strong>quattro dita di ciascuna mano</strong>: il mignolo non viene usato. Le corde vengono pizzicate con il cuscinetto carnoso della punta del dito e la corda viene rilasciata contro il palmo in un movimento di <strong>chiusura</strong>. Il pollice punta verso l\u2019alto e tende a suonare la melodia o la voce superiore.<br><br>Il posizionamento sulla corda influenza drammaticamente il colore timbrico: suonare vicino alla tavola armonica dà un suono brillante e chiaro; suonare più lontano dalla tavola armonica (verso il centro della corda) dà un tono più rotondo e caldo. Suonare molto vicino alla tavola armonica produce un colore nasale e tagliente a volte chiamato <em>près de la table</em>.' },
     { eye:'HARP', eye_it:'ARPA', head:'Lever Harp &\nBeginner Options', head_it:'Arpa a Leve e\nOpzioni per Principianti', sub:'The accessible alternative', sub_it:'L\'alternativa accessibile', type:'text',
       body:'The pedal harp is expensive (professional instruments cost tens of thousands of euros) and physically large. The <strong>lever harp</strong> (also called folk harp or Celtic harp) is a smaller, more affordable alternative. Instead of pedals, individual levers at the top of each string can be flipped to raise that string by a semitone. This is slower and less flexible than pedals but sufficient for folk, Celtic, and much early music.<br><br>Lever harps typically have 22–40 strings and are light enough to carry and perform standing. They\'re the standard starting instrument for harp students and are used professionally in Celtic and world music contexts.<br><br>The string color coding (red for C, dark for F) is the same on both pedal and lever harps, so navigation skills transfer directly. Basic technique is also transferable; the hand position and plucking motion are identical.',
       body_it:'L\'arpa a pedali è costosa (gli strumenti professionali costano decine di migliaia di euro) e fisicamente grande. L\'<strong>arpa a leve</strong> (chiamata anche arpa folk o arpa celtica) è un\'alternativa più piccola e accessibile. Invece dei pedali, singole leve nella parte superiore di ciascuna corda possono essere azionate per alzare quella corda di un semitono. Questo è più lento e meno flessibile dei pedali ma sufficiente per la musica folk, celtica e molta musica antica.<br><br>Le arpe a leve hanno tipicamente 22–40 corde e sono abbastanza leggere da trasportare e suonare in piedi. Sono lo strumento iniziale standard per gli studenti di arpa e sono usate professionalmente in contesti di musica celtica e mondiale.' },
@@ -123799,7 +124933,7 @@ winds: { color:'#38bdf8', sections:[
       body_it:'Il clarinetto in Sib è il membro più comune della famiglia dei clarinetti: uno strumento a foro cilindrico con bocchino ad ancia semplice e una delle estensioni più ampie di qualsiasi strumento a fiato (Mi3-Do7 nelle mani esperte). Questa grande estensione è divisa in tre registri distinti con caratteri drammaticamente diversi:<br><br>Il <strong>registro di chalumeau</strong> (dal Mi3 scritto fino a circa Sol4) è profondo, scuro e ricco, e nessun altro strumento suona così. Sopra stanno le <strong>note di gola</strong>, dal Sol4 al Si♭4, la parte più esile dell’estensione. Il <strong>registro clarion</strong> (dal Si4 al Do6) è chiaro e brillante, ed è dove vive gran parte della scrittura per clarinetto. L\'<strong>altissimo</strong> (il più alto) è stridulo e penetrante.<br><br>Il clarinetto produce il suo caratteristico "break" tra i registri chalumeau e clarion (intorno a Si3–Do4): questa transizione di registro è una delle prime sfide tecniche che gli studenti affrontano.' },
     { eye:'CLARINET', eye_it:'CLARINETTO', head:'Bass Clarinet', head_it:'Clarinetto Basso', sub:'An octave lower, same technique', sub_it:'Un\'ottava più bassa, stessa tecnica', type:'text',
       body:'The <strong>bass clarinet</strong> is built on the same single-reed principle as the Bb clarinet but sounds an octave lower, with a curved neck and an upturned bell giving it a distinctive saxophone-like appearance. It is a <strong>transposing instrument in Bb</strong> (like the standard clarinet) and is read in treble clef, sounding a major 9th below written pitch.<br><br>Its range is approximately C2 to Eb5, with a sonorous low register that provides depth and weight in woodwind ensembles and orchestral writing. In contemporary and film music it appears frequently as a featured instrument.<br><br>Technically it requires more air support than the soprano clarinet due to its larger bore and longer resonating column. Players who double on both instruments adjust their embouchure and air speed accordingly. The fingering system is identical.',
-      body_it:'Il <strong>clarinetto basso</strong> è costruito sullo stesso principio ad ancia semplice del clarinetto in Sib ma suona un\'ottava più bassa, con un collo curvo e un campano rivolto verso l\'alto che gli dà un aspetto caratteristico simile al sassofono. È uno <strong>strumento traspositore in Sib</strong> (come il clarinetto standard) e si legge in chiave di violino, suonando una nona maggiore sotto l\'altezza scritta.<br><br>La sua estensione è approssimativamente da Do2 a Mib5, con un registro basso sonoro che fornisce profondità e peso negli ensemble di fiati legni e nella scrittura orchestrale.' },
+      body_it:'Il <strong>clarinetto basso</strong> è costruito sullo stesso principio ad ancia semplice del clarinetto in Sib ma suona un\'ottava più bassa, con un collo curvo e un campano rivolto verso l\u2019alto che gli dà un aspetto caratteristico simile al sassofono. È uno <strong>strumento traspositore in Sib</strong> (come il clarinetto standard) e si legge in chiave di violino, suonando una nona maggiore sotto l\'altezza scritta.<br><br>La sua estensione è approssimativamente da Do2 a Mib5, con un registro basso sonoro che fornisce profondità e peso negli ensemble di fiati legni e nella scrittura orchestrale.' },
     { eye:'CLARINET', eye_it:'CLARINETTO', head:'Try the\nCharts', head_it:'Prova gli\nAccordi', sub:'Open the clarinet range tool', sub_it:'Apri lo strumento per clarinetto', type:'text', try_inst:'ww_clarinet', body:'The chart tool covers the Bb clarinet and its family, bass clarinet included, with both written and concert pitch.', body_it:'Lo strumento copre il clarinetto Sib e la sua famiglia, incluso il clarinetto basso, mostrando nota scritta e reale.' }
   ]},
   { title:'SAXOPHONE', title_it:'SASSOFONO', pages:[
@@ -123885,7 +125019,7 @@ freereed: { color:'#a78bfa', sections:[
   { title:'HARMONICA', title_it:'ARMONICA', pages:[
     { eye:'HARMONICA · OVERVIEW', eye_it:'ARMONICA · PANORAMICA', head:'The Harmonica', head_it:'L\'Armonica', sub:'Blow · draw · bend', sub_it:'Soffia · aspira · bend', type:'text',
       body:'The harmonica (or mouth harp) contains metal reeds in a small handheld housing. Most harmonicas have holes that produce different notes on <strong>blow</strong> (exhale) and <strong>draw</strong> (inhale); each hole contains two reeds tuned to different pitches.<br><br>The standard <strong>10-hole diatonic harmonica</strong> in a single key (most commonly C or G) produces the notes of the major scale but not the full chromatic scale. It\'s the instrument of blues and country: simple in construction but deep in expressive potential. Bob Dylan, Stevie Wonder, Little Walter, Sonny Boy Williamson.<br><br>The <strong>chromatic harmonica</strong> adds a side button that shifts all notes up by a semitone, giving access to all 12 pitches across its range. Preferred for jazz and classical playing. Toots Thielemans established the chromatic harmonica as a legitimate jazz solo instrument.',
-      body_it:'L\'armonica (o mouth harp) contiene ance metalliche in un piccolo alloggiamento portatile. La maggior parte delle armoniche ha buchi che producono note diverse al <strong>soffiato</strong> (espirazione) e al <strong>tirato</strong> (inspirazione); ogni buco contiene due ance accordate a altezze diverse.<br><br>La <strong>armonica diatonica a 10 buchi</strong> in una singola tonalità (più comunemente Do o Sol) produce le note della scala maggiore ma non la scala cromatica completa. È lo strumento del blues, del folk, del country e del rock: semplice nella costruzione ma profonda nel potenziale espressivo.<br><br>L\'<strong>armonica cromatica</strong> aggiunge un pulsante laterale che sposta tutte le note di un semitono verso l\'alto, dando accesso a tutte le 12 altezze nella sua estensione. Preferita per il jazz e il suonare classico.' },
+      body_it:'L\'armonica (o mouth harp) contiene ance metalliche in un piccolo alloggiamento portatile. La maggior parte delle armoniche ha buchi che producono note diverse al <strong>soffiato</strong> (espirazione) e al <strong>tirato</strong> (inspirazione); ogni buco contiene due ance accordate a altezze diverse.<br><br>La <strong>armonica diatonica a 10 buchi</strong> in una singola tonalità (più comunemente Do o Sol) produce le note della scala maggiore ma non la scala cromatica completa. È lo strumento del blues, del folk, del country e del rock: semplice nella costruzione ma profonda nel potenziale espressivo.<br><br>L\'<strong>armonica cromatica</strong> aggiunge un pulsante laterale che sposta tutte le note di un semitono verso l\u2019alto, dando accesso a tutte le 12 altezze nella sua estensione. Preferita per il jazz e il suonare classico.' },
     { eye:'HARMONICA', eye_it:'ARMONICA', head:'Bending &\nOverbending', head_it:'Bending\ne Overbending', sub:'The expressive core of blues harp', sub_it:'Il nucleo espressivo del blues harp', type:'text',
       body:'<strong>Bending</strong> is the main expressive technique on diatonic harmonica. By changing the shape of the oral cavity (the tongue, jaw, and throat) while drawing (inhaling), the player can lower the pitch of draw notes: usually by a half step or whole step, sometimes more. This produces the soulful, vocal inflections central to blues playing. Blow bends (on exhale) are also possible in the upper holes (holes 7–10), allowing pitch lowering on those notes as well.<br><br>Bending requires a specific tongue position (like saying "eee" shifting to "ooo" internally) combined with altered air speed and direction. It is a physical sensation that must be discovered through experimentation: written description helps orient the search, but the learning happens in the body.<br><br><strong>Overbending</strong> (overblows and overdraws) is an advanced technique that allows access to notes not normally available on a diatonic harmonica, effectively giving a complete chromatic range. Mastered by Howard Levy and essential for playing in multiple keys on one instrument.',
       body_it:'Il <strong>bending</strong> è la tecnica espressiva distintiva dell\'armonica diatonica. Cambiando la forma della cavità orale (lingua, mascella e gola) mentre si tira (inspira), il suonatore può abbassare l\'altezza delle note tirate: di solito di un semitono o tono intero, a volte di più. Questo produce le inflessioni sensuali e vocali centrali nel blues.<br><br>Il bending richiede una specifica posizione della lingua (come dire internamente "iii" che si sposta verso "ooo") combinata con velocità e direzione dell\'aria alterate. È una sensazione fisica che deve essere scoperta attraverso la sperimentazione: la descrizione scritta aiuta a orientare la ricerca, ma l\'apprendimento avviene nel corpo.' },
