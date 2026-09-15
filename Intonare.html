@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.66 -->
+<!-- INTONARE_VERSION: 0.210.67 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -34258,7 +34258,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.66';
+const INTONARE_VERSION = '0.210.67';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -37906,7 +37906,11 @@ function setMode(m) {
     m === 'practice' ? (currentExercise === 'interval' ? t('iv_sing_or_play') : t('mic_tap_tune')) :
     m === 'tools' ? t('mic_tap_pitch') : t('mic_tap_tune');
   // Show/hide mic per mode — metro and train manage it per sub-context
-  if (m === 'tuner') showMic();
+  if (m === 'tuner') {
+    showMic();
+    // Pipeline smoke test: tiny toast confirms GitHub Pages / build deploy.
+    try { svcToast('Success'); } catch (e) {}
+  }
   else if (m === 'tools') showMic();
   else if (m === 'metronome') hideMic();  // restored in setMetroTab if 'analyze'
   else if (m === 'practice') hideMic();  // restored in enterExercise if needed

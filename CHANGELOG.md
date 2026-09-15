@@ -2,6 +2,12 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.67 — Pipeline smoke: Success toast on tuner tab
+
+Tiny temporary toast: opening the tuner tab shows "Success" via the
+existing svcToast. Used to verify the Cursor + go.bat + GitHub Pages
+path. Remove after the smoke test.
+
 ## v0.210.66 — Accordion fix, extended cards push key concepts, session sort
 
 Three fixes that landed after v0.210.65:
