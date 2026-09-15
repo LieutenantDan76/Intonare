@@ -10,7 +10,12 @@
 ## Edit safety (giant HTML file)
 
 - Exact unique string replace only. Never DOTALL regex on `Intonare.html`.
-- Before/after: confirm ~12MB size and file still ends with `</html>`.
+- Never rewrite the whole file. Prefer a short `tools/_patch_*.py` with
+  uniqueness checks; avoid PowerShell inline Python (quoting corrupts).
+- Before/after every edit: confirm ~12MB size and file still ends with
+  `</html>`. Tool "success" is not enough.
+- If size collapses (~12MB → much smaller): stop, `git checkout --
+  Intonare.html`, re-apply. Do not keep patching a truncated copy.
 - After JS edits: `node --check` on touched script blocks when practical.
 - Before ship: `tools\ship_check.bat` (sentinel + changelog gate).
 
@@ -29,6 +34,8 @@
 
 ## Do not
 
-- Truncate or rewrite all of `Intonare.html` for a tiny change.
+- Truncate or rewrite all of `Intonare.html` for a tiny change. If
+  size collapses after an edit, restore from git first; never keep
+  patching the truncated copy.
 - Run `release.bat` for everyday testing.
 - Assume production is live on Play until Daniele says cutover happened.

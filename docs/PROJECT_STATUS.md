@@ -210,8 +210,14 @@ These have bitten before. Keep them in mind.
   `buildChordToneBank` defaults to `chd-tonepop`; pass a skin
   explicitly. `closeTonePopup()` must strip every skin class. New
   skins use theme vars only, never hardcoded hex.
-- DOTALL regex: never run one on a 10MB file. Use str.replace with
+- DOTALL regex: never run one on a ~12MB file. Use str.replace with
   an exact unique match instead.
+- Giant-file truncate hangup: editor/tools can report success while
+  `Intonare.html` silently shrinks (~12MB → ~8MB). Always re-check
+  byte size and trailing `</html>` after every edit. If collapsed:
+  stop, `git checkout -- Intonare.html`, re-apply with a unique exact
+  replace (prefer a short Python patch under `tools/`; avoid PowerShell
+  inline Python). Full rules in `.cursor/rules/intonare.mdc`.
 
 
 ## IP and licensing
