@@ -2,6 +2,10 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.68 — Remove pipeline Success toast
+
+Smoke toast on tuner tab removed after GitHub Pages verified.
+
 ## v0.210.67 — Pipeline smoke: Success toast on tuner tab
 
 Tiny temporary toast: opening the tuner tab shows "Success" via the
