@@ -2,6 +2,79 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.74 — Vocal Range polish pass (theme, light, motion)
+
+Vocal Range visual polish: Assess/History/Reference tabs use the tools
+accent instead of metro gold. Choice buttons use a theme-aware selected
+state (no hardcoded cyan fills). Note glows, tessitura bar, and intro
+hero washes use color-mix against --accent so light and dark both track
+the tab palette. Light mode drops neon text-shadows and keeps contrast
+via borders/fills. Screen transitions ease with a short vertical slide
+(honors prefers-reduced-motion). Locking a pitch pulses the detect card.
+Quick-mode step connectors no longer draw an extra orphan line.
+
+## v0.210.73 — Vocal Range redo lives under listening, not the header
+
+In-module mode hides every tool `.train-back`, so the header row that
+held Redo setup was effectively empty after onboarding. Redo setup is
+now a quiet text control under the intro CTAs, warmup, listening /
+detect cards, and results. `vrSyncChrome()` toggles it whenever
+onboarding completes or is cleared.
+
+## v0.210.72 — VR header redo label, tighter spacing, centered gender cards
+
+Removed the Vocal Range ? help control. Redo setup is a labeled
+iv-btn on the same row as the module back control. Screen stack gap
+tightened from 12px to 8px to match other card stacks. Male/Female
+voice buttons are center-aligned like the other onboarding option
+cards.
+
+## v0.210.71 — Vocal Range spacing + onboarding Back/Redo
+
+Vocal Range screens now stack with a 12px gap so cards and buttons
+stop sitting flush. Intro checklist bullets keep a single style
+attribute (accent color was being dropped). Onboarding steps have a
+Back control. A replay control in the module header appears after
+setup is complete and clears answers so you can redo it. Skip gender
+now stores as a real choice so onboarding can finish.
+
+## v0.210.70 — Vocal Range tips follow experience density
+
+Vocal Range tips that used the shared Teaching Mode `.teach-hint`
+class (intro duration, warmup safety, results singers note, reference
+overlap note) now use `.vr-exp-hint` and follow the same experience
+scheme as the singing-step tips: visible for New, hidden for Some,
+Trained, and Quick Test. First-time visitors still see them (experience
+defaults to New until onboarding finishes).
+
+## v0.210.69 — Mock data cleanup, SVG crash fix, history animation, onboarding alignment
+
+Vocal range mock data: removed the auto-injector that wrote 8 fake
+sessions into localStorage on every load when fewer than 3 real sessions
+existed. Added a one-time cleanup that strips the already-stored mock
+sessions by their exact dates so existing installs clear themselves on
+first run.
+
+SVG className crash: vrLockStep set .className on an SVG circle element
+(the ring fill), which throws because SVG elements have a read-only
+className property. Changed to setAttribute('class', ...). This was
+error log entry "Cannot set property className of #<SVGElement> which
+has only a getter" on tool:vocalrange.
+
+History card close animation: when the open animation finished it set
+maxHeight to 'none' so content could flow naturally. On close,
+parseFloat('none') returned NaN which fell to 0, so the close animation
+went from 0 to 0 and snapped shut instantly. Now reads scrollHeight as
+the start value when maxHeight is 'none', and sets overflow:hidden on
+close start.
+
+Onboarding card alignment: the age and experience button cards had
+orphaned display:flex, text-align:left and gap:14px left over from when
+they carried emoji icons. Stripped the flex layout and centered the text.
+Gender cards kept the flex (they still carry ♂/♀ symbols) but added
+justify-content:center so the icon+text pair sits centered instead of
+left-aligned.
+
 ## v0.210.68 — Remove pipeline Success toast
 
 Smoke toast on tuner tab removed after GitHub Pages verified.

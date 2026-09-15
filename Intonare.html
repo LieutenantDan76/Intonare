@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.68 -->
+<!-- INTONARE_VERSION: 0.210.74 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -3569,6 +3569,7 @@ html,body{background:#000000!important;transition:none!important}
   body.light .panel,
   body.light .practice-card-btn,
   body.light .teach-hint,
+  body.light .vr-exp-hint,
   body.light .sm-section,
   body.light .folder-card,
   body.light .practice-folder-btn {
@@ -21332,6 +21333,58 @@ html,body{background:#000000!important;transition:none!important}
     margin-bottom: 8px;
   }
 
+  /* Vocal Range: experience-density tips (New only). Not Teaching Mode. */
+  #toolVocalRange .vr-exp-hint {
+    font-family: 'Fraunces','GlyphFix', serif;
+    font-style: italic;
+    font-size: 11px;
+    color: rgba(232,232,240,0.75);
+    line-height: 1.4;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    background: rgba(182,242,91,0.06);
+    border-left: 2px solid rgba(182,242,91,0.4);
+    border-radius: 0 6px 6px 0;
+    letter-spacing: 0.2px;
+    display: none;
+  }
+  #toolVocalRange.vr-exp-full .vr-exp-hint {
+    display: block;
+  }
+
+  /* Vocal Range: screen stack gap matches common card stacks (8px) */
+  #toolVocalRange [id^="vrScreen-"] {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #toolVocalRange .vr-onboard-back {
+    width: 100%;
+    margin-top: 2px;
+    opacity: 0.85;
+  }
+  /* Redo setup lives in content (intro / under listening). Header train-back
+     is hidden in-module by the global tool rule, so redo must not live there. */
+  #toolVocalRange .vr-redo-inline {
+    display: none;
+    width: 100%;
+    margin-top: 2px;
+    padding: 10px 8px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: 'JetBrains Mono','GlyphFix', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+  }
+  #toolVocalRange.vr-onboarded .vr-redo-inline { display: block; }
+  #toolVocalRange .vr-redo-inline:hover { color: var(--accent); }
+
   /* Hide ? help buttons when user opts out */
   body.hide-help-tips .help-btn { display: none !important; }
 
@@ -21804,9 +21857,9 @@ html,body{background:#000000!important;transition:none!important}
   font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 44px; letter-spacing: 2px;
   color: var(--text); line-height: 1; transition: color 0.2s, text-shadow 0.2s;
 }
-.vr-note-big.active { color: var(--accent); text-shadow: 0 0 18px rgba(52,211,153,0.5); }
-.vr-note-big.warm.active { color: var(--accent-warm); text-shadow: 0 0 18px rgba(255,160,122,0.5); }
-.vr-note-big.locked { color: var(--in-tune); text-shadow: 0 0 22px rgba(182,242,91,0.6); }
+.vr-note-big.active { color: var(--accent); text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent); }
+.vr-note-big.warm.active { color: var(--accent-warm); text-shadow: 0 0 18px color-mix(in srgb, var(--accent-warm) 55%, transparent); }
+.vr-note-big.locked { color: var(--in-tune); text-shadow: 0 0 22px color-mix(in srgb, var(--in-tune) 60%, transparent); }
 .vr-note-big.silent { color: var(--muted); }
 .vr-note-oct { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; font-weight: 500; }
 .vr-note-oct.active { color: var(--accent); }
@@ -21888,7 +21941,7 @@ html,body{background:#000000!important;transition:none!important}
 .vr-tess-fill {
   height: 100%; background: var(--theme-grad); border-radius: 2px;
   transition: width 0.2s linear;
-  box-shadow: 0 0 8px rgba(52,211,153,0.5);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 /* ─── Range strip (results + reference) ─── */
@@ -22033,7 +22086,7 @@ body.light .vr-lane-note { color: var(--text); }
     transition: background .15s, color .15s, border-color .15s;
   }
   .vr-goal-note.selected, .vr-goal-note:active {
-    color:var(--accent); border-color:var(--accent); background:rgba(52,211,153,0.08);
+    color:var(--accent); border-color:var(--accent); background:color-mix(in srgb, var(--accent) 10%, transparent);
   }
   .vr-goal-note.c-note { border-left:2px solid var(--border); }
 
@@ -22093,6 +22146,106 @@ body.light .vr-lane-note { color: var(--text); }
 .vr-step-dot.optional.done  { background: var(--accent-warm); }
 .vr-step-line { width: 14px; height: 1px; background: var(--border); transition: background 0.3s; }
 .vr-step-line.done { background: var(--accent); }
+
+/* ─── Vocal Range polish (theme-aware, light + dark) ─── */
+#toolVocalRange .metro-subnav { margin-bottom: 8px; }
+#toolVocalRange .metro-subtab:hover { color: var(--accent); }
+#toolVocalRange .metro-subtab.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+#toolVocalRange .vr-choice.selected {
+  border-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel)) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+#toolVocalRange .vr-gender-btn,
+#toolVocalRange .vr-age-btn,
+#toolVocalRange .vr-changing-btn,
+#toolVocalRange .vr-exp-btn {
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+}
+#toolVocalRange .vr-gender-btn:active,
+#toolVocalRange .vr-age-btn:active,
+#toolVocalRange .vr-changing-btn:active,
+#toolVocalRange .vr-exp-btn:active {
+  transform: scale(0.985);
+}
+
+#toolVocalRange .vr-detect-card {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+#toolVocalRange .vr-detect-card.locked {
+  border-color: color-mix(in srgb, var(--in-tune) 45%, var(--border-soft));
+  box-shadow: var(--shadow-card), 0 0 24px color-mix(in srgb, var(--in-tune) 18%, transparent);
+  animation: vrDetectLock 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@keyframes vrDetectLock {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
+#toolVocalRange .vr-detect-card.locked .vr-ring-center {
+  border-color: color-mix(in srgb, var(--in-tune) 40%, var(--border-soft));
+  box-shadow: inset 0 0 20px color-mix(in srgb, var(--in-tune) 10%, transparent);
+}
+#toolVocalRange .vr-ring-center {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+body.light #toolVocalRange .vr-note-big.active,
+body.light #toolVocalRange .vr-note-big.warm.active,
+body.light #toolVocalRange .vr-note-big.locked {
+  text-shadow: none;
+}
+body.light #toolVocalRange .vr-step-dot.done,
+body.light #toolVocalRange .vr-step-dot.active {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+body.light #toolVocalRange .vr-detect-card.locked {
+  box-shadow: var(--shadow-card);
+}
+body.light #toolVocalRange .vr-tess-fill {
+  box-shadow: none;
+}
+body.light #toolVocalRange .vr-locked-note {
+  text-shadow: none;
+}
+body.light #toolVocalRange .metro-subtab.active {
+  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+body.light #toolVocalRange .vr-choice.selected {
+  box-shadow: none;
+}
+body.light #toolVocalRange .vr-exp-hint {
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+  border-left-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--text-dim);
+}
+body.light #toolVocalRange .vr-cents.in {
+  background: color-mix(in srgb, var(--in-tune) 12%, var(--panel));
+  border-color: color-mix(in srgb, var(--in-tune) 40%, var(--border));
+}
+body.light #toolVocalRange .vr-hero-icon svg {
+  filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #toolVocalRange .vr-detect-card.locked,
+  #toolVocalRange .vr-locked-confirm {
+    animation: none !important;
+  }
+  #toolVocalRange .vr-gender-btn:active,
+  #toolVocalRange .vr-age-btn:active,
+  #toolVocalRange .vr-changing-btn:active,
+  #toolVocalRange .vr-exp-btn:active {
+    transform: none;
+  }
+}
+
 
 /* ─── Particles ─── */
 .vr-particle {
@@ -29950,7 +30103,6 @@ try {
 <div id="toolVocalRange" class="hidden">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
     <button class="train-back" onclick="exitTool()"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <button class="help-btn" onclick="showHelp('vocalrange')" style="margin-left:auto;opacity:0.7">?</button>
   </div>
 
   <!-- Sub-nav: Assess / History / Reference -->
@@ -29970,38 +30122,39 @@ try {
     <div id="vrScreen-intro">
       <div class="card" style="text-align:center;padding:28px 20px 22px;overflow:hidden;">
         <div class="card-glow"></div>
-        <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 55% at 50% 0%,rgba(52,211,153,0.10),transparent 68%);pointer-events:none;"></div>
-        <div style="font-size:42px;margin-bottom:14px;filter:drop-shadow(0 0 18px rgba(52,211,153,0.5))"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></div>
-        <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:34px;letter-spacing:4px;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;filter:drop-shadow(0 0 12px rgba(52,211,153,0.3));" data-i18n="vr_title">Vocal Range</div>
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 55% at 50% 0%,color-mix(in srgb, var(--accent) 12%, transparent),transparent 68%);pointer-events:none;"></div>
+        <div class="vr-hero-icon" style="font-size:42px;margin-bottom:14px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);filter:drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 50%, transparent));"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></div>
+        <div class="vr-hero-title" style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:34px;letter-spacing:4px;background:var(--theme-grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;" data-i18n="vr_title">Vocal Range</div>
         <div style="font-family:'Fraunces','GlyphFix',serif;font-style:italic;font-size:12.5px;color:var(--text-dim);line-height:1.65;max-width:340px;margin:0 auto;" data-i18n="vr_subtitle">A guided assessment that maps your tessitura, comfortable range, and physiological extremes — and tracks them over time.</div>
       </div>
 
-      <div class="card" style="margin-top:0">
+      <div class="card">
         <div class="card-glow"></div>
         <div class="card-label" data-i18n="vr_before_begin">Before you begin</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
-            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))" style="font-weight:700;color:var(--accent);">●</span>
+          <div class="vr-checklist-row" style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
+            <span style="font-size:15px;flex-shrink:0;margin-top:1px;font-weight:700;color:var(--accent)">●</span>
             <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;"><strong style="color:var(--text)" data-i18n="vr_quiet_room">Quiet room.</strong> <span data-i18n="vr_quiet_desc">Background noise confuses pitch detection.</span></div>
           </div>
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
-            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))" style="font-weight:700;color:var(--accent);">●</span>
+          <div class="vr-checklist-row" style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
+            <span style="font-size:15px;flex-shrink:0;margin-top:1px;font-weight:700;color:var(--accent)">●</span>
             <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;"><strong style="color:var(--text)" data-i18n="vr_hydrated">Hydrated, rested voice.</strong> <span data-i18n="vr_hydrated_desc">Don't test after a long session or when unwell.</span></div>
           </div>
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
-            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))" style="font-weight:700;color:var(--accent-warm);">●</span>
+          <div class="vr-checklist-row" style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
+            <span style="font-size:15px;flex-shrink:0;margin-top:1px;font-weight:700;color:var(--accent-warm)">●</span>
             <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;"><strong style="color:var(--text)" data-i18n="vr_no_forcing">No forcing.</strong> <span data-i18n="vr_no_forcing_desc">Map your real voice — stop if anything feels strained.</span></div>
           </div>
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
-            <span style="font-size:15px;flex-shrink:0;margin-top:1px;filter:drop-shadow(0 0 5px rgba(52,211,153,0.4))" style="font-weight:700;color:var(--accent);">●</span>
+          <div class="vr-checklist-row" style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r-md);">
+            <span style="font-size:15px;flex-shrink:0;margin-top:1px;font-weight:700;color:var(--accent)">●</span>
             <div style="font-size:11.5px;color:var(--text-dim);line-height:1.5;"><strong style="color:var(--text)" data-i18n="vr_consistent">Consistent distance.</strong> <span data-i18n="vr_consistent_desc">Hold your device ~20–30 cm from your mouth throughout.</span></div>
           </div>
         </div>
-        <div class="teach-hint" style="margin-top:12px;" data-i18n-html="vr_duration_hint">About 4–5 minutes. The optional push steps can be skipped for a quick result.</div>
+        <div class="vr-exp-hint" data-i18n-html="vr_duration_hint">About 4–5 minutes. The optional push steps can be skipped for a quick result.</div>
       </div>
 
       <button class="iv-btn primary" onclick="vrShowGenderSelect()" style="width:100%;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3)" data-i18n="vr_begin_btn">Begin Assessment →</button>
       <button class="iv-btn" id="vrQuickTestBtn" onclick="vrQuickTest()" style="width:100%;margin-top:8px;display:none;" data-i18n="vr_quick_test">Quick Test →</button>
+      <button type="button" class="vr-redo-inline" onclick="vrRedoOnboarding()" data-i18n="vr_redo_setup">Redo setup</button>
     </div><!-- /vrScreen-intro -->
 
     <!-- ── GENDER SELECT ── -->
@@ -30013,23 +30166,24 @@ try {
         <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;" data-i18n="vr_voice_category_desc" data-i18n="vr_voice_category_desc">Knowing whether you're classifying a male or female voice narrows the match pool and gives you a much more accurate result.</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="iv-btn vr-gender-btn" id="vrGenderMale" onclick="vrSelectGender('male')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
-          <span style="font-size:26px;">♂</span>
+        <button class="iv-btn vr-gender-btn vr-choice" id="vrGenderMale" onclick="vrSelectGender('male')" style="padding:16px;text-align:center;">
           <div>
+            <div style="font-size:20px;line-height:1;margin-bottom:6px;">♂</div>
             <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_male_voice">Male Voice</div>
             <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;" data-i18n="vr_male_types">Bass · Baritone · Tenor</div>
           </div>
         </button>
-        <button class="iv-btn vr-gender-btn" id="vrGenderFemale" onclick="vrSelectGender('female')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
-          <span style="font-size:26px;">♀</span>
+        <button class="iv-btn vr-gender-btn vr-choice" id="vrGenderFemale" onclick="vrSelectGender('female')" style="padding:16px;text-align:center;">
           <div>
+            <div style="font-size:20px;line-height:1;margin-bottom:6px;">♀</div>
             <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_female_voice">Female Voice</div>
             <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;" data-i18n="vr_female_types">Alto · Mezzo-Soprano · Soprano</div>
           </div>
         </button>
-        <button class="iv-btn vr-gender-btn" id="vrGenderSkip" onclick="vrSelectGender(null)" style="padding:14px;text-align:center;">
+        <button class="iv-btn vr-gender-btn vr-choice" id="vrGenderSkip" onclick="vrSelectGender(null)" style="padding:14px;text-align:center;">
           <div style="font-size:11px;color:var(--muted);letter-spacing:1px;" data-i18n="vr_skip_gender">Skip — compare across all voice types</div>
         </button>
+        <button class="iv-btn vr-onboard-back" onclick="vrOnboardBack()" data-i18n="vr_onboard_back">← Back</button>
       </div>
     </div><!-- /vrScreen-gender -->
 
@@ -30042,21 +30196,22 @@ try {
         <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;" data-i18n="vr_age_desc">This helps us keep the exercises safe and the results accurate.</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="iv-btn vr-age-btn" data-val="under-13" onclick="vrSelectAge('under-13')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+        <button class="iv-btn vr-age-btn vr-choice" data-val="under-13" onclick="vrSelectAge('under-13')" style="padding:16px;text-align:center;">
           <div>
             <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_age_child">Under 13</div>
           </div>
         </button>
-        <button class="iv-btn vr-age-btn" data-val="13-17" onclick="vrSelectAge('13-17')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+        <button class="iv-btn vr-age-btn vr-choice" data-val="13-17" onclick="vrSelectAge('13-17')" style="padding:16px;text-align:center;">
           <div>
             <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_age_teen">13 to 17</div>
           </div>
         </button>
-        <button class="iv-btn vr-age-btn" data-val="18+" onclick="vrSelectAge('18+')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+        <button class="iv-btn vr-age-btn vr-choice" data-val="18+" onclick="vrSelectAge('18+')" style="padding:16px;text-align:center;">
           <div>
             <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_age_adult">18 and Up</div>
           </div>
         </button>
+        <button class="iv-btn vr-onboard-back" onclick="vrOnboardBack()" data-i18n="vr_onboard_back">← Back</button>
       </div>
     </div><!-- /vrScreen-onboard-age -->
 
@@ -30069,15 +30224,16 @@ try {
         <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;" data-i18n="vr_changing_desc">Voices change during these years, and that's completely normal. Some days it'll crack or feel different from yesterday. We'll keep the exercises where your voice is right now.</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="iv-btn vr-changing-btn" data-val="yes" onclick="vrSelectChanging('yes')" style="padding:16px;text-align:center;">
+        <button class="iv-btn vr-changing-btn vr-choice" data-val="yes" onclick="vrSelectChanging('yes')" style="padding:16px;text-align:center;">
           <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_changing_yes">Yes</div>
         </button>
-        <button class="iv-btn vr-changing-btn" data-val="unsure" onclick="vrSelectChanging('unsure')" style="padding:16px;text-align:center;">
+        <button class="iv-btn vr-changing-btn vr-choice" data-val="unsure" onclick="vrSelectChanging('unsure')" style="padding:16px;text-align:center;">
           <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_changing_unsure">Not Sure</div>
         </button>
-        <button class="iv-btn vr-changing-btn" data-val="no" onclick="vrSelectChanging('no')" style="padding:16px;text-align:center;">
+        <button class="iv-btn vr-changing-btn vr-choice" data-val="no" onclick="vrSelectChanging('no')" style="padding:16px;text-align:center;">
           <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_changing_no">No</div>
         </button>
+        <button class="iv-btn vr-onboard-back" onclick="vrOnboardBack()" data-i18n="vr_onboard_back">← Back</button>
       </div>
     </div><!-- /vrScreen-onboard-changing -->
 
@@ -30090,24 +30246,25 @@ try {
         <div style="font-size:11.5px;color:var(--text-dim);line-height:1.65;" data-i18n="vr_exp_desc">This sets the starting level for exercises and how the results are presented.</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="iv-btn vr-exp-btn" data-val="new" onclick="vrSelectExperience('new')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+        <button class="iv-btn vr-exp-btn vr-choice" data-val="new" onclick="vrSelectExperience('new')" style="padding:16px;text-align:center;">
           <div>
             <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_exp_new">New to Singing</div>
             <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;" data-i18n="vr_exp_new_desc">Never had lessons, just getting started</div>
           </div>
         </button>
-        <button class="iv-btn vr-exp-btn" data-val="some" onclick="vrSelectExperience('some')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+        <button class="iv-btn vr-exp-btn vr-choice" data-val="some" onclick="vrSelectExperience('some')" style="padding:16px;text-align:center;">
           <div>
             <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_exp_some">Some Experience</div>
             <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;" data-i18n="vr_exp_some_desc">Choir, lessons, or singing on your own</div>
           </div>
         </button>
-        <button class="iv-btn vr-exp-btn" data-val="trained" onclick="vrSelectExperience('trained')" style="padding:16px;text-align:left;display:flex;align-items:center;gap:14px;">
+        <button class="iv-btn vr-exp-btn vr-choice" data-val="trained" onclick="vrSelectExperience('trained')" style="padding:16px;text-align:center;">
           <div>
             <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);" data-i18n="vr_exp_trained">Trained</div>
             <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;" data-i18n="vr_exp_trained_desc">Years of study or performing</div>
           </div>
         </button>
+        <button class="iv-btn vr-onboard-back" onclick="vrOnboardBack()" data-i18n="vr_onboard_back">← Back</button>
       </div>
     </div><!-- /vrScreen-onboard-experience -->
 
@@ -30146,12 +30303,13 @@ try {
               </div>
             </div>
           </div>
-          <div class="teach-hint" style="margin-top:12px;" data-i18n-html="vr_safety_hint">Stop any exercise if something feels uncomfortable. A brief warmup is better than none at all.</div>
+          <div class="vr-exp-hint" data-i18n-html="vr_safety_hint">Stop any exercise if something feels uncomfortable. A brief warmup is better than none at all.</div>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="iv-btn" id="vrSkipAllBtn" onclick="vrSkipWarmup()" style="flex:1" data-i18n="vr_skip_all">Skip All</button>
           <button class="iv-btn primary" onclick="vrBeginWarmup()" style="flex:2;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3);" data-i18n="vr_start_warmup">▶︎ Start Warmup</button>
         </div>
+        <button type="button" class="vr-redo-inline" onclick="vrRedoOnboarding()" data-i18n="vr_redo_setup">Redo setup</button>
       </div>
 
       <!-- ── Active exercise display (hidden until started) ── -->
@@ -30190,6 +30348,7 @@ try {
           <button class="iv-btn" onclick="vrSkipWarmup()" style="flex:1" data-i18n="vr_skip_ex">Skip</button>
           <button class="iv-btn primary" id="vrBtnWarmupReady" onclick="vrWarmupDone()" disabled style="flex:2;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3);opacity:0.45;" data-i18n="vr_im_ready">I'm Ready →</button>
         </div>
+        <button type="button" class="vr-redo-inline" onclick="vrRedoOnboarding()" data-i18n="vr_redo_setup">Redo setup</button>
       </div>
 
     </div><!-- /vrScreen-warmup -->
@@ -34258,7 +34417,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.68';
+const INTONARE_VERSION = '0.210.74';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -89114,6 +89273,8 @@ const STRINGS = {
     vr_passaggio_note:'The amber zones are where your voice typically shifts between registers. Your actual transition may be a note or two away.',
     vr_quick_test:'Quick Test \u2192',
     vr_begin_btn:'Begin Assessment →',
+    vr_onboard_back:'← Back',
+    vr_redo_setup:'Redo setup',
     vr_step_2of3:'Step 2 of 3',
     vr_age_title:'How Old Are You?',
     vr_age_desc:'This helps keep the exercises safe and the results accurate.',
@@ -90369,6 +90530,8 @@ const STRINGS = {
     vr_passaggio_note:'Le zone ambra sono dove la voce tipicamente cambia registro. Il tuo passaggio reale pu\u00f2 essere una o due note pi\u00f9 in l\u00e0.',
     vr_quick_test:'Test Rapido \u2192',
     vr_begin_btn:'Inizia Valutazione →',
+    vr_onboard_back:'← Indietro',
+    vr_redo_setup:'Rifai impostazione',
     vr_step_2of3:'Passo 2 di 3',
     vr_age_title:'Quanti Anni Hai?',
     vr_age_desc:'Ci aiuta a mantenere gli esercizi sicuri e i risultati accurati.',
@@ -96332,7 +96495,11 @@ let vrCurrentStep  = 'intro';
 let vrDetectTarget = null;
 let vrShowExtended = false;  // toggle for reference section
 // vrUserGender reads from progState.vrOnboarding.gender so it persists.
-function vrGetGender() { return (progState.vrOnboarding && progState.vrOnboarding.gender) || null; }
+function vrGetGender() {
+  var g = progState.vrOnboarding && progState.vrOnboarding.gender;
+  if (!g || g === 'skip') return null;
+  return g;
+}
 function vrSetGender(g) { if (!progState.vrOnboarding) progState.vrOnboarding = {}; progState.vrOnboarding.gender = g; progSave(); }
 let vrUserGender = null; // runtime cache, synced from progState on module entry
 
@@ -96365,30 +96532,28 @@ function vrInit() {
   vrShowScreen('intro');
   vrRenderStepProgress();
   // Show Quick Test button if onboarded
-  var qBtn = document.getElementById('vrQuickTestBtn');
-  if (qBtn) qBtn.style.display = vrOnboardingComplete() ? '' : 'none';
+  vrSyncChrome();
   vrShowRetestNudge();
+  vrSyncExpHints();
 
-  // ── MOCK DATA (remove before shipping) ──────────────────────────
-  // Injects 8 fake sessions so the timeline, heatmap, and history features
-  // can be visually tested without singing 8 real assessments.
+  // v0.210.69: one-time cleanup of mock sessions injected during development.
+  // The injector is gone but the data may still be in localStorage.
   (function() {
-    var existing = vrGetSessions();
-    if (existing.length >= 3) return; // don't inject if real data exists
-    var mock = [
-      { lowComf:44, highComf:68, tessCenter:57, extLow:40, extHigh:71, voiceType:{id:'tenor',name:'Tenor',nameIt:'Tenore',color:'#34d399'}, date:'2026-09-13T10:00:00Z' },
-      { lowComf:44, highComf:67, tessCenter:57, extLow:41, extHigh:70, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-09-07T10:00:00Z' },
-      { lowComf:44, highComf:67, tessCenter:57, extLow:41, extHigh:70, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-09-01T10:00:00Z' },
-      { lowComf:45, highComf:66, tessCenter:56, extLow:42, extHigh:69, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-08-25T10:00:00Z' },
-      { lowComf:44, highComf:66, tessCenter:56, extLow:41, extHigh:69, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-08-15T10:00:00Z' },
-      { lowComf:44, highComf:65, tessCenter:56, extLow:41, extHigh:68, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-08-05T10:00:00Z' },
-      { lowComf:45, highComf:65, tessCenter:55, extLow:42, extHigh:67, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-07-29T10:00:00Z' },
-      { lowComf:45, highComf:64, tessCenter:55, extLow:41, extHigh:67, voiceType:{id:'baritone',name:'Baritone',nameIt:'Baritono',color:'#6495ed'}, date:'2026-07-15T10:00:00Z' },
-    ];
-    try { localStorage.setItem('intonare_vr_sessions', JSON.stringify(mock)); } catch(e) {}
-    console.log('[VR] mock data injected: 8 sessions');
+    try {
+      if (localStorage.getItem('intonare_vr_mock_cleared')) return;
+      var sessions = JSON.parse(localStorage.getItem('intonare_vr_sessions') || '[]');
+      if (!sessions.length) { localStorage.setItem('intonare_vr_mock_cleared','1'); return; }
+      var mockDates = ['2026-09-13T10:00:00Z','2026-09-07T10:00:00Z','2026-09-01T10:00:00Z',
+        '2026-08-25T10:00:00Z','2026-08-15T10:00:00Z','2026-08-05T10:00:00Z',
+        '2026-07-29T10:00:00Z','2026-07-15T10:00:00Z'];
+      var cleaned = sessions.filter(function(s) { return mockDates.indexOf(s.date) === -1; });
+      if (cleaned.length !== sessions.length) {
+        localStorage.setItem('intonare_vr_sessions', JSON.stringify(cleaned));
+        console.log('[VR] removed ' + (sessions.length - cleaned.length) + ' mock sessions');
+      }
+      localStorage.setItem('intonare_vr_mock_cleared','1');
+    } catch(e) {}
   })();
-  // ── END MOCK DATA ───────────────────────────────────────────────
 }
 
 function vrStop() {
@@ -96708,7 +96873,9 @@ function vrAutoLock(target, midi) {
 
   // Update ring to locked state
   const ringEl = document.getElementById({low:'vrRing-low',high:'vrRing-high',extlow:'vrRing-extlow',exthigh:'vrRing-exthigh'}[target]);
-  if (ringEl) { ringEl.className = 'vr-ring-fill locked'; ringEl.style.strokeDashoffset = '0'; }
+  if (ringEl) { ringEl.setAttribute('class', 'vr-ring-fill locked'); ringEl.style.strokeDashoffset = '0'; }
+  var detectCard = document.querySelector('#vrScreen-step .vr-detect-card');
+  if (detectCard) detectCard.classList.add('locked');
   const noteEl = document.getElementById({low:'vrNote-low',high:'vrNote-high',extlow:'vrNote-extlow',exthigh:'vrNote-exthigh'}[target]);
   if (noteEl) { noteEl.textContent = getDisplayNote(VR_DISPLAY_NOTES[((midi%12)+12)%12]); noteEl.className = 'vr-note-big locked'; }
 
@@ -97056,7 +97223,7 @@ function vrRenderStepProgress() {
     const done   = i < activeIdx;
     const active = i === activeIdx;
     const cls = 'vr-step-dot' + (s.optional?' optional':'') + (done?' done':active?' active':'');
-    const line = i < VR_STEPS.length - 1
+    const line = i < steps.length - 1
       ? `<div class="vr-step-line${done?' done':''}"></div>` : '';
     return `<div class="${cls}"></div>${line}`;
   }).join('');
@@ -97092,20 +97259,75 @@ function vrShowScreen(screenId) {
 function _vrFadeEl(el, toOpacity, dur, onDone) {
   var from = parseFloat(el.style.opacity);
   if (isNaN(from)) from = toOpacity === 0 ? 1 : 0;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var y0 = 0, y1 = 0;
+  if (!reduce) {
+    if (toOpacity === 1) { y0 = 8; y1 = 0; }
+    else { y0 = 0; y1 = -4; }
+  }
+  el.style.transform = 'translateY(' + y0 + 'px)';
   var startT = null;
   function step(ts) {
     if (!startT) startT = ts;
     var p = Math.min(1, (ts - startT) / dur);
-    el.style.opacity = from + (toOpacity - from) * p;
+    var e = 1 - Math.pow(1 - p, 2);
+    el.style.opacity = from + (toOpacity - from) * e;
+    el.style.transform = 'translateY(' + (y0 + (y1 - y0) * e) + 'px)';
     if (p < 1) requestAnimationFrame(step);
-    else { if (toOpacity === 1) el.style.opacity = ''; if (onDone) onDone(); }
+    else {
+      if (toOpacity === 1) { el.style.opacity = ''; el.style.transform = ''; }
+      if (onDone) onDone();
+    }
   }
   requestAnimationFrame(step);
 }
 
+function vrOnboardCurrentScreen() {
+  var ids = ['intro','gender','onboard-age','onboard-changing','onboard-experience','warmup','step','results'];
+  for (var i = 0; i < ids.length; i++) {
+    var el = document.getElementById('vrScreen-' + ids[i]);
+    if (el && !el.classList.contains('hidden')) return ids[i];
+  }
+  return null;
+}
+
+function vrOnboardBack() {
+  var cur = vrOnboardCurrentScreen();
+  if (cur === 'gender') { vrShowScreen('intro'); return; }
+  if (cur === 'onboard-age') { vrShowScreen('gender'); return; }
+  if (cur === 'onboard-changing') { vrShowScreen('onboard-age'); return; }
+  if (cur === 'onboard-experience') {
+    if (progState.vrOnboarding && progState.vrOnboarding.ageBracket === '13-17') vrShowScreen('onboard-changing');
+    else vrShowScreen('onboard-age');
+    return;
+  }
+}
+
+function vrSyncChrome() {
+  var done = vrOnboardingComplete();
+  var root = document.getElementById('toolVocalRange');
+  if (root) root.classList.toggle('vr-onboarded', done);
+  var qBtn = document.getElementById('vrQuickTestBtn');
+  if (qBtn) qBtn.style.display = done ? '' : 'none';
+}
+
+function vrRedoOnboarding() {
+  progState.vrOnboarding = { ageBracket: null, experience: null, voiceChanging: null, gender: null };
+  progSave();
+  vrUserGender = null;
+  vrQuickMode = false;
+  vrSyncExpHints();
+  vrSyncChrome();
+  vrShowScreen('gender');
+  ['vrGenderMale','vrGenderFemale','vrGenderSkip'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) { btn.classList.remove('selected'); btn.style.borderColor = ''; btn.style.background = ''; }
+  });
+}
+
 function vrShowGenderSelect() {
   // If already onboarded, go straight to the assessment (gender is stored).
-  // The user can change their onboarding via the gear icon.
+  // Redo setup (under intro / listening) restarts onboarding.
   if (vrOnboardingComplete()) {
     vrUserGender = vrGetGender();
     vrStartAssessment();
@@ -97115,26 +97337,22 @@ function vrShowGenderSelect() {
   // Reset button styles
   ['vrGenderMale','vrGenderFemale','vrGenderSkip'].forEach(id => {
     const btn = document.getElementById(id);
-    if (btn) { btn.style.borderColor = ''; btn.style.background = ''; }
+    if (btn) { btn.classList.remove('selected'); btn.style.borderColor = ''; btn.style.background = ''; }
   });
 }
 
 function vrSelectGender(gender) {
   vrUserGender = gender;
-  vrSetGender(gender);
+  vrSetGender(gender === null ? 'skip' : gender);
   // Highlight selected
   const map = { male:'vrGenderMale', female:'vrGenderFemale', null:'vrGenderSkip' };
   const selId = map[gender] || 'vrGenderSkip';
   ['vrGenderMale','vrGenderFemale','vrGenderSkip'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
-    if (id === selId) {
-      btn.style.borderColor = 'var(--accent)';
-      btn.style.background = 'rgba(94,226,255,0.08)';
-    } else {
-      btn.style.borderColor = '';
-      btn.style.background = '';
-    }
+    btn.classList.toggle('selected', id === selId);
+    btn.style.borderColor = '';
+    btn.style.background = '';
   });
   // Advance to age bracket (next onboarding step)
   setTimeout(() => vrShowOnboardingAge(), 250);
@@ -97150,8 +97368,9 @@ function vrSelectAge(bracket) {
   progSave();
   // Highlight
   document.querySelectorAll('.vr-age-btn').forEach(b => {
-    b.style.borderColor = (b.dataset.val === bracket) ? 'var(--accent)' : '';
-    b.style.background = (b.dataset.val === bracket) ? 'rgba(94,226,255,0.08)' : '';
+    b.classList.toggle('selected', b.dataset.val === bracket);
+    b.style.borderColor = '';
+    b.style.background = '';
   });
   // If teen, show voice-changing question; otherwise go to experience
   setTimeout(() => {
@@ -97168,8 +97387,9 @@ function vrSelectChanging(val) {
   progState.vrOnboarding.voiceChanging = val;
   progSave();
   document.querySelectorAll('.vr-changing-btn').forEach(b => {
-    b.style.borderColor = (b.dataset.val === val) ? 'var(--accent)' : '';
-    b.style.background = (b.dataset.val === val) ? 'rgba(94,226,255,0.08)' : '';
+    b.classList.toggle('selected', b.dataset.val === val);
+    b.style.borderColor = '';
+    b.style.background = '';
   });
   setTimeout(() => vrShowOnboardingExperience(), 250);
 }
@@ -97181,11 +97401,26 @@ function vrShowOnboardingExperience() {
 function vrSelectExperience(val) {
   progState.vrOnboarding.experience = val;
   document.querySelectorAll('.vr-exp-btn').forEach(b => {
-    b.style.borderColor = (b.dataset.val === val) ? 'var(--accent)' : '';
-    b.style.background = (b.dataset.val === val) ? 'rgba(94,226,255,0.08)' : '';
+    b.classList.toggle('selected', b.dataset.val === val);
+    b.style.borderColor = '';
+    b.style.background = '';
   });
   progSave();
+  vrSyncExpHints();
+  vrSyncChrome();
   setTimeout(() => vrStartAssessment(), 250);
+}
+
+// Experience-density tips (intro duration, warmup safety, results/reference).
+// Matches singing-step tips: New only. Some / Trained / Quick Test hide them.
+function vrWantsExpHints() {
+  if (typeof vrQuickMode !== 'undefined' && vrQuickMode) return false;
+  var exp = (progState.vrOnboarding && progState.vrOnboarding.experience) || 'new';
+  return exp === 'new';
+}
+function vrSyncExpHints() {
+  var root = document.getElementById('toolVocalRange');
+  if (root) root.classList.toggle('vr-exp-full', vrWantsExpHints());
 }
 
 // Check if onboarding is complete (all required fields filled)
@@ -97440,6 +97675,7 @@ function vrRenderSingingStep(stepId) {
             </div>
           </div>
           <div style="font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);" id="vrTessStatus">${(typeof progState !== 'undefined' && progState.lang === 'it') ? 'Canta liberamente nella tua zona comoda…' : 'Sing freely in your comfortable range…'}</div>
+          <button type="button" class="vr-redo-inline" onclick="vrRedoOnboarding()">${t('vr_redo_setup')}</button>
         </div>
       </div>
       <button class="iv-btn primary" id="vrBtnTessStart" onclick="vrStartTessitura()" style="width:100%;background:var(--theme-grad);box-shadow:0 4px 14px rgba(52,211,153,0.3)">▶︎ Start 15-Second Scan</button>`;
@@ -97479,6 +97715,7 @@ function vrRenderSingingStep(stepId) {
         <div style="width:7px;height:7px;border-radius:50%;background:var(--in-tune);box-shadow:0 0 6px var(--in-tune);animation:pdot 1.5s ease-in-out infinite;"></div>
         Mic active
       </div>
+      <button type="button" class="vr-redo-inline" onclick="vrRedoOnboarding()">${t('vr_redo_setup')}</button>
     </div>
     <div id="${cfg.confirmId}"></div>
     ${cfg.skipLabel ? `<div style="display:flex;gap:8px;">
@@ -97643,6 +97880,8 @@ function vrQuickTest() {
   if (vrTessTimer)   { clearInterval(vrTessTimer);   vrTessTimer   = null; }
   vrResetState();
   vrQuickMode = true;
+  vrSyncExpHints();
+  vrSyncChrome();
   vrShowStep('lowComf');
 }
 
@@ -97652,6 +97891,8 @@ function vrStartAssessment() {
   if (vrTessTimer)   { clearInterval(vrTessTimer);   vrTessTimer   = null; }
   vrResetState();
   vrQuickMode = false;
+  vrSyncExpHints();
+  vrSyncChrome();
   vrShowStep('warmup');
 }
 
@@ -97728,7 +97969,7 @@ function vrRenderResults(r) {
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
         ${vt.singers.slice(0,4).map(s=>`<span style="padding:5px 11px;background:var(--panel);border:1px solid var(--border-soft);border-radius:16px;font-size:9.5px;color:var(--text-dim);">${s}</span>`).join('')}
       </div>
-      <div class="teach-hint" data-i18n-html="hint_vr_range">Range alone doesn't set timbre or style; these artists share your approximate range but sound very different from each other.</div>
+      <div class="vr-exp-hint" data-i18n-html="hint_vr_range">Range alone doesn't set timbre or style; these artists share your approximate range but sound very different from each other.</div>
     </div>
 
     ${(progState.vrOnboarding && progState.vrOnboarding.voiceChanging && progState.vrOnboarding.voiceChanging !== "no") ? `<div style="font-family:'Fraunces','GlyphFix',serif;font-style:italic;font-size:10.5px;color:var(--accent-warm);line-height:1.6;padding:11px 14px;border-left:2px solid var(--accent-warm);margin-bottom:12px;">${t("vr_voice_changing_result")}</div>` : ""}
@@ -97745,6 +97986,7 @@ function vrRenderResults(r) {
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
       </button>
     </div>
+    <button type="button" class="vr-redo-inline" onclick="vrRedoOnboarding()">${t('vr_redo_setup')}</button>
     <div style="margin-top:10px;text-align:center;">
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;" data-i18n="vr_remind_title">Remind Me to Retest</div>
       <div style="display:flex;gap:6px;justify-content:center;">
@@ -97884,11 +98126,19 @@ function _vrAnimDetail(el, open) {
   el._vrOpen = open;
   if (el._vrRaf) cancelAnimationFrame(el._vrRaf);
   var targetH = 0;
-  var startH = parseFloat(el.style.maxHeight) || 0;
+  var startH = parseFloat(el.style.maxHeight);
+  if (isNaN(startH)) startH = open ? 0 : el.scrollHeight;
   if (open) {
     el.style.maxHeight = '9999px'; el.style.opacity = '1';
     targetH = el.scrollHeight;
     el.style.maxHeight = startH + 'px';
+  } else {
+    el.style.overflow = 'hidden';
+    if (el.style.maxHeight === 'none' || isNaN(parseFloat(el.style.maxHeight))) {
+      startH = el.scrollHeight;
+      el.style.maxHeight = startH + 'px';
+    }
+    targetH = 0;
   }
   var startT = null, dur = 200;
   function step(ts) {
@@ -98385,7 +98635,7 @@ function vrRenderReference() {
     html += `<span class="vr-axis-label${m===60?' c4':''}" style="left:${pct(m)}%">${lbl}</span>`;
   });
   html += `</div></div>
-    <div class="teach-hint" data-i18n-html="hint_vr_overlap">Ranges overlap significantly. Voice type is determined by where the voice is <em data-i18n="ui_most_comfortable">most comfortable</em>, not by its extremes.</div>
+    <div class="vr-exp-hint" data-i18n-html="hint_vr_overlap">Ranges overlap significantly. Voice type is determined by where the voice is <em data-i18n="ui_most_comfortable">most comfortable</em>, not by its extremes.</div>
   </div>`;
 
   // Combined discover-more row: Artist Reference + Extended Types toggle
