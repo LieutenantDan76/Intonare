@@ -1,6 +1,6 @@
 @echo off
 REM Intonare ship check — run from anywhere; resolves to repo root.
-setlocal
+setlocal EnableDelayedExpansion
 cd /d "%~dp0.."
 set PYTHONIOENCODING=utf-8
 
@@ -9,20 +9,33 @@ if not exist Intonare.html (
   exit /b 1
 )
 
-where python >nul 2>&1
-if errorlevel 1 (
-  echo FATAL: python not on PATH. Install Python 3 and reopen the terminal.
+REM Prefer real installs over the Windows Store stub (python.exe in WindowsApps).
+set "PY="
+where py >nul 2>&1 && for /f "delims=" %%i in ('py -3 -c "import sys; print(sys.executable)" 2^>nul') do set "PY=%%i"
+if not defined PY if exist "%LocalAppData%\Programs\Python\Python312\python.exe" set "PY=%LocalAppData%\Programs\Python\Python312\python.exe"
+if not defined PY if exist "%LocalAppData%\Programs\Python\Python313\python.exe" set "PY=%LocalAppData%\Programs\Python\Python313\python.exe"
+if not defined PY (
+  for /f "delims=" %%i in ('where python 2^>nul') do (
+    echo %%i | find /i "WindowsApps" >nul
+    if errorlevel 1 if not defined PY set "PY=%%i"
+  )
+)
+if not defined PY (
+  echo FATAL: Python 3 not found.
+  echo Install Python 3 and/or disable App execution aliases for python.exe
+  echo Settings - Apps - Advanced app settings - App execution aliases
   exit /b 1
 )
 
 echo ============================================================
 echo  INTONARE SHIP CHECK
 echo  cwd: %CD%
+echo  python: %PY%
 echo ============================================================
 
 echo.
 echo [1/2] Regression sentinel...
-python tools\audits\intonare_regression_sentinel.py Intonare.html
+"%PY%" tools\audits\intonare_regression_sentinel.py Intonare.html
 if errorlevel 1 (
   echo.
   echo FAILED: sentinel. Do not ship.
@@ -31,7 +44,7 @@ if errorlevel 1 (
 
 echo.
 echo [2/2] Changelog gate...
-python tools\audits\intonare_changelog_gate.py Intonare.html CHANGELOG.md
+"%PY%" tools\audits\intonare_changelog_gate.py Intonare.html CHANGELOG.md
 if errorlevel 1 (
   echo.
   echo FAILED: changelog gate. Do not ship.
