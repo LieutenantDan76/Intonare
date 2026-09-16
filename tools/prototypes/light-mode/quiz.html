@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Prototype · Music Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:opsz,wght@9..144,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="contract.css"/>
+<style>
+  /* Full-screen quiz panel feel */
+  .mq {
+    background: var(--ground);
+    min-height: calc(100dvh - 90px);
+    margin: 0 -14px;
+    padding: 0 16px 28px;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0 10px;
+  }
+  .back, .stats {
+    appearance: none;
+    background: none;
+    border: 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--ink-muted);
+    cursor: pointer;
+    padding: 6px 0;
+  }
+  .stats {
+    width: 34px;
+    height: 34px;
+    border: 1px solid color-mix(in oklab, var(--outline) 35%, transparent);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--panel);
+  }
+
+  /* Glass: size-scaled lift. Large mode cards = softer than medium tuner cards. */
+  body.mat-glass .daily,
+  body.mat-glass .pill,
+  body.mat-glass .stats,
+  body.mat-glass .ans,
+  body.mat-glass .next-row .secondary,
+  body.mat-glass .next-row .primary {
+    position: relative;
+    isolation: isolate;
+    background:
+      linear-gradient(160deg,
+        rgba(255,255,255,0.9) 0%,
+        rgba(255,255,255,0.62) 48%,
+        rgba(255,255,255,0.48) 100%),
+      color-mix(in oklab, white 78%, var(--accent-fill));
+    border-color: color-mix(in oklab, white 88%, var(--accent-ink));
+    box-shadow: var(--lift-xs);
+  }
+  body.mat-glass .ans,
+  body.mat-glass .next-row .secondary,
+  body.mat-glass .next-row .primary {
+    box-shadow: var(--lift-sm);
+  }
+  /* Large mode rows + question card: white lift, calm shadow (lift-lg) */
+  body.mat-glass .mode,
+  body.mat-glass .qcard {
+    position: relative;
+    isolation: isolate;
+    background:
+      linear-gradient(160deg,
+        rgba(255,255,255,0.94) 0%,
+        rgba(255,255,255,0.78) 42%,
+        rgba(255,255,255,0.66) 100%),
+      color-mix(in oklab, white 86%, var(--accent-fill));
+    border: 1px solid color-mix(in oklab, white 90%, var(--accent-ink));
+    outline: none;
+    box-shadow: var(--lift-lg);
+  }
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    body.mat-glass .mode,
+    body.mat-glass .qcard,
+    body.mat-glass .ans,
+    body.mat-glass .daily,
+    body.mat-glass .pill,
+    body.mat-glass .stats,
+    body.mat-glass .sheet {
+      -webkit-backdrop-filter: blur(14px) saturate(1.35);
+      backdrop-filter: blur(14px) saturate(1.35);
+    }
+    /* Keep white lift; blur is garnish, not a license to go translucent again */
+    body.mat-glass .mode,
+    body.mat-glass .qcard {
+      background:
+        linear-gradient(160deg,
+          rgba(255,255,255,0.9) 0%,
+          rgba(255,255,255,0.74) 48%,
+          rgba(255,255,255,0.6) 100%),
+        color-mix(in oklab, white 80%, transparent);
+    }
+  }
+  body.mat-glass .mode.quick {
+    background:
+      linear-gradient(160deg, rgba(255,255,255,0.95), rgba(255,255,255,0.72)),
+      color-mix(in oklab, white 88%, var(--accent-soft));
+  }
+  body.mat-glass .mode.custom {
+    background:
+      linear-gradient(160deg, rgba(255,255,255,0.95), rgba(255,255,255,0.72)),
+      color-mix(in oklab, white 88%, var(--accent-ink));
+  }
+  body.mat-glass .mode.survival {
+    background:
+      linear-gradient(160deg, rgba(255,255,255,0.95), rgba(255,255,255,0.72)),
+      color-mix(in oklab, white 90%, var(--bad));
+  }
+  body.mat-glass .mode.daily-card {
+    background:
+      linear-gradient(160deg, rgba(255,255,255,0.95), rgba(255,255,255,0.72)),
+      color-mix(in oklab, white 88%, var(--warm));
+  }
+  body.mat-glass .ans.correct {
+    background:
+      linear-gradient(155deg, rgba(255,255,255,0.4), rgba(255,255,255,0.05)),
+      color-mix(in oklab, var(--ok) 22%, transparent);
+    border-color: color-mix(in oklab, var(--ok) 55%, white);
+  }
+  body.mat-glass .ans.wrong {
+    background:
+      linear-gradient(155deg, rgba(255,255,255,0.4), rgba(255,255,255,0.05)),
+      color-mix(in oklab, var(--bad) 18%, transparent);
+    border-color: color-mix(in oklab, var(--bad) 50%, white);
+  }
+  body.mat-glass .next-row .primary {
+    background:
+      linear-gradient(155deg, rgba(255,255,255,0.5), rgba(255,255,255,0.08)),
+      color-mix(in oklab, var(--accent-soft) 35%, transparent);
+    color: var(--accent-soft);
+    border: 1px solid color-mix(in oklab, white 55%, var(--accent-soft));
+  }
+  body.mat-glass .sheet {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.4)),
+      color-mix(in oklab, white 55%, var(--accent-fill));
+    border-color: color-mix(in oklab, white 80%, transparent);
+    box-shadow: var(--lift-lg);
+  }
+  body.mat-glass .pack {
+    background: color-mix(in oklab, white 70%, transparent);
+    border-color: color-mix(in oklab, white 75%, transparent);
+    box-shadow: var(--lift-xs);
+  }
+  body.mat-glass .pack.on {
+    background: color-mix(in oklab, var(--accent-fill) 45%, white);
+    border-color: var(--accent-soft);
+    box-shadow: var(--lift-sm);
+  }
+  body.mat-glass .icon {
+    background: color-mix(in oklab, white 50%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+  }
+  body.mat-glass .mq {
+    background: transparent;
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    body.mat-glass .mode,
+    body.mat-glass .qcard,
+    body.mat-glass .ans,
+    body.mat-glass .sheet {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+  }
+
+  .topbar.glass-chrome {
+    margin: 0 -4px 8px;
+    padding: 8px 10px;
+    border-radius: 14px;
+  }
+
+  .hero { text-align: center; padding: 8px 0 16px; position: relative; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--accent-soft) 12%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--accent-soft) 28%, transparent);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    color: var(--accent-soft);
+    margin-bottom: 10px;
+  }
+  .dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--accent-soft);
+  }
+  .hero-title {
+    font-family: var(--font-ui);
+    font-size: 56px;
+    letter-spacing: 0.08em;
+    line-height: 0.9;
+    background: linear-gradient(140deg, var(--ink) 0%, var(--accent-soft) 55%, var(--accent-ink) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero-sub {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--ink-muted);
+    margin-top: 8px;
+  }
+  .daily {
+    position: absolute;
+    top: 0; right: 0;
+    max-width: 42%;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: color-mix(in oklab, var(--warm) 10%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--warm) 35%, transparent);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--warm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .modes { display: flex; flex-direction: column; gap: 8px; }
+  .mode {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: var(--r-md);
+    border: 1.5px solid color-mix(in oklab, var(--outline) 30%, transparent);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    color: inherit;
+  }
+  .mode.quick { background: color-mix(in oklab, var(--accent-soft) 6%, var(--surface)); }
+  .mode.custom { background: color-mix(in oklab, var(--accent-ink) 5%, var(--surface)); }
+  .mode.survival { background: color-mix(in oklab, var(--bad) 5%, var(--surface)); }
+  .mode.daily-card { background: color-mix(in oklab, var(--warm) 7%, var(--surface)); border-color: color-mix(in oklab, var(--warm) 30%, transparent); }
+  .icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    display: grid; place-items: center; flex-shrink: 0;
+    font-size: 18px;
+    background: var(--panel);
+  }
+  .mode.quick .icon { background: color-mix(in oklab, var(--accent-soft) 14%, var(--panel)); color: var(--accent-soft); }
+  .mode.custom .icon { background: color-mix(in oklab, var(--accent-ink) 14%, var(--panel)); color: var(--accent-ink); }
+  .mode.survival .icon { background: color-mix(in oklab, var(--bad) 14%, var(--panel)); color: var(--bad); }
+  .mode.daily-card .icon { background: color-mix(in oklab, var(--warm) 14%, var(--panel)); color: var(--warm); }
+  .name {
+    font-family: var(--font-ui);
+    font-size: 19px;
+    letter-spacing: 0.1em;
+    line-height: 1;
+  }
+  .mode.quick .name { color: var(--accent-soft); }
+  .mode.custom .name { color: var(--accent-ink); }
+  .mode.survival .name { color: var(--bad); }
+  .mode.daily-card .name { color: var(--warm); }
+  .desc {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--ink-muted);
+    margin-top: 4px;
+  }
+  .badge {
+    display: inline-block;
+    margin-top: 5px;
+    font-family: var(--font-mono);
+    font-size: 7px;
+    letter-spacing: 0.12em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, currentColor 28%, transparent);
+    background: color-mix(in oklab, currentColor 10%, transparent);
+  }
+  .arrow { margin-left: auto; color: var(--ink-muted); font-size: 16px; }
+
+  /* Play screen */
+  .progress {
+    height: 3px;
+    background: var(--surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress > i {
+    display: block;
+    height: 100%;
+    width: 58%;
+    background: var(--accent-soft);
+  }
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+  }
+  .meta .score { color: var(--accent-soft); font-weight: 700; }
+  .qcard {
+    background: var(--surface);
+    border: 1px solid color-mix(in oklab, var(--outline) 28%, transparent);
+    border-radius: var(--r-lg);
+    padding: 17px 15px;
+    box-shadow: var(--shadow-card);
+  }
+  .qnum {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    color: var(--ink-muted);
+    margin-bottom: 8px;
+  }
+  .qtext {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--panel);
+    border: 1px solid color-mix(in oklab, var(--outline) 30%, transparent);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    color: var(--ink-muted);
+  }
+  .cat i {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent-soft);
+  }
+  .answers { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+  .ans {
+    appearance: none;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 13px;
+    border-radius: var(--r-md);
+    border: 1px solid color-mix(in oklab, var(--outline) 32%, transparent);
+    background: var(--surface);
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .letter {
+    width: 22px; height: 22px; border-radius: 6px;
+    display: grid; place-items: center;
+    background: var(--panel);
+    border: 1px solid color-mix(in oklab, var(--outline) 40%, transparent);
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--ink-muted);
+    flex-shrink: 0;
+  }
+  .ans.correct {
+    border-color: var(--ok);
+    background: color-mix(in oklab, var(--ok) 10%, var(--surface));
+    color: var(--ok);
+  }
+  .ans.correct .letter {
+    background: var(--ok);
+    border-color: var(--ok);
+    color: white;
+  }
+  .ans.wrong {
+    border-color: var(--bad);
+    background: color-mix(in oklab, var(--bad) 8%, var(--surface));
+    color: var(--bad);
+  }
+  .ans.wrong .letter {
+    background: var(--bad);
+    border-color: var(--bad);
+    color: white;
+  }
+  .next-row { display: flex; gap: 9px; margin-top: 14px; }
+  .next-row button {
+    flex: 1;
+    appearance: none;
+    padding: 12px;
+    border-radius: var(--r-md);
+    font-family: var(--font-ui);
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+  }
+  .next-row .secondary {
+    background: var(--surface);
+    border: 1px solid color-mix(in oklab, var(--outline) 32%, transparent);
+    color: var(--ink-muted);
+  }
+  .next-row .primary {
+    background: color-mix(in oklab, var(--accent-soft) 12%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--accent-soft) 40%, transparent);
+    color: var(--accent-soft);
+  }
+
+  /* Pack sheet */
+  .sheet-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(18, 20, 36, 0.45);
+    z-index: 20;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .sheet-scrim.on { display: flex; }
+  .sheet {
+    width: min(430px, 100%);
+    background: var(--panel);
+    border: 1px solid color-mix(in oklab, var(--outline) 28%, transparent);
+    border-bottom: 0;
+    border-radius: 22px 22px 0 0;
+    padding: 14px 16px calc(20px + env(safe-area-inset-bottom));
+    max-height: 78vh;
+    overflow: auto;
+  }
+  .handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: color-mix(in oklab, var(--outline) 50%, transparent);
+    margin: 0 auto 14px;
+  }
+  .sheet-title {
+    font-family: var(--font-ui);
+    font-size: 22px;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+  }
+  .sheet-sub {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    color: var(--ink-muted);
+    margin: 2px 0 12px;
+  }
+  .pack-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+  .pack {
+    appearance: none;
+    text-align: left;
+    background: var(--surface);
+    border: 1.5px solid color-mix(in oklab, var(--outline) 30%, transparent);
+    border-radius: var(--r-sm);
+    padding: 10px;
+    cursor: pointer;
+    color: inherit;
+  }
+  .pack.on {
+    border-color: var(--accent-soft);
+    background: color-mix(in oklab, var(--accent-soft) 8%, var(--surface));
+  }
+  .pack-name {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+  }
+  .pack.on .pack-name { color: var(--accent-soft); }
+  .pack-desc {
+    font-family: var(--font-mono);
+    font-size: 7px;
+    color: var(--ink-muted);
+    margin-top: 3px;
+  }
+
+  .diff {
+    display: flex;
+    gap: 7px;
+    margin-top: 14px;
+  }
+  .diff button {
+    flex: 1;
+    appearance: none;
+    background: var(--surface);
+    border: 1.5px solid color-mix(in oklab, var(--outline) 30%, transparent);
+    border-radius: var(--r-sm);
+    padding: 9px 6px;
+    cursor: pointer;
+  }
+  .diff button.on-easy { border-color: var(--ok); background: color-mix(in oklab, var(--ok) 8%, var(--surface)); }
+  .diff button.on-med { border-color: var(--warm); background: color-mix(in oklab, var(--warm) 8%, var(--surface)); }
+  .diff .dn {
+    font-family: var(--font-ui);
+    font-size: 15px;
+    letter-spacing: 0.1em;
+  }
+  .diff .on-easy .dn { color: var(--ok); }
+  .diff .on-med .dn { color: var(--warm); }
+  .diff .dn.hard { color: var(--bad); }
+  .diff .ds {
+    font-family: var(--font-mono);
+    font-size: 7px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+  .start {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: var(--r-md);
+    border: 1px solid color-mix(in oklab, var(--accent-soft) 42%, transparent);
+    background: linear-gradient(135deg,
+      color-mix(in oklab, var(--accent-soft) 14%, var(--surface)),
+      color-mix(in oklab, var(--accent-ink) 8%, var(--surface)));
+    font-family: var(--font-ui);
+    font-size: 21px;
+    letter-spacing: 0.16em;
+    color: var(--ink);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body class="theme-train mat-solid">
+  <div class="shell">
+    <div class="proto-bar">
+      <div>
+        <a href="index.html">← Lab</a>
+        <div class="proto-title">Music Quiz</div>
+        <div class="proto-sub">Own screens · contract train tokens</div>
+      </div>
+      <div class="seg" role="group" aria-label="Screen">
+        <button type="button" class="on" data-view="hub">Hub</button>
+        <button type="button" data-view="play">Play</button>
+        <button type="button" data-view="sheet">Packs</button>
+      </div>
+    </div>
+
+    <div class="seg mat-toggle" role="group" aria-label="Material">
+      <button type="button" class="on" data-mat="solid">Solid</button>
+      <button type="button" data-mat="glass">Glass</button>
+    </div>
+
+    <div class="mq" style="margin-top:10px">
+      <!-- HUB -->
+      <section id="view-hub" class="view on">
+        <div class="topbar glass-chrome">
+          <button class="back" type="button">← BACK</button>
+          <button class="stats glass-chrome" type="button" aria-label="Stats">▣</button>
+        </div>
+        <div class="hero">
+          <div class="daily glass-chrome">DAILY · READY</div>
+          <div class="pill glass-chrome"><span class="dot"></span> EAR TRAINING</div>
+          <div class="hero-title">MUSIC<br/>QUIZ</div>
+          <div class="hero-sub">PICK A MODE</div>
+        </div>
+        <div class="modes">
+          <button class="mode quick" type="button" data-open="sheet">
+            <div class="icon">⚡</div>
+            <div>
+              <div class="name">QUICK</div>
+              <div class="desc">One pack, short run</div>
+              <span class="badge" style="color:var(--accent-soft)">5–10 Q</span>
+            </div>
+            <span class="arrow">›</span>
+          </button>
+          <button class="mode custom" type="button" data-open="sheet">
+            <div class="icon">◎</div>
+            <div>
+              <div class="name">CUSTOM</div>
+              <div class="desc">Mix packs + length</div>
+              <span class="badge" style="color:var(--accent-ink)">BUILD</span>
+            </div>
+            <span class="arrow">›</span>
+          </button>
+          <button class="mode survival" type="button" data-open="play">
+            <div class="icon">♥</div>
+            <div>
+              <div class="name">SURVIVAL</div>
+              <div class="desc">Three hearts, no mercy</div>
+              <span class="badge" style="color:var(--bad)">HARD</span>
+            </div>
+            <span class="arrow">›</span>
+          </button>
+          <button class="mode daily-card" type="button" data-open="play">
+            <div class="icon">☀</div>
+            <div>
+              <div class="name">DAILY</div>
+              <div class="desc">Same set for everyone today</div>
+              <span class="badge" style="color:var(--warm)">NEW</span>
+            </div>
+            <span class="arrow">›</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- PLAY -->
+      <section id="view-play" class="view">
+        <div class="topbar glass-chrome">
+          <button class="back" type="button" data-view="hub">← BACK</button>
+          <span class="proto-sub">STREAK 4</span>
+        </div>
+        <div class="progress"><i></i></div>
+        <div class="meta">
+          <span>Q 7 / 12</span>
+          <span class="score">5 CORRECT</span>
+        </div>
+        <div class="qcard">
+          <div class="qnum">BEATLES · ALBUMS</div>
+          <div class="qtext">Which album opens with Taxman?</div>
+          <div class="cat"><i></i> ALBUMS</div>
+        </div>
+        <div class="answers">
+          <button class="ans wrong" type="button"><span class="letter">A</span>Rubber Soul</button>
+          <button class="ans correct" type="button"><span class="letter">B</span>Revolver</button>
+          <button class="ans" type="button"><span class="letter">C</span>Help!</button>
+          <button class="ans" type="button"><span class="letter">D</span>Abbey Road</button>
+        </div>
+        <div class="next-row">
+          <button class="secondary glass-chrome" type="button">SKIP</button>
+          <button class="primary" type="button">NEXT</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- PACK SHEET -->
+  <div class="sheet-scrim" id="sheet">
+    <div class="sheet" role="dialog" aria-label="Pack picker">
+      <div class="handle"></div>
+      <div class="sheet-title">QUICK PLAY</div>
+      <div class="sheet-sub">CHOOSE A PACK</div>
+      <div class="pack-grid">
+        <button class="pack on" type="button"><div class="pack-name">BEATLES</div><div class="pack-desc">Albums, lines, lore</div></button>
+        <button class="pack" type="button"><div class="pack-name">80S</div><div class="pack-desc">Hits and gear</div></button>
+        <button class="pack" type="button"><div class="pack-name">GUITAR TECH</div><div class="pack-desc">Hands and tone</div></button>
+        <button class="pack" type="button"><div class="pack-name">THEORY</div><div class="pack-desc">Core concepts</div></button>
+      </div>
+      <div class="diff">
+        <button type="button"><div class="dn" style="color:var(--ok)">EASY</div><div class="ds">Warmup</div></button>
+        <button class="on-med" type="button"><div class="dn">MEDIUM</div><div class="ds">Default</div></button>
+        <button type="button"><div class="dn hard">HARD</div><div class="ds">Sharp</div></button>
+      </div>
+      <button class="start" type="button" data-open="play">START</button>
+    </div>
+  </div>
+
+<script>
+  function showView(name) {
+    document.getElementById("sheet").classList.remove("on");
+    document.querySelectorAll(".seg [data-view]").forEach((b) => {
+      b.classList.toggle("on", b.dataset.view === name);
+    });
+    document.querySelectorAll(".mq > .view").forEach((v) => {
+      v.classList.toggle("on", v.id === "view-" + name);
+    });
+    if (name === "sheet") {
+      document.getElementById("view-hub").classList.add("on");
+      document.getElementById("view-play").classList.remove("on");
+      document.getElementById("sheet").classList.add("on");
+      document.querySelectorAll(".seg [data-view]").forEach((b) => {
+        b.classList.toggle("on", b.dataset.view === "sheet");
+      });
+    }
+  }
+
+  document.querySelectorAll(".seg [data-view]").forEach((btn) => {
+    btn.addEventListener("click", () => showView(btn.dataset.view));
+  });
+  document.querySelectorAll("[data-open]").forEach((btn) => {
+    btn.addEventListener("click", () => showView(btn.dataset.open));
+  });
+  document.querySelectorAll(".back[data-view]").forEach((btn) => {
+    btn.addEventListener("click", () => showView(btn.dataset.view));
+  });
+  document.getElementById("sheet").addEventListener("click", (e) => {
+    if (e.target.id === "sheet") showView("hub");
+  });
+  document.querySelectorAll(".pack").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".pack").forEach((p) => p.classList.remove("on"));
+      btn.classList.add("on");
+    });
+  });
+  document.querySelectorAll("[data-mat]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-mat]").forEach((b) => b.classList.toggle("on", b === btn));
+      document.body.classList.remove("mat-solid", "mat-glass");
+      document.body.classList.add("mat-" + btn.dataset.mat);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Palette audit · contract vs live vs refs</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:opsz,wght@9..144,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --font-display: "Fraunces", Georgia, serif;
+    --font-ui: "Bebas Neue", Impact, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    color: #1e1e28;
+    background: #f3f1ea;
+    padding: 16px 14px 40px;
+  }
+  a { color: #3d4a8a; }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    margin: 0 0 4px;
+  }
+  .sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #5a5a6a;
+    margin-bottom: 18px;
+    line-height: 1.45;
+  }
+  .tab {
+    margin-bottom: 22px;
+    padding: 14px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #ddd8ce;
+  }
+  .tab h2 {
+    font-family: var(--font-ui);
+    letter-spacing: 0.1em;
+    font-size: 20px;
+    margin: 0 0 4px;
+  }
+  .feel {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #5a5a6a;
+    margin-bottom: 12px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  @media (max-width: 640px) {
+    .row { grid-template-columns: 1fr; }
+  }
+  .chip {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .swatch {
+    height: 72px;
+  }
+  .meta {
+    padding: 8px 10px;
+    background: #faf9f6;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .meta strong { display: block; font-size: 11px; margin-bottom: 2px; color: #1e1e28; }
+  .verdict {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.45;
+    background: #f0efe8;
+    border-left: 3px solid #6a6540;
+  }
+  .verdict.ok { border-left-color: #2f6b4f; background: #e8f3ec; }
+  .verdict.warn { border-left-color: #9a5b12; background: #f8efe0; }
+  .verdict.bad { border-left-color: #8a3030; background: #f6e8e8; }
+  .refs {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .glass-note {
+    margin-top: 20px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #1e1e28;
+    color: #eee;
+  }
+  .glass-note h2 {
+    font-family: var(--font-ui);
+    letter-spacing: 0.08em;
+    margin: 0 0 8px;
+    color: #c9c4ff;
+  }
+  .glass-note p { margin: 0 0 8px; font-size: 13px; line-height: 1.45; color: #ccc; }
+  .glass-note p:last-child { margin: 0; }
+</style>
+</head>
+<body>
+  <a href="index.html" style="font-family:var(--font-mono);font-size:11px">← Lab</a>
+  <h1>Palette audit</h1>
+  <p class="sub">
+    Contract lab tokens vs shipping light floors in Intonare.html vs online refs.
+    Hex from browser canvas fill of the OKLCH strings. Live hex from app CSS.
+  </p>
+
+  <div class="tab">
+    <h2>Tuner · cyan / ice metal</h2>
+    <div class="feel">Wanted: precision instrument, cool, studio. Housing is already the character.</div>
+    <div class="row">
+      <div class="chip">
+        <div class="swatch" style="background:#c9e3ef"></div>
+        <div class="meta"><strong>Contract ground</strong>#c9e3ef · oklch(0.90 0.032 230)<br/>Too soft. Reads baby blue office.</div>
+      </div>
+      <div class="chip">
+        <div class="swatch" style="background:#8faedc"></div>
+        <div class="meta"><strong>Live ground</strong>#8faedc<br/>Stronger. Closer to “instrument panel.”</div>
+      </div>
+      <div class="chip">
+        <div class="swatch" style="background:#4cb4ec"></div>
+        <div class="meta"><strong>Ref accent</strong>#4cb4ec synth UI<br/>+ steel #1c4464 / #acbdce</div>
+      </div>
+    </div>
+    <div class="verdict ok">
+      Hue is right. Contract is too light / low chroma vs live. Accent-ink #005681 is solid.
+      Glass earns its keep here: frost + metal bezel is a real material story, not paint.
+    </div>
+    <div class="refs">
+      Refs:
+      <a href="https://colorswall.com/palette/166759">Synth UI ColorsWall</a> ·
+      <a href="https://www.colorsencyclopedia.com/palettes/ice-blue/">Ice Blue</a> ·
+      <a href="https://colorswall.com/palette/208910">Futuristic music UI</a>
+    </div>
+  </div>
+
+  <div class="tab">
+    <h2>Metro · brass / amber</h2>
+    <div class="feel">Wanted: wooden metronome, brass, stage lamp. Warm but not urine-yellow.</div>
+    <div class="row">
+      <div class="chip">
+        <div class="swatch" style="background:#e8ddc5"></div>
+        <div class="meta"><strong>Contract ground</strong>#e8ddc5 · oklch(0.90 0.034 85)<br/>Cream melt risk with cards.</div>
+      </div>
+      <div class="chip">
+        <div class="swatch" style="background:#bdab75"></div>
+        <div class="meta"><strong>Live ground</strong>#bdab75<br/>Real brass stage. Keep this depth.</div>
+      </div>
+      <div class="chip">
+        <div class="swatch" style="background:#d0b285"></div>
+        <div class="meta"><strong>Glass lab override</strong>#d0b285 · oklch(0.78 0.07 78)<br/>Closer to live. Good instinct.</div>
+      </div>
+    </div>
+    <div class="verdict warn">
+      Solid contract metro is too pale; same hue family as cards so Soft mode melts.
+      Live + glass override are the correct weight. Accent-ink brown (#6f4200) fits brass CTAs.
+      Don’t frost the brass housing; glass is only for chrome around it.
+    </div>
+    <div class="refs">
+      Refs:
+      <a href="https://colorarchive.org/collections/ink-and-gold/">Ink and Gold</a> ·
+      <a href="https://colormagic.app/palette/671c65f35e344cd2bebee30c">Golden Amber</a> ·
+      <a href="https://colors.codes/color/a79737">Cool Brass #a79737</a>
+    </div>
+  </div>
+
+  <div class="tab">
+    <h2>Tools · emerald / mint</h2>
+    <div class="feel">Wanted: workshop utility, clean, fresh. Not hospital seafoam, not neon money-green.</div>
+    <div class="row">
+      <div class="chip">
+        <div class="swatch" style="background:#cbe5d9"></div>
+        <div class="meta"><strong>Contract ground</strong>#cbe5d9 · oklch(0.90 0.033 165)<br/>Spa / clinic risk.</div>
+      </div>
+      <div class="chip">
+        <div class="swatch" style="background:#79bca8"></div>
+        <div class="meta"><strong>Live ground</strong>#79bca8<br/>Better: teal-emerald toolbench.</div>
+      </div>
+      <div class="chip">
+        <div class="swatch" style="background:#10b981"></div>
+        <div class="meta"><strong>Ref mid</strong>#10b981 SaaS Emerald<br/>Scale: #022c22 … #ecfdf5</div>
+      </div>
+    </div>
+    <div class="verdict warn">
+      No Tools lab page yet, so glass here is guesswork. Live floor is the better mood.
+      Accent-ink #005938 is dark enough. Glass only helps if tools chrome is dense (lists,
+      sheets, pickers). Don’t frost piano/keep-dark style islands if any stay dark.
+    </div>
+    <div class="refs">
+      Refs:
+      <a href="https://colorui.io/palettes/saas-emerald">SaaS Emerald</a> ·
+      <a href="https://huehive.co/ai_generated_palettes/29830">Emerald Oasis</a>
+    </div>
+  </div>
+
+  <div class="tab">
+    <h2>Train / Quiz · violet</h2>
+    <div class="feel">Wanted: game energy, packs, streaks. Not yoga studio lavender.</div>
+    <div class="row">
+      <div class="chip">
+        <div class="swatch" style="background:#dfdaf3"></div>
+        <div class="meta"><strong>Contract ground</strong>#dfdaf3 · oklch(0.90 0.034 295)<br/>Soft spa lavender.</div>
+      </div>
+      <div class="chip">
+        <div class="swatch" style="background:#ada4d8"></div>
+        <div class="meta"><strong>Live ground</strong>#ada4d8<br/>More presence; still gentle.</div>
+      </div>
+      <div class="chip">
+        <div class="swatch" style="background:#6f50c9"></div>
+        <div class="meta"><strong>Live accent</strong>#6f50c9<br/>This carries the “game” vibe.</div>
+      </div>
+    </div>
+    <div class="verdict warn">
+      Solid quiz lab looks flat: cards almost same L as ground. Glass helps lift (mode rows),
+      but won’t invent energy. Accent-ink #543a8b is good; mode accents (orange/red/brown)
+      need more chroma so Survival/Daily don’t look muddy. Deepen ground toward live.
+    </div>
+    <div class="refs">
+      Refs:
+      <a href="https://palettecss.com/palette/6a2ecea9976bd7d41c092502">Light violet + teal</a> ·
+      live train accent #6f50c9 in Intonare.html
+    </div>
+  </div>
+
+  <div class="glass-note">
+    <h2>Where glass helps vs polish-a-turd</h2>
+    <p><strong>Helps:</strong> Tuner (metal + frost), Metro after hierarchy (amber stage + opaque brass + recessed rails), Quiz mode rows / answer chips when ground has enough chroma to blur against.</p>
+    <p><strong>Doesn’t save:</strong> Pale contract floors (L≈0.90 across all four). Same L/C band = four tinted pastels. Road Trip (own skins). Any keep-dark instrument stage.</p>
+    <p><strong>Next move:</strong> Pull contract grounds toward live floors (#8faedc / #bdab75 / #79bca8 / #ada4d8), keep cards near white, then glass. Don’t frost first and hope for personality.</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Prototype · Metro / drums</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:opsz,wght@9..144,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="contract.css"/>
+<style>
+  /* Material lab only. Not a live layout proposal. */
+
+  /* ── Solid baseline ── */
+  .subtabs {
+    display: flex;
+    gap: 6px;
+    margin: 12px 0;
+    padding: 4px;
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--surface-2) 88%, var(--accent-fill));
+    border: 1px solid color-mix(in oklab, var(--outline) 28%, transparent);
+  }
+  .subtabs button {
+    flex: 1;
+    appearance: none;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    padding: 9px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .subtabs button.on {
+    background: var(--panel);
+    border-color: color-mix(in oklab, var(--outline) 35%, transparent);
+    color: var(--accent-ink);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Brass metro housing (opaque island in both materials) */
+  .metro-screen {
+    position: relative;
+    border-radius: 18px;
+    padding: 6px;
+    background: linear-gradient(158deg,
+      #e8e2d0 0%, #bcae87 18%, #d5cdb2 34%,
+      #a89870 52%, #cfc6a8 68%, #b5a57c 84%, #e4dcc8 100%);
+    border: 1px solid #9a8a62;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.75),
+      inset 0 -1px 0 rgba(70,55,20,.28),
+      0 4px 12px rgba(60,45,15,.14),
+      0 10px 24px rgba(60,45,15,.10);
+  }
+  .metro-bezel {
+    border-radius: 14px;
+    padding: 4px;
+    background: linear-gradient(160deg, #8a7a52 0%, #a89468 45%, #c4b489 100%);
+    box-shadow:
+      inset 0 2px 3px rgba(50,40,15,.45),
+      inset 0 -1px 0 rgba(255,255,255,.4);
+  }
+  .metro-glass {
+    border-radius: 11px;
+    padding: 16px 14px 14px;
+    background:
+      linear-gradient(115deg, rgba(255,255,255,.2), rgba(255,255,255,0) 45%),
+      linear-gradient(180deg, #fbf8f0 0%, #f5efdf 55%, #efe6d0 100%);
+    box-shadow: inset 0 2px 5px rgba(60,45,15,.18);
+    text-align: center;
+  }
+  .bpm {
+    font-family: var(--font-display);
+    font-size: 64px;
+    line-height: 0.95;
+    font-weight: 700;
+    color: #7a5410;
+  }
+  .bpm-unit {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #523700;
+    margin-top: 2px;
+  }
+  .beats {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .beat {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: color-mix(in oklab, #7a5410 25%, #efe6d0);
+  }
+  .beat.on { background: #96214a; box-shadow: 0 0 8px rgba(150,33,74,.35); }
+
+  .section-label {
+    margin: 14px 0 8px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: var(--ink-muted);
+  }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 6px;
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--surface-2) 70%, var(--accent-fill));
+    border: 1px solid color-mix(in oklab, var(--outline) 22%, transparent);
+  }
+  .chip {
+    flex: 0 0 auto;
+    border: 1px solid color-mix(in oklab, var(--outline) 40%, transparent);
+    background: var(--panel);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    padding: 8px 12px;
+    border-radius: 999px;
+  }
+  .chip.on {
+    background: var(--accent-fill);
+    border-color: var(--accent-ink);
+    color: var(--accent-ink);
+  }
+
+  .row { display: flex; gap: 8px; margin-top: 12px; }
+  .btn {
+    flex: 1;
+    border: 1px solid color-mix(in oklab, var(--outline) 40%, transparent);
+    background: var(--panel);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    letter-spacing: 0.1em;
+    padding: 12px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .btn.solid {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+    color: var(--on-accent);
+  }
+
+  .track { margin-top: 4px; }
+  .track + .track { margin-top: 14px; }
+  .track-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+  }
+  .step-rail {
+    padding: 8px;
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--surface-2) 75%, var(--accent-fill));
+    border: 1px solid color-mix(in oklab, var(--outline) 22%, transparent);
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+  }
+  .step {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    border: 1px solid color-mix(in oklab, var(--outline) 40%, transparent);
+    background: var(--panel);
+  }
+  .step.hit {
+    background: var(--accent-fill);
+    border-color: var(--accent-ink);
+  }
+  .step.accent {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+  }
+
+  .note-line {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: color-mix(in oklab, var(--accent-fill) 55%, var(--panel));
+    border: 1px solid color-mix(in oklab, var(--accent-ink) 22%, transparent);
+    color: var(--ink-muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     GLASS — Metro thorough surface pass
+     Goal: no cream melt. Each tier reads as its own plane.
+     1 stage → 2 chrome tray → 3 cards → 4 nested rails → 5 cells
+     Brass housing stays fully opaque (not frosted).
+     ═══════════════════════════════════════════════════════════════ */
+  /* Glass: keep Metro hierarchy (rails/chips) but share card frost with Tuner.
+     No near-white card override — that made Metro cards read lighter. */
+  body.theme-metro.mat-glass {
+    /* Stage stays the live brass floor; do not bleach cards. */
+  }
+  body.theme-metro.mat-glass::after {
+    opacity: 0.55;
+  }
+
+  /* Subtab chrome tray: recessed, not card-white */
+  body.mat-glass .subtabs {
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, white 18%, transparent),
+        color-mix(in oklab, var(--accent-ink) 8%, transparent)),
+      color-mix(in oklab, var(--accent-fill) 45%, var(--ground));
+    border: 1px solid color-mix(in oklab, var(--accent-ink) 28%, transparent);
+    box-shadow:
+      inset 0 2px 4px color-mix(in oklab, var(--accent-ink) 18%, transparent),
+      inset 0 -1px 0 rgba(255,255,255,0.35);
+  }
+  body.mat-glass .subtabs button {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in oklab, var(--ink) 70%, transparent);
+    box-shadow: none;
+  }
+  body.mat-glass .subtabs button.on {
+    background:
+      linear-gradient(160deg, #fff 0%, #f7f4ea 100%);
+    border-color: color-mix(in oklab, white 50%, var(--accent-ink));
+    color: var(--accent-ink);
+    box-shadow: var(--lift-sm);
+  }
+
+  /* Cards: use shared contract glass frost (same as Tuner). Do not bleach. */
+
+  /* Brass housing: force opaque; never inherit frost */
+  body.mat-glass .metro-screen,
+  body.mat-glass .metro-bezel,
+  body.mat-glass .metro-glass {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  body.mat-glass .metro-screen {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.75),
+      inset 0 -1px 0 rgba(70,55,20,.28),
+      0 6px 16px rgba(60,45,15,.22),
+      0 14px 28px rgba(60,45,15,.12);
+  }
+
+  /* 4 · Nested rails: clearly carved amber wells */
+  body.mat-glass .chips,
+  body.mat-glass .step-rail {
+    background: color-mix(in oklab, var(--ground) 55%, oklch(0.72 0.06 78));
+    border: 1px solid color-mix(in oklab, var(--accent-ink) 26%, transparent);
+    box-shadow:
+      inset 0 2px 5px color-mix(in oklab, var(--accent-ink) 22%, transparent),
+      inset 0 -1px 0 rgba(255,255,255,0.28);
+  }
+
+  /* 5a · Chips: white raised pills; selected keeps gold hue */
+  body.mat-glass .chip {
+    background: linear-gradient(180deg, #fff, #f5f0e4);
+    border-color: color-mix(in oklab, var(--accent-ink) 22%, #ddd);
+    color: var(--ink);
+    box-shadow: var(--lift-xs);
+  }
+  body.mat-glass .chip.on {
+    background: linear-gradient(180deg,
+      color-mix(in oklab, var(--accent-fill) 40%, white),
+      var(--accent-fill));
+    border-color: var(--accent-ink);
+    color: var(--accent-ink);
+    box-shadow: var(--lift-sm);
+  }
+
+  /* 5b · Transport: secondary paper; primary solid ink */
+  body.mat-glass .btn {
+    background: linear-gradient(180deg, #fff, #f4efe4);
+    border-color: color-mix(in oklab, var(--accent-ink) 24%, #ccc);
+    box-shadow: var(--lift-sm);
+  }
+  body.mat-glass .btn.solid {
+    background: var(--accent-ink);
+    border-color: color-mix(in oklab, var(--accent-ink) 75%, #000);
+    color: var(--on-accent);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.22),
+      0 2px 4px color-mix(in oklab, var(--accent-ink) 30%, transparent),
+      0 8px 16px color-mix(in oklab, var(--accent-ink) 24%, transparent);
+  }
+
+  /* 5c · Steps must NOT share one cream:
+        empty = dim well, hit = vivid gold, accent = solid ink */
+  body.mat-glass .step {
+    background: color-mix(in oklab, var(--ground) 70%, #c4a86a);
+    border-color: color-mix(in oklab, var(--accent-ink) 28%, transparent);
+    box-shadow:
+      inset 0 2px 3px color-mix(in oklab, var(--accent-ink) 24%, transparent);
+  }
+  body.mat-glass .step.hit {
+    background: linear-gradient(160deg,
+      color-mix(in oklab, var(--accent-fill) 30%, white),
+      oklch(0.78 0.12 80));
+    border-color: var(--accent-ink);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.55),
+      0 1px 3px color-mix(in oklab, var(--accent-ink) 28%, transparent);
+  }
+  body.mat-glass .step.accent {
+    background: linear-gradient(160deg,
+      color-mix(in oklab, var(--accent-ink) 70%, white),
+      var(--accent-ink));
+    border-color: color-mix(in oklab, var(--accent-ink) 60%, #000);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.28),
+      0 2px 5px color-mix(in oklab, var(--accent-ink) 40%, transparent);
+  }
+
+  /* Callout: gold sheet, not white card twin */
+  body.mat-glass .note-line {
+    background: color-mix(in oklab, var(--accent-fill) 55%, #fff6e0);
+    border: 1px solid color-mix(in oklab, var(--accent-ink) 32%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+    color: var(--ink);
+  }
+
+  /* Material toggle itself: keep readable against deeper stage */
+  body.theme-metro.mat-glass .seg.mat-toggle {
+    background:
+      linear-gradient(155deg, rgba(255,255,255,0.5), rgba(255,255,255,0.12)),
+      color-mix(in oklab, var(--accent-fill) 45%, transparent);
+    border-color: color-mix(in oklab, white 65%, var(--accent-ink));
+  }
+</style>
+</head>
+<body class="theme-metro mat-glass">
+  <div class="shell">
+    <div class="proto-bar">
+      <div>
+        <a href="index.html">← Lab</a>
+        <div class="proto-title">Metro / drums</div>
+        <div class="proto-sub">Surface hierarchy pass · not live layout</div>
+      </div>
+    </div>
+
+    <div class="seg mat-toggle" role="group" aria-label="Material">
+      <button type="button" data-mat="solid">Solid</button>
+      <button type="button" class="on" data-mat="glass">Glass</button>
+    </div>
+
+    <div class="subtabs">
+      <button type="button" class="on">Click</button>
+      <button type="button">Analyze</button>
+      <button type="button">Ramp</button>
+    </div>
+
+    <div class="card">
+      <div class="metro-screen">
+        <div class="metro-bezel">
+          <div class="metro-glass">
+            <div class="bpm">112</div>
+            <div class="bpm-unit">BPM · 4/4</div>
+            <div class="beats">
+              <div class="beat on"></div>
+              <div class="beat"></div>
+              <div class="beat"></div>
+              <div class="beat"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">GROOVE</div>
+      <div class="chips">
+        <div class="chip on">Rock</div>
+        <div class="chip">Funk</div>
+        <div class="chip">Shuffle</div>
+        <div class="chip">Latin</div>
+      </div>
+      <div class="row">
+        <button class="btn" type="button">−</button>
+        <button class="btn solid" type="button">Play</button>
+        <button class="btn" type="button">+</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="track">
+        <div class="track-label">KICK</div>
+        <div class="step-rail">
+          <div class="steps">
+            <div class="step accent"></div>
+            <div class="step"></div>
+            <div class="step hit"></div>
+            <div class="step"></div>
+            <div class="step accent"></div>
+            <div class="step"></div>
+            <div class="step hit"></div>
+            <div class="step"></div>
+          </div>
+        </div>
+      </div>
+      <div class="track">
+        <div class="track-label">SNARE</div>
+        <div class="step-rail">
+          <div class="steps">
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step accent"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step hit"></div>
+            <div class="step accent"></div>
+            <div class="step"></div>
+          </div>
+        </div>
+      </div>
+      <div class="note-line">
+        Surfaces: warm stage → chrome tray → bright cards → recessed rails
+        → raised chips / empty steps / hits. Brass housing stays opaque.
+      </div>
+    </div>
+  </div>
+<script>
+  document.querySelectorAll("[data-mat]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-mat]").forEach((b) => b.classList.toggle("on", b === btn));
+      document.body.classList.remove("mat-solid", "mat-glass");
+      document.body.classList.add("mat-" + btn.dataset.mat);
+    });
+  });
+</script>
+</body>
+</html>

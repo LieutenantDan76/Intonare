@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Intonare — Light mode mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --font-display: "Fraunces", Georgia, serif;
+    --font-ui: "Bebas Neue", Impact, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --r: 14px;
+    --r-sm: 10px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--ground);
+    transition: background .25s ease, color .25s ease;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: linear-gradient(180deg,
+      color-mix(in oklab, white 22%, transparent) 0%,
+      color-mix(in oklab, white 8%, transparent) 42%,
+      transparent 100%);
+  }
+
+  /* ── Contract thesis (middle path) ── */
+  body.thesis-contract.theme-tuner {
+    --ground: oklch(0.90 0.032 230);
+    --surface: oklch(0.97 0.014 230);
+    --panel: oklch(0.99 0.006 230);
+    --ink: oklch(0.26 0.025 260);
+    --ink-muted: oklch(0.44 0.02 260);
+    --outline: oklch(0.60 0.025 230);
+    --accent-ink: oklch(0.42 0.12 230);
+    --accent-fill: oklch(0.86 0.055 230);
+    --accent-large: oklch(0.46 0.14 230);
+    --on-accent: oklch(0.98 0.01 230);
+    --ok: oklch(0.42 0.12 145);
+    --bad: oklch(0.45 0.14 25);
+  }
+  body.thesis-contract.theme-metro {
+    --ground: oklch(0.90 0.034 85);
+    --surface: oklch(0.97 0.016 85);
+    --panel: oklch(0.99 0.007 85);
+    --ink: oklch(0.26 0.025 70);
+    --ink-muted: oklch(0.44 0.022 70);
+    --outline: oklch(0.58 0.03 85);
+    --accent-ink: oklch(0.42 0.11 75);
+    --accent-fill: oklch(0.88 0.07 85);
+    --accent-large: oklch(0.46 0.13 75);
+    --on-accent: oklch(0.98 0.01 85);
+    --ok: oklch(0.42 0.12 145);
+    --bad: oklch(0.45 0.14 25);
+  }
+  body.thesis-contract.theme-tools {
+    --ground: oklch(0.90 0.033 165);
+    --surface: oklch(0.97 0.015 165);
+    --panel: oklch(0.99 0.006 165);
+    --ink: oklch(0.26 0.025 170);
+    --ink-muted: oklch(0.44 0.02 170);
+    --outline: oklch(0.58 0.028 165);
+    --accent-ink: oklch(0.40 0.11 165);
+    --accent-fill: oklch(0.87 0.055 165);
+    --accent-large: oklch(0.44 0.13 165);
+    --on-accent: oklch(0.98 0.01 165);
+    --ok: oklch(0.42 0.12 145);
+    --bad: oklch(0.45 0.14 25);
+  }
+  body.thesis-contract.theme-train {
+    --ground: oklch(0.90 0.034 295);
+    --surface: oklch(0.97 0.016 295);
+    --panel: oklch(0.99 0.007 295);
+    --ink: oklch(0.26 0.03 295);
+    --ink-muted: oklch(0.44 0.025 295);
+    --outline: oklch(0.58 0.03 295);
+    --accent-ink: oklch(0.42 0.13 295);
+    --accent-fill: oklch(0.88 0.05 295);
+    --accent-large: oklch(0.46 0.15 295);
+    --on-accent: oklch(0.98 0.01 295);
+    --ok: oklch(0.42 0.12 145);
+    --bad: oklch(0.45 0.14 25);
+  }
+
+  /* ── Current thesis (approx shipping light floors) ── */
+  body.thesis-current.theme-tuner {
+    --ground: #8faedc; --surface: #ddebff; --panel: #fbfdff;
+    --ink: #1f202c; --ink-muted: #3b3d50; --outline: #566b86;
+    --accent-ink: #3d67a4; --accent-fill: #a3bee0; --accent-large: #177bff;
+    --on-accent: #fbfdff; --ok: #224700; --bad: #6e1810;
+  }
+  body.thesis-current.theme-metro {
+    --ground: #bdab75; --surface: #f5eace; --panel: #fefdf9;
+    --ink: #1f202c; --ink-muted: #3b3d50; --outline: #746847;
+    --accent-ink: #746537; --accent-fill: #ebb30a; --accent-large: #a27900;
+    --on-accent: #fefdf9; --ok: #224700; --bad: #6e1810;
+  }
+  body.thesis-current.theme-tools {
+    --ground: #79bca8; --surface: #d2f3e8; --panel: #f9fefc;
+    --ink: #1f202c; --ink-muted: #3b3d50; --outline: #4a7366;
+    --accent-ink: #36705e; --accent-fill: #71ccb0; --accent-large: #009267;
+    --on-accent: #f9fefc; --ok: #224700; --bad: #6e1810;
+  }
+  body.thesis-current.theme-train {
+    --ground: #ada4d8; --surface: #eae4ff; --panel: #fdfcff;
+    --ink: #1f202c; --ink-muted: #3b3d50; --outline: #696484;
+    --accent-ink: #6f50c9; --accent-fill: #bdb6e2; --accent-large: #7f66ff;
+    --on-accent: #fdfcff; --ok: #224700; --bad: #6e1810;
+  }
+
+  .shell {
+    position: relative;
+    z-index: 1;
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    padding: 12px 14px calc(88px + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .brand span {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+
+  .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 4px;
+    background: color-mix(in oklab, var(--surface) 70%, transparent);
+    border: 1px solid color-mix(in oklab, var(--outline) 35%, transparent);
+    border-radius: 12px;
+  }
+  .seg button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    padding: 10px 8px;
+    border-radius: 9px;
+    cursor: pointer;
+  }
+  .seg button.on {
+    background: var(--accent-fill);
+    color: var(--accent-ink);
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .tabs button {
+    appearance: none;
+    border: 1px solid color-mix(in oklab, var(--outline) 40%, transparent);
+    background: var(--surface);
+    color: var(--ink-muted);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    padding: 9px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .tabs button.on {
+    border-color: var(--accent-ink);
+    color: var(--accent-ink);
+    background: var(--accent-fill);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid color-mix(in oklab, var(--outline) 28%, transparent);
+    border-radius: var(--r);
+    padding: 14px;
+    box-shadow:
+      0 1px 1px color-mix(in oklab, var(--accent-ink) 12%, transparent),
+      0 2px 4px color-mix(in oklab, var(--accent-ink) 8%, transparent),
+      0 8px 18px color-mix(in oklab, var(--accent-ink) 7%, transparent);
+  }
+  .card + .card { margin-top: 12px; }
+  .card h2 {
+    margin: 0 0 10px;
+    font-family: var(--font-ui);
+    font-size: 18px;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+  }
+  .muted {
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .chip {
+    flex: 0 0 auto;
+    border: 1px solid color-mix(in oklab, var(--outline) 45%, transparent);
+    background: var(--panel);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    padding: 8px 12px;
+    border-radius: 999px;
+  }
+  .chip.on {
+    background: var(--accent-fill);
+    border-color: var(--accent-ink);
+    color: var(--accent-ink);
+  }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+  .btn {
+    flex: 1;
+    border: 1px solid color-mix(in oklab, var(--outline) 45%, transparent);
+    background: var(--panel);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    letter-spacing: 0.1em;
+    padding: 12px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .btn.solid {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+    color: var(--on-accent);
+  }
+  .btn.ghost {
+    color: var(--accent-ink);
+    border-color: color-mix(in oklab, var(--accent-ink) 45%, transparent);
+    background: color-mix(in oklab, var(--accent-fill) 55%, var(--panel));
+  }
+
+  .keep-dark {
+    background: #1a1c2a;
+    color: #eef0f7;
+    border-radius: 16px;
+    padding: 18px 14px 16px;
+    border: 1px solid #3a3d55;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 28px rgba(0,0,0,0.28);
+  }
+  .keep-dark .note {
+    font-family: var(--font-display);
+    font-size: 72px;
+    line-height: 0.9;
+    text-align: center;
+    color: #5ee2ff;
+  }
+  .keep-dark .cents {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #a3a5b8;
+    margin-top: 6px;
+  }
+  .meter {
+    margin: 14px 8px 4px;
+    height: 8px;
+    border-radius: 999px;
+    background: #2a2d42;
+    position: relative;
+    overflow: hidden;
+  }
+  .meter > i {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 18%;
+    transform: translateX(-30%);
+    background: linear-gradient(90deg, #7aafff, #5ee2ff 55%, #b6f25b);
+    border-radius: inherit;
+  }
+
+  .bpm {
+    font-family: var(--font-display);
+    font-size: 64px;
+    line-height: 1;
+    color: var(--accent-large);
+    text-align: center;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .step {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    border: 1px solid color-mix(in oklab, var(--outline) 40%, transparent);
+    background: var(--panel);
+  }
+  .step.hit {
+    background: var(--accent-fill);
+    border-color: var(--accent-ink);
+  }
+  .step.accent {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+  }
+
+  .chord-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .fret {
+    background: var(--panel);
+    border: 1px solid color-mix(in oklab, var(--outline) 35%, transparent);
+    border-radius: 10px;
+    min-height: 54px;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .fret.finger {
+    color: var(--accent-ink);
+    background: var(--accent-fill);
+    border-color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  .list-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid color-mix(in oklab, var(--outline) 22%, transparent);
+    font-size: 14px;
+  }
+  .list-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .list-row strong { font-weight: 600; color: var(--ink); }
+  .list-row span { color: var(--ink-muted); font-family: var(--font-mono); font-size: 11px; }
+
+  .progress {
+    height: 10px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--outline) 22%, var(--panel));
+    overflow: hidden;
+    margin: 8px 0 14px;
+  }
+  .progress > i {
+    display: block;
+    height: 100%;
+    width: 62%;
+    background: var(--accent-ink);
+  }
+  .answers { display: grid; gap: 8px; }
+  .ans {
+    text-align: left;
+    border: 1px solid color-mix(in oklab, var(--outline) 40%, transparent);
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .ans .letter {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    margin-right: 8px;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    background: var(--accent-fill);
+    color: var(--accent-ink);
+  }
+  .ans.correct {
+    border-color: var(--ok);
+    background: color-mix(in oklab, var(--ok) 14%, var(--panel));
+  }
+  .ans.correct .letter { background: var(--ok); color: white; }
+  .pack {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--accent-fill);
+    color: var(--accent-ink);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  .panel {
+    display: none;
+  }
+  .panel.on { display: block; }
+
+  .nav {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    width: min(430px, 100%);
+    z-index: 5;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+    background: color-mix(in oklab, var(--surface) 88%, transparent);
+    border-top: 1px solid color-mix(in oklab, var(--outline) 28%, transparent);
+    backdrop-filter: blur(10px);
+  }
+  .nav button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    padding: 8px 4px;
+    cursor: pointer;
+  }
+  .nav button.on { color: var(--accent-ink); }
+
+  .note-line {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: color-mix(in oklab, var(--accent-fill) 55%, var(--panel));
+    border: 1px solid color-mix(in oklab, var(--accent-ink) 25%, transparent);
+    color: var(--ink-muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+</style>
+</head>
+<body class="thesis-contract theme-tuner">
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        Intonare
+        <span id="meta">Contract · Tuner stress kit</span>
+      </div>
+
+      <div class="seg" role="group" aria-label="Thesis">
+        <button type="button" class="on" data-thesis="contract">Contract</button>
+        <button type="button" data-thesis="current">Current</button>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Theme">
+        <button type="button" class="on" data-theme="tuner">Tuner</button>
+        <button type="button" data-theme="metro">Metro</button>
+        <button type="button" data-theme="tools">Tools</button>
+        <button type="button" data-theme="train">Train</button>
+      </div>
+    </div>
+
+    <!-- TUNER -->
+    <section class="panel on" data-panel="tuner">
+      <div class="card">
+        <h2>Tuner chrome</h2>
+        <p class="muted">Keep-dark glass · chips · muted · CTA</p>
+        <div class="keep-dark" style="margin-top:10px">
+          <div class="note">A4</div>
+          <div class="cents">+3 ¢ · 440.0 Hz</div>
+          <div class="meter"><i></i></div>
+        </div>
+        <div class="chips" style="margin-top:12px">
+          <div class="chip on">Guitar</div>
+          <div class="chip">Bass</div>
+          <div class="chip">Voice</div>
+          <div class="chip">Ukulele</div>
+          <div class="chip">Violin</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn ghost" type="button">Ref tone</button>
+          <button class="btn solid" type="button">Listen</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Readout hierarchy</h2>
+        <div class="list-row"><strong>Stability</strong><span>steady</span></div>
+        <div class="list-row"><strong>Vibrato</strong><span>none</span></div>
+        <div class="list-row"><strong>History</strong><span>12 s</span></div>
+        <div class="note-line">Watch: selected chip should gain chroma, not turn gray. Big A4 stays vivid inside keep-dark.</div>
+      </div>
+    </section>
+
+    <!-- METRO -->
+    <section class="panel" data-panel="metro">
+      <div class="card">
+        <h2>Metronome</h2>
+        <p class="muted">Large BPM · solid play · step hits</p>
+        <div class="bpm">112</div>
+        <p class="muted" style="text-align:center;margin:4px 0 0">4/4 · straight</p>
+        <div class="btn-row">
+          <button class="btn" type="button">−</button>
+          <button class="btn solid" type="button">Play</button>
+          <button class="btn" type="button">+</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Groove strip</h2>
+        <div class="chips">
+          <div class="chip on">Rock</div>
+          <div class="chip">Funk</div>
+          <div class="chip">Shuffle</div>
+          <div class="chip">Latin</div>
+        </div>
+        <div class="steps">
+          <div class="step accent"></div>
+          <div class="step"></div>
+          <div class="step hit"></div>
+          <div class="step"></div>
+          <div class="step accent"></div>
+          <div class="step hit"></div>
+          <div class="step"></div>
+          <div class="step hit"></div>
+        </div>
+        <div class="note-line">Watch: gold ground must not swallow empty steps. Hit cells need clear edge on the track.</div>
+      </div>
+    </section>
+
+    <!-- TOOLS -->
+    <section class="panel" data-panel="tools">
+      <div class="card">
+        <h2>Chord chart</h2>
+        <p class="muted">Mint tools · frets · secondary ink</p>
+        <div class="chord-grid" style="margin-top:8px">
+          <div class="fret">x</div>
+          <div class="fret finger">1</div>
+          <div class="fret finger">2</div>
+          <div class="fret">o</div>
+          <div class="fret">o</div>
+          <div class="fret finger">3</div>
+          <div class="fret">x</div>
+          <div class="fret">o</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn ghost" type="button">Voicing</button>
+          <button class="btn solid" type="button">Hear</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Reference rows</h2>
+        <div class="list-row"><strong>C major</strong><span>I</span></div>
+        <div class="list-row"><strong>A minor</strong><span>vi</span></div>
+        <div class="list-row"><strong>F major</strong><span>IV</span></div>
+        <div class="list-row"><strong>G major</strong><span>V</span></div>
+        <div class="note-line">Watch: mint fill on frets vs body text. Muted roman numerals must stay readable on surface.</div>
+      </div>
+    </section>
+
+    <!-- TRAIN -->
+    <section class="panel" data-panel="train">
+      <div class="card">
+        <h2>Music Quiz</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <span class="pack">Beatles</span>
+          <span class="muted">Q 7 / 12</span>
+        </div>
+        <div class="progress"><i></i></div>
+        <p style="margin:0 0 12px;font-size:16px;line-height:1.35;color:var(--ink)">
+          Which album opens with Taxman?
+        </p>
+        <div class="answers">
+          <button class="ans" type="button"><span class="letter">A</span>Rubber Soul</button>
+          <button class="ans correct" type="button"><span class="letter">B</span>Revolver</button>
+          <button class="ans" type="button"><span class="letter">C</span>Help!</button>
+          <button class="ans" type="button"><span class="letter">D</span>Abbey Road</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>State stack</h2>
+        <div class="chips">
+          <div class="chip on">Intervals</div>
+          <div class="chip">Chords</div>
+          <div class="chip">Scales</div>
+          <div class="chip">Chordle</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn ghost" type="button">Skip</button>
+          <button class="btn solid" type="button">Next</button>
+        </div>
+        <div class="note-line">Watch: progress track vs panel (must not vanish). Correct answer green without near-black NEXT.</div>
+      </div>
+    </section>
+  </div>
+
+  <nav class="nav" aria-label="Fake app tabs">
+    <button type="button" class="on" data-theme="tuner">Tune</button>
+    <button type="button" data-theme="metro">Metro</button>
+    <button type="button" data-theme="tools">Tools</button>
+    <button type="button" data-theme="train">Train</button>
+  </nav>
+
+<script>
+  const labels = {
+    tuner: "Tuner stress kit",
+    metro: "Metro / drums stress kit",
+    tools: "Tools / charts stress kit",
+    train: "Train / quiz stress kit"
+  };
+
+  function setThesis(name) {
+    document.body.classList.remove("thesis-contract", "thesis-current");
+    document.body.classList.add("thesis-" + name);
+    document.querySelectorAll("[data-thesis]").forEach((btn) => {
+      btn.classList.toggle("on", btn.dataset.thesis === name);
+    });
+    updateMeta();
+  }
+
+  function setTheme(name) {
+    document.body.classList.remove("theme-tuner", "theme-metro", "theme-tools", "theme-train");
+    document.body.classList.add("theme-" + name);
+    document.querySelectorAll("[data-theme]").forEach((btn) => {
+      btn.classList.toggle("on", btn.dataset.theme === name);
+    });
+    document.querySelectorAll("[data-panel]").forEach((panel) => {
+      panel.classList.toggle("on", panel.dataset.panel === name);
+    });
+    updateMeta();
+  }
+
+  function updateMeta() {
+    const thesis = document.body.classList.contains("thesis-current") ? "Current" : "Contract";
+    const theme = ["tuner", "metro", "tools", "train"].find((t) =>
+      document.body.classList.contains("theme-" + t)
+    );
+    document.getElementById("meta").textContent = thesis + " · " + labels[theme];
+  }
+
+  document.querySelectorAll("[data-thesis]").forEach((btn) => {
+    btn.addEventListener("click", () => setThesis(btn.dataset.thesis));
+  });
+  document.querySelectorAll("[data-theme]").forEach((btn) => {
+    btn.addEventListener("click", () => setTheme(btn.dataset.theme));
+  });
+</script>
+</body>
+</html>

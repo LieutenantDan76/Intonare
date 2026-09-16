@@ -3401,73 +3401,62 @@ html,body{background:#000000!important;transition:none!important}
      Every value is rebuilt at the new hue with LUMINANCE PINNED, so the ramp keeps the
      exact steps the soft rebuild established; only the hue moved. Grounds additionally
      drop to S=0.30 (see GROUND SATURATION below). */
+  /* LIGHT THEMES — equal card/accent weight across tabs.
+     Floors kept (bg-0/bg-1). Surfaces and accents regenerated at matched OKLCH
+     L/C so Metro cream cards stop reading lighter than Tuner, and Metro brass
+     ink stops reading heavier than Tuner cyan. Warm hues get a slight accent-L
+     bump so perceived weight matches cool hues. Accent-on-surface >= ~4.5:1. */
   body.light.theme-tuner {
-    --accent-fill: #a3bee0;
-    --tab-accent: #00317f;
-    --accent-vivid: #005dd7; --accent-vivid-2: #0050b8;
-    --accent-bright: #177bff; --accent-bright-2: #0065ea;
-    /* LIGHT FLOOR, REBUILT AS A RAMP.
-       Testers found light mode washed out across the app, and the measurement
-       agreed: floor-to-card contrast was 1.16:1 in all four modes, so nothing
-       read as raised. The four palettes are now generated from one OKLCH ramp
-       rather than hand-picked per mode -- floor L .745, card L .965, borders
-       L .52, accent L .36 -- because equal OKLCH lightness looks equally deep
-       across hues, which equal HSL lightness does not. Chroma is held high on
-       the floor so it stays vivid rather than going gray, and pulled back on
-       the card so the mode hue survives as a whisper.
-       Separation now measures 1.84-1.96 across the four. The accent had to
-       deepen with it: on the old pale floor #0049aa gave 5.24:1, and on the new
-       floor it would have fallen to 3.66:1, under AA. At L .36 it holds 4.8-5.2.
-       Ramp: floorL .745 xC 1.40 | cardL .965 xC .50 | bordL .52 xC 1.20 | accL .36 xC 1.15 */
+    --accent-fill: #b8d6f6;
+    --tab-accent: #00376e;
+    --accent-vivid: #00539f; --accent-vivid-2: #00488e;
+    --accent-bright: #0274c7; --accent-bright-2: #0065b1;
     --bg-0: #8faedc; --bg-1: #94b4e2;
-    --surface: #ddebff; --surface-2: #ecf4ff; --panel: #fbfdff;
-    --border: #566b86; --border-soft: #78889d;
-    --accent: #3d67a4; --accent-warm: #b34a18; --accent-lift: #3665b0; --ink-tight: #2d4058;
-    --theme: #3d67a4; --theme-a: #3d67a4; --theme-b: #3160ca; --theme-rgb: 61, 103, 164;
-    --grad-cyan: linear-gradient(135deg, #3d67a4 0%, #3160ca 100%);
-    --theme-grad: linear-gradient(135deg, #3d67a4 0%, #3160ca 100%);
+    --surface: #e6eff8; --surface-2: #f0f6fc; --panel: #f9fbfe;
+    --border: #536a82; --border-soft: #768799;
+    --accent: #2966a0; --accent-soft: #1b5d99; --accent-warm: #b34a18; --accent-lift: #1b5d99; --ink-tight: #2c3d4f;
+    --theme: #2966a0; --theme-a: #2966a0; --theme-b: #32599b; --theme-rgb: 41, 102, 160;
+    --grad-cyan: linear-gradient(135deg, #2966a0 0%, #32599b 100%);
+    --theme-grad: linear-gradient(135deg, #2966a0 0%, #32599b 100%);
   }
   body.light.theme-metro {
-    --accent-fill: #ebb30a;
-    --tab-accent: #463300;
-    --accent-vivid: #7f5f00; --accent-vivid-2: #6d5100;
-    --accent-bright: #a27900; --accent-bright-2: #8a6700;
+    --accent-fill: #e1d2aa;
+    --tab-accent: #4d3100;
+    --accent-vivid: #785000; --accent-vivid-2: #6a4600;
+    --accent-bright: #9b7000; --accent-bright-2: #896200;
     --bg-0: #bdab75; --bg-1: #c3b17a;
-    --surface: #f5eace; --surface-2: #faf3e0; --panel: #fefdf9;
-    --border: #746847; --border-soft: #8f866c;
-    --accent: #746537; --accent-warm: #b34a18; --accent-lift: #776435; --ink-tight: #473e24;
-    --theme: #746537; --theme-a: #746537; --theme-b: #832d00; --theme-rgb: 78, 58, 0;
-    --grad-cyan: linear-gradient(135deg, #746537 0%, #832d00 100%);
-    --theme-grad: linear-gradient(135deg, #746537 0%, #832d00 100%);
+    --surface: #f2eee2; --surface-2: #f8f5ee; --panel: #fcfbf7;
+    --border: #726747; --border-soft: #8c846e;
+    --accent: #826500; --accent-soft: #6a5200; --accent-warm: #b34a18; --accent-lift: #7a5c00; --ink-tight: #433b24;
+    --theme: #826500; --theme-a: #826500; --theme-b: #845600; --theme-rgb: 130, 101, 0;
+    --grad-cyan: linear-gradient(135deg, #826500 0%, #845600 100%);
+    --theme-grad: linear-gradient(135deg, #826500 0%, #845600 100%);
   }
   body.light.theme-tools {
-    /* Tools' surface is already a high-chroma mint, so the generic mid-tone green
-       landed at the SAME saturation and the state read as a plain darkening. Pushed
-       to a more vivid green so the fill still gains chroma against it. */
-    --accent-fill: #71ccb0;
-    --tab-accent: #00432e;
-    --accent-vivid: #007250; --accent-vivid-2: #006245;
-    --accent-bright: #009267; --accent-bright-2: #007c57;
+    --accent-fill: #afdfcd;
+    --tab-accent: #0a5c3c;
+    --accent-vivid: #0f8a5c; --accent-vivid-2: #0c7a52;
+    --accent-bright: #009066; --accent-bright-2: #007f59;
     --bg-0: #79bca8; --bg-1: #7ec2ad;
-    --surface: #d2f3e8; --surface-2: #e4faf2; --panel: #f9fefc;
-    --border: #4a7366; --border-soft: #6e8e85;
-    --accent: #36705e; --accent-warm: #b34a18; --accent-lift: #367058; --ink-tight: #244740;
-    --theme: #36705e; --theme-a: #36705e; --theme-b: #00556f; --theme-rgb: 0, 74, 50;
-    --grad-cyan: linear-gradient(135deg, #36705e 0%, #00556f 100%);
-    --theme-grad: linear-gradient(135deg, #36705e 0%, #00556f 100%);
+    --surface: #e4f1ec; --surface-2: #eff7f4; --panel: #f8fcfa;
+    --border: #4b7163; --border-soft: #718c81;
+    --accent: #007a5c; --accent-soft: #0a5c3c; --accent-warm: #b34a18; --accent-lift: #007253; --ink-tight: #274239;
+    --theme: #007a5c; --theme-a: #007a5c; --theme-b: #007262; --theme-rgb: 0, 122, 92;
+    --grad-cyan: linear-gradient(135deg, #007a5c 0%, #007262 100%);
+    --theme-grad: linear-gradient(135deg, #007a5c 0%, #007262 100%);
   }
   body.light.theme-train {
-    --accent-fill: #bdb6e2;
-    --tab-accent: #2700af;
-    --accent-vivid: #5c3bff; --accent-vivid-2: #411bff;
-    --accent-bright: #7f66ff; --accent-bright-2: #694aff;
+    --accent-fill: #d1cdf5;
+    --tab-accent: #38276c;
+    --accent-vivid: #543d9d; --accent-vivid-2: #49348b;
+    --accent-bright: #735dc4; --accent-bright-2: #6450af;
     --bg-0: #ada4d8; --bg-1: #b3a9de;
-    --surface: #eae4ff; --surface-2: #f5f1ff; --panel: #fdfcff;
-    --border: #696484; --border-soft: #87829c;
-    --accent: #6f50c9; --accent-warm: #b34a18; --accent-lift: #5a52d8; --ink-tight: #3e376d;
-    --theme: #6f50c9; --theme-a: #6f50c9; --theme-b: #00556f; --theme-rgb: 45, 0, 176;
-    --grad-cyan: linear-gradient(135deg, #6f50c9 0%, #00556f 100%);
-    --theme-grad: linear-gradient(135deg, #6f50c9 0%, #00556f 100%);
+    --surface: #edecf8; --surface-2: #f5f4fc; --panel: #fbfbfe;
+    --border: #676382; --border-soft: #848298;
+    --accent: #63569e; --accent-soft: #5238a5; --accent-warm: #b34a18; --accent-lift: #5b4d97; --ink-tight: #3b394f;
+    --theme: #63569e; --theme-a: #63569e; --theme-b: #47539b; --theme-rgb: 99, 86, 158;
+    --grad-cyan: linear-gradient(135deg, #63569e 0%, #47539b 100%);
+    --theme-grad: linear-gradient(135deg, #63569e 0%, #47539b 100%);
   }
 
   /* ── DIRECT-PAINT FALLBACK (in-app HTML preview) ──
@@ -3590,8 +3579,9 @@ html,body{background:#000000!important;transition:none!important}
      rather than grays. */
   body.light .beat-num-cell.downbeat { color: var(--accent-vivid, rgba(6,74,54,.85)) !important; }
   body.light .beat-num-cell { color: var(--text-dim, rgba(28,54,48,1)) !important; }
-  body.light .thmn-hint-overlay { color: rgba(10,68,54,.72) !important; }
-  body.light .thmn-led-lbl { color: rgba(30,44,60,.72) !important; }
+  /* Pad/console stay dark islands — ink must stay light-on-dark. */
+  body.light .thmn-hint-overlay { color: rgba(210,245,228,.88) !important; text-shadow: 0 1px 2px rgba(0,0,0,.45) !important; }
+  body.light .thmn-led-lbl { color: rgba(200,220,210,.78) !important; }
   body.light .practice-card-sub { color: var(--text-dim, var(--text-dim)) !important; }
 
 
@@ -4318,6 +4308,330 @@ html,body{background:#000000!important;transition:none!important}
       0 2px 4px rgba(18,32,60,.07),
       0 8px 16px -6px rgba(18,32,60,.16),
       0 20px 34px -18px rgba(18,32,60,.20) !important;
+  }
+
+  /* ── LIGHT GLASS (Regular) — chrome-first, always readable ───────────────
+     Apple Regular: tinted frost + blur + specular rim. Not Clear (needs dimming).
+     Hierarchy (HIG): glass on chrome / sheets / launcher faces. Content cards
+     get a denser soft panel so text stays AA without relying on blur.
+     Reduced Transparency: frostier fill, keep the rim/sheen — never flat paper.
+     Keep-dark instruments stay opaque. */
+  body.light {
+    --glass-blur: 22px;
+    --glass-sat: 1.85;
+    --glass-fill: color-mix(in srgb, #ffffff 42%, transparent);
+    --glass-fill-card: color-mix(in srgb, #ffffff 62%, transparent);
+    --glass-sheen: linear-gradient(155deg,
+      rgba(255,255,255,0.88) 0%,
+      rgba(255,255,255,0.22) 34%,
+      rgba(255,255,255,0.04) 58%,
+      rgba(255,255,255,0.28) 100%);
+    --glass-edge: color-mix(in srgb, #ffffff 82%, var(--accent));
+    --glass-lift:
+      inset 0 1px 0 rgba(255,255,255,1),
+      inset 0 -1px 0 color-mix(in srgb, var(--accent) 12%, transparent),
+      0 1px 2px color-mix(in srgb, var(--accent) 16%, transparent),
+      0 12px 32px color-mix(in srgb, var(--accent) 20%, transparent),
+      0 28px 56px color-mix(in srgb, var(--bg-0) 32%, transparent);
+    --glass-lift-sm:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      0 1px 3px color-mix(in srgb, var(--accent) 14%, transparent),
+      0 6px 16px color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  /* Chrome / sheets / launcher — full Regular frost */
+  body.light .fav-sheet,
+  body.light .mq-sheet,
+  body.light .stb-sheet,
+  body.light .lnch-sheet,
+  body.light .settings-modal-content,
+  body.light .ce-stats-content,
+  body.light .tour-card,
+  body.light .mode-toggle,
+  body.light .lnch-cell .lnch-face {
+    background: var(--glass-sheen), var(--glass-fill) !important;
+    border: 1px solid var(--glass-edge) !important;
+    box-shadow: var(--glass-lift) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  }
+  /* Specular streak — reads as glass even when blur is weak / reduced */
+  body.light .fav-sheet::after,
+  body.light .mq-sheet::after,
+  body.light .stb-sheet::after,
+  body.light .lnch-sheet::after,
+  body.light .settings-modal-content::after,
+  body.light .tour-card::after,
+  body.light .lnch-cell .lnch-face::after {
+    content: '';
+    position: absolute;
+    left: 10%; right: 10%; top: 0;
+    height: 1px;
+    pointer-events: none;
+    z-index: 3;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,255,255,0.95) 35%,
+      rgba(255,255,255,0.55) 65%,
+      transparent 100%);
+    opacity: 0.9;
+  }
+  body.light .lnch-cell .lnch-face {
+    background:
+      var(--glass-sheen),
+      linear-gradient(160deg,
+        color-mix(in srgb, var(--lf-top) 58%, transparent) 0%,
+        color-mix(in srgb, var(--lf-mid) 42%, transparent) 50%,
+        color-mix(in srgb, var(--lf-low) 28%, transparent) 100%),
+      var(--glass-fill) !important;
+  }
+  /* Content cards — denser soft panel (AA first; rim still glass-like) */
+  body.light .card:not(.tuner-bpm-card):not(.metro-bpm-card),
+  body.light .panel,
+  body.light .practice-card-btn,
+  body.light .teach-hint,
+  body.light .vr-exp-hint,
+  body.light .sm-section,
+  body.light .folder-card,
+  body.light .practice-folder-btn {
+    background: var(--glass-sheen), var(--glass-fill-card) !important;
+    border: 1px solid var(--glass-edge) !important;
+    box-shadow: var(--glass-lift) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.55);
+    backdrop-filter: blur(14px) saturate(1.55);
+  }
+  /* Compact chrome chips */
+  body.light .sm-toggle-chip,
+  body.light .lang-chip,
+  body.light .tg-seg,
+  body.light .ts-chip,
+  body.light .gss-inst-btn,
+  body.light .iv-mode-chip,
+  body.light .metro-sound-btn {
+    background: color-mix(in srgb, #ffffff 52%, transparent) !important;
+    border-color: color-mix(in srgb, #ffffff 62%, var(--border)) !important;
+    box-shadow: var(--glass-lift-sm) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(1.55);
+    backdrop-filter: blur(12px) saturate(1.55);
+  }
+  body.light .keep-dark,
+  body.light .keep-dark .card,
+  body.light .keep-dark .panel,
+  body.light .tuner-bpm-card,
+  body.light .metro-bpm-card,
+  body.light .tuner-screen,
+  body.light .metro-screen {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  body.light .keep-dark::after,
+  body.light .tuner-bpm-card::after,
+  body.light .metro-bpm-card::after { display: none !important; }
+  /* a11y: frostier, still a material (WWDC25 Reduced Transparency) */
+  @media (prefers-reduced-transparency: reduce) {
+    body.light {
+      --glass-blur: 12px;
+      --glass-fill: color-mix(in srgb, #ffffff 58%, color-mix(in srgb, var(--surface) 70%, transparent));
+      --glass-fill-card: color-mix(in srgb, #ffffff 78%, var(--surface));
+    }
+  }
+
+  /* Light sheet scrim family (Order 1).
+     Soft tinted veil so frost sheets can still read stage hue. NOT applied to
+     intentional dark stages (Band Flash, keep-dark islands, Tonale wave,
+     Organ/Rhodes night pickers, streak keep-dark cards). */
+  body.light {
+    --light-scrim: color-mix(in srgb, var(--bg-0) 38%, rgba(255,255,255,0.42));
+    --light-scrim-deep: color-mix(in srgb, var(--bg-0) 48%, rgba(255,255,255,0.28));
+    --light-scrim-filter: blur(22px) saturate(1.55);
+  }
+  body.light .settings-modal,
+  body.light .fav-overlay,
+  body.light .setlist-sheet,
+  body.light .help-modal,
+  body.light .progress-modal,
+  body.light .ce-stats-modal,
+  body.light .mq-sheet-overlay,
+  body.light .mq-daily-pop-overlay,
+  body.light .share-landing-overlay,
+  body.light #autoTourPrompt,
+  body.light .iv-test-overlay,
+  body.light .svc-scrim,
+  body.light .nc-sheet,
+  body.light .cs-picker-scrim,
+  body.light .ts-popup-scrim,
+  body.light .errdlg-backdrop,
+  body.light #toolSurvivalGuide .sg-overlay,
+  body.light .sg-symz,
+  body.light .gcc-zoom-overlay,
+  body.light .prog-chord-sheet-drawer.open .prog-metro-backdrop,
+  body.light .prog-metro-drawer.open .prog-metro-backdrop,
+  body.light .prog-preset-modal.open .prog-preset-modal-backdrop,
+  body.light .vr-modal-overlay.open,
+  body.light .thmn-demo-popup,
+  body.light #chordlePickerOverlay,
+  body.light #diadlePickerOverlay,
+  body.light #sessionSummaryOverlay {
+    background: var(--light-scrim) !important;
+    backdrop-filter: var(--light-scrim-filter) !important;
+    -webkit-backdrop-filter: var(--light-scrim-filter) !important;
+  }
+  body.light .iv-test-overlay,
+  body.light #sessionSummaryOverlay {
+    background: var(--light-scrim-deep) !important;
+  }
+  body.light .pro-lock-badge {
+    background: color-mix(in srgb, var(--theme) 16%, #ffffff) !important;
+    border-color: color-mix(in srgb, var(--theme) 38%, var(--border)) !important;
+    color: var(--tab-accent, var(--theme)) !important;
+  }
+
+
+  /* Tools/Train content: denser than chrome glass — chalk white was melting into stage */
+  body.light.theme-tools .card:not(.tuner-bpm-card):not(.metro-bpm-card),
+  body.light.theme-train .card:not(.tuner-bpm-card):not(.metro-bpm-card),
+  body.light.theme-tools .practice-card-btn,
+  body.light.theme-train .practice-card-btn,
+  body.light.theme-tools .folder-card,
+  body.light.theme-train .folder-card,
+  body.light.theme-tools .practice-folder-btn,
+  body.light.theme-train .practice-folder-btn,
+  body.light #toolCof .card.warm,
+  body.light #toolCof .card,
+  body.light #toolIntervalRef .card.warm,
+  body.light #toolIntervalRef .card {
+    /* Beat LIGHT GLASS sheen: solid tinted surface, not chalk frost */
+    background: linear-gradient(165deg,
+      color-mix(in srgb, var(--surface) 70%, white) 0%,
+      color-mix(in srgb, var(--bg-0) 28%, var(--surface)) 100%) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: var(--glass-lift-sm) !important;
+  }
+  body.light .ivr-jump,
+  body.light .ivr-dir,
+  body.light .ivr-nav,
+  body.light #toolIntervalRef .piano-overlay-voice-btn {
+    background: color-mix(in srgb, var(--surface) 48%, var(--bg-0)) !important;
+    border-color: var(--border) !important;
+    color: var(--text-dim) !important;
+  }
+  body.light .ivr-jump.active,
+  body.light .ivr-dir.active {
+    background: color-mix(in srgb, var(--accent-fill) 42%, var(--surface)) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+  }
+  body.light .ivr-card {
+    background: linear-gradient(165deg,
+      color-mix(in srgb, var(--accent-fill) 28%, var(--surface)) 0%,
+      color-mix(in srgb, var(--bg-0) 18%, var(--surface)) 100%) !important;
+    border-color: var(--border) !important;
+  }
+  body.light .ivr-sym { color: var(--accent) !important; }
+  body.light .ivr-play {
+    background: color-mix(in srgb, var(--accent-fill) 35%, var(--surface)) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+  }
+  body.light .ivr-dir:disabled {
+    opacity: 0.55 !important;
+    color: var(--text-dim) !important;
+  }
+  /* Neon leftovers → calm light materials */
+  body.light .tour-btn.primary {
+    background: var(--accent-vivid) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent-vivid) 30%, transparent) !important;
+  }
+  body.light .ramp-sound-pop {
+    background: color-mix(in srgb, var(--panel) 70%, var(--bg-0)) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
+  }
+  body.light .scale-chrome-row {
+    background: color-mix(in srgb, var(--bg-0) 35%, var(--panel)) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08) !important;
+  }
+  body.light #dailyStreakToast .dt-pill-count {
+    text-shadow: none !important;
+  }
+  body.light #toolSurvivalGuide .sg-note-lit {
+    fill: #00546d !important; stroke: #00546d !important;
+    filter: none !important;
+  }
+
+  /* ── TOOLS OMEGA (light) — bleed / too-light / too-dark from live screenshots ──
+     Keep module identities (cream piano, Moog theremin, warm progression PLAY).
+     Only lift contrast and stop chalk melt into the sage stage. */
+  body.light .prog-add-bar-btn {
+    background: color-mix(in srgb, var(--panel) 70%, var(--bg-0)) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-dim) !important;
+  }
+  body.light .prog-add-bar-btn:disabled {
+    opacity: 0.45 !important;
+  }
+  body.light .prog-cell:not(.filled):not(.playing):not(.rest) {
+    border-style: solid !important;
+    border-color: color-mix(in srgb, var(--accent) 18%, var(--border)) !important;
+    background: color-mix(in srgb, var(--panel) 82%, var(--bg-0)) !important;
+  }
+  body.light #toolDrumkit .step {
+    background: color-mix(in srgb, var(--surface-2) 28%, var(--bg-0)) !important;
+    border-color: var(--border) !important;
+  }
+  body.light #toolDrumkit .beat-num-cell {
+    color: var(--text-dim) !important;
+    opacity: 1 !important;
+  }
+  body.light #toolDrumkit .beat-num-cell.downbeat {
+    color: var(--accent) !important;
+    font-weight: 700 !important;
+  }
+  body.light .cs-sub-row {
+    background: color-mix(in srgb, var(--bg-0) 28%, var(--surface)) !important;
+    border-color: var(--border) !important;
+  }
+  body.light .cs-sub-pill {
+    color: var(--text-dim) !important;
+  }
+  body.light .cs-sub-pill.active {
+    background: var(--panel) !important;
+    color: var(--accent) !important;
+    box-shadow: var(--glass-lift-sm) !important;
+  }
+  body.light .tp-key-btn {
+    background: color-mix(in srgb, var(--panel) 75%, var(--bg-0)) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+  }
+  body.light .tp-staff-wrap {
+    background: color-mix(in srgb, var(--surface) 55%, var(--bg-0)) !important;
+    border: 1px solid var(--border-soft) !important;
+  }
+  body.light .db-canvas-wrap {
+    background: color-mix(in srgb, var(--surface) 60%, var(--bg-0)) !important;
+    border-color: var(--border) !important;
+  }
+  body.light .thmn-toggle {
+    background: linear-gradient(180deg, #2a2e32, #1a1c1f) !important;
+    border-color: #3a4046 !important;
+    color: rgba(245,245,245,.78) !important;
+  }
+  body.light .thmn-toggle.active {
+    background: linear-gradient(180deg, rgba(127,231,196,.22), rgba(127,231,196,.08)) !important;
+    border-color: rgba(127,231,196,.55) !important;
+    color: #9ef0d0 !important;
+  }
+  body.light #toolPiano .chip:not(.active),
+  body.light #toolPiano .voice-chip:not(.active) {
+    background: color-mix(in srgb, var(--panel) 70%, var(--bg-0)) !important;
+    border-color: var(--border) !important;
+  }
+  body.light #toolRhythmCards .rc-mode-btn,
+  body.light #toolRhythmCards .rc-toggle {
+    background: color-mix(in srgb, var(--panel) 68%, var(--bg-0)) !important;
+    border-color: var(--border) !important;
   }
 
   /* Title presence in light mode: .logo is weight-300 relying on a glow that doesn't
@@ -8014,6 +8328,10 @@ html,body{background:#000000!important;transition:none!important}
     text-shadow: -2px 0 rgba(255,70,70,0.35), 2px 0 rgba(70,70,255,0.30);
   }
   .note-name.in-tune { color: var(--in-tune); text-shadow: 0 0 24px rgba(182,242,91,0.4); }
+  body.light .note-name.in-tune {
+    color: var(--in-tune-lift, #2f5c00);
+    text-shadow: none;
+  }
   .note-name.sharp   { color: var(--sharp);   text-shadow: -2px 0 rgba(255,70,70,0.4), 2px 0 rgba(70,70,255,0.35), 0 0 18px rgba(255,138,101,0.3); }
   .note-name.flat    { color: var(--flat);    text-shadow: -2px 0 rgba(255,70,70,0.4), 2px 0 rgba(70,70,255,0.35), 0 0 18px rgba(122,175,255,0.3); }
   .note-name.silent  { color: var(--muted); text-shadow: none; }
@@ -10930,6 +11248,10 @@ html,body{background:#000000!important;transition:none!important}
   }
   .live-tempo-big.idle { color: var(--muted); text-shadow: none; }
   .live-tempo-big.match { color: var(--in-tune); text-shadow: 0 0 18px rgba(182,242,91,0.4); }
+  body.light .live-tempo-big.match {
+    color: var(--in-tune-lift, #2f5c00);
+    text-shadow: none;
+  }
   .live-tempo-big.rush  { color: var(--sharp); text-shadow: 0 0 14px rgba(255,138,101,0.3); }
   .live-tempo-big.drag  { color: var(--flat); text-shadow: 0 0 14px rgba(122,175,255,0.3); }
   .live-tempo-label { font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
@@ -19187,7 +19509,49 @@ html,body{background:#000000!important;transition:none!important}
   body.light .mq-sheet,
   body.light .stb-sheet,
   body.light .lnch-sheet {
-    background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%) !important;
+    background: var(--glass-sheen), var(--glass-fill) !important;
+    border: 1px solid var(--glass-edge) !important;
+    box-shadow: var(--glass-lift) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  }
+  body.light .settings-modal-content {
+    background: var(--glass-sheen), var(--glass-fill) !important;
+    border: 1px solid var(--glass-edge) !important;
+    box-shadow: var(--glass-lift) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  }
+  /* Light floating tab island — same frost, new geometry.
+     Dark keeps the full-bleed slab. Inset + radius + visible overflow so lift
+     reads as a pill, not a dock wall. Safe-area sits under the island (bottom),
+     not inside padding, so --nav-bar-h stays the bar height only. */
+  body.light .mode-toggle {
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    border-radius: 22px;
+    padding: 2px 4px;
+    overflow: visible;
+    background: var(--glass-sheen), var(--glass-fill) !important;
+    border: 1px solid var(--glass-edge) !important;
+    box-shadow: var(--glass-lift-sm) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  }
+  body.light .mode-toggle::after {
+    content: '';
+    position: absolute;
+    left: 12%; right: 12%; top: 0;
+    height: 1px;
+    pointer-events: none;
+    z-index: 3;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,255,255,0.95) 35%,
+      rgba(255,255,255,0.55) 65%,
+      transparent 100%);
+    opacity: 0.9;
   }
   .settings-modal-close {
     position: absolute; top: 12px; right: 12px;
@@ -20855,6 +21219,8 @@ html,body{background:#000000!important;transition:none!important}
 
   /* Body padding to clear the fixed bar */
   body { padding-bottom: calc(var(--nav-bar-h, 62px) + env(safe-area-inset-bottom)) !important; }
+  /* Light island floats 10px above the home indicator; clear that gap too. */
+  body.light { padding-bottom: calc(var(--nav-bar-h, 62px) + 10px + env(safe-area-inset-bottom)) !important; }
 
   /* Ref pitch: full width, stacked below tuner */
   .t-or-r { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
@@ -24299,8 +24665,9 @@ body.light #toolDrumkit .dk-sub-opt.trip.active {
    filled cells and to the track color on tinted cells. */
 body.light #toolDrumkit .step.on,
 body.light #toolDrumkit .step.flam {
-  background: var(--tcl, var(--tc, var(--accent))) !important;
-  border-color: color-mix(in srgb, var(--tcl, var(--tc)) 70%, black) !important;
+  /* Was full --tcl brick; too candy on cream. Mix with stage ground. */
+  background: color-mix(in srgb, var(--tcl, var(--tc, var(--accent))) 62%, var(--bg-0)) !important;
+  border-color: color-mix(in srgb, var(--tcl, var(--tc)) 55%, black) !important;
   box-shadow: none !important;
 }
 body.light #toolDrumkit .step.ghost {
@@ -24389,8 +24756,8 @@ body.light #toolDrumkit .dk-prec-step {
 }
 body.light #toolDrumkit .dk-prec-step.on,
 body.light #toolDrumkit .dk-prec-step.flam {
-  background: var(--tcl, var(--tc, var(--accent))) !important;
-  border-color: color-mix(in srgb, var(--tcl, var(--tc)) 70%, black) !important;
+  background: color-mix(in srgb, var(--tcl, var(--tc, var(--accent))) 62%, var(--bg-0)) !important;
+  border-color: color-mix(in srgb, var(--tcl, var(--tc)) 55%, black) !important;
   box-shadow: none !important;
 }
 body.light #toolDrumkit .dk-prec-step.ghost {
@@ -24458,7 +24825,7 @@ body.light #toolDrumkit .humanize-btn { color: var(--text-dim); }
 
 /* Grid card: white background, rounded, shadow — matches the dock panel */
 body.light #toolDrumkit .sequencer {
-  background: var(--panel);
+  background: color-mix(in srgb, var(--panel) 72%, var(--bg-0));
   border: 1px solid var(--border);
   border-radius: 10px;
   margin: 0 0 4px;
@@ -24474,9 +24841,16 @@ body.light #toolDrumkit .group-header {
 body.light #toolDrumkit .track-row {
   border-bottom: 1px solid var(--border-soft);
 }
+body.light #toolDrumkit .track-wrap {
+  border-bottom-color: var(--border-soft);
+}
+body.light #toolDrumkit .track-settings {
+  background: color-mix(in srgb, var(--bg-0) 42%, var(--panel));
+  border-top-color: var(--border-soft);
+}
 /* Step cells: lighter fill against white card */
 body.light #toolDrumkit .step {
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--surface-2) 45%, var(--bg-0));
   border-color: var(--border-soft);
 }
 /* Active chips: filled with accent-vivid, white text */
@@ -26732,6 +27106,9 @@ try {
   if (_ap === 'light' || (_ap === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches)) {
     document.body.classList.add('light');
     document.documentElement.classList.add('light-root');
+    // Native controls follow color-scheme; inline dark on <html> must flip pre-paint.
+    document.documentElement.style.colorScheme = 'light';
+    document.documentElement.style.background = '';
   }
 } catch(e) {}
 </script>
@@ -63756,8 +64133,13 @@ const COF_FLAT_POS    = [0,11,10,9,8,7,6,5,4,3,2,1]; // flat-progression index �
 
 // Resolve a CSS custom property to {r,g,b} so the canvas can ramp opacity itself.
 function cofRGB(varName, fallback) {
+  // Light theme tokens are declared on body.light; :root stays dark.
+  // Prefer body so canvas wedges/center match the live light palette.
   let v = '';
-  try { v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim(); } catch(e) {}
+  try { v = getComputedStyle(document.body).getPropertyValue(varName).trim(); } catch(e) {}
+  if (!v) {
+    try { v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim(); } catch(e) {}
+  }
   if (!v) v = fallback;
   // #rrggbb
   let m = v.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
@@ -63768,6 +64150,9 @@ function cofRGB(varName, fallback) {
   // rgb()/rgba()
   m = v.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
   if (m) return { r:+m[1], g:+m[2], b:+m[3] };
+  // color(srgb r g b)
+  m = v.match(/color\(\s*srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/i);
+  if (m) return { r:Math.round(+m[1]*255), g:Math.round(+m[2]*255), b:Math.round(+m[3]*255) };
   return { r:160, g:160, b:160 };
 }
 
@@ -63847,8 +64232,9 @@ function cofDraw() {
   const r4  = R * 0.28; // signature circle
 
   // Theme colors resolved live (canvas can't read var()).
-  const SH = cofRGB('--accent-warm', '#ffa07a');  // sharps ramp (warm)
-  const FL = cofRGB('--accent',      '#5ee2ff');  // flats ramp (cool)
+  // Light: ink-level --flat / --accent-warm (not dark neon cyan/peach from :root).
+  const SH = cofRGB('--accent-warm', _cofLight ? '#b34a18' : '#ffa07a');
+  const FL = cofRGB(_cofLight ? '--flat' : '--accent', _cofLight ? '#123a8c' : '#5ee2ff');
   const rgba = (col, a) => `rgba(${col.r},${col.g},${col.b},${a})`;
   // Accent color for a sector at depth-scaled opacity. In an accent mode every
   // highlighted wedge uses that mode's single color; otherwise warm=sharp, cool=flat.
@@ -63861,11 +64247,12 @@ function cofDraw() {
     else if (fInfo && fInfo.active) { col = FL; depth = fInfo.count  / 7; }
     else {
       const s = COF_SHARPS[i];
-      if (s === 0) return _cofLight ? `rgba(30,30,50,${baseA * 0.6})` : `rgba(255,255,255,${baseA * 0.5})`;
+      if (s === 0) return _cofLight ? `rgba(45,72,64,${baseA * 0.55})` : `rgba(255,255,255,${baseA * 0.5})`;
       col = s > 0 ? SH : FL; depth = Math.abs(s) / 6;
     }
-    if (depth === 0) return _cofLight ? `rgba(30,30,50,${baseA * 0.6})` : `rgba(255,255,255,${baseA * 0.5})`;
-    return rgba(col, baseA * (0.25 + 0.75 * depth) * (_cofLight ? 1.7 : 1));
+    if (depth === 0) return _cofLight ? `rgba(45,72,64,${baseA * 0.55})` : `rgba(255,255,255,${baseA * 0.5})`;
+    // Light: ink hues, mid tint. Cap keeps Db/F# from going muddy-dark.
+    return rgba(col, Math.min(0.48, baseA * (0.28 + 0.55 * depth) * (_cofLight ? 1.85 : 1)));
   };
   // Which accent THIS wedge should display right now (declared early so the label
   // helpers below can use it). Follows the ripple so color/respell sweeps in with
@@ -63948,10 +64335,12 @@ function cofDraw() {
     if (isSelected)      c.fillStyle = sectorTint(i, 0.60 * gA);
     else if (accentLvl > 0) c.fillStyle = sectorTint(i, (0.12 + 0.33 * accentLvl) * gA);
     else if (rel)        c.fillStyle = sectorTint(i, rel * gA);
-    else                 c.fillStyle = sectorTint(i, 0.12 * gA);
+    else                 c.fillStyle = sectorTint(i, (_cofLight ? 0.38 : 0.12) * gA);
     c.fill();
     const strokeA = isSelected ? 0.22 : (0.08 + 0.14 * accentLvl);
-    c.strokeStyle = `rgba(255,255,255,${strokeA*gA})`;
+    c.strokeStyle = _cofLight
+      ? `rgba(35,56,52,${strokeA * gA * 0.85})`
+      : `rgba(255,255,255,${strokeA*gA})`;
     c.lineWidth = (isSelected || accentLvl > 0.5) ? 1.4 : 1; c.stroke();
 
     // ── Inner sector ──
@@ -63959,7 +64348,7 @@ function cofDraw() {
     if (isSelected)      c.fillStyle = sectorTint(i, 0.32 * gA);
     else if (accentLvl > 0) c.fillStyle = sectorTint(i, (0.07 + 0.17 * accentLvl) * gA);
     else if (rel)        c.fillStyle = sectorTint(i, rel * 0.55 * gA);
-    else                 c.fillStyle = sectorTint(i, 0.07 * gA);
+    else                 c.fillStyle = sectorTint(i, (_cofLight ? 0.22 : 0.07) * gA);
     c.fill(); c.stroke();
 
     const emR = pop;   // push labels outward with the wedge
@@ -63974,7 +64363,8 @@ function cofDraw() {
     const sigText  = sigCount === 0 ? '♮' : (sigCount > 0 ? `${sigCount}♯` : `${Math.abs(sigCount)}♭`);
     c.font = `${Math.round(size * 0.038)}px monospace`;
     c.fillStyle = (isSelected || isAccent) ? sectorTint(i, 1)
-               : (accentLvl > 0 ? sectorTint(i, 0.25 + 0.75 * accentLvl) : 'rgba(255,255,255,0.25)');
+               : (accentLvl > 0 ? sectorTint(i, 0.25 + 0.75 * accentLvl)
+               : (_cofLight ? 'rgba(35,56,52,0.40)' : 'rgba(255,255,255,0.25)'));
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(sigText, sigX, sigY);
 
@@ -64039,22 +64429,22 @@ function cofDraw() {
 
   // ── Center circle ── (not rotated — stays readable through the spin)
   c.beginPath(); c.arc(cx, cy, r3, 0, Math.PI * 2);
-  c.fillStyle = _cofLight ? 'var(--panel)' : cofRGBcss('--bg-1', '#12121f'); c.fill();
-  c.strokeStyle = _cofLight ? 'rgba(30,30,50,0.15)' : 'rgba(255,255,255,0.1)'; c.stroke();
+  c.fillStyle = _cofLight ? cofRGBcss('--panel', '#f8fcfa') : cofRGBcss('--bg-1', '#12121f'); c.fill();
+  c.strokeStyle = _cofLight ? 'rgba(35,56,52,0.22)' : 'rgba(255,255,255,0.1)'; c.stroke();
   if (cofSelected >= 0) {
     const primaryLabel = cofMode === 'minor' ? minLabel(cofSelected) : majLabel(cofSelected);
     const subLabel     = cofMode === 'minor' ? majLabel(cofSelected) : minLabel(cofSelected);
-    // Center label stays bright for contrast — never tinted to the wedge color.
+    // Center label: dark ink in light, bright in dark — never wedge-tinted.
     c.font      = `bold ${Math.round(size * 0.075)}px 'Bebas Neue', sans-serif`;
-    c.fillStyle = 'rgba(255,255,255,0.95)';
+    c.fillStyle = _cofLight ? 'rgba(35,56,52,0.95)' : 'rgba(255,255,255,0.95)';
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(primaryLabel, cx, cy - size * 0.04);
     c.font      = `${Math.round(size * 0.042)}px monospace`;
-    c.fillStyle = _cofLight ? 'rgba(30,30,50,0.5)' : 'rgba(255,255,255,0.4)';
+    c.fillStyle = _cofLight ? 'rgba(35,56,52,0.55)' : 'rgba(255,255,255,0.4)';
     c.fillText(subLabel, cx, cy + size * 0.05);
   } else {
     c.font      = `${Math.round(size * 0.045)}px 'Bebas Neue', sans-serif`;
-    c.fillStyle = _cofLight ? 'rgba(30,30,50,0.3)' : 'rgba(255,255,255,0.15)';
+    c.fillStyle = _cofLight ? 'rgba(35,56,52,0.62)' : 'rgba(255,255,255,0.15)';
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText('TAP', cx, cy);
   }
@@ -80568,18 +80958,23 @@ function rtZoneCents(){ return rtDiffCfg().zone; }
 
 let rtPhase = 'menu';          // menu | home | drive | recall | result | done
 let rtLeg = 0, rtTier = 'melody';
-// Theme, restored. Falls back to Night if nothing is stored, or if the stored value
-// names a theme from an older build that no longer exists.
+// Theme, restored. Falls back to Night (dark app) / Nautical (light app) if nothing
+// is stored, or if the stored value names a theme from an older build.
 //
 // The key list is inlined rather than reading RT_DESIGNS: that is declared ~1100 lines
 // BELOW this point, so referencing it here is a temporal dead zone — and it is a const,
 // so it throws rather than coming back undefined. (Caught by the syntax gate, which is
 // exactly what it is for.)
+function rtDefaultDesignForAppearance(){
+  try {
+    return document.body.classList.contains('light') ? 'nautical' : 'night';
+  } catch(e){ return 'night'; }
+}
 let rtDesign = (function(){
   try {
     const d = localStorage.getItem('rt_design');
-    return ['parch','blueprint','night','nautical','ink'].includes(d) ? d : 'night';
-  } catch(e){ return 'night'; }
+    return ['parch','blueprint','night','nautical','ink'].includes(d) ? d : rtDefaultDesignForAppearance();
+  } catch(e){ return rtDefaultDesignForAppearance(); }
 })();
 let rtHomeMidi = null, rtHomeFreq = null, rtHomeName = '';
 let rtResults = [], rtReplayLeft = 1;
@@ -91999,6 +92394,13 @@ function applyAppearance() {
   const light = mode === 'light' || (mode === 'auto' && _lightMQ && _lightMQ.matches);
   document.body.classList.toggle('light', light);
   document.documentElement.classList.toggle('light-root', light);
+  // Keep <html> color-scheme / boot background in sync. Leaving color-scheme:dark
+  // made native pickers and some compositing stay night while body.light painted cream.
+  try {
+    document.documentElement.style.colorScheme = light ? 'light' : 'dark';
+    if (light) document.documentElement.style.removeProperty('background');
+    else document.documentElement.style.background = '#000000';
+  } catch (e) {}
   // Re-assert the brightness class after the light class changes, and keep the
   // control hidden in dark mode. Also covers the OS auto-switch path.
   try {
@@ -92012,6 +92414,14 @@ function applyAppearance() {
   } catch (e) {}
   document.querySelectorAll('#smAppearanceRow .app-seg-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.value === mode));
+  // Road Trip: pair Night with dark and Nautical with light when the user is on
+  // one of those two defaults. Custom skins (parch / ink / blueprint) stay put.
+  try {
+    if (typeof rtDesign === 'string' && (rtDesign === 'night' || rtDesign === 'nautical')) {
+      const want = light ? 'nautical' : 'night';
+      if (rtDesign !== want && typeof rtSetDesign === 'function') rtSetDesign(want);
+    }
+  } catch (e) {}
   _restainStaves();
   // Dynamic label reflects the active mode in words (icons show the options; the
   // label confirms the selection). Uses the i18n mode strings so it tracks language.
@@ -99022,22 +99432,22 @@ const TRACK_GROUPS = [
     id: 'cymbals', label: 'CYMBALS', labelIt: 'PIATTI',
     tracks: [
       { id:'crash',   name:'CRASH',   nameIt:'CRASH',  abbr:'CR', color:'#ffd166', light: '#aa7f00', glow:'rgba(255,209,102,0.45)' },
-      { id:'ride',    name:'RIDE',    nameIt:'RIDE',   abbr:'RD', color:'#a3e4ff', light: '#0094bd', glow:'rgba(163,228,255,0.45)' },
+      { id:'ride',    name:'RIDE',    nameIt:'RIDE',   abbr:'RD', color:'#a3e4ff', light: '#0a6f8c', glow:'rgba(163,228,255,0.45)' },
       { id:'bell',    name:'BELL',    nameIt:'CAMPANA',   abbr:'BL', color:'#ffe066', light: '#a18300', glow:'rgba(255,224,102,0.45)' },
     ]
   },
   {
     id: 'hihat', label: 'HI-HAT',   labelIt: 'HI-HAT',
     tracks: [
-      { id:'hihat-c', name:'CLOSED',  nameIt:'CHIUSO', abbr:'HH×', color:'#06b6d4', light: '#0098b5', glow:'rgba(6,182,212,0.45)'  },
-      { id:'hihat-o', name:'OPEN',    nameIt:'APERTO',   abbr:'HH○', color:'#34d399', light: '#00a26b', glow:'rgba(52,211,153,0.45)' },
-      { id:'hihat-p', name:'PEDAL',   nameIt:'PEDALE',  abbr:'HHp', color:'#67e8f9', light: '#0099ab', glow:'rgba(103,232,249,0.45)' },
+      { id:'hihat-c', name:'CLOSED',  nameIt:'CHIUSO', abbr:'HH×', color:'#06b6d4', light: '#0a7590', glow:'rgba(6,182,212,0.45)'  },
+      { id:'hihat-o', name:'OPEN',    nameIt:'APERTO',   abbr:'HH○', color:'#34d399', light: '#0a7a55', glow:'rgba(52,211,153,0.45)' },
+      { id:'hihat-p', name:'PEDAL',   nameIt:'PEDALE',  abbr:'HHp', color:'#67e8f9', light: '#0a7482', glow:'rgba(103,232,249,0.45)' },
     ]
   },
   {
     id: 'snare-group', label: 'SNARE', labelIt: 'RULLANTE',
     tracks: [
-      { id:'snare',  name:'SNARE', nameIt:'RULLANTE',   abbr:'SD', color:'#ff8aae', light: '#cb5b80', glow:'rgba(255,138,174,0.45)' },
+      { id:'snare',  name:'SNARE', nameIt:'RULLANTE',   abbr:'SD', color:'#ff8aae', light: '#a84a6a', glow:'rgba(255,138,174,0.45)' },
       { id:'cross',  name:'RIM',     nameIt:'CERCHIO',     abbr:'XS', color:'#b8a3ff', light: '#8b75cd', glow:'rgba(184,163,255,0.45)' },
     ]
   },
@@ -99047,13 +99457,13 @@ const TRACK_GROUPS = [
       { id:'tom-hi',  name:'HIGH TOM', nameIt:'TOM ALTO',  abbr:'TH', color:'#ffd4a3', light: '#b37825', glow:'rgba(255,212,163,0.45)' },
       { id:'tom1',    name:'MID TOM',  nameIt:'TOM MEDIO',   abbr:'T1', color:'#ffa07a', light: '#c46a45', glow:'rgba(255,160,122,0.45)' },
       { id:'tom2',    name:'LOW TOM',  nameIt:'TOM BASSO',   abbr:'T2', color:'#f97316', light: '#d85a00', glow:'rgba(249,115,22,0.45)'  },
-      { id:'floor',   name:'FLOOR',   nameIt:'FLOOR TOM',     abbr:'FT', color:'#ef4444', light: '#de4e4a', glow:'rgba(239,68,68,0.45)'   },
+      { id:'floor',   name:'FLOOR',   nameIt:'FLOOR TOM',     abbr:'FT', color:'#ef4444', light: '#b83c39', glow:'rgba(239,68,68,0.45)'   },
     ]
   },
   {
     id: 'kick-group', label: 'KICK', labelIt: 'GRANCASSA',
     tracks: [
-      { id:'kick', name:'KICK', nameIt:'CASSA', abbr:'BD', color:'#8b5cf6', light: '#8867e2', glow:'rgba(139,92,246,0.45)' },
+      { id:'kick', name:'KICK', nameIt:'CASSA', abbr:'BD', color:'#8b5cf6', light: '#5f46a6', glow:'rgba(139,92,246,0.45)' },
     ]
   },
   {

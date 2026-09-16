@@ -1,0 +1,372 @@
+/* Intonare light-mode contract tokens — shared by prototypes.
+   See docs/LIGHT_MODE_CONTRACT.md */
+
+:root {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-ui: "Bebas Neue", Impact, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+}
+
+/* Train (quiz) default — override on body for other tabs */
+body.theme-train {
+  --ground: #ada4d8;
+  --surface: #edecf8;
+  --surface-2: #f5f4fc;
+  --panel: #fbfbfe;
+  --ink: #3b394f;
+  --ink-muted: #676382;
+  --outline: #676382;
+  --outline-soft: #848298;
+  --accent-ink: #63569e;
+  --accent-fill: #d1cdf5;
+  --accent-large: #543d9d;
+  --accent-soft: #5b4d97;
+  --on-accent: #fbfbfe;
+  --ok: oklch(0.42 0.12 145);
+  --bad: oklch(0.45 0.14 25);
+  --warm: oklch(0.42 0.12 45);
+  --shadow-card:
+    inset 0 1px 0 rgba(255,255,255,0.55),
+    0 1px 2px color-mix(in oklab, var(--accent-ink) 10%, transparent),
+    0 2px 4px color-mix(in oklab, var(--accent-ink) 8%, transparent),
+    0 8px 18px color-mix(in oklab, var(--accent-ink) 7%, transparent);
+}
+
+body.theme-tuner {
+  --ground: #8faedc;
+  --surface: #e6eff8;
+  --surface-2: #f0f6fc;
+  --panel: #f9fbfe;
+  --ink: #2c3d4f;
+  --ink-muted: #536a82;
+  --outline: #536a82;
+  --outline-soft: #768799;
+  --accent-ink: #2966a0;
+  --accent-fill: #b8d6f6;
+  --accent-large: #00539f;
+  --accent-soft: #1b5d99;
+  --on-accent: #f9fbfe;
+  --ok: oklch(0.42 0.12 145);
+  --bad: oklch(0.45 0.14 25);
+  --warm: oklch(0.42 0.12 45);
+  --shadow-card:
+    inset 0 1px 0 rgba(255,255,255,0.55),
+    0 1px 2px color-mix(in oklab, var(--accent-ink) 10%, transparent),
+    0 2px 4px color-mix(in oklab, var(--accent-ink) 8%, transparent),
+    0 8px 18px color-mix(in oklab, var(--accent-ink) 7%, transparent);
+}
+
+body.theme-metro {
+  --ground: #bdab75;
+  --surface: #f2eee2;
+  --surface-2: #f8f5ee;
+  --panel: #fcfbf7;
+  --ink: #433b24;
+  --ink-muted: #726747;
+  --outline: #726747;
+  --outline-soft: #8c846e;
+  --accent-ink: #826500;
+  --accent-fill: #e1d2aa;
+  --accent-large: #785000;
+  --accent-soft: #7a5c00;
+  --on-accent: #fcfbf7;
+  --ok: oklch(0.42 0.12 145);
+  --bad: oklch(0.45 0.14 25);
+  --warm: oklch(0.42 0.12 45);
+  --shadow-card:
+    inset 0 1px 0 rgba(255,255,255,0.55),
+    0 1px 2px color-mix(in oklab, var(--accent-ink) 10%, transparent),
+    0 2px 4px color-mix(in oklab, var(--accent-ink) 8%, transparent),
+    0 8px 18px color-mix(in oklab, var(--accent-ink) 7%, transparent);
+}
+
+body.theme-tools {
+  --ground: #79bca8;
+  --surface: #e4f1ec;
+  --surface-2: #eff7f4;
+  --panel: #f8fcfa;
+  --ink: #274239;
+  --ink-muted: #4b7163;
+  --outline: #4b7163;
+  --outline-soft: #718c81;
+  --accent-ink: #007a5c;
+  --accent-fill: #afdfcd;
+  --accent-large: #006d48;
+  --accent-soft: #007253;
+  --on-accent: #f8fcfa;
+  --ok: oklch(0.42 0.12 145);
+  --bad: oklch(0.45 0.14 25);
+  --warm: oklch(0.42 0.12 45);
+  --shadow-card:
+    inset 0 1px 0 rgba(255,255,255,0.55),
+    0 1px 2px color-mix(in oklab, var(--accent-ink) 10%, transparent),
+    0 2px 4px color-mix(in oklab, var(--accent-ink) 8%, transparent),
+    0 8px 18px color-mix(in oklab, var(--accent-ink) 7%, transparent);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  font-family: system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--ground);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none !important;
+  z-index: 0;
+  background: linear-gradient(180deg,
+    color-mix(in oklab, white 22%, transparent) 0%,
+    color-mix(in oklab, white 8%, transparent) 42%,
+    transparent 100%);
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 12px 14px calc(24px + env(safe-area-inset-bottom));
+}
+
+.proto-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.proto-bar a {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+.proto-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.proto-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+}
+
+.seg {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 3px;
+  background: color-mix(in oklab, var(--surface) 75%, transparent);
+  border: 1px solid color-mix(in oklab, var(--outline) 30%, transparent);
+  border-radius: 10px;
+}
+.seg button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.seg button.on {
+  background: var(--accent-fill);
+  color: var(--accent-ink);
+}
+
+.view { display: none; }
+.view.on { display: block; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--outline) 28%, transparent);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  box-shadow: var(--shadow-card);
+}
+.card + .card { margin-top: 12px; }
+
+/* ── Material: Solid vs Glass (iOS-leaning frost) ──
+   Glass mode is meant to READ as different: tinted stage, frosted panels,
+   edge light, color still in selected states. Solid fallback always first. */
+body.mat-glass {
+  --glass-fill: color-mix(in oklab, white 52%, transparent);
+  --glass-fill-tint: color-mix(in oklab, var(--accent-fill) 42%, transparent);
+  --glass-edge: color-mix(in oklab, white 72%, transparent);
+  --glass-blur: 22px;
+  --surface: color-mix(in oklab, white 55%, var(--accent-fill));
+  --panel: color-mix(in oklab, white 62%, transparent);
+  --glass-card-fill: color-mix(in oklab, white 88%, var(--accent-fill));
+  --glass-card-fill-blur: color-mix(in oklab, white 70%, transparent);
+
+  /* Elevation by size: small = sharper; large = softer (big shadows feel fake). */
+  --lift-xs:
+    inset 0 1px 0 rgba(255,255,255,0.85),
+    0 1px 2px color-mix(in oklab, var(--accent-ink) 10%, transparent);
+  --lift-sm:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    0 1px 2px color-mix(in oklab, var(--accent-ink) 10%, transparent),
+    0 4px 12px color-mix(in oklab, var(--accent-ink) 10%, transparent);
+  --lift-md:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    0 1px 2px color-mix(in oklab, var(--accent-ink) 11%, transparent),
+    0 8px 20px color-mix(in oklab, var(--accent-ink) 12%, transparent);
+  --lift-lg:
+    inset 0 1px 0 rgba(255,255,255,0.92),
+    0 1px 2px color-mix(in oklab, var(--accent-ink) 8%, transparent),
+    0 6px 16px color-mix(in oklab, var(--accent-ink) 10%, transparent);
+}
+
+/* Busy tinted stage — frost needs something to blur */
+body.mat-glass {
+  background:
+    radial-gradient(ellipse 90% 70% at 10% -10%,
+      color-mix(in oklab, var(--accent-fill) 90%, white), transparent 55%),
+    radial-gradient(ellipse 80% 60% at 100% 20%,
+      color-mix(in oklab, var(--accent-ink) 28%, var(--accent-fill)), transparent 58%),
+    radial-gradient(ellipse 70% 50% at 50% 100%,
+      color-mix(in oklab, var(--accent-soft, var(--accent-ink)) 22%, var(--ground)), transparent 60%),
+    var(--ground);
+}
+body.mat-glass::before {
+  background: linear-gradient(180deg,
+    color-mix(in oklab, white 35%, transparent) 0%,
+    color-mix(in oklab, white 8%, transparent) 40%,
+    transparent 100%);
+}
+body.mat-glass::after {
+  content: "";
+  position: fixed;
+  inset: 40% -20% -10% -20%;
+  pointer-events: none !important;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 60%,
+      color-mix(in oklab, var(--accent-fill) 70%, transparent), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 80%,
+      color-mix(in oklab, white 40%, transparent), transparent 65%);
+  filter: blur(8px);
+  opacity: 0.85;
+}
+
+/* Shared frosted panel look — chrome / medium */
+body.mat-glass .glass-chrome,
+body.mat-glass .seg.mat-toggle {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(155deg,
+      rgba(255,255,255,0.55) 0%,
+      rgba(255,255,255,0.12) 38%,
+      rgba(255,255,255,0.05) 100%),
+    var(--glass-fill-tint);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--lift-sm);
+}
+
+/* MAIN CARDS (medium): white lift + calm shadow. No double outline. */
+body.mat-glass .card,
+body.mat-glass .glass-panel {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(160deg,
+      rgba(255,255,255,0.92) 0%,
+      rgba(255,255,255,0.72) 42%,
+      rgba(255,255,255,0.58) 100%),
+    var(--glass-card-fill);
+  border: 1px solid color-mix(in oklab, white 88%, var(--accent-ink));
+  box-shadow: var(--lift-md);
+}
+
+/* LARGE surfaces (quiz mode rows, sheets): softer lift than medium cards.
+   Same white density; less shadow drama so a stack of big cards doesn't shout. */
+body.mat-glass .lift-lg {
+  box-shadow: var(--lift-lg) !important;
+  outline: none;
+}
+body.mat-glass .lift-lg::before {
+  opacity: 0.35;
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  body.mat-glass .glass-chrome,
+  body.mat-glass .seg.mat-toggle {
+    background:
+      linear-gradient(155deg,
+        rgba(255,255,255,0.45) 0%,
+        rgba(255,255,255,0.08) 42%,
+        rgba(255,255,255,0.02) 100%),
+      color-mix(in oklab, var(--accent-fill) 28%, transparent);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.7);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.7);
+  }
+  body.mat-glass .card,
+  body.mat-glass .glass-panel {
+    background:
+      linear-gradient(160deg,
+        rgba(255,255,255,0.88) 0%,
+        rgba(255,255,255,0.68) 48%,
+        rgba(255,255,255,0.55) 100%),
+      var(--glass-card-fill-blur);
+    -webkit-backdrop-filter: blur(14px) saturate(1.35);
+    backdrop-filter: blur(14px) saturate(1.35);
+  }
+}
+
+/* Specular: whisper on medium cards; almost off on large (.lift-lg) */
+body.mat-glass .card::before,
+body.mat-glass .glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(115deg,
+    transparent 30%,
+    rgba(255,255,255,0.0) 42%,
+    rgba(255,255,255,0.14) 49%,
+    rgba(255,255,255,0.04) 55%,
+    transparent 66%);
+  opacity: 0.55;
+}
+body.mat-glass .card > *,
+body.mat-glass .glass-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  body.mat-glass .glass-panel,
+  body.mat-glass .glass-chrome,
+  body.mat-glass .card,
+  body.mat-glass .seg.mat-toggle {
+    background: var(--surface) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  body.mat-glass::after { display: none; }
+}
+
+.seg.mat-toggle {
+  margin-top: 8px;
+  width: 100%;
+  grid-template-columns: 1fr 1fr;
+}

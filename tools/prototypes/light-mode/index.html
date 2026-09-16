@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Light mode prototypes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:opsz,wght@9..144,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="contract.css"/>
+<style>
+  /* Kill the decorative wash on the hub so nothing can sit above hits. */
+  body.hub::before { display: none !important; }
+
+  .grid { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .link-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    color: inherit;
+    background: var(--surface);
+    border: 1px solid color-mix(in oklab, var(--outline) 28%, transparent);
+    border-radius: var(--r-lg);
+    padding: 16px 15px;
+    box-shadow: var(--shadow-card);
+    font: inherit;
+  }
+  .link-card:active { transform: scale(0.985); }
+  .link-card:disabled {
+    opacity: 0.72;
+    cursor: default;
+    transform: none;
+  }
+  .link-card h2 {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 22px;
+    letter-spacing: 0.1em;
+    color: var(--accent-ink);
+  }
+  .link-card p {
+    margin: 6px 0 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--ink-muted);
+  }
+  .tag {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--accent-ink);
+    background: var(--accent-fill);
+    border-radius: 999px;
+    padding: 4px 9px;
+  }
+  .tag.wait { color: var(--ink-muted); background: var(--panel); }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 700;
+    margin: 8px 0 4px;
+  }
+  .hint {
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--ink-muted);
+  }
+  .hint code {
+    font-family: inherit;
+    color: var(--accent-ink);
+  }
+
+  /* Full-screen prototype stage */
+  .stage {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: var(--ground);
+    flex-direction: column;
+  }
+  .stage.on { display: flex; }
+  .stage-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px calc(8px + env(safe-area-inset-top));
+    padding-top: calc(10px + env(safe-area-inset-top));
+    background: color-mix(in oklab, var(--surface) 92%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--outline) 28%, transparent);
+  }
+  .stage-bar button {
+    appearance: none;
+    border: 1px solid color-mix(in oklab, var(--outline) 35%, transparent);
+    background: var(--panel);
+    color: var(--accent-ink);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .stage-bar .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.06em;
+  }
+  .stage iframe {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: var(--ground);
+  }
+  .err {
+    display: none;
+    margin: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid color-mix(in oklab, var(--outline) 30%, transparent);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--ink-muted);
+  }
+  .err.on { display: block; }
+</style>
+</head>
+<body class="theme-train hub">
+  <div class="shell" id="home">
+    <div class="proto-sub">Intonare · light mode lab</div>
+    <div class="brand">Contract space</div>
+    <p class="proto-sub" style="margin:0 0 16px;line-height:1.5;max-width:34em">
+      Own screens first. No edits to Intonare.html until a family looks right on device.
+      Tap a card to open it here.
+    </p>
+    <div class="grid">
+      <button type="button" class="link-card" data-open="tuner.html" data-label="Tuner chrome">
+        <h2>Tuner chrome</h2>
+        <p>Metal housing, light glass readout, chips, CTAs. Solid vs Glass. Material only.</p>
+        <span class="tag">READY</span>
+      </button>
+      <button type="button" class="link-card" data-open="metro.html" data-label="Metro / drums">
+        <h2>Metro / drums</h2>
+        <p>Stage → tray → card → rail → cell. Glass must not cream-melt.</p>
+        <span class="tag">HIERARCHY</span>
+      </button>
+      <button type="button" class="link-card" data-open="quiz.html" data-label="Music Quiz">
+        <h2>Music Quiz</h2>
+        <p>Landing, mode cards, play, packs. Size-scaled glass lift.</p>
+        <span class="tag">READY</span>
+      </button>
+      <button type="button" class="link-card" data-open="roadtrip.html" data-label="Road Trip">
+        <h2>Road Trip</h2>
+        <p>Out of glass. Defaults: Night in dark, Nautical in light.</p>
+        <span class="tag">DEFAULTS</span>
+      </button>
+      <button type="button" class="link-card" data-open="tab-island.html" data-label="Tab island A/B">
+        <h2>Tab island A/B</h2>
+        <p>Order 2. Live full-bleed slab vs floating island vs chrome-only frost.</p>
+        <span class="tag">NEXT</span>
+      </button>
+      <button type="button" class="link-card" data-open="palette-audit.html" data-label="Palette audit">
+        <h2>Palette audit</h2>
+        <p>Contract vs live floors vs online refs. Where glass earns it.</p>
+        <span class="tag">AUDIT</span>
+      </button>
+      <button type="button" class="link-card" data-open="../light-mode-mockup.html" data-label="Four-tab stress kit">
+        <h2>Four-tab stress kit</h2>
+        <p>Earlier A/B (Contract vs Current) across all four themes.</p>
+        <span class="tag">REF</span>
+      </button>
+    </div>
+    <p class="hint">
+      Labs simplify layout on purpose. Live app keeps its layouts; we only borrow color/depth/material.<br/><br/>
+      Direct files:<br/>
+      <code>tools/prototypes/light-mode/tuner.html</code><br/>
+      <code>tools/prototypes/light-mode/metro.html</code><br/>
+      <code>tools/prototypes/light-mode/quiz.html</code><br/>
+      <code>tools/prototypes/light-mode/roadtrip.html</code>
+    </p>
+  </div>
+
+  <div class="stage" id="stage" aria-hidden="true">
+    <div class="stage-bar">
+      <button type="button" id="backHome">← Lab</button>
+      <span class="label" id="stageLabel">Prototype</span>
+    </div>
+    <p class="err" id="stageErr"></p>
+    <iframe id="stageFrame" title="Prototype"></iframe>
+  </div>
+
+<script>
+  const stage = document.getElementById("stage");
+  const frame = document.getElementById("stageFrame");
+  const label = document.getElementById("stageLabel");
+  const err = document.getElementById("stageErr");
+
+  function resolve(rel) {
+    return new URL(rel, window.location.href).href;
+  }
+
+  function openProto(rel, name) {
+    const url = resolve(rel);
+    err.classList.remove("on");
+    err.textContent = "";
+    label.textContent = name || rel;
+    stage.classList.add("on");
+    stage.setAttribute("aria-hidden", "false");
+    frame.onload = function () {
+      try {
+        // Same-origin smoke check; file:// may throw, ignore.
+        void frame.contentDocument;
+      } catch (e) { /* ok */ }
+    };
+    frame.onerror = function () {
+      err.textContent = "Could not load " + url + ". Open that file on its own.";
+      err.classList.add("on");
+    };
+    frame.src = url;
+    // If the iframe stays blank on some WebViews, offer escape after a beat.
+    setTimeout(function () {
+      try {
+        const doc = frame.contentDocument;
+        if (doc && doc.location && doc.location.href === "about:blank") {
+          err.innerHTML = "Embed blocked here. <a href=\"" + url + "\">Open " + name + " directly</a>.";
+          err.classList.add("on");
+        }
+      } catch (e) { /* cross-origin / file ok */ }
+    }, 700);
+  }
+
+  function closeProto() {
+    stage.classList.remove("on");
+    stage.setAttribute("aria-hidden", "true");
+    frame.src = "about:blank";
+    err.classList.remove("on");
+  }
+
+  document.querySelectorAll("[data-open]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      openProto(btn.getAttribute("data-open"), btn.getAttribute("data-label"));
+    });
+  });
+  document.getElementById("backHome").addEventListener("click", closeProto);
+
+  // Deep link: index.html#quiz or #tuner
+  const hash = (location.hash || "").replace(/^#/, "");
+  if (hash === "tuner") openProto("tuner.html", "Tuner chrome");
+  if (hash === "metro") openProto("metro.html", "Metro / drums");
+  if (hash === "quiz") openProto("quiz.html", "Music Quiz");
+  if (hash === "roadtrip") openProto("roadtrip.html", "Road Trip");
+  if (hash === "palette") openProto("palette-audit.html", "Palette audit");
+  if (hash === "tab" || hash === "island") openProto("tab-island.html", "Tab island A/B");
+  if (hash === "stress") openProto("../light-mode-mockup.html", "Four-tab stress kit");
+</script>
+</body>
+</html>
