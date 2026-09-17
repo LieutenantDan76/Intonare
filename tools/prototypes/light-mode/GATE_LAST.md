@@ -10,39 +10,39 @@ Skipped: dark-token, keep-dark, leak-ok (already has a body.light twin).
 |------:|------:|-----|-------|-------------|
 | 272 | 68 | `leak` | `#5ee2ff` | L858 |
 | 228 | 57 | `leak` | `rgb(182,242,91)` | L289 |
-| 220 | 55 | `leak` | `#ffa07a` | L64398 |
-| 208 | 52 | `leak` | `rgb(94,226,255)` | L8513 |
-| 164 | 41 | `leak` | `#ffd166` | L9866 |
-| 164 | 41 | `leak` | `#b8a3ff` | L17849 |
-| 144 | 36 | `leak` | `rgb(52,211,153)` | L24711 |
+| 220 | 55 | `leak` | `#ffa07a` | L64456 |
+| 208 | 52 | `leak` | `rgb(94,226,255)` | L8571 |
+| 164 | 41 | `leak` | `#ffd166` | L9924 |
+| 164 | 41 | `leak` | `#b8a3ff` | L17907 |
+| 144 | 36 | `leak` | `rgb(52,211,153)` | L24769 |
 | 124 | 31 | `leak` | `#b6f25b` | L987 |
-| 108 | 27 | `leak` | `#7aafff` | L124353 |
-| 56 | 14 | `leak` | `#ff8aae` | L85720 |
-| 48 | 12 | `leak` | `#34d399` | L63048 |
-| 36 | 9 | `leak` | `#4ade80` | L71730 |
-| 28 | 7 | `leak` | `#f472b6` | L19018 |
-| 24 | 6 | `leak` | `#60a5fa` | L71731 |
-| 24 | 6 | `leak` | `#c084fc` | L85719 |
-| 20 | 5 | `leak` | `#a78bfa` | L82630 |
-| 20 | 4 | `draw/js` | `rgb(52,211,153)` | L98811 |
-| 16 | 4 | `leak` | `#a3e635` | L86030 |
-| 15 | 3 | `draw/js` | `rgb(182,242,91)` | L64181 |
-| 12 | 3 | `leak` | `#fb923c` | L25838 |
-| 12 | 3 | `leak` | `#22d3ee` | L125961 |
-| 10 | 2 | `draw/js` | `#ffd166` | L76062 |
-| 8 | 2 | `leak` | `#86efac` | L86030 |
-| 8 | 2 | `leak` | `#06b6d4` | L99571 |
-| 8 | 2 | `leak` | `rgb(122,175,255)` | L15953 |
-| 5 | 1 | `draw/js` | `#5ee2ff` | L76063 |
-| 5 | 1 | `draw/js` | `#b6f25b` | L81281 |
-| 5 | 1 | `draw/js` | `#ffa07a` | L97586 |
-| 5 | 1 | `draw/js` | `#34d399` | L97586 |
-| 5 | 1 | `draw/js` | `rgb(94,226,255)` | L92126 |
-| 4 | 1 | `leak` | `#67e8f9` | L99606 |
+| 108 | 27 | `leak` | `#7aafff` | L124411 |
+| 56 | 14 | `leak` | `#ff8aae` | L85778 |
+| 48 | 12 | `leak` | `#34d399` | L63106 |
+| 36 | 9 | `leak` | `#4ade80` | L71788 |
+| 28 | 7 | `leak` | `#f472b6` | L19076 |
+| 24 | 6 | `leak` | `#60a5fa` | L71789 |
+| 24 | 6 | `leak` | `#c084fc` | L85777 |
+| 20 | 5 | `leak` | `#a78bfa` | L82688 |
+| 20 | 4 | `draw/js` | `rgb(52,211,153)` | L98869 |
+| 16 | 4 | `leak` | `#a3e635` | L86088 |
+| 15 | 3 | `draw/js` | `rgb(182,242,91)` | L64239 |
+| 12 | 3 | `leak` | `#fb923c` | L25896 |
+| 12 | 3 | `leak` | `#22d3ee` | L126019 |
+| 10 | 2 | `draw/js` | `#ffd166` | L76120 |
+| 8 | 2 | `leak` | `#86efac` | L86088 |
+| 8 | 2 | `leak` | `#06b6d4` | L99629 |
+| 8 | 2 | `leak` | `rgb(122,175,255)` | L16011 |
+| 5 | 1 | `draw/js` | `#5ee2ff` | L76121 |
+| 5 | 1 | `draw/js` | `#b6f25b` | L81339 |
+| 5 | 1 | `draw/js` | `#ffa07a` | L97644 |
+| 5 | 1 | `draw/js` | `#34d399` | L97644 |
+| 5 | 1 | `draw/js` | `rgb(94,226,255)` | L92184 |
+| 4 | 1 | `leak` | `#67e8f9` | L99664 |
 | 1 | 1 | `body.light` | `#6ef0ff` | L4648 |
-| 1 | 1 | `body.light` | `#5ee2ff` | L27316 |
-| 1 | 1 | `body.light` | `#7aafff` | L27316 |
-| 1 | 1 | `body.light` | `rgb(52,211,153)` | L25375 |
+| 1 | 1 | `body.light` | `#5ee2ff` | L27374 |
+| 1 | 1 | `body.light` | `#7aafff` | L27374 |
+| 1 | 1 | `body.light` | `rgb(52,211,153)` | L25433 |
 
 ### Top snips
 
@@ -55,44 +55,44 @@ Skipped: dark-token, keep-dark, leak-ok (already has a body.light twin).
 - L300: `} .dt-mythic-unlock { font-size:7.5px; letter-spacing:.18em; color:rgba(182,242,91,.75); margin-top:7px; text-transform:`
 
 **#ffa07a** (`leak` ×55)
-- L64398: `:root). const SH = cofRGB('--accent-warm', _cofLight ? '#b34a18' : '#ffa07a'); const FL = cofRGB(_cofLight ? '--flat' : `
-- L70349: `3,255,0.5)'; const cA_head = _prL ? '#ad3100' : 'var(--accent-warm, #ffa07a)'; const cB_head = _prL ? '#5238a5' : 'var(-`
+- L64456: `:root). const SH = cofRGB('--accent-warm', _cofLight ? '#b34a18' : '#ffa07a'); const FL = cofRGB(_cofLight ? '--flat' : `
+- L70407: `3,255,0.5)'; const cA_head = _prL ? '#ad3100' : 'var(--accent-warm, #ffa07a)'; const cB_head = _prL ? '#5238a5' : 'var(-`
 
 **rgb(94,226,255)** (`leak` ×52)
-- L8513: `c: tabular-nums; font-weight: 600; padding: 4px 10px; background: rgba(94,226,255,0.06); border-radius: 14px; transition`
-- L12079: `inite; } @keyframes forkPulse { 0%,100% { box-shadow: 0 0 8px rgba(94,226,255,0.15); } 50% { box-shadow: 0 0 16px rgba(9`
+- L8571: `c: tabular-nums; font-weight: 600; padding: 4px 10px; background: rgba(94,226,255,0.06); border-radius: 14px; transition`
+- L12137: `inite; } @keyframes forkPulse { 0%,100% { box-shadow: 0 0 8px rgba(94,226,255,0.15); } 50% { box-shadow: 0 0 16px rgba(9`
 
 **#ffd166** (`leak` ×41)
-- L9866: `-white-key.both { background: linear-gradient(180deg, #fff5c0 0%, #ffd166 60%, #f0a830 100%); box-shadow: 0 0 22px rgba(`
-- L13617: `knowing that neither keeps its dark-mode hue there: --metro is #ffd166 dark and #503600 light, and --accent-warm is gree`
+- L9924: `-white-key.both { background: linear-gradient(180deg, #fff5c0 0%, #ffd166 60%, #f0a830 100%); box-shadow: 0 0 22px rgba(`
+- L13675: `knowing that neither keeps its dark-mode hue there: --metro is #ffd166 dark and #503600 light, and --accent-warm is gree`
 
 **#b8a3ff** (`leak` ×41)
-- L17849: `er-radius: 50%; border: none; background: linear-gradient(135deg, #b8a3ff, #5ee2ff); cursor: pointer; box-shadow: 0 0 14`
-- L19954: `er-radius: 50%; border: none; background: linear-gradient(135deg, #b8a3ff, #5ee2ff); cursor: pointer; box-shadow: 0 0 10`
+- L17907: `er-radius: 50%; border: none; background: linear-gradient(135deg, #b8a3ff, #5ee2ff); cursor: pointer; box-shadow: 0 0 14`
+- L20012: `er-radius: 50%; border: none; background: linear-gradient(135deg, #b8a3ff, #5ee2ff); cursor: pointer; box-shadow: 0 0 10`
 
 **rgb(52,211,153)** (`leak` ×36)
-- L24711: `e playing */ @keyframes dk-breathe { 0%,100% { box-shadow: 0 0 10px rgba(52,211,153,0.15); } 50% { box-shadow: 0 0 16px `
-- L24712: `w: 0 0 10px rgba(52,211,153,0.15); } 50% { box-shadow: 0 0 16px rgba(52,211,153,0.3); } } #toolDrumkit .play-btn.playing`
+- L24769: `e playing */ @keyframes dk-breathe { 0%,100% { box-shadow: 0 0 10px rgba(52,211,153,0.15); } 50% { box-shadow: 0 0 16px `
+- L24770: `w: 0 0 10px rgba(52,211,153,0.15); } 50% { box-shadow: 0 0 16px rgba(52,211,153,0.3); } } #toolDrumkit .play-btn.playing`
 
 **#b6f25b** (`leak` ×31)
 - L987: `: rtLockedIn .5s cubic-bezier(.16,1,.3,1); color: var(--rtp-cacc, #b6f25b); text-shadow: 0 0 14px var(--rtp-cacc, rgba(1`
 - L992: `7px; height: 7px; border-radius: 50%; background: var(--rtp-cacc, #b6f25b); margin-right: 7px; vertical-align: middle; o`
 
 **#7aafff** (`leak` ×27)
-- L124353: `istent level when switching."}, {x:230,label:"BASS",type:"k",c:"#7aafff",name:"Bass",desc:"Low frequency control. On Mar`
-- L124354: `ially through a 4x12 cabinet."}, {x:264,label:"MID",type:"k",c:"#7aafff",name:"Middle",desc:"The most important Marshall`
+- L124411: `istent level when switching."}, {x:230,label:"BASS",type:"k",c:"#7aafff",name:"Bass",desc:"Low frequency control. On Mar`
+- L124412: `ially through a 4x12 cabinet."}, {x:264,label:"MID",type:"k",c:"#7aafff",name:"Middle",desc:"The most important Marshall`
 
 **#ff8aae** (`leak` ×14)
-- L85720: `8', '#7be0a4':'#2e7d4f', '#b8a3ff':'#5238a5', '#ffd166':'#6f4d00', '#ff8aae':'#a3284d', '#5ee2ff':'#006f8f', // Tonale's`
-- L94159: `glow:'rgba(255,102,51,.3)' }, 35: { quip:'GRIM REAPER', color:'#ff8aae', bg:'rgba(255,138,174,.14)', glow:'rgba(255,138,`
+- L85778: `8', '#7be0a4':'#2e7d4f', '#b8a3ff':'#5238a5', '#ffd166':'#6f4d00', '#ff8aae':'#a3284d', '#5ee2ff':'#006f8f', // Tonale's`
+- L94217: `glow:'rgba(255,102,51,.3)' }, 35: { quip:'GRIM REAPER', color:'#ff8aae', bg:'rgba(255,138,174,.14)', glow:'rgba(255,138,`
 
 **#34d399** (`leak` ×12)
-- L63048: `ode:'tools', nm:'TOOLS', k:'mode_tools', sub:'lnch_sub_tools', c:'#34d399' }, { id:'train', mode:'practice', nm:'TRAIN',`
-- L83594: `st CHORDLE_DIFF = { easy: { labelKey:'chordle_diff_easy', color:'#34d399', maxGuesses:6 }, medium:{ labelKey:'chordle_di`
+- L63106: `ode:'tools', nm:'TOOLS', k:'mode_tools', sub:'lnch_sub_tools', c:'#34d399' }, { id:'train', mode:'practice', nm:'TRAIN',`
+- L83652: `st CHORDLE_DIFF = { easy: { labelKey:'chordle_diff_easy', color:'#34d399', maxGuesses:6 }, medium:{ labelKey:'chordle_di`
 
 **#4ade80** (`leak` ×9)
-- L71730: `ght'); var diffs = [ { key:'easy', color: _rrL ? '#115f2e' : '#4ade80' }, { key:'normal', color: _rrL ? '#1d5fa8' : '#60`
-- L71941: `); return v || fb; }; var diffColors = { easy:_tok('--surv-easy','#4ade80'), normal:_tok('--surv-normal','#60a5fa'),`
+- L71788: `ght'); var diffs = [ { key:'easy', color: _rrL ? '#115f2e' : '#4ade80' }, { key:'normal', color: _rrL ? '#1d5fa8' : '#60`
+- L71999: `); return v || fb; }; var diffColors = { easy:_tok('--surv-easy','#4ade80'), normal:_tok('--surv-normal','#60a5fa'),`
 
 ## WASH (tiny white / heavy dark scrim) — 233 hits
 
@@ -127,91 +127,65 @@ Skipped: dark-token, keep-dark, leak-ok (already has a body.light twin).
 
 _None detected by alias heuristic._
 
-## LIVE AA walk — 15 screens, 262 fails
+## LIVE AA walk — 15 screens, 38 fails
 
 ### Fails by tool
 
-- `intervalref`: 35
-- `piano`: 32
-- `chords`: 27
-- `guitarchords`: 19
-- `scales`: 17
-- `theremin`: 16
-- `drumkit`: 16
-- `cof`: 15
-- `transpose`: 15
-- `tonal`: 14
-- `rhythmcards`: 13
-- `progression`: 11
-- `survivalguide`: 11
-- `volume`: 11
-- `vocalrange`: 10
+- `piano`: 12
+- `theremin`: 7
+- `drumkit`: 5
+- `guitarchords`: 4
+- `chords`: 2
+- `tonal`: 2
+- `progression`: 1
+- `vocalrange`: 1
+- `rhythmcards`: 1
+- `survivalguide`: 1
+- `transpose`: 1
+- `volume`: 1
 
 _Note: keep-dark islands (piano skins, theremin Moog, tuner glass) can legitimately fail AA on dark fills. Triage those last._
 
 ### Worst samples
 
+- `theremin` 1.07:1 — 'TRY A SOUND' fg=rgba(245, 245, 245, 0.78) bg=rgb(216,243,234)
+- `theremin` 1.07:1 — 'TRY A SOUND' fg=rgba(245, 245, 245, 0.78) bg=rgb(216,243,234)
+- `theremin` 1.07:1 — 'NOTE GRID' fg=rgba(245, 245, 245, 0.78) bg=rgb(216,243,234)
+- `theremin` 1.07:1 — 'SNAP TO SCALE' fg=rgba(245, 245, 245, 0.78) bg=rgb(216,243,234)
+- `theremin` 1.07:1 — 'DEFAULTS' fg=rgba(245, 245, 245, 0.78) bg=rgb(216,243,234)
+- `chords` 1.17:1 — '▶︎ PLAY' fg=rgb(255, 255, 255) bg=rgb(216,243,234)
+- `progression` 1.17:1 — '▶︎ PLAY' fg=rgb(255, 255, 255) bg=rgb(216,243,234)
+- `theremin` 1.17:1 — '⛶ EXPAND' fg=rgb(216, 221, 224) bg=rgb(216,243,234)
+- `vocalrange` 1.17:1 — 'BEGIN ASSESSMENT →' fg=rgb(255, 255, 255) bg=rgb(216,243,234)
+- `theremin` 1.23:1 — 'POWER' fg=rgba(200, 220, 210, 0.78) bg=rgb(216,243,234)
 - `chords` 1.49:1 — '▾' fg=rgba(127, 231, 196, 0.7) bg=rgb(255,255,255)
-- `piano` 1.52:1 — 'NOW PLAYING' fg=rgb(160, 138, 94) bg=rgb(121,188,168)
-- `theremin` 1.53:1 — 'POWER' fg=rgba(200, 220, 210, 0.78) bg=rgb(121,188,168)
-- `theremin` 1.60:1 — '⛶ EXPAND' fg=rgb(216, 221, 224) bg=rgb(121,188,168)
-- `chords` 1.76:1 — '♯♭' fg=rgb(47, 112, 72) bg=rgb(40,70,45)
-- `chords` 1.76:1 — '♯♭' fg=rgb(47, 112, 72) bg=rgb(40,70,45)
-- `chords` 1.97:1 — '♯♭ ♯ ♭' fg=rgb(78, 114, 106) bg=rgb(40,70,45)
-- `piano` 1.99:1 — 'ORGAN' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — 'ORGAN' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — 'RHODES' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — 'RHODES' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — 'LID' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — '❚❚' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — '■' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — 'WAVES' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — 'PLUCKED' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — 'BRASS' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `piano` 1.99:1 — 'WOODWIND' fg=rgb(138, 118, 84) bg=rgb(121,188,168)
-- `theremin` 2.01:1 — 'TRY A SOUND' fg=rgba(245, 245, 245, 0.78) bg=rgb(121,188,168)
-- `theremin` 2.01:1 — 'TRY A SOUND' fg=rgba(245, 245, 245, 0.78) bg=rgb(121,188,168)
-- `theremin` 2.01:1 — 'NOTE GRID' fg=rgba(245, 245, 245, 0.78) bg=rgb(121,188,168)
-- `theremin` 2.01:1 — 'SNAP TO SCALE' fg=rgba(245, 245, 245, 0.78) bg=rgb(121,188,168)
-- `theremin` 2.01:1 — 'DEFAULTS' fg=rgba(245, 245, 245, 0.78) bg=rgb(121,188,168)
-- `chords` 2.08:1 — '▶︎ PLAY' fg=rgb(242, 251, 244) bg=rgb(121,188,168)
-- `progression` 2.19:1 — '▶︎ PLAY' fg=rgb(255, 255, 255) bg=rgb(121,188,168)
-- `vocalrange` 2.19:1 — 'BEGIN ASSESSMENT →' fg=rgb(255, 255, 255) bg=rgb(121,188,168)
-- `tonal` 2.36:1 — 'DRONE OFF' fg=rgb(93, 115, 85) bg=rgb(121,188,168)
-- `tonal` 2.36:1 — 'EQ' fg=rgb(93, 115, 85) bg=rgb(121,188,168)
-- `chords` 2.43:1 — 'ROOT' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — 'TRIADS' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — '▾' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — '7THS' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — '▾' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — '6THS & EXTENDED' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — '▾' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — 'ALTERED' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — '▾' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — 'OTHER' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `chords` 2.43:1 — '▾' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `cof` 2.43:1 — 'CIRCLE OF FIFTHS' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `cof` 2.43:1 — '?' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `guitarchords` 2.43:1 — 'CHORDS' fg=rgb(121, 188, 168) bg=rgb(0,122,92)
-- `guitarchords` 2.43:1 — 'CAPO' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `guitarchords` 2.43:1 — '0' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `guitarchords` 2.43:1 — 'C' fg=rgb(121, 188, 168) bg=rgb(0,122,92)
-- `guitarchords` 2.43:1 — 'MAJOR' fg=rgb(121, 188, 168) bg=rgb(0,122,92)
-- `intervalref` 2.43:1 — 'INTERVAL REFERENCE' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `intervalref` 2.43:1 — '?' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `intervalref` 2.43:1 — 'P1' fg=rgb(0, 122, 92) bg=rgb(121,188,168)
-- `rhythmcards` 2.43:1 — '▶︎ PLAY' fg=rgb(0, 122, 92) bg=rgb(121,188,168)
-- `rhythmcards` 2.43:1 — 'PLAY' fg=rgb(0, 122, 92) bg=rgb(121,188,168)
-- `rhythmcards` 2.43:1 — 'CLICK: ON' fg=rgb(0, 122, 92) bg=rgb(121,188,168)
-- `scales` 2.43:1 — 'SLOW' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `scales` 2.43:1 — 'FAST' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `scales` 2.43:1 — 'TONE' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `scales` 2.43:1 — 'MAJOR' fg=rgb(0, 122, 92) bg=rgb(121,188,168)
-- `scales` 2.43:1 — '1/3' fg=rgb(0, 122, 92) bg=rgb(121,188,168)
-- `survivalguide` 2.43:1 — '1/3' fg=rgb(0, 122, 92) bg=rgb(121,188,168)
-- `transpose` 2.43:1 — 'MY INSTRUMENT' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- `transpose` 2.43:1 — '?' fg=rgb(78, 114, 106) bg=rgb(121,188,168)
-- … 202 more
+- `guitarchords` 2.70:1 — '★' fg=rgb(179, 74, 24) bg=rgb(255,160,122)
+- `guitarchords` 2.70:1 — 'ZOOM' fg=rgb(179, 74, 24) bg=rgb(255,160,122)
+- `piano` 2.85:1 — 'NOW PLAYING' fg=rgb(160, 138, 94) bg=rgb(216,243,234)
+- `guitarchords` 3.50:1 — '−' fg=rgb(0, 122, 92) bg=rgb(94,226,255)
+- `guitarchords` 3.50:1 — '+' fg=rgb(0, 122, 92) bg=rgb(94,226,255)
+- `rhythmcards` 3.59:1 — '▶︎ TEST' fg=rgb(8, 17, 13) bg=rgb(0,122,92)
+- `piano` 3.73:1 — 'ORGAN' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — 'ORGAN' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — 'RHODES' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — 'RHODES' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — 'LID' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — '❚❚' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — '■' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — 'WAVES' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — 'PLUCKED' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — 'BRASS' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `piano` 3.73:1 — 'WOODWIND' fg=rgb(138, 118, 84) bg=rgb(216,243,234)
+- `drumkit` 4.22:1 — '−' fg=rgb(15, 138, 92) bg=rgb(248,252,250)
+- `drumkit` 4.22:1 — '+' fg=rgb(15, 138, 92) bg=rgb(248,252,250)
+- `drumkit` 4.22:1 — '0%' fg=rgb(15, 138, 92) bg=rgb(248,252,250)
+- `drumkit` 4.37:1 — '1' fg=rgb(255, 255, 255) bg=rgb(15,138,92)
+- `drumkit` 4.37:1 — 'Standard' fg=rgb(255, 255, 255) bg=rgb(15,138,92)
+- `survivalguide` 4.37:1 — 'NEXT' fg=rgb(255, 255, 255) bg=rgb(15,138,92)
+- `transpose` 4.37:1 — 'NEXT' fg=rgb(255, 255, 255) bg=rgb(15,138,92)
+- `volume` 4.37:1 — 'NEXT' fg=rgb(255, 255, 255) bg=rgb(15,138,92)
+- `tonal` 4.43:1 — 'DRONE OFF' fg=rgb(93, 115, 85) bg=rgb(216,243,234)
+- `tonal` 4.43:1 — 'EQ' fg=rgb(93, 115, 85) bg=rgb(216,243,234)
 
 ## Next actions
 

@@ -3199,8 +3199,8 @@ body.sg-open #toolSurvivalGuide{
     /* The un-themed light fallback rides the same OKLCH ramp as the four mode
        palettes, or a body that has .light without a theme class shows the old
        pale floor for a frame. */
-    --bg-0: #a7a7d8;
-    --bg-1: #b0b0d9;
+    --bg-0: #ddd9f0;
+    --bg-1: #e4e0f4;
     /* CARDS ARE THE CALM PART, NOT THE COLORFUL PART.
        v0.97.90 dropped the grounds to S=0.30 and deliberately left surfaces at 0.42,
        reasoning that cards should be more saturated than the page. Measuring against
@@ -3422,7 +3422,7 @@ body.sg-open #toolSurvivalGuide{
     --tab-accent: #00376e;
     --accent-vivid: #00539f; --accent-vivid-2: #00488e;
     --accent-bright: #0274c7; --accent-bright-2: #0065b1;
-    --bg-0: #8faedc; --bg-1: #94b4e2;
+    --bg-0: #d8e6f8; --bg-1: #e0ecfa;
     --surface: #e6eff8; --surface-2: #f0f6fc; --panel: #f9fbfe;
     --border: #536a82; --border-soft: #768799;
     --accent: #2966a0; --accent-soft: #1b5d99; --accent-warm: #b34a18; --accent-lift: #1b5d99; --ink-tight: #2c3d4f;
@@ -3435,7 +3435,7 @@ body.sg-open #toolSurvivalGuide{
     --tab-accent: #4d3100;
     --accent-vivid: #785000; --accent-vivid-2: #6a4600;
     --accent-bright: #9b7000; --accent-bright-2: #896200;
-    --bg-0: #bdab75; --bg-1: #c3b17a;
+    --bg-0: #f3ebd4; --bg-1: #f7f1e0;
     --surface: #f2eee2; --surface-2: #f8f5ee; --panel: #fcfbf7;
     --border: #726747; --border-soft: #8c846e;
     --accent: #826500; --accent-soft: #6a5200; --accent-warm: #b34a18; --accent-lift: #7a5c00; --ink-tight: #433b24;
@@ -3448,7 +3448,7 @@ body.sg-open #toolSurvivalGuide{
     --tab-accent: #0a5c3c;
     --accent-vivid: #0f8a5c; --accent-vivid-2: #0c7a52;
     --accent-bright: #009066; --accent-bright-2: #007f59;
-    --bg-0: #79bca8; --bg-1: #7ec2ad;
+    --bg-0: #d8f3ea; --bg-1: #e0f6ef;
     --surface: #e4f1ec; --surface-2: #eff7f4; --panel: #f8fcfa;
     --border: #4b7163; --border-soft: #718c81;
     --accent: #007a5c; --accent-soft: #0a5c3c; --accent-warm: #b34a18; --accent-lift: #007253; --ink-tight: #274239;
@@ -3461,7 +3461,7 @@ body.sg-open #toolSurvivalGuide{
     --tab-accent: #38276c;
     --accent-vivid: #543d9d; --accent-vivid-2: #49348b;
     --accent-bright: #735dc4; --accent-bright-2: #6450af;
-    --bg-0: #ada4d8; --bg-1: #b3a9de;
+    --bg-0: #e0daf2; --bg-1: #e8e4f6;
     --surface: #edecf8; --surface-2: #f5f4fc; --panel: #fbfbfe;
     --border: #676382; --border-soft: #848298;
     --accent: #63569e; --accent-soft: #5238a5; --accent-warm: #b34a18; --accent-lift: #5b4d97; --ink-tight: #3b394f;
@@ -4783,6 +4783,64 @@ body.sg-open #toolSurvivalGuide{
   body.light #toolSurvivalGuide .sg-mode-rung.active {
     border-color: var(--tab-accent) !important;
     background: color-mix(in srgb, var(--accent-fill) 35%, var(--panel)) !important;
+  }
+
+  /* ── LIGHT GATE BATCH 2 — long-tail controls on lifted grounds ──
+     Piano cream / Moog / keep-dark islands still untouched. */
+  body.light .vol-slider-label.as-toggle::after,
+  body.light .scale-tempo-label.as-toggle::after {
+    color: var(--tab-accent) !important;
+    opacity: 1 !important;
+  }
+  body.light .vol-slider-label.as-toggle.open::after,
+  body.light .scale-tempo-label.as-toggle.open::after {
+    color: var(--text-dim) !important;
+    opacity: 0.9 !important;
+  }
+  body.light .scale-speed-row .speed-label,
+  body.light .scale-speed-row .tempo-val {
+    color: var(--text-dim) !important;
+  }
+  body.light .scale-ghost-btn {
+    color: var(--text-dim) !important;
+    border-color: var(--border) !important;
+    background: color-mix(in srgb, var(--panel) 70%, var(--bg-0)) !important;
+  }
+  body.light #toolChords .chord-play-btn:not(.playing) {
+    background: linear-gradient(135deg, #3f8a5c 0%, #2f7048 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #2a6440 !important;
+    box-shadow: 0 4px 14px rgba(47, 112, 72, 0.28) !important;
+  }
+  body.light .chd-enh {
+    background: color-mix(in srgb, var(--border-soft) 55%, var(--surface)) !important;
+  }
+  body.light .chd-enhbtn {
+    background: var(--panel) !important;
+    color: var(--text-dim) !important;
+  }
+  body.light .chd-enh .chd-enhbtn.active {
+    background: color-mix(in srgb, var(--accent-warm) 22%, #fff) !important;
+    color: var(--tab-accent) !important;
+  }
+  body.light .chd-row.collapsed .chd-arrow {
+    color: var(--tab-accent) !important;
+  }
+  /* Interval / scales chips that sat as accent ink on bare stage */
+  body.light .ivr-jump:not(.active),
+  body.light .ivr-dir:not(.active),
+  body.light .ivr-nav {
+    color: var(--text-dim) !important;
+  }
+  body.light .stb-tile:not(.active),
+  body.light .tone-tile:not(.active) {
+    color: var(--text-dim) !important;
+    border-color: var(--border-soft) !important;
+  }
+  body.light .stb-tile.active,
+  body.light .tone-tile.active {
+    color: var(--tab-accent) !important;
+    border-color: var(--accent) !important;
   }
 
   /* Title presence in light mode: .logo is weight-300 relying on a glow that doesn't
