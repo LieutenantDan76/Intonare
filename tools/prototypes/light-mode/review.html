@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Light review · real screenshots</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:opsz,wght@9..144,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --font-display: "Fraunces", Georgia, serif;
+    --font-ui: "Bebas Neue", Impact, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    color: #1e1e28;
+    background: #1a1a20;
+    padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
+  }
+  a { color: #9aa6ff; }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    margin: 4px 0 2px;
+    color: #f2f0ea;
+  }
+  .sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.45;
+    color: #9a9aaa;
+    margin: 0 0 12px;
+    max-width: 42em;
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .bar button, .votes button {
+    appearance: none;
+    border: 1px solid #3a3a48;
+    background: #2a2a34;
+    color: #eee;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+  }
+  .bar button.primary { background: #e8e4dc; color: #1a1a20; border-color: #e8e4dc; }
+  .bar button.on { outline: 2px solid #9aa6ff; }
+  .prog {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #9a9aaa;
+    flex: 1 1 120px;
+  }
+  .prog strong { color: #eee; }
+  .miss {
+    display: none;
+    padding: 14px;
+    border-radius: 12px;
+    background: #2a2430;
+    border: 1px solid #5a4060;
+    color: #e8d0e0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .miss.on { display: block; }
+  .miss code { color: #ffb0d0; }
+  .card {
+    background: #24242e;
+    border: 1px solid #353545;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .card.fine { outline: 2px solid #2f6b4f; }
+  .card.off { outline: 2px solid #b45309; }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    align-items: baseline;
+    padding: 10px 12px 8px;
+  }
+  .head .fam {
+    font-family: var(--font-ui);
+    letter-spacing: 0.08em;
+    font-size: 14px;
+    color: #c9c4ff;
+  }
+  .head .lab {
+    font-size: 15px;
+    font-weight: 650;
+    color: #f2f0ea;
+  }
+  .shot-wrap {
+    background: #0e0e12;
+    display: flex;
+    justify-content: center;
+  }
+  .shot-wrap img {
+    display: block;
+    width: 100%;
+    max-width: 390px;
+    height: auto;
+  }
+  .votes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 10px 12px 12px;
+  }
+  .votes button {
+    padding: 14px 8px;
+    font-weight: 650;
+  }
+  .votes button.on-fine { background: #1e3d30; border-color: #2f6b4f; }
+  .votes button.on-off { background: #3d2a12; border-color: #b45309; }
+  .stamp {
+    padding: 0 12px 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #7a7a8a;
+    min-height: 1em;
+  }
+  details {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #24242e;
+    border: 1px solid #353545;
+    color: #ccc;
+  }
+  details summary {
+    font-family: var(--font-ui);
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    color: #e8e4dc;
+  }
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    border-radius: 10px;
+    border: 1px solid #353545;
+    background: #1a1a20;
+    color: #ddd;
+    padding: 10px;
+  }
+</style>
+</head>
+<body>
+  <a href="index.html" style="font-family:var(--font-mono);font-size:11px">← Lab</a>
+  <h1>Light review</h1>
+  <p class="sub">
+    Real app screenshots. Tools family is locked and hidden by default.
+    Vote Fine or Looks off on Train / Tuner / Metro. Only Looks off feeds the next patch.
+  </p>
+  <div class="bar">
+    <span class="prog" id="prog">Loading…</span>
+    <button type="button" id="btnTodo" class="primary on">Needs review</button>
+    <button type="button" id="btnOff">Looks off only</button>
+    <button type="button" id="btnAll">Show all in scope</button>
+    <button type="button" id="btnTools">Include Tools</button>
+    <button type="button" id="btnClear">Clear votes</button>
+  </div>
+  <div class="miss" id="miss">
+    No shots yet. From the repo root run:<br/>
+    <code>npx --yes serve . -p 8899</code><br/>
+    <code>python tools/audits/intonare_light_shots.py</code><br/>
+    Then reload this page.
+  </div>
+  <div id="list"></div>
+  <details>
+    <summary>Export Looks off list</summary>
+    <div class="bar" style="margin-top:8px">
+      <button type="button" id="btnCopy">Copy markdown</button>
+    </div>
+    <textarea id="out" readonly></textarea>
+  </details>
+<script>
+const STORE = "intonare-light-review-v2";
+let shots = [];
+let votes = {};
+/** todo = unreviewed in scope; off = looks-off only; all = every in-scope shot */
+let viewMode = "todo";
+/** Tools locked — omit unless Include Tools is on */
+let includeTools = false;
+const LOCKED_FAMILIES = new Set(["Tools"]);
+
+try { votes = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { votes = {}; }
+function save() { localStorage.setItem(STORE, JSON.stringify(votes)); }
+
+function inScope(s) {
+  if (!includeTools && LOCKED_FAMILIES.has(s.family)) return false;
+  return true;
+}
+
+function visibleRows() {
+  const scoped = shots.filter(inScope);
+  if (viewMode === "todo") return scoped.filter(s => !votes[s.id]);
+  if (viewMode === "off") return scoped.filter(s => votes[s.id] === "off");
+  return scoped;
+}
+
+async function load() {
+  try {
+    const res = await fetch("shots/manifest.json?ts=" + Date.now());
+    if (!res.ok) throw new Error("missing");
+    const man = await res.json();
+    shots = (man.screens || []).filter(s => s.ok && s.file);
+    document.getElementById("miss").classList.toggle("on", shots.length === 0);
+    paint();
+  } catch (e) {
+    document.getElementById("miss").classList.add("on");
+    document.getElementById("prog").textContent = "No manifest";
+  }
+}
+
+function setBar() {
+  document.getElementById("btnTodo").classList.toggle("on", viewMode === "todo");
+  document.getElementById("btnTodo").classList.toggle("primary", viewMode === "todo");
+  document.getElementById("btnOff").classList.toggle("on", viewMode === "off");
+  document.getElementById("btnAll").classList.toggle("on", viewMode === "all");
+  document.getElementById("btnTools").classList.toggle("on", includeTools);
+  document.getElementById("btnTools").textContent = includeTools ? "Hide Tools" : "Include Tools";
+}
+
+function paint() {
+  setBar();
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  const scoped = shots.filter(inScope);
+  const rows = visibleRows();
+  const done = scoped.filter(s => votes[s.id]).length;
+  const off = scoped.filter(s => votes[s.id] === "off").length;
+  const hiddenTools = shots.filter(s => LOCKED_FAMILIES.has(s.family)).length;
+  document.getElementById("prog").innerHTML =
+    `<strong>${done}</strong> / ${scoped.length} · <strong>${off}</strong> looks off`
+    + (includeTools ? "" : ` · ${hiddenTools} Tools hidden`);
+  for (const s of rows) {
+    const v = votes[s.id] || "";
+    const card = document.createElement("article");
+    card.className = "card" + (v === "fine" ? " fine" : v === "off" ? " off" : "");
+    card.innerHTML = `
+      <div class="head">
+        <span class="fam">${esc(s.family)}</span>
+        <span class="lab">${esc(s.label)}</span>
+      </div>
+      <div class="shot-wrap">
+        <img src="shots/${esc(s.file)}?v=${Date.now()}" alt="${esc(s.label)}" loading="lazy" width="390" height="844"/>
+      </div>
+      <div class="votes">
+        <button type="button" data-v="fine" class="${v === "fine" ? "on-fine" : ""}">Fine</button>
+        <button type="button" data-v="off" class="${v === "off" ? "on-off" : ""}">Looks off</button>
+      </div>
+      <div class="stamp">${v ? "Saved: " + v : "Unreviewed"}</div>
+    `;
+    card.querySelectorAll(".votes button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        votes[s.id] = btn.getAttribute("data-v");
+        save();
+        paint();
+        buildOut();
+      });
+    });
+    list.appendChild(card);
+  }
+  buildOut();
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function buildOut() {
+  const scoped = shots.filter(inScope);
+  const off = scoped.filter(s => votes[s.id] === "off");
+  const lines = ["# Light review — Looks off", ""];
+  if (!off.length) lines.push("_None marked yet._", "");
+  for (const s of off) lines.push(`- **${s.family} / ${s.label}** (\`${s.id}\`)`);
+  lines.push("", `Fine: ${scoped.filter(s => votes[s.id] === "fine").length}`,
+    `Unreviewed: ${scoped.filter(s => !votes[s.id]).length}`,
+    `Tools hidden: ${includeTools ? "no" : "yes"}`);
+  document.getElementById("out").value = lines.join("\n");
+}
+
+document.getElementById("btnTodo").addEventListener("click", () => { viewMode = "todo"; paint(); });
+document.getElementById("btnOff").addEventListener("click", () => { viewMode = "off"; paint(); });
+document.getElementById("btnAll").addEventListener("click", () => { viewMode = "all"; paint(); });
+document.getElementById("btnTools").addEventListener("click", () => { includeTools = !includeTools; paint(); });
+document.getElementById("btnClear").addEventListener("click", () => {
+  if (!confirm("Clear review votes?")) return;
+  votes = {}; save(); paint();
+});
+document.getElementById("btnCopy").addEventListener("click", async () => {
+  buildOut();
+  try {
+    await navigator.clipboard.writeText(document.getElementById("out").value);
+    document.getElementById("btnCopy").textContent = "Copied";
+    setTimeout(() => { document.getElementById("btnCopy").textContent = "Copy markdown"; }, 1000);
+  } catch (e) {}
+});
+
+load();
+</script>
+</body>
+</html>

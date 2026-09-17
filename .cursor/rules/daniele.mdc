@@ -56,7 +56,26 @@ Beatles + guitar_technique packs are his voice reference only.
 1. Read `docs/PROJECT_STATUS.md`.
 2. Obey `.cursor/rules/intonare.mdc` (edit safety, preflight, pipeline).
 3. For copy or quizzes, read the matching guide under `docs/`.
-4. Keep `CHANGELOG.md` in sync with `INTONARE_VERSION` for Codemagic.
+4. Changelog is as-you-go, not ship-day only. See Workflow below and
+   `intonare.mdc` Version / changelog.
+
+## Workflow (version + changelog)
+
+After any user-facing change to `Intonare.html`, or any shipped tool /
+doc users or agents rely on for what shipped:
+
+1. Bump the patch in both marketing declarations (HTML comment
+   `INTONARE_VERSION:` and the JS `INTONARE_VERSION` const). Keep them
+   equal.
+2. Add a new top `## vX` entry in `CHANGELOG.md` in the same turn.
+   Cover the whole batch of work, not a one-liner that skips half.
+3. Do this before ending the task. Do not wait for Codemagic,
+   TestFlight, or "when we ship." Codemagic still fails if top
+   changelog and `INTONARE_VERSION` disagree; that is a backstop, not
+   the first time you write the entry.
+4. Tiny pure-internal agent scripts you delete in the same turn do not
+   need a bump. Prototype labs under `tools/prototypes/` need a bump
+   only when the change lands in the shipping app or a shipped audit.
 
 ## Do not
 

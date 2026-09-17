@@ -32,6 +32,8 @@ This machine had no `python` / `py` on PATH when imported. Install Python 3
 |---|---|
 | `intonare_regression_sentinel.py` | Pins past fixes. Highest value. Renamed from `…-6.py`. |
 | `intonare_changelog_gate.py` | Changelog top = HTML version (Codemagic also checks this). |
+| `intonare_light_gate.py` | Light-mode NEON / ROLE static + Playwright LIVE AA (Tools). |
+| `intonare_light_shots.py` | Light screenshots for `light-mode/review.html`. Default `--family train` (Train+Tuner+Metro). Tools: `--family tools`. |
 | `intonare_backup_audit.py` | Backup/restore key coverage |
 | `intonare_stopall_audit.py` | Audio stop wiring |
 | `intonare_us_spelling_audit.py` | American English ship check |

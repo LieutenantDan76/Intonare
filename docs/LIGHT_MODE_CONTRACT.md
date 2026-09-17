@@ -171,6 +171,20 @@ Depth cue priority: white fill contrast first, rim second, shadow last.
 - Ship another global chroma pass without checking this contract.
 
 
+## Finish path (taste, not more hex hunting)
+
+AA / the light gate catch contrast math. They do not catch "still too
+light / too dark" as a feel.
+
+1. Capture shots: `python tools/audits/intonare_light_shots.py`
+   (app must be served; see script docstring).
+2. Open `tools/prototypes/light-mode/review.html` and mark Fine /
+   Looks off on real screenshots.
+3. Patch only the Looks off list.
+
+Role-token lab (`triage.html`) is optional. Do not use labeled mocks
+as a substitute for module photos.
+
 ## Success check
 
 Same four screens, light vs dark, on device:
@@ -178,3 +192,49 @@ Same four screens, light vs dark, on device:
 2. Cards sit on the page (depth).
 3. Tab personality is obvious within one second.
 4. Nothing feels like a stain, a washout, or office gray.
+
+
+## Tools family — locked (v0.210.81)
+
+Confirmed in the screenshot review lab (Fine set + named fixes through
+v0.210.81). Do not re-open these hexes without a new Looks-off vote.
+
+### Stage tokens (`body.light.theme-tools`)
+
+| Role | Hex | Notes |
+|------|-----|--------|
+| ground `--bg-0` / `--bg-1` | `#d8f3ea` / `#e0f6ef` | sage stage |
+| surface / surface-2 / panel | `#e4f1ec` / `#eff7f4` / `#f8fcfa` | cards |
+| border / border-soft | `#4b7163` / `#718c81` | |
+| accent / tab-accent | `#007a5c` / `#0a5c3c` | selected + ink |
+| accent-fill | `#afdfcd` | soft selected wash |
+| accent-warm | `#b34a18` | streaks / true warm jobs only |
+
+### Module literals (keep)
+
+| Surface | Locked choice |
+|---------|----------------|
+| Scales degrees | mint `#1a9a78` (names `#0a5c3c`, deg `#0d8a6a`) |
+| Scales root/octave anchors | tools teal `#007a5c` |
+| Scales COMPARE ghost | amber `#b07a10` / `#8a5a00` (contrast on purpose) |
+| Scales root chip / `.card.warm` rim | tools teal (not peach) |
+| Charts finger dots / barre (light) | tools teal `rgba(10,92,60,…)` |
+| Volume idle hero / SAFE | ink green `#145a28` |
+| Progression BPM number | `var(--tab-accent)` |
+| Transposer active tab | tools teal (not `--metro` brown) |
+| Theremin pad + EXPAND pad + volume column | sage `#d2efe4`→`#b7dfd0`; Moog console stays wood/dark |
+| Theremin toggles | literal light chrome `#f8fcfa` / active `#afdfcd` |
+
+### Keep-dark / identity (do not flatten)
+
+- Moog theremin console (wood + black plate)
+- Piano / organ / Rhodes cream housings
+- Charts mute ✕ red; open-string O teal
+- Volume zone colors (safe / caution / warn / danger)
+- Transposer YOU READ warm vs IT SOUNDS teal (intentional pair)
+
+### Still open inside Tools (secondary surfaces)
+
+Drawers, zoom sheets, Survival Guide inner pages, Charts SCALES tab,
+Progression presets / filled slots. Capture when needed; do not reopen
+locked stage or tape colors above.

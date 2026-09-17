@@ -2,6 +2,99 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.83 — Train light: tabs, poly rings, difficulty pickers
+
+Pitch Match selected mode tab: solid purple fill + white ink. Polyrhythm
+rings brighter peach/lavender. Rhythm Reading / Chordle / Diadle / Tonale
+difficulty cards: white surfaces + mid-bright accents; RR play buttons
+drop the dark color glow. Shot lab defaults to Train+Tuner+Metro with
+difficulty/gameplay variants; Tools locked and hidden in review;
+achievement toasts suppressed during capture.
+
+## v0.210.82 — Tools light locked; Train shot pass starts
+
+Tools family colors locked in `docs/LIGHT_MODE_CONTRACT.md` (and
+`tools/prototypes/light-mode/TOOLS_LOCKED.md`). Shot lab expands into
+Train hub, folders, exercises, and Music Quiz plus Tuner/Metro chrome
+for the next review pass. No Tools stage hex reopen.
+
+## v0.210.81 — Scales mint pips + Theremin expand volume bar
+
+Scales: degree pips back to mint/teal on the tools stage (indigo
+dropped); root/octave stay deeper tools teal; COMPARE amber kept.
+Theremin EXPAND: left volume touch column matches the sage pad
+(was still a black instrument strip).
+
+## v0.210.80 — Shot capture fixes + Looks-off polish
+
+Shot lab: expand overlays no longer get inline `display:none` (that
+blocked `.active { display:flex }`). Vocal Range History/Reference force
+the panel without the fade path. Scales Compare opens Dorian so ghost
+arrows actually show. Scales: brighter indigo degrees; COMPARE ghost
+uses readable gold. Charts finger dots/barre use tools teal in light
+(was charcoal). Progression BPM number uses tab ink. Transposer active
+tab uses tools teal (was muddy --metro brown). Theremin pad hint ink
+deepened; stale light-on-dark hint rule removed. Expand/compact
+silent readout uses sage ink (was near-invisible gray). VR "No forcing"
+bullet matches other checklist accents.
+
+## v0.210.79 — Scales palette + richer Tools shots
+
+Scales light: degree pips move from electric blue to indigo (cool
+complement on the mint stage). Root and octave anchors use tools teal
+so home reads as a different shade. Root grid active chip drops peach
+`--accent-warm` and matches the teal type chips.
+Scales `.card.warm` rim/glow retinted to tools teal (was peach/rose).
+Shot lab adds EXPAND, Drone, Compare, and Vocal Range History/Reference
+states. Train interiors stay the next pass (hub chrome only for now).
+
+## v0.210.78 — Light triage: Scales pips, Volume hero, tour-safe shots
+
+Scales: tape pips/labels move from navy to mid tool-blue so degrees
+read as color, not black dots; drone-mode green override for light.
+Volume: idle hero number and SAFE badge use deep ink green (lime was
+washing out on cream). Shot lab: set `tune_tour_done`, stub auto-tour
+hooks, and stamp a demo dB on Volume so Theremin/Volume reviews are
+not blocked by the Guided tours popup or a blank em dash.
+
+## v0.210.77 — Light Looks-off details (named)
+
+Theremin: play pad and toggles redesigned for light (sage surface +
+literal light chrome; `#toolTheremin` is keep-dark so token vars stay
+dark-stage). Moog console stays wood/dark; fullscreen EXPAND pad
+matches the compact pad. Charts: ZOOM and save-star use tools teal
+instead of peach. Progression: PLAY / loop / BPM accent use tools
+teal (terracotta felt jarring on mint). Scales: restore blue degree
+tape color (removed muddy mono-green). Volume: denser zone ruler,
+heavier card/plot, darker grid labels. Transposer: note labels under
+the staff use ink-depth warm/teal instead of neon peach/cyan.
+
+Still open: drawers, pickers, and other secondary surfaces inside
+these modules were not walked in this pass.
+
+## v0.210.76 — Light review Looks-off batch (8 Tools screens)
+
+Patched the eight Tools screens marked Looks off in the screenshot
+review lab. Tonal Center: brighter sage LCD and readable scale-map
+cells (idle ink was 28% opacity). Theremin: softer charcoal toggles on
+the mint stage (Moog console stays keep-dark). Charts: stronger idle
+sub-pills, mode tabs, and family button. Progression: empty slots and
+± BAR use full panel + clearer borders. Circle of Fifths: lighter
+wedge tints so warm segments stop going muddy under labels. Scales:
+NOW PLAYING / action / ghost controls and tape dots use tools ink.
+Volume: denser plot wrap and darker grid labels. Transposer: denser
+staff wraps, ink-level YOU READ / IT SOUNDS caps, solid key cells.
+
+## v0.210.75 — Light mode Tools pass, contract, gate, shared grounds
+
+Light mode Tools pass. Contract and labs: `docs/LIGHT_MODE_CONTRACT.md`
+locks roles, OKLCH budgets, contrast floors, and keep-dark rules.
+Standalone prototypes under `tools/prototypes/light-mode/`. Ship audit:
+`tools/audits/intonare_light_gate.py`. Shared chrome: bottom tab dock is
+a full-bleed frost slab again. Survival Guide pins `--sg-top` from live
+header height. Grounds lifted for AA on accent-on-stage ink. Glass stays
+Regular frost. Piano cream / Moog / other keep-dark stages keep identity.
+
 ## v0.210.74 — Vocal Range polish pass (theme, light, motion)
 
 Vocal Range visual polish: Assess/History/Reference tabs use the tools

@@ -5,7 +5,10 @@
 1. Read `docs/PROJECT_STATUS.md`
 2. Rules auto-load from `.cursor/rules/` (`daniele.mdc`, `intonare.mdc`;
    copy/quiz rules when those files are in play)
-3. Keep `CHANGELOG.md` in sync with `INTONARE_VERSION` before Codemagic
+3. Changelog as you go: after user-facing `Intonare.html` work (or a
+   shipped audit/tool), bump both `INTONARE_VERSION` declarations and
+   add a top `CHANGELOG.md` `## vX` in the same turn. Codemagic /
+   `ship_check.bat` only verify the match; do not wait for ship day.
 
 ## Edit safety (giant HTML file)
 

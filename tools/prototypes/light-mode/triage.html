@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Light triage · Intonare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:opsz,wght@9..144,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --font-display: "Fraunces", Georgia, serif;
+    --font-ui: "Bebas Neue", Impact, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --bg: #e8e6df;
+    --card: #fbfaf7;
+    --ink: #1e1e28;
+    --muted: #5a5a6a;
+    --line: #d2cec4;
+    --ok: #2f6b4f;
+    --warn: #8a4b12;
+    --bad: #8a3030;
+    --keep: #3d4a8a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    padding: 12px 12px calc(28px + env(safe-area-inset-bottom));
+  }
+  a { color: #3d4a8a; }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    margin: 4px 0 2px;
+  }
+  .sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--muted);
+    margin: 0 0 14px;
+    max-width: 40em;
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .bar select, .bar button, .votes button {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    border-radius: 10px;
+    padding: 9px 11px;
+    cursor: pointer;
+  }
+  .bar button.primary {
+    background: #1e1e28;
+    color: #f5f3ee;
+    border-color: #1e1e28;
+  }
+  .prog {
+    flex: 1 1 140px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .prog strong { color: var(--ink); }
+  .meter {
+    height: 6px;
+    border-radius: 999px;
+    background: #d8d4ca;
+    overflow: hidden;
+    margin: 6px 0 14px;
+  }
+  .meter > i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--ok);
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 18px rgba(0,0,0,0.04);
+  }
+  .card.done { opacity: 0.72; }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .meta .fam {
+    font-family: var(--font-ui);
+    letter-spacing: 0.08em;
+    font-size: 15px;
+  }
+  .meta .mod {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .meta .role {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--keep);
+    background: #ebe8f8;
+    border-radius: 999px;
+    padding: 3px 8px;
+  }
+  .title {
+    font-size: 16px;
+    font-weight: 650;
+    margin: 0 0 4px;
+  }
+  .hint {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.4;
+    margin: 0 0 10px;
+  }
+  .stage {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .stage .ground {
+    padding: 14px 12px 12px;
+  }
+  .stage .surface {
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.55),
+      0 2px 6px rgba(0,0,0,0.06);
+  }
+  .stage .line1 {
+    font-size: 15px;
+    font-weight: 650;
+    margin: 0 0 4px;
+  }
+  .stage .line2 {
+    font-size: 12px;
+    margin: 0 0 10px;
+    opacity: 0.92;
+  }
+  .stage .chiprow { display: flex; flex-wrap: wrap; gap: 6px; }
+  .stage .chip {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 6px 9px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.12);
+  }
+  .stage .cta {
+    margin-top: 10px;
+    display: inline-block;
+    font-family: var(--font-ui);
+    letter-spacing: 0.08em;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 9px;
+    border: none;
+  }
+  .hexrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .hexrow span {
+    background: #f0eee8;
+    border-radius: 6px;
+    padding: 3px 6px;
+  }
+  .votes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .votes button {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: #f4f2ec;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 12px 4px;
+    cursor: pointer;
+    line-height: 1.2;
+  }
+  .votes button.on-dark { outline: 2px solid var(--bad); background: #f6e8e8; }
+  .votes button.on-light { outline: 2px solid var(--warn); background: #f8efe0; }
+  .votes button.on-ok { outline: 2px solid var(--ok); background: #e8f3ec; }
+  .votes button.on-keep { outline: 2px solid var(--keep); background: #ebe8f8; }
+  .stamp {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    min-height: 1.2em;
+  }
+  .empty {
+    padding: 28px 12px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  details.export {
+    margin-top: 18px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+  }
+  details.export summary {
+    font-family: var(--font-ui);
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.4;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    padding: 10px;
+    background: #f7f5ef;
+  }
+  .export-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <a href="index.html" style="font-family:var(--font-mono);font-size:11px">← Lab</a>
+  <h1>Light triage</h1>
+  <p class="sub">
+    Role / stage tokens only (grounds, cards, ink). For real modules, use
+    <a href="review.html">Light review</a> (screenshots). The old named hot-spot
+    list was too abstract; it is gone from the finish path.
+  </p>
+
+  <div class="bar">
+    <select id="filterFam" aria-label="Family">
+      <option value="all">All families</option>
+    </select>
+    <select id="filterVote" aria-label="Vote filter">
+      <option value="todo">Unvoted</option>
+      <option value="all">All cards</option>
+      <option value="dark">Too dark</option>
+      <option value="light">Too light</option>
+      <option value="ok">OK</option>
+      <option value="keep">Keep dark</option>
+    </select>
+    <span class="prog" id="prog">—</span>
+    <button type="button" id="btnOne" class="primary">One-at-a-time</button>
+    <button type="button" id="btnReset">Clear votes</button>
+  </div>
+  <div class="meter" aria-hidden="true"><i id="meterFill"></i></div>
+
+  <div id="list"></div>
+  <div class="empty" id="empty" hidden>Nothing in this filter. Switch filter or export.</div>
+
+  <details class="export">
+    <summary>Export punch list</summary>
+    <p class="sub" style="margin-top:8px">Markdown for chat / patch queue. JSON for machines.</p>
+    <div class="export-actions">
+      <button type="button" id="btnMd">Refresh markdown</button>
+      <button type="button" id="btnJson">Refresh JSON</button>
+      <button type="button" id="btnCopy">Copy markdown</button>
+      <button type="button" id="btnDl">Download JSON</button>
+    </div>
+    <textarea id="out" readonly spellcheck="false"></textarea>
+  </details>
+
+<script>
+/* Shipping light floors + module hot spots (Sep 2026 lift). */
+const THEMES = {
+  tuner: {
+    ground: "#d8e6f8", surface: "#e6eff8", panel: "#f9fbfe",
+    ink: "#2c3d4f", muted: "#536a82", accent: "#2966a0",
+    fill: "#b8d6f6", onAccent: "#f9fbfe", border: "#536a82"
+  },
+  metro: {
+    ground: "#f3ebd4", surface: "#f2eee2", panel: "#fcfbf7",
+    ink: "#433b24", muted: "#726747", accent: "#826500",
+    fill: "#e1d2aa", onAccent: "#fcfbf7", border: "#726747"
+  },
+  tools: {
+    ground: "#d8f3ea", surface: "#e4f1ec", panel: "#f8fcfa",
+    ink: "#274239", muted: "#4b7163", accent: "#007a5c",
+    fill: "#afdfcd", onAccent: "#f8fcfa", border: "#4b7163"
+  },
+  train: {
+    ground: "#e0daf2", surface: "#edecf8", panel: "#fbfbfe",
+    ink: "#3b394f", muted: "#676382", accent: "#63569e",
+    fill: "#d1cdf5", onAccent: "#fbfbfe", border: "#676382"
+  }
+};
+
+const STORE_KEY = "intonare-light-triage-v1";
+
+function roleCards(famKey, famLabel) {
+  const t = THEMES[famKey];
+  const base = [
+    ["ground", "Page ground", "The stage behind cards. Mid sage/blue/cream that still fights ink goes here.",
+      { kind: "ground-only" }],
+    ["surface", "Card surface", "Main content cards on the stage.",
+      { kind: "card" }],
+    ["panel", "Panel / sheet", "Highest lift: modals, dense panels.",
+      { kind: "panel" }],
+    ["ink", "Primary ink", "Titles and body text on cards.",
+      { kind: "ink" }],
+    ["muted", "Muted ink", "Secondary labels on cards.",
+      { kind: "muted" }],
+    ["accent", "Accent ink", "Links, icons, selected chrome text.",
+      { kind: "accent" }],
+    ["fill", "Accent fill chip", "Selected chips / soft washes.",
+      { kind: "chip" }],
+    ["cta", "Solid accent CTA", "Filled primary button on stage.",
+      { kind: "cta" }]
+  ];
+  return base.map(([role, label, hint, sample]) => ({
+    id: `${famKey}.role.${role}`,
+    family: famLabel,
+    module: "Tab stage",
+    role,
+    label,
+    hint,
+    theme: famKey,
+    sample,
+    hexes: pickHexes(t, role)
+  }));
+}
+
+function pickHexes(t, role) {
+  if (role === "ground") return { ground: t.ground };
+  if (role === "surface") return { ground: t.ground, surface: t.surface };
+  if (role === "panel") return { ground: t.ground, panel: t.panel };
+  if (role === "ink") return { surface: t.surface, ink: t.ink };
+  if (role === "muted") return { surface: t.surface, muted: t.muted };
+  if (role === "accent") return { surface: t.surface, accent: t.accent };
+  if (role === "fill") return { surface: t.surface, fill: t.fill, accent: t.accent };
+  if (role === "cta") return { ground: t.ground, accent: t.accent, onAccent: t.onAccent };
+  return t;
+}
+
+function hotspot(id, family, module, role, label, hint, theme, sample, hexes) {
+  return { id, family, module, role, label, hint, theme, sample, hexes };
+}
+
+function toolsHotspots() {
+  const t = THEMES.tools;
+  const rows = [
+    ["tools.hub.card", "Tools", "Hub", "surface", "Hub tool cards",
+      "Dense cards on sage. Vote if cards melt into ground or look chalky.",
+      { kind: "card" }, { ground: t.ground, surface: t.surface, ink: t.ink, muted: t.muted }],
+    ["tools.piano.cream", "Tools", "Piano", "keep-dark", "Cream piano housing",
+      "Identity stage. Prefer Keep dark unless labels fail.",
+      { kind: "keep", bg: "#e8dcc0", fg: "#5a4a28", muted: "#8a7a58", text: "NOW PLAYING · ORGAN" },
+      { cream: "#e8dcc0" }],
+    ["tools.theremin.moog", "Tools", "Theremin", "keep-dark", "Moog wood / dark pad",
+      "Identity stage. Prefer Keep dark unless light chrome labels fail around it.",
+      { kind: "keep", bg: "#2a241c", fg: "rgba(245,245,245,0.78)", muted: "#8a8070", text: "TRY A SOUND · POWER" },
+      { moog: "#2a241c" }],
+    ["tools.charts.sub", "Tools", "Charts", "control", "Charts sub-pills",
+      "Chalky selected/unselected pills on mint.",
+      { kind: "chip" }, { surface: t.surface, fill: t.fill, accent: t.accent, muted: t.muted }],
+    ["tools.prog.empty", "Tools", "Progression", "control", "Empty progression slots",
+      "Empty cells that vanish into the card.",
+      { kind: "empty-cell" }, { surface: t.surface, border: t.border, muted: t.muted }],
+    ["tools.prog.bar", "Tools", "Progression", "control", "± BAR controls",
+      "Tiny bar steppers that go invisible.",
+      { kind: "chip" }, { surface: t.panel, accent: t.accent, muted: t.muted, border: t.border }],
+    ["tools.drum.step", "Tools", "Drumkit", "control", "Empty drum steps",
+      "Step pads chalky on panel.",
+      { kind: "empty-cell" }, { surface: t.panel, border: t.border, muted: t.muted }],
+    ["tools.drum.beat", "Tools", "Drumkit", "ink", "Beat numbers",
+      "Beat numerals too soft on the grid.",
+      { kind: "muted" }, { surface: t.panel, muted: t.muted, ink: t.ink }],
+    ["tools.scales.cyan", "Tools", "Scales", "accent", "Scales degree / cyan marks",
+      "Was dark-stage neon. Vote if still too bright or too deep on mint.",
+      { kind: "accent" }, { surface: t.surface, accent: "#007a5c", neon: "#0a8a9a" }],
+    ["tools.sg.body", "Tools", "Survival Guide", "surface", "Survival chapter body",
+      "Was dark wash under copy. Stage + card stack.",
+      { kind: "card" }, { ground: t.ground, surface: t.surface, ink: t.ink, muted: t.muted }],
+    ["tools.sg.nav", "Tools", "Survival Guide", "chrome", "Survival own nav vs tab dock",
+      "Header / guide nav / flush tab. Vote if any band is too light or muddy.",
+      { kind: "chrome" }, { ground: t.ground, surface: t.surface, panel: t.panel, muted: t.muted }],
+    ["tools.ivr.chip", "Tools", "Interval Ref", "control", "Interval chips / pads",
+      "Selected vs idle pads on sage.",
+      { kind: "chip" }, { surface: t.surface, fill: t.fill, accent: t.accent, muted: t.muted }],
+    ["tools.vr.cta", "Tools", "Vocal Range", "cta", "Assessment CTAs",
+      "Solid buttons and detect cards on tools ground.",
+      { kind: "cta" }, { ground: t.ground, accent: t.accent, onAccent: t.onAccent }],
+    ["tools.vol.plot", "Tools", "Volume", "surface", "Volume plot wrap",
+      "Canvas wrap that went soft / chalky.",
+      { kind: "panel" }, { ground: t.ground, panel: t.panel, muted: t.muted }],
+    ["tools.tp.keys", "Tools", "Transposer", "control", "Key grid + staff wrap",
+      "Key cells and staff bleed on light mint.",
+      { kind: "empty-cell" }, { surface: t.surface, border: t.border, muted: t.muted, ink: t.ink }],
+    ["tools.cof.ring", "Tools", "Circle of Fifths", "accent", "CoF ring accents",
+      "Warm/cool accents on the wheel vs ground.",
+      { kind: "accent" }, { surface: t.surface, accent: t.accent, warm: "#b34a18" }],
+    ["tools.rc.toggle", "Tools", "Rhythm Cards", "control", "Rhythm soft toggles",
+      "Toggle tracks and selected states.",
+      { kind: "chip" }, { surface: t.surface, fill: t.fill, accent: t.accent, muted: t.muted }],
+    ["tools.chords.play", "Tools", "Chords", "cta", "Chords PLAY",
+      "Primary play on tools stage.",
+      { kind: "cta" }, { ground: t.ground, accent: t.accent, onAccent: t.onAccent }]
+  ];
+  return rows.map(r => hotspot(...r));
+}
+
+function otherHotspots() {
+  const u = THEMES.tuner;
+  const m = THEMES.metro;
+  const tr = THEMES.train;
+  return [
+    hotspot("chrome.tab", "Shared", "Tab bar", "chrome", "Flush tab dock frost",
+      "Full-bleed frost slab labels on each tab ground.",
+      "tools", { kind: "chrome" },
+      { ground: THEMES.tools.ground, surface: THEMES.tools.surface, muted: THEMES.tools.muted, accent: THEMES.tools.accent }),
+    hotspot("tuner.glass", "Tuner", "Tuner", "keep-dark", "Tuner glass / metal readout",
+      "Keep-dark island. Prefer Keep dark unless chrome around it fails.",
+      "tuner", { kind: "keep", bg: "#1a2430", fg: "#c8d8e8", muted: "#7a8a9a", text: "A4 · 440.0" },
+      { glass: "#1a2430" }),
+    hotspot("tuner.chips", "Tuner", "Tuner", "control", "Tuner mode chips",
+      "Selected chips on blue ground.",
+      "tuner", { kind: "chip" },
+      { surface: u.surface, fill: u.fill, accent: u.accent, muted: u.muted }),
+    hotspot("metro.bpm", "Metro", "Metronome", "ink", "Big BPM numeral",
+      "Large tempo on cream stage.",
+      "metro", { kind: "ink" },
+      { ground: m.ground, ink: m.ink, accent: m.accent }),
+    hotspot("metro.steps", "Metro", "Metronome", "control", "Step cells empty vs hit",
+      "Rail / empty cells melting into card.",
+      "metro", { kind: "empty-cell" },
+      { surface: m.surface, border: m.border, muted: m.muted, fill: m.fill }),
+    hotspot("train.pack", "Train", "Music Quiz", "control", "Pack pill + progress",
+      "Pack chrome on violet ground. Full quiz omega still pending.",
+      "train", { kind: "chip" },
+      { ground: tr.ground, surface: tr.surface, fill: tr.fill, accent: tr.accent, muted: tr.muted }),
+    hotspot("train.next", "Train", "Music Quiz", "cta", "Quiz NEXT / answer states",
+      "Solid CTA and correct-answer wash.",
+      "train", { kind: "cta" },
+      { ground: tr.ground, accent: tr.accent, onAccent: tr.onAccent, fill: tr.fill }),
+    hotspot("train.cards", "Train", "Ear training hub", "surface", "Train mode cards",
+      "Large mode rows on violet stage.",
+      "train", { kind: "card" },
+      { ground: tr.ground, surface: tr.surface, ink: tr.ink, muted: tr.muted })
+  ];
+}
+
+const CARDS = [
+  ...roleCards("tuner", "Tuner"),
+  ...roleCards("metro", "Metro"),
+  ...roleCards("tools", "Tools"),
+  ...roleCards("train", "Train")
+];
+
+/* Module hot spots removed: they were labeled mocks, not real UI.
+   Use review.html + intonare_light_shots.py for module photos. */
+
+function loadVotes() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; }
+  catch (e) { return {}; }
+}
+function saveVotes(v) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(v));
+}
+
+let votes = loadVotes();
+let oneMode = false;
+let oneIndex = 0;
+
+function families() {
+  return [...new Set(CARDS.map(c => c.family))];
+}
+
+function fillFamSelect() {
+  const sel = document.getElementById("filterFam");
+  for (const f of families()) {
+    const o = document.createElement("option");
+    o.value = f;
+    o.textContent = f;
+    sel.appendChild(o);
+  }
+}
+
+function filtered() {
+  const fam = document.getElementById("filterFam").value;
+  const vote = document.getElementById("filterVote").value;
+  return CARDS.filter(c => {
+    if (fam !== "all" && c.family !== fam) return false;
+    const v = votes[c.id];
+    if (vote === "todo") return !v;
+    if (vote === "all") return true;
+    return v === vote;
+  });
+}
+
+function renderSample(card) {
+  const t = THEMES[card.theme] || THEMES.tools;
+  const h = card.hexes || {};
+  const s = card.sample || { kind: "card" };
+  const ground = h.ground || t.ground;
+  const surface = h.surface || h.panel || t.surface;
+  const panel = h.panel || t.panel;
+  const ink = h.ink || t.ink;
+  const muted = h.muted || t.muted;
+  const accent = h.accent || t.accent;
+  const fill = h.fill || t.fill;
+  const onA = h.onAccent || t.onAccent;
+  const border = h.border || t.border;
+
+  if (s.kind === "keep") {
+    return `
+      <div class="stage">
+        <div class="ground" style="background:${s.bg}">
+          <div class="line1" style="color:${s.fg}">${escapeHtml(s.text || "Keep-dark stage")}</div>
+          <div class="line2" style="color:${s.muted}">Identity island · frame with light chrome</div>
+        </div>
+      </div>`;
+  }
+  if (s.kind === "ground-only") {
+    return `
+      <div class="stage">
+        <div class="ground" style="background:${ground};min-height:88px">
+          <div class="line1" style="color:${ink}">Ground only</div>
+          <div class="line2" style="color:${muted}">No card · judge the stage wash</div>
+        </div>
+      </div>`;
+  }
+  if (s.kind === "chrome") {
+    return `
+      <div class="stage">
+        <div class="ground" style="background:${ground};padding:0">
+          <div style="padding:10px 12px;background:color-mix(in srgb, ${surface} 88%, white);border-bottom:1px solid ${border}55;color:${muted};font-family:var(--font-mono);font-size:11px">Module header</div>
+          <div style="padding:16px 12px">
+            <div class="surface" style="background:${surface};color:${ink}">
+              <div class="line1">Content</div>
+              <div class="line2" style="color:${muted}">Body on card</div>
+            </div>
+          </div>
+          <div style="padding:10px 12px;background:color-mix(in srgb, ${panel} 80%, white);border-top:1px solid ${border}55;display:flex;gap:12px;justify-content:space-around;font-family:var(--font-ui);letter-spacing:.08em;font-size:12px;color:${accent}">
+            <span>TUNER</span><span>METRO</span><span style="color:${ink}">TOOLS</span><span>TRAIN</span>
+          </div>
+        </div>
+      </div>`;
+  }
+  if (s.kind === "empty-cell") {
+    return `
+      <div class="stage">
+        <div class="ground" style="background:${ground}">
+          <div class="surface" style="background:${surface}">
+            <div class="line1" style="color:${ink}">Grid</div>
+            <div class="chiprow">
+              <span class="chip" style="background:${fill};color:${accent};border-color:${accent}55">HIT</span>
+              <span class="chip" style="background:transparent;color:${muted};border:1px dashed ${border}">EMPTY</span>
+              <span class="chip" style="background:transparent;color:${muted};border:1px dashed ${border}">EMPTY</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const usePanel = s.kind === "panel";
+  const cardBg = usePanel ? panel : surface;
+  const titleC = s.kind === "muted" ? muted : (s.kind === "accent" ? accent : ink);
+  const bodyC = muted;
+  return `
+    <div class="stage">
+      <div class="ground" style="background:${ground}">
+        <div class="surface" style="background:${cardBg}">
+          <div class="line1" style="color:${titleC}">${escapeHtml(card.label)}</div>
+          <div class="line2" style="color:${bodyC}">Secondary line on this surface</div>
+          <div class="chiprow">
+            <span class="chip" style="background:${fill};color:${accent};border-color:${accent}44">SELECTED</span>
+            <span class="chip" style="background:transparent;color:${muted};border-color:${border}66">IDLE</span>
+          </div>
+          ${s.kind === "cta" || s.kind === "card" || s.kind === "panel" ? `<button type="button" class="cta" style="background:${accent};color:${onA}">PRIMARY</button>` : ""}
+        </div>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[c]);
+}
+
+function hexList(card) {
+  const entries = Object.entries(card.hexes || {});
+  if (!entries.length) return "";
+  return `<div class="hexrow">${entries.map(([k, v]) => `<span>${k} ${v}</span>`).join("")}</div>`;
+}
+
+function renderCard(card) {
+  const v = votes[card.id] || "";
+  const el = document.createElement("article");
+  el.className = "card" + (v ? " done" : "");
+  el.dataset.id = card.id;
+  el.innerHTML = `
+    <div class="meta">
+      <span class="fam">${escapeHtml(card.family)}</span>
+      <span class="mod">${escapeHtml(card.module)}</span>
+      <span class="role">${escapeHtml(card.role)}</span>
+    </div>
+    <h2 class="title">${escapeHtml(card.label)}</h2>
+    <p class="hint">${escapeHtml(card.hint || "")}</p>
+    ${renderSample(card)}
+    ${hexList(card)}
+    <div class="votes" role="group" aria-label="Verdict">
+      <button type="button" data-v="dark" class="${v === "dark" ? "on-dark" : ""}">Too dark</button>
+      <button type="button" data-v="light" class="${v === "light" ? "on-light" : ""}">Too light</button>
+      <button type="button" data-v="ok" class="${v === "ok" ? "on-ok" : ""}">OK</button>
+      <button type="button" data-v="keep" class="${v === "keep" ? "on-keep" : ""}">Keep dark</button>
+    </div>
+    <div class="stamp">${v ? "Saved: " + v : "Unvoted"}</div>
+  `;
+  el.querySelectorAll(".votes button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      votes[card.id] = btn.getAttribute("data-v");
+      saveVotes(votes);
+      if (oneMode) {
+        const left = CARDS.filter(c => !votes[c.id]);
+        if (left.length) {
+          oneIndex = CARDS.findIndex(c => c.id === left[0].id);
+        }
+      }
+      paint();
+    });
+  });
+  return el;
+}
+
+function updateProg() {
+  const done = CARDS.filter(c => votes[c.id]).length;
+  const n = CARDS.length;
+  const dark = CARDS.filter(c => votes[c.id] === "dark").length;
+  const light = CARDS.filter(c => votes[c.id] === "light").length;
+  document.getElementById("prog").innerHTML =
+    `<strong>${done}</strong> / ${n} voted · <strong>${dark}</strong> too dark · <strong>${light}</strong> too light`;
+  document.getElementById("meterFill").style.width = Math.round((done / n) * 100) + "%";
+}
+
+function paint() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  let rows = filtered();
+  if (oneMode) {
+    const pool = document.getElementById("filterVote").value === "todo"
+      ? CARDS.filter(c => {
+          const fam = document.getElementById("filterFam").value;
+          if (fam !== "all" && c.family !== fam) return false;
+          return !votes[c.id];
+        })
+      : filtered();
+    if (!pool.length) {
+      document.getElementById("empty").hidden = false;
+      updateProg();
+      return;
+    }
+    if (oneIndex >= pool.length) oneIndex = 0;
+    rows = [pool[oneIndex]];
+  }
+  document.getElementById("empty").hidden = rows.length > 0;
+  for (const c of rows) list.appendChild(renderCard(c));
+  updateProg();
+}
+
+function buildMarkdown() {
+  const lines = [
+    "# Light triage punch list",
+    "",
+    `Voted ${CARDS.filter(c => votes[c.id]).length} / ${CARDS.length}`,
+    ""
+  ];
+  for (const key of ["dark", "light", "keep", "ok"]) {
+    const label = ({ dark: "Too dark", light: "Too light", keep: "Keep dark", ok: "OK" })[key];
+    const hits = CARDS.filter(c => votes[c.id] === key);
+    if (!hits.length) continue;
+    lines.push(`## ${label} (${hits.length})`, "");
+    for (const c of hits) {
+      lines.push(`- **${c.family} / ${c.module}** — ${c.label} (\`${c.id}\`)`);
+    }
+    lines.push("");
+  }
+  const todo = CARDS.filter(c => !votes[c.id]);
+  if (todo.length) {
+    lines.push(`## Unvoted (${todo.length})`, "");
+    for (const c of todo) {
+      lines.push(`- ${c.family} / ${c.module} — ${c.label}`);
+    }
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+
+function buildJson() {
+  return JSON.stringify({
+    version: 1,
+    savedAt: new Date().toISOString(),
+    votes,
+    cards: CARDS.map(c => ({
+      id: c.id,
+      family: c.family,
+      module: c.module,
+      role: c.role,
+      label: c.label,
+      vote: votes[c.id] || null,
+      hexes: c.hexes
+    }))
+  }, null, 2);
+}
+
+fillFamSelect();
+document.getElementById("filterFam").addEventListener("change", () => { oneIndex = 0; paint(); });
+document.getElementById("filterVote").addEventListener("change", () => { oneIndex = 0; paint(); });
+document.getElementById("btnOne").addEventListener("click", () => {
+  oneMode = !oneMode;
+  document.getElementById("btnOne").textContent = oneMode ? "Show list" : "One-at-a-time";
+  oneIndex = 0;
+  if (oneMode) document.getElementById("filterVote").value = "todo";
+  paint();
+});
+document.getElementById("btnReset").addEventListener("click", () => {
+  if (!confirm("Clear all triage votes on this device?")) return;
+  votes = {};
+  saveVotes(votes);
+  oneIndex = 0;
+  paint();
+});
+document.getElementById("btnMd").addEventListener("click", () => {
+  document.getElementById("out").value = buildMarkdown();
+});
+document.getElementById("btnJson").addEventListener("click", () => {
+  document.getElementById("out").value = buildJson();
+});
+document.getElementById("btnCopy").addEventListener("click", async () => {
+  const md = buildMarkdown();
+  document.getElementById("out").value = md;
+  try {
+    await navigator.clipboard.writeText(md);
+    document.getElementById("btnCopy").textContent = "Copied";
+    setTimeout(() => { document.getElementById("btnCopy").textContent = "Copy markdown"; }, 1200);
+  } catch (e) {
+    document.getElementById("btnCopy").textContent = "Select + copy";
+  }
+});
+document.getElementById("btnDl").addEventListener("click", () => {
+  const blob = new Blob([buildJson()], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "intonare-light-triage.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+paint();
+</script>
+</body>
+</html>

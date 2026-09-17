@@ -57,6 +57,19 @@ If size collapsed or `</html>` is missing:
 Prefer Node/shell whole-file writes only for tiny top-of-file
 inserts; never treat a truncated copy as success.
 
+## Version / changelog (as you go)
+
+Do not batch version notes until ship day. After each user-facing
+`Intonare.html` change (or shipped audit/tool that defines what
+shipped):
+
+1. Bump the patch in both places: HTML comment `INTONARE_VERSION:` and
+   JS `const INTONARE_VERSION`. They must stay equal.
+2. Write a new top `## vX` in `CHANGELOG.md` in the same turn. Cover
+   the full batch (chrome, modules, tooling, scope limits if relevant).
+3. Codemagic / `ship_check.bat` only verify the match. They are not
+   permission to skip the entry during daily work.
+
 Before any Codemagic / TestFlight build:
 - Top `CHANGELOG.md` `## vX` must equal `INTONARE_VERSION`.
 - HTML comment and JS const must agree.

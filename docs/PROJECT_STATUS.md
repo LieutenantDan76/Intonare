@@ -37,12 +37,14 @@ instrument anatomy diagrams.
 ## Version
 
 Check CHANGELOG.md for the current version. As of this writing it is
-v0.210.66. The marketing version lives in two declarations in the HTML
+v0.210.83. The marketing version lives in two declarations in the HTML
 file that must stay in sync: an HTML comment near the top (grep
 `INTONARE_VERSION:`) and a JS const. The Settings footer reads the
 const; it is not a third literal. Android Play versionCode / versionName
 are separate: go.bat for day-to-day, release.bat only on upload day.
-version.txt must match android/app/build.gradle versionCode.
+version.txt must match android/app/build.gradle versionCode. Agents
+bump patch + changelog in the same turn as user-facing work; do not
+wait for Codemagic.
 
 
 ## Architecture
@@ -77,7 +79,11 @@ version.txt must match android/app/build.gradle versionCode.
 
 ## Active focus (verify against changelog before assuming)
 
-As of the Claude handoff (Sep 2026), recent focus areas were:
+As of Sep 2026, recent focus areas were:
+- Light mode: Tools family locked (hex in `docs/LIGHT_MODE_CONTRACT.md`);
+  Train picker/tabs pass at v0.210.83. Shot lab:
+  `intonare_light_shots.py --family train`; review hides Tools by default.
+  Intonare.html restored from Windows version history after a truncate.
 - Drum engine (cymbal/brush synthesis, BPM per-step nudge)
 - Drumkit UI layout (grid-first + dock panel)
 - Light mode color system (OKLCH, per-theme saturated grounds)
