@@ -4705,6 +4705,86 @@ body.sg-open #toolSurvivalGuide{
     background: color-mix(in srgb, var(--bg-0) 42%, rgba(255,255,255,.55)) !important;
   }
 
+  /* ── LIGHT GATE BATCH 1 — ranked NEON/LIVE; piano cream + Moog untouched ──
+     Root issue on Tools: mid sage stage makes --accent (~#007a5c) fail AA as
+     body text. Chrome on the stage uses --tab-accent. Cards keep --accent. */
+  body.light .header-back-btn {
+    color: var(--tab-accent) !important;
+    opacity: 1 !important;
+  }
+  body.light .header--module #headerTagline .hdr-mod-sub {
+    color: var(--ink-tight, var(--text-dim)) !important;
+    -webkit-text-fill-color: var(--ink-tight, var(--text-dim)) !important;
+  }
+  body.light .header--module #headerTagline .hdr-mod-title {
+    background: linear-gradient(135deg, var(--accent-vivid) 0%, var(--accent-vivid-2) 100%) !important;
+  }
+
+  /* Scales: playhead still used dark cyan glow */
+  body.light .stp-playhead {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 55%, transparent));
+  }
+  body.light .ex-resting { color: var(--accent-soft) !important; }
+  body.light .ex-resting-lbl {
+    opacity: 0.72 !important;
+    color: var(--text-dim) !important;
+  }
+
+  /* Charts / winds PLAY: hard mint rgba → token pads (readable on sage) */
+  body.light .gss-play-btn,
+  body.light .gcc-play-btn {
+    background: color-mix(in srgb, var(--accent-fill) 58%, var(--panel)) !important;
+    border: 1px solid var(--accent) !important;
+    color: var(--tab-accent) !important;
+    box-shadow: none !important;
+  }
+  body.light .gss-speed-slider::-webkit-slider-thumb,
+  body.light .gss-speed-slider::-moz-range-thumb {
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent) !important;
+    border-color: var(--panel) !important;
+  }
+  body.light .cs-family-btn:hover {
+    background: color-mix(in srgb, var(--accent-fill) 42%, var(--surface)) !important;
+    border-color: var(--accent) !important;
+  }
+
+  /* Interval Ref: deepen HEAR IT / symbols off the sage stage */
+  body.light .ivr-sym { color: var(--tab-accent) !important; }
+  body.light .ivr-play {
+    background: color-mix(in srgb, var(--accent-fill) 58%, var(--panel)) !important;
+    border-color: var(--accent) !important;
+    color: var(--tab-accent) !important;
+  }
+
+  /* Progression PLAY: keep warm terracotta identity; solid fill + white ink */
+  body.light .prog-play-btn:not(.playing) {
+    background: linear-gradient(135deg, #c45a28, #ad3100) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(173, 49, 0, 0.28) !important;
+  }
+
+  /* Vocal Range / primary CTAs with inline mint shadow */
+  body.light #toolVocalRange .iv-btn.primary,
+  body.light #toolVocalRange button.iv-btn.primary {
+    background: linear-gradient(135deg, var(--accent-vivid), var(--accent-vivid-2)) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 28%, transparent) !important;
+  }
+
+  /* Survival Guide: remaining dark-mode white washes → quiet surface */
+  body.light #toolSurvivalGuide .sg-vl-toggle,
+  body.light #toolSurvivalGuide .sg-cad-chip,
+  body.light #toolSurvivalGuide .sg-vl-prog {
+    background: color-mix(in srgb, var(--surface-2) 82%, #ffffff) !important;
+    border-color: var(--border-soft) !important;
+    color: var(--text) !important;
+  }
+  body.light #toolSurvivalGuide .sg-mode-char b { color: var(--tab-accent) !important; }
+  body.light #toolSurvivalGuide .sg-mode-rung.active {
+    border-color: var(--tab-accent) !important;
+    background: color-mix(in srgb, var(--accent-fill) 35%, var(--panel)) !important;
+  }
+
   /* Title presence in light mode: .logo is weight-300 relying on a glow that doesn't
      register on a light page, so it reads thin. Nudge to 400 + a faint shadow for
      body. Scoped to the title only — tabs and text keep their weights (no cascade). */
