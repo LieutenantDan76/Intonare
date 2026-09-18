@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.105 -->
+<!-- INTONARE_VERSION: 0.210.106 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -35785,7 +35785,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.105';
+const INTONARE_VERSION = '0.210.106';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -69264,6 +69264,12 @@ function _toneBankWarm(key) {
 }
 
 function _tonePreviewPick(key, stillPicked) {
+  // Start the FULL sample set here. The tabbed tone bank (buildRefToneBank) used
+  // to call only this preview helper, which warmed A4 for the audition and never
+  // asked SampleEngine.load(). Label stuck on "loading samples…", keys stayed on
+  // synth. pickTonePopup already called _toneBankWarm; putting it here covers
+  // every pick surface. Idempotent if a caller also warmed already.
+  try { _toneBankWarm(key); } catch (e) {}
   const _canPreview = () => !droneMode && Object.keys(refOscs).length === 0 && !metroPlaying;
   const _isSampleTone = !!SampleEngine._instruments[key];
   // Written for the audio diagnostics panel. Three builds went into this bug on
@@ -69294,15 +69300,15 @@ function _tonePreviewPick(key, stillPicked) {
     D.vol = (typeof refVolume !== 'undefined') ? refVolume : 'undef';
     try {
       if (_isSampleTone && !SampleEngine.isReady(key) && !SampleEngine.isFailed(key)) {
-        const lbl = document.getElementById('pianoSampleStatus');
-        if (lbl) { lbl.textContent = t('samples_loading'); lbl.style.visibility = 'visible'; }
-        // One file, then play. The full set is already loading in the background
-        // from _syncToneUI, and this buffer is one of the ones it wanted anyway.
+        if (typeof _updateSampleStatusLabel === 'function') _updateSampleStatusLabel();
+        // One file, then play. The full set is loading via _toneBankWarm above;
+        // this buffer is one of the ones that load wants anyway.
         D.via = 'warmNote';
         SampleEngine.warmNote(key, 69, ctx).then((ok) => {
           D.warmed = ok;
           D.stillPicked = stillPicked ? stillPicked() : 'n/a';
           D.canPreview = _canPreview();
+          if (typeof _updateSampleStatusLabel === 'function') _updateSampleStatusLabel();
           if (!(!stillPicked || stillPicked()) || !_canPreview()) { D.played = false; return; }
           if (ok) {
             D.played = !!SampleEngine.play(key, 69, ctx, refMasterGain, refVolume, 0.8);

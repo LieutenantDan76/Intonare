@@ -2,6 +2,15 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.106 — Tone bank: load full samples on pick
+
+Tabbed tone bank preview only warmed A4, so the audition sounded like the
+real sample while every other key stayed on synth and the status line stuck
+on "loading samples…". Grand piano worked because `_pianoSamplesInit` still
+called `SampleEngine.load`. `_tonePreviewPick` now starts `_toneBankWarm`
+(full set) on every pick; popup path already did this. Play Store builds
+back through at least 0.210.66 shipped the gap.
+
 ## v0.210.105 — Remaining light card / sheet wash
 
 App-wide follow-up after hub folders: settings sections, setlist cards,
