@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Depth · farthest polish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:opsz,wght@9..144,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="contract.css"/>
+<style>
+  /*
+    FARTHER THAN BASIC GLASS — research stack (Apple + optical polish)
+
+    Apple WWDC25 / HIG Materials
+      · Glass = navigation layer only (Regular). Content = standard materials.
+      · Lensing > scattering: bend/concentrate light, don’t dirty the fill.
+      · Larger surface = thicker material (deeper shadow, softer scatter).
+      · Adaptive shadow: stronger over busy content, quieter over solid.
+      · Ambient spill: colorful stage tints the glass surface.
+      · Scroll-edge dissolve lifts chrome above moving content.
+      · Interactive: energize with light on press (gel flex).
+      · No glass-on-glass; nested controls = recessed fills + vibrancy.
+      · Concentric radii (hardware-informed roundness).
+      · Reduced Transparency → denser fill, keep rim.
+
+    Optical polish (CSS-reachable without WebGL)
+      · Warm key + cool fill stage (one light field, not stains).
+      · Contact shadow + far falloff (physics, hue-tinted).
+      · Fresnel rim: bright grazing edge on rounded corners.
+      · Specular streak + soft top sheen (not film grain).
+      · Primary tint through glass (not opaque brand slab).
+      · True refraction / chroma edge = Chromium-only; skip for ship.
+        (Safari/Capacitor get blur+saturate+rim — Apple’s own web fallback.)
+  */
+  :root {
+    --r-phone: 28px;
+    --r-card: 22px;   /* concentric with phone */
+    --r-ctl: 14px;
+    --r-chip: 10px;
+  }
+  body {
+    min-height: 100dvh;
+    margin: 0;
+    color: var(--ink);
+    background: var(--ground);
+  }
+  body.mat-flat::before,
+  body.mat-flat::after { display: none !important; }
+
+  .shell {
+    max-width: 430px;
+    margin: 0 auto;
+    padding: 12px 14px calc(28px + env(safe-area-inset-bottom));
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: var(--accent-ink);
+  }
+  .lede {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.55;
+    color: var(--ink-muted);
+    margin: 0 0 12px;
+    max-width: 42em;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .row button {
+    appearance: none;
+    border: 1px solid color-mix(in oklab, var(--outline) 32%, transparent);
+    background: color-mix(in oklab, white 70%, transparent);
+    color: var(--ink-muted);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    padding: 10px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .row button.on {
+    background: var(--accent-fill);
+    color: var(--accent-ink);
+    border-color: color-mix(in oklab, var(--accent-ink) 28%, transparent);
+  }
+
+  /* ═══════════════ FLAT ═══════════════ */
+  body.mat-flat .phone {
+    background: var(--ground);
+    border: 1px solid color-mix(in oklab, var(--outline) 22%, transparent);
+  }
+  body.mat-flat .ex-card {
+    background: #fbfbfe;
+    border: 1px solid color-mix(in oklab, var(--outline) 28%, transparent);
+    box-shadow: 0 1px 2px rgba(18,32,60,0.05), 0 8px 16px rgba(18,32,60,0.05);
+  }
+  body.mat-flat .ex-card::before,
+  body.mat-flat .ex-card::after,
+  body.mat-flat .phone::after,
+  body.mat-flat .tabbar::before,
+  body.mat-flat .tabbar::after { display: none; }
+  body.mat-flat .tray { background: transparent; border: 0; padding: 0; box-shadow: none; }
+  body.mat-flat .chip {
+    background: color-mix(in oklab, white 88%, var(--accent-fill));
+    border: 1px solid color-mix(in oklab, var(--outline) 25%, transparent);
+    box-shadow: none;
+  }
+  body.mat-flat .tabbar {
+    background: color-mix(in oklab, white 92%, var(--ground));
+    border-top: 1px solid color-mix(in oklab, var(--outline) 22%, transparent);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  body.mat-flat .btns .solid {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+    color: var(--on-accent);
+    box-shadow: none;
+  }
+
+  /* ═══════════════ APPLE (baseline you liked) ═══════════════ */
+  body.mat-apple .phone {
+    background:
+      radial-gradient(ellipse 95% 60% at 50% -12%,
+        color-mix(in oklab, white 55%, var(--accent-fill)), transparent 62%),
+      radial-gradient(ellipse 70% 50% at 100% 30%,
+        color-mix(in oklab, var(--accent-fill) 70%, var(--ground)), transparent 58%),
+      radial-gradient(ellipse 65% 45% at 0% 85%,
+        color-mix(in oklab, var(--accent-ink) 16%, var(--ground)), transparent 55%),
+      var(--ground);
+    border: 1px solid color-mix(in oklab, var(--outline) 16%, transparent);
+  }
+  body.mat-apple .ex-card {
+    position: relative;
+    isolation: isolate;
+    background:
+      linear-gradient(165deg,
+        rgba(255,255,255,0.94) 0%,
+        rgba(255,255,255,0.82) 38%,
+        color-mix(in oklab, white 78%, var(--accent-fill)) 100%);
+    border: 1px solid color-mix(in oklab, white 86%, var(--accent-ink));
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      inset 0 -1px 0 color-mix(in oklab, var(--accent-ink) 6%, transparent),
+      0 1px 2px color-mix(in oklab, var(--accent-ink) 10%, transparent),
+      0 8px 22px color-mix(in oklab, var(--accent-ink) 12%, transparent);
+    -webkit-backdrop-filter: blur(12px) saturate(1.45) brightness(1.03);
+    backdrop-filter: blur(12px) saturate(1.45) brightness(1.03);
+  }
+  body.mat-apple .ex-card::before {
+    content: "";
+    position: absolute;
+    left: 8%; right: 8%; top: 0; height: 1px; z-index: 3;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95) 40%, rgba(255,255,255,0.55) 60%, transparent);
+  }
+  body.mat-apple .ex-card::after { display: none; }
+  body.mat-apple .tray {
+    background: color-mix(in oklab, var(--accent-ink) 5.5%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--outline) 16%, transparent);
+    border-radius: 12px;
+    padding: 5px;
+    box-shadow: inset 0 1px 2px color-mix(in oklab, var(--accent-ink) 10%, transparent), inset 0 -1px 0 rgba(255,255,255,0.55);
+  }
+  body.mat-apple .chip {
+    background: color-mix(in oklab, white 88%, transparent);
+    border: 1px solid color-mix(in oklab, white 70%, var(--outline));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px color-mix(in oklab, var(--accent-ink) 8%, transparent);
+  }
+  body.mat-apple .chip.on {
+    background: var(--accent-fill);
+    color: var(--accent-ink);
+    border-color: color-mix(in oklab, var(--accent-ink) 22%, transparent);
+  }
+  body.mat-apple .tabbar {
+    position: relative;
+    isolation: isolate;
+    background:
+      linear-gradient(155deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.14) 42%, rgba(255,255,255,0.06) 100%),
+      color-mix(in oklab, white 38%, transparent);
+    border-top: 1px solid color-mix(in oklab, white 78%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 -8px 24px color-mix(in oklab, var(--accent-ink) 10%, transparent);
+    -webkit-backdrop-filter: blur(22px) saturate(1.8) brightness(1.04);
+    backdrop-filter: blur(22px) saturate(1.8) brightness(1.04);
+  }
+  body.mat-apple .tabbar::before {
+    content: "";
+    position: absolute; left: 12%; right: 12%; top: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95) 45%, transparent);
+  }
+  body.mat-apple .tabbar::after,
+  body.mat-apple .phone::after { display: none; }
+  body.mat-apple .btns .solid {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+    color: var(--on-accent);
+  }
+
+  /* ═══════════════ ULTRA (farthest CSS polish) ═══════════════ */
+  body.mat-ultra .phone {
+    /* Ambient environment: warm key, cool fill, accent spill — continuous, no blob edges */
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, white 28%, transparent) 0%,
+        transparent 42%),
+      radial-gradient(ellipse 110% 70% at 50% -18%,
+        color-mix(in oklab, white 70%, var(--accent-fill)), transparent 58%),
+      radial-gradient(ellipse 80% 55% at 108% 22%,
+        color-mix(in oklab, var(--accent-fill) 85%, var(--ground)), transparent 56%),
+      radial-gradient(ellipse 70% 50% at -8% 88%,
+        color-mix(in oklab, var(--accent-ink) 20%, var(--ground)), transparent 54%),
+      radial-gradient(ellipse 50% 40% at 70% 100%,
+        color-mix(in oklab, var(--accent-soft, var(--accent-ink)) 14%, transparent), transparent 60%),
+      var(--ground);
+    border: 1px solid color-mix(in oklab, white 55%, var(--outline));
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.65),
+      0 20px 50px color-mix(in oklab, var(--accent-ink) 14%, transparent);
+  }
+  /* Scroll-edge dissolve under header (Apple scroll-edge cue) */
+  body.mat-ultra .phone::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 54px;
+    height: 28px;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(180deg,
+      color-mix(in oklab, var(--ground) 35%, transparent),
+      transparent);
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+  }
+
+  /* Thicker content material (large surface): softer scatter, deeper lift, ambient spill in fill */
+  body.mat-ultra .ex-card {
+    position: relative;
+    isolation: isolate;
+    border-radius: var(--r-card);
+    background:
+      /* top sheen — light concentration (lensing cue without WebGL) */
+      linear-gradient(125deg,
+        rgba(255,255,255,0.72) 0%,
+        rgba(255,255,255,0.18) 28%,
+        transparent 52%),
+      /* vertical density — thicker glass = softer scatter lower */
+      linear-gradient(180deg,
+        rgba(255,255,255,0.96) 0%,
+        rgba(255,255,255,0.88) 32%,
+        color-mix(in oklab, white 72%, var(--accent-fill)) 78%,
+        color-mix(in oklab, white 62%, var(--accent-fill)) 100%);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    /* fresnel rim via border-image substitute: layered box-shadow */
+    box-shadow:
+      /* grazing highlight (fresnel) */
+      inset 0 1px 0 rgba(255,255,255,1),
+      inset 1px 0 0 rgba(255,255,255,0.55),
+      inset -1px 0 0 rgba(255,255,255,0.28),
+      inset 0 -1px 0 color-mix(in oklab, var(--accent-ink) 10%, transparent),
+      /* contact */
+      0 1px 1px color-mix(in oklab, var(--accent-ink) 14%, transparent),
+      /* near */
+      0 2px 4px color-mix(in oklab, var(--accent-ink) 10%, transparent),
+      /* mid */
+      0 10px 24px color-mix(in oklab, var(--accent-ink) 12%, transparent),
+      /* far (thicker material) */
+      0 28px 56px -12px color-mix(in oklab, var(--accent-ink) 18%, transparent),
+      /* hairline edge */
+      0 0 0 1px color-mix(in oklab, white 70%, var(--accent-ink));
+    -webkit-backdrop-filter: blur(16px) saturate(1.55) brightness(1.045);
+    backdrop-filter: blur(16px) saturate(1.55) brightness(1.045);
+  }
+  /* Specular streak */
+  body.mat-ultra .ex-card::before {
+    content: "";
+    position: absolute;
+    left: 6%; right: 6%; top: 0; height: 1.5px; z-index: 3;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,255,255,0.35) 18%,
+      rgba(255,255,255,1) 48%,
+      rgba(255,255,255,0.4) 72%,
+      transparent 100%);
+    opacity: 0.95;
+  }
+  /* Soft inner bloom — ambient spill from stage into glass (not grain) */
+  body.mat-ultra .ex-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 80% 100%,
+        color-mix(in oklab, var(--accent-fill) 45%, transparent), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 10% 0%,
+        rgba(255,255,255,0.35), transparent 65%);
+    opacity: 0.55;
+  }
+
+  body.mat-ultra .tray {
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, var(--accent-ink) 7%, var(--surface)),
+        color-mix(in oklab, var(--accent-ink) 4%, var(--surface)));
+    border: 1px solid color-mix(in oklab, var(--outline) 14%, transparent);
+    border-radius: calc(var(--r-chip) + 4px);
+    padding: 5px;
+    box-shadow:
+      inset 0 2px 4px color-mix(in oklab, var(--accent-ink) 12%, transparent),
+      inset 0 -1px 0 rgba(255,255,255,0.65);
+  }
+  body.mat-ultra .chip {
+    background: color-mix(in oklab, white 90%, transparent);
+    border: 1px solid color-mix(in oklab, white 75%, var(--outline));
+    border-radius: var(--r-chip);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      0 1px 2px color-mix(in oklab, var(--accent-ink) 9%, transparent);
+    transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.18s ease, background 0.18s ease;
+  }
+  body.mat-ultra .chip.on {
+    background: color-mix(in oklab, var(--accent-fill) 88%, white);
+    color: var(--accent-ink);
+    border-color: color-mix(in oklab, var(--accent-ink) 24%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.75),
+      0 1px 3px color-mix(in oklab, var(--accent-ink) 16%, transparent);
+  }
+  /* Interactive energize (Apple: flex with light on touch) */
+  body.mat-ultra .chip:active {
+    transform: scale(0.97);
+    box-shadow: inset 0 1px 3px color-mix(in oklab, var(--accent-ink) 14%, transparent);
+  }
+  body.mat-ultra .btns .ghost {
+    background: color-mix(in oklab, white 55%, transparent);
+    -webkit-backdrop-filter: blur(8px) saturate(1.4);
+    backdrop-filter: blur(8px) saturate(1.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+  }
+  /* Primary tint through glass — not opaque brand slab */
+  body.mat-ultra .btns .solid {
+    background:
+      linear-gradient(165deg,
+        color-mix(in oklab, white 28%, var(--accent-ink)) 0%,
+        var(--accent-ink) 45%,
+        color-mix(in oklab, var(--accent-soft, var(--accent-ink)) 70%, var(--accent-ink)) 100%);
+    border: 1px solid color-mix(in oklab, white 35%, var(--accent-ink));
+    color: var(--on-accent);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.35),
+      0 1px 2px color-mix(in oklab, var(--accent-ink) 25%, transparent),
+      0 8px 18px color-mix(in oklab, var(--accent-ink) 28%, transparent);
+    transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1), filter 0.18s ease;
+  }
+  body.mat-ultra .btns .solid:active {
+    transform: scale(0.98);
+    filter: brightness(1.06);
+  }
+
+  /* Chrome = thinner Regular glass; floating lift vs content */
+  body.mat-ultra .tabbar {
+    position: relative;
+    isolation: isolate;
+    margin: 0;
+    border-radius: 0;
+    border: 0;
+    border-top: 1px solid color-mix(in oklab, white 78%, transparent);
+    background:
+      linear-gradient(155deg,
+        rgba(255,255,255,0.55) 0%,
+        rgba(255,255,255,0.14) 42%,
+        rgba(255,255,255,0.06) 100%),
+      color-mix(in oklab, white 40%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      0 -6px 20px color-mix(in oklab, var(--accent-ink) 8%, transparent);
+    -webkit-backdrop-filter: blur(22px) saturate(1.8) brightness(1.04);
+    backdrop-filter: blur(22px) saturate(1.8) brightness(1.04);
+  }
+  body.mat-ultra .tabbar::before {
+    content: "";
+    position: absolute; left: 12%; right: 12%; top: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95) 45%, transparent);
+  }
+  body.mat-ultra .tabbar::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    top: -16px;
+    height: 16px;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--ground) 22%, transparent));
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    body.mat-apple .ex-card,
+    body.mat-apple .tabbar,
+    body.mat-ultra .ex-card,
+    body.mat-ultra .tabbar,
+    body.mat-ultra .btns .ghost {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      background: color-mix(in oklab, white 92%, var(--surface)) !important;
+    }
+  }
+
+  .phone {
+    position: relative;
+    border-radius: var(--r-phone);
+    overflow: hidden;
+    min-height: 660px;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-top { padding: 18px 16px 6px; position: relative; z-index: 3; }
+  .phone-top .mod {
+    font-family: var(--font-ui);
+    font-size: 28px;
+    letter-spacing: 0.06em;
+    color: var(--accent-ink);
+    margin: 0;
+  }
+  .phone-top .tagline {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin: 2px 0 0;
+  }
+  .phone-body { flex: 1; padding: 8px 14px 14px; position: relative; z-index: 1; }
+  .ex-card { border-radius: var(--r-card); padding: 16px; }
+  .ex-card > * { position: relative; z-index: 1; }
+  .lbl {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    text-align: center;
+    margin: 0 0 6px;
+  }
+  .hero {
+    font-family: var(--font-ui);
+    font-size: 72px;
+    line-height: 1.05;
+    text-align: center;
+    margin: 4px 0 8px;
+    background: linear-gradient(150deg, var(--accent-ink), var(--accent-fill));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  .hz {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-align: center;
+    color: var(--ink-muted);
+    margin: 0 0 14px;
+  }
+  .arc {
+    width: 180px;
+    height: 96px;
+    margin: 0 auto 14px;
+    border: 7px solid color-mix(in oklab, var(--ink) 55%, transparent);
+    border-bottom: 0;
+    border-radius: 180px 180px 0 0;
+    position: relative;
+  }
+  .arc::after {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: 0;
+    width: 3px; height: 78px;
+    background: var(--accent-ink);
+    transform: translateX(-50%);
+    border-radius: 2px;
+  }
+  .btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .btns button {
+    appearance: none;
+    border-radius: var(--r-ctl);
+    padding: 12px 8px;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+  }
+  .btns .ghost {
+    background: color-mix(in oklab, white 80%, transparent);
+    border: 1px solid var(--accent-ink);
+    color: var(--accent-ink);
+  }
+  .chips {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+  }
+  .chip {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 8px 4px;
+    border-radius: var(--r-chip);
+    color: var(--ink-muted);
+  }
+  .chip.on { color: var(--accent-ink); }
+
+  .tabbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+    padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
+    margin-top: auto;
+  }
+  .tab {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    padding: 8px 2px 6px;
+    position: relative;
+  }
+  .tab.on { color: var(--accent-ink); font-weight: 700; }
+  /* Selected must punch through frost — fill pill + hairline bar (live Intonare cue) */
+  body.mat-apple .tab.on,
+  body.mat-ultra .tab.on {
+    background: color-mix(in oklab, var(--accent-fill) 94%, white);
+    border-radius: 12px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.75),
+      0 1px 3px color-mix(in oklab, var(--accent-ink) 14%, transparent);
+  }
+  body.mat-apple .tab.on::before,
+  body.mat-ultra .tab.on::before {
+    content: "";
+    position: absolute;
+    left: 24%; right: 24%;
+    top: 3px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--accent-ink);
+  }
+  .tab .dot {
+    width: 18px; height: 18px;
+    margin: 0 auto 4px;
+    border-radius: 50%;
+    background: color-mix(in oklab, var(--ink-muted) 35%, transparent);
+  }
+  .tab.on .dot {
+    background: var(--accent-ink);
+    box-shadow: 0 0 10px color-mix(in oklab, var(--accent-ink) 40%, transparent);
+  }
+
+  /* Card intensity — independent of chrome tier (answers “too busy?”) */
+  body.card-quiet.mat-apple .ex-card,
+  body.card-quiet.mat-ultra .ex-card {
+    background: color-mix(in oklab, white 96%, var(--accent-fill)) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.9),
+      0 1px 2px color-mix(in oklab, var(--accent-ink) 8%, transparent),
+      0 6px 16px color-mix(in oklab, var(--accent-ink) 8%, transparent) !important;
+  }
+  body.card-quiet.mat-apple .ex-card::after,
+  body.card-quiet.mat-ultra .ex-card::after { display: none !important; opacity: 0; }
+  body.card-quiet.mat-apple .ex-card::before,
+  body.card-quiet.mat-ultra .ex-card::before { opacity: 0.55; }
+
+  /* Glassier: borrow Ultra card optics even under Apple chrome */
+  body.card-glassier.mat-apple .ex-card {
+    background:
+      linear-gradient(125deg,
+        rgba(255,255,255,0.72) 0%,
+        rgba(255,255,255,0.18) 28%,
+        transparent 52%),
+      linear-gradient(180deg,
+        rgba(255,255,255,0.96) 0%,
+        rgba(255,255,255,0.88) 32%,
+        color-mix(in oklab, white 72%, var(--accent-fill)) 78%,
+        color-mix(in oklab, white 62%, var(--accent-fill)) 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,1),
+      inset 1px 0 0 rgba(255,255,255,0.55),
+      inset -1px 0 0 rgba(255,255,255,0.28),
+      inset 0 -1px 0 color-mix(in oklab, var(--accent-ink) 10%, transparent),
+      0 1px 1px color-mix(in oklab, var(--accent-ink) 14%, transparent),
+      0 2px 4px color-mix(in oklab, var(--accent-ink) 10%, transparent),
+      0 10px 24px color-mix(in oklab, var(--accent-ink) 12%, transparent),
+      0 28px 56px -12px color-mix(in oklab, var(--accent-ink) 18%, transparent),
+      0 0 0 1px color-mix(in oklab, white 70%, var(--accent-ink)) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.55) brightness(1.045) !important;
+    backdrop-filter: blur(16px) saturate(1.55) brightness(1.045) !important;
+  }
+  body.card-glassier.mat-apple .ex-card::after {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 80% 100%,
+        color-mix(in oklab, var(--accent-fill) 45%, transparent), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 10% 0%,
+        rgba(255,255,255,0.35), transparent 65%);
+    opacity: 0.55;
+  }
+
+  .research {
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.55;
+    color: var(--ink-muted);
+    padding: 12px 13px;
+    border-radius: 12px;
+    background: color-mix(in oklab, white 55%, transparent);
+    border: 1px solid color-mix(in oklab, var(--outline) 22%, transparent);
+  }
+  .research strong { color: var(--ink); display: block; margin: 10px 0 4px; }
+  .research strong:first-child { margin-top: 0; }
+  .research ul { margin: 4px 0 0; padding-left: 1.1em; }
+  .research li { margin: 3px 0; }
+  .research a { color: var(--accent-ink); }
+</style>
+</head>
+<body class="theme-train mat-apple card-glassier">
+  <div class="shell">
+    <a href="index.html" style="font-family:var(--font-mono);font-size:11px;color:var(--accent-ink);text-decoration:none">← Lab</a>
+    <div class="brand">Depth · farthest polish</div>
+    <p class="lede">
+      Leaning locked: <strong style="color:var(--ink);font-weight:600">Apple flush tab + Glassier cards</strong>
+      (shipped v0.210.95). Selected tab = accent-fill pill. Cards = sheen + spill + fresnel lift.
+      Quiet / Lifted remain for A/B only.
+    </p>
+
+    <div class="row" id="themes">
+      <button type="button" class="on" data-theme="train">Train</button>
+      <button type="button" data-theme="tuner">Tuner</button>
+      <button type="button" data-theme="metro">Metro</button>
+      <button type="button" data-theme="tools">Tools</button>
+    </div>
+    <div class="row" id="mats">
+      <button type="button" data-mat="flat">Flat</button>
+      <button type="button" class="on" data-mat="apple">Apple tab</button>
+      <button type="button" data-mat="ultra">Ultra chrome</button>
+    </div>
+    <div class="row" id="cards">
+      <button type="button" data-card="quiet">Card · Quiet</button>
+      <button type="button" data-card="lifted">Card · Lifted</button>
+      <button type="button" class="on" data-card="glassier">Card · Glassier</button>
+    </div>
+
+    <div class="phone" aria-label="Phone mock">
+      <div class="phone-top">
+        <p class="mod">PITCH MATCH</p>
+        <p class="tagline">see it, sing it</p>
+      </div>
+      <div class="phone-body">
+        <div class="ex-card">
+          <p class="lbl">Sing this note</p>
+          <div class="hero">F<sub style="font-size:.28em;-webkit-text-fill-color:var(--ink-muted);color:var(--ink-muted)">4</sub></div>
+          <p class="hz">OCTAVE 4 · 349.2 Hz</p>
+          <div class="arc" aria-hidden="true"></div>
+          <div class="btns">
+            <button type="button" class="ghost">HEAR AGAIN</button>
+            <button type="button" class="solid">NEW ROUND</button>
+          </div>
+          <div class="tray">
+            <div class="chips">
+              <div class="chip on">SINGLE</div>
+              <div class="chip">MELODY</div>
+              <div class="chip">ARPEGGIO</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><div class="dot"></div>TUNER</div>
+        <div class="tab"><div class="dot"></div>METRO</div>
+        <div class="tab"><div class="dot"></div>TOOLS</div>
+        <div class="tab on"><div class="dot"></div>TRAIN</div>
+        <div class="tab"><div class="dot"></div>SET</div>
+      </div>
+    </div>
+
+    <div class="research">
+      <strong>Apple (WWDC25 · HIG Materials)</strong>
+      <ul>
+        <li>Lensing bends light; old materials scattered it. Grain = scatter dirt. Out.</li>
+        <li>Glass = nav layer. Content = standard materials. No glass-on-glass.</li>
+        <li>Larger = thicker (deeper shadow, softer scatter). Menus/sidebars get ambient spill.</li>
+        <li>Adaptive shadow / scroll-edge dissolve / interactive light flex.</li>
+        <li>Clear glass only over rich media + dimming — not exercise cards.</li>
+      </ul>
+      <strong>Ultra = farthest shippable polish (CSS)</strong>
+      <ul>
+        <li>Flush tab bar (not floating island). Selected = fill pill + hairline bar.</li>
+        <li>Fresnel rim + specular streak + top sheen on cards (optional Glassier).</li>
+        <li>Contact → far shadow stack, hue-tinted. Ambient spill optional.</li>
+        <li>Primary CTA tinted through light. Press energize. Concentric radii.</li>
+      </ul>
+      <strong>Cards — busy or not?</strong>
+      <ul>
+        <li>Apple’s rule: content stays standard material. Quiet = near-opaque + light lift.</li>
+        <li>Lifted = slight translucency so stage tint bleeds (Apple baseline card).</li>
+        <li>Glassier = Ultra optics. Can feel busy if every exercise card does it.</li>
+        <li>Recommendation if you like Apple tab: Quiet or Lifted cards, glass only on chrome.</li>
+      </ul>
+      <strong>Left on the table (not shipping first)</strong>
+      <ul>
+        <li>True SVG/WebGL refraction + chroma rim — Chromium yes, Safari/Capacitor no.</li>
+        <li>Device-tilt specular (needs motion sensors).</li>
+        <li>Per-frame adaptive shadow over scrolling text (needs JS sampling).</li>
+      </ul>
+      <strong>Sources</strong>
+      <ul>
+        <li><a href="https://developer.apple.com/videos/play/wwdc2025/219/">Meet Liquid Glass · WWDC25</a></li>
+        <li><a href="https://developer.apple.com/design/human-interface-guidelines/materials">HIG Materials</a></li>
+        <li><a href="https://developer.apple.com/documentation/TechnologyOverviews/adopting-liquid-glass">Adopting Liquid Glass</a></li>
+        <li><a href="https://m3.material.io/styles/elevation">M3 Elevation</a> (tonal lift as secondary cue)</li>
+      </ul>
+    </div>
+  </div>
+<script>
+  const themes = document.getElementById("themes");
+  const mats = document.getElementById("mats");
+  const cards = document.getElementById("cards");
+  themes.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-theme]");
+    if (!b) return;
+    document.body.classList.remove("theme-train", "theme-tuner", "theme-metro", "theme-tools");
+    document.body.classList.add("theme-" + b.dataset.theme);
+    themes.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  });
+  mats.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-mat]");
+    if (!b) return;
+    document.body.classList.remove("mat-flat", "mat-apple", "mat-ultra", "mat-glass", "mat-depth");
+    document.body.classList.add("mat-" + b.dataset.mat);
+    if (b.dataset.mat !== "flat") document.body.classList.add("mat-glass");
+    mats.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  });
+  cards.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-card]");
+    if (!b) return;
+    document.body.classList.remove("card-quiet", "card-lifted", "card-glassier");
+    document.body.classList.add("card-" + b.dataset.card);
+    cards.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  });
+  document.body.classList.add("mat-glass");
+</script>
+</body>
+</html>

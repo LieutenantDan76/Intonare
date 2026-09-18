@@ -12,8 +12,10 @@ Usage (repo root):
 
 Writes PNGs + manifest to tools/prototypes/light-mode/shots/
 Open review.html in the light-mode lab to vote Fine / Looks off.
-Default family is train (+ Tuner/Metro chrome). Tools stay locked and
-are omitted from the default manifest so review stays focused.
+Default family is train (+ Tuner/Metro chrome) for regression captures.
+Tools + Train + Tuner/Metro + Secondary are locked in review.html; use Include locked
+to re-vote. Depth/glass lab: tools/prototypes/light-mode/depth.html before shipping.
+Prefer --family all only for full regression packs.
 """
 from __future__ import annotations
 
@@ -104,11 +106,31 @@ TRAIN_SCREENS = [
     ("musicquiz-daily", "Music Quiz · Daily popup", "Train", "mq:daily"),
 ]
 
+# Secondary states — locked Fine (v0.210.94). Regression via --family secondary.
+SECONDARY_SCREENS = [
+    ("sec-settings", "Settings tab", "Secondary", "mode:settings"),
+    ("sec-favorites", "Favorites sheet", "Secondary", "fav"),
+    ("sec-tuner-simple", "Tuner · Simple face", "Secondary", "tuner:simple"),
+    ("sec-tuner-strobe", "Tuner · Strobe", "Secondary", "tuner:strobe"),
+    ("sec-metro-analyze", "Metro · Analyze", "Secondary", "metro:analyze"),
+    ("sec-metro-ramp", "Metro · Ramp", "Secondary", "metro:ramp"),
+    ("sec-metro-groove", "Metro · Groove", "Secondary", "metro:groove"),
+    ("sec-mq-quick", "Quiz · Quick sheet", "Secondary", "mq:quick"),
+    ("sec-mq-custom", "Quiz · Custom setup", "Secondary", "mq:custom"),
+    ("sec-mq-survival", "Quiz · Survival sheet", "Secondary", "mq:survival"),
+    ("sec-mq-play", "Quiz · In-round", "Secondary", "mq:play"),
+    ("sec-iv-settings", "Interval · Settings modal", "Secondary", "exercise:interval:settings"),
+    ("sec-tempo-play", "Tempo Lock · Playing", "Secondary", "exercise:tempo:play"),
+    ("sec-poly-play", "Polyrhythm · Playing", "Secondary", "exercise:poly:play"),
+    ("sec-singsing-round", "Pitch Match · Round", "Secondary", "exercise:singsing:round"),
+]
+
 FAMILIES = {
     "train": CHROME_SCREENS + TRAIN_SCREENS,
     "tools": TOOLS_SCREENS,
     "chrome": CHROME_SCREENS,
-    "all": TOOLS_SCREENS + CHROME_SCREENS + TRAIN_SCREENS,
+    "secondary": SECONDARY_SCREENS,
+    "all": TOOLS_SCREENS + CHROME_SCREENS + TRAIN_SCREENS + SECONDARY_SCREENS,
 }
 
 
@@ -208,7 +230,7 @@ OPEN_JS = """(spec) => {
   const goMode = (m) => {
     if (typeof setMode === 'function') setMode(m);
     document.body.classList.remove('theme-tuner','theme-metro','theme-tools','theme-train');
-    const theme = ({ tuner:'tuner', metronome:'metro', tools:'tools', practice:'train' })[m] || m;
+    const theme = ({ tuner:'tuner', metronome:'metro', tools:'tools', practice:'train', settings:'train' })[m] || m;
     document.body.classList.add('light', 'theme-' + theme, 'lnch-settled', 'is-pro');
     document.body.classList.remove('lnch-open');
   };
@@ -224,14 +246,69 @@ OPEN_JS = """(spec) => {
 
   if (spec === 'hub' || spec.startsWith('mode:')) {
     const want = spec === 'hub' ? 'tools' : spec.slice(5);
+    if (want === 'settings') {
+      goMode('practice');
+      try { if (typeof openSettings === 'function') openSettings(); } catch (e) {}
+      killTour();
+      return 'settings';
+    }
     const mode = ({ tuner:'tuner', metro:'metronome', tools:'tools', train:'practice' })[want] || want;
     document.body.classList.remove('in-module');
     if (typeof moduleExit === 'function') { try { moduleExit(); } catch (e) {} }
     if (typeof exitTool === 'function') { try { exitTool(); } catch (e) {} }
     if (typeof exitExercise === 'function') { try { exitExercise(); } catch (e) {} }
     goMode(mode);
+    // Force section titles — exitExercise/exitTool can race setHeaderSection and
+    // leave the app-name wordmark on Tuner/Metro shots.
+    try {
+      if (mode === 'tuner' && typeof setHeaderSection === 'function') {
+        setHeaderSection((typeof t === 'function' && t('mode_tuner')) || 'TUNER', null, 'tuner_sub');
+      } else if (mode === 'metronome' && typeof setHeaderSection === 'function') {
+        setHeaderSection((typeof t === 'function' && t('mode_metro')) || 'METRO', null, 'metro_sub');
+      }
+    } catch (e) {}
     killTour();
     return mode;
+  }
+
+  if (spec === 'fav') {
+    goMode('practice');
+    try { if (typeof openFavSheet === 'function') openFavSheet(); } catch (e) {}
+    killTour();
+    return spec;
+  }
+
+  if (spec.startsWith('tuner:')) {
+    goMode('tuner');
+    try {
+      if (typeof setHeaderSection === 'function') {
+        setHeaderSection((typeof t === 'function' && t('mode_tuner')) || 'TUNER', null, 'tuner_sub');
+      }
+      const v = spec.slice(6);
+      if (v === 'simple' && typeof setTunerFace === 'function') setTunerFace('simple');
+      if (v === 'strobe') {
+        if (typeof setTunerFace === 'function') setTunerFace('full');
+        if (typeof toggleStrobe === 'function' && !document.body.classList.contains('strobe-active')) toggleStrobe();
+        else document.body.classList.add('strobe-active');
+      }
+    } catch (e) {}
+    killTour();
+    return spec;
+  }
+
+  if (spec.startsWith('metro:')) {
+    goMode('metronome');
+    try {
+      if (typeof setHeaderSection === 'function') {
+        setHeaderSection((typeof t === 'function' && t('mode_metro')) || 'METRO', null, 'metro_sub');
+      }
+      const v = spec.slice(6);
+      if (v === 'analyze' && typeof setMetroTab === 'function') setMetroTab('analyze');
+      if (v === 'ramp' && typeof setMetroTab === 'function') setMetroTab('ramp');
+      if (v === 'groove' && typeof setMetroClickMode === 'function') setMetroClickMode('groove');
+    } catch (e) {}
+    killTour();
+    return spec;
   }
 
   if (spec === 'mq' || spec.startsWith('mq:')) {
@@ -239,6 +316,21 @@ OPEN_JS = """(spec) => {
     if (typeof mqOpen === 'function') mqOpen();
     if (spec === 'mq:daily') {
       try { if (typeof mqOpenDailyPopup === 'function') mqOpenDailyPopup(); } catch (e) {}
+    }
+    if (spec === 'mq:quick') {
+      try { if (typeof mqShowQuickSheet === 'function') mqShowQuickSheet(); } catch (e) {}
+    }
+    if (spec === 'mq:custom') {
+      try { if (typeof mqGoCustom === 'function') mqGoCustom(); } catch (e) {}
+    }
+    if (spec === 'mq:survival') {
+      try { if (typeof mqSurvivalPlay === 'function') mqSurvivalPlay(); } catch (e) {}
+    }
+    if (spec === 'mq:play') {
+      try {
+        if (typeof mqGoCustom === 'function') mqGoCustom();
+        if (typeof mqStartCustom === 'function') mqStartCustom();
+      } catch (e) {}
     }
     killTour();
     return spec;
@@ -271,10 +363,23 @@ OPEN_JS = """(spec) => {
         if (typeof ssBuildModeTabs === 'function') ssBuildModeTabs();
         if (typeof ssEnterNeutral === 'function') ssEnterNeutral();
       }
-      if (name === 'interval' && variant === 'sing' && typeof ivSetMode === 'function') ivSetMode('sing');
+      if (name === 'interval' && variant === 'sing' && typeof ivSetMode === 'function') {
+        ivSetMode('sing');
+        try { if (typeof ivNext === 'function') ivNext(); } catch (e) {}
+      }
       if (name === 'interval' && variant === 'test' && typeof ivStartTestMode === 'function') ivStartTestMode();
+      if (name === 'interval' && variant === 'settings' && typeof ivOpenSettings === 'function') ivOpenSettings();
       if (name === 'chords' && variant === 'round' && typeof ceStartRound === 'function') ceStartRound();
-      if (name === 'poly' && variant && typeof prSetTab === 'function') prSetTab(variant);
+      if (name === 'tempo' && variant === 'play') {
+        try { if (typeof tlStart === 'function') tlStart(); else if (typeof tlToggle === 'function') tlToggle(); } catch (e) {}
+      }
+      if (name === 'poly' && variant === 'play') {
+        try { if (typeof prStart === 'function') prStart(); } catch (e) {}
+      }
+      if (name === 'poly' && variant && variant !== 'play' && typeof prSetTab === 'function') prSetTab(variant);
+      if (name === 'singsing' && variant === 'round') {
+        try { if (typeof ssNext === 'function') ssNext(); } catch (e) {}
+      }
       if (name === 'rhythmread' && (variant === 'play' || variant === 'sight')) {
         // Headless: stub preview/count-in so we get the play UI without scheduling audio.
         var _bp = (typeof rrBeginPreview === 'function') ? rrBeginPreview : null;
@@ -414,7 +519,7 @@ def main() -> int:
         "--family",
         default="train",
         choices=sorted(FAMILIES.keys()),
-        help="train (default: Train+Tuner+Metro), tools (locked regression), all",
+        help="train (default), secondary (leftover states), tools, chrome, all",
     )
     args = ap.parse_args()
     out = Path(args.out)

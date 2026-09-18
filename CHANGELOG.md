@@ -2,6 +2,104 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.95 — Depth: Apple flush tab + Glassier cards
+
+Light depth pass ships the lab vote: flush Regular glass tab dock (no
+island); active tab uses accent-fill pill so selection reads on frost;
+content cards and exercise .iv-card-v2 get Glassier optics (sheen,
+accent spill, fresnel insets, hue-tinted lift). Locked Fine hexes
+unchanged. Depth lab defaults to Apple + Glassier.
+
+## v0.210.94 — Lock Secondary; depth/glass pass starts
+
+Secondary light family locked Fine (Pitch Match purple/clip, trivia
+vibrancy, Settings/Favorites/Tuner Simple+Strobe/Metro tabs/Quiz sheets/
+Interval settings/Tempo+Poly play). Review hides Secondary with other
+locked families. Depth/glass lab: \	ools/prototypes/light-mode/depth.html(Flat vs Depth A/B). Material-only pass next; no locked hex reopen.
+
+## v0.210.93 — Pitch Match hero purple / light purple
+
+Light Pitch Match letter gradient is train purple to light purple
+(#5238a5 → #b8a3ff), not the blue-leaning mid stop.
+
+## v0.210.92 — Pitch Match letter clip fix
+
+Real bug, not a shot artifact: Pitch Match hero used line-height .8 with
+background-clip:text, so Bebas glyphs got flat-cut tops and bottoms.
+Line-height 1.05 + taller strip wrap. Light purple gradient now targets
+the real .ss-slot .n (legacy .ss-note stays hidden).
+
+## v0.210.91 — Pitch Match purple; trivia vibrancy; depth pass noted
+
+Pitch Match letter hero uses train purple on light (was cyan). Music Quiz
+pack chips denser wash on light; in-round theme keeps vivid pack chrome
+(`MQ_PACK_COLORS`) for accents while readable ink stays for text; motif/
+wash slightly stronger. Docs: next light focus is a character/depth pass
+on flat cards (not reopening locked Fine hexes).
+
+## v0.210.90 — Lock Train + Tuner/Metro light families
+
+Light review: Train and Tuner/Metro chrome locked alongside Tools in
+`docs/LIGHT_MODE_CONTRACT.md` (through Interval SING needle / Tempo /
+poly / Quiz Survival). Review lab hides locked families by default;
+Include locked to re-open. Secondary states listed as still-open, not Fine.
+
+## v0.210.89 — Interval SING needle + transport (real fix)
+
+Interval Training light: the SING-mode needle used `box-shadow: currentColor`
+so it painted a charcoal aura on cream — that was the “dark glow,” not the
+resting hero dash. Soft blue needle + soft glow; sing meter tinted. Gauge
+transport hairline lightened; manual root tick lifted off navy. Pending
+answer chips raise opacity and take a purple tint. Difficulty pill fills
+stronger so Easy/Med/Hard read as color. Shot lab starts a Sing round so
+the needle shows in review.
+
+## v0.210.88 — poly ring/number match, denser tempo + survival
+
+Polyrhythm: hero 3:2 lightened to ring-stroke peach/lavender; light rings
+drawn denser so big type and thin paths meet. Tempo Lock measure pips use
+solid coral/lavender fills. Music Quiz Survival coral wash denser again.
+
+## v0.210.87 — denser tempo/poly/quiz, Interval resting clear
+
+Interval: resting hero writes empty (not em-dash); hide rules collapse the
+slot. Answer pending ink denser. Tempo Lock measure pips stronger coral/
+lavender. Polyrhythm 3:2 uses the same hex as ring playheads. Music Quiz
+Survival coral wash denser.
+
+## v0.210.86 — Interval hero dash, Tuner section title, tempo/poly/quiz
+
+Interval Training: the resting em-dash in `.iv-hero-name` was painting as a
+short cyan/purple “needle” via background-clip gradient — hide it while
+resting. Answer chip ink denser on light. Tuner/Metro shot lab forces the
+section title (TUNER/METRO) so exit races cannot leave the Intonare wordmark.
+Logo width:auto no longer fights section flex titles. Tempo Lock measure
+pips denser. Polyrhythm hero 3:2 matches ring peach/lavender. Music Quiz
+Survival card coral denser on lavender ground.
+
+## v0.210.85 — Tuner logo slab, Interval chip/gauge, warmer game chips
+
+Tuner/section title: keep background-clip on the light logo rule (the
+`background` shorthand was wiping it) and size the glyph box to the
+word — Chromium was painting a solid accent rectangle. Interval
+difficulty pill regains per-tier color (a purple !important was
+flattening Easy); soft tinted fills. Gauge transport line uses soft
+outline ink instead of charcoal; knote/hero glows stay off; idle guess2 tick no longer ghosts at 70% opacity;
+empty hero-name smear killed; RR playhead loses filter bloom. Fixed `#exIntervals`
+CSS typo to `#exInterval`. RR / Chordle / Diadle in-game chips:
+mid-bright ink + tinted fill. Chordle / Diadle color-key swatches
+lifted a touch.
+
+## v0.210.84 — Train light: gauge/poly glows, in-game diff pills, Tonale pads
+
+Interval Training gauge ticks drop neon glow on light. Polyrhythm
+OUTER/INNER legend dots lose the dark aura. Rhythm Reading / Chordle /
+Diadle in-game difficulty pills use dense AA ink on white (readable small
+labels; picker cards keep mid-bright). Diadle control fills use soft light lifts instead of
+black drop shadows. Tonale wave + freq scrubber switch to lavender play
+pads (Theremin-pad idea) with ink strokes; wave canvas skips neon bloom
+in light.
+
 ## v0.210.83 — Train light: tabs, poly rings, difficulty pickers
 
 Pitch Match selected mode tab: solid purple fill + white ink. Polyrhythm

@@ -164,15 +164,15 @@
   <a href="index.html" style="font-family:var(--font-mono);font-size:11px">← Lab</a>
   <h1>Light review</h1>
   <p class="sub">
-    Real app screenshots. Tools family is locked and hidden by default.
-    Vote Fine or Looks off on Train / Tuner / Metro. Only Looks off feeds the next patch.
+    Real app screenshots. Locked families stay hidden unless Include locked.
+    Needs review shows new shots only.
   </p>
   <div class="bar">
     <span class="prog" id="prog">Loading…</span>
     <button type="button" id="btnTodo" class="primary on">Needs review</button>
     <button type="button" id="btnOff">Looks off only</button>
     <button type="button" id="btnAll">Show all in scope</button>
-    <button type="button" id="btnTools">Include Tools</button>
+    <button type="button" id="btnTools">Include locked</button>
     <button type="button" id="btnClear">Clear votes</button>
   </div>
   <div class="miss" id="miss">
@@ -194,16 +194,17 @@ const STORE = "intonare-light-review-v2";
 let shots = [];
 let votes = {};
 /** todo = unreviewed in scope; off = looks-off only; all = every in-scope shot */
-let viewMode = "todo";
-/** Tools locked — omit unless Include Tools is on */
-let includeTools = false;
-const LOCKED_FAMILIES = new Set(["Tools"]);
+const _qs = new URLSearchParams(location.search);
+let viewMode = _qs.has("locked") || _qs.has("all") ? "all" : "todo";
+/** Locked families — omit unless Include locked is on (?locked=1 forces show + all) */
+let includeLocked = _qs.has("locked");
+const LOCKED_FAMILIES = new Set(["Tools", "Train", "Tuner", "Metro", "Secondary"]);
 
 try { votes = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { votes = {}; }
 function save() { localStorage.setItem(STORE, JSON.stringify(votes)); }
 
 function inScope(s) {
-  if (!includeTools && LOCKED_FAMILIES.has(s.family)) return false;
+  if (!includeLocked && LOCKED_FAMILIES.has(s.family)) return false;
   return true;
 }
 
@@ -233,8 +234,8 @@ function setBar() {
   document.getElementById("btnTodo").classList.toggle("primary", viewMode === "todo");
   document.getElementById("btnOff").classList.toggle("on", viewMode === "off");
   document.getElementById("btnAll").classList.toggle("on", viewMode === "all");
-  document.getElementById("btnTools").classList.toggle("on", includeTools);
-  document.getElementById("btnTools").textContent = includeTools ? "Hide Tools" : "Include Tools";
+  document.getElementById("btnTools").classList.toggle("on", includeLocked);
+  document.getElementById("btnTools").textContent = includeLocked ? "Hide locked" : "Include locked";
 }
 
 function paint() {
@@ -248,7 +249,7 @@ function paint() {
   const hiddenTools = shots.filter(s => LOCKED_FAMILIES.has(s.family)).length;
   document.getElementById("prog").innerHTML =
     `<strong>${done}</strong> / ${scoped.length} · <strong>${off}</strong> looks off`
-    + (includeTools ? "" : ` · ${hiddenTools} Tools hidden`);
+    + (includeLocked ? "" : ` · ${hiddenTools} locked hidden`);
   for (const s of rows) {
     const v = votes[s.id] || "";
     const card = document.createElement("article");
@@ -294,14 +295,14 @@ function buildOut() {
   for (const s of off) lines.push(`- **${s.family} / ${s.label}** (\`${s.id}\`)`);
   lines.push("", `Fine: ${scoped.filter(s => votes[s.id] === "fine").length}`,
     `Unreviewed: ${scoped.filter(s => !votes[s.id]).length}`,
-    `Tools hidden: ${includeTools ? "no" : "yes"}`);
+    `Locked hidden: ${includeLocked ? "no" : "yes"}`);
   document.getElementById("out").value = lines.join("\n");
 }
 
 document.getElementById("btnTodo").addEventListener("click", () => { viewMode = "todo"; paint(); });
 document.getElementById("btnOff").addEventListener("click", () => { viewMode = "off"; paint(); });
 document.getElementById("btnAll").addEventListener("click", () => { viewMode = "all"; paint(); });
-document.getElementById("btnTools").addEventListener("click", () => { includeTools = !includeTools; paint(); });
+document.getElementById("btnTools").addEventListener("click", () => { includeLocked = !includeLocked; paint(); });
 document.getElementById("btnClear").addEventListener("click", () => {
   if (!confirm("Clear review votes?")) return;
   votes = {}; save(); paint();

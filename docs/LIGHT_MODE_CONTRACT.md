@@ -224,6 +224,9 @@ v0.210.81). Do not re-open these hexes without a new Looks-off vote.
 | Transposer active tab | tools teal (not `--metro` brown) |
 | Theremin pad + EXPAND pad + volume column | sage `#d2efe4`→`#b7dfd0`; Moog console stays wood/dark |
 | Theremin toggles | literal light chrome `#f8fcfa` / active `#afdfcd` |
+| Tonale wave + freq scrubber | lavender play pads `#f0ebf8`→`#e4dcf0` (Theremin-pad idea); ink strokes, no neon bloom |
+| Train in-game diff pills (RR / Chordle / Diadle) | mid-bright `diffPickerColor` on white; no washed neon on cream |
+| Interval gauge ticks / poly OUTER·INNER dots | solid ticks; no glow aura on light |
 
 ### Keep-dark / identity (do not flatten)
 
@@ -238,3 +241,97 @@ v0.210.81). Do not re-open these hexes without a new Looks-off vote.
 Drawers, zoom sheets, Survival Guide inner pages, Charts SCALES tab,
 Progression presets / filled slots. Capture when needed; do not reopen
 locked stage or tape colors above.
+
+## Train + Tuner/Metro chrome — locked (v0.210.90)
+
+Confirmed Fine after Looks-off pass through v0.210.89 (Interval SING
+needle, Tuner section title, Tempo Lock pips, poly ratio/rings, Quiz
+Survival). Do not re-open these without a new Looks-off vote.
+
+Shot lab: `python tools/audits/intonare_light_shots.py --family train`
+(includes Tuner/Metro chrome). Review hides Tools + Train + Tuner + Metro
++ Secondary unless you Include them.
+
+### Stage tokens (`body.light.theme-*`)
+
+| Theme | ground `--bg-0` / `--bg-1` | surface / panel | accent / tab-accent |
+|-------|----------------------------|-----------------|---------------------|
+| train | `#e0daf2` / `#e8e4f6` | `#edecf8` / `#fbfbfe` | `#63569e` / `#38276c` |
+| tuner | `#d8e6f8` / `#e0ecfa` | `#e6eff8` / `#f9fbfe` | `#2966a0` / `#00376e` |
+| metro | `#f3ebd4` / `#f7f1e0` | `#f2eee2` / `#fcfbf7` | `#826500` / `#4d3100` |
+
+Prefer module literals below over shifting these stage ramps.
+
+### Module literals (keep)
+
+| Surface | Locked choice |
+|---------|----------------|
+| Tuner / Metro section titles | `setHeaderSection` TUNER/METRO (not Intonare wordmark) |
+| Interval SING needle | soft blue `#3d7ecf` + soft blue glow (no `currentColor` charcoal) |
+| Interval diff pill | tinted Easy/Med/Hard fills on `#exInterval` |
+| Interval pending answers | raised opacity + purple tint (not 0.4 wash) |
+| Interval gauge / gtick | no neon glow; soft transport hairline |
+| Tempo Lock measure pips | solid coral / lavender fills on light |
+| Polyrhythm hero 3:2 | ring-family peach/lavender; denser light rings |
+| Polyrhythm OUTER/INNER dots | no dark aura |
+| Music Quiz Survival card | denser coral wash + ink |
+| RR / Chordle / Diadle in-game diff | mid-bright picker ink (not washed neon) |
+| Tonale wave + freq | Theremin-pad lavender family |
+
+### Keep-dark / identity (do not flatten)
+
+- Tuner glass / metal housing (keep-dark island)
+- Road Trip skins (own theme system; Nautical default on light)
+- Streak reward stages
+
+
+## Secondary states — locked (v0.210.94)
+
+Confirmed Fine after the secondary shot pass (Pitch Match purple hero +
+clip fix, trivia pack vibrancy, Settings / Favorites / Tuner Simple+Strobe /
+Metro Analyze+Ramp+Groove / Quiz sheets+in-round / Interval settings /
+Tempo+Poly mid-play). Do not re-open without a new Looks-off vote.
+
+Shot lab: `python tools/audits/intonare_light_shots.py --family secondary`.
+Review hides Secondary with other locked families unless Include locked.
+
+### Literals added in this pass
+
+| Surface | Locked choice |
+|---------|----------------|
+| Pitch Match hero `.ss-slot .n` | purple → light purple `#5238a5` → `#b8a3ff`; line-height ≥ 1.05 |
+| Music Quiz pack chips / in-round | denser wash; vivid `MQ_PACK_COLORS` chrome + readable ink |
+
+### Still open (not in secondary Fine set)
+
+- Tour / paywall / session-summary overlays
+- Tuner live string-guide detect
+- Metro drums panel deep states (beyond Analyze/Ramp/Groove tabs)
+- Road Trip mid-drive + non-default skins
+- Tools secondary still-open list (unchanged)
+- Deferred: Melody Dictation, Score Reader
+
+
+## Next light focus — character / depth / glass pass (in progress)
+
+All Fine color families stay locked. This pass adds material only:
+glass frost, tinted elevation, recessed trays so light cards are not a
+sea of flat white boxes. Do not reopen locked hexes; stack depth on top.
+
+## Depth / glass — locked recipe (v0.210.95)
+
+Voted in the depth lab: **Apple flush tab + Glassier cards**.
+
+| Layer | Recipe |
+|-------|--------|
+| Tab dock | Flush full-bleed Regular frost (no floating island) |
+| Active tab | Accent-fill pill + top hairline bar (reads on frost) |
+| Content / `.iv-card-v2` | Glassier: top sheen, accent spill in fill, fresnel insets, hue-tinted multi-stop lift, blur 16 / sat 1.55 |
+| Keep-dark | Untouched |
+
+Do not reopen locked Fine hexes. Material only. Lab still has Quiet/Lifted for regression A/B.
+
+Lab: `tools/prototypes/light-mode/depth.html` defaults to Apple + Glassier.
+True refraction / tilt specular left on the table (Safari/Capacitor).
+
+
