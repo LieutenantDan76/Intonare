@@ -2,6 +2,28 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.102 — Train screen pass: RR PLAYING, Pitch Match feedback
+
+Walked the remaining Train exercise shots (Pitch Match, Tempo Lock,
+Tempo Guess, Poly, Rhythm Reading, Chordle, Diadle, Tonale, Notation
+Cards, Road Trip). Fixes: Rhythm Reading PLAYING/PAUSE pill was neon
+lavender at 30% opacity (unreadable on light) — class-based idle/hot +
+dense light chip; NEW / mode-active ink forced white; result score ink
+dense. Pitch Match feedback box locked to 64px like Interval/Chord Ear
+so mic prompts vs verdicts do not shove the transport. Other screens
+looked Fine for chrome/layout in this pass (Road Trip keep-dark skins
+unchanged). Dark untouched.
+
+## v0.210.101 — Interval answer layout + Chord Ear light ink
+
+Interval Training light: empty `.iv-hero-name` no longer collapses to
+height 0 (v0.210.87 dash hide). Slot stays reserved so revealing the
+interval name on answer does not shove the card. Soften Hear Again /
+advance sample stop (0.12s release, +20ms lead) so hot samples are less
+likely to crackle under the next attack. Chord Ear light: denser answer
+chip ink + correct/wrong/reveal fills; settings section heads and READY
+label readable on pale cards. Dark untouched.
+
 ## v0.210.100 — Light paint triage (color / canvas writers)
 
 Not just blooms: audited ungated JS style.color/background writers and

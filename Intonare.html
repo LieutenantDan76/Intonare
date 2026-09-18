@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.100 -->
+<!-- INTONARE_VERSION: 0.210.102 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -5206,7 +5206,9 @@ body.sg-open #toolSurvivalGuide{
     filter: none !important;
   }
   /* Resting placeholder used to be an em-dash. JS now clears it; keep hide
-     rules so bg-clip cannot paint a needle if a dash returns. */
+     rules so bg-clip cannot paint a needle if a dash returns.
+     Do NOT collapse height/margin - that shoved the card when the name
+     appeared on answer (v0.210.87 regression). Reserve the base slot. */
   body.light .iv-target-zone.resting .iv-hero-name,
   body.light .iv-hero-name:empty {
     background: none !important;
@@ -5218,10 +5220,6 @@ body.sg-open #toolSurvivalGuide{
     text-shadow: none !important;
     opacity: 0 !important;
     visibility: hidden !important;
-    min-height: 0 !important;
-    height: 0 !important;
-    margin: 0 !important;
-    overflow: hidden !important;
   }
   /* Answer chips: pending was still washed — denser ink, closer to active. */
   body.light .iv-answer-btn .iv-ans-sym { color: #4a36a8 !important; }
@@ -6241,6 +6239,40 @@ body.sg-open #toolSurvivalGuide{
     color:#6b4a00 !important; border-color:rgba(107,74,0,.45) !important;
     background:rgba(107,74,0,.10) !important; text-shadow:none !important;
   }
+  /* Chord Ear answer rack: dark neon greens/cyans wash on pale cards.
+     Dense ink + soft tinted fills (same idea as Interval answer chips). */
+  body.light .ce-answer-btn {
+    background: color-mix(in srgb, var(--surface-2, var(--panel)) 88%, transparent) !important;
+    border-color: color-mix(in srgb, var(--border) 70%, var(--bg-0)) !important;
+    color: #2e2a48 !important;
+  }
+  body.light .ce-answer-btn .ce-btn-name { color: #2e2a48 !important; }
+  body.light .ce-answer-btn .ce-btn-formula { color: #5a5478 !important; opacity: 1 !important; }
+  body.light .ce-answer-btn.correct {
+    background: color-mix(in srgb, #0a7a4a 12%, #ffffff) !important;
+    border-color: #0a7a4a !important;
+    color: #095c3a !important;
+  }
+  body.light .ce-answer-btn.correct .ce-btn-name { color: #095c3a !important; }
+  body.light .ce-answer-btn.correct .ce-btn-formula { color: #0a7a4a !important; }
+  body.light .ce-answer-btn.wrong {
+    background: color-mix(in srgb, #a3243a 8%, #ffffff) !important;
+    border-color: color-mix(in srgb, #a3243a 45%, #c9c6b6) !important;
+    color: #8a1d31 !important;
+  }
+  body.light .ce-answer-btn.wrong .ce-btn-name { color: #8a1d31 !important; }
+  body.light .ce-answer-btn.reveal {
+    background: color-mix(in srgb, #005570 10%, #ffffff) !important;
+    border-color: #005570 !important;
+    color: #005570 !important;
+  }
+  body.light .ce-answer-btn.reveal .ce-btn-name { color: #005570 !important; }
+  body.light .ce-sec-diff > span:first-child { color: #8a5a00 !important; }
+  body.light .ce-sec-pref > span:first-child { color: #5238a5 !important; }
+  body.light #exChords .ex-resting-lbl {
+    opacity: 0.85 !important;
+    color: color-mix(in srgb, var(--accent) 28%, #4e4b3c) !important;
+  }
   body.light .ce-cog-onscreen {
     background:rgba(255,255,255,.50) !important;
     border-color:color-mix(in srgb, var(--accent) 26%, transparent) !important;
@@ -6347,6 +6379,39 @@ body.sg-open #toolSurvivalGuide{
   body.light .rr-tap-zone.rr-fy { background:rgba(107,74,0,.24) !important;  border-color:#6b4a00 !important; }
   body.light .rr-tap-zone.rr-fo { background:rgba(140,74,10,.24) !important; border-color:#8c4a0a !important; }
   body.light .rr-tap-zone.rr-fr { background:rgba(143,34,21,.24) !important; border-color:#8f2215 !important; }
+  /* RR control row: hardcoded lavender neon + 30% opacity made PLAYING invisible
+     on pale lavender. Dense chip; idle still readable as a status label. */
+  body.light #rrPauseBtn {
+    border-color: color-mix(in srgb, var(--accent) 42%, #b0ac9b) !important;
+    background: color-mix(in srgb, var(--accent-fill, #cfc8e8) 70%, #ffffff) !important;
+    color: var(--tab-accent, #38276c) !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+  }
+  body.light #rrPauseBtn.rr-pause-idle {
+    opacity: 0.78 !important;
+    color: color-mix(in srgb, var(--tab-accent, #38276c) 78%, #5a5478) !important;
+  }
+  body.light #rrPauseBtn.rr-pause-hot {
+    opacity: 1 !important;
+    border-color: var(--accent) !important;
+    background: color-mix(in srgb, var(--accent-fill, #cfc8e8) 88%, #ffffff) !important;
+    color: var(--tab-accent, #38276c) !important;
+  }
+  body.light #rrGoBtn {
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(18,32,60,0.14) !important;
+  }
+  body.light .rr-mode-btn.active,
+  body.light .rr-opt-chip.active,
+  body.light .rr-retry-btn:active {
+    color: #ffffff !important;
+  }
+  body.light .rr-tap-fb-score {
+    color: var(--tab-accent, #38276c) !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
   /* CARD BLOOMS REMOVED.
      These baked a radial of --theme (an INK value, L~0.05) into two card backgrounds.
      That is the same subtractive mistake the page blooms had in v0.98.5: mixing a dark
@@ -17613,6 +17678,8 @@ body.sg-open #toolSurvivalGuide{
   /* chords feedback: fixed height so blurb vs prompt never shifts layout */
   #exChords .iv-feedback { height:64px; min-height:64px; line-height:1.4; }
   #exInterval .iv-feedback { height:64px; min-height:64px; line-height:1.4; }
+  /* Pitch Match: same fixed box so mic prompts vs verdicts never shove HEAR/NEW */
+  #exSingSing .iv-feedback { height:64px; min-height:64px; line-height:1.4; }
   .ce-pool-details { border:1px solid var(--border-soft); border-radius:var(--r-sm); padding:2px 10px; }
   .ce-pool-summary { cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; padding:8px 0; font-family:'JetBrains Mono','GlyphFix',monospace; font-size:10px; letter-spacing:1px; color:var(--text-dim); text-transform:uppercase; }
   .ce-pool-summary::-webkit-details-marker { display:none; }
@@ -26484,6 +26551,8 @@ body.light #toolDrumkit .dk-prec-step-num { color: rgba(0,0,0,0.32); }
   }
   .rr-phase-status.counting { color: var(--accent-soft); }
   .rr-phase-status.tapping  { color: var(--accent); }
+  #rrPauseBtn.rr-pause-idle { opacity: 0.35; }
+  #rrPauseBtn.rr-pause-hot  { opacity: 0.85; }
   .rr-tap-zone {
     background: var(--bg-1);
     border: 2px solid var(--border-soft);
@@ -33925,7 +33994,7 @@ try {
 
       <!-- ① Primary controls — always visible, above the notes -->
       <div id="rrControlRow" style="display:flex;gap:6px;align-items:center;padding:2px 0 4px;">
-        <button id="rrPauseBtn" onclick="rrTogglePause()" style="width:72px;flex-shrink:0;padding:5px 0;border-radius:6px;border:1px solid rgba(184,163,255,.3);background:rgba(184,163,255,.07);color:var(--accent-soft);font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:11px;letter-spacing:1.5px;cursor:pointer;opacity:.3;pointer-events:none;transition:opacity .15s,color .15s,border-color .15s,background .15s;text-align:center;">PAUSE</button>
+        <button id="rrPauseBtn" class="rr-pause-idle" onclick="rrTogglePause()" style="width:72px;flex-shrink:0;padding:5px 0;border-radius:6px;border:1px solid rgba(184,163,255,.3);background:rgba(184,163,255,.07);color:var(--accent-soft);font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:11px;letter-spacing:1.5px;cursor:pointer;pointer-events:none;transition:opacity .15s,color .15s,border-color .15s,background .15s;text-align:center;">PAUSE</button>
         <div id="rrPatternInfo" style="flex:1;text-align:center;display:flex;flex-direction:column;gap:1px;visibility:hidden;">
           <div id="rrPatternName" style="font-size:9px;letter-spacing:1.5px;color:var(--muted);line-height:1;"></div>
           <div id="rrPatternSig" style="font-size:8px;color:var(--muted);opacity:.5;letter-spacing:1px;"></div>
@@ -35557,7 +35626,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.100';
+const INTONARE_VERSION = '0.210.102';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -58450,11 +58519,14 @@ function ivPlayReference() {
   // new one. ivNext() reaches here via ivStop(), but ivReplay() calls this
   // function directly — without this, hitting replay stacked the new playback
   // on top of the old one exactly the way advancing used to.
-  ivNodes.forEach(function(n) { try { n.stop(); } catch(e){} });
+  // Soft release (not hard cut) so the previous sample does not click under the
+  // new attack. Hear Again / advance used to zero in ~40ms while the next note
+  // started 20ms later, and the sum could crackle on hot samples.
+  ivNodes.forEach(function(n) { try { n.stop(0.12); } catch(e){} });
   ivNodes = [];
   const myToken = ivSession;
   const style   = r.playStyle || 'mel';
-  const LEAD     = 0.02;   // schedule a hair ahead of currentTime to avoid buffer-edge clicks
+  const LEAD     = 0.04;   // schedule a hair ahead of currentTime to avoid buffer-edge clicks
   const GAP      = 650;    // ms between melodic notes
   const NOTE_DUR = 0.58;   // melodic note length — shorter than GAP so notes don't overlap/sum
   const HARM_DUR = 1.4;    // simultaneous-note length
@@ -76994,10 +77066,13 @@ function rrSetPhase(ph) {
   var pb = document.getElementById('rrPauseBtn');
   if (!tz) return;
 
-  // Pause button: text switches between PAUSE (active) / PLAYING (inactive)
+  // Pause button: text switches between PAUSE (active) / PLAYING (inactive).
+  // Classes (not bare opacity) so light mode can keep PLAYING readable.
   var pausable = (ph === 'preview' || ph === 'countin' || ph === 'tapping');
   if (pb && !rrPaused) {
-    pb.style.opacity = pausable ? '0.85' : '0.3';
+    pb.classList.toggle('rr-pause-hot', pausable);
+    pb.classList.toggle('rr-pause-idle', !pausable);
+    pb.style.opacity = '';
     pb.style.pointerEvents = pausable ? '' : 'none';
     pb.textContent = pausable ? t('rr_pause') : t('rr_playing');
   }
@@ -77035,7 +77110,10 @@ function rrSetPhase(ph) {
     if (fbLayer) fbLayer.style.display = '';
     if (tz) { tz.classList.remove('rr-disabled'); tz.classList.add('rr-next'); }
   } else if (ph === 'playback') {
-    if (pb && !rrPaused) { pb.style.opacity = '0.3'; pb.style.pointerEvents = 'none'; pb.textContent = t('rr_playing'); }
+    if (pb && !rrPaused) {
+      pb.classList.add('rr-pause-idle'); pb.classList.remove('rr-pause-hot');
+      pb.style.opacity = ''; pb.style.pointerEvents = 'none'; pb.textContent = t('rr_playing');
+    }
     // Keep feedback layer visible during playback — tapping still advances
     var inner2 = document.getElementById('rrTapInner');
     var fbLayer2 = document.getElementById('rrTapFeedback');
@@ -77075,7 +77153,10 @@ function rrPause() {
   if (rrAnimFr) { cancelAnimationFrame(rrAnimFr); rrAnimFr = null; }
   // Update UI
   var pb = document.getElementById('rrPauseBtn');
-  if (pb) { pb.textContent = t('rr_resume'); pb.style.opacity = '0.85'; pb.style.pointerEvents = ''; }
+  if (pb) {
+    pb.classList.add('rr-pause-hot'); pb.classList.remove('rr-pause-idle');
+    pb.textContent = t('rr_resume'); pb.style.opacity = ''; pb.style.pointerEvents = '';
+  }
   var tz = document.getElementById('rrTapZone');
   if (tz) tz.classList.add('rr-disabled');
 }
@@ -77092,7 +77173,10 @@ function rrResume() {
     } catch(e) {}
   }
   var pb = document.getElementById('rrPauseBtn');
-  if (pb) { pb.textContent = t('rr_pause'); pb.style.opacity = '0.85'; }
+  if (pb) {
+    pb.classList.add('rr-pause-hot'); pb.classList.remove('rr-pause-idle');
+    pb.textContent = t('rr_pause'); pb.style.opacity = '';
+  }
   // Re-run from count-in — pattern stays the same, taps reset
   rrTaps = [];
   rrBeginCountIn();
