@@ -2,6 +2,39 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.105 — Remaining light card / sheet wash
+
+App-wide follow-up after hub folders: settings sections, setlist cards,
+polyrhythm popup tiles, and progress modal content get the same opaque
+white→panel lift. Favorites / Music Quiz / songbook / launcher sheets,
+settings modal, CE stats, and tour cards keep glass but denser frost and
+firmer edges. Favorites empty state ink denser. Inactive settings /
+language chips no longer melt into lavender. Music Quiz pack tiles get
+full fill + readable desc ink. Road Trip Nautical unselected tiers and
+pills less frosted mush (Night/Blueprint keep-dark untouched). Rhythm
+Reading difficulty picker light cards match hub lift. Dark untouched.
+
+## v0.210.104 — Hub / folder cards lift off the stage
+
+Tools + Train module folders and exercise picker tiles were mid-tint
+mixed with `--bg-0`, so cards melted into the lavender/sage stage;
+"N tools ›" badges and subs looked washed. Hub tiles now opaque
+white→panel lift, denser border, clearer shadow; title/sub/badge/icon
+ink denser. Music Quiz mode cards get the same lift; pack chips firmer
+edges. In-module mid-tint cards keep their recipe; borders slightly
+firmer only. Dark untouched.
+
+## v0.210.103 — Big-element light contrast (heroes / poly / scales)
+
+Contrast pass on large type that still used dark neon on pale cards.
+Interval answer hero: dense `#5238a5`→`#005570` clip (was accent-soft +
+`#5ee2ff`, ~1.5:1). Pitch Match letter: `#38276c`→`#5238a5` (light end was
+`#b8a3ff` ~2:1); drop soft glow on active. Polyrhythm 3:2 numerals: warm
+`#b34a18` / purple `#5238a5` (peach/lavender soft failed large AA). Scales
+degree labels `#007a5c`, dots `#0d8a6a` (mid mint was weak at 9px). Titles,
+primary white-on-accent, answer chips, CE LCD, RR pause already cleared.
+Disabled SUBMIT stay intentionally quiet. Dark untouched.
+
 ## v0.210.102 — Train screen pass: RR PLAYING, Pitch Match feedback
 
 Walked the remaining Train exercise shots (Pitch Match, Tempo Lock,

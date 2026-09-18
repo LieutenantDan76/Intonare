@@ -214,7 +214,7 @@ v0.210.81). Do not re-open these hexes without a new Looks-off vote.
 
 | Surface | Locked choice |
 |---------|----------------|
-| Scales degrees | mint `#1a9a78` (names `#0a5c3c`, deg `#0d8a6a`) |
+| Scales degrees | mint `#0d8a6a` dots; deg `#007a5c`; names `#0a5c3c` |
 | Scales root/octave anchors | tools teal `#007a5c` |
 | Scales COMPARE ghost | amber `#b07a10` / `#8a5a00` (contrast on purpose) |
 | Scales root chip / `.card.warm` rim | tools teal (not peach) |
@@ -227,6 +227,8 @@ v0.210.81). Do not re-open these hexes without a new Looks-off vote.
 | Tonale wave + freq scrubber | lavender play pads `#f0ebf8`→`#e4dcf0` (Theremin-pad idea); ink strokes, no neon bloom |
 | Train in-game diff pills (RR / Chordle / Diadle) | mid-bright `diffPickerColor` on white; no washed neon on cream |
 | Interval gauge ticks / poly OUTER·INNER dots | solid ticks; no glow aura on light |
+| Interval answer hero `.iv-hero-name` | dense `#5238a5`→`#005570` clip (not neon cyan) |
+| Polyrhythm hero 3:2 numerals | warm `#b34a18` / purple `#5238a5` on light |
 
 ### Keep-dark / identity (do not flatten)
 
@@ -272,7 +274,7 @@ Prefer module literals below over shifting these stage ramps.
 | Interval pending answers | raised opacity + purple tint (not 0.4 wash) |
 | Interval gauge / gtick | no neon glow; soft transport hairline |
 | Tempo Lock measure pips | solid coral / lavender fills on light |
-| Polyrhythm hero 3:2 | ring-family peach/lavender; denser light rings |
+| Polyrhythm hero 3:2 | warm `#b34a18` / purple `#5238a5` numerals; denser light rings |
 | Polyrhythm OUTER/INNER dots | no dark aura |
 | Music Quiz Survival card | denser coral wash + ink |
 | RR / Chordle / Diadle in-game diff | mid-bright picker ink (not washed neon) |
@@ -299,7 +301,7 @@ Review hides Secondary with other locked families unless Include locked.
 
 | Surface | Locked choice |
 |---------|----------------|
-| Pitch Match hero `.ss-slot .n` | purple → light purple `#5238a5` → `#b8a3ff`; line-height ≥ 1.05 |
+| Pitch Match hero `.ss-slot .n` | purple `#38276c` → `#5238a5` (denser end; was washed `#b8a3ff`); line-height ≥ 1.05 |
 | Music Quiz pack chips / in-round | denser wash; vivid `MQ_PACK_COLORS` chrome + readable ink |
 
 ### Still open (not in secondary Fine set)
@@ -327,7 +329,7 @@ not muddy brick). Nested controls are recessed trays.
 |-------|--------|
 | Tab dock | Flush full-bleed Regular frost (no floating island) |
 | Active tab | Colored top line only; no fill; no dark radial ::after |
-| Content cards | panel/surface-2 mixed with bg-0 (stage hue). No card blur. |
+| Content cards | mid-tint panel/surface mix (in-module). Hub pickers/folders + settings sections / setlist / poly popup tiles: opaque white→panel lift (v0.210.104–105). Sheets/modals: denser glass frost, not opaque (v0.210.105). No card blur. |
 | Nested chips / drumkit grid | Recessed inset tray (copy groove editor language) |
 | Play / mic / live | No glow emission in light (CSS kill + JS gates). Fill/border/contact only. |
 | Keep-dark | Untouched |

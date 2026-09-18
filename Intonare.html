@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.102 -->
+<!-- INTONARE_VERSION: 0.210.105 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -4446,11 +4446,11 @@ body.sg-open #toolSurvivalGuide{
       linear-gradient(165deg,
         color-mix(in srgb, var(--panel) 82%, var(--bg-0)) 0%,
         color-mix(in srgb, var(--surface-2, var(--surface)) 72%, var(--bg-0)) 100%) !important;
-    border: 1px solid color-mix(in srgb, var(--border) 48%, var(--bg-0)) !important;
+    border: 1px solid color-mix(in srgb, var(--border) 62%, var(--bg-0)) !important;
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.72),
-      0 1px 2px color-mix(in srgb, var(--tab-accent, var(--accent)) 8%, transparent),
-      0 6px 16px color-mix(in srgb, var(--tab-accent, var(--accent)) 10%, transparent) !important;
+      inset 0 1px 0 rgba(255,255,255,0.78),
+      0 1px 2px color-mix(in srgb, var(--tab-accent, var(--accent)) 10%, transparent),
+      0 6px 16px color-mix(in srgb, var(--tab-accent, var(--accent)) 12%, transparent) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -4476,6 +4476,158 @@ body.sg-open #toolSurvivalGuide{
     opacity: 0.28;
   }
   body.light .iv-card-v2 > * { position: relative; z-index: 1; }
+
+  /* Hub picker / folder tiles (v0.210.104).
+     Mid-tint cards mixed so much --bg-0 that Tools/Train folders melted into
+     the stage. These stay opaque panel/white so they lift as real tiles;
+     borders + badge/sub ink denser so lists and "N tools >" do not wash out.
+     In-module .card / .iv-card-v2 keep the mid-tint recipe above. */
+  body.light .practice-card-btn,
+  body.light .practice-folder-btn,
+  body.light .folder-card {
+    background:
+      linear-gradient(165deg,
+        #ffffff 0%,
+        color-mix(in srgb, var(--panel) 88%, #ffffff) 100%) !important;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, var(--bg-0)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      0 1px 2px rgba(18,32,60,0.07),
+      0 4px 12px rgba(18,32,60,0.08),
+      0 12px 24px color-mix(in srgb, var(--tab-accent, var(--accent)) 14%, transparent) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  body.light .practice-card-btn::before {
+    opacity: 0.55 !important;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--accent) 55%, transparent) 50%,
+      transparent 100%) !important;
+  }
+  body.light .practice-card-title {
+    color: var(--tab-accent, var(--text)) !important;
+  }
+  body.light .practice-card-sub {
+    color: color-mix(in srgb, var(--tab-accent, #38276c) 42%, #2e2a48) !important;
+    opacity: 1 !important;
+  }
+  body.light .practice-folder-badge {
+    color: var(--accent-lift, var(--accent)) !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+  }
+  body.light .practice-icon {
+    color: var(--tab-accent, var(--accent)) !important;
+    opacity: 1 !important;
+  }
+  /* Music Quiz mode picker cards — same melt into lavender stage */
+  body.light .mq-mode-card {
+    background:
+      linear-gradient(165deg,
+        #ffffff 0%,
+        color-mix(in srgb, var(--panel) 90%, #ffffff) 100%) !important;
+    border: 1.5px solid color-mix(in srgb, var(--border) 75%, var(--bg-0)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.9),
+      0 2px 8px rgba(18,32,60,0.07),
+      0 8px 18px color-mix(in srgb, var(--tab-accent, var(--accent)) 12%, transparent) !important;
+  }
+  body.light .mq-pack-btn {
+    background:
+      linear-gradient(165deg,
+        #ffffff 0%,
+        color-mix(in srgb, var(--panel) 90%, #ffffff) 100%) !important;
+    border-color: color-mix(in srgb, var(--border) 78%, var(--bg-0)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.9),
+      0 1px 3px rgba(18,32,60,0.07),
+      0 6px 14px color-mix(in srgb, var(--tab-accent, var(--accent)) 10%, transparent) !important;
+  }
+  body.light .mq-pack-desc {
+    color: color-mix(in srgb, var(--tab-accent, #38276c) 38%, #3a3658) !important;
+    opacity: 1 !important;
+  }
+
+  /* Remaining washed surfaces (v0.210.105).
+     Tiles/sections: opaque hub lift. Sheets/modals: denser frost (keep glass).
+     Teach-hints stay mid-tint; denser border + ink only. */
+  body.light .sm-section,
+  body.light .setlist-card,
+  body.light .pr-popup-btn,
+  body.light .progress-modal-content {
+    background:
+      linear-gradient(165deg,
+        #ffffff 0%,
+        color-mix(in srgb, var(--panel) 90%, #ffffff) 100%) !important;
+    border: 1px solid color-mix(in srgb, var(--border) 78%, var(--bg-0)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.92),
+      0 1px 2px rgba(18,32,60,0.06),
+      0 6px 16px color-mix(in srgb, var(--tab-accent, var(--accent)) 11%, transparent) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  body.light .fav-sheet,
+  body.light .mq-sheet,
+  body.light .stb-sheet,
+  body.light .lnch-sheet,
+  body.light .settings-modal-content,
+  body.light .ce-stats-content,
+  body.light .tour-card {
+    background:
+      var(--glass-sheen),
+      linear-gradient(180deg,
+        rgba(255,255,255,0.90) 0%,
+        color-mix(in srgb, var(--panel) 62%, transparent) 100%) !important;
+    border-color: color-mix(in srgb, var(--border) 58%, var(--glass-edge)) !important;
+  }
+  body.light .teach-hint {
+    border-color: color-mix(in srgb, var(--border) 78%, var(--bg-0)) !important;
+    color: color-mix(in srgb, var(--tab-accent, var(--text)) 48%, #2e2a48) !important;
+  }
+  body.light .fav-empty-icon { opacity: 0.45 !important; color: var(--tab-accent, var(--accent)) !important; }
+  body.light .fav-empty-title { color: var(--tab-accent, var(--text)) !important; }
+  body.light .fav-empty-hint {
+    color: color-mix(in srgb, var(--tab-accent, #38276c) 40%, #3a3658) !important;
+    opacity: 1 !important;
+  }
+  /* Settings choice chips: inactive was nearly invisible on lavender */
+  body.light .sm-toggle-chip:not(.active),
+  body.light .lang-chip:not(.active) {
+    background: color-mix(in srgb, #ffffff 78%, var(--surface)) !important;
+    border: 1px solid color-mix(in srgb, var(--border) 70%, var(--bg-0)) !important;
+    color: color-mix(in srgb, var(--tab-accent, var(--text)) 55%, #3a3658) !important;
+    box-shadow: 0 1px 2px rgba(18,32,60,0.05) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  body.light .sm-toggle-chip:not(.active) .sm-toggle-main,
+  body.light .sm-toggle-chip:not(.active) .sm-toggle-sub {
+    color: inherit !important;
+    opacity: 1 !important;
+  }
+  body.light .sm-toggle-chip:not(.active) .sm-toggle-sub {
+    color: color-mix(in srgb, var(--tab-accent, #38276c) 35%, #5a5478) !important;
+  }
+  /* Road Trip Nautical (light default): unselected tiers/pills were frosted mush */
+  body.light #exRoadTrip.rt-dsn-nautical .rt-tier:not(.sel) {
+    background: linear-gradient(150deg, rgba(255,255,255,.78), rgba(255,255,255,.48)) !important;
+    border-color: color-mix(in srgb, var(--nc-rule, #3a6a68) 88%, #1e3a38) !important;
+  }
+  body.light #exRoadTrip.rt-dsn-nautical .rt-tier .ds {
+    color: color-mix(in srgb, var(--nc-ink, #1e2e2c) 72%, var(--nc-ink-soft, #5a706c)) !important;
+  }
+  body.light #exRoadTrip.rt-dsn-nautical .rt-pill {
+    background: rgba(255,255,255,.62) !important;
+    border-color: color-mix(in srgb, var(--nc-rule, #3a6a68) 88%, #1e3a38) !important;
+  }
+  body.light #exRoadTrip.rt-dsn-nautical .rt-diff:not(.on),
+  body.light #exRoadTrip.rt-dsn-nautical .rt-pill .vr,
+  body.light #exRoadTrip.rt-dsn-nautical .rt-pill .cyc {
+    color: color-mix(in srgb, var(--nc-ink, #1e2e2c) 65%, var(--nc-ink-soft, #5a706c)) !important;
+  }
+
   /* Compact chrome chips */
   body.light .sm-toggle-chip,
   body.light .lang-chip,
@@ -4775,9 +4927,9 @@ body.sg-open #toolSurvivalGuide{
   /* Scales tape: mint family on tools stage (no blue).
      Degrees = mid mint; root+octave anchors = deeper tools teal.
      COMPARE keeps amber for moved notes / arrows. */
-  body.light #exScales .stp-dot { fill: #1a9a78; }
+  body.light #exScales .stp-dot { fill: #0d8a6a; }
   body.light #exScales .stp-name { fill: #0a5c3c; }
-  body.light #exScales .stp-deg { fill: #0d8a6a; }
+  body.light #exScales .stp-deg { fill: #007a5c; }
   body.light #exScales .stp-note.anchor .stp-dot,
   body.light #exScales .stp-note.anchor .stp-name { fill: #007a5c; }
   body.light #exScales .stp-note.anchor .stp-deg { fill: #007a5c; opacity: .95; }
@@ -5204,6 +5356,12 @@ body.sg-open #toolSurvivalGuide{
   }
   body.light .iv-hero-name {
     filter: none !important;
+    /* Dark neon cyan/lavender clip was ~1.5:1 on pale cards. Dense train ink. */
+    background: linear-gradient(135deg, #5238a5, #005570) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
   }
   /* Resting placeholder used to be an em-dash. JS now clears it; keep hide
      rules so bg-clip cannot paint a needle if a dash returns.
@@ -17637,7 +17795,8 @@ body.sg-open #toolSurvivalGuide{
   /* Pitch Match letter hero: real glyph is .ss-slot .n (legacy .ss-note stays hidden). */
   body.light #exSingSing .ss-slot .n,
   body.light #exSingSing .ss-note {
-    background: linear-gradient(150deg, #5238a5, #b8a3ff) !important;
+    /* Was #5238a5->#b8a3ff; light end ~2:1 on white. End at tab-accent. */
+    background: linear-gradient(150deg, #38276c, #5238a5) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     color: transparent !important;
@@ -17645,7 +17804,7 @@ body.sg-open #toolSurvivalGuide{
   }
   body.light #exSingSing .ss-slot.active .n,
   body.light #exSingSing .ss-note {
-    filter: drop-shadow(0 0 14px rgba(99, 86, 158, 0.28)) !important;
+    filter: none !important;
   }
   body.light #exSingSing .ss-slot.hidden .n,
   body.light #exSingSing .ss-note.hidden-q {
@@ -18775,16 +18934,16 @@ body.sg-open #toolSurvivalGuide{
   body.light .pr-ratio-big .pr-ratio-a {
     background: none !important;
     -webkit-background-clip: border-box !important; background-clip: border-box !important;
-    color: #e8926a !important; -webkit-text-fill-color: #e8926a !important;
+    color: #b34a18 !important; -webkit-text-fill-color: #b34a18 !important;
     filter: none !important;
   }
   body.light .pr-ratio-big .pr-ratio-b {
     background: none !important;
     -webkit-background-clip: border-box !important; background-clip: border-box !important;
-    color: #8f7cd4 !important; -webkit-text-fill-color: #8f7cd4 !important;
+    color: #5238a5 !important; -webkit-text-fill-color: #5238a5 !important;
     filter: none !important;
   }
-  body.light .pr-ratio-big .pr-ratio-sep { color: #8a82a8 !important; }
+  body.light .pr-ratio-big .pr-ratio-sep { color: #5a5478 !important; }
   .pr-ratio-big .pr-ratio-sep { color: var(--muted); margin: 0 6px; }
   .pr-ratio-name {
     font-family: 'Fraunces','GlyphFix', serif; font-style: italic;
@@ -35626,7 +35785,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.102';
+const INTONARE_VERSION = '0.210.105';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -72441,7 +72600,7 @@ function rrRenderDiffPickerContent() {
 
     var card = document.createElement('div');
     card.style.cssText = _rrL
-      ? 'background:#ffffff;border:1.5px solid color-mix(in srgb,var(--border-soft) 70%,#c8c4d8);border-radius:12px;transition:border-color .15s,background .15s;overflow:hidden;box-shadow:0 1px 3px rgba(18,32,60,.06);'
+      ? 'background:linear-gradient(165deg,#ffffff,color-mix(in srgb,var(--panel) 90%,#ffffff));border:1.5px solid color-mix(in srgb,var(--border) 78%,var(--bg-0));border-radius:12px;transition:border-color .15s,background .15s;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 8px rgba(18,32,60,.07),0 8px 18px color-mix(in srgb,var(--tab-accent,var(--accent)) 12%,transparent);'
       : 'background:var(--bg-1);border:1.5px solid var(--border-soft);border-radius:12px;transition:border-color .15s,background .15s;overflow:hidden;';
 
     // ── Top row: info left, play button right ──────────────────────────────

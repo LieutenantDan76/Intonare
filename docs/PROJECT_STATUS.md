@@ -37,7 +37,7 @@ instrument anatomy diagrams.
 ## Version
 
 Check CHANGELOG.md for the current version. As of this writing it is
-v0.210.102. The marketing version lives in two declarations in the HTML
+v0.210.105. The marketing version lives in two declarations in the HTML
 file that must stay in sync: an HTML comment near the top (grep
 `INTONARE_VERSION:`) and a JS const. The Settings footer reads the
 const; it is not a third literal. Android Play versionCode / versionName
@@ -83,7 +83,9 @@ As of Sep 2026, recent focus areas were:
 - Light mode: Tools + Train + Tuner/Metro + Secondary locked; depth recipe
   light paint triage through color/canvas writers (v0.210.100); Interval
   answer layout + Chord Ear ink (v0.210.101); Train screen pass RR PLAYING
-  + Pitch Match feedback reserve (v0.210.102). See
+  + Pitch Match feedback reserve (v0.210.102); big hero/poly/scales contrast
+  (v0.210.103); hub/folder card lift (v0.210.104); remaining
+  sheets/settings/favorites/RT nautical wash (v0.210.105). See
   `docs/LIGHT_MODE_CONTRACT.md`. Shot lab regression via `--family all`;
   review hides locked families by default.
 - Drum engine (cymbal/brush synthesis, BPM per-step nudge)
