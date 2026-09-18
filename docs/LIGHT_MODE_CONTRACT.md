@@ -318,20 +318,20 @@ All Fine color families stay locked. This pass adds material only:
 glass frost, tinted elevation, recessed trays so light cards are not a
 sea of flat white boxes. Do not reopen locked hexes; stack depth on top.
 
-## Depth / glass — locked recipe (v0.210.95)
+## Depth / glass — locked recipe (v0.210.97)
 
-Voted in the depth lab: **Apple flush tab + Glassier cards**.
+Voted in the depth lab: **Apple flush tab + clean near-white cards**.
 
 | Layer | Recipe |
 |-------|--------|
 | Tab dock | Flush full-bleed Regular frost (no floating island) |
-| Active tab | Accent-fill pill + top hairline bar (reads on frost) |
-| Content / `.iv-card-v2` | Glassier: top sheen, accent spill in fill, fresnel insets, hue-tinted multi-stop lift, blur 16 / sat 1.55 |
+| Active tab | Colored top line only; no fill pill; no dark radial ::after wash |
+| Content / .iv-card-v2 | Near-white lift + soft sheen; **no** backdrop blur on cards (blur sampled the tinted stage and looked muddy vs lab). Subtle accent spill only. Glass frost stays on chrome/tab/sheets. |
 | Keep-dark | Untouched |
 
 Do not reopen locked Fine hexes. Material only. Lab still has Quiet/Lifted for regression A/B.
 
-Lab: `tools/prototypes/light-mode/depth.html` defaults to Apple + Glassier.
+Lab: tools/prototypes/light-mode/depth.html defaults to Apple + Glassier
+(preview optics); shipping cards follow the near-white no-blur recipe above.
 True refraction / tilt specular left on the table (Safari/Capacitor).
-
 

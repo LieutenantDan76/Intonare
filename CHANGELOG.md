@@ -2,6 +2,25 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.97 — Light cards match lab; tab line-only for real
+
+Tools/Train still looked muddy because a later denser tint override
+(surface/bg-0 mix) beat the near-white card recipe from 0.210.96; removed
+so all tabs share the clean lift. Softened exercise-card accent spill.
+Active tab: hide the dark-mode radial `::after` wash in light so selection
+is the colored top line only (no fill, no glow). Dark mode untouched.
+Locked Fine stage + module literals re-audited PASS (Tools/Train/Tuner/
+Metro/Secondary).
+
+## v0.210.96 — Cleaner light cards; tab line-only; Tonale scrubber
+
+Cards were muddy/dark vs the lab: dropped content-card backdrop blur (it
+sampled the tinted stage), near-white fill + light sheen/lift only. Active
+tab fill pill removed in light; colored top line only. Tonale freq scrubber
+aligned to locked lavender #f0ebf8→#e4dcf0. Dark mode untouched. Audit:
+Tools locked set PASS except that scrubber (now fixed); Train/Tuner/Metro/
+Secondary literals PASS.
+
 ## v0.210.95 — Depth: Apple flush tab + Glassier cards
 
 Light depth pass ships the lab vote: flush Regular glass tab dock (no
