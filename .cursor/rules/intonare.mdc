@@ -19,40 +19,51 @@ app itself. Capacitor + Vite handle native wrapping only.
 - Never use DOTALL regex on this file. It is ~12MB / ~137k lines.
 - Never rewrite or re-save the whole file for a small change. No
   `Write` of full `Intonare.html`. No "read all → edit → write all."
-- Prefer a short Python patch script under `tools/` (exact
-  `old → new` replaces, uniqueness check, then write). Delete the
-  script after a successful run.
+- Prefer a short Python patch via `tools/patch_intonare.py` (bytes-safe
+  exact `old → new`, uniqueness check, integrity gate after write).
+  One-shot scripts under `tools/` are fine if they read/write **bytes**
+  the same way; delete them after a successful run.
+- **Never** `Path.read_text` / `write_text` / text-mode `open` on
+  `Intonare.html` on Windows. That turns CRLF into LF in memory; writing
+  back drops ~140 KB and looks like a “successful” edit. Same class of
+  failure as truncate.
 - Do not put multi-line patches in PowerShell `-c` / inline Python.
   Windows quoting corrupts the patch and can write garbage.
 - After any edit, run `node --check` on every script block to catch
-  syntax errors.
+  syntax errors. Also run
+  `python tools/audits/intonare_html_integrity.py` (or `tools\ship_check.bat`).
 - The marketing version lives in two declarations that must stay in
   sync: the HTML comment (`INTONARE_VERSION:`) and the JS const. The
   Settings footer reads the const; do not treat it as a third literal.
 
-## Preflight (idiot-proof) — truncate hangup
+## Preflight (idiot-proof) — truncate / CRLF hangup
 
-Real failure mode (hit more than once): an editor/tool reports
-success but `Intonare.html` silently shrinks (e.g. ~12MB → ~8MB).
-The app then looks "half broken." Treat that as a hard stop.
+Real failure modes (hit more than once):
+1. An editor/tool reports success but `Intonare.html` silently shrinks
+   (e.g. ~12MB → ~8MB). Truncate.
+2. A text-mode Python rewrite strips CRLF → LF (~140 KB drop). The file
+   still ends with `</html>` and still “works,” then weirdly breaks later.
 
 Before editing `Intonare.html`:
 - Record byte size and that the file ends with `</html>`.
 
 After every edit of `Intonare.html` (including ApplyPatch /
   StrReplace / Python patch):
-- Re-check byte size. Expect ~12MB. A drop of more than ~100KB for a
-  small patch means truncate; do not keep editing that copy.
+- Re-check byte size. Expect ~12MB. A drop of more than ~80KB for a
+  small patch means truncate or newline rewrite; do not keep editing
+  that copy.
 - Confirm the file still ends with `</html>`.
 - Confirm CSS brace count diff is ~0 (`{` vs `}`).
-- Tool "success" is not proof. Size + `</html>` are proof.
+- Tool "success" is not proof. Size + `</html>` + integrity script are
+  proof. `tools\ship_check.bat` runs the integrity gate first.
 
 If size collapsed or `</html>` is missing:
 1. Stop. Do not re-patch the damaged file.
 2. Restore: `git checkout -- Intonare.html` (or the last known good
    commit for that file only).
-3. Re-apply the change with a unique exact replace / Python patch.
-4. Re-run the size / `</html>` / brace checks.
+3. Re-apply with `tools/patch_intonare.py` (or another **bytes-only**
+   exact replace).
+4. Re-run the integrity script / ship_check.
 
 Prefer Node/shell whole-file writes only for tiny top-of-file
 inserts; never treat a truncated copy as success.

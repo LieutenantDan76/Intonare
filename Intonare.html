@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.106 -->
+<!-- INTONARE_VERSION: 0.210.109 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -28394,9 +28394,9 @@ try {
       // thread, which is why opening the tuner and immediately using it felt laggy —
       // you were fighting a queue of sample decodes you hadn't asked for.
       //
-      // It's also redundant: SampleEngine.load() deduplicates and every consumer
-      // already calls it on demand (instrument pickers, the piano tool, etc. all
-      // check isReady/isFailed and load if needed). So the eager pass bought nothing
+      // Redundant with pickers / _samplePlay / practicePlayNote which now kick
+      // SampleEngine.load when a registered voice is idle. Keep the GP warm for
+      // the common first-open path. So the eager multi-instrument pass bought nothing
       // except contention. The piano is the one worth warming, because it's the
       // default voice for reference tones across several surfaces.
       setTimeout(() => {
@@ -35785,7 +35785,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.106';
+const INTONARE_VERSION = '0.210.109';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -41445,6 +41445,13 @@ function _samplePlay(toneId, freq, ctx, dest, vol, dur, when) {
   const _dc = !!((typeof selectedInstrument !== 'undefined' && _DOUBLED_COURSE_TONES[selectedInstrument]) ||
     (typeof currentTool !== 'undefined' && currentTool === 'guitarchords' &&
      typeof chordScaleInstrument !== 'undefined' && _DOUBLED_COURSE_TONES[chordScaleInstrument]));
+  // Request samples whenever a registered voice is still idle. Callers that
+  // only check isReady (charts mid-note, train, etc.) used to stay on synth
+  // forever if nothing else had started the load.
+  try {
+    if (SampleEngine._instruments[toneId] && !SampleEngine.isReady(toneId) && !SampleEngine.isFailed(toneId))
+      SampleEngine.load(toneId);
+  } catch (e) {}
   if (SampleEngine.isReady(toneId)) {
     const delay = t - ctx.currentTime;
     if (delay > 0.005) {
@@ -41527,7 +41534,9 @@ function playRef(key, freq, noteName) {
 function stopRef(key) {
   const r = refOscs[key]; if (!r) return;
   if (r.sound && r.sound.stop) {
-    try { r.sound.stop(); } catch(e) {}
+    // 40ms default in SampleEngine.play.stop clicks on hot piano samples.
+    // Match Interval's soft cut; still snappy enough for finger lifts.
+    try { r.sound.stop(0.1); } catch(e) {}
   }
   if (r.timeoutId) clearTimeout(r.timeoutId);
   delete refOscs[key];
@@ -58644,6 +58653,10 @@ function ivAnswerTap(sem, btn) {
 function practicePlayNote(freq, when, dur, vol) {
   const ctx  = ensurePracticeCtx();
   const toneId = selectedRefTone;
+  // Kick the full set if this voice was never picked in a tone bank (Train /
+  // Scales can play before any picker warm). Same gap class as the tabbed
+  // bank A4-only bug: isReady gate + synth fallback with no load request.
+  try { if (typeof _toneBankWarm === 'function') _toneBankWarm(toneId); } catch (e) {}
   if (SampleEngine.isReady(toneId)) {
     return _samplePlay(toneId, freq, ctx, practiceMasterGain, vol ?? 0.35, dur, when);
   }
@@ -67170,6 +67183,9 @@ const SampleEngine = (function() {
       const x = new XMLHttpRequest();
       x.open('GET', url, true);
       x.responseType = 'arraybuffer';
+      // Without a timeout a single hung request keeps the instrument in
+      // 'loading' forever (stuck status label + synth keys).
+      x.timeout = 20000;
       x.onload = () => {
         const ok = (x.status >= 200 && x.status < 300) ||
                    (x.status === 0 && x.response && x.response.byteLength > 0);
@@ -67177,6 +67193,7 @@ const SampleEngine = (function() {
         else reject(new Error('XHR HTTP ' + x.status + ' ' + url));
       };
       x.onerror = () => reject(new Error('XHR failed ' + url));
+      x.ontimeout = () => reject(new Error('XHR timeout ' + url));
       x.send();
     });
   }
@@ -67189,9 +67206,12 @@ const SampleEngine = (function() {
     window._sampleDiag.lastUrl = url;
 
     let arrayBuf = null;
+    let _fetchTo = null;
 
     try {
-      const resp = await fetch(url);
+      const _ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      _fetchTo = _ac ? setTimeout(function(){ try { _ac.abort(); } catch (e) {} }, 20000) : null;
+      const resp = await fetch(url, _ac ? { signal: _ac.signal } : undefined);
       if (resp.ok) {
         arrayBuf = await resp.arrayBuffer();
         window._sampleDiag.via = 'fetch';
@@ -67210,6 +67230,8 @@ const SampleEngine = (function() {
       } else {
         throw e;
       }
+    } finally {
+      if (_fetchTo) clearTimeout(_fetchTo);
     }
 
     if (arrayBuf === null) {
@@ -67303,8 +67325,15 @@ const SampleEngine = (function() {
       if (_state[id] === 'ready' || _state[id] === 'loading') return _loadPromise[id];
       const desc = _instruments[id];
       if (!desc) return Promise.reject(new Error('Unknown instrument: ' + id));
-      // Skip network fetches in file:// context (HTML preview) — avoids console noise
-      if (location.protocol === 'file:') return Promise.resolve();
+      // Skip network fetches in file:// context (HTML preview) — avoids console noise.
+      // Mark failed + notify so the piano status label does not stick on
+      // "loading samples…" after _pianoSamplesInit forced it visible.
+      if (location.protocol === 'file:') {
+        _state[id] = 'failed';
+        this._notifyStatus(id);
+        if (desc.onFailed) desc.onFailed();
+        return Promise.resolve();
+      }
 
       _state[id] = 'loading';
       this._notifyStatus(id);
@@ -121183,9 +121212,19 @@ function pccPlay() {
 
 <script>
 // ── PWA: Service Worker Registration ─────────────────────────
-// Only register in real HTTP(S) contexts — skips file://, blob://, preview iframes
+// Only register in real HTTP(S) contexts — skips file://, blob://, preview iframes.
+// Never on Capacitor: native already ships assets in the bundle, and a cache-first
+// SW on capacitor:// or https WebViews can pin a stale Intonare.html after updates.
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
   window.addEventListener('load', () => {
+    try {
+      if (typeof isCapacitor === 'function' && isCapacitor()) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          regs.forEach(function(r) { try { r.unregister(); } catch (e) {} });
+        }).catch(function(){});
+        return;
+      }
+    } catch (e) {}
     navigator.serviceWorker.register('./sw.js')
       .then(reg => {
         console.log('[Intonare] Service worker registered, scope:', reg.scope);
@@ -126963,7 +127002,10 @@ theremin: { color:'#22d3ee', sections:[
 };
 // ── AUDIO ────────────────────────────────────────────────────────────
 var actx=null;
-function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}
+// Shared getAudio() only. A second context here fought the rest of the app
+// on iOS (silence / session conflicts). Keep actx as an alias so stop paths
+// that read actx.currentTime stay correct.
+function ac(){actx=getAudio();if(actx.state==='suspended')actx.resume();return actx;}
 // Tracked in _liveTones so stopAllSounds can actually silence what is sounding.
 // This used to create an oscillator, start it and return nothing, so the only
 // thing stopAllSounds could do was clear pending timeouts — every note already

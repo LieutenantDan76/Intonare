@@ -55,6 +55,9 @@ Beatles + guitar_technique packs are his voice reference only.
 
 1. Read `docs/PROJECT_STATUS.md`.
 2. Obey `.cursor/rules/intonare.mdc` (edit safety, preflight, pipeline).
+   Patch `Intonare.html` with `tools/patch_intonare.py` (bytes-safe). Never
+   text-mode rewrite that file on Windows. `tools\ship_check.bat` now runs
+   an HTML integrity gate first (truncate / CRLF-shrink / missing end tag).
 3. For copy or quizzes, read the matching guide under `docs/`.
 4. Changelog is as-you-go, not ship-day only. See Workflow below and
    `intonare.mdc` Version / changelog.

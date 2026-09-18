@@ -19,7 +19,15 @@ From the repo root, or double-click / run:
 tools\ship_check.bat
 ```
 
-Runs: regression sentinel → changelog gate. Exit 0 = green.
+Runs: HTML integrity → regression sentinel → changelog gate. Exit 0 = green.
+
+Integrity gate (`intonare_html_integrity.py`) fails on truncate, sudden
+shrink vs HEAD (including the Windows CRLF→LF rewrite), missing `</html>`,
+or wild brace imbalance. Patch `Intonare.html` with `tools/patch_intonare.py`
+(bytes-safe), not `read_text`/`write_text`.
+
+Web PWA: `sw.js` is network-first for the app shell; Capacitor never
+registers a service worker (native bundle is the source of truth).
 
 ## Needs Python first
 

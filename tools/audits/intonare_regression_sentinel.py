@@ -547,7 +547,7 @@ EXACT_PINS = [
     ('LIGHT', 'Cards redeclare the secondary ink levels',
         'body.light.theme-tuner .card, body.light.theme-tuner .ce-stats-content,', []),
     ('LIGHT', 'A tight ink stays reachable inside a card',
-        '--ink-tight: #2d4058;', []),
+        '--ink-tight: #2c3d4f;', ['--ink-tight: #2d4058;']),
     # ── Ink is pinned for the card, not the floor (v0.113.7) ──────────────
     # Body ink at 7:1 against the FLOOR lands at 13.8-14.6:1 on a CARD, and
     # almost everything in this app is read on a card. Past AAA by a long way,
@@ -599,8 +599,9 @@ EXACT_PINS = [
     # white, is an outline: the white bleeds inward at the stroke edges and eats
     # the contrast of the type it is meant to be lifting.
     ('LIGHT', 'Light titles get one highlight and one shadow, not a halo',
-        'drop-shadow(0 -1px 0 rgba(255,255,255,.45))',
-        ['drop-shadow(0 1px 0 rgba(255,255,255,.55))']),
+        'filter: drop-shadow(0 1px 1px rgba(28,34,60,.18));',
+        ['drop-shadow(0 -1px 0 rgba(255,255,255,.45))',
+         'drop-shadow(0 1px 0 rgba(255,255,255,.55))']),
     # ── Every exercise has a header tagline (v0.112.9) ────────────────────
     # Staff Notes had no entry in the map at all, and Relative Pitch borrowed
     # its CARD subtitle, which is written for a card and twice what the header
@@ -947,7 +948,8 @@ EXACT_PINS = [
     # C .05-.07. Same lightness, wildly different weight -- two modes read heavy
     # and two read washed. Chroma is absolute now, .075 on every floor.
     ('LIGHT', 'Every light floor carries the same chroma',
-        '--bg-0: #bdab75; --bg-1: #c3b17a;', ['--bg-0: #cca932']),
+        '--bg-0: #f3ebd4; --bg-1: #f7f1e0;',
+        ['--bg-0: #bdab75; --bg-1: #c3b17a;', '--bg-0: #cca932']),
     # The daylight wash was 62% white at the top falling to 3% at the bottom,
     # tuned for the old pale floor. On a deeper one it repainted the top of the
     # screen and left the bottom raw, which is both halves of the complaint.
@@ -980,13 +982,15 @@ EXACT_PINS = [
     # If a floor value drifts back toward the old pale set the whole complaint
     # comes back: separation was 1.16:1 in all four modes before this.
     ('LIGHT', 'Light floors sit on the deepened ramp',
-        '--bg-0: #8faedc; --bg-1: #94b4e2;', ['--bg-0: #becfe7', '--bg-0: #97aecf']),
+        '--bg-0: #d8e6f8; --bg-1: #e0ecfa;',
+        ['--bg-0: #8faedc; --bg-1: #94b4e2;', '--bg-0: #becfe7', '--bg-0: #97aecf']),
     # Cards carry real hue and a real internal fall. They shipped once at chroma
     # .012 with a .019 fall against dark's .037/.029, which is most of why light
     # read flat: a third of the colour and two thirds of the modelling.
     ('LIGHT', 'Light cards carry hue and a fall, matched to dark',
-        '--surface: #ddebff; --surface-2: #ecf4ff; --panel: #fbfdff;',
-        ['--surface: #e7edf7', '--surface: #d5dde9']),
+        '--surface: #e6eff8; --surface-2: #f0f6fc; --panel: #f9fbfe;',
+        ['--surface: #ddebff; --surface-2: #ecf4ff; --panel: #fbfdff;',
+         '--surface: #e7edf7', '--surface: #d5dde9']),
     # The accent had to deepen with the floor or it drops under AA on it.
     ('LIGHT', 'Light accent deepened with the floor',
         '--accent: #00546d;\n    --accent-warm: #b34a18;',
@@ -1288,6 +1292,22 @@ EXACT_PINS = [
         "D.via = 'synth fallback';", []),
     ('TONEPOP', 'Single-note fetches are shared, not raced',
         'const _warmPromise = {};', []),
+    # Tabbed tone bank used to call only _tonePreviewPick, which warmed A4 for
+    # the audition and never started SampleEngine.load. Keys stayed on synth;
+    # status stuck on loading. Preview must kick the full warm.
+    ('TONEPOP', 'Tone preview starts the full sample set, not just A4',
+        'Start the FULL sample set here', []),
+    ('AUDIO', 'Survival Guide uses the shared AudioContext',
+        'function ac(){actx=getAudio();',
+        ['function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)()']),
+    ('AUDIO', 'Shared sample play kicks load when a voice is still idle',
+        'Request samples whenever a registered voice', []),
+    ('AUDIO', 'Sample fetches time out so loading cannot hang forever',
+        'x.timeout = 20000;', []),
+    ('AUDIO', 'Interactive stopRef uses a soft release on samples',
+        'try { r.sound.stop(0.1); } catch(e) {}', []),
+    ('SYSTEM', 'Service worker does not register inside Capacitor',
+        'if (typeof isCapacitor === \'function\' && isCapacitor()) {', []),
     ('TONEPOP', 'play() works from a partially loaded instrument',
         'if (!this.isReady(id) && !(_buffers[id] && _buffers[id].size)) return null;',
         ['play(id, midi, ctx, dest, vol, dur, at) {\n      if (!this.isReady(id)) return null;']),

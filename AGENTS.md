@@ -13,14 +13,16 @@
 ## Edit safety (giant HTML file)
 
 - Exact unique string replace only. Never DOTALL regex on `Intonare.html`.
-- Never rewrite the whole file. Prefer a short `tools/_patch_*.py` with
-  uniqueness checks; avoid PowerShell inline Python (quoting corrupts).
+- Never rewrite the whole file. Prefer `tools/patch_intonare.py` (bytes-safe).
+  Never `read_text`/`write_text` on this file on Windows (CRLF→LF shrink).
 - Before/after every edit: confirm ~12MB size and file still ends with
-  `</html>`. Tool "success" is not enough.
-- If size collapses (~12MB → much smaller): stop, `git checkout --
-  Intonare.html`, re-apply. Do not keep patching a truncated copy.
+  `</html>`. Run `python tools/audits/intonare_html_integrity.py` or
+  `tools\ship_check.bat`. Tool "success" is not enough.
+- If size collapses (~12MB → much smaller, or ~140KB CRLF strip): stop,
+  `git checkout -- Intonare.html`, re-apply. Do not keep patching a
+  damaged copy.
 - After JS edits: `node --check` on touched script blocks when practical.
-- Before ship: `tools\ship_check.bat` (sentinel + changelog gate).
+- Before ship: `tools\ship_check.bat` (integrity + sentinel + changelog).
 
 ## Deploy
 

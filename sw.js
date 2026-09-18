@@ -1,8 +1,8 @@
 // Intonare Service Worker
-// Strategy: cache-first, update in background
-// Bump CACHE_NAME version any time you deploy a major update
+// Strategy: network-first for the app shell; cache-first for everything else.
+// Bump CACHE_NAME any time you change this file or want clients to drop old caches.
 
-const CACHE_NAME = 'intonare-v2';   // bumped: v1 never installed, see precache() below
+const CACHE_NAME = 'intonare-v3';
 
 // Files to precache on install
 const PRECACHE = [
@@ -59,16 +59,44 @@ self.addEventListener('activate', event => {
   );
 });
 
-// ── Fetch: serve from cache, update in background ──────────────
+function _isAppShell(request) {
+  if (request.mode === 'navigate') return true;
+  try {
+    const u = new URL(request.url);
+    const path = u.pathname || '';
+    return /\/Intonare\.html$/i.test(path) || path.endsWith('/') || /\/index\.html$/i.test(path);
+  } catch (e) {
+    return false;
+  }
+}
+
+// ── Fetch ──────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
   // Only handle GET requests; skip non-http(s) (e.g. chrome-extension)
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
+  // App shell: network first so a Play/Pages deploy is not stuck on a cached
+  // Intonare.html. Fall back to cache when offline.
+  if (_isAppShell(event.request)) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Everything else (samples, icons, etc.): cache-first, update in background.
   event.respondWith(
     caches.open(CACHE_NAME).then(cache =>
       cache.match(event.request).then(cached => {
-        // Kick off a network fetch regardless — update cache in background
         const networkFetch = fetch(event.request)
           .then(response => {
             if (response && response.ok) {
@@ -78,7 +106,6 @@ self.addEventListener('fetch', event => {
           })
           .catch(() => null);
 
-        // Return cached version immediately if available, otherwise wait for network
         return cached || networkFetch;
       })
     )

@@ -2,6 +2,38 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.109 — Play T-cross: sample stop, load timeouts, SW, light pins
+
+Pre-Play polish on residuals from the sample scan. Interactive `stopRef`
+uses a 0.1s release (was default 40ms) to cut piano key-up clicks. Sample
+fetches time out at 20s (fetch + XHR) so a hung file cannot leave a voice
+stuck on "loading samples…". `file://` preview marks instruments failed
+and clears the status label. Service worker: never register on Capacitor
+(and unregister if one was left); web shell is network-first; cache bumped
+to `intonare-v3`. Light-mode sentinel exact pins re-pinned to the current
+locked floors/cards/title lift. Mandolin stays synth-only in the tone bank
+(by design).
+
+## v0.210.108 — Scan fixes: one AudioContext + train sample load
+
+App-wide sample/audio scan after the tone-bank fix. Survival Guide `ac()`
+no longer creates a second AudioContext (uses shared `getAudio()`). Train /
+Scales / shared `_samplePlay` kick `SampleEngine.load` when a registered
+voice is still idle, so exercises do not stay on synth until a picker is
+opened. Integrity/changelog gates still pass. Left as known residuals:
+service-worker cache-first on https, load hang with no timeout, short
+piano `stopRef` release, mandolin synth-only in the tone bank, light-mode
+sentinel exact-pin drift (unrelated).
+
+## v0.210.107 — HTML integrity gate (anti-truncate / anti-CRLF strip)
+
+Ship check now fails if `Intonare.html` shrinks vs HEAD by more than
+~80KB, drops under 11MB, loses its closing `</html>`, or has a wild
+brace imbalance. That catches truncate and the Windows
+`read_text`→`write_text` CRLF→LF rewrite (~140KB silent shrink) that
+rules alone did not stop. Use `tools/patch_intonare.py` for bytes-safe
+edits. Sentinel pin: tone preview must start the full sample set.
+
 ## v0.210.106 — Tone bank: load full samples on pick
 
 Tabbed tone bank preview only warmed A4, so the audition sounded like the

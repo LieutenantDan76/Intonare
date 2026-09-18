@@ -34,7 +34,16 @@ echo  python: %PY%
 echo ============================================================
 
 echo.
-echo [1/2] Regression sentinel...
+echo [1/3] HTML integrity (size / shrink-vs-HEAD / end tag / braces)...
+"%PY%" tools\audits\intonare_html_integrity.py Intonare.html
+if errorlevel 1 (
+  echo.
+  echo FAILED: HTML integrity. Do not ship. Restore Intonare.html from git.
+  exit /b 1
+)
+
+echo.
+echo [2/3] Regression sentinel...
 "%PY%" tools\audits\intonare_regression_sentinel.py Intonare.html
 if errorlevel 1 (
   echo.
@@ -43,7 +52,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/2] Changelog gate...
+echo [3/3] Changelog gate...
 "%PY%" tools\audits\intonare_changelog_gate.py Intonare.html CHANGELOG.md
 if errorlevel 1 (
   echo.
