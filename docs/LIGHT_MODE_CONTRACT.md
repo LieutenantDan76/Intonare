@@ -318,20 +318,45 @@ All Fine color families stay locked. This pass adds material only:
 glass frost, tinted elevation, recessed trays so light cards are not a
 sea of flat white boxes. Do not reopen locked hexes; stack depth on top.
 
-## Depth / glass — locked recipe (v0.210.97)
+## Depth / glass — locked recipe (v0.210.98)
 
-Voted in the depth lab: **Apple flush tab + clean near-white cards**.
+Voted Apple flush tab; cards settled on **mid-tint lift** (not stark white,
+not muddy brick). Nested controls are recessed trays.
 
 | Layer | Recipe |
 |-------|--------|
 | Tab dock | Flush full-bleed Regular frost (no floating island) |
-| Active tab | Colored top line only; no fill pill; no dark radial ::after wash |
-| Content / .iv-card-v2 | Near-white lift + soft sheen; **no** backdrop blur on cards (blur sampled the tinted stage and looked muddy vs lab). Subtle accent spill only. Glass frost stays on chrome/tab/sheets. |
+| Active tab | Colored top line only; no fill; no dark radial ::after |
+| Content cards | panel/surface-2 mixed with bg-0 (stage hue). No card blur. |
+| Nested chips / drumkit grid | Recessed inset tray (copy groove editor language) |
+| Play / mic / live | No glow emission in light (CSS kill + JS gates). Fill/border/contact only. |
 | Keep-dark | Untouched |
 
-Do not reopen locked Fine hexes. Material only. Lab still has Quiet/Lifted for regression A/B.
+## Done means (stop the Fine-hex loop)
 
-Lab: tools/prototypes/light-mode/depth.html defaults to Apple + Glassier
-(preview optics); shipping cards follow the near-white no-blur recipe above.
+Idle screenshots + locked Fine hexes are **not** enough. Light still feels
+like "dark mode tweaked" when play/mic/nested UI keep neon glows.
+
+A light pass is done only when all of these are true:
+
+1. **One card recipe** wins everywhere (no later denser/stark override).
+2. **Nested controls** sit in recessed trays, not a second white card.
+3. **Emission audit**: no `0 0 Npx` glow / drop-shadow / phosphor text-shadow
+   on light outside keep-dark (CSS *and* JS inline during listen/play).
+4. **Play/mic states** checked: Tuner live, Volume needle, Pitch Match arc,
+   Chordle/Diadle play, drumkit playing, Metro scrubbing.
+5. Mockup / triage Fine votes must match **live CSS cascade winners**, not
+   only token tables.
+
+Also run `python tools/audits/intonare_light_vars.py` for theme tokens,
+ungated JS color/background writers, and canvas paints.
+
+Scanner hint: grep `boxShadow`, `drop-shadow`, `0 0 .*px`, `text-shadow`
+and confirm each either has a `body.light` kill or a `classList.contains('light')`
+gate. Dark mode must keep the glow path.
+
+Lab: `tools/prototypes/light-mode/depth.html`. Shot lab still useful for
+regression; add play-state captures when judging emission.
+
 True refraction / tilt specular left on the table (Safari/Capacitor).
 

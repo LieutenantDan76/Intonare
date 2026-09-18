@@ -37,7 +37,7 @@ instrument anatomy diagrams.
 ## Version
 
 Check CHANGELOG.md for the current version. As of this writing it is
-v0.210.97. The marketing version lives in two declarations in the HTML
+v0.210.100. The marketing version lives in two declarations in the HTML
 file that must stay in sync: an HTML comment near the top (grep
 `INTONARE_VERSION:`) and a JS const. The Settings footer reads the
 const; it is not a third literal. Android Play versionCode / versionName
@@ -81,7 +81,7 @@ wait for Codemagic.
 
 As of Sep 2026, recent focus areas were:
 - Light mode: Tools + Train + Tuner/Metro + Secondary locked; depth recipe
-  locked Apple flush tab + near-white cards (v0.210.97). See
+  light paint triage through color/canvas writers (v0.210.100). See
   `docs/LIGHT_MODE_CONTRACT.md`. Shot lab regression via `--family all`;
   review hides locked families by default.
 - Drum engine (cymbal/brush synthesis, BPM per-step nudge)

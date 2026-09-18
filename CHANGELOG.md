@@ -2,6 +2,36 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.100 — Light paint triage (color / canvas writers)
+
+Not just blooms: audited ungated JS style.color/background writers and
+canvas paints. Fixed page-level residue: Pitch Match arc track (charcoal
+→ border on light); drumkit beat-flash mint → tools teal; Rhythm Reading
+Survival button ink; session goal-over lime → in-tune-lift; Road Trip tun
+changed-row highlight; Chordle/Diadle end name+reveal via diffColorFor;
+Metro BPM wheel ticks use brown ink on light LCD. Keep-dark / CRT / splash
+left alone. Audit helper: tools/audits/intonare_light_vars.py.
+
+## v0.210.99 — Light emission nooks (second pass)
+
+Swept corners missed by the first kill list: piano key decay no longer
+paints coral radial glow in light; Chordle submit + Road Trip lock-bar
+gated; Scales drone rail / latched dots / playhead filters killed;
+drumkit precision pads match step glow kill; Interval SING needle
+contact-only; tuner meter fill/needle bloom off; daily-streak pill breath
+flattened on light; Metro live-tempo rush/drag, ref-pitch toggle dot,
+and Chord ID streak flame drop-shadows cleared. Dark untouched.
+
+## v0.210.98 — Light residue sweep (cards, glow kill, trays)
+
+Stops the Fine-hex / idle-shot loop: one mid-tint card recipe (panel/surface
+mix, not stark #fff and not muddy bg-0 brick); nested chips recessed (Metro
+tabs, subdiv, etc.); drumkit step-grid as inset tray. Dark emission killed in
+light (status live, note-name smear, SingSing drop-shadow, drumkit thumbs,
+BPM scrub glow). JS play/mic glows gated off in light: mic RMS, Volume needle,
+Pitch Match arc, Chordle/Diadle dots/board, carousel, bar/line filters. Dark
+mode untouched. Done means idle + play/mic + nested trays, not hex alone.
+
 ## v0.210.97 — Light cards match lab; tab line-only for real
 
 Tools/Train still looked muddy because a later denser tint override
