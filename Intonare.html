@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.109 -->
+<!-- INTONARE_VERSION: 0.210.110 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -7281,11 +7281,15 @@ body.sg-open #toolSurvivalGuide{
      switching is unaffected. */
   /* !important because the app-wide `*` transition rule otherwise replaces both the
      duration and the delay, which is what let the bar start moving mid-handover. */
+  /* Transform transition ONLY while the launcher is handing off. Leaving
+     transition:transform on forever after settle keeps a compositor layer that
+     rubber-bands with document overscroll, so the tab bar flexes with bounce. */
   body:not(.lnch-settled) .mode-toggle {
     transition: transform .38s cubic-bezier(.22,.61,.36,1) !important;
   }
-  body.lnch-settled .mode-toggle {
-    transition: transform .34s cubic-bezier(.4,0,.2,1) !important;
+  body.lnch-settled:not(.lnch-open) .mode-toggle {
+    transform: none !important;
+    transition: none !important;
   }
   @media (prefers-reduced-motion: reduce) {
     body.lnch-open .mode-toggle, .mode-toggle { transition: none; }
@@ -22162,7 +22166,7 @@ body.sg-open #toolSurvivalGuide{
      long (14+): readable size, wraps to 2 lines instead of shrinking tiny. */
   /* Bottom tab bar */
   .mode-toggle {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+    position: fixed !important; bottom: 0; left: 0; right: 0; z-index: 1000;
     display: flex; align-items: stretch;
     background: var(--bg-0);
     border: none;
@@ -22172,6 +22176,10 @@ body.sg-open #toolSurvivalGuide{
     gap: 0;
     box-shadow: none;
     overflow: hidden;
+    /* Stay pinned to the viewport; do not ride document rubber-band. */
+    transform: none;
+    overscroll-behavior: none;
+    touch-action: manipulation;
   }
   .mode-btn {
     flex: 1; padding: 8px 2px 10px;
@@ -35785,7 +35793,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.109';
+const INTONARE_VERSION = '0.210.110';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -74485,11 +74493,13 @@ function srRender() {
     if (ghost != null) {
       var lastTag = srWrong[srWrong.length - 1];
       var byKey = lastTag[0] === 'm';
-      var ghostAcc = byKey ? (srIsBlack(ghost) ? '#' : '') : (lastTag.slice(1) || '#');
+      // Grid tags are "C", "C#", "Cb". Empty slice means natural; never default
+      // to sharp (that made every natural guess read as you said C sharp).
+      var ghostAcc = byKey ? (srIsBlack(ghost) ? '#' : '') : lastTag.slice(1);
       var ghostLetter = byKey ? rrMidiToStaff(ghost).letter : lastTag[0];
       ghostOpt = {
         midi: ghost,
-        acc: byKey ? ghostAcc : (lastTag.slice(1) || '#'),
+        acc: byKey ? ghostAcc : lastTag.slice(1),
         dx: 34,                 // close enough to read as an aside, not a second answer
         color: '#ff6b6b',
         opacity: 0.85,
@@ -125168,6 +125178,10 @@ document.addEventListener('DOMContentLoaded', () => {
 (function() {
   function setNavH() {
     var nav = document.querySelector('.mode-toggle');
+    // Pin to body so fixed geometry cannot ride .app scroll/overscroll.
+    if (nav && nav.parentElement && nav.parentElement !== document.body) {
+      document.body.appendChild(nav);
+    }
     var h = nav ? Math.round(nav.getBoundingClientRect().height) : 62;
     document.documentElement.style.setProperty('--nav-bar-h', h + 'px');
   }

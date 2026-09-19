@@ -2,6 +2,14 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.110 — Rigid tab bar; Staff Notes natural ghost
+
+Tab bar no longer rides scroll bounce: transform transition only during
+launcher handoff, then locked (`transform: none`); bar portaled to
+`document.body` so fixed geometry cannot follow `.app` overscroll. Staff
+Notes letter-grid ghost label no longer defaults an empty accidental to
+sharp (piano/fretboard paths were already correct).
+
 ## v0.210.109 — Play T-cross: sample stop, load timeouts, SW, light pins
 
 Pre-Play polish on residuals from the sample scan. Interactive `stopRef`
