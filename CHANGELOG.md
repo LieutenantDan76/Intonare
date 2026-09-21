@@ -2,6 +2,68 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.117 — Interval SING: clear hold on silence
+
+Hard silence now zeros `ivSingHoldStart` / `ivtHoldStart` inside
+`ivSingMeterReset` (needle was resetting while the 350ms hold clock kept
+running through dropouts).
+
+## v0.210.116 — Pitch consumers: soft-hold, Interval zone, Sing Sing dt
+
+Second audit pass. Soft-hold now feeds Interval / Sing Sing / Road Trip /
+Simple / string guide / chroma (exercises no longer freeze on brief misses).
+Interval SING accept + needle green match the ±18¢ zone (was ±40¢ grade vs
+±18¢ paint). Light Interval needle uses in-tune/sharp/flat classes. Voice
+bandpass for Interval + Road Trip. Sing Sing grace uses wall-clock dt (not
+fake 40ms ticks). Pitch-history green uses `tuneTolerance()`. Light idle
+needle charcoal (not fake green). Worklet pitch hop disabled. Notch settle
+calls setNoteSilent once. Piano “pure” badge uses `tuneTolerance()`.
+
+## v0.210.115 — Tuner feel: worklet miss fix, hysteresis, coast
+
+Big pass before device test. WebView no longer treats AudioWorklet pitch
+gaps as misses (worklet hops ~21.5 Hz while rAF is ~60 Hz; those -1 frames
+were shredding soft-hold). Pitch always comes from the analyser/native
+buffer; worklet stays onset/tempo only. Soft-hold 420–680ms. Note-letter
+hysteresis (±14¢ past the boundary). Needle spring coasts on stale native
+frames so motion stays 60fps. Tooltip “IN TUNE” matches the green lock
+band. Strobe in-tune uses `tuneTolerance()`. First-note letter 30ms.
+
+## v0.210.114 — Tuner feel: live needle, time-based hold
+
+Pretend-user pass on the “not sensitive / notes die” jank. Root cause: the
+whole display (including the cents needle) waited on an 8-frame note lock
+(~360ms on Android native). Needle/cents/Hz now update every live frame;
+only the big note letter waits (45ms first note, 100ms on change). Soft-hold
+and auto-detect use milliseconds so ~22 Hz native and ~60 Hz WebView match
+(~320–520ms soft-hold, 450ms instrument detect). Dimmed note hold 2.2s→2.8s;
+needle spring slightly snappier.
+
+## v0.210.113 — Tuner meter: spring, lock band, color accuracy
+
+Cents needle uses a real spring (omega/zeta settle) instead of a soft EMA.
+Green lock band on the track matches `tuneTolerance()` (±5¢ instrument /
+±18¢ voice). Meter ticks, tip needle, restrained phosphor; pitch-history
+green zone and stroke thresholds align to ±5¢; strobe sharp uses token red.
+Light idle note no longer paints a clipped gradient bar. Interval SING
+zone widened to ±18¢. Prototype: `tools/prototypes/tuner-meter.html`.
+
+## v0.210.112 — PitchEngine: confidence, profiles, one loop
+
+Shared PitchEngine owns detect → median/EMA → confidence → soft-hold for
+Tuner, Tools match, Interval, Pitch Match, Road Trip, and Vocal Range.
+Instrument-family bandpass profiles (guitar / bass / voice / wide) plus
+freqRange accept bands from INSTRUMENTS. Vocal Range no longer runs a
+second detectPitch (feeds from processAudio). Scales mic chrome hidden
+(no pitch consumer). Offline pitch bench still green.
+
+## v0.210.111 — Pitch regression bench (measurement layer)
+
+Offline FFT-YIN corpus + harness under `tools/pitch/`: synthetic WAVs,
+median-cents / dropout gates, app knob pins, optional baseline compare.
+Run `tools\pitch_bench.bat`. First slice of the mic audit: numbers before
+more detector tweaks. No runtime mic path changes.
+
 ## v0.210.110 — Rigid tab bar; Staff Notes natural ghost
 
 Tab bar no longer rides scroll bounce: transform transition only during

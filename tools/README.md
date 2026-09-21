@@ -60,7 +60,11 @@ Suggested ship order once Python works:
 3. `python tools/audits/intonare_changelog_gate.py`
 4. spelling + backup + stopall if the change touched those areas
 
-## Keep — `tools/quiz/` (only when editing quiz packs)
+## Keep — `tools/pitch/` (before detector changes)
+
+Offline FFT-YIN regression: synth corpus, cents/dropout gates, app knob
+pins. Run `tools\pitch_bench.bat` (or see `tools/pitch/README.md`).
+Not part of daily `ship_check.bat` yet; run when touching mic / pitch.
 
 Pack build/audit/voice/Italian tools + `QUIZ_TOOLING.md` + `QUIZ_VOICE.md`.
 Do **not** overwrite `docs/QUIZ_BLURB_GUIDE.md` or `docs/AI_COPY_GUIDE.md`;

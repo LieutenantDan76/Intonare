@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.110 -->
+<!-- INTONARE_VERSION: 0.210.117 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -3823,19 +3823,39 @@ body.sg-open #toolSurvivalGuide{
     -webkit-background-clip: text !important; background-clip: text !important;
     filter: none !important;
   }
+  body.light .tuner-screen .tuner-screen-note.silent {
+    background: none !important;
+    -webkit-background-clip: border-box !important; background-clip: border-box !important;
+    color: rgba(30,44,80,0.34) !important;
+    -webkit-text-fill-color: rgba(30,44,80,0.34) !important;
+    filter: none !important;
+  }
   body.light .tuner-screen .tuner-screen-cents-badge { color: #3d4a70 !important; }
   body.light .tuner-screen .tuner-screen-cents-badge.in-tune { color: #264c00 !important; }
   body.light .tuner-screen .tuner-screen-cents-badge.sharp   { color: #8f2416 !important; }
   body.light .tuner-screen .tuner-screen-cents-badge.flat    { color: #163b8f !important; }
   /* meter: track, center, ticks, needle, FLAT/SHARP head — dark-on-light for C2 */
   body.light .tuner-screen .tuner-screen-meter-head { color: #3a4360 !important; }
-  body.light .tuner-screen .meter-track { background: #8b9cb6 !important; box-shadow: inset 0 1px 3px rgba(18,34,64,.34) !important; }
-  body.light .tuner-screen .meter-center { background: rgba(25,40,75,.35) !important; }
+  body.light .tuner-screen .meter-track {
+    background:
+      repeating-linear-gradient(90deg,
+        transparent 0, transparent calc(12.5% - 0.5px),
+        rgba(25,40,75,.14) calc(12.5% - 0.5px),
+        rgba(25,40,75,.14) calc(12.5% + 0.5px),
+        transparent calc(12.5% + 0.5px), transparent 25%),
+      #8b9cb6 !important;
+    box-shadow: inset 0 1px 3px rgba(18,34,64,.34) !important;
+  }
+  body.light .tuner-screen .meter-center { background: rgba(25,40,75,.42) !important; }
+  body.light .tuner-screen .meter-zone {
+    background: rgba(47,92,0,.18) !important;
+    box-shadow: inset 0 0 0 1px rgba(47,92,0,.32) !important;
+  }
   body.light .tuner-screen .tick-label { color: rgba(30,44,80,.78) !important; }
-  body.light .tuner-screen .meter-needle { background: #264c00 !important; box-shadow: 0 0 6px rgba(38,76,0,.45) !important; }
-  body.light .tuner-screen .meter-needle.in-tune { background: #2f5c00 !important; }
-  body.light .tuner-screen .meter-needle.sharp { background: #8f2416 !important; }
-  body.light .tuner-screen .meter-needle.flat { background: #163b8f !important; }
+  body.light .tuner-screen .meter-needle { background: #3a4360 !important; color: #3a4360 !important; box-shadow: none !important; }
+  body.light .tuner-screen .meter-needle.in-tune { background: #2f5c00 !important; color: #2f5c00 !important; }
+  body.light .tuner-screen .meter-needle.sharp { background: #8f2416 !important; color: #8f2416 !important; }
+  body.light .tuner-screen .meter-needle.flat { background: #163b8f !important; color: #163b8f !important; }
   /* STROBE button + OCT label — deep on light C2 */
   body.light .tuner-screen .tuner-strobe-btn {
     background: rgba(0,92,120,.10) !important;
@@ -5282,12 +5302,24 @@ body.sg-open #toolSurvivalGuide{
     color: rgba(58,47,106,.48) !important;
   }
 
-  /* Interval SING needle: box-shadow used currentColor (= dark ink) → charcoal aura. */
+  /* Interval SING needle: class colors (JS sets .in-tune/.sharp/.flat). Idle = soft blue. */
   body.light .iv-sing-needle {
     background: #3d7ecf !important;
     color: #3d7ecf !important;
     box-shadow: 0 1px 3px rgba(61, 126, 207, 0.28) !important;
     filter: none !important;
+  }
+  body.light .iv-sing-needle.in-tune {
+    background: #2f5c00 !important; color: #2f5c00 !important;
+    box-shadow: 0 1px 3px rgba(47, 92, 0, 0.28) !important;
+  }
+  body.light .iv-sing-needle.sharp {
+    background: #8f2416 !important; color: #8f2416 !important;
+    box-shadow: 0 1px 3px rgba(143, 36, 22, 0.28) !important;
+  }
+  body.light .iv-sing-needle.flat {
+    background: #163b8f !important; color: #163b8f !important;
+    box-shadow: 0 1px 3px rgba(22, 59, 143, 0.28) !important;
   }
   body.light .iv-sing-meter {
     background: color-mix(in srgb, var(--panel) 88%, #dce6f8) !important;
@@ -9304,22 +9336,35 @@ body.sg-open #toolSurvivalGuide{
     position: relative;
   }
   .meter-center { position: absolute; left: 50%; top: -6px; bottom: -6px; width: 1px; background: var(--border); transform: translateX(-50%); }
+  .meter-zone {
+    position: absolute; top: 1px; bottom: 1px; left: 45%; width: 10%;
+    border-radius: 3px; pointer-events: none;
+    background: color-mix(in srgb, var(--in-tune) 18%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--in-tune) 32%, transparent);
+  }
   .meter-fill {
     position: absolute; height: 100%; top: 0;
-    border-radius: 4px;
-    transition: all 0.08s ease-out;
-    box-shadow: 0 0 14px currentColor, 0 0 4px currentColor;
+    border-radius: 4px; opacity: 0.52;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: none;
   }
   .meter-needle {
-    position: absolute; top: -6px; width: 3px; height: 20px;
-    background: var(--text); border-radius: 2px;
+    position: absolute; top: -8px; width: 2px; height: 26px;
+    background: var(--text); border-radius: 1px 1px 0 0;
     transform: translateX(-50%);
-    transition: left 0.14s ease-out, background 0.2s, box-shadow 0.2s;
-    box-shadow: 0 0 6px rgba(238,240,247,0.5);
+    transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+    box-shadow: 0 0 6px rgba(238,240,247,0.35);
+    color: var(--text);
   }
-  .meter-needle.in-tune { background: var(--in-tune); box-shadow: 0 0 12px var(--in-tune); }
-  .meter-needle.sharp   { background: var(--sharp); }
-  .meter-needle.flat    { background: var(--flat); }
+  .meter-needle::after {
+    content: ''; position: absolute; left: 50%; bottom: -3px;
+    transform: translateX(-50%);
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+  }
+  .meter-needle.in-tune { background: var(--in-tune); color: var(--in-tune); box-shadow: 0 0 12px color-mix(in srgb, var(--in-tune) 55%, transparent); }
+  .meter-needle.sharp   { background: var(--sharp); color: var(--sharp); box-shadow: 0 0 10px color-mix(in srgb, var(--sharp) 45%, transparent); }
+  .meter-needle.flat    { background: var(--flat); color: var(--flat); box-shadow: 0 0 10px color-mix(in srgb, var(--flat) 45%, transparent); }
   .meter-ticks { display: flex; justify-content: space-between; margin-top: 10px; padding: 0 1px; }
   .tick-label { font-size: 9px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
@@ -9461,16 +9506,15 @@ body.sg-open #toolSurvivalGuide{
       inset 0 -1px  5px rgba(0,0,0,0.5),
       inset  2px 0  8px rgba(0,0,0,0.4),
       inset -2px 0  8px rgba(0,0,0,0.4),
-      inset 0 0 50px rgba(182,242,91,0.14);
+      inset 0 0 36px rgba(182,242,91,0.11);
     transition: box-shadow 0.4s ease;
   }
   .tuner-screen-inner {
     transition: box-shadow 0.5s ease;
   }
 
-  /* ── Spring needle — CSS transition handles the physics feel ──
-     The spring effect comes from JS, CSS just smooths jitter */
-  .meter-needle { transition: left 0.0s linear; } /* JS drives position directly */
+  /* ── Spring needle — JS spring integrates position; CSS must not lag left ── */
+  .meter-needle { transition: background 0.18s, box-shadow 0.18s, color 0.18s; }
 
   /* ─── PANEL HEAD ─── */
   .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -12761,37 +12805,47 @@ body.sg-open #toolSurvivalGuide{
   }
   /* override global meter-track/needle for screen context */
   .tuner-screen-meter .meter-track {
-    background: rgba(255,255,255,0.04);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset;
+    height: 10px;
+    background:
+      repeating-linear-gradient(90deg,
+        transparent 0, transparent calc(12.5% - 0.5px),
+        rgba(255,255,255,0.07) calc(12.5% - 0.5px),
+        rgba(255,255,255,0.07) calc(12.5% + 0.5px),
+        transparent calc(12.5% + 0.5px), transparent 25%),
+      rgba(255,255,255,0.045);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.07) inset;
   }
   .tuner-screen-meter .meter-center {
-    background: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.22);
+    width: 1px; top: -5px; bottom: -5px;
+  }
+  .tuner-screen-meter .meter-zone {
+    background: rgba(182,242,91,0.14);
+    box-shadow: inset 0 0 0 1px rgba(182,242,91,0.28);
   }
   .tuner-screen-meter .meter-ticks { position: relative; z-index: 3; }
   .tuner-screen-meter .tick-label {
     font-size: 8px; color: rgba(255,255,255,0.45); letter-spacing: 0;
     font-family: 'JetBrains Mono','GlyphFix', monospace;
   }
-  /* meter fill glow on screen */
-  .tuner-screen-meter .meter-fill {
-    box-shadow: 0 0 10px currentColor, 0 0 4px currentColor;
-  }
-  /* needle on screen — brighter, more glowy */
+  .tuner-screen-meter .meter-fill { box-shadow: none; opacity: 0.48; }
+  /* needle on screen — phosphor, not neon blob */
   .tuner-screen-meter .meter-needle {
-    background: rgba(255,255,255,0.7);
-    box-shadow: 0 0 8px rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.78);
+    color: rgba(255,255,255,0.78);
+    box-shadow: 0 0 8px rgba(255,255,255,0.22);
   }
   .tuner-screen-meter .meter-needle.in-tune {
-    background: var(--in-tune);
-    box-shadow: 0 0 14px var(--in-tune), 0 0 4px var(--in-tune);
+    background: var(--in-tune); color: var(--in-tune);
+    box-shadow: 0 0 12px rgba(182,242,91,0.42);
   }
   .tuner-screen-meter .meter-needle.sharp {
-    background: var(--sharp);
-    box-shadow: 0 0 10px var(--sharp);
+    background: var(--sharp); color: var(--sharp);
+    box-shadow: 0 0 10px rgba(255,82,82,0.38);
   }
   .tuner-screen-meter .meter-needle.flat {
-    background: var(--flat);
-    box-shadow: 0 0 10px var(--flat);
+    background: var(--flat); color: var(--flat);
+    box-shadow: 0 0 10px rgba(122,175,255,0.38);
   }
   /* strobe is a background layer — no layout changes needed */
 
@@ -16755,8 +16809,8 @@ body.sg-open #toolSurvivalGuide{
 
   /* sing meter + lock-in */
   .iv-sing-meter { position:relative; height:52px; border-radius:10px; background:var(--bg-1); border:1px solid var(--border-soft); overflow:hidden; margin-top:4px; }
-  .iv-sing-zone { position:absolute; top:0; bottom:0; left:44%; width:12%; background:rgba(182,242,91,.12); border-left:1px solid rgba(182,242,91,.3); border-right:1px solid rgba(182,242,91,.3); }
-  .iv-sing-needle { position:absolute; top:6px; bottom:6px; width:3px; border-radius:2px; background:var(--flat); left:50%; box-shadow:0 0 10px currentColor; transition:left .1s linear, background .2s; }
+  .iv-sing-zone { position:absolute; top:0; bottom:0; left:41%; width:18%; background:rgba(182,242,91,.12); border-left:1px solid rgba(182,242,91,.3); border-right:1px solid rgba(182,242,91,.3); }
+  .iv-sing-needle { position:absolute; top:6px; bottom:6px; width:2px; border-radius:1px; background:var(--flat); left:50%; transform:translateX(-50%); box-shadow:0 0 8px currentColor; transition:left .1s linear, background .2s, box-shadow .2s; }
   .iv-sing-lock { position:relative; height:6px; border-radius:3px; background:var(--bg-1); border:1px solid var(--border-soft); margin-top:8px; overflow:hidden; }
   .iv-sing-lock-fill { position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg,rgba(182,242,91,.6),var(--in-tune)); transition:width .1s linear; }
   .iv-sing-lock.done .iv-sing-lock-fill { background:var(--in-tune); box-shadow:0 0 12px rgba(182,242,91,.5); }
@@ -29713,6 +29767,7 @@ try {
             <div class="meter-wrap">
               <div id="needleView">
                 <div class="meter-track">
+                  <div class="meter-zone" id="meterZone" aria-hidden="true"></div>
                   <div class="meter-center"></div>
                   <div class="meter-fill" id="meterFill"></div>
                   <div class="meter-needle" id="meterNeedle" style="left:50%"></div>
@@ -35793,7 +35848,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.110';
+const INTONARE_VERSION = '0.210.117';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -36211,12 +36266,20 @@ function _isVoiceSource() {
 function tuneTolerance() { return _isVoiceSource() ? TOL_VOICE : TOL_INSTRUMENT; }
 let _micAGCOn = false;          // true if the device forced auto-gain on (see startMic)
 let _micHP = null, _micLP = null; // bandpass filter nodes on the mic input
-let _pitchMissFrames = 0;      // consecutive no-pitch frames; small grace before going silent
-const PITCH_MISS_TOLERANCE = 4; // frames of silence allowed before the display drops out
-let _noteCandidate = null, _noteCandidateFrames = 0;
-let _detectCandidate = null, _detectCandidateFrames = 0;
-const NOTE_LOCK_FRAMES = 8; // frames a note must hold before display switches
-const DETECT_LOCK_FRAMES = 20; // frames auto-detect must agree before switching instrument
+let _pitchMissFrames = 0;      // consecutive no-pitch frames (diagnostic / legacy mirror)
+let _pitchMissSince = 0;       // ms timestamp of first miss in a run (0 = none)
+// Soft-hold windows are TIME-based so native (~22 Hz) and WebView (~60 Hz) feel the same.
+// Old frame counts (4 / +3) were ~67ms web vs ~185ms native — that asymmetry is what
+// made Android feel like notes died early while desktop felt sticky.
+const PITCH_SOFT_HOLD_MS = 420;   // keep last pitch published (decay tails)
+const PITCH_EXT_HOLD_MS  = 680;   // extra while confidence still warm
+let _noteCandidate = null, _noteCandidateSince = 0;
+let _detectCandidate = null, _detectCandidateSince = 0;
+// Note LETTER commits after this; needle/cents stay live every frame (see updateLiveMeter).
+const NOTE_LOCK_MS = 90;          // note change
+const NOTE_FIRST_MS = 30;         // first note after silence — snappy pickup
+const DETECT_LOCK_MS = 450;       // auto-instrument
+const NOTE_HYST_CENTS = 14;       // stay on letter until past boundary by this much
 
 // ── CUE VOLUME SCALING ───────────────────────────────────────────────────────
 // Set by cue dispatchers before playing; buildLimiterChain applies it only
@@ -39519,7 +39582,7 @@ function selectFamily(famKey) {
     selectedInstrument = 'auto';
     // Reset detected instrument — go back to listening state, not holding last result
     detectedInstrument = null;
-    _detectCandidate = null; _detectCandidateFrames = 0;
+    _detectCandidate = null; _detectCandidateSince = 0;
     buildStringGrid(null);
     if (mode === 'tools') buildRefPitchGrid();
   }
@@ -41764,7 +41827,7 @@ function updateIntervalDisplay(detectedFreq) {
   const diff = actualCents - targetCents;
 
   nameEl.textContent = intervalText;
-  nameEl.className = 'piano-interval-name' + (Math.abs(diff) < 8 ? ' pure' : '');
+  nameEl.className = 'piano-interval-name' + (Math.abs(diff) < tuneTolerance() ? ' pure' : '');
 
   // Plain-English helper
   let plain;
@@ -41777,7 +41840,7 @@ function updateIntervalDisplay(detectedFreq) {
   plainEl.textContent = plain;
 
   centsEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '¢ ' + (temperament === 'just' ? 'just' : 'equal');
-  centsEl.className = 'piano-cents-badge ' + (Math.abs(diff) < 8 ? 'in' : diff > 0 ? 'sharp' : 'flat');
+  centsEl.className = 'piano-cents-badge ' + (Math.abs(diff) < tuneTolerance() ? 'in' : diff > 0 ? 'sharp' : 'flat');
   _ivalLastShown = performance.now();   // for dropout hold
   tcRenderCRT('live', { diff, rounded, detectedFreq });
 }
@@ -41787,26 +41850,23 @@ function updateIntervalDisplay(detectedFreq) {
 // ═══════════════════════════════════════════════
 // Hysteresis thresholds — wider exit bands prevent flickering at boundaries
 // Enter band / Exit band per state
-const _TOOLTIP_BANDS = {
-  //        enter   exit
-  perfect: [  8,    12  ],   // ±3 in-tune, ±8 nearly — leave if >12
-  close:   [ 18,    22  ],   // leave if >22
-  off:     [ Infinity, Infinity ],
-};
 let _tooltipCurCls = null;  // currently displayed state, for hysteresis
 
 function getCentsTooltip(cents) {
   const abs = Math.abs(cents); const sharp = cents > 0;
-  // Hysteresis: if already in a state, require exit threshold to leave it
-  if (_tooltipCurCls === 'perfect' && abs <= _TOOLTIP_BANDS.perfect[1])
-    return abs <= 3
+  const tol = (typeof tuneTolerance === 'function') ? tuneTolerance() : 5;
+  const nearly = Math.max(tol + 3, 8);
+  const closeExit = Math.max(nearly + 10, 22);
+  // Hysteresis: stay "perfect" until past nearly+4 so the verdict does not chatter
+  if (_tooltipCurCls === 'perfect' && abs <= nearly + 4)
+    return abs <= tol
       ? { cls:'perfect', arrow:'', text:t('tooltip_in_tune') }
       : { cls:'perfect', arrow:'', text:t('tooltip_nearly') };
-  if (_tooltipCurCls === 'close' && abs <= _TOOLTIP_BANDS.close[1])
+  if (_tooltipCurCls === 'close' && abs <= closeExit)
     return sharp ? { cls:'close', arrow:'', text:t('tooltip_little_lower') } : { cls:'close', arrow:'', text:t('tooltip_little_higher') };
-  // Fresh entry thresholds
-  if (abs <= 3)  return { cls:'perfect', arrow:'', text:t('tooltip_in_tune') };
-  if (abs <= 8)  return { cls:'perfect', arrow:'', text:t('tooltip_nearly') };
+  // Fresh entry — IN TUNE matches green lock band (tol), not a tighter secret band
+  if (abs <= tol) return { cls:'perfect', arrow:'', text:t('tooltip_in_tune') };
+  if (abs <= nearly) return { cls:'perfect', arrow:'', text:t('tooltip_nearly') };
   if (abs <= 18) return sharp ? { cls:'close', arrow:'', text:t('tooltip_little_lower') } : { cls:'close', arrow:'', text:t('tooltip_little_higher') };
   if (abs <= 35) return sharp ? { cls:'off', arrow:'', text:t('tooltip_lower') } : { cls:'off', arrow:'', text:t('tooltip_higher') };
   return sharp ? { cls:'off', arrow:'', text:t('tooltip_much_lower') } : { cls:'off', arrow:'', text:t('tooltip_much_higher') };
@@ -41992,6 +42052,31 @@ function freqToNote(freq) {
   const oct = Math.floor((rounded + 57) / 12);
   return { name: NOTE_NAMES[idx], idx, oct, cents };
 }
+// Display naming with hysteresis: do not flip A↔A♯ at ±49¢. Stick until the
+// pitch crosses the boundary by NOTE_HYST_CENTS. Clears on hard silence.
+let _dispNoteSticky = null;
+function _noteNameOctMidi(name, oct) {
+  const i = NOTE_NAMES.indexOf(name);
+  if (i < 0) return null;
+  return (oct + 1) * 12 + i;
+}
+function freqToDisplayNote(freq) {
+  const raw = freqToNote(freq);
+  if (!raw) { _dispNoteSticky = null; return null; }
+  if (_dispNoteSticky) {
+    const midi = _noteNameOctMidi(_dispNoteSticky.name, _dispNoteSticky.oct);
+    if (midi != null && refPitch > 0) {
+      const f0 = refPitch * Math.pow(2, (midi - 69) / 12);
+      const c = 1200 * Math.log2(freq / f0);
+      if (Math.abs(c) < 50 + NOTE_HYST_CENTS) {
+        return { name: _dispNoteSticky.name, idx: _dispNoteSticky.idx, oct: _dispNoteSticky.oct, cents: c };
+      }
+    }
+  }
+  _dispNoteSticky = { name: raw.name, idx: raw.idx, oct: raw.oct };
+  return raw;
+}
+function clearDisplayNoteSticky() { _dispNoteSticky = null; }
 function autoDetectInstrument(freq) {
   if (!freq || freq < 20) return null;
   let best = null, bestScore = Infinity;
@@ -42042,6 +42127,9 @@ const _fFr = new Float64Array(_FFT_SIZE), _fFi = new Float64Array(_FFT_SIZE);
 const _fCr = new Float64Array(_FFT_SIZE), _fCi = new Float64Array(_FFT_SIZE);
 const _fPs = new Float64Array(4097);          // prefix sums of squares
 const _fYin = new Float32Array(2048);
+// Last accepted (or rejected) YIN clarity 0..1 for PitchEngine confidence.
+// Side channel so call sites keep hz|-1 without a breaking API change.
+let _lastYinClarity = 0;
 
 function detectPitch(buf, sr) {
   const N = buf.length, H = Math.floor(N / 2);
@@ -42112,14 +42200,189 @@ function detectPitch(buf, sr) {
     tau++;
   }
   // Relaxed clarity reject (was 0.12) — fewer dropouts on harmonically rich signals.
-  if (tau === H || yin[tau] >= 0.18) return -1;
+  if (tau === H || yin[tau] >= 0.18) { _lastYinClarity = 0; return -1; }
+  const _yinAt = yin[tau];
   if (tau > 0 && tau < H - 1) {
     const s0 = yin[tau-1], s1 = yin[tau], s2 = yin[tau+1];
     const den = 2 * (2*s1 - s2 - s0);
     if (Math.abs(den) > 1e-12) tau += (s2 - s0) / den;
   }
+  // Map YIN dip to confidence: 0 at reject threshold, 1 at a perfect dip.
+  _lastYinClarity = Math.max(0, Math.min(1, 1 - (_yinAt / 0.18)));
   return sr / tau;
 }
+
+// ═══════════════════════════════════════════════
+// PITCH ENGINE — shared detect → smooth → confidence
+// ═══════════════════════════════════════════════
+// One pipeline for Tuner, Tools match, Interval, Pitch Match, Road Trip, and
+// Vocal Range. processAudio owns the mic loop; consumers read PitchEngine state
+// (and still get the legacy smoothedFreq / smoothedCents mirrors).
+const PITCH_PROFILES = {
+  guitar: { id: 'guitar', hp: 70,  lp: 4500, fMin: 70,  fMax: 1400 },
+  bass:   { id: 'bass',   hp: 28,  lp: 1800, fMin: 28,  fMax: 520  },
+  voice:  { id: 'voice',  hp: 60,  lp: 3500, fMin: 70,  fMax: 1500 },
+  wide:   { id: 'wide',   hp: 25,  lp: 4500, fMin: 20,  fMax: 4500 }
+};
+function pitchActiveProfile() {
+  try {
+    var inst = (typeof selectedInstrument !== 'undefined') ? selectedInstrument : 'auto';
+    var tool = (typeof currentTool !== 'undefined') ? currentTool : null;
+    var ex   = (typeof currentExercise !== 'undefined') ? currentExercise : null;
+    if (tool === 'vocalrange' || ex === 'singsing' || ex === 'interval' || ex === 'roadtrip')
+      return PITCH_PROFILES.voice;
+    if (tool === 'tonal' && typeof droneActive !== 'undefined' && droneActive) return PITCH_PROFILES.voice;
+    var p = PITCH_PROFILES.wide;
+    var fam = null;
+    if (inst && inst !== 'auto' && typeof INSTRUMENTS === 'object' && INSTRUMENTS[inst]) {
+      fam = INSTRUMENTS[inst].fam;
+    }
+    if (fam === 'voice') p = PITCH_PROFILES.voice;
+    else if (fam === 'bass' || inst === 'doublebass' || inst === 'tuba' || inst === 'bassoon') p = PITCH_PROFILES.bass;
+    else if (fam === 'guitar' || fam === 'uke' || fam === 'plucked') p = PITCH_PROFILES.guitar;
+    // Tighten accept band from the instrument table; keep filter cutoffs stable
+    // so pitchSyncFilters does not rebuild every frame.
+    if (inst && INSTRUMENTS[inst] && INSTRUMENTS[inst].freqRange) {
+      var fr = INSTRUMENTS[inst].freqRange;
+      return {
+        id: p.id, hp: p.hp, lp: p.lp,
+        fMin: Math.max(p.fMin, fr[0] * 0.9),
+        fMax: Math.min(p.fMax, fr[1] * 1.1)
+      };
+    }
+    return p;
+  } catch (e) {}
+  return PITCH_PROFILES.wide;
+}
+let _nfProfile = null;
+function pitchSyncFilters(sr) {
+  var p = pitchActiveProfile();
+  var rate = sr || (_nativeMicActive ? (_nativeSampleRate || 44100)
+              : (typeof audioCtx !== 'undefined' && audioCtx ? audioCtx.sampleRate : 44100));
+  try {
+    if (_micHP) _micHP.frequency.value = p.hp;
+    if (_micLP) _micLP.frequency.value = p.lp;
+  } catch (e) {}
+  try {
+    if (typeof _biquadHP === 'function') {
+      if (!_nfProfile || _nfProfile.hp !== p.hp || _nfProfile.lp !== p.lp || _nfBuiltSr !== rate) {
+        _nfHP = _biquadHP(p.hp, rate, 0.707);
+        _nfLP = _biquadLP(p.lp, rate, 0.707);
+        _nfBuiltSr = rate;
+        _nfProfile = { hp: p.hp, lp: p.lp };
+        if (typeof _nfReset === 'function') _nfReset();
+      }
+    }
+  } catch (e) {}
+  return p;
+}
+
+const PitchEngine = {
+  freq: 0,
+  cents: 0,
+  confidence: 0,
+  rms: 0,
+  rawHz: -1,
+  clarity: 0,
+  silent: true,
+  locked: false,
+  profileId: 'wide',
+  reset: function () {
+    this.freq = 0; this.cents = 0; this.confidence = 0; this.rms = 0;
+    this.rawHz = -1; this.clarity = 0; this.silent = true; this.locked = false;
+    smoothedFreq = 0; smoothedCents = 0;
+    _pitchHistIdx = 0; _pitchMissFrames = 0; _pitchMissSince = 0;
+  },
+  ingest: function (freq, rms, opts) {
+    opts = opts || {};
+    this.rms = rms || 0;
+    this.rawHz = freq;
+    this.clarity = (typeof _lastYinClarity === 'number') ? _lastYinClarity : 0;
+    var profile = opts.profile || pitchActiveProfile();
+    this.profileId = profile.id;
+    var fMin = profile.fMin, fMax = profile.fMax;
+
+    if (!(freq > fMin && freq < fMax)) {
+      return this._miss();
+    }
+    if (typeof droneActive !== 'undefined' && droneActive && activeRefFreq > 0 && smoothedFreq > 0) {
+      var dCents = Math.abs(1200 * Math.log2(freq / smoothedFreq));
+      if (dCents > 1100 && dCents < 1300) {
+        _pitchMissFrames = 0;
+        this.locked = true;
+        this.silent = false;
+        return this.snapshot();
+      }
+    }
+    _pitchMissFrames = 0;
+    _pitchMissSince = 0;
+
+    _pitchHist[_pitchHistIdx % _PITCH_HIST_N] = freq;
+    _pitchHistIdx++;
+    var medFreq = freq;
+    var spreadCents = 0;
+    if (_pitchHistIdx >= _PITCH_HIST_N) {
+      _pitchSort[0]=_pitchHist[0]; _pitchSort[1]=_pitchHist[1]; _pitchSort[2]=_pitchHist[2];
+      _pitchSort.sort(function(a,b){ return a-b; });
+      spreadCents = 1200 * Math.log2(_pitchSort[2] / _pitchSort[0]);
+      medFreq = (spreadCents > 40) ? _pitchSort[1] : freq;
+    }
+
+    var alpha60 = 0.12;
+    if (smoothedFreq > 0) {
+      var centsDelta = Math.abs(1200 * Math.log2(medFreq / smoothedFreq));
+      if (centsDelta > 800) alpha60 = 0.03;
+      else if (centsDelta > 300) alpha60 = 0.06;
+      else if (centsDelta < 25) alpha60 = 0.22;
+    }
+    var alpha = _rateAlpha(alpha60);
+    smoothedFreq = smoothedFreq === 0 ? medFreq : smoothedFreq * (1 - alpha) + medFreq * alpha;
+    this.freq = smoothedFreq;
+
+    var stab = spreadCents <= 0 ? 1 : Math.max(0, Math.min(1, 1 - (spreadCents / 80)));
+    var conf = 0.55 * this.clarity + 0.45 * stab;
+    this.confidence = Math.max(this.confidence * 0.35, conf);
+    this.silent = false;
+    this.locked = false;
+    return this.snapshot();
+  },
+  _miss: function () {
+    _pitchMissFrames++;
+    var now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+    if (!_pitchMissSince) _pitchMissSince = now;
+    var elapsed = now - _pitchMissSince;
+    if (elapsed < PITCH_SOFT_HOLD_MS && this.freq > 0) {
+      this.confidence *= 0.78;
+      this.locked = true;
+      this.silent = false;
+      return this.snapshot();
+    }
+    if (this.confidence > 0.28 && this.freq > 0 && elapsed < PITCH_EXT_HOLD_MS) {
+      this.confidence *= 0.62;
+      this.locked = true;
+      this.silent = false;
+      return this.snapshot();
+    }
+    _pitchMissSince = 0;
+    this.freq = 0; this.cents = 0; this.confidence = 0;
+    this.silent = true; this.locked = false;
+    smoothedFreq = 0; smoothedCents = 0; _pitchHistIdx = 0;
+    return this.snapshot();
+  },
+  snapshot: function () {
+    return {
+      freq: this.freq,
+      cents: this.cents,
+      confidence: this.confidence,
+      rms: this.rms,
+      rawHz: this.rawHz,
+      clarity: this.clarity,
+      silent: this.silent,
+      locked: this.locked,
+      profileId: this.profileId
+    };
+  }
+};
 
 // ═══════════════════════════════════════════════
 // LIVE TEMPO (SPECTRAL-FLUX ONSET DETECTION)
@@ -42541,11 +42804,7 @@ class IntonareAnalysisProcessor extends AudioWorkletProcessor {
       this.ringPos = (this.ringPos + 1) % this.fftSize;
       this.hopCount++;
       if (this.hopCount >= this.hopSize) { this.hopCount = 0; this.processFrame(); }
-      // Pitch ring (4096-point, hop 2048)
-      this.pitchRing[this.pitchRingPos] = sample;
-      this.pitchRingPos = (this.pitchRingPos + 1) % this.pitchSize;
-      this.pitchHopCount++;
-      if (this.pitchHopCount >= this.pitchHopSize) { this.pitchHopCount = 0; this.detectPitchYIN(); }
+      // Pitch YIN disabled in worklet — main thread owns pitch (avoids -1 miss storms).
     }
     return true;
   }
@@ -42565,6 +42824,7 @@ async function _initAnalysisWorklet(ctx) {
     URL.revokeObjectURL(url);
     _workletNode = new AudioWorkletNode(ctx, 'intonare-analysis-processor');
     _workletNode.port.onmessage = function(e) {
+      // Onset/tempo only. Pitch messages ignored (main-thread detectPitch).
       if (e.data.type === 'onset') {
         onsetTimes.push(e.data.time);
         if (onsetTimes.length > _SF_MAX_ONSETS) onsetTimes.shift();
@@ -42809,7 +43069,7 @@ function toggleAutoDetect() {
   try { localStorage.setItem('intonare_autodetect', autoDetectEnabled ? '1' : '0'); } catch(e) {}
   if (!autoDetectEnabled) {
     // Disabled — clear detection state, show collapsed disabled grid
-    _detectCandidate = null; _detectCandidateFrames = 0;
+    _detectCandidate = null; _detectCandidateSince = 0;
     detectedInstrument = null;
     if (selectedInstrument === 'auto') {
       buildStringGrid(null);
@@ -42849,6 +43109,32 @@ function _clearHold() {
   document.body.classList.remove('note-held');
   if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; }
 }
+
+// Soft-hold / live: keep exercise needles and string guide moving on brief dropouts.
+function _feedHeldPitchConsumers(freq, rms) {
+  if (!(freq > 0)) return;
+  var activeInst = (selectedInstrument === 'auto') ? detectedInstrument : selectedInstrument;
+  try {
+    if (activeInst && mode === 'tuner') updateStringPanel(freq, activeInst);
+    if (mode === 'tuner' && progState && progState.tunerFace === 'simple')
+      updateSimpleFace(freq, activeInst || null);
+    if (mode === 'tools') updateIntervalDisplay(freq);
+    if (mode === 'practice' && currentExercise === 'interval') {
+      if (typeof ivtActive !== 'undefined' && ivtActive) ivtCheckPitch(freq);
+      else ivCheckPitch(freq);
+    }
+    if (mode === 'practice' && currentExercise === 'singsing' && !ssPlayingRef) ssCheckPitch(freq);
+    if (mode === 'practice' && currentExercise === 'roadtrip' && typeof rtOnPitch === 'function')
+      rtOnPitch(freq);
+    if (mode === 'tools' && currentTool === 'vocalrange' && typeof vrFeedPitch === 'function')
+      vrFeedPitch(freq, rms);
+    updateTooltip(smoothedCents || 0, true);
+    var ni = (typeof freqToDisplayNote === 'function') ? freqToDisplayNote(freq) : null;
+    if (ni) updateChromaStrip(ni.idx, ni.oct, (smoothedCents != null ? smoothedCents : ni.cents));
+  } catch (e) {}
+}
+
+let _notchSilentArmed = false;
 
 function processAudio() {
   if (!isListening) { animFrame = null; return; }
@@ -42906,7 +43192,9 @@ function processAudio() {
   if (_fresh) _lastDetectSeq = _nativeRingSeq;
 
   if (!_fresh) {
-    // No new audio — skip detection entirely, keep the loop alive.
+    // No new audio — skip detection, but keep the needle spring integrating at
+    // rAF so native (~22 Hz audio) does not look stepped.
+    if (typeof _coastNeedle === 'function') _coastNeedle();
     animFrame = requestAnimationFrame(processAudio);
     return;
   }
@@ -42941,100 +43229,38 @@ function processAudio() {
     // come back it recenters on clean data instead of averaging in the garbage.
     const _settleNow = (typeof performance !== 'undefined' ? performance.now() : Date.now());
     if (_notchSettleUntil && _settleNow < _notchSettleUntil) {
-      smoothedFreq = 0;
-      smoothedCents = 0;
-      _pitchHistIdx = 0;
-      setNoteSilent();
+      if (!_notchSilentArmed) {
+        _notchSilentArmed = true;
+        if (typeof PitchEngine !== 'undefined') PitchEngine.reset();
+        else { smoothedFreq = 0; smoothedCents = 0; _pitchHistIdx = 0; }
+        setNoteSilent();
+      }
       animFrame = requestAnimationFrame(processAudio);
       return;
     }
-    // When the worklet is active, pitch detection runs on the audio thread
-    // and posts results. Use that instead of running detectPitch here.
-    let freq;
-    if (_workletReady && _workletPitchFresh) {
-      freq = _workletPitchFreq;
-      _workletPitchFresh = false;
-    } else if (!_workletReady) {
-      freq = detectPitch(buf, _sr);
-    } else {
-      freq = -1;  // worklet active but no fresh reading this frame
-    }
-    if (freq > 20 && freq < 4500) {
-      // Drone-context octave guard: when a reference drone is playing and the new
-      // reading is a near-CLEAN octave from the current smoothed pitch (≈1200¢ ±
-      // a semitone), it's almost certainly the detector grabbing a harmonic/sub-
-      // harmonic rather than a real octave leap by the singer. Drop the frame so
-      // the readout holds the note the user is actually singing. Only active with
-      // a drone (tonal-center) — the plain tuner keeps its original behavior.
-      if (typeof droneActive !== 'undefined' && droneActive && activeRefFreq > 0 && smoothedFreq > 0) {
-        const dCents = Math.abs(1200 * Math.log2(freq / smoothedFreq));
-        if (dCents > 1100 && dCents < 1300) {
-          _pitchMissFrames = 0;          // treat as held, not silence
-          animFrame = requestAnimationFrame(processAudio);
-          return;
-        }
-      }
-      _pitchMissFrames = 0;   // got a valid pitch — reset the silence grace counter
-
-      // ── MEDIAN PRE-FILTER (before the EMA) ──────────────────────────────────
-      // An EMA cannot reject an outlier — it AVERAGES IT IN, just with less weight,
-      // so one bad frame still drags the reading and takes several frames to bleed
-      // out. A median simply DISCARDS it. This is the standard fix for singing pitch
-      // contours, where detectors reliably throw occasional wrong frames (harmonic
-      // grabs, transients, breath). 5-frame window: long enough to outvote a single
-      // bad reading, short enough to add only ~40ms of lag at 60fps — well under the
-      // ~100ms where latency starts to feel sluggish.
-      _pitchHist[_pitchHistIdx % _PITCH_HIST_N] = freq;
-      _pitchHistIdx++;
-      let medFreq = freq;
-      if (_pitchHistIdx >= _PITCH_HIST_N) {
-        _pitchSort[0]=_pitchHist[0]; _pitchSort[1]=_pitchHist[1]; _pitchSort[2]=_pitchHist[2];
-        _pitchSort.sort((a,b)=>a-b);
-        // ADAPTIVE: the median costs ~70 ms of lag (half its 139 ms window at the true
-        // ~21.6 Hz frame rate) and that was the single biggest contributor to the tuner
-        // feeling slow — bigger than the EMA. But it's only EARNING that lag when the
-        // readings actually disagree. When the last 3 frames are tight (the normal case
-        // now that the FFT detector is accurate and every frame is genuinely new audio),
-        // the median is just delay for nothing, so take the newest reading instead.
-        // Spread > 40¢ means something is genuinely unstable → use the median, pay the lag.
-        const _spreadCents = 1200 * Math.log2(_pitchSort[2] / _pitchSort[0]);
-        medFreq = (_spreadCents > 40) ? _pitchSort[1] : freq;
-      }
-
-      // Outlier-resistant EMA. The alphas below are expressed at the ORIGINAL 60 Hz
-      // tuning and then RE-SOLVED for whatever rate detection is actually running at,
-      // so the *feel* is identical on both paths. This matters enormously: native
-      // detection runs at frameSize/sampleRate (2048/44100 = 21.5 Hz, measured 21.6),
-      // not 60 Hz, and a fixed alpha at 21.6 Hz has a time constant 2.8x LONGER than
-      // intended — the octave-jump damping alone became a 1.5-SECOND lag. That isn't
-      // smoothing, it's paralysis, and it's a large part of why the readout felt both
-      // sluggish and jumpy at once.
-      //   tau  = -1 / (rate * ln(1 - alpha))          [time constant at a given rate]
-      //   a'   = 1 - exp(-1 / (rate' * tau))          [alpha preserving tau at rate']
-      let alpha60 = 0.12;
-      if (smoothedFreq > 0) {
-        const centsDelta = Math.abs(1200 * Math.log2(medFreq / smoothedFreq));
-        if (centsDelta > 800) alpha60 = 0.03; // near-octave jump — almost certainly an overtone
-        else if (centsDelta > 300) alpha60 = 0.06; // large jump — reduce trust
-        // Near the target the EMA can afford to be brisker: small deltas are real
-        // pitch movement, not noise, and over-damping here is what makes a tuner
-        // feel laggy and vague rather than precise.
-        else if (centsDelta < 25) alpha60 = 0.22;
-      }
-      const alpha = _rateAlpha(alpha60);
-      smoothedFreq = smoothedFreq === 0 ? medFreq : smoothedFreq * (1 - alpha) + medFreq * alpha;
+    _notchSilentArmed = false;
+    // Pitch always from this buffer (native ring or AnalyserNode). The analysis
+    // worklet owns onset/tempo only. Using its pitch here posted -1 on ~2/3 of
+    // rAF ticks (worklet hops ~21.5 Hz, rAF ~60 Hz) and shredded soft-hold.
+    let freq = detectPitch(buf, _sr);
+    if (_workletPitchFresh) _workletPitchFresh = false;
+    // Shared PitchEngine: median + EMA + confidence + soft-hold + profile band.
+    pitchSyncFilters(_sr);
+    const _pe = PitchEngine.ingest(freq, rms, { profile: pitchActiveProfile() });
+    if (!_pe.silent && _pe.freq > 0) {
       let activeInst;
       if (selectedInstrument === 'auto') {
         if (autoDetectEnabled) {
           const d = autoDetectInstrument(smoothedFreq);
-          // Debounce: require DETECT_LOCK_FRAMES consecutive agreement before switching
+          const _detNow = (typeof performance !== 'undefined') ? performance.now() : Date.now();
           if (d === _detectCandidate) {
-            _detectCandidateFrames++;
+            /* keep since */
           } else {
             _detectCandidate = d;
-            _detectCandidateFrames = 1;
+            _detectCandidateSince = _detNow;
           }
-          if (_detectCandidateFrames >= DETECT_LOCK_FRAMES && d && detectedInstrument !== d) {
+          if (d && detectedInstrument !== d
+              && (_detNow - _detectCandidateSince) >= DETECT_LOCK_MS) {
             detectedInstrument = d;
             buildStringGrid(d);
             if (mode === 'tools') buildRefPitchGrid();
@@ -43044,40 +43270,38 @@ function processAudio() {
         activeInst = detectedInstrument;
       } else activeInst = selectedInstrument;
 
-      const noteInfo = freqToNote(smoothedFreq);
+      const noteInfo = freqToDisplayNote(smoothedFreq);
       if (noteInfo) {
-        // Smooth the cents value — matches needle alpha so they track together
-        // The needle EMA was the ONE piece of smoothing left running a fixed alpha
-        // (0.18, tuned for 60 Hz rAF). Detection now runs at the true native frame
-        // rate (~21.6 Hz), so each frame was landing with ~3x too much weight — the
-        // needle jerked to every individual reading. That is the shaky gauge.
-        // Re-solve it for the real rate, exactly like the frequency EMA.
+        // Rate-aware cents EMA (same tau on native ~22 Hz and WebView ~60 Hz).
         const _cAlpha = _rateAlpha(0.18);
         smoothedCents = smoothedCents === null ? noteInfo.cents
           : smoothedCents * (1 - _cAlpha) + noteInfo.cents * _cAlpha;
         const displayNote = { ...noteInfo, cents: smoothedCents };
 
-        // Candidate lock: only switch displayed note after NOTE_LOCK_FRAMES consecutive agreement
+        // LIVE every frame: needle, cents, Hz. Note LETTER waits for a short lock
+        // so octave flip-flops do not thrash the big glyph — but the gauge never freezes.
+        updateLiveMeter(displayNote, smoothedFreq);
+
         const candidateKey = noteInfo.name + noteInfo.oct;
-        if (candidateKey === _noteCandidate) {
-          _noteCandidateFrames++;
-        } else {
+        const _lockNow = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+        if (candidateKey !== _noteCandidate) {
           _noteCandidate = candidateKey;
-          _noteCandidateFrames = 1;
+          _noteCandidateSince = _lockNow;
         }
-        if (_noteCandidateFrames >= NOTE_LOCK_FRAMES) {
-          updateNoteDisplay(displayNote, smoothedFreq);
-          // Cache for auto-hold and clear any active hold
+        const _nameEl = document.getElementById('noteName');
+        const _awaitingFirst = !_lastNoteKey || (_nameEl && _nameEl.classList.contains('silent'));
+        const _needMs = _awaitingFirst ? NOTE_FIRST_MS : NOTE_LOCK_MS;
+        if ((_lockNow - _noteCandidateSince) >= _needMs) {
+          commitNoteName(displayNote, smoothedFreq);
           _heldNote = displayNote; _heldFreq = smoothedFreq; _heldCents = smoothedCents;
           if (document.body.classList.contains('note-held')) _clearHold();
         }
-        // Cents meter + tooltip update every frame (stays live)
         updateTooltip(smoothedCents, true);
         updateChromaStrip(noteInfo.idx, noteInfo.oct, smoothedCents);
         // Feed high-rate vibrato buffer (runs at animation frame rate, ~60fps)
         if (vibratoOn) vibratoFeed(smoothedCents);
         // Strobe — driven every animation frame for smooth rotation
-        if (strobeMode) drawStrobe(smoothedCents, Math.abs(smoothedCents) < 5, true);
+        if (strobeMode) drawStrobe(smoothedCents, Math.abs(smoothedCents) < tuneTolerance(), true);
         if (activeInst && mode === 'tuner') updateStringPanel(smoothedFreq, activeInst);
         if (mode === 'tuner' && progState.tunerFace === 'simple') updateSimpleFace(smoothedFreq, activeInst || null);
         if (mode === 'tools') updateIntervalDisplay(smoothedFreq);
@@ -43092,55 +43316,63 @@ function processAudio() {
         if (mode === 'practice' && currentExercise === 'singsing' && !ssPlayingRef) ssCheckPitch(smoothedFreq);
         if (mode === 'practice' && currentExercise === 'roadtrip' && typeof rtOnPitch === 'function') rtOnPitch(smoothedFreq);
         window.lastCents = smoothedCents;
+        window.lastPitchConfidence = (typeof _pe !== 'undefined') ? _pe.confidence : 1;
+        if (mode === 'tools' && currentTool === 'vocalrange' && typeof vrFeedPitch === 'function') {
+          vrFeedPitch(smoothedFreq, rms);
+        }
       }
       document.getElementById('statusDot').className = 'status-dot active';
-      document.getElementById('statusText').textContent = t('mic_live');
+      document.getElementById('statusText').textContent =
+        (typeof _pe !== 'undefined' && (_pe.confidence < 0.45 || _pe.locked))
+          ? (t('mic_live') + ' · …') : t('mic_live');
       const _sp = document.getElementById('statusPill');
       if (_sp) _sp.classList.add('live');
-    } else {
-      // Brief grace period: a single dropped frame shouldn't blank the tuner.
-      // Only go silent after several consecutive misses.
-      _pitchMissFrames++;
-      if (_pitchMissFrames < PITCH_MISS_TOLERANCE) {
-        // Keep the last live reading on screen; just feed the strobe a neutral frame.
-        if (strobeMode) drawStrobe(smoothedCents || 0, false, true);
-        animFrame = requestAnimationFrame(processAudio);
-        return;
+    } else if (_pe.locked && _pe.freq > 0) {
+      // Soft-hold: confidence draining but last pitch still published.
+      if (_heldNote && smoothedFreq > 0) {
+        const _holdNote = { ..._heldNote, cents: (smoothedCents != null ? smoothedCents : _heldCents) };
+        updateLiveMeter(_holdNote, smoothedFreq);
       }
-      smoothedFreq = 0;
-      smoothedCents = 0;
-      _pitchHistIdx = 0;   // drop the median window too — stale frames from the
-                           // previous note must not bleed into the next one
+      if (strobeMode) drawStrobe(smoothedCents || 0, false, true);
+      document.getElementById('statusDot').className = 'status-dot active';
+      document.getElementById('statusText').textContent = t('mic_live') + ' · …';
+      const _spHold = document.getElementById('statusPill');
+      if (_spHold) _spHold.classList.add('live');
+      _feedHeldPitchConsumers(smoothedFreq, rms);
+    } else {
+      // Hard silence after grace + confidence drain.
       document.getElementById('statusDot').className = 'status-dot';
       const _sp2 = document.getElementById('statusPill');
       if (_sp2) _sp2.classList.remove('live');
-      _noteCandidate = null; _noteCandidateFrames = 0;
-      _detectCandidate = null; _detectCandidateFrames = 0;
-      if (vibratoOn) { _vibStartHold(); }  // hold last reading; buffer kept for resume
+      _noteCandidate = null; _noteCandidateSince = 0;
+      _detectCandidate = null; _detectCandidateSince = 0;
+      if (typeof clearDisplayNoteSticky === 'function') clearDisplayNoteSticky();
+      if (vibratoOn) { _vibStartHold(); }
 
-      // Strobe: keep animating slowly when silent
       if (strobeMode) drawStrobe(0, false, false);
 
-      // ── Auto-hold: freeze last note display briefly, then fade independently ──
       if (_heldNote && !document.body.classList.contains('note-held')) {
         _activateHold();
-        // Note display clears after short hold (1.2s), independent of stability graph
         if (_holdTimer) clearTimeout(_holdTimer);
         _holdTimer = setTimeout(() => {
           _clearHold();
           setNoteSilent();
-        }, 2200);
+        }, 2800);
       } else if (!_heldNote) {
         setNoteSilent();
       }
 
-      // Chroma light clears immediately on silence — its own timer
       updateChromaStrip(-1);
-
-      // Verdict clears on its own short timer — independent of note-hold
       updateTooltip(0, false);
       if (mode === 'tuner') sfOnSilence();
       if (mode === 'tools') updateIntervalDisplay(null);
+      if (mode === 'tools' && currentTool === 'vocalrange' && typeof vrFeedPitch === 'function') {
+        vrFeedPitch(0, rms);
+      }
+      if (mode === 'practice' && currentExercise === 'singsing' && typeof ssResetNeedle === 'function')
+        ssResetNeedle();
+      if (mode === 'practice' && currentExercise === 'interval' && typeof ivSingMeterReset === 'function')
+        ivSingMeterReset();
     }
   }
 
@@ -43149,13 +43381,49 @@ function processAudio() {
 
 let _wasInTune = false;
 let _lastNoteKey = null;  // tracks note changes for pulse
-// Spring needle state
-let _needleSmoothed = 50;  // heavily smoothed needle position
-const NEEDLE_ALPHA  = 0.18; // EMA weight — low = heavy smoothing, glides to pitch
+// Critically-damped-ish spring needle (mass + damping), not a plain EMA.
+// omega/zeta chosen for ~220ms settle with a hair of overshoot — Cleartune-class.
+let _needlePos = 50;
+let _needleVel = 0;
+let _needleLastT = 0;
+let _needleTargetPct = 50;
+let _needleCoastInTune = false;
+let _needleCoastCents = 0;
+const NEEDLE_OMEGA = 28;
+const NEEDLE_ZETA  = 0.93;
+
+function _syncMeterZone() {
+  const zone = document.getElementById('meterZone');
+  if (!zone) return;
+  const tol = (typeof tuneTolerance === 'function') ? tuneTolerance() : 5;
+  const w = Math.max(4, Math.min(40, (tol / 50) * 100));
+  zone.style.left = (50 - w / 2) + '%';
+  zone.style.width = w + '%';
+}
+
+function _coastNeedle() {
+  _updateNeedle(_needleTargetPct, _needleCoastInTune, _needleCoastCents);
+}
 
 function _updateNeedle(targetPct, inTune, cents) {
-  _needleSmoothed = _needleSmoothed * (1 - NEEDLE_ALPHA) + targetPct * NEEDLE_ALPHA;
-  const pos = _needleSmoothed;
+  _needleTargetPct = targetPct;
+  _needleCoastInTune = !!inTune;
+  _needleCoastCents = cents;
+
+  const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+  let dt = _needleLastT ? (now - _needleLastT) / 1000 : 0.016;
+  _needleLastT = now;
+  if (dt > 0.05) dt = 0.016;
+  dt = Math.min(0.033, Math.max(0.008, dt));
+
+  const x = _needlePos - targetPct;
+  const a = -2 * NEEDLE_ZETA * NEEDLE_OMEGA * _needleVel - NEEDLE_OMEGA * NEEDLE_OMEGA * x;
+  _needleVel += a * dt;
+  _needlePos += _needleVel * dt;
+  _needlePos = Math.max(2, Math.min(98, _needlePos));
+  const pos = _needlePos;
+
+  _syncMeterZone();
 
   const needle = document.getElementById('meterNeedle');
   if (needle) needle.style.left = pos.toFixed(2) + '%';
@@ -43258,10 +43526,11 @@ function getTransposedNote(noteName, oct) {
   return { name: m[1], oct: parseInt(m[2]) };
 }
 
-function updateNoteDisplay(note, freq) {
+// Live gauge every detection frame. Note letter commits separately (commitNoteName)
+// so a short lock cannot freeze the needle — that freeze is what felt "insensitive."
+function updateLiveMeter(note, freq) {
   const c = note.cents, abs = Math.abs(c), inTune = abs < tuneTolerance();
 
-  // Cancel any in-progress silent fade and restore readout
   if (_silentFadeTimer) { clearTimeout(_silentFadeTimer); _silentFadeTimer = null; }
   const readoutEl = document.getElementById('tunerReadout');
   if (readoutEl) readoutEl.classList.remove('fading');
@@ -43271,21 +43540,39 @@ function updateNoteDisplay(note, freq) {
   document.getElementById('tunerCentsBadge')?.classList.remove('idle');
   document.getElementById('octaveBadge')?.classList.remove('idle');
 
-  // Persistent green glow while in tune, fades out when leaving
   const screenInner = document.querySelector('.tuner-screen-inner');
   if (screenInner) screenInner.classList.toggle('in-tune-glow', inTune);
-
   _wasInTune = inTune;
 
+  const freqEl = document.getElementById('freqDisplay');
+  if (freqEl && freq > 0) freqEl.textContent = freq.toFixed(1);
+  const centsBadge = document.getElementById('tunerCentsBadge');
+  if (centsBadge) {
+    centsBadge.textContent = (c >= 0 ? '+' : '') + c.toFixed(1) + '¢';
+    centsBadge.className = 'tuner-screen-cents-badge ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
+  }
+  const centsEl = document.getElementById('centsDisplay');
+  if (centsEl) centsEl.textContent = (c >= 0 ? '+' : '') + c.toFixed(1) + '¢';
+
+  const pct = Math.max(2, Math.min(98, 50 + (c / 50) * 50));
+  const needle = document.getElementById('meterNeedle');
+  if (needle) {
+    _updateNeedle(pct, inTune, c);
+    needle.className = 'meter-needle ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
+  }
+  // Tint the big note if one is already showing (without committing a new letter).
+  const nameEl = document.getElementById('noteName');
+  if (nameEl && !nameEl.classList.contains('silent') && nameEl.textContent !== '—') {
+    nameEl.className = 'tuner-screen-note ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
+  }
+}
+
+function commitNoteName(note, freq) {
   const nameEl = document.getElementById('noteName');
   if (!nameEl) return;
   nameEl.dataset.rawNote = note.name;
-
-  // Apply transposition offset to displayed note (not to pitch detection)
   const transposed = getTransposedNote(note.name, note.oct);
   const newNoteKey = transposed.name + transposed.oct;
-
-  // Note change pulse — brief scale pop when note changes
   if (newNoteKey !== _lastNoteKey) {
     _lastNoteKey = newNoteKey;
     nameEl.classList.remove('note-change');
@@ -43293,25 +43580,16 @@ function updateNoteDisplay(note, freq) {
     nameEl.classList.add('note-change');
     setTimeout(() => nameEl.classList.remove('note-change'), 200);
   }
-
+  const c = note.cents, abs = Math.abs(c), inTune = abs < tuneTolerance();
   nameEl.textContent = getDisplayNote(transposed.name).replace('#','♯');
-  document.getElementById('octaveBadge').textContent = transposed.oct;
-  document.getElementById('freqDisplay').textContent = freq.toFixed(1);
-  // cents badge (new screen layout)
-  const centsBadge = document.getElementById('tunerCentsBadge');
-  if (centsBadge) {
-    centsBadge.textContent = (c >= 0 ? '+' : '') + c.toFixed(1) + '¢';
-    centsBadge.className = 'tuner-screen-cents-badge ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
-  }
-  // legacy centsDisplay — may still exist in ref tools mode
-  const centsEl = document.getElementById('centsDisplay');
-  if (centsEl) centsEl.textContent = (c >= 0 ? '+' : '') + c.toFixed(1) + '¢';
-  const pct = Math.max(2, Math.min(98, 50 + (c/50)*50));
-  const needle = document.getElementById('meterNeedle');
-  if (!needle) return;
-  _updateNeedle(pct, inTune, c);
   nameEl.className = 'tuner-screen-note ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
-  needle.className = 'meter-needle ' + (inTune ? 'in-tune' : c > 0 ? 'sharp' : 'flat');
+  const octEl = document.getElementById('octaveBadge');
+  if (octEl) octEl.textContent = transposed.oct;
+}
+
+function updateNoteDisplay(note, freq) {
+  updateLiveMeter(note, freq);
+  commitNoteName(note, freq);
 }
 
 let _silentFadeTimer = null;
@@ -43348,9 +43626,12 @@ function _applyNoteSilentState() {
   const centsEl = document.getElementById('centsDisplay');
   if (centsEl) centsEl.textContent = '0¢';
   // Reset needle and state
-  _needleSmoothed = 50;
+  _needlePos = 50; _needleVel = 0; _needleLastT = 0;
+  _needleTargetPct = 50; _needleCoastInTune = false; _needleCoastCents = 0;
   _lastNoteKey = null;
   _wasInTune = false;
+  if (typeof clearDisplayNoteSticky === 'function') clearDisplayNoteSticky();
+  _syncMeterZone();
   _tooltipCurCls = null;
   const si = document.querySelector('.tuner-screen-inner');
   if (si) si.classList.remove('in-tune-glow');
@@ -43436,12 +43717,10 @@ async function startMic(_opts) {
   // iOS, which has no native plugin yet). Keep these in sync with the MIC_TOOLS /
   // MIC_EXERCISES lists (enterTool / enterExercise) — a surface that shows the mic
   // and reads pitch belongs here.
-  //   vocalrange: its own detection loop (vrStartDetect) — native for stable holds.
+  //   vocalrange: shares PitchEngine via processAudio → vrFeedPitch.
   //   volume: level meter only, no pitch; native buys nothing but harmless/uniform.
-  //   'scales' is deliberately ABSENT: it shows the mic button (which is a global
-  //     header control, present on plenty of surfaces that do not read pitch) but
-  //     its own detection was removed, so it consumes no pitch and routing it
-  //     native would gain nothing. It is a TOOL as of v0.132.3, not an exercise.
+  //   'scales' is absent: no pitch consumer. Mic chrome is also hidden there
+  //     (MIC_TOOLS) so the header does not imply a live detector.
   const _NATIVE_SURFACES_TOOLS     = ['tonal', 'piano', 'vocalrange', 'volume'];
   const _NATIVE_SURFACES_EXERCISES = ['interval', 'singsing', 'roadtrip'];
   const _NATIVE_SURFACES_MODES     = ['tuner', 'tools', 'metronome'];
@@ -43459,6 +43738,8 @@ async function startMic(_opts) {
       await _requestMicPermission();
       await _nativeMicStart();
       _micAGCOn = false;        // native path keeps AGC off (per config); loudness gates valid
+      if (typeof pitchSyncFilters === 'function') pitchSyncFilters(_nativeSampleRate || 44100);
+      if (typeof PitchEngine !== 'undefined') PitchEngine.reset();
       isListening = true;
       const hvw = document.getElementById('headerVolWrap');
       if (hvw) hvw.classList.add('active');
@@ -43560,10 +43841,11 @@ async function startMic(_opts) {
     // above the highest note we tune. Cleaner signal in → fewer dropouts, without
     // having to loosen the detector thresholds further. (chordbook does the same.)
     try {
+      var _pp = (typeof pitchActiveProfile === 'function') ? pitchActiveProfile() : { hp:25, lp:4500 };
       _micHP = audioCtx.createBiquadFilter();
-      _micHP.type = 'highpass'; _micHP.frequency.value = 25; _micHP.Q.value = 0.707;
+      _micHP.type = 'highpass'; _micHP.frequency.value = _pp.hp; _micHP.Q.value = 0.707;
       _micLP = audioCtx.createBiquadFilter();
-      _micLP.type = 'lowpass';  _micLP.frequency.value = 4500; _micLP.Q.value = 0.707;
+      _micLP.type = 'lowpass';  _micLP.frequency.value = _pp.lp; _micLP.Q.value = 0.707;
       micSource.connect(_micHP);
       _micHP.connect(_micLP);
       _micLP.connect(analyzer);
@@ -43629,10 +43911,11 @@ function stopMic() {
   // .playback immediately instead of waiting for the track to let go.
   _iosSyncAudioMode('mic stop');
   audioCtx = null;  // local alias; shared context keeps running
+  if (typeof PitchEngine !== 'undefined') PitchEngine.reset();
   smoothedFreq = 0;
   smoothedCents = 0;
   _pitchHistIdx = 0;   // clear the median window on mic stop
-  _detectCandidate = null; _detectCandidateFrames = 0;
+  _detectCandidate = null; _detectCandidateSince = 0;
   detectedBPM = null; onsetTimes = []; lastEnergy = 0; _sfPrevMag = null; _sfHistory = []; _tempoConfidence = 0;
   const _mbStop = document.getElementById('micBtn');
   _mbStop.className = 'head-btn mic-head-btn';
@@ -43696,10 +43979,17 @@ let _nfHP = _biquadHP(25, _NF_SR, 0.707);
 let _nfLP = _biquadLP(4500, _NF_SR, 0.707);
 function _nfEnsureSr(sr) {
   const rate = sr || _NF_SR;
-  if (rate === _nfBuiltSr) return;
-  _nfHP = _biquadHP(25, rate, 0.707);
-  _nfLP = _biquadLP(4500, rate, 0.707);
+  if (rate === _nfBuiltSr && _nfProfile) return;
+  var hp = 25, lp = 4500;
+  try {
+    if (typeof pitchActiveProfile === 'function') {
+      var p = pitchActiveProfile(); hp = p.hp; lp = p.lp;
+    }
+  } catch (e) {}
+  _nfHP = _biquadHP(hp, rate, 0.707);
+  _nfLP = _biquadLP(lp, rate, 0.707);
   _nfBuiltSr = rate;
+  _nfProfile = { hp: hp, lp: lp };
 }
 function _nfReset() {
   _nfHP.x1 = _nfHP.x2 = _nfHP.y1 = _nfHP.y2 = 0;
@@ -45311,7 +45601,8 @@ function enterTool(name, restoreState) {
   setTimeout(_langRefresh, 0);   // after this tool has built its own controls
   // Stash any saved-view snapshot so the tool's init can apply it.
   _pendingChartRestore = (name === 'guitarchords' && restoreState) ? restoreState : null;
-  const MIC_TOOLS = ['piano', 'tonal', 'volume', 'vocalrange', 'scales'];
+  // scales: no pitch consumer (detection removed) — do not show mic chrome.
+  const MIC_TOOLS = ['piano', 'tonal', 'volume', 'vocalrange'];
   if (MIC_TOOLS.includes(name)) showMic(); else hideMic();
   currentTool = name;
   TOOL_FOLDER_IDS.forEach(id => document.getElementById(id)?.classList.add('hidden'));
@@ -57247,6 +57538,8 @@ let ivGotIt = false;
 let ivSingHoldMs = 0;       // how long the sung pitch has stayed on target
 let ivSingHoldStart = 0;    // timestamp the current on-target streak began
 const IV_SING_HOLD_REQUIRED = 350;  // ms you must hold the target (stops sweeping through)
+// Must match .iv-sing-zone width (18% of ±100¢ scale) and TOL_VOICE.
+const IV_SING_CENTS_TOL = 18;
 
 
 function ivFbText(text) {
@@ -57653,7 +57946,7 @@ function ivtCheckPitch(detectedFreq) {
   if (ivtMode !== 'sing' || ivtAnswered) return;
   var semis = 12 * Math.log2(detectedFreq / ivtRound.targetFreq);
   var wrapped = Math.abs(semis - Math.round(semis / 12) * 12);
-  if (wrapped < 0.40) {
+  if (wrapped < (IV_SING_CENTS_TOL / 100)) {
     if (ivtHoldStart === 0) { ivtHoldStart = nowT; return; }
     if (nowT - ivtHoldStart < IV_SING_HOLD_REQUIRED) return;   // must hold, not sweep
     ivtHoldStart = 0;
@@ -57806,7 +58099,7 @@ function ivtDrillCheckPitch(detectedFreq) {
   if (nowT < ivListenUntil) return;   // gate during our own playback
   var semis = 12 * Math.log2(detectedFreq / ivtDrillRound.targetFreq);
   var wrapped = Math.abs(semis - Math.round(semis / 12) * 12);
-  if (wrapped < 0.40) {
+  if (wrapped < (IV_SING_CENTS_TOL / 100)) {
     if (ivtHoldStart === 0) { ivtHoldStart = nowT; return; }
     if (nowT - ivtHoldStart < IV_SING_HOLD_REQUIRED) return;
     ivtHoldStart = 0;
@@ -58946,9 +59239,10 @@ function ivSingMeterUpdate(cents, holdMs) {
   var pos = 50 + Math.max(-50, Math.min(50, (cents / 100) * 50));
   needle.style.left = pos + '%';
   var abs = Math.abs(cents);
-  if (abs < 40) needle.style.background = 'var(--in-tune)';
-  else if (cents < 0) needle.style.background = 'var(--flat)';
-  else needle.style.background = 'var(--sharp)';
+  var tol = (typeof IV_SING_CENTS_TOL === 'number') ? IV_SING_CENTS_TOL : 18;
+  var cls = abs < tol ? 'in-tune' : (cents < 0 ? 'flat' : 'sharp');
+  needle.className = 'iv-sing-needle ' + cls;
+  needle.style.background = abs < tol ? 'var(--in-tune)' : (cents < 0 ? 'var(--flat)' : 'var(--sharp)');
   if (fill && lock) {
     var pct = Math.max(0, Math.min(100, (holdMs / IV_SING_HOLD_REQUIRED) * 100));
     fill.style.width = pct + '%';
@@ -58959,9 +59253,12 @@ function ivSingMeterReset() {
   var needle = document.getElementById('ivSingNeedle');
   var lock = document.getElementById('ivSingLock');
   var fill = document.getElementById('ivSingLockFill');
-  if (needle) { needle.style.left = '50%'; needle.style.background = 'var(--flat)'; }
+  if (needle) { needle.style.left = '50%'; needle.className = 'iv-sing-needle flat'; needle.style.background = 'var(--flat)'; }
   if (fill) fill.style.width = '0%';
   if (lock) lock.classList.remove('done');
+  // Hard silence must not keep banking wall-clock hold time (Sing Sing clears ssHoldMs).
+  if (typeof ivSingHoldStart !== 'undefined') { ivSingHoldStart = 0; ivSingHoldMs = 0; }
+  if (typeof ivtHoldStart !== 'undefined') ivtHoldStart = 0;
 }
 function ivCheckPitch(detectedFreq) {
   if (ivMode !== 'sing') return;   // mic grading only applies in Sing/Play mode
@@ -58979,7 +59276,7 @@ function ivCheckPitch(detectedFreq) {
   const name = document.getElementById('ivTargetName');
   ivSingMeterUpdate(cents, (ivSingHoldStart ? (nowT - ivSingHoldStart) : 0));
 
-  if (wrappedCents < 40) {
+  if (wrappedCents < IV_SING_CENTS_TOL) {
     // On target — but require holding it briefly so sweeping through doesn't count.
     if (ivSingHoldStart === 0) { ivSingHoldStart = nowT; ivSingHoldMs = 0; }
     else ivSingHoldMs = nowT - ivSingHoldStart;
@@ -64821,7 +65118,7 @@ function drawStrobe(cents, inTune, hasSignal) {
   } else {
     if (!hasSignal)     { r=80;  g=82;  b=100; }
     else if (inTune)    { r=182; g=242; b=91;  }
-    else if (cents > 0) { r=255; g=138; b=101; }
+    else if (cents > 0) { r=255; g=82;  b=82;  }
     else                { r=122; g=175; b=255; }
   }
 
@@ -65056,9 +65353,11 @@ function pitchHistDraw() {
   const midY = H / 2;
   const scale = (H / 2) / 50; // pixels per cent
 
-  // In-tune zone (±10¢)
+  // In-tune zone matches live green lock (instrument ±5 / voice ±18)
+  var _phTol = (typeof tuneTolerance === 'function') ? tuneTolerance()
+             : ((typeof TOL_INSTRUMENT === 'number') ? TOL_INSTRUMENT : 5);
   c.fillStyle = _phLight ? 'rgba(20,112,54,0.20)' : 'rgba(182,242,91,0.07)';
-  c.fillRect(0, midY - 10 * scale, W, 20 * scale);
+  c.fillRect(0, midY - _phTol * scale, W, _phTol * 2 * scale);
 
   // Center line
   c.strokeStyle = _phLight ? 'rgba(30,32,48,0.38)' : 'rgba(255,255,255,0.08)';
@@ -65096,8 +65395,8 @@ function pitchHistDraw() {
   // Color by current deviation
   const latest = pitchHistory.filter(v => v !== null).slice(-1)[0] ?? 0;
   c.strokeStyle = _phLight
-    ? (Math.abs(latest) <= 10 ? '#3a7000' : Math.abs(latest) <= 25 ? '#875d00' : '#a32718')
-    : (Math.abs(latest) <= 10 ? '#b6f25b' : Math.abs(latest) <= 25 ? '#ffd166' : '#ff8a65');
+    ? (Math.abs(latest) <= _phTol ? '#3a7000' : Math.abs(latest) <= 25 ? '#875d00' : '#a32718')
+    : (Math.abs(latest) <= _phTol ? '#b6f25b' : Math.abs(latest) <= 25 ? '#ffd166' : '#ff5252');
   c.globalAlpha = 0.85;
   c.stroke();
   c.globalAlpha = 1;
@@ -65110,11 +65409,6 @@ function pitchHistDraw() {
     c.beginPath(); c.arc(lx, ly, 2.5, 0, Math.PI * 2);
     c.fillStyle = c.strokeStyle; c.fill();
   }
-}
-
-// Hook into pitch detection — called from processAudio
-function pitchHistFeed(cents) {
-  // No-op; pitchHistTick samples lastCents directly
 }
 
 // ═══════════════════════════════════════════════
@@ -81399,7 +81693,8 @@ const SS_TUNE = { zone: 16, hold: 1500, grace: 300, graceDrain: 0.6 };  // ¢, m
 let ssTune = SS_TUNE;
 let ssOutMs       = 0;   // ms spent just outside the zone (forgiveness window)
 let ssLastHitTime = 0;
-let ssSmoothCents = 0;  // EMA-smoothed cents for the sing-along needle
+let ssSmoothCents = 0;  // light EMA on top of PitchEngine (already smoothed Hz)
+let _ssPitchLastT = 0;
 // Arc geometry: needle pivot (cx,cy), radius r, sweep deg-per-cent. Zone segment is computed
 // from ssTune.zone so the green ALWAYS matches the grading tolerance exactly.
 const SS_ARC = { cx:112, cy:114, r:96, degPerCent:1.45, clampCents:52 };
@@ -81943,36 +82238,37 @@ function ssArcUpdate(cents, holdMs, graceActive) {
 }
 
 function ssCheckPitch(freq) {
-  if (!ssRound || ssGotIt || !freq) { ssResetNeedle(); ssSmoothCents = 0; return; }
+  if (!ssRound || ssGotIt || !freq) { ssResetNeedle(); ssSmoothCents = 0; _ssPitchLastT = 0; return; }
 
   const rawCents = 1200 * Math.log2(freq / ssRound.freq);
-  ssSmoothCents  = ssSmoothCents * 0.72 + rawCents * 0.28;
+  // PitchEngine already smooths Hz; keep a light cents EMA so the arc is not raw.
+  ssSmoothCents = (ssSmoothCents === 0) ? rawCents : (ssSmoothCents * 0.45 + rawCents * 0.55);
   const cents = ssSmoothCents;
   const abs   = Math.abs(cents);
-  const now   = Date.now();
+  const now   = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+  const dt    = _ssPitchLastT ? Math.min(80, Math.max(8, now - _ssPitchLastT)) : 16;
+  _ssPitchLastT = now;
   const hold  = ssTune.hold, zone = ssTune.zone, grace = ssTune.grace;
   const hb    = document.getElementById('ssHoldBar');
   const note  = document.querySelector('#exSingSing .ss-slot.active .n');
   let graceActive = false;
 
   if (abs < zone) {
-    // In tune — accumulate hold.
     ssOutMs = 0;
-    if (ssLastHitTime === 0) ssLastHitTime = now - ssHoldMs;   // resume from banked hold
+    if (ssLastHitTime === 0) ssLastHitTime = now - ssHoldMs;
     ssHoldMs = Math.min(hold, now - ssLastHitTime);
     if (hb) hb.classList.remove('grace');
     if (note) note.classList.add('locked');
     if (ssHoldMs >= hold) { ssArcUpdate(cents, ssHoldMs, false); ssArcLock(); ssAdvanceSequence(); return; }
   } else {
-    // Out of zone — forgiveness window: pause + slow-drain briefly, then drain fast.
     if (ssHoldMs > 0 && ssOutMs < grace) {
-      ssOutMs += 40;                       // ~one detection tick
-      ssHoldMs = Math.max(0, ssHoldMs - 40 * ssTune.graceDrain);
+      ssOutMs += dt;
+      ssHoldMs = Math.max(0, ssHoldMs - dt * ssTune.graceDrain);
       ssLastHitTime = now - ssHoldMs;
       graceActive = true;
       if (hb) hb.classList.add('grace');
     } else {
-      ssHoldMs = Math.max(0, ssHoldMs - 40 * 1.4);
+      ssHoldMs = Math.max(0, ssHoldMs - dt * 1.4);
       ssLastHitTime = (ssHoldMs > 0) ? now - ssHoldMs : 0;
       if (hb) hb.classList.remove('grace');
     }
@@ -98217,97 +98513,67 @@ function vrStopDetect() {
   if (vrDetectFrame) { cancelAnimationFrame(vrDetectFrame); vrDetectFrame = null; }
 }
 
+// Pitch now arrives from processAudio → PitchEngine (vrFeedPitch). This loop only
+// paints the waveform so VR does not run a second detectPitch or steal worklet frames.
 function vrStartDetect() {
   vrStopDetect();
   vrFrameCount = 0;
   function loop() {
     vrDetectFrame = requestAnimationFrame(loop);
     vrFrameCount++;
-    if (vrFrameCount % 3 !== 0) { vrDrawWaveform(); return; }  // ~20fps
-
-    // Mic must be on. NOTE: on the native path `analyzer` is null (it's only created
-    // in startMic's WebView branch), so this must NOT require an analyzer — it has to
-    // read the native ring instead, exactly like processAudio does. Requiring the
-    // analyzer here is what would silently show "no mic" forever the moment vocalrange
-    // gets migrated to native.
+    if (vrFrameCount % 3 !== 0) return;
     if (!isListening || (!_nativeMicActive && !analyzer)) {
       vrHandleNoMic();
       vrDrawWaveform();
       return;
     }
-
-    let buf, _vrSr;
-    if (_nativeMicActive) {
-      buf = new Float32Array(4096);
-      buf.set(_nativeRing);
-      _vrSr = _nativeSampleRate;
-    } else {
-      if (!analyzer) return;
-      buf = new Float32Array(analyzer.fftSize);
-      analyzer.getFloatTimeDomainData(buf);
-      _vrSr = audioCtx ? audioCtx.sampleRate : 44100;
-    }
-    // When the AudioWorklet is active, use its pitch output (same YIN algorithm,
-    // audio-thread timing). Fall back to the main-thread detectPitch otherwise.
-    let freq;
-    if (_workletReady && _workletPitchFresh) {
-      freq = _workletPitchFreq;
-      _workletPitchFresh = false;
-    } else if (!_workletReady) {
-      freq = detectPitch(buf, _vrSr);
-    } else {
-      freq = -1;
-    }
-    const note = freq > 0 ? vrFreqToMidi(freq) : null;
-
-    vrDrawWaveform(note);
-
-    // ── RMS for strain detection ──
-    var _vrRms = 0;
-    for (var _ri = 0; _ri < buf.length; _ri++) _vrRms += buf[_ri] * buf[_ri];
-    _vrRms = Math.sqrt(_vrRms / buf.length);
-    vrRmsHistory.push(_vrRms);
-    if (vrRmsHistory.length > 20) vrRmsHistory.shift();
-    if (vrRmsHistory.length >= 5 && vrBaselineRms === 0) {
-      vrBaselineRms = vrRmsHistory.reduce(function(a,b){return a+b;},0) / vrRmsHistory.length;
-    }
-    // ── Flip detection (high steps only) ──
-    if (note && vrLastStableMidi !== null && !vrFlipFired && vrStabBuf.length >= 3
-        && (vrDetectTarget === 'high' || vrDetectTarget === 'exthigh')) {
-      if (Math.abs(note.midiRound - vrLastStableMidi) >= VR_FLIP_THRESHOLD) {
-        vrFlipFired = true; vrStopDetect(); vrShowFlipWarning(); return;
-      }
-    }
-    if (note && vrStabBuf.length >= 5) vrLastStableMidi = note.midiRound;
-    // ── Strain detection (high steps only) ──
-    if (!vrStrainFired && vrBaselineRms > 0 && vrRmsHistory.length >= 10
-        && (vrDetectTarget === 'high' || vrDetectTarget === 'exthigh')) {
-      var _recentRms = vrRmsHistory.slice(-5).reduce(function(a,b){return a+b;},0) / 5;
-      if (_recentRms / vrBaselineRms >= VR_STRAIN_RMS_RISE && vrStabBuf.length >= 8) {
-        var _l8 = vrStabBuf.slice(-8);
-        if (Math.max.apply(null,_l8) - Math.min.apply(null,_l8) >= VR_STRAIN_WOBBLE) {
-          vrStrainFired = true; vrStopDetect(); vrShowStrainWarning(); return;
-        }
-      }
-    }
-
-    if (vrDetectTarget === 'tess') {
-      vrProcessTessNote(note);
-      // Live pitch trace: record every frame (null = silence → a break in the line)
-      // only while the scan is actually running, so the strip shows the user their
-      // pitch sliding around in real time.
-      if (vrTessActive) {
-        const _tn = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-        vrTessTrace.push({ t: _tn, midi: note ? (note.midiRound + (note.cents||0)/100) : null });
-        // keep ~6s of history at 20fps ≈ 120 samples; trim generously
-        if (vrTessTrace.length > 200) vrTessTrace.shift();
-      }
-      vrDrawTessTrace();
-    } else if (vrDetectTarget) {
-      vrProcessStabNote(note, vrDetectTarget);
-    }
+    vrDrawWaveform(vrLastFeedNote);
   }
   vrDetectFrame = requestAnimationFrame(loop);
+}
+
+var vrLastFeedNote = null;
+function vrFeedPitch(freq, rms) {
+  if (!vrDetectFrame && !vrDetectTarget) return;
+  if (!isListening) { vrHandleNoMic(); return; }
+  var note = (freq > 0) ? vrFreqToMidi(freq) : null;
+  vrLastFeedNote = note;
+
+  var _vrRms = rms || 0;
+  vrRmsHistory.push(_vrRms);
+  if (vrRmsHistory.length > 20) vrRmsHistory.shift();
+  if (vrRmsHistory.length >= 5 && vrBaselineRms === 0) {
+    vrBaselineRms = vrRmsHistory.reduce(function(a,b){return a+b;},0) / vrRmsHistory.length;
+  }
+  if (note && vrLastStableMidi !== null && !vrFlipFired && vrStabBuf.length >= 3
+      && (vrDetectTarget === 'high' || vrDetectTarget === 'exthigh')) {
+    if (Math.abs(note.midiRound - vrLastStableMidi) >= VR_FLIP_THRESHOLD) {
+      vrFlipFired = true; vrStopDetect(); vrShowFlipWarning(); return;
+    }
+  }
+  if (note && vrStabBuf.length >= 5) vrLastStableMidi = note.midiRound;
+  if (!vrStrainFired && vrBaselineRms > 0 && vrRmsHistory.length >= 10
+      && (vrDetectTarget === 'high' || vrDetectTarget === 'exthigh')) {
+    var _recentRms = vrRmsHistory.slice(-5).reduce(function(a,b){return a+b;},0) / 5;
+    if (_recentRms / vrBaselineRms >= VR_STRAIN_RMS_RISE && vrStabBuf.length >= 8) {
+      var _l8 = vrStabBuf.slice(-8);
+      if (Math.max.apply(null,_l8) - Math.min.apply(null,_l8) >= VR_STRAIN_WOBBLE) {
+        vrStrainFired = true; vrStopDetect(); vrShowStrainWarning(); return;
+      }
+    }
+  }
+
+  if (vrDetectTarget === 'tess') {
+    vrProcessTessNote(note);
+    if (vrTessActive) {
+      var _tn = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      vrTessTrace.push({ t: _tn, midi: note ? (note.midiRound + (note.cents||0)/100) : null });
+      if (vrTessTrace.length > 200) vrTessTrace.shift();
+    }
+    vrDrawTessTrace();
+  } else if (vrDetectTarget) {
+    vrProcessStabNote(note, vrDetectTarget);
+  }
 }
 
 function vrHandleNoMic() {

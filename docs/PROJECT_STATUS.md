@@ -37,7 +37,7 @@ instrument anatomy diagrams.
 ## Version
 
 Check CHANGELOG.md for the current version. As of this writing it is
-v0.210.105. The marketing version lives in two declarations in the HTML
+v0.210.117. The marketing version lives in two declarations in the HTML
 file that must stay in sync: an HTML comment near the top (grep
 `INTONARE_VERSION:`) and a JS const. The Settings footer reads the
 const; it is not a third literal. Android Play versionCode / versionName
@@ -170,8 +170,10 @@ INTONARE_VERSION or the build fails.
 
 High-value audits live under `tools/` (see `tools/README.md`). Python 3.12
 is installed. Daily ship gate: `tools\ship_check.bat` (sentinel + changelog).
-Do not treat the old August inventory as current for every script; area
-audits are on-demand. Daily edit safety still uses `.cursor/rules` preflight.
+Pitch measurement: `tools\pitch_bench.bat` (FFT-YIN synth corpus; run before
+detector changes). Do not treat the old August inventory as current for every
+script; area audits are on-demand. Daily edit safety still uses `.cursor/rules`
+preflight.
 
 
 

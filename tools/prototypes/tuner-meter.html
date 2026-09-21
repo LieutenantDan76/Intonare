@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Prototype · Tuner meter spring + zone</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c12;
+    --panel: #12151e;
+    --in-tune: #b6f25b;
+    --sharp: #ff5252;
+    --flat: #7aafff;
+    --muted: #6a7088;
+    --text: #e8eaf2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 0%, #151a28, var(--bg));
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    padding: 24px 16px 48px;
+  }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 3px; margin: 0 0 6px; }
+  p { color: var(--muted); font-size: 12px; line-height: 1.5; max-width: 520px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+  button {
+    appearance: none; border: 1px solid #2a3044; background: var(--panel);
+    color: var(--text); font: inherit; font-size: 11px; letter-spacing: 1px;
+    padding: 10px 14px; border-radius: 8px; cursor: pointer; text-transform: uppercase;
+  }
+  button.on { border-color: var(--in-tune); color: var(--in-tune); }
+  .screen {
+    max-width: 360px; margin-top: 8px; padding: 20px 16px 24px;
+    background: #010408; border-radius: 10px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.9), 0 0 0 1px #1a2030;
+  }
+  .note {
+    font-family: 'Bebas Neue', sans-serif; font-size: 72px; line-height: .85;
+    text-align: center; color: transparent;
+    background: linear-gradient(135deg, var(--in-tune), #5ee2ff);
+    -webkit-background-clip: text; background-clip: text;
+  }
+  .note.sharp { background: linear-gradient(135deg, var(--sharp), #ffd166); -webkit-background-clip: text; background-clip: text; }
+  .note.flat { background: linear-gradient(135deg, var(--flat), #b8a3ff); -webkit-background-clip: text; background-clip: text; }
+  .cents { text-align: right; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .head { display: flex; justify-content: space-between; font-size: 8px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+  .track {
+    position: relative; height: 10px; border-radius: 5px;
+    background:
+      repeating-linear-gradient(90deg,
+        transparent 0, transparent calc(12.5% - .5px),
+        rgba(255,255,255,.07) calc(12.5% - .5px), rgba(255,255,255,.07) calc(12.5% + .5px),
+        transparent calc(12.5% + .5px), transparent 25%),
+      rgba(255,255,255,.045);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
+  }
+  .zone {
+    position: absolute; top: 1px; bottom: 1px; border-radius: 3px;
+    background: rgba(182,242,91,.16);
+    box-shadow: inset 0 0 0 1px rgba(182,242,91,.28);
+    left: 45%; width: 10%; /* ±5¢ of ±50 */
+  }
+  .center {
+    position: absolute; left: 50%; top: -5px; bottom: -5px; width: 1px;
+    background: rgba(255,255,255,.22); transform: translateX(-50%);
+  }
+  .fill {
+    position: absolute; top: 0; height: 100%; border-radius: 4px; opacity: .5;
+    pointer-events: none;
+  }
+  .needle {
+    position: absolute; top: -8px; width: 2px; height: 26px;
+    transform: translateX(-50%); border-radius: 1px 1px 0 0;
+    background: rgba(255,255,255,.75);
+    box-shadow: 0 0 10px rgba(255,255,255,.25);
+  }
+  .needle::after {
+    content: ''; position: absolute; left: 50%; bottom: -2px;
+    width: 0; height: 0; transform: translateX(-50%);
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid inherit; border-top-color: currentColor;
+  }
+  .needle.in-tune { background: var(--in-tune); color: var(--in-tune); box-shadow: 0 0 12px rgba(182,242,91,.45); }
+  .needle.sharp { background: var(--sharp); color: var(--sharp); box-shadow: 0 0 10px rgba(255,82,82,.4); }
+  .needle.flat { background: var(--flat); color: var(--flat); box-shadow: 0 0 10px rgba(122,175,255,.4); }
+  .ticks { display: flex; justify-content: space-between; margin-top: 10px; font-size: 9px; color: rgba(255,255,255,.45); }
+  .meta { margin-top: 18px; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <h1>TUNER METER</h1>
+  <p>Critically damped spring (slight settle), green lock band = ±5¢ on a ±50 scale, needle tip, restrained phosphor. Drag the slider or tap presets.</p>
+  <div class="row">
+    <button type="button" data-c="-42">Flat 42</button>
+    <button type="button" data-c="-8">Flat 8</button>
+    <button type="button" data-c="0" class="on">Lock</button>
+    <button type="button" data-c="3">Sharp 3</button>
+    <button type="button" data-c="28">Sharp 28</button>
+  </div>
+  <label class="meta">Target cents
+    <input id="slider" type="range" min="-50" max="50" value="0" style="width:100%; margin-top:6px"/>
+  </label>
+  <div class="screen">
+    <div class="cents" id="centsLbl">+0.0¢</div>
+    <div class="note" id="note">A</div>
+    <div class="head"><span>♭ Flat</span><span>Sharp ♯</span></div>
+    <div class="track">
+      <div class="zone" id="zone"></div>
+      <div class="center"></div>
+      <div class="fill" id="fill"></div>
+      <div class="needle in-tune" id="needle" style="left:50%"></div>
+    </div>
+    <div class="ticks"><span>-50</span><span>-25</span><span>0</span><span>+25</span><span>+50</span></div>
+  </div>
+  <p class="meta" id="dbg">spring · pos 50.00 · vel 0.00</p>
+<script>
+  const TOL = 5;
+  let target = 0, pos = 50, vel = 0, last = performance.now();
+  const omega = 22, zeta = 0.9;
+  const needle = document.getElementById('needle');
+  const fill = document.getElementById('fill');
+  const zone = document.getElementById('zone');
+  const note = document.getElementById('note');
+  const centsLbl = document.getElementById('centsLbl');
+  const dbg = document.getElementById('dbg');
+  const slider = document.getElementById('slider');
+
+  function setZone() {
+    const w = (TOL / 50) * 100;
+    zone.style.left = (50 - w / 2) + '%';
+    zone.style.width = w + '%';
+  }
+  setZone();
+
+  function setTarget(c) {
+    target = Math.max(-50, Math.min(50, c));
+    slider.value = String(target);
+    document.querySelectorAll('button[data-c]').forEach(b => {
+      b.classList.toggle('on', Number(b.dataset.c) === target);
+    });
+  }
+  document.querySelectorAll('button[data-c]').forEach(b => {
+    b.onclick = () => setTarget(Number(b.dataset.c));
+  });
+  slider.oninput = () => setTarget(Number(slider.value));
+
+  function frame(now) {
+    let dt = (now - last) / 1000;
+    last = now;
+    dt = Math.min(0.033, Math.max(0.008, dt));
+    const targetPct = 50 + (target / 50) * 50;
+    const x = pos - targetPct;
+    const a = -2 * zeta * omega * vel - omega * omega * x;
+    vel += a * dt;
+    pos += vel * dt;
+    pos = Math.max(2, Math.min(98, pos));
+
+    const inTune = Math.abs(target) < TOL;
+    const cls = inTune ? 'in-tune' : (target > 0 ? 'sharp' : 'flat');
+    needle.style.left = pos.toFixed(2) + '%';
+    needle.className = 'needle ' + cls;
+    note.className = 'note ' + cls;
+    centsLbl.textContent = (target >= 0 ? '+' : '') + target.toFixed(1) + '¢';
+    centsLbl.style.color = inTune ? 'var(--in-tune)' : (target > 0 ? 'var(--sharp)' : 'var(--flat)');
+
+    const col = inTune ? 'var(--in-tune)' : (target > 0 ? 'var(--sharp)' : 'var(--flat)');
+    if (pos >= 50) {
+      fill.style.left = '50%';
+      fill.style.width = Math.min(48, pos - 50) + '%';
+    } else {
+      const w = Math.min(48, 50 - pos);
+      fill.style.left = (50 - w) + '%';
+      fill.style.width = w + '%';
+    }
+    fill.style.background = col;
+
+    dbg.textContent = 'spring · pos ' + pos.toFixed(2) + ' · vel ' + vel.toFixed(2) + ' · target ' + targetPct.toFixed(1) + '%';
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>
