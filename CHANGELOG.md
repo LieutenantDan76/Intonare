@@ -2,6 +2,14 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.118: Guitar Gods hand triage installed
+
+Guitar Gods replaced with the hand-triaged pack: 90 questions, 36/36/18,
+both languages. 69 edited, 18 kept, 2 replaced (Jerry Reed at #56 for the
+Claw technique, Albert King's Flying V at #90). #67 and #47 answers trimmed
+so they no longer stand out by length. The 18 `also` tags to Beatles and
+Guitar Technique carried over by row position.
+
 ## v0.210.117 — Interval SING: clear hold on silence
 
 Hard silence now zeros `ivSingHoldStart` / `ivtHoldStart` inside
