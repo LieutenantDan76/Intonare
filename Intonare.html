@@ -2750,6 +2750,10 @@ body.sg-open #toolSurvivalGuide{
   .mq2.pk-vocals .mq2-motif,
   .mq2.pk-theory_fundamentals .mq2-motif,
   .mq2.pk-advanced_theory .mq2-motif { opacity: .30; }
+  /* The bass headstock is drawn right up to the top of its artwork, so at the
+     shared top it ran into the score counter in the top row. Start it below
+     that row. */
+  .mq2.pk-bass .mq2-motif { top: 34px; }
   .mq2-motif > div { position: absolute; inset: 0; display: flex;
     align-items: center; justify-content: center; }
   /* the artwork used to be scaled past the layer it sits in, so its top was
@@ -91242,6 +91246,7 @@ const STRINGS = {
     vr_begin_btn:'Begin Assessment →',
     vr_onboard_back:'← Back',
     vr_redo_setup:'Redo setup',
+    vr_locked_in_lbl:'Locked in', vr_sing_again:'Sing it again',
     vr_step_2of3:'Step 2 of 3',
     vr_age_title:'How Old Are You?',
     vr_age_desc:'This helps keep the exercises safe and the results accurate.',
@@ -91287,7 +91292,7 @@ const STRINGS = {
     vr_start_warmup:'▶︎ Start Warmup',
     // VR JS dynamic strings
     vr_tap_mic:'Tap the mic button to activate',
-    vr_sing_hold:"Sing and hold — we'll catch it…",
+    vr_sing_hold:"Sing and hold; we'll catch it…",
     vr_locking_in:'Locking in…',
     vr_almost:'Almost there…',
     vr_nudge_steady:'Hold it as steady as you can…',
@@ -92499,6 +92504,7 @@ const STRINGS = {
     vr_begin_btn:'Inizia Valutazione →',
     vr_onboard_back:'← Indietro',
     vr_redo_setup:'Rifai impostazione',
+    vr_locked_in_lbl:'Fissata', vr_sing_again:'Ricantala',
     vr_step_2of3:'Passo 2 di 3',
     vr_age_title:'Quanti Anni Hai?',
     vr_age_desc:'Ci aiuta a mantenere gli esercizi sicuri e i risultati accurati.',
@@ -92544,7 +92550,7 @@ const STRINGS = {
     vr_start_warmup:'▶︎ Inizia Riscaldamento',
     // VR JS dynamic strings
     vr_tap_mic:'Tocca il pulsante microfono per attivare',
-    vr_sing_hold:'Canta e tieni — lo catturiamo…',
+    vr_sing_hold:'Canta e tieni; la prendiamo al volo…',
     vr_locking_in:'Blocco in corso…',
     vr_almost:'Ci siamo quasi…',
     vr_nudge_steady:'Tieni la nota il più ferma possibile…',
@@ -98853,9 +98859,14 @@ function vrAutoLock(target, midi) {
   // Show locked confirm
   const confirmEl = document.getElementById({low:'vrConfirm-low',high:'vrConfirm-high',extlow:'vrConfirm-extlow',exthigh:'vrConfirm-exthigh'}[target]);
   if (confirmEl) {
+    // "Sing it again": auto-lock takes the first steady note, and a note caught
+    // too early (a crack, a note not yet at the edge of the range) could only be
+    // kept. Redo restarts just this step; everything locked before it stays.
+    const stepId = { low:'lowComf', high:'highComf', extlow:'extLow', exthigh:'extHigh' }[target];
     confirmEl.innerHTML = `<div class="vr-locked-confirm">
-      <div class="vr-locked-sublabel">✓ Locked In</div>
+      <div class="vr-locked-sublabel">✓ ${t('vr_locked_in_lbl')}</div>
       <div class="vr-locked-note">${vrMidiToName(midi)}</div>
+      <button type="button" class="vr-redo-inline" onclick="vrRedoStep('${stepId}','${target}')">${t('vr_sing_again')}</button>
     </div>`;
   }
 
@@ -98869,6 +98880,16 @@ function vrAutoLock(target, midi) {
 
   vrDetectTarget = null;
   vrStabBuf = [];
+}
+
+function vrRedoStep(stepId, target) {
+  vrStepLocked[target] = false;
+  if (target === 'low')     vrLocks.lowComf  = null;
+  if (target === 'high')    vrLocks.highComf = null;
+  if (target === 'extlow')  vrLocks.extLow   = null;
+  if (target === 'exthigh') vrLocks.extHigh  = null;
+  try { hapticLight(); } catch (e) {}
+  vrShowStep(stepId);
 }
 
 function vrLockStep(target) {
@@ -124892,10 +124913,29 @@ function stopAllAudio() {
   }
 }
 
+// Music Quiz background music: stopAllAudio() kills it on background (right),
+// but nothing brought it back on return, so the quiz sat silent until you hit
+// play. Remember whether it was playing and pick the same track back up.
+var _mqAmbWasOn = false;
+function mqAmbNoteBackground() {
+  try { _mqAmbWasOn = !!(typeof _mqAmb !== 'undefined' && _mqAmb.on); } catch (e) { _mqAmbWasOn = false; }
+}
+function mqAmbResumeAfterBackground() {
+  if (!_mqAmbWasOn) return;
+  _mqAmbWasOn = false;
+  try {
+    var modal = document.getElementById('mqModal');
+    if (!modal || !modal.classList.contains('active')) return;
+    if (progState.mqMusicOn === false || _mqAmb.on) return;
+    mqAmbStart(typeof _mqAmb.trackIdx === 'number' ? _mqAmb.trackIdx : undefined);
+  } catch (e) {}
+}
+
 // Background/foreground pause
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (_sesActive) sesLeave();
+    mqAmbNoteBackground();
     stopAllAudio();
   } else {
     // Resume any suspended audio contexts so the first sound event isn't dropped
@@ -124907,6 +124947,7 @@ document.addEventListener('visibilitychange', () => {
     else if (typeof currentExercise !== 'undefined' && currentExercise) sesEnter();
     // Restore mic + active mic-tool if the OS killed the stream while backgrounded
     if (typeof micResumeAfterBackground === 'function') micResumeAfterBackground();
+    mqAmbResumeAfterBackground();
   }
 });
 
@@ -124931,6 +124972,9 @@ try {
     window.Capacitor.Plugins.App.addListener('appStateChange', ({ isActive }) => {
       if (!isActive) {
         if (_sesActive) sesLeave();
+        // Only record when music is still live: visibilitychange may have run
+        // first and already stopped it (and recorded the true state).
+        if (_mqAmb.on) mqAmbNoteBackground();
         stopAllAudio();
       }
       else {
@@ -124944,6 +124988,7 @@ try {
         if (typeof currentTool !== 'undefined' && currentTool) sesEnter();
         else if (typeof currentExercise !== 'undefined' && currentExercise) sesEnter();
         if (typeof micResumeAfterBackground === 'function') micResumeAfterBackground();
+        mqAmbResumeAfterBackground();
       }
     });
   }
@@ -136770,14 +136815,18 @@ var MQ_GTR_NOTE_FACTS = [
    'I pallini al terzo, quinto, settimo e nono tasto servono perch\u00e9 l\u2019occhio trovi la posizione senza contare dal capotasto.']
 ];
 var MQ_GTR_IV_FACTS = [
+  // v0.210.122: three of these were written as a sequence ("That one exception",
+  // "removes the exception", "this tuning") but the rotation hands out one per
+  // question, so each read as a reply to a blurb the player never saw. Each one
+  // now stands alone.
   ['A guitar is tuned in fourths except between the G and B strings, where the gap is a major third.',
    'La chitarra \u00e8 accordata per quarte tranne che fra la corda di Sol e quella di Si, dove la distanza \u00e8 una terza maggiore.'],
-  ['That one exception is why a shape moved across the G and B strings comes out a half step wrong.',
-   '\u00c8 quell\u2019unica eccezione a far uscire sbagliata di un semitono una forma spostata fra le corde di Sol e Si.'],
-  ['Tuning the whole instrument in fourths removes the exception, and a handful of players do exactly that.',
-   'Accordare tutto lo strumento per quarte elimina l\u2019eccezione, e qualche chitarrista fa esattamente cos\u00ec.'],
-  ['Lute players settled this tuning centuries ago and guitarists inherited it, awkward third and all.',
-   'I liutisti fissarono questa accordatura secoli fa e i chitarristi l\u2019hanno ereditata, terza scomoda compresa.']
+  ['Move a shape across the G and B strings and it comes out a half step off, because that pair is a major third apart instead of a fourth.',
+   'Sposta una forma fra le corde di Sol e Si ed esce sbagliata di un semitono, perch\u00e9 quelle due corde distano una terza maggiore invece di una quarta.'],
+  ['Some players tune all six strings in fourths, so every shape moves across the neck without changing.',
+   'Alcuni chitarristi accordano tutte e sei le corde per quarte, cos\u00ec ogni forma si sposta sul manico senza cambiare.'],
+  ['Standard guitar tuning comes from the lute: fourths between the strings, with one major third in the middle.',
+   'L\u2019accordatura standard della chitarra viene dal liuto: quarte fra le corde, con una sola terza maggiore nel mezzo.']
 ];
 
 var MQ_GEN_GUITAR = [mqGenGtrNote, mqGenGtrInterval, mqGenGtrUnison];

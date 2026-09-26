@@ -2,6 +2,25 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.123: quiz music resume, bass mark, guitar blurbs, vocal range redo
+
+Music Quiz:
+- The background music stopped when the app went to the background (right)
+  and never came back (wrong); the quiz sat silent until you pressed play. It
+  now picks the same track back up on return, only if it was playing before.
+- The Bass pack's mark (the headstock) ran into the score counter in the top
+  row. It now starts below that row.
+- Guitar Technique, generated interval questions: three of the four blurbs
+  were written as a sequence ("That one exception...", "removes the
+  exception", "this tuning"), but each question gets one, so they read as
+  replies to a blurb the player never saw. All four now stand alone.
+
+Vocal Range: a locked note now has "Sing it again" under it. Auto-lock takes
+the first steady note, so a note caught too early (a crack, or before the
+edge of the range) could only be kept. Redo restarts just that step; earlier
+steps stay locked. The "Locked In" label was hardcoded English; it is
+translated now. "Sing and hold" lost its em-dash in both languages.
+
 ## v0.210.122: tab bar stretch, Tempo Guess lock, Rhythm Reading fit, bell, tuner needle
 
 Tab bar: still bent and stretched on edge pulls after v0.210.110. That fix
