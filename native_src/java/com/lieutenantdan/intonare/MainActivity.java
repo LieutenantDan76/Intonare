@@ -55,6 +55,24 @@ public class MainActivity extends BridgeActivity {
         // shows them transiently, then Android auto-hides again on its own.
         hideSystemBars();
 
+        // No overscroll stretch. On Android 12+ the WebView's overscroll effect is a
+        // View-level stretch of the WHOLE WebView surface, applied by the OS after the
+        // page has rendered. A position:fixed tab bar is inside that surface, so it
+        // bends and stretches with every edge pull no matter what the CSS says
+        // (v0.210.110 took the bar off .app and killed its transform; that removed
+        // the web-side flex but could not touch this one). CSS overscroll-behavior on
+        // body is not an option: it broke document scrolling in v0.98.3. Scrolling is
+        // unchanged; only the stretch/glow at the edges goes.
+        getBridge().getWebView().setOverScrollMode(android.view.View.OVER_SCROLL_NEVER);
+
+        // Honor the page's meta viewport. The Settings text-size slider scales the
+        // app through initial-scale on that tag (v0.210.122; it used CSS zoom, which
+        // broke every full-screen view). Android WebView ignores the tag's scale and
+        // width unless wide-viewport mode is on. At the default size the tag says
+        // width=device-width, initial-scale=1, so nothing changes there.
+        getBridge().getWebView().getSettings().setUseWideViewPort(true);
+        getBridge().getWebView().getSettings().setLoadWithOverviewMode(false);
+
         // Expose a tiny JS bridge: the in-app settings toggle persists the mute
         // preference, and the splash sequence calls playSplashSound() at the exact
         // instant the animation clock starts (so audio + visual stay locked even

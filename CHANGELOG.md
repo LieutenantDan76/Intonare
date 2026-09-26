@@ -2,6 +2,80 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.122: tab bar stretch, Tempo Guess lock, Rhythm Reading fit, bell, tuner needle
+
+Tab bar: still bent and stretched on edge pulls after v0.210.110. That fix
+covered the web side; what was left is Android 12+'s overscroll stretch, which
+the OS applies to the whole WebView surface after the page renders, fixed bar
+included. `MainActivity` now sets `OVER_SCROLL_NEVER` on the WebView. Scrolling
+is unchanged; the stretch and edge glow are gone. Native change: go.bat will
+see it and run a Gradle clean. CSS `overscroll-behavior` on body stays off
+(it killed document scrolling in v0.98.3).
+
+Tempo Guess: the slider and +/- still moved after LOCK IN, and the "You" number
+on the result changed with them. Worse, REPLAY after the reveal walked the round
+back to guessing, so LOCK IN could score the same round twice. A `tgAnswered`
+flag now holds from LOCK IN to the next round: the slider and +/- dim and do
+nothing, and a replay after the reveal returns to the result with its grade.
+
+Rhythm Reading:
+- Feedback in the tap zone was clipped mid-sentence on long rounds (headline +
+  misses + extra taps + drift + a tip, up to five sentences). All feedback copy
+  is rewritten in both languages: a short headline ("Tight.", "Almost.") and
+  one note, the most useful one (misses, then extra taps, then timing, then a
+  tip). If even that does not fit, the headline goes first. No sentence is
+  ever cut.
+- All 238 pattern hints rewritten and translated (`hint_it`), so Italian gets
+  them again. Each one was checked against the pattern's own note data: the
+  old set described several patterns wrongly (a dot "across the barline" that
+  sits inside the bar, "six equal quarters" in a bar of five, a "Star Wars
+  fanfare" that was not). They now say what to tap and where, in one or two
+  short sentences, with no pep talk or stakes. Unverifiable claims are gone
+  ("the most-heard rhythm of the last twenty years", "prog rock at its most
+  committed").
+- Two patterns did not match their names. RUMBA CLAVE had four hits in bar 1
+  and its third hit on beat 4, like son clave; it is now 1, and-of-2, and-of-4
+  | 2, 3. The hard SON CLAVE (`h_clave_son`) had three hits in bar 2 and a gap
+  in bar 1; it is now 1, and-of-2, 4 | 2, 3.
+- Not changed, flagged: CHARLESTON and CHARLESTON PHRASE play dotted quarter,
+  eighth rest, quarter, quarter. The Charleston figure is beat 1 and the and
+  of 2. The hints describe the notes as written until that is decided.
+- Difficulty card labels were 13px regular, a size up from every other picker.
+  Now 11px bold like Chordle, Diadle and Tonale (Survival label too).
+
+Text size (Settings slider): rebuilt. It scaled the app with CSS `zoom` on
+body, and Chromium's standardized zoom multiplies viewport units inside a zoomed
+element. Every full-screen view (Music Quiz, Road Trip, the piano and theremin
+overlays) came out 1.26x the screen at the top step (1063px tall on an 844px
+screen) and lost its bottom; Quiz lost everything under Quick Play. JS-placed
+popups read zoomed rects and wrote unzoomed pixels, so they landed out of line.
+Now the scale is set on the meta viewport (`initial-scale`), so the app lays
+out on a narrower virtual phone and the OS scales it up; vh, vw, fixed layers,
+rects and touches all agree. The zoom-only patches (the 100vw/1.26 column cap
+and the tour's counter-zoom) are gone.
+- The scale never lays the app out narrower than 300 CSS px (most cards have a
+  minimum width near 290). On a 390px phone every step applies in full; on a
+  360px phone the top step is 1.2 instead of 1.26.
+- `MainActivity` turns on wide-viewport mode; Android WebView ignores the
+  viewport tag's scale without it. At the default size the tag is unchanged.
+- Fit fixes found by a sweep of all 75 shot-lab screens: the theremin knobs
+  shrink with their row, Chordle's difficulty and SUBMIT buttons shrink before
+  they run off the edge, and the header back label ends in an ellipsis instead
+  of sliding under the mic and star buttons.
+- Sweep result: 0 overflowing screens at every size on 390px and 360px phones.
+  Before: 10 at the top step (all of Music Quiz, Road Trip, piano, theremin).
+
+Drumkit bell: measured offline it ran about 3.4x the ride's RMS and above the
+crash. Acoustic bell level 1.9 to 0.9 and FM index 3000 to 1800 (fewer
+inharmonic sidebands, less clang, same pitched ping); it now sits about 1.5 to
+1.7x the ride. Electronic bell level 1.9 to 1.1.
+
+Tuner meter: the needle look goes back to before v0.210.113 (3px rounded bar
+with glow, no arrow tip, glowing fill, plain track, no lock-band box). Only the
+look; the spring motion, live needle, hold and tolerance logic from v113 to
+v116 all stay. The lock band element is still in the DOM, hidden by one
+`display: none`.
+
 ## v0.210.121: gap fill for Theory, Advanced Theory, Bass and Seventies
 
 30 new questions in both languages, each fact checked and triaged. They fill

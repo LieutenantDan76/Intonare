@@ -29,7 +29,10 @@ VALID_VALUES = {0, 1, 2, 3}   # 0 off, 1 ghost, 2 hit, 3 flam
 VALID_SUBS = {1, 2, 3, 4, 6, 8}
 
 META_KEYS = {"name", "nameIt", "ts", "dk_bpm", "kit", "swing",
-             "globalSub", "trackSub", "barCount"}
+             "globalSub", "trackSub", "barCount",
+             # nudge: { track: { step: fraction } } per-step timing offsets
+             # (loadPreset copies it into dk_nudges). Checked separately below.
+             "nudge"}
 
 
 def extract_block(src, marker, endmark):
@@ -203,6 +206,33 @@ def main():
                         f"step index by {gsub // 4}; the written data is "
                         f"stretched and the tail is dropped")
                     break
+
+            # nudge: every track must exist, every step must be on the grid,
+            # every offset must be a fraction of a step (0 < x < 1).
+            nud = p.get("nudge", {})
+            if nud and not isinstance(nud, dict):
+                errors.append(f"{tag}: nudge is not an object")
+                nud = {}
+            for tid, steps in nud.items():
+                if tid not in track_ids:
+                    errors.append(f"{tag}: nudge names unknown track '{tid}'")
+                    continue
+                if not isinstance(steps, dict):
+                    errors.append(f"{tag}: nudge['{tid}'] is not an object")
+                    continue
+                arr = p.get(tid)
+                for st, off in steps.items():
+                    try:
+                        si, fv = int(st), float(off)
+                    except (TypeError, ValueError):
+                        errors.append(f"{tag}: nudge['{tid}'][{st}] is not numeric")
+                        continue
+                    if not (0 < fv < 1):
+                        errors.append(f"{tag}: nudge['{tid}'][{si}] = {fv} is not a fraction of a step")
+                    if isinstance(arr, list) and not (0 <= si < len(arr)):
+                        errors.append(f"{tag}: nudge['{tid}'][{si}] is off the end of the pattern")
+                    elif isinstance(arr, list) and not arr[si]:
+                        warnings.append(f"{tag}: nudge['{tid}'][{si}] moves a step that has no hit")
 
             # per-track pattern lengths
             voices = 0

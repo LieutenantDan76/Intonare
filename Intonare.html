@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 0.210.121 -->
+<!-- INTONARE_VERSION: 0.210.122 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -3836,17 +3836,8 @@ body.sg-open #toolSurvivalGuide{
   body.light .tuner-screen .tuner-screen-cents-badge.flat    { color: #163b8f !important; }
   /* meter: track, center, ticks, needle, FLAT/SHARP head — dark-on-light for C2 */
   body.light .tuner-screen .tuner-screen-meter-head { color: #3a4360 !important; }
-  body.light .tuner-screen .meter-track {
-    background:
-      repeating-linear-gradient(90deg,
-        transparent 0, transparent calc(12.5% - 0.5px),
-        rgba(25,40,75,.14) calc(12.5% - 0.5px),
-        rgba(25,40,75,.14) calc(12.5% + 0.5px),
-        transparent calc(12.5% + 0.5px), transparent 25%),
-      #8b9cb6 !important;
-    box-shadow: inset 0 1px 3px rgba(18,34,64,.34) !important;
-  }
-  body.light .tuner-screen .meter-center { background: rgba(25,40,75,.42) !important; }
+  body.light .tuner-screen .meter-track { background: #8b9cb6 !important; box-shadow: inset 0 1px 3px rgba(18,34,64,.34) !important; }
+  body.light .tuner-screen .meter-center { background: rgba(25,40,75,.35) !important; }
   body.light .tuner-screen .meter-zone {
     background: rgba(47,92,0,.18) !important;
     box-shadow: inset 0 0 0 1px rgba(47,92,0,.32) !important;
@@ -7034,14 +7025,16 @@ body.sg-open #toolSurvivalGuide{
   }
 
   /* ── Accessibility: app-wide UI scale (slider, 5 snap steps) ──
-     Bumps the size of everything — text, buttons, spacing, tap targets —
-     uniformly, so internal layouts stay proportional. zoom is well-supported in
-     the Android WebView/Chromium. Applied to body so portaled elements (modals,
-     dropdown lists) scale too. Steps: 0=1.0, 1=1.08, 2=1.15, 3=1.21, 4=1.26. */
-  html[data-uiscale="1"] body { zoom: 1.08; }
-  html[data-uiscale="2"] body { zoom: 1.15; }
-  html[data-uiscale="3"] body { zoom: 1.21; }
-  html[data-uiscale="4"] body { zoom: 1.26; }
+     v0.210.122: the scale is now the VIEWPORT's, set on the meta viewport tag by
+     applyUiScale() (initial-scale 1.08 .. 1.26), not CSS `zoom` on body.
+     Why: Chromium's standardized zoom multiplies viewport units inside the zoomed
+     body, so every full-screen surface (height:100dvh) came out 1.26x the screen
+     and ran off the bottom (Music Quiz lost everything under Quick Play), and
+     every JS-positioned popup read zoomed rects but wrote unzoomed px, so things
+     landed out of line. With a viewport scale the app simply lays out on a
+     narrower phone (390 / 1.26 = 310 CSS px) and the OS scales it up: vh, vw,
+     fixed positioning, getBoundingClientRect and touch all agree.
+     data-uiscale stays on <html> for the padding trims below. */
   /* The side padding zooms up too and pushes the content column past the viewport
      at the bigger steps. Trim it progressively so everything still fits edge to
      edge without horizontal scroll. */
@@ -7049,20 +7042,9 @@ body.sg-open #toolSurvivalGuide{
   html[data-uiscale="2"] .app { padding-left: 11px; padding-right: 11px; }
   html[data-uiscale="3"] .app { padding-left: 8px;  padding-right: 8px; gap: 5px; }
   html[data-uiscale="4"] .app { padding-left: 6px;  padding-right: 6px; gap: 5px; }
-  /* Safety net at the upper steps: cap the column to the viewport so sub-pixel
-     rounding from `zoom` can never push content off the right edge on any device.
-     Vertical scroll is unaffected; family-tab strips still scroll in their row. */
-  html[data-uiscale="3"] .app { max-width: calc(100vw / 1.21); overflow-x: clip; }
-  html[data-uiscale="4"] .app { max-width: calc(100vw / 1.26); overflow-x: clip; }
-  /* The tour overlay is positioned with JS using real (unzoomed) viewport
-     coordinates, and it sits ON TOP of the app rather than inside its layout.
-     The body zoom would re-multiply those coordinates and inflate the card,
-     pushing buttons off-screen. Counter-zoom the overlay back to 1.0 at each step
-     so the tour always renders crisp and correctly placed, whatever the UI scale. */
-  html[data-uiscale="1"] .tour-overlay { zoom: calc(1 / 1.08); }
-  html[data-uiscale="2"] .tour-overlay { zoom: calc(1 / 1.15); }
-  html[data-uiscale="3"] .tour-overlay { zoom: calc(1 / 1.21); }
-  html[data-uiscale="4"] .tour-overlay { zoom: calc(1 / 1.26); }
+  /* (Removed with the zoom: the calc(100vw / 1.26) column cap and the tour
+     overlay's counter-zoom. Under a viewport scale 100vw is already the scaled
+     width and the tour's coordinates already match, so both would now be wrong.) */
 
   /* Surfaces — mid-tier shift */
   .card, .ref-controls, .live-tempo-card, .mode-toggle, .tooltip-bar, .inst-list,
@@ -9336,7 +9318,10 @@ body.sg-open #toolSurvivalGuide{
     position: relative;
   }
   .meter-center { position: absolute; left: 50%; top: -6px; bottom: -6px; width: 1px; background: var(--border); transform: translateX(-50%); }
+  /* Lock band: kept in the DOM (JS still sizes it from tuneTolerance()), hidden
+     with the rest of the v113 look. Delete the display:none to bring it back. */
   .meter-zone {
+    display: none;
     position: absolute; top: 1px; bottom: 1px; left: 45%; width: 10%;
     border-radius: 3px; pointer-events: none;
     background: color-mix(in srgb, var(--in-tune) 18%, transparent);
@@ -9344,24 +9329,23 @@ body.sg-open #toolSurvivalGuide{
   }
   .meter-fill {
     position: absolute; height: 100%; top: 0;
-    border-radius: 4px; opacity: 0.52;
+    border-radius: 4px;
     transition: background 0.2s, color 0.2s;
-    box-shadow: none;
+    box-shadow: 0 0 14px currentColor, 0 0 4px currentColor;
   }
+  /* v0.210.122: the pre-v0.210.113 look is back (3px rounded bar with glow, no
+     arrow tip, glowing fill, plain track, no lock-band box). Daniele: the v113
+     redesign was "not as elegant". Only the LOOK is reverted; the spring motion,
+     live needle and tolerance logic from v113-v116 all stay. */
   .meter-needle {
-    position: absolute; top: -8px; width: 2px; height: 26px;
-    background: var(--text); border-radius: 1px 1px 0 0;
+    position: absolute; top: -6px; width: 3px; height: 20px;
+    background: var(--text); border-radius: 2px;
     transform: translateX(-50%);
     transition: background 0.18s, box-shadow 0.18s, color 0.18s;
-    box-shadow: 0 0 6px rgba(238,240,247,0.35);
+    box-shadow: 0 0 6px rgba(238,240,247,0.5);
     color: var(--text);
   }
-  .meter-needle::after {
-    content: ''; position: absolute; left: 50%; bottom: -3px;
-    transform: translateX(-50%);
-    border-left: 4px solid transparent; border-right: 4px solid transparent;
-    border-top: 5px solid currentColor;
-  }
+  .meter-needle::after { content: none; }
   .meter-needle.in-tune { background: var(--in-tune); color: var(--in-tune); box-shadow: 0 0 12px color-mix(in srgb, var(--in-tune) 55%, transparent); }
   .meter-needle.sharp   { background: var(--sharp); color: var(--sharp); box-shadow: 0 0 10px color-mix(in srgb, var(--sharp) 45%, transparent); }
   .meter-needle.flat    { background: var(--flat); color: var(--flat); box-shadow: 0 0 10px color-mix(in srgb, var(--flat) 45%, transparent); }
@@ -12805,19 +12789,11 @@ body.sg-open #toolSurvivalGuide{
   }
   /* override global meter-track/needle for screen context */
   .tuner-screen-meter .meter-track {
-    height: 10px;
-    background:
-      repeating-linear-gradient(90deg,
-        transparent 0, transparent calc(12.5% - 0.5px),
-        rgba(255,255,255,0.07) calc(12.5% - 0.5px),
-        rgba(255,255,255,0.07) calc(12.5% + 0.5px),
-        transparent calc(12.5% + 0.5px), transparent 25%),
-      rgba(255,255,255,0.045);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.07) inset;
+    background: rgba(255,255,255,0.04);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset;
   }
   .tuner-screen-meter .meter-center {
-    background: rgba(255,255,255,0.22);
-    width: 1px; top: -5px; bottom: -5px;
+    background: rgba(255,255,255,0.12);
   }
   .tuner-screen-meter .meter-zone {
     background: rgba(182,242,91,0.14);
@@ -12828,24 +12804,26 @@ body.sg-open #toolSurvivalGuide{
     font-size: 8px; color: rgba(255,255,255,0.45); letter-spacing: 0;
     font-family: 'JetBrains Mono','GlyphFix', monospace;
   }
-  .tuner-screen-meter .meter-fill { box-shadow: none; opacity: 0.48; }
+  .tuner-screen-meter .meter-fill {
+    box-shadow: 0 0 10px currentColor, 0 0 4px currentColor;
+  }
   /* needle on screen — phosphor, not neon blob */
   .tuner-screen-meter .meter-needle {
-    background: rgba(255,255,255,0.78);
-    color: rgba(255,255,255,0.78);
-    box-shadow: 0 0 8px rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.7);
+    color: rgba(255,255,255,0.7);
+    box-shadow: 0 0 8px rgba(255,255,255,0.4);
   }
   .tuner-screen-meter .meter-needle.in-tune {
     background: var(--in-tune); color: var(--in-tune);
-    box-shadow: 0 0 12px rgba(182,242,91,0.42);
+    box-shadow: 0 0 14px var(--in-tune), 0 0 4px var(--in-tune);
   }
   .tuner-screen-meter .meter-needle.sharp {
     background: var(--sharp); color: var(--sharp);
-    box-shadow: 0 0 10px rgba(255,82,82,0.38);
+    box-shadow: 0 0 10px var(--sharp);
   }
   .tuner-screen-meter .meter-needle.flat {
     background: var(--flat); color: var(--flat);
-    box-shadow: 0 0 10px rgba(122,175,255,0.38);
+    box-shadow: 0 0 10px var(--flat);
   }
   /* strobe is a background layer — no layout changes needed */
 
@@ -18714,6 +18692,9 @@ body.sg-open #toolSurvivalGuide{
     display: flex; align-items: center; gap: 10px;
     padding: 4px 6px;
   }
+  /* Locked after LOCK IN: the answer is final until the next round. */
+  .tg-guess-locked .tg-guess-slider,
+  .tg-guess-locked .tl-bpm-adj { opacity: .45; pointer-events: none; }
   .tg-guess-slider {
     flex: 1; -webkit-appearance: none; appearance: none;
     height: 8px; background: var(--bg-1); border-radius: 4px;
@@ -21980,7 +21961,9 @@ body.sg-open #toolSurvivalGuide{
     align-items: center; gap: 3px;
     align-self: center;
     height: 32px; padding: 0 6px 0 2px;
-    flex-shrink: 0;
+    /* Shrinks and ellipsizes instead of running under the mic / star / level
+       buttons ("back to PITCH & SOUND" at the larger text sizes). */
+    flex-shrink: 1; min-width: 0; overflow: hidden;
     border-radius: 6px;
     background: transparent;
     border: none;
@@ -21993,6 +21976,7 @@ body.sg-open #toolSurvivalGuide{
     opacity: 0.85;
   }
   .header-back-btn:active { opacity: 1; }
+  #headerBackLabel { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
   /* ── Module controls slot (e.g. Chordle speed/settings) ── */
   .header-module-controls {
@@ -26963,10 +26947,12 @@ body.light #toolDrumkit .dk-prec-step-num { color: rgba(0,0,0,0.32); }
 .thmn-expand-btn { flex: 0 0 auto; padding: 6px 11px; border-radius: 6px; cursor: pointer; background: linear-gradient(180deg, #3a3a3f, #1e1e22); border: 1px solid #4a4a50; border-top-color: #5c5c62; color: #d8dde0; font-size: 9px; letter-spacing: 1px; font-weight: 800; white-space: nowrap; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.5); text-shadow: 0 1px 1px rgba(0,0,0,.6); }
 .thmn-expand-btn:active { background: linear-gradient(180deg, #1e1e22, #2c2c30); box-shadow: inset 0 2px 4px rgba(0,0,0,.6); }
 /* knob row */
-.thmn-knob-row { display: flex; gap: 6px; justify-content: space-between; flex: 1; }
+.thmn-knob-row { display: flex; gap: 6px; justify-content: space-between; flex: 1; min-width: 0; }
 .thmn-knob-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; min-width: 0; }
 .thmn-knob {
-  width: 46px; height: 46px; border-radius: 50%; position: relative; touch-action: none; cursor: pointer;
+  /* Shrinks with its cell on narrow layouts (six knobs + gaps = 306px fixed, which
+     ran off the right edge at the larger text sizes). Square via aspect-ratio. */
+  width: 46px; height: auto; max-width: 100%; aspect-ratio: 1; border-radius: 50%; position: relative; touch-action: none; cursor: pointer;
   /* knurled black skirt + brushed silver cap, closer to the real Moog knob */
   background:
     radial-gradient(circle at 50% 36%, #e6e9ec 0%, #c2c6ca 16%, #9a9ea2 30%, #4c4d50 40%, #1c1c1f 43%, #0c0c0e 100%);
@@ -34769,7 +34755,7 @@ try {
 
     <!-- Row 2: diff left · hint center · play+submit right -->
     <div style="display:flex;align-items:center;gap:8px;padding:6px 16px 10px">
-      <button id="chordleDiffBtn" onclick="chordleCycleDiff()" style="width:116px;flex-shrink:0;border-radius:100px;padding:8px 0;font-size:9px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .25s;border-width:1.5px;border-style:solid">
+      <button id="chordleDiffBtn" onclick="chordleCycleDiff()" style="width:116px;flex-shrink:1;min-width:84px;border-radius:100px;padding:8px 0;font-size:9px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .25s;border-width:1.5px;border-style:solid">
         <span style="opacity:.4;font-size:8px">‹</span>
         <span id="chordleDiffLabel">MEDIUM</span>
         <span style="opacity:.4;font-size:8px">›</span>
@@ -34777,7 +34763,7 @@ try {
       <button onclick="chordleNewGame(chordleDiff,chordleCustom)" title="New progression" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:transparent;border:1.5px solid var(--border);color:var(--text-dim);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1" onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">↺</button>
       <div style="flex:1"></div>
       <button id="chordlePlayBtn" onclick="chordlePlay()" style="border-radius:100px;padding:0;font-size:17px;cursor:pointer;width:56px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;border-width:1.5px;border-style:solid;background:transparent">▶︎</button>
-      <button id="chordleSubmitBtn" onclick="chordleSubmit()" style="width:88px;height:46px;border:none;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:2px;cursor:default;font-family:inherit;transition:all .2s;opacity:.35;background:var(--surface);color:var(--muted);flex-shrink:0" data-i18n="chordle_submit">SUBMIT</button>
+      <button id="chordleSubmitBtn" onclick="chordleSubmit()" style="width:88px;height:46px;border:none;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:2px;cursor:default;font-family:inherit;transition:all .2s;opacity:.35;background:var(--surface);color:var(--muted);flex-shrink:1;min-width:72px" data-i18n="chordle_submit">SUBMIT</button>
     </div>
 
   </div>
@@ -35848,7 +35834,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '0.210.121';
+const INTONARE_VERSION = '0.210.122';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -70440,6 +70426,11 @@ let tgCtx = null, tgMasterGain = null;
 let tgActualBpm = null;
 let tgGuess = 100;
 let tgPhase = 'idle';  // idle | listening | guessing | revealed
+// True from LOCK IN until the next round starts. Phase alone cannot carry this:
+// a replay after the reveal walks the phase back through 'replaying' to
+// 'guessing', which reopened the slider and let LOCK IN score the round twice.
+let tgAnswered = false;
+let tgLastGrade = null;   // { text, cls } for restoring the pill after a replay
 let tgSchedTimer = null;
 let tgEventQueue = [];
 let tgNextNoteTime = 0;
@@ -70662,6 +70653,9 @@ function tgUpdateDiffDisplay() {
 
 function tgResetUI() {
   tgPhase = 'idle';
+  tgAnswered = false;
+  tgLastGrade = null;
+  tgSyncGuessLock();
   const pill = document.getElementById('tgPhasePill');
   pill.textContent = t('tl_ready');
   pill.className = 'tg-phase-pill';
@@ -70690,6 +70684,12 @@ function tgResetUI() {
 }
 
 function tgSetGuess(v) {
+  // Answer is final once locked in: snap the slider back and ignore the input.
+  if (tgAnswered) {
+    const sl = document.getElementById('tgGuessSlider');
+    if (sl) sl.value = tgGuess;
+    return;
+  }
   tgGuess = Math.max(40, Math.min(220, parseInt(v) || 100));
   const youEl = document.getElementById('tgRevealYou');
   if (youEl) youEl.textContent = tgGuess;
@@ -70759,8 +70759,23 @@ function tgEndListenEarly() {
   tgLockControls(false);
 }
 
+// Dim and disable the guess controls once the answer is locked in.
+function tgSyncGuessLock() {
+  const sl = document.getElementById('tgGuessSlider');
+  if (!sl) return;
+  sl.disabled = tgAnswered;
+  const row = sl.parentElement;
+  if (row) {
+    row.classList.toggle('tg-guess-locked', tgAnswered);
+    row.querySelectorAll('.tl-bpm-adj').forEach(b => { b.disabled = tgAnswered; });
+  }
+}
+
 function tgNewRound() {
   tgEnsureCtx();
+  tgAnswered = false;
+  tgLastGrade = null;
+  tgSyncGuessLock();
   const d = TG_DIFFICULTIES[tgDifficulty];
   const steps = Math.floor((d.max - d.min) / d.step) + 1;
   tgActualBpm = d.min + d.step * Math.floor(Math.random() * steps);
@@ -70886,6 +70901,27 @@ function tgScheduler() {
 
 function tgOnListenComplete() {
   if (tgPhase !== 'listening' && tgPhase !== 'replaying') return;
+  if (tgAnswered) {
+    // Replay after the reveal: go back to the result, not to a fresh guess.
+    tgPhase = 'revealed';
+    const pillR = document.getElementById('tgPhasePill');
+    if (tgLastGrade) {
+      pillR.textContent = tgLastGrade.text;
+      pillR.className = 'tg-phase-pill revealed ' + tgLastGrade.cls;
+    }
+    document.getElementById('tgGoBtn').disabled = false;
+    document.getElementById('tgReplayBtn').disabled = false;
+    document.querySelectorAll('#tgTickGroup .tg-tick').forEach(t => {
+      t.classList.remove('lit');
+      t.classList.add('filled');
+    });
+    const rimR = document.getElementById('tgRimFill');
+    if (rimR) rimR.style.strokeDashoffset = '0';
+    document.getElementById('tgPulseCircle')?.classList.remove('beating');
+    document.getElementById('tgPulseBloom')?.classList.remove('go');
+    tgLockControls(false);
+    return;
+  }
   tgPhase = 'guessing';
   document.getElementById('tgGoBtn').disabled = false;   // ensure LOCK IN usable
   document.getElementById('tgPhasePill').textContent = t('tg_your_guess');
@@ -70995,8 +71031,10 @@ function tgReplay() {
 }
 
 function tgLockGuess() {
-  if (tgPhase !== 'guessing' || tgActualBpm === null) return;
+  if (tgPhase !== 'guessing' || tgActualBpm === null || tgAnswered) return;
   tgPhase = 'revealed';
+  tgAnswered = true;
+  tgSyncGuessLock();
   const prevStreak = tgStats.streak;
   const delta = tgGuess - tgActualBpm;
   const absDelta = Math.abs(delta);
@@ -71012,6 +71050,7 @@ function tgLockGuess() {
   const pill = document.getElementById('tgPhasePill');
   pill.textContent = grade;
   pill.className = 'tg-phase-pill revealed ' + gradeClass;
+  tgLastGrade = { text: grade, cls: gradeClass };
 
   // Morph the result box in place — no layout shift, just cross-fade
   const box = document.getElementById('tgResultBox');
@@ -71662,76 +71701,76 @@ var RR_PATTERNS = [
   { id:'four_quarters', name:'FOUR QUARTERS', diff:'easy', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1}],
     songs:[],
-    hint:'Four even quarter notes per bar. Everything else is built on this.' },
+    hint:'Four even quarter notes. Tap with the click.', hint_it:'Quattro semiminime uguali. Batti insieme al click.' },
 
   { id:'two_halves', name:'TWO HALVES', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:2},{p:2,d:2}],
     songs:[],
-    hint:'Two half notes fill a bar. Tap then count silently to two before the next one.' },
+    hint:'Two half notes. Tap on 1 and 3, count two beats after each.', hint_it:'Due minime. Batti sull\u20191 e sul 3, conta due movimenti dopo ciascuna.' },
 
   { id:'whole_note', name:'WHOLE NOTE', diff:'easy', sig:[4,4], m:1, bpm:60,
     notes:[{p:0,d:4}],
     songs:[],
-    hint:'One tap, four beats of patience. The whole note tests your internal pulse. Watch the playhead travel.' },
+    hint:'One tap on beat 1, then count to four.', hint_it:'Un solo colpo sull\u20191, poi conta fino a quattro.' },
 
   { id:'march_hold', name:'MARCH & HOLD', diff:'easy', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:2}],
     songs:[],
-    hint:'Quarter, quarter, half. The opening three notes of the Star Wars fanfare are exactly this shape.' },
+    hint:'Quarter, quarter, half. Hold the last note to the end of the bar.', hint_it:'Semiminima, semiminima, minima. Tieni l\u2019ultima nota fino a fine battuta.' },
 
   { id:'downbeat_pulse', name:'DOWNBEAT PULSE', diff:'easy', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1,r:true},{p:2,d:1},{p:3,d:1,r:true}],
     songs:[],
-    hint:'Beats 1 and 3, where your feet land in a march.' },
+    hint:'Tap on 1 and 3; beats 2 and 4 stay silent.', hint_it:'Batti sull\u20191 e sul 3; il 2 e il 4 restano in silenzio.' },
 
   // ── NORMAL ──
   { id:'eighth_drive', name:'EIGHTH NOTE DRIVE', diff:'normal', sig:[4,4], m:1, bpm:90,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:.5},{p:3.5,d:.5}],
     songs:[],
-    hint:'Eight evenly spaced eighth notes. Subdivide: ONE-and-TWO-and-THREE-and-FOUR-and.' },
+    hint:'Eight even eighths. Count 1-and-2-and-3-and-4-and.', hint_it:'Otto crome uguali. Conta 1-e-2-e-3-e-4-e.' },
 
   { id:'backbeat', name:'THE BACKBEAT', diff:'normal', sig:[4,4], m:1, bpm:90,
     notes:[{p:0,d:1,r:true},{p:1,d:1},{p:2,d:1,r:true},{p:3,d:1}],
     songs:[],
-    hint:'Beats 2 and 4. The snare or clap in virtually every rock and pop song lands here.' },
+    hint:'Tap on 2 and 4 only, where the snare goes in rock and pop.', hint_it:'Batti solo sul 2 e sul 4, dove cade il rullante nel rock e nel pop.' },
 
   { id:'dotted_groove', name:'DOTTED GROOVE', diff:'normal', sig:[4,4], m:1, bpm:84,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1.5},{p:3.5,d:.5}],
     songs:[],
-    hint:'Long-short, long-short. The dotted quarter is 3× the eighth. Hear the lilt.' },
+    hint:'Dotted quarter, eighth, twice. The long note is three times the short one.', hint_it:'Semiminima puntata e croma, due volte. La nota lunga vale tre volte la corta.' },
 
   { id:'half_quarters', name:'HALF & QUARTERS', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:2},{p:2,d:1},{p:3,d:1}],
     songs:[],
-    hint:'Hold for two full beats, then two quick ones. Feel the contrast.' },
+    hint:'A half note held for two beats, then two quarters.', hint_it:'Una minima tenuta per due movimenti, poi due semiminime.' },
 
   { id:'run_hold', name:'RUN & HOLD', diff:'normal', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:2}],
     songs:[],
-    hint:"Four fast eighth notes, then release into a long hold. Don't cut the half note short." },
+    hint:'Four eighths, then a half note. Hold it for the full two beats.', hint_it:'Quattro crome, poi una minima. Tienila per tutti e due i movimenti.' },
 
   // ── HARD ──
   { id:'habanera', name:'HABANERA', diff:'hard', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1}],
     songs:[],
-    hint:'Dotted quarter, eighth, quarter, quarter. One of the most pervasive rhythmic cells in Western music.' },
+    hint:'Dotted quarter, eighth, quarter, quarter: the habanera rhythm.', hint_it:'Semiminima puntata, croma, semiminima, semiminima: il ritmo di habanera.' },
 
   { id:'stomp_clap', name:'STOMP & CLAP', diff:'hard', sig:[4,4], m:2, bpm:100,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1,r:true},{p:3,d:1},
            {p:4,d:1},{p:5,d:1},{p:6,d:1,r:true},{p:7,d:1}],
     songs:[],
-    hint:'The silence on beat 3 is as important as the notes; that gap creates the tension.' },
+    hint:'Tap, tap, rest, tap in both bars. Count the rest on beat 3.', hint_it:'Colpo, colpo, pausa, colpo in tutte e due le battute. Conta la pausa sul 3.' },
 
   { id:'synco', name:'SYNCOPATION', diff:'hard', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.5},{p:.5,d:1},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:1},{p:3.5,d:.5}],
     songs:[],
-    hint:'Syncopation lands on the upbeats. Keep your foot on the quarter beat. Tap between foot-taps.' },
+    hint:'Eighth, quarter, eighth, twice. The quarters start on the and.', hint_it:'Croma, semiminima, croma, due volte. Le semiminime partono sull\u2019e.' },
 
   { id:'mixed_16th', name:'SIXTEENTH MIX', diff:'hard', sig:[4,4], m:1, bpm:76,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},
            {p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:1}],
     songs:[],
-    hint:'Count: ONE-e-and-a-TWO-and-THREE-e-and-a-FOUR.' },
+    hint:'Eighths and sixteenths. Count 1-and-a 2-and 3-and-a 4.', hint_it:'Crome e semicrome. Conta 1-e-a 2-e 3-e-a 4.' },
 
   { id:'triplet_shuffle', name:'SHUFFLE FEEL', diff:'hard', sig:[4,4], m:1, bpm:82,
     notes:[
@@ -71741,7 +71780,7 @@ var RR_PATTERNS = [
       {p:3,       d:1/3}, {p:3+1/3, d:1/3}, {p:3+2/3, d:1/3},
     ],
     songs:[],
-    hint:'Quarter then triplets, repeated. This long-short-short-short feel is the heartbeat of the blues shuffle.' },
+    hint:'A quarter, then a triplet, twice. Three even notes fill each triplet beat.', hint_it:'Una semiminima, poi una terzina, due volte. Ogni terzina è tre note uguali in un movimento.' },
 
   { id:'triplet_run', name:'TRIPLET RUN', diff:'hard', sig:[4,4], m:1, bpm:78,
     notes:[
@@ -71751,7 +71790,7 @@ var RR_PATTERNS = [
       {p:3,       d:1},
     ],
     songs:[],
-    hint:'Two beats of triplets, then two plain quarters. Feel the gear-shift from triplet subdivision back to straight pulse.' },
+    hint:'Two beats of triplets, then two quarters. Switch from three per beat to one.', hint_it:'Due movimenti di terzine, poi due semiminime. Passa da tre note per movimento a una.' },
 
   { id:'triplet_lock', name:'TRIPLET LOCK', diff:'hard', sig:[4,4], m:1, bpm:76,
     notes:[
@@ -71761,7 +71800,7 @@ var RR_PATTERNS = [
       {p:3,       d:1/3}, {p:3+1/3, d:1/3}, {p:3+2/3, d:1/3},
     ],
     songs:[],
-    hint:'Twelve taps to the bar, four beats of triplet eighths. Keep the inner pulse steady and they roll instead of rushing.' },
+    hint:'Twelve triplet eighths, three to each beat. Keep them even.', hint_it:'Dodici crome in terzina, tre per movimento. Tienile uguali.' },
 
   // ── DIRECT QUOTES — the actual opening rhythm of these songs ──
   { id:'beethoven_5th', name:"FATE'S KNOCK", diff:'easy', sig:[4,4], m:1, bpm:92,
@@ -71771,7 +71810,7 @@ var RR_PATTERNS = [
       {p:2,   d:2},
     ],
     songs:[],
-    hint:'Three short, one long. The most famous four-note motif in classical music: da-da-da-DUUUM.' },
+    hint:'Rest, three eighths, then a long half note: the opening of Beethoven\u2019s Fifth.', hint_it:'Pausa, tre crome, poi una minima lunga: l\u2019inizio della Quinta di Beethoven.' },
 
   { id:'super_mario', name:'LEVEL ONE', diff:'normal', sig:[4,4], m:1, bpm:100,
     notes:[
@@ -71780,7 +71819,7 @@ var RR_PATTERNS = [
       {p:3.5,d:0.5},
     ],
     songs:[],
-    hint:'Five eighth notes into a quarter landing, then a pickup: the opening run of the overworld melody.' },
+    hint:'Five eighths, a quarter on the and of 3, then one more eighth.', hint_it:'Cinque crome, una semiminima sull\u2019e del 3, poi un\u2019altra croma.' },
 
   { id:'seven_nation', name:'SEVEN NATION', diff:'normal', sig:[4,4], m:2, bpm:124,
     notes:[
@@ -71790,12 +71829,12 @@ var RR_PATTERNS = [
       {p:7,   d:1, r:true},
     ],
     songs:[],
-    hint:'Bar 1: three stomps then the quick two-step. Bar 2: the long low resolution note, then silence before it repeats. The complete phrase.' },
+    hint:'Three quarters and two eighths, then a long note and a rest.', hint_it:'Tre semiminime e due crome, poi una nota lunga e una pausa.' },
 
   { id:'tresillo', name:'TRESILLO', diff:'normal', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:1.5},{p:1.5,d:1.5},{p:3,d:1}],
     songs:[],
-    hint:'Three uneven hits grouped 3+3+2. It sits under reggaeton, cumbia and a good half of Latin pop, and the unevenness is the whole point.' },
+    hint:'Three hits spaced 3+3+2 eighths: the tresillo.', hint_it:'Tre colpi a distanza di 3+3+2 crome: il tresillo.' },
 
   { id:'reggae_skank', name:'REGGAE SKANK', diff:'normal', sig:[4,4], m:1, bpm:76,
     notes:[
@@ -71805,12 +71844,12 @@ var RR_PATTERNS = [
       {p:3,d:0.5,r:true},{p:3.5,d:0.5},
     ],
     songs:[],
-    hint:'Every upbeat, silence on every downbeat. The guitar skank that defines reggae. Your foot should tap on the quiet beats.' },
+    hint:'Tap every and, never the beat. The reggae guitar skank.', hint_it:'Batti ogni e, mai sul movimento. Lo skank della chitarra reggae.' },
 
   { id:'charleston', name:'CHARLESTON', diff:'hard', sig:[4,4], m:1, bpm:108,
     notes:[{p:0,d:1.5},{p:1.5,d:0.5,r:true},{p:2,d:1},{p:3,d:1}],
     songs:[],
-    hint:'Dotted quarter, eighth rest, quarter, quarter. That skipped upbeat is the bounce of 1920s jazz dance.' },
+    hint:'Dotted quarter, eighth rest, then quarters on 3 and 4.', hint_it:'Semiminima puntata, pausa di croma, poi semiminime sul 3 e sul 4.' },
 
   { id:'clave_23', name:'CLAVE 2-3', diff:'hard', sig:[4,4], m:2, bpm:88,
     notes:[
@@ -71825,7 +71864,7 @@ var RR_PATTERNS = [
       {p:7,   d:1},
     ],
     songs:[],
-    hint:'2-3 clave: two hits in bar 1, three in bar 2. The mirror of son clave; together they form the rhythmic fabric of salsa.' },
+    hint:'2-3 clave: two hits in bar 1, three in bar 2.', hint_it:'Clave 2-3: due colpi nella prima battuta, tre nella seconda.' },
 
     { id:'son_clave', name:'SON CLAVE', diff:'hard', sig:[4,4], m:2, bpm:90,
     notes:[
@@ -71840,18 +71879,18 @@ var RR_PATTERNS = [
       {p:7,   d:1,   r:true},
     ],
     songs:[],
-    hint:'3-2 son clave: three hits in bar 1, two in bar 2. The rhythmic spine of Afro-Cuban music and Latin jazz.' },
+    hint:'3-2 son clave: three hits in bar 1, two in bar 2.', hint_it:'Son clave 3-2: tre colpi nella prima battuta, due nella seconda.' },
 
   // ── 3/4 NORMAL ──
   { id:'waltz_basic', name:'WALTZ STEP', diff:'normal', sig:[3,4], m:1, bpm:120,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1}],
     songs:[],
-    hint:'ONE two three, ONE two three. Lean on beat 1 and the rest follows.' },
+    hint:'Three quarters. Count ONE-two-three.', hint_it:'Tre semiminime. Conta UNO-due-tre.' },
 
   { id:'waltz_lilt', name:'WALTZ LILT', diff:'normal', sig:[3,4], m:1, bpm:116,
     notes:[{p:0,d:1.5},{p:1.5,d:0.5},{p:2,d:1}],
     songs:[],
-    hint:'The classic waltz lilt, dotted quarter into eighth. That dot stretches beat 1 right across the barline.' },
+    hint:'Dotted quarter, eighth, quarter. The dot holds beat 1 into beat 2.', hint_it:'Semiminima puntata, croma, semiminima. Il punto porta l\u20191 dentro il 2.' },
 
   { id:'waltz_phrase', name:'WALTZ PHRASE', diff:'normal', sig:[3,4], m:2, bpm:112,
     notes:[
@@ -71859,18 +71898,18 @@ var RR_PATTERNS = [
       {p:3,d:3},
     ],
     songs:[],
-    hint:'Bar 1 walks three steps, bar 2 holds the whole bar. Classic waltz question and answer.' },
+    hint:'Three quarters, then a dotted half that fills bar 2.', hint_it:'Tre semiminime, poi una minima puntata che riempie la seconda battuta.' },
 
   { id:'waltz_eighth', name:'WALTZ EIGHTHS', diff:'normal', sig:[3,4], m:1, bpm:108,
     notes:[{p:0,d:1},{p:1,d:0.5},{p:1.5,d:0.5},{p:2,d:0.5},{p:2.5,d:0.5}],
     songs:[],
-    hint:'Quarter then four eighths. The subdivision on beats 2 and 3 is the engine of folk and Celtic music.' },
+    hint:'A quarter, then four eighths on beats 2 and 3.', hint_it:'Una semiminima, poi quattro crome sul 2 e sul 3.' },
 
   // ── 3/4 HARD ──
   { id:'waltz_synco', name:'WALTZ SYNCO', diff:'hard', sig:[3,4], m:1, bpm:120,
     notes:[{p:0,d:0.5},{p:0.5,d:1},{p:1.5,d:0.5},{p:2,d:1}],
     songs:[],
-    hint:'Off-beat start into a long tie. Syncopation in 3/4 lands differently than 4/4, so count through it.' },
+    hint:'Eighth, quarter, eighth, quarter. The first quarter starts on the and of 1.', hint_it:'Croma, semiminima, croma, semiminima. La prima semiminima parte sull\u2019e dell\u20191.' },
 
   { id:'waltz_triplet', name:'WALTZ TRIPLETS', diff:'hard', sig:[3,4], m:1, bpm:116,
     notes:[
@@ -71879,7 +71918,7 @@ var RR_PATTERNS = [
       {p:2,d:1/3},{p:2+1/3,d:1/3},{p:2+2/3,d:1/3},
     ],
     songs:[],
-    hint:'Triplets on beats 1 and 3, plain quarter on beat 2. Feel the three-against-three tension.' },
+    hint:'Triplets on beats 1 and 3, a quarter on beat 2.', hint_it:'Terzine sull\u20191 e sul 3, una semiminima sul 2.' },
 
   { id:'waltz_phrase_hard', name:'WALTZ DRIVE', diff:'hard', sig:[3,4], m:2, bpm:126,
     notes:[
@@ -71887,7 +71926,7 @@ var RR_PATTERNS = [
       {p:3,d:1},{p:4,d:0.5,r:true},{p:4.5,d:0.5},{p:5,d:1},
     ],
     songs:[],
-    hint:'Busy bar 1 into a rest on beat 2 of bar 2. The silence after the drive is the point.' },
+    hint:'Eighths and a quarter in bar 1; bar 2 has a rest on beat 2.', hint_it:'Crome e una semiminima nella prima battuta; nella seconda c\u2019è una pausa sul 2.' },
 
   // ── 2-BAR EASY ──
   { id:'easy_call_response', name:'CALL & RESPONSE', diff:'easy', sig:[4,4], m:2, bpm:72,
@@ -71896,7 +71935,7 @@ var RR_PATTERNS = [
       {p:4,d:2},{p:6,d:2},
     ],
     songs:[],
-    hint:'Bar 1 asks, bar 2 answers. Feel the longer notes in bar 2 as a reply to bar 1.' },
+    hint:'Quarter, quarter, half, then two halves in bar 2.', hint_it:'Semiminima, semiminima, minima, poi due minime nella seconda battuta.' },
 
   { id:'easy_long_phrase', name:'LONG PHRASE', diff:'easy', sig:[4,4], m:2, bpm:68,
     notes:[
@@ -71904,7 +71943,7 @@ var RR_PATTERNS = [
       {p:4,d:2},{p:6,d:2},
     ],
     songs:[],
-    hint:'Four quarters build momentum, then two halves let it breathe. Classic question-and-answer phrasing.' },
+    hint:'Four quarters, then two half notes.', hint_it:'Quattro semiminime, poi due minime.' },
 
   { id:'easy_march_phrase', name:'MARCH PHRASE', diff:'easy', sig:[4,4], m:2, bpm:80,
     notes:[
@@ -71912,7 +71951,7 @@ var RR_PATTERNS = [
       {p:4,d:1},{p:5,d:1},{p:6,d:1},{p:7,d:1},
     ],
     songs:[],
-    hint:'Dotted feel in bar 1, steady quarters in bar 2. Hold that half note across the barline in your head.' },
+    hint:'Quarter, quarter, half, then four quarters in bar 2.', hint_it:'Semiminima, semiminima, minima, poi quattro semiminime nella seconda battuta.' },
 
   // ── 2-BAR NORMAL ──
   { id:'normal_eighth_phrase', name:'EIGHTH PHRASE', diff:'normal', sig:[4,4], m:2, bpm:88,
@@ -71921,7 +71960,7 @@ var RR_PATTERNS = [
       {p:4,d:1},{p:5,d:1},{p:6,d:2},
     ],
     songs:[],
-    hint:'Full bar of eighths then step back to quarters and a half. Contrast between busy and open.' },
+    hint:'A bar of eighths, then quarter, quarter, half.', hint_it:'Una battuta di crome, poi semiminima, semiminima, minima.' },
 
   { id:'normal_dotted_phrase', name:'DOTTED PHRASE', diff:'normal', sig:[4,4], m:2, bpm:84,
     notes:[
@@ -71929,7 +71968,7 @@ var RR_PATTERNS = [
       {p:4,d:1.5},{p:5.5,d:.5},{p:6,d:1},{p:7,d:1},
     ],
     songs:[],
-    hint:'Dotted groove across two bars, the lilt carrying from bar 1 into bar 2. Feel it as one long phrase.' },
+    hint:'Dotted quarter and eighth, three times, then two quarters.', hint_it:'Semiminima puntata e croma, tre volte, poi due semiminime.' },
 
   { id:'normal_backbeat_phrase', name:'BACKBEAT PHRASE', diff:'normal', sig:[4,4], m:2, bpm:90,
     notes:[
@@ -71937,7 +71976,7 @@ var RR_PATTERNS = [
       {p:4,d:.5},{p:4.5,d:.5},{p:5,d:1,r:true},{p:6,d:1},{p:7,d:1,r:true},
     ],
     songs:[],
-    hint:'Classic backbeat in bar 1, then eighths push into bar 2 before the groove returns.' },
+    hint:'Tap 2 and 4 in bar 1; bar 2 opens with two eighths.', hint_it:'Batti il 2 e il 4 nella prima battuta; la seconda si apre con due crome.' },
 
   // ── 2-BAR HARD ──
   { id:'hard_synco_phrase', name:'SYNCO PHRASE', diff:'hard', sig:[4,4], m:2, bpm:84,
@@ -71946,7 +71985,7 @@ var RR_PATTERNS = [
       {p:4,d:.5},{p:4.5,d:1.5},{p:6,d:.5},{p:6.5,d:.5},{p:7,d:.5},{p:7.5,d:.5},
     ],
     songs:[],
-    hint:'Syncopation carries across both bars. Keep the internal pulse rock solid or the off-beats drift.' },
+    hint:'Off-beat quarters in bar 1, a dotted quarter from the and of 1 in bar 2.', hint_it:'Semiminime in contrattempo nella prima battuta, una semiminima puntata dall\u2019e dell\u20191 nella seconda.' },
 
   { id:'hard_16th_phrase', name:'SIXTEENTH PHRASE', diff:'hard', sig:[4,4], m:2, bpm:76,
     notes:[
@@ -71959,7 +71998,7 @@ var RR_PATTERNS = [
       {p:7,d:1},
     ],
     songs:[],
-    hint:'Sixteenth bursts with rests and longer notes. The silence is as important as the hits.' },
+    hint:'Sixteenth groups with rests between them. Count every e-and-a.', hint_it:'Gruppi di semicrome con pause in mezzo. Conta ogni e-e-a.' },
 
   { id:'hard_clave_phrase', name:'CLAVE PHRASE', diff:'hard', sig:[4,4], m:2, bpm:90,
     notes:[
@@ -71967,859 +72006,863 @@ var RR_PATTERNS = [
       {p:4,d:1,r:true},{p:5,d:1},{p:6,d:1},{p:7,d:1,r:true},
     ],
     songs:[],
-    hint:'Son clave 3-2: feel the three-side as syncopated and the two-side as resolved. Two bars, one idea.' },
+    hint:'3-2 son clave: three hits in bar 1, two in bar 2.', hint_it:'Son clave 3-2: tre colpi nella prima battuta, due nella seconda.' },
 
   // ── EASY 1-bar additions ──────────────────────────────────────────────────
   { id:'rest_start', name:'REST AND GO', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:1,r:true},{p:1,d:1},{p:2,d:1},{p:3,d:1}],
-    songs:[], hint:'Beat 1 is silence. Feel the empty downbeat and come in on beat 2.' },
+    songs:[], hint:'Rest on 1, then come in on beat 2.', hint_it:'Pausa sull\u20191, poi entra sul 2.' },
 
   { id:'three_one', name:'LONG SHORT', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:3},{p:3,d:1}],
-    songs:[], hint:'Three beats then one. Hold the long note all the way through.' },
+    songs:[], hint:'A dotted half for three beats, then one quarter.', hint_it:'Una minima puntata per tre movimenti, poi una semiminima.' },
 
   { id:'one_three', name:'SHORT LONG', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:1},{p:1,d:3}],
-    songs:[], hint:'One beat then three. The long note arrives early and stays.' },
+    songs:[], hint:'One quarter, then a dotted half held to the end.', hint_it:'Una semiminima, poi una minima puntata tenuta fino alla fine.' },
 
   { id:'rest_mid', name:'GAP IN THE MIDDLE', diff:'easy', sig:[4,4], m:1, bpm:76,
     notes:[{p:0,d:1},{p:1,d:2,r:true},{p:3,d:1}],
-    songs:[], hint:'Beat 1, two beats of silence, beat 4. Count through the rest.' },
+    songs:[], hint:'Tap on 1, rest for two beats, tap on 4.', hint_it:'Batti sull\u20191, pausa per due movimenti, batti sul 4.' },
 
   { id:'two_two', name:'TWO AND TWO', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:2},{p:2,d:2}],
-    songs:[], hint:'Two halves. Feel the midpoint land on beat 3.' },
+    songs:[], hint:'Two half notes, on 1 and on 3.', hint_it:'Due minime, sull\u20191 e sul 3.' },
 
   { id:'big_small', name:'BIG THEN SMALL', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:2},{p:2,d:1},{p:3,d:1}],
-    songs:[], hint:'Half note then two quarters. Long breath, short steps.' },
+    songs:[], hint:'Half note, then two quarters.', hint_it:'Minima, poi due semiminime.' },
 
   { id:'small_big', name:'SMALL THEN BIG', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:2}],
-    songs:[], hint:'Two quarters then a half. Build momentum into the hold.' },
+    songs:[], hint:'Two quarters, then a half note.', hint_it:'Due semiminime, poi una minima.' },
 
   { id:'bookends', name:'BOOKENDS', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:1},{p:1,d:2},{p:3,d:1}],
-    songs:[], hint:'Hit, hold for two, hit. The half note is the center of the bar.' },
+    songs:[], hint:'Quarter, half, quarter. The half note takes beats 2 and 3.', hint_it:'Semiminima, minima, semiminima. La minima prende il 2 e il 3.' },
 
   { id:'skip_two', name:'SKIP BEAT TWO', diff:'easy', sig:[4,4], m:1, bpm:76,
     notes:[{p:0,d:1},{p:1,d:1,r:true},{p:2,d:1},{p:3,d:1}],
-    songs:[], hint:'Quarter, rest on 2, two quarters. One gap to count through.' },
+    songs:[], hint:'Tap on 1, rest on 2, tap on 3 and 4.', hint_it:'Batti sull\u20191, pausa sul 2, batti sul 3 e sul 4.' },
 
   { id:'skip_three', name:'SKIP BEAT THREE', diff:'easy', sig:[4,4], m:1, bpm:76,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1,r:true},{p:3,d:1}],
-    songs:[], hint:'Two hits, rest on 3, hit. Feel the gap in the middle.' },
+    songs:[], hint:'Tap on 1 and 2, rest on 3, tap on 4.', hint_it:'Batti sull\u20191 e sul 2, pausa sul 3, batti sul 4.' },
 
   { id:'hold_release', name:'HOLD RELEASE', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:2,r:true},{p:2,d:1},{p:3,d:1}],
-    songs:[], hint:'Two beats of silence then two quarters. The rest is the setup.' },
+    songs:[], hint:'Two beats of rest, then quarters on 3 and 4.', hint_it:'Due movimenti di pausa, poi semiminime sul 3 e sul 4.' },
 
   { id:'pickup_easy', name:'PICKUP', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:1,r:true},{p:1,d:1},{p:2,d:2}],
-    songs:[], hint:'Rest on 1, quarter on 2, half note. Coming in late feels intentional.' },
+    songs:[], hint:'Rest on 1, quarter on 2, then a half note.', hint_it:'Pausa sull\u20191, semiminima sul 2, poi una minima.' },
 
   { id:'three_rest', name:'THREE THEN REST', diff:'easy', sig:[4,4], m:1, bpm:76,
     notes:[{p:0,d:3},{p:3,d:1,r:true}],
-    songs:[], hint:'Long note then a rest. The silence after the hold is part of the rhythm.' },
+    songs:[], hint:'A dotted half, then a rest on beat 4.', hint_it:'Una minima puntata, poi una pausa sul 4.' },
 
   { id:'synco_easy', name:'SIMPLE DOTTED', diff:'easy', sig:[4,4], m:1, bpm:76,
     notes:[{p:0,d:1.5},{p:1.5,d:1},{p:2.5,d:1.5}],
-    songs:[], hint:'Dotted quarter, quarter, dotted quarter. The dot shifts where you land.' },
+    songs:[], hint:'Dotted quarter, quarter, dotted quarter. The last two start on the and.', hint_it:'Semiminima puntata, semiminima, semiminima puntata. Le ultime due partono sull\u2019e.' },
 
   { id:'waltz_in_4', name:'WALTZ IN FOUR', diff:'easy', sig:[4,4], m:1, bpm:76,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1,r:true}],
-    songs:[], hint:'Three equal beats then a rest. Familiar waltz feel in 4/4.' },
+    songs:[], hint:'Three quarters and a rest on 4.', hint_it:'Tre semiminime e una pausa sul 4.' },
 
   // ── EASY 4/4 2-bar additions ──────────────────────────────────────────────
   { id:'easy_build', name:'BUILD AND HOLD', diff:'easy', sig:[4,4], m:2, bpm:68,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:4}],
-    songs:[], hint:'Four quarters then a whole note. Busy bar then a full hold.' },
+    songs:[], hint:'Four quarters, then a whole note for all of bar 2.', hint_it:'Quattro semiminime, poi una semibreve per tutta la seconda battuta.' },
 
   { id:'easy_gap_phrase', name:'GAP PHRASE', diff:'easy', sig:[4,4], m:2, bpm:68,
     notes:[{p:0,d:1},{p:1,d:2,r:true},{p:3,d:1},{p:4,d:2},{p:6,d:2}],
-    songs:[], hint:'Bar 1 has a rest in the middle. Bar 2 is open and settled.' },
+    songs:[], hint:'Tap 1 and 4 in bar 1, two half notes in bar 2.', hint_it:'Batti l\u20191 e il 4 nella prima battuta, due minime nella seconda.' },
 
   // ── NORMAL 4/4 1-bar additions ────────────────────────────────────────────
   { id:'bossa_cell', name:'BOSSA CELL', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1}],
-    songs:[], hint:'Dotted quarter, eighth, quarter, quarter. The heartbeat of bossa nova.' },
+    songs:[], hint:'Dotted quarter, eighth, quarter, quarter: the same cell as the habanera.', hint_it:'Semiminima puntata, croma, semiminima, semiminima: la stessa cellula dell\u2019habanera.' },
 
   { id:'second_line', name:'SECOND LINE', diff:'normal', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:1},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:1}],
-    songs:[], hint:'Eighth pair, quarter, twice. New Orleans second-line march feel.' },
+    songs:[], hint:'Two eighths and a quarter, twice.', hint_it:'Due crome e una semiminima, due volte.' },
 
   { id:'push_beat', name:'PUSH BEAT', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:1},{p:2,d:1},{p:3,d:1}],
-    songs:[], hint:'Rest on 1 then an eighth, so the first hit is pushed off the beat.' },
+    songs:[], hint:'Eighth rest on 1, so the first hit lands on the and.', hint_it:'Pausa di croma sull\u20191: il primo colpo cade sull\u2019e.' },
 
   { id:'anticipated', name:'ANTICIPATED', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.5},{p:.5,d:1.5},{p:2,d:.5},{p:2.5,d:1.5}],
-    songs:[], hint:'Hit early, hold across the beat. The note sounds before where it resolves.' },
+    songs:[], hint:'Eighth, then a dotted quarter from the and, twice.', hint_it:'Croma, poi una semiminima puntata dall\u2019e, due volte.' },
 
   { id:'afro_cell', name:'AFRO CELL', diff:'normal', sig:[4,4], m:1, bpm:90,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:1},{p:2.5,d:.5},{p:3,d:1}],
-    songs:[], hint:'Three eighths, a quarter, an eighth, a quarter. West African timeline feel.' },
+    songs:[], hint:'Three eighths, a quarter on the and of 2, an eighth, a quarter.', hint_it:'Tre crome, una semiminima sull\u2019e del 2, una croma, una semiminima.' },
 
   { id:'samba_cell', name:'SAMBA CELL', diff:'normal', sig:[4,4], m:1, bpm:96,
     notes:[{p:0,d:.5},{p:.5,d:1.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'Eighth, dotted quarter, then four eighths. The basic samba rhythmic cell.' },
+    songs:[], hint:'Eighth, dotted quarter, then four eighths.', hint_it:'Croma, semiminima puntata, poi quattro crome.' },
 
   { id:'swing_feel', name:'SWING FEEL', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.75},{p:.75,d:.25},{p:1,d:.75},{p:1.75,d:.25},{p:2,d:.75},{p:2.75,d:.25},{p:3,d:.75},{p:3.75,d:.25}],
-    songs:[], hint:'Dotted eighth into sixteenth, four times. The written swing lilt.' },
+    songs:[], hint:'Dotted eighth and sixteenth on every beat: long-short, long-short.', hint_it:'Croma puntata e semicroma su ogni movimento: lunga-corta, lunga-corta.' },
 
   { id:'funk_rest', name:'FUNK REST', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:.5,r:true},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:1}],
-    songs:[], hint:'Quarter, eighth, rest, two eighths, quarter. The rest in the middle is the funk.' },
+    songs:[], hint:'Quarter, eighth, eighth rest, two eighths, quarter.', hint_it:'Semiminima, croma, pausa di croma, due crome, semiminima.' },
 
   { id:'synco_push', name:'SYNCO PUSH', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:1},{p:2.5,d:.5},{p:3,d:1}],
-    songs:[], hint:'Every other hit falls off the beat. Quarter, eighth, quarter, eighth, quarter.' },
+    songs:[], hint:'Quarter, eighth, quarter, eighth, quarter. The middle quarter starts on the and of 2.', hint_it:'Semiminima, croma, semiminima, croma, semiminima. La semiminima centrale parte sull\u2019e del 2.' },
 
   { id:'irish_feel', name:'IRISH FEEL', diff:'normal', sig:[4,4], m:1, bpm:100,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:1}],
-    songs:[], hint:'Six eighths then a quarter. The jig energy compressed into one bar of 4/4.' },
+    songs:[], hint:'Six even eighths, then a quarter on 4.', hint_it:'Sei crome uguali, poi una semiminima sul 4.' },
 
   // ── NORMAL 4/4 2-bar additions ────────────────────────────────────────────
   { id:'normal_push_phrase', name:'PUSH PHRASE', diff:'normal', sig:[4,4], m:2, bpm:88,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:1},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:1},{p:4,d:1},{p:5,d:1},{p:6,d:2}],
-    songs:[], hint:'Pushed first bar resolves into walking quarters and a hold.' },
+    songs:[], hint:'Bar 1 starts with an eighth rest; bar 2 is quarter, quarter, half.', hint_it:'La prima battuta parte con una pausa di croma; la seconda è semiminima, semiminima, minima.' },
 
   { id:'normal_afro_phrase', name:'AFRO PHRASE', diff:'normal', sig:[4,4], m:2, bpm:90,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:1},{p:2.5,d:.5},{p:3,d:1},
            {p:4,d:1},{p:5,d:.75},{p:5.75,d:.25},{p:6,d:.5},{p:6.5,d:.5},{p:7,d:1}],
-    songs:[], hint:'Afro cell then a busier answer bar.' },
+    songs:[], hint:'The afro cell, then a bar with a dotted eighth and sixteenth on beat 2.', hint_it:'La cellula afro, poi una battuta con croma puntata e semicroma sul 2.' },
 
   { id:'normal_samba_phrase', name:'SAMBA PHRASE', diff:'normal', sig:[4,4], m:2, bpm:96,
     notes:[{p:0,d:.5},{p:.5,d:1.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:.5},{p:3.5,d:.5},
            {p:4,d:1},{p:5,d:1.5},{p:6.5,d:.5},{p:7,d:1}],
-    songs:[], hint:'Samba cell then a relaxed two-beat landing.' },
+    songs:[], hint:'The samba cell, then quarter, dotted quarter, eighth, quarter.', hint_it:'La cellula di samba, poi semiminima, semiminima puntata, croma, semiminima.' },
 
   { id:'normal_swing_phrase', name:'SWING PHRASE', diff:'normal', sig:[4,4], m:2, bpm:88,
     notes:[{p:0,d:.75},{p:.75,d:.25},{p:1,d:.75},{p:1.75,d:.25},{p:2,d:1},{p:3,d:1},
            {p:4,d:.75},{p:4.75,d:.25},{p:5,d:.75},{p:5.75,d:.25},{p:6,d:2}],
-    songs:[], hint:'Swing feel bar then resolution into a held note.' },
+    songs:[], hint:'Long-short on beats 1 and 2 of each bar; bar 1 ends on quarters, bar 2 on a half note.', hint_it:'Lunga-corta sull\u20191 e sul 2 di ogni battuta; la prima chiude con semiminime, la seconda con una minima.' },
 
   // ── NORMAL 3/4 1-bar additions ────────────────────────────────────────────
   { id:'waltz_rest_1', name:'WALTZ WITH REST', diff:'normal', sig:[3,4], m:1, bpm:116,
     notes:[{p:0,d:1},{p:1,d:1,r:true},{p:2,d:1}],
-    songs:[], hint:'Hit beat 1, rest on 2, hit beat 3. The middle gap changes the feel.' },
+    songs:[], hint:'Tap on 1, rest on 2, tap on 3.', hint_it:'Batti sull\u20191, pausa sul 2, batti sul 3.' },
 
   { id:'mazurka', name:'MAZURKA', diff:'normal', sig:[3,4], m:1, bpm:120,
     notes:[{p:0,d:1},{p:1,d:1.5},{p:2.5,d:.5}],
-    songs:[], hint:'Quarter then dotted quarter then eighth. The accent on beat 2 is the mazurka signature.' },
+    songs:[], hint:'Quarter, dotted quarter, eighth. The dotted note falls on beat 2, a beat mazurkas often accent.', hint_it:'Semiminima, semiminima puntata, croma. La puntata cade sul 2, un movimento che la mazurka accentua spesso.' },
 
   { id:'waltz_pickups', name:'WALTZ PICKUPS', diff:'normal', sig:[3,4], m:1, bpm:112,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:1},{p:2,d:1}],
-    songs:[], hint:'Two eighths pickup into two quarters. Busy start, settled finish.' },
+    songs:[], hint:'Two eighths on beat 1, then quarters on 2 and 3.', hint_it:'Due crome sull\u20191, poi semiminime sul 2 e sul 3.' },
 
   // ── HARD 4/4 1-bar additions ──────────────────────────────────────────────
   // ── NORMAL 3/4 2-bar addition ────────────────────────────────────────────
   { id:'waltz_swing_phrase', name:'WALTZ SWING', diff:'normal', sig:[3,4], m:2, bpm:116,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1.5},{p:4.5,d:.5},{p:5,d:1}],
-    songs:[], hint:'Dotted lilt in both bars. Feel the sway carry across the barline.' },
+    songs:[], hint:'Dotted quarter, eighth, quarter in both bars.', hint_it:'Semiminima puntata, croma, semiminima in tutte e due le battute.' },
 
   // ── HARD 4/4 1-bar additions ──────────────────────────────────────────────
   { id:'eighth_rest', name:'EIGHTH RESTS', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:.5,r:true},{p:3.5,d:.5}],
-    songs:[], hint:'The rests land on 2 and 4, exactly where you expect the accent. That absence is the exercise.' },
+    songs:[], hint:'Eighths with rests on beats 2 and 4. Keep counting through them.', hint_it:'Crome con pause sul 2 e sul 4. Continua a contare.' },
 
   { id:'pop_16th', name:'POP POCKET', diff:'normal', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:1},{p:1,d:.25},{p:1.25,d:.25},{p:1.5,d:.5},{p:2,d:1},{p:3,d:.25},{p:3.25,d:.25},{p:3.5,d:.5}],
-    songs:[], hint:'Quarter on the beat, two 16ths and an eighth pushing off it. Classic pop subdivision.' },
+    songs:[], hint:'A quarter, then two sixteenths and an eighth, twice.', hint_it:'Una semiminima, poi due semicrome e una croma, due volte.' },
 
   { id:'sixteenth_rest', name:'SIXTEENTH RESTS', diff:'hard', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.5,r:true},{p:1,d:.25},{p:1.25,d:.25},{p:1.5,d:.25},{p:1.75,d:.25},{p:2,d:.5},{p:2.5,d:.5,r:true},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'16th rests inside fast groups. The gaps are as precise as the hits.' },
+    songs:[], hint:'Sixteenths with eighth rests inside the groups. Count every sixteenth.', hint_it:'Semicrome con pause di croma dentro i gruppi. Conta ogni semicroma.' },
 
   { id:'displaced', name:'DISPLACED', diff:'hard', sig:[4,4], m:1, bpm:84,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:1.5},{p:2.5,d:.5},{p:3,d:.5,r:true},{p:3.5,d:.5}],
-    songs:[], hint:'Downbeat is a rest, so your first hit is the and-of-1. Everything is displaced by half a beat.' },
+    songs:[], hint:'Rest on 1; the first hit is the and of 1.', hint_it:'Pausa sull\u20191; il primo colpo è l\u2019e dell\u20191.' },
 
   // ── HARD 4/4 2-bar additions (continued) ─────────────────────────────────
   { id:'hard_tied_phrase', name:'TIED PHRASE', diff:'hard', sig:[4,4], m:2, bpm:80,
     notes:[{p:0,d:.5},{p:.5,d:1.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:.5,r:true},{p:3.5,d:.5},
            {p:4,d:1.5},{p:5.5,d:.5},{p:6,d:.5},{p:6.5,d:.25},{p:6.75,d:.25},{p:7,d:1}],
-    songs:[], hint:'Long tied notes skip across the barline. Keep the internal pulse through each held note.' },
+    songs:[], hint:'Dotted quarters that start on the and. Keep counting while they ring.', hint_it:'Semiminime puntate che partono sull\u2019e. Continua a contare mentre suonano.' },
 
   { id:'hard_16th_pocket', name:'SIXTEENTH POCKET', diff:'hard', sig:[4,4], m:2, bpm:76,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.25,r:true},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},
            {p:2,d:.25},{p:2.25,d:.25},{p:2.5,d:.5,r:true},{p:3,d:1},
            {p:4,d:.5},{p:4.5,d:.25},{p:4.75,d:.25},{p:5,d:.25,r:true},{p:5.25,d:.25},{p:5.5,d:.5},
            {p:6,d:.25},{p:6.25,d:.25},{p:6.5,d:.25},{p:6.75,d:.25},{p:7,d:1}],
-    songs:[], hint:'16th rests embedded in fast groups. Feel the subdivisions to land on the right one.' },
+    songs:[], hint:'Sixteenth rests inside fast groups. Count e-and-a on every beat.', hint_it:'Pause di semicroma dentro gruppi veloci. Conta e-e-a su ogni movimento.' },
 
   // ── HARD 3/4 2-bar addition ────────────────────────────────────────────────
   { id:'waltz_push', name:'WALTZ PUSH', diff:'hard', sig:[3,4], m:2, bpm:120,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1},
            {p:3,d:.5,r:true},{p:3.5,d:.5},{p:4,d:1.5},{p:5.5,d:.5}],
-    songs:[], hint:'Rests on the backbeat in both bars; the space gives the waltz its push-pull tension.' },
+    songs:[], hint:'Eighth rests on beat 2 in bar 1 and on beat 1 in bar 2.', hint_it:'Pause di croma sul 2 nella prima battuta e sull\u20191 nella seconda.' },
 
   { id:'hemiola', name:'HEMIOLA', diff:'hard', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:1.5},{p:1.5,d:1.5},{p:3,d:1}],
-    songs:[], hint:'Two dotted quarters then a quarter. Three equal groups against four beats.' },
+    songs:[], hint:'Two dotted quarters and a quarter: groups of 3+3+2 eighths.', hint_it:'Due semiminime puntate e una semiminima: gruppi di 3+3+2 crome.' },
 
   { id:'afro_16th', name:'AFRO SIXTEENTH', diff:'hard', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.25,r:true},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.25},{p:1.75,d:.25},{p:2,d:.5},{p:2.5,d:.25,r:true},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'16th-level afrobeat cell. Count every subdivision or the rests vanish.' },
+    songs:[], hint:'A sixteenth-note afro cell with rests inside. Count every sixteenth.', hint_it:'Una cellula afro in semicrome con pause dentro. Conta ogni semicroma.' },
 
   { id:'ghost_sparse', name:'GHOST SPARSE', diff:'hard', sig:[4,4], m:1, bpm:76,
     notes:[{p:0,d:2,r:true},{p:2,d:.5},{p:2.5,d:1.5,r:true}],
-    songs:[], hint:'Two hits and a lot of silence. The rests are the hard part.' },
+    songs:[], hint:'One eighth on beat 3. Everything else is rest.', hint_it:'Una croma sul 3. Tutto il resto è pausa.' },
 
   { id:'bomba_cell', name:'BOMBA CELL', diff:'hard', sig:[4,4], m:1, bpm:84,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:.5,r:true},{p:3.5,d:.5}],
-    songs:[], hint:'Short hits with 16th pickups and offbeat rests. Puerto Rican bomba feel.' },
+    songs:[], hint:'Eighth, two sixteenths, eighth rest, eighth, twice.', hint_it:'Croma, due semicrome, pausa di croma, croma, due volte.' },
 
   { id:'end_rush', name:'END RUSH', diff:'hard', sig:[4,4], m:1, bpm:84,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:.25},{p:2.25,d:.25},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:.25},{p:3.25,d:.25},{p:3.5,d:.25},{p:3.75,d:.25}],
-    songs:[], hint:'Two quiet quarters then a burst of 16ths. The calm before the storm.' },
+    songs:[], hint:'Two quarters, then eight sixteenths to the end of the bar.', hint_it:'Due semiminime, poi otto semicrome fino a fine battuta.' },
 
   { id:'complex_synco', name:'COMPLEX SYNCO', diff:'hard', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:.25},{p:.25,d:.75},{p:1,d:.5,r:true},{p:1.5,d:.25},{p:1.75,d:.25},{p:2,d:.25},{p:2.25,d:.75},{p:3,d:.5,r:true},{p:3.5,d:.5}],
-    songs:[], hint:'Off-beat 16th into dotted eighth, rest, repeat. Dense syncopation both halves.' },
+    songs:[], hint:'Sixteenth, dotted eighth, then an eighth rest, on beats 1 and 3. Count every sixteenth.', hint_it:'Semicroma, croma puntata, poi una pausa di croma, sull\u20191 e sul 3. Conta ogni semicroma.' },
 
   { id:'soca_cell', name:'SOCA CELL', diff:'hard', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.25},{p:2.25,d:.25},{p:2.5,d:.5,r:true},{p:3,d:.25},{p:3.25,d:.25},{p:3.5,d:.5}],
-    songs:[], hint:'Soca dance groove: 16th pickups into offbeat rests.' },
+    songs:[], hint:'Sixteenth pickups into eighths, with a rest on the and of 3.', hint_it:'Semicrome in levare verso le crome, con una pausa sull\u2019e del 3.' },
 
   { id:'paradiddle', name:'PARADIDDLE FEEL', diff:'hard', sig:[4,4], m:1, bpm:84,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.5},{p:1,d:.25},{p:1.25,d:.25},{p:1.5,d:.25},{p:1.75,d:.25},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'16th-eighth alternation derived from the drum paradiddle sticking pattern.' },
+    songs:[], hint:'Sixteenth pairs and eighths in turn. Count every sixteenth.', hint_it:'Coppie di semicrome e crome alternate. Conta ogni semicroma.' },
 
   // ── HARD 4/4 2-bar additions ──────────────────────────────────────────────
   { id:'hard_afro_phrase', name:'AFRO PHRASE', diff:'hard', sig:[4,4], m:2, bpm:80,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.25,r:true},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.25},{p:1.75,d:.25},{p:2,d:.5},{p:2.5,d:.25,r:true},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5},
            {p:4,d:1},{p:5,d:1},{p:6,d:1},{p:7,d:1}],
-    songs:[], hint:'16th afro cell then four quarters, releasing after the intensity.' },
+    songs:[], hint:'The sixteenth afro cell, then four plain quarters.', hint_it:'La cellula afro in semicrome, poi quattro semiminime.' },
 
   { id:'hard_hemiola_phrase', name:'HEMIOLA PHRASE', diff:'hard', sig:[4,4], m:2, bpm:80,
     notes:[{p:0,d:1.5},{p:1.5,d:1.5},{p:3,d:1},{p:4,d:1.5},{p:5.5,d:1.5},{p:7,d:1}],
-    songs:[], hint:'Hemiola in both bars, three-against-four sustained across the pair.' },
+    songs:[], hint:'3+3+2 in both bars: dotted quarter, dotted quarter, quarter.', hint_it:'3+3+2 in tutte e due le battute: puntata, puntata, semiminima.' },
 
   { id:'hard_funk_phrase', name:'FUNK PHRASE', diff:'hard', sig:[4,4], m:2, bpm:80,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:.5,r:true},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:1},
            {p:4,d:.5},{p:4.5,d:.5},{p:5,d:.5,r:true},{p:5.5,d:.25},{p:5.75,d:.25},{p:6,d:1},{p:7,d:1}],
-    songs:[], hint:'Funky rests carry into bar 2 then lock down on beats 3 and 4.' },
+    songs:[], hint:'Funk rests in bar 1; bar 2 ends with quarters on 3 and 4.', hint_it:'Pause funk nella prima battuta; la seconda chiude con semiminime sul 3 e sul 4.' },
 
   { id:'hard_soca_phrase', name:'SOCA PHRASE', diff:'hard', sig:[4,4], m:2, bpm:92,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.25},{p:2.25,d:.25},{p:2.5,d:.5,r:true},{p:3,d:.5},{p:3.5,d:.5},
            {p:4,d:.25},{p:4.25,d:.25},{p:4.5,d:.5},{p:5,d:.5,r:true},{p:5.5,d:.5},{p:6,d:.25},{p:6.25,d:.25},{p:6.5,d:.25},{p:6.75,d:.25},{p:7,d:1}],
-    songs:[], hint:'Soca cell carried across two bars with 16th fills landing on the close.' },
+    songs:[], hint:'The soca cell, then a bar that ends on four sixteenths and a quarter.', hint_it:'La cellula soca, poi una battuta che chiude con quattro semicrome e una semiminima.' },
 
   // ── HARD 3/4 1-bar additions ──────────────────────────────────────────────
   { id:'waltz_16th', name:'WALTZ SIXTEENTH', diff:'hard', sig:[3,4], m:1, bpm:116,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:1},{p:2,d:1}],
-    songs:[], hint:'16th burst on beat 1 then two quarters. The 16ths announce the bar.' },
+    songs:[], hint:'Four sixteenths on beat 1, then quarters on 2 and 3.', hint_it:'Quattro semicrome sull\u20191, poi semiminime sul 2 e sul 3.' },
 
   { id:'waltz_hemiola', name:'WALTZ HEMIOLA', diff:'hard', sig:[3,4], m:1, bpm:120,
     notes:[{p:0,d:1.5},{p:1.5,d:1.5}],
-    songs:[], hint:'Two dotted quarters in a 3/4 bar. Two equal groups where you expect three.' },
+    songs:[], hint:'Two dotted quarters in 3/4: two groups where you count three beats.', hint_it:'Due semiminime puntate in 3/4: due gruppi dentro tre movimenti.' },
 
   { id:'waltz_displaced', name:'WALTZ DISPLACED', diff:'hard', sig:[3,4], m:1, bpm:116,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:1},{p:2,d:1}],
-    songs:[], hint:'Rest on beat 1, enter on the and. The waltz downbeat is a gap.' },
+    songs:[], hint:'Eighth rest on 1, then an eighth on the and.', hint_it:'Pausa di croma sull\u20191, poi una croma sull\u2019e.' },
 
   // ── HARD 3/4 2-bar additions ──────────────────────────────────────────────
   { id:'waltz_16th_phrase', name:'WALTZ BURST', diff:'hard', sig:[3,4], m:2, bpm:116,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:1},{p:2,d:1},
            {p:3,d:1},{p:4,d:.5},{p:4.5,d:.5},{p:5,d:1}],
-    songs:[], hint:'16th burst bar then a more open answer.' },
+    songs:[], hint:'Four sixteenths on beat 1, then a bar of quarter, two eighths, quarter.', hint_it:'Quattro semicrome sull\u20191, poi una battuta di semiminima, due crome, semiminima.' },
 
   { id:'waltz_hemiola_phrase', name:'HEMIOLA WALTZ', diff:'hard', sig:[3,4], m:2, bpm:116,
     notes:[{p:0,d:1.5},{p:1.5,d:1.5},{p:3,d:1.5},{p:4.5,d:1.5}],
-    songs:[], hint:'Four dotted quarters across two bars of 3/4. The feel fights the meter all the way through.' },
+    songs:[], hint:'Two dotted quarters in each bar of 3/4.', hint_it:'Due semiminime puntate in ogni battuta di 3/4.' },
 
   // ── SHUFFLE ───────────────────────────────────────────────────────────────
   { id:'shuffle_basic', name:'SHUFFLE', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:1/3},{p:1/3,d:1/3},{p:2/3,d:1/3},{p:1,d:1/3},{p:1+1/3,d:1/3},{p:1+2/3,d:1/3},{p:2,d:1/3},{p:2+1/3,d:1/3},{p:2+2/3,d:1/3},{p:3,d:1/3},{p:3+1/3,d:1/3},{p:3+2/3,d:1/3}],
-    songs:[], hint:'The full 12/8 shuffle, written out in 4/4. Count it 1-trip-let 2-trip-let 3-trip-let 4-trip-let.' },
+    songs:[], hint:'Twelve triplet eighths. Count 1-trip-let 2-trip-let.', hint_it:'Dodici crome in terzina. Conta ter-zi-na su ogni movimento.' },
 
   { id:'shuffle_groove', name:'SHUFFLE GROOVE', diff:'normal', sig:[4,4], m:1, bpm:84,
     notes:[{p:0,d:1/3},{p:1/3,d:2/3},{p:1,d:1/3},{p:1+1/3,d:2/3},{p:2,d:1/3},{p:2+1/3,d:2/3},{p:3,d:1/3},{p:3+1/3,d:2/3}],
-    songs:[], hint:'Hit the first triplet, skip the second, land on the third: the blues shuffle lilt. Long-short, long-short.' },
+    songs:[], hint:'Tap the first and third note of each triplet: the shuffle.', hint_it:'Batti la prima e la terza nota di ogni terzina: lo shuffle.' },
 
   { id:'shuffle_phrase', name:'SHUFFLE PHRASE', diff:'normal', sig:[4,4], m:2, bpm:84,
     notes:[{p:0,d:1/3},{p:1/3,d:2/3},{p:1,d:1/3},{p:1+1/3,d:2/3},{p:2,d:1/3},{p:2+1/3,d:2/3},{p:3,d:1/3},{p:3+1/3,d:2/3},
            {p:4,d:2/3},{p:4+2/3,d:1/3},{p:5,d:2},{p:7,d:1}],
-    songs:[], hint:'Shuffle bar then a relaxed landing. Feel the lilt carry into the held note.' },
+    songs:[], hint:'A bar of shuffle, then a half note and a quarter.', hint_it:'Una battuta di shuffle, poi una minima e una semiminima.' },
 
   // ── CUMBIA ────────────────────────────────────────────────────────────────
   { id:'cumbia_cell', name:'CUMBIA CELL', diff:'normal', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:1},{p:3.5,d:.5}],
-    songs:[], hint:'Quarter, three eighths, quarter, eighth. The cumbia rhythmic cell, steady and hypnotic.' },
+    songs:[], hint:'Quarter, three eighths, a quarter on the and of 3, an eighth.', hint_it:'Semiminima, tre crome, una semiminima sull\u2019e del 3, una croma.' },
 
   { id:'cumbia_phrase', name:'CUMBIA PHRASE', diff:'normal', sig:[4,4], m:2, bpm:92,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:1},{p:3.5,d:.5},
            {p:4,d:.5},{p:4.5,d:.5},{p:5,d:1},{p:6,d:.5},{p:6.5,d:.5},{p:7,d:1}],
-    songs:[], hint:'Cumbia cell then an answer bar. The groove locks in across both bars.' },
+    songs:[], hint:'The cumbia cell, then two eighths and a quarter, twice.', hint_it:'La cellula di cumbia, poi due crome e una semiminima, due volte.' },
 
   // ── REGGAETON DEMBOW ──────────────────────────────────────────────────────
   { id:'dembow', name:'DEMBOW', diff:'normal', sig:[4,4], m:1, bpm:96,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'Eighth, two 16ths, eighth, eighth, over and over. The dembow, and probably the most-heard rhythm of the last twenty years.' },
+    songs:[], hint:'Eighth, two sixteenths, eighth, eighth, twice through.', hint_it:'Croma, due semicrome, croma, croma, due volte.' },
 
   { id:'dembow_phrase', name:'DEMBOW PHRASE', diff:'hard', sig:[4,4], m:2, bpm:96,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5},
            {p:4,d:.25},{p:4.25,d:.25},{p:4.5,d:.5,r:true},{p:5,d:.5},{p:5.5,d:.25},{p:5.75,d:.25},{p:6,d:.5},{p:6.5,d:.25},{p:6.75,d:.25},{p:7,d:1}],
-    songs:[], hint:'Dembow cell then a busier answer with a rest and 16th fills.' },
+    songs:[], hint:'The dembow cell, then a bar with a rest and sixteenth fills.', hint_it:'La cellula dembow, poi una battuta con una pausa e riempimenti in semicrome.' },
 
   // ── BAIÃO ─────────────────────────────────────────────────────────────────
   { id:'baiao_cell', name:'BAIÃO CELL', diff:'normal', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.75},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.75},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'Dotted eighth, sixteenth, two eighths, twice through. It\'s the baião cell from northeast Brazil: faster than samba, and harder than it looks.' },
+    songs:[], hint:'Dotted eighth, sixteenth, two eighths, twice: the baião cell from northeast Brazil.', hint_it:'Croma puntata, semicroma, due crome, due volte: la cellula del baião del Nordest brasiliano.' },
 
   { id:'baiao_phrase', name:'BAIÃO PHRASE', diff:'hard', sig:[4,4], m:2, bpm:92,
     notes:[{p:0,d:.75},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.75},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5},
            {p:4,d:.75},{p:4.75,d:.25},{p:5,d:.5},{p:5.5,d:.5,r:true},{p:6,d:.75},{p:6.75,d:.25},{p:7,d:1}],
-    songs:[], hint:'Baião cell into a bar where a rest breaks the pattern on beat 3. The lift before the landing.' },
+    songs:[], hint:'The baião cell, then a bar with a rest on the and of 2.', hint_it:'La cellula del baião, poi una battuta con una pausa sull\u2019e del 2.' },
 
   // ── RUMBA CLAVE ───────────────────────────────────────────────────────────
   { id:'rumba_clave', name:'RUMBA CLAVE', diff:'hard', sig:[4,4], m:2, bpm:88,
-    notes:[{p:0,d:.75},{p:.75,d:.25},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1,r:true},{p:3,d:1},
-           {p:4,d:1,r:true},{p:5,d:.5},{p:5.5,d:.5,r:true},{p:6,d:1},{p:7,d:1,r:true}],
-    songs:[], hint:'3-2 rumba clave. The third hit lands a 16th later than son clave, giving it a heavier pull. Compare the two.' },
+    // v0.210.122: was 0, .75, 1.5, 3 | 5, 6 (four hits in bar 1, third hit on
+    // beat 4 like son clave). Rumba 3-2 is 1, and-of-2, and-of-4 | 2, 3.
+    notes:[{p:0,d:1},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1.5,r:true},{p:3.5,d:.5},
+           {p:4,d:1,r:true},{p:5,d:1},{p:6,d:1},{p:7,d:1,r:true}],
+    songs:[], hint:'3-2 rumba clave. The third hit comes an eighth later than in son clave.', hint_it:'Rumba clave 3-2. Il terzo colpo arriva una croma dopo rispetto alla son clave.' },
 
   // ── CALYPSO ───────────────────────────────────────────────────────────────
   { id:'calypso_cell', name:'CALYPSO CELL', diff:'normal', sig:[4,4], m:1, bpm:96,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:.5,r:true},{p:2.5,d:.5},{p:3,d:.5,r:true},{p:3.5,d:.5}],
-    songs:[], hint:'Every beat is a rest then an eighth: always playing the and. Pure calypso anticipation feel.' },
+    songs:[], hint:'Tap every and; rest on every beat.', hint_it:'Batti ogni e; pausa su ogni movimento.' },
 
   { id:'calypso_phrase', name:'CALYPSO PHRASE', diff:'normal', sig:[4,4], m:2, bpm:96,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:.5,r:true},{p:2.5,d:.5},{p:3,d:1},
            {p:4,d:.5,r:true},{p:4.5,d:.5},{p:5,d:1},{p:6,d:.5,r:true},{p:6.5,d:.5},{p:7,d:1}],
-    songs:[], hint:'Off-beat bar then a mix of anticipations and landing quarters. Bar 1 is all tension, bar 2 resolves it.' },
+    songs:[], hint:'Off-beat eighths, then quarters that land on the beat.', hint_it:'Crome in contrattempo, poi semiminime che cadono sul movimento.' },
 
   // ── TRAP FEEL ─────────────────────────────────────────────────────────────
   { id:'trap_cell', name:'TRAP CELL', diff:'hard', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:1/3},{p:1/3,d:1/3},{p:2/3,d:1/3},{p:1,d:1/3,r:true},{p:1+1/3,d:1/3},{p:1+2/3,d:1/3},{p:2,d:.5},{p:2.5,d:.5,r:true},{p:3,d:1/3},{p:3+1/3,d:1/3},{p:3+2/3,d:1/3}],
-    songs:[], hint:'Triplet 16ths with rests and synco at slow BPM: dense subdivisions. The trap hi-hat feel.' },
+    songs:[], hint:'Triplet eighths with a rest inside, then an eighth and another triplet.', hint_it:'Crome in terzina con una pausa dentro, poi una croma e un\u2019altra terzina.' },
 
   { id:'trap_phrase', name:'TRAP PHRASE', diff:'hard', sig:[4,4], m:2, bpm:72,
     notes:[{p:0,d:1/3},{p:1/3,d:1/3},{p:2/3,d:1/3},{p:1,d:1/3,r:true},{p:1+1/3,d:1/3},{p:1+2/3,d:1/3},{p:2,d:.5},{p:2.5,d:.5,r:true},{p:3,d:1/3},{p:3+1/3,d:1/3},{p:3+2/3,d:1/3},
            {p:4,d:.5},{p:4.5,d:.5},{p:5,d:.5},{p:5.5,d:.5},{p:6,d:.5},{p:6.5,d:.5},{p:7,d:1}],
-    songs:[], hint:'Trap cell then a straight eighth-note release bar. Dense then open, and the contrast is the point.' },
+    songs:[], hint:'The trap cell, then a bar of plain eighths.', hint_it:'La cellula trap, poi una battuta di crome.' },
 
   // ── 5/4 ───────────────────────────────────────────────────────────────────
   { id:'five_four_basic', name:'FIVE FOUR', diff:'normal', sig:[5,4], m:1, bpm:88,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:1}],
-    songs:[], hint:'Five equal quarter notes. Feel the bar as 3+2: ONE two three ONE two.' },
+    songs:[], hint:'Five quarters. Count ONE-two-three ONE-two.', hint_it:'Cinque semiminime. Conta UNO-due-tre UNO-due.' },
 
   { id:'five_four_3_2', name:'FIVE FOUR 3+2', diff:'normal', sig:[5,4], m:1, bpm:84,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:2}],
-    songs:[], hint:'Three quarters then a half. Count it ONE two three ONE two.' },
+    songs:[], hint:'Three quarters, then a half note: 3+2.', hint_it:'Tre semiminime, poi una minima: 3+2.' },
 
   { id:'five_four_2_3', name:'FIVE FOUR 2+3', diff:'normal', sig:[5,4], m:1, bpm:84,
     notes:[{p:0,d:2},{p:2,d:1},{p:3,d:1},{p:4,d:1}],
-    songs:[], hint:'Half first, then three quarters. ONE two ONE two three.' },
+    songs:[], hint:'A half note, then three quarters: 2+3.', hint_it:'Una minima, poi tre semiminime: 2+3.' },
 
   { id:'five_four_synco', name:'FIVE FOUR SYNCO', diff:'hard', sig:[5,4], m:1, bpm:80,
     notes:[{p:0,d:.5},{p:.5,d:.5,r:true},{p:1,d:1},{p:2,d:.5},{p:2.5,d:.5,r:true},{p:3,d:.5},{p:3.5,d:1},{p:4.5,d:.5}],
-    songs:[], hint:'5/4 is lopsided enough before you add off-beats. Feel the 3+2 skeleton underneath and it holds together.' },
+    songs:[], hint:'Off-beat notes over 3+2. Count all five beats.', hint_it:'Note in contrattempo sopra il 3+2. Conta tutti e cinque i movimenti.' },
 
   { id:'five_four_phrase', name:'FIVE FOUR PHRASE', diff:'hard', sig:[5,4], m:2, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:2},{p:5,d:.5},{p:5.5,d:.5},{p:6,d:1},{p:7,d:.5},{p:7.5,d:.5},{p:8,d:1},{p:9,d:1}],
-    songs:[], hint:'A plain 3+2 bar, then a busier answer. Two bars of five that want to be heard as one phrase.' },
+    songs:[], hint:'A 3+2 bar, then a busier bar of eighths and quarters.', hint_it:'Una battuta 3+2, poi una più fitta di crome e semiminime.' },
 
   // ── EASY 4/4 2-bar additions ──────────────────────────────────────────────
   { id:'easy_walk_hold', name:'WALK AND HOLD', diff:'easy', sig:[4,4], m:2, bpm:68,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:4}],
-    songs:[], hint:'Four steady quarters then a full four-beat hold. Walk in, then stop and breathe.' },
+    songs:[], hint:'Four quarters, then a whole note for all of bar 2.', hint_it:'Quattro semiminime, poi una semibreve per tutta la seconda battuta.' },
 
   { id:'easy_swing_intro', name:'SWING INTRO', diff:'easy', sig:[4,4], m:2, bpm:72,
     notes:[{p:0,d:2},{p:2,d:1},{p:3,d:1},{p:4,d:1},{p:5,d:1},{p:6,d:2}],
-    songs:[], hint:'Half then two quarters, then two quarters and a half. The shape flips between bars.' },
+    songs:[], hint:'Half and two quarters, then the same notes in reverse.', hint_it:'Minima e due semiminime, poi le stesse note al contrario.' },
 
   { id:'easy_rest_phrase2', name:'REST PHRASE', diff:'easy', sig:[4,4], m:2, bpm:68,
     notes:[{p:0,d:1,r:true},{p:1,d:1},{p:2,d:2},{p:4,d:2},{p:6,d:1},{p:7,d:1}],
-    songs:[], hint:'Bar 1 starts with a rest. Bar 2 starts with a hold. Two different kinds of space.' },
+    songs:[], hint:'Rest on 1 in bar 1; bar 2 starts with a half note.', hint_it:'Pausa sull\u20191 nella prima battuta; la seconda parte con una minima.' },
 
   // ── NORMAL 3/4 2-bar additions ────────────────────────────────────────────
   { id:'waltz_rest_phrase', name:'WALTZ REST PHRASE', diff:'normal', sig:[3,4], m:2, bpm:116,
     notes:[{p:0,d:1},{p:1,d:1,r:true},{p:2,d:1},{p:3,d:3}],
-    songs:[], hint:'Hit, rest, hit, then a dotted half fills bar 2. The rest in bar 1 gives bar 2 room to breathe.' },
+    songs:[], hint:'Tap, rest, tap, then a dotted half for all of bar 2.', hint_it:'Colpo, pausa, colpo, poi una minima puntata per tutta la seconda battuta.' },
 
   { id:'waltz_eighth_phrase', name:'WALTZ EIGHTH PHRASE', diff:'normal', sig:[3,4], m:2, bpm:112,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1.5},{p:4.5,d:.5},{p:5,d:1}],
-    songs:[], hint:'Eighths in bar 1, dotted lilt in bar 2. Two different waltz feelings across one phrase.' },
+    songs:[], hint:'Quarter, two eighths, quarter; then dotted quarter, eighth, quarter.', hint_it:'Semiminima, due crome, semiminima; poi semiminima puntata, croma, semiminima.' },
 
   { id:'waltz_lilt_phrase', name:'WALTZ LILT PHRASE', diff:'normal', sig:[3,4], m:2, bpm:120,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1},{p:4,d:1.5},{p:5.5,d:.5}],
-    songs:[], hint:'Dotted lilt in both bars but offset: bar 2 starts straight and lilts late.' },
+    songs:[], hint:'The dotted quarter is on beat 1 in bar 1 and on beat 2 in bar 2.', hint_it:'La semiminima puntata è sull\u20191 nella prima battuta e sul 2 nella seconda.' },
 
   // ── NORMAL 5/4 additions ──────────────────────────────────────────────────
   { id:'five_four_dotted', name:'FIVE FOUR DOTTED', diff:'normal', sig:[5,4], m:1, bpm:84,
     notes:[{p:0,d:2},{p:2,d:1.5},{p:3.5,d:.5},{p:4,d:1}],
-    songs:[], hint:'Half, dotted quarter, eighth, quarter. The dotted note blurs the 3+2 grouping nicely.' },
+    songs:[], hint:'Half, dotted quarter, eighth, quarter.', hint_it:'Minima, semiminima puntata, croma, semiminima.' },
 
   { id:'five_four_rest', name:'FIVE FOUR REST', diff:'normal', sig:[5,4], m:1, bpm:88,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1,r:true},{p:4,d:1}],
-    songs:[], hint:'Four quarters with a rest on beat 4. The gap lands in the middle of the 2 side, surprising.' },
+    songs:[], hint:'Five beats with a rest on 4.', hint_it:'Cinque movimenti con una pausa sul 4.' },
 
   { id:'five_four_push', name:'FIVE FOUR PUSH', diff:'normal', sig:[5,4], m:1, bpm:84,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:1},{p:2,d:1.5},{p:3.5,d:.5},{p:4,d:1}],
-    songs:[], hint:'Rest on 1, push in on the and, dotted quarter crossing beat 3. Three-side is syncopated, two-side lands.' },
+    songs:[], hint:'Eighth rest on 1, then a dotted quarter from beat 3.', hint_it:'Pausa di croma sull\u20191, poi una semiminima puntata dal 3.' },
 
   { id:'five_four_phrase_n', name:'FIVE FOUR PHRASE', diff:'normal', sig:[5,4], m:2, bpm:84,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:2},{p:5,d:1},{p:6,d:1},{p:7,d:1},{p:8,d:1},{p:9,d:1}],
-    songs:[], hint:'3+2 bar then five equal quarters. First bar groups, second bar levels out.' },
+    songs:[], hint:'3+2 in bar 1, then five even quarters.', hint_it:'3+2 nella prima battuta, poi cinque semiminime uguali.' },
 
   // ── HARD 5/4 additions ────────────────────────────────────────────────────
   { id:'five_four_groove', name:'FIVE FOUR GROOVE', diff:'hard', sig:[5,4], m:1, bpm:84,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1},{p:3,d:.5},{p:3.5,d:.5},{p:4,d:1}],
-    songs:[], hint:'Beat 2 drops out and that hole is the groove. Count the five carefully or you\'ll lose it.' },
+    songs:[], hint:'Eighth rest on beat 2. Count all five beats.', hint_it:'Pausa di croma sul 2. Conta tutti e cinque i movimenti.' },
 
   { id:'five_four_16th', name:'FIVE FOUR SIXTEENTH', diff:'hard', sig:[5,4], m:1, bpm:76,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.5},{p:1,d:1},{p:2,d:.25},{p:2.25,d:.25},{p:2.5,d:.5},{p:3,d:1},{p:4,d:1}],
-    songs:[], hint:'16th pickups on beats 1 and 3, quarters elsewhere. The 16ths announce each side of the bar.' },
+    songs:[], hint:'Sixteenth pairs on beats 1 and 3: the start of each group in 3+2.', hint_it:'Coppie di semicrome sull\u20191 e sul 3: l\u2019inizio di ogni gruppo nel 3+2.' },
 
   { id:'five_four_synco2', name:'FIVE FOUR SYNCO II', diff:'hard', sig:[5,4], m:1, bpm:80,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:.5,r:true},{p:3.5,d:.5},{p:4,d:1}],
-    songs:[], hint:'Dotted quarter synco on the 3-side, rest then off-beat on the 2-side. Asymmetric push-pull.' },
+    songs:[], hint:'Dotted quarter and eighth, then an eighth rest on beat 4.', hint_it:'Semiminima puntata e croma, poi una pausa di croma sul 4.' },
 
   { id:'five_four_hard_phrase', name:'FIVE FOUR HARD PHRASE', diff:'hard', sig:[5,4], m:2, bpm:80,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1},{p:3,d:.5},{p:3.5,d:.5},{p:4,d:1},
            {p:5,d:1},{p:6,d:.5},{p:6.5,d:.5},{p:7,d:1.5},{p:8.5,d:.5},{p:9,d:1}],
-    songs:[], hint:'Grooved bar then a tied landing. The tie from beat 3 of bar 2 into beat 4 is the payoff.' },
+    songs:[], hint:'The 5/4 groove bar, then a bar with a dotted quarter on beat 3.', hint_it:'La battuta groove in 5/4, poi una battuta con una semiminima puntata sul 3.' },
 
   // ── 7/4 NORMAL ────────────────────────────────────────────────────────────
   { id:'seven_four_basic', name:'SEVEN FOUR', diff:'normal', sig:[7,4], m:1, bpm:84,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:1},{p:5,d:1},{p:6,d:1}],
-    songs:[], hint:'Seven equal quarters. Count in two groups: ONE two three four ONE two three, or ONE two ONE two ONE two three.' },
+    songs:[], hint:'Seven quarters. Count 4+3: ONE-two-three-four ONE-two-three.', hint_it:'Sette semiminime. Conta 4+3: UNO-due-tre-quattro UNO-due-tre.' },
 
   { id:'seven_four_4_3', name:'SEVEN FOUR 4+3', diff:'normal', sig:[7,4], m:1, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:3}],
-    songs:[], hint:'Four quarters, then a dotted half. The asymmetry lives in that long note.' },
+    songs:[], hint:'Four quarters, then a dotted half: 4+3.', hint_it:'Quattro semiminime, poi una minima puntata: 4+3.' },
 
   { id:'seven_four_3_4', name:'SEVEN FOUR 3+4', diff:'normal', sig:[7,4], m:1, bpm:80,
     notes:[{p:0,d:3},{p:3,d:1},{p:4,d:1},{p:5,d:1},{p:6,d:1}],
-    songs:[], hint:'Long note first, then the bar walks out on four quarters.' },
+    songs:[], hint:'A dotted half, then four quarters: 3+4.', hint_it:'Una minima puntata, poi quattro semiminime: 3+4.' },
 
   { id:'seven_four_2_3_2', name:'SEVEN FOUR 2+3+2', diff:'normal', sig:[7,4], m:1, bpm:84,
     notes:[{p:0,d:2},{p:2,d:3},{p:5,d:2}],
-    songs:[], hint:'Half, dotted half, half. Three unequal groups. Feel the middle note as the long center.' },
+    songs:[], hint:'Half, dotted half, half: 2+3+2.', hint_it:'Minima, minima puntata, minima: 2+3+2.' },
 
   { id:'seven_four_rest', name:'SEVEN FOUR REST', diff:'normal', sig:[7,4], m:1, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:1},{p:5,d:1,r:true},{p:6,d:1}],
-    songs:[], hint:'Six quarters with a rest on beat 6. The gap appears in the 3-side and completely changes the feel.' },
+    songs:[], hint:'Seven beats with a rest on 6.', hint_it:'Sette movimenti con una pausa sul 6.' },
 
   { id:'seven_four_phrase', name:'SEVEN FOUR PHRASE', diff:'normal', sig:[7,4], m:2, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:3},
            {p:7,d:1},{p:8,d:1},{p:9,d:1},{p:10,d:3},{p:13,d:1}],
-    songs:[], hint:'4+3 in both bars with a trailing quarter. Let the long note breathe before bar 2 arrives.' },
+    songs:[], hint:'4+3 in bar 1; in bar 2 the dotted half moves to beat 4.', hint_it:'4+3 nella prima battuta; nella seconda la minima puntata passa al 4.' },
 
   // ── 7/4 HARD ──────────────────────────────────────────────────────────────
   { id:'seven_four_synco', name:'SEVEN FOUR SYNCO', diff:'hard', sig:[7,4], m:1, bpm:80,
     notes:[{p:0,d:.5},{p:.5,d:1},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1},{p:4,d:.5},{p:4.5,d:1},{p:5.5,d:.5},{p:6,d:1}],
-    songs:[], hint:'The long notes land off the beat here. Count the seven underneath or the whole thing unravels.' },
+    songs:[], hint:'Quarters that start on the and of 1 and the and of 5. Count all seven.', hint_it:'Semiminime che partono sull\u2019e dell\u20191 e sull\u2019e del 5. Conta tutti e sette.' },
 
   { id:'seven_four_groove', name:'SEVEN FOUR GROOVE', diff:'hard', sig:[7,4], m:1, bpm:84,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:.5},{p:3.5,d:.5,r:true},{p:4,d:1},{p:5,d:1},{p:6,d:1}],
-    songs:[], hint:'Funk groove with a rest on the and-of-4. The pocket sits on both sides of the asymmetric bar.' },
+    songs:[], hint:'An eighth rest on the and of 4, in the middle of the bar.', hint_it:'Una pausa di croma sull\u2019e del 4, a metà battuta.' },
 
   { id:'seven_four_16th', name:'SEVEN FOUR SIXTEENTH', diff:'hard', sig:[7,4], m:1, bpm:72,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.5},{p:1,d:1},{p:2,d:1},{p:3,d:.25},{p:3.25,d:.25},{p:3.5,d:.5},{p:4,d:1},{p:5,d:.5},{p:5.5,d:.5},{p:6,d:1}],
-    songs:[], hint:'16th pickups on beats 1 and 4: one on each side of the 4+3 grouping. Slow BPM, high density.' },
+    songs:[], hint:'Sixteenth pairs on beats 1 and 4: the start of each side of 4+3.', hint_it:'Coppie di semicrome sull\u20191 e sul 4: l\u2019inizio di ogni lato del 4+3.' },
 
   { id:'seven_four_hard_phrase', name:'SEVEN FOUR HARD PHRASE', diff:'hard', sig:[7,4], m:2, bpm:76,
     notes:[{p:0,d:.5},{p:.5,d:1},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1},{p:4,d:.5},{p:4.5,d:1},{p:5.5,d:.5},{p:6,d:1},
            {p:7,d:1},{p:8,d:1},{p:9,d:.5},{p:9.5,d:.5},{p:10,d:.5,r:true},{p:10.5,d:.5},{p:11,d:1},{p:12,d:1},{p:13,d:1}],
-    songs:[], hint:'A syncopated bar answered by a rest-driven one. Count straight through; the rest will throw you otherwise.' },
+    songs:[], hint:'The syncopated bar, then a bar with a rest on beat 4.', hint_it:'La battuta sincopata, poi una battuta con una pausa sul 4.' },
 
   // ── NORMAL 4/4 1-bar: new world feels ────────────────────────────────────
   { id:'mozambique', name:'MOZAMBIQUE', diff:'normal', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'Mozambique, from Cuba. Two 16th pickups run into a hole on beat 2, then it picks up again. Dembow-adjacent, accented differently.' },
+    songs:[], hint:'Eighth and two sixteenths, then an eighth rest on beat 2.', hint_it:'Croma e due semicrome, poi una pausa di croma sul 2.' },
 
   { id:'tumbao', name:'TUMBAO', diff:'normal', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:1},{p:2.5,d:.5},{p:3,d:.5,r:true},{p:3.5,d:.5}],
-    songs:[], hint:'Rests on 1 and 3, hits either side of them. The Cuban tumbao piano cell, and almost nothing lands on the beat.' },
+    songs:[], hint:'Every hit is on an and; beats 1, 2 and 4 are rests.', hint_it:'Ogni colpo cade su un\u2019e; l\u20191, il 2 e il 4 sono pause.' },
 
   { id:'cascara', name:'CASCARA', diff:'normal', sig:[4,4], m:1, bpm:90,
     notes:[{p:0,d:.5},{p:.5,d:.5,r:true},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5,r:true},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'Cascara, the shell of the clave. Every downbeat is played; the gaps come on the and of 1 and the and of 3.' },
+    songs:[], hint:'Every beat is played; the rests are on the and of 1 and the and of 3.', hint_it:'Ogni movimento è suonato; le pause sono sull\u2019e dell\u20191 e sull\u2019e del 3.' },
 
   { id:'nashville_shuffle', name:'NASHVILLE SHUFFLE', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:1/3},{p:1/3,d:2/3},{p:1,d:1/3},{p:1+1/3,d:2/3},{p:2,d:1/3},{p:2+1/3,d:2/3},{p:3,d:1/3},{p:3+1/3,d:2/3}],
-    songs:[], hint:'Same long-short triplet as blues shuffle, different context. Country feel, slightly brighter than the blues version.' },
+    songs:[], hint:'First and third note of each triplet, the same shuffle country uses.', hint_it:'Prima e terza nota di ogni terzina, lo stesso shuffle del country.' },
 
   { id:'nine_eight_feel', name:'9/8 FEEL', diff:'normal', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:1/3},{p:1/3,d:1/3},{p:2/3,d:1/3},{p:1,d:1/3},{p:1+1/3,d:1/3},{p:1+2/3,d:1/3},{p:2,d:1/3},{p:2+1/3,d:1/3},{p:2+2/3,d:1/3},{p:3,d:1}],
-    songs:[], hint:'Nine triplet eighths then a quarter — 9/8 compound triple compressed into one bar. Three groups of three then a landing.' },
+    songs:[], hint:'Nine triplet eighths, then a quarter on 4. Three groups of three.', hint_it:'Nove crome in terzina, poi una semiminima sul 4. Tre gruppi da tre.' },
 
   { id:'guajeo', name:'GUAJEO', diff:'normal', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5,r:true},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'The guajeo cell, the piano vamp of Cuban son. Nothing on 1, nothing on 2, and another hole on the and of 3, which is what keeps it tipping forward.' },
+    songs:[], hint:'Rests on 1, on 2 and on the and of 3.', hint_it:'Pause sull\u20191, sul 2 e sull\u2019e del 3.' },
 
   { id:'joropo', name:'JOROPO', diff:'normal', sig:[4,4], m:1, bpm:96,
     notes:[{p:0,d:1/3},{p:1/3,d:1/3},{p:2/3,d:1/3},{p:1,d:1/3},{p:1+1/3,d:1/3},{p:1+2/3,d:1/3},{p:2,d:1/3},{p:2+1/3,d:1/3},{p:2+2/3,d:1/3},{p:3,d:1}],
-    songs:[], hint:'Venezuelan joropo harp pattern — nine rapid triplets landing on a quarter. The rush-and-land is the feel.' },
+    songs:[], hint:'Nine triplet eighths running into a quarter on 4.', hint_it:'Nove crome in terzina che arrivano a una semiminima sul 4.' },
 
   { id:'celtic_reel', name:'CELTIC REEL', diff:'normal', sig:[4,4], m:1, bpm:104,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:.25},{p:3.25,d:.25},{p:3.5,d:.25},{p:3.75,d:.25}],
-    songs:[], hint:'Six eighths then four 16ths — reel momentum building to the barline. Fast and even, no swing.' },
+    songs:[], hint:'Six eighths, then four sixteenths. Keep them straight, no swing.', hint_it:'Sei crome, poi quattro semicrome. Tienile dritte, senza swing.' },
 
   { id:'nnanigo', name:'ÑÁÑIGO', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.5},{p:.5,d:.5,r:true},{p:1,d:.25},{p:1.25,d:.25},{p:1.5,d:.5},{p:2,d:.5,r:true},{p:2.5,d:.5},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'Afro-Cuban ñáñigo (6/8 clave in 4/4) — the rests fall asymmetrically, creating a wobbling cross-rhythm feel.' },
+    songs:[], hint:'Eighth rests on the and of 1 and on beat 3, with a sixteenth pair on beat 2.', hint_it:'Pause di croma sull\u2019e dell\u20191 e sul 3, con due semicrome sul 2.' },
 
   { id:'funk_ghost', name:'FUNK GHOST', diff:'normal', sig:[4,4], m:1, bpm:84,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.5,r:true},{p:1,d:.5},{p:1.5,d:.25},{p:1.75,d:.25},{p:2,d:.5,r:true},{p:2.5,d:.5},{p:3,d:.25},{p:3.25,d:.25},{p:3.5,d:.5}],
-    songs:[], hint:'16th pickups into offbeat rests on each beat; the rest is where the ghost note lives in a real drum groove.' },
+    songs:[], hint:'Sixteenth pairs and eighths, with rests on the and of 1 and on beat 3.', hint_it:'Coppie di semicrome e crome, con pause sull\u2019e dell\u20191 e sul 3.' },
 
   // ── NORMAL 4/4 2-bar: new feels ──────────────────────────────────────────
   { id:'mozambique_phrase', name:'MOZAMBIQUE PHRASE', diff:'normal', sig:[4,4], m:2, bpm:92,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5},
            {p:4,d:1},{p:5,d:1},{p:6,d:.5},{p:6.5,d:.5,r:true},{p:7,d:1}],
-    songs:[], hint:'Mozambique cell then a quarter-based landing. Bar 2 resolves the tension of bar 1.' },
+    songs:[], hint:'The mozambique cell, then quarters with a rest on the and of 3.', hint_it:'La cellula mozambique, poi semiminime con una pausa sull\u2019e del 3.' },
 
   { id:'tumbao_phrase', name:'TUMBAO PHRASE', diff:'normal', sig:[4,4], m:2, bpm:92,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:1},{p:2.5,d:.5},{p:3,d:.5,r:true},{p:3.5,d:.5},
            {p:4,d:.5,r:true},{p:4.5,d:.5},{p:5,d:.5,r:true},{p:5.5,d:.5},{p:6,d:.5,r:true},{p:6.5,d:.5},{p:7,d:1}],
-    songs:[], hint:'Tumbao across two bars — the off-beat pattern intensifies in bar 2 before landing on a quarter.' },
+    songs:[], hint:'The tumbao, then a bar of off-beat eighths ending on a quarter.', hint_it:'Il tumbao, poi una battuta di crome in contrattempo che chiude su una semiminima.' },
 
   { id:'celtic_phrase', name:'CELTIC PHRASE', diff:'normal', sig:[4,4], m:2, bpm:104,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:.25},{p:3.25,d:.25},{p:3.5,d:.25},{p:3.75,d:.25},
            {p:4,d:.5},{p:4.5,d:.5},{p:5,d:.5},{p:5.5,d:.5},{p:6,d:2}],
-    songs:[], hint:'Reel feel then a held landing. Bar 1 drives, bar 2 releases.' },
+    songs:[], hint:'The reel bar, then four eighths and a half note.', hint_it:'La battuta di reel, poi quattro crome e una minima.' },
 
   // ── HARD 4/4 1-bar: new world feels ──────────────────────────────────────
   { id:'mozambique_hard', name:'MOZAMBIQUE HARD', diff:'hard', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5,r:true},{p:1.5,d:.25},{p:1.75,d:.25},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'Mozambique at 16th density — 16th approach into the offbeat rest, then 16th fills on the way out.' },
+    songs:[], hint:'Four sixteenths, an eighth rest on beat 2, then sixteenth pairs into eighths.', hint_it:'Quattro semicrome, una pausa di croma sul 2, poi coppie di semicrome verso le crome.' },
 
   { id:'cascara_hard', name:'CASCARA HARD', diff:'hard', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5,r:true},{p:1.5,d:.25},{p:1.75,d:.25},{p:2,d:.5},{p:2.5,d:.5,r:true},{p:3,d:.25},{p:3.25,d:.25},{p:3.5,d:.5}],
-    songs:[], hint:'Cascara with 16th pickup ornaments — the shell pattern thickened with approach notes.' },
+    songs:[], hint:'The cascara with sixteenth pairs added. Count every sixteenth.', hint_it:'La cascara con coppie di semicrome in più. Conta ogni semicroma.' },
 
   { id:'joropo_hard', name:'JOROPO HARD', diff:'hard', sig:[4,4], m:1, bpm:96,
     notes:[{p:0,d:1/3},{p:1/3,d:1/3},{p:2/3,d:1/3},{p:1,d:1/3},{p:1+1/3,d:1/3},{p:1+2/3,d:1/3},{p:2,d:1/3,r:true},{p:2+1/3,d:1/3},{p:2+2/3,d:1/3},{p:3,d:1/3},{p:3+1/3,d:1/3},{p:3+2/3,d:1/3}],
-    songs:[], hint:'Joropo with a triplet rest in the middle; the silence lands inside the third group, completely destabilising the flow.' },
+    songs:[], hint:'Triplets with a rest on the first note of beat 3.', hint_it:'Terzine con una pausa sulla prima nota del 3.' },
 
   { id:'repique', name:'REPIQUE', diff:'hard', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.25,r:true},{p:.75,d:.25},{p:1,d:.25},{p:1.25,d:.25},{p:1.5,d:.25,r:true},{p:1.75,d:.25},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'Repique drum pattern — rapid 16ths with rests on every third 16th, then quarters to close.' },
+    songs:[], hint:'Sixteenths with a rest on the third one of beats 1 and 2, then eighths.', hint_it:'Semicrome con una pausa sulla terza dell\u20191 e del 2, poi crome.' },
 
   // ── HARD 4/4 2-bar: new feels ────────────────────────────────────────────
   { id:'cascara_phrase', name:'CASCARA PHRASE', diff:'hard', sig:[4,4], m:2, bpm:88,
     notes:[{p:0,d:.5},{p:.5,d:.5,r:true},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5,r:true},{p:3,d:.5},{p:3.5,d:.5},
            {p:4,d:.5},{p:4.5,d:.25},{p:4.75,d:.25},{p:5,d:.5,r:true},{p:5.5,d:.25},{p:5.75,d:.25},{p:6,d:.5},{p:6.5,d:.5,r:true},{p:7,d:1}],
-    songs:[], hint:'Cascara into an ornamented bar 2. The 16th pickups in bar 2 grow out of the eighth grid of bar 1.' },
+    songs:[], hint:'The cascara, then the same shape with sixteenth pairs added.', hint_it:'La cascara, poi la stessa forma con coppie di semicrome in più.' },
 
   { id:'afrocuban_phrase', name:'AFRO-CUBAN PHRASE', diff:'hard', sig:[4,4], m:2, bpm:92,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:1},{p:2.5,d:.5},{p:3,d:.5,r:true},{p:3.5,d:.5},
            {p:4,d:.25},{p:4.25,d:.25},{p:4.5,d:.5},{p:5,d:.5,r:true},{p:5.5,d:.25},{p:5.75,d:.25},{p:6,d:.5},{p:6.5,d:.25},{p:6.75,d:.25},{p:7,d:1}],
-    songs:[], hint:'Tumbao bar then a 16th-dense answer — off-beat foundation, 16th fills on top. Full Afro-Cuban texture.' },
+    songs:[], hint:'The tumbao, then a bar of sixteenths and rests. Count every sixteenth.', hint_it:'Il tumbao, poi una battuta di semicrome e pause. Conta ogni semicroma.' },
 
   // ── NORMAL 5/4 2-bar: more ───────────────────────────────────────────────
   { id:'five_lilt_phrase', name:'FIVE LILT PHRASE', diff:'normal', sig:[5,4], m:2, bpm:84,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:2},{p:5,d:1},{p:6,d:2},{p:8,d:1},{p:9,d:1}],
-    songs:[], hint:'Dotted lilt on the 3-side, held notes on the 2-side. The lilt and the space work against each other.' },
+    songs:[], hint:'Dotted quarter, eighth, quarter, half; then quarter, half, quarter, quarter.', hint_it:'Semiminima puntata, croma, semiminima, minima; poi semiminima, minima, semiminima, semiminima.' },
 
   { id:'five_rest_phrase', name:'FIVE REST PHRASE', diff:'normal', sig:[5,4], m:2, bpm:84,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1,r:true},{p:4,d:1},{p:5,d:1},{p:6,d:1},{p:7,d:1},{p:8,d:2}],
-    songs:[], hint:'Rest on beat 4 of bar 1, then all five filled in bar 2, then a held close. The missing beat returns.' },
+    songs:[], hint:'Rest on beat 4 in bar 1; bar 2 ends 3+2 with a half note.', hint_it:'Pausa sul 4 nella prima battuta; la seconda chiude 3+2 con una minima.' },
 
   { id:'five_groove_phrase', name:'FIVE GROOVE PHRASE', diff:'normal', sig:[5,4], m:2, bpm:88,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:1},{p:2,d:1},{p:3,d:.5},{p:3.5,d:.5},{p:4,d:1},
            {p:5,d:1},{p:6,d:1},{p:7,d:1},{p:8,d:1},{p:9,d:1}],
-    songs:[], hint:'Grooved bar 1 then six equal quarters. The push-pull of the groove against the simplicity.' },
+    songs:[], hint:'Eighths and quarters in bar 1, five even quarters in bar 2.', hint_it:'Crome e semiminime nella prima battuta, cinque semiminime uguali nella seconda.' },
 
   // ── HARD 5/4 2-bar: more ─────────────────────────────────────────────────
   { id:'five_afro_phrase', name:'FIVE AFRO PHRASE', diff:'hard', sig:[5,4], m:2, bpm:80,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1},{p:3,d:.5},{p:3.5,d:.5},{p:4,d:1},
            {p:5,d:.5},{p:5.5,d:1},{p:6.5,d:.5},{p:7,d:1},{p:8,d:.5,r:true},{p:8.5,d:.5},{p:9,d:1}],
-    songs:[], hint:'Funk groove in 5/4 across two bars. The offbeat rests keep moving — count or get lost.' },
+    songs:[], hint:'Off-beat eighths and rests in both bars of 5/4. Count all five.', hint_it:'Crome in contrattempo e pause in tutte e due le battute di 5/4. Conta tutti e cinque.' },
 
   { id:'five_trap_phrase', name:'FIVE TRAP PHRASE', diff:'hard', sig:[5,4], m:2, bpm:72,
     notes:[{p:0,d:1/3},{p:1/3,d:1/3},{p:2/3,d:1/3},{p:1,d:1/3,r:true},{p:1+1/3,d:1/3},{p:1+2/3,d:1/3},{p:2,d:.5},{p:2.5,d:.5,r:true},{p:3,d:.5},{p:3.5,d:.5},{p:4,d:1},
            {p:5,d:1},{p:6,d:1},{p:7,d:.5},{p:7.5,d:.5},{p:8,d:.5},{p:8.5,d:.5},{p:9,d:1}],
-    songs:[], hint:'Trap cell in 5/4 — the triplet density of bar 1 against the eighth release of bar 2, all inside asymmetric time.' },
+    songs:[], hint:'Triplets with a rest in bar 1, plain eighths and quarters in bar 2.', hint_it:'Terzine con una pausa nella prima battuta, crome e semiminime nella seconda.' },
 
   // ── NORMAL 7/4 2-bar: more ───────────────────────────────────────────────
   { id:'seven_lilt_phrase', name:'SEVEN LILT PHRASE', diff:'normal', sig:[7,4], m:2, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:3},
            {p:7,d:1.5},{p:8.5,d:.5},{p:9,d:1},{p:10,d:1},{p:11,d:2},{p:13,d:1}],
-    songs:[], hint:'4+3 bar then a lilt in the second bar: dotted feel enters in bar 2 as the answer.' },
+    songs:[], hint:'4+3 in bar 1; bar 2 opens with a dotted quarter and an eighth.', hint_it:'4+3 nella prima battuta; la seconda si apre con semiminima puntata e croma.' },
 
   { id:'seven_dotted_phrase', name:'SEVEN DOTTED PHRASE', diff:'normal', sig:[7,4], m:2, bpm:76,
     notes:[{p:0,d:3},{p:3,d:1},{p:4,d:1},{p:5,d:1},{p:6,d:1},
            {p:7,d:1},{p:8,d:1},{p:9,d:3},{p:12,d:1},{p:13,d:1}],
-    songs:[], hint:'3+4 then 2+3+2 — the dotted half moves position between bars. Different grouping each time.' },
+    songs:[], hint:'The dotted half is on beat 1 in bar 1 and on beat 3 in bar 2.', hint_it:'La minima puntata è sull\u20191 nella prima battuta e sul 3 nella seconda.' },
 
   { id:'seven_rest_phrase', name:'SEVEN REST PHRASE', diff:'normal', sig:[7,4], m:2, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:1},{p:5,d:1,r:true},{p:6,d:1},
            {p:7,d:1},{p:8,d:3},{p:11,d:1},{p:12,d:1},{p:13,d:1}],
-    songs:[], hint:'Rest on beat 6 of bar 1, then bar 2 uses a dotted half. Two very different textures across one phrase.' },
+    songs:[], hint:'Rest on beat 6 in bar 1; bar 2 has a dotted half on beat 2.', hint_it:'Pausa sul 6 nella prima battuta; nella seconda c\u2019è una minima puntata sul 2.' },
 
   // ── HARD 7/4 2-bar: more ─────────────────────────────────────────────────
   { id:'seven_synco_phrase', name:'SEVEN SYNCO PHRASE', diff:'hard', sig:[7,4], m:2, bpm:76,
     notes:[{p:0,d:.5},{p:.5,d:1},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1},{p:4,d:.5},{p:4.5,d:1},{p:5.5,d:.5},{p:6,d:1},
            {p:7,d:.5},{p:7.5,d:.5},{p:8,d:1},{p:9,d:.5},{p:9.5,d:.5,r:true},{p:10,d:1},{p:11,d:1},{p:12,d:1},{p:13,d:1}],
-    songs:[], hint:'Synco bar then a rest-driven answer. The dotted quarter synco of bar 1 gives way to a rest on the two-side.' },
+    songs:[], hint:'The syncopated bar, then a bar with a rest on the and of 3.', hint_it:'La battuta sincopata, poi una battuta con una pausa sull\u2019e del 3.' },
 
   { id:'seven_groove_phrase', name:'SEVEN GROOVE PHRASE', diff:'hard', sig:[7,4], m:2, bpm:80,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:.5},{p:3.5,d:.5,r:true},{p:4,d:1},{p:5,d:1},{p:6,d:1},
            {p:7,d:.5},{p:7.5,d:.5},{p:8,d:.5},{p:8.5,d:.5},{p:9,d:1},{p:10,d:.5,r:true},{p:10.5,d:.5},{p:11,d:1},{p:12,d:1},{p:13,d:1}],
-    songs:[], hint:'Groove in both bars, rest positions shift. Bar 2 answers bar 1 with a different pocket.' },
+    songs:[], hint:'The rest is on the and of 4 in bar 1 and on beat 4 in bar 2.', hint_it:'La pausa è sull\u2019e del 4 nella prima battuta e sul 4 nella seconda.' },
 
   { id:'seven_16th_phrase', name:'SEVEN SIXTEENTH PHRASE', diff:'hard', sig:[7,4], m:2, bpm:72,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.5},{p:1,d:1},{p:2,d:1},{p:3,d:.25},{p:3.25,d:.25},{p:3.5,d:.5},{p:4,d:1},{p:5,d:.5},{p:5.5,d:.5},{p:6,d:1},
            {p:7,d:1},{p:8,d:1},{p:9,d:.5},{p:9.5,d:.5},{p:10,d:1},{p:11,d:.5,r:true},{p:11.5,d:.5},{p:12,d:1},{p:13,d:1}],
-    songs:[], hint:'16th pickups in bar 1, eighth feel in bar 2 with a rest. The density drops as the phrase settles.' },
+    songs:[], hint:'Sixteenth pairs in bar 1; bar 2 is eighths and quarters with a rest on 5.', hint_it:'Coppie di semicrome nella prima battuta; la seconda ha crome e semiminime con una pausa sul 5.' },
 
   // ── HARD 7/4 1-bar: more ─────────────────────────────────────────────────
   { id:'seven_triplet', name:'SEVEN TRIPLETS', diff:'hard', sig:[7,4], m:1, bpm:76,
     notes:[{p:0,d:1/3},{p:1/3,d:1/3},{p:2/3,d:1/3},{p:1,d:1/3},{p:1+1/3,d:1/3},{p:1+2/3,d:1/3},
            {p:2,d:1},{p:3,d:1},{p:4,d:1/3},{p:4+1/3,d:1/3},{p:4+2/3,d:1/3},{p:5,d:1/3},{p:5+1/3,d:1/3},{p:5+2/3,d:1/3},{p:6,d:1}],
-    songs:[], hint:'Two triplet groups flanking two quarters. The 4-side has triplets, the 3-side has a quarter at the end.' },
+    songs:[], hint:'Triplets on beats 1, 2, 5 and 6; quarters on 3, 4 and 7.', hint_it:'Terzine sull\u20191, 2, 5 e 6; semiminime sul 3, 4 e 7.' },
 
   { id:'seven_displaced', name:'SEVEN DISPLACED', diff:'hard', sig:[7,4], m:1, bpm:80,
     notes:[{p:0,d:.5,r:true},{p:.5,d:1},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1},{p:4,d:.5,r:true},{p:4.5,d:1.5},{p:6,d:1}],
-    songs:[], hint:'Both downbeats are rests — displaced 7/4. If 4/4 displacement is hard, asymmetric displacement is another level.' },
+    songs:[], hint:'Eighth rests on beats 1 and 5; both groups start on the and.', hint_it:'Pause di croma sull\u20191 e sul 5; tutti e due i gruppi partono sull\u2019e.' },
 
   { id:'seven_funk', name:'SEVEN FUNK', diff:'hard', sig:[7,4], m:1, bpm:84,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:.5,r:true},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:1},{p:4,d:.5},{p:4.5,d:.5,r:true},{p:5,d:.5},{p:5.5,d:.5},{p:6,d:1}],
-    songs:[], hint:'Funk pocket stretched across seven. The rest on the and-of-2 and and-of-5 creates a pocket on both sides of the bar.' },
+    songs:[], hint:'Eighth rests on the and of 2 and the and of 5.', hint_it:'Pause di croma sull\u2019e del 2 e sull\u2019e del 5.' },
 
   // ── NORMAL 3/4 1-bar: more texture ───────────────────────────────────────
   { id:'waltz_dotted_8th', name:'WALTZ DOTTED EIGHTH', diff:'normal', sig:[3,4], m:1, bpm:116,
     notes:[{p:0,d:.75},{p:.75,d:.25},{p:1,d:.75},{p:1.75,d:.25},{p:2,d:1}],
-    songs:[], hint:'Dotted eighth into 16th, twice, then a quarter. Faster subdivision than the lilt — almost a march feel in 3.' },
+    songs:[], hint:'Dotted eighth and sixteenth on beats 1 and 2, then a quarter.', hint_it:'Croma puntata e semicroma sull\u20191 e sul 2, poi una semiminima.' },
 
   { id:'waltz_synco_n', name:'WALTZ SYNCO', diff:'normal', sig:[3,4], m:1, bpm:116,
     notes:[{p:0,d:.5},{p:.5,d:1},{p:1.5,d:.5},{p:2,d:1}],
-    songs:[], hint:'Eighth, quarter, eighth, quarter — syncopated 3/4. Every note falls off the beat.' },
+    songs:[], hint:'Eighth, quarter, eighth, quarter. The first quarter starts on the and of 1.', hint_it:'Croma, semiminima, croma, semiminima. La prima semiminima parte sull\u2019e dell\u20191.' },
 
   { id:'waltz_16th_n', name:'WALTZ SIXTEENTH INTRO', diff:'normal', sig:[3,4], m:1, bpm:112,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.5},{p:1,d:1},{p:2,d:1}],
-    songs:[], hint:'16th pair into eighth on beat 1, quarters on 2 and 3. A small burst of fast notes, then settle.' },
+    songs:[], hint:'Two sixteenths and an eighth on beat 1, then quarters on 2 and 3.', hint_it:'Due semicrome e una croma sull\u20191, poi semiminime sul 2 e sul 3.' },
 
   // ── HARD 3/4 1-bar: more ─────────────────────────────────────────────────
   { id:'waltz_afro', name:'WALTZ AFRO CELL', diff:'hard', sig:[3,4], m:1, bpm:112,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1}],
-    songs:[], hint:'Mozambique-style 16th pickup into an offbeat rest, inside 3/4. Afro-Cuban feel in waltz time.' },
+    songs:[], hint:'Eighth, two sixteenths, an eighth rest on beat 2, eighth, quarter.', hint_it:'Croma, due semicrome, una pausa di croma sul 2, croma, semiminima.' },
 
   { id:'waltz_triplet_hard', name:'WALTZ TRIPLET HARD', diff:'hard', sig:[3,4], m:1, bpm:116,
     notes:[{p:0,d:1/3},{p:1/3,d:2/3},{p:1,d:1/3},{p:1+1/3,d:2/3},{p:2,d:1/3},{p:2+1/3,d:2/3}],
-    songs:[], hint:'Three long-short triplet pairs — shuffle feel inside waltz time. Every beat has the same long-short lilt.' },
+    songs:[], hint:'First and third note of each triplet: a shuffle in 3/4.', hint_it:'Prima e terza nota di ogni terzina: uno shuffle in 3/4.' },
 
   { id:'waltz_ghost', name:'WALTZ GHOST', diff:'hard', sig:[3,4], m:1, bpm:112,
     notes:[{p:0,d:1.5,r:true},{p:1.5,d:.5},{p:2,d:1}],
-    songs:[], hint:'A beat-and-a-half of silence then two notes. The ghost waltz — almost nothing, completely disorienting.' },
+    songs:[], hint:'A beat and a half of rest, an eighth on the and of 2, a quarter on 3.', hint_it:'Un movimento e mezzo di pausa, una croma sull\u2019e del 2, una semiminima sul 3.' },
 
   // ── HABANERA + CHARLESTON 2-bar ──────────────────────────────────────────
   { id:'habanera_phrase', name:'HABANERA PHRASE', diff:'hard', sig:[4,4], m:2, bpm:88,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1},{p:4,d:1.5},{p:5.5,d:.5},{p:6,d:1},{p:7,d:1}],
-    songs:[], hint:'Habanera cell across two bars. The dotted quarter into eighth repeats — lock into the lilt.' },
+    songs:[], hint:'The habanera twice: dotted quarter, eighth, quarter, quarter.', hint_it:'L\u2019habanera due volte: semiminima puntata, croma, semiminima, semiminima.' },
 
   { id:'charleston_phrase', name:'CHARLESTON PHRASE', diff:'hard', sig:[4,4], m:2, bpm:108,
     notes:[{p:0,d:1.5},{p:1.5,d:.5,r:true},{p:2,d:1},{p:3,d:1},{p:4,d:1.5},{p:5.5,d:.5,r:true},{p:6,d:1},{p:7,d:1}],
-    songs:[], hint:'Charleston across two bars — dotted quarter then an off-beat rest, twice. The rest is the strut.' },
+    songs:[], hint:'Dotted quarter, eighth rest, then quarters on 3 and 4, twice.', hint_it:'Semiminima puntata, pausa di croma, poi semiminime sul 3 e sul 4, due volte.' },
 
   // ── FROM THE GROOVE LIBRARY: 4/4 ─────────────────────────────────────────
   { id:'groove_bossa', name:'BOSSA GROOVE', diff:'normal', sig:[4,4], m:1, bpm:120,
     notes:[{p:0,d:1.25},{p:1.25,d:.25},{p:1.5,d:.5},{p:2,d:1.25},{p:3.25,d:.25},{p:3.5,d:.5}],
-    songs:[], hint:'Kick+snare composite from the bossa nova groove. The dotted quarter push is the bossa heartbeat.' },
+    songs:[], hint:'A long note on 1, then quick hits on the e and the and of 2; again from beat 3.', hint_it:'Una nota lunga sull\u20191, poi due colpi rapidi sulla seconda e sulla terza semicroma del 2; di nuovo dal 3.' },
 
   { id:'groove_second_line', name:'SECOND LINE GROOVE', diff:'hard', sig:[4,4], m:1, bpm:96,
     notes:[{p:0,d:.75},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.25},{p:2.25,d:.5},{p:2.75,d:.25},{p:3,d:.5},{p:3.5,d:.25},{p:3.75,d:.25}],
-    songs:[], hint:'Full second line groove composite — ten notes, all different durations. New Orleans at its most complex.' },
+    songs:[], hint:'Ten hits of mixed lengths. Count every sixteenth.', hint_it:'Dieci colpi di durate diverse. Conta ogni semicroma.' },
 
   { id:'groove_samba', name:'SAMBA GROOVE', diff:'normal', sig:[4,4], m:1, bpm:130,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:1},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:1}],
-    songs:[], hint:'Kick+snare composite from the samba groove preset. Eighth pair, quarter, repeated — pure samba engine.' },
+    songs:[], hint:'Two eighths and a quarter, twice.', hint_it:'Due crome e una semiminima, due volte.' },
 
   { id:'groove_cha_cha', name:'CHA-CHA-CHÁ', diff:'normal', sig:[4,4], m:1, bpm:116,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:1},{p:2.5,d:.5},{p:3,d:1}],
-    songs:[], hint:'The cha-cha-chá cell — quarter, eighth, quarter, eighth, quarter. The "cha cha cha" lands on beats 2-and, 3, 4.' },
+    songs:[], hint:'Quarter, eighth, quarter, eighth, quarter. Two quarters start on the and.', hint_it:'Semiminima, croma, semiminima, croma, semiminima. Due semiminime partono sull\u2019e.' },
 
   { id:'groove_merengue', name:'MERENGUE', diff:'normal', sig:[4,4], m:1, bpm:135,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'Eight even eighths — the merengue pulse. Deceptively simple, needs to stay locked at high tempo.' },
+    songs:[], hint:'Eight even eighths. Keep them even at speed.', hint_it:'Otto crome uguali. Tienile uguali anche veloci.' },
 
   { id:'groove_afrobeat', name:'AFROBEAT GROOVE', diff:'hard', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.75},{p:1.75,d:.25},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.75},{p:3.5,d:.5}],
-    songs:[], hint:'Extracted from the afrobeat groove preset. The dotted notes fall asymmetrically across both halves.' },
+    songs:[], hint:'Eighths and dotted eighths off the beat. Count every sixteenth.', hint_it:'Crome e crome puntate in contrattempo. Conta ogni semicroma.' },
 
   { id:'groove_bebop', name:'BEBOP COMP', diff:'hard', sig:[4,4], m:1, bpm:160,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:1},{p:2.5,d:1},{p:3.5,d:.5}],
-    songs:[], hint:'Bebop ride/comping composite — the long notes on the second half of beats 2 and 3 are the comp hits.' },
+    songs:[], hint:'Three eighths, then quarters on the and of 2 and the and of 3.', hint_it:'Tre crome, poi semiminime sull\u2019e del 2 e sull\u2019e del 3.' },
 
   { id:'groove_neo_soul', name:'NEO-SOUL GROOVE', diff:'normal', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:.75},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.75},{p:2.25,d:.25},{p:2.5,d:.5},{p:3,d:.75},{p:3.75,d:.25}],
-    songs:[], hint:'Dotted eighth into 16th, three times per bar with an eighth fill. The neo-soul pocket at slow BPM.' },
+    songs:[], hint:'Dotted eighth and sixteenth, with eighths between. Slow and even.', hint_it:'Croma puntata e semicroma, con crome in mezzo. Lento e regolare.' },
 
   { id:'groove_motown', name:'MOTOWN GROOVE', diff:'normal', sig:[4,4], m:1, bpm:105,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:.5},{p:3,d:.5},{p:3.5,d:.5}],
-    songs:[], hint:'The Motown groove composite — 16th pickup on beat 1 then steady eighths. The Funk Brothers pocket.' },
+    songs:[], hint:'Eighth and two sixteenths on beat 1, then steady eighths.', hint_it:'Croma e due semicrome sull\u20191, poi crome regolari.' },
 
   { id:'groove_bossa_phrase', name:'BOSSA GROOVE PHRASE', diff:'normal', sig:[4,4], m:2, bpm:120,
     notes:[{p:0,d:1.25},{p:1.25,d:.25},{p:1.5,d:.5},{p:2,d:1.25},{p:3.25,d:.25},{p:3.5,d:.5},{p:4,d:1.25},{p:5.25,d:.25},{p:5.5,d:.5},{p:6,d:2}],
-    songs:[], hint:'Bossa groove for a bar and a half then a held note. The groove releases into space.' },
+    songs:[], hint:'The bossa groove for a bar and a half, then a half note.', hint_it:'Il groove bossa per una battuta e mezza, poi una minima.' },
 
   { id:'groove_cha_cha_phrase', name:'CHA-CHA PHRASE', diff:'normal', sig:[4,4], m:2, bpm:116,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:1},{p:2.5,d:.5},{p:3,d:1},{p:4,d:.5},{p:4.5,d:.5},{p:5,d:.5},{p:5.5,d:.5},{p:6,d:2}],
-    songs:[], hint:'Cha-cha cell then a busy eighth bar landing on a half. Two different feels in one phrase.' },
+    songs:[], hint:'The cha-cha cell, then four eighths and a half note.', hint_it:'La cellula del cha-cha, poi quattro crome e una minima.' },
 
   { id:'groove_afro_phrase', name:'AFROBEAT PHRASE', diff:'hard', sig:[4,4], m:2, bpm:92,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.75},{p:1.75,d:.25},{p:2,d:.5},{p:2.5,d:.25},{p:2.75,d:.75},{p:3.5,d:.5},
            {p:4,d:1},{p:5,d:1},{p:6,d:.5},{p:6.5,d:.5,r:true},{p:7,d:1}],
-    songs:[], hint:'Afrobeat groove then a rest-driven landing. Bar 2 answers with space after the density of bar 1.' },
+    songs:[], hint:'The afrobeat bar, then quarters with a rest on the and of 3.', hint_it:'La battuta afrobeat, poi semiminime con una pausa sull\u2019e del 3.' },
 
   // ── FROM THE GROOVE LIBRARY: 5/4 ─────────────────────────────────────────
   { id:'groove_5_4', name:'5/4 GROOVE', diff:'normal', sig:[5,4], m:1, bpm:96,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:.5},{p:3.5,d:1.5}],
-    songs:[], hint:'From the 5/4 groove preset — three quarters then a short-long pair on the 2-side.' },
+    songs:[], hint:'Three quarters, then an eighth and a dotted quarter.', hint_it:'Tre semiminime, poi una croma e una semiminima puntata.' },
 
   { id:'groove_5_odd', name:'5/4 ODD ROCK', diff:'hard', sig:[5,4], m:1, bpm:104,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:1},{p:2.5,d:1},{p:3.5,d:1.5}],
-    songs:[], hint:'5/4 odd rock groove — the push on the and-of-2 makes this feel like 2+1+2 rather than 3+2.' },
+    songs:[], hint:'Quarter and eighth, then notes on the and of 2, the and of 3 and the and of 4.', hint_it:'Semiminima e croma, poi note sull\u2019e del 2, sull\u2019e del 3 e sull\u2019e del 4.' },
 
   // ── FROM THE GROOVE LIBRARY: 6/4 ─────────────────────────────────────────
   { id:'groove_6_4', name:'6/4 GROOVE', diff:'normal', sig:[6,4], m:1, bpm:96,
     notes:[{p:0,d:1.5},{p:1.5,d:1.5},{p:3,d:1.5},{p:4.5,d:1.5}],
-    songs:[], hint:'Four dotted-quarter groups across six beats — the 6/8 feel in 6/4. Count in two groups of three.' },
+    songs:[], hint:'Four dotted quarters across six beats: groups of three eighths.', hint_it:'Quattro semiminime puntate in sei movimenti: gruppi di tre crome.' },
 
   { id:'groove_6_4_phrase', name:'6/4 PHRASE', diff:'normal', sig:[6,4], m:2, bpm:96,
     notes:[{p:0,d:1.5},{p:1.5,d:1.5},{p:3,d:1.5},{p:4.5,d:1.5},{p:6,d:3},{p:9,d:3}],
-    songs:[], hint:'6/4 groove bar then two dotted halves. The compound feel resolving into held notes.' },
+    songs:[], hint:'Four dotted quarters, then two dotted halves.', hint_it:'Quattro semiminime puntate, poi due minime puntate.' },
 
   // ── FROM THE GROOVE LIBRARY: 7/4 ─────────────────────────────────────────
   { id:'groove_7_groove', name:'7/4 GROOVE', diff:'normal', sig:[7,4], m:1, bpm:110,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1.5},{p:3.5,d:1},{p:4.5,d:1},{p:5.5,d:1.5}],
-    songs:[], hint:'From the 7/4 groove preset — 2+1.5+2+1.5 grouping. Two equal halves, each with the same asymmetric feel.' },
+    songs:[], hint:'Grouped 2+1.5+2+1.5: two halves of the bar with the same shape.', hint_it:'Raggruppato 2+1,5+2+1,5: due metà di battuta con la stessa forma.' },
 
   { id:'groove_7_balkan', name:'7/4 BALKAN', diff:'hard', sig:[7,4], m:1, bpm:112,
     notes:[{p:0,d:1.5},{p:1.5,d:1},{p:2.5,d:1},{p:3.5,d:1.5},{p:5,d:1},{p:6,d:1}],
-    songs:[], hint:'Balkan 7/4 — 1.5+1+1+1.5+1+1 grouping. Alternating long-short pattern across seven beats.' },
+    songs:[], hint:'Grouped 1.5+1+1+1.5+1+1: long, short, short, twice.', hint_it:'Raggruppato 1,5+1+1+1,5+1+1: lunga, corta, corta, due volte.' },
 
   { id:'groove_7_phrase', name:'7/4 GROOVE PHRASE', diff:'normal', sig:[7,4], m:2, bpm:110,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1.5},{p:3.5,d:1},{p:4.5,d:1},{p:5.5,d:1.5},{p:7,d:1.5},{p:8.5,d:.5},{p:9,d:1},{p:10,d:1},{p:11,d:3}],
-    songs:[], hint:'Groove bar then a lilt-into-hold answer. Bar 2 relaxes from the asymmetry of bar 1.' },
+    songs:[], hint:'The 7/4 groove, then dotted quarter, eighth, two quarters and a dotted half.', hint_it:'Il groove in 7/4, poi semiminima puntata, croma, due semiminime e una minima puntata.' },
 
   { id:'groove_7_balkan_phrase', name:'BALKAN PHRASE', diff:'hard', sig:[7,4], m:2, bpm:112,
     notes:[{p:0,d:1.5},{p:1.5,d:1},{p:2.5,d:1},{p:3.5,d:1.5},{p:5,d:1},{p:6,d:1},
            {p:7,d:1},{p:8,d:1.5},{p:9.5,d:1},{p:10.5,d:1},{p:11.5,d:1.5},{p:13,d:1}],
-    songs:[], hint:'Balkan feel across two bars — the long-short grouping shifts position in bar 2.' },
+    songs:[], hint:'The Balkan grouping, then the same grouping moved one beat later.', hint_it:'Il raggruppamento balcanico, poi lo stesso spostato di un movimento.' },
 
   // ── FROM THE GROOVE LIBRARY: 9/4 ─────────────────────────────────────────
   { id:'groove_9_4', name:'9/4 GROOVE', diff:'hard', sig:[9,4], m:1, bpm:100,
     notes:[{p:0,d:3},{p:3,d:2},{p:5,d:4}],
-    songs:[], hint:'Nine beats in three groups: 3+2+4. Count ONE two three ONE two ONE two three four.' },
+    songs:[], hint:'Nine beats as 3+2+4: dotted half, half, whole.', hint_it:'Nove movimenti come 3+2+4: minima puntata, minima, semibreve.' },
 
   { id:'groove_9_funk', name:'9/4 FUNK', diff:'hard', sig:[9,4], m:1, bpm:96,
     notes:[{p:0,d:3},{p:3,d:1},{p:4,d:2},{p:6,d:2},{p:8,d:1}],
-    songs:[], hint:'Five hits across nine beats. The 3+1+2+2+1 grouping creates a lopsided funk pocket.' },
+    songs:[], hint:'Five notes across nine beats, grouped 3+1+2+2+1.', hint_it:'Cinque note in nove movimenti, raggruppate 3+1+2+2+1.' },
 
   { id:'groove_9_phrase', name:'9/4 PHRASE', diff:'hard', sig:[9,4], m:2, bpm:96,
     notes:[{p:0,d:3},{p:3,d:1},{p:4,d:2},{p:6,d:2},{p:8,d:1},{p:9,d:3},{p:12,d:2},{p:14,d:4}],
-    songs:[], hint:'9/4 funk then 3+2+4 answer. Two bars of nine — feel the 9 as compound triple: three groups of three.' },
+    songs:[], hint:'The 9/4 funk bar, then 3+2+4.', hint_it:'La battuta funk in 9/4, poi 3+2+4.' },
 
   // ── FROM THE GROOVE LIBRARY: 11/4 ────────────────────────────────────────
   { id:'groove_11_tool', name:'11/4 GROOVE', diff:'hard', sig:[11,4], m:1, bpm:90,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1.5},{p:3.5,d:2},{p:5.5,d:1.5},{p:7,d:.5},{p:7.5,d:1.5},{p:9,d:2}],
-    songs:[], hint:'11/4 in two halves of 5.5+5.5 — each half has the same 1.5+.5+1.5+2 pattern. Prog rock at its most committed.' },
+    songs:[], hint:'Eleven beats in two halves of 5.5, each grouped 1.5+0.5+1.5+2.', hint_it:'Undici movimenti in due metà da 5,5, ciascuna raggruppata 1,5+0,5+1,5+2.' },
 
   { id:'groove_11_phrase', name:'11/4 PHRASE', diff:'hard', sig:[11,4], m:2, bpm:90,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1.5},{p:3.5,d:2},{p:5.5,d:1.5},{p:7,d:.5},{p:7.5,d:1.5},{p:9,d:2},
            {p:11,d:1.5},{p:12.5,d:.5},{p:13,d:1.5},{p:14.5,d:2},{p:16.5,d:1.5},{p:18,d:.5},{p:18.5,d:1.5},{p:20,d:2}],
-    songs:[], hint:'Two bars of eleven — the same pattern both bars. Once you have the first bar, bar 2 is just doing it again.' },
+    songs:[], hint:'Two bars of 11/4 with the same pattern. Count through the long notes.', hint_it:'Due battute di 11/4 con lo stesso schema. Conta durante le note lunghe.' },
 
 
   // ?? ADDED v0.68.170 ? more variety to thin pools (easy + 6/8 especially) ??
   // EASY ? more whole/half/quarter combos + simple rests
   { id:'q_rest_q_q', name:'REST ON TWO', diff:'easy', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1,r:true},{p:2,d:1},{p:3,d:1}], songs:[],
-    hint:'A quarter rest on beat two. Keep counting through the silence.' },
+    hint:'Rest on beat 2. Keep counting through it.', hint_it:'Pausa sul 2. Continua a contare.' },
   { id:'half_two_quarters', name:'HALF THEN TWO', diff:'easy', sig:[4,4], m:1, bpm:78,
     notes:[{p:0,d:2},{p:2,d:1},{p:3,d:1}], songs:[],
-    hint:'Hold the half note for two full beats, then two quarters to finish.' },
+    hint:'A half note for two beats, then two quarters.', hint_it:'Una minima per due movimenti, poi due semiminime.' },
   { id:'two_quarters_half', name:'TWO THEN HALF', diff:'easy', sig:[4,4], m:1, bpm:78,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:2}], songs:[],
-    hint:'Two quarters, then a half note held to the end of the bar.' },
+    hint:'Two quarters, then a half note to the end of the bar.', hint_it:'Due semiminime, poi una minima fino a fine battuta.' },
   { id:'q_q_rest_q', name:'REST ON THREE', diff:'easy', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1,r:true},{p:3,d:1}], songs:[],
-    hint:'Quarter rest on beat three. Tap, tap, count, tap.' },
+    hint:'Rest on beat 3: tap, tap, count, tap.', hint_it:'Pausa sul 3: colpo, colpo, conta, colpo.' },
   { id:'half_rest_half', name:'HALF REST HALF', diff:'easy', sig:[4,4], m:1, bpm:72,
     notes:[{p:0,d:2},{p:2,d:2,r:true}], songs:[],
-    hint:'A half note, then two beats of silence. Hold your count to the bar line.' },
+    hint:'A half note, then two beats of rest.', hint_it:'Una minima, poi due movimenti di pausa.' },
   { id:'three_q_rest', name:'THREE AND REST', diff:'easy', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1,r:true}], songs:[],
-    hint:'Three quarters and a rest. Let the bar breathe on beat four.' },
+    hint:'Three quarters and a rest on 4.', hint_it:'Tre semiminime e una pausa sul 4.' },
   { id:'easy_34_quarters', name:'WALTZ STEP', diff:'easy', sig:[3,4], m:1, bpm:84,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1}], songs:[],
-    hint:'Three quarters in 3/4 — the basic waltz pulse. ONE two three.' },
+    hint:'Three quarters in 3/4. Count ONE-two-three.', hint_it:'Tre semiminime in 3/4. Conta UNO-due-tre.' },
   { id:'easy_34_dotted_half', name:'WALTZ HOLD', diff:'easy', sig:[3,4], m:1, bpm:80,
     notes:[{p:0,d:3}], songs:[],
-    hint:'One dotted half note fills the whole 3/4 bar. Three beats, one tap.' },
+    hint:'One dotted half fills the bar: one tap, three beats.', hint_it:'Una minima puntata riempie la battuta: un colpo, tre movimenti.' },
   { id:'easy_34_half_q', name:'WALTZ HALF', diff:'easy', sig:[3,4], m:1, bpm:82,
     notes:[{p:0,d:2},{p:2,d:1}], songs:[],
-    hint:'A half note then a quarter. Lean on beat one, lift on three.' },
+    hint:'A half note, then a quarter on 3.', hint_it:'Una minima, poi una semiminima sul 3.' },
   { id:'easy_two_bar', name:'EASY TWO-BAR', diff:'easy', sig:[4,4], m:2, bpm:80,
     notes:[{p:0,d:2},{p:2,d:1},{p:3,d:1},{p:4,d:1},{p:5,d:1},{p:6,d:2}], songs:[],
-    hint:'Two bars: half + two quarters, then two quarters + half. A small phrase.' },
+    hint:'Half and two quarters, then two quarters and a half.', hint_it:'Minima e due semiminime, poi due semiminime e una minima.' },
   { id:'easy_q_half_q', name:'AROUND THE HALF', diff:'easy', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:1},{p:1,d:2},{p:3,d:1}], songs:[],
-    hint:'Quarter, half, quarter — the long note sits in the middle of the bar.' },
+    hint:'Quarter, half, quarter. The half note takes beats 2 and 3.', hint_it:'Semiminima, minima, semiminima. La minima prende il 2 e il 3.' },
 
   // NORMAL ? more eighth/dotted/rest combos
   { id:'n_eighths_run', name:'EIGHTH RUN', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1}], songs:[],
-    hint:'Four eighths then two quarters. Keep the eighths even, don\'t rush into beat three.' },
+    hint:'Four eighths, then quarters on 3 and 4. Keep the eighths even.', hint_it:'Quattro crome, poi semiminime sul 3 e sul 4. Tieni le crome uguali.' },
   { id:'n_dotted_q_eighth', name:'DOTTED PAIR', diff:'normal', sig:[4,4], m:1, bpm:86,
     notes:[{p:0,d:1.5},{p:1.5,d:.5},{p:2,d:1.5},{p:3.5,d:.5}], songs:[],
-    hint:'Dotted-quarter then eighth, twice. The long-short gallop.' },
+    hint:'Dotted quarter and eighth, twice.', hint_it:'Semiminima puntata e croma, due volte.' },
   { id:'n_eighth_rest_synco', name:'OFFBEAT POP', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:.5,r:true},{p:.5,d:.5},{p:1,d:1},{p:2,d:.5,r:true},{p:2.5,d:.5},{p:3,d:1}], songs:[],
-    hint:'Rest on the beat, tap the offbeat. Syncopation you feel more than count.' },
+    hint:'Eighth rest, eighth, quarter, twice. The eighths land on the and.', hint_it:'Pausa di croma, croma, semiminima, due volte. Le crome cadono sull\u2019e.' },
   { id:'n_eighths_quarters', name:'MIXED EIGHTHS', diff:'normal', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:1},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:.5},{p:3.5,d:.5}], songs:[],
-    hint:'Quarter then two eighths, twice. Alternating long and short.' },
+    hint:'A quarter, then two eighths, twice.', hint_it:'Una semiminima, poi due crome, due volte.' },
   { id:'n_syncopa', name:'SYNCOPA', diff:'normal', sig:[4,4], m:1, bpm:86,
     notes:[{p:0,d:.5},{p:.5,d:1},{p:1.5,d:.5},{p:2,d:.5},{p:2.5,d:1},{p:3.5,d:.5}], songs:[],
-    hint:'The classic eighth-quarter-eighth syncopation. The middle note crosses the beat.' },
+    hint:'Eighth, quarter, eighth, twice. Each quarter starts on the and.', hint_it:'Croma, semiminima, croma, due volte. Ogni semiminima parte sull\u2019e.' },
   { id:'n_34_eighths', name:'WALTZ EIGHTHS', diff:'normal', sig:[3,4], m:1, bpm:90,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:1},{p:2,d:1}], songs:[],
-    hint:'Two eighths then two quarters in 3/4. A lilting waltz.' },
+    hint:'Two eighths on beat 1, then quarters on 2 and 3.', hint_it:'Due crome sull\u20191, poi semiminime sul 2 e sul 3.' },
   { id:'n_68_basic', name:'6/8 PULSE', diff:'normal', sig:[6,8], m:1, bpm:100,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:1},{p:5,d:1}], songs:[],
-    hint:'Six eighth notes — the bones of 6/8. Feel it as two groups of three.' },
+    hint:'Six eighths in 6/8. Count ONE-two-three FOUR-five-six.', hint_it:'Sei crome in 6/8. Conta UNO-due-tre QUATTRO-cinque-sei.' },
   { id:'n_68_dotted', name:'6/8 TWO GROUPS', diff:'normal', sig:[6,8], m:1, bpm:104,
     notes:[{p:0,d:3},{p:3,d:3}], songs:[],
-    hint:'Two dotted-quarter pulses — the heartbeat of 6/8. ONE-two-three FOUR-five-six.' },
+    hint:'Two dotted quarters: the two beats of 6/8.', hint_it:'Due semiminime puntate: i due movimenti del 6/8.' },
   { id:'n_68_mixed', name:'6/8 SKIP', diff:'normal', sig:[6,8], m:1, bpm:104,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:3}], songs:[],
-    hint:'Three eighths then a dotted-quarter. The compound-time skip.' },
+    hint:'Three eighths, then a dotted quarter.', hint_it:'Tre crome, poi una semiminima puntata.' },
   { id:'n_54_walk', name:'FIVE WALK', diff:'normal', sig:[5,4], m:1, bpm:92,
     notes:[{p:0,d:1},{p:1,d:1},{p:2,d:1},{p:3,d:1},{p:4,d:1}], songs:[],
-    hint:'Five even quarters. Group them 3+2 in your head to stay grounded.' },
+    hint:'Five even quarters. Count them 3+2.', hint_it:'Cinque semiminime uguali. Contale 3+2.' },
 
   // HARD ? more 16ths, syncopation, 6/8
   { id:'h_16th_run', name:'SIXTEENTH RUN', diff:'hard', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.25},{p:.25,d:.25},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:1},{p:2,d:1},{p:3,d:1}], songs:[],
-    hint:'Four sixteenths off the top, then three quarters. Nail the even subdivision.' },
+    hint:'Four sixteenths on beat 1, then three quarters. Keep the sixteenths even.', hint_it:'Quattro semicrome sull\u20191, poi tre semiminime. Tieni le semicrome uguali.' },
   { id:'h_gallop', name:'GALLOP', diff:'hard', sig:[4,4], m:1, bpm:96,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.5},{p:1.5,d:.25},{p:1.75,d:.25},{p:2,d:1},{p:3,d:1}], songs:[],
-    hint:'Eighth then two sixteenths — the galloping figure. Twice, then settle.' },
+    hint:'Eighth and two sixteenths, twice, then two quarters.', hint_it:'Croma e due semicrome, due volte, poi due semiminime.' },
   { id:'h_16th_synco', name:'16TH SYNCOPATION', diff:'hard', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.25,r:true},{p:.25,d:.25},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1}], songs:[],
-    hint:'A sixteenth rest pushes everything off the grid. Feel the gap on the downbeat.' },
+    hint:'Sixteenth rest on 1, then a sixteenth and an eighth off the beat.', hint_it:'Pausa di semicroma sull\u20191, poi una semicroma e una croma in contrattempo.' },
   { id:'h_clave_son', name:'SON CLAVE', diff:'hard', sig:[4,4], m:2, bpm:94,
-    notes:[{p:0,d:1},{p:1.5,d:.5},{p:2,d:1,r:true},{p:3,d:1},{p:4,d:1},{p:5,d:1,r:true},{p:6,d:1},{p:7,d:1}], songs:[],
-    hint:'The 3-2 son clave — the spine of Latin music. Two bars, syncopated then steady.' },
+    // v0.210.122: bar 2 had three hits (4, 6, 7) and a hole at beat 2 of bar 1.
+    // Son 3-2 is 1, and-of-2, 4 | 2, 3.
+    notes:[{p:0,d:1},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1,r:true},{p:3,d:1},{p:4,d:1,r:true},{p:5,d:1},{p:6,d:1},{p:7,d:1,r:true}], songs:[],
+    hint:'3-2 son clave: three hits in bar 1, two in bar 2.', hint_it:'Son clave 3-2: tre colpi nella prima battuta, due nella seconda.' },
   { id:'h_68_fast', name:'6/8 DRIVE', diff:'hard', sig:[6,8], m:1, bpm:120,
     notes:[{p:0,d:.5},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1},{p:4,d:.5},{p:4.5,d:.5},{p:5,d:1}], songs:[],
-    hint:'Sixteenths and eighths driving through a fast 6/8. Keep the compound pulse underneath.' },
+    hint:'Sixteenths and eighths in 6/8. Feel two beats per bar.', hint_it:'Semicrome e crome in 6/8. Senti due movimenti per battuta.' },
   { id:'h_68_synco', name:'6/8 CROSS', diff:'hard', sig:[6,8], m:1, bpm:112,
     notes:[{p:0,d:1},{p:1,d:2},{p:3,d:1},{p:4,d:2}], songs:[],
-    hint:'Eighth then quarter, twice — the cross-rhythm that fights the 6/8 grouping.' },
+    hint:'Eighth then quarter, twice: groups of 1+2 against the 3+3 of 6/8.', hint_it:'Croma poi semiminima, due volte: gruppi di 1+2 contro il 3+3 del 6/8.' },
   { id:'h_triplet_mix', name:'TRIPLET MIX', diff:'hard', sig:[4,4], m:1, bpm:88,
     notes:[{p:0,d:1/3},{p:1/3,d:1/3},{p:2/3,d:1/3},{p:1,d:1},{p:2,d:1/3},{p:2+1/3,d:1/3},{p:2+2/3,d:1/3},{p:3,d:1}], songs:[],
-    hint:'Eighth-note triplets on beats one and three, quarters between. Three-against-two feel.' },
+    hint:'Triplets on beats 1 and 3, quarters on 2 and 4.', hint_it:'Terzine sull\u20191 e sul 3, semiminime sul 2 e sul 4.' },
   { id:'h_16th_offbeat', name:'OFFBEAT 16THS', diff:'hard', sig:[4,4], m:1, bpm:92,
     notes:[{p:0,d:.5},{p:.5,d:.25},{p:.75,d:.25},{p:1,d:.25},{p:1.25,d:.25},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1}], songs:[],
-    hint:'Sixteenths clustered off the beat. The kind of figure that trips up steady tappers.' },
+    hint:'Sixteenths around the and of 1 and beat 2, then quarters on 3 and 4.', hint_it:'Semicrome intorno all\u2019e dell\u20191 e al 2, poi semiminime sul 3 e sul 4.' },
 
 ];
 
@@ -72977,7 +73020,8 @@ function rrRenderDiffPickerContent() {
     var info = document.createElement('div');
     info.style.cssText = 'flex:1;min-width:0;';
     var lbl = document.createElement('div');
-    lbl.style.cssText = 'font-size:13px;letter-spacing:2px;margin-bottom:2px;color:' + d.color;
+    // 11px bold, same as the Chordle / Diadle / Tonale picker labels (was 13px regular, a size up from every other difficulty screen).
+    lbl.style.cssText = 'font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:3px;color:' + d.color;
     lbl.textContent = t('rr_diff_' + d.key + '_label');
     var sub = document.createElement('div');
     sub.style.cssText = 'font-size:9px;color:var(--muted);line-height:1.4;';
@@ -73148,7 +73192,7 @@ function rrRenderDiffPickerContent() {
   // Match the difficulty card headers: same size, letter-spacing, and (system) font ? amber + a lightning glyph.
   var _survCS = getComputedStyle(document.body);
   var _survAmber = (_survCS.getPropertyValue('--surv-amber').trim() || '#fbbf24');
-  survLbl.style.cssText = "font-size:13px;letter-spacing:2px;margin-bottom:2px;color:" + _survAmber + ";display:flex;align-items:center;gap:6px;";
+  survLbl.style.cssText = "font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:3px;color:" + _survAmber + ";display:flex;align-items:center;gap:6px;";
   survLbl.innerHTML = '<svg width="10" height="14" viewBox="0 0 11 15" fill="' + _survAmber + '" style="flex-shrink:0;"><path d="M6.5 0 L0 8.5 H4.2 L3.2 15 L11 5.8 H6.2 Z"/></svg><span>' + (t('rr_survival') || 'SURVIVAL') + '</span>';
   var survSub = document.createElement('div');
   survSub.style.cssText = 'font-size:9px;color:var(--muted);line-height:1.4;';
@@ -78290,12 +78334,30 @@ function rrShowResults() {
   // Populate feedback layer in tap zone
   var fbScore = document.getElementById('rrTapFbScore');
   var fbText  = document.getElementById('rrFbText');
-  if (fbScore) fbScore.textContent = score + '%';
-  if (fbText)  fbText.textContent  = fb;
-
+  // (Set before the text so the fit check below measures the real space.)
   // Retry is for free-practice only — survival is one-shot per pattern.
   var retryBtn = document.getElementById('rrRetryBtn');
   if (retryBtn) retryBtn.style.display = rrSurv.active ? 'none' : '';
+  if (fbScore) fbScore.textContent = score + '%';
+  if (fbText) {
+    // The feedback sits inside the fixed-height tap zone, so a long round (miss +
+    // extra taps + drift + a tip) ran past the bottom and got clipped mid-sentence.
+    // Lines come as headline, then notes in priority order (misses, extras,
+    // timing, tip). When it all will not fit, the headline goes first: the score
+    // above it already says how the round went, and the notes say what to fix.
+    // Then drop notes from the end. Never clip a sentence.
+    var _fbLines = rrBuildFeedback.lines || [fb];
+    var _tries = [_fbLines];
+    if (_fbLines.length > 1) {
+      var _notes = _fbLines.slice(1);
+      for (var _k = _notes.length; _k >= 1; _k--) _tries.push(_notes.slice(0, _k));
+    }
+    for (var _i = 0; _i < _tries.length; _i++) {
+      fbText.textContent = _tries[_i].join(' ');
+      if (fbText.scrollHeight <= fbText.clientHeight + 1) break;
+    }
+  }
+
 
   // Auto-start results playback — skip if noReplay option or survival mode
   if (!rrCurOpts().noReplay && !rrSurv.active) {
@@ -78314,59 +78376,61 @@ function rrRandPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 // stay in sync. Headline/timing lines are arrays (rrRandPick adds variety);
 // the rest are picked structurally in rrBuildFeedback. {ms} is substituted.
 var RR_FB = {
+  // v0.210.122 rewrite: one short headline, then ONE note (rrBuildFeedback keeps
+  // the most useful). Plain, action first, no "so" chains, no pep talk.
   en: {
-    head_perfect: ['Locked in.','Perfect.','Nothing to fix here.','A clean sweep.'],
-    head_great:   ['Solid round.','Tight and clean.','Right in the pocket.','Really nicely played.'],
-    head_good:    ['It is coming together.','The shape is there.','Almost there.','That is starting to click.'],
-    head_mid:     ['Rough in places, but the feel is there.','Better than it sounded.','The rhythm is in there, so keep at it.'],
-    head_low:     ['A tricky one; watch the playback below and go again.','Harder than it looks, and the playback will help.','This one takes a few goes.'],
-    head_poor:    ['Let the playback sink in, then come back to it.','Watch the noteheads light up, because that is the pattern.','If this feels out of reach, ease into it with Listen First.'],
-    miss_all:     'Nothing matched, so try Listen First or drop the tempo right down.',
-    miss_first:   'You missed the opening note; start with the playhead sitting on beat 1.',
-    miss_last:    'You missed the last note, so stay with it right to the end.',
-    miss_one:     'One missed note, and the red notehead shows exactly where.',
-    miss_half:    '{ms} notes missed; try halving the tempo first.',
-    miss_some:    '{ms} missed, so watch for the red noteheads in the playback.',
-    extra_one:    ['One ghost hit there; only tap on the noteheads, not the rests.','One extra tap crept in, so trust the silence.'],
-    extra_many:   ['{ms} extra taps; the white symbols are rests, not notes.','Too many hits, so count through the rests instead of filling them.'],
-    bias_scatter: ['Your timing is scattered, so tap the click beats first and add the notes once that feels steady.','Lock onto the metronome click before you start worrying about the notes.'],
-    bias_late:    ['Dragging about {ms}ms behind, so lean into each hit a touch earlier.','Running roughly {ms}ms late; anticipate the beat rather than chasing it.','A little behind by {ms}ms, so commit to each note just before it lands.'],
-    bias_early:   ['Rushing about {ms}ms ahead, so breathe and let the beat come to you.','Roughly {ms}ms early; let the click lead and follow it.','A touch fast by {ms}ms, so feel the beat before you tap it.'],
-    bias_tight:   ['Your timing is tight.','Nice pocket.','Solid, steady timing.'],
-    tip_34:       ['Waltz feel: beat 1 is strong while 2 and 3 stay light, so think ONE-two-three, ONE-two-three.','In 3/4 there are only three beats to a bar, so resist the pull to expect a fourth.','Count in threes and feel the downbeat as an arrival rather than a launch.'],
-    tip_triplet:  ['Triplets split one beat into three even parts, so count "trip-let" under each beat.','That "3" bracket means three notes sharing one beat evenly, each a third of it.','For triplets, tap your foot on the quarter pulse and fit three taps between each one.'],
-    tip_dotted_bars: 'A dot adds half the value back on, and the duration bar shows how far to stretch each dotted note.',
-    tip_dotted_nobars: 'A dot adds half the value back on, so a dotted note runs one and a half times its base length; count it carefully.',
-    tip_dotted_alt: 'Hold dotted notes a touch longer than feels natural, since the dot adds half the value again.',
-    tip_rests:    'Rests are deliberate silence, so count through them rather than filling them in.',
-    tip_2bar:     'For two-bar phrases, carry the pulse straight from bar 1 into bar 2 without resetting in between.',
+    head_perfect: ['Perfect.','Spot on.','Clean.','Nailed it.'],
+    head_great:   ['Tight.','Solid.','In the pocket.','Nice and steady.'],
+    head_good:    ['Close.','Almost.','Nearly there.','Getting there.'],
+    head_mid:     ['Some rough spots.','Parts of it landed.','Halfway there.'],
+    head_low:     ['A tough one.','Not yet.','That one fought back.'],
+    head_poor:    ['Watch the playback, then go again.','Take another look.','Back to the top.'],
+    miss_all:     'Nothing matched. Try Listen First, or drop the tempo.',
+    miss_first:   'You missed the first note. Come in on beat 1.',
+    miss_last:    'You missed the last note. Play through to the end.',
+    miss_one:     'One missed note; it shows in red.',
+    miss_half:    'Missed {ms} notes. Try it at half the tempo.',
+    miss_some:    'Missed {ms} notes; they show in red.',
+    extra_one:    ['One extra tap. Rests stay silent.','One tap too many.'],
+    extra_many:   ['{ms} extra taps. Rests stay silent.','{ms} taps too many; count through the rests.'],
+    bias_scatter: ['Timing is all over. Tap along with the click first.','Lock onto the click before the notes.'],
+    bias_late:    ['About {ms}ms late. Tap a hair earlier.','Dragging by about {ms}ms.','Behind the beat by about {ms}ms.'],
+    bias_early:   ['About {ms}ms early. Wait for the beat.','Rushing by about {ms}ms.','Ahead of the beat by about {ms}ms.'],
+    bias_tight:   ['Steady timing.','Right on the click.','Even all the way through.'],
+    tip_34:       ['In 3/4, count ONE-two-three.','Three beats a bar; beat 1 is the strong one.'],
+    tip_triplet:  ['A triplet is three even notes in one beat. Count trip-a-let.','Fit three even taps into each beat.'],
+    tip_dotted_bars: 'A dot adds half the length again; the bar shows how long to hold.',
+    tip_dotted_nobars: 'A dot adds half the length again. A dotted quarter lasts a beat and a half.',
+    tip_dotted_alt: 'Hold dotted notes their full length.',
+    tip_rests:    'Count through the rests; don\u2019t tap them.',
+    tip_2bar:     'Keep counting across the bar line; don\u2019t restart at bar 2.',
   },
   it: {
-    head_perfect: ['A segno.','Perfetto.','Niente da correggere.','Tutto pulito.'],
-    head_great:   ['Bella prova.','Preciso e pulito.','In pieno ritmo.','Suonato davvero bene.'],
-    head_good:    ['Sta prendendo forma.','La struttura c\u2019è.','Ci sei quasi.','Comincia a tornare.'],
-    head_mid:     ['Qualche punto incerto, ma il feeling c\u2019è.','Meglio di come sembrava.','Il ritmo c\u2019è, quindi continua così.'],
-    head_low:     ['Una bella sfida; guarda la riproduzione qui sotto e riprova.','Più difficile di quanto sembri, e la riproduzione ti aiuterà.','Questo richiede qualche tentativo.'],
-    head_poor:    ['Lascia che la riproduzione entri in testa, poi riprova.','Guarda le note illuminarsi, perché quello è il pattern.','Se ti sembra fuori portata, inizia con Ascolta Prima.'],
-    miss_all:     'Niente ha combaciato, quindi prova Ascolta Prima o abbassa molto il tempo.',
-    miss_first:   'Hai mancato la prima nota; parti con il cursore sul primo movimento.',
-    miss_last:    'Hai mancato l\u2019ultima nota, quindi restaci fino in fondo.',
-    miss_one:     'Una nota mancata, e la testa di nota rossa mostra esattamente dove.',
-    miss_half:    '{ms} note mancate; prova prima a dimezzare il tempo.',
-    miss_some:    '{ms} mancate, quindi cerca le note rosse nella riproduzione.',
-    extra_one:    ['Un colpo di troppo; batti solo sulle note, non sulle pause.','Si è infilato un tocco in più, quindi fidati del silenzio.'],
-    extra_many:   ['{ms} tocchi di troppo; i simboli bianchi sono pause, non note.','Troppi colpi, quindi conta le pause invece di riempirle.'],
-    bias_scatter: ['Il tuo tempo è sparso, quindi batti prima sui click e aggiungi le note quando ti sembra stabile.','Aggancia il click del metronomo prima di pensare alle note.'],
-    bias_late:    ['Sei indietro di circa {ms}ms, quindi anticipa un po\u2019 ogni colpo.','Circa {ms}ms in ritardo; anticipa il movimento invece di rincorrerlo.','Un filo indietro di {ms}ms, quindi entra su ogni nota appena prima che arrivi.'],
-    bias_early:   ['Sei avanti di circa {ms}ms, quindi respira e lascia che il movimento ti raggiunga.','Circa {ms}ms in anticipo; lascia guidare il click e seguilo.','Un filo veloce di {ms}ms, quindi senti il movimento prima di battere.'],
-    bias_tight:   ['Tempo preciso.','Bel ritmo.','Tempo solido e regolare.'],
-    tip_34:       ['Senso di valzer: il primo movimento è forte mentre il secondo e il terzo restano leggeri, quindi pensa UNO-due-tre, UNO-due-tre.','In 3/4 ci sono solo tre movimenti per battuta, quindi resisti alla voglia di aspettarne un quarto.','Conta in tre e senti il primo movimento come un arrivo, non come una partenza.'],
-    tip_triplet:  ['Le terzine dividono un movimento in tre parti uguali, quindi conta "ter-zi-na" sotto ogni movimento.','Quel "3" indica tre note che condividono un movimento in parti uguali, ciascuna un terzo.','Per le terzine, batti il piede sulla pulsazione e infila tre tocchi tra un battito e l\u2019altro.'],
-    tip_dotted_bars: 'Il punto aggiunge metà del valore, e la barra di durata mostra quanto allungare ogni nota puntata.',
-    tip_dotted_nobars: 'Il punto aggiunge metà del valore, quindi una nota puntata dura una volta e mezzo la sua durata base; contala con cura.',
-    tip_dotted_alt: 'Tieni le note puntate un filo più del naturale, perché il punto aggiunge di nuovo metà del valore.',
-    tip_rests:    'Le pause sono silenzio voluto, quindi contale invece di riempirle.',
-    tip_2bar:     'Nelle frasi di due battute, porta la pulsazione dritta dalla prima alla seconda senza azzerarti nel mezzo.',
+    head_perfect: ['Perfetto.','Preciso.','Pulito.','Centrato.'],
+    head_great:   ['Ottimo.','Solido.','A tempo.','Bello regolare.'],
+    head_good:    ['Quasi.','Ci sei quasi.','Vicino.','Manca poco.'],
+    head_mid:     ['Qualche punto incerto.','Una parte c’è.','A metà strada.'],
+    head_low:     ['Difficile, questo.','Non ancora.','Questo ha resistito.'],
+    head_poor:    ['Guarda la riproduzione e riprova.','Riguardalo con calma.','Si riparte dall’inizio.'],
+    miss_all:     'Nessuna nota presa. Prova Ascolta Prima o abbassa il tempo.',
+    miss_first:   'Hai perso la prima nota. Entra sul primo movimento.',
+    miss_last:    'Hai perso l’ultima nota. Suona fino in fondo.',
+    miss_one:     'Una nota persa; la vedi in rosso.',
+    miss_half:    '{ms} note perse. Provalo a metà tempo.',
+    miss_some:    '{ms} note perse; le vedi in rosso.',
+    extra_one:    ['Un tocco in più. Le pause restano in silenzio.','Un tocco di troppo.'],
+    extra_many:   ['{ms} tocchi in più. Le pause restano in silenzio.','{ms} tocchi di troppo; conta le pause.'],
+    bias_scatter: ['Tempo irregolare. Batti prima insieme al click.','Aggancia il click prima delle note.'],
+    bias_late:    ['Circa {ms}ms in ritardo. Anticipa appena.','Trascini di circa {ms}ms.','Dietro il tempo di circa {ms}ms.'],
+    bias_early:   ['Circa {ms}ms in anticipo. Aspetta il movimento.','Corri di circa {ms}ms.','Davanti al tempo di circa {ms}ms.'],
+    bias_tight:   ['Tempo regolare.','Sul click.','Regolare dall’inizio alla fine.'],
+    tip_34:       ['In 3/4 conta UNO-due-tre.','Tre movimenti per battuta; il primo è quello forte.'],
+    tip_triplet:  ['La terzina è tre note uguali in un movimento. Conta ter-zi-na.','Tre tocchi uguali per ogni movimento.'],
+    tip_dotted_bars: 'Il punto aggiunge metà del valore; la barra mostra quanto tenere.',
+    tip_dotted_nobars: 'Il punto aggiunge metà del valore. Una semiminima puntata dura un movimento e mezzo.',
+    tip_dotted_alt: 'Tieni le note puntate per tutta la durata.',
+    tip_rests:    'Conta le pause; non batterle.',
+    tip_2bar:     'Continua a contare oltre la stanghetta; non ripartire alla seconda battuta.',
   },
 };
 
@@ -78461,11 +78525,15 @@ function rrBuildFeedback(notes, matches, beatDur, extraTaps, score) {
     } else if (is2bar && score < 80) {
       lines.push(FB.tip_2bar);
     } else if (rrPattern.hint && score < 85) {
-      lines.push(rrPattern.hint);
+      lines.push((lang === 'it' && rrPattern.hint_it) || rrPattern.hint);
     }
   }
 
-  return lines.filter(Boolean).join(' ');
+  // Headline plus the single most useful note (lines are pushed in priority
+  // order: misses, extras, timing, tip). One thing to fix per round.
+  lines = lines.filter(Boolean).slice(0, 2);
+  rrBuildFeedback.lines = lines;
+  return lines.join(' ');
 }
 
 // ─── Next pattern ────────────────────────────────────────────────────────────
@@ -95418,6 +95486,22 @@ function applyUiScale() {
   const html = document.documentElement;
   if (step === 0) html.removeAttribute('data-uiscale');
   else html.setAttribute('data-uiscale', String(step));
+  // The scale itself: a viewport scale, not CSS zoom (see the CSS note at
+  // html[data-uiscale]). Width is left out on purpose above step 0: with only
+  // initial-scale the layout width becomes device-width / scale, which is the
+  // whole point. min = max = initial so it cannot be pinched.
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (vp) {
+    let S = [1, 1.08, 1.15, 1.21, 1.26][step] || 1;
+    // Never lay the app out narrower than 300 CSS px: most cards have a minimum
+    // content width near 290, so on a 360px phone the full 1.26 (286px) would
+    // push them off the right edge. Take the largest scale that still fits.
+    const base = Math.min(screen.width || 390, screen.height || 844);
+    S = Math.max(1, Math.min(S, Math.floor(base / 300 * 100) / 100));
+    vp.setAttribute('content', step === 0
+      ? 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+      : 'initial-scale=' + S + ', minimum-scale=' + S + ', maximum-scale=' + S + ', user-scalable=no, viewport-fit=cover');
+  }
 }
 
 
@@ -96502,6 +96586,9 @@ const BACKUP_KEYS_SKIP   = [PROG_STORAGE_KEY, 'mq_in_progress', 'intonare_restor
                             // phone could silence a legitimate update prompt there,
                             // and it rebuilds itself the moment one is dismissed.
                             'iu_snooze',
+                            // One-shot flag from the v0.210.69 vocal range mock-data
+                            // purge. Per-device housekeeping, not progress.
+                            'intonare_vr_mock_cleared',
                             // intonare_dev is the developer-tools switch. It is
                             // per-device on purpose (set from a console, survives
                             // a rebuilt file). Carrying it in a backup would turn
@@ -102049,14 +102136,18 @@ function synthBell(time, vel, kit) {
   const m = _dkIsElectronic(kit)
     ? _dkMetal(t, v, kit, {
         set: 'bell', bp: 4800, bpQ: 1.8, hp: 900,
-        decay: 0.5, oscGain: 0.30, level: 1.9, jitter: 0.02,
+        decay: 0.5, oscGain: 0.30, level: 1.1, jitter: 0.02,
         tick: 0.06, wash: 0.05,
       })
     // Tuned on-device: pure FM, no ping, slight pitch raise, just the ring.
+    // v0.210.122: "too loud and clangy". Measured offline it ran ~3.4x the ride's
+    // RMS and above the crash. Level 1.9 -> 0.9 puts it ~1.8x the ride (an accent,
+    // not a gong). FM index 3000 -> 1800 thins the inharmonic sidebands that read
+    // as clang while keeping the pitched ping. Electronic bell 1.9 -> 1.1 to match.
     : _dkMetalAcoustic(t, v, kit, {
-        car: 2500, mod: 1000, index: 3000,
+        car: 2500, mod: 1000, index: 1800,
         ping: 4800, tail: 2640,
-        decay: 0.5, level: 1.9,
+        decay: 0.5, level: 0.9,
         oscMix: 1.0, fmPitchMul: 1.16,
         pingLevel: 0,
         tailLevel: 0.78,

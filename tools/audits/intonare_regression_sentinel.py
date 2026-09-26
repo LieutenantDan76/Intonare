@@ -271,7 +271,9 @@ CHECKS = [
     ('QUIZ GEN', 'The exotic generator no longer stamps d:3 on a pentatonic',
         'absent', "var s = mqGPick(MQ_F_EXOTIC);", 0),
     ('QUIZ GEN', 'Advanced Theory rates the card, not the generator list',
-        'sub', 'return mqCardLevel(q) === slot;', 1),
+        # v0.210.119: mqAdvLevel wraps mqCardLevel so Advanced Theory never deals
+        # grade-one cards. Still rates the card, not the generator list.
+        'sub', 'return mqAdvLevel(q) === slot;', 1),
     ('QUIZ GEN', 'Every generator is in the pot for every slot',
         'sub', 'kinds: function () { return MQ_GEN_ALL; }', 1),
     ('QUIZ GEN', 'A kind on two family lists is not counted twice',
@@ -1389,8 +1391,25 @@ EXACT_PINS = [
     # Vocal range now calls the shared detectPitch(). The call site uses a
     # pre-declared `freq` (let), not `const freq = …`, because worklet output
     # can fill freq first and the main-thread path is the fallback.
+    # v0.210.112: Vocal Range no longer calls detectPitch itself at all; it is
+    # fed from processAudio -> PitchEngine through vrFeedPitch(). Still no
+    # private detector, which is what this pin guards.
     ('AUDIO',  'Vocal range uses the shared detectPitch (no private detector)',
-        'freq = detectPitch(buf, _vrSr)', []),
+        'function vrFeedPitch(freq, rms)', []),
+    # v0.210.122: Tempo Guess answer is final once locked. Replay after the
+    # reveal used to walk back to 'guessing' and let LOCK IN score twice.
+    ('TRAIN',  'Tempo Guess: guess cannot change or re-score after LOCK IN',
+        "if (tgPhase !== 'guessing' || tgActualBpm === null || tgAnswered) return;", []),
+    # v0.210.122: Rhythm Reading feedback fits the tap zone whole, never clipped.
+    ('TRAIN',  'Rhythm Reading feedback drops whole sentences to fit (no clipping)',
+        'if (fbText.scrollHeight <= fbText.clientHeight + 1) break;', []),
+    # v0.210.122: text size is a viewport scale, not CSS zoom on body (zoom
+    # blew every 100dvh view past the screen). Do not go back to zoom.
+    ('LAYOUT', 'UI scale sets the viewport initial-scale (not body zoom)',
+        "'initial-scale=' + S + ', minimum-scale=' + S", []),
+    # v0.210.122: bell was ~3.4x the ride. Level 0.9, FM index 1800.
+    ('DRUMS',  'Acoustic ride bell level tamed (not 1.9)',
+        "car: 2500, mod: 1000, index: 1800,\n        ping: 4800, tail: 2640,\n        decay: 0.5, level: 0.9,", []),
     # v0.80.27: the needle EMA is now RATE-AWARE. A fixed 0.18 was tuned for 60 Hz rAF,
     # but detection runs at the true native frame rate (~21.6 Hz), so every frame landed
     # with ~3x too much weight and the needle jerked to each individual reading — the
