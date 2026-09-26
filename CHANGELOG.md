@@ -2,6 +2,35 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.124: Rhythm Flash Cards copy, Survival Guide copy pass
+
+Version note: the v0.210.123 push went out with the HTML still stamped
+0.210.122 (the bump reached the changelog but not the file). Nothing was lost;
+this build carries everything from .123 and restores the stamp order.
+
+Rhythm Flash Cards: all 29 card blurbs rewritten against their notes, with
+Italian added (`blurbIt`) and Italian card names (`nameIt`); Italian showed
+English on every card. Count fixes where the old count did not match the
+notes: SCOTCH SNAP said "e--one" for a figure that starts on the beat (now
+"one-e, two-e", with its Italian name, ritmo lombardo), SIXTEENTH GAP and the
+syncopation cards now count the onsets that are actually there. No em-dashes.
+
+Survival Guide copy pass (AI_COPY_GUIDE rules, English and Italian):
+- 70 edits. Gone: "not just / non solo" constructions, "so you can / così
+  puoi", "which is why", "worth learning / vale la pena", "underpin",
+  "navigate", "encompasses", "remarkably", "lush", "truly", "simply", "sound
+  great", "powerful tonal tool", "essential", "Pensalo come", the "most
+  shocking moments of classical music" line, and the "most iconic sounds of
+  jazz" line.
+- The Italian had drifted from the English in places (extra editorial lines
+  such as "Essenziale nel ritmo funk", "è al cuore del suono funk"); it now
+  says what the English says.
+- Tap-to-hear labels use a middle dot instead of an em-dash (OPEN STRINGS ·
+  TAP TO HEAR). The Theory tab description and the Ukulele tagline lost theirs.
+- Left for the photo pass: the tap-zone tooltips on the guitar anatomy photos
+  (`GUITAR_EMBEDDED`) still carry em-dashes and are English-only. They only
+  show once a photo is in, so they go with the photos.
+
 ## v0.210.123: quiz music resume, bass mark, guitar blurbs, vocal range redo
 
 Music Quiz:
