@@ -2,6 +2,26 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.125: Survival Guide instrument photos
+
+Guitar and bass anatomy now uses real photos for eight models, each with a
+BODY and a HEADSTOCK view: Stratocaster, Telecaster, Les Paul, ES-335,
+Jazzmaster (guitars) and Jazz Bass, StingRay, Rickenbacker (basses).
+- Every photo is cut out of its background, set upright by the NECK (the
+  headstock stays at its natural angle, so the Fenders are not crooked), and
+  sized to the same 3:4 frame. 750x1000 WebP, embedded, about 1.2 MB total.
+- New tap zones for all 16 photos, English and Italian: pickups, controls,
+  bridge, jack, neck, and on the headstocks every tuner by string name and
+  pitch, nut, string trees and truss rod. The old Strat tooltips (with
+  em-dashes, English only) are replaced.
+- The bass card gets the BODY / HEADSTOCK toggle the guitar card already had.
+- Models without a photo yet (SG, acoustic, Precision, Hofner) keep the model
+  notes as before.
+- Credits: new "Instrument photos" group with author, source page and license
+  for each photo (Wikimedia Commons; backgrounds removed and cropped).
+- Dev calibration keys moved to g2_/b2_ so an old saved Strat calibration
+  cannot shift the new zones; a saved calibration now keeps the Italian text.
+
 ## v0.210.124: Rhythm Flash Cards copy, Survival Guide copy pass
 
 Version note: the v0.210.123 push went out with the HTML still stamped
