@@ -2,6 +2,85 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.128: Head-on photos for the Precision headstock and the SG body
+
+- Precision Bass headstock: the old photo was shot at an angle. The new one
+  is an American Professional P-Bass head, shot straight on, with all four
+  keys and the neck set upright. Its tap zones are redrawn to fit.
+- SG body: now an Epiphone SG Muse shot straight on, so the SG body and
+  headstock are the same brand. It has two humbuckers, so the pickup zones
+  are now "Neck Humbucker" and "Bridge Humbucker" (English and Italian).
+  All eleven body zones are redrawn to fit.
+- The Hofner headstock stays for now. No free photo of a 500/1 headstock
+  shot head-on is sharp enough to use.
+- Credits updated for both new photos.
+- Cleanup pass on all 24 photos:
+  - Missing or edge-on tuner keys rebuilt from the same photo's good keys:
+    acoustic (all six now match; one was missing), Jazz Bass (low E key
+    was edge-on), StingRay (top key edge-on, treble-side key had a bite
+    out of it), Rickenbacker (one key with a stray wire, one with no
+    shaft).
+  - SG headstock: the gray strip of the headstock side on the left and
+    the wood sliver on the right are trimmed off, and the keys moved in
+    to meet the new edge.
+  - Strat body: the speckled outline on the left edge is smoothed.
+  - Stray pixels removed from the Precision body and Rickenbacker head.
+- Tooltip facts checked:
+  - The acoustic G and D tooltips no longer describe electric string sets
+    (on an acoustic set both are wound).
+  - The Rickenbacker body is a 4001, so the tooltip now says that instead
+    of calling the 4001 its predecessor. The truss rod tooltip no longer
+    names a 4003.
+  - The Hofner neck pickup tooltip no longer claims which pickup
+    McCartney used most.
+  - Martin "first built" the dreadnought shape in 1916 (for another
+    brand), rather than "introduced" it.
+
+## v0.210.127: Survival Guide photos for all 12 models
+
+- The last four models get photos and tap zones, English and Italian: SG,
+  acoustic (Martin D-28), Precision Bass (a 1957-style blonde, shot straight
+  on) and Hofner 500/1. Every guitar and bass in the Survival Guide now has a
+  BODY and a HEADSTOCK photo. Parts of the Bass opens on the Precision again.
+- SG headstock: the only sharp front-on shot is an Epiphone SG (Gibson's own
+  brand). Its tuner keys were out of focus, so they are replaced with the
+  matching Kluson-style keys from the Les Paul photo. The tooltip names it
+  as an Epiphone.
+- Tilt check on all 24 photos, measured from the strings and the neck edges:
+  Strat, ES-335, Rickenbacker, StingRay, SG and Precision bodies, and the
+  Precision, Hofner and StingRay headstocks, are now straight within about
+  half a degree.
+- Crop check: the StingRay headstock now shows its neck and nut; the
+  acoustic headstock got back its neck below the nut and the shafts of its
+  left tuners; the Les Paul's upper bout no longer fades out at the edge;
+  the Rickenbacker's right horn and the Precision's horn lost leftover
+  background bits.
+- Zones carried to the new layouts by image matching, then checked: none
+  overlap and all sit on the instrument. Credits list the eight new photos.
+
+## v0.210.126: Survival Guide photo alignment and tap zones
+
+- All 16 instrument photos re-laid out on one rule: the neck is centered in
+  the frame, bodies share the same body height with the same stub of neck
+  above them, and headstocks sit on the same baseline at the nut.
+- Cleanup: the Rickenbacker body's horns were clipped by the crop and are
+  back; the StingRay body lost its leftover drop shadow; the ES-335
+  headstock had a notch in its edge where a wall hanger was removed, now
+  painted over; stray specks around the cutouts removed.
+- Tap zones redrawn tight to each part on every photo, with no two zones
+  overlapping (the Jazzmaster vibrato arm used to cover its volume and tone
+  knobs; it now sits on the arm tip). Checked by script.
+- String labels corrected on the Fender 6-in-line and 4-in-line headstocks,
+  the StingRay and the Rickenbacker: the low string's tuner is the one nearest
+  the nut, not the tip.
+- Every tooltip rewritten in the quiz voice, English and Italian: what the
+  part is, one concrete fact (a date, a pitch, who used it), no sound
+  adjectives or AI phrasing.
+- Dev calibration keys moved to g3_/b3_ so older saved positions do not move
+  the new zones.
+- Parts of the Bass now opens on the Jazz Bass, which has photos, instead of
+  the Precision, which does not yet.
+
 ## v0.210.125: Survival Guide instrument photos
 
 Guitar and bass anatomy now uses real photos for eight models, each with a
