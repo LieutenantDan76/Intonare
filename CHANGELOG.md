@@ -2,6 +2,89 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.142: Four more amps in the Survival Guide
+
+- Added Line 6 Spider V 60 MkII (Student), Mesa/Boogie '90s Dual
+  Rectifier (Pro), Roland JC-120 Jazz Chorus and Fender '59 Bassman LTD
+  (Legend). Each panel is drawn 1:1 from the maker's photo or owner's
+  manual, with brand logos left off.
+- The four show panel types the list did not have yet: a modeler where
+  each knob has two jobs, a head with a full row of controls per channel,
+  a stereo solid-state amp whose effects live on one channel, and a
+  no-master tweed with linkable Bright and Normal channels.
+- Every control has an English and Italian tooltip, checked against the
+  owner's manuals (for example, the JC-120 Speed and Depth knobs work
+  only on the vibrato, not the chorus).
+
+## v0.210.141: Blues Deluxe labels match the current amp
+
+- Checked against more photos of real tweed Blues Deluxe Reissues. The
+  current panel prints only BRIGHT over the bright switch and no numbers
+  over the inputs; the drawing now matches. The Inputs tooltip says which
+  jack is input 1.
+- Older Reissues used a polished chrome panel with black lettering and a
+  larger jewel, with the same controls in the same places.
+
+## v0.210.140: Blues Deluxe checked against photos of the real tweed amp
+
+- Two photos of real tweed Blues Deluxe Reissues (a full-panel shot and a
+  close-up of the left half) confirm the layout drawn from the faceplate.
+- Matched to them: a darker chrome panel, a smaller red pilot jewel, and
+  the Bright switch drawn as the small two-position rocker it is.
+
+## v0.210.139: Accuracy pass on the four new amps
+
+- Marshall 1959SLP inputs corrected: the jacks are grouped by column, not
+  row. The left pair (1) is the High Treble channel and the right pair (2)
+  is the Normal channel; the top jack of each pair is full sensitivity.
+  The jumping tooltip now matches: guitar in the top left, a short cable
+  from the bottom left to the top right.
+- Peavey 6505: label and scale type sized to match the real panel,
+  rectangular channel and status lights, and the missing divider after
+  the inputs.
+- Fender Blues Deluxe: controls and labels moved to match the faceplate's
+  spacing, with larger printed scales that no longer crowd each other.
+- Tooltip wording tightened on the 6505 and the Plexi.
+
+## v0.210.138: Four new amps, grouped amp list, 3-band StingRay
+
+- New amp panels, each drawn 1:1 from photos of the real panel and the
+  owner's manual, with tooltips in English and Italian:
+  - Orange Crush 20RT (student): word labels plus Orange's picture
+    symbols, headphone and aux jacks, and a built-in tuner.
+  - Fender Blues Deluxe Reissue (pro): Normal and Drive channels, an
+    effects loop, and chicken-head knobs on a scale printed 1 to 12.
+  - Peavey 6505 (pro): separate pre gain and post gain, rhythm and lead
+    channels with Bright and Crunch, and a shared EQ.
+  - Marshall 1959SLP Super Lead (legend): no master volume, four inputs,
+    and how players "jump" the two channels.
+- The amp dropdown is grouped under Student, Pro, Legend and Bass Amp
+  headings. The headings cannot be selected.
+- Music Man StingRay: new body photo of a 2001 model with the 3-band EQ
+  (volume, treble, middle, bass), with new tooltips including the mid knob
+  and the 9-volt battery. Photo: Catfish Jim and the soapdish, CC BY-SA 3.0.
+
+## v0.210.137: Tooltip pass on the guitar, bass and amp viewers
+
+- Every tooltip on the three Survival Guide viewers was reread for facts,
+  tone and usefulness. Opinion words about sound ("warm and round",
+  "brighter and tighter", "thumpy") are replaced with what the part does.
+- Facts corrected:
+  - Les Paul and SG: the fret markers are trapezoids, not dots.
+  - Jazz Bass: the finger rest below the G string is where players rested
+    their fingers to pluck with the thumb; Fender moved it above the E
+    string in the mid-1970s.
+  - Acoustic D string: all four low strings are wound on an acoustic set.
+  - Strat bridge pickup: clearer explanation of the slant.
+  - Humbucker: opposite windings and magnets; Seth Lover's patent was
+    granted in 1959.
+  - Marshall OD1/OD2 now matches the manual (OD2 boosts the mids and has
+    more gain). Master Select notes that each channel recalls its master.
+- Model notes fixed: ES-335 players (Larry Carlton, Alvin Lee, Clapton in
+  Cream), the StingRay's 2-band EQ on the model shown, and the bass
+  dropdown now says Rickenbacker 4001, which matches the photo.
+- Italian: grammar fix in the Strat tremolo tooltip.
+
 ## v0.210.136: Tap anywhere to close a photo tooltip
 
 - On the guitar, bass and amp viewers in the Survival Guide, a tap anywhere
