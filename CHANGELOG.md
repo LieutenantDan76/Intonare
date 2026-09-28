@@ -2,6 +2,26 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.136: Tap anywhere to close a photo tooltip
+
+- On the guitar, bass and amp viewers in the Survival Guide, a tap anywhere
+  on the screen now closes the open tooltip. Before, it only closed when you
+  tapped the same control again or another control. Tapping another control
+  still switches straight to its tooltip.
+
+## v0.210.135: Amp panel viewer: overview strip and zoom window
+
+- The amp panels no longer sit in a sideways scroller, which fought with
+  the page swipe and could not be scrolled on a phone.
+- The Amplifier card now shows the whole panel as a small strip, with a
+  frame marking the part shown in a zoom window underneath. Tap or drag
+  the strip to move the frame, or drag the zoom window itself. Tap any
+  control in the zoom window for its tooltip.
+- The viewer is exempt from the page-swipe gesture, so dragging it never
+  turns the page. Swipes anywhere else still do.
+- The zoom window is shorter than the old panel (124 px instead of 170),
+  so the card takes less room. Mouse wheels and trackpads also pan it.
+
 ## v0.210.134: Amp panels redrawn 1:1 from photos of the real amps
 
 - Every amp panel is redrawn to match photos of the real front panel, not
