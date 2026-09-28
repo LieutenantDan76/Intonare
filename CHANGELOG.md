@@ -2,6 +2,41 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.130: Precision Bass from our own photos
+
+- Precision Bass body and headstock are now both from Daniele's own Squier
+  P-Bass, shot straight on. This replaces the 1956 body and the American
+  Pro headstock, whose bottom left corner was cut off. Body and headstock
+  now come from the same bass.
+- Headstock: the edge-on third tuner key and the dark top key are rebuilt
+  from the clean second key, so all four match.
+- Tap zones redrawn for both photos. The neck tooltip now says black
+  blocks, the pickguard tooltip describes the black 1970s-style guard, and
+  the headstock tooltip explains that Squier is Fender's own budget brand
+  (English and Italian).
+- Credits: both photos are listed as Daniele Citti, own photo.
+
+## v0.210.129: Survival Guide photos, polish pass
+
+- Precision Bass body: now a 1956 sunburst shot straight on (the blonde
+  body was turned slightly). New tap zones to match: single pickup,
+  finger rest, bridge cover, pickguard, volume and tone.
+- Hofner headstock: the photo is straightened so the head is flat and
+  symmetric, with all four tuner buttons against its edges. The pale strip
+  along the right side of the Hofner body is trimmed off.
+- Split knob tooltips: Les Paul, SG, ES-335 and Rickenbacker now have
+  separate Neck Volume, Bridge Volume, Neck Tone and Bridge Tone zones.
+  The Hofner control panel is split into its two volumes and the pickup
+  switches. English and Italian.
+- Nut zones redrawn to sit on the nut: Strat, Tele, Jazzmaster, Precision,
+  Hofner. The StingRay headstock gets a nut zone.
+- Crops: Les Paul keys meet the headstock and the top of the headstock is
+  clean; the SG keys meet the headstock; the gray shadows behind the Strat
+  keys are gone; the StingRay keys all match; the acoustic body loses the
+  stand leg and grass at the bottom; the Jazz Bass body edge is smoothed.
+- Tighter zones: Les Paul neck, SG horns, ES-335 f-hole, Rickenbacker and
+  StingRay tuner keys, Hofner body.
+
 ## v0.210.128: Head-on photos for the Precision headstock and the SG body
 
 - Precision Bass headstock: the old photo was shot at an angle. The new one
