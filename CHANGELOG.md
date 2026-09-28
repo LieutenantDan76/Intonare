@@ -2,6 +2,65 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.134: Amp panels redrawn 1:1 from photos of the real amps
+
+- Every amp panel is redrawn to match photos of the real front panel, not
+  only the manual's list of controls. Control order, spacing, label
+  placement, switch types and knob styles now follow the real amp.
+- Fixes found by checking against the photos:
+  - Marshall DSL100HR: the panel runs right to left (Input on the far right,
+    Power and Output on the far left), and labels sit under the knobs.
+  - Fender Rumble 100: Bright, Contour and Vintage are three small buttons
+    stacked vertically, each with its label above it.
+  - Fender '65 Twin Reverb: labels sit under the knobs, the knobs have
+    numbered skirts, and the two channels share one bordered panel.
+  - Vox AC30C2: four input jacks (High and Low for each channel), section
+    titles along the top, and Standby and Power toggles with their lamps.
+  - Boss Katana-100 MkII: Booster/Mod and FX/Delay each share one knob with
+    a button pair, and the Presence knob and Tap button were added.
+  - Orange Rockerverb 50 MkIII: the three-way switch is Full / Standby /
+    Half, and the symbols sit in a strip above the knobs.
+- Each panel is one long strip, as on the amp, in a sideways scroller so
+  the knobs stay large enough to tap. Brand logos are left off.
+- Tooltips updated for the new controls in English and Italian. Calibration
+  keys moved to a3_ so an old saved calibration cannot shift the new zones.
+
+## v0.210.133: Amp panels redrawn from the owner's manuals
+
+- All six amps in The Amplifier card now show a detailed drawing of the
+  real front panel instead of the old generic strip: Marshall DSL100HR,
+  Vox AC30C2, Fender '65 Twin Reverb, Boss Katana-100 MkII, Fender Rumble
+  100 and Orange Rockerverb 50 MkIII. Free photos of these panels are too
+  rare to make a matching set, so every panel is drawn.
+- Each drawing follows the owner's manual: every control in the real order,
+  with the labels as printed, the panel colors and knob styles of each
+  brand. The Orange keeps its picture symbols instead of words. Long panels
+  are split into two rows so the knobs stay large enough to tap. No brand
+  logos are drawn.
+- Every control has a tap zone with a new tooltip in English and Italian,
+  written from the manuals. The old tooltips had errors (for example a
+  Middle knob on the AC30 and a Presence knob on the Twin that those amps
+  do not have); those are gone.
+- The model notes under each amp are rewritten with the exact model, power
+  and tubes. Calibration keys moved to a2_ so an old saved calibration
+  cannot shift the new zones.
+
+## v0.210.132: Les Paul and ES-335 knob tooltips
+
+- Les Paul and ES-335 knob tooltips corrected. With the guitar upright, the
+  inner column (nearest the strings) is the neck pickup, volume above tone,
+  and the outer column is the bridge pickup, volume above tone. In playing
+  position that makes the top two knobs the neck pickup's. This now matches
+  the SG. Checked against a labeled Les Paul Standard control photo.
+
+## v0.210.131: SG knob tooltips
+
+- SG body: the knob tooltips now match the real SG layout. The top pair
+  are the two volumes (neck on the inside, bridge on the outside) and the
+  bottom pair are the two tones, so each pickup's volume and tone stack
+  vertically. Les Paul, ES-335 and Rickenbacker stay as they were: their
+  layout is different, with the volumes in the column nearest the strings.
+
 ## v0.210.130: Precision Bass from our own photos
 
 - Precision Bass body and headstock are now both from Daniele's own Squier
