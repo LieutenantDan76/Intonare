@@ -2,6 +2,82 @@
 
 A human-readable record of what changed, when,
 
+## v0.210.147: "Know this amp" notes, Katana knobs, Italian pass
+
+- Every amp's info panel now opens with a short "Know this amp" list:
+  tube or solid state and what that means in practice, what the footswitch
+  does, how the volume controls react, and one or two tricks worth knowing
+  (for example rolling back the guitar volume on a driven tube amp, Power
+  Control at 0.5 W on the Katana, jumping channels on the Plexi and
+  Bassman, or level-matching presets on the Spider).
+- Katana: the Booster/Mod and FX/Delay knobs are concentric, outer ring
+  and inner knob. The drawing and tooltips now show that, and the effect
+  controls explain what boost, modulation, FX and delay do.
+- Italian pass over all 528 tooltips: gender and agreement fixes, better
+  terms (sfrigolio for fizz, segnale diretto for dry, headroom, selletta),
+  and more natural phrasing throughout.
+
+## v0.210.146: Tooltip fact-check fixes
+
+- A separate review pass over all 528 guitar, bass and amp tooltips,
+  checked against manuals and maker pages, found and fixed:
+  - Vox AC30C2 Normal volume no longer says the amp has no master.
+  - Orange Rockerverb half power is 25 watts, not about 30.
+  - Fender Rumble input no longer mentions a pad it does not have.
+  - Darkglass Microtubes engine: it sits before the clean section, and
+    Blend mixes it with the dry signal.
+  - ES-335: both pickups sit on the solid center block.
+  - Vox and Orange Clean treble tips no longer mention a Mid knob those
+    channels lack.
+  - Crush Clean volume text no longer contradicts itself.
+  - Pickup selectors on humbucker guitars: both pickups on sounds between
+    the two, not thin and hollow.
+  - Jazzmaster vibrato: strings slide over the nut, not the saddles.
+  - Blues Deluxe and Bassman power: "keep the amp in standby for the first
+    minute", which cannot be misread.
+- Bright switches that do not work like a Fender bright cap (JC-120,
+  Peavey 6505, Rumble) and the Katana Presence knob have their own text.
+
+## v0.210.145: Bass amp page in the Bass chapter
+
+- New BASS AMPS section in the Bass chapter with its own amp page. The
+  Fender Rumble 100 moves there from the guitar amp list, joined by the
+  Ampeg BA-110 v2 (Student), Markbass Little Mark IV and Darkglass
+  Microtubes 900 v2 (Pro), and Ampeg SVT-CL and B-15N Portaflex (Legend).
+- Each panel is drawn from the maker's photo or owner's manual, with logos
+  left off, and every control has the full info panel: what it does, how it
+  changes the sound, and something to try, written for bass (for example,
+  why bass distortion comes with a Blend knob, and why cutting mids makes a
+  bass disappear in a band). The Rumble's tone text was rewritten for bass
+  too.
+- The guitar and bass amp pages remember their last model separately.
+
+## v0.210.144: Guitar and bass parts explained in depth
+
+- Every part on the guitar and bass photos now has the same deeper panel as
+  the amps: how it changes the sound, and something to try. Pickups explain
+  why the neck position sounds round and the bridge bright; the volume
+  knob explains cleaning up a driven amp; the bridge explains intonation and
+  action, with a 12th-fret check; the strings give the neighbor tuning check.
+- A signal-chain strip for instruments (Strings, Pickups, Controls, Output)
+  lights the stage each part belongs to. Acoustic guitar parts skip it.
+
+## v0.210.143: Survival Guide info panel, and dropdowns that scroll
+
+- Dropdown lists now scroll with a finger drag. An item is chosen only when
+  you lift your finger without moving it; before, the first item touched was
+  selected the moment a scroll began. Applies to every dropdown in the guide.
+- Guitar, bass and amp pages: tapping a part now shows a small name label on
+  the photo, and the full explanation goes in a panel under it instead of a
+  popup over the picture. Before anything is tapped, the panel shows the
+  model overview.
+- Amp controls get two new sections in that panel: how the control changes
+  the sound, and a short thing to try. A signal-chain strip (Input, Preamp,
+  Tone, Effects, Power amp, Speaker) lights the stage the control works in;
+  power switches say they are outside the signal path.
+- Tapping inside the panel keeps it open; dragging the amp window keeps the
+  explanation on screen and drops only the label.
+
 ## v0.210.142: Four more amps in the Survival Guide
 
 - Added Line 6 Spider V 60 MkII (Student), Mesa/Boogie '90s Dual
