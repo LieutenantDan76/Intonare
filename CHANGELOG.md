@@ -2,6 +2,33 @@
 
 A human-readable record of what changed, when,
 
+## v1.0.0: Intonare 1.0
+
+- First public release on Google Play and the App Store.
+- The version number moves from the 0.210 dev series to 1.0.0. The app,
+  Google Play and the App Store now all show the same number. Nothing else
+  changed from v0.210.148.
+
+## v0.210.148: The app's own fonts load again
+
+- Bebas Neue, JetBrains Mono, Fraunces, Rajdhani, Cinzel, Press Start 2P
+  and IM Fell English were not loading anywhere, phones included. Their
+  @font-face rules named two families ('Bebas Neue','GlyphFix'), and a
+  font-face rule may name only one, so the browser dropped all 14 rules and
+  fell back to system fonts. Each rule names one family again. GlyphFix
+  still works as the fallback in the normal font stacks.
+- The startup font warm-up now ignores a failed load. JBMono points only
+  at local fonts; with the rules working, a phone without them rejected
+  the load and showed the "Something went wrong" screen.
+- Checked on the tuner, metronome, tools and train screens: no new text
+  overflow and no errors. Headings, BPM digits and buttons now look as
+  designed; some buttons read narrower because Bebas is condensed.
+- Groove screen: with Bebas loaded, "SON CLAVE 3-2" broke after the
+  hyphen and left a lone "2" on the second line. A word joiner now follows
+  each hyphen, so "3-2" and "4-ON-THE-FLOOR" stay whole. All 61 names, EN
+  and IT, fit in two lines.
+- Sentinel pins: no multi-name @font-face, and the warm-up keeps its catch.
+
 ## v0.210.147: "Know this amp" notes, Katana knobs, Italian pass
 
 - Every amp's info panel now opens with a short "Know this amp" list:

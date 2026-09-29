@@ -22,8 +22,14 @@ if "%VCODE%"=="" set "VCODE=1"
 REM --- increment ---
 set /a NEWCODE=VCODE+1
 
-REM --- versionName mirrors the code as 1.0.N ---
-set "VNAME=1.0.%NEWCODE%"
+REM --- versionName comes from INTONARE_VERSION in Intonare.html (1.0.0 and up) ---
+set "VNAME="
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -Command "(Select-String -Path 'Intonare.html' -Pattern 'INTONARE_VERSION:\s*([\d.]+)' | Select-Object -First 1).Matches[0].Groups[1].Value"`) do set "VNAME=%%V"
+if not defined VNAME (
+    echo  ERROR: could not read INTONARE_VERSION from Intonare.html. Nothing changed.
+    pause
+    exit /b 1
+)
 
 echo ============================================================
 echo  Bumping Intonare release version

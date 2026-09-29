@@ -35,6 +35,14 @@ import sys, re, argparse
 # Keep descriptions phrased as the BEHAVIOUR that breaks if the signature is gone.
 CHECKS = [
     # ── App-wide UI guards ────────────────────────────────────────────────
+    ('UI', 'Embedded fonts load: an @font-face family must be ONE name (a list drops the whole rule)',
+        'absent', "','GlyphFix';font-style", 0),
+    ('UI', 'Embedded fonts load: @font-face with weight first must also be a single family name',
+        'absent', "','GlyphFix';font-weight", 0),
+    ('UI', 'Groove name keeps hyphenated tokens whole (no lone "2" under SON CLAVE 3-)',
+        'sub', ".replace(/-/g, '-\\u2060')", 1),
+    ('UI', 'Font warm-up swallows the JBMono local() rejection (else the error screen shows)',
+        'sub', "document.fonts.load('16px \"' + f + '\"').catch(function () {})", 1),
     ('UI', 'Long-press does not select text / pop selection callout',
         'sub', '-webkit-touch-callout: none', 1),
     ('UI', 'Text inputs still allow typing/paste (selection re-enabled)',
