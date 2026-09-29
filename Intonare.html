@@ -408,7 +408,9 @@ body.sg-open #toolSurvivalGuide{
 #toolSurvivalGuide .sg-info .si-list{margin:3px 0 0;padding-left:17px;font-size:11px;color:var(--txd);line-height:1.5}
 #toolSurvivalGuide .sg-info .si-list li{margin:3px 0}
 #toolSurvivalGuide .sg-info .si-note{font-size:9.5px;color:var(--mu);margin:4px 0 2px;font-style:italic}
-#toolSurvivalGuide .zone-chip{position:absolute;z-index:6;pointer-events:none;font-family:"Bebas Neue",sans-serif;font-size:12px;letter-spacing:.08em;line-height:1;padding:4px 8px 3px;border-radius:7px;background:rgba(10,10,10,.86);color:#fff;border:1.5px solid currentColor;white-space:nowrap;animation:fadeUp .12s ease}
+#toolSurvivalGuide .zone-chip{position:absolute;z-index:6;pointer-events:none;font-family:"Bebas Neue",sans-serif;font-size:12px;letter-spacing:.08em;line-height:1;padding:4px 8px 3px;border-radius:7px;background:rgba(10,10,10,.86);color:#fff;border:1.5px solid currentColor;white-space:nowrap;animation:sgChipIn .12s ease}
+/* v1.0.0: opacity only. fadeUp animates transform, which overrode the chip's own translate(-50%) while it ran, so the label opened to the right of the part and then snapped under it. */
+@keyframes sgChipIn{from{opacity:0}to{opacity:1}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 #toolSurvivalGuide .tip-name{font-family:"Bebas Neue",sans-serif;font-size:13px;letter-spacing:.12em;margin-bottom:3px}
 #toolSurvivalGuide .tip-desc{font-size:10.5px;color:var(--txd);line-height:1.55}
@@ -2976,6 +2978,10 @@ body.sg-open #toolSurvivalGuide{
   body.mq2on #mqSurvivalSheet .mq-sheet-all-btn {
     display: flex; width: calc(100% - 28px); margin-left: 14px; margin-right: 14px;
   }
+  /* v1.0.0: the hide rule for this button lost to the rule above on
+     specificity, so START SURVIVAL showed and read as a pool of every pack.
+     Survival picks one pack; the pack popup has its own start button. */
+  body.mq2on #mqSurvivalSheet #mqSurvAllBtn { display: none; }
 
   /* The grid, in the answer-tile language. */
   body.mq2on #mqSheetPackGrid,
@@ -13605,6 +13611,13 @@ body.sg-open #toolSurvivalGuide{
     background:color-mix(in srgb,var(--accent-warm) 11%,transparent)}
   .chd-aka .chd-none{color:var(--text-dim);font-size:10px;
     display:flex;align-items:center;height:27px;flex:0 0 auto;line-height:1}
+  /* v1.0.0: the chip rule above (inline-block, 4px bottom margin, content-box)
+     came after the flex one and won, so each chip stood about 31px tall in a
+     27px row: clipped edges and a vertical scroll inside the row. One chip
+     box, border-box, no margin; the row never scrolls vertically. */
+  .chd-aka{overflow-y:hidden}
+  .chd-aka .chd-aka-chip{display:inline-flex;align-items:center;box-sizing:border-box;
+    height:27px;margin:0;line-height:1}
   /* Reserved whether or not it has text, so the row does not grow on first tap. */
   .chd-order{font-size:8.5px;color:var(--text-dim);margin-top:7px;letter-spacing:1px;
     min-height:11px}
@@ -17706,6 +17719,13 @@ body.sg-open #toolSurvivalGuide{
   #exRoadTrip .rt-tier .pips i { width:6px; height:14px; border-radius:2px; background:#2a3441; display:block; }
   #exRoadTrip .rt-tier .pips i.on { background:var(--rtp-cacc,var(--accent-warm)); }
   #exRoadTrip .rt-setrow { display:flex; gap:10px; margin-top:12px; }
+  /* v1.0.0: larger text sizes. The 76px pin keeps themes level at the default
+     size, but at step 4 a two-line title plus a two-line blurb clipped. Above
+     step 0 the card may grow (never shrink below 76). At steps 3-4 the range
+     and design pills stack so their names are not cut to "TEN..". */
+  html[data-uiscale] #exRoadTrip .rt-tier { height:auto; }
+  html[data-uiscale="3"] #exRoadTrip .rt-setrow,
+  html[data-uiscale="4"] #exRoadTrip .rt-setrow { flex-direction:column; }
   #exRoadTrip .rt-pill { flex:1; min-width:0; display:flex; align-items:center; gap:9px; cursor:pointer; text-align:left;
     background:var(--rtp-ccard,var(--surface)); border:1px solid var(--rtp-cborder,var(--border)); border-radius:13px; padding:9px 11px; transition:border-color .18s, transform .12s; }
   #exRoadTrip .rt-pill:active { transform:scale(.985); }
@@ -20850,6 +20870,9 @@ body.sg-open #toolSurvivalGuide{
   }
   /* ── Accessibility size slider (hybrid: free slide, labeled snap points) ── */
   .uiscale-slider-wrap { padding: 4px 4px 0; }
+  /* v1.0.0: let a vertical swipe on a Settings slider scroll the panel.
+     The JS guard next to INTONARE_VERSION restores the value if it moved. */
+  #settingsModal input[type=range] { touch-action: pan-y; }
   .uiscale-slider {
     width: 100%; height: 8px; -webkit-appearance: none; appearance: none;
     background: var(--bg-1); border-radius: 4px; outline: none;
@@ -34852,10 +34875,10 @@ try {
     <!-- Header: slot info, page dots, close -->
     <div id="chordleSheetHeader" style="display:flex;align-items:center;padding:0 16px 10px;gap:8px;border-bottom:1px solid var(--border-soft)"></div>
     <!-- Cards viewport -->
-    <div id="chordleCardsViewport" style="overflow-y:auto;flex:1;min-height:0">
+    <div id="chordleCardsViewport" style="overflow-y:auto;overflow-x:hidden;flex:1;min-height:0">
       <div id="chordleCardsTrack" style="display:flex;width:200%;transition:transform 0.26s cubic-bezier(0.4,0,0.2,1)">
-        <div id="chordleCard1" style="flex:0 0 50%;padding:12px 14px 20px"></div>
-        <div id="chordleCard2" style="flex:0 0 50%;padding:12px 14px 20px;overflow-y:auto;max-height:60vh"></div>
+        <div id="chordleCard1" style="flex:0 0 50%;min-width:0;box-sizing:border-box;padding:12px 14px 20px"></div>
+        <div id="chordleCard2" style="flex:0 0 50%;min-width:0;box-sizing:border-box;padding:12px 14px 20px;overflow-y:auto;max-height:60vh"></div>
       </div>
     </div>
   </div>
@@ -35880,6 +35903,48 @@ try {
 'use strict';
 
 const INTONARE_VERSION = '1.0.0';
+/* v1.0.0: Settings sliders ignore vertical swipes. On Android a touch that
+   lands on a range track moves the thumb at once, so scrolling the Settings
+   panel changed Text Size or Master Volume by accident. If the finger moves
+   more up/down than sideways, or the browser takes the touch for scrolling,
+   the slider goes back to the value it had when the touch started. Scoped to
+   #settingsModal only: some sliders elsewhere sit in rotated panels, where a
+   vertical drag is the real slider axis. */
+(function () {
+  var st = null;
+  function inSettings(el) {
+    return el && el.tagName === 'INPUT' && el.type === 'range' && el.closest && el.closest('#settingsModal');
+  }
+  function restore() {
+    if (!st || st.el.value === st.v0) return;
+    st.el.value = st.v0;
+    st.el.dispatchEvent(new Event('input', { bubbles: true }));
+    st.el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  document.addEventListener('touchstart', function (e) {
+    var el = e.target;
+    if (!inSettings(el) || !e.touches.length) { st = null; return; }
+    st = { el: el, x: e.touches[0].clientX, y: e.touches[0].clientY, v0: el.value, decided: false, vertical: false };
+  }, { capture: true, passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (!st || st.decided || !e.touches.length) return;
+    var dx = Math.abs(e.touches[0].clientX - st.x), dy = Math.abs(e.touches[0].clientY - st.y);
+    if (dx < 8 && dy < 8) return;
+    st.decided = true;
+    if (dy > dx) { st.vertical = true; restore(); }
+  }, { capture: true, passive: true });
+  document.addEventListener('input', function (e) {
+    if (st && st.vertical && e.target === st.el && st.el.value !== st.v0) st.el.value = st.v0;
+  }, true);
+  document.addEventListener('touchend', function () {
+    if (st && st.vertical) restore();
+    st = null;
+  }, { capture: true, passive: true });
+  document.addEventListener('touchcancel', function () {
+    if (st && (st.vertical || !st.decided)) restore();
+    st = null;
+  }, { capture: true, passive: true });
+})();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEVELOPER TOOLS — off for everyone, switchable at RUNTIME on your own device
@@ -87839,7 +87904,7 @@ function chordleRenderPickerHeader() {
 function chordleRenderCard1() {
   var card=document.getElementById('chordleCard1'); if (!card) return;
   var _deadDeg=chordleRuledOut().deadDeg;  // degrees only ever scored gray -> root absent
-  var nb='display:flex;align-items:center;justify-content:center;flex:1;min-width:34px;padding:9px 0;font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:13px;letter-spacing:-.3px;border-radius:9px;cursor:pointer;transition:all .1s;';
+  var nb='display:flex;align-items:center;justify-content:center;flex:1 1 0;min-width:0;padding:9px 0;font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:13px;letter-spacing:-.3px;border-radius:9px;cursor:pointer;transition:all .1s;';
   var tb='width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:14px;border-radius:9px;cursor:pointer;transition:all .1s;flex-shrink:0;';
   function numBt(n) {
     var on=chordlePNum===n;
@@ -87856,11 +87921,11 @@ function chordleRenderCard1() {
   // Labels
   html+='<div style="font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:0 0 5px 1px">MAJOR</div>';
   html+='<div style="display:flex;align-items:stretch;gap:5px;margin-bottom:8px">'
-    +'<div style="display:flex;gap:3px;flex:1">'+maj.map(numBt).join('')+'</div>'
+    +'<div style="display:flex;gap:3px;flex:1;min-width:0">'+maj.map(numBt).join('')+'</div>'
     +modBt('°','°')+'</div>';
   html+='<div style="font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:0 0 5px 1px">MINOR</div>';
   html+='<div style="display:flex;align-items:stretch;gap:5px">'
-    +'<div style="display:flex;gap:3px;flex:1">'+min.map(numBt).join('')+'</div>'
+    +'<div style="display:flex;gap:3px;flex:1;min-width:0">'+min.map(numBt).join('')+'</div>'
     +modBt('+','+')+'</div>';
   // Confirm + extensions hint
   var isCustomA=chordleDiff==='custom';
@@ -96099,13 +96164,15 @@ const ACHIEVEMENTS = [
     desc_it:"Né gli erranti sono perduti",
     check: s => _achModuleCount(s) >= 10,
     prog: s => ({cur:_achModuleCount(s), target:10}) },
-  { id:'explorer', cond_it:'completa una sessione in tutti e 6 gli esercizi', cond:'complete a session in all 6 exercises', rarity:'rare',       cat:'exploration', name:'Explorer', name_it:'Esploratore',
+  { id:'explorer', cond_it:'completa una sessione in tutti e 7 gli esercizi', cond:'complete a session in all 7 exercises', rarity:'rare',       cat:'exploration', name:'Explorer', name_it:'Esploratore',
     desc:"Where we're going, we don't need roads",
     desc_it:"Strade? Dove stiamo andando non c’è bisogno di strade!",
     check: s => {
+      // v1.0.0: stats only. history logs time with a module open (5 s or more),
+      // so opening the seven exercises once unlocked this with nothing played.
+      // progUpdate writes stats only on real answers or finished rounds.
       const used = new Set();
-      Object.values(s.history||{}).forEach(day => Object.keys(day).forEach(k => used.add(k)));
-      ['interval','chords','singsing','tempo','tempoguess','poly'].forEach(k => {
+      ['interval','chords','singsing','tempo','tempoguess','poly','chordle'].forEach(k => {
         if (Object.keys((s.stats||{})[k]||{}).length > 0) used.add(k);
       });
       return ['interval','chords','singsing','tempo','tempoguess','poly','chordle'].every(k => used.has(k));
@@ -102223,10 +102290,14 @@ function synthBell(time, vel, kit) {
     // RMS and above the crash. Level 1.9 -> 0.9 puts it ~1.8x the ride (an accent,
     // not a gong). FM index 3000 -> 1800 thins the inharmonic sidebands that read
     // as clang while keeping the pitched ping. Electronic bell 1.9 -> 1.1 to match.
+    // v1.0.0: volume only. Rendered offline (A-weighted 100 ms peak) the bell
+    // still sat ~9 dB over the ride on standard/latin and ~7 dB on jazz; a real
+    // bell hit is ~3-5 dB over the bow. The trim puts every acoustic kit near
+    // ride +4 dB. Brush already sat there. Timbre (FM index, tail) unchanged.
     : _dkMetalAcoustic(t, v, kit, {
         car: 2500, mod: 1000, index: 1800,
         ping: 4800, tail: 2640,
-        decay: 0.5, level: 0.9,
+        decay: 0.5, level: 0.9 * ({ standard: 0.55, latin: 0.54, jazz: 0.68 }[kit] || 1),
         oscMix: 1.0, fmPitchMul: 1.16,
         pingLevel: 0,
         tailLevel: 0.78,
@@ -102277,7 +102348,9 @@ function synthCowbell(time, vel) {
     o.frequency.exponentialRampToValueAtTime(f, time + 0.012); // pitch drop on impact
     const d = Math.max(baseDecay * dt, 0.018);
     g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(vel * 0.72 * a, time + 0.001);
+    // v1.0.0: 0.72 -> 0.40 (-5 dB). Measured it ran ~2.6 dB over the snare and
+    // ~16 dB over the ride on standard; now it sits just under the snare.
+    g.gain.linearRampToValueAtTime(vel * 0.40 * a, time + 0.001);
     g.gain.exponentialRampToValueAtTime(0.0001, time + d);
     o.connect(g); g.connect(dk_masterGain);
     _dkRegister(o, time).start(time); o.stop(time + d + 0.01);
@@ -127829,7 +127902,13 @@ function buildPhotoZoneWithCalib(imgSrc, zonesDefault, tipEl, calibKey) {
   // With the info panel, taps inside the panel leave it alone, and dragging the amp
   // window drops the label but keeps the explanation on screen.
   var chip=null;
-  function tapOutside(e){if(tipEl&&tipEl._info&&e&&e.target&&tipEl.contains(e.target))return;clearActive();}
+  // v1.0.0: close on a real tap only. It used to close on pointerdown, so the
+  // first touch of a scroll down to the info panel wiped what you went to read.
+  // A scroll ends in pointercancel or moves past 12px, and neither closes it.
+  var _toX=null,_toY=null;
+  function tapOutside(e){if(tipEl&&tipEl._info&&e&&e.target&&tipEl.contains(e.target)){_toX=null;return;}_toX=e.clientX;_toY=e.clientY;}
+  function tapOutsideUp(e){if(_toX===null)return;var moved=Math.abs(e.clientX-_toX)>12||Math.abs(e.clientY-_toY)>12;_toX=null;if(!moved)clearActive();}
+  function tapOutsideCancel(){_toX=null;}
   wrap._clearTip=function(){clearActive(!!(tipEl&&tipEl._info));};
   function clearActive(keepPanel){
     if(activeZone){activeZone.classList.remove('lit');activeZone=null;}
@@ -127837,6 +127916,9 @@ function buildPhotoZoneWithCalib(imgSrc, zonesDefault, tipEl, calibKey) {
     if(tipEl&&tipEl._info){if(!keepPanel)tipEl.reset();}
     else if(tipEl){tipEl.classList.remove('show');tipEl.style.cssText='';}
     document.removeEventListener('pointerdown',tapOutside);
+    document.removeEventListener('pointerup',tapOutsideUp);
+    document.removeEventListener('pointercancel',tapOutsideCancel);
+    _toX=null;
   }
   function placeChip(z){
     chip=document.createElement('div');chip.className='zone-chip';chip.style.color=z[4];
@@ -127867,7 +127949,7 @@ function buildPhotoZoneWithCalib(imgSrc, zonesDefault, tipEl, calibKey) {
       if(calibMode)return;
       if(Math.abs(e.clientX-_ztx)>12||Math.abs(e.clientY-_zty)>12)return;
       if(activeZone===div){clearActive();return;}
-      clearActive();activeZone=div;document.addEventListener('pointerdown',tapOutside);
+      clearActive();activeZone=div;document.addEventListener('pointerdown',tapOutside);document.addEventListener('pointerup',tapOutsideUp);document.addEventListener('pointercancel',tapOutsideCancel);
       div.classList.add('lit');
       var wRect=wrap.getBoundingClientRect();
       var ring=document.createElement('div');ring.className='glow-ring';
@@ -134709,8 +134791,9 @@ function mqRenderSurvivalPackGrid() {
       btn.className = 'mq-sheet-pack-btn' + (sel && ready ? ' surv-pack-sel' : '') + (ready ? '' : ' mq-pack-soon');
       if (ready) btn.style.cssText = sel
         ? 'border-color:' + col + ';background:color-mix(in srgb,' + col + ' ' + (document.body.classList.contains('light') ? 16 : 8) + '%,var(--surface));'
-        : 'border-color:color-mix(in srgb,' + col + ' 55%,var(--border-soft));'
-          + 'background:color-mix(in srgb,' + col + ' 5%,var(--surface));';
+        // v1.0.0: same tile tint as Quick Play (70% border, sheet wash, colored name).
+        : 'border-color:color-mix(in srgb,' + col + ' 70%,var(--border-soft));'
+          + 'background:color-mix(in srgb,' + col + ' ' + mqPackSheetWashPct() + '%,var(--surface));';
       var qCount = mqPackQuestions(id).length;
       // A locked pack must not advertise a count it will not deal from.
       var _sgen = (typeof MQ_GEN_PACKS !== 'undefined') && MQ_GEN_PACKS.indexOf(id) !== -1;
@@ -134721,7 +134804,7 @@ function mqRenderSurvivalPackGrid() {
         : '<span class="mq-pack-soon-tag">' + (t('mq_coming_soon') || 'COMING SOON') + '</span>';
       btn.innerHTML = '<span class="mq-sheet-pack-emoji">'+mqPackIcon(id,18)+'</span>'
         + '<div class="mq-sheet-pack-txt">'
-        + '<span class="mq-sheet-pack-name" style="'+(sel&&ready?'color:'+col:'')+'">'+packName(pack)+'</span>'
+        + '<span class="mq-sheet-pack-name" style="'+(ready?'color:'+col:'')+'">'+packName(pack)+'</span>'
         + soonTag + countLabel + '</div>'
         + '';
       // Highlighting every pack by default asked people to notice a selection

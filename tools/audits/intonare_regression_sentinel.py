@@ -1417,7 +1417,10 @@ EXACT_PINS = [
         "'initial-scale=' + S + ', minimum-scale=' + S", []),
     # v0.210.122: bell was ~3.4x the ride. Level 0.9, FM index 1800.
     ('DRUMS',  'Acoustic ride bell level tamed (not 1.9)',
-        "car: 2500, mod: 1000, index: 1800,\n        ping: 4800, tail: 2640,\n        decay: 0.5, level: 0.9,", []),
+        "car: 2500, mod: 1000, index: 1800,\n        ping: 4800, tail: 2640,\n        decay: 0.5, level: 0.9 * ({ standard: 0.55, latin: 0.54, jazz: 0.68 }[kit] || 1),", []),
+    # v1.0.0: bell trimmed per kit to ~ride +4 dB; cowbell 0.72 -> 0.40 (-5 dB).
+    ('DRUMS',  'Cowbell level under the snare (not 0.72)',
+        "g.gain.linearRampToValueAtTime(vel * 0.40 * a, time + 0.001);", []),
     # v0.80.27: the needle EMA is now RATE-AWARE. A fixed 0.18 was tuned for 60 Hz rAF,
     # but detection runs at the true native frame rate (~21.6 Hz), so every frame landed
     # with ~3x too much weight and the needle jerked to each individual reading — the

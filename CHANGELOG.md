@@ -6,8 +6,26 @@ A human-readable record of what changed, when,
 
 - First public release on Google Play and the App Store.
 - The version number moves from the 0.210 dev series to 1.0.0. The app,
-  Google Play and the App Store now all show the same number. Nothing else
-  changed from v0.210.148.
+  Google Play and the App Store now all show the same number.
+- Settings: scrolling past the Text Size or Master Volume slider no longer
+  moves it. A vertical swipe that starts on a slider now scrolls the panel,
+  and the slider keeps its value.
+- Survival Guide: the info panel no longer resets when you scroll down to
+  read it; only a real tap somewhere else closes it. The part name label now
+  opens in place instead of jumping under your finger.
+- Chords: the row of other names for a chord no longer clips its chips or
+  scrolls up and down inside itself.
+- Music Quiz: Survival pack tiles use the same colors as Quick Play, and the
+  START SURVIVAL button is gone. Pick a pack, then start from its card.
+- Explorer achievement: it now needs a real session in all seven exercises
+  (answers or finished rounds), not just opening them. The text says seven,
+  to match what it checks.
+- Largest text size: Chordle's picker fits the screen (the right-hand
+  buttons and CONFIRM were cut off), Road Trip's mode cards grow instead of
+  clipping, and the range and design buttons stack so their names fit.
+- Drums: the ride bell is about 5 dB quieter on the standard and latin kits
+  and 3 dB on jazz, so it sits a little above the ride instead of over the
+  crash. The cowbell is 5 dB quieter and now sits under the snare.
 
 ## v0.210.148: The app's own fonts load again
 
