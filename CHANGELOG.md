@@ -7,9 +7,9 @@ A human-readable record of what changed, when,
 - First public release on Google Play and the App Store.
 - The version number moves from the 0.210 dev series to 1.0.0. The app,
   Google Play and the App Store now all show the same number.
-- Settings: scrolling past the Text Size or Master Volume slider no longer
-  moves it. A vertical swipe that starts on a slider now scrolls the panel,
-  and the slider keeps its value.
+- Settings: the Text Size and Master Volume sliders move only when you drag
+  them sideways or tap and let go. A vertical swipe that starts on a slider
+  scrolls the panel and leaves the slider where it was.
 - Survival Guide: the info panel no longer resets when you scroll down to
   read it; only a real tap somewhere else closes it. The part name label now
   opens in place instead of jumping under your finger.
@@ -22,7 +22,9 @@ A human-readable record of what changed, when,
   to match what it checks.
 - Largest text size: Chordle's picker fits the screen (the right-hand
   buttons and CONFIRM were cut off), Road Trip's mode cards grow instead of
-  clipping, and the range and design buttons stack so their names fit.
+  clipping, and the range and design buttons stack so their names fit. When
+  the cards are taller than the screen they scroll, and START THE DRIVE stays
+  on the bottom edge.
 - Drums: the ride bell is about 5 dB quieter on the standard and latin kits
   and 3 dB on jazz, so it sits a little above the ride instead of over the
   crash. The cowbell is 5 dB quieter and now sits under the snare.

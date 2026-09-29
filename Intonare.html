@@ -16894,6 +16894,12 @@ body.sg-open #toolSurvivalGuide{
   }
   /* The card stack keeps its natural height at the top; it must not stretch into the gap. */
   #exRoadTrip .rt-stage-wrap.menu-mode .rt-menu-scroll { flex: 0 0 auto; }
+  /* v1.0.0: when the cards are taller than the screen (large text sizes, short
+     phones) the stack may shrink and scroll, so START stays on the bottom edge.
+     At normal sizes it still fits and nothing changes. */
+  #exRoadTrip .rt-stage-wrap.menu-mode .rt-menu-scroll { flex: 0 1 auto; min-height: 0;
+    overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  #exRoadTrip .rt-stage-wrap.menu-mode .rt-menu-scroll::-webkit-scrollbar { display: none; }
   /* And START holds its size on the bottom edge rather than being stretched by the flex. */
   #exRoadTrip .rt-stage-wrap.menu-mode .rt-go { flex: 0 0 auto; margin-top: 0; }
   /* Fading out, it goes position:absolute — it must not fight the flex column then. */
@@ -20870,9 +20876,9 @@ body.sg-open #toolSurvivalGuide{
   }
   /* ── Accessibility size slider (hybrid: free slide, labeled snap points) ── */
   .uiscale-slider-wrap { padding: 4px 4px 0; }
-  /* v1.0.0: let a vertical swipe on a Settings slider scroll the panel.
-     The JS guard next to INTONARE_VERSION restores the value if it moved. */
-  #settingsModal input[type=range] { touch-action: pan-y; }
+  /* v1.0.0: Settings sliders take no native touch. The JS next to
+     INTONARE_VERSION moves them on a sideways drag or a clean tap only. */
+  #settingsModal input[type=range] { touch-action: none; }
   .uiscale-slider {
     width: 100%; height: 8px; -webkit-appearance: none; appearance: none;
     background: var(--bg-1); border-radius: 4px; outline: none;
@@ -35903,47 +35909,67 @@ try {
 'use strict';
 
 const INTONARE_VERSION = '1.0.0';
-/* v1.0.0: Settings sliders ignore vertical swipes. On Android a touch that
-   lands on a range track moves the thumb at once, so scrolling the Settings
-   panel changed Text Size or Master Volume by accident. If the finger moves
-   more up/down than sideways, or the browser takes the touch for scrolling,
-   the slider goes back to the value it had when the touch started. Scoped to
-   #settingsModal only: some sliders elsewhere sit in rotated panels, where a
-   vertical drag is the real slider axis. */
+/* v1.0.0: Settings sliders move only on a sideways drag or a clean tap.
+   On Android the native range input jumps the thumb the moment a finger lands,
+   so scrolling the Settings panel changed Text Size or Master Volume (and a
+   restore-afterwards guard still showed the jump). Touch on these sliders is
+   handled here instead: the touch start is swallowed, a sideways drag sets the
+   value from the finger, a tap sets it on release, and a vertical swipe scrolls
+   the panel by hand. Mouse and keyboard keep the native behavior. Scoped to
+   #settingsModal: some sliders elsewhere sit in rotated panels. */
 (function () {
-  var st = null;
-  function inSettings(el) {
+  var st = null, THUMB = 22;
+  function isSlider(el) {
     return el && el.tagName === 'INPUT' && el.type === 'range' && el.closest && el.closest('#settingsModal');
   }
-  function restore() {
-    if (!st || st.el.value === st.v0) return;
-    st.el.value = st.v0;
-    st.el.dispatchEvent(new Event('input', { bubbles: true }));
-    st.el.dispatchEvent(new Event('change', { bubbles: true }));
+  function scrollerOf(el) {
+    for (var p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      var oy = getComputedStyle(p).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight + 1) return p;
+    }
+    return document.scrollingElement;
+  }
+  function setFromX(el, x, fireChange) {
+    var r = el.getBoundingClientRect();
+    var min = parseFloat(el.min || 0), max = parseFloat(el.max || 100), step = parseFloat(el.step) || 1;
+    var ratio = (x - r.left - THUMB / 2) / Math.max(1, r.width - THUMB);
+    ratio = Math.max(0, Math.min(1, ratio));
+    var v = min + Math.round(ratio * (max - min) / step) * step;
+    v = Math.max(min, Math.min(max, v));
+    if (String(v) !== el.value) {
+      el.value = v;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (fireChange) el.dispatchEvent(new Event('change', { bubbles: true }));
   }
   document.addEventListener('touchstart', function (e) {
     var el = e.target;
-    if (!inSettings(el) || !e.touches.length) { st = null; return; }
-    st = { el: el, x: e.touches[0].clientX, y: e.touches[0].clientY, v0: el.value, decided: false, vertical: false };
-  }, { capture: true, passive: true });
+    if (!isSlider(el) || e.touches.length !== 1) { st = null; return; }
+    e.preventDefault();
+    var t = e.touches[0];
+    st = { el: el, x: t.clientX, y: t.clientY, lastY: t.clientY, mode: null, sc: scrollerOf(el) };
+  }, { capture: true, passive: false });
   document.addEventListener('touchmove', function (e) {
-    if (!st || st.decided || !e.touches.length) return;
-    var dx = Math.abs(e.touches[0].clientX - st.x), dy = Math.abs(e.touches[0].clientY - st.y);
-    if (dx < 8 && dy < 8) return;
-    st.decided = true;
-    if (dy > dx) { st.vertical = true; restore(); }
-  }, { capture: true, passive: true });
-  document.addEventListener('input', function (e) {
-    if (st && st.vertical && e.target === st.el && st.el.value !== st.v0) st.el.value = st.v0;
-  }, true);
-  document.addEventListener('touchend', function () {
-    if (st && st.vertical) restore();
+    if (!st || !e.touches.length) return;
+    var t = e.touches[0];
+    if (!st.mode) {
+      var dx = Math.abs(t.clientX - st.x), dy = Math.abs(t.clientY - st.y);
+      if (dx < 6 && dy < 6) return;
+      st.mode = dx > dy ? 'h' : 'v';
+    }
+    e.preventDefault();
+    if (st.mode === 'h') setFromX(st.el, t.clientX, false);
+    else if (st.sc) { st.sc.scrollTop -= (t.clientY - st.lastY); }
+    st.lastY = t.clientY;
+  }, { capture: true, passive: false });
+  document.addEventListener('touchend', function (e) {
+    if (!st) return;
+    var t = e.changedTouches && e.changedTouches[0];
+    if (!st.mode && t) setFromX(st.el, t.clientX, true);       // clean tap
+    else if (st.mode === 'h') st.el.dispatchEvent(new Event('change', { bubbles: true }));
     st = null;
   }, { capture: true, passive: true });
-  document.addEventListener('touchcancel', function () {
-    if (st && (st.vertical || !st.decided)) restore();
-    st = null;
-  }, { capture: true, passive: true });
+  document.addEventListener('touchcancel', function () { st = null; }, { capture: true, passive: true });
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
