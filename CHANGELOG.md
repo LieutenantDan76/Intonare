@@ -2,6 +2,34 @@
 
 A human-readable record of what changed, when,
 
+## v1.0.1: Piano that recovers, fairer rhythm grading, quiz fixes
+
+- Piano and Rhodes: if the shared sound path ever picked up bad audio data,
+  both went silent for the rest of the session while the organ kept working,
+  and the song bank still lit its keys with no sound. The path now checks
+  itself while you play and rebuilds when it finds the fault, so you lose one
+  note instead of the session. Opening the Piano or Rhodes tab also starts a
+  clean path every time.
+- Rhythm Reading: a player who taps a little early or late all the way
+  through no longer gets red notes for notes they hit. The grader used to
+  decide which tap belonged to which note before it allowed for that lean, so
+  on fast notes a tap could be handed to the neighbor. It now allows for the
+  lean first. A note you really skip still shows one red. Taps that land
+  inside a rest are judged with the same allowance.
+- Music Quiz: on some screen widths the correct answer card spilled its text
+  out of the box when you answered. The card keeps the same text area before
+  and after the reveal, and the text size is checked again once the fonts load.
+- Music Quiz, Theory: questions that name a minor key now say harmonic
+  minor, because the fifth and seventh chords are only major and diminished
+  there. The explanation reads "Degree 5 of D harmonic minor is a major
+  triad." The Italian text says the same.
+- Chordle: on Medium and Hard, the picker shows an ADD QUALITY button on the
+  first card. It takes you to maj7, m7, 7 and the rest, which used to sit
+  behind a swipe with a faint hint.
+- Drums: the moving step highlight no longer searches the whole screen on
+  every step, which should keep fast patterns like Trap 32nds smooth on
+  slower phones.
+
 ## v1.0.0: Intonare 1.0
 
 - First public release on Google Play and the App Store.

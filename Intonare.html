@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 1.0.0 -->
+<!-- INTONARE_VERSION: 1.0.1 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -2350,6 +2350,14 @@ body.sg-open #toolSurvivalGuide{
      the three fading behind it. The live cards take the lightest surface in the
      set and carry their color in the border, the text and a lift. */
   .mq2-opt.pr, .mq2-opt.pw, .mq2-opt.ok { border-width: 2px; background: var(--panel); }
+  /* The 2px border takes a pixel from each side of the content box. Without this
+     the answer text lost 2px of width on reveal, which was enough to push a
+     three-line label to four and out of the fixed-height tile. Padding gives the
+     pixel back, so the text box is the same size before and after. The key sits
+     against the padding box, so it moves the same pixel. */
+  .mq2-opt.pr, .mq2-opt.pw, .mq2-opt.ok { padding: 41px 12px 11px; }
+  .mq2-grid.nokeys .mq2-opt.pr, .mq2-grid.nokeys .mq2-opt.pw, .mq2-grid.nokeys .mq2-opt.ok { padding: 11px 12px; }
+  .mq2-opt.pr .mq2-key, .mq2-opt.pw .mq2-key, .mq2-opt.ok .mq2-key { top: 11px; left: 13px; }
   .mq2-opt.pr { border-color: var(--in-tune); color: var(--in-tune);
     box-shadow: 0 4px 14px color-mix(in srgb, var(--in-tune) 22%, transparent); }
   .mq2-opt.pr .mq2-key { border-color: var(--in-tune); color: var(--in-tune);
@@ -35908,7 +35916,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '1.0.0';
+const INTONARE_VERSION = '1.0.1';
 /* v1.0.0: Settings sliders move only on a sideways drag or a clean tap.
    On Android the native range input jumps the thumb the moment a finger lands,
    so scrolling the Settings panel changed Text Size or Master Volume (and a
@@ -41591,8 +41599,73 @@ function ensureRefCtx() {
     refLimiter.disconnect();
     _pianoLidFilter = _buildPianoLidFilter(refAudioCtx);
     refLimiter.connect(_pianoLidFilter);
+    _refWatchAttach();
   }
+  _refWatchCheck();
   return refAudioCtx;
+}
+
+// ── Reference bus self-heal (v1.0.1) ─────────────────────────────────────────
+// The piano, Rhodes, Chords and tuner reference tones all play through ONE
+// long-lived chain: gain -> low shelf -> compressor -> lid filter -> master bus.
+// The low shelf, the compressor and the lid filter are recursive. A single
+// burst of NaN or Infinity into any of them leaves their internal state at NaN
+// for good, and every later sample out of that chain is NaN, which the device
+// plays as silence. Reproduced offline: one NaN buffer into refMasterGain and
+// the piano never sounded again until the app restarted. The organ has its own
+// chain, which is why it kept working while piano and Rhodes went dead and the
+// song bank still flashed its keys.
+//
+// What puts the NaN there on a real phone is not found yet. Until it is, the
+// chain heals itself: an analyser on the chain's output is read at most once
+// every second from ensureRefCtx(), and if it sees a non-finite sample the whole
+// chain is thrown away and rebuilt. The player loses one note, not the session.
+// Every heal is recorded on window._refDiag so the audio diagnostics panel
+// (seven taps on the version stamp) can show how often it happened.
+let _refWatch = null;
+function _refWatchAttach() {
+  try {
+    const an = refAudioCtx.createAnalyser();
+    an.fftSize = 256;
+    _pianoLidFilter.connect(an);
+    _refWatch = { an: an, buf: new Float32Array(256), last: 0, pending: false };
+  } catch (e) { _refWatch = null; }
+}
+function _refWatchCheck() {
+  const w = _refWatch;
+  if (!w || w.pending) return;
+  const now = Date.now();
+  if (now - w.last < 1000) return;
+  w.last = now;
+  w.pending = true;
+  setTimeout(function () {
+    w.pending = false;
+    try {
+      if (_refWatch !== w) return;
+      w.an.getFloatTimeDomainData(w.buf);
+      for (let i = 0; i < w.buf.length; i++) {
+        if (!Number.isFinite(w.buf[i])) { _refChainReset('nan'); return; }
+      }
+    } catch (e) {}
+  }, 120);
+}
+function _refChainReset(reason) {
+  try {
+    const ctx = refAudioCtx || getAudio();
+    [refMasterGain, refLimiter, _pianoLidFilter].forEach(function (n) {
+      if (n) { try { n.disconnect(); } catch (e) {} }
+    });
+    // buildLimiterChain caches per context and gain, so the poisoned chain
+    // would come straight back from the cache. Evict it first.
+    const perCtx = _limiterChainCache.get(ctx);
+    if (perCtx) perCtx.delete(0.6);
+    refMasterGain = null; refLimiter = null; _pianoLidFilter = null; _refWatch = null;
+    ensureRefCtx();
+    const d = window._refDiag = window._refDiag || { resets: 0, nan: 0 };
+    d.resets++;
+    if (reason === 'nan') d.nan++;
+    d.last = reason + ' ' + new Date().toISOString().slice(11, 19);
+  } catch (e) {}
 }
 
 function togglePlayRef(key, freq, noteName) {
@@ -78252,24 +78325,45 @@ function rrShowResults() {
   var noteTaken = {};
 
   var matchWin = Math.min(0.5, (rrTh.orange * 1.4) / 1000);
-  var pairs = [];
-  notes.forEach(function(n) {
-    var origIdx = rrPattern.notes.indexOf(n);
-    var noteTime = n.p * beatDur;
-    matches[origIdx] = null;                     // default: missed
-    taps.forEach(function(tap, ti) {
-      var signed = tap.t - noteTime;             // + = late, - = early
-      var dist = Math.abs(signed);
-      if (dist < matchWin) pairs.push({ origIdx: origIdx, ti: ti, dist: dist, signed: signed, tap: tap });
+  // Two passes (v1.0.1). The grade below is taken on the drift-corrected error, but
+  // the matching used to run on RAW time, so the two disagreed whenever a player
+  // leaned early or late. On fast notes that is enough to hand a tap to the wrong
+  // neighbor: leaning 170 ms early on 16ths, the tap meant for the second note
+  // sat exactly on the first, took it, and left the second note red with its real
+  // tap shown as a stray. Pass 1 matches raw to estimate the lean; pass 2 matches
+  // again with every tap shifted by that lean, so a tap is paired with the note it
+  // was aimed at. signedMs stays raw because the grading below subtracts the bias.
+  function rrMatchPass(lean) {
+    var pairs = [];
+    used.fill(false);
+    noteTaken = {};
+    notes.forEach(function(n) {
+      var origIdx = rrPattern.notes.indexOf(n);
+      var noteTime = n.p * beatDur;
+      matches[origIdx] = null;                   // default: missed
+      taps.forEach(function(tap, ti) {
+        var signed = tap.t - noteTime;           // + = late, - = early (raw)
+        var dist = Math.abs(signed - lean);      // distance after removing the lean
+        if (dist < matchWin) pairs.push({ origIdx: origIdx, ti: ti, dist: dist, signed: signed, tap: tap });
+      });
     });
-  });
-  pairs.sort(function(a, b){ return a.dist - b.dist; });
-  pairs.forEach(function(pr) {
-    if (used[pr.ti] || noteTaken[pr.origIdx]) return;
-    used[pr.ti] = true;
-    noteTaken[pr.origIdx] = true;
-    matches[pr.origIdx] = { accMs: Math.round(pr.dist * 1000), signedMs: pr.signed * 1000, tap: pr.tap };
-  });
+    pairs.sort(function(a, b){ return a.dist - b.dist; });
+    pairs.forEach(function(pr) {
+      if (used[pr.ti] || noteTaken[pr.origIdx]) return;
+      used[pr.ti] = true;
+      noteTaken[pr.origIdx] = true;
+      matches[pr.origIdx] = { accMs: Math.round(Math.abs(pr.signed) * 1000), signedMs: pr.signed * 1000, tap: pr.tap };
+    });
+  }
+  rrMatchPass(0);
+  (function() {
+    var sl = [];
+    rrPattern.notes.forEach(function(n, ni){ if (!n.r && matches[ni]) sl.push(matches[ni].signedMs); });
+    if (!sl.length) return;
+    var cap = beatDur * 1000 * 0.30;               // same cap as the grading bias below
+    var lean = Math.max(-cap, Math.min(cap, rcMedian(sl)));
+    if (Math.abs(lean) >= 15) rrMatchPass(lean / 1000);
+  })();
 
   // Per-attempt bias correction (mirrors the rhythm-challenge grader): a tap
   // stream that leans consistently late or early is residual input/audio
@@ -78339,7 +78433,8 @@ function rrShowResults() {
       if (!rn.r) return false;
       var s = rn.p * beatDur + restPad;
       var e = (rn.p + rn.d) * beatDur - restPad;
-      return e > s && tp.t >= s && tp.t <= e;
+      var tc = tp.t - rrBias / 1000;           // lean removed, same as the markers and the grade
+      return e > s && tc >= s && tc <= e;
     });
   };
   var dirtyTaps = unmatchedTaps.filter(function(tp){ return !tapInRest(tp); });
@@ -78360,7 +78455,7 @@ function rrShowResults() {
       var nearIdx = -1, nearDist = dirtyWin;
       rrPattern.notes.forEach(function(n, ni) {
         if (n.r || !matches[ni]) return;         // only sounding notes that were hit
-        var d = Math.abs(tp.t - n.p * beatDur);
+        var d = Math.abs(tp.t - rrBias / 1000 - n.p * beatDur);   // corrected, like the grade
         if (d <= nearDist) { nearDist = d; nearIdx = ni; }
       });
       if (nearIdx < 0) return;
@@ -78389,7 +78484,7 @@ function rrShowResults() {
     var rStart = n.p * beatDur + restPad;
     var rEnd   = (n.p + n.d) * beatDur - restPad;
     if (rEnd <= rStart) { colorMap[ni] = GREEN; return; }
-    var filled = unmatchedTaps.some(function(tp){ return tp.t >= rStart && tp.t <= rEnd; });
+    var filled = unmatchedTaps.some(function(tp){ var tc = tp.t - rrBias / 1000; return tc >= rStart && tc <= rEnd; });
     colorMap[ni] = filled ? RED : GREEN;
   });
 
@@ -87957,7 +88052,10 @@ function chordleRenderCard1() {
   var isCustomA=chordleDiff==='custom';
   var qualKeyA=isCustomA?chordleCustom.qualDepth:CHORDLE_DIFF_QUAL[chordleDiff]||'7ths';
   var hasExt=qualKeyA!=='triads';
-  if (hasExt) html+='<div style="text-align:center;font-size:9px;color:var(--muted);letter-spacing:1px;margin:10px 0 2px;opacity:.55">swipe for extensions →</div>';
+  // A real button, not a 9px whisper. The qualities (maj7, m7, 7 and the rest) live on
+  // card 2 and the old hint was easy to miss, so a bare numeral looked like the only
+  // thing you could play on Medium and Hard. Tapping slides to card 2; swiping still works.
+  if (hasExt) html+='<button onclick="chordlePickerSlide(2);chordleRenderCard2()" style="display:block;width:100%;margin:10px 0 2px;padding:9px 0;background:transparent;border:1.5px dashed var(--accent);color:var(--accent);border-radius:9px;font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:11px;letter-spacing:1px;cursor:pointer">'+t('chordle_add_quality')+'</button>';
   var chordC1=(chordlePFlat?'♭':'')+chordlePNum+chordlePMod;
   var c1Active=!!chordlePNum;
   html+='<button '+(c1Active?'onclick="chordlePickerConfirm(false)"':'')+' style="width:100%;background:'+(c1Active?'linear-gradient(135deg,var(--accent),var(--accent-soft))':'var(--surface-2)')+';color:'+(c1Active?'#000':'var(--muted)')+';border:1.5px solid '+(c1Active?'transparent':'var(--border-soft)')+';border-radius:100px;padding:12px 0;font-size:11px;font-weight:700;letter-spacing:2px;cursor:'+(c1Active?'pointer':'default')+';font-family:inherit;margin-top:12px;opacity:'+(c1Active?'1':'.45')+'">CONFIRM'+(chordC1?' '+chordC1:'')+'</button>';
@@ -91785,6 +91883,7 @@ const STRINGS = {
     diadle_sub_easy:'Diatonic · root drone', diadle_sub_med:'Chromatic · root on tap', diadle_sub_hard:'Chromatic · root once',
     chordle_speed_slow:'SLOW', chordle_speed_med:'MED',
     chordle_speed_fast:'FAST', chordle_speed_swift:'SWIFT',
+    chordle_add_quality:'ADD QUALITY: maj7, m7, 7 \u2192',
     chordle_diff_easy:'EASY', chordle_diff_medium:'MEDIUM',
     chordle_diff_hard:'HARD', chordle_diff_vhard:'VERY HARD',
   chordle_pick_easy_s:'Triads only, no extensions',chordle_pick_med_s:'7th chords and accidentals',chordle_pick_hard_s:'Full jazz extensions',chordle_pick_vhard_s:'Chromatic, every degree in play',
@@ -93042,6 +93141,7 @@ const STRINGS = {
     diadle_sub_easy:'Diatonico · bordone', diadle_sub_med:'Cromatico · tonica a tasto', diadle_sub_hard:'Cromatico · tonica una volta',
     chordle_speed_slow:'LENTO', chordle_speed_med:'MED',
     chordle_speed_fast:'VELOCE', chordle_speed_swift:'RAPIDO',
+    chordle_add_quality:'AGGIUNGI QUALIT\u00c0: maj7, m7, 7 \u2192',
     chordle_diff_easy:'FACILE', chordle_diff_medium:'MEDIO',
     chordle_diff_hard:'DIFFICILE', chordle_diff_vhard:'MOLTO DIFFICILE',
   chordle_pick_easy_s:'Solo triadi, nessuna estensione',chordle_pick_med_s:'Accordi di settima e alterazioni',chordle_pick_hard_s:'Estensioni jazz complete',chordle_pick_vhard_s:'Cromatico, ogni grado in gioco',
@@ -103295,14 +103395,25 @@ function updateCursorForTrack(trackId, step) {
   const stepsPerBar = _trackSteps(trackId);
   const barOfStep = Math.floor(step / stepsPerBar);
   const stepInBar = step % stepsPerBar;
-  // Only show cursor on the currently viewed bar
-  document.querySelectorAll(`#row-${trackId} .step.cursor`).forEach(e => e.classList.remove('cursor'));
+  // Only show cursor on the currently viewed bar.
+  // This runs once per step per track, about 19 times a second per row on a 32nd
+  // grid and across 17 rows, from the animation frame. It used to walk the whole
+  // document with two selector queries each time. Now it remembers the one element
+  // it lit, un-lights just that, and looks the next one up inside its own row.
+  // A rebuilt grid detaches the remembered element, in which case one full sweep
+  // clears whatever is left.
+  const prevEl = _dkCursorEl[trackId];
+  if (prevEl && prevEl.isConnected) prevEl.classList.remove('cursor');
+  else document.querySelectorAll(`#row-${trackId} .step.cursor`).forEach(e => e.classList.remove('cursor'));
+  _dkCursorEl[trackId] = null;
   if (barOfStep === dk_viewBar) {
-    const el = document.querySelector(`#row-${trackId} .step[data-step="${stepInBar}"]`);
-    if (el) el.classList.add('cursor');
+    const row = document.getElementById('row-' + trackId);
+    const el = row && row.querySelector(`.step[data-step="${stepInBar}"]`);
+    if (el) { el.classList.add('cursor'); _dkCursorEl[trackId] = el; }
   }
   _updatePrecCursor(stepInBar);
 }
+const _dkCursorEl = {};
 
 function flashBeat(isDown) {
   const el = document.getElementById('dk-beatFlash');
@@ -121330,6 +121441,8 @@ function switchPianoToolTab(tab) {
   if (pianoPanel)  pianoPanel.style.display  = tab === 'piano'  ? '' : 'none';
   if (organPanel)  organPanel.classList.toggle('visible', tab === 'organ');
   if (rhodesPanel) rhodesPanel.style.display = tab === 'rhodes' ? '' : 'none';
+  // Fresh reference chain on every entry, so a poisoned one can never outlive the tab.
+  if (tab === 'piano' || tab === 'rhodes') { try { _refChainReset('tab'); } catch (e) {} }
   if (tab === 'piano')  { buildPiano(); _initPianoPedal(); _initPianoOctLongPress(); }
   if (tab === 'organ')  { ptoRender(); _initOrganPedal(); }
   if (tab === 'rhodes') { buildRhodesKeyboard(); initRhodesKnobs(); _initRhodesPedal(); _initRhodesOctLongPress(); _rhodesLoadSamples(); }
@@ -136513,22 +136626,25 @@ function mqGenFunction(d) {
   var kn = minor ? MQ_REL_MINOR[key.id] : key.name;
   return {
     gkey: 'cf:' + key.id + ':' + (minor ? 'm' : 'M') + ':' + deg + ':' + clef,
-    q: 'The key is ' + kn + ' ' + (minor ? 'minor' : 'major') + '. Which chord of that key is written here?',
-    q_it: 'La tonalità è ' + mqKeyNameIt(kn, minor) + '. Quale accordo di quella tonalità è scritto qui?',
+    // Minor keys are built on the HARMONIC minor (mqDiatonic), so say so. V and vii\u00b0 are
+    // only major and diminished there; in natural minor the fifth is minor, and a
+    // learner who knows that was right to call the old wording misleading.
+    q: 'The key is ' + kn + (minor ? ' harmonic minor' : ' major') + '. Which chord of that key is written here?',
+    q_it: 'La tonalità è ' + mqKeyNameIt(kn, minor) + (minor ? ' armonica' : '') + '. Quale accordo di quella tonalità è scritto qui?',
     opts: all, opts_it: all.slice(),
     ans: 0, d: d,
     vis: { t:'staff', clef:clef, keySig: { n:key.n, type:key.type },
            chords: mqShiftCols([mqDrawInKey(fitted, key)], clef) },
-    fact: 'Built on degree ' + (deg + 1) + ' of ' + kn + ' ' + (minor ? 'minor' : 'major') + ', which comes out '
+    fact: 'Degree ' + (deg + 1) + ' of ' + kn + (minor ? ' harmonic minor' : ' major') + ' is a '
         + (roman.indexOf('\u00b0') > -1 ? 'diminished' : roman.indexOf('+') > -1 ? 'augmented'
-           : roman === roman.toUpperCase() ? 'major' : 'minor') + '.'
+           : roman === roman.toUpperCase() ? 'major' : 'minor') + ' triad.'
         + ((minor && [2,4,6].indexOf(deg) !== -1)
-           ? ' It contains the raised seventh, which carries its own accidental rather than coming from the signature.' : ''),
-    fact_it: 'Costruito sul grado ' + (deg + 1) + ' di ' + mqKeyNameIt(kn, minor) + ', e viene '
-        + (roman.indexOf('\u00b0') > -1 ? 'diminuito' : roman.indexOf('+') > -1 ? 'aumentato'
+           ? ' The raised seventh is an accidental, not part of the signature.' : ''),
+    fact_it: 'Il grado ' + (deg + 1) + ' di ' + mqKeyNameIt(kn, minor) + (minor ? ' armonica' : '') + ' è una triade '
+        + (roman.indexOf('\u00b0') > -1 ? 'diminuita' : roman.indexOf('+') > -1 ? 'aumentata'
            : roman === roman.toUpperCase() ? 'maggiore' : 'minore') + '.'
         + ((minor && [2,4,6].indexOf(deg) !== -1)
-           ? ' Contiene la settima alzata, che porta la propria alterazione invece di venire dall\u2019armatura.' : '')
+           ? ' La settima alzata è un\u2019alterazione accidentale, non fa parte dell\u2019armatura.' : '')
   };
 }
 
@@ -138044,6 +138160,11 @@ function mq2RenderQ(q, dispOpts, col) {
   });
   // after every tile is in the grid, so the fitter measures real boxes
   requestAnimationFrame(mq2FitOpts);
+  // And again once the web fonts are in. The first pass can run on the fallback
+  // serif, which is narrower than Fraunces, so a label like "Connect different
+  // pitches smoothly" measured as two lines and then reflowed to four on the
+  // real face, spilling out of its tile on the reveal.
+  try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { requestAnimationFrame(mq2FitOpts); }); } catch (e) {}
 }
 
 // Put the XP toast just under the band. The band's height changes with the stem
