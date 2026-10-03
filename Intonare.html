@@ -88019,7 +88019,7 @@ function chordleOpenSlot(i) {
   if (chordleGameState!=='playing') return;
   if (chordleLockedSlots.includes(i)) return; // locked correct slot
   chordleSelSlot=i; chordlePNum=''; chordlePQual=''; chordlePMod=''; chordlePFlat=false; chordlePCard=1; chordlePStep='numeral';
-  chordlePRoot=''; chordlePType=null;
+  chordlePRoot=''; chordlePType=null; chordlePBase='';
   chordleRender();
   chordleOpenSheet();
   hapticLight();
@@ -88055,6 +88055,14 @@ function chordleRenderSheet() {
 var CHORDLE_LOWER_Q = ['m','m7','ø7','°7','m9','m7b5','°'];
 var chordlePRoot = '';     // 'I'..'VII', always uppercase here; the TYPE decides the case
 var chordlePType = null;   // quality value ('' means major triad) or null when none is picked
+var chordlePBase = '';     // quality family: major, minor, dim, aug or sus. It decides which extensions are offered.
+var CHORDLE_FAMILIES = [
+  { id:'major', vals:['','7','maj7','maj9','7♭9','7#11'], triad:'' },
+  { id:'minor', vals:['m','m7','m9'],                     triad:'m' },
+  { id:'dim',   vals:['°','ø7','°7'],                     triad:'°' },
+  { id:'aug',   vals:['+'],                                triad:'+' },
+  { id:'sus',   vals:['sus4'],                             triad:'sus4' }
+];
 function chordleQualListNow() {
   var qualKey=chordleDiff==='custom'?chordleCustom.qualDepth:CHORDLE_DIFF_QUAL[chordleDiff]||'7ths';
   return CHORDLE_QUALITIES[qualKey]||CHORDLE_QUALITIES['7ths'];
@@ -88086,16 +88094,33 @@ function chordlePickType(val) {
   chordlePType=val;
   chordleAfterPick();
 }
+// Choosing a quality re-labels every extension under it (minor offers m7 and m9, not maj7).
+// The triad of that quality is selected for you when the level has it; a type you had already
+// picked stays if it belongs to the new family.
+function chordlePickBase(id) {
+  var fam=null; CHORDLE_FAMILIES.forEach(function(F){ if(F.id===id) fam=F; });
+  if (!fam) return;
+  var avail=chordleQualListNow().map(function(e){return e[0];});
+  var mine=fam.vals.filter(function(v){return avail.indexOf(v)!==-1;});
+  chordlePBase=id;
+  if (chordlePType===null || mine.indexOf(chordlePType)===-1) {
+    chordlePType = mine.indexOf(fam.triad)!==-1 ? fam.triad : (mine.length===1 ? mine[0] : null);
+  }
+  chordleAfterPick();
+}
 function chordleAfterPick() {
   chordleSyncPick();
   chordleRenderCard1(); chordleRenderPickerHeader(); hapticLight();
-  if (chordlePNum && chordlePType!==null) chordlePreviewBuilt();
 }
-// Hear the chord that is currently built. Plain chord, no tonic: this is for auditioning.
-function chordlePreviewBuilt() {
-  var c=chordleBuiltNow(); if (!c||chordlePlaying) return;
-  var ch=chordleChordFreqs(c);
-  chordlePlayFreqs(ch,0);
+// The drawer plays the QUESTION, never your pick. Hearing your own selection would let you test
+// guesses by ear until one sounds right. Same rule as Diadle: ▶ plays the answer chord for the
+// open slot, ROOT plays the tonic note.
+function chordlePlayRoot() {
+  if (chordlePlaying) return;
+  var savedArp=chordleArp; chordleArp=false;
+  chordlePlayFreqs([440*Math.pow(2,(48-69)/12)],0);
+  chordleArp=savedArp;
+  hapticLight();
 }
 function chordleRenderPickerHeader() {
   var h=document.getElementById('chordleSheetHeader'); if (!h) return;
@@ -88103,7 +88128,8 @@ function chordleRenderPickerHeader() {
   var built=chordleBuiltNow();
   var part=built||(chordlePRoot?(chordlePFlat?'♭':'')+chordlePRoot+' …':'');
   var chip=part?'<div style="background:color-mix(in srgb,var(--accent) 18%,transparent);border:1.5px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:8px;padding:2px 10px;font-size:13px;font-weight:700;letter-spacing:-.3px;font-family:\'JetBrains Mono\',monospace">'+part+'</div>':'';
-  var ear=built?'<button onclick="chordlePreviewBuilt()" aria-label="Hear" style="background:transparent;border:1px solid var(--border-soft);color:var(--accent);border-radius:7px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit">▶</button>':'';
+  var ear='<button onclick="chordlePlaySlot('+chordleSelSlot+')" title="hear chord" aria-label="Hear this chord" style="background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:100px;width:34px;height:28px;font-size:12px;cursor:pointer;font-family:inherit">▶</button>'
+    +'<button onclick="chordlePlayRoot()" title="hear root" style="background:transparent;border:1px solid var(--border-soft);color:var(--muted);border-radius:100px;padding:0 10px;height:28px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit">ROOT</button>';
   h.innerHTML='<span style="font-size:10px;color:var(--muted);letter-spacing:1.5px">SLOT '+(chordleSelSlot+1)+' / '+n+'</span>'
     +chip+ear+'<div style="flex:1"></div>'
     +'<button onclick="chordleCloseSheet()" style="background:transparent;border:1px solid var(--border-soft);color:var(--text-dim);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit">✕</button>';
@@ -88126,32 +88152,36 @@ function chordleRenderCard1() {
     html+=lbl(t('chordle_flat'),true);
     html+='<div style="display:flex;gap:3px">'+['II','III','IV','V','VI','VII'].map(function(n){return rootBt(n,true);}).join('')+'</div>';
   }
-  // Types, in teaching order. Triads first, then sevenths and up when the level has them.
+  // Quality first, then the extensions that belong to it. Names update with the root you picked.
   var list=chordleQualListNow();
-  var order=['','m','°','+','sus4','7','maj7','m7','ø7','°7','7♭9','7#11','maj9','m9'];
-  var triadSet=['','m','°','+','sus4'];
   var have=function(v){for(var i=0;i<list.length;i++) if(list[i][0]===v) return list[i];return null;};
-  var typeBt=function(e){
-    var val=e[0], desc=e[1];
-    var on=chordlePType===val;
-    var shown=desc;
-    if (val==='') shown=t('chordle_major'); else if (val==='m') shown=t('chordle_minor');
-    var full=null;
-    if (chordlePRoot) { var p=chordleTypeParts(chordlePRoot,chordlePFlat,val); full=p.num+p.mod+p.qual; }
-    var dead=!on&&full&&deadBase[full];
-    return '<button onclick="chordlePickType(\''+val+'\')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:64px;padding:8px 10px;border-radius:9px;cursor:pointer;font-family:\'JetBrains Mono\',monospace;transition:all .1s;'+(dead?'opacity:.32;text-decoration:line-through;':'')+(on?onS:offS(dead))+'"'+(dead?' title="ruled out"':'')+'>'
-      +(full?'<span style="font-size:13px;font-weight:700;letter-spacing:-.3px">'+full+'</span><span style="font-size:9px;color:var(--muted);letter-spacing:.5px">'+shown+'</span>'
-            :'<span style="font-size:11px;font-weight:700">'+shown+'</span>')
-      +'</button>';
+  var famNow=function(F){return F.vals.filter(function(v){return have(v);});};
+  var fams=CHORDLE_FAMILIES.filter(function(F){return famNow(F).length>0;});
+  var fullOf=function(val){var p=chordleTypeParts(chordlePRoot,chordlePFlat,val);return p.num+p.mod+p.qual;};
+  var baseNames={major:t('chordle_major'),minor:t('chordle_minor'),dim:'dim',aug:'aug',sus:'sus'};
+  var baseBt=function(F){
+    var on=chordlePBase===F.id;
+    var vals=famNow(F);
+    var dead=!on&&chordlePRoot&&vals.every(function(v){return deadBase[fullOf(v)];});
+    return '<button onclick="chordlePickBase(\''+F.id+'\')" style="'+rb+(dead?'opacity:.32;text-decoration:line-through;':'')+(on?onS:offS(dead))+'"'+(dead?' title="ruled out"':'')+'>'+baseNames[F.id]+'</button>';
   };
-  var tri=[], ext=[];
-  order.forEach(function(v){var e=have(v); if(!e) return; (triadSet.indexOf(v)!==-1?tri:ext).push(e);});
-  var wrap='<div style="display:flex;flex-wrap:wrap;gap:6px">';
-  if (ext.length) {
-    html+=lbl(t('chordle_triads'),true)+wrap+tri.map(typeBt).join('')+'</div>';
-    html+=lbl(t('chordle_sevenths'),true)+wrap+ext.map(typeBt).join('')+'</div>';
-  } else {
-    html+=lbl(t('chordle_type'),true)+wrap+tri.map(typeBt).join('')+'</div>';
+  html+=lbl(t('chordle_quality'),true)+'<div style="display:flex;gap:3px">'+fams.map(baseBt).join('')+'</div>';
+  var curFam=null; fams.forEach(function(F){ if(F.id===chordlePBase) curFam=F; });
+  if (curFam) {
+    var vals=famNow(curFam);
+    if (vals.length>1) {
+      var extBt=function(val){
+        var e=have(val), on=chordlePType===val;
+        var shown=(val===curFam.triad)?t('chordle_triad'):e[1];
+        var full=chordlePRoot?fullOf(val):null;
+        var dead=!on&&full&&deadBase[full];
+        return '<button onclick="chordlePickType(\''+val+'\')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:64px;padding:8px 10px;border-radius:9px;cursor:pointer;font-family:\'JetBrains Mono\',monospace;transition:all .1s;'+(dead?'opacity:.32;text-decoration:line-through;':'')+(on?onS:offS(dead))+'"'+(dead?' title="ruled out"':'')+'>'
+          +(full?'<span style="font-size:13px;font-weight:700;letter-spacing:-.3px">'+full+'</span><span style="font-size:9px;color:var(--muted);letter-spacing:.5px">'+shown+'</span>'
+                :'<span style="font-size:11px;font-weight:700">'+shown+'</span>')
+          +'</button>';
+      };
+      html+=lbl(t('chordle_ext'),true)+'<div style="display:flex;flex-wrap:wrap;gap:6px">'+vals.map(extBt).join('')+'</div>';
+    }
   }
   // Confirm stays pinned to the bottom of the sheet so the longest type list never pushes it off screen.
   var ok=!!chordlePNum;
@@ -91890,7 +91920,7 @@ const STRINGS = {
     diadle_sub_easy:'Diatonic · root drone', diadle_sub_med:'Chromatic · root on tap', diadle_sub_hard:'Chromatic · root once',
     chordle_speed_slow:'SLOW', chordle_speed_med:'MED',
     chordle_speed_fast:'FAST', chordle_speed_swift:'SWIFT',
-    chordle_root:'ROOT', chordle_flat:'FLAT', chordle_type:'CHORD TYPE', chordle_triads:'TRIADS', chordle_sevenths:'SEVENTHS AND UP', chordle_major:'major', chordle_minor:'minor',
+    chordle_root:'ROOT', chordle_flat:'FLAT', chordle_quality:'QUALITY', chordle_ext:'EXTENSION', chordle_triad:'triad', chordle_major:'major', chordle_minor:'minor',
     chordle_tap_hint:'Tap a guessed chord to hear the answer in that spot.',
     chordle_diff_easy:'EASY', chordle_diff_medium:'MEDIUM',
     chordle_diff_hard:'HARD', chordle_diff_vhard:'VERY HARD',
@@ -93149,7 +93179,7 @@ const STRINGS = {
     diadle_sub_easy:'Diatonico · bordone', diadle_sub_med:'Cromatico · tonica a tasto', diadle_sub_hard:'Cromatico · tonica una volta',
     chordle_speed_slow:'LENTO', chordle_speed_med:'MED',
     chordle_speed_fast:'VELOCE', chordle_speed_swift:'RAPIDO',
-    chordle_root:'RADICE', chordle_flat:'BEMOLLE', chordle_type:'TIPO DI ACCORDO', chordle_triads:'TRIADI', chordle_sevenths:'SETTIME E OLTRE', chordle_major:'maggiore', chordle_minor:'minore',
+    chordle_root:'RADICE', chordle_flat:'BEMOLLE', chordle_quality:'QUALIT\u00c0', chordle_ext:'ESTENSIONE', chordle_triad:'triade', chordle_major:'maggiore', chordle_minor:'minore',
     chordle_tap_hint:'Tocca un accordo tentato per sentire la risposta in quel punto.',
     chordle_diff_easy:'FACILE', chordle_diff_medium:'MEDIO',
     chordle_diff_hard:'DIFFICILE', chordle_diff_vhard:'MOLTO DIFFICILE',
