@@ -30,6 +30,13 @@ A human-readable record of what changed, when,
   you place pulses into its tile. Tiles show the numeral large with the suffix
   small underneath, so long names like bIImaj7 or bVII7 fit on small phones.
   Phones set to reduce motion get none of it.
+- Chordle and Diadle, more polish: both drawers now slide away as well as in,
+  and you can swipe them down by the handle or the header. The confirm button
+  and the edge buttons no longer grow past the drawer sides when they pop.
+  When you submit a guess, its tiles flip over one after another. Diadle's
+  drawer got the same treatment: its degree buttons ease in, your current pick
+  is highlighted, the header shows the slot and your pick on one line, and a
+  placed note pulses into its tile.
 - Chordle, ruled-out marks: a numeral was struck out when every guess of it
   scored gray, but gray only means wrong for that spot, so the true answer
   could get struck out. The marks now follow what each slot really proves. If
