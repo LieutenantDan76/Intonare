@@ -15,13 +15,14 @@ A human-readable record of what changed, when,
   case of the numeral follows the type, so there is no separate major row and
   minor row, and every flat chord can be minor. Types are grouped as triads
   and sevenths, each button shows the exact chord it will enter, chords you
-  have ruled out are struck through, and the chord plays when you pick it.
-  Before, the flat chords hid behind a toggle that only appeared after you
-  picked a numeral, so a flat-heavy answer looked like the picker had run out
-  of options.
-- Chordle, previews: tap a guessed chord, or a green locked one, to hear what
-  the answer has in that spot, led by a short tonic note. You no longer have
-  to play the whole line every time.
+  have ruled out are struck through. Before, the flat chords hid behind a
+  toggle that only appeared after you picked a numeral, so a flat-heavy answer
+  looked like the picker had run out of options.
+- Chordle, previews: the picker drawer has a play button that plays the
+  answer chord for the slot you are filling, led by a short tonic note, and a
+  ROOT button for the tonic alone. Tapping a guessed chord, or a green locked
+  one, plays the answer for that spot too. It never plays your own pick, so you
+  cannot guess by ear. You no longer have to play the whole line every time.
 - Chordle, sound: minor chords written as a lowercase numeral (ii, iii, iv,
   vi, i) played as major chords, so the chord you heard did not match the
   numeral on screen. They now play as minor. The flat ii chord also played on
