@@ -2,6 +2,20 @@
 
 A human-readable record of what changed, when,
 
+## v1.0.2: Chordle flats on the first card, a cleaner Trap 32nds, clearer Rhythm Reading wait
+
+- Chordle: the flat chords (♭II, ♭III, ♭IV, ♭V, ♭VI, ♭VII) now have their own
+  row on the first card of the picker. Before, they sat behind a toggle on the
+  second card that only shows after you pick a numeral. On a flat-heavy line
+  every natural numeral got struck out, which looked like the picker had run
+  out of options. Flats you have ruled out get struck out the same way.
+- Drums: Trap 32nds had hi-hat hits scattered on odd 32nd steps in no pattern,
+  which sounded like a stutter. It is now a steady 16th-note hat with a pair of
+  32nds at the end of beat 2 and a four-note roll at the end of beat 4.
+- Rhythm Reading: during the listen phase and the count-in the tap box was
+  dimmed like a disabled control. It now stays bright and still ignores taps,
+  so it reads as "wait" and not "broken". Pausing still dims it.
+
 ## v1.0.1: Piano that recovers, fairer rhythm grading, quiz fixes
 
 - Piano and Rhodes: if the shared sound path ever picked up bad audio data,

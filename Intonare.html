@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 1.0.1 -->
+<!-- INTONARE_VERSION: 1.0.2 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -26831,6 +26831,8 @@ body.light #toolDrumkit .dk-prec-step-num { color: rgba(0,0,0,0.32); }
   .rr-tap-zone.rr-active  { border-color: var(--accent); background: var(--bg-2); }
   .rr-tap-zone.rr-next    { border-color: var(--border-soft); background: var(--bg-1); border-style: dashed; }
   .rr-tap-zone.rr-disabled{ opacity: 0.4; pointer-events: none; }
+  /* Listening and count-in: taps are blocked, but the box should read as "wait", not as broken */
+  .rr-tap-zone.rr-disabled.rr-wait{ opacity: 0.85; }
   .rr-tap-zone.rr-fg      { background: rgba(74,222,128,0.13) !important; border-color: #4ade80 !important; }
   .rr-tap-zone.rr-fy      { background: rgba(250,204,21,0.13) !important; border-color: #facc15 !important; }
   .rr-tap-zone.rr-fo      { background: rgba(251,146,60,0.13) !important; border-color: #fb923c !important; }
@@ -35916,7 +35918,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '1.0.1';
+const INTONARE_VERSION = '1.0.2';
 /* v1.0.0: Settings sliders move only on a sideways drag or a clean tap.
    On Android the native range input jumps the thumb the moment a finger lands,
    so scrolling the Settings panel changed Text Size or Master Volume (and a
@@ -77852,7 +77854,7 @@ function rrSetPhase(ph) {
     pb.textContent = pausable ? t('rr_pause') : t('rr_playing');
   }
 
-  tz.classList.remove('rr-active','rr-disabled','rr-next');
+  tz.classList.remove('rr-active','rr-disabled','rr-next','rr-wait');
   // Restore tap layer (hidden during results/playback)
   var _inner = document.getElementById('rrTapInner');
   var _fbLayer = document.getElementById('rrTapFeedback');
@@ -77866,11 +77868,11 @@ function rrSetPhase(ph) {
     if (ti) ti.textContent = '◯';
     if (tl) tl.textContent = t('rr_tap_lbl');
   } else if (ph === 'preview') {
-    if (tz) tz.classList.add('rr-disabled');
+    if (tz) tz.classList.add('rr-disabled','rr-wait');
     if (ti) ti.textContent = '♪';
     if (tl) tl.textContent = t('rr_phase_listen_lbl');
   } else if (ph === 'countin') {
-    if (tz) tz.classList.add('rr-disabled');
+    if (tz) tz.classList.add('rr-disabled','rr-wait');
     if (ti) ti.textContent = '1';
     if (tl) tl.textContent = t('rr_phase_countin_lbl');
   } else if (ph === 'tapping') {
@@ -77933,7 +77935,7 @@ function rrPause() {
     pb.textContent = t('rr_resume'); pb.style.opacity = ''; pb.style.pointerEvents = '';
   }
   var tz = document.getElementById('rrTapZone');
-  if (tz) tz.classList.add('rr-disabled');
+  if (tz) { tz.classList.remove('rr-wait'); tz.classList.add('rr-disabled'); }
 }
 
 function rrResume() {
@@ -78103,7 +78105,7 @@ function rrBeginTapping(patternAudioStart) {
   // Set internal phase + remove pointer-events block immediately so taps register
   rrPhase = 'tapping';
   var _tz = document.getElementById('rrTapZone');
-  if (_tz) _tz.classList.remove('rr-disabled');  // unblock touch events now
+  if (_tz) _tz.classList.remove('rr-disabled','rr-wait');  // unblock touch events now
   var ctx     = getAudio();
   var beatDur = rrBeatDur();
   rrPatternStart = patternAudioStart || (ctx.currentTime + 0.05);
@@ -78116,7 +78118,7 @@ function rrBeginTapping(patternAudioStart) {
     var tz = document.getElementById('rrTapZone');
     var ti = document.getElementById('rrTapIcon');
     var tl = document.getElementById('rrTapLbl');
-      if (tz) { tz.classList.remove('rr-disabled'); tz.classList.add('rr-active'); }
+      if (tz) { tz.classList.remove('rr-disabled','rr-wait'); tz.classList.add('rr-active'); }
     if (ti) { ti.textContent = '◉'; ti.style.transform = 'scale(1.15)'; ti.style.color = 'var(--accent)';
       setTimeout(function(){ if(ti){ ti.style.transform=''; ti.style.color=''; } }, 200); }
     if (tl) tl.textContent = t('rr_phase_tap_lbl');
@@ -88028,7 +88030,7 @@ function chordleRenderCard1() {
   var nb='display:flex;align-items:center;justify-content:center;flex:1 1 0;min-width:0;padding:9px 0;font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:13px;letter-spacing:-.3px;border-radius:9px;cursor:pointer;transition:all .1s;';
   var tb='width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:14px;border-radius:9px;cursor:pointer;transition:all .1s;flex-shrink:0;';
   function numBt(n) {
-    var on=chordlePNum===n;
+    var on=chordlePNum===n && !chordlePFlat;
     var dead=!on && _deadDeg[chordleGetDegree(n)];  // this degree proven absent (every guess gray)
     return '<button onclick="chordlePickNum(\''+n+'\')" style="'+nb+(dead?'opacity:.32;text-decoration:line-through;':'')+'background:'+(on?'color-mix(in srgb,var(--accent) 20%,var(--surface))':'var(--surface-2)')+';border:1.5px solid '+(on?'var(--accent)':'var(--border-soft)')+';color:'+(on?'var(--accent)':(dead?'var(--muted)':'var(--text)'))+'"'+(dead?' title="ruled out"':'')+'>'+n+'</button>';
   }
@@ -88048,6 +88050,21 @@ function chordleRenderCard1() {
   html+='<div style="display:flex;align-items:stretch;gap:5px">'
     +'<div style="display:flex;gap:3px;flex:1;min-width:0">'+min.map(numBt).join('')+'</div>'
     +modBt('+','+')+'</div>';
+  // Flat numerals live on card 1 too (v1.0.1). They used to hide behind a toggle on card 2
+  // that only appears after a numeral is picked. Once every natural numeral was struck out,
+  // the picker looked empty even though the answer sat on the flat chords (Giant Steps style
+  // lines are mostly flats), and nothing said they were still in play.
+  var _isCust=chordleDiff==='custom';
+  var _chromA=_isCust?chordleCustom.numVocab==='vhard':(chordleDiff==='hard'||chordleDiff==='vhard'||chordleDiff==='medium');
+  if (_chromA) {
+    var flatBt=function(n){
+      var on=chordlePNum===n && chordlePFlat;
+      var dead=!on && _deadDeg[chordleGetDegree('\u266d'+n)];
+      return '<button onclick="chordlePickFlat(\''+n+'\')" style="'+nb+(dead?'opacity:.32;text-decoration:line-through;':'')+'background:'+(on?'color-mix(in srgb,var(--accent) 20%,var(--surface))':'var(--surface-2)')+';border:1.5px solid '+(on?'var(--accent)':'var(--border-soft)')+';color:'+(on?'var(--accent)':(dead?'var(--muted)':'var(--text)'))+'"'+(dead?' title="ruled out"':'')+'>\u266d'+n+'</button>';
+    };
+    html+='<div style="font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:8px 0 5px 1px">FLAT</div>';
+    html+='<div style="display:flex;gap:3px">'+['II','III','IV','V','VI','VII'].map(flatBt).join('')+'</div>';
+  }
   // Confirm + extensions hint
   var isCustomA=chordleDiff==='custom';
   var qualKeyA=isCustomA?chordleCustom.qualDepth:CHORDLE_DIFF_QUAL[chordleDiff]||'7ths';
@@ -88119,6 +88136,10 @@ function chordlePickerSlide(card, animate) {
 
 function chordlePickNum(num) {
   chordlePNum=num; chordlePMod=''; chordlePQual=''; chordlePFlat=false;
+  chordleRenderCard1(); chordleRenderCard2(); chordleRenderPickerHeader(); hapticLight();
+}
+function chordlePickFlat(num) {
+  chordlePNum=num; chordlePMod=''; chordlePQual=''; chordlePFlat=true;
   chordleRenderCard1(); chordleRenderCard2(); chordleRenderPickerHeader(); hapticLight();
 }
 function chordleToggleMod(mod) {
@@ -105500,7 +105521,10 @@ const PRESET_CATS = [
       {
         // Trap 32nds — hi-hat at 32nd resolution shows the subdivision students hear in trap
         name:'Trap 32nds', nameIt:'Trap in Trentaduesimi', ts:4, dk_bpm:140, kit:'electronic', globalSub:8,
-        'hihat-c': [2,1,0,1, 2,0,1,0, 2,1,0,1, 2,0,1,0, 2,0,1,0, 2,1,0,0, 2,0,1,0, 2,1,0,1],
+        // 16th-note hat (every other 32nd step) with two 32nd rolls: a pair at the end of beat 2
+        // and a four-note run at the end of beat 4. The old row had ghost hits scattered on odd
+        // 32nd steps in no pattern, so the hat stuttered instead of rolling.
+        'hihat-c': [2,0,1,0, 1,0,1,0, 2,0,1,0, 1,0,1,1, 2,0,1,0, 1,0,1,0, 2,0,1,0, 1,1,1,1],
         'snare':   [0,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0],
         'kick':    [2,0,0,0, 0,0,0,0, 0,0,2,0, 0,0,0,0, 2,0,0,0, 2,0,0,0, 0,0,0,0, 0,0,0,0],
       },
