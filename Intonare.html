@@ -34882,6 +34882,47 @@ try {
   </div>
 </div>
 
+<style id="chordleDrawerCss">
+  /* Drawer: slides up over a fading scrim; buttons keep their DOM so state changes animate */
+  #chordlePickerOverlay { opacity:0; transition:opacity .24s ease; }
+  #chordlePickerOverlay.chp-show { opacity:1; }
+  #chordlePickerOverlay > div { transform:translateY(100%); transition:transform .34s cubic-bezier(.22,.9,.3,1); }
+  #chordlePickerOverlay.chp-show > div { transform:none; }
+  .chp-lbl { font-size:8px; color:var(--muted); letter-spacing:1.5px; padding:0 0 5px 1px; }
+  .chp-row { display:flex; gap:3px; }
+  .chp-b { display:flex; align-items:center; justify-content:center; flex:1 1 0; min-width:0; padding:9px 0;
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; letter-spacing:-.3px; border-radius:9px; cursor:pointer;
+    background:var(--surface-2); border:1.5px solid var(--border-soft); color:var(--text);
+    transition:background .18s, border-color .18s, color .18s, opacity .22s, transform .12s; -webkit-tap-highlight-color:transparent; }
+  .chp-b:active { transform:scale(.94); }
+  .chp-b.on { background:color-mix(in srgb,var(--accent) 20%,var(--surface)); border-color:var(--accent); color:var(--accent); }
+  .chp-b.dead { opacity:.32; text-decoration:line-through; color:var(--muted); }
+  .chp-chip { flex:0 0 auto; flex-direction:column; gap:2px; min-width:64px; padding:8px 10px; }
+  .chp-chip .f { font-size:13px; letter-spacing:-.3px; }
+  .chp-chip .s { font-size:9px; font-weight:600; color:var(--muted); letter-spacing:.5px; }
+  .chp-chip .s:empty { display:none; }
+  .chp-ext { display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .32s cubic-bezier(.22,.9,.3,1), opacity .22s ease; }
+  .chp-ext.open { grid-template-rows:1fr; opacity:1; }
+  .chp-ext > .chp-ext-in { overflow:hidden; min-height:0; }
+  .chp-ext-row { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:2px; }
+  .chp-in { animation:chpIn .3s cubic-bezier(.22,.9,.3,1) both; }
+  @keyframes chpIn { from { opacity:0; transform:translateY(8px) scale(.96); } to { opacity:1; transform:none; } }
+  .chp-pop { animation:chpPop .28s cubic-bezier(.2,.9,.3,1.4); }
+  @keyframes chpPop { 0% { transform:scale(.9); } 60% { transform:scale(1.06); } 100% { transform:scale(1); } }
+  .chp-conf-wrap { position:sticky; bottom:-20px; background:var(--surface); padding:12px 0 0; margin-top:6px; }
+  .chp-confirm { width:100%; border:1.5px solid transparent; border-radius:100px; padding:12px 0; font-size:11px; font-weight:700;
+    letter-spacing:2px; cursor:pointer; font-family:inherit; color:#000; background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+    transition:opacity .24s, filter .24s, transform .12s; }
+  .chp-confirm.off { opacity:.4; filter:saturate(.15) brightness(.75); cursor:default; }
+  .chp-confirm:not(.off):active { transform:scale(.98); }
+  .chp-tile-pop { animation:chpTile .34s cubic-bezier(.2,.9,.3,1.3); }
+  @keyframes chpTile { 0% { transform:scale(.78); opacity:.35; } 100% { transform:none; opacity:1; } }
+  @media (prefers-reduced-motion: reduce) {
+    #chordlePickerOverlay, #chordlePickerOverlay > div, .chp-b, .chp-ext, .chp-confirm { transition:none !important; }
+    .chp-in, .chp-pop, .chp-tile-pop { animation:none !important; }
+  }
+</style>
+
 <!-- CHORDLE PICKER SHEET — two-card sliding layout -->
 <div id="chordlePickerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:900;flex-direction:column;justify-content:flex-end;padding-bottom:calc(var(--nav-bar-h, 62px) + env(safe-area-inset-bottom))" onclick="chordleCloseSheet()">
   <div onclick="event.stopPropagation()" style="background:var(--surface);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;flex-direction:column;overflow:hidden;max-height:calc(88vh - var(--nav-bar-h, 62px))">
@@ -85338,34 +85379,28 @@ function chordleScoreRow(guessArr, ansArr) {
   }
   return res;
 }
-// --- Wordle-style "ruled out" tracking from guess history ---
-// A degree is DEAD only if it has been guessed AND every appearance scored gray ('wrong').
-// A complete chord is GRAY-PROVEN only if that exact chord string scored gray at least once.
-function chordleRuledOut() {
-  // deadDeg: degree only ever scored gray -> root absent, safe to gray numeral.
-  // deadBase: a base chord (root+quality, ignoring inversion) that, every time it was
-  //   guessed, scored rootonly(blue) or wrong(gray) and NEVER correct/present/inversion.
-  //   Those two verdicts both prove THIS exact base chord is not the answer -> safe to gray quality.
-  var degSeen={}, degNonGray={}, baseSeen={}, baseSafe={};
+// --- What a guess history PROVES about one slot (v1.0.1) ---
+// The old logic struck out a numeral when every guess of it scored gray. That is not a proof:
+// gray only says "not this chord, not this spot, and not this root at this spot". The root can
+// still be in the answer at another slot. Guess I in slot 3 against Imaj7 | bIIImaj7 | bVImaj7 |
+// bII7 | Imaj7 and it scores gray, yet I is right there at slots 1 and 5. The picker then struck
+// out a numeral the answer needs. Everything below is true for THIS slot only, by construction:
+//   gray      -> this root and this exact chord are not the answer here
+//   blue      -> the root IS right here, so every other root is out for this slot
+function chordleSlotInfo(j) {
+  var degDead={}, baseDead={}, knownDeg=null;
   (chordleGuesses||[]).forEach(function(gz){
-    (gz.chords||[]).forEach(function(ch,i){
-      if(!ch) return;
-      var sc=gz.scores[i];
-      var d=chordleGetDegree(ch);
-      degSeen[d]=true;
-      if(sc!=='wrong') degNonGray[d]=true;
-      var b=chordleBase(ch);
-      baseSeen[b]=true;
-      // a base chord stays "safe to gray" only while every appearance is rootonly/wrong
-      if(sc==='rootonly' || sc==='wrong'){ if(baseSafe[b]===undefined) baseSafe[b]=true; }
-      else { baseSafe[b]=false; }   // correct/present/inversion -> never gray this base
-    });
+    var ch=gz.chords&&gz.chords[j]; if(!ch) return;
+    var sc=gz.scores[j], d=chordleGetDegree(ch), b=chordleBase(ch);
+    if (sc==='wrong') { degDead[d]=true; baseDead[b]=true; }
+    else if (sc==='rootonly') { knownDeg=d; baseDead[b]=true; }
   });
-  var deadDeg={};
-  Object.keys(degSeen).forEach(function(d){ if(!degNonGray[d]) deadDeg[d]=true; });
-  var deadBase={};
-  Object.keys(baseSeen).forEach(function(b){ if(baseSafe[b]===true) deadBase[b]=true; });
-  return { deadDeg:deadDeg, deadBase:deadBase };
+  if (knownDeg) {
+    ['i','ii','iii','iv','v','vi','vii'].forEach(function(n){
+      [n,'♭'+n].forEach(function(d){ if (d!==knownDeg) degDead[d]=true; });
+    });
+  }
+  return { degDead:degDead, baseDead:baseDead, knownDeg:knownDeg };
 }
 
 function chordleRand(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
@@ -87506,6 +87541,18 @@ function chordleRootPositions() {
     var r=chordleGetRoot(c); if(r==='I'||r==='i')a.push(i); return a;
   },[]);
 }
+// A tile shows the numeral big and the quality small underneath ("♭VII" over "7/3"), so
+// 'IVmaj7' or '♭VImaj7/7' stay readable instead of shrinking to 7px on one line.
+function chordleTileInner(chord, size) {
+  if (!chord) return '';
+  var inv='', base=chord, ix=chord.indexOf('/');
+  if (ix>-1) { inv=chord.slice(ix); base=chord.slice(0,ix); }
+  var m=base.match(/^([♭#b]?(?:VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)°?)(.*)$/);
+  var root=m?m[1]:base, suf=(m?m[2]:'')+inv;
+  var fsR=({lg:16,md:14,sm:11,xs:9})[size]||13, fsS=({lg:10,md:9,sm:8,xs:7})[size]||9;
+  if (!suf) return '<span style="font-size:'+(fsR+1)+'px;line-height:1">'+root+'</span>';
+  return '<span style="display:flex;flex-direction:column;align-items:center;line-height:1;gap:2px"><span style="font-size:'+fsR+'px">'+root+'</span><span style="font-size:'+fsS+'px;opacity:.85;font-weight:600">'+suf+'</span></span>';
+}
 function chordleSlotEl(chord, sc, selected, isRoot, pulse, size, playIdx) {
   var l = chord?chord.length:0;
   var w = size==='lg'?58:size==='md'?48:size==='sm'?38:30;
@@ -87526,7 +87573,7 @@ function chordleSlotEl(chord, sc, selected, isRoot, pulse, size, playIdx) {
     +(isRoot?'<div style="width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.7"></div>':'')
     +'</div>'
     +'<div'+(playIdx!==undefined?' onclick="chordlePlaySlot('+playIdx+')"':'')+' style="width:'+w+'px;height:'+h+'px;border-radius:10px;border:1.5px solid '+bdr+';background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:'+fs+'px;font-weight:700;letter-spacing:-.3px;color:'+col+';box-shadow:'+shadow+';font-family:\'JetBrains Mono\',monospace;user-select:none'+(playIdx!==undefined?';cursor:pointer':'')+'">'
-    +(chord||'')+'</div></div>';
+    +chordleTileInner(chord,size)+'</div></div>';
 }
 function chordleActiveRowEl(chords, n, selSlot, pulseIdx, rootPos) {
   var sz=n<=4?'lg':n<=8?'md':n<=12?'sm':'xs';
@@ -87552,8 +87599,8 @@ function chordleActiveRowEl(chords, n, selSlot, pulseIdx, rootPos) {
       +(isRoot&&!locked?'<div style="width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.7"></div>':'')
       // no dot — locked cell color speaks for itself
       +'</div>'
-      +'<div onclick="'+(locked?'chordlePlaySlot':'chordleOpenSlot')+'('+i+')" style="width:'+w+'px;height:'+h+'px;border-radius:10px;border:1.5px solid '+bdr+';background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:'+fs+'px;font-weight:700;letter-spacing:-.3px;color:'+col+';box-shadow:'+shadow+';cursor:pointer'+';font-family:\'JetBrains Mono\',monospace;user-select:none">'
-      +(chord||'')+'</div></div>';
+      +'<div'+(i===chordleJustFilled?' class="chp-tile-pop"':'')+' onclick="'+(locked?'chordlePlaySlot':'chordleOpenSlot')+'('+i+')" style="width:'+w+'px;height:'+h+'px;border-radius:10px;border:1.5px solid '+bdr+';background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:'+fs+'px;font-weight:700;letter-spacing:-.3px;color:'+col+';box-shadow:'+shadow+';cursor:pointer'+';font-family:\'JetBrains Mono\',monospace;user-select:none">'
+      +chordleTileInner(chord,sz)+'</div></div>';
   }
   // Left accent strip only — no background fill so empty boxes stay visible
   var minH=sz==='lg'?66:sz==='md'?58:sz==='sm'?50:44;
@@ -87926,7 +87973,7 @@ var CHORDLE_QUAL_IV = {
   'm7':  [0,3,7,10],   'ø7':  [0,3,6,10],
   '°7':  [0,3,6,9],    '°':   [0,3,6],
   '+':   [0,4,8],      '7♭9': [0,4,7,10,13],
-  '7#11':[0,4,7,10],   'maj9':[0,4,7,11,14],
+  '7#11':[0,4,7,10,18],   'maj9':[0,4,7,11,14],
   'm9':  [0,3,7,10,14],'sus4':[0,5,7],
   'm7b5':[0,3,6,10],   'dim': [0,3,6],
 };
@@ -87948,10 +87995,15 @@ function chordleChordMidis(chordStr, prevMidis) {
     if (cleanR===cleanR.toLowerCase()&&cleanR!==cleanR.toUpperCase()) qual='m';
   }
   var ivs=CHORDLE_QUAL_IV[qual]||CHORDLE_QUAL_IV[''];
+  // Inversions. The slash was parsed off and thrown away, so Imaj7/3 sounded as plain Imaj7 and
+  // the bass note the player is meant to hear never moved. /3, /5 and /7 put the third, fifth or
+  // seventh in the bass: rotate the chord so that tone is lowest, the rest stacked above it.
+  var invM=chordStr.match(/\/(3|5|7)$/), invK=invM?({'3':1,'5':2,'7':3})[invM[1]]:0;
+  if (invK && ivs.length>invK) ivs=ivs.slice(invK).concat(ivs.slice(0,invK).map(function(n){return n+12;}));
   if (!prevMidis||!prevMidis.length) {
     // First chord: root in comfortable range C3–E4 (MIDI 48–64)
     var r=C4+st;
-    while (r>64) r-=12; while (r<48) r+=12;
+    while (r+ivs[0]>64) r-=12; while (r+ivs[0]<48) r+=12;   // keep the BASS note in range
     return ivs.map(function(n){return r+n;});
   }
   // Pick octave that minimizes movement from previous chord's center
@@ -88019,14 +88071,20 @@ function chordleOpenSlot(i) {
   if (chordleGameState!=='playing') return;
   if (chordleLockedSlots.includes(i)) return; // locked correct slot
   chordleSelSlot=i; chordlePNum=''; chordlePQual=''; chordlePMod=''; chordlePFlat=false; chordlePCard=1; chordlePStep='numeral';
-  chordlePRoot=''; chordlePType=null; chordlePBase='';
+  chordlePRoot=''; chordlePType=null; chordlePBase=''; chordleCardDirty=true;
+  // The history can prove the root of this slot (a blue tile). Then there is only one
+  // root left, so it is picked for you.
+  var _si=chordleSlotInfo(i);
+  if (_si.knownDeg) { chordlePFlat=_si.knownDeg.charAt(0)==='♭'; chordlePRoot=_si.knownDeg.replace('♭','').toUpperCase(); }
   chordleRender();
   chordleOpenSheet();
   hapticLight();
 }
+var chordleCloseT=0;
 function chordleOpenSheet() {
   var overlay=document.getElementById('chordlePickerOverlay');
-  if (overlay) overlay.style.display='flex';
+  clearTimeout(chordleCloseT);
+  if (overlay) { overlay.style.display='flex'; void overlay.offsetWidth; overlay.classList.add('chp-show'); }
   chordleSheetOpen=true;
   chordlePCard=1;
   chordleRenderSheet();
@@ -88034,8 +88092,11 @@ function chordleOpenSheet() {
 }
 function chordleCloseSheet() {
   var overlay=document.getElementById('chordlePickerOverlay');
-  if (overlay) overlay.style.display='none';
   chordleSheetOpen=false;
+  if (!overlay) return;
+  overlay.classList.remove('chp-show');
+  clearTimeout(chordleCloseT);
+  chordleCloseT=setTimeout(function(){ if (!chordleSheetOpen) overlay.style.display='none'; },340);
 }
 
 function chordleRenderSheet() {
@@ -88110,7 +88171,7 @@ function chordlePickBase(id) {
 }
 function chordleAfterPick() {
   chordleSyncPick();
-  chordleRenderCard1(); chordleRenderPickerHeader(); hapticLight();
+  chordleUpdateCard(); chordleRenderPickerHeader(); hapticLight();
 }
 // The drawer plays the QUESTION, never your pick. Hearing your own selection would let you test
 // guesses by ear until one sounds right. Same rule as Diadle: ▶ plays the answer chord for the
@@ -88127,67 +88188,96 @@ function chordleRenderPickerHeader() {
   var n=chordleProg?chordleProg.chords.length:4;
   var built=chordleBuiltNow();
   var part=built||(chordlePRoot?(chordlePFlat?'♭':'')+chordlePRoot+' …':'');
-  var chip=part?'<div style="background:color-mix(in srgb,var(--accent) 18%,transparent);border:1.5px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:8px;padding:2px 10px;font-size:13px;font-weight:700;letter-spacing:-.3px;font-family:\'JetBrains Mono\',monospace">'+part+'</div>':'';
+  var chip=part?'<div class="chp-pop" style="background:color-mix(in srgb,var(--accent) 18%,transparent);border:1.5px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:8px;padding:2px 10px;font-size:13px;font-weight:700;letter-spacing:-.3px;font-family:\'JetBrains Mono\',monospace">'+part+'</div>':'';
   var ear='<button onclick="chordlePlaySlot('+chordleSelSlot+')" title="hear chord" aria-label="Hear this chord" style="background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:100px;width:34px;height:28px;font-size:12px;cursor:pointer;font-family:inherit">▶</button>'
     +'<button onclick="chordlePlayRoot()" title="hear root" style="background:transparent;border:1px solid var(--border-soft);color:var(--muted);border-radius:100px;padding:0 10px;height:28px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit">ROOT</button>';
   h.innerHTML='<span style="font-size:10px;color:var(--muted);letter-spacing:1.5px">SLOT '+(chordleSelSlot+1)+' / '+n+'</span>'
     +chip+ear+'<div style="flex:1"></div>'
     +'<button onclick="chordleCloseSheet()" style="background:transparent;border:1px solid var(--border-soft);color:var(--text-dim);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit">✕</button>';
 }
+var chordleCardDirty=true, chordleJustFilled=-1;
+function chordleFamVals(F) {
+  var list=chordleQualListNow();
+  return F.vals.filter(function(v){ for (var i=0;i<list.length;i++) if (list[i][0]===v) return true; return false; });
+}
+function chordleQualEntry(v) {
+  var list=chordleQualListNow();
+  for (var i=0;i<list.length;i++) if (list[i][0]===v) return list[i];
+  return null;
+}
+function chordleFullName(val) {
+  var p=chordleTypeParts(chordlePRoot,chordlePFlat,val);
+  return p.num+p.mod+p.qual;
+}
+// Build the drawer once per open. After that every pick only changes classes and text, so
+// buttons ease between states instead of being thrown away and redrawn.
+function chordleBuildCard(card) {
+  var lbl=function(txt,top){return '<div class="chp-lbl"'+(top?' style="padding-top:12px"':'')+'>'+txt+'</div>';};
+  var html=lbl(t('chordle_root'),false)+'<div class="chp-row">'
+    +['I','II','III','IV','V','VI','VII'].map(function(n){return '<button class="chp-b" data-root="'+n+'" data-flat="0" onclick="chordlePickRoot(this.dataset.root,false)">'+n+'</button>';}).join('')+'</div>';
+  if (chordleChromaticNow()) {
+    html+=lbl(t('chordle_flat'),true)+'<div class="chp-row">'
+      +['II','III','IV','V','VI','VII'].map(function(n){return '<button class="chp-b" data-root="'+n+'" data-flat="1" onclick="chordlePickRoot(this.dataset.root,true)">♭'+n+'</button>';}).join('')+'</div>';
+  }
+  var baseNames={major:t('chordle_major'),minor:t('chordle_minor'),dim:'dim',aug:'aug',sus:'sus'};
+  var fams=CHORDLE_FAMILIES.filter(function(F){return chordleFamVals(F).length>0;});
+  html+=lbl(t('chordle_quality'),true)+'<div class="chp-row">'
+    +fams.map(function(F){return '<button class="chp-b" data-fam="'+F.id+'" onclick="chordlePickBase(this.dataset.fam)">'+baseNames[F.id]+'</button>';}).join('')+'</div>';
+  html+='<div class="chp-ext" id="chpExtWrap"><div class="chp-ext-in"><div class="chp-lbl" style="padding-top:12px">'+t('chordle_ext')+'</div><div class="chp-ext-row" id="chpExtRow"></div></div></div>';
+  html+='<div class="chp-conf-wrap"><button class="chp-confirm off" id="chpConfirm">CONFIRM</button></div>';
+  card.innerHTML=html;
+  card.dataset.built='1';
+}
+function chordleUpdateCard() {
+  var card=document.getElementById('chordleCard1'); if (!card||card.dataset.built!=='1') return;
+  var info=chordleSlotInfo(chordleSelSlot), deadDeg=info.degDead, deadBase=info.baseDead;
+  var setState=function(el,on,dead){
+    var was=el.classList.contains('on');
+    el.classList.toggle('on',!!on); el.classList.toggle('dead',!!dead);
+    if (dead) el.title='ruled out'; else el.removeAttribute('title');
+    if (on&&!was) { el.classList.remove('chp-pop'); void el.offsetWidth; el.classList.add('chp-pop'); }
+  };
+  card.querySelectorAll('[data-root]').forEach(function(b){
+    var flat=b.dataset.flat==='1', on=chordlePRoot===b.dataset.root&&chordlePFlat===flat;
+    setState(b,on,!on&&deadDeg[chordleGetDegree((flat?'♭':'')+b.dataset.root)]);
+  });
+  var curFam=null;
+  card.querySelectorAll('[data-fam]').forEach(function(b){
+    var F=null; CHORDLE_FAMILIES.forEach(function(x){ if(x.id===b.dataset.fam) F=x; });
+    var on=chordlePBase===F.id; if (on) curFam=F;
+    var dead=!on&&chordlePRoot&&chordleFamVals(F).every(function(v){return deadBase[chordleFullName(v)];});
+    setState(b,on,dead);
+  });
+  var wrap=card.querySelector('#chpExtWrap'), row=card.querySelector('#chpExtRow');
+  var vals=curFam?chordleFamVals(curFam):[];
+  var open=vals.length>1;
+  if (open) {
+    if (row.dataset.shown!==curFam.id) {
+      row.dataset.shown=curFam.id;
+      row.innerHTML=vals.map(function(v,i){
+        return '<button class="chp-b chp-chip chp-in" style="animation-delay:'+(i*35)+'ms" data-val="'+v+'" onclick="chordlePickType(this.dataset.val)"><span class="f"></span><span class="s"></span></button>';
+      }).join('');
+    }
+    row.querySelectorAll('.chp-chip').forEach(function(b){
+      var v=b.dataset.val, e=chordleQualEntry(v), on=chordlePType===v;
+      var shown=(v===curFam.triad)?t('chordle_triad'):e[1];
+      var full=chordlePRoot?chordleFullName(v):null;
+      b.querySelector('.f').textContent=full||shown;
+      b.querySelector('.s').textContent=full?shown:'';
+      setState(b,on,!on&&full&&deadBase[full]);
+    });
+  } else if (row) { row.dataset.shown=''; }
+  wrap.classList.toggle('open',open);
+  var ok=!!chordlePNum, cb=card.querySelector('#chpConfirm'), wasOk=!cb.classList.contains('off');
+  cb.classList.toggle('off',!ok);
+  cb.textContent=ok?'CONFIRM  '+chordleBuiltNow():'CONFIRM';
+  cb.onclick=ok?function(){ chordlePickerConfirm(true); }:null;
+  if (ok&&!wasOk) { cb.classList.remove('chp-pop'); void cb.offsetWidth; cb.classList.add('chp-pop'); }
+}
 function chordleRenderCard1() {
   var card=document.getElementById('chordleCard1'); if (!card) return;
-  var ruled=chordleRuledOut(), deadDeg=ruled.deadDeg, deadBase=ruled.deadBase;
-  var lbl=function(txt,top){return '<div style="font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:'+(top?'12px':'0')+' 0 5px 1px">'+txt+'</div>';};
-  var rb='display:flex;align-items:center;justify-content:center;flex:1 1 0;min-width:0;padding:9px 0;font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:13px;letter-spacing:-.3px;border-radius:9px;cursor:pointer;transition:all .1s;';
-  var onS='background:color-mix(in srgb,var(--accent) 20%,var(--surface));border:1.5px solid var(--accent);color:var(--accent)';
-  var offS=function(dead){return 'background:var(--surface-2);border:1.5px solid var(--border-soft);color:'+(dead?'var(--muted)':'var(--text)');};
-  var rootBt=function(n,flat){
-    var on=chordlePRoot===n&&chordlePFlat===flat;
-    var dead=!on&&deadDeg[chordleGetDegree((flat?'♭':'')+n)];
-    return '<button onclick="chordlePickRoot(\''+n+'\','+(flat?'true':'false')+')" style="'+rb+(dead?'opacity:.32;text-decoration:line-through;':'')+(on?onS:offS(dead))+'"'+(dead?' title="ruled out"':'')+'>'+(flat?'♭':'')+n+'</button>';
-  };
-  var html=lbl(t('chordle_root'),false);
-  html+='<div style="display:flex;gap:3px">'+['I','II','III','IV','V','VI','VII'].map(function(n){return rootBt(n,false);}).join('')+'</div>';
-  if (chordleChromaticNow()) {
-    html+=lbl(t('chordle_flat'),true);
-    html+='<div style="display:flex;gap:3px">'+['II','III','IV','V','VI','VII'].map(function(n){return rootBt(n,true);}).join('')+'</div>';
-  }
-  // Quality first, then the extensions that belong to it. Names update with the root you picked.
-  var list=chordleQualListNow();
-  var have=function(v){for(var i=0;i<list.length;i++) if(list[i][0]===v) return list[i];return null;};
-  var famNow=function(F){return F.vals.filter(function(v){return have(v);});};
-  var fams=CHORDLE_FAMILIES.filter(function(F){return famNow(F).length>0;});
-  var fullOf=function(val){var p=chordleTypeParts(chordlePRoot,chordlePFlat,val);return p.num+p.mod+p.qual;};
-  var baseNames={major:t('chordle_major'),minor:t('chordle_minor'),dim:'dim',aug:'aug',sus:'sus'};
-  var baseBt=function(F){
-    var on=chordlePBase===F.id;
-    var vals=famNow(F);
-    var dead=!on&&chordlePRoot&&vals.every(function(v){return deadBase[fullOf(v)];});
-    return '<button onclick="chordlePickBase(\''+F.id+'\')" style="'+rb+(dead?'opacity:.32;text-decoration:line-through;':'')+(on?onS:offS(dead))+'"'+(dead?' title="ruled out"':'')+'>'+baseNames[F.id]+'</button>';
-  };
-  html+=lbl(t('chordle_quality'),true)+'<div style="display:flex;gap:3px">'+fams.map(baseBt).join('')+'</div>';
-  var curFam=null; fams.forEach(function(F){ if(F.id===chordlePBase) curFam=F; });
-  if (curFam) {
-    var vals=famNow(curFam);
-    if (vals.length>1) {
-      var extBt=function(val){
-        var e=have(val), on=chordlePType===val;
-        var shown=(val===curFam.triad)?t('chordle_triad'):e[1];
-        var full=chordlePRoot?fullOf(val):null;
-        var dead=!on&&full&&deadBase[full];
-        return '<button onclick="chordlePickType(\''+val+'\')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:64px;padding:8px 10px;border-radius:9px;cursor:pointer;font-family:\'JetBrains Mono\',monospace;transition:all .1s;'+(dead?'opacity:.32;text-decoration:line-through;':'')+(on?onS:offS(dead))+'"'+(dead?' title="ruled out"':'')+'>'
-          +(full?'<span style="font-size:13px;font-weight:700;letter-spacing:-.3px">'+full+'</span><span style="font-size:9px;color:var(--muted);letter-spacing:.5px">'+shown+'</span>'
-                :'<span style="font-size:11px;font-weight:700">'+shown+'</span>')
-          +'</button>';
-      };
-      html+=lbl(t('chordle_ext'),true)+'<div style="display:flex;flex-wrap:wrap;gap:6px">'+vals.map(extBt).join('')+'</div>';
-    }
-  }
-  // Confirm stays pinned to the bottom of the sheet so the longest type list never pushes it off screen.
-  var ok=!!chordlePNum;
-  html+='<div style="position:sticky;bottom:-20px;background:var(--surface);padding:12px 0 0;margin-top:6px">'
-    +'<button '+(ok?'onclick="chordlePickerConfirm(true)"':'')+' style="width:100%;background:'+(ok?'linear-gradient(135deg,var(--accent),var(--accent-soft))':'var(--surface-2)')+';color:'+(ok?'#000':'var(--muted)')+';border:1.5px solid '+(ok?'transparent':'var(--border-soft)')+';border-radius:100px;padding:12px 0;font-size:11px;font-weight:700;letter-spacing:2px;cursor:'+(ok?'pointer':'default')+';font-family:inherit">'+(ok?'CONFIRM  '+chordleBuiltNow():'CONFIRM')+'</button></div>';
-  card.innerHTML=html;
+  if (chordleCardDirty||card.dataset.built!=='1') { chordleBuildCard(card); chordleCardDirty=false; }
+  chordleUpdateCard();
 }
 // Old two-card entry points. Nothing slides any more; these stay so stray callers do not throw.
 function chordleRenderCard2() {}
@@ -88199,8 +88289,9 @@ function chordlePickerConfirm(fromCard2) {
   var chord=chordleBuild(numStr,qual,'');
   var isCustom=chordleDiff==='custom';
   var invOn=isCustom?chordleCustom.inversions:false;
-  if (invOn){ chordlePQual=qual; chordlePStep='inversion'; chordleSheetInversion(); return; }
+  if (invOn){ chordlePQual=qual; chordlePStep='inversion'; chordleCardDirty=true; chordleSheetInversion(); return; }
   chordleCur[chordleSelSlot]=chord;
+  chordleJustFilled=chordleSelSlot; setTimeout(function(){ chordleJustFilled=-1; },450);
   chordleCloseSheet();
   chordlePNum=''; chordlePQual=''; chordlePMod=''; chordlePFlat=false; chordlePCard=1; chordlePStep='numeral';
   chordleRender(); hapticLight();
@@ -88224,6 +88315,7 @@ function chordlePickInv(suf) {
   var numStr=(chordlePFlat?'♭':'')+chordlePNum+chordlePMod;
   var chord=chordleBuild(numStr,chordlePQual,suf);
   chordleCur[chordleSelSlot]=chord;
+  chordleJustFilled=chordleSelSlot; setTimeout(function(){ chordleJustFilled=-1; },450);
   chordleCloseSheet();
   chordlePNum=''; chordlePQual=''; chordlePMod=''; chordlePFlat=false; chordlePCard=1; chordlePStep='numeral';
   chordleRender(); hapticLight();
