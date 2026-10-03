@@ -38,6 +38,19 @@ A human-readable record of what changed, when,
   is highlighted, the header shows the slot and your pick on one line, and a
   placed note pulses into its tile. The "natural / altered" captions and the
   "tap a degree to hear its name" line are gone, since a tap places the note.
+- Drums, accuracy pass over all 78 presets and the fills. Trap and Trap 32nds
+  had the snare on 2 and 4; trap at 140 is half-time, so the snare now sits
+  alone on beat 3 (the kick that shared that beat moved off it). UK Garage had
+  its snare on the "+" of 2 and the "a" of 3; 2-step puts it on 2 and 4, at
+  128 BPM with a heavier swing, and the kick is now a syncopated figure instead
+  of one that landed on the backbeat. 8th Rock had the kick on beats 2 and 4
+  under the snare; it now plays 1, 3 and the "and" of 3. Basic House had its
+  first open hat a sixteenth late, on the "a" of 2; it is now on the "and".
+  The fill called "Porcaro - Rosanna" was never a Rosanna fill, so it is now
+  "Shuffle Fill". Copeland Style and Beauford Style stay, and their notes say
+  they are style sketches and not transcriptions. The Rosanna Groove note
+  described an older triplet version; it now matches the swung-sixteenth
+  pattern that is actually in the preset.
 - Chordle, ruled-out marks: a numeral was struck out when every guess of it
   scored gray, but gray only means wrong for that spot, so the true answer
   could get struck out. The marks now follow what each slot really proves. If
