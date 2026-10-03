@@ -11,10 +11,11 @@ A human-readable record of what changed, when,
   note instead of the session. Opening the Piano or Rhodes tab also starts a
   clean path every time.
 - Chordle, picker: one screen instead of two swipe cards. Pick a root (I to
-  VII, plus a flat row on Medium and up), then pick a type, then confirm. The
-  case of the numeral follows the type, so there is no separate major row and
-  minor row, and every flat chord can be minor. Types are grouped as triads
-  and sevenths, each button shows the exact chord it will enter, chords you
+  VII, plus a flat row on Medium and up), pick a quality (major, minor, dim,
+  aug, sus), then confirm. The extensions under it change with the quality:
+  minor offers m7 and m9, major offers 7, maj7 and the rest. The case of the
+  numeral follows the quality, so there is no separate major row and minor
+  row, and every flat chord can be minor. Each button shows the exact chord it will enter, chords you
   have ruled out are struck through. Before, the flat chords hid behind a
   toggle that only appeared after you picked a numeral, so a flat-heavy answer
   looked like the picker had run out of options.
