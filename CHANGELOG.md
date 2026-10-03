@@ -24,6 +24,19 @@ A human-readable record of what changed, when,
   ROOT button for the tonic alone. Tapping a guessed chord, or a green locked
   one, plays the answer for that spot too. It never plays your own pick, so you
   cannot guess by ear. You no longer have to play the whole line every time.
+- Chordle, drawer feel: the drawer slides up and fades in instead of popping.
+  Buttons stay in place and change state, extension chips ease in when you
+  change the quality, the chosen chip and the confirm button pop, and a chord
+  you place pulses into its tile. Tiles show the numeral large with the suffix
+  small underneath, so long names like bIImaj7 or bVII7 fit on small phones.
+  Phones set to reduce motion get none of it.
+- Chordle, ruled-out marks: a numeral was struck out when every guess of it
+  scored gray, but gray only means wrong for that spot, so the true answer
+  could get struck out. The marks now follow what each slot really proves. If
+  a slot shows the right root with the wrong quality, the drawer opens with
+  that root already chosen.
+- Chordle, sound: inversions (/3, /5, /7) now put the right note in the bass,
+  and 7#11 now plays its #11.
 - Chordle, sound: minor chords written as a lowercase numeral (ii, iii, iv,
   vi, i) played as major chords, so the chord you heard did not match the
   numeral on screen. They now play as minor. The flat ii chord also played on
