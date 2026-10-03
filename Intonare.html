@@ -104289,10 +104289,13 @@ const PRESET_CATS = [
         'kick':    [2,0,0,2, 2,0,0,0],
       },
       {
+        // Kick on 1, 3 and the "and" of 3, the standard second rock beat in drum
+        // method books. The old kick sat on beats 2 and 4 as well, which is where
+        // the snare is, so the backbeat was a kick-and-snare thud instead of a snare.
         name:'8th Rock', nameIt:'Rock in Ottavi', ts:4, dk_bpm:110, kit:'standard', globalSub:2,
         'hihat-c': [2,2,2,2, 2,2,2,2],
         'snare':   [0,0,2,0, 0,0,2,0],
-        'kick':    [2,0,2,0, 0,2,2,0],
+        'kick':    [2,0,0,0, 2,2,0,0],
       },
       {
         name:'Half-Time',       nameIt:'Mezza Battuta', ts:4, dk_bpm:90, kit:'standard',
@@ -104422,22 +104425,21 @@ const PRESET_CATS = [
         'crash':   [2,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
       },
       {
-        // ROSANNA GROOVE. Jeff Porcaro's half-time shuffle (Toto, 1982), which
-        // he took from the Purdie shuffle. It is triplet music, so it now lives
-        // on the triplet grid.
+        // ROSANNA GROOVE. Jeff Porcaro's half-time shuffle (Toto, 1982), built
+        // from the Purdie shuffle, Bonham's "Fool in the Rain" and the Bo Diddley
+        // beat, with ghost notes throughout.
+        //   https://www.musicradar.com/artists/porcaro-makes-the-whole-process-look-effortless-and-easy-we-can-bet-that-this-didnt-happen-by-accident-or-overnight-exploring-the-genius-of-jeff-porcaros-rosanna-shuffle
+        //     (hi-hat in sixteenths that shuffle, "as though it were a 12/8 or
+        //      triplet feel", an accent on each eighth; snare ghosts on the second
+        //      sixteenth of each pair; counted at 88 with the backbeat on 2 and 4,
+        //      or at 176 with it on 3; kick syncopated, from the Bo Diddley pattern)
         //
-        // It used to be a 16th grid with swing:55, which cannot work. The swing
-        // engine stretches adjacent PAIRS of steps inside a beat, so four
-        // sixteenths become long-short-long-short. That is still four notes per
-        // beat. A shuffle has three. No slider value turns one into the other,
-        // and 55% is a 1.45:1 ratio where a shuffle wants 2:1 anyway.
-        //
-        // trackSub 3 puts every voice on real triplet eighths. Snare ghosts sit
-        // on the middle triplet of each beat with the backbeat on 3, plus the
-        // lead-in ghost on the last triplet of beat 2 that makes the backbeat
-        // land the way it does on the record. Pedal hat on 2 and 4.
-        // swing is dropped: the scheduler skips swing on any track that carries
-        // its own trackSub, so the value was inert as well as wrong.
+        // So it is a SWUNG SIXTEENTH grid, not a triplet-eighth one, and swing:100
+        // is the 2:1 setting that gives the triplet feel to each pair of sixteenths.
+        // (An earlier version moved it to trackSub 3 on the theory that a shuffle
+        // has three notes to a beat. The record has four, swung, so that was undone
+        // in v0.204.7.) Tempo and kick follow the transcription restored in
+        // v0.204.5 and v0.204.6, not the database figure.
         name:'Rosanna Groove', nameIt:'Groove Rosanna', ts:4, dk_bpm:83, kit:'standard',
         barCount:2, swing:100,
         // Counted with the backbeat on 2 and 4, not the half-time 3, so the
@@ -105580,7 +105582,9 @@ const PRESET_CATS = [
         'kick':    [2,0,0,0, 2,0,0,0, 2,0,0,0, 2,0,0,0],
         'snare':   [0,0,0,0, 2,0,0,0, 0,0,0,0, 2,0,0,0],
         'hihat-c': [2,0,2,0, 2,0,2,0, 2,0,2,0, 2,0,2,0],
-        'hihat-o': [0,0,0,0, 0,0,0,2, 0,0,0,0, 0,0,2,0],
+        // Open hat on the "and" of 2 and the "and" of 4. The first one sat on the
+        // "a" of 2, a sixteenth late, the same miscount Tech House had.
+        'hihat-o': [0,0,0,0, 0,0,2,0, 0,0,0,0, 0,0,2,0],
         'shaker':  [0,2,0,2, 0,2,0,2, 0,2,0,2, 0,2,0,2],
       },
       {
@@ -105665,10 +105669,14 @@ const PRESET_CATS = [
         'shaker':  [1,1,2,2, 1,1,2,2, 1,1,2,2, 1,1,2,2],
       },
       {
+        // Trap at 140 is half-time: ONE snare per bar, on beat 3. The old snare was
+        // on 2 and 4, which at this tempo is a double-time backbeat and sounds like
+        // fast pop. The kick that sat on beat 3 moved off it so the snare stands alone.
+        //   https://isolate.audio/articles/trap-drum-patterns ("Snare on beat 3")
         name:'Trap', nameIt:'Trap', ts:4, dk_bpm:140, kit:'electronic',
         'hihat-c': [2,1,2,2, 1,2,2,1, 2,2,1,2, 2,1,2,2],
-        'snare':   [0,0,0,0, 2,0,0,0, 0,0,0,0, 2,0,0,0],
-        'kick':    [2,0,0,0, 0,2,0,0, 2,0,2,0, 0,0,0,0],
+        'snare':   [0,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0],
+        'kick':    [2,0,0,0, 0,2,0,0, 0,0,2,0, 0,0,0,0],
       },
       {
         // Trap 32nds — hi-hat at 32nd resolution shows the subdivision students hear in trap
@@ -105677,8 +105685,10 @@ const PRESET_CATS = [
         // and a four-note run at the end of beat 4. The old row had ghost hits scattered on odd
         // 32nd steps in no pattern, so the hat stuttered instead of rolling.
         'hihat-c': [2,0,1,0, 1,0,1,0, 2,0,1,0, 1,0,1,1, 2,0,1,0, 1,0,1,0, 2,0,1,0, 1,1,1,1],
-        'snare':   [0,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0],
-        'kick':    [2,0,0,0, 0,0,0,0, 0,0,2,0, 0,0,0,0, 2,0,0,0, 2,0,0,0, 0,0,0,0, 0,0,0,0],
+        // Half-time like Trap above: one snare, on beat 3 (32nd step 16). Kick is the
+        // same three hits as Trap, written on this finer grid (steps 0, 10, 20).
+        'snare':   [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+        'kick':    [2,0,0,0, 0,0,0,0, 0,0,2,0, 0,0,0,0, 0,0,0,0, 2,0,0,0, 0,0,0,0, 0,0,0,0],
       },
       {
         name:'Breakbeat', nameIt:'Breakbeat', ts:4, dk_bpm:120, kit:'electronic', barCount:2,
@@ -105699,10 +105709,19 @@ const PRESET_CATS = [
                     2,0,0,0, 0,0,0,2, 2,0,0,0, 0,0,0,0],
       },
       {
-        name:'UK Garage', nameIt:'UK Garage', ts:4, dk_bpm:132, kit:'electronic', swing:40,
+        // 2-STEP GARAGE. Snare on 2 and 4 ("the snare pattern is much more simple
+        // than the kick, hitting on the second and fourth beats"), a kick that is
+        // syncopated and does not land on every beat, swung hats. The old snare sat
+        // on the "+" of 2 and the "a" of 3, which is not where any source puts it.
+        //   https://www.attackmagazine.com/technique/beat-dissected/rolling-2-step-garage/
+        //     (122-128 BPM, swing 60-65%)
+        //   https://theproducerschool.com/blogs/featured-blogs/how-to-program-uk-garage-drums-complete-guide-for-producers
+        // The exact kick steps are not given by either source, so the kick is a
+        // typical syncopated figure, not a transcription.
+        name:'UK Garage', nameIt:'UK Garage', ts:4, dk_bpm:128, kit:'electronic', swing:70,
         'hihat-c': [2,1,2,1, 2,1,2,1, 2,1,2,1, 2,1,2,1],
-        'snare':   [0,0,0,0, 0,0,2,0, 0,0,0,2, 0,0,0,0],
-        'kick':    [2,0,0,0, 2,0,0,0, 0,0,2,0, 0,2,0,0],
+        'snare':   [0,0,0,0, 2,0,0,0, 0,0,0,0, 2,0,0,0],
+        'kick':    [2,0,0,0, 0,0,2,0, 0,0,2,0, 0,0,0,0],
       },
     ]
   },
@@ -105784,11 +105803,13 @@ const PRESET_CATS = [
         'kick':   [0,0,2,0, 0,2,0,0, 2,0,0,0, 0,0,0,0],
       },
       {
-        // Jeff Porcaro, Rosanna: the ghost-note half-time shuffle fill. Same fix
-        // as the Rosanna Groove preset. It was a 16th grid with swing:55, which
-        // cannot produce three notes to a beat, so it never shuffled. Now on
-        // trackSub 3 with the original hits snapped to the nearest triplet.
-        name:'Porcaro – Rosanna', nameIt:'Porcaro – Rosanna', ts:4, dk_bpm:83, kit:'standard',
+        // HALF-TIME SHUFFLE FILL. A generic ghost-note fill on the triplet grid,
+        // ending on the floor tom. It was labeled "Porcaro – Rosanna", which it
+        // never was: Rosanna's famous part is the groove (see Rosanna Groove in
+        // ROCK / POP, built on swung sixteenths from the MusicRadar and Wikipedia
+        // accounts), not a fill, and nothing reachable transcribes a fill from it.
+        // The name now says what the pattern is.
+        name:'Shuffle Fill', nameIt:'Fill Shuffle', ts:4, dk_bpm:90, kit:'standard',
         trackSub: {'snare':3, 'floor':3, 'kick':3, 'hihat-c':3},
         'snare':  [0,1,0, 2,1,1, 0,2,1, 0,1,0],
         'floor':  [0,0,0, 0,0,0, 0,0,0, 0,2,0],
@@ -105796,7 +105817,13 @@ const PRESET_CATS = [
         'hihat-c':[2,0,0, 2,0,0, 2,0,0, 0,0,0],
       },
       {
-        // Stewart Copeland: syncopated hi-hat/snare Police-style
+        // A STYLE SKETCH, not a transcription of any Police track. Copeland's
+        // documented habits are what is here: busy sixteenth-note hi-hat
+        // embellishment, cross-stick instead of a full snare, a sparse kick.
+        // For real parts: Roxanne keeps quarter-note hat accents with the kick
+        // under the snare on 2 and nothing on 3 and 4; Walking on the Moon puts
+        // the kick on 2 and 4 (musicradar.com/news/how-to-play-drums-like-stewart-copeland).
+        // Neither source gives the full bar step by step, so neither is built.
         name:'Copeland Style', nameIt:'Stile Copeland', ts:4, dk_bpm:132, kit:'standard',
         'hihat-c':[2,0,1,2, 0,2,1,0, 2,1,0,2, 1,0,2,0],
         'snare':  [0,0,0,0, 2,0,2,0, 0,2,0,0, 2,0,0,2],
@@ -105821,7 +105848,8 @@ const PRESET_CATS = [
                    0,0,0,0, 2,0,0,0, 0,0,0,0, 2,0,0,0],
       },
       {
-        // Carter Beauford style: dense polyrhythmic DMB-era fill over 2 bars
+        // Carter Beauford style: dense polyrhythmic DMB-era fill over 2 bars.
+        // A STYLE SKETCH, not a transcription of a Dave Matthews Band record.
         // Bar 1: sparse setup — toms enter gradually | Bar 2: full density payoff
         name:'Beauford Style', nameIt:'Stile Beauford', ts:4, dk_bpm:108, kit:'standard', barCount:2,
         'tom-hi': [3,0,0,0, 0,0,0,0, 3,0,0,3, 0,0,0,0,
