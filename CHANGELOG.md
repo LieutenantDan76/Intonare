@@ -2,21 +2,7 @@
 
 A human-readable record of what changed, when,
 
-## v1.0.2: Chordle flats on the first card, a cleaner Trap 32nds, clearer Rhythm Reading wait
-
-- Chordle: the flat chords (♭II, ♭III, ♭IV, ♭V, ♭VI, ♭VII) now have their own
-  row on the first card of the picker. Before, they sat behind a toggle on the
-  second card that only shows after you pick a numeral. On a flat-heavy line
-  every natural numeral got struck out, which looked like the picker had run
-  out of options. Flats you have ruled out get struck out the same way.
-- Drums: Trap 32nds had hi-hat hits scattered on odd 32nd steps in no pattern,
-  which sounded like a stutter. It is now a steady 16th-note hat with a pair of
-  32nds at the end of beat 2 and a four-note roll at the end of beat 4.
-- Rhythm Reading: during the listen phase and the count-in the tap box was
-  dimmed like a disabled control. It now stays bright and still ignores taps,
-  so it reads as "wait" and not "broken". Pausing still dims it.
-
-## v1.0.1: Piano that recovers, fairer rhythm grading, quiz fixes
+## v1.0.1: Piano that recovers, a rebuilt Chordle picker, fairer rhythm grading, quiz fixes
 
 - Piano and Rhodes: if the shared sound path ever picked up bad audio data,
   both went silent for the rest of the session while the organ kept working,
@@ -24,12 +10,35 @@ A human-readable record of what changed, when,
   itself while you play and rebuilds when it finds the fault, so you lose one
   note instead of the session. Opening the Piano or Rhodes tab also starts a
   clean path every time.
+- Chordle, picker: one screen instead of two swipe cards. Pick a root (I to
+  VII, plus a flat row on Medium and up), then pick a type, then confirm. The
+  case of the numeral follows the type, so there is no separate major row and
+  minor row, and every flat chord can be minor. Types are grouped as triads
+  and sevenths, each button shows the exact chord it will enter, chords you
+  have ruled out are struck through, and the chord plays when you pick it.
+  Before, the flat chords hid behind a toggle that only appeared after you
+  picked a numeral, so a flat-heavy answer looked like the picker had run out
+  of options.
+- Chordle, previews: tap a guessed chord, or a green locked one, to hear what
+  the answer has in that spot, led by a short tonic note. You no longer have
+  to play the whole line every time.
+- Chordle, sound: minor chords written as a lowercase numeral (ii, iii, iv,
+  vi, i) played as major chords, so the chord you heard did not match the
+  numeral on screen. They now play as minor. The flat ii chord also played on
+  the wrong root. Both are fixed.
+- Chordle, custom games: the random line generator could build chords the
+  picker could not spell (iim, iiim, vii°°, vii°ø7), which made some lines
+  impossible to win. It now spells them the way the picker does, and Medium has
+  a half-diminished seventh type.
 - Rhythm Reading: a player who taps a little early or late all the way
   through no longer gets red notes for notes they hit. The grader used to
   decide which tap belonged to which note before it allowed for that lean, so
   on fast notes a tap could be handed to the neighbor. It now allows for the
   lean first. A note you really skip still shows one red. Taps that land
   inside a rest are judged with the same allowance.
+- Rhythm Reading: during the listen phase and the count-in the tap box was
+  dimmed like a disabled control. It now stays bright and still ignores taps,
+  so it reads as "wait" and not "broken". Pausing still dims it.
 - Music Quiz: on some screen widths the correct answer card spilled its text
   out of the box when you answered. The card keeps the same text area before
   and after the reveal, and the text size is checked again once the fonts load.
@@ -37,9 +46,9 @@ A human-readable record of what changed, when,
   minor, because the fifth and seventh chords are only major and diminished
   there. The explanation reads "Degree 5 of D harmonic minor is a major
   triad." The Italian text says the same.
-- Chordle: on Medium and Hard, the picker shows an ADD QUALITY button on the
-  first card. It takes you to maj7, m7, 7 and the rest, which used to sit
-  behind a swipe with a faint hint.
+- Drums: Trap 32nds had hi-hat hits scattered on odd 32nd steps in no pattern,
+  which sounded like a stutter. It is now a steady 16th-note hat with a pair of
+  32nds at the end of beat 2 and a four-note roll at the end of beat 4.
 - Drums: the moving step highlight no longer searches the whole screen on
   every step, which should keep fast patterns like Trap 32nds smooth on
   slower phones.
