@@ -36,7 +36,8 @@ A human-readable record of what changed, when,
   When you submit a guess, its tiles flip over one after another. Diadle's
   drawer got the same treatment: its degree buttons ease in, your current pick
   is highlighted, the header shows the slot and your pick on one line, and a
-  placed note pulses into its tile.
+  placed note pulses into its tile. The "natural / altered" captions and the
+  "tap a degree to hear its name" line are gone, since a tap places the note.
 - Chordle, ruled-out marks: a numeral was struck out when every guess of it
   scored gray, but gray only means wrong for that spot, so the true answer
   could get struck out. The marks now follow what each slot really proves. If
