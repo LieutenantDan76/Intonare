@@ -34884,10 +34884,11 @@ try {
 
 <style id="chordleDrawerCss">
   /* Drawer: slides up over a fading scrim; buttons keep their DOM so state changes animate */
-  #chordlePickerOverlay { opacity:0; transition:opacity .24s ease; }
-  #chordlePickerOverlay.chp-show { opacity:1; }
-  #chordlePickerOverlay > div { transform:translateY(100%); transition:transform .34s cubic-bezier(.22,.9,.3,1); }
-  #chordlePickerOverlay.chp-show > div { transform:none; }
+  #chordlePickerOverlay, #diadlePickerOverlay { opacity:0; transition:opacity .24s ease; padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); }
+  #chordlePickerOverlay.chp-show, #diadlePickerOverlay.chp-show { opacity:1; }
+  #chordlePickerOverlay > div, #diadlePickerOverlay > div { transform:translateY(100%); transition:transform .34s cubic-bezier(.22,.9,.3,1); will-change:transform; }
+  #chordlePickerOverlay.chp-show > div, #diadlePickerOverlay.chp-show > div { transform:none; }
+  .chp-grab { touch-action:none; cursor:grab; }
   .chp-lbl { font-size:8px; color:var(--muted); letter-spacing:1.5px; padding:0 0 5px 1px; }
   .chp-row { display:flex; gap:3px; }
   .chp-b { display:flex; align-items:center; justify-content:center; flex:1 1 0; min-width:0; padding:9px 0;
@@ -34903,12 +34904,17 @@ try {
   .chp-chip .s:empty { display:none; }
   .chp-ext { display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .32s cubic-bezier(.22,.9,.3,1), opacity .22s ease; }
   .chp-ext.open { grid-template-rows:1fr; opacity:1; }
-  .chp-ext > .chp-ext-in { overflow:hidden; min-height:0; }
-  .chp-ext-row { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:2px; }
-  .chp-in { animation:chpIn .3s cubic-bezier(.22,.9,.3,1) both; }
+  .chp-ext > .chp-ext-in { overflow:hidden; min-height:0; margin:0 -6px; padding:0 6px; }
+  .chp-ext-row { display:flex; flex-wrap:wrap; gap:6px; padding:3px 0 4px; }
+  .chp-in { animation:chpIn .3s cubic-bezier(.22,.9,.3,1) backwards; }
   @keyframes chpIn { from { opacity:0; transform:translateY(8px) scale(.96); } to { opacity:1; transform:none; } }
-  .chp-pop { animation:chpPop .28s cubic-bezier(.2,.9,.3,1.4); }
-  @keyframes chpPop { 0% { transform:scale(.9); } 60% { transform:scale(1.06); } 100% { transform:scale(1); } }
+  .chp-pop { animation:chpPop .26s cubic-bezier(.2,.9,.3,1.3); }
+  @keyframes chpPop { 0% { transform:scale(.94); } 60% { transform:scale(1.03); } 100% { transform:scale(1); } }
+  .chp-confirm.chp-pop { animation:chpConf .4s ease; }
+  @keyframes chpConf { 0% { filter:brightness(1.5); } 100% { filter:none; } }
+  .chp-rv { animation:chpReveal .5s cubic-bezier(.3,.8,.3,1) backwards; backface-visibility:hidden; }
+  @keyframes chpReveal { 0% { transform:perspective(320px) rotateX(-90deg); opacity:0; } 55% { opacity:1; } 100% { transform:none; opacity:1; } }
+  .chp-b.dd { height:46px; font-size:15px; padding:0; }
   .chp-conf-wrap { position:sticky; bottom:-20px; background:var(--surface); padding:12px 0 0; margin-top:6px; }
   .chp-confirm { width:100%; border:1.5px solid transparent; border-radius:100px; padding:12px 0; font-size:11px; font-weight:700;
     letter-spacing:2px; cursor:pointer; font-family:inherit; color:#000; background:linear-gradient(135deg,var(--accent),var(--accent-soft));
@@ -34918,8 +34924,8 @@ try {
   .chp-tile-pop { animation:chpTile .34s cubic-bezier(.2,.9,.3,1.3); }
   @keyframes chpTile { 0% { transform:scale(.78); opacity:.35; } 100% { transform:none; opacity:1; } }
   @media (prefers-reduced-motion: reduce) {
-    #chordlePickerOverlay, #chordlePickerOverlay > div, .chp-b, .chp-ext, .chp-confirm { transition:none !important; }
-    .chp-in, .chp-pop, .chp-tile-pop { animation:none !important; }
+    #chordlePickerOverlay, #chordlePickerOverlay > div, #diadlePickerOverlay, #diadlePickerOverlay > div, .chp-b, .chp-ext, .chp-confirm { transition:none !important; }
+    .chp-in, .chp-pop, .chp-tile-pop, .chp-rv { animation:none !important; }
   }
 </style>
 
@@ -34927,11 +34933,11 @@ try {
 <div id="chordlePickerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:900;flex-direction:column;justify-content:flex-end;padding-bottom:calc(var(--nav-bar-h, 62px) + env(safe-area-inset-bottom))" onclick="chordleCloseSheet()">
   <div onclick="event.stopPropagation()" style="background:var(--surface);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;flex-direction:column;overflow:hidden;max-height:calc(88vh - var(--nav-bar-h, 62px))">
     <!-- Drag handle -->
-    <div style="display:flex;justify-content:center;padding:10px 0 6px">
+    <div class="chp-grab" style="display:flex;justify-content:center;padding:10px 0 6px">
       <div style="width:40px;height:4px;border-radius:2px;background:var(--border)"></div>
     </div>
     <!-- Header: slot info, page dots, close -->
-    <div id="chordleSheetHeader" style="display:flex;align-items:center;padding:0 16px 10px;gap:8px;border-bottom:1px solid var(--border-soft)"></div>
+    <div id="chordleSheetHeader" class="chp-grab" style="display:flex;align-items:center;padding:0 16px 10px;gap:8px;border-bottom:1px solid var(--border-soft)"></div>
     <!-- Cards viewport -->
     <div id="chordleCardsViewport" style="overflow-y:auto;overflow-x:hidden;flex:1;min-height:0">
       <div id="chordleCardsTrack" style="display:block;width:100%">
@@ -35029,10 +35035,10 @@ try {
      is NOT sufficient. This has regressed multiple times — keep both lines. -->
 <div id="diadlePickerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:900;flex-direction:column;justify-content:flex-end;padding-bottom:calc(var(--nav-bar-h, 62px) + env(safe-area-inset-bottom))" onclick="diadleCloseSheet()">
   <div onclick="event.stopPropagation()" style="background:var(--surface);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;flex-direction:column;overflow:hidden;max-height:calc(80dvh - var(--nav-bar-h, 62px))">
-    <div style="display:flex;justify-content:center;padding:10px 0 6px">
+    <div class="chp-grab" style="display:flex;justify-content:center;padding:10px 0 6px">
       <div style="width:40px;height:4px;border-radius:2px;background:var(--border)"></div>
     </div>
-    <div id="diadleSheetHeader" style="display:flex;align-items:center;padding:0 16px 10px;gap:8px;border-bottom:1px solid var(--border-soft)"></div>
+    <div id="diadleSheetHeader" class="chp-grab" style="display:flex;align-items:center;padding:0 16px 10px;gap:8px;border-bottom:1px solid var(--border-soft)"></div>
     <div id="diadleCard" style="overflow-y:auto;flex:1;min-height:0;padding:14px"></div>
   </div>
 </div>
@@ -87646,6 +87652,7 @@ function chordleRender() {
     }
   }
   board.innerHTML = html;
+  if (chordleRevealRow>=0) { gameRevealRow(board.querySelectorAll('.chordle-guess-row')[chordleRevealRow]); chordleRevealRow=-1; }
   // Attach click handlers to active row slots
   if (chordleGameState==='playing') {
     var rows = board.querySelectorAll('div>div');
@@ -88081,7 +88088,46 @@ function chordleOpenSlot(i) {
   hapticLight();
 }
 var chordleCloseT=0;
+var chordleRevealRow=-1, diadleRevealRow=-1, diadleJustFilled=-1;
+// Wordle-style reveal: tiles of the row just submitted flip in one after another.
+function gameRevealRow(rowEl) {
+  if (!rowEl) return;
+  var slots=rowEl.children;
+  for (var i=0;i<slots.length;i++) {
+    var tile=slots[i].children[1]; if (!tile) continue;
+    tile.classList.add('chp-rv'); tile.style.animationDelay=(i*110)+'ms';
+  }
+}
+// Swipe a bottom sheet down to close it. Grab the handle or the header.
+function gameSheetSwipe(overlayId, closeFn) {
+  var ov=document.getElementById(overlayId); if (!ov||ov.dataset.swipe==='1') return; ov.dataset.swipe='1';
+  var sheet=ov.firstElementChild, y0=0, dy=0, t0=0, drag=false, pid=null;
+  var grab=function(el){ return el&&el.closest&&el.closest('.chp-grab'); };
+  sheet.addEventListener('pointerdown',function(e){
+    if (!grab(e.target)||e.target.closest('button')) return;
+    drag=true; y0=e.clientY; dy=0; t0=Date.now(); pid=e.pointerId;
+    try{ sheet.setPointerCapture(pid); }catch(x){}
+    sheet.style.transition='none'; ov.style.transition='none';
+  });
+  sheet.addEventListener('pointermove',function(e){
+    if (!drag) return; dy=Math.max(0,e.clientY-y0);
+    sheet.style.transform='translateY('+dy+'px)'; ov.style.opacity=String(Math.max(.15,1-dy/420));
+  });
+  var end=function(){
+    if (!drag) return; drag=false;
+    var v=dy/Math.max(1,Date.now()-t0);
+    sheet.style.transition=''; ov.style.transition='';
+    if (dy>90||(v>0.6&&dy>24)) {
+      sheet.style.transition='transform .26s cubic-bezier(.4,0,1,1)'; sheet.style.transform='translateY(100%)'; ov.style.opacity='0';
+      closeFn();
+      setTimeout(function(){ sheet.style.transition=''; sheet.style.transform=''; ov.style.opacity=''; },380);
+    } else { sheet.style.transform=''; ov.style.opacity=''; }
+    dy=0;
+  };
+  sheet.addEventListener('pointerup',end); sheet.addEventListener('pointercancel',end);
+}
 function chordleOpenSheet() {
+  gameSheetSwipe('chordlePickerOverlay',chordleCloseSheet);
   var overlay=document.getElementById('chordlePickerOverlay');
   clearTimeout(chordleCloseT);
   if (overlay) { overlay.style.display='flex'; void overlay.offsetWidth; overlay.classList.add('chp-show'); }
@@ -88334,6 +88380,7 @@ function chordleSubmit() {
   var scores=chordleScoreRow(chordleCur, chordleProg.chords);
   var won=scores.every(function(s){return s==='correct';});
   chordleGuesses.push({chords:chordleCur.slice(),scores:scores});
+  chordleRevealRow=chordleGuesses.length-1;
   // XP and stats
   chordleStats.total++;
   if (won) {
@@ -88998,8 +89045,8 @@ function diadleSlotColors(state) {
   if (state==='filled')   return {bdr:'var(--border)',bg:'var(--surface)',col:'var(--text)',shadow:'none'};
   return {bdr:'var(--border-soft)',bg:'transparent',col:'transparent',shadow:'none'};
 }
-function diadleSlotBox(label, c, w, h, onclick, cursor) {
-  return '<div'+(onclick?' onclick="'+onclick+'"':'')+' style="width:'+w+'px;height:'+h+'px;border-radius:10px;border:1.5px solid '+c.bdr+';background:'+c.bg+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;letter-spacing:-.3px;color:'+c.col+';box-shadow:'+c.shadow+';cursor:'+(cursor||'default')+';font-family:\'JetBrains Mono\',monospace;user-select:none">'
+function diadleSlotBox(label, c, w, h, onclick, cursor, cls) {
+  return '<div'+(cls?' class="'+cls+'"':'')+(onclick?' onclick="'+onclick+'"':'')+' style="width:'+w+'px;height:'+h+'px;border-radius:10px;border:1.5px solid '+c.bdr+';background:'+c.bg+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;letter-spacing:-.3px;color:'+c.col+';box-shadow:'+c.shadow+';cursor:'+(cursor||'default')+';font-family:\'JetBrains Mono\',monospace;user-select:none">'
     +(label||'')+'</div>';
 }
 function diadleRowEl(degs, scores, n, submitted, selSlot, pulseIdx, locked, isActive) {
@@ -89025,7 +89072,7 @@ function diadleRowEl(degs, scores, n, submitted, selSlot, pulseIdx, locked, isAc
     var c=diadleSlotColors(state);
     slots+='<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">'
       +'<div style="height:6px"></div>'
-      +diadleSlotBox(label,c,w,h,onclick,cursor)
+      +diadleSlotBox(label,c,w,h,onclick,cursor,(isActive&&i===diadleJustFilled)?'chp-tile-pop':'')
       +'</div>';
   }
   var minH=sz==='lg'?66:58;
@@ -89052,6 +89099,7 @@ function diadleRender() {
     }
   }
   board.innerHTML=html;
+  if (diadleRevealRow>=0) { gameRevealRow(board.querySelectorAll('.diadle-guess-row')[diadleRevealRow]); diadleRevealRow=-1; }
   var allFilled=diadleCur.length===n&&diadleCur.every(Boolean);
   var submitBtn=document.getElementById('diadleSubmitBtn');
   if (submitBtn) {
@@ -89093,16 +89141,22 @@ function diadleOpenSlot(i) {
   diadleOpenSheet();
   diadleRender();
 }
+var diadleCloseT=0;
 function diadleOpenSheet() {
+  gameSheetSwipe('diadlePickerOverlay',diadleCloseSheet);
   diadlePickerOpen=true;
   var ov=document.getElementById('diadlePickerOverlay');
-  if (ov) ov.style.display='flex';
+  clearTimeout(diadleCloseT);
+  if (ov) { ov.style.display='flex'; void ov.offsetWidth; ov.classList.add('chp-show'); }
   diadleRenderSheet();
 }
 function diadleCloseSheet() {
   diadlePickerOpen=false;
   var ov=document.getElementById('diadlePickerOverlay');
-  if (ov) ov.style.display='none';
+  if (!ov) return;
+  ov.classList.remove('chp-show');
+  clearTimeout(diadleCloseT);
+  diadleCloseT=setTimeout(function(){ if (!diadlePickerOpen) ov.style.display='none'; },340);
 }
 function diadleRuledOut() {
   // A degree id is DEAD if guessed AND every appearance scored 'wrong' (absent) or
@@ -89129,8 +89183,10 @@ function diadleRenderSheet() {
   var pool=diadlePool(diadleDiff);
   var _diadleDead=diadleRuledOut();
   if (hdr) {
-    hdr.innerHTML='<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text);flex:1">'
-      +t('diadle_pick_degree')+' · '+(diadleSelSlot+1)+'/'+diadlePuzzle.notes.length+'</div>'
+    var _cd=diadleCur[diadleSelSlot];
+    hdr.innerHTML='<span style="font-size:10px;color:var(--muted);letter-spacing:1.5px;white-space:nowrap">SLOT '+(diadleSelSlot+1)+' / '+diadlePuzzle.notes.length+'</span>'
+      +(_cd?'<div class="chp-pop" style="background:color-mix(in srgb,var(--accent) 18%,transparent);border:1.5px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:8px;padding:2px 10px;font-size:13px;font-weight:700;font-family:\'JetBrains Mono\',monospace">'+_cd+'</div>':'')
+      +'<div style="flex:1"></div>'
       +'<button onclick="diadlePlaySlot('+diadleSelSlot+')" title="hear note" style="background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:100px;width:36px;height:30px;font-size:13px;cursor:pointer;font-family:inherit">▶︎</button>'
       +'<button onclick="diadleRootBtnTap()" title="hear root" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:100px;padding:0 10px;height:30px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit">'+t('diadle_root')+'</button>'
       +'<button onclick="diadleCloseSheet()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:100px;width:30px;height:30px;font-size:14px;cursor:pointer;font-family:inherit">✕</button>';
@@ -89152,13 +89208,11 @@ function diadleRenderSheet() {
   var html='<div id="diadleNamePop" style="text-align:center;min-height:32px;margin-bottom:8px">'
     +'<div style="font-size:12px;font-family:\'Fraunces\',serif;font-style:italic;color:var(--accent)">'+t('diadle_namepop_hint')+'</div></div>';
   var cellBase='border-radius:9px;cursor:pointer;font-family:\'JetBrains Mono\',monospace;font-size:15px;font-weight:700;color:var(--text);transition:all .12s;display:flex;align-items:center;justify-content:center;height:46px;';
+  var _cellN=0, _curId=diadleCur[diadleSelSlot]||null;
   function cellBtn(id){
     if (!id||!inPool(id)) return '<div style="height:46px"></div>';
-    var dead=_diadleDead[id];
-    if (dead) {
-      return '<button data-deg="'+id+'" onclick="diadlePickDegree(this.dataset.deg)" style="'+cellBase+'opacity:.32;text-decoration:line-through;background:var(--surface-2);border:1.5px solid var(--border-soft)" title="ruled out">'+id+'</button>';
-    }
-    return '<button data-deg="'+id+'" onclick="diadlePickDegree(this.dataset.deg)" style="'+cellBase+'background:var(--surface-2);border:1.5px solid var(--border-soft)">'+id+'</button>';
+    var dead=_diadleDead[id]&&id!==_curId, on=id===_curId;
+    return '<button class="chp-b dd chp-in'+(on?' on':'')+(dead?' dead':'')+'" style="animation-delay:'+((_cellN++)*18)+'ms" data-deg="'+id+'" onclick="diadlePickDegree(this.dataset.deg)"'+(dead?' title="ruled out"':'')+'>'+id+'</button>';
   }
   html+='<div style="display:grid;grid-template-columns:repeat('+nCols+',1fr);gap:6px">';
   cols.forEach(function(c){ html+=cellBtn(c[0]); }); // naturals
@@ -89172,7 +89226,7 @@ function diadleRenderSheet() {
     var pop=function(){
       var p=document.getElementById('diadleNamePop'); if(!p||!d) return;
       var note=diadlePuzzle?diadleNoteName(diadlePuzzle.root+d.st):'';
-      p.innerHTML='<div style="font-size:13px;font-family:\'Fraunces\',serif;font-style:italic;color:var(--accent)">'+d.name+'</div>'
+      p.innerHTML='<div class="chp-in" style="font-size:13px;font-family:\'Fraunces\',serif;font-style:italic;color:var(--accent)">'+d.name+'</div>'
         +'<div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:1px">'+t('diadle_would_be')+' '+note+'</div>';
     };
     btn.addEventListener('mouseenter',pop);
@@ -89181,6 +89235,7 @@ function diadleRenderSheet() {
 }
 function diadlePickDegree(id) {
   diadleCur[diadleSelSlot]=id;
+  diadleJustFilled=diadleSelSlot; setTimeout(function(){ diadleJustFilled=-1; },450);
   hapticLight();
   diadleCloseSheet();
   diadleRender();
@@ -89194,6 +89249,7 @@ function diadleSubmit() {
   var scores=diadleScoreRow(diadleCur, diadlePuzzle.degIds);
   var won=scores.every(function(s){return s==='correct';});
   diadleGuesses.push({degs:diadleCur.slice(),scores:scores});
+  diadleRevealRow=diadleGuesses.length-1;
   diadleStats.total++;
   if (won) {
     diadleStats.solved++;
