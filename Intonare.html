@@ -89205,8 +89205,7 @@ function diadleRenderSheet() {
   ];
   cols=cols.filter(function(c){ return (c[0]&&inPool(c[0]))||(c[1]&&inPool(c[1])); });
   var nCols=cols.length;
-  var html='<div id="diadleNamePop" style="text-align:center;min-height:32px;margin-bottom:8px">'
-    +'<div style="font-size:12px;font-family:\'Fraunces\',serif;font-style:italic;color:var(--accent)">'+t('diadle_namepop_hint')+'</div></div>';
+  var html='';
   var cellBase='border-radius:9px;cursor:pointer;font-family:\'JetBrains Mono\',monospace;font-size:15px;font-weight:700;color:var(--text);transition:all .12s;display:flex;align-items:center;justify-content:center;height:46px;';
   var _cellN=0, _curId=diadleCur[diadleSelSlot]||null;
   function cellBtn(id){
@@ -89218,20 +89217,7 @@ function diadleRenderSheet() {
   cols.forEach(function(c){ html+=cellBtn(c[0]); }); // naturals
   cols.forEach(function(c){ html+=cellBtn(c[1]); }); // accidentals
   html+='</div>';
-  html+='<div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 2px;font-size:8px;letter-spacing:1px;color:var(--muted);opacity:.6"><span>'+t('diadle_row_natural')+'</span><span>'+t('diadle_row_accidental')+'</span></div>';
   card.innerHTML=html;
-  // popup: interval name + the actual note this degree would be
-  card.querySelectorAll('button[data-deg]').forEach(function(btn){
-    var d=diadleDeg(btn.dataset.deg);
-    var pop=function(){
-      var p=document.getElementById('diadleNamePop'); if(!p||!d) return;
-      var note=diadlePuzzle?diadleNoteName(diadlePuzzle.root+d.st):'';
-      p.innerHTML='<div class="chp-in" style="font-size:13px;font-family:\'Fraunces\',serif;font-style:italic;color:var(--accent)">'+d.name+'</div>'
-        +'<div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:1px">'+t('diadle_would_be')+' '+note+'</div>';
-    };
-    btn.addEventListener('mouseenter',pop);
-    btn.addEventListener('touchstart',pop,{passive:true});
-  });
 }
 function diadlePickDegree(id) {
   diadleCur[diadleSelSlot]=id;
