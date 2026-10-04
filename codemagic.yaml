@@ -188,6 +188,17 @@ workflows:
           $PB -c "Add :UISupportedInterfaceOrientations array" "$PLIST"
           $PB -c "Add :UISupportedInterfaceOrientations:0 string UIInterfaceOrientationPortrait" "$PLIST"
 
+          # iPhone only for now. The layout is built for a phone, and an iPad install
+          # would run it stretched or letterboxed. This is a one-line value in the
+          # project file (1 = iPhone, 1,2 = iPhone and iPad). Remove this block when a
+          # tablet layout exists. It fails the build if the value is not found, so a
+          # template change cannot quietly put the iPad back.
+          PBX="ios/App/App.xcodeproj/project.pbxproj"
+          sed -i '' 's/TARGETED_DEVICE_FAMILY = "1,2";/TARGETED_DEVICE_FAMILY = 1;/' "$PBX"
+          if grep -q 'TARGETED_DEVICE_FAMILY = "1,2"' "$PBX" || ! grep -q 'TARGETED_DEVICE_FAMILY = 1;' "$PBX"; then
+            echo "FATAL: could not lock TARGETED_DEVICE_FAMILY to iPhone"; grep -n TARGETED_DEVICE_FAMILY "$PBX"; exit 1
+          fi
+
           # Declared localizations. Without this, iOS will not even look for a
           # localized string file — the plist value is used verbatim regardless of
           # device language.
@@ -224,10 +235,15 @@ workflows:
           import io
           EN = 'Intonare uses the microphone to detect the pitch of your instrument or voice for tuning and ear-training exercises. Audio is processed on your device and never recorded or transmitted.'
           IT = 'Intonare usa il microfono per riconoscere l\u2019intonazione del tuo strumento o della tua voce, per accordare e per gli esercizi di orecchio musicale. L\u2019audio viene elaborato sul dispositivo: non viene mai registrato n\u00e9 inviato altrove.'
+          # Home screen long-press menu titles. iOS looks each title up in
+          # InfoPlist.strings by the English text, so the key IS the English title.
+          SHORTCUTS = (('Tuner', 'Tuner', 'Accordatore'), ('Metronome', 'Metronome', 'Metronomo'), ('Daily Chordle', 'Daily Chordle', 'Chordle del giorno'), ('Music Quiz', 'Music Quiz', 'Quiz Musicale'))
           for lang, txt in (('en', EN), ('it', IT)):
               path = 'ios/App/App/%s.lproj/InfoPlist.strings' % lang
               with io.open(path, 'w', encoding='utf-8') as f:
                   f.write('\"NSMicrophoneUsageDescription\" = \"%s\";\n' % txt)
+                  for key, en, it in SHORTCUTS:
+                      f.write('\"%s\" = \"%s\";\n' % (key, en if lang == 'en' else it))
               print('wrote %s' % path)
           "
 
@@ -260,6 +276,28 @@ workflows:
           $PB -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST"
           $PB -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string intonare" "$PLIST"
           echo "  URL scheme registered: intonare://"
+
+          # Home screen long-press menu (quick actions).
+          # Same intonare:// links as above. Each item carries its link in userInfo;
+          # the AppDelegate extension appended by patch_ios_appdelegate.py hands it to
+          # Capacitor as an opened URL, and the web layer's openFromUrl() takes over.
+          # Titles are the keys in InfoPlist.strings, so they localize with the device.
+          $PB -c "Delete :UIApplicationShortcutItems" "$PLIST" 2>/dev/null || true
+          $PB -c "Add :UIApplicationShortcutItems array" "$PLIST"
+          QA_INDEX=0
+          for ITEM in "tuner|Tuner|Audio" "metronome|Metronome|Time" "chordle|Daily Chordle|Play" "musicquiz|Music Quiz|Task"; do
+            QA_LINK=$(echo "$ITEM" | cut -d'|' -f1)
+            QA_TITLE=$(echo "$ITEM" | cut -d'|' -f2)
+            QA_ICON=$(echo "$ITEM" | cut -d'|' -f3)
+            $PB -c "Add :UIApplicationShortcutItems:$QA_INDEX dict" "$PLIST"
+            $PB -c "Add :UIApplicationShortcutItems:$QA_INDEX:UIApplicationShortcutItemType string com.lieutenantdan.intonare.$QA_LINK" "$PLIST"
+            $PB -c "Add :UIApplicationShortcutItems:$QA_INDEX:UIApplicationShortcutItemTitle string $QA_TITLE" "$PLIST"
+            $PB -c "Add :UIApplicationShortcutItems:$QA_INDEX:UIApplicationShortcutItemIconType string UIApplicationShortcutIconType$QA_ICON" "$PLIST"
+            $PB -c "Add :UIApplicationShortcutItems:$QA_INDEX:UIApplicationShortcutItemUserInfo dict" "$PLIST"
+            $PB -c "Add :UIApplicationShortcutItems:$QA_INDEX:UIApplicationShortcutItemUserInfo:url string intonare://$QA_LINK" "$PLIST"
+            QA_INDEX=$((QA_INDEX + 1))
+          done
+          echo "  Quick actions registered: $QA_INDEX"
 
           # ── Universal Links: Associated Domains entitlement ─────────────────
           # iOS fetches

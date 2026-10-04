@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Home screen long-press menu. Each shortcut is a VIEW intent for an intonare:// link,
+  the same links the shared daily results already use, so the app needs no new entry
+  point: MainActivity forwards the URL to the web layer (appUrlOpen on a running app,
+  getLaunchUrl on a cold start) and openFromUrl() in Intonare.html does the rest.
+
+  Launchers show about four. Order here is the order the launcher lists them.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="tuner"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_tuner"
+        android:shortcutLongLabel="@string/shortcut_tuner_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="intonare://tuner"
+            android:targetPackage="com.lieutenantdan.intonare"
+            android:targetClass="com.lieutenantdan.intonare.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="metronome"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_metronome"
+        android:shortcutLongLabel="@string/shortcut_metronome_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="intonare://metronome"
+            android:targetPackage="com.lieutenantdan.intonare"
+            android:targetClass="com.lieutenantdan.intonare.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="chordle"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_chordle"
+        android:shortcutLongLabel="@string/shortcut_chordle_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="intonare://chordle"
+            android:targetPackage="com.lieutenantdan.intonare"
+            android:targetClass="com.lieutenantdan.intonare.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="musicquiz"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_musicquiz"
+        android:shortcutLongLabel="@string/shortcut_musicquiz_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="intonare://musicquiz"
+            android:targetPackage="com.lieutenantdan.intonare"
+            android:targetClass="com.lieutenantdan.intonare.MainActivity" />
+    </shortcut>
+</shortcuts>

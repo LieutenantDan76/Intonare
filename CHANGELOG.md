@@ -2,6 +2,32 @@
 
 A human-readable record of what changed, when,
 
+## v1.0.2: Achievements that unlock when they should
+
+- I Have You Now did not unlock on a 0ms Tempo Lock round. The app shows the timing error rounded, but the unlock needed an exact zero, so a "0ms" on screen could still miss. It now unlocks on anything that rounds to 0ms. A 0 bpm miss in Tempo Guess counts as well, which it never did before.
+- Great Ears Kid could not be earned at all. The interval test now earns it: a perfect 10 out of 10 with every interval turned on (the ALL deck).
+- Flawless Victory only worked through the Notation Cards test. A perfect interval test on a deck of eight or more intervals now counts too, and so do a perfect Tónale run above Easy and a perfect Daily Quiz.
+- Deaf Composer needed a first-guess solve with no play, which comes down to luck. It is now a solve in two guesses or fewer without pressing play.
+- Hard Day's Night read a stale timer and left out the minutes still running. It now reads the live total.
+- The Force Is With You unlocked at the next save instead of at the summit. It now unlocks as you land on it.
+- Dedicated and Addicted now check every time practice time is logged, not only at the next save.
+- Dedicated counted only the last 90 days, because older history is trimmed. A lifetime counter now carries the total, and it starts from the history you already have.
+- Daily keys now follow your own calendar day instead of UTC. In California the day used to roll over at 5pm, which could break a streak, reset the session timer early and move the daily challenges. Streaks saved under the old keys carry over without a reset.
+- Your saved bests could be overwritten by a worse session. Tempo Lock, Tempo Guess, Polyrhythm, Chordle and Diadle now keep the better of the saved record and the session, and round counts keep adding up.
+- Tempo Lock now grades on the whole-bpm error you see on screen, so a result shown as 2 bpm off no longer grades like 1.6.
+- Haptics were redesigned. A right answer feels like a bright "da-dink". A wrong answer feels like two dull thumps. Wins and level ups build up to one big hit. Each feel is now one native pattern on iPhone and Android, so the timing no longer wobbles, and a small tap can no longer cut a big celebration short. Phones without a haptic motor keep the old taps.
+- Haptics now follow the sound you pick. Each correct, wrong, streak, level up, achievement, game over and new record sound has its own haptic, built from that sound's own notes, so the buzz lands on the same beats you hear. The Music Quiz round endings and the secret unlock sounds have theirs too.
+- New in Settings: haptic strength, Soft, Normal or Strong. It is a big step between them now, it also applies on phones that use the basic haptic taps, and tapping a strength plays three equal taps so you can feel the difference.
+- Haptics are now on by default for new installs. Anyone who already has the app keeps their current setting.
+- Tuner: a small click when the needle settles in tune. The simple tuner also buzzes in time with its two-note lock sound.
+- Music Quiz survival: the last wrong answer no longer fires the wrong buzz and the game over feel on top of each other.
+- Music Quiz survival: ending a run on your best streak now plays the new record sting. It never did, because the streak was cleared before the check.
+- Flute chart: every key now has a label. The thumb and side B♭ keys, the two trill keys, the three foot keys and the gizmo key were blank before. The small mini chart stays uncluttered.
+- Two new help buttons: the interval pool popup (it now says that at least two intervals must stay on) and the Tempo Guess difficulty pill. The Tempo Guess help had the wrong ranges and left out Insane.
+- Tuner and Metronome from the app icon menu now also work when the app is already open on the module chooser.
+- Long-press the app icon for Tuner, Metronome, Daily Chordle and Music Quiz, on iPhone and Android.
+- iPhone: the tuner now records through the phone's own audio engine instead of the web view, which stops the app's sound from dropping in volume while the mic is on. Haptics also keep working with the mic on.
+
 ## v1.0.1: Piano that recovers, a rebuilt Chordle picker, fairer rhythm grading, quiz fixes
 
 - Piano and Rhodes: if the shared sound path ever picked up bad audio data,

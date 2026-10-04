@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 1.0.1 -->
+<!-- INTONARE_VERSION: 1.0.2 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -28680,7 +28680,11 @@ try {
         }
         // Every daily that has a share button. musicquiz is the odd one out: it does
         // not open via enterExercise() like the others, it has its own mqOpen().
-        var DAILIES = { chordle: 1, tonale: 1, diadle: 1, musicquiz: 1 };
+        // tuner and metronome are not dailies. They ride the same path because the home
+        // screen long-press menu (Android app shortcuts, iOS quick actions) sends
+        // intonare://tuner and intonare://metronome, and they need the same cold-start
+        // handling: skip the splash, wait for the app to finish booting, then switch tab.
+        var DAILIES = { chordle: 1, tonale: 1, diadle: 1, musicquiz: 1, tuner: 1, metronome: 1 };
         if (!DAILIES[target]) return;   // 'open' or anything unknown: just launch
 
         // Open the module, then go STRAIGHT TO THE DAILY.
@@ -28707,6 +28711,26 @@ try {
 
         function go() {
           try {
+            // Warm start with the launcher grid on screen (app already open, sitting on
+            // the chooser): the link would switch the tab UNDER the launcher and look
+            // like nothing happened. Drop the launcher first, the way picking a card
+            // does with reduced motion. A cold start never shows it (lnchShouldShow).
+            try {
+              if (typeof _launcherIsUp === 'function' && _launcherIsUp()) {
+                var _lc = document.getElementById('lnch');
+                if (typeof _drainLaunchCelebrations === 'function') { try { _drainLaunchCelebrations(); } catch (e2) {} }
+                document.body.classList.remove('lnch-open');
+                if (typeof flushModeTheme === 'function') flushModeTheme();
+                _lc.classList.add('lnch-gone');
+                document.body.classList.add('lnch-settled');
+                setTimeout(function () { _lc.style.display = 'none'; }, 20);
+              }
+            } catch (e) {}
+            // Home screen menu: just switch to the tab. No landing popup, no module.
+            if (target === 'tuner' || target === 'metronome') {
+              if (typeof setMode === 'function') setMode(target);
+              return;
+            }
             if (target === 'musicquiz') {
               if (typeof mqOpen === 'function') mqOpen();
               // The quiz needs its shell up before the daily card can sit on top.
@@ -33913,7 +33937,7 @@ try {
         <!-- Header strip: difficulty (tap to cycle) + stats -->
         <div class="tg-top">
           <div class="tg-diff tg-hud-left" onclick="tgCycleDiff()">
-            <span class="tg-hud-diff" id="tgHudDiff" data-i18n="tg_normal">NORMAL</span>
+            <span style="display:flex;align-items:center"><span class="tg-hud-diff" id="tgHudDiff" data-i18n="tg_normal">NORMAL</span><button class="help-btn" onclick="event.stopPropagation();showHelp('tgdiff')" aria-label="Help" style="margin-left:4px;font-size:10px">?</button></span>
             <span class="tg-hud-lbl" id="tgHudRange">50–180 bpm</span>
           </div>
           <div class="tg-stats">
@@ -35292,7 +35316,7 @@ try {
   <div class="ce-stats-content">
     <button class="iv-modal-back" onclick="ivClosePool(); ivOpenSettings();" aria-label="Back to settings"><svg width="16" height="16" viewBox="0 0 14 14" fill="none"><path d="M11 7H3M3 7L7 3M3 7L7 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <button class="progress-modal-close" onclick="ivClosePool()">×</button>
-    <div class="ce-stats-title" data-i18n="pool_iv_title">INTERVAL POOL</div>
+    <div class="ce-stats-title"><span data-i18n="pool_iv_title">INTERVAL POOL</span><button class="help-btn" onclick="showHelp('ivpool')" aria-label="Help">?</button></div>
     <div class="ce-stats-sub"><span data-i18n="pool_iv_sub">select which intervals appear</span></div>
     <div id="ivPoolContainer" style="margin-top:12px"></div>
   </div>
@@ -35738,6 +35762,18 @@ try {
         <span class="sm-toggle-main" data-i18n="teach_on">ON</span>
       </button>
     </div>
+    <div class="sm-toggle-row sm-toggle-compact" id="smHapticStrengthRow" style="margin-top:8px">
+      <button class="sm-toggle-chip" data-value="soft" onclick="setHapticStrength('soft')">
+        <span class="sm-toggle-main" data-i18n="haptic_soft">SOFT</span>
+      </button>
+      <button class="sm-toggle-chip active" data-value="normal" onclick="setHapticStrength('normal')">
+        <span class="sm-toggle-main" data-i18n="haptic_normal">NORMAL</span>
+      </button>
+      <button class="sm-toggle-chip" data-value="strong" onclick="setHapticStrength('strong')">
+        <span class="sm-toggle-main" data-i18n="haptic_strong">STRONG</span>
+      </button>
+    </div>
+    <div id="smHapticEngine" onclick="_hdCycleRoute()" style="font-size:10px;color:var(--muted);margin:6px 0 0"></div>
 
     <div class="sm-section-title sm-section-sub" style="margin-top:14px" data-i18n="settings_splash_sound">Launch Sound</div>
     <div class="sm-toggle-row sm-toggle-compact" id="smSplashSoundRow">
@@ -35965,7 +36001,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '1.0.1';
+const INTONARE_VERSION = '1.0.2';
 /* v1.0.0: Settings sliders move only on a sideways drag or a clean tap.
    On Android the native range input jumps the thumb the moment a finger lands,
    so scrolling the Settings panel changed Text Size or Master Volume (and a
@@ -43627,6 +43663,7 @@ function processAudio() {
 }
 
 let _wasInTune = false;
+let _tuneInAt = 0, _tuneBuzzed = false;   // detent haptic: held in tune for a moment, once per lock
 let _lastNoteKey = null;  // tracks note changes for pulse
 // Critically-damped-ish spring needle (mass + damping), not a plain EMA.
 // omega/zeta chosen for ~220ms settle with a hair of overshoot — Cleartune-class.
@@ -43789,6 +43826,20 @@ function updateLiveMeter(note, freq) {
 
   const screenInner = document.querySelector('.tuner-screen-inner');
   if (screenInner) screenInner.classList.toggle('in-tune-glow', inTune);
+  // Detent haptic. In tune for 220 ms makes one click; it re-arms only after the
+  // needle leaves well outside the window, so a wobble on the edge cannot repeat it.
+  // The simple face has its own lock cue (_sfDing) and handles its own haptic.
+  if (inTune) {
+    if (!_wasInTune) _tuneInAt = performance.now();
+    // Not right after the app played a sound of its own: the mic hears a preview or a
+    // cue, finds a steady pitch and would click for a note nobody played.
+    if (!_tuneBuzzed && performance.now() - _tuneInAt > 220 && progState.tunerFace !== 'simple' && Date.now() - _hdLastFeelAt > 3000) {
+      _tuneBuzzed = true;
+      hapticDetent();
+    }
+  } else if (abs > tuneTolerance() * 1.8) {
+    _tuneBuzzed = false;
+  }
   _wasInTune = inTune;
 
   const freqEl = document.getElementById('freqDisplay');
@@ -43877,6 +43928,7 @@ function _applyNoteSilentState() {
   _needleTargetPct = 50; _needleCoastInTune = false; _needleCoastCents = 0;
   _lastNoteKey = null;
   _wasInTune = false;
+  _tuneBuzzed = false;
   if (typeof clearDisplayNoteSticky === 'function') clearDisplayNoteSticky();
   _syncMeterZone();
   _tooltipCurCls = null;
@@ -55896,7 +55948,7 @@ HELP_CONTENT.intervalref = {
 };
 HELP_CONTENT.ivpool = {
   title: 'Interval Pool',
-  body: 'Choose which intervals appear in random rounds. <strong>EASY</strong> sticks to consonant intervals (3rds, 5ths, octave), best for beginners. <strong>MEDIUM</strong> adds 4ths, 6ths, 7ths. <strong>ALL</strong> includes every interval up to an octave including dissonant ones.'
+  body: 'Tap an interval to add it or remove it. EASY, MEDIUM, HARD and ALL load a ready-made set. At least two intervals must stay on.'
 };
 HELP_CONTENT.scales = {
   title: 'Scales',
@@ -55919,8 +55971,8 @@ HELP_CONTENT.ss_voice = {
   body: 'Sets the octave range the target notes are drawn from, so prompts sit comfortably in your voice. Pick the band that matches your range, lower for bass or baritone and higher for alto or soprano, and the app keeps every prompt singable.'
 };
 HELP_CONTENT.ss_note = {
-  title: 'Note Pool',
-  body: 'Controls which notes can be chosen as targets. A smaller pool (e.g. just a few scale degrees) is easier to match by ear; widening it toward the full chromatic set makes the drill progressively harder.'
+  title: 'Note Name',
+  body: 'Shown prints the name of the target note. Hidden removes it, and you match the pitch by ear. Start with Shown.'
 };
 HELP_CONTENT.ss_mode = {
   title: 'Practice Mode',
@@ -58295,6 +58347,18 @@ function ivtShowResults() {
   // XP: scaled to score (correct answers worth more on harder pools).
   var base = ivDifficulty === 'hard' ? 4 : ivDifficulty === 'medium' ? 3 : 2;
   if (typeof progAddXp === 'function') progAddXp(correct * base);
+
+  // Perfect run. Great Ears needs the whole ALL pool switched on, so a 4 interval
+  // deck cannot earn it. Flawless Victory counts any perfect run on a pool of 8 or
+  // more, which keeps the EASY deck from handing it out.
+  if (correct === IVT_RUN_LEN) {
+    var _pool = ivActivePool();
+    var _full = IV_DIFFICULTIES.all.intervals.every(function (s) { return _pool.indexOf(s) >= 0; });
+    var _upd = {};
+    if (_full) _upd.perfectSession = true;
+    if (_pool.length >= 8) { if (!progState.stats) progState.stats = {}; progState.stats.anyPerfect = true; }
+    if (_full || _pool.length >= 8) { try { progUpdate('interval', _upd); } catch (e) {} }
+  }
 }
 
 // ── Drill your misses ──────────────────────────────────────────────────────
@@ -70621,13 +70685,16 @@ function tlEvaluateRound(_activePhaseStartTime) {
   // One tap gives no interval to measure, so fall back to the grid distance.
   const useBpm = (tlBpmErr !== null);
 
+  // Grade on the number the player is shown. The screen rounds the tempo error to whole
+  // bpm, so grading the unrounded value let one "±2" read as locked and another as close.
+  const tlErrShown = useBpm ? Math.round(tlBpmErr) : 0;
   let grade, gradeClass;
   const prevStreak = tlStats.streak;
   // Thresholds in BPM: 2 is tighter than most people can hear, 5 is the point a
   // tempo starts sounding wrong against a reference.
-  if (useBpm ? (tlBpmErr < 2)  : (avgAbsMs < 40))  { grade = t('tl_grade_locked');    gradeClass = 'great'; tlStats.streak++; }
-  else if (useBpm ? (tlBpmErr < 5)  : (avgAbsMs < 75))  { grade = t('tl_grade_close');     gradeClass = 'good';  tlStats.streak++; }
-  else if (useBpm ? (tlBpmErr < 10) : (avgAbsMs < 100)) { grade = t('tl_grade_needs_work'); gradeClass = 'meh';   tlStats.streak = 0; }
+  if (useBpm ? (tlErrShown < 2)  : (avgAbsMs < 40))  { grade = t('tl_grade_locked');    gradeClass = 'great'; tlStats.streak++; }
+  else if (useBpm ? (tlErrShown < 5)  : (avgAbsMs < 75))  { grade = t('tl_grade_close');     gradeClass = 'good';  tlStats.streak++; }
+  else if (useBpm ? (tlErrShown < 10) : (avgAbsMs < 100)) { grade = t('tl_grade_needs_work'); gradeClass = 'meh';   tlStats.streak = 0; }
   else                     { grade = t('tl_grade_off');        gradeClass = 'bad';   tlStats.streak = 0; }
   checkStreakMilestone(tlStats.streak);
 
@@ -70663,7 +70730,14 @@ function tlEvaluateRound(_activePhaseStartTime) {
   // Was 15 / 8 / 3 / 1 for a twelve second round.
   const xp = avgAbsMs < 25 ? 8 : avgAbsMs < 50 ? 4 : avgAbsMs < 100 ? 1 : 0;
   if (xp) progAddXp(xp);
-  progUpdate('tempo', { bestMs: tlStats.bestMs, streak: tlStats.streak, rounds: tlStats.rounds });
+  // tlStats lives for one launch. Saving it straight over the stored values replaced the
+  // all-time best with the session best, and the lifetime round count with the session's.
+  var _tpPrev = progGet('tempo');
+  progUpdate('tempo', {
+    bestMs: (typeof _tpPrev.bestMs === 'number') ? Math.min(_tpPrev.bestMs, tlStats.bestMs) : tlStats.bestMs,
+    streak: tlStats.streak,
+    rounds: (_tpPrev.rounds || 0) + 1,
+  });
 }
 
 // Help content
@@ -71344,7 +71418,13 @@ function tgLockGuess() {
   // second listen, about 150 a minute on a good ear.
   const xp = absDelta <= 2 ? 10 : absDelta <= 5 ? 6 : absDelta <= 10 ? 3 : absDelta <= 20 ? 1 : 0;
   if (xp) progAddXp(xp);
-  progUpdate('tempoguess', { bestDelta: tgStats.bestDelta, streak: tgStats.streak, rounds: tgStats.rounds });
+  // Same as Tempo Lock: keep the stored best, count rounds across launches.
+  var _tgPrev = progGet('tempoguess');
+  progUpdate('tempoguess', {
+    bestDelta: (typeof _tgPrev.bestDelta === 'number') ? Math.min(_tgPrev.bestDelta, tgStats.bestDelta) : tgStats.bestDelta,
+    streak: tgStats.streak,
+    rounds: (_tgPrev.rounds || 0) + 1,
+  });
   const isGood = absDelta <= 10;
   if (isGood) { hapticCorrect(); playCueCorrect(); }
   tgStartCountdown(isGood);
@@ -76807,6 +76887,7 @@ function rlpChRecord(kind, rawVal) {
     s.ch.bestMult = rlpResMult;
   }
   try { progSave(); } catch (e) {}
+  try { checkAchievements(); } catch (e) {}
 }
 
 function rlpCNext() {
@@ -81547,8 +81628,8 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
   progUpdate('poly', {
     ratio: `${prRatioA}:${prRatioB}`,
     cycles: (progGet('poly').cycles || 0),
-    gameBestMs: prGameStats.bestMs,
-    gameRounds: prGameStats.rounds,
+    gameBestMs: (typeof progGet('poly').gameBestMs === 'number') ? Math.min(progGet('poly').gameBestMs, prGameStats.bestMs) : prGameStats.bestMs,
+    gameRounds: (progGet('poly').gameRounds || 0) + 1,
   });
   // Climb mode: a cycle that's CLOSE or better (meanFrac <= 0.15) counts as
   // clean. Drive the rung state machine and override the result line.
@@ -88395,11 +88476,11 @@ function chordleSubmit() {
     progUpdate('chordle',{
       total:(_cs.total||0)+1,
       correct:(_cs.correct||0)+1,
-      bestGuesses:chordleStats.bestGuesses,
+      bestGuesses:_cs.bestGuesses ? Math.min(_cs.bestGuesses, chordleStats.bestGuesses) : chordleStats.bestGuesses,
       firstTry: guesses===1 ? (_cs.firstTry||0)+1 : (_cs.firstTry||0),
       hardSolved: _isHard ? (_cs.hardSolved||0)+1 : (_cs.hardSolved||0),
       vhardSolved: _isVhard ? (_cs.vhardSolved||0)+1 : (_cs.vhardSolved||0),
-      solvedNoPlay: (!chordlePlayedThisGame&&guesses===1) ? true : (_cs.solvedNoPlay||false),
+      solvedNoPlay: (!chordlePlayedThisGame&&guesses<=2) ? true : (_cs.solvedNoPlay||false),
     });
     // Reveal the progression name in the header subtitle
     setTimeout(function(){
@@ -89248,7 +89329,7 @@ function diadleSubmit() {
     progUpdate('diadle',{
       total:(_cs.total||0)+1,
       correct:(_cs.correct||0)+1,
-      bestGuesses:diadleStats.bestGuesses,
+      bestGuesses:_cs.bestGuesses ? Math.min(_cs.bestGuesses, diadleStats.bestGuesses) : diadleStats.bestGuesses,
       firstTry: guesses===1 ? (_cs.firstTry||0)+1 : (_cs.firstTry||0),
       hardSolved: _isHard ? (_cs.hardSolved||0)+1 : (_cs.hardSolved||0),
     });
@@ -89577,8 +89658,14 @@ function diadleDailyHideShareBtn() {
 let _modKey = null;
 let _modStart = null;
 
+// Day keys use the player's own calendar day. toISOString() is UTC, which flipped the
+// day at 5pm in California and broke streaks, dailies and the session reset.
+function localDateStr(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateStr(new Date());
 }
 
 function moduleEnter(key) {
@@ -89600,12 +89687,14 @@ function logModuleTime(key, sec) {
   const today = todayStr();
   if (!progState.history[today]) progState.history[today] = {};
   progState.history[today][key] = (progState.history[today][key] || 0) + sec;
+  progState.totalPracticeSec = (progState.totalPracticeSec || 0) + sec;
   // Prune to 90 days
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 90);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const cutoffStr = localDateStr(cutoff);
   Object.keys(progState.history).forEach(d => { if (d < cutoffStr) delete progState.history[d]; });
   progSave();
+  try { checkAchievements(); } catch (e) {}
 }
 
 // Flush on visibility change / app background
@@ -89621,7 +89710,9 @@ function checkDailyStreak() {
   const today = todayStr();
   const last = progState.streak.lastDate;
 
-  if (last === today) {
+  // last > today happens once for saves made under the old UTC day keys, in the
+  // evening Pacific hours. It is the same day, so it must not read as a gap.
+  if (last === today || (last && last > today)) {
     progRefreshChip(); // still update chip in case of reload
     return;
   }
@@ -90129,7 +90220,7 @@ function markDailyChallengeDone() {
   if (!progState.dailyChallengeStreak) progState.dailyChallengeStreak = { count: 0, lastDate: null, longest: 0 };
   const dc = progState.dailyChallengeStreak;
   const today = todayStr();
-  if (dc.lastDate === today) return; // already counted a daily today
+  if (dc.lastDate === today || (dc.lastDate && dc.lastDate > today)) return; // already counted a daily today
   if (!dc.lastDate) {
     dc.count = 1;
   } else {
@@ -90294,7 +90385,8 @@ function dtFireLegendaryCard() {
 function dtFireMythicCard() {
   // Unlock and save
   if (!progState.mythic_unlocked) { progState.mythic_unlocked = true; progSave(); }
-  hapticMilestone(); playCueMilestone();
+  playCueMilestone();
+  setTimeout(function () { try { hapticMilestone('mythic_fanfare'); } catch (e) {} }, 100);   // lands with playMythicFanfare below
   var card  = document.getElementById('dtMythicCard');
   var inner = document.getElementById('dtMythicInner');
   if (!card || !inner) return;
@@ -90678,7 +90770,7 @@ function pmGetWeekData(weekOffset) {
   for (let i = 0; i < 7; i++) {
     const d = new Date();
     d.setDate(d.getDate() + (weekOffset * 7) - i);
-    const dStr = d.toISOString().slice(0, 10);
+    const dStr = localDateStr(d);
     const day = history[dStr] || {};
     GRAPH_EXERCISES.forEach(function(e) {
       totals[e.key] = (totals[e.key] || 0) + (day[e.key] || 0);
@@ -90811,7 +90903,8 @@ const PROG_DEFAULTS = {
   lang: 'en',              // 'en' or 'it'
   teachingMode: false,
   helpTips: true,          // show/hide ? help buttons
-  hapticsOn: false,
+  hapticsOn: true,
+  hapticStrength: 'normal', // 'soft' | 'normal' | 'strong' (scales every haptic)
   splashSoundOn: true,     // native launch sound on cold start (Android)
   hasPro: false,           // Pro unlocked (via purchase or unlock code)
   mqMusicOn: true,         // music quiz ambient background music
@@ -90843,6 +90936,7 @@ const PROG_DEFAULTS = {
   sessionDate: '',
   sessionCompleted: false,   // per-DAY flag, reset nightly
   sessionsCompleted: 0,      // cumulative count, never reset — see first_light
+  totalPracticeSec: 0,       // lifetime seconds in modules; history is trimmed to 90 days, this is not
   sesModulesVisited: [],
   metroPresets: [],  // [{ id, name, bpm, sound, mode }]
   rampPresets:  [],  // [{ id, name, fromBpm, toBpm, stepBpm, measuresPerStep, sound }]
@@ -91609,6 +91703,8 @@ const STRINGS = {
     trp_play_note:'▶︎ PLAY NOTE',
     bowed_play_ds:'▶︎ PLAY DOUBLE STOP',
     settings_haptics:'Haptic Feedback',
+    haptic_soft:'SOFT', haptic_normal:'NORMAL', haptic_strong:'STRONG',
+    haptic_engine_custom:'Haptic engine: custom patterns', haptic_engine_basic:'Haptic engine: basic taps',
     settings_splash_sound:'Launch Sound',
     pw_title:'INTONARE PRO',
     pw_sub:'one payment. no subscription. ever.',
@@ -92765,13 +92861,13 @@ const STRINGS = {
     // rullante/cassa/charleston for the kit. Markup is preserved exactly.
     help: {
     intervalref: { title: "Riferimento Intervalli", body: "<strong>Una carta per ogni intervallo.</strong> Tocca ASCOLTA per sentirlo, e passa fra ascendente, discendente e INSIEME (le due note come accordo). Sfoglia le carte con le frecce, e usa i pulsanti in alto per scegliere quali intervalli stanno nel mazzo. Ogni carta cita canzoni che si aprono con quell’intervallo, così hai un motivo da canticchiare quando provi a riconoscerlo a orecchio.<br><br>Questo è un riferimento, quindi qui non c’è punteggio. Quando vuoi esercitarti e seguire i progressi, apri <strong>Allenamento Intervalli</strong> nella sezione Esercizi." },
-    ivpool: { title: "Gruppo di Intervalli", body: "Scegli quali intervalli compaiono nei turni casuali. <strong>FACILE</strong> resta sugli intervalli consonanti (terze, quinte, ottava), il meglio per iniziare. <strong>MEDIO</strong> aggiunge quarte, seste e settime. <strong>TUTTI</strong> comprende ogni intervallo entro l’ottava, dissonanti inclusi." },
+    ivpool: { title: "Gruppo di Intervalli", body: "Tocca un intervallo per aggiungerlo o toglierlo. FACILE, MEDIO, DIFFICILE e TUTTI caricano un gruppo già pronto. Ne devono restare accesi almeno due." },
     scales: { title: "Scale", body: "Scegli una tonica e una scala. Il nastro disegna la scala su un righello cromatico: gli spazi fra i punti SONO il disegno degli intervalli, e i numeri sotto contano i semitoni. <strong>SU / GIÙ / LOOP</strong> la suonano; tocca un punto qualsiasi per sentire quel grado da solo. Il <strong>BORDONE</strong> tiene ferma la tonica così puoi toccare i gradi sopra di essa: il modo più rapido per imparare com’è fatto ciascuno. <strong>CONFRONTA</strong> mostra in cosa la scala differisce dalla sua scala madre (il dorico è un minore naturale con la sesta alzata), detto a parole e disegnato come movimento." },
     ce_play: { title: "Esecuzione dell’Accordo", body: "<strong>Accordo</strong> suona tutte le note insieme, come le sentiresti nella musica vera. <strong>Arpeggio</strong> le suona in successione dal grave all’acuto, e così i singoli intervalli si distinguono meglio. Passa ad Accordo quando l’orecchio è allenato, e appoggiati all’Arpeggio mentre ci arrivi." },
     ss_auto: { title: "Avanzamento Automatico", body: "<strong>Manuale</strong> vuol dire che tocchi NUOVO TURNO quando sei pronto. <strong>Automatico</strong> aspetta un momento dopo che hai centrato una nota, poi passa da solo alla successiva. Tiene viva la sessione senza un tocco fra una nota e l’altra, comodo per le sedute lunghe." },
     ce_auto: { title: "Avanzamento Automatico", body: "<strong>Manuale</strong> vuol dire che tocchi tu per l’accordo successivo quando sei pronto. <strong>Automatico</strong> aspetta un attimo dopo la tua risposta, poi suona da solo l’accordo dopo, così l’esercizio prosegue senza un tocco fra un turno e l’altro." },
     ss_voice: { title: "Estensione Vocale", body: "Imposta l’ottava da cui vengono pescate le note obiettivo, così le proposte stanno comode nella tua voce. Scegli la fascia che corrisponde alla tua estensione, più grave per basso o baritono e più acuta per contralto o soprano, e l’app terrà ogni proposta cantabile." },
-    ss_note: { title: "Gruppo di Note", body: "Decide quali note possono essere scelte come obiettivo. Un gruppo ristretto (per esempio pochi gradi della scala) è più facile da riprodurre a orecchio; allargandolo fino all’intero cromatico l’esercizio diventa via via più difficile." },
+    ss_note: { title: "Nome della Nota", body: "Visibile mostra il nome della nota obiettivo. Nascosta lo toglie e intoni solo a orecchio. Comincia con Visibile." },
     ss_mode: { title: "Modalità di Esercizio", body: "Cambia come viene valutato e mostrato un turno, dal riprodurre una singola nota tenuta al lavorare su una breve sequenza. Comincia dalla nota singola per costruire precisione, poi sali di livello quando sei costante." },
     interval: { title: "Allenamento Intervalli", body: "Senti due note (o un accordo) e riconosci l’<strong>intervallo</strong> fra loro: la distanza musicale, come una terza maggiore o una quinta giusta. Tocca la tua risposta; l’app ti dice se hai ragione e riascolti quante volte vuoi. Usa il <strong>Gruppo di Intervalli</strong> qui sotto per scegliere quali compaiono: comincia con pochi e allarga man mano che l’orecchio si affina." },
     tempo: { title: "Tempo Lock", body: "Il metronomo suona per qualche battuta, poi diventa <strong>silenzioso</strong>, e il tuo compito è continuare a battere a tempo attraverso il silenzio. L’app misura di quanti millisecondi sei andato alla deriva e tiene il conto della tua serie. Allena l’orologio interno, quello che tiene insieme una band quando nessuno sta contando. Attiva <strong>CASUALE</strong> per avere un tempo a sorpresa a ogni turno." },
@@ -92795,7 +92891,7 @@ const STRINGS = {
     tllock: { title: "Tempo Lock", body: "Imposta un tempo obiettivo, premi AVVIA, e il click suona per qualche battuta poi sparisce. Continua a battere sul pad seguendo la pulsazione attraverso il silenzio; quando il click torna scopri quanto l’hai tenuto. Il risultato mostra il tempo che hai battuto rispetto all’obiettivo e la deriva fra i due. AUTO passa dritto al turno successivo; disattivandolo ogni turno si ferma così puoi leggere il risultato prima di ripartire. NUOVO estrae un obiettivo casuale." },
     tllocktempo: { title: "Tempo Obiettivo", body: "Il tempo che stai cercando di tenere. Comincia lento (60–80) e sali. I tempi lenti sono più difficili da tenere fermi attraverso il silenzio, ed è lì che un time incerto viene fuori." },
     tllockpattern: { title: "Schema e Metro", body: "Lo schema imposta quante battute suona il click prima di tacere, e quanto dura il silenzio. <strong>2/2</strong> è un buon punto di partenza. <strong>4/8</strong> è il più difficile: un silenzio lungo richiede una pulsazione interna vera, e oltre le otto battute mute quasi tutti vanno alla deriva. Il metro imposta i movimenti per battuta." },
-    tgdiff: { title: "Indovina il Tempo — Difficoltà", body: "<strong>FACILE</strong> resta su BPM tondi (multipli di 5) fra 60 e 140, la fascia più comune. <strong>NORMALE</strong> copre 50–180 con qualsiasi numero intero. <strong>DIFFICILE</strong> apre tutta la gamma 40–220, compresi i tempi lentissimi da marcia funebre e i prestissimi sfrenati che quasi nessuno frequenta." },
+    tgdiff: { title: "Difficoltà", body: "Tocca per cambiare la difficoltà. Ogni livello fissa la gamma dei tempi: Facile da 60 a 140 bpm a passi di 5, Normale da 50 a 180, Difficile da 32 a 240, Folle da 30 a 250. Con Folle cambiano a caso anche groove e suddivisione a ogni turno." },
     prratio: { title: "Rapporto del Poliritmo", body: "N:M vuol dire che N pulsazioni stanno nello stesso tempo di M pulsazioni. <strong>3:2</strong> (l’emiolia) è il più comune: una sensazione di terzina sopra un tempo binario. <strong>4:3</strong> compare in Chopin e in “Clocks” dei Coldplay. <strong>5:4</strong> è iconico nel jazz (Dave Brubeck). Più il rapporto sale, più diventa difficile tenerlo in testa." },
     prtempo: { title: "Tempo del Ciclo", body: "Imposta la velocità dello <strong>Strato A</strong> (l’anello esterno) in BPM. Lo Strato B riempie lo stesso tempo con il proprio conteggio. Comincia lento (40–60): i poliritmi sembrano confusione finché l’orecchio non smette di contare i due strati separatamente e comincia a sentirli come un unico groove." },
     prmode: { title: "Modalità Poliritmo", body: "<strong>ENTRAMBI</strong> suona tutti e due gli strati: parti da qui, ascolta e basta finché la pulsazione incrociata non “si aggancia” nel tuo orecchio.<br><br><strong>SOLO A / SOLO B</strong> suona un solo strato. Utile per sentire ciascun ritmo pulito, o per suonare sopra uno mentre l’app ti tiene l’altro in testa.<br><br><strong>BATTI A / BATTI B</strong> è il gioco: l’app suona lo strato che NON stai battendo, e tu batti l’altro. Il punteggio si aggiorna a ogni ciclo in millisecondi. Punta a <strong>AGGANCIATO</strong> (sotto 25ms). La precisione del tocco è compensata in automatico per la latenza dello schermo." },
@@ -92871,6 +92967,8 @@ const STRINGS = {
     trp_play_note:'▶︎ SUONA NOTA',
     bowed_play_ds:'▶︎ SUONA BICORDO',
     settings_haptics:'Feedback Aptico',
+    haptic_soft:'LEGGERO', haptic_normal:'NORMALE', haptic_strong:'FORTE',
+    haptic_engine_custom:'Motore aptico: pattern personalizzati', haptic_engine_basic:'Motore aptico: tocchi di base',
     settings_splash_sound:'Suono d\u2019Avvio',
     pw_title:'INTONARE PRO',
     pw_sub:'un pagamento. nessun abbonamento. mai.',
@@ -94559,6 +94657,8 @@ function _sfDing() {
     _cueNote(880,    'sine', n,        0.32, 0.30);
     _cueNote(1318.5, 'sine', n + 0.09, 0.32, 0.26);
   } catch(e) {}
+  // The 'success' feel is one crisp tick, landing with the first note.
+  try { hapticSuccess(); } catch(e) {}
 }
 
 function _sfResetHold() { _sfHoldStart = null; _sfLocked = false; _sfHeldIdx = -1; }
@@ -95844,40 +95944,423 @@ function renderCueDropdowns() {
 // injected by main.iife.js (built from main.js via Vite).
 // Falls back silently if not running in Capacitor context.
 // ═══════════════════════════════════════════════
-async function hapticLight()   { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
-async function hapticMedium()  { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Medium }); } catch(e) {} }
-async function hapticSelect()  { if (!progState.hapticsOn) return; try { await window.Haptics.selectionChanged(); } catch(e) {} }
+// ── HD HAPTICS ──────────────────────────────────────────────────────────────
+// Core Haptics on iOS, VibrationEffect on Android (IntonareHaptics plugin). Each feel
+// below is ONE native call, so the spacing between taps no longer depends on bridge
+// or main-thread timing the way chained Capacitor taps did. The patterns live here so
+// both platforms feel the same and a feel is tuned in one place.
+//
+// Event = [t, intensity, sharpness, duration]
+//   t          ms from now
+//   intensity  0..1  (Capacitor equivalents: Light ~0.45, Medium ~0.7, Heavy 1.0)
+//   sharpness  0..1  (high = crisp tick, low = dull thump)
+//   duration   0 = single tap, >0 = sustained buzz of that many ms
+//
+// If the plugin is missing (browser, older build) or the phone has no haptic motor,
+// every hapticX() below falls straight through to the Capacitor taps it always used.
+// HOW THE FEELS ARE DESIGNED
+//  - A haptic is the ATTACK of the sound plus its mood. It is not the whole sound.
+//    Sharp and high (tick) reads as bright and right. Dull and low (thud) reads as
+//    heavy and wrong. That contrast, not strength, is what tells correct from wrong.
+//  - The cue sounds are user-chosen and range from 300 ms to 2 s, so every feel here
+//    is short (under 300 ms) or builds to one hit (celebrations, under 1 s).
+//  - Swells and fades are built from short sustained steps (_hdSwell). One format on
+//    both platforms, no extra native code.
+//  - PRIORITY. Android replaces a running effect when a new one starts, so without a
+//    rule one stray tap cuts a celebration in half. A feel of lower rank than the one
+//    playing is dropped. Equal or higher always plays.
+//  - Plain UI taps are rate limited, so a six string strum is not six motor kicks.
+const HD_L = [0, 0.40, 0.80, 0], HD_M = [0, 0.65, 0.55, 0], HD_H = [0, 1.00, 0.35, 0];
+// A swell (i0 < i1) or a fade (i0 > i1) as back to back 40 ms steps.
+function _hdSwell(t0, dur, i0, i1, sharp, stepMs) {
+  const out = [], step = stepMs || 40, n = Math.max(1, Math.round(dur / step));
+  for (let k = 0; k < n; k++) {
+    const f = n === 1 ? 1 : k / (n - 1);
+    out.push([t0 + k * step, Math.round((i0 + (i1 - i0) * f) * 1000) / 1000, sharp, step]);
+  }
+  return out;
+}
+const HD_PATTERNS = {
+  // UI. light = any tap on a control, medium = a bigger control (octave shift),
+  // select = a toggle or a pick from a list.
+  light:       [HD_L],
+  medium:      [HD_M],
+  select:      [[0, 0.28, 0.95, 0]],
+  // Strength preview. Three identical medium taps, so the only thing that changes
+  // between Soft, Normal and Strong is how hard they hit.
+  strengthTest: [[0, 0.7, 0.5, 0], [170, 0.7, 0.5, 0], [340, 0.7, 0.5, 0]],
+  // Metronome. Normal beat is a tick, the downbeat is a firmer knock, pocket mode
+  // (screen off, no click) is stronger so the haptic can carry the beat alone.
+  beat:        [[0, 0.38, 0.85, 0]],
+  beatAccent:  [[0, 0.90, 0.40, 0]],
+  beatPocket:  [[0, 0.70, 0.60, 0]],
+  // Tuner. A detent: a crisp click as the needle seats, then a soft thud under it.
+  detent:      [[0, 0.55, 0.92, 0], [30, 0.35, 0.25, 0]],
+  // Confirmation. Two ticks 90 ms apart, the same spacing as the two note ding the
+  // simple tuner plays when a string locks (_sfDing). Also used for saves.
+  success:     [[0, 0.60, 0.95, 0]],
+  // Right answer: a light tick then a firmer one. "da-dink", up and bright.
+  correct:     [[0, 0.35, 0.85, 0], [55, 0.75, 0.70, 0]],
+  // Wrong answer: two dull thumps and a short rumble. "uh-oh", down and heavy. Low
+  // sharpness is the point; it must not feel like correct.
+  wrong:       [[0, 0.85, 0.15, 0], [110, 0.70, 0.10, 0]].concat(_hdSwell(145, 80, 0.45, 0.25, 0.05)),
+  // Achievement: three rising ticks. "ta-da".
+  achievement: [[0, 0.40, 0.80, 0], [70, 0.50, 0.80, 0], [140, 0.85, 0.60, 0]].concat(_hdSwell(170, 80, 0.50, 0.30, 0.30)),
+  // Streak milestone: a swell that builds, one hit at the top, a short fade.
+  milestone:   _hdSwell(0, 280, 0.20, 0.75, 0.45, 70).concat([[300, 1.00, 0.50, 0]], _hdSwell(330, 100, 0.55, 0.30, 0.30)),
+  // Level up: a bang, a rise, a burst with two sparkles.
+  levelUp:     [[0, 1.00, 0.35, 0]].concat(
+                 _hdSwell(120, 320, 0.20, 0.85, 0.60, 80),
+                 [[460, 1.00, 0.40, 0], [540, 0.60, 0.95, 0]],
+                 _hdSwell(580, 120, 0.50, 0.30, 0.30)),
+  // New record: two hits, a rise, a double hit, a short fade. Bigger than milestone.
+  win:         [[0, 0.60, 0.50, 0], [90, 0.50, 0.70, 0]].concat(
+                 _hdSwell(160, 240, 0.30, 0.90, 0.50, 80),
+                 [[420, 1.00, 0.35, 0], [490, 1.00, 0.35, 0]],
+                 _hdSwell(520, 100, 0.55, 0.30, 0.30)),
+  // Game over: one heavy thud, then a short low rumble that sinks.
+  gameOver:    [[0, 1.00, 0.10, 0]].concat(_hdSwell(40, 320, 0.65, 0.25, 0.05, 80)),
+};
+// PER SOUND HAPTICS. Every cue sound the player can pick has its own pattern, built
+// from that sound's real note timings (read from the sound code), so the haptic lands
+// on the same beats as the notes. Rules used for all of them:
+//  - Each note onset is a tap. A note that rings gets a fading tail under the tap.
+//  - Rising notes rise in strength. Falling notes fall in strength and in sharpness.
+//  - Bright, short, high sounds (blips, bells, chiptune) are sharp. Brass, low and
+//    dark sounds are dull. Sustained sounds (choir, swell, trombone) are swells.
+//  - Silent, and any sound without a pattern, uses the event's default feel.
+// Names are 'event:soundKey'. 'u:' are the unlockable sounds, shared across events.
+const _hdT = (t, i, s) => [t, i, s, 0];
+const _hdP = (...a) => a.reduce((o, x) => o.concat(Array.isArray(x[0]) ? x : [x]), []);
+const _hdS = _hdSwell;
+const HD_CUE = {
+  // ── correct (chime, blip, piano, marimba, harp) ──
+  'correct:chime':    _hdP(_hdT(0, .35, .85), _hdT(45, .75, .70)),
+  'correct:blip':     _hdP(_hdT(0, .30, .95), _hdT(40, .55, .95)),
+  'correct:piano':    _hdP(_hdT(0, .75, .60)),
+  'correct:marimba':  _hdP(_hdT(0, .70, .90)),
+  'correct:harp':     _hdP(_hdT(0, .35, .70), _hdT(70, .60, .75)),
+  // ── wrong (buzz, doubledrop, clunk, trombone, warphole, stepdown) ──
+  'wrong:buzz':       _hdP(_hdS(0, 180, .85, .50, .25), _hdS(220, 180, .85, .50, .25)),
+  'wrong:doubledrop': _hdP(_hdS(0, 160, .80, .30, .08), _hdS(240, 140, .70, .30, .08)),
+  'wrong:clunk':      _hdP(_hdT(0, 1.0, .20), _hdS(30, 80, .55, .30, .15)),
+  'wrong:trombone':   _hdP(_hdS(0, 240, .60, .35, .15, 60), _hdS(440, 240, .60, .35, .15, 60)),
+  'wrong:warphole':   _hdP(_hdT(0, .70, .40), _hdS(40, 240, .75, .30, .05, 60)),
+  'wrong:stepdown':   _hdP(_hdT(0, .80, .55), _hdT(100, .80, .42), _hdT(200, .90, .20)),
+  // ── streak milestone (fanfare, coin, brass, bell, drumroll) ──
+  'milestone:fanfare':  _hdP(_hdT(0, .40, .70), _hdT(160, .55, .70), _hdT(320, .90, .60), _hdS(345, 100, .55, .30, .40)),
+  'milestone:coin':     _hdP(_hdT(0, .50, .95), _hdT(80, .55, .95), _hdT(160, .95, .95), _hdS(185, 80, .45, .30, .90)),
+  'milestone:brass':    _hdP(_hdT(0, .85, .30), _hdT(180, .90, .30), _hdT(360, 1.0, .30), _hdS(385, 260, .80, .30, .30, 65)),
+  'milestone:bell':     _hdP(_hdT(0, 1.0, .75), _hdS(30, 260, .55, .30, .90, 65)),
+  'milestone:drumroll': _hdP(_hdS(0, 200, .15, .55, .70), _hdT(220, .60, .50), _hdT(370, .70, .50), _hdT(520, .80, .50),
+                              _hdT(740, 1.0, .35), _hdS(765, 80, .50, .30, .30)),
+  // ── level up (chiptune, orchestral, swell, powerup, harp, treasure) ──
+  'levelup:chiptune':   _hdP(_hdT(0, .45, .95), _hdT(110, .55, .95), _hdT(300, .60, .95), _hdT(400, .75, .95),
+                              _hdT(520, 1.0, .80), _hdS(545, 120, .50, .30, .60)),
+  'levelup:orchestral': _hdP(_hdT(0, .85, .50), _hdT(320, 1.0, .45), _hdS(345, 140, .70, .30, .40)),
+  'levelup:swell':      _hdP(_hdS(0, 300, .20, .70, .30, 75), _hdT(350, .65, .60), _hdT(510, .75, .60),
+                              _hdT(590, .90, .60), _hdS(620, 120, .50, .30, .35)),
+  'levelup:powerup':    _hdP(_hdS(0, 370, .20, .90, .50, 75), _hdT(380, 1.0, .90), _hdS(405, 100, .45, .30, .80)),
+  'levelup:harp':       _hdP([0, 1, 2, 3].map(k => _hdT(k * 80, .65 - k * .08, .70)),
+                              [0, 1, 2].map(k => _hdT(380 + k * 90, .45 + k * .2, .78))),
+  'levelup:treasure':   _hdP(_hdT(0, .50, .90), _hdT(170, .60, .90), _hdT(360, .70, .90), _hdT(570, 1.0, .85),
+                              _hdS(600, 260, .65, .30, .50, 65)),
+  // ── achievement (ping, chime, trophy) ──
+  'achievement:ping':   _hdP(_hdT(0, .75, 1.0)),
+  'achievement:chime':  _hdP(_hdT(0, .70, .85)),
+  'achievement:trophy': _hdP(_hdT(0, .40, .90), _hdT(160, .60, .90), _hdT(340, 1.0, .70), _hdS(365, 100, .50, .30, .50)),
+  // ── game over (synthcollapse, belltoll, glitch, dissonant, ghostwail, sadtrombone) ──
+  'gameover:synthcollapse': _hdP(_hdT(0, .90, .20), _hdS(30, 480, .70, .25, .10, 80)),
+  'gameover:belltoll':  _hdP(_hdT(20, 1.0, .60), _hdS(50, 120, .50, .30, .70), _hdT(360, .85, .55), _hdS(390, 100, .45, .30, .60),
+                              _hdT(700, .70, .50), _hdS(730, 100, .40, .30, .55)),
+  'gameover:glitch':    _hdP(_hdT(0, .60, .95), _hdT(100, .40, .95), _hdT(200, .55, .95),
+                              _hdT(360, .90, .10), _hdS(385, 160, .60, .30, .10)),
+  'gameover:dissonant': _hdP(_hdS(0, 600, .80, .25, .12, 50).map((e, k) => k % 2 ? [e[0], Math.round(e[1] * 60) / 100, e[2], e[3]] : e)),
+  'gameover:ghostwail': _hdP(_hdS(0, 120, .25, .55, .30), _hdS(120, 160, .55, .30, .30),
+                              _hdS(280, 120, .30, .55, .30), _hdS(400, 200, .55, .30, .30)),
+  'gameover:sadtrombone': _hdP(_hdT(0, .85, .20), _hdS(25, 200, .50, .30, .15, 65),
+                              _hdT(430, .80, .20),
+                              _hdT(580, .90, .20), _hdS(605, 480, .55, .25, .15, 80),
+                              _hdT(1780, .80, .20), _hdS(1805, 200, .50, .30, .15, 65),
+                              _hdT(2210, .70, .20),
+                              _hdT(2410, 1.0, .20), _hdS(2435, 640, .60, .25, .15, 80)),
+  // ── new record (euphoria, musicbox, triumph, choir, jackpot, funiculi) ──
+  'win:euphoria':  _hdP(_hdS(0, 440, .20, .75, .50, 70), _hdT(450, 1.0, .55), _hdS(480, 240, .70, .30, .50, 80)),
+  'win:musicbox':  _hdP(_hdT(20, .50, 1.0), _hdT(130, .55, 1.0), _hdT(240, .60, 1.0), _hdT(350, .80, 1.0), _hdS(375, 100, .40, .30, .95)),
+  'win:triumph':   _hdP(_hdT(20, 1.0, .45), _hdT(200, .70, .95), _hdT(300, .80, .95), _hdS(330, 280, .65, .30, .40, 70)),
+  'win:choir':     _hdP(_hdS(0, 350, .20, .70, .25, 70), _hdS(350, 400, .70, .30, .25, 80)),
+  'win:jackpot':   _hdP(_hdT(0, .45, .95), _hdT(80, .55, .95), _hdT(160, .65, .95), _hdT(240, .75, .95),
+                         _hdT(360, 1.0, .90), _hdT(440, .85, .95), _hdS(465, 120, .50, .30, .90)),
+  'win:funiculi':  _hdP([0, 337, 675, 1012, 1350, 1687].map(t => _hdT(t, .65, .80)),
+                         _hdT(2025, .95, .55), _hdS(2050, 120, .50, .30, .50)),
+  // ── unlockable sounds (any pool) ──
+  'u:secret_chime':   _hdP(_hdT(0, .45, .95), _hdT(230, .50, .95), _hdT(460, .55, .95),
+                           _hdT(805, .95, .85), _hdS(830, 300, .50, .30, .70, 75)),
+  'u:beethoven_chime': _hdP(_hdT(0, .70, .90), _hdT(150, .70, .90), _hdT(300, .70, .90), _hdT(480, 1.0, .30), _hdS(510, 400, .70, .30, .25, 80)),
+  'u:mythic_fanfare':  _hdP(_hdT(0, .90, .30), _hdT(418, .90, .30), _hdS(445, 200, .60, .30, .25, 70),
+                            _hdT(835, .80, .25), _hdS(860, 200, .50, .30, .20, 70), _hdT(1253, .70, .30),
+                            _hdT(1671, 1.0, .20), _hdS(1700, 360, .85, .30, .20, 90)),
+  'u:adventurer_chime': _hdP(_hdT(0, .60, .50), _hdT(170, .60, .50), _hdT(255, .90, .40), _hdS(280, 150, .50, .30, .30),
+                             _hdT(715, 1.0, .35), _hdS(740, 300, .70, .30, .30, 75)),
+  'u:completionist_chime': _hdP(_hdT(0, .90, .40), _hdS(30, 300, .60, .30, .35, 75), _hdT(780, .60, .40),
+                                _hdT(1040, .65, .40), _hdT(1300, .95, .40), _hdS(1325, 240, .60, .30, .35, 80)),
+  'u:mountainking_chime': _hdP(_hdT(0, .45, .35), _hdT(434, .50, .35), _hdT(868, .60, .35),
+                               _hdT(1304, .95, .25), _hdS(1330, 300, .70, .30, .25, 75)),
+  // ── Music Quiz end of round stings (fixed sounds, not picks) ──
+  'mq:win':     _hdP(_hdT(0, .35, .85), _hdT(336, .50, .85), _hdT(672, .65, .85), _hdT(840, .75, .85),
+                      _hdT(1080, 1.0, .45), _hdS(1105, 360, .70, .30, .40, 90)),
+  'mq:perfect': _hdP(_hdT(0, .35, .85), _hdT(336, .50, .85), _hdT(672, .65, .85), _hdT(840, .75, .85),
+                      _hdT(1080, 1.0, .45), _hdS(1105, 270, .70, .30, .40, 90),
+                      _hdT(1500, .60, .95), _hdT(1650, .80, .95), _hdS(1675, 130, .45, .30, .60)),
+  'mq:lose':    _hdP(_hdT(0, .80, .70), _hdT(384, .60, .45), _hdT(768, .45, .25),
+                      _hdT(1140, .90, .15), _hdS(1165, 480, .60, .25, .10, 80)),
+};
+Object.assign(HD_PATTERNS, HD_CUE);
+// The pattern for a cue event. key undefined = use the player's pick for that event
+// (or the shipped default), false = the event's plain default feel (used where the
+// sound that plays is not the player's pick).
+function _hdCue(ev, base, key) {
+  if (key === false) return base;
+  if (key === undefined || key === null) {
+    const c = progState && progState.audioCues;
+    key = (c && c[ev]) || (typeof _CUE_DEFS !== 'undefined' && _CUE_DEFS[ev] && _CUE_DEFS[ev].def);
+  }
+  if (!key) return base;
+  if (HD_PATTERNS[ev + ':' + key]) return ev + ':' + key;
+  if (HD_PATTERNS['u:' + key]) return 'u:' + key;
+  return base;
+}
+// Priority: 0 = interface and beats, 1 = answer feedback, 2 = celebrations and losses.
+const HD_PRIO = { light: 0, medium: 0, select: 0, beat: 0, beatAccent: 0, beatPocket: 0, detent: 0,
+                  success: 1, correct: 1, wrong: 1, strengthTest: 1,
+                  achievement: 2, milestone: 2, levelUp: 2, win: 2, gameOver: 2 };
+// How long each feel runs, so the priority rule knows when the motor is free again.
+const HD_DUR = {};
+Object.keys(HD_PATTERNS).forEach(function (k) {
+  let end = 0;
+  HD_PATTERNS[k].forEach(function (e) { end = Math.max(end, e[0] + Math.max(e[3], 25)); });
+  HD_DUR[k] = end;
+});
+let _hdBusyUntil = 0, _hdBusyPrio = -1, _hdLastUiAt = 0;
+// Strength setting (Settings > Haptic Feedback). Scales every intensity.
+// Sustained steps below this are dropped, since they only whine and leave a dangling tail.
+function _hdFloor() { return (progState && progState.hapticStrength === 'soft') ? 0.26 : 0.34; }
+function _hdLevel() { const v = progState && progState.hapticStrength; return v === 'soft' ? 0 : (v === 'strong' ? 2 : 1); }
+function _hdAmp(i, sharp) {
+  const v = progState && progState.hapticStrength;
+  // A sharp tick is a short, thin kick and feels weaker than a dull thud at the same
+  // number, on motors and on Core Haptics. Lift it so the pattern reads even.
+  if (sharp > 0.75) i = Math.min(1, i + 0.15 * (sharp - 0.75) / 0.25);
+  // Normal lifts the floor: a pattern value of 0.3 is a real tap, not a whisper. Motors
+  // and Core Haptics both read low values as much weaker than the old fixed taps.
+  // Three bands that barely overlap: soft tops out near 0.6, normal runs 0.35 to 0.9,
+  // strong starts at 0.78. A quiet step on strong is still stronger than a loud one on soft.
+  if (v === 'soft') return 0.1 + i * 0.5;
+  if (v === 'strong') return 0.78 + i * 0.22;
+  return 0.35 + i * 0.55;
+}
+// The same setting for the Capacitor fallback taps, which only have three sizes.
+function _hdStyle(st) {
+  const v = progState && progState.hapticStrength, S = window.ImpactStyle;
+  if (!S || (v !== 'soft' && v !== 'strong')) return st;
+  if (v === 'soft') return S.Light;
+  return st === S.Light ? S.Medium : S.Heavy;
+}
+let _hdPlugin = null;   // the plugin handle once found (a miss is never remembered)
+let _hdState = 0;       // 0 = unknown, 1 = works, -1 = off (use the Capacitor taps)
+let _hdFails = 0, _hdPauseUntil = 0;
+// One refusal is not a reason to give up for the session (a call or Siri can take the
+// motor for a moment). Three in a row pauses the native route for 15 s; the Capacitor
+// taps cover the gap. After the pause a single new refusal pauses it again.
+function _hdNoteResult(ok) {
+  if (ok) { _hdFails = 0; return; }
+  _hdFails++;
+  if (_hdFails >= 3) { _hdPauseUntil = Date.now() + 15000; _hdFails = 2; }
+}
+// One time check of what the phone can do. Also what the Settings line reports.
+// Bump this on every change to the patterns or the strength curve. It shows in Settings
+// under Haptic Feedback, so a tester can tell which set the installed build carries.
+const HD_VERSION = 'v18';
+let _hdWhy = '', _hdMode = '', _hdSupport = null;
+function _hdProbe() {
+  if (_hdState !== 0) return;
+  const p = _hdHandle();
+  if (!p) { _hdUpdateInfo(); return; }
+  _hdState = -2;   // check in flight; stay on the old taps until it answers
+  try {
+    p.isSupported().then(function (r) {
+      _hdSupport = r || {};
+      _hdState = (r && r.supported) ? 1 : -1;
+      if (_hdState < 0) _hdWhy = 'no haptic motor';
+      _hdUpdateInfo();
+    }).catch(function (e) { _hdState = -1; _hdWhy = String((e && e.message) || e); _hdUpdateInfo(); });
+  } catch (e) { _hdState = -1; _hdWhy = String(e); _hdUpdateInfo(); }
+}
+// Developer mode only: tap the engine line in Settings to force every haptic down one
+// Android route (auto, waveform, primitives) and tell the routes apart by feel. Lasts
+// until the app restarts. Harmless on iPhone, which ignores it.
+let _hdRoute = 'auto';
+function _hdCycleRoute() {
+  if (!INTONARE_DEV) return;   // developer tools only
+  _hdRoute = _hdRoute === 'auto' ? 'wave' : (_hdRoute === 'wave' ? 'prim' : 'auto');
+  _hdUpdateInfo();
+  hapticStrengthTest();
+}
+function _hdUpdateInfo() {
+  const el = document.getElementById('smHapticEngine');
+  if (!el) return;
+  if (!INTONARE_DEV) { el.textContent = ''; return; }   // developer mode only
+  if (_hdState === -2) { el.textContent = ''; return; }
+  if (_hdState === 0 && !_hdWhy) { el.textContent = ''; return; }
+  let txt;
+  if (_hdState === 1) {
+    txt = t('haptic_engine_custom');
+    const d = _hdMode || (_hdSupport && (_hdSupport.primitives ? 'primitives' : _hdSupport.amplitudeControl ? 'waveform' : ''));
+    if (d) txt += ' (' + d + ')';
+    if (INTONARE_DEV) txt += ' \u00b7 ' + HD_VERSION;
+    if (INTONARE_DEV && _hdRoute !== 'auto') txt += ' \u00b7 forced ' + (_hdRoute === 'wave' ? 'waveform' : 'primitives');
+  } else {
+    txt = t('haptic_engine_basic');
+    if (_hdWhy) txt += ' (' + _hdWhy + ')';
+    if (INTONARE_DEV) txt += ' \u00b7 ' + HD_VERSION;
+  }
+  if (INTONARE_DEV && _hdTraceList.length) txt += '\n' + _hdTraceList.join('\n');
+  el.style.whiteSpace = 'pre-line';
+  el.textContent = txt;
+}
+function _hdHandle() {
+  // Only a hit is remembered. A miss is looked up again next time: a haptic that fires
+  // while the app is still starting (before Capacitor is ready) must not switch the
+  // custom patterns off for the whole session.
+  if (_hdPlugin) return _hdPlugin;
+  try {
+    const cap = window.Capacitor;
+    if (cap && typeof cap.isPluginAvailable === 'function' && cap.isPluginAvailable('IntonareHaptics')) {
+      _hdPlugin = cap.registerPlugin('IntonareHaptics');
+    }
+  } catch (e) { _hdPlugin = null; }
+  if (!_hdPlugin) {
+    // Say WHY in the Settings line: no Capacitor yet, or Capacitor without our plugin.
+    const cap = window.Capacitor;
+    _hdWhy = !cap ? 'plugin missing: no Capacitor'
+      : 'plugin missing: ' + ((cap.PluginHeaders && cap.PluginHeaders.length) || 0) + ' native plugins listed';
+  }
+  return _hdPlugin || null;
+}
+// Returns true when the haptic was handled, either handed to the native plugin or
+// dropped on purpose (rate limit, priority), so the caller does not also fire a
+// fallback tap. The very first call returns false while the one-time support check
+// runs; that haptic goes out the old way, so nothing is ever dropped.
+// Developer mode only: the Settings engine line shows the last few haptic requests. "play" went to
+// the custom route, "drop" was skipped on purpose, "BASIC" fell back to the old taps.
+// A stray buzz that is not in this list did not come from a haptic request at all.
+let _hdTraceList = [], _hdTraceAt = 0, _hdSent = false;
+let _hdLastFeelAt = 0;   // last time a sound linked feel (not a tap or the tuner click) was requested
+function _hdPlay(name) {
+  _hdSent = false;
+  const r = _hdPlay0(name);
+  const now = Date.now();
+  if (!/^(detent|light|medium|select|beat)/.test(name)) _hdLastFeelAt = now;
+  _hdTraceList.unshift(name + ' ' + (r ? (_hdSent ? 'play' : 'drop') : 'BASIC') + (_hdTraceAt ? ' +' + Math.min(99999, now - _hdTraceAt) : ''));
+  _hdTraceAt = now;
+  if (_hdTraceList.length > 4) _hdTraceList.length = 4;
+  _hdUpdateInfo();
+  return r;
+}
+function _hdPlay0(name) {
+  if (_hdState < 0) return false;
+  const p = _hdHandle();
+  if (!p) { return false; }
+  if (_hdState === 0) { _hdProbe(); return false; }   // first call: the old taps cover it
+  if (_hdState !== 1) return false;
+  if (Date.now() < _hdPauseUntil) return false;
+  const pat = HD_PATTERNS[name];
+  if (!pat) return false;
+  const prio = HD_PRIO[name] !== undefined ? HD_PRIO[name] : (/^(correct|wrong):/.test(name) ? 1 : 2);
+  const now = Date.now();
+  if (prio < _hdBusyPrio && now < _hdBusyUntil) return true;       // a bigger feel is playing
+  if (prio === 0 && now - _hdLastUiAt < 30) return true;           // rate limit
+  try {
+    const events = pat.filter(function (e) { return e[3] === 0 || _hdAmp(e[1], e[2]) >= _hdFloor(); }).map(function (e) { return { t: e[0], i: Math.max(0, Math.min(1, _hdAmp(e[1], e[2]))), s: e[2], d: e[3] }; });
+    _hdBusyUntil = now + HD_DUR[name]; _hdBusyPrio = prio;
+    if (prio === 0) _hdLastUiAt = now;
+    _hdSent = true;
+    p.play({ events: events, strength: _hdLevel(), route: INTONARE_DEV ? _hdRoute : 'auto' }).then(function (r) {
+      _hdNoteResult(!(r && r.ok === false));
+      if (r && r.mode) _hdMode = r.mode;
+      if (r && r.ok === false) { _hdWhy = String(r.error || 'play refused'); }
+      _hdUpdateInfo();
+    }).catch(function (e) { _hdNoteResult(false); _hdWhy = String((e && e.message) || e); _hdUpdateInfo(); });
+    return true;
+  } catch (e) { _hdNoteResult(false); return false; }
+}
+
+// Warm the custom route before the first haptic. The first _hdPlay of a session only
+// starts the support check and returns false, so that first tap went out as the old
+// basic tap and felt different. Probe at startup, again once Capacitor is surely up,
+// and on the first touch, so the check is long done before anyone feels anything.
+[1200, 3500].forEach(function (ms) { setTimeout(function () { try { _hdProbe(); } catch (e) {} }, ms); });
+document.addEventListener('pointerdown', function _hdWarm() {
+  if (_hdState === 0) { try { _hdProbe(); } catch (e) {} } else { document.removeEventListener('pointerdown', _hdWarm, true); }
+}, true);
+async function hapticLight()   { if (!progState.hapticsOn) return; if (_hdPlay('light')) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); } catch(e) {} }
+async function hapticMedium()  { if (!progState.hapticsOn) return; if (_hdPlay('medium')) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Medium) }); } catch(e) {} }
+async function hapticStrengthTest() { if (!progState.hapticsOn) return; if (_hdPlay('strengthTest')) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Medium) }); } catch(e) {} }
+// Music Quiz end of round stings. Their sounds are fixed, not the player's picks.
+async function hapticMq(kind) {
+  if (!progState.hapticsOn) return;
+  if (_hdPlay('mq:' + kind)) return;
+  if (kind === 'lose') return hapticWrong(false);
+  return kind === 'perfect' ? hapticWin(false) : hapticSuccess();
+}
+// Tuner needle seated in tune: a click-in detent.
+async function hapticDetent()  { if (!progState.hapticsOn) return; if (_hdPlay('detent')) return; try { await window.Haptics.selectionChanged(); } catch(e) {} }
+async function hapticSelect()  { if (!progState.hapticsOn) return; if (_hdPlay('select')) return; try { await window.Haptics.selectionChanged(); } catch(e) {} }
 // In-tune ping — double Light tap, like a little ding ding
-async function hapticSuccess() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+async function hapticSuccess() { if (!progState.hapticsOn) return; if (_hdPlay('success')) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); } catch(e) {} }
 // Wrong — Heavy stumble then Light, feels like "oops"
 // Wrong — slow "BZZ...BZZ": Heavy long pause Heavy
-async function hapticWrong()   { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 150)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); } catch(e) {} }
+async function hapticWrong(key)   { if (!progState.hapticsOn) return; if (_hdPlay(_hdCue('wrong', 'wrong', key))) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); await new Promise(r => setTimeout(r, 150)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); } catch(e) {} }
 // Correct answer — distinct notification Success pulse, separate from in-tune ping
 // Correct — quick "da-Dink": Light then Medium
-async function hapticCorrect() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); } catch(e) {} }
+async function hapticCorrect(key) { if (!progState.hapticsOn) return; if (_hdPlay(_hdCue('correct', 'correct', key))) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); await new Promise(r => setTimeout(r, 30)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Medium) }); } catch(e) {} }
 // Level up — fireworks: big bang, shimmer, second burst, fade
 // Level up — fireworks cascade with breathing room
-async function hapticLevelUp() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 100)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 50)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 100)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 40)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+async function hapticLevelUp(key) { if (!progState.hapticsOn) return; if (_hdPlay(_hdCue('levelup', 'levelUp', key))) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); await new Promise(r => setTimeout(r, 100)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); await new Promise(r => setTimeout(r, 50)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); await new Promise(r => setTimeout(r, 100)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Medium) }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); await new Promise(r => setTimeout(r, 40)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); } catch(e) {} }
 // Streak milestone — trumpet "doo doo dooo" + firework burst
 // Streak milestone — snappy triple tap, "nice, keep going" energy
 // Streak milestone — ceremonial build with breathing room
-async function hapticMilestone() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); } catch(e) {} }
+async function hapticMilestone(key) { if (!progState.hapticsOn) return; if (_hdPlay(_hdCue('milestone', 'milestone', key))) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Medium) }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); await new Promise(r => setTimeout(r, 120)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); } catch(e) {} }
 // Achievement unlock — bright little "ta-da": Light, Light, Medium
-async function hapticAchievement() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 70)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 70)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); } catch(e) {} }
+async function hapticAchievement(key) { if (!progState.hapticsOn) return; if (_hdPlay(_hdCue('achievement', 'achievement', key))) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); await new Promise(r => setTimeout(r, 70)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); await new Promise(r => setTimeout(r, 70)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Medium) }); } catch(e) {} }
 // New record / big win — triumphant build, bigger than Milestone: Medium, Light, Heavy, Heavy
-async function hapticWin() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 90)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); await new Promise(r => setTimeout(r, 90)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); } catch(e) {} }
+async function hapticWin(key) { if (!progState.hapticsOn) return; if (_hdPlay(_hdCue('win', 'win', key))) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Medium) }); await new Promise(r => setTimeout(r, 90)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); await new Promise(r => setTimeout(r, 90)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); await new Promise(r => setTimeout(r, 60)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); } catch(e) {} }
 // Game over — deflating fade-out, distinct from Wrong's sharp double-Heavy: Heavy, Medium, Light
-async function hapticGameOver() { if (!progState.hapticsOn) return; try { await window.Haptics.impact({ style: window.ImpactStyle.Heavy }); await new Promise(r => setTimeout(r, 130)); await window.Haptics.impact({ style: window.ImpactStyle.Medium }); await new Promise(r => setTimeout(r, 130)); await window.Haptics.impact({ style: window.ImpactStyle.Light }); } catch(e) {} }
+async function hapticGameOver(key) { if (!progState.hapticsOn) return; if (_hdPlay(_hdCue('gameover', 'gameOver', key))) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); await new Promise(r => setTimeout(r, 130)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Medium) }); await new Promise(r => setTimeout(r, 130)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); } catch(e) {} }
 // Beat haptic — pocket mode bumps up so haptic carries alone
 async function hapticBeat(isAccent) {
   if (!progState.hapticsOn) return;
+  if (_hdPlay(metroAudioOn ? (isAccent ? 'beatAccent' : 'beat') : (isAccent ? 'beatAccent' : 'beatPocket'))) return;
   try {
     if (!metroAudioOn) {
-      await window.Haptics.impact({ style: isAccent ? window.ImpactStyle.Heavy : window.ImpactStyle.Medium });
+      await window.Haptics.impact({ style: _hdStyle(isAccent ? window.ImpactStyle.Heavy : window.ImpactStyle.Medium) });
     } else {
-      await window.Haptics.impact({ style: isAccent ? window.ImpactStyle.Heavy : window.ImpactStyle.Light });
+      await window.Haptics.impact({ style: _hdStyle(isAccent ? window.ImpactStyle.Heavy : window.ImpactStyle.Light) });
     }
   } catch(e) {}
+}
+
+function _syncHapticStrength() {
+  _hdProbe(); _hdUpdateInfo();
+  const v = (progState && progState.hapticStrength) || 'normal';
+  document.querySelectorAll('#smHapticStrengthRow .sm-toggle-chip').forEach(b =>
+    b.classList.toggle('active', b.dataset.value === v));
+}
+function setHapticStrength(v) {
+  progState.hapticStrength = (v === 'soft' || v === 'strong') ? v : 'normal';
+  _syncHapticStrength();
+  progSave();
+  if (progState.hapticsOn) hapticStrengthTest();   // three equal taps at the new strength
 }
 
 function setHaptics(on) {
@@ -96286,6 +96769,11 @@ function progMigrate(s) {
   // achievement doesn't wait for tomorrow to become earnable.
   if (s.sessionsCompleted === undefined) s.sessionsCompleted = s.sessionCompleted ? 1 : 0;
   if (!s.sesModulesVisited) s.sesModulesVisited = [];
+  if (s.totalPracticeSec === undefined) {
+    let _t = 0;
+    Object.values(s.history || {}).forEach(d => Object.values(d).forEach(v => { _t += (v || 0); }));
+    s.totalPracticeSec = _t;
+  }
   if (!s.vrOnboarding) s.vrOnboarding = { ageBracket: null, experience: null, voiceChanging: null, gender: null };
   if (!s.metroPresets) s.metroPresets = [];
 
@@ -96428,14 +96916,18 @@ const ACHIEVEMENTS = [
     check: s => (s.streak?.count||0) >= 50, prog: s => ({cur:(s.streak?.count||0), target:50}) },
 
   // ACCURACY
-  { id:'great_ears', cond_it:'100% di precisione nel training degli intervalli', cond:'100% accuracy in an interval session', rarity:'rare',    cat:'accuracy', name:"Great Ears Kid, Don't Get Cocky!", name_it:'Orecchio fino',
+  { id:'great_ears', cond_it:'punteggio perfetto nel test degli intervalli con tutti gli intervalli attivi', cond:'perfect score in the interval test with every interval turned on', rarity:'rare',    cat:'accuracy', name:"Great Ears Kid, Don't Get Cocky!", name_it:'Orecchio fino',
     desc:"Never tell me the odds",
     desc_it:"Non t'ho chiesto pronostici",
     check: s => !!(s.stats?.interval?.perfectSession) },
-  { id:'i_have_you', cond_it:'colpisci esattamente 0ms nel training del tempo', cond:'hit exactly 0ms in tempo training', rarity:'legendary',    cat:'accuracy', name:'I Have You Now', name_it:'Ora ti tengo',
+  { id:'i_have_you', cond_it:'colpisci 0ms in Tempo Lock, o indovina il tempo con 0 bpm di scarto', cond:'hit 0ms in Tempo Lock, or guess the tempo with 0 bpm off', rarity:'legendary',    cat:'accuracy', name:'I Have You Now', name_it:'Ora ti tengo',
     desc:"Impressive. Most impressive.",
     desc_it:"Impressionante. Davvero impressionante.",
-    check: s => s.stats?.tempo?.bestMs !== undefined && s.stats.tempo.bestMs === 0 },
+    check: s => {
+      // Tempo Lock stores a float and shows it rounded, so "0ms" on screen is anything under 0.5.
+      const tl = s.stats?.tempo?.bestMs;
+      return (typeof tl === 'number' && tl < 0.5) || s.stats?.tempoguess?.bestDelta === 0;
+    } },
   /* The climb's ceiling. 24 rungs with the wrong answers closing in the whole
      way, no lifeline taken, so the multiplier is still on 2.0 at the summit and
      the payout settles at 200,000. There is exactly one way to earn it. */
@@ -96455,7 +96947,7 @@ const ACHIEVEMENTS = [
   { id:'flawless', cond_it:'punteggio perfetto in qualsiasi esercizio', cond:'perfect score in any exercise', rarity:'legendary',      cat:'accuracy', name:'Flawless Victory', name_it:'Flawless Victory',
     desc:"Inconceivable!",
     desc_it:"Inconcepibile!",
-    check: s => !!(s.stats?.anyPerfect) },
+    check: s => !!(s.stats?.anyPerfect) || !!s.mqDailyPerfect || !!s.tonalePerfect },
 
   // EXPLORATION
   { id:'curious', cond_it:'usa 10 strumenti o esercizi diversi', cond:'use 10 different tools or exercises', rarity:'rare',        cat:'exploration', name:'Curious', name_it:'Curioso',
@@ -96557,7 +97049,7 @@ const ACHIEVEMENTS = [
     name:'Giant Steps', name_it:'Giant Steps',  desc:"If you're not living on the edge, you're taking up space",
     desc_it:"Se non vivi sul filo del rasoio, stai solo occupando spazio",
     check: s => (s.stats?.chordle?.vhardSolved||0) >= 5, prog: s => ({cur:(s.stats?.chordle?.vhardSolved||0), target:5}) },
-  { id:'deaf_composer', cond_it:'risolvi un Chordle senza mai premere play', cond:'solve a Chordle without pressing play', rarity:'secret', cat:'secrets',
+  { id:'deaf_composer', cond_it:'risolvi un Chordle in due tentativi o meno senza mai premere play', cond:'solve a Chordle in two guesses or fewer without pressing play', rarity:'secret', cat:'secrets',
     name:'Deaf Composer', name_it:'Compositore sordo', desc:"Music is like a dream... one that I cannot hear",
     desc_it:"La musica è come un sogno... che non riesco a sentire",
     check: s => !!(s.stats?.chordle?.solvedNoPlay) },
@@ -96605,7 +97097,7 @@ const ACHIEVEMENTS = [
 function _achTotalTime(s) {
   let t = 0;
   Object.values(s.history||{}).forEach(d => Object.values(d).forEach(v => t += (v||0)));
-  return t;
+  return Math.max(t, s.totalPracticeSec || 0);
 }
 function _achMaxDayTime(s) {
   let max = 0;
@@ -96826,7 +97318,7 @@ function _achShowNextToast() {
   }
   try {
     const _achVol = getCueVol('achievement');
-    hapticAchievement();
+    hapticAchievement(_unlockEntry ? _unlockEntry.k : undefined);
     if (_unlockEntry) { _unlockEntry.fn(_achVol); }
     else              { playCueAchievement(); }
   } catch(e) {}
@@ -97044,7 +97536,7 @@ const BACKUP_KEYS_SKIP   = [PROG_STORAGE_KEY, 'mq_in_progress', 'intonare_restor
 // and that button comes out before launch.
 const PROG_KEEP_ON_RESET = [
   'masterVolume', 'tapOffsetMs', 'noteNaming', 'uiScale', 'lang', 'teachingMode',
-  'helpTips', 'hapticsOn', 'splashSoundOn', 'mqMusicOn', 'audioCues',
+  'helpTips', 'hapticsOn', 'hapticStrength', 'splashSoundOn', 'mqMusicOn', 'audioCues',
   'notifications', 'sessionGoalMin', 'hasPro',
 ];
 
@@ -97931,6 +98423,7 @@ function progRenderModal() {
   // Sync haptics toggle
   document.querySelectorAll('#smHapticsRow .sm-toggle-chip').forEach(b =>
     b.classList.toggle('active', (b.dataset.value === 'on') === !!progState.hapticsOn));
+  _syncHapticStrength();
   // Sync metro audio toggle
   document.querySelectorAll('#smMetroAudioRow .sm-toggle-chip').forEach(b =>
     b.classList.toggle('active', (b.dataset.value === 'on') === metroAudioOn));
@@ -98009,8 +98502,8 @@ function resetProgress() {
 
 // Help content
 HELP_CONTENT.tgdiff = {
-  title: 'Tempo Guess — Difficulty',
-  body: '<strong>EASY</strong> sticks to round BPMs (multiples of 5) between 60-140: the most common range. <strong>NORMAL</strong> covers 50-180 with any integer. <strong>HARD</strong> opens up the full 40-220 range, including the slow funeral-march tempos and the breakneck prestissimos most musicians rarely sit with.'
+  title: 'Difficulty',
+  body: 'Tap to change the difficulty. Each level sets the tempo range: Easy 60 to 140 bpm in steps of 5, Normal 50 to 180, Hard 32 to 240, Insane 30 to 250. Insane also picks a random groove and subdivision every round.'
 };
 HELP_CONTENT.prratio = {
   title: 'Polyrhythm Ratio',
@@ -98527,7 +99020,7 @@ window.injectMockData = function() {
   var today = new Date();
   function daysAgo(n) {
     var d = new Date(today); d.setDate(d.getDate() - n);
-    return d.toISOString().slice(0, 10);
+    return localDateStr(d);
   }
   var mock = {
     xp: 1240, level: 24,
@@ -113547,10 +114040,14 @@ function _fluteSvgDraw(containerEl, data, mini, moving, noFoot) {
   }
   // ── Label pass: finger assignments on the primary tone-hole keys ─────────────
   // Left thumb (LT) on the thumb keys, L1–L3 on the left tone holes, L4 on the G♯
-  // key, R1–R3 on the right tone holes, R4 on the E♭ key. Auxiliary keys (trills,
-  // B♭ lever, foot joint, gizmo) are left unlabeled to keep the small diagram
-  // readable. Labels sit at each slot's centroid; circle slots use their center.
-  const FLABELS = { 1:'LT', 2:'L1', 3:'L2', 4:'L3', 5:'L4', 10:'R1', 11:'R2', 12:'R3', 13:'R4' };
+  // key, R1–R3 on the right tone holes, R4 on the E♭ key. The auxiliary keys carry a
+  // smaller label of their own (thumb B♭, side B♭, the two trill keys, the three foot
+  // keys, the gizmo), drawn only at full size; the mini diagram stays uncluttered.
+  // Labels sit at each slot's centroid; circle slots use their center.
+  const FLABELS = { 0:'B♭', 1:'LT', 2:'L1', 3:'L2', 4:'L3', 5:'L4', 6:'sB♭', 8:'D', 9:'D♯',
+                    10:'R1', 11:'R2', 12:'R3', 13:'R4', 14:'C♯', 15:'C', 16:'B', 17:'Gz' };
+  const FAUX = { 0:6.5, 6:6, 8:6, 9:6, 14:6, 15:5.5, 16:5.5, 17:5 };   // small labels (font size), full size only
+  const FOUTSIDE = { 8:1, 9:1 };   // trill pills are too narrow: label sits just above them
   // Circle slots center perfectly on their hole. The irregular keys (thumb bowl,
   // G♯, E♭) have lopsided bounding boxes — the E♭ slot even carries a phantom RH3
   // ring from the trace — so their bbox centroid lands off the visible body. These
@@ -113558,6 +114055,14 @@ function _fluteSvgDraw(containerEl, data, mini, moving, noFoot) {
   const FLABEL_ANCHOR = {
     1:  { x: 78,  y: 86 },   // thumb bowl — centered on the cup mass (pixel-centroid 77.2,86.4)
     5:  { x: 150, y: 72 },   // G♯ lozenge — on the touch-piece body, not the notch above it
+    0:  { x: 62,  y: 69.2 }, // thumb B♭ bar, over its long arm
+    6:  { x: 133.5, y: 16 }, // side B♭ hook, in the head of the hook
+    8:  { x: 193.5, y: 56.5 },  // D trill, above its pill
+    9:  { x: 228.6, y: 56.5 },  // D♯ trill, above its pill
+    14: { x: 296, y: 70 },   // low C♯ pad (bottom of the stack)
+    15: { x: 296, y: 48.6 }, // low C pad (top of the stack)
+    16: { x: 296, y: 57.7 }, // low B pad (middle of the stack)
+    17: { x: 317.6, y: 56 }, // gizmo, in the belly of the drop
     13: { x: 266, y: 76 },   // E♭ paddle — where the hook widens; minimizes overhang on a key
                              // narrower than the glyphs (centroid 268,71 sits on the thin neck)
   };
@@ -113573,6 +114078,7 @@ function _fluteSvgDraw(containerEl, data, mini, moving, noFoot) {
   for (let slot=0; slot<18; slot++){
     const lbl = FLABELS[slot]; if (!lbl) continue;
     if (noFoot && slot>=14) continue;
+    if (FAUX[slot] && mini) continue;
     const ctr = FLABEL_ANCHOR[slot] || _fcentroid(slot); if (!ctr) continue;
     const closed = data[slot]===1;
     const txt = document.createElementNS(NS,'text');
@@ -113581,11 +114087,11 @@ function _fluteSvgDraw(containerEl, data, mini, moving, noFoot) {
     txt.setAttribute('text-anchor','middle');
     txt.setAttribute('dominant-baseline','central');
     txt.setAttribute('font-family','JetBrains Mono, monospace');
-    txt.setAttribute('font-size', _FLUTE_CIRCLE_SLOTS[slot] ? '9' : '7');
+    txt.setAttribute('font-size', _FLUTE_CIRCLE_SLOTS[slot] ? '9' : (FAUX[slot] ? String(FAUX[slot]) : '7'));
     txt.setAttribute('font-weight','600');
     // On a closed (filled) key the fill is green, so use the dark bg color for contrast;
     // on an open key use a muted gray that reads on the dark background.
-    txt.setAttribute('fill', closed ? '#0d211c' : '#9ecfc4');
+    txt.setAttribute('fill', (closed && !FOUTSIDE[slot]) ? '#0d211c' : '#9ecfc4');
     txt.setAttribute('pointer-events','none');
     txt.setAttribute('data-flabel', String(slot));
     txt.textContent = lbl;
@@ -124996,7 +125502,7 @@ function sesResetTimer() {
   }
 }
 function sesCheckDay() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayStr();
   if (progState.sessionDate !== today) {
     progState.sessionDate = today;
     progState.sessionTodayMs = 0;
@@ -125145,6 +125651,12 @@ function sesShowStamp() {
 function sesUpdate() {
   if (!progState.sessionGoalMin) return;
   const totalMs = progState.sessionTodayMs + (_sesActive ? Date.now() - _sesStart : 0);
+  // Hard Day's Night reads the live total. The stored sessionTodayMs leaves out the
+  // segment still running, so the old check at goal completion came up short.
+  if (!progState.hardDaysNight && totalMs >= 3600000) {
+    progState.hardDaysNight = true; progSave();
+    try { checkAchievements(); } catch (e) {}
+  }
   const goalMs  = progState.sessionGoalMin * 60000;
   const rawPct  = totalMs / goalMs;
   const pct     = Math.min(1, rawPct);
@@ -126059,7 +126571,7 @@ document.addEventListener('DOMContentLoaded', () => {
   sesRefreshGoalChips();
   rampBuildChips();
   // Restore _sesCompleted: if today\'s accumulated time already meets goal, don\'t fire again
-  const _today = new Date().toISOString().slice(0,10);
+  const _today = todayStr();
   if (progState.sessionDate === _today && progState.sessionGoalMin > 0) {
     const _goalMs = progState.sessionGoalMin * 60000;
     if (progState.sessionTodayMs >= _goalMs || progState.sessionCompleted) {
@@ -138921,19 +139433,20 @@ function mqAnswer(idx) {
     else { hapticCorrect(); playCueCorrect(); }
     mqAmbDuck();
   } else {
+    var _streakAtMiss = MQ.streak;   // read below: the record check needs the run that just ended
     MQ.streak=0; MQ._v2streakMsg='';
     if (MQ.mode === 'daily' && MQ.dailyAnswers) { MQ.dailyAnswers.push(false); mqDailyLockAnswer(); }
     mqAmbDuck();
     if (MQ.mode==='survival') {
       MQ.lives--;
-      hapticWrong();
+      if (MQ.lives > 0) hapticWrong();   // the fatal miss gets its game over feel below, not both
       mq2RenderHearts(MQ.lives);          // the one just spent pops
       var _lh=document.getElementById('mqh'+(MQ.lives+1));   // the heart just lost
       if (_lh) { _lh.classList.add('heart-loss'); }   // animation is permanent (forwards); no swap needed
       mqUpdateHearts();
       if (MQ.lives<=0) {
         // Fatal answer: play the game-over sting (record gets the achievement chime), not the plain wrong buzz.
-        var _qRecord = MQ.streak > 0 && MQ.streak >= (MQ.bestStreak||0);
+        var _qRecord = _streakAtMiss > 0 && _streakAtMiss >= (MQ.bestStreak||0);
         try { _qRecord ? hapticWin() : hapticGameOver(); } catch(e) {}
         try { _qRecord ? playCueWin() : playCueGameOver(); } catch(e) {}
         document.getElementById('mqScoreDisp').textContent=MQ.score+' pts';
@@ -139021,9 +139534,9 @@ function mqEndRound(grade) {
   try { mqAmbStop(); mqNpUpdate(); } catch (e) {}
   setTimeout(function () {
     try {
-      if (grade === 'lose') { hapticWrong(); mqStingLose(); }
-      else if (grade === 'perfect') { hapticWin(); mqStingWin(true); }
-      else { hapticSuccess(); mqStingWin(false); }
+      if (grade === 'lose') { hapticMq('lose'); mqStingLose(); }
+      else if (grade === 'perfect') { hapticMq('perfect'); mqStingWin(true); }
+      else { hapticMq('win'); mqStingWin(false); }
     } catch (e) {}
   }, 450);
 }

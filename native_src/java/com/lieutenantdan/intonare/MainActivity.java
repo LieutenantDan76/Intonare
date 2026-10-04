@@ -49,6 +49,9 @@ public class MainActivity extends BridgeActivity {
         // registered, and JS reported "not implemented on Android". The build gave
         // no warning at any point.
         registerPlugin(FileSaverPlugin.class);
+        // Custom haptic patterns (one effect per pattern, timed by the system).
+        // Same rule as the two above: register BEFORE super.onCreate.
+        registerPlugin(IntonareHapticsPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Sticky immersive: hide status + nav bars. "Sticky" = a reveal swipe

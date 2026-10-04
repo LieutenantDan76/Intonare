@@ -34,7 +34,7 @@ echo  python: %PY%
 echo ============================================================
 
 echo.
-echo [1/3] HTML integrity (size / shrink-vs-HEAD / end tag / braces)...
+echo [1/7] HTML integrity (size / shrink-vs-HEAD / end tag / braces)...
 "%PY%" tools\audits\intonare_html_integrity.py Intonare.html
 if errorlevel 1 (
   echo.
@@ -43,7 +43,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/3] Regression sentinel...
+echo [2/7] Regression sentinel...
 "%PY%" tools\audits\intonare_regression_sentinel.py Intonare.html
 if errorlevel 1 (
   echo.
@@ -52,11 +52,47 @@ if errorlevel 1 (
 )
 
 echo.
-echo [3/3] Changelog gate...
+echo [3/7] Changelog gate...
 "%PY%" tools\audits\intonare_changelog_gate.py Intonare.html CHANGELOG.md
 if errorlevel 1 (
   echo.
   echo FAILED: changelog gate. Do not ship.
+  exit /b 1
+)
+
+echo.
+echo [4/7] Achievement audit...
+"%PY%" tools\audits\intonare_achievement_audit.py
+if errorlevel 1 (
+  echo.
+  echo FAILED: achievement audit. Do not ship.
+  exit /b 1
+)
+
+echo.
+echo [5/7] Backup audit...
+"%PY%" tools\audits\intonare_backup_audit.py Intonare.html
+if errorlevel 1 (
+  echo.
+  echo FAILED: backup audit. Do not ship.
+  exit /b 1
+)
+
+echo.
+echo [6/7] Drum preset audit...
+"%PY%" tools\audits\intonare_drum_preset_audit.py Intonare.html
+if errorlevel 1 (
+  echo.
+  echo FAILED: drum preset audit. Do not ship.
+  exit /b 1
+)
+
+echo.
+echo [7/7] US spelling audit...
+"%PY%" tools\audits\intonare_us_spelling_audit.py Intonare.html
+if errorlevel 1 (
+  echo.
+  echo FAILED: US spelling audit. Do not ship.
   exit /b 1
 )
 

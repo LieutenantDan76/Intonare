@@ -138,8 +138,13 @@ may already be done.
   canonical, cloud is a mirror.
 - Auto-start tuner mic on Android: post-launch. It races the
   MainActivity RECORD_AUDIO grant.
-- iOS native mic plugin: Swift, from scratch. The Android-only Java
-  plugin gives iOS nothing. Currently iOS uses WebView mic only.
+- iOS native plugins (mic, haptics, audio mode) and home screen shortcuts: written,
+  registered by patch_ios_appdelegate.py through SceneDelegate (Capacitor 8.5 is
+  scene based; the old storyboard route never loaded them). Mic is
+  native_src/ios/IntonareMicPlugin.swift, AVAudioEngine, mode .measurement.
+  NOT YET BUILT OR TESTED. Needs a Codemagic build and an iPhone check before
+  1.0.2 ships on iOS. Known gap: no handling for headphone plug/unplug while
+  the mic is live. Until verified, the WebView mic is the fallback.
 - Melody Dictation and Score Reader: deferred WIP. Coming Soon cards
   were removed pre-launch but the features are not cancelled.
 - Groove audit: 60 grooves, 57/60 vetted. Three are CEILING REACHED

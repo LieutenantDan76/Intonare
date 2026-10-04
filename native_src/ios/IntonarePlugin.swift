@@ -87,8 +87,10 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
     //
     // Ordering is now deterministic by construction, not by timing.
 
-    private static let sessionQueue = DispatchQueue(label: "com.lieutenantdan.intonare.audiosession")
-    private static var lastMicLive: Bool?     // nil = nothing applied yet
+    // Internal, not private: IntonareMicPlugin runs its start and stop on this same
+    // queue so only one caller at a time can change the session category.
+    static let sessionQueue = DispatchQueue(label: "com.lieutenantdan.intonare.audiosession")
+    static var lastMicLive: Bool?             // nil = nothing applied yet
 
     @objc func setAudioMode(_ call: CAPPluginCall) {
         let micLive = call.getBool("micLive") ?? false
@@ -108,6 +110,14 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
         let force = call.getBool("force") ?? false
 
         IntonarePlugin.sessionQueue.async {
+            // The native mic owns the session while it runs. It set playAndRecord with
+            // mode .measurement (or voice processing, if the surface needs echo
+            // cancelling). Re-asserting mode .default here would undo exactly that.
+            if micLive && IntonareMicPlugin.running {
+                call.resolve(["ok": true, "changed": false, "mode": "native mic"])
+                return
+            }
+
             // Idempotent. Rapid start/stop hits this constantly; make it free.
             if !force && IntonarePlugin.lastMicLive == micLive {
                 call.resolve(["ok": true, "changed": false,
@@ -128,6 +138,11 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
                         mode: .default,
                         options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers]
                     )
+                    // iOS silences haptics and system sounds while an app records.
+                    // The WebView mic path needs this too, or haptics die with the mic on.
+                    if #available(iOS 13.0, *) {
+                        try? session.setAllowHapticsAndSystemSoundsDuringRecording(true)
+                    }
                     try session.setActive(true)
                     try? session.overrideOutputAudioPort(.speaker)
                 } else {

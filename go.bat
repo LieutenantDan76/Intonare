@@ -78,8 +78,22 @@ fc /b native_src\java\com\lieutenantdan\intonare\FileSaverPlugin.java android\ap
 if errorlevel 1 set NATIVE_CHANGED=1
 copy /Y native_src\java\com\lieutenantdan\intonare\FileSaverPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\FileSaverPlugin.java
 
+echo [4c4] Restoring IntonareHapticsPlugin.java...
+fc /b native_src\java\com\lieutenantdan\intonare\IntonareHapticsPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\IntonareHapticsPlugin.java >nul 2>&1
+if errorlevel 1 set NATIVE_CHANGED=1
+copy /Y native_src\java\com\lieutenantdan\intonare\IntonareHapticsPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\IntonareHapticsPlugin.java
+
 echo [4d] Restoring styles.xml...
 copy /Y native_src\res\values\styles.xml android\app\src\main\res\values\styles.xml
+
+echo [4d2] Restoring home screen shortcuts...
+REM shortcuts.xml and its labels. The manifest points at @xml/shortcuts, so if these
+REM are not copied in, the build fails with a missing resource, not a quiet no-op.
+if not exist android\app\src\main\res\xml mkdir android\app\src\main\res\xml
+if not exist android\app\src\main\res\values-it mkdir android\app\src\main\res\values-it
+copy /Y native_src\res\xml\shortcuts.xml android\app\src\main\res\xml\shortcuts.xml
+copy /Y native_src\res\values\shortcut_strings.xml android\app\src\main\res\values\shortcut_strings.xml
+copy /Y native_src\res\values-it\shortcut_strings.xml android\app\src\main\res\values-it\shortcut_strings.xml
 
 echo [4e] Restoring colors.xml...
 copy /Y native_src\res\values\colors.xml android\app\src\main\res\values\colors.xml
