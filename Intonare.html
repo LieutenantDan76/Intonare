@@ -36345,6 +36345,19 @@ function _iosPluginHandle() {
 // the cache. After that, caching is correct and rapid start/stop stays free.
 let _iosAudioEverApplied = false;
 
+// Stay-loud experiment (1.0.3). On at least one iPhone, plain .playback is the
+// quiet state and playAndRecord with the speaker override is the loud one. With
+// this on (the default), the session stays in the loud mode even with the mic
+// off, which also removes the mode switch that could leave the sound dead.
+// Flip it in the audio debug panel (seven taps on the version number).
+let _iosStayLoud = true;
+try { if (localStorage.getItem('intonare_stay_loud') === '0') _iosStayLoud = false; } catch (e) {}
+function _iosSetStayLoud(on) {
+  _iosStayLoud = !!on;
+  try { localStorage.setItem('intonare_stay_loud', on ? '1' : '0'); } catch (e) {}
+  _iosSyncAudioMode('stay loud ' + (on ? 'on' : 'off'));
+}
+
 // Is anything audibly playing right now that a session-category change would
 // disrupt? The change tears WebKit's output down and rebuilds it: everything
 // scheduled ahead of the current moment is dropped. The metronome schedules
@@ -36395,7 +36408,7 @@ function _iosSyncAudioMode(why) {
   const force   = !_iosAudioEverApplied;
   if (haveCtx) _iosAudioEverApplied = true;
   try {
-    p.setAudioMode({ micLive, force }).then(r => {
+    p.setAudioMode({ micLive, force, stayLoud: _iosStayLoud }).then(r => {
       if (window._sampleDiag) {
         window._sampleDiag.audioMode =
           (r && r.ok ? (r.mode || '?') : 'failed') +
@@ -107152,6 +107165,16 @@ function _openAudioDiag() {
     'padding:6px 12px;font:12px ui-monospace,monospace;cursor:pointer';
   close.onclick = () => { clearInterval(box._t); box.remove(); };
   box.appendChild(close);
+
+  // Stay-loud switch: A/B the two iPhone audio modes on the device.
+  const loudBtn = document.createElement('button');
+  const _loudLabel = () => 'STAY LOUD: ' + (_iosStayLoud ? 'ON' : 'OFF');
+  loudBtn.textContent = _loudLabel();
+  loudBtn.style.cssText =
+    'float:right;margin-right:8px;background:#1f3a2a;color:#9fe3b8;border:0;border-radius:6px;' +
+    'padding:6px 12px;font:12px ui-monospace,monospace;cursor:pointer';
+  loudBtn.onclick = () => { _iosSetStayLoud(!_iosStayLoud); loudBtn.textContent = _loudLabel(); };
+  box.appendChild(loudBtn);
 
   const pre = document.createElement('pre');
   pre.style.cssText = 'margin:0;white-space:pre-wrap;word-break:break-all';

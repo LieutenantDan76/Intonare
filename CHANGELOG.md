@@ -6,6 +6,7 @@ A human-readable record of what changed, when,
 
 - iPhone: the sound could stop completely after the mic was switched on and off, and only came back after closing the app. iOS can leave the sound engine in an "interrupted" state when it changes the audio mode, and the app only woke it from "suspended". It now wakes the engine from any state that is not running, and tries again on the next touch.
 - The audio debug readout now shows the sound engine state even when the mic is off.
+- iPhone: new "stay loud" mode, on by default. With the mic off, the app now stays in the louder recording audio mode with the speaker forced, instead of dropping to plain playback, which sounds quieter on at least one iPhone. It also removes the mode switch that could leave the sound dead. Turn it off with the STAY LOUD button in the audio debug panel (seven taps on the version number) to compare.
 
 ## v1.0.2: Achievements that unlock when they should
 

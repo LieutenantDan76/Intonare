@@ -91,6 +91,7 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
     // queue so only one caller at a time can change the session category.
     static let sessionQueue = DispatchQueue(label: "com.lieutenantdan.intonare.audiosession")
     static var lastMicLive: Bool?             // nil = nothing applied yet
+    static var lastStayLoud: Bool?            // the stayLoud value that went with lastMicLive
 
     @objc func setAudioMode(_ call: CAPPluginCall) {
         let micLive = call.getBool("micLive") ?? false
@@ -108,6 +109,12 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
         // AudioContext. After that the cache is trustworthy and rapid start/stop
         // stays free.
         let force = call.getBool("force") ?? false
+        // stayLoud (1.0.3 experiment): with the mic off, keep the loud mode
+        // (playAndRecord + .defaultToSpeaker + speaker override) instead of
+        // dropping to plain .playback. On at least one iPhone, plain .playback is
+        // the quiet state and the recording mode is the loud one. JS owns the
+        // switch (debug panel), so it can be A/B tested on a device.
+        let stayLoud = call.getBool("stayLoud") ?? false
 
         IntonarePlugin.sessionQueue.async {
             // The native mic owns the session while it runs. It set playAndRecord with
@@ -119,15 +126,15 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
             }
 
             // Idempotent. Rapid start/stop hits this constantly; make it free.
-            if !force && IntonarePlugin.lastMicLive == micLive {
+            if !force && IntonarePlugin.lastMicLive == micLive && IntonarePlugin.lastStayLoud == stayLoud {
                 call.resolve(["ok": true, "changed": false,
-                              "mode": micLive ? "playAndRecord" : "playback"])
+                              "mode": (micLive || stayLoud) ? "playAndRecord" : "playback"])
                 return
             }
 
             let session = AVAudioSession.sharedInstance()
             do {
-                if micLive {
+                if micLive || stayLoud {
                     // iOS requires playAndRecord to record. It is inherently
                     // quieter — output runs through a voice-processing path built
                     // for phone calls. mode .default keeps that as light as it
@@ -158,9 +165,10 @@ public class IntonarePlugin: CAPPlugin, CAPBridgedPlugin {
                 }
 
                 IntonarePlugin.lastMicLive = micLive
-                print("[Intonare] session → \(micLive ? "playAndRecord" : "playback")")
-                call.resolve(["ok": true, "changed": true,
-                              "mode": micLive ? "playAndRecord" : "playback"])
+                IntonarePlugin.lastStayLoud = stayLoud
+                let modeName = micLive ? "playAndRecord" : (stayLoud ? "playAndRecord (stay loud)" : "playback")
+                print("[Intonare] session → \(modeName)")
+                call.resolve(["ok": true, "changed": true, "mode": modeName])
             } catch {
                 // A failure here means the app is quieter than ideal, not broken.
                 // Do not poison lastMicLive: leaving it unchanged means the next
