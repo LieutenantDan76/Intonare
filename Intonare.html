@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 1.0.2 -->
+<!-- INTONARE_VERSION: 1.0.3 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -36001,7 +36001,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '1.0.2';
+const INTONARE_VERSION = '1.0.3';
 /* v1.0.0: Settings sliders move only on a sideways drag or a clean tap.
    On Android the native range input jumps the thumb the moment a finger lands,
    so scrolling the Settings panel changed Text Size or Master Volume (and a
@@ -36257,6 +36257,17 @@ function getAudio() {
   const _fresh = (!_sharedAudio || _sharedAudio.state === 'closed');
   if (_fresh) {
     _sharedAudio = new (window.AudioContext || window.webkitAudioContext)();
+    // If the context stops running (iOS 'interrupted' after a session change),
+    // try to wake it now, and again on the next touch if the first try is refused.
+    try {
+      _sharedAudio.addEventListener('statechange', function () {
+        const c = _sharedAudio;
+        if (!c || c.state === 'running' || c.state === 'closed') return;
+        c.resume().catch(() => {});
+        const wake = function () { if (c.state !== 'running' && c.state !== 'closed') c.resume().catch(() => {}); };
+        document.addEventListener('pointerdown', wake, { once: true, capture: true });
+      });
+    } catch (e) {}
     // iOS: the .playback category is CONFIGURED at launch but not ACTIVE — iOS
     // does not activate a session until something needs audio, and WKWebView
     // activates it with ITS defaults, not ours. So the first sounds of a session
@@ -36277,7 +36288,11 @@ function getAudio() {
       _iosSyncAudioMode('first audio');
     } catch (e) {}
   }
-  if (_sharedAudio.state === 'suspended') {
+  // iOS can put the context in 'interrupted' (not 'suspended') when the audio
+  // session category changes, for example when the mic turns on or off. Only
+  // waking 'suspended' left the sound dead until the app was restarted. Wake
+  // anything that is not running.
+  if (_sharedAudio.state !== 'running' && _sharedAudio.state !== 'closed') {
     // resume() may reject if not called from a user gesture; swallow it
     _sharedAudio.resume().catch(() => {});
   }
@@ -107162,7 +107177,7 @@ function _openAudioDiag() {
   }
 
   function render() {
-    const ctx  = (typeof audioCtx !== 'undefined' && audioCtx) ? audioCtx : null;
+    const ctx  = (typeof audioCtx !== 'undefined' && audioCtx) ? audioCtx : ((typeof _sharedAudio !== 'undefined' && _sharedAudio) ? _sharedAudio : null);
     const inst = readPeak();
 
     const L = [];

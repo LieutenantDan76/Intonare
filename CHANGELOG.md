@@ -2,6 +2,11 @@
 
 A human-readable record of what changed, when,
 
+## v1.0.3: iPhone sound recovery
+
+- iPhone: the sound could stop completely after the mic was switched on and off, and only came back after closing the app. iOS can leave the sound engine in an "interrupted" state when it changes the audio mode, and the app only woke it from "suspended". It now wakes the engine from any state that is not running, and tries again on the next touch.
+- The audio debug readout now shows the sound engine state even when the mic is off.
+
 ## v1.0.2: Achievements that unlock when they should
 
 - I Have You Now did not unlock on a 0ms Tempo Lock round. The app shows the timing error rounded, but the unlock needed an exact zero, so a "0ms" on screen could still miss. It now unlocks on anything that rounds to 0ms. A 0 bpm miss in Tempo Guess counts as well, which it never did before.
