@@ -28323,6 +28323,7 @@ body.light #appHeader .mic-head-btn.listening {
 #levelChip .lvc::after {
   content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 38%; opacity: 0; pointer-events: none;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--lc) 38%, transparent), transparent);
+  will-change: transform, opacity;
 }
 #levelChip.fresh .lvc::after, #levelChip.lvup .lvc::after { animation: lvshine .8s cubic-bezier(.4,0,.2,1) .08s both; }
 #levelChip.fresh .lvb .xv:not(.tick) { display: inline-block; animation: lvnum .55s cubic-bezier(.2,.9,.3,1) .04s both; }
@@ -28584,40 +28585,62 @@ body.light #streakSheet .ss-d.p.t { color: #fff; }
 }
 
 /* ── COLLAPSING HEADER ────────────────────────────────────────────────────────
-   The button row and the session timer pin while the page scrolls. The moment you start
-   scrolling, the title and subtitle lift away and a soft strip fades in behind the pinned
-   rows; near the top they come back. It is one animation per direction, not something that
-   follows the scroll position frame by frame (that runs on the main thread, which is busy on
-   the Tuner and Metro, so it would trail your finger). Kill switch: HVS_COLLAPSE in the
-   script, or remove html.hv-collapse. */
+   The button row and the session bar are always sticky, so they pin with no script in the way.
+   From the first pixel of scroll the big title and subtitle lift away, a bar settles in behind
+   the pinned rows, and the screen name slides up beside the session timer, so the bar says
+   where you are and keeps the timer in view. Near the top it all reverses. Each direction is
+   one animation (transform and opacity only), not something that follows the scroll frame by
+   frame, because that would run on the main thread, which is busy on the Tuner and Metro.
+   Kill switch: HVS_COLLAPSE in the script, or remove html.hv-collapse. */
 @supports (overflow: clip) {
   :where(html.hv2.hv-collapse) body { overflow-x: clip; overflow-y: visible; }
-  html.hv2.hv-collapse.hv-pinned #appHeader { position: sticky; top: var(--hv-pin, 0px); }
-  html.hv2.hv-collapse.hv-pinned .session-bar { position: sticky; top: calc(var(--hv-pin, 0px) + var(--hv-h, 34px) + 8px); z-index: 510; }
+  html.hv2.hv-collapse #appHeader { position: sticky; top: var(--hv-pin, 0px); }
+  html.hv2.hv-collapse .session-bar { position: sticky; top: calc(var(--hv-pin, 0px) + var(--hv-h, 34px) + 8px); z-index: 510; }
 }
 html.hv2.hv-collapse #appHeader { z-index: 500; }
 html.hv2.hv-collapse #appHeader::before {
-  content: ''; position: absolute; left: -7%; right: -7%; z-index: -1; pointer-events: none; opacity: 0;
-  top: calc(-1 * var(--hv-pin, 60px) - 40px); height: calc(var(--hv-pin, 60px) + 40px + var(--hv-h, 34px) + 36px);
-  background: linear-gradient(to bottom,
-    color-mix(in srgb, var(--accent) 5%, var(--bg-0)) 0,
-    color-mix(in srgb, var(--accent) 5%, var(--bg-0)) calc(100% - 22px),
-    color-mix(in srgb, var(--accent) 5%, transparent) calc(100% - 1px), transparent 100%);
-  transition: opacity .28s ease !important;
+  content: ''; position: absolute; left: -7%; right: -7%; z-index: -1; pointer-events: none;
+  top: calc(-1 * var(--hv-pin, 60px) - 40px); height: calc(var(--hv-pin, 60px) + 40px + var(--hv-h, 34px) + 34px);
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-0));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 22%, transparent), 0 14px 22px -16px rgba(0,0,0,.55);
+  opacity: 0; transform: translateY(-10px); will-change: transform, opacity;
+  transition: opacity .3s ease, transform .45s cubic-bezier(.2,.8,.2,1) !important;
 }
-html.hv2.hv-collapse.hv-compact #appHeader::before { opacity: 1; }
+body.light #appHeader::before { box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 24%, transparent), 0 12px 20px -16px rgba(0,0,0,.2); }
+html.hv2.hv-collapse.hv-compact #appHeader::before { opacity: 1; transform: none; }
 html.hv2.hv-collapse #appHeader:not(.header--module) #appLogo,
 html.hv2.hv-collapse #appHeader:not(.header--module) #headerTagline {
-  transition: opacity .26s ease, transform .4s cubic-bezier(.2,.8,.2,1) !important;
+  will-change: transform, opacity;
+  transition: opacity .24s ease, transform .42s cubic-bezier(.2,.8,.2,1) !important;
 }
 html.hv2.hv-collapse.hv-compact #appHeader:not(.header--module) #appLogo,
 html.hv2.hv-collapse.hv-compact #appHeader:not(.header--module) #headerTagline {
-  opacity: 0 !important; transform: translateY(-34px) !important; pointer-events: none;
+  opacity: 0 !important; transform: translateY(-30px) !important; pointer-events: none;
 }
+/* The screen name that takes the title's place in the bar. */
+.hvs-pt {
+  position: absolute; left: 0; top: 6px; max-width: 58%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 700 10px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
+  opacity: 0; transform: translateY(10px); pointer-events: none; z-index: 5; will-change: transform, opacity;
+  transition: opacity .2s ease, transform .3s cubic-bezier(.2,.8,.2,1) !important;
+}
+html.hv2.hv-collapse.hv-compact #appHeader:not(.header--module) ~ .session-bar .hvs-pt {
+  opacity: 1; transform: none;
+  transition: opacity .32s ease .1s, transform .45s cubic-bezier(.2,.8,.2,1) .1s !important;
+}
+/* A new screen name eases in instead of swapping. */
+@keyframes hvsTitleIn { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+#appHeader:not(.header--module) #appLogo.hvs-in, #appHeader:not(.header--module) #headerTagline.hvs-in { animation: hvsTitleIn .42s cubic-bezier(.2,.8,.2,1) both; }
 @media (prefers-reduced-motion: reduce) {
   html.hv2.hv-collapse #appHeader::before, html.hv2.hv-collapse #appHeader:not(.header--module) #appLogo,
-  html.hv2.hv-collapse #appHeader:not(.header--module) #headerTagline { transition: none !important; }
+  html.hv2.hv-collapse #appHeader:not(.header--module) #headerTagline, .hvs-pt { transition: none !important; }
+  .hvs-in { animation: none !important; }
 }
+
+/* The Back button slides in whenever a screen shows it (it is shown by switching display, which restarts this). */
+@keyframes hvsBackIn { from { opacity: 0; translate: -10px 0; } to { opacity: 1; translate: 0 0; } }
+html.hv2 #appHeader #headerBackBtn { animation: hvsBackIn .38s cubic-bezier(.2,.8,.2,1) backwards; }
+@media (prefers-reduced-motion: reduce) { html.hv2 #appHeader #headerBackBtn { animation: none; } }
 
 /* ── Progress menu (tap the level chip) ───────────────────────────────────────
    It used to snap in. Now the scrim fades, the card unfolds from the chip corner and its parts
@@ -28629,22 +28652,12 @@ html.hv2.hv-collapse.hv-compact #appHeader:not(.header--module) #headerTagline {
 @keyframes pmOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate(14px, -26px) scale(.92); } }
 .progress-modal.active { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(0,0,0,.72); animation: pmBd .3s ease both; }
 .progress-modal.active .progress-modal-content { transform-origin: 92% 0; animation: pmIn .55s cubic-bezier(.16,1,.3,1) both; will-change: transform, opacity; }
-.progress-modal.active .progress-modal-content > :not(.progress-modal-close) { animation: ssUp .55s cubic-bezier(.16,1,.3,1) both; }
-.progress-modal.active .progress-modal-content > :nth-child(2) { animation-delay: .1s; }
-.progress-modal.active .progress-modal-content > :nth-child(3) { animation-delay: .14s; }
-.progress-modal.active .progress-modal-content > :nth-child(4) { animation-delay: .18s; }
-.progress-modal.active .progress-modal-content > :nth-child(5) { animation-delay: .22s; }
-.progress-modal.active .progress-modal-content > :nth-child(6) { animation-delay: .26s; }
-.progress-modal.active .progress-modal-content > :nth-child(7) { animation-delay: .3s; }
-.progress-modal.active .progress-modal-content > :nth-child(n+8) { animation-delay: .34s; }
 .progress-modal.active .pm-xp-fill { transform-origin: left center; animation: ssFill .9s cubic-bezier(.2,.8,.2,1) .3s both; }
 .progress-modal.active.closing { animation: pmBdOut .22s ease both; }
 .progress-modal.active.closing .progress-modal-content { animation: pmOut .24s cubic-bezier(.4,0,1,1) both; }
-.progress-modal.active.closing .progress-modal-content > * { animation: none; }
 body.light .progress-modal.active { background: rgba(20,30,28,.5); }
 @media (prefers-reduced-motion: reduce) {
-  .progress-modal.active, .progress-modal.active .progress-modal-content, .progress-modal.active .progress-modal-content > *,
-  .progress-modal.active .pm-xp-fill { animation: none !important; }
+  .progress-modal.active, .progress-modal.active .progress-modal-content, .progress-modal.active .pm-xp-fill { animation: none !important; }
 }
 </style>
 </head>
@@ -141627,6 +141640,15 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     return w;
   }
 
+  // The pinned bar shows the screen name beside the session timer, so after the big title lifts
+  // away you still know where you are. Module screens keep their title in the button row.
+  function syncPinTitle() {
+    var bar = document.querySelector('.session-bar'); if (!bar) return;
+    var el = document.getElementById('hvPinTitle');
+    if (!el) { el = document.createElement('span'); el.id = 'hvPinTitle'; el.className = 'hvs-pt'; el.setAttribute('aria-hidden', 'true'); bar.appendChild(el); }
+    var lg = document.getElementById('appLogo'), txt = lg ? (lg.textContent || '').trim() : '';
+    if (el.textContent !== txt) el.textContent = txt;
+  }
   var _crumbTab = '';
   window._hvsSync = function () {
     try {
@@ -141638,6 +141660,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       var isMod = hd.classList.contains('header--module');
       var show = !isMod && !inFolder;
       w.classList.toggle('on', show);
+      syncPinTitle();
       var n = Math.max(1, (window.progState && progState.streak && progState.streak.count) || 1);
       var nEl = document.getElementById('hvStreakN');
       if (nEl && nEl.textContent !== String(n)) nEl.textContent = n;
@@ -141815,9 +141838,11 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   }
 
   function weekStart() { return lang() === 'it' ? 1 : 0; }
+  var _fm = {};
+  function fmtOf(loc, k, o) { var key = loc + k; return _fm[key] || (_fm[key] = new Intl.DateTimeFormat(loc, o)); }
   function monthName() {
     var loc = lang() === 'it' ? 'it-IT' : 'en-US';
-    var name = new Intl.DateTimeFormat(loc, { month: 'long', year: 'numeric' }).format(new Date(calY, calM, 1));
+    var name = fmtOf(loc, 'm', { month: 'long', year: 'numeric' }).format(new Date(calY, calM, 1));
     return name.charAt(0).toUpperCase() + name.slice(1);
   }
   // Always 6 weeks (42 cells), so the sheet keeps one height in every month.
@@ -141828,7 +141853,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var now = new Date(), todayKey = dstr(now), h = '';
     for (var i = 0; i < 7; i++) {
       var wd = new Date(2023, 0, 1 + ((i + weekStart()) % 7));
-      h += '<i>' + esc(new Intl.DateTimeFormat(loc, { weekday: 'narrow' }).format(wd)) + '</i>';
+      h += '<i>' + esc(fmtOf(loc, 'w', { weekday: 'narrow' }).format(wd)) + '</i>';
     }
     var cells = 0;
     for (var l = 0; l < lead; l++, cells++) h += '<div class="ss-d"></div>';
@@ -141961,6 +141986,34 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       var sc = sheet.querySelector('.ss-scroll'); if (sc) sc.scrollTop = 0;
     } catch (e) {}
   };
+
+  // Screen names ease in when they change (tab switch, folder, module).
+  (function () {
+    var last = {}, timers = {};
+    function watch(id) {
+      var el = document.getElementById(id); if (!el) return;
+      last[id] = el.textContent;
+      new MutationObserver(function () {
+        var t = el.textContent;
+        if (t === last[id]) return; last[id] = t;
+        if (root.classList.contains('hv-compact')) return;
+        el.classList.remove('hvs-in'); void el.offsetWidth; el.classList.add('hvs-in');
+        clearTimeout(timers[id]); timers[id] = setTimeout(function () { el.classList.remove('hvs-in'); }, 520);
+      }).observe(el, { childList: true, characterData: true, subtree: true });
+    }
+    setTimeout(function () { watch('appLogo'); watch('headerTagline'); }, 2600);
+  })();
+
+  // Build everything once while the app is idle, so the first open is as light as the second.
+  function warm() {
+    try {
+      ensureSheet();
+      var now = new Date(); calY = now.getFullYear(); calM = now.getMonth();
+      render('main'); search('a'); fmtOf('en-US', 'm', { month: 'long', year: 'numeric' });
+    } catch (e) {}
+  }
+  var _idle = window.requestIdleCallback || function (f) { return setTimeout(f, 600); };
+  setTimeout(function () { _idle(warm, { timeout: 4000 }); }, 2500);
   window.closeStreakSheet = function () {
     if (!built) return;
     try { var i = document.getElementById('ssInput'); if (i) i.blur(); } catch (e) {}
@@ -141969,44 +142022,42 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     if (window._scrollLockSync) setTimeout(_scrollLockSync, 60);
   };
 })();
-/* Collapsing header. The only scroll work is a cheap threshold check once per frame:
-   pin the header (position: sticky) when the page has scrolled, and flip html.hv-compact past
-   6px (back at the top). The animation itself is CSS. Kill switch: HVS_COLLAPSE. */
+/* Collapsing header. The header and the session bar are always sticky, so pinning never
+   waits on a scroll event (waiting made the row jump back). The only scroll work is a cheap
+   threshold check once per frame that flips html.hv-compact past 6px (back at the top); the
+   animation itself is CSS. Kill switch: HVS_COLLAPSE. */
 (function () {
   var HVS_COLLAPSE = true;
   var root = document.documentElement;
   if (!HVS_COLLAPSE) return;
   root.classList.add('hv-collapse');
-  var hd = null, raf = 0, pinned = false, compact = false;
+  var hd = null, raf = 0, compact = false, pin = -1;
   function scrollY() {
     var se = document.scrollingElement || document.documentElement;
     return window.pageYOffset || se.scrollTop || 0;
   }
-  function setPin(v) {
-    var s = Math.max(0, Math.round(v)) + 'px';
-    if (root.style.getPropertyValue('--hv-pin') !== s) root.style.setProperty('--hv-pin', s);
+  // Where the header sits at rest: the body's top padding plus the header's top margin. Read from
+  // styles, not from the header's rectangle, so it is right even while the header is pinned.
+  function measure() {
+    hd = hd || document.getElementById('appHeader'); if (!hd) return;
+    var v = (parseFloat(getComputedStyle(document.body).paddingTop) || 0) + (parseFloat(getComputedStyle(hd).marginTop) || 0);
+    v = Math.max(0, Math.floor(v));
+    if (v !== pin) { pin = v; root.style.setProperty('--hv-pin', v + 'px'); }
   }
   function upd() {
-    raf = 0; hd = hd || document.getElementById('appHeader'); if (!hd) return;
+    raf = 0; measure();
     var y = scrollY();
-    if (y <= 0.5) {
-      if (pinned) { pinned = false; root.classList.remove('hv-pinned'); }
-      setPin(hd.getBoundingClientRect().top);       // exact at rest: the header is in normal flow
-    } else if (!pinned) {
-      setPin(hd.getBoundingClientRect().top + y);   // it has not left its slot yet, so top + y is its rest top
-      pinned = true; root.classList.add('hv-pinned');
-    }
     var want = compact ? y > 2 : y > 6;
     if (want !== compact) { compact = want; root.classList.toggle('hv-compact', compact); }
   }
   function kick() { if (!raf) raf = requestAnimationFrame(upd); }
   window.addEventListener('scroll', kick, { passive: true });
-  function repin() { kick(); }
-  window.addEventListener('resize', repin);
+  window.addEventListener('resize', kick);
   var _ap = window._hv2After;
-  window._hv2After = function () { try { if (_ap) _ap.apply(this, arguments); } catch (e) {} repin(); };
-  [0, 400, 1200, 3000].forEach(function (ms) { setTimeout(repin, ms); });
-  document.addEventListener('visibilitychange', repin);
+  window._hv2After = function () { try { if (_ap) _ap.apply(this, arguments); } catch (e) {} kick(); };
+  [0, 400, 1200, 3000].forEach(function (ms) { setTimeout(kick, ms); });
+  document.addEventListener('visibilitychange', kick);
+  try { new MutationObserver(kick).observe(document.body, { attributes: true, attributeFilter: ['style', 'class'] }); } catch (e) {}
 })();
 </script>
 </body>
