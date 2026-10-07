@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 1.0.3 -->
+<!-- INTONARE_VERSION: 1.0.2 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -1077,6 +1077,12 @@ body.sg-open #toolSurvivalGuide{
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+
+  /* iPhone: while a question is up, the answer drawer owns the bottom edge.
+     #mqPanel padded the bottom safe area itself, which left a blank strip under
+     the drawer, and NEXT already pads its own bottom (.mq2-foot), so the home
+     indicator is covered either way. */
+  #mqPanel:has(#mqScreenQuiz.active) { padding-bottom: 0; }
 
   /* ── Quiz header (matches app header pattern) ── */
   /* Floating top controls — no title bar, just BACK (left) + stats (right) */
@@ -28173,6 +28179,188 @@ body.light #exRelPitch .rlp-flick { animation:rlpFlickLight .48s steps(1) both; 
 .rct-practice-back span:first-child { font-size: 15px; line-height: 1; }
 
 </style>
+<style id="hv2-style">
+/* ═══ HEADER V2 (1.0.5) ═══════════════════════════════════════════════════════
+   Two parts.
+   1. A shared LOOK for the three header controls on every screen: calm glass mic
+      and star, and a level chip that draws its XP progress as a glowing line round
+      its own edge. Scoped to #appHeader so the drum kit's own .header is untouched.
+   2. A LAYOUT for module screens only (.header--module), switched on by the JS
+      profile (html.hv2 + data-hv). The hub and folder screens keep their layout.
+   Colors come from the theme variables, so light mode follows without a second
+   set of values; only the places an older !important rule would win are repeated.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. SHARED LOOK ───────────────────────────────────────────────────────── */
+#appHeader .head-btn {
+  width: 44px; height: 34px; border-radius: 17px; flex: none;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, color-mix(in srgb, var(--surface) 62%, transparent)) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  transition: transform .15s ease, color .2s, border-color .2s, background .2s;
+}
+#appHeader .head-btn:active { transform: scale(.94); }
+#appHeader .head-btn svg { display: block; }
+#appHeader .fav-btn svg { width: 15px; height: 15px; }
+#appHeader .mic-head-btn.listening {
+  color: var(--green);
+  border-color: color-mix(in srgb, var(--green) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--green) 12%, color-mix(in srgb, var(--surface) 62%, transparent)) !important;
+  transform: none; outline: 0;
+}
+#appHeader .mic-head-btn.listening svg rect { fill: currentColor; fill-opacity: .3; }
+#appHeader .mic-head-btn.mic-active::after { border-radius: 17px; }
+#appHeader .fav-btn.fav-added::after { border-radius: 17px; }
+
+/* Level chip: an SVG outline that doubles as the XP meter. */
+#appHeader .level-chip {
+  --lv-ink: var(--in-tune);
+  position: relative; display: block; flex: none;
+  height: 34px; min-width: 84px; padding: 0; margin: 0;
+  border: 0 !important; border-radius: 17px; overflow: visible;
+  color: var(--in-tune);
+  background: color-mix(in srgb, var(--in-tune) 7%, color-mix(in srgb, var(--surface) 62%, transparent)) !important;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  box-shadow: none;
+  transition: transform .15s ease;
+}
+#appHeader .level-chip:active { transform: scale(.96); }
+#levelChip .lvc { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: block; }
+#levelChip .lva {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: transform .45s cubic-bezier(.3,1.1,.3,1), opacity .25s, filter .3s;
+}
+#levelChip .level-chip-lv { font: 600 9px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .1em; opacity: .85; }
+#levelChip .level-chip-num { font-size: 19px; letter-spacing: .5px; line-height: 1; }
+#levelChip .lvb {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font: 700 13px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .04em; color: var(--lv-ink);
+  transform: translateY(70%) scale(.92); opacity: 0; filter: blur(3px);
+  transition: transform .45s cubic-bezier(.3,1.2,.3,1), opacity .25s, filter .3s;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--in-tune) 55%, transparent);
+  pointer-events: none;
+}
+#levelChip .lvb .xv { font: 700 14px 'JetBrains Mono','GlyphFix',monospace; font-variant-numeric: tabular-nums; }
+#levelChip .lvb .xl { font: 600 9px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .14em; margin-left: 5px; opacity: .85; font-style: normal; }
+#levelChip.pop .lva { transform: translateY(-80%) scale(.92); opacity: 0; filter: blur(3px); }
+#levelChip.pop .lvb { transform: none; opacity: 1; filter: none; }
+#levelChip .lvg {
+  position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 3;
+  filter: drop-shadow(0 0 2.5px var(--in-tune)) drop-shadow(0 0 7px color-mix(in srgb, var(--in-tune) 55%, transparent));
+  transition: filter .4s;
+}
+#levelChip .lvg .trk { fill: none; stroke: color-mix(in srgb, var(--in-tune) 34%, transparent); stroke-width: 1; }
+#levelChip .lvg .prg {
+  fill: none; stroke: var(--in-tune); stroke-width: 2; stroke-linecap: round;
+  stroke-dasharray: calc(var(--p, 0) * 100px) 300px;
+  transition: stroke-dasharray .8s cubic-bezier(.2,.8,.2,1), stroke-width .3s;
+}
+#levelChip.snap .lvg .prg { transition: none; }
+#levelChip.pop .lvg .prg { stroke-width: 2.8; }
+#levelChip.pop .lvg { filter: drop-shadow(0 0 3px var(--in-tune)) drop-shadow(0 0 10px var(--in-tune)); }
+@keyframes lvbump { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
+#levelChip.bump { animation: lvbump .38s cubic-bezier(.2,.9,.3,1.3); }
+@keyframes lvflash {
+  0% { background-color: transparent; }
+  25% { background-color: color-mix(in srgb, var(--in-tune) 30%, transparent); }
+  100% { background-color: transparent; }
+}
+#levelChip.lvup .lvc { animation: lvflash 1.1s ease-out; }
+/* Light ground: a soft halo reads as dirt, so the glow thins out. */
+body.light #levelChip .lvg { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--in-tune) 38%, transparent)); }
+body.light #levelChip.pop .lvg { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--in-tune) 55%, transparent)); }
+body.light #levelChip .lvb { text-shadow: none; }
+body.light #appHeader .level-chip {
+  background: color-mix(in srgb, var(--in-tune) 9%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
+}
+body.light #appHeader .head-btn {
+  background: color-mix(in srgb, var(--accent) 9%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent) !important;
+}
+body.light #appHeader .mic-head-btn.listening {
+  background: color-mix(in srgb, var(--green) 14%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--green) 55%, transparent) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #levelChip .lva, #levelChip .lvb, #levelChip .lvg, #levelChip .lvg .prg { transition: none; }
+  #levelChip.bump, #levelChip.lvup .lvc { animation: none; }
+}
+
+/* ── 2. MODULE LAYOUT ─────────────────────────────────────────────────────── */
+html.hv2 #appHeader.header--module {
+  position: relative; display: block; box-sizing: border-box;
+  height: var(--hv-hh); padding: 0; gap: 0;
+  margin: var(--hv-mt) -16px 0;
+}
+html.hv2 #appHeader.header--module .header-top { display: block; height: 0; padding: 0; overflow: visible; }
+html.hv2 #appHeader.header--module .logo-area { display: block; flex: none; min-width: 0; }
+html.hv2 #appHeader.header--module .header-top-right { display: contents; }
+html.hv2 #appHeader.header--module #appLogo { display: none; }
+html.hv2 #appHeader.header--module .header-sub { position: static; display: block; height: 0; padding: 0 !important; overflow: visible; }
+
+/* Back: a neutral glass pill, so the level chip is the only bright thing in the row. */
+html.hv2 #appHeader.header--module #headerBackBtn {
+  position: absolute; display: flex; align-items: center; justify-content: center; gap: 6px;
+  left: var(--hv-bl); top: 0; width: var(--hv-pw); height: var(--hv-h);
+  padding: 0; border-radius: calc(var(--hv-h) / 2); flex: none; min-width: 0; overflow: hidden;
+  background: color-mix(in srgb, var(--text) 7%, color-mix(in srgb, var(--surface) 62%, transparent));
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  color: color-mix(in srgb, var(--text) 88%, transparent);
+  opacity: 1; width: var(--hv-pw);
+  font: 600 12px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .04em;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  transition: transform .15s ease;
+}
+html.hv2 #appHeader.header--module #headerBackBtn:active { transform: scale(.96); opacity: 1; }
+html.hv2 #appHeader.header--module #headerBackLabel { padding: 0 !important; overflow: visible; text-overflow: clip; }
+html.hv2.hv-noword #appHeader.header--module #headerBackLabel { display: none; }
+
+html.hv2 #appHeader.header--module #levelChip {
+  position: absolute; right: var(--hv-lr); top: 0; width: var(--hv-pw); height: var(--hv-h); min-width: 0;
+  border-radius: calc(var(--hv-h) / 2);
+}
+html.hv2 #appHeader.header--module .head-btn {
+  position: absolute; width: var(--hv-mw); height: var(--hv-h); border-radius: calc(var(--hv-h) / 2);
+}
+
+/* strip: iPhones with an island or notch. Back and level beside the cutout; title row below. */
+html.hv2[data-hv="strip"] #appHeader.header--module .fav-btn { top: var(--hv-r2); right: 16px; }
+html.hv2[data-hv="strip"] #appHeader.header--module .mic-head-btn { top: var(--hv-r2); right: calc(16px + var(--hv-mw) + 8px); }
+/* band: Android camera hole in the middle. Back and mic left of it; star and level right of it. */
+html.hv2[data-hv="band"] #appHeader.header--module .mic-head-btn { top: 0; left: calc(var(--hv-bl) + var(--hv-pw) + 8px); }
+html.hv2[data-hv="band"] #appHeader.header--module .fav-btn { top: 0; right: calc(var(--hv-lr) + var(--hv-pw) + 8px); }
+/* classic: no cutout to dodge, or a corner camera. Back left; mic, star, level right. */
+html.hv2[data-hv="classic"] #appHeader.header--module .fav-btn { top: 0; right: calc(var(--hv-lr) + var(--hv-pw) + 8px); }
+html.hv2[data-hv="classic"] #appHeader.header--module .mic-head-btn { top: 0; right: calc(var(--hv-lr) + var(--hv-pw) + 8px + var(--hv-mw) + 8px); }
+
+/* Title: sentence case, one row, subtitle beside it when it fits (the JS decides). */
+html.hv2 #appHeader.header--module #headerTagline {
+  position: absolute !important; left: 16px; right: var(--hv-tr); top: var(--hv-r2); height: var(--hv-th);
+  display: flex !important; flex-wrap: nowrap; align-items: baseline; box-sizing: border-box;
+  padding-top: calc((var(--hv-th) - 1.05em) / 2);
+  overflow: visible; max-width: none; letter-spacing: .2px; line-height: 1.05; text-transform: none;
+  white-space: nowrap !important; -webkit-line-clamp: none; overflow-wrap: normal;
+}
+html.hv2 #appHeader.header--module #headerTagline .hdr-mod-title { white-space: nowrap !important; overflow-wrap: normal; }
+html.hv2 #appHeader.header--module #headerTagline[data-len="short"]  { font-size: 28px; }
+html.hv2 #appHeader.header--module #headerTagline[data-len="medium"] { font-size: 25px; }
+html.hv2 #appHeader.header--module #headerTagline[data-len="long"]   { font-size: 22px; }
+html.hv2 #appHeader.header--module #headerTagline .hdr-mod-title { flex: 0 0 auto; min-width: 0; overflow: visible; letter-spacing: inherit; }
+html.hv2 #appHeader.header--module #headerTagline .hdr-mod-sub {
+  flex: 0 0 auto; margin-left: 10px; font-size: 13px; letter-spacing: .3px; max-width: none; overflow: visible; text-overflow: clip;
+}
+/* Subtitle that did not fit beside the title: left of the timer, under the bar. */
+html.hv2 #appHeader.header--module #headerTagline.sub-under .hdr-mod-sub {
+  position: absolute; left: 0; margin: 0; font-size: 12px; white-space: nowrap;
+  top: calc(var(--hv-hh) + 15px - var(--hv-r2));
+}
+html.hv2 #appHeader.header--module #headerTagline.sub-none .hdr-mod-sub { display: none; }
+
+/* The row under the session bar: timer on the right, a fallback subtitle on the left. */
+html.hv2 #appHeader.header--module + .session-bar { margin-bottom: 14px; }
+</style>
 </head>
 <body>
 <script>
@@ -29627,7 +29815,8 @@ try {
         <button class="head-btn fav-btn" onclick="openFavSheet()" title="Quick Access" aria-label="Quick access favorites"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
         <button class="level-chip" id="levelChip" onclick="openProgress()" title="Progress" aria-label="Progress and level"
           ontouchstart="_dbgHoldStart(event)" ontouchend="_dbgHoldEnd()" ontouchcancel="_dbgHoldEnd()">
-          <span class="level-chip-lv">LV</span><span class="level-chip-num" id="levelChipNum">1</span>
+          <span class="lvc"><span class="lva"><span class="level-chip-lv" id="levelChipWord">LV</span><span class="level-chip-num" id="levelChipNum">1</span></span><span class="lvb"><span class="xv"></span><span class="xl">XP</span></span></span>
+          <svg class="lvg" aria-hidden="true" focusable="false"><path class="trk" pathLength="100"/><path class="prg" pathLength="100"/></svg>
         </button>
       </div>
     </div>
@@ -36001,7 +36190,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '1.0.3';
+const INTONARE_VERSION = '1.0.2';
 /* v1.0.0: Settings sliders move only on a sideways drag or a clean tap.
    On Android the native range input jumps the thumb the moment a finger lands,
    so scrolling the Settings panel changed Text Size or Master Volume (and a
@@ -56376,7 +56565,17 @@ function setHeaderModule(name, subtitle, exerciseId, backLabel) {
     if (name && header) header.classList.add('header--module');
     if (name) {
       // Back button pill label (no arrow — chevron is in the button HTML)
-      if (backLbl) backLbl.textContent = backLabel || '';
+      var _hv = document.documentElement.classList.contains('hv2');
+      if (backLbl) {
+        if (_hv) {
+          // V2: the pill says only "Back". The full label stays for screen readers.
+          var _bw = (t('hdr_back_word') !== 'hdr_back_word') ? t('hdr_back_word') : 'Back';
+          backLbl.textContent = _bw;
+          var _bb = document.getElementById('headerBackBtn');
+          if (_bb) { _bb.setAttribute('aria-label', backLabel || _bw); _bb.setAttribute('title', backLabel || _bw); }
+          if (window._hv2Apply) window._hv2Apply(true);
+        } else backLbl.textContent = backLabel || '';
+      }
       // Big title lives in #headerTagline (row below the pill — normal flow, inside the
       // fixed-height header-sub so it never moves the progress bar). Length bucket drives
       // size; subtitle appended as a small italic line beneath.
@@ -56386,11 +56585,11 @@ function setHeaderModule(name, subtitle, exerciseId, backLabel) {
         var mlen = name.length;
         tagline.dataset.len = mlen >= 14 ? 'long' : mlen >= 9 ? 'medium' : 'short';
         tagline.dataset.title = name;
-        tagline.innerHTML = '<span class="hdr-mod-title">' + name + '</span>' + (subtitle ? '<span class="hdr-mod-sub">' + subtitle + '</span>' : '');
+        tagline.innerHTML = '<span class="hdr-mod-title">' + (_hv && window._hv2Sentence ? _hv2Sentence(name) : name) + '</span>' + (subtitle ? '<span class="hdr-mod-sub">' + subtitle + '</span>' : '');
         // Module titles take this path, not setHeaderSection. They used to call
         // _fitHeaderTitle directly and it was measuring against the wrong box; see
         // the note on _fitModuleTagline.
-        _fitModuleTagline(tagline);
+        if (_hv && window._hv2FitTitle) _hv2FitTitle(tagline); else _fitModuleTagline(tagline);
       }
       var ids = exerciseId && EXERCISE_CONTROLS[exerciseId] ? EXERCISE_CONTROLS[exerciseId] : [];
       ids.forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = ''; });
@@ -91688,6 +91887,8 @@ const STRINGS = {
     gtool_play_asc:'▶︎ PLAY ASCENDING', gtool_play_desc:'◀ PLAY DESCENDING',
     inst_guitar:'GUITAR', inst_bass:'BASS', inst_uke:'UKE', inst_mandolin:'MANDOLIN', inst_banjo:'BANJO', inst_lute:'LUTE', inst_bouzouki:'BOUZOUKI', inst_piano:'PIANO', inst_organ:'ORGAN', inst_melodica:'MELODICA', inst_harp:'HARP', inst_mallet:'MALLET', inst_trumpet:'TRUMPET', inst_flugelhorn:'FLUGELHORN', inst_frenchhorn:'FRENCH HORN', inst_euphonium:'EUPHONIUM', inst_tuba:'TUBA', inst_trombone:'TROMBONE', inst_ww_flute:'FLUTE', inst_ww_clarinet:'CLARINET', inst_ww_oboe:'OBOE', inst_ww_bassoon:'BASSOON', inst_ww_sax:'SAX', inst_ww_recorder:'RECORDER', inst_ww_whistle:'TIN WHISTLE', inst_ww_ocarina:'OCARINA', inst_harmonica:'HARMONICA', inst_ww_chrom_harp:'CHROM. HARP', inst_didgeridoo:'DIDGERIDOO', inst_bowed_violin:'VIOLIN', inst_bowed_viola:'VIOLA', inst_bowed_cello:'CELLO', inst_bowed_doublebass:'DBL BASS', csfam_fretted:'Fretted', csfam_chromperc:'Chrom.', csfam_brass:'Brass', csfam_woodwind:'Woodwind', csfam_freereed:'Free Reed', csfam_bowed:'Bowed',
     hdr_back_to:'back to ',
+    hdr_back_word:'Back',
+    hdr_level_word:'LEVEL',
     lbl_other:'OTHER',  lbl_options:'OPTIONS', btn_close:'CLOSE', lbl_to:'to:', lbl_bass:'BASS', pn_tap_start:'tap a key to start', trp_sounds:'Sounds: ', trp_written:'Written: ', photo_loading:'LOADING PHOTO…', photo_offline:'PHOTO UNAVAILABLE', photo_soon:'PHOTO COMING SOON',
     backup_partial_restore:'This backup was saved with %n item(s) missing. Everything else will be restored.',
     backup_partial:'Backup saved, but %n item(s) could not be included. This is a bug \u2014 please report it.',
@@ -92880,6 +93081,8 @@ const STRINGS = {
     gtool_play_asc:'▶︎ SUONA ASCENDENTE', gtool_play_desc:'◀ SUONA DISCENDENTE',
     inst_guitar:'CHITARRA', inst_bass:'BASSO', inst_uke:'UKULELE', inst_mandolin:'MANDOLINO', inst_banjo:'BANJO', inst_lute:'LIUTO', inst_bouzouki:'BOUZOUKI', inst_piano:'PIANOFORTE', inst_organ:'ORGANO', inst_melodica:'MELODICA', inst_harp:'ARPA', inst_mallet:'PERCUSSIONI', inst_trumpet:'TROMBA', inst_flugelhorn:'FLICORNO', inst_frenchhorn:'CORNO', inst_euphonium:'EUFONIO', inst_tuba:'TUBA', inst_trombone:'TROMBONE', inst_ww_flute:'FLAUTO', inst_ww_clarinet:'CLARINETTO', inst_ww_oboe:'OBOE', inst_ww_bassoon:'FAGOTTO', inst_ww_sax:'SAX', inst_ww_recorder:'FLAUTO DOLCE', inst_ww_whistle:'TIN WHISTLE', inst_ww_ocarina:'OCARINA', inst_harmonica:'ARMONICA', inst_ww_chrom_harp:'ARMONICA CROM.', inst_didgeridoo:'DIDGERIDOO', inst_bowed_violin:'VIOLINO', inst_bowed_viola:'VIOLA', inst_bowed_cello:'VIOLONCELLO', inst_bowed_doublebass:'CONTRABBASSO', csfam_fretted:'Corde', csfam_chromperc:'Crom.', csfam_brass:'Ottoni', csfam_woodwind:'Legni', csfam_freereed:'Ance libere', csfam_bowed:'Arco',
     hdr_back_to:'torna a ',
+    hdr_back_word:'Indietro',
+    hdr_level_word:'LIV.',
     // Italian help content. showHelp() looks up STRINGS[lang].help[key] and
     // falls back to the English HELP_CONTENT when it misses — and this table did
     // not exist at all, so every help popup in the app was English regardless of
@@ -94445,6 +94648,11 @@ function _settingsScrollLock(on) {
   else    modal.removeEventListener('touchmove', _settingsTouchBlock, { passive: false });
 }
 function syncSettingsUI() {
+  // Haptic chips: without this, Settings always showed the HTML default (Normal)
+  // until the Progress screen was opened, even when Soft or Strong was saved.
+  document.querySelectorAll('#smHapticsRow .sm-toggle-chip').forEach(b =>
+    b.classList.toggle('active', (b.dataset.value === 'on') === !!progState.hapticsOn));
+  try { _syncHapticStrength(); } catch (e) {}
   // Note naming toggle
   const naming = progState.noteNaming || 'english';
   document.querySelectorAll('#smNoteNamingRow .sm-toggle-chip').forEach(b =>
@@ -98340,6 +98548,7 @@ function progShowXpToast(amount) {
   if (!amount || amount <= 0) return;
   const chip = document.getElementById('levelChip');
   if (!chip) return;
+  if (window._lvChipPopup && _lvChipPopup(chip, amount)) return;   // new chip shows the award itself
   const r = chip.getBoundingClientRect();
   if (!r.width) return;                    // chip hidden (fullscreen overlays etc)
 
@@ -98402,6 +98611,7 @@ function progShowXpToast(amount) {
 function progRefreshChip() {
   const el = document.getElementById('levelChipNum');
   if (el) el.textContent = progState.level;
+  if (window._lvChipRefresh) _lvChipRefresh();
 }
 
 function progLevelUpAnim() {
@@ -98412,6 +98622,7 @@ function progLevelUpAnim() {
   chip.classList.add('leveling-up');
   hapticLevelUp(); playCueLevelUp();
   setTimeout(() => chip.classList.remove('leveling-up'), 1300);
+  try { if (window._lvChipLevelUp) _lvChipLevelUp(); } catch (e) {}
   // Mini notification
   setTimeout(() => showMiniNotif('↑ LV ' + (progState.level || ''), 'lvl-up', 3000), 200);
 }
@@ -126641,6 +126852,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!bar || !appEl) return;
     var gap    = parseInt(getComputedStyle(appEl).gap) || 14;
     var bottom = Math.round(bar.getBoundingClientRect().bottom) + gap;
+    var sbar = bar.parentElement;
+    if (sbar && sbar.classList.contains('session-bar')) bottom += parseFloat(getComputedStyle(sbar).marginBottom) || 0;
     document.documentElement.style.setProperty('--header-h', bottom + 'px');
   }
 
@@ -140666,5 +140879,307 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     </div>
 </div>
 
+<script id="hv2-js">
+/* ═══ HEADER V2 (1.0.5) ═══════════════════════════════════════════════════════
+   Reads the phone (iPhone island, notch, or none; Android camera hole position
+   from the native hook), picks one of three module-header layouts, and writes the
+   numbers as CSS variables. The layouts themselves live in <style id="hv2-style">.
+   Also drives the level chip: the glow line that shows XP progress and the popup
+   that stacks XP awards inside the chip.
+   Nothing here touches the hub or folder headers.
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  root.classList.add('hv2');
+
+  var _cut = null, _cutKey = '';
+
+  function textW(el) {
+    if (el.classList && el.classList.contains('hdr-mod-title')) return Math.max(el.getBoundingClientRect().width, el.scrollWidth || 0);
+    try {
+      var rg = document.createRange();
+      rg.selectNodeContents(el);
+      var w = rg.getBoundingClientRect().width;
+      if (rg.detach) rg.detach();
+      return w;
+    } catch (e) { return el.getBoundingClientRect().width; }
+  }
+
+  // Device points per CSS px. The text-size slider shrinks the CSS viewport (meta
+  // viewport scale), so a cutout measured in points has to be divided by this.
+  function vpScale() {
+    if (!(root.classList.contains('ios') || root.classList.contains('android'))) return 1;
+    var s = (window.screen && screen.width ? screen.width : window.innerWidth) / window.innerWidth;
+    if (!(s >= 1)) s = 1;
+    return Math.min(1.6, s);
+  }
+
+  function profile() {
+    var W = window.innerWidth || 390;
+    var s = vpScale();
+    var pad = parseFloat(getComputedStyle(document.body).paddingTop) || 0;
+    var isIos = root.classList.contains('ios');
+    var P = { kind: 'classic', h: 34, pw: 92, mw: 44, bl: 16, lr: 16, r2: 38, th: 30, top: pad + 6 };
+
+    if (isIos) {
+      var sat = pad * s;
+      if (sat >= 46) {
+        var island = sat >= 54;
+        P.kind = 'strip';
+        if (island) {
+          P.h = 34;
+          P.top = 32.5 / s - P.h / 2;
+          var cutW = 125 / s;
+          P.pw = Math.max(56, Math.min(92, Math.floor((W - cutW) / 2 - 24)));
+          P.r2 = Math.max(P.h + 8, 61 / s - P.top);
+        } else {
+          P.h = 30;
+          P.top = Math.max(8, Math.round(sat / 2) - 15) / s;
+          var nW = 161 / s;
+          P.pw = Math.max(56, Math.min(78, Math.floor((W - nW) / 2 - 20)));
+          P.r2 = Math.max(P.h + 8, (sat + 2) / s - P.top);
+        }
+        P.mw = (P.pw < 70 || W < 360) ? 44 : 52;
+        P.th = 32;
+      }
+      // sat < 46: iPhone SE and X-class with no island. Classic.
+    } else if (_cut && !_cut.none && _cut.w > 0) {
+      var k = W / _cut.w;                       // CSS px per dp
+      var l = _cut.l * k, r = _cut.r * k;
+      var cx = (l + r) / 2;
+      if (Math.abs(cx - W / 2) < 0.14 * W) {
+        P.kind = 'band';
+        var room = (W - ((r - l) + 20)) / 2;
+        P.mw = 40;
+        P.pw = Math.max(44, Math.min(92, Math.floor(room - 16 - 8 - P.mw)));
+        P.top = 8; P.r2 = P.h + 6; P.th = 32;
+      } else {
+        // Corner camera: classic row, with the left or right end moved past the lens.
+        if (cx < W / 2) P.bl = Math.max(16, Math.round(r + 10));
+        else P.lr = Math.max(16, Math.round(W - l + 10));
+        P.top = 8; P.r2 = P.h + 6; P.th = 32;
+      }
+    }
+
+    if (P.kind === 'classic') {
+      // Back + mic + star + level share one row.
+      var span = W - P.bl - P.lr;
+      while (P.pw > 56 && 2 * P.pw + 2 * P.mw + 24 > span) P.pw -= 2;
+      if (2 * P.pw + 2 * P.mw + 24 > span) P.mw = 40;
+    }
+    P.noword = P.pw < 64;
+    // Only the strip layout has controls on the title row (mic and star, right end).
+    P.tr = P.kind === 'strip' ? (16 + 2 * P.mw + 8 + 10) : 16;
+    P.hh = Math.round(P.r2 + P.th - 2);
+    P.mt = P.top - pad;
+    return P;
+  }
+
+  function apply(skipFit) {
+    var P = profile();
+    var st = root.style;
+    st.setProperty('--hv-h', P.h + 'px');
+    st.setProperty('--hv-pw', P.pw + 'px');
+    st.setProperty('--hv-mw', P.mw + 'px');
+    st.setProperty('--hv-bl', P.bl + 'px');
+    st.setProperty('--hv-lr', P.lr + 'px');
+    st.setProperty('--hv-r2', P.r2 + 'px');
+    st.setProperty('--hv-th', P.th + 'px');
+    st.setProperty('--hv-hh', P.hh + 'px');
+    st.setProperty('--hv-mt', P.mt + 'px');
+    st.setProperty('--hv-tr', P.tr + 'px');
+    root.setAttribute('data-hv', P.kind);
+    root.classList.toggle('hv-noword', !!P.noword);
+    window._hv2P = P;
+    if (!skipFit) {
+      var tg = document.getElementById('headerTagline');
+      if (tg && tg.querySelector('.hdr-mod-title') && document.getElementById('appHeader').classList.contains('header--module')) {
+        window._hv2FitTitle(tg);
+      }
+      if (typeof setHeaderH === 'function') { try { setHeaderH(); } catch (e) {} }
+    }
+    chipPath();
+  }
+  window._hv2Apply = apply;
+
+  // Sentence case. Left alone when the title holds markup or an ampersand.
+  window._hv2Sentence = function (s) {
+    s = String(s == null ? '' : s);
+    if (/[&<]/.test(s)) return s;
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  };
+
+  // Title always wins the row. The subtitle sits beside it only if it fits whole.
+  // If not, it moves under the session bar, left of the timer; if that is too
+  // tight it shrinks to 9px, then goes away.
+  window._hv2FitTitle = function (tagline) {
+    if (!tagline) return;
+    var title = tagline.querySelector('.hdr-mod-title');
+    if (!title) return;
+    var sub = tagline.querySelector('.hdr-mod-sub');
+    tagline.classList.remove('sub-under', 'sub-none');
+    tagline.style.removeProperty('font-size');
+    if (sub) { sub.style.removeProperty('font-size'); sub.style.removeProperty('display'); }
+    var avail = tagline.getBoundingClientRect().width - 1;
+    if (!(avail > 0)) return;
+    var cs = getComputedStyle(tagline);
+    var tpx = parseFloat(cs.fontSize) || 0, guard = 0;
+    while (tpx > 15 && textW(title) > avail && guard++ < 40) {
+      tpx -= 1;
+      tagline.style.setProperty('font-size', tpx + 'px', 'important');
+    }
+    if (!sub) return;
+    var gap = parseFloat(getComputedStyle(sub).marginLeft) || 0;
+    if (textW(title) + gap + textW(sub) <= avail) return;     // fits inline
+    tagline.classList.add('sub-under');
+    var stamp = document.getElementById('sessionStamp');
+    var sw = stamp ? stamp.offsetWidth : 40;
+    var room = (window.innerWidth || 390) - 32 - sw - 14 - 12;
+    var spx = parseFloat(getComputedStyle(sub).fontSize) || 12;
+    guard = 0;
+    while (spx > 9 && textW(sub) > room && guard++ < 12) {
+      spx -= 0.5;
+      sub.style.setProperty('font-size', spx + 'px', 'important');
+    }
+    if (textW(sub) > room) { tagline.classList.remove('sub-under'); tagline.classList.add('sub-none'); }
+  };
+
+  // ── Level chip: glow line + XP popup ───────────────────────────────────────
+  var NS = 'http://www.w3.org/2000/svg';
+  var _lvTotal = 0, _lvT = null, _lvSnapT = null, _lvPend = false;
+
+  function chipEl() { return document.getElementById('levelChip'); }
+
+  function chipPath() {
+    var chip = chipEl();
+    if (!chip) return;
+    var svg = chip.querySelector('.lvg');
+    if (!svg) return;
+    var w = chip.offsetWidth, h = chip.offsetHeight;
+    if (!w || !h) return;
+    if (svg.getAttribute('data-w') === w + 'x' + h) return;
+    svg.setAttribute('data-w', w + 'x' + h);
+    svg.setAttribute('width', w); svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    var x0 = 1, y0 = 1, x1 = w - 1, y1 = h - 1, r = (h - 2) / 2, cx = w / 2;
+    var d = 'M' + cx + ' ' + y0 + 'H' + (x1 - r) +
+            'A' + r + ' ' + r + ' 0 0 1 ' + x1 + ' ' + (y0 + r) +
+            'A' + r + ' ' + r + ' 0 0 1 ' + (x1 - r) + ' ' + y1 +
+            'H' + (x0 + r) +
+            'A' + r + ' ' + r + ' 0 0 1 ' + x0 + ' ' + (y0 + r) +
+            'A' + r + ' ' + r + ' 0 0 1 ' + (x0 + r) + ' ' + y0 + 'H' + cx;
+    var paths = svg.querySelectorAll('path');
+    for (var i = 0; i < paths.length; i++) paths[i].setAttribute('d', d);
+  }
+
+  function fraction() {
+    try {
+      var lv = progState.level || 1;
+      var prev = lv > 1 ? progXpForLevel(lv - 1) : 0;
+      var need = progXpForLevel(lv) - prev;
+      if (!(need > 0)) return 1;
+      var f = ((progState.xp || 0) - prev) / need;
+      return f < 0 ? 0 : f > 1 ? 1 : f;
+    } catch (e) { return 0; }
+  }
+
+  function setP(p) {
+    var chip = chipEl();
+    if (!chip) return;
+    chip.style.setProperty('--p', String(p));
+    var prg = chip.querySelector('.lvg .prg');
+    if (prg) prg.style.opacity = p > 0.004 ? '1' : '0';
+  }
+  window._lvChipSetP = setP;
+
+  function word() {
+    var w = (typeof t === 'function') ? t('hdr_level_word') : '';
+    return (w && w !== 'hdr_level_word') ? w : 'LEVEL';
+  }
+  window._lvWord = function () {
+    var el = document.getElementById('levelChipWord');
+    if (el) el.textContent = word();
+  };
+
+  // Called by progRefreshChip. Skipped while a level-up is still playing.
+  window._lvChipRefresh = function () {
+    window._lvWord();
+    chipPath();
+    if (!_lvPend) setP(fraction());
+  };
+
+  // Returns false when the new chip is not there, so the old toast can run.
+  window._lvChipPopup = function (chip, amount) {
+    if (!chip || !chip.querySelector('.lvb .xv') || !chip.offsetWidth) return false;
+    chipPath();
+    _lvTotal += amount;
+    if (!_lvPend) {
+      chip.querySelector('.xv').textContent = '+' + _lvTotal;
+      chip.querySelector('.xl').textContent = 'XP';
+      chip.classList.add('pop');
+      chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump');
+    }
+    clearTimeout(_lvT);
+    _lvT = setTimeout(function () {
+      chip.classList.remove('pop', 'bump'); _lvTotal = 0;
+    }, 1700);
+    return true;
+  };
+
+  window._lvChipLevelUp = function () {
+    var chip = chipEl();
+    if (!chip || !chip.querySelector('.lvb .xv') || !chip.offsetWidth) return false;
+    chipPath();
+    _lvPend = true;
+    chip.querySelector('.xv').textContent = word() + ' ' + (progState.level || '');
+    chip.querySelector('.xl').textContent = '';
+    chip.classList.add('pop', 'lvup');
+    setP(1);
+    clearTimeout(_lvT); clearTimeout(_lvSnapT);
+    _lvSnapT = setTimeout(function () {
+      chip.classList.add('snap');
+      _lvPend = false;
+      setP(fraction());
+      void chip.offsetWidth;
+      chip.classList.remove('snap');
+    }, 900);
+    _lvT = setTimeout(function () {
+      chip.classList.remove('pop', 'lvup', 'bump'); _lvTotal = 0;
+    }, 2300);
+    return true;
+  };
+
+  // ── Android cutout from the native bridge ──────────────────────────────────
+  function pollCut() {
+    try {
+      var n = window.IntonareNative;
+      if (!n || typeof n.getCutout !== 'function') return;
+      var s = n.getCutout();
+      if (!s) return;
+      if (s === _cutKey) return;
+      _cutKey = s;
+      _cut = JSON.parse(s);
+      apply();
+    } catch (e) {}
+  }
+  window._hv2PollCut = pollCut;
+
+  // ── Boot and re-apply hooks ────────────────────────────────────────────────
+  var _rt = null;
+  function later() { clearTimeout(_rt); _rt = setTimeout(function () { apply(); }, 120); }
+  window.addEventListener('resize', later);
+  window.addEventListener('orientationchange', later);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', later);
+  window.addEventListener('load', function () { apply(); pollCut(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { apply(); });
+  try {
+    var chip0 = chipEl();
+    if (chip0 && window.ResizeObserver) new ResizeObserver(function () { chipPath(); }).observe(chip0);
+  } catch (e) {}
+  [0, 300, 900, 2000, 4000].forEach(function (ms) { setTimeout(function () { pollCut(); window._lvChipRefresh && window._lvChipRefresh(); }, ms); });
+  apply();
+})();
+</script>
 </body>
 </html>

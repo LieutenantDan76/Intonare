@@ -86,6 +86,13 @@ public class MainActivity extends BridgeActivity {
         // with no prepare latency. Playback itself is fired by the bridge, not here.
         prepareSplashSound();
 
+        // Camera cutout for the module header layout. Read now and again a few times:
+        // insets are often empty until the window is attached and laid out.
+        captureCutout(0);
+        captureCutout(300);
+        captureCutout(900);
+        captureCutout(2000);
+
         // Grant WebView mic requests
         getBridge().getWebView().setWebChromeClient(
             new BridgeWebChromeClient(getBridge()) {
@@ -231,6 +238,44 @@ public class MainActivity extends BridgeActivity {
         super.onDestroy();
     }
 
+    // Latest cutout as JSON in dp: {"w":screenWidthDp,"l":..,"t":..,"r":..,"b":..} for the
+    // top cutout, or {"w":..,"none":1} when there is none. The page converts dp to CSS px.
+    private volatile String cutoutJson = "";
+
+    private void captureCutout(long delayMs) {
+        final android.view.View decor = getWindow().getDecorView();
+        decor.postDelayed(new Runnable() {
+            @Override public void run() {
+                try {
+                    float d = getResources().getDisplayMetrics().density;
+                    int wpx = decor.getWidth() > 0 ? decor.getWidth()
+                            : getResources().getDisplayMetrics().widthPixels;
+                    int wdp = Math.round(wpx / d);
+                    String out = "{\"w\":" + wdp + ",\"none\":1}";
+                    if (android.os.Build.VERSION.SDK_INT >= 28) {
+                        android.view.WindowInsets wi = decor.getRootWindowInsets();
+                        android.view.DisplayCutout dc = wi != null ? wi.getDisplayCutout() : null;
+                        if (dc != null) {
+                            java.util.List<android.graphics.Rect> rs = dc.getBoundingRects();
+                            android.graphics.Rect top = null;
+                            for (android.graphics.Rect r : rs) {
+                                if (r.top <= 2 && (top == null || r.width() > top.width())) top = r;
+                            }
+                            if (top != null) {
+                                out = "{\"w\":" + wdp
+                                    + ",\"l\":" + Math.round(top.left / d)
+                                    + ",\"t\":" + Math.round(top.top / d)
+                                    + ",\"r\":" + Math.round(top.right / d)
+                                    + ",\"b\":" + Math.round(top.bottom / d) + "}";
+                            }
+                        }
+                    }
+                    cutoutJson = out;
+                } catch (Throwable ignored) { }
+            }
+        }, delayMs);
+    }
+
     // JS-callable bridge: toggle persists the mute pref; playSplashSound() starts
     // the prepared clip at the exact moment the splash animation begins.
     public class SplashSoundBridge {
@@ -240,6 +285,11 @@ public class MainActivity extends BridgeActivity {
                 .edit()
                 .putString(KEY_SPLASH_SOUND, on ? "1" : "0")
                 .apply();
+        }
+
+        @JavascriptInterface
+        public String getCutout() {
+            return cutoutJson;
         }
 
         @JavascriptInterface

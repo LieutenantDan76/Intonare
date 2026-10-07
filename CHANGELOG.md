@@ -2,12 +2,6 @@
 
 A human-readable record of what changed, when,
 
-## v1.0.3: iPhone sound recovery
-
-- iPhone: the sound could stop completely after the mic was switched on and off, and only came back after closing the app. iOS can leave the sound engine in an "interrupted" state when it changes the audio mode, and the app only woke it from "suspended". It now wakes the engine from any state that is not running, and tries again on the next touch.
-- The audio debug readout now shows the sound engine state even when the mic is off.
-- iPhone: new "stay loud" mode, on by default. With the mic off, the app now stays in the louder recording audio mode with the speaker forced, instead of dropping to plain playback, which sounds quieter on at least one iPhone. It also removes the mode switch that could leave the sound dead. Turn it off with the STAY LOUD button in the audio debug panel (seven taps on the version number) to compare.
-
 ## v1.0.2: Achievements that unlock when they should
 
 - I Have You Now did not unlock on a 0ms Tempo Lock round. The app shows the timing error rounded, but the unlock needed an exact zero, so a "0ms" on screen could still miss. It now unlocks on anything that rounds to 0ms. A 0 bpm miss in Tempo Guess counts as well, which it never did before.
@@ -33,6 +27,18 @@ A human-readable record of what changed, when,
 - Tuner and Metronome from the app icon menu now also work when the app is already open on the module chooser.
 - Long-press the app icon for Tuner, Metronome, Daily Chordle and Music Quiz, on iPhone and Android.
 - iPhone: the tuner now records through the phone's own audio engine instead of the web view, which stops the app's sound from dropping in volume while the mic is on. Haptics also keep working with the mic on.
+- Module screens have a new header. The title is in sentence case. Back is a calm glass pill that says only "Back", with no folder name. The mic and star are calm glass pills too, and the level chip now reads "LEVEL n" in a wider pill.
+- The level chip draws your XP progress as a glowing line around its edge. XP awards pop up inside the chip and add up when they arrive close together. A level-up fills the line, shows the new level, then starts the line again.
+- The header fits the phone. iPhones with an island or notch put Back and the level chip beside the cutout, and the title row sits below. Android phones with a camera hole in the middle put Back and mic on the left and star and level on the right. Phones without a cutout keep one row of buttons. A corner camera moves the row past the lens.
+- The subtitle sits beside the title only when it fits whole. If not, it moves under the session bar, left of the timer, and the title always keeps its room.
+- The mic, star and level chip got the new look on every screen. The hub and folder screens keep their layout.
+- Android: a small native change reads the real camera cutout. This needs a rebuild with go.bat. Until then Android uses the one-row layout.
+- Not in this build: the header collapsing on scroll and returning.
+- Music Quiz on iPhone: the answer drawer now reaches the bottom edge of the screen. The quiz panel added the bottom safe area as blank padding under the drawer, so a strip showed below it and the drawer seemed to rise from that strip. The NEXT button keeps its own padding, so it still clears the home indicator.
+- iPhone: the sound could stop completely after the mic was switched on and off, and only came back after closing the app. iOS can leave the sound engine in an "interrupted" state when it changes the audio mode, and the app only woke it from "suspended". It now wakes the engine from any state that is not running, and tries again on the next touch.
+- The audio debug readout now shows the sound engine state even when the mic is off.
+- Settings: the haptic strength chip showed Normal after every restart, even when Strong or Soft was saved. The setting itself was kept, but Settings only read it after you opened the Progress screen. It now reads the saved value when Settings opens.
+- iPhone: new "stay loud" mode, on by default. With the mic off, the app now stays in the louder recording audio mode with the speaker forced, instead of dropping to plain playback, which sounds quieter on at least one iPhone. It also removes the mode switch that could leave the sound dead. Turn it off with the STAY LOUD button in the audio debug panel (seven taps on the version number) to compare.
 
 ## v1.0.1: Piano that recovers, a rebuilt Chordle picker, fairer rhythm grading, quiz fixes
 
