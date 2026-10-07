@@ -35,6 +35,7 @@ A human-readable record of what changed, when,
 - Titles use one font. The header font only held capital letters, so lowercase letters came from a different face. It now includes lowercase, and the module subtitle is the same weight as the hub subtitle.
 - After you leave a module, the space that fixed-height panels reserve for the header now returns to the right value.
 - The mic, star and level chip got the new look on every screen.
+- The level chip and the Back button now take the color of the tab you are in (cyan, gold, green, purple, and the matching deep tones in light mode). Back is a tinted glass pill with a bolder arrow.
 - The level chip is calm when nothing is happening. The line and its glow sit low. When XP arrives, the line brightens and moves, then eases back down. Every chip change (popup, number count, level-up, line reset) now uses smooth easing.
 - The mic button now turns green with a small pulsing dot whenever the mic is really on, including when the tuner opens with the mic already running. It used to look idle until you tapped it.
 - Android: a small native change shows the status bar and reads its height. This needs a rebuild with go.bat. The navigation bar stays hidden as before; swipe up to show it. iPhone needs a new Codemagic build for the status bar.

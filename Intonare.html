@@ -28228,12 +28228,12 @@ body.light #appHeader .mic-head-btn.listening::before { box-shadow: none; }
 
 /* Level chip: an SVG outline that doubles as the XP meter. */
 #appHeader .level-chip {
-  --lv-ink: var(--in-tune);
+  --lc: var(--accent); --lv-ink: var(--lc);
   position: relative; display: block; flex: none;
   height: 34px; min-width: 84px; padding: 0; margin: 0;
   border: 0 !important; border-radius: 17px; overflow: visible;
-  color: var(--in-tune);
-  background: color-mix(in srgb, var(--in-tune) calc(5% + 4% * var(--g, 0)), color-mix(in srgb, var(--surface) 62%, transparent)) !important;
+  color: var(--lc);
+  background: color-mix(in srgb, var(--lc) calc(5% + 4% * var(--g, 0)), color-mix(in srgb, var(--surface) 62%, transparent)) !important;
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   box-shadow: none;
 }
@@ -28257,7 +28257,7 @@ body.light #appHeader .mic-head-btn.listening::before { box-shadow: none; }
   transform: translateY(70%) scale(.92); opacity: 0; filter: blur(3px);
   transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .35s ease, filter .4s ease !important;
   will-change: transform, opacity;
-  text-shadow: 0 0 10px color-mix(in srgb, var(--in-tune) 55%, transparent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--lc) 55%, transparent);
   pointer-events: none;
 }
 #levelChip .lvb .xv { font: 700 14px 'JetBrains Mono','GlyphFix',monospace; font-variant-numeric: tabular-nums; }
@@ -28270,12 +28270,12 @@ body.light #appHeader .mic-head-btn.listening::before { box-shadow: none; }
 #levelChip .lvb .xv.tick { animation: lvtick .28s cubic-bezier(.2,.8,.2,1); }
 #levelChip .lvg {
   position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 3;
-  filter: drop-shadow(0 0 calc(1.5px + 1.5px * var(--g)) color-mix(in srgb, var(--in-tune) calc(38% + 62% * var(--g)), transparent))
-          drop-shadow(0 0 calc(4px + 6px * var(--g)) color-mix(in srgb, var(--in-tune) calc(14% + 71% * var(--g)), transparent));
+  filter: drop-shadow(0 0 calc(1.5px + 1.5px * var(--g)) color-mix(in srgb, var(--lc) calc(38% + 62% * var(--g)), transparent))
+          drop-shadow(0 0 calc(4px + 6px * var(--g)) color-mix(in srgb, var(--lc) calc(14% + 71% * var(--g)), transparent));
 }
-#levelChip .lvg .trk { fill: none; stroke: color-mix(in srgb, var(--in-tune) 22%, transparent); stroke-width: 1; }
+#levelChip .lvg .trk { fill: none; stroke: color-mix(in srgb, var(--lc) 22%, transparent); stroke-width: 1; }
 #levelChip .lvg .prg {
-  fill: none; stroke: color-mix(in srgb, var(--in-tune) calc(62% + 38% * var(--g)), transparent); stroke-width: calc(1.7px + .9px * var(--g)); stroke-linecap: round;
+  fill: none; stroke: color-mix(in srgb, var(--lc) calc(62% + 38% * var(--g)), transparent); stroke-width: calc(1.7px + .9px * var(--g)); stroke-linecap: round;
   stroke-dasharray: calc(var(--p, 0) * 100px) 300px;
   transition: stroke-dasharray 1s cubic-bezier(.22,.9,.24,1), opacity .4s ease !important;
 }
@@ -28286,16 +28286,18 @@ body.light #appHeader .mic-head-btn.listening::before { box-shadow: none; }
 #levelChip.bump { animation: lvbump .5s cubic-bezier(.3,.7,.3,1); }
 @keyframes lvflash {
   0% { background-color: transparent; }
-  25% { background-color: color-mix(in srgb, var(--in-tune) 26%, transparent); }
+  25% { background-color: color-mix(in srgb, var(--lc) 26%, transparent); }
   100% { background-color: transparent; }
 }
 #levelChip.lvup .lvc { animation: lvflash 1.3s ease-in-out; }
 /* Light ground: a soft halo reads as dirt, so the glow thins out. */
-body.light #levelChip .lvg { filter: drop-shadow(0 0 calc(1px + 2px * var(--g)) color-mix(in srgb, var(--in-tune) calc(22% + 33% * var(--g)), transparent)); }
-body.light #levelChip .lvg .prg { stroke: color-mix(in srgb, var(--in-tune) calc(78% + 22% * var(--g)), transparent); }
+body.light #levelChip .lvg { filter: drop-shadow(0 0 calc(1px + 2px * var(--g)) color-mix(in srgb, var(--lc) calc(22% + 33% * var(--g)), transparent)); }
+body.light #levelChip .lvg .prg { stroke: color-mix(in srgb, var(--lc) calc(78% + 22% * var(--g)), transparent); }
 body.light #levelChip .lvb { text-shadow: none; }
+body.light #levelChip .level-chip-lv, body.light #levelChip .level-chip-num { color: color-mix(in srgb, var(--lc) 86%, #000) !important; }
+body.light #levelChip .lvb { color: color-mix(in srgb, var(--lc) 86%, #000); }
 body.light #appHeader .level-chip {
-  background: color-mix(in srgb, var(--in-tune) calc(9% + 4% * var(--g, 0)), color-mix(in srgb, var(--surface) 78%, transparent)) !important;
+  background: color-mix(in srgb, var(--lc) calc(9% + 4% * var(--g, 0)), color-mix(in srgb, var(--surface) 78%, transparent)) !important;
 }
 body.light #appHeader .head-btn {
   background: color-mix(in srgb, var(--accent) 9%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
@@ -28326,19 +28328,23 @@ html.hv2 #appHeader .header-top-right { display: contents; }
 html.hv2 #appHeader .header-sub { position: static; display: block; height: 0; padding: 0 !important; overflow: visible; }
 html.hv2 #appHeader.header--module #appLogo { display: none; }
 
-/* Back: a neutral glass pill, so the level chip is the only bright thing in the row. */
+/* Back: a glass pill tinted with the tab color, with a bold chevron and a soft top highlight. */
 html.hv2 #appHeader #headerBackBtn {
   position: absolute; align-items: center; justify-content: center; gap: 6px;
   left: var(--hv-bl); top: 0; width: var(--hv-pw); height: var(--hv-h);
   padding: 0; border-radius: calc(var(--hv-h) / 2); flex: none; min-width: 0; overflow: hidden;
-  background: color-mix(in srgb, var(--text) 7%, color-mix(in srgb, var(--surface) 62%, transparent));
-  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
-  color: color-mix(in srgb, var(--text) 88%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, color-mix(in srgb, var(--surface) 62%, transparent));
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  color: var(--accent);
   opacity: 1;
-  font: 600 12px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .04em;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  font: 600 12px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .06em;
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-  transition: transform .15s ease;
+  transition: transform .18s cubic-bezier(.2,.8,.2,1) !important, background-color .2s ease !important;
 }
+html.hv2 #appHeader #headerBackBtn svg { width: 13px; height: 13px; stroke-width: 3; transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+html.hv2 #appHeader #headerBackBtn:active svg { transform: translateX(-2px); }
+body.light #appHeader #headerBackBtn { background: color-mix(in srgb, var(--accent) 9%, color-mix(in srgb, var(--surface) 78%, transparent)); border-color: color-mix(in srgb, var(--accent) 38%, transparent); box-shadow: none; }
 html.hv2 #appHeader #headerBackBtn:active { transform: scale(.96); opacity: 1; }
 html.hv2 #appHeader #headerBackLabel { padding: 0 !important; overflow: visible; text-overflow: clip; }
 html.hv2.hv-noword #appHeader #headerBackLabel { display: none; }
