@@ -47,7 +47,8 @@ A human-readable record of what changed, when,
 - iPhone: new "stay loud" mode, on by default. With the mic off, the app now stays in the louder recording audio mode with the speaker forced, instead of dropping to plain playback, which sounds quieter on at least one iPhone. It also removes the mode switch that could leave the sound dead. Turn it off with the STAY LOUD button in the audio debug panel (seven taps on the version number) to compare.
 - New streak chip on the home screens, with a search button next to it. The chip counts the days you opened the app. Tap it for a practice sheet: search every tool and exercise, resume your last tool, a calendar of the days you opened the app, and your achievements at a glance. The app starts the calendar log on the day you update, and backups carry it.
 - Folder screens now show a breadcrumb (Home, then the tab) under the title. The Back button and the level chip now take the color of the tab you are in.
-- Collapsing header: when you scroll down, the button row stays pinned on a soft glass strip while the title and subtitle fade away. They come back as you scroll up. Module screens keep their title in the row.
+- Collapsing header: when you scroll down, the button row stays pinned on a soft glass strip while the title and subtitle fade away, and they return as you scroll up. On phones that support it the fade follows your finger directly, so it stays smooth. Module screens keep their title in the row.
+- Practice sheet polish: it slides up with a soft spring, its parts rise in one after another, the day circles pop in, and the achievements bar fills. Months slide when you change them, and the calendar always shows six weeks, so the sheet no longer jumps in height. Dragging the handle moves the backdrop with it, and a quick flick closes the sheet.
 
 ## v1.0.1: Piano that recovers, a rebuilt Chordle picker, fairer rhythm grading, quiz fixes
 

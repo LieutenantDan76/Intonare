@@ -28411,8 +28411,12 @@ html.hv2 #appHeader + .session-bar { margin-bottom: 14px; }
    The chip sits where Back would be, so it only shows on screens with no Back.
    Every color comes from the tab accent (--accent), so it matches the screen. */
 #hvLeft { position: absolute; left: var(--hv-bl, 16px); top: 0; height: var(--hv-h, 34px); z-index: 3;
-  display: none; align-items: center; gap: 8px; box-sizing: border-box; white-space: nowrap;
+  display: flex; align-items: center; gap: 8px; box-sizing: border-box; white-space: nowrap;
+  opacity: 0; visibility: hidden; transform: translateY(-4px) scale(.96); transform-origin: left center; pointer-events: none;
+  transition: opacity .26s ease, transform .4s cubic-bezier(.2,.8,.2,1), visibility 0s linear .4s !important;
   max-width: calc(100vw - 32px - var(--hv-pw, 92px) - var(--hv-mw, 44px) * 2 - 24px); }
+#hvLeft.on { opacity: 1; visibility: visible; transform: none; pointer-events: auto;
+  transition: opacity .3s ease .06s, transform .45s cubic-bezier(.2,.8,.2,1) .06s, visibility 0s !important; }
 .hvs-pill { -webkit-appearance: none; appearance: none; margin: 0; cursor: pointer; height: 34px; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 17px;
   font: 600 12px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .04em; color: var(--accent);
@@ -28432,7 +28436,7 @@ html.hv2 #appHeader + .session-bar { margin-bottom: 14px; }
 body.light .hvs-pill { background: color-mix(in srgb, var(--accent) 9%, color-mix(in srgb, var(--surface) 78%, transparent)); box-shadow: none; }
 body.light .hvs-sb { background: color-mix(in srgb, var(--text) 6%, color-mix(in srgb, var(--surface) 78%, transparent)); }
 @media (max-width: 389px) { .hvs-days { display: none; } }
-@media (max-width: 345px) { #hvLeft { gap: 6px; } .hvs-pill { padding: 0 9px; gap: 5px; } .hvs-sb { width: 32px; padding: 0; } }
+@media (max-width: 345px) { #streakSheet .ss-lg { display: none; } #streakSheet .ss-mn span { min-width: 8.4em; } #hvLeft { gap: 6px; } .hvs-pill { padding: 0 9px; gap: 5px; } .hvs-sb { width: 32px; padding: 0; } }
 /* Breadcrumb: replaces the folder subtitle on screens that have a Back button. */
 #headerTagline.hvs-crumb { font: 500 11px 'JetBrains Mono','GlyphFix',monospace !important; letter-spacing: .06em !important;
   font-style: normal !important; text-transform: none !important; display: flex; align-items: center; gap: 6px; }
@@ -28442,8 +28446,8 @@ body.light .hvs-sb { background: color-mix(in srgb, var(--text) 6%, color-mix(in
 
 /* Sheet */
 #streakSheetBd { position: fixed; inset: 0; z-index: 9290; background: #000; opacity: 0; visibility: hidden;
-  transition: opacity .35s ease, visibility 0s linear .35s !important; }
-#streakSheetBd.on { opacity: .5; visibility: visible; transition: opacity .35s ease, visibility 0s !important; }
+  transition: opacity .32s ease, visibility 0s linear .32s !important; }
+#streakSheetBd.on { opacity: .5; visibility: visible; transition: opacity .45s ease, visibility 0s !important; }
 body.light #streakSheetBd.on { opacity: .32; }
 #streakSheet { position: fixed; left: 0; right: 0; bottom: var(--ss-kb, 0px); z-index: 9300; box-sizing: border-box;
   max-height: min(88vh, calc(100dvh - var(--ss-kb, 0px) - 24px)); display: flex; flex-direction: column; gap: 14px;
@@ -28451,10 +28455,10 @@ body.light #streakSheetBd.on { opacity: .32; }
   background: color-mix(in srgb, var(--accent) 6%, color-mix(in srgb, var(--surface) 96%, var(--text)));
   color: var(--text); border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); border-bottom: 0;
   box-shadow: 0 -12px 40px rgba(0,0,0,.35);
-  transform: translateY(105%); visibility: hidden;
-  transition: transform .5s cubic-bezier(.2,.8,.2,1), visibility 0s linear .5s !important; }
-#streakSheet.on { transform: none; visibility: visible; transition: transform .5s cubic-bezier(.2,.8,.2,1), visibility 0s !important; }
-#streakSheet.drag { transition: none !important; }
+  transform: translateY(105%); visibility: hidden; will-change: transform;
+  transition: transform .34s cubic-bezier(.4,0,.8,.3), visibility 0s linear .34s !important; }
+#streakSheet.on { transform: none; visibility: visible; transition: transform .6s cubic-bezier(.16,1,.3,1), visibility 0s !important; }
+#streakSheet.drag, #streakSheetBd.drag { transition: none !important; }
 body.light #streakSheet { box-shadow: 0 -10px 34px rgba(0,0,0,.16); }
 #streakSheet .ss-grab { width: 40px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--text) 25%, transparent);
   align-self: center; flex: none; margin: 2px 0 4px; }
@@ -28499,13 +28503,19 @@ body.light #streakSheet .ss-play { color: #fff; }
 #streakSheet .ss-cal { display: flex; flex-direction: column; gap: 6px; flex: none; }
 #streakSheet .ss-ch { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 #streakSheet .ss-mn { display: flex; align-items: center; gap: 4px; font: 600 17px 'FrauncesHdr','Fraunces',Georgia,serif; }
-#streakSheet .ss-nav { width: 32px; height: 32px; border-radius: 50%; border: 0; background: none; color: var(--accent); font-size: 20px; line-height: 1; cursor: pointer; }
-#streakSheet .ss-nav[disabled] { opacity: .25; cursor: default; }
+#streakSheet .ss-nav { width: 34px; height: 34px; border-radius: 50%; border: 0; background: none; color: var(--accent); font-size: 20px; line-height: 1; cursor: pointer;
+  flex: none; -webkit-tap-highlight-color: transparent;
+  transition: transform .18s cubic-bezier(.2,.8,.2,1), background-color .2s ease, opacity .25s ease !important; }
+#streakSheet .ss-nav:active:not([disabled]) { transform: scale(.88); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+#streakSheet .ss-nav[disabled] { opacity: .22; cursor: default; }
+#streakSheet .ss-mn span { min-width: 9em; text-align: center; white-space: nowrap; display: inline-block; }
+#streakSheet .ss-gridwrap { overflow: hidden; margin: 0 -4px; padding: 0 4px; }
 #streakSheet .ss-lg { white-space: nowrap; font: 500 9px 'JetBrains Mono',monospace; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in srgb, var(--text) 55%, transparent); text-align: right; }
 #streakSheet .ss-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px 4px; text-align: center; }
 #streakSheet .ss-grid i { font: 500 9px 'JetBrains Mono',monospace; font-style: normal; letter-spacing: .1em; color: color-mix(in srgb, var(--text) 45%, transparent); }
 #streakSheet .ss-d { aspect-ratio: 1/1; width: 100%; max-height: 38px; margin: auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
   font: 500 12px 'JetBrains Mono',monospace; color: color-mix(in srgb, var(--text) 80%, transparent); }
+#streakSheet .ss-d { transition: transform .2s ease !important; }
 #streakSheet .ss-d.p { background: var(--accent); color: var(--bg-0, #06130f); font-weight: 700; }
 body.light #streakSheet .ss-d.p { color: #fff; }
 #streakSheet .ss-d.t { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent); font-weight: 700; }
@@ -28519,43 +28529,83 @@ body.light #streakSheet .ss-d.p.t { color: #fff; }
 #streakSheet .ss-bar { height: 5px; border-radius: 3px; margin: 7px 0 6px; overflow: hidden; background: color-mix(in srgb, var(--text) 14%, transparent); }
 #streakSheet .ss-bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .6s cubic-bezier(.2,.8,.2,1) !important; }
 #streakSheet .ss-nx { font-size: 12px; color: color-mix(in srgb, var(--text) 65%, transparent); }
+
+/* ── Motion ─────────────────────────────────────────────────────────────── */
+@keyframes ssUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes ssFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ssInL { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+@keyframes ssInR { from { opacity: 0; transform: translateX(-22px); } to { opacity: 1; transform: none; } }
+@keyframes ssPop { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes ssFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes ssFlame { 0%,100% { transform: scale(1) rotate(0); } 30% { transform: scale(1.1) rotate(-3deg); } 60% { transform: scale(.97) rotate(2deg); } }
+#streakSheet.on .ss-search { animation: ssUp .5s cubic-bezier(.16,1,.3,1) .08s both; }
+#streakSheet.on .ss-scroll > :nth-child(1), #streakSheet.on #ssMain > :nth-child(1) { animation: ssUp .55s cubic-bezier(.16,1,.3,1) .14s both; }
+#streakSheet.on #ssMain > :nth-child(2) { animation: ssUp .55s cubic-bezier(.16,1,.3,1) .2s both; }
+#streakSheet.on #ssMain > :nth-child(3) { animation: ssUp .55s cubic-bezier(.16,1,.3,1) .26s both; }
+#streakSheet.on #ssMain > :nth-child(4) { animation: ssUp .55s cubic-bezier(.16,1,.3,1) .32s both; }
+#streakSheet #ssMain.ss-re > * { animation: ssFade .3s ease both !important; }
+#streakSheet .ss-r { animation: ssUp .32s cubic-bezier(.2,.8,.2,1) calc(var(--i, 0) * 28ms) both; }
+#streakSheet .ss-none { animation: ssFade .25s ease both; }
+#streakSheet .ss-grid.sl-l, #streakSheet #ssMonth.sl-l { animation: ssInL .32s cubic-bezier(.2,.8,.2,1) both; }
+#streakSheet .ss-grid.sl-r, #streakSheet #ssMonth.sl-r { animation: ssInR .32s cubic-bezier(.2,.8,.2,1) both; }
+#streakSheet.on .ss-d.p { animation: ssPop .45s cubic-bezier(.2,.9,.3,1.2) calc(.3s + var(--i, 0) * 12ms) both; }
+#streakSheet .ss-grid.sl-l .ss-d.p, #streakSheet .ss-grid.sl-r .ss-d.p { animation: none; }
+#streakSheet.on .ss-bar i { transform-origin: left center; animation: ssFill .9s cubic-bezier(.2,.8,.2,1) .5s both; transition: none !important; }
+#streakSheet.on .ss-big svg { transform-origin: 50% 85%; animation: ssFlame 1.1s ease-in-out .35s 1 both; }
+#streakSheet .ss-resume, #streakSheet .ss-ach, #streakSheet .ss-r { -webkit-tap-highlight-color: transparent;
+  transition: transform .2s cubic-bezier(.2,.8,.2,1), background-color .2s ease !important; }
+#streakSheet .ss-ach:active { transform: scale(.985); }
+#streakSheet .ss-r:active { transform: scale(.99); }
 @media (prefers-reduced-motion: reduce) {
+  #streakSheet *, #streakSheet.on *, #streakSheet.on { animation: none !important; }
   #streakSheet, #streakSheet.on, #streakSheetBd, #streakSheetBd.on, .hvs-pill, #streakSheet .ss-bar i { transition: none !important; }
 }
 
 /* ── COLLAPSING HEADER ────────────────────────────────────────────────────────
-   The button row pins to the top while the page scrolls. --hc (0..1) follows the scroll
-   position, so the title and subtitle fade out and the glass backdrop fades in with no
-   timers. Kill switch: HVS_COLLAPSE in the script (or remove html.hv-collapse). */
-/* The app sets overflow-x:hidden on html and body, which turns body into a scroll container
-   that never scrolls, and sticky would bind to it. overflow-x:clip keeps the same visual
-   clipping without that. Older WebViews without clip simply keep the old, unpinned header. */
+   The button row pins while the page scrolls; the title and subtitle fade out and a glass
+   strip fades in behind the row. Where scroll-driven animations exist (Chrome and Android
+   WebView 115+, iOS 26+) the whole effect runs on the scroll itself, off the main thread.
+   Elsewhere the script writes --hc (0..1) once per frame. Kill switch: HVS_COLLAPSE in the
+   script, or remove html.hv-collapse. */
 @supports (overflow: clip) {
   :where(html.hv2.hv-collapse) body { overflow-x: clip; overflow-y: visible; }
-  html.hv2.hv-collapse #appHeader { position: sticky; top: var(--hv-pin, 0px); z-index: 500; }
+  html.hv2.hv-collapse.hv-pinned #appHeader { position: sticky; top: var(--hv-pin, 0px); }
 }
+html.hv2.hv-collapse #appHeader { z-index: 500; }
 html.hv2.hv-collapse #appHeader::before {
-  content: ''; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
-  top: calc(-1 * var(--hv-pin, 0px) - 2px);
-  height: calc(var(--hv-pin, 0px) + var(--hv-hh) + 12px);
+  content: ''; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none; opacity: var(--hc, 0);
+  top: calc(-1 * var(--hv-pin, 60px)); height: calc(var(--hv-pin, 60px) + var(--hv-hh) + 14px);
   background: linear-gradient(to bottom,
-    color-mix(in srgb, var(--bg-0) calc(var(--hc, 0) * 94%), transparent) 0,
-    color-mix(in srgb, var(--bg-0) calc(var(--hc, 0) * 88%), transparent) calc(100% - 10px),
+    color-mix(in srgb, var(--bg-0) 92%, transparent) 0,
+    color-mix(in srgb, var(--bg-0) 86%, transparent) calc(100% - 16px),
     transparent 100%);
-  -webkit-backdrop-filter: blur(calc(var(--hc, 0) * 16px)) saturate(1.2);
-  backdrop-filter: blur(calc(var(--hc, 0) * 16px)) saturate(1.2);
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
-  transition: none !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+  will-change: opacity; transition: none !important;
 }
-html.hv2.hv-collapse #appHeader:not(.header--module) #appLogo,
-html.hv2.hv-collapse #appHeader:not(.header--module) #headerTagline {
+html.hv2.hv-collapse:not(.hv-sda) #appHeader:not(.header--module) #appLogo,
+html.hv2.hv-collapse:not(.hv-sda) #appHeader:not(.header--module) #headerTagline {
   opacity: calc(1 - var(--hc, 0) * 2.6) !important;
   transform: translateY(calc(var(--hc, 0) * -8px)) !important;
   transition: none !important;
 }
 html.hv2.hv-collapse.hv-collapsed #appHeader:not(.header--module) #appLogo,
 html.hv2.hv-collapse.hv-collapsed #appHeader:not(.header--module) #headerTagline { pointer-events: none; }
+@keyframes hvsBg { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hvsTitle { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-9px); } }
+@supports (animation-timeline: scroll()) {
+  html.hv2.hv-collapse.hv-sda #appHeader::before {
+    opacity: 0; animation: hvsBg linear both; animation-timeline: scroll(root block); animation-range: 0px 46px;
+  }
+  html.hv2.hv-collapse.hv-sda #appHeader:not(.header--module) #appLogo,
+  html.hv2.hv-collapse.hv-sda #appHeader:not(.header--module) #headerTagline {
+    animation: hvsTitle linear both; animation-timeline: scroll(root block); animation-range: 0px 30px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.hv2.hv-collapse.hv-sda #appHeader::before { animation-range: 0px 8px; }
+}
 </style>
 </head>
 <body>
@@ -141530,7 +141580,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       var inFolder = document.body.classList.contains('in-section-back');
       var isMod = hd.classList.contains('header--module');
       var show = !isMod && !inFolder;
-      w.style.display = show ? 'flex' : 'none';
+      w.classList.toggle('on', show);
       var n = Math.max(1, (window.progState && progState.streak && progState.streak.count) || 1);
       var nEl = document.getElementById('hvStreakN');
       if (nEl && nEl.textContent !== String(n)) nEl.textContent = n;
@@ -141670,21 +141720,28 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     sheet.setAttribute('aria-label', T('ss_title', 'Your practice'));
     document.body.appendChild(bd); document.body.appendChild(sheet);
     built = true;
-    // Drag the grab handle down to close.
-    var y0 = null, dy = 0;
+    // Drag the grab handle down to close. The sheet follows the finger, the backdrop fades with it,
+    // and a quick flick closes it even when the drag was short.
+    var y0 = null, dy = 0, t0 = 0, vy = 0, ly = 0, lt = 0;
     sheet.addEventListener('touchstart', function (e) {
       if (!e.target.closest || !e.target.closest('.ss-grabzone')) return;
-      y0 = e.touches[0].clientY; dy = 0; sheet.classList.add('drag');
+      y0 = e.touches[0].clientY; dy = 0; vy = 0; ly = y0; lt = e.timeStamp; sheet.classList.add('drag');
     }, { passive: true });
     sheet.addEventListener('touchmove', function (e) {
       if (y0 == null) return;
-      dy = Math.max(0, e.touches[0].clientY - y0);
+      var y = e.touches[0].clientY, raw = y - y0;
+      dy = raw > 0 ? raw : raw / 6;               // a little resistance when pulling up
+      var dt = Math.max(1, e.timeStamp - lt); vy = 0.8 * vy + 0.2 * ((y - ly) / dt); ly = y; lt = e.timeStamp;
       sheet.style.transform = 'translateY(' + dy + 'px)';
+      var h = sheet.offsetHeight || 1;
+      bd.style.opacity = String(Math.max(0, 1 - Math.max(0, dy) / h) * (document.body.classList.contains('light') ? 0.32 : 0.5));
     }, { passive: true });
     function endDrag() {
       if (y0 == null) return;
-      y0 = null; sheet.classList.remove('drag'); sheet.style.transform = '';
-      if (dy > 80) window.closeStreakSheet();
+      y0 = null; sheet.classList.remove('drag'); bd.style.opacity = '';
+      var close = dy > 90 || vy > 0.6;
+      sheet.style.transform = close ? '' : '';
+      if (close) window.closeStreakSheet();
     }
     sheet.addEventListener('touchend', endDrag); sheet.addEventListener('touchcancel', endDrag);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheet.classList.contains('on')) window.closeStreakSheet(); });
@@ -141701,30 +141758,39 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   }
 
   function weekStart() { return lang() === 'it' ? 1 : 0; }
-  function calHTML(open) {
+  function monthName() {
+    var loc = lang() === 'it' ? 'it-IT' : 'en-US';
+    var name = new Intl.DateTimeFormat(loc, { month: 'long', year: 'numeric' }).format(new Date(calY, calM, 1));
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  }
+  // Always 6 weeks (42 cells), so the sheet keeps one height in every month.
+  function gridHTML(open) {
     var loc = lang() === 'it' ? 'it-IT' : 'en-US';
     var first = new Date(calY, calM, 1), days = new Date(calY, calM + 1, 0).getDate();
     var lead = (first.getDay() - weekStart() + 7) % 7;
-    var name = new Intl.DateTimeFormat(loc, { month: 'long', year: 'numeric' }).format(first);
-    name = name.charAt(0).toUpperCase() + name.slice(1);
-    var now = new Date(), todayKey = dstr(now), isCur = (calY === now.getFullYear() && calM === now.getMonth());
-    var h = '<div class="ss-cal"><div class="ss-ch"><div class="ss-mn"><button type="button" class="ss-nav" id="ssPrev" aria-label="' + esc(T('ss_prev', 'Previous month')) + '">‹</button><span>' + esc(name) +
-      '</span><button type="button" class="ss-nav" id="ssNext" aria-label="' + esc(T('ss_next_m', 'Next month')) + '"' + (isCur ? ' disabled' : '') + '>›</button></div>' +
-      '<div class="ss-lg">● ' + esc(T('ss_legend', 'Days you opened')) + '</div></div><div class="ss-grid">';
+    var now = new Date(), todayKey = dstr(now), h = '';
     for (var i = 0; i < 7; i++) {
       var wd = new Date(2023, 0, 1 + ((i + weekStart()) % 7));
       h += '<i>' + esc(new Intl.DateTimeFormat(loc, { weekday: 'narrow' }).format(wd)) + '</i>';
     }
-    for (var l = 0; l < lead; l++) h += '<div class="ss-d"></div>';
-    for (var d = 1; d <= days; d++) {
+    var cells = 0;
+    for (var l = 0; l < lead; l++, cells++) h += '<div class="ss-d"></div>';
+    for (var d = 1; d <= days; d++, cells++) {
       var key = calY + '-' + String(calM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
       var cls = 'ss-d';
       if (open[key]) cls += ' p';
       if (key === todayKey) cls += ' t';
       else if (key > todayKey) cls += ' f';
-      h += '<div class="' + cls + '">' + d + '</div>';
+      h += '<div class="' + cls + '" style="--i:' + cells + '">' + d + '</div>';
     }
-    return h + '</div></div>';
+    for (; cells < 42; cells++) h += '<div class="ss-d"></div>';
+    return h;
+  }
+  function calHTML(open) {
+    var now = new Date(), isCur = (calY === now.getFullYear() && calM === now.getMonth());
+    return '<div class="ss-cal"><div class="ss-ch"><div class="ss-mn"><button type="button" class="ss-nav" id="ssPrev" aria-label="' + esc(T('ss_prev', 'Previous month')) + '">‹</button><span id="ssMonth">' + esc(monthName()) +
+      '</span><button type="button" class="ss-nav" id="ssNext" aria-label="' + esc(T('ss_next_m', 'Next month')) + '"' + (isCur ? ' disabled' : '') + '>›</button></div>' +
+      '<div class="ss-lg">● ' + esc(T('ss_legend', 'Days you opened')) + '</div></div><div class="ss-gridwrap"><div class="ss-grid" id="ssGrid">' + gridHTML(open) + '</div></div></div>';
   }
 
   function achInfo() {
@@ -141778,10 +141844,10 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var inp = document.getElementById('ssInput'), res = document.getElementById('ssRes'), main = document.getElementById('ssMain');
     function runSearch() {
       var q = inp.value.trim();
-      if (!q) { res.hidden = true; res.innerHTML = ''; main.style.display = 'contents'; return; }
+      if (!q) { res.hidden = true; res.innerHTML = ''; if (main.style.display === 'none') { main.style.display = 'contents'; main.classList.remove('ss-re'); void main.offsetWidth; main.classList.add('ss-re'); } return; }
       var r = search(q);
       main.style.display = 'none'; res.hidden = false;
-      res.innerHTML = r.length ? r.map(function (it, i) { return '<button type="button" class="ss-r" data-i="' + i + '">' + esc(it.label) + '<span>' + esc(it.tag) + '</span></button>'; }).join('')
+      res.innerHTML = r.length ? r.map(function (it, i) { return '<button type="button" class="ss-r" data-i="' + i + '" style="--i:' + i + '">' + esc(it.label) + '<span>' + esc(it.tag) + '</span></button>'; }).join('')
                               : '<div class="ss-none">' + esc(T('ss_none', 'No results')) + '</div>';
       Array.prototype.forEach.call(res.querySelectorAll('.ss-r'), function (b) {
         b.addEventListener('click', function () { var it = r[+b.getAttribute('data-i')]; go(it.launch); });
@@ -141793,17 +141859,31 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     if (rs) rs.addEventListener('click', function () { var m = FAV_META[progState.lastTool.k]; go(function () { m.launch(); }); });
     var ac = document.getElementById('ssAch');
     if (ac) ac.addEventListener('click', function () { go(function () { if (typeof openProgress === 'function') openProgress(); }); });
+    function navState() {
+      var p = document.getElementById('ssPrev'), n = document.getElementById('ssNext');
+      var lim = new Date(); lim.setFullYear(lim.getFullYear() - 1);
+      var now = new Date();
+      if (p) p.disabled = (calY < lim.getFullYear() || (calY === lim.getFullYear() && calM <= lim.getMonth()));
+      if (n) n.disabled = (calY === now.getFullYear() && calM === now.getMonth());
+    }
     function month(delta) {
+      var p = document.getElementById('ssPrev'), n = document.getElementById('ssNext');
+      if ((delta < 0 && p && p.disabled) || (delta > 0 && n && n.disabled)) return;
       calM += delta; if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; }
-      var old = sheet.querySelector('.ss-cal'); if (!old) return;
-      var tmp = document.createElement('div'); tmp.innerHTML = calHTML(openSet());
-      old.parentNode.replaceChild(tmp.firstChild, old); wireCal();
+      var g = document.getElementById('ssGrid'), mn = document.getElementById('ssMonth'); if (!g || !mn) return;
+      g.innerHTML = gridHTML(openSet());
+      mn.textContent = monthName();
+      // Restart the slide on the same nodes: toggle the class across a reflow.
+      [g, mn].forEach(function (el) {
+        el.classList.remove('sl-l', 'sl-r'); void el.offsetWidth; el.classList.add(delta > 0 ? 'sl-l' : 'sl-r');
+      });
+      navState();
     }
     function wireCal() {
       var p = document.getElementById('ssPrev'), n = document.getElementById('ssNext');
-      var lim = new Date(); lim.setFullYear(lim.getFullYear() - 1);
-      if (p) { if (calY < lim.getFullYear() || (calY === lim.getFullYear() && calM <= lim.getMonth())) p.disabled = true; p.addEventListener('click', function () { month(-1); }); }
+      if (p) p.addEventListener('click', function () { month(-1); });
       if (n) n.addEventListener('click', function () { month(1); });
+      navState();
     }
     wireCal();
     if (mode === 'search') { try { inp.focus({ preventScroll: true }); } catch (e) { inp.focus(); } }
@@ -141832,35 +141912,46 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     if (window._scrollLockSync) setTimeout(_scrollLockSync, 60);
   };
 })();
-/* Collapsing header: drives --hc (0..1) from the page scroll. Body is the scroller.
-   Kill switch: set HVS_COLLAPSE to false. */
+/* Collapsing header. Where scroll-driven animations exist the CSS does all the work; this
+   script only pins the header (position: sticky) once the page has scrolled and, on older
+   WebViews, writes --hc (0..1). The document is the scroller. Kill switch: HVS_COLLAPSE. */
 (function () {
   var HVS_COLLAPSE = true;
   var root = document.documentElement;
   if (!HVS_COLLAPSE) return;
   root.classList.add('hv-collapse');
-  var hd = null, last = -1, raf = 0, RANGE = 44, START = 6;
-  function pin() {
-    hd = hd || document.getElementById('appHeader'); if (!hd) return;
-    var b = document.body, cs = getComputedStyle(b);
-    var mt = parseFloat(getComputedStyle(hd).marginTop) || 0;
-    var v = Math.max(0, (parseFloat(cs.paddingTop) || 0) + mt);
-    root.style.setProperty('--hv-pin', v + 'px');
+  var SDA = false;
+  try { SDA = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: scroll()')); } catch (e) {}
+  if (SDA) root.classList.add('hv-sda');
+  var hd = null, last = -1, raf = 0, pinned = false, RANGE = 46;
+  function scrollY() {
+    var se = document.scrollingElement || document.documentElement;
+    return window.pageYOffset || se.scrollTop || 0;
   }
   function upd() {
     raf = 0; hd = hd || document.getElementById('appHeader'); if (!hd) return;
-    var se = document.scrollingElement || document.documentElement;
-    var y = window.pageYOffset || se.scrollTop || document.body.scrollTop || 0;
-    var c = Math.max(0, Math.min(1, (y - START) / RANGE));
-    c = Math.round(c * 200) / 200;
-    if (c === last) return; last = c;
-    hd.style.setProperty('--hc', c);
-    root.classList.toggle('hv-collapsed', c > 0.6);
+    var y = scrollY();
+    if (y <= 0.5) {
+      // At rest the header is in normal flow, so its position is exact: remember it for the strip.
+      if (pinned) { pinned = false; root.classList.remove('hv-pinned'); }
+      root.style.setProperty('--hv-pin', Math.max(0, Math.round(hd.getBoundingClientRect().top)) + 'px');
+    } else if (!pinned) {
+      // The header has not moved from its rest slot yet (it is in flow), so its rest top is rect.top + y.
+      var rest = Math.max(0, Math.round(hd.getBoundingClientRect().top + y));
+      root.style.setProperty('--hv-pin', rest + 'px');
+      pinned = true; root.classList.add('hv-pinned');
+    }
+    root.classList.toggle('hv-collapsed', y > 24);
+    if (!SDA) {
+      var c = Math.max(0, Math.min(1, y / RANGE));
+      c = Math.round(c * 250) / 250;
+      if (c !== last) { last = c; hd.style.setProperty('--hc', c); }
+    }
   }
   function kick() { if (!raf) raf = requestAnimationFrame(upd); }
-  document.body.addEventListener('scroll', kick, { passive: true });
   window.addEventListener('scroll', kick, { passive: true });
-  function repin() { pin(); last = -1; kick(); }
+  document.addEventListener('scroll', kick, { passive: true, capture: false });
+  function repin() { last = -1; kick(); }
   window.addEventListener('resize', repin);
   var _ap = window._hv2After;
   window._hv2After = function () { try { if (_ap) _ap.apply(this, arguments); } catch (e) {} repin(); };
