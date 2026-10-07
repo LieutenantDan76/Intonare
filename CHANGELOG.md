@@ -31,7 +31,10 @@ A human-readable record of what changed, when,
 - The level chip draws your XP progress as a glowing line around its edge. XP awards pop up inside the chip and add up when they arrive close together. A level-up fills the line, shows the new level, then starts the line again.
 - The header fits the phone. iPhones with an island or notch put Back and the level chip beside the cutout, and the title row sits below. Android phones with a camera hole in the middle put Back and mic on the left and star and level on the right. Phones without a cutout keep one row of buttons. A corner camera moves the row past the lens.
 - The subtitle sits beside the title only when it fits whole. If not, it moves under the session bar, left of the timer, and the title always keeps its room.
-- The mic, star and level chip got the new look on every screen. The hub and folder screens keep their layout.
+- The hub, folder and root screens use the same header layout, so the content no longer jumps up and down when you enter or leave a module. Folder and hub titles are in sentence case, and a folder shows the same Back pill. Their subtitle sits under the session bar.
+- Titles use one font. The header font only held capital letters, so lowercase letters came from a different face. It now includes lowercase, and the module subtitle is the same weight as the hub subtitle.
+- After you leave a module, the space that fixed-height panels reserve for the header now returns to the right value.
+- The mic, star and level chip got the new look on every screen.
 - Android: a small native change reads the real camera cutout. This needs a rebuild with go.bat. Until then Android uses the one-row layout.
 - Not in this build: the header collapsing on scroll and returning.
 - Music Quiz on iPhone: the answer drawer now reaches the bottom edge of the screen. The quiz panel added the bottom safe area as blank padding under the drawer, so a strip showed below it and the drawer seemed to rise from that strip. The NEXT button keeps its own padding, so it still clears the home indicator.
