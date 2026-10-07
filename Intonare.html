@@ -140959,7 +140959,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var s = vpScale();
     var pad = parseFloat(getComputedStyle(document.body).paddingTop) || 0;
     var isIos = root.classList.contains('ios');
-    var P = { kind: 'classic', h: 34, pw: 92, mw: 44, bl: 16, lr: 16, r2: 38, th: 30, top: pad + 6 };
+    var P = { kind: 'classic', h: 34, pw: 92, mw: 44, bl: 16, lr: 16, r2: 42, th: 36, top: Math.max(pad + 6, 14) };
 
     if (isIos) {
       var sat = pad * s;
@@ -140980,7 +140980,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
           P.r2 = Math.max(P.h + 8, (sat + 2) / s - P.top);
         }
         P.mw = (P.pw < 70 || W < 360) ? 44 : 52;
-        P.th = 32;
+        P.th = 36;
       }
       // sat < 46: iPhone SE and X-class with no island. Classic.
     } else if (_cut && !_cut.none && _cut.w > 0) {
@@ -140992,12 +140992,12 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
         var room = (W - ((r - l) + 20)) / 2;
         P.mw = 40;
         P.pw = Math.max(44, Math.min(92, Math.floor(room - 16 - 8 - P.mw)));
-        P.top = 8; P.r2 = P.h + 6; P.th = 32;
+        P.top = 16; P.r2 = P.h + 10; P.th = 36;
       } else {
         // Corner camera: classic row, with the left or right end moved past the lens.
         if (cx < W / 2) P.bl = Math.max(16, Math.round(r + 10));
         else P.lr = Math.max(16, Math.round(W - l + 10));
-        P.top = 8; P.r2 = P.h + 6; P.th = 32;
+        P.top = 16; P.r2 = P.h + 10; P.th = 36;
       }
     }
 
