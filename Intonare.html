@@ -304,8 +304,8 @@ html,body{background:#000000!important;transition:none!important}
      — the 5/10/15...40 in-session streak toast — was hardcoded to a bare
      top:20px with no relationship to the safe area, landing right where an
      Android punch-hole camera commonly sits. Matches the calc(Npx +
-     env(safe-area-inset-top)) pattern used elsewhere in the file. */
-  #streakMilestoneToast { top:calc(20px + env(safe-area-inset-top)) !important; bottom:auto !important }
+     var(--sat-top)) pattern used elsewhere in the file. */
+  #streakMilestoneToast { top:calc(20px + var(--sat-top)) !important; bottom:auto !important }
   .streak-milestone-inner { border-radius:18px !important; padding:9px 20px 8px !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:2px !important }
   .streak-ms-main { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:15px; letter-spacing:.22em }
   .streak-ms-quip { font-size:7px; letter-spacing:.2em; opacity:.8; text-transform:uppercase; font-weight:700 }
@@ -954,7 +954,7 @@ body.sg-open #toolSurvivalGuide{
     width: 100%; margin: 0;
     overflow-y: auto; -webkit-overflow-scrolling: touch;
     /* Respect device safe areas (status bar / notch / home indicator) */
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--sat-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
@@ -1072,7 +1072,7 @@ body.sg-open #toolSurvivalGuide{
     min-height: 0;
     position: relative;
     /* Respect the device safe areas so the header clears the status bar / notch */
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--sat-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
@@ -1398,7 +1398,7 @@ body.sg-open #toolSurvivalGuide{
   body.mq2on #mqScreenCustom.active > div:first-child,
   body.mq2on #mqScreenCustom.mq2-leaving > div:first-child {
     flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
-    padding: calc(8px + env(safe-area-inset-top)) 16px 6px;
+    padding: calc(8px + var(--sat-top)) 16px 6px;
   }
   body.mq2on #mqScreenCustom.mq2-leaving { display: flex !important; }
   .mq-screen.active { display: flex; }
@@ -2548,7 +2548,7 @@ body.sg-open #toolSurvivalGuide{
   #mqPanel.mq2r-on .mq2r { display: flex; flex-direction: column;
     flex: 1 1 auto; min-height: 0; }
   .mq2r-band { background: var(--surface); border-bottom: 3px solid var(--border);
-    padding: calc(12px + env(safe-area-inset-top)) 20px 18px; text-align: center;
+    padding: calc(12px + var(--sat-top)) 20px 18px; text-align: center;
     transition: background .45s cubic-bezier(.16,.84,.44,1),
                 border-color .45s cubic-bezier(.16,.84,.44,1); }
   .mq2r.good .mq2r-band { background: color-mix(in srgb, var(--in-tune) 40%, var(--surface));
@@ -7046,10 +7046,10 @@ body.sg-open #toolSurvivalGuide{
        rubber-band cosmetics; cosmetics do not get to break scrolling. */
     display: flex; flex-direction: column; align-items: center; position: relative;
     /* Native sticky-immersive (MainActivity) hides both bars and may zero out
-       env(safe-area-inset-top). Keep a tiny floor so the header never jams the
+       var(--sat-top). Keep a tiny floor so the header never jams the
        top edge / camera cutout, capped so a large reported inset can't balloon
        the gap now that the status bar is gone. */
-    padding-top: min(8px, max(2px, env(safe-area-inset-top)));
+    padding-top: min(8px, max(2px, var(--sat-top)));
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
@@ -7059,7 +7059,7 @@ body.sg-open #toolSurvivalGuide{
      zeroes the inset; applying it on iPhone throws the notch clearance away
      and buries the header under the island. Take the full inset here. */
   html.ios body {
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--sat-top);
   }
 
   /* ── Accessibility: app-wide UI scale (slider, 5 snap steps) ──
@@ -7238,7 +7238,7 @@ body.sg-open #toolSurvivalGuide{
     --border-soft: rgba(255,255,255,.12);
     position: fixed; inset: 0; z-index: 900;
     display: flex; flex-direction: column; justify-content: center;
-    padding: max(26px, env(safe-area-inset-top)) 14px
+    padding: max(26px, var(--sat-top)) 14px
              max(14px, env(safe-area-inset-bottom));
     /* NOT var(--bg-0): that is themed per tab, so the launcher would change color
        depending on which module you happened to use last. The chooser sits above all
@@ -10930,7 +10930,7 @@ body.sg-open #toolSurvivalGuide{
     background: rgba(8,8,18,0.88);
     align-items: center; justify-content: center;
     padding: 24px 20px;
-    padding-top: calc(24px + env(safe-area-inset-top));
+    padding-top: calc(24px + var(--sat-top));
     padding-bottom: calc(24px + env(safe-area-inset-bottom));
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
@@ -11027,7 +11027,7 @@ body.sg-open #toolSurvivalGuide{
     background: var(--bg-0);
     flex-direction: row;
     /* Cover the notch/status bar on notched phones */
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--sat-top);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
     padding-bottom: env(safe-area-inset-bottom);
@@ -28180,6 +28180,7 @@ body.light #exRelPitch .rlp-flick { animation:rlpFlickLight .48s steps(1) both; 
 
 </style>
 <style id="hv2-style">
+:root { --sat-top: env(safe-area-inset-top); }
 /* FrauncesHdr lowercase (1.0.5): same instance as the caps face above (wght 600, opsz 24, SOFT 0, WONK 0),
    so sentence-case titles stay in one face. The caps face is untouched. */
 @font-face{font-family:'FrauncesHdr';font-style:normal;font-weight:600;font-display:block;unicode-range:U+0061-007A,U+00DF-00FF;src:url(data:font/woff2;base64,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) format('woff2');}
@@ -28188,8 +28189,8 @@ body.light #exRelPitch .rlp-flick { animation:rlpFlickLight .48s steps(1) both; 
    1. A shared LOOK for the three header controls on every screen: calm glass mic
       and star, and a level chip that draws its XP progress as a glowing line round
       its own edge. Scoped to #appHeader so the drum kit's own .header is untouched.
-   2. A LAYOUT for module screens only (.header--module), switched on by the JS
-      profile (html.hv2 + data-hv). The hub and folder screens keep their layout.
+   2. A LAYOUT for every header (module, folder, hub, root), switched on by the JS
+      profile (html.hv2).
    Colors come from the theme variables, so light mode follows without a second
    set of values; only the places an older !important rule would win are repeated.
    ══════════════════════════════════════════════════════════════════════════ */
@@ -28332,17 +28333,9 @@ html.hv2 #appHeader .head-btn {
   position: absolute; width: var(--hv-mw); height: var(--hv-h); border-radius: calc(var(--hv-h) / 2);
 }
 
-/* strip: iPhones with an island or notch. Back and level beside the cutout; title row below. */
-html.hv2[data-hv="strip"] #appHeader .fav-btn { top: var(--hv-r2); right: 16px; }
-html.hv2[data-hv="strip"] #appHeader .mic-head-btn { top: var(--hv-r2); right: calc(16px + var(--hv-mw) + 8px); }
-/* band: Android camera hole in the middle. Back and mic left of it; star and level right of it. */
-html.hv2[data-hv="band"] #appHeader .mic-head-btn { top: 0; left: calc(var(--hv-bl) + var(--hv-pw) + 8px); }
-html.hv2[data-hv="band"] #appHeader .fav-btn { top: 0; right: calc(var(--hv-lr) + var(--hv-pw) + 8px); }
-/* classic: no cutout to dodge, or a corner camera. Back left; mic, star, level right. */
+/* One layout for every phone: Back left; mic, star, level right; title row below. */
 html.hv2[data-hv="classic"] #appHeader .fav-btn { top: 0; right: calc(var(--hv-lr) + var(--hv-pw) + 8px); }
 html.hv2[data-hv="classic"] #appHeader .mic-head-btn { top: 0; right: calc(var(--hv-lr) + var(--hv-pw) + 8px + var(--hv-mw) + 8px); }
-/* band with no Back button (hub, root): the mic moves to the left edge, where Back would be. */
-html.hv2[data-hv="band"] body:not(.in-module):not(.in-section-back) #appHeader .mic-head-btn { left: var(--hv-bl); }
 
 /* Module title: sentence case, one row, subtitle beside it when it fits (the JS decides). */
 html.hv2 #appHeader.header--module #headerTagline {
@@ -28742,8 +28735,13 @@ try {
       window._enforceImmersive = function() {
         const sb = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar;
         if (!sb) return;
-        try { sb.setOverlaysWebView({ overlay: true }); } catch (e) {}
-        try { sb.hide(); } catch (e) {}
+        // Status bar SHOWN, transparent, over the app (clock and battery float on top,
+        // like a native app). The header starts below it; see the hv2 script.
+        const _q = function (p) { try { if (p && p.catch) p.catch(function () {}); } catch (e) {} };
+        try { _q(sb.setOverlaysWebView({ overlay: true })); } catch (e) {}
+        try { _q(sb.show()); } catch (e) {}
+        try { _q(sb.setBackgroundColor({ color: '#00000000' })); } catch (e) {}   // Android only
+        try { if (window._hv2StatusStyle) window._hv2StatusStyle(true); } catch (e) {}
       };
       window._enforceImmersive();
 
@@ -35781,7 +35779,7 @@ try {
 </div>
 
 <!-- STREAK MILESTONE TOAST -->
-<div id="streakMilestoneToast" style="display:none;position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9100;pointer-events:none;">
+<div id="streakMilestoneToast" style="display:none;position:fixed;top:calc(20px + var(--sat-top));left:50%;transform:translateX(-50%);z-index:9100;pointer-events:none;">
   <div class="streak-milestone-inner" id="streakMilestoneInner">
     <span class="streak-ms-main" id="streakMilestoneText"></span>
     <span class="streak-ms-quip" id="streakMilestoneQuip"></span>
@@ -107623,14 +107621,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (isCapacitor()) {
     var _plat = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform();
     if (_plat === 'ios') {
-      document.body.style.paddingTop = 'env(safe-area-inset-top)';
+      document.body.style.paddingTop = 'var(--sat-top)';
     } else if (_plat === 'android') {
       // Punch-hole / pinhole cameras are small and centered, so the header can
       // ride up close without colliding. Use ~60% of the reported inset —
       // tighter than full clearance, still scales with the device's cutout —
       // floored at 2px so flat-top phones stay tight.
       document.body.style.paddingTop =
-        'max(2px, calc(env(safe-area-inset-top) * 0.6))';
+        'var(--sat-top)';
     }
   }
 });
@@ -140945,71 +140943,20 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     } catch (e) { return el.getBoundingClientRect().width; }
   }
 
-  // Device points per CSS px. The text-size slider shrinks the CSS viewport (meta
-  // viewport scale), so a cutout measured in points has to be divided by this.
-  function vpScale() {
-    if (!(root.classList.contains('ios') || root.classList.contains('android'))) return 1;
-    var s = (window.screen && screen.width ? screen.width : window.innerWidth) / window.innerWidth;
-    if (!(s >= 1)) s = 1;
-    return Math.min(1.6, s);
-  }
-
+  // The status bar (clock, battery) is shown, transparent, over the app on every phone.
+  // The header starts just below it, so there is one layout and no camera guessing.
+  // body padding-top is the status bar height: var(--sat-top) on iPhone, and
+  // on Android the native height from the bridge (see pollInset).
   function profile() {
     var W = window.innerWidth || 390;
-    var s = vpScale();
     var pad = parseFloat(getComputedStyle(document.body).paddingTop) || 0;
-    var isIos = root.classList.contains('ios');
-    var P = { kind: 'classic', h: 34, pw: 92, mw: 44, bl: 16, lr: 16, r2: 42, th: 36, top: Math.max(pad + 6, 14) };
-
-    if (isIos) {
-      var sat = pad * s;
-      if (sat >= 46) {
-        var island = sat >= 54;
-        P.kind = 'strip';
-        if (island) {
-          P.h = 34;
-          P.top = 32.5 / s - P.h / 2;
-          var cutW = 125 / s;
-          P.pw = Math.max(56, Math.min(92, Math.floor((W - cutW) / 2 - 24)));
-          P.r2 = Math.max(P.h + 8, 61 / s - P.top);
-        } else {
-          P.h = 30;
-          P.top = Math.max(8, Math.round(sat / 2) - 15) / s;
-          var nW = 161 / s;
-          P.pw = Math.max(56, Math.min(78, Math.floor((W - nW) / 2 - 20)));
-          P.r2 = Math.max(P.h + 8, (sat + 2) / s - P.top);
-        }
-        P.mw = (P.pw < 70 || W < 360) ? 44 : 52;
-        P.th = 36;
-      }
-      // sat < 46: iPhone SE and X-class with no island. Classic.
-    } else if (_cut && !_cut.none && _cut.w > 0) {
-      var k = W / _cut.w;                       // CSS px per dp
-      var l = _cut.l * k, r = _cut.r * k;
-      var cx = (l + r) / 2;
-      if (Math.abs(cx - W / 2) < 0.14 * W) {
-        P.kind = 'band';
-        var room = (W - ((r - l) + 20)) / 2;
-        P.mw = 40;
-        P.pw = Math.max(44, Math.min(92, Math.floor(room - 16 - 8 - P.mw)));
-        P.top = 16; P.r2 = P.h + 10; P.th = 36;
-      } else {
-        // Corner camera: classic row, with the left or right end moved past the lens.
-        if (cx < W / 2) P.bl = Math.max(16, Math.round(r + 10));
-        else P.lr = Math.max(16, Math.round(W - l + 10));
-        P.top = 16; P.r2 = P.h + 10; P.th = 36;
-      }
-    }
-
-    if (P.kind === 'classic') {
-      // Back + mic + star + level share one row.
-      var span = W - P.bl - P.lr;
-      while (P.pw > 56 && 2 * P.pw + 2 * P.mw + 24 > span) P.pw -= 2;
-      if (2 * P.pw + 2 * P.mw + 24 > span) P.mw = 40;
-    }
+    var P = { kind: 'classic', h: 34, pw: 92, mw: 44, bl: 16, lr: 16, r2: 42, th: 36, top: pad + 6 };
+    // Back + mic + star + level share one row.
+    var span = W - P.bl - P.lr;
+    while (P.pw > 56 && 2 * P.pw + 2 * P.mw + 24 > span) P.pw -= 2;
+    if (2 * P.pw + 2 * P.mw + 24 > span) P.mw = 40;
     P.noword = P.pw < 64;
-    // Only the strip layout has controls on the title row (mic and star, right end).
-    P.tr = P.kind === 'strip' ? (16 + 2 * P.mw + 8 + 10) : 16;
+    P.tr = 16;
     P.hh = Math.round(P.r2 + P.th - 2);
     P.mt = P.top - pad;
     return P;
@@ -141224,20 +141171,39 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     return true;
   };
 
-  // ── Android cutout from the native bridge ──────────────────────────────────
-  function pollCut() {
+  // ── Android status bar height from the native bridge ───────────────────────
+  // Android's WebView does not report the status bar through env(), so the app asks
+  // the native side. {"w":screenWidthDp,"top":statusBarDp}; dp to CSS px by the ratio
+  // of the CSS viewport to the screen (the text-size slider changes that ratio).
+  function pollInset() {
     try {
       var n = window.IntonareNative;
-      if (!n || typeof n.getCutout !== 'function') return;
-      var s = n.getCutout();
-      if (!s) return;
-      if (s === _cutKey) return;
-      _cutKey = s;
-      _cut = JSON.parse(s);
+      if (!n || typeof n.getTopInset !== 'function') return;
+      var j = n.getTopInset();
+      if (!j || j === _cutKey) return;
+      _cutKey = j;
+      var o = JSON.parse(j);
+      if (!(o.w > 0) || !(o.top >= 0)) return;
+      var px = Math.round(o.top * (window.innerWidth / o.w));
+      root.style.setProperty('--sat-top', px + 'px');
       apply();
     } catch (e) {}
   }
-  window._hv2PollCut = pollCut;
+  window._hv2PollCut = pollInset;
+
+  // Status bar text color follows the app theme: light text on dark, dark text on light.
+  var _sbs = '';
+  window._hv2StatusStyle = function (force) {
+    try {
+      var sb = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar;
+      if (!sb) return;
+      var st = document.body.classList.contains('light') ? 'LIGHT' : 'DARK';
+      if (!force && st === _sbs) return;
+      _sbs = st;
+      var r = sb.setStyle({ style: st });
+      if (r && r.catch) r.catch(function () {});
+    } catch (e) {}
+  };
 
   // ── Boot and re-apply hooks ────────────────────────────────────────────────
   var _rt = null;
@@ -141245,14 +141211,22 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   window.addEventListener('resize', later);
   window.addEventListener('orientationchange', later);
   if (window.visualViewport) window.visualViewport.addEventListener('resize', later);
-  document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { apply(); pollCut(); }, 0); });
-  window.addEventListener('load', function () { apply(); pollCut(); });
+  document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { apply(); pollInset(); }, 0); });
+  window.addEventListener('load', function () { apply(); pollInset(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { apply(); });
   try {
     var chip0 = chipEl();
     if (chip0 && window.ResizeObserver) new ResizeObserver(function () { chipPath(); }).observe(chip0);
   } catch (e) {}
-  [0, 300, 900, 2000, 4000].forEach(function (ms) { setTimeout(function () { pollCut(); window._lvChipRefresh && window._lvChipRefresh(); }, ms); });
+  [0, 300, 900, 2000, 4000].forEach(function (ms) { setTimeout(function () { pollInset(); window._lvChipRefresh && window._lvChipRefresh(); }, ms); });
+  try {
+    var plat = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform();
+    // Until the native height arrives (first few hundred ms), use a typical 24px.
+    if (plat === 'android' && !root.style.getPropertyValue('--sat-top')) root.style.setProperty('--sat-top', '24px');
+    new MutationObserver(function () { window._hv2StatusStyle(false); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+  window.addEventListener('resize', function () { pollInset(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) pollInset(); });
   apply();
 })();
 </script>

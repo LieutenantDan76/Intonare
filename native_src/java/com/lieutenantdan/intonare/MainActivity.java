@@ -86,12 +86,11 @@ public class MainActivity extends BridgeActivity {
         // with no prepare latency. Playback itself is fired by the bridge, not here.
         prepareSplashSound();
 
-        // Camera cutout for the module header layout. Read now and again a few times:
-        // insets are often empty until the window is attached and laid out.
-        captureCutout(0);
-        captureCutout(300);
-        captureCutout(900);
-        captureCutout(2000);
+        // Status bar height for the header. Read now and again a few times.
+        captureInset(0);
+        captureInset(300);
+        captureInset(900);
+        captureInset(2000);
 
         // Grant WebView mic requests
         getBridge().getWebView().setWebChromeClient(
@@ -238,11 +237,13 @@ public class MainActivity extends BridgeActivity {
         super.onDestroy();
     }
 
-    // Latest cutout as JSON in dp: {"w":screenWidthDp,"l":..,"t":..,"r":..,"b":..} for the
-    // top cutout, or {"w":..,"none":1} when there is none. The page converts dp to CSS px.
-    private volatile String cutoutJson = "";
+    // Status bar height for the page, as JSON in dp: {"w":screenWidthDp,"top":statusBarDp}.
+    // The status bar is shown (transparent, over the app), so the header has to start
+    // below it. The page converts dp to CSS px. Read a few times because insets are
+    // often empty until the window is attached and laid out.
+    private volatile String insetJson = "";
 
-    private void captureCutout(long delayMs) {
+    private void captureInset(long delayMs) {
         final android.view.View decor = getWindow().getDecorView();
         decor.postDelayed(new Runnable() {
             @Override public void run() {
@@ -250,27 +251,14 @@ public class MainActivity extends BridgeActivity {
                     float d = getResources().getDisplayMetrics().density;
                     int wpx = decor.getWidth() > 0 ? decor.getWidth()
                             : getResources().getDisplayMetrics().widthPixels;
-                    int wdp = Math.round(wpx / d);
-                    String out = "{\"w\":" + wdp + ",\"none\":1}";
-                    if (android.os.Build.VERSION.SDK_INT >= 28) {
-                        android.view.WindowInsets wi = decor.getRootWindowInsets();
-                        android.view.DisplayCutout dc = wi != null ? wi.getDisplayCutout() : null;
-                        if (dc != null) {
-                            java.util.List<android.graphics.Rect> rs = dc.getBoundingRects();
-                            android.graphics.Rect top = null;
-                            for (android.graphics.Rect r : rs) {
-                                if (r.top <= 2 && (top == null || r.width() > top.width())) top = r;
-                            }
-                            if (top != null) {
-                                out = "{\"w\":" + wdp
-                                    + ",\"l\":" + Math.round(top.left / d)
-                                    + ",\"t\":" + Math.round(top.top / d)
-                                    + ",\"r\":" + Math.round(top.right / d)
-                                    + ",\"b\":" + Math.round(top.bottom / d) + "}";
-                            }
-                        }
+                    int top = 0;
+                    WindowInsetsCompat wi = androidx.core.view.ViewCompat.getRootWindowInsets(decor);
+                    if (wi != null) {
+                        top = Math.max(
+                            wi.getInsets(WindowInsetsCompat.Type.statusBars()).top,
+                            wi.getInsets(WindowInsetsCompat.Type.displayCutout()).top);
                     }
-                    cutoutJson = out;
+                    insetJson = "{\"w\":" + Math.round(wpx / d) + ",\"top\":" + Math.round(top / d) + "}";
                 } catch (Throwable ignored) { }
             }
         }, delayMs);
@@ -288,8 +276,8 @@ public class MainActivity extends BridgeActivity {
         }
 
         @JavascriptInterface
-        public String getCutout() {
-            return cutoutJson;
+        public String getTopInset() {
+            return insetJson;
         }
 
         @JavascriptInterface
@@ -309,7 +297,7 @@ public class MainActivity extends BridgeActivity {
         // Re-assert immersive whenever the window regains focus. This fires after
         // a bar reveal, a permission dialog, or returning from background — the
         // hook the WebView/JS layer can't see, which is why JS-only hiding fails.
-        if (hasFocus) hideSystemBars();
+        if (hasFocus) { hideSystemBars(); captureInset(0); captureInset(400); }
     }
 
     // Hides the status bar and the navigation bar.
@@ -326,11 +314,16 @@ public class MainActivity extends BridgeActivity {
     //                                            then Android hides them again)
     //   hide(Type.systemBars())               == FULLSCREEN + HIDE_NAVIGATION
     private void hideSystemBars() {
+        // Edge-to-edge, status bar SHOWN and transparent (clock and battery float over
+        // the app, like a native app). Only the navigation bar stays hidden; swipe up
+        // reveals it for a moment.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
         WindowInsetsControllerCompat controller =
             WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         controller.setSystemBarsBehavior(
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-        controller.hide(WindowInsetsCompat.Type.systemBars());
+        controller.show(WindowInsetsCompat.Type.statusBars());
+        controller.hide(WindowInsetsCompat.Type.navigationBars());
     }
 }
