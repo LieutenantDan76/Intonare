@@ -28233,16 +28233,20 @@ body.light #appHeader .mic-head-btn.listening::before { box-shadow: none; }
   height: 34px; min-width: 84px; padding: 0; margin: 0;
   border: 0 !important; border-radius: 17px; overflow: visible;
   color: var(--in-tune);
-  background: color-mix(in srgb, var(--in-tune) 5%, color-mix(in srgb, var(--surface) 62%, transparent)) !important;
+  background: color-mix(in srgb, var(--in-tune) calc(5% + 4% * var(--g, 0)), color-mix(in srgb, var(--surface) 62%, transparent)) !important;
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   box-shadow: none;
-  transition: transform .18s cubic-bezier(.2,.8,.2,1), background-color .6s ease;
 }
 #appHeader .level-chip:active { transform: scale(.96); }
+/* One dial (--g, 0 to 1) drives glow, line weight, line color and the chip tint, so every
+   part eases together. Registered as a number so the browser can animate it. */
+@property --g { syntax: '<number>'; inherits: true; initial-value: 0; }
+#levelChip { --g: 0; transition: transform .18s cubic-bezier(.2,.8,.2,1), --g 2.2s cubic-bezier(.33,.0,.2,1) .35s !important; }
+#levelChip.pop { --g: 1; transition: transform .18s cubic-bezier(.2,.8,.2,1), --g .5s cubic-bezier(.2,.7,.2,1) 0s !important; }
 #levelChip .lvc { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: block; }
 #levelChip .lva {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
-  transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .35s ease, filter .4s ease;
+  transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .35s ease, filter .4s ease !important;
   will-change: transform, opacity;
 }
 #levelChip .level-chip-lv { font: 600 9px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .1em; opacity: .85; }
@@ -28251,7 +28255,7 @@ body.light #appHeader .mic-head-btn.listening::before { box-shadow: none; }
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font: 700 13px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .04em; color: var(--lv-ink);
   transform: translateY(70%) scale(.92); opacity: 0; filter: blur(3px);
-  transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .35s ease, filter .4s ease;
+  transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .35s ease, filter .4s ease !important;
   will-change: transform, opacity;
   text-shadow: 0 0 10px color-mix(in srgb, var(--in-tune) 55%, transparent);
   pointer-events: none;
@@ -28259,27 +28263,25 @@ body.light #appHeader .mic-head-btn.listening::before { box-shadow: none; }
 #levelChip .lvb .xv { font: 700 14px 'JetBrains Mono','GlyphFix',monospace; font-variant-numeric: tabular-nums; }
 #levelChip .lvb .xl { font: 600 9px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .14em; margin-left: 5px; opacity: .85; font-style: normal; }
 #levelChip.pop .lva { transform: translateY(-80%) scale(.92); opacity: 0; filter: blur(3px);
-  transition: transform .45s cubic-bezier(.3,1.1,.3,1), opacity .22s ease, filter .3s ease; }
+  transition: transform .45s cubic-bezier(.3,1.1,.3,1), opacity .22s ease, filter .3s ease !important; }
 #levelChip.pop .lvb { transform: none; opacity: 1; filter: none;
-  transition: transform .45s cubic-bezier(.3,1.1,.3,1), opacity .25s ease .05s, filter .3s ease .05s; }
+  transition: transform .45s cubic-bezier(.3,1.1,.3,1), opacity .25s ease .05s, filter .3s ease .05s !important; }
 @keyframes lvtick { 0% { opacity: .35; transform: translateY(3px); } 100% { opacity: 1; transform: none; } }
 #levelChip .lvb .xv.tick { animation: lvtick .28s cubic-bezier(.2,.8,.2,1); }
 #levelChip .lvg {
   position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 3;
-  filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--in-tune) 38%, transparent)) drop-shadow(0 0 4px color-mix(in srgb, var(--in-tune) 14%, transparent));
-  transition: filter 1.6s cubic-bezier(.4,0,.2,1);
+  filter: drop-shadow(0 0 calc(1.5px + 1.5px * var(--g)) color-mix(in srgb, var(--in-tune) calc(38% + 62% * var(--g)), transparent))
+          drop-shadow(0 0 calc(4px + 6px * var(--g)) color-mix(in srgb, var(--in-tune) calc(14% + 71% * var(--g)), transparent));
 }
 #levelChip .lvg .trk { fill: none; stroke: color-mix(in srgb, var(--in-tune) 22%, transparent); stroke-width: 1; }
 #levelChip .lvg .prg {
-  fill: none; stroke: color-mix(in srgb, var(--in-tune) 62%, transparent); stroke-width: 1.7; stroke-linecap: round;
+  fill: none; stroke: color-mix(in srgb, var(--in-tune) calc(62% + 38% * var(--g)), transparent); stroke-width: calc(1.7px + .9px * var(--g)); stroke-linecap: round;
   stroke-dasharray: calc(var(--p, 0) * 100px) 300px;
-  transition: stroke-dasharray .9s cubic-bezier(.22,.9,.24,1), stroke-width 1.2s ease, stroke .6s ease, opacity .35s ease;
+  transition: stroke-dasharray 1s cubic-bezier(.22,.9,.24,1), opacity .4s ease !important;
 }
-#levelChip.snap .lvg .prg { transition: none; }
+#levelChip.snap .lvg .prg { transition: none !important; }
 /* Active: XP just came in. The line brightens and thickens fast, then the base rules
    above bring it back down slowly (the slow part lives on the idle state). */
-#levelChip.pop .lvg .prg { stroke: var(--in-tune); stroke-width: 2.6; transition: stroke-dasharray .9s cubic-bezier(.22,.9,.24,1), stroke-width .3s ease-out, stroke .25s ease-out, opacity .35s ease; }
-#levelChip.pop .lvg { filter: drop-shadow(0 0 3px var(--in-tune)) drop-shadow(0 0 10px color-mix(in srgb, var(--in-tune) 85%, transparent)); transition: filter .3s ease-out; }
 @keyframes lvbump { 0% { transform: scale(1); } 40% { transform: scale(1.05); } 100% { transform: scale(1); } }
 #levelChip.bump { animation: lvbump .5s cubic-bezier(.3,.7,.3,1); }
 @keyframes lvflash {
@@ -28289,13 +28291,11 @@ body.light #appHeader .mic-head-btn.listening::before { box-shadow: none; }
 }
 #levelChip.lvup .lvc { animation: lvflash 1.3s ease-in-out; }
 /* Light ground: a soft halo reads as dirt, so the glow thins out. */
-body.light #levelChip .lvg { filter: drop-shadow(0 0 1px color-mix(in srgb, var(--in-tune) 22%, transparent)); }
-body.light #levelChip.pop .lvg { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--in-tune) 55%, transparent)); }
-body.light #levelChip .lvg .prg { stroke: color-mix(in srgb, var(--in-tune) 78%, transparent); }
-body.light #levelChip.pop .lvg .prg { stroke: var(--in-tune); }
+body.light #levelChip .lvg { filter: drop-shadow(0 0 calc(1px + 2px * var(--g)) color-mix(in srgb, var(--in-tune) calc(22% + 33% * var(--g)), transparent)); }
+body.light #levelChip .lvg .prg { stroke: color-mix(in srgb, var(--in-tune) calc(78% + 22% * var(--g)), transparent); }
 body.light #levelChip .lvb { text-shadow: none; }
 body.light #appHeader .level-chip {
-  background: color-mix(in srgb, var(--in-tune) 9%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
+  background: color-mix(in srgb, var(--in-tune) calc(9% + 4% * var(--g, 0)), color-mix(in srgb, var(--surface) 78%, transparent)) !important;
 }
 body.light #appHeader .head-btn {
   background: color-mix(in srgb, var(--accent) 9%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
@@ -28306,7 +28306,7 @@ body.light #appHeader .mic-head-btn.listening {
   border-color: color-mix(in srgb, var(--green) 55%, transparent) !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  #levelChip .lva, #levelChip .lvb, #levelChip .lvg, #levelChip .lvg .prg { transition: none; }
+  #levelChip, #levelChip.pop, #levelChip .lva, #levelChip .lvb, #levelChip .lvg, #levelChip .lvg .prg { transition: none !important; }
   #levelChip.bump, #levelChip.lvup .lvc, #levelChip .lvb .xv.tick { animation: none; }
 }
 
