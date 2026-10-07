@@ -28406,6 +28406,157 @@ html.hv2 #appHeader:not(.header--module) #headerTagline {
 /* The row under the session bar: timer on the right, a fallback subtitle on the left. */
 html.hv2 #appHeader + .session-bar { margin-bottom: 14px; }
 </style>
+<style id="hvs-style">
+/* ═══ STREAK CHIP, SEARCH BUTTON, PRACTICE SHEET (header slot) ═══════════════
+   The chip sits where Back would be, so it only shows on screens with no Back.
+   Every color comes from the tab accent (--accent), so it matches the screen. */
+#hvLeft { position: absolute; left: var(--hv-bl, 16px); top: 0; height: var(--hv-h, 34px); z-index: 3;
+  display: none; align-items: center; gap: 8px; box-sizing: border-box; white-space: nowrap;
+  max-width: calc(100vw - 32px - var(--hv-pw, 92px) - var(--hv-mw, 44px) * 2 - 24px); }
+.hvs-pill { -webkit-appearance: none; appearance: none; margin: 0; cursor: pointer; height: 34px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 17px;
+  font: 600 12px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .04em; color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, color-mix(in srgb, var(--surface) 62%, transparent));
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 9%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  transition: transform .18s cubic-bezier(.2,.8,.2,1) !important; -webkit-tap-highlight-color: transparent; }
+.hvs-pill:active { transform: scale(.95); }
+.hvs-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hvs-pill svg { flex: none; }
+.hvs-pill b { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.hvs-days { font-size: 9px; letter-spacing: .14em; color: color-mix(in srgb, var(--text) 58%, transparent); }
+.hvs-sb { width: 34px; padding: 0; color: color-mix(in srgb, var(--text) 82%, transparent);
+  border-color: color-mix(in srgb, var(--text) 18%, transparent);
+  background: color-mix(in srgb, var(--text) 7%, color-mix(in srgb, var(--surface) 62%, transparent)); }
+body.light .hvs-pill { background: color-mix(in srgb, var(--accent) 9%, color-mix(in srgb, var(--surface) 78%, transparent)); box-shadow: none; }
+body.light .hvs-sb { background: color-mix(in srgb, var(--text) 6%, color-mix(in srgb, var(--surface) 78%, transparent)); }
+@media (max-width: 389px) { .hvs-days { display: none; } }
+@media (max-width: 345px) { #hvLeft { gap: 6px; } .hvs-pill { padding: 0 9px; gap: 5px; } .hvs-sb { width: 32px; padding: 0; } }
+/* Breadcrumb: replaces the folder subtitle on screens that have a Back button. */
+#headerTagline.hvs-crumb { font: 500 11px 'JetBrains Mono','GlyphFix',monospace !important; letter-spacing: .06em !important;
+  font-style: normal !important; text-transform: none !important; display: flex; align-items: center; gap: 6px; }
+#headerTagline.hvs-crumb .c0 { opacity: .6; }
+#headerTagline.hvs-crumb .sep { opacity: .45; margin: 0 .5em; }
+#headerTagline.hvs-crumb .c1 { color: var(--accent); }
+
+/* Sheet */
+#streakSheetBd { position: fixed; inset: 0; z-index: 9290; background: #000; opacity: 0; visibility: hidden;
+  transition: opacity .35s ease, visibility 0s linear .35s !important; }
+#streakSheetBd.on { opacity: .5; visibility: visible; transition: opacity .35s ease, visibility 0s !important; }
+body.light #streakSheetBd.on { opacity: .32; }
+#streakSheet { position: fixed; left: 0; right: 0; bottom: var(--ss-kb, 0px); z-index: 9300; box-sizing: border-box;
+  max-height: min(88vh, calc(100dvh - var(--ss-kb, 0px) - 24px)); display: flex; flex-direction: column; gap: 14px;
+  padding: 10px 18px calc(22px + env(safe-area-inset-bottom)); border-radius: 26px 26px 0 0;
+  background: color-mix(in srgb, var(--accent) 6%, color-mix(in srgb, var(--surface) 96%, var(--text)));
+  color: var(--text); border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); border-bottom: 0;
+  box-shadow: 0 -12px 40px rgba(0,0,0,.35);
+  transform: translateY(105%); visibility: hidden;
+  transition: transform .5s cubic-bezier(.2,.8,.2,1), visibility 0s linear .5s !important; }
+#streakSheet.on { transform: none; visibility: visible; transition: transform .5s cubic-bezier(.2,.8,.2,1), visibility 0s !important; }
+#streakSheet.drag { transition: none !important; }
+body.light #streakSheet { box-shadow: 0 -10px 34px rgba(0,0,0,.16); }
+#streakSheet .ss-grab { width: 40px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--text) 25%, transparent);
+  align-self: center; flex: none; margin: 2px 0 4px; }
+#streakSheet .ss-grabzone { margin: -10px -18px 0; padding: 12px 18px 0; flex: none; touch-action: none; cursor: grab; }
+#streakSheet .ss-scroll { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch; min-height: 0; flex: 1 1 auto; }
+#streakSheet .ss-search { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 15px; box-sizing: border-box; flex: none;
+  border-radius: 16px; color: color-mix(in srgb, var(--text) 60%, transparent);
+  background: color-mix(in srgb, var(--text) 7%, transparent); border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  transition: border-color .2s ease, box-shadow .2s ease !important; }
+#streakSheet .ss-search:focus-within { border-color: var(--accent); color: var(--text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+#streakSheet .ss-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text);
+  font-size: 16px; font-weight: 400; line-height: 1.2; font-family: inherit; -webkit-appearance: none; appearance: none; user-select: text; -webkit-user-select: text; }
+#streakSheet .ss-search input::placeholder { color: color-mix(in srgb, var(--text) 50%, transparent); }
+#streakSheet .ss-search input::-webkit-search-cancel-button { display: none; }
+#streakSheet .ss-res { display: flex; flex-direction: column; flex: none; }
+#streakSheet .ss-r { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 48px;
+  padding: 10px 4px; background: none; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  color: var(--text); font-size: 16px; font-weight: 500; line-height: 1.25; font-family: inherit; text-align: left; cursor: pointer; }
+#streakSheet .ss-r span { font: 600 9px 'JetBrains Mono',monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); flex: none; }
+#streakSheet .ss-r:active { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+#streakSheet .ss-none { padding: 18px 4px; color: color-mix(in srgb, var(--text) 60%, transparent); font-size: 14px; }
+#streakSheet .ss-resume { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; padding: 12px 14px;
+  border-radius: 16px; text-align: left; cursor: pointer; flex: none; color: var(--text); font: inherit;
+  background: color-mix(in srgb, var(--accent) 11%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 36%, transparent); }
+#streakSheet .ss-resume:active { transform: scale(.985); }
+#streakSheet .ss-play { width: 38px; height: 38px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: var(--bg-0, #06130f); }
+body.light #streakSheet .ss-play { color: #fff; }
+#streakSheet .ss-k, #streakSheet .ss-t, #streakSheet .ss-s { display: block; }
+#streakSheet .ss-k { font: 600 9px 'JetBrains Mono',monospace; letter-spacing: .16em; color: var(--accent); }
+#streakSheet .ss-t { font: 600 19px/1.15 'FrauncesHdr','Fraunces',Georgia,serif; }
+#streakSheet .ss-s { font-size: 12px; color: color-mix(in srgb, var(--text) 62%, transparent); }
+#streakSheet .ss-chev { margin-left: auto; color: var(--accent); font-size: 22px; }
+#streakSheet .ss-streak { display: flex; align-items: center; justify-content: space-between; padding: 2px; flex: none; }
+#streakSheet .ss-big { display: flex; align-items: center; gap: 10px; font: 600 40px/1 'FrauncesHdr','Fraunces',Georgia,serif; }
+#streakSheet .ss-big small { display: block; margin-top: 5px; font: 500 10px 'JetBrains Mono',monospace; letter-spacing: .14em;
+  text-transform: uppercase; color: color-mix(in srgb, var(--text) 58%, transparent); }
+#streakSheet .ss-meta { text-align: right; font: 500 11px/1.7 'JetBrains Mono',monospace; color: color-mix(in srgb, var(--text) 62%, transparent); }
+#streakSheet .ss-meta .ok { color: var(--accent); }
+#streakSheet .ss-cal { display: flex; flex-direction: column; gap: 6px; flex: none; }
+#streakSheet .ss-ch { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+#streakSheet .ss-mn { display: flex; align-items: center; gap: 4px; font: 600 17px 'FrauncesHdr','Fraunces',Georgia,serif; }
+#streakSheet .ss-nav { width: 32px; height: 32px; border-radius: 50%; border: 0; background: none; color: var(--accent); font-size: 20px; line-height: 1; cursor: pointer; }
+#streakSheet .ss-nav[disabled] { opacity: .25; cursor: default; }
+#streakSheet .ss-lg { white-space: nowrap; font: 500 9px 'JetBrains Mono',monospace; letter-spacing: .1em; text-transform: uppercase; color: color-mix(in srgb, var(--text) 55%, transparent); text-align: right; }
+#streakSheet .ss-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px 4px; text-align: center; }
+#streakSheet .ss-grid i { font: 500 9px 'JetBrains Mono',monospace; font-style: normal; letter-spacing: .1em; color: color-mix(in srgb, var(--text) 45%, transparent); }
+#streakSheet .ss-d { aspect-ratio: 1/1; width: 100%; max-height: 38px; margin: auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font: 500 12px 'JetBrains Mono',monospace; color: color-mix(in srgb, var(--text) 80%, transparent); }
+#streakSheet .ss-d.p { background: var(--accent); color: var(--bg-0, #06130f); font-weight: 700; }
+body.light #streakSheet .ss-d.p { color: #fff; }
+#streakSheet .ss-d.t { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent); font-weight: 700; }
+#streakSheet .ss-d.p.t { color: var(--bg-0, #06130f); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+body.light #streakSheet .ss-d.p.t { color: #fff; }
+#streakSheet .ss-d.f { color: color-mix(in srgb, var(--text) 28%, transparent); }
+#streakSheet .ss-ach { display: block; width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 16px; text-align: left; cursor: pointer; flex: none;
+  color: var(--text); font: inherit; background: color-mix(in srgb, var(--text) 6%, transparent); border: 1px solid color-mix(in srgb, var(--text) 10%, transparent); }
+#streakSheet .ss-ach .h { display: flex; justify-content: space-between; align-items: baseline; font: 500 12px 'JetBrains Mono',monospace; }
+#streakSheet .ss-ach b { font: 600 17px 'FrauncesHdr','Fraunces',Georgia,serif; }
+#streakSheet .ss-bar { height: 5px; border-radius: 3px; margin: 7px 0 6px; overflow: hidden; background: color-mix(in srgb, var(--text) 14%, transparent); }
+#streakSheet .ss-bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .6s cubic-bezier(.2,.8,.2,1) !important; }
+#streakSheet .ss-nx { font-size: 12px; color: color-mix(in srgb, var(--text) 65%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  #streakSheet, #streakSheet.on, #streakSheetBd, #streakSheetBd.on, .hvs-pill, #streakSheet .ss-bar i { transition: none !important; }
+}
+
+/* ── COLLAPSING HEADER ────────────────────────────────────────────────────────
+   The button row pins to the top while the page scrolls. --hc (0..1) follows the scroll
+   position, so the title and subtitle fade out and the glass backdrop fades in with no
+   timers. Kill switch: HVS_COLLAPSE in the script (or remove html.hv-collapse). */
+/* The app sets overflow-x:hidden on html and body, which turns body into a scroll container
+   that never scrolls, and sticky would bind to it. overflow-x:clip keeps the same visual
+   clipping without that. Older WebViews without clip simply keep the old, unpinned header. */
+@supports (overflow: clip) {
+  :where(html.hv2.hv-collapse) body { overflow-x: clip; overflow-y: visible; }
+  html.hv2.hv-collapse #appHeader { position: sticky; top: var(--hv-pin, 0px); z-index: 500; }
+}
+html.hv2.hv-collapse #appHeader::before {
+  content: ''; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  top: calc(-1 * var(--hv-pin, 0px) - 2px);
+  height: calc(var(--hv-pin, 0px) + var(--hv-hh) + 12px);
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--bg-0) calc(var(--hc, 0) * 94%), transparent) 0,
+    color-mix(in srgb, var(--bg-0) calc(var(--hc, 0) * 88%), transparent) calc(100% - 10px),
+    transparent 100%);
+  -webkit-backdrop-filter: blur(calc(var(--hc, 0) * 16px)) saturate(1.2);
+  backdrop-filter: blur(calc(var(--hc, 0) * 16px)) saturate(1.2);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
+  transition: none !important;
+}
+html.hv2.hv-collapse #appHeader:not(.header--module) #appLogo,
+html.hv2.hv-collapse #appHeader:not(.header--module) #headerTagline {
+  opacity: calc(1 - var(--hc, 0) * 2.6) !important;
+  transform: translateY(calc(var(--hc, 0) * -8px)) !important;
+  transition: none !important;
+}
+html.hv2.hv-collapse.hv-collapsed #appHeader:not(.header--module) #appLogo,
+html.hv2.hv-collapse.hv-collapsed #appHeader:not(.header--module) #headerTagline { pointer-events: none; }
+</style>
 </head>
 <body>
 <script>
@@ -45713,6 +45864,17 @@ function TOOL_FOLDER_NAME(k){ return t(TOOL_FOLDER_NAME_KEYS[k]) || k.toUpperCas
 const TOOL_FOLDER_IDS = ['toolFolderPitch','toolFolderHarmony','toolFolderRhythm','toolFolderReference','toolFolderUtilities'];
 let currentToolFolder = null;
 
+// Remembers the last tool or exercise opened, for Resume in the practice sheet.
+// Only things the favorites list knows how to launch are kept.
+function _noteLastTool(k1, k2) {
+  try {
+    const k = (typeof FAV_META !== 'undefined' && FAV_META[k1]) ? k1 : ((typeof FAV_META !== 'undefined' && FAV_META[k2]) ? k2 : null);
+    if (!k) return;
+    progState.lastTool = { k: k, at: Date.now() };
+    progSave();
+  } catch (e) {}
+}
+
 function enterToolFolder(folder) {
   currentToolFolder = folder;
   document.getElementById('toolsHub').classList.add('hidden');
@@ -46185,6 +46347,7 @@ function enterTool(name, restoreState) {
   if (!isToolFree(name) && !isPro()) { showPaywall('tool', name); return; }
   sesEnter();
   sesTrackModule('t:' + name);
+  _noteLastTool('tool:' + name, 'exercise:' + name);
   setTimeout(_langRefresh, 0);   // after this tool has built its own controls
   // Stash any saved-view snapshot so the tool's init can apply it.
   _pendingChartRestore = (name === 'guitarchords' && restoreState) ? restoreState : null;
@@ -57931,6 +58094,7 @@ function enterExercise(name) {
   if (!isTrainFree(name) && !isPro()) { showPaywall('train', name); return; }
   sesEnter();
   sesTrackModule('e:' + name);
+  _noteLastTool('exercise:' + name, 'tool:' + name);
   setTimeout(_langRefresh, 0);   // same reason as enterTool
   // Swap app header to show module name with contextual back label
   var _exBackMap = EXERCISE_BACK_MAP;
@@ -89993,7 +90157,30 @@ window.addEventListener('pagehide', () => { if (typeof stopAllAudio === 'functio
 // ═══════════════════════════════════════════════
 // DAILY STREAK
 // ═══════════════════════════════════════════════
+// Keeps a list of the days the app was opened (one year at most) for the practice
+// sheet's calendar. It lives in progState, so backup and restore carry it. A person
+// who already has a streak gets the days it covers, so the calendar is not empty.
+function _logOpenDay() {
+  try {
+    const today = todayStr();
+    if (!Array.isArray(progState.openDays)) progState.openDays = [];
+    const a = progState.openDays;
+    let changed = false;
+    if (!a.length && progState.streak && progState.streak.count > 0 && progState.streak.lastDate) {
+      const end = new Date(progState.streak.lastDate + 'T00:00:00');
+      for (let i = Math.min(progState.streak.count, 365) - 1; i >= 0; i--) {
+        const d = new Date(end); d.setDate(d.getDate() - i);
+        a.push(localDateStr(d)); changed = true;
+      }
+    }
+    if (a.indexOf(today) === -1) { a.push(today); changed = true; }
+    if (a.length > 400) { a.splice(0, a.length - 400); changed = true; }
+    if (changed) progSave();
+  } catch (e) {}
+}
+
 function checkDailyStreak() {
+  _logOpenDay();
   if (!progState.streak) progState.streak = { count: 0, lastDate: null, longest: 0 };
   const today = todayStr();
   const last = progState.streak.lastDate;
@@ -91950,6 +92137,12 @@ const STRINGS = {
     hdr_back_to:'back to ',
     hdr_back_word:'Back',
     hdr_level_word:'LEVEL',
+    ss_days:'DAYS', ss_day:'DAY', ss_best1:'Best 1 day', ss_open_aria:'Practice sheet. {n} day streak', ss_search_aria:'Search', ss_home:'Home',
+    ss_t_tab:'Tab', ss_t_tool:'Tool', ss_t_train:'Train',
+    ss_ago_now:'just now', ss_ago_min:'{n} min ago', ss_ago_hr:'{n} h ago', ss_ago_day:'{n} d ago',
+    ss_title:'Your practice', ss_search_ph:'Search the app', ss_resume:'RESUME',
+    ss_today:'Opened today', ss_best:'Best {n} days', ss_of:'{a} of {b}', ss_next:'Next: {name}, {cur} of {target}',
+    ss_none:'No results', ss_prev:'Previous month', ss_next_m:'Next month', ss_legend:'Days opened',
     lbl_other:'OTHER',  lbl_options:'OPTIONS', btn_close:'CLOSE', lbl_to:'to:', lbl_bass:'BASS', pn_tap_start:'tap a key to start', trp_sounds:'Sounds: ', trp_written:'Written: ', photo_loading:'LOADING PHOTO…', photo_offline:'PHOTO UNAVAILABLE', photo_soon:'PHOTO COMING SOON',
     backup_partial_restore:'This backup was saved with %n item(s) missing. Everything else will be restored.',
     backup_partial:'Backup saved, but %n item(s) could not be included. This is a bug \u2014 please report it.',
@@ -93144,6 +93337,12 @@ const STRINGS = {
     hdr_back_to:'torna a ',
     hdr_back_word:'Indietro',
     hdr_level_word:'LIV.',
+    ss_days:'GIORNI', ss_day:'GIORNO', ss_best1:'Record: 1 giorno', ss_open_aria:'Scheda di pratica. Serie di {n} giorni', ss_search_aria:'Cerca', ss_home:'Home',
+    ss_t_tab:'Sezione', ss_t_tool:'Strumento', ss_t_train:'Allenamento',
+    ss_ago_now:'adesso', ss_ago_min:'{n} min fa', ss_ago_hr:'{n} h fa', ss_ago_day:'{n} g fa',
+    ss_title:'La tua pratica', ss_search_ph:'Cerca nell\'app', ss_resume:'RIPRENDI',
+    ss_today:'Aperta oggi', ss_best:'Record: {n} giorni', ss_of:'{a} di {b}', ss_next:'Prossimo: {name}, {cur} di {target}',
+    ss_none:'Nessun risultato', ss_prev:'Mese precedente', ss_next_m:'Mese successivo', ss_legend:'Giorni aperti',
     // Italian help content. showHelp() looks up STRINGS[lang].help[key] and
     // falls back to the English HELP_CONTENT when it misses — and this table did
     // not exist at all, so every help popup in the app was English regardless of
@@ -140690,6 +140889,8 @@ const _BACK_CLOSERS = {
   gsPulsePopover:       'closePulsePopover',
   backupSheet:          'backupCloseSheet',
   backupOutSheet:       'backupCloseOutSheet',
+  streakSheet:          'closeStreakSheet',
+  streakSheetBd:        'closeStreakSheet',
   riffPopup:            'riffClosePopup',
   csPickerSheet:        'closeInstPicker',
   csPickerScrim:        'closeInstPicker',
@@ -141275,6 +141476,396 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   window.addEventListener('resize', function () { pollInset(); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) pollInset(); });
   apply();
+})();
+</script>
+<script id="hvs-js">
+/* ═══ STREAK CHIP + PRACTICE SHEET + SEARCH ═══════════════════════════════════
+   Chip: a flame with the day streak, and a search button, in the header slot where
+   Back would be. Shown only on screens that have no Back button.
+   Sheet: search, Resume (the last tool you opened), the streak, a calendar of the
+   days you opened the app, and your achievements.
+   Data: progState.openDays (YYYY-MM-DD list, one year at most) and
+   progState.lastTool ({k, at}). Both live in progState, so backup carries them. */
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var FLAME = function (w, h) {
+    return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 24 28" aria-hidden="true" focusable="false">' +
+      '<path fill="var(--accent)" d="M12 1c1 5 7 8 7 15a7 7 0 0 1-14 0c0-3 1.5-5 3-6.5.3 2 1.2 3 2.5 3.5C9.5 9 10 5 12 1z"/>' +
+      '<path fill="color-mix(in srgb,var(--accent) 40%,#fff)" d="M12 14c1 2 3 3 3 5.5a3 3 0 0 1-6 0c0-1.5.8-2.5 1.5-3.5.3.8.8 1.2 1.5 1.5-.2-1.5 0-2.500 0-3.500z"/></svg>';
+  };
+  var SEARCH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>';
+  var PLAY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>';
+
+  function lang() { return (window.progState && progState.lang === 'it') ? 'it' : 'en'; }
+  function T(k, fb) { var v = (typeof t === 'function') ? t(k) : k; return (v && v !== k) ? v : fb; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function fmt(s, o) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] != null ? o[k] : m; }); }
+  function sentence(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(); }
+  function norm(s) { s = String(s || '').toLowerCase(); try { s = s.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) {} return s; }
+
+  /* ── Chip ───────────────────────────────────────────────────────────────── */
+  function ensureChip() {
+    var hd = document.getElementById('appHeader');
+    if (!hd) return null;
+    var w = document.getElementById('hvLeft');
+    if (w) return w;
+    w = document.createElement('div');
+    w.id = 'hvLeft';
+    w.innerHTML = '<button type="button" id="hvStreak" class="hvs-pill">' + FLAME(15, 17) + '<b id="hvStreakN">1</b><span class="hvs-days" id="hvStreakD"></span></button>' +
+                  '<button type="button" id="hvSearch" class="hvs-pill hvs-sb">' + SEARCH + '</button>';
+    hd.appendChild(w);
+    document.getElementById('hvStreak').addEventListener('click', function () { window.openStreakSheet('main'); });
+    document.getElementById('hvSearch').addEventListener('click', function () { window.openStreakSheet('search'); });
+    return w;
+  }
+
+  var _crumbTab = '';
+  window._hvsSync = function () {
+    try {
+      var hd = document.getElementById('appHeader');
+      if (!hd || !root.classList.contains('hv2')) return;
+      var w = ensureChip();
+      if (!w) return;
+      var inFolder = document.body.classList.contains('in-section-back');
+      var isMod = hd.classList.contains('header--module');
+      var show = !isMod && !inFolder;
+      w.style.display = show ? 'flex' : 'none';
+      var n = Math.max(1, (window.progState && progState.streak && progState.streak.count) || 1);
+      var nEl = document.getElementById('hvStreakN');
+      if (nEl && nEl.textContent !== String(n)) nEl.textContent = n;
+      var d = document.getElementById('hvStreakD');
+      if (d) d.textContent = n === 1 ? T('ss_day', 'DAY') : T('ss_days', 'DAYS');
+      var b1 = document.getElementById('hvStreak'), b2 = document.getElementById('hvSearch');
+      if (b1) { var lab = fmt(T('ss_open_aria', 'Practice sheet. {n} day streak'), { n: n }); b1.setAttribute('aria-label', lab); b1.setAttribute('title', lab); }
+      if (b2) { var l2 = T('ss_search_aria', 'Search'); b2.setAttribute('aria-label', l2); b2.setAttribute('title', l2); }
+      // Breadcrumb on folder screens (a Back button is there, so the chip steps aside).
+      var tg = document.getElementById('headerTagline');
+      if (tg) {
+        if (inFolder && !isMod && hd.classList.contains('header--section')) {
+          var m = (typeof mode !== 'undefined') ? mode : '';
+          var key = { tuner: 'mode_tuner', metronome: 'mode_metro', tools: 'mode_tools', practice: 'mode_train' }[m];
+          var nm = key ? sentence(T(key, '')) : '';
+          if (nm) {
+            var html = '<span class="c0">' + esc(T('ss_home', 'Home')) + '</span><span class="sep">›</span><span class="c1">' + esc(nm) + '</span>';
+            if (tg.getAttribute('data-crumb') !== html) { tg.innerHTML = html; tg.setAttribute('data-crumb', html); }
+            tg.classList.add('hvs-crumb');
+          }
+        } else if (tg.classList.contains('hvs-crumb')) {
+          tg.classList.remove('hvs-crumb'); tg.removeAttribute('data-crumb');
+        }
+      }
+    } catch (e) {}
+  };
+  var _syncT = null;
+  function syncSoon() { clearTimeout(_syncT); _syncT = setTimeout(window._hvsSync, 60); }
+
+  // Re-sync after header changes, XP/streak refreshes and language changes.
+  var _oAfter = window._hv2After;
+  window._hv2After = function () { if (_oAfter) _oAfter(); setTimeout(window._hvsSync, 130); };
+  var _oRefresh = window.progRefreshChip;
+  if (typeof _oRefresh === 'function') window.progRefreshChip = function () { var r = _oRefresh.apply(this, arguments); syncSoon(); return r; };
+  var _oLang = window.applyLang;
+  if (typeof _oLang === 'function') window.applyLang = function () { var r = _oLang.apply(this, arguments); syncSoon(); return r; };
+  try {
+    var mo = new MutationObserver(syncSoon);
+    mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    var hd0 = document.getElementById('appHeader');
+    if (hd0) mo.observe(hd0, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) syncSoon(); });
+  window.addEventListener('resize', syncSoon);
+  [0, 300, 900, 2000, 4000].forEach(function (ms) { setTimeout(window._hvsSync, ms); });
+
+  /* ── Data helpers ───────────────────────────────────────────────────────── */
+  function dstr(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function openSet() { var o = {}; ((window.progState && progState.openDays) || []).forEach(function (x) { o[x] = 1; }); return o; }
+  var TOOL_NAMES = {
+    'tool:tonal': ['Tonal center', 'Centro tonale'], 'tool:guitarchords': ['Chord charts', 'Diagrammi accordi'],
+    'tool:volume': ['Volume meter', 'Misuratore volume'], 'tool:cof': ['Circle of fifths', 'Circolo delle quinte'],
+    'tool:intervalref': ['Intervals', 'Intervalli'], 'tool:vocalrange': ['Vocal range', 'Estensione vocale'],
+    'tool:transpose': ['Transposer', 'Traspositore'], 'tool:rhythmcards': ['Rhythm cards', 'Carte ritmiche'],
+    'tool:survivalguide': ['Survival Guide', 'Guida di sopravvivenza'], 'tool:musicquiz': ['Music quiz', 'Quiz musicale']
+  };
+  function nameOf(key, meta) {
+    var o = TOOL_NAMES[key];
+    if (o) return lang() === 'it' ? o[1] : o[0];
+    return sentence(lang() === 'it' ? (meta.labelIt || meta.label) : meta.label);
+  }
+  var ALIAS = {
+    tuner: 'tuner tune pitch intonation accordatore accorda note',
+    metro: 'metronome tempo bpm beat click metronomo battito',
+    'tool:piano': 'piano keyboard keys tastiera', 'tool:drumkit': 'drums drum kit batteria percussion',
+    'tool:cof': 'circle fifths keys quinte tonalita', 'tool:chords': 'chord chords accordi armonia harmony',
+    'tool:guitarchords': 'guitar chart diagram chitarra fingering', 'tool:progression': 'progression changes chord progressione armonia',
+    'tool:vocalrange': 'voice singing voce range estensione canto', 'tool:transpose': 'transpose capo trasporta key',
+    'tool:volume': 'volume db loudness decibel', 'tool:theremin': 'theremin glide', 'tool:rhythmcards': 'rhythm cards notation ritmo',
+    'tool:tonal': 'tonal center drone key tonalita', 'tool:intervalref': 'intervals reference semitone intervallo',
+    'tool:survivalguide': 'guide theory help learn teoria guida survival notation', 'tool:musicquiz': 'quiz trivia music test domande',
+    'exercise:scales': 'scale scales modes major minor scala modi', 'exercise:interval': 'interval ear training intervalli orecchio',
+    'exercise:chords': 'chord ear chords accordi orecchio', 'exercise:tempo': 'tempo lock rhythm timing ritmo',
+    'exercise:tempoguess': 'tempo guess bpm rhythm', 'exercise:poly': 'polyrhythm poly ritmi', 'exercise:rhythmread': 'rhythm reading ritmo lettura',
+    'exercise:singsing': 'sing singing voice pitch canto', 'exercise:relpitch': 'relative pitch ear orecchio',
+    'exercise:staffread': 'staff reading notes pentagramma lettura', 'exercise:notationcards': 'notation cards flashcards notazione'
+  };
+  function typeTag(meta) { return (meta.type === 'EXERCISE') ? T('ss_t_train', 'Train') : T('ss_t_tool', 'Tool'); }
+  var _index = null, _indexLang = '';
+  function index() {
+    if (_index && _indexLang === lang()) return _index;
+    var list = [];
+    function add(id, label, tag, launch) {
+      var al = ALIAS[id] || '';
+      list.push({ id: id, label: label, tag: tag, launch: launch, hay: norm(label), lw: norm(label).split(/[^a-z0-9]+/).filter(Boolean), aw: norm(al).split(/[^a-z0-9]+/).filter(Boolean) });
+    }
+    add('tuner', sentence(T('mode_tuner', 'Tuner')), T('ss_t_tab', 'Tab'), function () { setMode('tuner'); });
+    add('metro', sentence(T('mode_metro', 'Metro')), T('ss_t_tab', 'Tab'), function () { setMode('metronome'); });
+    try {
+      Object.keys(FAV_META).forEach(function (k) {
+        var m = FAV_META[k];
+        if (!m || typeof m.launch !== 'function') return;
+        add(k, nameOf(k, m), typeTag(m), function () { m.launch(); });
+      });
+    } catch (e) {}
+    _index = list; _indexLang = lang();
+    return list;
+  }
+  function search(q) {
+    var toks = norm(q).split(/\s+/).filter(Boolean);
+    if (!toks.length) return [];
+    var out = [];
+    index().forEach(function (it) {
+      var total = 0;
+      for (var i = 0; i < toks.length; i++) {
+        var tk = toks[i], s = 0;
+        if (it.hay.indexOf(tk) === 0) s = 100;
+        else if (it.lw.some(function (w) { return w.indexOf(tk) === 0; })) s = 80;
+        else if (it.aw.some(function (w) { return w.indexOf(tk) === 0; })) s = 60;
+        else if (it.hay.indexOf(tk) > -1) s = 30;
+        else if (tk.length > 2 && it.lw.concat(it.aw).some(function (w) { return w.indexOf(tk) > -1; })) s = 15;
+        if (!s) return;
+        total += s;
+      }
+      out.push({ it: it, s: total });
+    });
+    out.sort(function (x, y) { return y.s - x.s || x.it.label.localeCompare(y.it.label); });
+    return out.slice(0, 8).map(function (x) { return x.it; });
+  }
+
+  function ago(ms) {
+    var d = Date.now() - ms, m = Math.round(d / 60000);
+    if (m < 1) return T('ss_ago_now', 'just now');
+    if (m < 60) return fmt(T('ss_ago_min', '{n} min ago'), { n: m });
+    var h = Math.round(m / 60);
+    if (h < 24) return fmt(T('ss_ago_hr', '{n} h ago'), { n: h });
+    return fmt(T('ss_ago_day', '{n} d ago'), { n: Math.max(1, Math.round(h / 24)) });
+  }
+
+  /* ── Sheet ──────────────────────────────────────────────────────────────── */
+  var calY = 0, calM = 0, built = false, sheet, bd;
+
+  function ensureSheet() {
+    if (built) return;
+    bd = document.createElement('div'); bd.id = 'streakSheetBd'; bd.addEventListener('click', window.closeStreakSheet);
+    sheet = document.createElement('div'); sheet.id = 'streakSheet'; sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', T('ss_title', 'Your practice'));
+    document.body.appendChild(bd); document.body.appendChild(sheet);
+    built = true;
+    // Drag the grab handle down to close.
+    var y0 = null, dy = 0;
+    sheet.addEventListener('touchstart', function (e) {
+      if (!e.target.closest || !e.target.closest('.ss-grabzone')) return;
+      y0 = e.touches[0].clientY; dy = 0; sheet.classList.add('drag');
+    }, { passive: true });
+    sheet.addEventListener('touchmove', function (e) {
+      if (y0 == null) return;
+      dy = Math.max(0, e.touches[0].clientY - y0);
+      sheet.style.transform = 'translateY(' + dy + 'px)';
+    }, { passive: true });
+    function endDrag() {
+      if (y0 == null) return;
+      y0 = null; sheet.classList.remove('drag'); sheet.style.transform = '';
+      if (dy > 80) window.closeStreakSheet();
+    }
+    sheet.addEventListener('touchend', endDrag); sheet.addEventListener('touchcancel', endDrag);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheet.classList.contains('on')) window.closeStreakSheet(); });
+    // Keep the sheet above the keyboard.
+    if (window.visualViewport) {
+      var fix = function () {
+        var vv = window.visualViewport;
+        var kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        sheet.style.setProperty('--ss-kb', (kb > 80 ? kb : 0) + 'px');
+      };
+      window.visualViewport.addEventListener('resize', fix);
+      window.visualViewport.addEventListener('scroll', fix);
+    }
+  }
+
+  function weekStart() { return lang() === 'it' ? 1 : 0; }
+  function calHTML(open) {
+    var loc = lang() === 'it' ? 'it-IT' : 'en-US';
+    var first = new Date(calY, calM, 1), days = new Date(calY, calM + 1, 0).getDate();
+    var lead = (first.getDay() - weekStart() + 7) % 7;
+    var name = new Intl.DateTimeFormat(loc, { month: 'long', year: 'numeric' }).format(first);
+    name = name.charAt(0).toUpperCase() + name.slice(1);
+    var now = new Date(), todayKey = dstr(now), isCur = (calY === now.getFullYear() && calM === now.getMonth());
+    var h = '<div class="ss-cal"><div class="ss-ch"><div class="ss-mn"><button type="button" class="ss-nav" id="ssPrev" aria-label="' + esc(T('ss_prev', 'Previous month')) + '">‹</button><span>' + esc(name) +
+      '</span><button type="button" class="ss-nav" id="ssNext" aria-label="' + esc(T('ss_next_m', 'Next month')) + '"' + (isCur ? ' disabled' : '') + '>›</button></div>' +
+      '<div class="ss-lg">● ' + esc(T('ss_legend', 'Days you opened')) + '</div></div><div class="ss-grid">';
+    for (var i = 0; i < 7; i++) {
+      var wd = new Date(2023, 0, 1 + ((i + weekStart()) % 7));
+      h += '<i>' + esc(new Intl.DateTimeFormat(loc, { weekday: 'narrow' }).format(wd)) + '</i>';
+    }
+    for (var l = 0; l < lead; l++) h += '<div class="ss-d"></div>';
+    for (var d = 1; d <= days; d++) {
+      var key = calY + '-' + String(calM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      var cls = 'ss-d';
+      if (open[key]) cls += ' p';
+      if (key === todayKey) cls += ' t';
+      else if (key > todayKey) cls += ' f';
+      h += '<div class="' + cls + '">' + d + '</div>';
+    }
+    return h + '</div></div>';
+  }
+
+  function achInfo() {
+    var tot = 0, got = 0, best = null, bestR = -1;
+    try {
+      ACHIEVEMENTS.forEach(function (a) {
+        if (a.cat === 'secrets') return;
+        tot++;
+        if (progState.achievements && progState.achievements[a.id]) { got++; return; }
+        if (typeof a.prog === 'function') {
+          var p = null; try { p = a.prog(progState); } catch (e) {}
+          if (p && p.target > 0 && p.cur >= 0) { var r = p.cur / p.target; if (r < 1 && r > bestR) { bestR = r; best = { a: a, cur: p.cur, target: p.target }; } }
+        }
+      });
+    } catch (e) {}
+    return { tot: tot, got: got, next: best };
+  }
+
+  function render(mode) {
+    var open = openSet(), n = Math.max(1, (progState.streak && progState.streak.count) || 1);
+    var best = Math.max(n, (progState.streak && progState.streak.longest) || 0);
+    var last = progState.lastTool, lm = last && window.FAV_META && FAV_META[last.k];
+    var h = '<div class="ss-grabzone"><div class="ss-grab"></div></div>' +
+      '<label class="ss-search">' + SEARCH + '<input id="ssInput" type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' +
+      esc(T('ss_search_ph', 'Search tools and exercises')) + '" aria-label="' + esc(T('ss_search_aria', 'Search')) + '"></label>' +
+      '<div class="ss-scroll"><div class="ss-res" id="ssRes" hidden></div><div id="ssMain" style="display:contents">';
+    if (lm && typeof lm.launch === 'function') {
+      h += '<button type="button" class="ss-resume" id="ssResume"><span class="ss-play">' + PLAY + '</span><span class="ss-rt"><span class="ss-k">' + esc(T('ss_resume', 'RESUME')) + '</span><span class="ss-t">' +
+        esc(nameOf(last.k, lm)) + '</span><span class="ss-s">' + esc(ago(last.at || Date.now())) + '</span></span><span class="ss-chev">›</span></button>';
+    }
+    h += '<div class="ss-streak"><div class="ss-big">' + FLAME(30, 34) + '<div>' + n + '<small>' + esc(T('pm_day_streak', 'day streak')) + '</small></div></div>' +
+      '<div class="ss-meta"><div class="ok">' + esc(T('ss_today', 'Opened today')) + '</div><div>' + esc(best === 1 ? T('ss_best1', 'Best 1 day') : fmt(T('ss_best', 'Best {n} days'), { n: best })) + '</div></div></div>';
+    h += calHTML(open);
+    var ai = achInfo();
+    if (ai.tot) {
+      var pct = Math.round(ai.got / ai.tot * 100);
+      h += '<button type="button" class="ss-ach" id="ssAch"><div class="h"><b>' + esc(T('pm_achievements', 'Achievements')) + '</b><span>' + esc(fmt(T('ss_of', '{a} of {b}'), { a: ai.got, b: ai.tot })) +
+        '</span></div><div class="ss-bar"><i style="width:' + pct + '%"></i></div>';
+      if (ai.next) {
+        var nm = (lang() === 'it' && ai.next.a.name_it) ? ai.next.a.name_it : ai.next.a.name;
+        h += '<div class="ss-nx">' + esc(fmt(T('ss_next', 'Next: {name}, {cur} of {target}'), { name: nm, cur: Math.floor(ai.next.cur), target: ai.next.target })) + '</div>';
+      }
+      h += '</button>';
+    }
+    h += '</div></div>';
+    sheet.innerHTML = h;
+    wire(mode);
+  }
+
+  function wire(mode) {
+    var inp = document.getElementById('ssInput'), res = document.getElementById('ssRes'), main = document.getElementById('ssMain');
+    function runSearch() {
+      var q = inp.value.trim();
+      if (!q) { res.hidden = true; res.innerHTML = ''; main.style.display = 'contents'; return; }
+      var r = search(q);
+      main.style.display = 'none'; res.hidden = false;
+      res.innerHTML = r.length ? r.map(function (it, i) { return '<button type="button" class="ss-r" data-i="' + i + '">' + esc(it.label) + '<span>' + esc(it.tag) + '</span></button>'; }).join('')
+                              : '<div class="ss-none">' + esc(T('ss_none', 'No results')) + '</div>';
+      Array.prototype.forEach.call(res.querySelectorAll('.ss-r'), function (b) {
+        b.addEventListener('click', function () { var it = r[+b.getAttribute('data-i')]; go(it.launch); });
+      });
+    }
+    inp.addEventListener('input', runSearch);
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var f = res.querySelector('.ss-r'); if (f) f.click(); inp.blur(); } });
+    var rs = document.getElementById('ssResume');
+    if (rs) rs.addEventListener('click', function () { var m = FAV_META[progState.lastTool.k]; go(function () { m.launch(); }); });
+    var ac = document.getElementById('ssAch');
+    if (ac) ac.addEventListener('click', function () { go(function () { if (typeof openProgress === 'function') openProgress(); }); });
+    function month(delta) {
+      calM += delta; if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; }
+      var old = sheet.querySelector('.ss-cal'); if (!old) return;
+      var tmp = document.createElement('div'); tmp.innerHTML = calHTML(openSet());
+      old.parentNode.replaceChild(tmp.firstChild, old); wireCal();
+    }
+    function wireCal() {
+      var p = document.getElementById('ssPrev'), n = document.getElementById('ssNext');
+      var lim = new Date(); lim.setFullYear(lim.getFullYear() - 1);
+      if (p) { if (calY < lim.getFullYear() || (calY === lim.getFullYear() && calM <= lim.getMonth())) p.disabled = true; p.addEventListener('click', function () { month(-1); }); }
+      if (n) n.addEventListener('click', function () { month(1); });
+    }
+    wireCal();
+    if (mode === 'search') { try { inp.focus({ preventScroll: true }); } catch (e) { inp.focus(); } }
+  }
+
+  function go(fn) {
+    window.closeStreakSheet();
+    setTimeout(function () { try { fn(); } catch (e) {} }, 220);
+  }
+
+  window.openStreakSheet = function (mode) {
+    try {
+      ensureSheet();
+      var now = new Date(); calY = now.getFullYear(); calM = now.getMonth();
+      render(mode || 'main');
+      bd.classList.add('on'); sheet.classList.add('on');
+      if (window._scrollLockSync) _scrollLockSync();
+      var sc = sheet.querySelector('.ss-scroll'); if (sc) sc.scrollTop = 0;
+    } catch (e) {}
+  };
+  window.closeStreakSheet = function () {
+    if (!built) return;
+    try { var i = document.getElementById('ssInput'); if (i) i.blur(); } catch (e) {}
+    sheet.classList.remove('on'); bd.classList.remove('on');
+    sheet.style.removeProperty('--ss-kb');
+    if (window._scrollLockSync) setTimeout(_scrollLockSync, 60);
+  };
+})();
+/* Collapsing header: drives --hc (0..1) from the page scroll. Body is the scroller.
+   Kill switch: set HVS_COLLAPSE to false. */
+(function () {
+  var HVS_COLLAPSE = true;
+  var root = document.documentElement;
+  if (!HVS_COLLAPSE) return;
+  root.classList.add('hv-collapse');
+  var hd = null, last = -1, raf = 0, RANGE = 44, START = 6;
+  function pin() {
+    hd = hd || document.getElementById('appHeader'); if (!hd) return;
+    var b = document.body, cs = getComputedStyle(b);
+    var mt = parseFloat(getComputedStyle(hd).marginTop) || 0;
+    var v = Math.max(0, (parseFloat(cs.paddingTop) || 0) + mt);
+    root.style.setProperty('--hv-pin', v + 'px');
+  }
+  function upd() {
+    raf = 0; hd = hd || document.getElementById('appHeader'); if (!hd) return;
+    var se = document.scrollingElement || document.documentElement;
+    var y = window.pageYOffset || se.scrollTop || document.body.scrollTop || 0;
+    var c = Math.max(0, Math.min(1, (y - START) / RANGE));
+    c = Math.round(c * 200) / 200;
+    if (c === last) return; last = c;
+    hd.style.setProperty('--hc', c);
+    root.classList.toggle('hv-collapsed', c > 0.6);
+  }
+  function kick() { if (!raf) raf = requestAnimationFrame(upd); }
+  document.body.addEventListener('scroll', kick, { passive: true });
+  window.addEventListener('scroll', kick, { passive: true });
+  function repin() { pin(); last = -1; kick(); }
+  window.addEventListener('resize', repin);
+  var _ap = window._hv2After;
+  window._hv2After = function () { try { if (_ap) _ap.apply(this, arguments); } catch (e) {} repin(); };
+  [0, 400, 1200, 3000].forEach(function (ms) { setTimeout(repin, ms); });
+  document.addEventListener('visibilitychange', repin);
 })();
 </script>
 </body>
