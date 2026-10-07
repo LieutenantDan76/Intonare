@@ -28216,6 +28216,14 @@ body.light #exRelPitch .rlp-flick { animation:rlpFlickLight .48s steps(1) both; 
 }
 #appHeader .mic-head-btn.listening svg rect { fill: currentColor; fill-opacity: .3; }
 #appHeader .mic-head-btn.mic-active::after { border-radius: 17px; }
+/* A small live dot on the mic while it is listening. */
+#appHeader .mic-head-btn.listening::before {
+  content: ''; position: absolute; top: 6px; right: 8px; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 6px var(--green);
+  animation: pdot 1.5s ease-in-out infinite;
+}
+body.light #appHeader .mic-head-btn.listening::before { box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { #appHeader .mic-head-btn.listening::before { animation: none; } }
 #appHeader .fav-btn.fav-added::after { border-radius: 17px; }
 
 /* Level chip: an SVG outline that doubles as the XP meter. */
@@ -28225,16 +28233,17 @@ body.light #exRelPitch .rlp-flick { animation:rlpFlickLight .48s steps(1) both; 
   height: 34px; min-width: 84px; padding: 0; margin: 0;
   border: 0 !important; border-radius: 17px; overflow: visible;
   color: var(--in-tune);
-  background: color-mix(in srgb, var(--in-tune) 7%, color-mix(in srgb, var(--surface) 62%, transparent)) !important;
+  background: color-mix(in srgb, var(--in-tune) 5%, color-mix(in srgb, var(--surface) 62%, transparent)) !important;
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   box-shadow: none;
-  transition: transform .15s ease;
+  transition: transform .18s cubic-bezier(.2,.8,.2,1), background-color .6s ease;
 }
 #appHeader .level-chip:active { transform: scale(.96); }
 #levelChip .lvc { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; display: block; }
 #levelChip .lva {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
-  transition: transform .45s cubic-bezier(.3,1.1,.3,1), opacity .25s, filter .3s;
+  transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .35s ease, filter .4s ease;
+  will-change: transform, opacity;
 }
 #levelChip .level-chip-lv { font: 600 9px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .1em; opacity: .85; }
 #levelChip .level-chip-num { font-size: 19px; letter-spacing: .5px; line-height: 1; }
@@ -28242,39 +28251,48 @@ body.light #exRelPitch .rlp-flick { animation:rlpFlickLight .48s steps(1) both; 
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font: 700 13px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .04em; color: var(--lv-ink);
   transform: translateY(70%) scale(.92); opacity: 0; filter: blur(3px);
-  transition: transform .45s cubic-bezier(.3,1.2,.3,1), opacity .25s, filter .3s;
+  transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .35s ease, filter .4s ease;
+  will-change: transform, opacity;
   text-shadow: 0 0 10px color-mix(in srgb, var(--in-tune) 55%, transparent);
   pointer-events: none;
 }
 #levelChip .lvb .xv { font: 700 14px 'JetBrains Mono','GlyphFix',monospace; font-variant-numeric: tabular-nums; }
 #levelChip .lvb .xl { font: 600 9px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .14em; margin-left: 5px; opacity: .85; font-style: normal; }
-#levelChip.pop .lva { transform: translateY(-80%) scale(.92); opacity: 0; filter: blur(3px); }
-#levelChip.pop .lvb { transform: none; opacity: 1; filter: none; }
+#levelChip.pop .lva { transform: translateY(-80%) scale(.92); opacity: 0; filter: blur(3px);
+  transition: transform .45s cubic-bezier(.3,1.1,.3,1), opacity .22s ease, filter .3s ease; }
+#levelChip.pop .lvb { transform: none; opacity: 1; filter: none;
+  transition: transform .45s cubic-bezier(.3,1.1,.3,1), opacity .25s ease .05s, filter .3s ease .05s; }
+@keyframes lvtick { 0% { opacity: .35; transform: translateY(3px); } 100% { opacity: 1; transform: none; } }
+#levelChip .lvb .xv.tick { animation: lvtick .28s cubic-bezier(.2,.8,.2,1); }
 #levelChip .lvg {
   position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 3;
-  filter: drop-shadow(0 0 2.5px var(--in-tune)) drop-shadow(0 0 7px color-mix(in srgb, var(--in-tune) 55%, transparent));
-  transition: filter .4s;
+  filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--in-tune) 38%, transparent)) drop-shadow(0 0 4px color-mix(in srgb, var(--in-tune) 14%, transparent));
+  transition: filter 1.6s cubic-bezier(.4,0,.2,1);
 }
-#levelChip .lvg .trk { fill: none; stroke: color-mix(in srgb, var(--in-tune) 34%, transparent); stroke-width: 1; }
+#levelChip .lvg .trk { fill: none; stroke: color-mix(in srgb, var(--in-tune) 22%, transparent); stroke-width: 1; }
 #levelChip .lvg .prg {
-  fill: none; stroke: var(--in-tune); stroke-width: 2; stroke-linecap: round;
+  fill: none; stroke: color-mix(in srgb, var(--in-tune) 62%, transparent); stroke-width: 1.7; stroke-linecap: round;
   stroke-dasharray: calc(var(--p, 0) * 100px) 300px;
-  transition: stroke-dasharray .8s cubic-bezier(.2,.8,.2,1), stroke-width .3s;
+  transition: stroke-dasharray .9s cubic-bezier(.22,.9,.24,1), stroke-width 1.2s ease, stroke .6s ease, opacity .35s ease;
 }
 #levelChip.snap .lvg .prg { transition: none; }
-#levelChip.pop .lvg .prg { stroke-width: 2.8; }
-#levelChip.pop .lvg { filter: drop-shadow(0 0 3px var(--in-tune)) drop-shadow(0 0 10px var(--in-tune)); }
-@keyframes lvbump { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
-#levelChip.bump { animation: lvbump .38s cubic-bezier(.2,.9,.3,1.3); }
+/* Active: XP just came in. The line brightens and thickens fast, then the base rules
+   above bring it back down slowly (the slow part lives on the idle state). */
+#levelChip.pop .lvg .prg { stroke: var(--in-tune); stroke-width: 2.6; transition: stroke-dasharray .9s cubic-bezier(.22,.9,.24,1), stroke-width .3s ease-out, stroke .25s ease-out, opacity .35s ease; }
+#levelChip.pop .lvg { filter: drop-shadow(0 0 3px var(--in-tune)) drop-shadow(0 0 10px color-mix(in srgb, var(--in-tune) 85%, transparent)); transition: filter .3s ease-out; }
+@keyframes lvbump { 0% { transform: scale(1); } 40% { transform: scale(1.05); } 100% { transform: scale(1); } }
+#levelChip.bump { animation: lvbump .5s cubic-bezier(.3,.7,.3,1); }
 @keyframes lvflash {
   0% { background-color: transparent; }
-  25% { background-color: color-mix(in srgb, var(--in-tune) 30%, transparent); }
+  25% { background-color: color-mix(in srgb, var(--in-tune) 26%, transparent); }
   100% { background-color: transparent; }
 }
-#levelChip.lvup .lvc { animation: lvflash 1.1s ease-out; }
+#levelChip.lvup .lvc { animation: lvflash 1.3s ease-in-out; }
 /* Light ground: a soft halo reads as dirt, so the glow thins out. */
-body.light #levelChip .lvg { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--in-tune) 38%, transparent)); }
+body.light #levelChip .lvg { filter: drop-shadow(0 0 1px color-mix(in srgb, var(--in-tune) 22%, transparent)); }
 body.light #levelChip.pop .lvg { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--in-tune) 55%, transparent)); }
+body.light #levelChip .lvg .prg { stroke: color-mix(in srgb, var(--in-tune) 78%, transparent); }
+body.light #levelChip.pop .lvg .prg { stroke: var(--in-tune); }
 body.light #levelChip .lvb { text-shadow: none; }
 body.light #appHeader .level-chip {
   background: color-mix(in srgb, var(--in-tune) 9%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
@@ -28289,7 +28307,7 @@ body.light #appHeader .mic-head-btn.listening {
 }
 @media (prefers-reduced-motion: reduce) {
   #levelChip .lva, #levelChip .lvb, #levelChip .lvg, #levelChip .lvg .prg { transition: none; }
-  #levelChip.bump, #levelChip.lvup .lvc { animation: none; }
+  #levelChip.bump, #levelChip.lvup .lvc, #levelChip .lvb .xv.tick { animation: none; }
 }
 
 /* ── 2. HEADER LAYOUT (every screen) ──────────────────────────────────────────
@@ -44282,7 +44300,7 @@ async function startMic(_opts) {
       _micAGCOn = false;        // native path keeps AGC off (per config); loudness gates valid
       if (typeof pitchSyncFilters === 'function') pitchSyncFilters(_nativeSampleRate || 44100);
       if (typeof PitchEngine !== 'undefined') PitchEngine.reset();
-      isListening = true;
+      isListening = true; try { if (window._hv2SyncMic) _hv2SyncMic(); } catch (e) {}
       const hvw = document.getElementById('headerVolWrap');
       if (hvw) hvw.classList.add('active');
       if (mode === 'tuner') pitchHistStart();
@@ -44407,7 +44425,7 @@ async function startMic(_opts) {
         if (_workletNode && _workletReady) micSource.connect(_workletNode);
       }).catch(() => {}); } catch(e) {}
     }
-    isListening = true;
+    isListening = true; try { if (window._hv2SyncMic) _hv2SyncMic(); } catch (e) {}
     _iosSyncAudioMode('mic start');   // now that the flag is true, this resolves
                                       // to .playAndRecord + speaker snap-back
     // 'listening' already added in toggleMic for immediate feedback
@@ -44432,7 +44450,7 @@ function micReviveLoop() {
   }
 }
 function stopMic() {
-  isListening = false;
+  isListening = false; try { if (window._hv2SyncMic) _hv2SyncMic(); } catch (e) {}
   // The iOS session change happens AFTER the tracks are stopped, further down —
   // not here. Asking iOS for .playback while the microphone track is still live
   // means the category change is fighting an active capture: the record path is
@@ -44780,7 +44798,7 @@ async function micResumeAfterBackground() {
   const dead = !micStream || !track || track.readyState === 'ended';
   if (dead) {
     // Tear down the stale state, then re-acquire cleanly.
-    isListening = false;
+    isListening = false; try { if (window._hv2SyncMic) _hv2SyncMic(); } catch (e) {}
     if (_workletNode) { try { _workletNode.disconnect(); } catch(e) {} }
   if (micSource) { try { micSource.disconnect(); } catch(e) {} }
     if (analyzer)  { try { analyzer.disconnect(); } catch(e) {} }
@@ -140945,7 +140963,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
 
   // The status bar (clock, battery) is shown, transparent, over the app on every phone.
   // The header starts just below it, so there is one layout and no camera guessing.
-  // body padding-top is the status bar height: var(--sat-top) on iPhone, and
+  // body padding-top is the status bar height: env(safe-area-inset-top) on iPhone, and
   // on Android the native height from the bridge (see pollInset).
   function profile() {
     var W = window.innerWidth || 390;
@@ -141068,7 +141086,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
 
   // ── Level chip: glow line + XP popup ───────────────────────────────────────
   var NS = 'http://www.w3.org/2000/svg';
-  var _lvTotal = 0, _lvT = null, _lvSnapT = null, _lvPend = false;
+  var _lvTotal = 0, _lvT = null, _lvSnapT = null, _lvPend = false, _lvBumpAt = 0;
 
   function chipEl() { return document.getElementById('levelChip'); }
 
@@ -141136,10 +141154,17 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     chipPath();
     _lvTotal += amount;
     if (!_lvPend) {
-      chip.querySelector('.xv').textContent = '+' + _lvTotal;
+      var xv = chip.querySelector('.xv'), was = chip.classList.contains('pop');
+      xv.textContent = '+' + _lvTotal;
       chip.querySelector('.xl').textContent = 'XP';
       chip.classList.add('pop');
-      chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump');
+      // Count change while the popup is already up: a soft tick on the number only.
+      // A fresh popup gets the bump. Bumps are spaced so quick taps do not stutter.
+      if (was) { xv.classList.remove('tick'); void xv.offsetWidth; xv.classList.add('tick'); }
+      var now = Date.now();
+      if (!was || now - _lvBumpAt > 450) {
+        chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); _lvBumpAt = now;
+      }
     }
     clearTimeout(_lvT);
     _lvT = setTimeout(function () {
@@ -141158,17 +141183,33 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     chip.classList.add('pop', 'lvup');
     setP(1);
     clearTimeout(_lvT); clearTimeout(_lvSnapT);
+    // The full line fades out, resets while invisible, then fades in at the new level.
+    var prg = chip.querySelector('.lvg .prg');
     _lvSnapT = setTimeout(function () {
-      chip.classList.add('snap');
-      _lvPend = false;
-      setP(fraction());
-      void chip.offsetWidth;
-      chip.classList.remove('snap');
-    }, 900);
+      if (prg) prg.style.opacity = '0';
+      _lvSnapT = setTimeout(function () {
+        chip.classList.add('snap');
+        _lvPend = false;
+        setP(fraction());
+        if (prg) prg.style.opacity = '0';
+        void chip.offsetWidth;
+        chip.classList.remove('snap');
+        setP(fraction());
+      }, 380);
+    }, 1000);
     _lvT = setTimeout(function () {
       chip.classList.remove('pop', 'lvup', 'bump'); _lvTotal = 0;
-    }, 2300);
+    }, 2500);
     return true;
+  };
+
+  // The mic pill follows the real mic state, not just a tap on it: the tuner opens with
+  // the mic already running, and the pill used to look idle until it was tapped twice.
+  window._hv2SyncMic = function () {
+    try {
+      var b = document.getElementById('micBtn');
+      if (b) b.classList.toggle('listening', !!isListening);
+    } catch (e) {}
   };
 
   // ── Android status bar height from the native bridge ───────────────────────
@@ -141218,7 +141259,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var chip0 = chipEl();
     if (chip0 && window.ResizeObserver) new ResizeObserver(function () { chipPath(); }).observe(chip0);
   } catch (e) {}
-  [0, 300, 900, 2000, 4000].forEach(function (ms) { setTimeout(function () { pollInset(); window._lvChipRefresh && window._lvChipRefresh(); }, ms); });
+  [0, 300, 900, 2000, 4000].forEach(function (ms) { setTimeout(function () { pollInset(); window._hv2SyncMic(); window._lvChipRefresh && window._lvChipRefresh(); }, ms); });
   try {
     var plat = window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform();
     // Until the native height arrives (first few hundred ms), use a typical 24px.
