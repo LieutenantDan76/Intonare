@@ -5,6 +5,7 @@ A human-readable record of what changed, when,
 ## v1.0.2: Achievements that unlock when they should
 
 - Popups now frost the page behind them the same way quick access does. Settings, level, help, the streak sheet, search, chord and riff popups, and the progress sheets all blur the background, and the panel glass still shows.
+- Every popup uses the same soft blur now. Light mode was heavier (22px) and washed out, so it is lighter. Quick access now frosts the header too.
 - First launch from the module selector is smoother. Every embedded font face now loads before you pick a module, background reminder setup waits for idle, and the overlay scan no longer reruns each time a module builds its screen.
 - Motion now speaks one language. 61 different easing curves collapse to five (ease out, sheet, standard, exit, spring), and 24 different press sizes collapse to three.
 - Sheets and popups (settings, level, search, picker, quiz sheets) now share one open feel: same curve, similar length, no overshoot.

@@ -29120,7 +29120,7 @@ html body.light .mode-ind::after{background:radial-gradient(ellipse 75% 120% at 
    The blur sits on a ::before layer so the panel glass still sees the page (backdrop-root rule). */
 .settings-modal,.progress-modal,.help-modal{background:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 .progress-modal.active,.progress-modal.active.closing{animation:none!important;background:transparent!important}
-.settings-modal::before,.progress-modal::before,.help-modal::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:rgba(4,6,14,.34);-webkit-backdrop-filter:blur(6px) saturate(1.15);backdrop-filter:blur(6px) saturate(1.15)}
+.settings-modal::before,.progress-modal::before,.help-modal::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:rgba(4,6,14,.34);-webkit-backdrop-filter:blur(5px) saturate(1.1);backdrop-filter:blur(5px) saturate(1.1)}
 .settings-modal.active::before,.progress-modal.active::before,.help-modal.active::before{animation:hvBdIn .28s ease both!important}
 .progress-modal.closing::before{animation:hvBdOut .22s ease both!important}
 body.light .settings-modal::before,body.light .progress-modal::before,body.light .help-modal::before{background:rgba(40,58,96,.12)}
@@ -29131,6 +29131,11 @@ body.light .settings-modal::before,body.light .progress-modal::before,body.light
 .vr-modal-overlay::before,.prog-preset-modal-backdrop::before,.prog-metro-backdrop::before,#searchSheet::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;-webkit-backdrop-filter:blur(5px) saturate(1.1);backdrop-filter:blur(5px) saturate(1.1);opacity:0}
 .vr-modal-overlay.open::before,.prog-preset-modal.open .prog-preset-modal-backdrop::before,.prog-metro-drawer.open .prog-metro-backdrop::before,.prog-chord-sheet-drawer.open .prog-metro-backdrop::before,#searchSheet.on::before{opacity:1}
 .prog-preset-modal-backdrop,.prog-metro-backdrop{z-index:0}
+/* One frost for every scrim: same blur and a light dim, in both themes. The old light scrim used 22px and a milky wash, which was too busy. */
+body.light{--light-scrim:rgba(40,58,96,.14);--light-scrim-deep:rgba(40,58,96,.2);--light-scrim-filter:blur(5px) saturate(1.1)}
+/* The header sits at z 500. Quick access and the pedal sheet were below it, so the header stayed sharp. */
+.fav-overlay{z-index:700!important}
+.fav-sheet{z-index:701!important}
 </style>
 </head>
 <body>
