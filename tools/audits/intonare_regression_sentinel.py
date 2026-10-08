@@ -941,7 +941,7 @@ EXACT_PINS = [
     # and a filled shape only needs 3:1 to be a graphical object. The lifted set
     # exists for fills and must not be collapsed back into the ink set.
     ('LIGHT', 'Lifted status colours exist for card-borne fills',
-        '--in-tune-lift: #447124;', []),
+        '--in-tune-lift: #178a40;', []),
     # The chooser ground carried real chroma at hue 293, a violet-grey, with
     # four other hues sitting on it. Four hues on a fifth is why it read muddy.
     # The chooser and the splash share one recipe so the app opens on a surface
@@ -1058,7 +1058,7 @@ EXACT_PINS = [
     # Ink and the shared status colours are pinned to the GROUND now, not the
     # card, because the ground became the hard case when it dropped.
     ('LIGHT', 'Status colours re-pinned to the ground',
-        '--in-tune: #224700; --green: #224700;', ['--in-tune: #3a7000;']),
+        '--in-tune: #0b6e2f; --green: #0b6e2f;', ['--in-tune: #3a7000;']),
     ('LIGHT', 'Tuner accent literals follow the token',
         'body.light .sf-chosen-name { color: var(--accent); }', ['.sf-chosen-name { color: #0049aa']),
     # ── Relative Pitch intro interactions (v0.111.3) ──────────────────────
@@ -1387,7 +1387,7 @@ EXACT_PINS = [
     ('WIND',   'Ocarina C5 home fingering exact bit-pattern',
         '0:  { p:[1,1,1,1,0,0,1,1,1,1,1,1] }', []),
     ('TONALE', 'Reveal color thresholds: 9.5 green / 7 amber',
-        "pts>=9.5 ? 'var(--in-tune)' : pts>=7", []),
+        "pts>=9.5 ? 'var(--fb-good,var(--in-tune))' : pts>=7", []),
     ('TONALE', 'Positive-cue threshold is 6.5',
         'pts >= 6.5', []),
     ('DIADLE', 'All three difficulties are 5 guesses',

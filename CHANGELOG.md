@@ -4,17 +4,24 @@ A human-readable record of what changed, when,
 
 ## v1.0.2: Achievements that unlock when they should
 
+- Light mode answer screens use real colors. Tonale's green, amber and red were near-black olive, brown and maroon, and the Target label disappeared. They are now vivid, and the label reads.
+- Chordle and Diadle tiles and legends, ear training answers, Music Quiz answers, Survival and Daily cards, and the Volume Meter zones lose their muddy tints in light mode.
+- Light mode status text (in tune, close, off) moves from dark olive, chocolate and maroon to a clear green, amber and red that still passes contrast.
+- The tab light in light mode glows in each tab's own bright color instead of gray-blue.
 - Module headers lose their subtitles. The session timer now sits at the right end of the title row.
 - The collapsed header uses a soft blur and tint that fades out, instead of a hard colored bar.
 - The tab bar is now a rounded dock with a lifted pill on the active tab.
 - The active tab is lit from the top again, with a colored glow line and a soft cone of light under it, in dark and light.
 - Light mode gets a frosted glass look on the tab bar, cards, folders, and every popup and sheet (Settings, Progress, Pro, Quick Access, help and more). Dark mode popups get the same surface style with a lighter rim.
 - Cards, folders, popups, and their inner boxes share the same rounded corners in both themes.
+- One corner scale across modules: 22 for cards, 14 for boxes, 10 for buttons. In light mode, decorative boxes get soft rims instead of dark outlines. Tappable controls keep their outlines.
+- Small labels that were too faint now meet a contrast floor, such as the piano lid and tone tabs, BPM unit and tempo name, tuner readout labels, session timer goal, and several hint texts. Both themes.
 - Tab labels are a little larger.
-- The active tab has no chip anymore. One light bar with a soft glow slides between tabs.
+- The active tab has no chip anymore. One brighter light bar with a soft glow slides between tabs.
 - Scrollbars are hidden on touch screens, which also removes the stray bar in the streak popup.
 - Light mode search box and popups are more solid so text is easier to read.
-- Popups keep the page visible behind them with a soft blur, so the glass shows.
+- Settings, Progress and other popups are real frosted glass now: the page shows through the panel, blurred.
+- The small glow smudge under the title no longer shows when the session bar is nearly empty.
 - A thin line and shadow no longer show at the bottom of the screen on the home grid and in quizzes.
 - The search box uses the app fonts instead of the system font.
 - Piano keys light up in a clear warm color when you press or hold them.

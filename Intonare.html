@@ -478,7 +478,7 @@ body.sg-open #toolSurvivalGuide{
 
 #toolSurvivalGuide .pedal-btn.on{background:color-mix(in srgb,var(--ac) 10%,var(--surf));border-color:var(--ac)}
 #toolSurvivalGuide .pedal-btn.on.sp{background:color-mix(in srgb,var(--soft) 10%,var(--surf));border-color:var(--soft)}
-#toolSurvivalGuide .pedal-btn.on.pp{background:color-mix(in srgb,var(--flat) 10%,var(--surf));border-color:var(--flat)}
+#toolSurvivalGuide .pedal-btn.on.pp{background:color-mix(in srgb,var(--flat-t,var(--flat)) 10%,var(--surf));border-color:var(--flat)}
 #toolSurvivalGuide .pedal-nm{font-family:"Bebas Neue",sans-serif;font-size:11px;letter-spacing:.1em;color:var(--txd);display:block}
 #toolSurvivalGuide .pedal-btn.on .pedal-nm{color:var(--ac)}
 #toolSurvivalGuide .pedal-btn.on.sp .pedal-nm{color:var(--soft)}
@@ -1059,7 +1059,7 @@ body.sg-open #toolSurvivalGuide{
   #rtStatsOverlay .rt-stat-rv { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:10px; color:var(--rtp-ctext,var(--text)); width:70px; text-align:right; flex-shrink:0; }
   #rtStatsOverlay .rt-stat-cnt { color:var(--rtp-cmuted,var(--muted)); font-size:8px; }
   #rtStatsOverlay .rt-stats-reset { width:100%; margin-top:14px; padding:9px; border-radius:10px; cursor:pointer;
-    background:color-mix(in srgb, var(--sharp) 10%, transparent); border:1px solid color-mix(in srgb, var(--sharp) 30%, transparent);
+    background:color-mix(in srgb, var(--sharp-t,var(--sharp)) 10%, transparent); border:1px solid color-mix(in srgb, var(--sharp-t,var(--sharp)) 30%, transparent);
     color:var(--sharp); font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; letter-spacing:.14em; }
   #rtStatsOverlay .rt-stats-close { width:100%; margin-top:8px; padding:9px; border-radius:10px; cursor:pointer;
     background:transparent; border:1px solid var(--rtp-cborder,var(--border-soft));
@@ -1113,9 +1113,9 @@ body.sg-open #toolSurvivalGuide{
     border: 1.5px solid var(--border-soft); background: var(--surface);
     cursor: pointer; transition: all .14s; color: var(--muted);
   }
-  .mq-gd-chip.easy.selected   { border-color: var(--in-tune);   background: color-mix(in srgb,var(--in-tune) 10%,var(--surface));   color: var(--in-tune); }
+  .mq-gd-chip.easy.selected   { border-color: var(--in-tune);   background: color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 10%,var(--surface));   color: var(--in-tune); }
   .mq-gd-chip.medium.selected { border-color: var(--accent-warm); background: color-mix(in srgb,var(--accent-warm) 10%,var(--surface)); color: var(--accent-warm); }
-  .mq-gd-chip.hard.selected   { border-color: var(--sharp);     background: color-mix(in srgb,var(--sharp) 10%,var(--surface));     color: var(--sharp); }
+  .mq-gd-chip.hard.selected   { border-color: var(--sharp);     background: color-mix(in srgb,var(--sharp-t,var(--sharp)) 10%,var(--surface));     color: var(--sharp); }
 @media (hover: hover) and (pointer: fine) {
 
   .mq-gd-chip:not(.selected):hover { color: var(--text-dim); border-color: var(--border); }
@@ -1153,7 +1153,7 @@ body.sg-open #toolSurvivalGuide{
 }
 
   .mq-daily-badge:active { transform: scale(.96); }
-  .mq-daily-badge.mq-daily-done-badge { color: var(--in-tune); border-color: color-mix(in srgb, var(--in-tune) 35%, transparent); background: color-mix(in srgb, var(--in-tune) 8%, var(--surface)); }
+  .mq-daily-badge.mq-daily-done-badge { color: var(--in-tune); border-color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 35%, transparent); background: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 8%, var(--surface)); }
   .mq-daily-badge-dot {
     width: 6px; height: 6px; border-radius: 50%; background: var(--accent-warm);
     box-shadow: 0 0 6px var(--accent-warm); display: none;
@@ -1286,16 +1286,16 @@ body.sg-open #toolSurvivalGuide{
   .mq-np-btn:active { transform: scale(.92); }
 
   /* ── Bands (online) card ── */
-  .mqc-bands { background: color-mix(in srgb, var(--metro) 4%, var(--surface)); }
-  .mqc-bands::before { background: linear-gradient(135deg, color-mix(in srgb, var(--metro) 8%, transparent), transparent); }
+  .mqc-bands { background: color-mix(in srgb, var(--metro-t,var(--metro)) 4%, var(--surface)); }
+  .mqc-bands::before { background: linear-gradient(135deg, color-mix(in srgb, var(--metro-t,var(--metro)) 8%, transparent), transparent); }
 @media (hover: hover) and (pointer: fine) {
 
-  .mqc-bands:hover   { border-color: color-mix(in srgb, var(--metro) 50%, transparent); }
+  .mqc-bands:hover   { border-color: color-mix(in srgb, var(--metro-t,var(--metro)) 50%, transparent); }
 }
 
-  .mqc-bands .mq-card-icon { background: color-mix(in srgb, var(--metro) 12%, var(--panel)); }
+  .mqc-bands .mq-card-icon { background: color-mix(in srgb, var(--metro-t,var(--metro)) 12%, var(--panel)); }
   .mqc-bands .mq-card-name { color: var(--metro); }
-  .mqc-bands .mq-card-badge { background: color-mix(in srgb,var(--metro) 12%,transparent); color:var(--metro); border:1px solid color-mix(in srgb,var(--metro) 25%,transparent); }
+  .mqc-bands .mq-card-badge { background: color-mix(in srgb,var(--metro-t,var(--metro)) 12%,transparent); color:var(--metro); border:1px solid color-mix(in srgb,var(--metro-t,var(--metro)) 25%,transparent); }
 
   /* ── Bands chip (in pack grids) ── */
   .mq-bands-chip {
@@ -1307,12 +1307,12 @@ body.sg-open #toolSurvivalGuide{
   }
 @media (hover: hover) and (pointer: fine) {
 
-  .mq-bands-chip:hover:not(.offline) { border-color: color-mix(in srgb, var(--metro) 50%, transparent); }
+  .mq-bands-chip:hover:not(.offline) { border-color: color-mix(in srgb, var(--metro-t,var(--metro)) 50%, transparent); }
 }
 
   .mq-bands-chip.selected {
     border-color: var(--metro);
-    background: color-mix(in srgb, var(--metro) 8%, var(--surface));
+    background: color-mix(in srgb, var(--metro-t,var(--metro)) 8%, var(--surface));
   }
   .mq-bands-chip.offline { opacity: .38; cursor: not-allowed; pointer-events: none; }
   .mq-bands-chip-icon { font-size: 18px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
@@ -1325,9 +1325,9 @@ body.sg-open #toolSurvivalGuide{
   .mq-bands-chip-badge {
     font-size: 7px; letter-spacing: 1px; font-weight: 700;
     padding: 2px 7px; border-radius: 20px;
-    background: color-mix(in srgb, var(--metro) 12%, transparent);
+    background: color-mix(in srgb, var(--metro-t,var(--metro)) 12%, transparent);
     color: var(--metro);
-    border: 1px solid color-mix(in srgb, var(--metro) 25%, transparent);
+    border: 1px solid color-mix(in srgb, var(--metro-t,var(--metro)) 25%, transparent);
     flex-shrink: 0; white-space: nowrap;
   }
   .mq-bands-chip.offline .mq-bands-chip-badge {
@@ -1352,7 +1352,7 @@ body.sg-open #toolSurvivalGuide{
 @media (hover: hover) and (pointer: fine) {
 
   .mq-bands-chip-sheet:hover:not(.offline) {
-    background: color-mix(in srgb, var(--metro) 6%, var(--surface));
+    background: color-mix(in srgb, var(--metro-t,var(--metro)) 6%, var(--surface));
     border-style: solid;
   }
 }
@@ -1521,10 +1521,10 @@ body.sg-open #toolSurvivalGuide{
   .mq-mode-card:active { transform: scale(.985); }
   .mqc-quick { background: color-mix(in srgb, var(--accent-soft) 4%, var(--surface)); }
   .mqc-custom { background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
-  .mqc-survival { background: color-mix(in srgb, var(--sharp) 4%, var(--surface)); }
+  .mqc-survival { background: color-mix(in srgb, var(--sharp-t,var(--sharp)) 4%, var(--surface)); }
   .mqc-quick::before  { background: linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 8%, transparent), transparent); }
   .mqc-custom::before { background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent); }
-  .mqc-survival::before { background: linear-gradient(135deg, color-mix(in srgb, var(--sharp) 8%, transparent), transparent); }
+  .mqc-survival::before { background: linear-gradient(135deg, color-mix(in srgb, var(--sharp-t,var(--sharp)) 8%, transparent), transparent); }
   .mqc-daily { background: color-mix(in srgb, var(--accent-warm) 6%, var(--surface)); border-color: color-mix(in srgb, var(--accent-warm) 30%, transparent) !important; }
   .mqc-daily::before { background: linear-gradient(135deg, color-mix(in srgb, var(--accent-warm) 10%, transparent), transparent); }
 @media (hover: hover) and (pointer: fine) {
@@ -1536,7 +1536,7 @@ body.sg-open #toolSurvivalGuide{
   .mqc-daily .mq-card-name { color: var(--accent-warm); }
   .mqc-daily .mq-card-badge { background: color-mix(in srgb,var(--accent-warm) 12%,transparent); color:var(--accent-warm); border:1px solid color-mix(in srgb,var(--accent-warm) 28%,transparent); }
   .mqc-daily.mq-daily-done { opacity: .72; }
-  .mqc-daily.mq-daily-done .mq-card-badge { background: color-mix(in srgb,var(--in-tune) 12%,transparent); color:var(--in-tune); border-color:color-mix(in srgb,var(--in-tune) 28%,transparent); }
+  .mqc-daily.mq-daily-done .mq-card-badge { background: color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 12%,transparent); color:var(--in-tune); border-color:color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 28%,transparent); }
   #mqScreenDailyResult .mq-daily-score-big { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:68px; line-height:1; color:var(--accent-warm); text-align:center; letter-spacing:2px; }
   #mqScreenDailyResult .mq-daily-score-denom { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-align:center; margin-bottom:14px; }
   #mqScreenDailyResult .mq-daily-emoji-grid { font-size:22px; letter-spacing:4px; text-align:center; margin:8px 0 16px; line-height:1.6; word-break:break-all; }
@@ -1554,7 +1554,7 @@ body.sg-open #toolSurvivalGuide{
 
 @media (hover: hover) and (pointer: fine) {
 
-  .mqc-survival:hover { border-color: color-mix(in srgb, var(--sharp) 50%, transparent); }
+  .mqc-survival:hover { border-color: color-mix(in srgb, var(--sharp-t,var(--sharp)) 50%, transparent); }
 }
 
   .mq-card-icon {
@@ -1563,7 +1563,7 @@ body.sg-open #toolSurvivalGuide{
   }
   .mqc-quick .mq-card-icon    { background: color-mix(in srgb, var(--accent-soft) 12%, var(--panel)); }
   .mqc-custom .mq-card-icon   { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); }
-  .mqc-survival .mq-card-icon { background: color-mix(in srgb, var(--sharp) 12%, var(--panel)); }
+  .mqc-survival .mq-card-icon { background: color-mix(in srgb, var(--sharp-t,var(--sharp)) 12%, var(--panel)); }
   .mq-card-info { flex: 1; position: relative; z-index: 1; }
   .mq-card-name { font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 19px; letter-spacing: 2px; line-height: 1; }
   .mqc-quick .mq-card-name    { color: var(--accent-soft); }
@@ -1576,7 +1576,7 @@ body.sg-open #toolSurvivalGuide{
   }
   .mqc-quick .mq-card-badge    { background: color-mix(in srgb,var(--accent-soft) 12%,transparent); color:var(--accent-soft); border:1px solid color-mix(in srgb,var(--accent-soft) 25%,transparent); }
   .mqc-custom .mq-card-badge   { background: color-mix(in srgb,var(--accent) 12%,transparent); color:var(--accent); border:1px solid color-mix(in srgb,var(--accent) 25%,transparent); }
-  .mqc-survival .mq-card-badge { background: color-mix(in srgb,var(--sharp) 12%,transparent); color:var(--sharp); border:1px solid color-mix(in srgb,var(--sharp) 25%,transparent); }
+  .mqc-survival .mq-card-badge { background: color-mix(in srgb,var(--sharp-t,var(--sharp)) 12%,transparent); color:var(--sharp); border:1px solid color-mix(in srgb,var(--sharp-t,var(--sharp)) 25%,transparent); }
   .mq-card-arrow { color: var(--muted); font-size: 16px; position: relative; z-index: 1; }
 
   /* ── Custom setup screen ── */
@@ -1636,14 +1636,14 @@ body.sg-open #toolSurvivalGuide{
   .mq-diff-chip { flex: 1; background: var(--surface); border: 1.5px solid var(--border-soft); border-radius: var(--r-sm); padding: 9px 6px; text-align: center; cursor: pointer; transition: all .14s; }
   .mq-diff-name { font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 15px; letter-spacing: 1.5px; line-height: 1; }
   .mq-diff-sub  { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 7px; letter-spacing: .3px; color: var(--muted); margin-top: 2px; }
-  .mq-diff-chip.easy.selected    { border-color: var(--in-tune); background: color-mix(in srgb, var(--in-tune) 7%, var(--surface)); }
+  .mq-diff-chip.easy.selected    { border-color: var(--in-tune); background: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 7%, var(--surface)); }
   .mq-diff-chip.medium.selected  { border-color: var(--accent-warm); background: color-mix(in srgb, var(--accent-warm) 7%, var(--surface)); }
-  .mq-diff-chip.hard.selected    { border-color: var(--sharp); background: color-mix(in srgb, var(--sharp) 7%, var(--surface)); }
+  .mq-diff-chip.hard.selected    { border-color: var(--sharp); background: color-mix(in srgb, var(--sharp-t,var(--sharp)) 7%, var(--surface)); }
   .mq-diff-chip.easy .mq-diff-name   { color: var(--in-tune); }
   .mq-diff-chip.medium .mq-diff-name { color: var(--accent-warm); }
   .mq-diff-chip.hard .mq-diff-name   { color: var(--sharp); }
   .mq-surv-chip { flex: 1; background: var(--surface); border: 1.5px solid var(--border-soft); border-radius: var(--r-sm); padding: 9px; text-align: center; cursor: pointer; transition: all .14s; }
-  .mq-surv-chip.selected { border-color: var(--sharp); background: color-mix(in srgb, var(--sharp) 7%, var(--surface)); }
+  .mq-surv-chip.selected { border-color: var(--sharp); background: color-mix(in srgb, var(--sharp-t,var(--sharp)) 7%, var(--surface)); }
   .mq-surv-chip .mq-chip-val { color: var(--text); }
   .mq-surv-chip.selected .mq-chip-val { color: var(--sharp); }
   .mq-start-btn {
@@ -1784,9 +1784,9 @@ body.sg-open #toolSurvivalGuide{
 }
 
   .mq-ans-btn:disabled { cursor: default; }
-  .mq-ans-btn.correct { border-color: var(--in-tune); background: color-mix(in srgb,var(--in-tune) 9%,var(--surface)); color: var(--in-tune); }
-  .mq-ans-btn.wrong   { border-color: var(--sharp);   background: color-mix(in srgb,var(--sharp) 7%,var(--surface));   color: var(--sharp); }
-  .mq-ans-btn.reveal  { border-color: color-mix(in srgb,var(--in-tune) 22%,transparent); color: color-mix(in srgb,var(--in-tune) 45%,var(--text-dim)); }
+  .mq-ans-btn.correct { border-color: var(--in-tune); background: color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 9%,var(--surface)); color: var(--in-tune); }
+  .mq-ans-btn.wrong   { border-color: var(--sharp);   background: color-mix(in srgb,var(--sharp-t,var(--sharp)) 7%,var(--surface));   color: var(--sharp); }
+  .mq-ans-btn.reveal  { border-color: color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 22%,transparent); color: color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 45%,var(--text-dim)); }
   .mq-ans-letter {
     width: 22px; height: 22px; border-radius: 6px; background: var(--panel); border: 1px solid var(--border);
     display: flex; align-items: center; justify-content: center;
@@ -1794,7 +1794,7 @@ body.sg-open #toolSurvivalGuide{
   }
   .mq-ans-btn.correct .mq-ans-letter { background: var(--in-tune); border-color: var(--in-tune); color: var(--bg-0); }
   .mq-ans-btn.wrong   .mq-ans-letter { background: var(--sharp);   border-color: var(--sharp);   color: #fff; }
-  .mq-ans-btn.reveal  .mq-ans-letter { border-color: color-mix(in srgb,var(--in-tune) 30%,var(--border)); }
+  .mq-ans-btn.reveal  .mq-ans-letter { border-color: color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 30%,var(--border)); }
   /* ── Results screen ── */
   .mq-results-ring { width: 105px; height: 105px; margin: 0 auto; position: relative; }
   .mq-results-ring svg { transform: rotate(-90deg); }
@@ -2006,8 +2006,8 @@ body.sg-open #toolSurvivalGuide{
   /* Personal best banner */
   .mq-pb-banner {
     font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 8.5px; letter-spacing: 1px;
-    color: var(--metro); background: color-mix(in srgb, var(--metro) 8%, var(--surface));
-    border: 1px solid color-mix(in srgb, var(--metro) 25%, transparent);
+    color: var(--metro); background: color-mix(in srgb, var(--metro-t,var(--metro)) 8%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--metro-t,var(--metro)) 25%, transparent);
     border-radius: 8px; padding: 8px 12px; text-align: center; margin: 2px 0;
     animation: mqAnsFadeIn .3s ease both;
   }
@@ -2190,7 +2190,7 @@ body.sg-open #toolSurvivalGuide{
   .mq2-beat.now.d1 { height: 8px; }
   .mq2-beat.now.d2 { height: 10px; }
   .mq2-beat.now.d3 { height: 12px;
-    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--metro) 55%, var(--mq2-pack, var(--accent))); }
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--metro-t,var(--metro)) 55%, var(--mq2-pack, var(--accent))); }
   .mq2-beat.now.d4 { height: 13px; box-shadow: inset 0 0 0 1.5px var(--metro); }
 
   /* LIGHT MODE. Two things do not survive the inversion.
@@ -2226,10 +2226,10 @@ body.sg-open #toolSurvivalGuide{
   .mq2-beat.live.l2 { height: 10px;
     box-shadow: 0 0 7px color-mix(in srgb, var(--mq2-pack, var(--accent)) 65%, transparent); }
   .mq2-beat.live.l3 { height: 12px;
-    background: color-mix(in srgb, var(--metro) 55%, var(--mq2-pack, var(--accent)));
-    box-shadow: 0 0 10px color-mix(in srgb, var(--metro) 70%, transparent); }
+    background: color-mix(in srgb, var(--metro-t,var(--metro)) 55%, var(--mq2-pack, var(--accent)));
+    box-shadow: 0 0 10px color-mix(in srgb, var(--metro-t,var(--metro)) 70%, transparent); }
   .mq2-beat.live.l4 { height: 13px; background: var(--metro);
-    box-shadow: 0 0 13px color-mix(in srgb, var(--metro) 85%, transparent); }
+    box-shadow: 0 0 13px color-mix(in srgb, var(--metro-t,var(--metro)) 85%, transparent); }
   /* Losing the last life used to be announced only by the next button changing
      its label. The band says it. */
   @keyframes mq2OverIn { from { opacity: 0; transform: translateY(-4px) }
@@ -2365,14 +2365,14 @@ body.sg-open #toolSurvivalGuide{
   .mq2-grid.nokeys .mq2-opt.pr, .mq2-grid.nokeys .mq2-opt.pw, .mq2-grid.nokeys .mq2-opt.ok { padding: 11px 12px; }
   .mq2-opt.pr .mq2-key, .mq2-opt.pw .mq2-key, .mq2-opt.ok .mq2-key { top: 11px; left: 13px; }
   .mq2-opt.pr { border-color: var(--in-tune); color: var(--in-tune);
-    box-shadow: 0 4px 14px color-mix(in srgb, var(--in-tune) 22%, transparent); }
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 22%, transparent); }
   .mq2-opt.pr .mq2-key { border-color: var(--in-tune); color: var(--in-tune);
     background: transparent; transform: scale(1.12); }
   .mq2-opt.pw { border-color: var(--sharp); color: var(--sharp);
-    box-shadow: 0 4px 14px color-mix(in srgb, var(--sharp) 20%, transparent); }
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--sharp-t,var(--sharp)) 20%, transparent); }
   .mq2-opt.pw .mq2-key { border-color: var(--sharp); color: var(--sharp); background: transparent; }
   .mq2-opt.ok { border-color: var(--in-tune); color: var(--in-tune);
-    box-shadow: 0 4px 14px color-mix(in srgb, var(--in-tune) 22%, transparent); }
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 22%, transparent); }
   .mq2-opt.ok .mq2-key { border-color: var(--in-tune); color: var(--in-tune);
     background: transparent; transform: scale(1.16); }
   .mq2-opt.dim { opacity: .26; filter: grayscale(1); box-shadow: none; }
@@ -2487,7 +2487,7 @@ body.sg-open #toolSurvivalGuide{
   .mq2-mult { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 11px;
     font-weight: 600; letter-spacing: 1.1px; color: var(--metro);
     padding: 3px 7px; border-radius: 20px;
-    border: 1px solid color-mix(in srgb, var(--metro) 45%, transparent);
+    border: 1px solid color-mix(in srgb, var(--metro-t,var(--metro)) 45%, transparent);
     opacity: 0; transform: scale(.7); }
   body.light .mq2-mult { color: #6b4a00; border-color: color-mix(in srgb, #6b4a00 45%, transparent); }
   .mq2-strk { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 11px;
@@ -2551,14 +2551,14 @@ body.sg-open #toolSurvivalGuide{
     padding: calc(12px + var(--sat-top)) 20px 18px; text-align: center;
     transition: background .45s cubic-bezier(.16,.84,.44,1),
                 border-color .45s cubic-bezier(.16,.84,.44,1); }
-  .mq2r.good .mq2r-band { background: color-mix(in srgb, var(--in-tune) 40%, var(--surface));
+  .mq2r.good .mq2r-band { background: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 40%, var(--surface));
     border-bottom-color: var(--in-tune); }
   .mq2r.mid .mq2r-band  { background: color-mix(in srgb, var(--accent-warm) 26%, var(--surface));
     border-bottom-color: var(--accent-warm); }
-  .mq2r.poor .mq2r-band { background: color-mix(in srgb, var(--sharp) 24%, var(--surface));
+  .mq2r.poor .mq2r-band { background: color-mix(in srgb, var(--sharp-t,var(--sharp)) 24%, var(--surface));
     border-bottom-color: var(--sharp); }
   /* A survival run that beats your own record gets its own ending. */
-  .mq2r.best .mq2r-band { background: color-mix(in srgb, var(--metro) 15%, var(--surface));
+  .mq2r.best .mq2r-band { background: color-mix(in srgb, var(--metro-t,var(--metro)) 15%, var(--surface));
     border-bottom-color: var(--metro); }
   .mq2r.best .mq2r-grade { color: var(--metro); }
 
@@ -2598,8 +2598,8 @@ body.sg-open #toolSurvivalGuide{
     font-size: 11px; font-weight: 600; letter-spacing: 1.3px; color: var(--muted);
     text-transform: uppercase; }
   .mq2r-pb { margin-top: 11px; padding: 12px 14px; border-radius: 13px;
-    background: color-mix(in srgb, var(--metro) 12%, var(--surface));
-    border: 1px solid color-mix(in srgb, var(--metro) 42%, transparent);
+    background: color-mix(in srgb, var(--metro-t,var(--metro)) 12%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--metro-t,var(--metro)) 42%, transparent);
     font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 12px; font-weight: 600;
     line-height: 1.5; color: var(--text); }
   .mq2r-sect { margin-top: 18px; font-family: 'JetBrains Mono','GlyphFix', monospace;
@@ -2638,7 +2638,7 @@ body.sg-open #toolSurvivalGuide{
   body.light .mq2r.best .mq2r-btn.primary { background: #f0b429; color: #3a2a00; }
   .mq2r-btn.review { min-height: 48px; font-family: 'JetBrains Mono','GlyphFix', monospace;
     font-size: 12px; font-weight: 600; letter-spacing: 1.6px; background: none;
-    border-color: color-mix(in srgb, var(--sharp) 45%, transparent); color: var(--sharp); }
+    border-color: color-mix(in srgb, var(--sharp-t,var(--sharp)) 45%, transparent); color: var(--sharp); }
   .mq2r-share { width: 100%; min-height: 48px; margin-top: 11px; border-radius: 13px;
     cursor: pointer; background: var(--surface); border: 1px dashed var(--border);
     color: var(--text-dim); font-family: 'JetBrains Mono','GlyphFix', monospace;
@@ -3282,12 +3282,12 @@ body.sg-open #toolSurvivalGuide{
     --accent-warm: #b34a18;
     --accent-rose: #8f2344;
     --accent-soft: #5238a5;
-    --in-tune: #224700;
-    --green: #224700;
-    --sharp: #6e1810;
-    --flat: #123a8c;
-    --metro: #503600;
-    --in-tune-lift: #447124; --sharp-lift: #a43c30; --flat-lift: #2b5cc0; --metro-lift: #7f5c21;
+    --in-tune: #0b6e2f;
+    --green: #0b6e2f;
+    --sharp: #b4232f;
+    --flat: #1d4fb8;
+    --metro: #835600;
+    --in-tune-lift: #178a40; --sharp-lift: #cf3a3a; --flat-lift: #2f6bd6; --metro-lift: #a86f08;
 
     --theme-a: #00546d;
     --theme-b: #2563cc;
@@ -3438,8 +3438,8 @@ body.sg-open #toolSurvivalGuide{
     /* Re-pinned for the deepened floor: #3a7000 measured 4.5:1 on the old pale
        ground and 2.6:1 on the new one, and these three carry small text drawn
        straight on it. All now clear 4.6:1 on every ground and 8:1+ on card. */
-    --in-tune: #224700; --green: #224700; --sharp: #6e1810; --flat: #123a8c; --metro: #503600;
-    --in-tune-lift: #447124; --sharp-lift: #a43c30; --flat-lift: #2b5cc0; --metro-lift: #7f5c21;
+    --in-tune: #0b6e2f; --green: #0b6e2f; --sharp: #b4232f; --flat: #1d4fb8; --metro: #835600;
+    --in-tune-lift: #178a40; --sharp-lift: #cf3a3a; --flat-lift: #2f6bd6; --metro-lift: #a86f08;
     --shadow-card: inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 2px rgba(18,32,60,0.04), 0 2px 4px rgba(18,32,60,0.04), 0 4px 8px rgba(18,32,60,0.05), 0 8px 16px rgba(18,32,60,0.05);
     /* ELEVATION, REBUILT AS PHYSICS.
        The old value was two faint layers (0.05/0.06) -- ambient occlusion and a soft
@@ -6124,7 +6124,7 @@ body.sg-open #toolSurvivalGuide{
   body.light .vol-slider-label.as-toggle { color: var(--tab-accent) !important; }
   body.light #exScales.drone-mode .stb-tile.active,
   body.light #exScales.drone-mode .tone-tile.active {
-    background: color-mix(in srgb, var(--green) 20%, transparent) !important;
+    background: color-mix(in srgb, var(--green-t,var(--green)) 20%, transparent) !important;
   }
   /* generic accent-tinted CTAs (auto-detect, fork playing, etc.) */
   body.light .fork-btn.playing,
@@ -6142,18 +6142,18 @@ body.sg-open #toolSurvivalGuide{
   /* auto-detect CTA container + its ready/off states */
   body.light .gss-detect-toggle,
   body.light .instrument-detect-cta {
-    background: color-mix(in srgb, var(--green) 12%, var(--surface-2, var(--panel))) !important;
+    background: color-mix(in srgb, var(--green-t,var(--green)) 12%, var(--surface-2, var(--panel))) !important;
   }
 
   /* AUTO DETECT banner (the big green CTA) — 4-6% fill was invisible on light */
   body.light .auto-banner {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--green) 16%, var(--surface-2, var(--panel))), color-mix(in srgb, var(--accent) 10%, var(--surface-2, var(--panel)))) !important;
-    border-color: color-mix(in srgb, var(--green) 38%, transparent) !important;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--green-t,var(--green)) 16%, var(--surface-2, var(--panel))), color-mix(in srgb, var(--accent) 10%, var(--surface-2, var(--panel)))) !important;
+    border-color: color-mix(in srgb, var(--green-t,var(--green)) 38%, transparent) !important;
   }
 @media (hover: hover) and (pointer: fine) {
 
   body.light .auto-banner:not(.disabled):hover {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--green) 22%, var(--surface-2, var(--panel))), color-mix(in srgb, var(--accent) 14%, var(--surface-2, var(--panel)))) !important;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--green-t,var(--green)) 22%, var(--surface-2, var(--panel))), color-mix(in srgb, var(--accent) 14%, var(--surface-2, var(--panel)))) !important;
   }
 }
 
@@ -7910,10 +7910,10 @@ body.sg-open #toolSurvivalGuide{
     transition: color .2s ease;
   }
   body.tuner-simple.theme-tuner .sf-in-tune .sf-note {
-    filter: drop-shadow(0 0 24px color-mix(in srgb, var(--in-tune) 45%, transparent));
+    filter: drop-shadow(0 0 24px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 45%, transparent));
   }
   body.tuner-simple.theme-tuner .sf-in-tune .sf-state {
-    color: color-mix(in srgb, var(--in-tune) 75%, transparent);
+    color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 75%, transparent);
   }
 
   .sf-pips { display: flex; gap: 4px; justify-content: center;
@@ -8064,12 +8064,12 @@ body.sg-open #toolSurvivalGuide{
   .sf-pip.closest .pn { color: var(--accent);
     text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 55%, transparent); }
   .sf-pip.closest .po { color: color-mix(in srgb, var(--accent) 60%, transparent); }
-  .sf-pip.sf-done { border-color: color-mix(in srgb, var(--in-tune) 45%, transparent);
-    background: color-mix(in srgb, var(--in-tune) 10%, transparent);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--in-tune) 14%, transparent); }
+  .sf-pip.sf-done { border-color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 45%, transparent);
+    background: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 10%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 14%, transparent); }
   .sf-pip.sf-done .pn { color: var(--in-tune);
-    text-shadow: 0 0 10px color-mix(in srgb, var(--in-tune) 45%, transparent); }
-  .sf-pip.sf-done .po { color: color-mix(in srgb, var(--in-tune) 45%, transparent); }
+    text-shadow: 0 0 10px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 45%, transparent); }
+  .sf-pip.sf-done .po { color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 45%, transparent); }
   .sf-pip.sf-done::after { content: '✓'; position: absolute; top: -5px; right: -4px;
     font-size: 8px; color: var(--in-tune); background: #010408; border-radius: 50%;
     width: 12px; height: 12px; line-height: 12px; }
@@ -9060,8 +9060,8 @@ body.sg-open #toolSurvivalGuide{
   body.light #exScales.drone-mode .stb-tab.active,
   body.light #exScales.drone-mode .stb-tile.active,
   body.light #exScales.drone-mode .tone-tile.active {
-    background: color-mix(in srgb, var(--in-tune) 14%, var(--surface)) !important;
-    border-color: color-mix(in srgb, var(--in-tune) 55%, transparent) !important;
+    background: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 14%, var(--surface)) !important;
+    border-color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 55%, transparent) !important;
   }
 
   body.light .chord-root-btn.active,
@@ -9281,7 +9281,7 @@ body.sg-open #toolSurvivalGuide{
     pointer-events: none;
   }
   .card.warm .card-glow { background: radial-gradient(circle, rgba(255,160,122,0.10) 0%, transparent 65%); }
-  .card.metro .card-glow { background: radial-gradient(circle, color-mix(in srgb, var(--metro) 12%, transparent) 0%, transparent 65%); }
+  .card.metro .card-glow { background: radial-gradient(circle, color-mix(in srgb, var(--metro-t,var(--metro)) 12%, transparent) 0%, transparent 65%); }
 
   .card-label {
     display: flex; align-items: center; gap: 8px;
@@ -9362,8 +9362,8 @@ body.sg-open #toolSurvivalGuide{
     display: none;
     position: absolute; top: 1px; bottom: 1px; left: 45%; width: 10%;
     border-radius: 3px; pointer-events: none;
-    background: color-mix(in srgb, var(--in-tune) 18%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--in-tune) 32%, transparent);
+    background: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 18%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 32%, transparent);
   }
   .meter-fill {
     position: absolute; height: 100%; top: 0;
@@ -9384,9 +9384,9 @@ body.sg-open #toolSurvivalGuide{
     color: var(--text);
   }
   .meter-needle::after { content: none; }
-  .meter-needle.in-tune { background: var(--in-tune); color: var(--in-tune); box-shadow: 0 0 12px color-mix(in srgb, var(--in-tune) 55%, transparent); }
-  .meter-needle.sharp   { background: var(--sharp); color: var(--sharp); box-shadow: 0 0 10px color-mix(in srgb, var(--sharp) 45%, transparent); }
-  .meter-needle.flat    { background: var(--flat); color: var(--flat); box-shadow: 0 0 10px color-mix(in srgb, var(--flat) 45%, transparent); }
+  .meter-needle.in-tune { background: var(--in-tune); color: var(--in-tune); box-shadow: 0 0 12px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 55%, transparent); }
+  .meter-needle.sharp   { background: var(--sharp); color: var(--sharp); box-shadow: 0 0 10px color-mix(in srgb, var(--sharp-t,var(--sharp)) 45%, transparent); }
+  .meter-needle.flat    { background: var(--flat); color: var(--flat); box-shadow: 0 0 10px color-mix(in srgb, var(--flat-t,var(--flat)) 45%, transparent); }
   .meter-ticks { display: flex; justify-content: space-between; margin-top: 10px; padding: 0 1px; }
   .tick-label { font-size: 9px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
@@ -10412,8 +10412,8 @@ body.sg-open #toolSurvivalGuide{
   .tc-pair-note{font-size:34px; line-height:1; min-height:34px; color:var(--tc-snote); text-shadow:0 0 10px var(--tc-sg),0 0 2px var(--tc-sg);}
   .tc-pair-note.tc-you{color:var(--tc-syou);}
   .tc-pair-note.tc-you.in{color:var(--in-tune); text-shadow:0 0 14px var(--in-tune);}
-  .tc-pair-note.tc-you.flat{color:var(--flat); text-shadow:0 0 12px color-mix(in srgb,var(--flat) 60%,transparent);}
-  .tc-pair-note.tc-you.sharp{color:var(--sharp); text-shadow:0 0 12px color-mix(in srgb,var(--sharp) 60%,transparent);}
+  .tc-pair-note.tc-you.flat{color:var(--flat); text-shadow:0 0 12px color-mix(in srgb,var(--flat-t,var(--flat)) 60%,transparent);}
+  .tc-pair-note.tc-you.sharp{color:var(--sharp); text-shadow:0 0 12px color-mix(in srgb,var(--sharp-t,var(--sharp)) 60%,transparent);}
   .tc-pair-note.tc-dim{color:var(--tc-sdim); text-shadow:none;}
   .tc-pair-hz{font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; color:var(--tc-smid); margin-top:4px; font-variant-numeric:tabular-nums;}
   .tc-pair-div{align-self:stretch; width:2px; background:linear-gradient(180deg,transparent,var(--tc-sdim) 30%,var(--tc-sdim) 70%,transparent); opacity:.4;}
@@ -10422,14 +10422,14 @@ body.sg-open #toolSurvivalGuide{
   .tc-iv-name{font-size:42px; line-height:.9; letter-spacing:.04em; min-height:38px; color:var(--tc-shero); text-shadow:0 0 16px var(--tc-sg),0 0 3px var(--tc-sg);}
   .tc-iv-name.tc-idle{color:var(--tc-sdim); text-shadow:none;}
   .tc-iv-name.in{color:var(--in-tune); text-shadow:0 0 22px var(--in-tune),0 0 4px var(--in-tune);}
-  .tc-iv-name.flat{color:var(--flat); text-shadow:0 0 18px color-mix(in srgb,var(--flat) 70%,transparent),0 0 3px var(--flat);}
-  .tc-iv-name.sharp{color:var(--sharp); text-shadow:0 0 18px color-mix(in srgb,var(--sharp) 70%,transparent),0 0 3px var(--sharp);}
+  .tc-iv-name.flat{color:var(--flat); text-shadow:0 0 18px color-mix(in srgb,var(--flat-t,var(--flat)) 70%,transparent),0 0 3px var(--flat);}
+  .tc-iv-name.sharp{color:var(--sharp); text-shadow:0 0 18px color-mix(in srgb,var(--sharp-t,var(--sharp)) 70%,transparent),0 0 3px var(--sharp);}
   .tc-iv-sub{font-family:'Press Start 2P','GlyphFix',monospace; font-size:7px; color:var(--tc-smid); height:12px; line-height:12px; margin-top:10px; white-space:nowrap; overflow:hidden;}
 
   .tc-reticle{width:100%; max-width:280px; margin:14px auto 4px;}
   .tc-ret-track{position:relative; height:14px; border-radius:3px; background:rgba(0,0,0,.5); border:1px solid var(--tc-sdeep); overflow:hidden; box-shadow:inset 0 0 8px rgba(0,0,0,.8);}
   .tc-ret-tick{position:absolute; top:2px; bottom:2px; width:1px; background:rgba(255,255,255,.10);}
-  .tc-ret-target{position:absolute; top:0; bottom:0; left:50%; width:14px; transform:translateX(-50%); background:color-mix(in srgb,var(--in-tune) 14%,transparent); border-left:1px solid color-mix(in srgb,var(--in-tune) 40%,transparent); border-right:1px solid color-mix(in srgb,var(--in-tune) 40%,transparent);}
+  .tc-ret-target{position:absolute; top:0; bottom:0; left:50%; width:14px; transform:translateX(-50%); background:color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 14%,transparent); border-left:1px solid color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 40%,transparent); border-right:1px solid color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 40%,transparent);}
   .tc-ret-mark{position:absolute; top:50%; width:0; height:0; transform:translate(-50%,-50%); transition:left .12s ease; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:10px solid var(--tc-smark); filter:drop-shadow(0 0 4px var(--tc-sg));}
   .tc-ret-mark.in{border-bottom-color:var(--in-tune); filter:drop-shadow(0 0 8px var(--in-tune));}
   .tc-ret-mark.sharp{border-bottom-color:var(--sharp);} .tc-ret-mark.flat{border-bottom-color:var(--flat);}
@@ -10532,8 +10532,8 @@ body.sg-open #toolSurvivalGuide{
     color:var(--tc-grn-hi) !important; text-shadow:0 0 10px var(--tc-grn-glow);
   }
   .tc-chrome-cell.tc-singing.tc-pure{
-    background:color-mix(in srgb,var(--in-tune) 18%,transparent);
-    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--in-tune) 55%,transparent), 0 0 14px color-mix(in srgb,var(--in-tune) 40%,transparent);
+    background:color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 18%,transparent);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 55%,transparent), 0 0 14px color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 40%,transparent);
     color:var(--in-tune) !important; text-shadow:0 0 12px var(--in-tune);
   }
 
@@ -12109,7 +12109,7 @@ body.sg-open #toolSurvivalGuide{
   }
   .ts-input:focus { border-color: var(--metro); box-shadow: 0 0 0 2px rgba(255,209,102,0.15); }
   .ts-picker-btn { cursor: pointer; user-select: none; transition: border-color 0.15s, background 0.15s; }
-  .ts-picker-btn:active { background: color-mix(in srgb, var(--metro) 14%, var(--panel)); border-color: var(--metro); }
+  .ts-picker-btn:active { background: color-mix(in srgb, var(--metro-t,var(--metro)) 14%, var(--panel)); border-color: var(--metro); }
   .ts-popup-scrim { position: fixed; inset: 0; z-index: 900; background: rgba(0,0,0,0.45); animation: tsFadeIn 0.12s ease; }
   @keyframes tsFadeIn { from { opacity:0; } to { opacity:1; } }
   .ts-popup { position: fixed; z-index: 901; background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 10px; box-shadow: 0 12px 40px rgba(0,0,0,0.7); animation: tsPopIn 0.15s cubic-bezier(0.34,1.56,0.64,1); }
@@ -12122,7 +12122,7 @@ body.sg-open #toolSurvivalGuide{
   .ts-popup-item:hover { color: var(--metro); border-color: var(--border); }
 }
 
-  .ts-popup-item.active { color: var(--metro); background: color-mix(in srgb, var(--metro) 14%, var(--surface)); border-color: var(--metro); }
+  .ts-popup-item.active { color: var(--metro); background: color-mix(in srgb, var(--metro-t,var(--metro)) 14%, var(--surface)); border-color: var(--metro); }
   .ts-slash {
     font-family: 'Bebas Neue','GlyphFix', sans-serif;
     font-size: 28px; color: var(--text-dim); line-height: 1;
@@ -12409,7 +12409,7 @@ body.sg-open #toolSurvivalGuide{
   }
   .groove-sort-done {
     grid-column: 1 / -1; padding: 9px;
-    background: color-mix(in srgb, var(--metro) 12%, transparent);
+    background: color-mix(in srgb, var(--metro-t,var(--metro)) 12%, transparent);
     border: 1px solid var(--metro); border-radius: var(--r-sm);
     color: var(--metro); font-family: 'JetBrains Mono','GlyphFix', monospace;
     font-size: 10px; letter-spacing: 2px; cursor: pointer;
@@ -12736,9 +12736,9 @@ body.sg-open #toolSurvivalGuide{
     font-variant-numeric: tabular-nums;
     transition: color 0.2s;
   }
-  .tuner-screen-cents-badge.in-tune { color: color-mix(in srgb, var(--in-tune) 70%, transparent); }
-  .tuner-screen-cents-badge.sharp   { color: color-mix(in srgb, var(--sharp) 70%, transparent); }
-  .tuner-screen-cents-badge.flat    { color: color-mix(in srgb, var(--flat) 70%, transparent); }
+  .tuner-screen-cents-badge.in-tune { color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 70%, transparent); }
+  .tuner-screen-cents-badge.sharp   { color: color-mix(in srgb, var(--sharp-t,var(--sharp)) 70%, transparent); }
+  .tuner-screen-cents-badge.flat    { color: color-mix(in srgb, var(--flat-t,var(--flat)) 70%, transparent); }
 
   /* note name — big number equivalent */
   .tuner-screen-note {
@@ -13254,9 +13254,9 @@ body.sg-open #toolSurvivalGuide{
     font-variant-numeric: tabular-nums;
     transition: color 0.2s;
   }
-  .tuner-screen-cents-badge.in-tune { color: color-mix(in srgb, var(--in-tune) 70%, transparent); }
-  .tuner-screen-cents-badge.sharp   { color: color-mix(in srgb, var(--sharp) 70%, transparent); }
-  .tuner-screen-cents-badge.flat    { color: color-mix(in srgb, var(--flat) 70%, transparent); }
+  .tuner-screen-cents-badge.in-tune { color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 70%, transparent); }
+  .tuner-screen-cents-badge.sharp   { color: color-mix(in srgb, var(--sharp-t,var(--sharp)) 70%, transparent); }
+  .tuner-screen-cents-badge.flat    { color: color-mix(in srgb, var(--flat-t,var(--flat)) 70%, transparent); }
 
   /* note name */
   .tuner-screen-note {
@@ -21810,7 +21810,7 @@ body.sg-open #toolSurvivalGuide{
     box-shadow: 0 0 16px color-mix(in srgb, var(--theme) 30%, transparent);
   }
   .mini-notif.lvl-up {
-    color: var(--green); background: color-mix(in srgb, var(--green) 10%, var(--surface));
+    color: var(--green); background: color-mix(in srgb, var(--green-t,var(--green)) 10%, var(--surface));
     box-shadow: 0 0 16px rgba(182,242,91,0.3);
   }
 
@@ -23260,7 +23260,7 @@ body.sg-open #toolSurvivalGuide{
   }
   .subdiv-chip.active {
     border-color: var(--metro); color: var(--metro);
-    background: color-mix(in srgb, var(--metro) 8%, var(--panel));
+    background: color-mix(in srgb, var(--metro-t,var(--metro)) 8%, var(--panel));
   }
 @media (hover: hover) and (pointer: fine) {
 
@@ -23322,7 +23322,7 @@ body.sg-open #toolSurvivalGuide{
 }
 .vr-note-big.active { color: var(--accent); text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent); }
 .vr-note-big.warm.active { color: var(--accent-warm); text-shadow: 0 0 18px color-mix(in srgb, var(--accent-warm) 55%, transparent); }
-.vr-note-big.locked { color: var(--in-tune); text-shadow: 0 0 22px color-mix(in srgb, var(--in-tune) 60%, transparent); }
+.vr-note-big.locked { color: var(--in-tune); text-shadow: 0 0 22px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 60%, transparent); }
 .vr-note-big.silent { color: var(--muted); }
 .vr-note-oct { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; font-weight: 500; }
 .vr-note-oct.active { color: var(--accent); }
@@ -23641,8 +23641,8 @@ body.light .vr-lane-note { color: var(--text); }
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 #toolVocalRange .vr-detect-card.locked {
-  border-color: color-mix(in srgb, var(--in-tune) 45%, var(--border-soft));
-  box-shadow: var(--shadow-card), 0 0 24px color-mix(in srgb, var(--in-tune) 18%, transparent);
+  border-color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 45%, var(--border-soft));
+  box-shadow: var(--shadow-card), 0 0 24px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 18%, transparent);
   animation: vrDetectLock 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 @keyframes vrDetectLock {
@@ -23651,8 +23651,8 @@ body.light .vr-lane-note { color: var(--text); }
   100% { transform: scale(1); }
 }
 #toolVocalRange .vr-detect-card.locked .vr-ring-center {
-  border-color: color-mix(in srgb, var(--in-tune) 40%, var(--border-soft));
-  box-shadow: inset 0 0 20px color-mix(in srgb, var(--in-tune) 10%, transparent);
+  border-color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 40%, var(--border-soft));
+  box-shadow: inset 0 0 20px color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 10%, transparent);
 }
 #toolVocalRange .vr-ring-center {
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
@@ -23689,8 +23689,8 @@ body.light #toolVocalRange .vr-exp-hint {
   color: var(--text-dim);
 }
 body.light #toolVocalRange .vr-cents.in {
-  background: color-mix(in srgb, var(--in-tune) 12%, var(--panel));
-  border-color: color-mix(in srgb, var(--in-tune) 40%, var(--border));
+  background: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 12%, var(--panel));
+  border-color: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 40%, var(--border));
 }
 body.light #toolVocalRange .vr-hero-icon svg {
   filter: none !important;
@@ -25886,7 +25886,7 @@ body.light #toolDrumkit .dk-preset-cat.custom-cat {
 body.light #toolDrumkit .dk-preset-cat.custom-cat.active {
   color: var(--in-tune);
   border-left-color: var(--in-tune);
-  background: color-mix(in srgb, var(--in-tune) 8%, transparent);
+  background: color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 8%, transparent);
 }
 body.light #toolDrumkit .dk-cat-count { color: var(--text-dim); opacity: 0.6; }
 
@@ -26587,10 +26587,10 @@ body.light #toolDrumkit .dk-prec-step-num { color: rgba(0,0,0,0.32); }
     background: var(--panel); border: 1px solid var(--border-soft);
     border-radius: var(--r-sm); color: var(--text-dim); cursor: pointer; transition: all 0.15s;
   }
-  .ramp-chip.active { background: color-mix(in srgb, var(--metro) 12%, transparent); border-color: var(--metro); color: var(--metro); }
+  .ramp-chip.active { background: color-mix(in srgb, var(--metro-t,var(--metro)) 12%, transparent); border-color: var(--metro); color: var(--metro); }
 .ramp-start-btn {
     width: 100%; padding: 12px; border-radius: var(--r-md);
-    background: color-mix(in srgb, var(--metro) 10%, transparent);
+    background: color-mix(in srgb, var(--metro-t,var(--metro)) 10%, transparent);
     border: 1px solid var(--metro); color: var(--metro);
     font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 10px; letter-spacing: 2px;
     cursor: pointer; transition: all 0.2s; margin-top: 4px;
@@ -26626,7 +26626,7 @@ body.light #toolDrumkit .dk-prec-step-num { color: rgba(0,0,0,0.32); }
     border-radius: var(--r-sm); cursor: pointer; transition: all 0.15s;
     display: flex; align-items: center; justify-content: center;
   }
-  .ramp-picker:active { border-color: var(--metro); background: color-mix(in srgb, var(--metro) 8%, var(--panel)); }
+  .ramp-picker:active { border-color: var(--metro); background: color-mix(in srgb, var(--metro-t,var(--metro)) 8%, var(--panel)); }
   .ramp-picker-val { font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 24px; color: var(--metro); line-height: 1; }
   .ramp-sound-row { position: relative; margin-bottom: 8px; }
   .ramp-sound-pick {
@@ -26682,11 +26682,11 @@ body.light #toolDrumkit .dk-prec-step-num { color: rgba(0,0,0,0.32); }
   .setlist-save-row { display: flex; gap: 8px; margin-bottom: 12px; flex-shrink: 0; }
   .setlist-name-input { flex: 1; min-width: 0; padding: 8px 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-soft); border-radius: var(--r-sm); color: var(--text); font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 10px; outline: none; }
   .setlist-name-input:focus { border-color: var(--metro); }
-  .setlist-add-btn { padding: 8px 12px; border-radius: var(--r-sm); background: color-mix(in srgb, var(--metro) 12%, transparent); border: 1px solid var(--metro); color: var(--metro); font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 10px; letter-spacing: 1px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  .setlist-add-btn { padding: 8px 12px; border-radius: var(--r-sm); background: color-mix(in srgb, var(--metro-t,var(--metro)) 12%, transparent); border: 1px solid var(--metro); color: var(--metro); font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 10px; letter-spacing: 1px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
   .setlist-list { overflow-y: auto; flex: 1; }
   .setlist-empty { text-align: center; padding: 24px; color: var(--text-dim); font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 10px; letter-spacing: 1px; }
   .setlist-card { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: var(--r-sm); border: 1px solid var(--border-soft); background: var(--panel); margin-bottom: 6px; cursor: pointer; transition: all 0.15s; }
-  .setlist-card:active { border-color: var(--metro); background: color-mix(in srgb, var(--metro) 8%, transparent); }
+  .setlist-card:active { border-color: var(--metro); background: color-mix(in srgb, var(--metro-t,var(--metro)) 8%, transparent); }
   .setlist-card-bpm { font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 28px; color: var(--metro); line-height: 1; min-width: 48px; text-align: center; }
   .setlist-card-info { flex: 1; min-width: 0; }
   .setlist-card-name { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 10px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -27926,8 +27926,8 @@ body.light #exRelPitch .rlp-fork-s { opacity:1; }
   background:color-mix(in srgb, var(--bg-0) 55%, var(--panel)); color:var(--text-dim); }
 #exRelPitch .rlp-key { font-size:13px; font-weight:700; padding:15px 0; border-radius:8px;
   background:var(--panel); border:1px solid var(--border-soft); color:var(--text); }
-#exRelPitch .rlp-key.wrong { border-color:color-mix(in srgb, var(--sharp) 55%, var(--border));
-  color:var(--sharp); background:color-mix(in srgb, var(--sharp) 8%, transparent); }
+#exRelPitch .rlp-key.wrong { border-color:color-mix(in srgb, var(--sharp-t,var(--sharp)) 55%, var(--border));
+  color:var(--sharp); background:color-mix(in srgb, var(--sharp-t,var(--sharp)) 8%, transparent); }
 /* Right and wrong are the two states you look straight at, and both were
    wearing floor-pinned status ink on a near-white card: 8.8:1 for a letter that
    is meant to read as green, which is how it ends up looking like moss. */
@@ -27940,7 +27940,7 @@ body.light #exRelPitch .rlp-key.right {
 body.light #exRelPitch .rlp-live { color:var(--in-tune-lift); }
 body.light #exRelPitch .rlp-lamp.right { border-color:var(--in-tune-lift); }
 #exRelPitch .rlp-key.right { border-color:var(--in-tune); color:var(--in-tune);
-  background:color-mix(in srgb, var(--in-tune) 9%, transparent); }
+  background:color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 9%, transparent); }
 
 /* the climb */
 #exRelPitch .rlp-vu { display:flex; gap:2px; align-items:flex-end; height:34px; margin:0 0 4px; }
@@ -27993,9 +27993,9 @@ body.light #exRelPitch .rlp-mult.clean { color:var(--in-tune-lift, var(--in-tune
 body.light #exRelPitch .rlp-opt-i { color:#6b4a06; }
 #exRelPitch .rlp-opt-n { font-size:16px; font-weight:700; }
 #exRelPitch .rlp-opt.gone { opacity:.16; }
-#exRelPitch .rlp-opt.right { border-color:var(--in-tune); background:color-mix(in srgb, var(--in-tune) 10%, transparent); }
+#exRelPitch .rlp-opt.right { border-color:var(--in-tune); background:color-mix(in srgb, var(--in-tune-t,var(--in-tune)) 10%, transparent); }
 #exRelPitch .rlp-opt.right .rlp-opt-n, #exRelPitch .rlp-opt.right .rlp-opt-i { color:var(--in-tune); }
-#exRelPitch .rlp-opt.wrong { border-color:var(--sharp); background:color-mix(in srgb, var(--sharp) 10%, transparent); }
+#exRelPitch .rlp-opt.wrong { border-color:var(--sharp); background:color-mix(in srgb, var(--sharp-t,var(--sharp)) 10%, transparent); }
 #exRelPitch .rlp-opt.wrong .rlp-opt-n, #exRelPitch .rlp-opt.wrong .rlp-opt-i { color:var(--sharp); }
 #exRelPitch .rlp-lls { display:flex; gap:5px; margin-top:12px; }
 #exRelPitch .rlp-ll { flex:1 1 0; min-width:0; padding:9px 2px 8px; border-radius:8px;
@@ -28210,8 +28210,8 @@ body.light #exRelPitch .rlp-flick { animation:rlpFlickLight .48s steps(1) both; 
 #appHeader .fav-btn svg { width: 15px; height: 15px; }
 #appHeader .mic-head-btn.listening {
   color: var(--green);
-  border-color: color-mix(in srgb, var(--green) 60%, transparent) !important;
-  background: color-mix(in srgb, var(--green) 12%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--green-t,var(--green)) 60%, transparent) !important;
+  background: color-mix(in srgb, var(--green-t,var(--green)) 12%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
   transform: none; outline: 0;
 }
 #appHeader .mic-head-btn.listening svg rect { fill: currentColor; fill-opacity: .3; }
@@ -28303,8 +28303,8 @@ body.light #appHeader .head-btn {
   border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent) !important;
 }
 body.light #appHeader .mic-head-btn.listening {
-  background: color-mix(in srgb, var(--green) 14%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
-  border-color: color-mix(in srgb, var(--green) 55%, transparent) !important;
+  background: color-mix(in srgb, var(--green-t,var(--green)) 14%, color-mix(in srgb, var(--surface) 78%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--green-t,var(--green)) 55%, transparent) !important;
 }
 
 /* Opening polish: when the popup first opens the chip rings out once, a soft light crosses it,
@@ -28836,10 +28836,10 @@ body.light @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: 
 .card, .practice-card-btn { border-radius: 22px !important; }
 body:not(.light) .card, body:not(.light) .practice-card-btn { box-shadow: var(--shadow-card), inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent) !important; }
 body:not(.light) :is(.settings-modal-content, .progress-modal-content, .help-modal-content, .vr-modal-sheet, .mq-sheet, .fav-sheet, .nc-sheet-inner, .cs-picker-sheet, .rc-cat-sheet, .prog-preset-modal-sheet, .prog-metro-sheet, .mq-daily-pop, .gcc-zoom-modal, .riff-popup-card, .thmn-demo-popup-card, .chd-clefpop-inner, .pr-popup, .tg-popup, .ts-popup, .prog-voicing-popup, .gs-pulse-popover, .tuner-refpitch-popover, .tuner-capo-pop, .ramp-sound-pop) {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 82%, transparent), color-mix(in srgb, var(--bg-1) 86%, transparent)) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 66%, transparent), color-mix(in srgb, var(--bg-1) 72%, transparent)) !important;
   border-color: color-mix(in srgb, #fff 11%, transparent) !important;
   box-shadow: 0 24px 60px rgba(0,0,0,.55), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--accent) 6%, transparent) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(30px) saturate(1.7); backdrop-filter: blur(30px) saturate(1.7);
 }
 .settings-modal-content, .progress-modal-content, .help-modal-content { border-radius: 24px !important; }
 body.light .card, body.light .practice-card-btn {
@@ -28848,10 +28848,10 @@ body.light .card, body.light .practice-card-btn {
   box-shadow: var(--glass-lift-sm) !important;
 }
 body.light :is(.settings-modal-content, .progress-modal-content, .help-modal-content, .vr-modal-sheet, .mq-sheet, .fav-sheet, .nc-sheet-inner, .cs-picker-sheet, .rc-cat-sheet, .prog-preset-modal-sheet, .prog-metro-sheet, .mq-daily-pop, .gcc-zoom-modal, .riff-popup-card, .thmn-demo-popup-card, .chd-clefpop-inner, .pr-popup, .tg-popup, .ts-popup, .prog-voicing-popup, .gs-pulse-popover, .tuner-refpitch-popover, .tuner-capo-pop, .ramp-sound-pop) {
-  background: var(--glass-sheen), color-mix(in srgb, #fff 84%, transparent) !important;
+  background: var(--glass-sheen), color-mix(in srgb, #fff 66%, transparent) !important;
   border: 1px solid var(--glass-edge) !important;
   box-shadow: var(--glass-lift) !important;
-  -webkit-backdrop-filter: blur(26px) saturate(1.8); backdrop-filter: blur(26px) saturate(1.8);
+  -webkit-backdrop-filter: blur(30px) saturate(1.9); backdrop-filter: blur(30px) saturate(1.9);
 }
 body.light #searchSheet .sr-card { background: var(--glass-sheen), color-mix(in srgb, #fff 95%, #e8eef8) !important; -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); border-color: var(--glass-edge) !important; }
 body.light :is(.pm-level-block, .sm-toggle-chip:not(.active), .lang-chip:not(.active), .sm-goal-chip:not(.active):not(.on)) { background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.44)) !important; border: 1px solid rgba(255,255,255,.9) !important; box-shadow: inset 0 1px 0 #fff, 0 2px 8px -3px color-mix(in srgb, var(--accent) 22%, transparent) !important; }
@@ -28877,23 +28877,118 @@ body.lang-it .mode-btn { font-size: 7.5px !important; }
   transition: transform .5s cubic-bezier(.3,1.15,.4,1), width .5s cubic-bezier(.3,1.15,.4,1), color .35s ease, opacity .25s ease !important; }
 .mode-ind.on { opacity: 1; }
 .mode-ind.nt { transition: none !important; }
-.mode-ind::before { content: ''; position: absolute; top: 0; left: 22%; right: 22%; height: 2px; background: currentColor; border-radius: 0 0 2px 2px;
-  box-shadow: 0 0 10px currentColor, 0 0 22px color-mix(in srgb, currentColor 45%, transparent); }
-.mode-ind::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 75% 120% at 50% -6%, color-mix(in srgb, currentColor 30%, transparent) 0%, color-mix(in srgb, currentColor 9%, transparent) 45%, transparent 85%);
-  -webkit-mask: linear-gradient(to right, transparent, #000 25%, #000 75%, transparent); mask: linear-gradient(to right, transparent, #000 25%, #000 75%, transparent); }
+.mode-ind::before { content: ''; position: absolute; top: 0; left: 18%; right: 18%; height: 3px; background: currentColor; border-radius: 0 0 3px 3px; filter: saturate(1.35) brightness(1.15);
+  box-shadow: 0 0 12px currentColor, 0 0 28px currentColor, 0 0 44px color-mix(in srgb, currentColor 55%, transparent); }
+.mode-ind::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 75% 120% at 50% -6%, color-mix(in srgb, currentColor 46%, transparent) 0%, color-mix(in srgb, currentColor 16%, transparent) 48%, transparent 90%);
+  -webkit-mask: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent); mask: linear-gradient(to right, transparent, #000 25%, #000 75%, transparent); }
 .mode-toggle[data-tab="tools"] .mode-ind { color: var(--theme); }
 .mode-toggle[data-tab="metro"] .mode-ind { color: var(--metro); }
 .mode-toggle[data-tab="train"] .mode-ind { color: var(--accent-soft); }
 .mode-toggle[data-tab="settings"] .mode-ind { color: var(--text-dim); }
-body.light .mode-ind { color: var(--accent-bright, var(--accent)) !important; }
-body.light .mode-ind::before { background: var(--accent-vivid, currentColor); box-shadow: 0 1px 8px color-mix(in srgb, var(--accent-vivid, currentColor) 55%, transparent); }
+body.light .mode-ind { color: var(--accent-vivid, var(--accent-bright, var(--accent))) !important; }
+body.light .mode-ind::before { background: currentColor; box-shadow: 0 1px 10px color-mix(in srgb, currentColor 70%, transparent), 0 2px 26px color-mix(in srgb, currentColor 45%, transparent); filter: saturate(1.2); }
 /* hidden bar must leave nothing behind: no rim, no shadow, no line */
 body.lnch-open .mode-toggle { transform: translateY(calc(100% + 48px)) !important; box-shadow: none !important; border-top-color: transparent !important; }
 /* popups: keep the page visible, soften it, let the glass show */
-.settings-modal, .progress-modal, .help-modal { background: rgba(4,6,14,.40) !important; -webkit-backdrop-filter: blur(5px) saturate(1.1); backdrop-filter: blur(5px) saturate(1.1); }
+.settings-modal, .progress-modal, .help-modal { background: rgba(4,6,14,.34) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .fav-overlay, .mq-sheet-overlay { background: rgba(4,6,14,.34) !important; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-body.light .settings-modal, body.light .progress-modal, body.light .help-modal { background: rgba(40,58,96,.14) !important; -webkit-backdrop-filter: blur(5px) saturate(1.2); backdrop-filter: blur(5px) saturate(1.2); }
+body.light .settings-modal, body.light .progress-modal, body.light .help-modal { background: rgba(40,58,96,.12) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 body.light .fav-overlay, body.light .mq-sheet-overlay { background: rgba(40,58,96,.12) !important; }
+/* radius scale: 22 cards, 14 boxes, 10 buttons. Soft rims on decorative boxes in light. */
+:is(.chord-quality-btn, .tab-btn, .chord-root-btn, .gcc-root-btn, .sc-root-btn, .ce-pool-chip, .metro-subtab, .ch-pill, .iv-btn, .prog-preset-btn, .scale-action-btn, .tg-popup-btn, .pr-popup-btn, .iv-diff-pill, .iv-answer-btn, .ce-answer-btn, .chord-play-btn, .chord-arp-btn, .cs-family-btn, .prog-add-bar-btn) { border-radius: 10px !important; }
+:is(.iv-feedback, .ce-pool-details, .cs-sub-row, .vr-checklist-row, .iv-stat, .metro-subnav, .step-grid, .cs-mode-tabs, .tp-staff-col) { border-radius: 14px !important; }
+body.light :is(.card.warm, .card.cool, .vr-checklist-row, .iv-stat, .metro-subnav, .step-grid, .iv-card-v2, .iv-feedback, .tp-staff-col, .tp-staff-wrap, .cs-mode-tabs, .cs-sub-row, .ce-pool-details) { border-color: color-mix(in srgb, var(--border) 34%, #fff) !important; }
+body.light .card.warm, body.light .card.cool { background: var(--glass-sheen), var(--glass-fill-card) !important; box-shadow: var(--glass-lift-sm) !important; }
+/* contrast floor: labels that measured under 3:1 */
+body:not(.light) .piano-lid-seg { color: rgba(255,255,255,0.55); }
+body:not(.light) .piano-lid-seg.active { color: rgba(255,255,255,0.92); }
+body:not(.light) .piano-lid-label { color: rgba(255,255,255,0.45); }
+body:not(.light) .np-idle-label { color: rgba(255,255,255,0.36); }
+body:not(.light) .tone-group-tab:not(.active) { color: rgba(255,255,255,0.52); }
+body:not(.light) .bpm-unit { color: rgba(255,209,102,0.62); }
+body:not(.light) .bpm-name { color: rgba(255,170,115,0.74); }
+body:not(.light) .piano-oct-range { color: rgba(255,255,255,0.5); }
+body:not(.light) .tone-tile-name { color: rgba(255,255,255,0.56); }
+body:not(.light) :is(.ce-hud-diff-sub, .ce-hud-lives-lbl) { color: rgba(196,178,255,.74); }
+body:not(.light) .ppc-name { color: rgba(196,178,255,.82); }
+body:not(.light) .thmn-hz { color: rgba(255,255,255,.66); }
+body:not(.light) .thmn-led-lbl { color: rgba(255,255,255,.66); }
+body:not(.light) .tuner-screen-side { color: color-mix(in srgb, var(--muted) 68%, transparent); }
+body:not(.light) .tuner-screen-label { color: color-mix(in srgb, var(--accent-warm) 56%, transparent); }
+body:not(.light) .tuner-screen-freq { color: color-mix(in srgb, var(--accent) 62%, transparent); }
+body:not(.light) .tuner-screen-cents-badge { color: color-mix(in srgb, var(--accent) 62%, transparent); }
+body:not(.light) .tuner-strobe-btn { color: color-mix(in srgb, var(--accent) 78%, transparent); }
+:is(.tg-stat-l, .tg-hud-lbl, .gcc-swipe-hint, .ex-resting-lbl, .sm-toggle-sub, .tt-hint) { opacity: .88 !important; }
+.hvs-days { color: color-mix(in srgb, var(--text) 74%, transparent); }
+.session-stamp .stamp-goal { color: color-mix(in srgb, var(--text) 70%, transparent) !important; }
+body.light :is(.piano-lid-label, .np-idle-label, .tone-group-tab:not(.active), .piano-oct-range, .tone-tile-name, .ppc-lbl, .ppc-name, .piano-lid-seg:not(.active), .tg-stat-l, .tg-hud-lbl, .gcc-swipe-hint, .tt-hint, .ex-resting-lbl, .iv-diff-pill-lbl, .chd-sub, .tc-tag, .tc-sb-txt, .tc-temp-mirror) { color: color-mix(in srgb, var(--text) 82%, transparent) !important; }
+body:not(.light) :is(.nc-grp, .prog-bpm-unit, .stb-name, .pm-level-label, .tuner-refpitch-label, .ppc-lbl, .thmn-hint-overlay, .scale-oct-val) { color: var(--text-dim) !important; opacity: 1 !important; }
+body:not(.light) .db-ruler-seg { filter: brightness(1.25); }
+
+/* ── Feedback colors (right / close / wrong) ──────────────────────────────
+   Light mode used the dark ink tokens (near-black olive, brown, maroon) as
+   FILLS too, which read as mud. Fills get a vivid twin; text keeps an ink twin
+   that still clears contrast. Dark mode keeps its existing neon values. */
+:root{--fb-good:#b6f25b;--fb-warn:#ffd166;--fb-bad:#d6455d;--fb-good-ink:#b6f25b;--fb-warn-ink:#ffd166;--fb-bad-ink:#e0566c}
+body.light{--fb-good:#30c25e;--fb-warn:#ffb324;--fb-bad:#f0495a;--fb-good-ink:#0c7a34;--fb-warn-ink:#8f5a00;--fb-bad-ink:#c12a40}
+
+/* ── Light mode: solid feedback fills get real colors, text keeps its ink ─── */
+body.light{--fb-good-solid:#16a34a;--fb-warn-solid:#d98500;--fb-bad-solid:#dc2626;--fb-flat-solid:#2563eb}
+:root{--fb-good-solid:var(--fb-good);--fb-warn-solid:var(--fb-warn);--fb-bad-solid:var(--fb-bad);--fb-flat-solid:#7aafff}
+html body.light :is(.status-dot.active,.piano-legend-dot.user,.ss-seq-dot.done,.ss-cents-needle.in,.ss-hold-bar,.ce-countdown-bar:not(.wrong),.iv-sing-lock.done .iv-sing-lock-fill,#exSingSing .ss-dot.got,.vr-tess-center,.meter-needle.in-tune,#exRelPitch .rlp-istep.top::after){background:var(--fb-good-solid)!important}
+html body.light :is(.ss-cents-needle.off,.ce-countdown-bar.wrong,.iv-gtick.guess,.iv-gtick.root.as-guess,#exSingSing .ss-dot.miss,.meter-needle.sharp){background:var(--fb-bad-solid)!important}
+html body.light .tuner-screen .meter-needle.in-tune{background:var(--fb-good-solid)!important;color:var(--fb-good-solid)!important}
+html body.light .tuner-screen .meter-needle.sharp{background:var(--fb-bad-solid)!important;color:var(--fb-bad-solid)!important}
+html body.light .tuner-screen .meter-needle.flat{background:var(--fb-flat-solid)!important;color:var(--fb-flat-solid)!important}
+html body.light :is(.stp-note.latched .stp-dot,#exScales.drone-mode .stp-note.anchor .stp-dot){fill:var(--fb-good-solid)!important}
+html body.light :is(.stp-note.moved .stp-dot,.stp-gap.big,.sd-pip){fill:var(--fb-warn-solid)!important}
+html body.light :is(.beat-dot.active,.gcp-step.on,.groove-visual-step.gvs-accent,.groove-legend-dot.accent,.gs-pdot.active,.ramp-progress-fill,.mq2-beat.live.l4,#exRelPitch .rlp-vur.safe .rlp-seg::after,#exRelPitch .rlp-istep.haven::after){background:var(--fb-warn-solid)!important}
+html body.light .mq-ans-btn.correct .mq-ans-letter{background:var(--fb-good-solid)!important;border-color:var(--fb-good-solid)!important}
+html body.light .mq-ans-btn.wrong .mq-ans-letter{background:var(--fb-bad-solid)!important;border-color:var(--fb-bad-solid)!important}
+/* ear training answers: vivid edge, soft tint, readable ink */
+html body.light :is(.ce-answer-btn.correct,.iv-answer-btn.correct){border-color:#16a34a!important;background:color-mix(in srgb,#16a34a 13%,#fff)!important}
+html body.light :is(.ce-answer-btn.wrong,.iv-answer-btn.wrong){border-color:#e04858!important;background:color-mix(in srgb,#dc2626 8%,#fff)!important}
+html body.light :is(.ce-answer-btn.correct .ce-btn-name,.iv-answer-btn.correct .iv-ans-name){color:#0b6b38!important}
+html body.light :is(.ce-answer-btn.wrong .ce-btn-name,.iv-answer-btn.wrong .iv-ans-name){color:#b4232f!important}
+html body.light :is(.iv-test-dot.hit){background:var(--fb-good-solid)!important;border-color:var(--fb-good-solid)!important}
+html body.light :is(.iv-test-dot.miss){background:var(--fb-bad-solid)!important;border-color:var(--fb-bad-solid)!important}
+/* Chordle / Diadle legend dots */
+html body.light :is(#chordleLegend,#diadleLegend) div[style*="#22c55e"]{background:#16a34a!important}
+html body.light :is(#chordleLegend,#diadleLegend) div[style*="#eab308"]{background:#e0a100!important}
+html body.light :is(#chordleLegend,#diadleLegend) div[style*="#a855f7"]{background:#7c3aed!important}
+html body.light :is(#chordleLegend,#diadleLegend) div[style*="#3b82f6"]{background:#2563eb!important}
+html body.light :is(#chordleLegend,#diadleLegend) div[style*="#ef4444"]{background:#dc2626!important}
+html body.light .mq-ans-btn.correct{border-color:#16a34a!important;background:color-mix(in srgb,#16a34a 12%,#fff)!important;color:#0b6b38!important}
+html body.light .mq-ans-btn.wrong{border-color:#e04858!important;background:color-mix(in srgb,#dc2626 8%,#fff)!important;color:#b4232f!important}
+html body.light .iv-feedback.got{border-color:#16a34acc!important;background:color-mix(in srgb,#16a34a 12%,#fff)!important;color:#0b6b38!important}
+html body.light .iv-feedback.off{border-color:#e04858cc!important;background:color-mix(in srgb,#dc2626 8%,#fff)!important;color:#b4232f!important}
+/* Tints and borders built from the status tokens: in light mode the tokens are near-black ink,
+   so a 10% mix came out dusty. Mixes now read the vivid twins (-t); dark falls back to the token. */
+body.light{--in-tune-t:#16a34a;--green-t:#16a34a;--sharp-t:#dc2626;--metro-t:#d99a00;--flat-t:#2563eb}
+/* Music Quiz: Survival and Daily were coral mixed into lavender, which comes out dusty salmon. */
+html body.light .mqc-survival .mq-card-icon{background:color-mix(in srgb,#e5484d 14%,#fff)!important;color:#c02a30!important}
+html body.light .mqc-survival .mq-card-name{color:#a3232a!important}
+html body.light .mqc-survival .mq-card-badge{background:color-mix(in srgb,#e5484d 12%,#fff)!important;color:#a3232a!important;border-color:color-mix(in srgb,#e5484d 45%,transparent)!important}
+html body.light .mq-daily-badge{background:color-mix(in srgb,#f08a3c 14%,#fff)!important;border-color:color-mix(in srgb,#f08a3c 55%,transparent)!important}
+html body.light #mqDailyBadgeLabel,html body.light .mq-daily-badge{color:#a3420c!important}
+/* Volume meter ruler: 55% alpha dark tones read as sage, mustard and dusty rose. Solid, clean zones instead. */
+html body.light .db-ruler-safe{background:#4fc276!important;color:#0a3a1a!important}
+html body.light .db-ruler-caution{background:#f4c542!important;color:#4a3300!important}
+html body.light .db-ruler-warn{background:#f59a4a!important;color:#4a1d00!important}
+html body.light .db-ruler-danger{background:#ee6a6a!important;color:#4a0a0a!important}
+html body.light .db-ruler-seg{filter:none!important}
+html body.light .db-number{color:#0f7a37}
+html body.light #exRelPitch .rlp-fork{color:#b04a12;border-color:rgba(224,110,40,.55);background:linear-gradient(180deg,rgba(255,150,80,.24),rgba(255,150,80,.12))}
+html body.light #exRelPitch .rlp-live.dim{color:var(--text-dim)}
+html body.light #rrPatternSig{opacity:.85!important}
+/* Light: the tab light used the dark ink at partial alpha, which turned to gray-blue mud over the glass.
+   Each tab now glows in its own bright color. */
+html body.light .mode-toggle .mode-ind{--tl:#3b8de0;color:var(--tl)!important}
+html body.light .mode-toggle[data-tab="metro"] .mode-ind{--tl:#f2a900}
+html body.light .mode-toggle[data-tab="tools"] .mode-ind{--tl:#12b886}
+html body.light .mode-toggle[data-tab="train"] .mode-ind{--tl:#6d4fe0}
+html body.light .mode-toggle[data-tab="settings"] .mode-ind{--tl:#7d84a6}
+html body.light .mode-ind::after{background:radial-gradient(ellipse 75% 120% at 50% -6%,color-mix(in srgb,var(--tl) 42%,transparent) 0%,color-mix(in srgb,var(--tl) 14%,transparent) 48%,transparent 90%)}
 </style>
 </head>
 <body>
@@ -47385,10 +47480,10 @@ function dbDraw() {
 
   // Zone background bands — positioned on SPL scale
   [
-    { min:   0, max:  70, col: 'rgba(182,242,91,0.06)'  },
-    { min:  70, max:  85, col: 'rgba(255,209,102,0.08)' },
-    { min:  85, max:  91, col: 'rgba(255,138,101,0.10)' },
-    { min:  91, max: SPL_G_MAX, col: 'rgba(255,68,68,0.14)' },
+    { min:   0, max:  70, col: _dbLight ? 'rgba(79,194,118,0.10)'  : 'rgba(182,242,91,0.06)'  },
+    { min:  70, max:  85, col: _dbLight ? 'rgba(244,197,66,0.20)'  : 'rgba(255,209,102,0.08)' },
+    { min:  85, max:  91, col: _dbLight ? 'rgba(245,154,74,0.22)'  : 'rgba(255,138,101,0.10)' },
+    { min:  91, max: SPL_G_MAX, col: _dbLight ? 'rgba(238,106,106,0.22)' : 'rgba(255,68,68,0.14)' },
   ].forEach(({ min, max, col }) => {
     const y1 = H - ((max - SPL_G_MIN) / (SPL_G_MAX - SPL_G_MIN)) * H;
     const y2 = H - ((min - SPL_G_MIN) / (SPL_G_MAX - SPL_G_MIN)) * H;
@@ -87227,13 +87322,18 @@ function tonaleSetStatus(txt) {
 }
 
 // ── waveform + color animation ──
+// Fill colors for score feedback come from --fb-good/warn/bad (vivid in light mode).
+// Text drawn straight on a card uses the -ink twin, which keeps its contrast.
+function tonaleInk(c) {
+  return typeof c==='string' ? c.replace(/var\(--fb-(good|warn|bad),/, 'var(--fb-$1-ink,') : c;
+}
 function tonaleResolveColor(c) {
   // Turn a 'var(--name[,fallback])' string into a concrete color the canvas can use.
   if (typeof c !== 'string') return '#b6f25b';
   var m = c.match(/var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\)/);
   if (!m) return c;  // already concrete
   var val = '';
-  try { val = getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim(); } catch(e) {}
+  try { val = getComputedStyle(document.body || document.documentElement).getPropertyValue(m[1]).trim(); } catch(e) {}
   if (!val && m[2]) val = m[2].trim();
   return val || '#b6f25b';
 }
@@ -87549,11 +87649,11 @@ function tonaleShowReveal(target, guess, cents, pts) {
   var revColor;
   if (tonaleMode.snap) {
     var semisOff = Math.abs(Math.round(tonaleFreqToMidi(guess)) - Math.round(tonaleFreqToMidi(target)));
-    revColor = semisOff===0 ? 'var(--in-tune)' : semisOff===1 ? 'var(--metro)' : 'var(--out-tune,#d6455d)';
+    revColor = semisOff===0 ? 'var(--fb-good,var(--in-tune))' : semisOff===1 ? 'var(--fb-warn,var(--metro))' : 'var(--fb-bad,var(--out-tune,#d6455d))';
   } else {
-    revColor = pts>=9.5 ? 'var(--in-tune)' : pts>=7 ? 'var(--metro)' : 'var(--out-tune,#d6455d)';
+    revColor = pts>=9.5 ? 'var(--fb-good,var(--in-tune))' : pts>=7 ? 'var(--fb-warn,var(--metro))' : 'var(--fb-bad,var(--out-tune,#d6455d))';
   }
-  ptsEl.style.color = revColor;
+  ptsEl.style.color = tonaleInk(revColor);
   var dir = cents>0 ? t('tonale_sharp') : t('tonale_flat');
   var detail = t('tonale_target')+': <b>'+Math.round(target)+' Hz</b>';
   if (tonaleMode.snap || Math.abs(cents) < 600) detail += ' ('+tonaleNoteName(target)+')';
@@ -87618,7 +87718,7 @@ function tonaleCmpHighlight(mode) {
     box.style.background = lit ? col : '';
     box.style.borderColor = lit ? col : 'var(--border)';
   }
-  set(tBox, mode==='target'||mode==='both', 'var(--in-tune)');
+  set(tBox, mode==='target'||mode==='both', 'var(--fb-good,var(--in-tune))');
   set(gBox, mode==='guess'||mode==='both', tonaleCmp ? tonaleCmp.color : 'var(--accent)');
   // also light the mini-keyboard cells if present
   if (tonaleMode && tonaleMode.snap && tonaleCmp) {
@@ -87692,7 +87792,7 @@ function tonaleRenderRevealKeys(box, target, guess, guessColor) {
     var bg = 'var(--surface-2,var(--surface))';
     var ring = '';
     if (m===tM && exact) { bg = guessColor; }            // bullseye: one square, score color
-    else if (m===tM)     { bg = 'var(--in-tune)'; }       // target marker
+    else if (m===tM)     { bg = 'var(--fb-good,var(--in-tune))'; }       // target marker
     else if (m===gM)     { bg = guessColor; }             // your guess, colored by score
     var lit = (m===tM || m===gM);
     cell.style.cssText='width:20px;height:30px;border-radius:4px;border:1px solid var(--border);'+
@@ -87705,7 +87805,7 @@ function tonaleRenderRevealKeys(box, target, guess, guessColor) {
   box.appendChild(row);
   var legend = document.createElement('div');
   legend.style.cssText='text-align:center;font-size:9px;color:var(--text-faint);margin-top:6px';
-  legend.innerHTML='<span style="color:var(--in-tune)">■</span> '+t('tonale_target')+
+  legend.innerHTML='<span style="color:var(--fb-good,var(--in-tune))">■</span> '+t('tonale_target')+
     '  <span style="color:'+guessColor+'">■</span> '+t('tonale_you');
   box.appendChild(legend);
 }
@@ -87814,10 +87914,10 @@ function tonaleRenderBreakdown() {
   box.innerHTML = '';
   tonaleGuesses.forEach(function(g, i) {
     var cents = 1200 * Math.log2(g.guess / g.target);
-    var colVar = g.pts>=9.5 ? 'var(--in-tune)' : g.pts>=7 ? 'var(--metro)' : 'var(--out-tune,#d6455d)';
+    var colVar = g.pts>=9.5 ? 'var(--fb-good,var(--in-tune))' : g.pts>=7 ? 'var(--fb-warn,var(--metro))' : 'var(--fb-bad,var(--out-tune,#d6455d))';
     if (tonaleMode.snap) {
       var semisOff = Math.abs(Math.round(tonaleFreqToMidi(g.guess)) - Math.round(tonaleFreqToMidi(g.target)));
-      colVar = semisOff===0 ? 'var(--in-tune)' : semisOff===1 ? 'var(--metro)' : 'var(--out-tune,#d6455d)';
+      colVar = semisOff===0 ? 'var(--fb-good,var(--in-tune))' : semisOff===1 ? 'var(--fb-warn,var(--metro))' : 'var(--fb-bad,var(--out-tune,#d6455d))';
     }
     var dir = cents>0 ? t('tonale_sharp') : t('tonale_flat');
     var offTxt = tonaleMode.snap
@@ -87829,7 +87929,7 @@ function tonaleRenderBreakdown() {
       '<span style="width:8px;height:8px;border-radius:50%;background:'+colVar+';flex-shrink:0"></span>'
       + '<span style="color:var(--text-faint);width:30px">'+t('tonale_round_abbr')+(i+1)+'</span>'
       + '<span style="color:var(--text-soft);flex:1">'+offTxt+'</span>'
-      + '<span style="color:'+colVar+';font-weight:700">'+g.pts.toFixed(1)+'</span>';
+      + '<span style="color:'+tonaleInk(colVar)+';font-weight:700">'+g.pts.toFixed(1)+'</span>';
     box.appendChild(row);
   });
 }
@@ -88264,8 +88364,8 @@ function diffPickerColor(c) {
   var map = {
     '#22c55e':'#16a34a', '#34d399':'#16a34a', '#2ec78f':'#16a34a', '#54d18a':'#16a34a',
     '#4ade80':'#16a34a', '#f87171':'#dc2626',
-    '#f59e0b':'#d97706', '#eab308':'#ca8a04', '#facc15':'#ca8a04', '#fbbf24':'#d97706',
-    '#f2c14e':'#ca8a04', '#f97316':'#ea580c', '#e8743b':'#ea580c',
+    '#f59e0b':'#d97706', '#eab308':'#d99a00', '#facc15':'#d99a00', '#fbbf24':'#d97706',
+    '#f2c14e':'#d99a00', '#f97316':'#ea580c', '#e8743b':'#ea580c',
     '#ef4444':'#dc2626', '#d6455d':'#e11d48',
     '#a855f7':'#7c3aed', '#c084fc':'#7c3aed', '#3b82f6':'#2563eb', '#60a5fa':'#2563eb'
   };
@@ -88294,6 +88394,10 @@ const DIFF_COLOR_LIGHT = {
   // the one set the existing table never covered.
   '#54d18a':'#0f6b3f', '#f2c14e':'#6f4d00', '#e8743b':'#a3441b', '#d6455d':'#8f1530'
 };
+// Fills, borders and tints can be vivid; only TEXT needs the deep AA ink above.
+function diffFillFor(c) {
+  return document.body.classList.contains('light') ? diffPickerColor(c) : c;
+}
 function diffColorFor(c) {
   if (document.body.classList.contains('light')) {
     var k = (c||'').toLowerCase();
@@ -88476,10 +88580,10 @@ function chordleSlotEl(chord, sc, selected, isRoot, pulse, size, playIdx) {
   var bdr,bg,col,shadow;
   if (pulse)         { bdr='var(--accent)'; bg='color-mix(in srgb,var(--accent) 18%,transparent)'; col='var(--accent)'; shadow='0 0 12px color-mix(in srgb,var(--accent) 40%,transparent)'; }
   else if (selected) { bdr='var(--accent)'; bg='color-mix(in srgb,var(--accent) 12%,var(--surface))'; col='var(--accent)'; shadow='0 0 10px color-mix(in srgb,var(--accent) 30%,transparent)'; }
-  else if (sc==='correct')   { bdr=diffColorFor('#22c55e')+'99'; bg='color-mix(in srgb,'+diffColorFor('#22c55e')+' 12%,var(--bg-0))'; col=diffColorFor('#22c55e'); shadow='0 0 12px #22c55e22'; }
-  else if (sc==='present')   { bdr=diffColorFor('#eab308')+'99'; bg='color-mix(in srgb,'+diffColorFor('#eab308')+' 14%,var(--bg-0))'; col=diffColorFor('#eab308'); shadow='0 0 10px #eab30822'; }
-  else if (sc==='inversion') { bdr=diffColorFor('#a855f7')+'88'; bg='color-mix(in srgb,'+diffColorFor('#a855f7')+' 12%,var(--bg-0))'; col=diffColorFor('#c084fc'); shadow='0 0 8px #a855f711'; }
-  else if (sc==='rootonly')  { bdr=diffColorFor('#3b82f6')+'88'; bg='color-mix(in srgb,'+diffColorFor('#3b82f6')+' 12%,var(--bg-0))'; col=diffColorFor('#60a5fa'); shadow='0 0 8px #3b82f611'; }
+  else if (sc==='correct')   { bdr=diffFillFor('#22c55e')+'cc'; bg='color-mix(in srgb,'+diffFillFor('#22c55e')+' 17%,'+(document.body.classList.contains('light')?'#fff':'var(--bg-0)')+')'; col=diffColorFor('#22c55e'); shadow='0 0 12px #22c55e22'; }
+  else if (sc==='present')   { bdr=diffFillFor('#eab308')+'cc'; bg='color-mix(in srgb,'+diffFillFor('#eab308')+' 20%,'+(document.body.classList.contains('light')?'#fff':'var(--bg-0)')+')'; col=diffColorFor('#eab308'); shadow='0 0 10px #eab30822'; }
+  else if (sc==='inversion') { bdr=diffFillFor('#a855f7')+'b0'; bg='color-mix(in srgb,'+diffFillFor('#a855f7')+' 15%,'+(document.body.classList.contains('light')?'#fff':'var(--bg-0)')+')'; col=diffColorFor('#c084fc'); shadow='0 0 8px #a855f711'; }
+  else if (sc==='rootonly')  { bdr=diffFillFor('#3b82f6')+'b0'; bg='color-mix(in srgb,'+diffFillFor('#3b82f6')+' 15%,'+(document.body.classList.contains('light')?'#fff':'var(--bg-0)')+')'; col=diffColorFor('#60a5fa'); shadow='0 0 8px #3b82f611'; }
   else if (sc==='wrong')     { bdr='#47556966'; bg='color-mix(in srgb,#475569 12%,var(--bg-0))'; col='var(--muted)'; shadow='none'; }
   else if (chord)         { bdr='var(--border)'; bg='var(--surface)'; col='var(--text)'; shadow='none'; }
   else                    { bdr='var(--border-soft)'; bg='transparent'; col='transparent'; shadow='none'; }
@@ -88504,7 +88608,7 @@ function chordleActiveRowEl(chords, n, selSlot, pulseIdx, rootPos) {
     var fs=l>6?7:l>4?9:l>3?11:13;
     var bdr,bg,col,shadow;
     var locked=chordleLockedSlots.includes(i);
-    if (locked)        {bdr=diffColorFor('#22c55e')+'99';bg='color-mix(in srgb,'+diffColorFor('#22c55e')+' 12%,var(--bg-0))';col=diffColorFor('#22c55e');shadow='0 0 12px #22c55e22';}
+    if (locked)        {bdr=diffFillFor('#22c55e')+'cc';bg='color-mix(in srgb,'+diffFillFor('#22c55e')+' 17%,'+(document.body.classList.contains('light')?'#fff':'var(--bg-0)')+')';col=diffColorFor('#22c55e');shadow='0 0 12px #22c55e22';}
     else if (pulse)    {bdr='var(--accent)';bg='color-mix(in srgb,var(--accent) 18%,transparent)';col='var(--accent)';shadow='0 0 12px color-mix(in srgb,var(--accent) 40%,transparent)';}
     else if (selected) {bdr='var(--accent)';bg='color-mix(in srgb,var(--accent) 12%,var(--surface))';col='var(--accent)';shadow='0 0 10px color-mix(in srgb,var(--accent) 30%,transparent)';}
     else if (chord)    {bdr='var(--border)';bg='var(--surface)';col='var(--text)';shadow='none';}
@@ -89944,6 +90048,13 @@ function diadleRootBtnTap() {
 
 // ── Board render ─────────────────────────────────
 function diadleSlotColors(state) {
+  if (document.body.classList.contains('light')) {
+    // Light: vivid border and tint, deep ink for the text (neon text washes out here)
+    if (state==='correct' || state==='locked')
+      return {bdr:'#16a34acc',bg:'color-mix(in srgb,#16a34a 17%,#fff)',col:diffColorFor('#22c55e'),shadow:'0 0 10px #16a34a22'};
+    if (state==='present')  return {bdr:'#d99a00cc',bg:'color-mix(in srgb,#d99a00 20%,#fff)',col:diffColorFor('#eab308'),shadow:'0 0 10px #ca8a0422'};
+    if (state==='sizeonly') return {bdr:'#2563ebb0',bg:'color-mix(in srgb,#2563eb 15%,#fff)',col:diffColorFor('#60a5fa'),shadow:'0 0 8px #2563eb11'};
+  }
   if (state==='correct')  return {bdr:'#22c55e99',bg:'color-mix(in srgb,#22c55e 12%,var(--bg-0))',col:'#22c55e',shadow:'0 0 12px #22c55e22'};
   if (state==='present')  return {bdr:'#eab30899',bg:'color-mix(in srgb,#eab308 14%,var(--bg-0))',col:'#eab308',shadow:'0 0 10px #eab30822'};
   if (state==='sizeonly') return {bdr:'#3b82f688',bg:'color-mix(in srgb,#3b82f6 12%,var(--bg-0))',col:'#60a5fa',shadow:'0 0 8px #3b82f611'};
@@ -132931,7 +133042,7 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
       <div class="mq-sheet-title" data-i18n="mq_stats">STATS</div>
       <div class="mq-sheet-sub" data-i18n="mq_your_lifetime_quiz_perform">your lifetime quiz performance</div>
       <div id="mqStatsContent" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"></div>
-      <button class="mq-sheet-all-btn" style="margin-top:14px;background:color-mix(in srgb,var(--sharp) 10%,var(--surface));border-color:color-mix(in srgb,var(--sharp) 30%,transparent);color:var(--sharp);font-size:11px;" onclick="mqResetStats(this)" data-i18n="mq_reset_stats">RESET STATS</button>
+      <button class="mq-sheet-all-btn" style="margin-top:14px;background:color-mix(in srgb,var(--sharp-t,var(--sharp)) 10%,var(--surface));border-color:color-mix(in srgb,var(--sharp-t,var(--sharp)) 30%,transparent);color:var(--sharp);font-size:11px;" onclick="mqResetStats(this)" data-i18n="mq_reset_stats">RESET STATS</button>
     </div>
   </div>
 
@@ -140649,9 +140760,9 @@ function mqShowMissReview() {
       var isCorrect = i === reviewAns;
       var isWrong   = i === miss.pickedIdx && !isCorrect;
       var style = isCorrect
-        ? 'color:var(--in-tune);background:color-mix(in srgb,var(--in-tune) 8%,var(--surface));border:1px solid color-mix(in srgb,var(--in-tune) 25%,transparent);'
+        ? 'color:var(--in-tune);background:color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 8%,var(--surface));border:1px solid color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 25%,transparent);'
         : isWrong
-          ? 'color:var(--sharp);background:color-mix(in srgb,var(--sharp) 8%,var(--surface));border:1px solid color-mix(in srgb,var(--sharp) 25%,transparent);'
+          ? 'color:var(--sharp);background:color-mix(in srgb,var(--sharp-t,var(--sharp)) 8%,var(--surface));border:1px solid color-mix(in srgb,var(--sharp-t,var(--sharp)) 25%,transparent);'
           : 'color:var(--text-dim);background:var(--panel);border:1px solid var(--border-soft);';
       var prefix = isCorrect ? '\u2713 ' : isWrong ? '\u2717 ' : '';
       return '<div style="' + style + 'border-radius:7px;padding:7px 10px;font-size:' + '12' + 'px;font-family:\'JetBrains Mono\',monospace;line-height:1.35;">'
@@ -142796,6 +142907,24 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     window.addEventListener('resize', function () { ind.classList.add('nt'); place(); requestAnimationFrame(function () { ind.classList.remove('nt'); }); });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { ind.classList.add('nt'); place(); requestAnimationFrame(function () { ind.classList.remove('nt'); }); });
     place(); setTimeout(place, 400);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+/* hide the progress glow while the session bar is nearly empty: it read as a smudge under the title */
+(function () {
+  function init() {
+    var bar = document.getElementById('modeProgressBar'), glow = document.getElementById('modeProgressGlow');
+    if (!bar || !glow) return;
+    function sync() {
+      var w = parseFloat(bar.style.width);
+      var show = !(w >= 0 && w < 2.5);
+      var want = show ? '' : 'none';
+      if (glow.style.display !== want) glow.style.display = want;
+      if (bar.style.visibility !== (show ? '' : 'hidden')) bar.style.visibility = show ? '' : 'hidden';
+    }
+    new MutationObserver(sync).observe(bar, { attributes: true, attributeFilter: ['style'] });
+    sync();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
