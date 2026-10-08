@@ -11,9 +11,12 @@ A human-readable record of what changed, when,
 - Light mode gets a frosted glass look on the tab bar, cards, folders, and every popup and sheet (Settings, Progress, Pro, Quick Access, help and more). Dark mode popups get the same surface style with a lighter rim.
 - Cards, folders, popups, and their inner boxes share the same rounded corners in both themes.
 - Tab labels are a little larger.
-- The active tab chip is calmer: a faint glow and the top line, no box.
+- The active tab has no chip anymore. One light bar with a soft glow slides between tabs.
 - Scrollbars are hidden on touch screens, which also removes the stray bar in the streak popup.
 - Light mode search box and popups are more solid so text is easier to read.
+- Popups keep the page visible behind them with a soft blur, so the glass shows.
+- A thin line and shadow no longer show at the bottom of the screen on the home grid and in quizzes.
+- The search box uses the app fonts instead of the system font.
 - Piano keys light up in a clear warm color when you press or hold them.
 - I Have You Now did not unlock on a 0ms Tempo Lock round. The app shows the timing error rounded, but the unlock needed an exact zero, so a "0ms" on screen could still miss. It now unlocks on anything that rounds to 0ms. A 0 bpm miss in Tempo Guess counts as well, which it never did before.
 - Great Ears Kid could not be earned at all. The interval test now earns it: a perfect 10 out of 10 with every interval turned on (the ALL deck).
