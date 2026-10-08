@@ -22078,8 +22078,8 @@ body.sg-open #toolSurvivalGuide{
      launcher morph. Dropped. Elements that want a filter transition declare
      their own, and now those declarations actually apply. */
 
-  #logoArea  { transition: opacity 0.15s ease-out !important; }
-  #headerSub { transition: opacity 0.15s ease-out !important; }
+  #logoArea  { transition: opacity 0.12s ease-out !important; }
+  #headerSub { transition: opacity 0.12s ease-out !important; }
   /* min-height 38px against a ~24px line box left 14px of slack, and because the
      element is a block that slack does not distribute evenly around the text: a
      single-line title rendered with its ink sitting high, measurably ~9px above the
@@ -28603,10 +28603,10 @@ body.light #streakSheet .ss-d.p.t { color: #fff; }
 html.hv2.hv-collapse #appHeader { z-index: 500; }
 html.hv2.hv-collapse #appHeader::before {
   content: ''; position: absolute; left: -7%; right: -7%; z-index: -1; pointer-events: none;
-  top: calc(-1 * var(--hv-pin, 60px) - 40px); height: calc(var(--hv-pin, 60px) + 40px + var(--hv-h, 34px) + 64px);
+  top: calc(-1 * var(--hv-pin, 60px) - 40px); height: calc(var(--hv-pin, 60px) + 40px + var(--hv-h, 34px) + 40px);
   background: color-mix(in srgb, var(--accent) 7%, var(--bg-0));
   /* Solid behind the buttons and the timer, then a soft fade into the page instead of a hard edge. */
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
   opacity: 0; transform: translateY(-10px); will-change: transform, opacity;
   transition: opacity .3s ease, transform .45s cubic-bezier(.2,.8,.2,1) !important;
 }
@@ -57007,6 +57007,38 @@ function _rerenderHeader() {
     }
   } catch (e) {}
 }
+// Header title change: the title area fades out, the text swaps while it is fully clear, then it
+// fades in. When the Back button stays on screen (folder to module and back) only the title and
+// subtitle fade, so Back does not dip. The inline !important values beat the sheet's own rules.
+var _hdrKeep = false;
+var _hdrPB = null; // whether Back was on screen before a change that is still waiting to swap (exitTool makes two calls in a row)
+function _hdrEls(keep) { return [keep ? 'appLogo' : 'logoArea', 'headerSub'].map(function (id) { return document.getElementById(id); }).filter(Boolean); }
+function _hdrClear() {
+  ['logoArea', 'appLogo', 'headerSub'].forEach(function (id) {
+    var e = document.getElementById(id); if (!e) return;
+    e.style.removeProperty('opacity'); e.style.removeProperty('transition');
+  });
+}
+function _hdrOut(keep) {
+  _hdrClear(); _hdrKeep = keep;
+  _hdrEls(keep).forEach(function (e) {
+    e.style.setProperty('transition', 'opacity .12s ease-out', 'important');
+    e.style.setProperty('opacity', '0', 'important');
+  });
+}
+function _hdrSnapOut() {
+  _hdrPB = null;
+  _hdrEls(_hdrKeep).forEach(function (e) {
+    e.style.setProperty('transition', 'none', 'important'); e.style.setProperty('opacity', '0', 'important');
+    void e.offsetWidth;
+    e.style.setProperty('transition', 'opacity .12s ease-out', 'important');
+  });
+}
+function _hdrIn() {
+  var els = _hdrEls(_hdrKeep);
+  els.forEach(function (e) { e.style.removeProperty('opacity'); });
+  setTimeout(function () { els.forEach(function (e) { e.style.removeProperty('transition'); }); }, 240);
+}
 function setHeaderModule(name, subtitle, exerciseId, backLabel) {
   var header    = document.getElementById('appHeader');
   var logo      = document.getElementById('appLogo');
@@ -57020,12 +57052,14 @@ function setHeaderModule(name, subtitle, exerciseId, backLabel) {
   clearTimeout(_pendingHeaderTimeout);
   if (!logo) return;
 
+  var _hadBack = (_hdrPB !== null) ? _hdrPB : (document.body.classList.contains('in-module') || document.body.classList.contains('in-section-back'));
+  _hdrPB = _hadBack;
   if (name) { document.body.classList.add('in-module'); } else { document.body.classList.remove('in-module'); }
 
-  if (logoArea) logoArea.style.opacity = '0';
-  if (headerSub) headerSub.style.opacity = '0';
+  _hdrOut(_hadBack && !!name);
 
   _pendingHeaderTimeout = setTimeout(function() {
+    _hdrSnapOut();
     if (controls) Array.from(controls.querySelectorAll('button')).forEach(function(b){ b.style.display = 'none'; });
     document.body.classList.remove('in-section', 'in-section-back');
     if (header) header.classList.remove('header--module', 'header--section');
@@ -57066,12 +57100,9 @@ function setHeaderModule(name, subtitle, exerciseId, backLabel) {
       if (tagline) { _resetTaglineInline(tagline); tagline.textContent = 'suona in sintonia · play in tune'; }
       if (logo)    { delete logo.dataset.len; delete logo.dataset.title; }
     }
-    requestAnimationFrame(function() {
-      if (logoArea) logoArea.style.opacity = '1';
-      if (headerSub) headerSub.style.opacity = '1';
-    });
+    requestAnimationFrame(_hdrIn);
     if (window._hv2After) _hv2After();
-  }, 60);
+  }, 80);
 }
 
 // ─── Section-level header (tab hub or folder) ───
@@ -57102,14 +57133,16 @@ function setHeaderSection(name, onBack, subKey) {
   _headerBackFn = onBack || null;
   clearTimeout(_pendingHeaderTimeout);
 
+  var _hadBack2 = (_hdrPB !== null) ? _hdrPB : (document.body.classList.contains('in-module') || document.body.classList.contains('in-section-back'));
+  _hdrPB = _hadBack2;
   document.body.classList.remove('in-module');
   if (name) document.body.classList.add('in-section');
 
-  if (logoArea) logoArea.style.opacity = '0';
-  if (headerSub) headerSub.style.opacity = '0';
+  _hdrOut(_hadBack2 && !!name && !!onBack);
 
-  var _delay = window._lnchMorphing ? 0 : 60;
+  var _delay = window._lnchMorphing ? 0 : 80;
   _pendingHeaderTimeout = setTimeout(function() {
+    _hdrSnapOut();
     document.body.classList.remove('in-section', 'in-section-back');
     if (header) header.classList.remove('header--module', 'header--section');
     if (name) {
@@ -57145,10 +57178,7 @@ function setHeaderSection(name, onBack, subKey) {
       } else backLbl.textContent = '';
     }
     if (window._hv2Apply) _hv2Apply(true);
-    requestAnimationFrame(function() {
-      if (logoArea) logoArea.style.opacity = '1';
-      if (headerSub) headerSub.style.opacity = '1';
-    });
+    requestAnimationFrame(_hdrIn);
     if (window._hv2After) _hv2After();
   }, _delay);
 }
@@ -141858,7 +141888,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
 
   // Re-sync after header changes, XP/streak refreshes and language changes.
   var _oAfter = window._hv2After;
-  window._hv2After = function () { if (_oAfter) _oAfter(); setTimeout(window._hvsSync, 130); };
+  window._hv2After = function () { if (_oAfter) _oAfter(); window._hvsSync(); setTimeout(window._hvsSync, 130); };
   var _oRefresh = window.progRefreshChip;
   if (typeof _oRefresh === 'function') window.progRefreshChip = function () { var r = _oRefresh.apply(this, arguments); syncSoon(); return r; };
   var _oLang = window.applyLang;

@@ -54,6 +54,9 @@ A human-readable record of what changed, when,
 - Module titles are now in title case, such as Pitch Match and Chord Ear Training, with small words like and, or and of left lowercase. Italian titles keep sentence case. Search results use the same names.
 - Collapsing header in modules: the title lifts away like on the main tabs, so it no longer hangs below the bar. The bar now fades out softly instead of ending in a hard line, the timer sits right under the buttons, and the small screen name in the collapsed bar is gone.
 - Entering a module: the streak and search buttons leave at once instead of fading under the Back button.
+- The collapsed header's fade is short now. It ends right under the session timer instead of reaching far down the screen.
+- Header titles no longer flash between screens. Entering a folder showed the folder subtitle for a moment before the "Home › Tools" trail replaced it. Titles also now swap while fully faded out, so the new title no longer pops in over the old one.
+- The Back button stays solid when you go from a folder into a module and back. It used to dip to about 40 percent because it faded together with the title.
 - Metronome tempo wheels only react to sideways swipes. A vertical swipe scrolls the page and leaves the tempo alone.
 - Fixed the header buttons snapping when you enter a module from the chooser or open a sheet. The pinned header now holds still while the page locks.
 - Folder screens now show a breadcrumb (Home, then the tab) under the title. The Back button and the level chip now take the color of the tab you are in.
