@@ -28717,6 +28717,9 @@ body.light #searchSheet .sr-card::before { background: linear-gradient(170deg, r
 @keyframes srPop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
 #searchSheet .sr-body { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; box-sizing: border-box; position: relative;
   max-height: var(--sr-max, 380px); padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 12px; transition: height .3s cubic-bezier(.2,.8,.2,1) !important; }
+#searchSheet .sr-body { scrollbar-width: none; }
+#searchSheet .sr-body::-webkit-scrollbar { display: none; width: 0; height: 0; }
+#searchSheet .sr-body.more { -webkit-mask-image: linear-gradient(#000 calc(100% - 34px), transparent); mask-image: linear-gradient(#000 calc(100% - 34px), transparent); }
 #searchSheet .sr-body::before { content: ''; position: absolute; left: 22px; right: 22px; top: 0; height: 1px; pointer-events: none;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text) 20%, transparent) 20%, color-mix(in srgb, var(--text) 20%, transparent) 80%, transparent); }
 #searchSheet .sr-body.nt { transition: none !important; }
@@ -92380,7 +92383,7 @@ const STRINGS = {
     ss_ago_now:'just now', ss_ago_min:'{n} min ago', ss_ago_hr:'{n} h ago', ss_ago_day:'{n} d ago',
     ss_title:'Your practice', ss_search_ph:'Search the app', ss_resume:'RESUME',
     ss_today:'Opened today', ss_best:'Best {n} days', ss_of:'{a} of {b}', ss_next:'Next: {name}, {cur} of {target}',
-    ss_none:'No results', sr_cancel:'Cancel', sr_all:'All', sr_tabs:'Tabs', sr_open:'Open {n}', sr_try_fmt:'Try "{q}"', sr_recent:'RECENT', sr_suggested:'SUGGESTED', sr_goto:'GO TO', sr_try:'TRY', sr_clear:'Clear', sr_none:'Nothing found for "{q}"', ss_prev:'Previous month', ss_next_m:'Next month', ss_legend:'Days opened',
+    ss_none:'No results', sr_cancel:'Cancel', sr_sfx_tuner:'tuner', sr_sfx_tuning:'tuning', sr_voice_lc:'voice', sr_sfx_charts:'charts', sr_in_charts:'Charts', sr_grooves:'Grooves', sr_trills:'trills', sr_guide:'Guide', sr_guide_lc:'guide', sr_ts:'Time signature', sr_all:'All', sr_tabs:'Tabs', sr_open:'Open {n}', sr_try_fmt:'Try "{q}"', sr_recent:'RECENT', sr_suggested:'SUGGESTED', sr_goto:'GO TO', sr_try:'TRY', sr_clear:'Clear', sr_none:'Nothing found for "{q}"', ss_prev:'Previous month', ss_next_m:'Next month', ss_legend:'Days opened',
     lbl_other:'OTHER',  lbl_options:'OPTIONS', btn_close:'CLOSE', lbl_to:'to:', lbl_bass:'BASS', pn_tap_start:'tap a key to start', trp_sounds:'Sounds: ', trp_written:'Written: ', photo_loading:'LOADING PHOTO…', photo_offline:'PHOTO UNAVAILABLE', photo_soon:'PHOTO COMING SOON',
     backup_partial_restore:'This backup was saved with %n item(s) missing. Everything else will be restored.',
     backup_partial:'Backup saved, but %n item(s) could not be included. This is a bug \u2014 please report it.',
@@ -93580,7 +93583,7 @@ const STRINGS = {
     ss_ago_now:'adesso', ss_ago_min:'{n} min fa', ss_ago_hr:'{n} h fa', ss_ago_day:'{n} g fa',
     ss_title:'La tua pratica', ss_search_ph:'Cerca nell\'app', ss_resume:'RIPRENDI',
     ss_today:'Aperta oggi', ss_best:'Record: {n} giorni', ss_of:'{a} di {b}', ss_next:'Prossimo: {name}, {cur} di {target}',
-    ss_none:'Nessun risultato', sr_cancel:'Annulla', sr_all:'Tutto', sr_tabs:'Sezioni', sr_open:'Apri {n}', sr_try_fmt:'Prova "{q}"', sr_recent:'RECENTI', sr_suggested:'SUGGERITI', sr_goto:'VAI A', sr_try:'PROVA', sr_clear:'Cancella', sr_none:'Nessun risultato per "{q}"', ss_prev:'Mese precedente', ss_next_m:'Mese successivo', ss_legend:'Giorni aperti',
+    ss_none:'Nessun risultato', sr_cancel:'Annulla', sr_sfx_tuner:'accordatore', sr_sfx_tuning:'accordatura', sr_voice_lc:'voce', sr_sfx_charts:'diagrammi', sr_in_charts:'Diagrammi', sr_grooves:'Ritmi', sr_trills:'trilli', sr_guide:'Guida', sr_guide_lc:'guida', sr_ts:'Indicazione di tempo', sr_all:'Tutto', sr_tabs:'Sezioni', sr_open:'Apri {n}', sr_try_fmt:'Prova "{q}"', sr_recent:'RECENTI', sr_suggested:'SUGGERITI', sr_goto:'VAI A', sr_try:'PROVA', sr_clear:'Cancella', sr_none:'Nessun risultato per "{q}"', ss_prev:'Mese precedente', ss_next_m:'Mese successivo', ss_legend:'Giorni aperti',
     // Italian help content. showHelp() looks up STRINGS[lang].help[key] and
     // falls back to the English HELP_CONTENT when it misses — and this table did
     // not exist at all, so every help popup in the app was English regardless of
@@ -141849,7 +141852,9 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   var TOOL_NAMES = {
     'tool:tonal': ['Tonal center', 'Centro tonale'], 'tool:guitarchords': ['Chord charts', 'Diagrammi accordi'],
     'tool:volume': ['Volume meter', 'Misuratore volume'], 'tool:cof': ['Circle of fifths', 'Circolo delle quinte'],
-    'tool:intervalref': ['Intervals', 'Intervalli'], 'tool:vocalrange': ['Vocal range', 'Estensione vocale'],
+    'tool:intervalref': ['Interval reference', 'Riferimento intervalli'], 'exercise:interval': ['Interval training', 'Allenamento intervalli'],
+    'exercise:chords': ['Chord ear', 'Orecchio accordi'], 'exercise:singsing': ['Pitch match', 'Intona la nota'], 'exercise:staffread': ['Staff notes', 'Note sul pentagramma'],
+    'exercise:relpitch': ['Relative pitch', 'Orecchio relativo'], 'tool:survivalguide': ['Survival Guide', 'Guida di sopravvivenza'], 'tool:guitarchords': ['Guitar chord charts', 'Diagrammi accordi chitarra'], 'tool:vocalrange': ['Vocal range', 'Estensione vocale'],
     'tool:transpose': ['Transposer', 'Traspositore'], 'tool:rhythmcards': ['Rhythm cards', 'Carte ritmiche'],
     'tool:survivalguide': ['Survival Guide', 'Guida di sopravvivenza'], 'tool:musicquiz': ['Music quiz', 'Quiz musicale']
   };
@@ -141875,20 +141880,156 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     'exercise:staffread': 'staff reading notes pentagramma lettura', 'exercise:notationcards': 'notation cards flashcards notazione'
   };
   var COL = { tuner: '#5ee2ff', metro: '#ffd166', tools: '#34d399', train: '#b8a3ff' };
+  // The same four icons as the bottom tab bar.
   var TABIC = {
-    tuner: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18a9 9 0 0 1 14 0"/><path d="M12 17l3.500-6"/><circle cx="12" cy="17.500" r="1" fill="currentColor"/></svg>',
-    metro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.500 3h7l3 18h-13z"/><path d="M12 17l3-9"/><path d="M10 21h4"/></svg>',
-    tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.500 6.500a4 4 0 0 0 4.800 4.800L20 12l-8 8a2.100 2.100 0 0 1-3-3l8-8z"/></svg>',
-    train: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.500"/><path d="M12 4V2M20 12h2"/></svg>'
+    tuner: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+    metro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l6 18H6L12 3z"/><line x1="12" y1="12" x2="17" y2="7"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
+    tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="1.5"/><line x1="7" y1="5" x2="7" y2="19"/><line x1="12" y1="5" x2="12" y2="19"/><rect x="4.5" y="5" width="3" height="8" rx="0.5" fill="currentColor" stroke="none"/></svg>',
+    train: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>'
   };
   function typeTag(meta) { return (meta.type === 'EXERCISE') ? T('ss_t_train', 'Train') : T('ss_t_tool', 'Tool'); }
+  /* ── Deep index: things inside screens (charts, guide chapters, tunings, scales, grooves …) ── */
+  var SG = [
+    ['theory', 'THEORY', 'TEORIA', [['DYNAMICS','DINAMICA'],['TEMPO','TEMPO'],['ARTICULATION','ARTICOLAZIONE'],['NOTATION','NOTAZIONE'],['INTERVALS','INTERVALLI'],['HARMONY','ARMONIA'],['CADENCES','CADENZE'],['MODULATION','MODULAZIONE'],['MODES','MODI']]],
+    ['guitar', 'GUITAR', 'CHITARRA', [['ANATOMY','ANATOMIA'],['THE FRETBOARD','LA TASTIERA'],['READING TAB','LEGGERE LA TAB'],['TECHNIQUES','TECNICHE'],['CHORDS & TERMS','ACCORDI E TERMINI'],['AMP ANATOMY',"ANATOMIA DELL'AMP"],['EFFECTS','EFFETTI']]],
+    ['bass', 'BASS', 'BASSO', [['ANATOMY','ANATOMIA'],['BASS AMPS','AMPLIFICATORI PER BASSO'],['THE LOW END','IL REGISTRO BASSO'],['TECHNIQUE','TECNICA'],['READING & THEORY','LETTURA E TEORIA'],['EFFECTS','EFFETTI']]],
+    ['ukulele', 'UKE', 'UKE', [['ANATOMY','ANATOMIA'],['THE FOUR SIZES','LE QUATTRO TAGLIE'],['TUNING & REENTRANT','ACCORDATURA E REENTRANT'],['TECHNIQUE','TECNICA']]],
+    ['plucked', 'PLUCKED', 'PIZZICATO', [['THE FAMILY','LA FAMIGLIA'],['MANDOLIN','MANDOLINO'],['LUTE','LIUTO'],['BOUZOUKI','BOUZOUKI'],['BANJO','BANJO'],['HARP','ARPA']]],
+    ['strings', 'STRINGS', 'ARCHI', [['THE BOWED FAMILY','LA FAMIGLIA AD ARCO'],['THE BOW',"L'ARCHETTO"],['LEFT HAND','MANO SINISTRA']]],
+    ['winds', 'WINDS', 'LEGNI', [['HOW WOODWINDS WORK','COME FUNZIONANO I LEGNI'],['FLUTE','FLAUTO'],['OBOE','OBOE'],['CLARINET','CLARINETTO'],['SAXOPHONE','SASSOFONO'],['BASSOON','FAGOTTO'],['RECORDER & WHISTLE','FLAUTO DOLCE E FISCHIETTO']]],
+    ['brass', 'BRASS', 'OTTONI', [['HOW BRASS WORKS','COME FUNZIONANO GLI OTTONI'],['TRUMPET','TROMBA'],['TROMBONE','TROMBONE'],['FRENCH HORN','CORNO'],['TUBA & EUPHONIUM','TUBA ED EUFONIO']]],
+    ['freereed', 'FREE REED', 'ANCIA LIB.', [['FREE REED INSTRUMENTS','STRUMENTI A ANCIA LIBERA'],['HARMONICA','ARMONICA'],['CHROM. HARP','ARM. CROMATICA'],['DIDGERIDOO','DIDGERIDOO']]],
+    ['percussion', 'PERCUSSION', 'PERCUSSIONI', [['PERCUSSION','PERCUSSIONI'],['ANATOMY','ANATOMIA'],['TECHNIQUE','TECNICA'],['TUNING','ACCORDATURA'],['LATIN PERCUSSION','PERCUSSIONI LATINE'],['WORLD PERCUSSION','PERCUSSIONI DEL MONDO']]],
+    ['piano', 'PIANO', 'PIANOFORTE', [['ANATOMY','ANATOMIA'],['TECHNIQUE','TECNICA'],['PEDALS','PEDALI'],['CHORDS & TERMS','ACCORDI E TERMINI'],['BEYOND THE GRAND','OLTRE IL GRAN CODA']]],
+    ['voice', 'VOICE', 'VOCE', [['THE VOICE','LA VOCE'],['VOICE TYPES','TIPI DI VOCE'],['TECHNIQUE','TECNICA']]],
+    ['theremin', 'THEREMIN', 'THEREMIN', [['THEREMIN','THEREMIN']]]
+  ];
+  // Extra words for entries the names alone would not find. Both languages, so either one finds it.
+  var SG_ALIAS = { 'piano:2': 'pedal pedals sustain soft sostenuto damper', 'piano:4': 'rhodes wurlitzer electric piano synth keyboard organ upright', 'guitar:5': 'amplifier amplifiers amplificatore',
+    'guitar:6': 'pedals pedalboard distortion overdrive delay reverb chorus fuzz effetti pedali', 'bass:5': 'pedals pedalboard distortion compressor effetti pedali', 'bass:1': 'amplifier amplificatore cab',
+    'theory:5': 'chords chord progression accordi', 'theory:3': 'staff clef reading notes pentagramma', 'theory:1': 'bpm time signature rhythm', 'theory:8': 'dorian lydian phrygian mixolydian aeolian locrian ionian',
+    'guitar:2': 'tablature tabs', 'winds:4': 'sax alto tenor soprano baritone', 'brass:3': 'horn', 'freereed:1': 'blues harp mouth organ', 'voice:2': 'breath breathing warmup vibrato' };
+  function sgGo(tab, sec) {
+    setMode('tools'); enterTool('survivalguide');
+    setTimeout(function () {
+      try {
+        var b = document.querySelector('.tab-btn[data-tab="' + tab + '"]'); if (b) b.click();
+        if (sec != null) setTimeout(function () { var ps = document.querySelectorAll('#chPills .ch-pill'); if (ps[sec]) ps[sec].click(); }, 280);
+      } catch (e) {}
+    }, 200);
+  }
+  function chartsGo(inst, sub, mode) {
+    setMode('tools'); enterTool('guitarchords');
+    try {
+      switchChordScaleInstrument(inst);
+      if (sub) switchSubType(inst, sub);
+      if (mode === 'trills') wwSubMode('trills'); else if (inst === 'ww_flute' || inst === 'ww_clarinet') wwSubMode('notes');
+      if (mode !== 'trills' && typeof switchGuitarChordMode === 'function') switchGuitarChordMode('chords');
+    } catch (e) {}
+  }
+  function titleCase(s) { return String(s || '').split(' ').map(function (w) { return (w.length <= 2 || w === 'DADGAD' || /[0-9]/.test(w)) ? (w === 'DADGAD' ? 'DADGAD' : w) : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); }).join(' '); }
+  function plain(s) { return String(s || '').replace(/^[^A-Za-z0-9À-ɏ]+/, '').trim(); }
+  function bi(en, it) { return lang() === 'it' ? (it || en) : en; }
+  function deepIndex(add) {
+    var it = lang() === 'it';
+    var iconOf = function (k) { try { return FAV_META[k].icon || ''; } catch (e) { return ''; } };
+    var sfx = T('sr_sfx_charts', 'charts');
+    // Survival Guide: every tab and chapter.
+    var cnt = {};
+    SG.forEach(function (tb) { tb[3].forEach(function (c) { cnt[c[0]] = (cnt[c[0]] || 0) + 1; }); });
+    var gname = nameOf('tool:survivalguide', FAV_META['tool:survivalguide'] || {}), gic = iconOf('tool:survivalguide');
+    SG.forEach(function (tb) {
+      var tn = sentence(bi(tb[1], tb[2])), tother = norm(tb[1] + ' ' + tb[2]);
+      add('sg:' + tb[0], tn + ' ' + T('sr_guide_lc', 'guide'), gname, function () { sgGo(tb[0], null); }, gic, COL.tools, 'guide', tother + ' ' + (SG_ALIAS[tb[0]] || ''), 0);
+      tb[3].forEach(function (c, i) {
+        var nm = sentence(bi(c[0], c[1])), label = cnt[c[0]] > 1 ? nm + ' (' + tn + ')' : nm;
+        add('sg:' + tb[0] + ':' + i, label, gname + ' · ' + tn, function () { sgGo(tb[0], i); }, gic, COL.tools, 'guide', norm(c[0] + ' ' + c[1] + ' ' + tb[1] + ' ' + tb[2]) + ' ' + (SG_ALIAS[tb[0] + ':' + i] || ''), 0);
+      });
+    });
+    // Charts: every instrument, its sub-types, and the flute and clarinet trills.
+    var cic = iconOf('tool:guitarchords'), ctag = T('sr_in_charts', 'Charts');
+    Object.keys(CS_INSTRUMENTS).forEach(function (k) {
+      var d = CS_INSTRUMENTS[k], en = plain(d.label), itn = plain(d.labelIt || d.label);
+      var nm = sentence(bi(en, itn));
+      add('cs:' + k, nm + ' ' + sfx, ctag, function () { chartsGo(k); }, cic, COL.tools, 'tool', norm(en + ' ' + itn + ' fingering chords scales diagram'), 1);
+      (d.subs || []).forEach(function (s) {
+        if (!s.key || (d.subs.length < 2) || norm(s.label) === norm(en)) return;
+        var sn = sentence(bi(s.label, s.labelIt));
+        if (norm(sn).indexOf(norm(nm)) < 0) sn = sn + ' · ' + nm;
+        add('cs:' + k + ':' + s.key, sn + ' ' + sfx, ctag + ' · ' + nm, function () { chartsGo(k, s.key); }, cic, COL.tools, 'tool', norm(s.label + ' ' + (s.labelIt || '') + ' ' + en + ' ' + itn), 0);
+      });
+    });
+    [['ww_flute', 'Flute', 'Flauto'], ['ww_clarinet', 'Clarinet', 'Clarinetto']].forEach(function (x) {
+      add('cs:' + x[0] + ':trills', bi(x[1], x[2]) + ' ' + T('sr_trills', 'trills'), ctag, function () { chartsGo(x[0], null, 'trills'); }, cic, COL.tools, 'tool', 'trill trills trillo trilli fingering ' + norm(x[1] + ' ' + x[2]), 1);
+    });
+    // Piano tool tabs.
+    var pic = iconOf('tool:piano');
+    [['organ', 'Organ', 'Organo', 'hammond church pipe'], ['rhodes', 'Rhodes', 'Rhodes', 'electric piano wurlitzer e-piano tremolo vibe']].forEach(function (x) {
+      add('pt:' + x[0], bi(x[1], x[2]), nameOf('tool:piano', FAV_META['tool:piano'] || {}), function () { setMode('tools'); enterTool('piano'); switchPianoToolTab(x[0]); }, pic, COL.tools, 'tool', x[3], 1);
+    });
+    // Tuner instruments and tunings.
+    var ttag = sentence(T('mode_tuner', 'Tuner'));
+    FAMILIES.forEach(function (f) {
+      var fn = sentence(bi(f.name, f.it));
+      (f.items || []).forEach(function (id) {
+        var d = INSTRUMENTS[id]; if (!d) return;
+        var raw = bi(d.name, d.nameIt), nm = titleCase(raw), sub = bi(d.sub, d.subIt), label;
+        if (f.key === 'guitar') label = fn + ' · ' + nm + ' ' + T('sr_sfx_tuning', 'tuning');
+        else if (f.key === 'bass' || f.key === 'uke') label = (norm(raw) === norm(fn) || norm(raw) === 'ukulele' ? nm + ' ' + sub.toLowerCase() : nm) + ' ' + T('sr_sfx_tuning', 'tuning');
+        else if (f.key === 'voice') label = nm + ' ' + T('sr_voice_lc', 'voice') + ' ' + T('sr_sfx_tuner', 'tuner');
+        else label = nm + ' ' + T('sr_sfx_tuner', 'tuner');
+        add('tn:' + id, label, ttag + ' · ' + fn, function () { setMode('tuner'); selectFamily(f.key); selectInstrument(id); }, TABIC.tuner, COL.tuner, 'tab', norm(d.name + ' ' + (d.nameIt || '') + ' ' + (d.sub || '') + ' ' + f.name + ' ' + f.it + ' tuning accordatura'), f.key === 'guitar' ? 1 : 0);
+      });
+    });
+    // Scales.
+    var sic = iconOf('exercise:scales'), sname = nameOf('exercise:scales', FAV_META['exercise:scales'] || {});
+    Object.keys(SCALE_DEFS).forEach(function (id) {
+      var d = SCALE_DEFS[id], aka = (typeof SCALE_AKA !== 'undefined' && SCALE_AKA[id]) || [];
+      add('sc:' + id, sentence(bi(d.name, d.it)), sname, function () {
+        setMode('tools'); enterTool('scales');
+        try { scaleType = id; buildScaleTypePicker(); buildScaleRootPicker(); updateScale(); } catch (e) {}
+      }, sic, COL.tools, 'tool', norm(d.name + ' ' + d.it + ' ' + aka.join(' ')), 0);
+    });
+    // Metronome: grooves and time signatures.
+    var mtag = sentence(T('mode_metro', 'Metro'));
+    GROOVE_PRESETS.forEach(function (g) {
+      if (!g || !g.id) return;
+      add('gr:' + g.id, sentence(g.name), mtag + ' · ' + T('sr_grooves', 'Grooves'), function () { setMode('metronome'); setMetroClickMode('groove'); grooveLoadPreset(g.id); }, TABIC.metro, COL.metro, 'tab', norm((g.origin || '') + ' ' + (g.originIt || '') + ' ' + (g.cat || '') + ' groove rhythm pattern'), 0);
+    });
+    (typeof TS_PRESETS !== 'undefined' ? TS_PRESETS : []).forEach(function (p) {
+      add('ts:' + p[0] + '/' + p[1], p[0] + '/' + p[1], mtag + ' · ' + T('sr_ts', 'Time signature'), function () { setMode('metronome'); setTS(p[0], p[1]); }, TABIC.metro, COL.metro, 'tab', 'time signature meter ' + p[0] + ' ' + p[1], 0);
+    });
+    // Drum kit presets and chord progressions.
+    var dic = iconOf('tool:drumkit'), dtag = nameOf('tool:drumkit', FAV_META['tool:drumkit'] || {});
+    PRESET_CATS.forEach(function (c) {
+      (c.presets || []).forEach(function (p, i) {
+        if (!p || !p.name) return;
+        add('dk:' + c.label + ':' + i, bi(p.name, p.nameIt), dtag + ' · ' + sentence(bi(c.label, c.labelIt)), function () { setMode('tools'); enterTool('drumkit'); loadPreset(p); }, dic, COL.tools, 'tool', norm((p.name || '') + ' ' + (p.nameIt || '') + ' ' + c.label + ' beat preset'), 0);
+      });
+    });
+    var pgic = iconOf('tool:progression'), pgtag = nameOf('tool:progression', FAV_META['tool:progression'] || {});
+    PROG_PRESETS.forEach(function (p) {
+      if (!p || !p.id || p.id === 'empty') return;
+      add('pg:' + p.id, p.label, pgtag + ' · ' + sentence(p.cat), function () { setMode('tools'); enterTool('progression'); progLoadPreset(p.id); }, pgic, COL.tools, 'tool', norm((p.desc || '') + ' ' + (p.cat || '') + ' chord changes progression'), 0);
+    });
+    // Voice types.
+    var vic = iconOf('tool:vocalrange'), vtag = nameOf('tool:vocalrange', FAV_META['tool:vocalrange'] || {});
+    (VR_VOICE_TYPES || []).concat(typeof VR_EXTENDED_TYPES !== 'undefined' ? VR_EXTENDED_TYPES : []).forEach(function (v) {
+      if (!v || !v.id) return;
+      add('vr:' + v.id, bi(v.name, v.nameIt), vtag, function () { setMode('tools'); enterTool('vocalrange'); vrSetTab('reference'); setTimeout(function () { try { vrToggleRefCard(v.id); } catch (e) {} }, 200); }, vic, COL.tools, 'tool', norm(v.name + ' ' + (v.nameIt || '') + ' voice type singer range'), 0);
+    });
+  }
+
+
   var _index = null, _indexLang = '';
   function index() {
     if (_index && _indexLang === lang()) return _index;
     var list = [];
-    function add(id, label, tag, launch, icon, col, kind) {
-      var al = ALIAS[id] || '';
-      list.push({ id: id, label: label, tag: tag, kind: kind || 'tool', launch: launch, icon: icon || '', col: col || 'var(--accent)', hay: norm(label), lw: norm(label).split(/[^a-z0-9]+/).filter(Boolean), aw: norm(al).split(/[^a-z0-9]+/).filter(Boolean) });
+    var _dk = {};
+    function add(id, label, tag, launch, icon, col, kind, alias, pri) {
+      if (_dk[label + '|' + tag]) return; _dk[label + '|' + tag] = 1;
+      var al = (ALIAS[id] || '') + ' ' + (alias || '');
+      list.push({ id: id, label: label, tag: tag, kind: kind || 'tool', pri: pri == null ? 2 : pri, launch: launch, icon: icon || '', col: col || 'var(--accent)', hay: norm(label), lw: norm(label).split(/[^a-z0-9]+/).filter(Boolean), aw: norm(al).split(/[^a-z0-9]+/).filter(Boolean) });
     }
     add('tuner', sentence(T('mode_tuner', 'Tuner')), T('ss_t_tab', 'Tab'), function () { setMode('tuner'); }, TABIC.tuner, COL.tuner, 'tab');
     add('metro', sentence(T('mode_metro', 'Metro')), T('ss_t_tab', 'Tab'), function () { setMode('metronome'); }, TABIC.metro, COL.metro, 'tab');
@@ -141899,26 +142040,84 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
         add(k, nameOf(k, m), typeTag(m), function () { m.launch(); }, m.icon, m.type === 'EXERCISE' ? COL.train : COL.tools, m.type === 'EXERCISE' ? 'train' : 'tool');
       });
     } catch (e) {}
+    try { deepIndex(add); } catch (e) { try { console.warn('deep index', e); } catch (e2) {} }
+    var seen = {};
+    list.forEach(function (x) { seen[x.label] = (seen[x.label] || 0) + 1; });
+    list.forEach(function (x) { if (seen[x.label] > 1) { x.label = x.label + ' (' + x.tag.split(' · ')[0] + ')'; x.hay = norm(x.label); x.lw = x.hay.split(/[^a-z0-9]+/).filter(Boolean); } });
     _index = list; _indexLang = lang();
     return list;
   }
-  function search(q, n) {
+  // Words people type that the screens call something else. Both directions, English and Italian.
+  var SYN = {
+    sax: ['saxophone', 'sassofono'], saxofono: ['saxophone', 'sassofono'], sassofono: ['saxophone'], keyboard: ['piano', 'keys'], keys: ['piano', 'keyboard'], tastiera: ['piano', 'fretboard'],
+    fiddle: ['violin'], ukelele: ['ukulele'], uke: ['ukulele'], horn: ['french horn', 'trumpet'], drum: ['drums', 'kit'], drums: ['drum', 'kit', 'percussion'], batteria: ['drums', 'kit'],
+    pedal: ['pedals', 'pedali'], pedals: ['pedal', 'effects'], effect: ['effects'], fx: ['effects'], vocals: ['voice', 'vocal'], singing: ['sing', 'voice'], singer: ['voice', 'vocal'], canto: ['sing', 'voice'],
+    click: ['metronome'], bpm: ['metronome', 'tempo'], beat: ['groove', 'metronome'], rhythm: ['groove', 'metronome'], tune: ['tuner', 'tuning'], tuning: ['tuner'], intonare: ['tuner'],
+    fret: ['fretboard'], amp: ['amplifier', 'amps'], amps: ['amp', 'amplifier'], harp: ['arpa'], arpa: ['harp'], chords: ['chord', 'accordi'], chord: ['accordi'], scale: ['scales', 'scala'],
+    mode: ['modes'], jam: ['progression'], changes: ['progression'], 'e-piano': ['rhodes'], epiano: ['rhodes'], wurli: ['rhodes'], flauto: ['flute'], tromba: ['trumpet'], chitarra: ['guitar'], basso: ['bass'],
+    violino: ['violin'], voce: ['voice'], theory: ['theory', 'teoria'], teoria: ['theory'], help: ['guide'], learn: ['guide', 'theory']
+  };
+  // Edit distance with swaps of neighbors counting as one mistake. Gives up early.
+  function lev(a, b, max) {
+    var la = a.length, lb = b.length;
+    if (Math.abs(la - lb) > max) return max + 1;
+    var prev2 = null, prev = [], cur, i, j;
+    for (j = 0; j <= lb; j++) prev[j] = j;
+    for (i = 1; i <= la; i++) {
+      cur = [i]; var rowMin = i;
+      for (j = 1; j <= lb; j++) {
+        var c = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+        var v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + c);
+        if (i > 1 && j > 1 && a.charCodeAt(i - 1) === b.charCodeAt(j - 2) && a.charCodeAt(i - 2) === b.charCodeAt(j - 1)) v = Math.min(v, prev2[j - 2] + 1);
+        cur[j] = v; if (v < rowMin) rowMin = v;
+      }
+      if (rowMin > max) return max + 1;
+      prev2 = prev; prev = cur;
+    }
+    return prev[lb];
+  }
+  function tokScore(it, tk) {
+    if (it.hay.indexOf(tk) === 0) return 100;
+    var i, w;
+    if (it.lw.indexOf(tk) > -1) return 92;
+    for (i = 0; i < it.lw.length; i++) if (it.lw[i].indexOf(tk) === 0) return 80;
+    for (i = 0; i < it.aw.length; i++) if (it.aw[i].indexOf(tk) === 0) return 60;
+    if (tk.length > 3 && it.hay.indexOf(tk) > -1) return 30;
+    if (tk.length > 3) { var all = it.lw.concat(it.aw); for (i = 0; i < all.length; i++) if (all[i].indexOf(tk) > -1) return 15; }
+    return 0;
+  }
+  function fuzzyScore(it, tk) {
+    if (tk.length < 4) return 0;
+    var max = tk.length >= 7 ? 2 : 1, all = it.lw.concat(it.aw), i, w;
+    for (i = 0; i < all.length; i++) {
+      w = all[i];
+      if (w.length < 3) continue;
+      if (lev(tk, w, max) <= max) return 12;
+      if (tk.length >= 5 && w.length > tk.length && lev(tk, w.slice(0, tk.length), 1) <= 1) return 9;
+    }
+    return 0;
+  }
+  function search(q, n) { var r = searchPass(q, n, false); return r.length < 3 ? searchPass(q, n, true) : r; }
+  function searchPass(q, n, fz) {
     var toks = norm(q).split(/\s+/).filter(Boolean);
     if (!toks.length) return [];
-    var out = [];
+    var out = [], alts = toks.map(function (tk) { return SYN[tk] || []; });
     index().forEach(function (it) {
       var total = 0;
       for (var i = 0; i < toks.length; i++) {
-        var tk = toks[i], s = 0;
-        if (it.hay.indexOf(tk) === 0) s = 100;
-        else if (it.lw.some(function (w) { return w.indexOf(tk) === 0; })) s = 80;
-        else if (it.aw.some(function (w) { return w.indexOf(tk) === 0; })) s = 60;
-        else if (it.hay.indexOf(tk) > -1) s = 30;
-        else if (tk.length > 2 && it.lw.concat(it.aw).some(function (w) { return w.indexOf(tk) > -1; })) s = 15;
+        var tk = toks[i], s = tokScore(it, tk);
+        if (!s) {
+          var al = alts[i];
+          for (var k = 0; k < al.length && !s; k++) {
+            if (al[k].indexOf(' ') > -1) s = it.hay.indexOf(al[k]) > -1 ? 50 : 0;
+            else s = Math.round(tokScore(it, al[k]) * 0.8);
+          }
+        }
+        if (!s && fz) s = fuzzyScore(it, tk);
         if (!s) return;
         total += s;
       }
-      out.push({ it: it, s: total });
+      out.push({ it: it, s: total + it.pri * 7 - it.label.length * 0.08 });
     });
     out.sort(function (x, y) { return y.s - x.s || x.it.label.localeCompare(y.it.label); });
     return out.slice(0, n || 8).map(function (x) { return x.it; });
@@ -142181,9 +142380,9 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     srHit.hidden = true; srBody.classList.remove('sr-q');
     srBody.innerHTML = h; srSel = -1; srBody.scrollTop = 0; fit(!srOpen);
   }
-  var KIND_LABEL = function (k) { return k === 'tool' ? sentence(T('mode_tools', 'Tools')) : k === 'train' ? sentence(T('mode_train', 'Train')) : T('sr_tabs', 'Tabs'); };
+  var KIND_LABEL = function (k) { return k === 'guide' ? T('sr_guide', 'Guide') : k === 'tool' ? sentence(T('mode_tools', 'Tools')) : k === 'train' ? sentence(T('mode_train', 'Train')) : T('sr_tabs', 'Tabs'); };
   function renderResults(q, keepFilter) {
-    if (!keepFilter) { srAll = search(q, 12); srFilter = 'all'; }
+    if (!keepFilter) { srAll = search(q, 14); srFilter = 'all'; }
     var r = srFilter === 'all' ? srAll : srAll.filter(function (x) { return x.kind === srFilter; });
     srList = r; srSel = r.length ? 0 : -1;
     var h = '';
@@ -142216,7 +142415,9 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     if (!instant && prev) { srBody.style.height = prev + 'px'; void srBody.offsetHeight; srBody.classList.remove('nt'); }
     srBody.style.height = h + 'px';
     if (instant) { void srBody.offsetHeight; srBody.classList.remove('nt'); }
+    fade();
   }
+  function fade() { if (!srBody) return; srBody.classList.toggle('more', srBody.scrollHeight - srBody.scrollTop - srBody.clientHeight > 6); }
   // One highlight slides between rows, so moving the selection feels like one object moving.
   function paintSel(snap, nav) {
     var rows = srBody.querySelectorAll('.sr-r'), hlEl = srBody.querySelector('.sr-hl');
@@ -142293,6 +142494,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     srClear.addEventListener('click', function () { srIn.value = ''; srQ = ''; srClear.classList.remove('on'); srPh.classList.remove('gone'); renderEmpty(); try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } });
     srHit.addEventListener('click', function () { pick(srList[srSel > -1 ? srSel : 0]); });
     sr.querySelector('.sr-bd').addEventListener('click', function () { closeSearch(); });
+    srBody.addEventListener('scroll', fade, { passive: true });
     srBody.addEventListener('pointerdown', function (e) {
       var b = e.target.closest && e.target.closest('.sr-r'); if (!b) return;
       var i = +b.getAttribute('data-i'); if (i !== srSel) { srSel = i; paintSel(); }
