@@ -28828,22 +28828,49 @@ html.hv2.hv-compact #appHeader.header--module ~ .session-bar .session-stamp { to
 .mode-toggle { border-top-left-radius: 26px !important; border-top-right-radius: 26px !important; border-top: 1px solid color-mix(in srgb, var(--accent) 26%, transparent) !important; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, var(--bg-1)), var(--bg-0)) !important; box-shadow: 0 -10px 30px -8px rgba(0,0,0,.7) !important; padding-left: 8px !important; padding-right: 8px !important; gap: 2px !important; }
 .mode-btn { border-radius: 18px !important; }
 .mode-btn.active { background: color-mix(in srgb, currentColor 10%, transparent) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 28%, transparent) !important; }
-.mode-btn.active::before { display: none !important; }
-.mode-btn.active::after { background: radial-gradient(ellipse 90% 120% at 50% -10%, color-mix(in srgb, currentColor 24%, transparent) 0%, transparent 100%) !important; }
+.mode-btn.active::before { display: block !important; left: 24% !important; right: 24% !important; top: 0 !important; height: 2px !important; opacity: 1 !important; border-radius: 0 0 2px 2px !important; box-shadow: 0 0 10px currentColor, 0 0 22px color-mix(in srgb, currentColor 45%, transparent) !important; }
+.mode-btn.active::after { display: block !important; content: '' !important; inset: 0 !important; border-radius: inherit !important; background: radial-gradient(ellipse 80% 130% at 50% -8%, color-mix(in srgb, currentColor 42%, transparent) 0%, color-mix(in srgb, currentColor 14%, transparent) 45%, transparent 85%) !important; -webkit-mask: none !important; mask: none !important; }
 body.light .mode-toggle { background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(246,250,252,.74)) !important; border-top: 1px solid rgba(255,255,255,.95) !important; box-shadow: 0 -8px 28px -10px rgba(40,60,80,.22), inset 0 1px 0 rgba(255,255,255,.9) !important; }
-body.light .mode-btn.active { background: color-mix(in srgb, currentColor 12%, rgba(255,255,255,.6)) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 26%, transparent), 0 2px 8px -2px color-mix(in srgb, currentColor 30%, transparent) !important; }
+body.light .mode-btn.active::before { background: var(--accent-vivid, currentColor) !important; box-shadow: 0 1px 8px color-mix(in srgb, var(--accent-vivid, currentColor) 55%, transparent) !important; }
+body.light .mode-btn.active::after { display: block !important; content: '' !important; background: radial-gradient(ellipse 80% 130% at 50% -8%, color-mix(in srgb, var(--accent-bright, currentColor) 38%, transparent) 0%, color-mix(in srgb, var(--accent-bright, currentColor) 12%, transparent) 50%, transparent 90%) !important; }
+body.light .mode-btn.active { background: linear-gradient(180deg, color-mix(in srgb, var(--accent-bright, currentColor) 22%, rgba(255,255,255,.7)), color-mix(in srgb, var(--accent-bright, currentColor) 8%, rgba(255,255,255,.5))) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 26%, transparent), 0 2px 8px -2px color-mix(in srgb, currentColor 30%, transparent) !important; }
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   body.light .mode-toggle { -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6); }
 }
 
-/* card and folder alignment */
+/* ===== one surface language for every layer ===== */
 .card, .practice-card-btn { border-radius: 22px !important; }
 body:not(.light) .card, body:not(.light) .practice-card-btn { box-shadow: var(--shadow-card), inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent) !important; }
-body.light .card, body.light .practice-card-btn { background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.62)) !important; border: 1px solid rgba(255,255,255,.9) !important; box-shadow: 0 8px 26px -12px rgba(40,60,90,.22), inset 0 1px 0 rgba(255,255,255,.95) !important; }
-@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  body.light .practice-card-btn { -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
+body:not(.light) :is(.settings-modal-content, .progress-modal-content, .help-modal-content, .vr-modal-sheet, .mq-sheet, .fav-sheet, .nc-sheet-inner, .cs-picker-sheet, .rc-cat-sheet, .prog-preset-modal-sheet, .prog-metro-sheet, .mq-daily-pop, .gcc-zoom-modal, .riff-popup-card, .thmn-demo-popup-card, .chd-clefpop-inner, .pr-popup, .tg-popup, .ts-popup, .prog-voicing-popup, .gs-pulse-popover, .tuner-refpitch-popover, .tuner-capo-pop, .ramp-sound-pop) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 90%, transparent), color-mix(in srgb, var(--bg-1) 93%, transparent)) !important;
+  border-color: color-mix(in srgb, #fff 11%, transparent) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,.55), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--accent) 6%, transparent) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5);
 }
-body.light #searchSheet .sr-card { background: rgba(255,255,255,.8) !important; border-color: rgba(255,255,255,.9) !important; }
+.settings-modal-content, .progress-modal-content, .help-modal-content { border-radius: 24px !important; }
+body.light .card, body.light .practice-card-btn {
+  background: var(--glass-sheen), var(--glass-fill-card) !important;
+  border: 1px solid var(--glass-edge) !important;
+  box-shadow: var(--glass-lift-sm) !important;
+}
+body.light :is(.settings-modal-content, .progress-modal-content, .help-modal-content, .vr-modal-sheet, .mq-sheet, .fav-sheet, .nc-sheet-inner, .cs-picker-sheet, .rc-cat-sheet, .prog-preset-modal-sheet, .prog-metro-sheet, .mq-daily-pop, .gcc-zoom-modal, .riff-popup-card, .thmn-demo-popup-card, .chd-clefpop-inner, .pr-popup, .tg-popup, .ts-popup, .prog-voicing-popup, .gs-pulse-popover, .tuner-refpitch-popover, .tuner-capo-pop, .ramp-sound-pop) {
+  background: var(--glass-sheen), color-mix(in srgb, #fff 70%, transparent) !important;
+  border: 1px solid var(--glass-edge) !important;
+  box-shadow: var(--glass-lift) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(1.8); backdrop-filter: blur(26px) saturate(1.8);
+}
+body.light .settings-modal, body.light .progress-modal, body.light .help-modal { background: color-mix(in srgb, var(--bg-0) 38%, rgba(30,45,80,.22)) !important; -webkit-backdrop-filter: blur(10px) saturate(1.3); backdrop-filter: blur(10px) saturate(1.3); }
+body.light #searchSheet .sr-card { background: var(--glass-sheen), color-mix(in srgb, #fff 72%, transparent) !important; border-color: var(--glass-edge) !important; }
+body.light :is(.pm-level-block, .sm-toggle-chip:not(.active), .lang-chip:not(.active), .sm-goal-chip:not(.active):not(.on)) { background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.44)) !important; border: 1px solid rgba(255,255,255,.9) !important; box-shadow: inset 0 1px 0 #fff, 0 2px 8px -3px color-mix(in srgb, var(--accent) 22%, transparent) !important; }
+body:not(.light) :is(.pm-level-block, .sm-toggle-chip:not(.active), .lang-chip:not(.active), .sm-goal-chip:not(.active):not(.on)) { background: color-mix(in srgb, #fff 4.5%, var(--panel)) !important; box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent) !important; }
+.pm-level-block { border-radius: 18px !important; }
+.sm-toggle-chip { border-radius: 14px !important; }
+.pm-ach-cat-header { border-radius: 14px !important; }
+.pm-ach-cat-header.open { border-radius: 14px 14px 0 0 !important; }
+body.light .pm-ach-cat-header { background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.44)) !important; border-color: rgba(255,255,255,.9) !important; box-shadow: inset 0 1px 0 #fff !important; }
+.pm-graph-nav-btn { border-radius: 9px !important; }
+.mode-btn { font-size: 9px !important; }
+body.lang-it .mode-btn { font-size: 7.5px !important; }
 </style>
 </head>
 <body>
