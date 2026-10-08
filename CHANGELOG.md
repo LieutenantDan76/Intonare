@@ -50,6 +50,11 @@ A human-readable record of what changed, when,
 - Search results now use each screen's own title, such as Chord ear training and Interval reference, and groove, drum and chord change twins read like Samba groove, Samba drums and Samba changes.
 - Search works in Italian and with Do Re Mi note names. Italian search was silently off, and the same bug left the streak chip count, the calendar open days and the Resume card in the streak sheet empty. They now read your saved data.
 - Closing the search card no longer leaves the page stuck, and short words like "re" no longer rank Reggae above Drop Re tuning.
+- Search card on a touch screen: there is no sliding highlight any more, since a tap opens the row. It stays for mouse and keyboard on a computer.
+- Module titles are now in title case, such as Pitch Match and Chord Ear Training, with small words like and, or and of left lowercase. Italian titles keep sentence case. Search results use the same names.
+- Collapsing header in modules: the title lifts away like on the main tabs, so it no longer hangs below the bar. The bar now fades out softly instead of ending in a hard line, the timer sits right under the buttons, and the small screen name in the collapsed bar is gone.
+- Entering a module: the streak and search buttons leave at once instead of fading under the Back button.
+- Metronome tempo wheels only react to sideways swipes. A vertical swipe scrolls the page and leaves the tempo alone.
 - Fixed the header buttons snapping when you enter a module from the chooser or open a sheet. The pinned header now holds still while the page locks.
 - Folder screens now show a breadcrumb (Home, then the tab) under the title. The Back button and the level chip now take the color of the tab you are in.
 - Collapsing header: the button row and the session bar stay pinned while you scroll, and the row no longer jumps when the collapse starts. The big title lifts away from the first pixel of scroll, a bar settles in behind the pinned rows, and the screen name slides up next to the session timer, so the bar always shows where you are. It reverses near the top. Module screens keep their title in the row.

@@ -11704,6 +11704,7 @@ body.sg-open #toolSurvivalGuide{
     margin: 3px 0 5px;
     opacity: 0.4;
     transition: opacity 0.2s;
+    touch-action: pan-y;
   }
   .metro-screen-inner.bpm-scrubbing .bpm-wheel-wrap { opacity: calc(0.4 + 0.6 * var(--bpm-glow, 1)); transition: none; }
   .bpm-wheel-canvas { display: block; border-radius: 4px; }
@@ -11801,7 +11802,7 @@ body.sg-open #toolSurvivalGuide{
   .groove-screen-right-col { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; width: 100px; }
   .groove-screen-bpm-row { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
   /* Tiny wheel below BPM — purely a visual accent + swipe affordance */
-  .groove-wheel-col { display: flex; justify-content: flex-end; align-items: center; opacity: 0.4; transition: opacity 0.2s; }
+  .groove-wheel-col { display: flex; justify-content: flex-end; align-items: center; opacity: 0.4; transition: opacity 0.2s; touch-action: pan-y; }
   .metro-screen-inner.bpm-scrubbing .groove-wheel-col { opacity: calc(0.4 + 0.6 * var(--bpm-glow, 1)); transition: none; }
   .groove-bpm-adj {
     background: none; border: none; cursor: pointer;
@@ -28602,25 +28603,26 @@ body.light #streakSheet .ss-d.p.t { color: #fff; }
 html.hv2.hv-collapse #appHeader { z-index: 500; }
 html.hv2.hv-collapse #appHeader::before {
   content: ''; position: absolute; left: -7%; right: -7%; z-index: -1; pointer-events: none;
-  top: calc(-1 * var(--hv-pin, 60px) - 40px); height: calc(var(--hv-pin, 60px) + 40px + var(--hv-h, 34px) + 34px);
+  top: calc(-1 * var(--hv-pin, 60px) - 40px); height: calc(var(--hv-pin, 60px) + 40px + var(--hv-h, 34px) + 64px);
   background: color-mix(in srgb, var(--accent) 7%, var(--bg-0));
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 22%, transparent), 0 14px 22px -16px rgba(0,0,0,.55);
+  /* Solid behind the buttons and the timer, then a soft fade into the page instead of a hard edge. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
   opacity: 0; transform: translateY(-10px); will-change: transform, opacity;
   transition: opacity .3s ease, transform .45s cubic-bezier(.2,.8,.2,1) !important;
 }
-body.light #appHeader::before { box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 24%, transparent), 0 12px 20px -16px rgba(0,0,0,.2); }
 html.hv2.hv-collapse.hv-compact #appHeader::before { opacity: 1; transform: none; }
-html.hv2.hv-collapse #appHeader:not(.header--module) #appLogo,
-html.hv2.hv-collapse #appHeader:not(.header--module) #headerTagline {
+html.hv2.hv-collapse #appHeader #appLogo,
+html.hv2.hv-collapse #appHeader #headerTagline {
   will-change: transform, opacity;
   transition: opacity .24s ease, transform .42s cubic-bezier(.2,.8,.2,1) !important;
 }
-html.hv2.hv-collapse.hv-compact #appHeader:not(.header--module) #appLogo,
-html.hv2.hv-collapse.hv-compact #appHeader:not(.header--module) #headerTagline {
+html.hv2.hv-collapse.hv-compact #appHeader #appLogo,
+html.hv2.hv-collapse.hv-compact #appHeader #headerTagline {
   opacity: 0 !important; transform: translateY(-30px) !important; pointer-events: none;
 }
-/* The screen name that takes the title's place in the bar. */
-.hvs-pt {
+/* No screen name in the collapsed bar: the lifted title is enough, and a second name only fights the collapse. */
+.hvs-pt { display: none !important; }
+.hvs-pt-off {
   position: absolute; left: 0; top: 6px; max-width: 58%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font: 700 10px 'JetBrains Mono','GlyphFix',monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
   opacity: 0; transform: translateY(10px); pointer-events: none; z-index: 5; will-change: transform, opacity;
@@ -28747,6 +28749,8 @@ body.light #searchSheet .sr-card::before { background: linear-gradient(170deg, r
 #searchSheet .sr-g { font: 500 11.5px 'Inter',system-ui,sans-serif; color: color-mix(in srgb, var(--text) 50%, transparent); }
 #searchSheet .sr-key { flex: none; display: none; align-items: center; justify-content: center; width: 30px; height: 24px; border-radius: 7px; color: color-mix(in srgb, var(--text) 70%, transparent);
   background: color-mix(in srgb, var(--text) 12%, transparent); box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--text) 16%, transparent); opacity: 0; transition: opacity .15s ease !important; }
+/* Touch screens: a tap opens the row, so there is no "selected" row to show. */
+@media (hover: none) { #searchSheet .sr-hl { display: none; } }
 @media (hover: hover) { #searchSheet .sr-key { display: flex; } #searchSheet .sr-r.sel .sr-key { opacity: 1; } }
 #searchSheet .sr-fl { display: flex; gap: 6px; overflow-x: auto; flex: none; padding: 2px 2px 0; scrollbar-width: none; }
 #searchSheet .sr-fl::-webkit-scrollbar { display: none; }
@@ -28796,6 +28800,9 @@ body.light #searchSheet .sr-hit { color: color-mix(in srgb, var(--c) 66%, var(--
   #searchSheet .sr-card, #searchSheet.on .sr-card { transform: none; transition: opacity .15s linear !important; }
   #searchSheet * { animation: none !important; }
 }
+
+/* The streak chip and search button leave at once when a Back button takes their slot, so the two never overlap mid-fade. */
+body.in-module #hvLeft, body.in-section-back #hvLeft { opacity: 0 !important; visibility: hidden !important; transition: none !important; pointer-events: none !important; }
 </style>
 </head>
 <body>
@@ -45423,6 +45430,7 @@ function adjBPM(delta) {
   }
 
   let _touchId = null; // track active touch identifier to ignore stray touches
+  let _swipeStartY = 0;
 
   function _swipeStart(e) {
     // Block re-entry: if we're already in a gesture, ignore new starts entirely
@@ -45437,7 +45445,7 @@ function adjBPM(delta) {
     _stopInertia();
     const touch = e.touches ? e.touches[0] : e;
     if (e.touches) _touchId = touch.identifier;
-    _swipeStartX   = touch.clientX;
+    _swipeStartX   = touch.clientX; _swipeStartY = touch.clientY;
     _swipeBpmStart = bpm;
     _lastX = touch.clientX; _lastT = performance.now();
     _swiping = false;
@@ -45460,7 +45468,12 @@ function adjBPM(delta) {
     const touch = _getTrackedTouch(e);
     if (!touch) return;
     const dx = touch.clientX - _swipeStartX;
-    if (!_swiping && Math.abs(dx) > 5) {
+    if (!_swiping) {
+      // Decide the direction once. A vertical swipe is the page scrolling, so the wheel lets go of it.
+      const ady = Math.abs(touch.clientY - _swipeStartY);
+      if (ady > 6 && ady > Math.abs(dx)) { _swipeStartX = null; _touchId = null; return; }
+    }
+    if (!_swiping && Math.abs(dx) > 6) {
       _swiping = true;
       _lastTickBpm = bpm;
       _velSamples = [];
@@ -141470,11 +141483,27 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   window._hv2Apply = apply;
 
   // Sentence case. Left alone when the title holds markup or an ampersand.
-  window._hv2Sentence = function (s) {
+  // Title case: every word capitalized except small joining words (and, or, of, the...), which
+  // stay lowercase unless they open or close the title. Italian keeps sentence case, as Italian does.
+  var _SMALL = { a: 1, an: 1, and: 1, as: 1, at: 1, but: 1, by: 1, for: 1, in: 1, nor: 1, of: 1, on: 1, or: 1, per: 1, the: 1, to: 1, vs: 1, via: 1 };
+  var _ACR = { bpm: 'BPM', midi: 'MIDI', eq: 'EQ', fx: 'FX', dadgad: 'DADGAD' };
+  window._hv2TitleCase = function (s) {
     s = String(s == null ? '' : s);
-    if (/[&<]/.test(s)) return s;
-    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    if (/</.test(s)) return s;
+    var it = false; try { it = typeof progState !== 'undefined' && progState.lang === 'it'; } catch (e) {}
+    if (it) return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    var words = s.toLowerCase().split(' ');
+    return words.map(function (w, i) {
+      if (!w) return w;
+      var edge = i === 0 || i === words.length - 1;
+      return w.split('-').map(function (p, j) {
+        if (_ACR[p]) return _ACR[p];
+        if (!p || (_SMALL[p] && !(edge && j === 0) && !(j > 0 && false))) return p;
+        return p.charAt(0).toUpperCase() + p.slice(1);
+      }).join('-');
+    }).join(' ');
   };
+  window._hv2Sentence = window._hv2TitleCase;
 
   // Title always wins the row. The subtitle sits beside it only if it fits whole.
   // If not, it moves under the session bar, left of the timer; if that is too
@@ -141530,10 +141559,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
 
   // Sentence case for plain-text titles (folder and hub names). The module path
   // injects HTML and keeps its own guard.
-  window._hv2SentenceText = function (s) {
-    s = String(s == null ? '' : s);
-    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-  };
+  window._hv2SentenceText = function (s) { return window._hv2TitleCase(s); };
 
   // After any header change: re-measure where content starts, and redraw the chip line.
   window._hv2After = function () {
@@ -141865,8 +141891,10 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   };
   function nameOf(key, meta) {
     var o = TOOL_NAMES[key];
-    if (o) return lang() === 'it' ? o[1] : o[0];
-    return sentence(lang() === 'it' ? (meta.labelIt || meta.label) : meta.label);
+    // The same title case the screen's own header uses (Italian stays sentence case).
+    var tc = window._hv2TitleCase || sentence;
+    if (o) return tc(lang() === 'it' ? o[1] : o[0]);
+    return tc(lang() === 'it' ? (meta.labelIt || meta.label) : meta.label);
   }
   var ALIAS = {
     tuner: 'tuner tune pitch intonation accordatore accorda note',
@@ -142522,6 +142550,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     sr.querySelector('.sr-bd').addEventListener('click', function () { closeSearch(); });
     srBody.addEventListener('scroll', fade, { passive: true });
     srBody.addEventListener('pointerdown', function (e) {
+      if (e.pointerType && e.pointerType !== 'mouse') return; /* touch scrolls the list; the highlight must not jump */
       var b = e.target.closest && e.target.closest('.sr-r'); if (!b) return;
       var i = +b.getAttribute('data-i'); if (i !== srSel) { srSel = i; paintSel(); }
     });
