@@ -4,6 +4,11 @@ A human-readable record of what changed, when,
 
 ## v1.0.2: Achievements that unlock when they should
 
+- First launch from the module selector is smoother. Every embedded font face now loads before you pick a module, background reminder setup waits for idle, and the overlay scan no longer reruns each time a module builds its screen.
+- Motion now speaks one language. 61 different easing curves collapse to five (ease out, sheet, standard, exit, spring), and 24 different press sizes collapse to three.
+- Sheets and popups (settings, level, search, picker, quiz sheets) now share one open feel: same curve, similar length, no overshoot.
+- Opening a module no longer stalls on hidden redraws. Launches skip work for tools that were not running, and the session bar waits for the screen to settle.
+- Light mode tab glows are tuned to even brightness across Metro and Train.
 - Light mode answer screens use real colors. Tonale's green, amber and red were near-black olive, brown and maroon, and the Target label disappeared. They are now vivid, and the label reads.
 - Chordle and Diadle tiles and legends, ear training answers, Music Quiz answers, Survival and Daily cards, and the Volume Meter zones lose their muddy tints in light mode.
 - Light mode status text (in tune, close, off) moves from dark olive, chocolate and maroon to a clear green, amber and red that still passes contrast.
