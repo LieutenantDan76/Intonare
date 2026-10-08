@@ -28610,6 +28610,17 @@ html.hv2.hv-collapse #appHeader::before {
   opacity: 0; transform: translateY(-10px); will-change: transform, opacity;
   transition: opacity .3s ease, transform .45s cubic-bezier(.2,.8,.2,1) !important;
 }
+/* Where the browser can blur what is behind, the bar is progressive blur instead: content gets
+   blurrier the nearer it is to the buttons, and there is no edge to see. */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  html.hv2.hv-collapse #appHeader::before {
+    height: calc(var(--hv-pin, 60px) + 40px + var(--hv-h, 34px) + 100px);
+    background: color-mix(in srgb, var(--bg-0) 55%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 90px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 90px), transparent);
+  }
+  body.light.hv2 #appHeader::before, html.hv2 body.light #appHeader::before { background: color-mix(in srgb, #fff 42%, transparent); }
+}
 html.hv2.hv-collapse.hv-compact #appHeader::before { opacity: 1; transform: none; }
 html.hv2.hv-collapse #appHeader #appLogo,
 html.hv2.hv-collapse #appHeader #headerTagline {
@@ -28803,6 +28814,36 @@ body.light #searchSheet .sr-hit { color: color-mix(in srgb, var(--c) 66%, var(--
 
 /* The streak chip and search button leave at once when a Back button takes their slot, so the two never overlap mid-fade. */
 body.in-module #hvLeft, body.in-section-back #hvLeft { opacity: 0 !important; visibility: hidden !important; transition: none !important; pointer-events: none !important; }
+
+/* Module screens: no subtitle (most only repeated the title), and the session timer takes the title row's right end. */
+html.hv2 #appHeader.header--module #headerTagline .hdr-mod-sub { display: none !important; }
+html.hv2 #appHeader.header--module #headerTagline { right: 104px; }
+html.hv2 #appHeader.header--module ~ .session-bar .session-stamp {
+  top: -27px; right: 16px; font-size: 10px; letter-spacing: .06em;
+  transition: opacity .4s ease, top .3s cubic-bezier(.2,.8,.2,1) !important;
+}
+html.hv2.hv-compact #appHeader.header--module ~ .session-bar .session-stamp { top: 6px; font-size: 9px; }
+
+/* tab bar dock */
+.mode-toggle { border-top-left-radius: 26px !important; border-top-right-radius: 26px !important; border-top: 1px solid color-mix(in srgb, var(--accent) 26%, transparent) !important; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, var(--bg-1)), var(--bg-0)) !important; box-shadow: 0 -10px 30px -8px rgba(0,0,0,.7) !important; padding-left: 8px !important; padding-right: 8px !important; gap: 2px !important; }
+.mode-btn { border-radius: 18px !important; }
+.mode-btn.active { background: color-mix(in srgb, currentColor 10%, transparent) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 28%, transparent) !important; }
+.mode-btn.active::before { display: none !important; }
+.mode-btn.active::after { background: radial-gradient(ellipse 90% 120% at 50% -10%, color-mix(in srgb, currentColor 24%, transparent) 0%, transparent 100%) !important; }
+body.light .mode-toggle { background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(246,250,252,.74)) !important; border-top: 1px solid rgba(255,255,255,.95) !important; box-shadow: 0 -8px 28px -10px rgba(40,60,80,.22), inset 0 1px 0 rgba(255,255,255,.9) !important; }
+body.light .mode-btn.active { background: color-mix(in srgb, currentColor 12%, rgba(255,255,255,.6)) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 26%, transparent), 0 2px 8px -2px color-mix(in srgb, currentColor 30%, transparent) !important; }
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  body.light .mode-toggle { -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6); }
+}
+
+/* card and folder alignment */
+.card, .practice-card-btn { border-radius: 22px !important; }
+body:not(.light) .card, body:not(.light) .practice-card-btn { box-shadow: var(--shadow-card), inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent) !important; }
+body.light .card, body.light .practice-card-btn { background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.62)) !important; border: 1px solid rgba(255,255,255,.9) !important; box-shadow: 0 8px 26px -12px rgba(40,60,90,.22), inset 0 1px 0 rgba(255,255,255,.95) !important; }
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  body.light .practice-card-btn { -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
+}
+body.light #searchSheet .sr-card { background: rgba(255,255,255,.8) !important; border-color: rgba(255,255,255,.9) !important; }
 </style>
 </head>
 <body>

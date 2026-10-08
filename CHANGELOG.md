@@ -4,6 +4,10 @@ A human-readable record of what changed, when,
 
 ## v1.0.2: Achievements that unlock when they should
 
+- Module headers lose their subtitles. The session timer now sits at the right end of the title row.
+- The collapsed header uses a soft blur and tint that fades out, instead of a hard colored bar.
+- The tab bar is now a rounded dock with a lifted pill on the active tab.
+- Light mode gets a frosted glass look on the tab bar, cards, and folders. Cards and folders share the same rounded corners in both themes.
 - I Have You Now did not unlock on a 0ms Tempo Lock round. The app shows the timing error rounded, but the unlock needed an exact zero, so a "0ms" on screen could still miss. It now unlocks on anything that rounds to 0ms. A 0 bpm miss in Tempo Guess counts as well, which it never did before.
 - Great Ears Kid could not be earned at all. The interval test now earns it: a perfect 10 out of 10 with every interval turned on (the ALL deck).
 - Flawless Victory only worked through the Notation Cards test. A perfect interval test on a deck of eight or more intervals now counts too, and so do a perfect Tónale run above Easy and a perfect Daily Quiz.
