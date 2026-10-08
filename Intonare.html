@@ -141756,11 +141756,12 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   var SEARCH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>';
   var PLAY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>';
 
-  function lang() { return (window.progState && progState.lang === 'it') ? 'it' : 'en'; }
+  function lang() { return (typeof progState !== 'undefined' && progState.lang === 'it') ? 'it' : 'en'; }
   function T(k, fb) { var v = (typeof t === 'function') ? t(k) : k; return (v && v !== k) ? v : fb; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function fmt(s, o) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] != null ? o[k] : m; }); }
-  function sentence(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(); }
+  function sentence(s) { s = String(s || '').replace(/İ/g, 'I'); return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase().replace(/i\u0307/g, 'i'); }
+  function capWords(s) { return String(s || '').toLowerCase().split(' ').map(function (w) { return /&/.test(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1); }).join(' '); }
   function norm(s) { s = String(s || '').toLowerCase(); try { s = s.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) {} return s; }
 
   /* ── Chip ───────────────────────────────────────────────────────────────── */
@@ -141800,7 +141801,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       var show = !isMod && !inFolder;
       w.classList.toggle('on', show);
       syncPinTitle();
-      var n = Math.max(1, (window.progState && progState.streak && progState.streak.count) || 1);
+      var n = Math.max(1, (typeof progState !== 'undefined' && progState.streak && progState.streak.count) || 1);
       var nEl = document.getElementById('hvStreakN');
       if (nEl && nEl.textContent !== String(n)) nEl.textContent = n;
       var d = document.getElementById('hvStreakD');
@@ -141848,15 +141849,19 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
 
   /* ── Data helpers ───────────────────────────────────────────────────────── */
   function dstr(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  function openSet() { var o = {}; ((window.progState && progState.openDays) || []).forEach(function (x) { o[x] = 1; }); return o; }
+  function openSet() { var o = {}; ((typeof progState !== 'undefined' && progState.openDays) || []).forEach(function (x) { o[x] = 1; }); return o; }
+  // The titles each screen shows in its own header, English and Italian.
   var TOOL_NAMES = {
-    'tool:tonal': ['Tonal center', 'Centro tonale'], 'tool:guitarchords': ['Chord charts', 'Diagrammi accordi'],
-    'tool:volume': ['Volume meter', 'Misuratore volume'], 'tool:cof': ['Circle of fifths', 'Circolo delle quinte'],
-    'tool:intervalref': ['Interval reference', 'Riferimento intervalli'], 'exercise:interval': ['Interval training', 'Allenamento intervalli'],
-    'exercise:chords': ['Chord ear', 'Orecchio accordi'], 'exercise:singsing': ['Pitch match', 'Intona la nota'], 'exercise:staffread': ['Staff notes', 'Note sul pentagramma'],
-    'exercise:relpitch': ['Relative pitch', 'Orecchio relativo'], 'tool:survivalguide': ['Survival Guide', 'Guida di sopravvivenza'], 'tool:guitarchords': ['Guitar chord charts', 'Diagrammi accordi chitarra'], 'tool:vocalrange': ['Vocal range', 'Estensione vocale'],
-    'tool:transpose': ['Transposer', 'Traspositore'], 'tool:rhythmcards': ['Rhythm cards', 'Carte ritmiche'],
-    'tool:survivalguide': ['Survival Guide', 'Guida di sopravvivenza'], 'tool:musicquiz': ['Music quiz', 'Quiz musicale']
+    'tool:piano': ['Piano', 'Pianoforte'], 'tool:tonal': ['Tonal center', 'Centro tonale'], 'tool:chords': ['Chords', 'Accordi'], 'tool:guitarchords': ['Charts', 'Diagrammi'],
+    'tool:progression': ['Progression', 'Progressione'], 'tool:drumkit': ['Drumkit', 'Batteria'], 'tool:cof': ['Circle of fifths', 'Cerchio delle quinte'],
+    'tool:intervalref': ['Interval reference', 'Intervalli'], 'tool:volume': ['Volume meter', 'Misuratore volume'], 'tool:transpose': ['Transposer', 'Trasposizione'],
+    'tool:vocalrange': ['Vocal range', 'Estensione vocale'], 'tool:theremin': ['Theremin', 'Theremin'], 'tool:rhythmcards': ['Rhythm cards', 'Carte ritmiche'],
+    'tool:survivalguide': ['Survival guide', 'Guida rapida'], 'tool:musicquiz': ['Music quiz', 'Quiz musicale'],
+    'exercise:tempo': ['Tempo lock', 'Stabilità ritmo'], 'exercise:tempoguess': ['Tempo guess', 'Indovina il tempo'], 'exercise:poly': ['Polyrhythm', 'Poliritmo'],
+    'exercise:rhythmread': ['Rhythm reading', 'Lettura ritmica'], 'exercise:interval': ['Interval training', 'Intervalli'], 'exercise:chords': ['Chord ear training', 'Riconoscimento accordi'],
+    'exercise:singsing': ['Pitch match', 'Intonazione'], 'exercise:notationcards': ['Notation cards', 'Carte di notazione'], 'exercise:staffread': ['Staff notes', 'Note sul pentagramma'],
+    'exercise:relpitch': ['Relative pitch', 'Intonazione relativa'], 'exercise:scales': ['Scales', 'Scale'], 'exercise:chordle': ['Chordle', 'Chordle'],
+    'exercise:tonale': ['Tónale', 'Tónale'], 'exercise:diadle': ['Diadle', 'Diadle'], 'exercise:roadtrip': ['Road trip', 'On the road']
   };
   function nameOf(key, meta) {
     var o = TOOL_NAMES[key];
@@ -141866,15 +141871,15 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   var ALIAS = {
     tuner: 'tuner tune pitch intonation accordatore accorda note',
     metro: 'metronome tempo bpm beat click metronomo battito',
-    'tool:piano': 'piano keyboard keys tastiera', 'tool:drumkit': 'drums drum kit batteria percussion',
-    'tool:cof': 'circle fifths keys quinte tonalita', 'tool:chords': 'chord chords accordi armonia harmony',
-    'tool:guitarchords': 'guitar chart diagram chitarra fingering', 'tool:progression': 'progression changes chord progressione armonia',
+    'tool:piano': 'piano keyboard keys tastiera', 'tool:drumkit': 'drums drum kit drumkit batteria percussion sequencer',
+    'tool:cof': 'circle fifths cerchio circolo quinte keys key signature tonalita', 'tool:chords': 'chord chords accordi armonia harmony',
+    'tool:guitarchords': 'guitar chord charts chart diagram diagrammi chitarra fingering fingerings', 'tool:progression': 'progression changes chord progressione armonia',
     'tool:vocalrange': 'voice singing voce range estensione canto', 'tool:transpose': 'transpose capo trasporta key',
     'tool:volume': 'volume db loudness decibel', 'tool:theremin': 'theremin glide', 'tool:rhythmcards': 'rhythm cards notation ritmo',
     'tool:tonal': 'tonal center drone key tonalita', 'tool:intervalref': 'intervals reference semitone intervallo',
     'tool:survivalguide': 'guide theory help learn teoria guida survival notation', 'tool:musicquiz': 'quiz trivia music test domande',
     'exercise:scales': 'scale scales modes major minor scala modi', 'exercise:interval': 'interval ear training intervalli orecchio',
-    'exercise:chords': 'chord ear chords accordi orecchio', 'exercise:tempo': 'tempo lock rhythm timing ritmo',
+    'exercise:chords': 'chord ear training chords accordi riconoscimento orecchio', 'exercise:tempo': 'tempo lock rhythm timing ritmo',
     'exercise:tempoguess': 'tempo guess bpm rhythm', 'exercise:poly': 'polyrhythm poly ritmi', 'exercise:rhythmread': 'rhythm reading ritmo lettura',
     'exercise:singsing': 'sing singing voice pitch canto', 'exercise:relpitch': 'relative pitch ear orecchio',
     'exercise:staffread': 'staff reading notes pentagramma lettura', 'exercise:notationcards': 'notation cards flashcards notazione'
@@ -141927,7 +141932,22 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       if (mode !== 'trills' && typeof switchGuitarChordMode === 'function') switchGuitarChordMode('chords');
     } catch (e) {}
   }
-  function titleCase(s) { return String(s || '').split(' ').map(function (w) { return (w.length <= 2 || w === 'DADGAD' || /[0-9]/.test(w)) ? (w === 'DADGAD' ? 'DADGAD' : w) : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); }).join(' '); }
+  function solf(label) {
+    if (!(typeof progState !== 'undefined' && progState.noteNaming === 'solfege') || typeof getDisplayNote !== 'function') return label;
+    return String(label).replace(/(^|[\s(·\/-])([A-G][#b♯♭]?)(?=$|[\s)·\/,.-])/g, function (m, pre, n) { return pre + getDisplayNote(n); });
+  }
+  var CAT_IT = { rock: 'Rock', blues: 'Blues', jazz: 'Jazz', soul: 'Soul', world: 'Mondo', classical: 'Classica', latin: 'Latina', electronic: 'Elettronica', odd: 'Tempi dispari', other: 'Altro' };
+  function catName(c) { return lang() === 'it' ? (CAT_IT[c] || sentence(c)) : (c === 'odd' ? 'Odd time' : sentence(c)); }
+  // English puts the kind last ("Flute charts"), Italian first ("Diagrammi flauto").
+  function kindName(base, sfx) { return lang() === 'it' ? sfx.charAt(0).toUpperCase() + sfx.slice(1) + ' ' + base.charAt(0).toLowerCase() + base.slice(1) : base + ' ' + sfx; }
+  function titleCase(s) {
+    var it = lang() === 'it';
+    return String(s || '').split(' ').map(function (w, i) {
+      if (w === 'DADGAD') return w;
+      if (w.length <= 2 || /[0-9]/.test(w)) return w;
+      return (i === 0 || !it) ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase();
+    }).join(' ');
+  }
   function plain(s) { return String(s || '').replace(/^[^A-Za-z0-9À-ɏ]+/, '').trim(); }
   function bi(en, it) { return lang() === 'it' ? (it || en) : en; }
   function deepIndex(add) {
@@ -141940,8 +141960,9 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var gname = nameOf('tool:survivalguide', FAV_META['tool:survivalguide'] || {}), gic = iconOf('tool:survivalguide');
     SG.forEach(function (tb) {
       var tn = sentence(bi(tb[1], tb[2])), tother = norm(tb[1] + ' ' + tb[2]);
-      add('sg:' + tb[0], tn + ' ' + T('sr_guide_lc', 'guide'), gname, function () { sgGo(tb[0], null); }, gic, COL.tools, 'guide', tother + ' ' + (SG_ALIAS[tb[0]] || ''), 0);
+      add('sg:' + tb[0], kindName(tn, T('sr_guide_lc', 'guide')), gname, function () { sgGo(tb[0], null); }, gic, COL.tools, 'guide', tother + ' ' + (SG_ALIAS[tb[0]] || ''), 0);
       tb[3].forEach(function (c, i) {
+        if (tb[3].length === 1) return;
         var nm = sentence(bi(c[0], c[1])), label = cnt[c[0]] > 1 ? nm + ' (' + tn + ')' : nm;
         add('sg:' + tb[0] + ':' + i, label, gname + ' · ' + tn, function () { sgGo(tb[0], i); }, gic, COL.tools, 'guide', norm(c[0] + ' ' + c[1] + ' ' + tb[1] + ' ' + tb[2]) + ' ' + (SG_ALIAS[tb[0] + ':' + i] || ''), 0);
       });
@@ -141951,16 +141972,17 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     Object.keys(CS_INSTRUMENTS).forEach(function (k) {
       var d = CS_INSTRUMENTS[k], en = plain(d.label), itn = plain(d.labelIt || d.label);
       var nm = sentence(bi(en, itn));
-      add('cs:' + k, nm + ' ' + sfx, ctag, function () { chartsGo(k); }, cic, COL.tools, 'tool', norm(en + ' ' + itn + ' fingering chords scales diagram'), 1);
+      add('cs:' + k, kindName(nm, sfx), ctag, function () { chartsGo(k); }, cic, COL.tools, 'tool', norm(en + ' ' + itn + ' fingering chords scales diagram'), 1);
       (d.subs || []).forEach(function (s) {
         if (!s.key || (d.subs.length < 2) || norm(s.label) === norm(en)) return;
         var sn = sentence(bi(s.label, s.labelIt));
         if (norm(sn).indexOf(norm(nm)) < 0) sn = sn + ' · ' + nm;
-        add('cs:' + k + ':' + s.key, sn + ' ' + sfx, ctag + ' · ' + nm, function () { chartsGo(k, s.key); }, cic, COL.tools, 'tool', norm(s.label + ' ' + (s.labelIt || '') + ' ' + en + ' ' + itn), 0);
+        var snEn = sn; sn = solf(sn);
+        add('cs:' + k + ':' + s.key, kindName(sn, sfx), ctag + ' · ' + nm, function () { chartsGo(k, s.key); }, cic, COL.tools, 'tool', norm(snEn + ' ' + s.label + ' ' + (s.labelIt || '') + ' ' + en + ' ' + itn), 0);
       });
     });
     [['ww_flute', 'Flute', 'Flauto'], ['ww_clarinet', 'Clarinet', 'Clarinetto']].forEach(function (x) {
-      add('cs:' + x[0] + ':trills', bi(x[1], x[2]) + ' ' + T('sr_trills', 'trills'), ctag, function () { chartsGo(x[0], null, 'trills'); }, cic, COL.tools, 'tool', 'trill trills trillo trilli fingering ' + norm(x[1] + ' ' + x[2]), 1);
+      add('cs:' + x[0] + ':trills', kindName(bi(x[1], x[2]), T('sr_trills', 'trills')), ctag, function () { chartsGo(x[0], null, 'trills'); }, cic, COL.tools, 'tool', 'trill trills trillo trilli fingering ' + norm(x[1] + ' ' + x[2]), 1);
     });
     // Piano tool tabs.
     var pic = iconOf('tool:piano');
@@ -141974,11 +141996,12 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       (f.items || []).forEach(function (id) {
         var d = INSTRUMENTS[id]; if (!d) return;
         var raw = bi(d.name, d.nameIt), nm = titleCase(raw), sub = bi(d.sub, d.subIt), label;
-        if (f.key === 'guitar') label = fn + ' · ' + nm + ' ' + T('sr_sfx_tuning', 'tuning');
-        else if (f.key === 'bass' || f.key === 'uke') label = (norm(raw) === norm(fn) || norm(raw) === 'ukulele' ? nm + ' ' + sub.toLowerCase() : nm) + ' ' + T('sr_sfx_tuning', 'tuning');
-        else if (f.key === 'voice') label = nm + ' ' + T('sr_voice_lc', 'voice') + ' ' + T('sr_sfx_tuner', 'tuner');
-        else label = nm + ' ' + T('sr_sfx_tuner', 'tuner');
-        add('tn:' + id, label, ttag + ' · ' + fn, function () { setMode('tuner'); selectFamily(f.key); selectInstrument(id); }, TABIC.tuner, COL.tuner, 'tab', norm(d.name + ' ' + (d.nameIt || '') + ' ' + (d.sub || '') + ' ' + f.name + ' ' + f.it + ' tuning accordatura'), f.key === 'guitar' ? 1 : 0);
+        if (f.key === 'guitar') label = kindName(fn + ' · ' + nm, T('sr_sfx_tuning', 'tuning'));
+        else if (f.key === 'bass' || f.key === 'uke') label = kindName(norm(raw) === norm(fn) || norm(raw) === 'ukulele' ? nm + ' ' + sub.toLowerCase() : nm, T('sr_sfx_tuning', 'tuning'));
+        else if (f.key === 'voice') label = kindName(nm + ' ' + T('sr_voice_lc', 'voice'), T('sr_sfx_tuner', 'tuner'));
+        else label = kindName(nm, T('sr_sfx_tuner', 'tuner'));
+        var enLabel = label; label = solf(label);
+        add('tn:' + id, label, ttag + ' · ' + fn, function () { setMode('tuner'); selectFamily(f.key); selectInstrument(id); }, TABIC.tuner, COL.tuner, 'tab', norm(enLabel + ' ' + d.name + ' ' + (d.nameIt || '') + ' ' + (d.sub || '') + ' ' + f.name + ' ' + f.it + ' tuning accordatura'), f.key === 'guitar' ? 1 : 0);
       });
     });
     // Scales.
@@ -142004,13 +142027,13 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     PRESET_CATS.forEach(function (c) {
       (c.presets || []).forEach(function (p, i) {
         if (!p || !p.name) return;
-        add('dk:' + c.label + ':' + i, bi(p.name, p.nameIt), dtag + ' · ' + sentence(bi(c.label, c.labelIt)), function () { setMode('tools'); enterTool('drumkit'); loadPreset(p); }, dic, COL.tools, 'tool', norm((p.name || '') + ' ' + (p.nameIt || '') + ' ' + c.label + ' beat preset'), 0);
+        add('dk:' + c.label + ':' + i, bi(p.name, p.nameIt), dtag + ' · ' + capWords(bi(c.label, c.labelIt)), function () { setMode('tools'); enterTool('drumkit'); loadPreset(p); }, dic, COL.tools, 'tool', norm((p.name || '') + ' ' + (p.nameIt || '') + ' ' + c.label + ' beat preset'), 0);
       });
     });
     var pgic = iconOf('tool:progression'), pgtag = nameOf('tool:progression', FAV_META['tool:progression'] || {});
     PROG_PRESETS.forEach(function (p) {
       if (!p || !p.id || p.id === 'empty') return;
-      add('pg:' + p.id, p.label, pgtag + ' · ' + sentence(p.cat), function () { setMode('tools'); enterTool('progression'); progLoadPreset(p.id); }, pgic, COL.tools, 'tool', norm((p.desc || '') + ' ' + (p.cat || '') + ' chord changes progression'), 0);
+      add('pg:' + p.id, solf(p.label), pgtag + ' · ' + catName(p.cat), function () { setMode('tools'); enterTool('progression'); progLoadPreset(p.id); }, pgic, COL.tools, 'tool', norm(p.label + ' ' + (p.desc || '') + ' ' + (p.cat || '') + ' chord changes progression'), 0);
     });
     // Voice types.
     var vic = iconOf('tool:vocalrange'), vtag = nameOf('tool:vocalrange', FAV_META['tool:vocalrange'] || {});
@@ -142023,7 +142046,8 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
 
   var _index = null, _indexLang = '';
   function index() {
-    if (_index && _indexLang === lang()) return _index;
+    var _key = lang() + ((typeof progState !== 'undefined' && progState.noteNaming) || '');
+    if (_index && _indexLang === _key) return _index;
     var list = [];
     var _dk = {};
     function add(id, label, tag, launch, icon, col, kind, alias, pri) {
@@ -142043,8 +142067,9 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     try { deepIndex(add); } catch (e) { try { console.warn('deep index', e); } catch (e2) {} }
     var seen = {};
     list.forEach(function (x) { seen[x.label] = (seen[x.label] || 0) + 1; });
-    list.forEach(function (x) { if (seen[x.label] > 1) { x.label = x.label + ' (' + x.tag.split(' · ')[0] + ')'; x.hay = norm(x.label); x.lw = x.hay.split(/[^a-z0-9]+/).filter(Boolean); } });
-    _index = list; _indexLang = lang();
+    var _SFX = { gr: ['groove', 'groove'], dk: ['drums', 'batteria'], pg: ['changes', 'accordi'] };
+    list.forEach(function (x) { if (seen[x.label] > 1) { var _p = _SFX[x.id.slice(0, 2)], _w = _p ? _p[lang() === 'it' ? 1 : 0] : x.tag.split(' · ')[0]; x.label = _p && lang() !== 'it' ? x.label + ' ' + _w : x.label + ' (' + _w + ')'; x.hay = norm(x.label); x.lw = x.hay.split(/[^a-z0-9]+/).filter(Boolean); } });
+    _index = list; _indexLang = _key;
     return list;
   }
   // Words people type that the screens call something else. Both directions, English and Italian.
@@ -142077,7 +142102,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     return prev[lb];
   }
   function tokScore(it, tk) {
-    if (it.hay.indexOf(tk) === 0) return 100;
+    if (it.hay.indexOf(tk) === 0 && (tk.length > 2 || it.lw[0] === tk)) return 100;
     var i, w;
     if (it.lw.indexOf(tk) > -1) return 92;
     for (i = 0; i < it.lw.length; i++) if (it.lw[i].indexOf(tk) === 0) return 80;
@@ -142097,6 +142122,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     }
     return 0;
   }
+  window._hvsIndex = function () { return index(); };
   function search(q, n) { var r = searchPass(q, n, false); return r.length < 3 ? searchPass(q, n, true) : r; }
   function searchPass(q, n, fz) {
     var toks = norm(q).split(/\s+/).filter(Boolean);
@@ -142236,7 +142262,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   function render(mode) {
     var open = openSet(), n = Math.max(1, (progState.streak && progState.streak.count) || 1);
     var best = Math.max(n, (progState.streak && progState.streak.longest) || 0);
-    var last = progState.lastTool, lm = last && window.FAV_META && FAV_META[last.k];
+    var last = progState.lastTool, lm = last && typeof FAV_META !== 'undefined' && FAV_META[last.k];
     var h = '<div class="ss-grabzone"><div class="ss-grab"></div></div>' +
       '<div class="ss-scroll"><div id="ssMain" style="display:contents">';
     if (lm && typeof lm.launch === 'function') {
@@ -142539,6 +142565,8 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     srOpen = false; clearInterval(srTimer);
     try { srIn.blur(); } catch (e) {}
     sr.classList.remove('on');
+    // The card is hidden when its fade ends, so check the page lock again after that.
+    [120, 320, 520].forEach(function (ms) { setTimeout(function () { if (window._scrollLockSync) _scrollLockSync(); }, ms); });
     setTimeout(function () { if (!srOpen) fullH = window.innerHeight; }, 400);
   }
 
