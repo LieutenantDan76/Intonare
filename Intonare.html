@@ -28594,6 +28594,8 @@ body.light #streakSheet .ss-d.p.t { color: #fff; }
    Kill switch: HVS_COLLAPSE in the script, or remove html.hv-collapse. */
 @supports (overflow: clip) {
   :where(html.hv2.hv-collapse) body { overflow-x: clip; overflow-y: visible; }
+  /* A locked body (launcher entry, open sheets) must not become a scroll container, or the sticky header shifts by the body padding. */
+  html.hv2.hv-collapse body { overflow: clip !important; }
   html.hv2.hv-collapse #appHeader { position: sticky; top: var(--hv-pin, 0px); }
   html.hv2.hv-collapse .session-bar { position: sticky; top: calc(var(--hv-pin, 0px) + var(--hv-h, 34px) + 8px); z-index: 510; }
 }
@@ -28658,6 +28660,90 @@ html.hv2 #appHeader #headerBackBtn { animation: hvsBackIn .38s cubic-bezier(.2,.
 body.light .progress-modal.active { background: rgba(20,30,28,.5); }
 @media (prefers-reduced-motion: reduce) {
   .progress-modal.active, .progress-modal.active .progress-modal-content, .progress-modal.active .pm-xp-fill { animation: none !important; }
+}
+
+/* ═══ SEARCH SCREEN ═══════════════════════════════════════════════════════════
+   Full screen, opened by the search button. The field sits where the header row sits,
+   so the button seems to open into it. Transform and opacity only. */
+#searchSheet { position: fixed; inset: 0; z-index: 9320; display: flex; flex-direction: column; box-sizing: border-box;
+  padding-top: calc(var(--hv-pin, 14px) - 4px);
+  background: radial-gradient(130% 38% at 50% 0, color-mix(in srgb, var(--accent) 13%, transparent), transparent 70%), color-mix(in srgb, var(--accent) 4%, var(--bg-0));
+  color: var(--text); opacity: 0; visibility: hidden; transform: translateY(-14px) scale(.985); transform-origin: 50% 0; will-change: transform, opacity;
+  transition: opacity .2s ease, transform .24s cubic-bezier(.4,0,.8,.3), visibility 0s linear .24s !important; }
+#searchSheet.on { opacity: 1; visibility: visible; transform: none;
+  transition: opacity .22s ease, transform .5s cubic-bezier(.16,1,.3,1), visibility 0s !important; }
+#searchSheet .sr-top { display: flex; align-items: center; gap: 10px; padding: 0 16px; flex: none; }
+#searchSheet .sr-field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 12px 0 15px; box-sizing: border-box;
+  border-radius: 23px; color: color-mix(in srgb, var(--text) 62%, transparent);
+  background: color-mix(in srgb, var(--text) 8%, color-mix(in srgb, var(--surface) 80%, transparent));
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  transition: border-color .2s ease, box-shadow .25s ease, color .2s ease !important; }
+#searchSheet .sr-field:focus-within { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent); }
+#searchSheet .sr-field svg { flex: none; }
+#searchSheet .sr-field input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text);
+  font: 500 16px 'Inter',system-ui,sans-serif; -webkit-appearance: none; appearance: none; padding: 0; margin: 0; }
+#searchSheet .sr-field input::placeholder { color: color-mix(in srgb, var(--text) 48%, transparent); }
+#searchSheet .sr-field input::-webkit-search-cancel-button, #searchSheet .sr-field input::-webkit-search-decoration { display: none; -webkit-appearance: none; }
+#searchSheet .sr-x { flex: none; width: 22px; height: 22px; border-radius: 11px; border: 0; padding: 0; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--text) 22%, transparent); color: var(--bg-0); cursor: pointer;
+  opacity: 0; transform: scale(.6); pointer-events: none; -webkit-tap-highlight-color: transparent;
+  transition: opacity .15s ease, transform .22s cubic-bezier(.2,.8,.2,1) !important; }
+#searchSheet .sr-x.on { opacity: 1; transform: none; pointer-events: auto; }
+#searchSheet .sr-cancel { flex: none; border: 0; background: transparent; color: var(--accent); cursor: pointer; padding: 10px 2px 10px 4px;
+  font: 600 14px 'Inter',system-ui,sans-serif; -webkit-tap-highlight-color: transparent; }
+#searchSheet .sr-cancel:active { opacity: .6; }
+#searchSheet .sr-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: 18px 16px calc(24px + var(--sr-kb, 0px) + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 22px; }
+#searchSheet .sr-sec { display: flex; flex-direction: column; gap: 2px; }
+#searchSheet .sr-flat { gap: 2px; }
+#searchSheet .sr-h { font: 600 10px 'JetBrains Mono',monospace; letter-spacing: .16em; color: color-mix(in srgb, var(--text) 52%, transparent); padding: 0 4px 8px; }
+#searchSheet .sr-r { display: flex; align-items: center; gap: 13px; width: 100%; min-height: 56px; padding: 8px 10px; margin: 0; box-sizing: border-box; cursor: pointer;
+  border: 1px solid transparent; border-radius: 16px; background: transparent; color: var(--text); text-align: left; position: relative;
+  font: 500 15px 'Inter',system-ui,sans-serif; -webkit-tap-highlight-color: transparent;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease !important; }
+#searchSheet .sr-r.sel { background: color-mix(in srgb, var(--c) 10%, transparent); border-color: color-mix(in srgb, var(--c) 30%, transparent); }
+#searchSheet .sr-r:active { background: color-mix(in srgb, var(--c) 14%, transparent); transform: scale(.985); }
+#searchSheet .sr-ic { flex: none; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--c);
+  background: color-mix(in srgb, var(--c) 13%, transparent); border: 1px solid color-mix(in srgb, var(--c) 28%, transparent); }
+#searchSheet .sr-ic svg { width: 20px; height: 20px; }
+#searchSheet .sr-n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#searchSheet .sr-n b { font-weight: 700; color: var(--c); }
+#searchSheet .sr-g { flex: none; font: 600 9px 'JetBrains Mono',monospace; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in srgb, var(--text) 50%, transparent); }
+#searchSheet .sr-ch { flex: none; display: flex; color: color-mix(in srgb, var(--text) 32%, transparent); }
+#searchSheet .sr-resume { display: flex; align-items: center; gap: 14px; width: 100%; box-sizing: border-box; padding: 14px 16px; margin: 0; cursor: pointer; text-align: left;
+  border-radius: 20px; color: var(--text); -webkit-tap-highlight-color: transparent;
+  border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c) 18%, transparent), color-mix(in srgb, var(--c) 6%, transparent));
+  transition: transform .18s cubic-bezier(.2,.8,.2,1) !important; }
+#searchSheet .sr-resume:active { transform: scale(.98); }
+#searchSheet .sr-resume .ss-play { flex: none; width: 42px; height: 42px; border-radius: 21px; display: flex; align-items: center; justify-content: center;
+  background: var(--c); color: var(--bg-0); }
+#searchSheet .sr-rt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#searchSheet .sr-k { font: 700 9px 'JetBrains Mono',monospace; letter-spacing: .18em; color: var(--c); }
+#searchSheet .sr-t { font: 600 17px 'Inter',system-ui,sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#searchSheet .sr-s { font-size: 12px; color: color-mix(in srgb, var(--text) 56%, transparent); }
+#searchSheet .sr-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#searchSheet .sr-chip { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 12px; margin: 0; cursor: pointer; border-radius: 16px; color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); background: color-mix(in srgb, var(--c) 8%, transparent);
+  font: 600 14px 'Inter',system-ui,sans-serif; -webkit-tap-highlight-color: transparent; transition: transform .16s cubic-bezier(.2,.8,.2,1) !important; }
+#searchSheet .sr-chip:active { transform: scale(.96); }
+#searchSheet .sr-chip .sr-ic { width: 30px; height: 30px; border-radius: 10px; }
+#searchSheet .sr-chip .sr-ic svg { width: 17px; height: 17px; }
+#searchSheet .sr-none { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 26px 0 4px; color: color-mix(in srgb, var(--text) 62%, transparent); text-align: center; }
+#searchSheet .sr-ni { width: 52px; height: 52px; border-radius: 26px; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--text) 8%, transparent); }
+#searchSheet .sr-ni svg { width: 22px; height: 22px; }
+#searchSheet .sr-nt { font-size: 14px; max-width: 80%; overflow-wrap: anywhere; }
+/* Entrance: each part rises in turn. Same animations on the first and every later open. */
+#searchSheet.on .sr-top { animation: ssUp .5s cubic-bezier(.16,1,.3,1) both; }
+#searchSheet.on .sr-resume, #searchSheet.on .sr-sec, #searchSheet.on .sr-none { animation: ssUp .45s cubic-bezier(.16,1,.3,1) .06s both; }
+#searchSheet.on .sr-sec + .sr-sec { animation-delay: .12s; }
+#searchSheet .sr-r, #searchSheet .sr-chip { animation: ssUp .36s cubic-bezier(.2,.8,.2,1) calc(60ms + var(--i, 0) * 26ms) both; }
+#searchSheet .sr-flat .sr-r { animation-duration: .3s; animation-delay: calc(var(--i, 0) * 22ms); }
+body.light #searchSheet { background: radial-gradient(130% 38% at 50% 0, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%), color-mix(in srgb, var(--accent) 3%, var(--bg-0)); }
+@media (prefers-reduced-motion: reduce) {
+  #searchSheet, #searchSheet.on { transform: none; transition: opacity .15s linear, visibility 0s !important; }
+  #searchSheet * { animation: none !important; }
 }
 </style>
 </head>
@@ -45974,6 +46060,7 @@ function _noteLastTool(k1, k2) {
     const k = (typeof FAV_META !== 'undefined' && FAV_META[k1]) ? k1 : ((typeof FAV_META !== 'undefined' && FAV_META[k2]) ? k2 : null);
     if (!k) return;
     progState.lastTool = { k: k, at: Date.now() };
+    progState.recentTools = [k].concat((progState.recentTools || []).filter(x => x !== k)).slice(0, 6);
     progSave();
   } catch (e) {}
 }
@@ -92245,7 +92332,7 @@ const STRINGS = {
     ss_ago_now:'just now', ss_ago_min:'{n} min ago', ss_ago_hr:'{n} h ago', ss_ago_day:'{n} d ago',
     ss_title:'Your practice', ss_search_ph:'Search the app', ss_resume:'RESUME',
     ss_today:'Opened today', ss_best:'Best {n} days', ss_of:'{a} of {b}', ss_next:'Next: {name}, {cur} of {target}',
-    ss_none:'No results', ss_prev:'Previous month', ss_next_m:'Next month', ss_legend:'Days opened',
+    ss_none:'No results', sr_cancel:'Cancel', sr_recent:'RECENT', sr_suggested:'SUGGESTED', sr_goto:'GO TO', sr_try:'TRY', sr_clear:'Clear', sr_none:'Nothing found for "{q}"', ss_prev:'Previous month', ss_next_m:'Next month', ss_legend:'Days opened',
     lbl_other:'OTHER',  lbl_options:'OPTIONS', btn_close:'CLOSE', lbl_to:'to:', lbl_bass:'BASS', pn_tap_start:'tap a key to start', trp_sounds:'Sounds: ', trp_written:'Written: ', photo_loading:'LOADING PHOTO…', photo_offline:'PHOTO UNAVAILABLE', photo_soon:'PHOTO COMING SOON',
     backup_partial_restore:'This backup was saved with %n item(s) missing. Everything else will be restored.',
     backup_partial:'Backup saved, but %n item(s) could not be included. This is a bug \u2014 please report it.',
@@ -93445,7 +93532,7 @@ const STRINGS = {
     ss_ago_now:'adesso', ss_ago_min:'{n} min fa', ss_ago_hr:'{n} h fa', ss_ago_day:'{n} g fa',
     ss_title:'La tua pratica', ss_search_ph:'Cerca nell\'app', ss_resume:'RIPRENDI',
     ss_today:'Aperta oggi', ss_best:'Record: {n} giorni', ss_of:'{a} di {b}', ss_next:'Prossimo: {name}, {cur} di {target}',
-    ss_none:'Nessun risultato', ss_prev:'Mese precedente', ss_next_m:'Mese successivo', ss_legend:'Giorni aperti',
+    ss_none:'Nessun risultato', sr_cancel:'Annulla', sr_recent:'RECENTI', sr_suggested:'SUGGERITI', sr_goto:'VAI A', sr_try:'PROVA', sr_clear:'Cancella', sr_none:'Nessun risultato per "{q}"', ss_prev:'Mese precedente', ss_next_m:'Mese successivo', ss_legend:'Giorni aperti',
     // Italian help content. showHelp() looks up STRINGS[lang].help[key] and
     // falls back to the English HELP_CONTENT when it misses — and this table did
     // not exist at all, so every help popup in the app was English regardless of
@@ -141004,6 +141091,7 @@ const _BACK_CLOSERS = {
   backupOutSheet:       'backupCloseOutSheet',
   streakSheet:          'closeStreakSheet',
   streakSheetBd:        'closeStreakSheet',
+  searchSheet:          'closeSearch',
   riffPopup:            'riffClosePopup',
   csPickerSheet:        'closeInstPicker',
   csPickerScrim:        'closeInstPicker',
@@ -141636,7 +141724,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
                   '<button type="button" id="hvSearch" class="hvs-pill hvs-sb">' + SEARCH + '</button>';
     hd.appendChild(w);
     document.getElementById('hvStreak').addEventListener('click', function () { window.openStreakSheet('main'); });
-    document.getElementById('hvSearch').addEventListener('click', function () { window.openStreakSheet('search'); });
+    document.getElementById('hvSearch').addEventListener('click', function () { window.openSearch(); });
     return w;
   }
 
@@ -141738,22 +141826,29 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     'exercise:singsing': 'sing singing voice pitch canto', 'exercise:relpitch': 'relative pitch ear orecchio',
     'exercise:staffread': 'staff reading notes pentagramma lettura', 'exercise:notationcards': 'notation cards flashcards notazione'
   };
+  var COL = { tuner: '#5ee2ff', metro: '#ffd166', tools: '#34d399', train: '#b8a3ff' };
+  var TABIC = {
+    tuner: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18a9 9 0 0 1 14 0"/><path d="M12 17l3.500-6"/><circle cx="12" cy="17.500" r="1" fill="currentColor"/></svg>',
+    metro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.500 3h7l3 18h-13z"/><path d="M12 17l3-9"/><path d="M10 21h4"/></svg>',
+    tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.500 6.500a4 4 0 0 0 4.800 4.800L20 12l-8 8a2.100 2.100 0 0 1-3-3l8-8z"/></svg>',
+    train: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.500"/><path d="M12 4V2M20 12h2"/></svg>'
+  };
   function typeTag(meta) { return (meta.type === 'EXERCISE') ? T('ss_t_train', 'Train') : T('ss_t_tool', 'Tool'); }
   var _index = null, _indexLang = '';
   function index() {
     if (_index && _indexLang === lang()) return _index;
     var list = [];
-    function add(id, label, tag, launch) {
+    function add(id, label, tag, launch, icon, col) {
       var al = ALIAS[id] || '';
-      list.push({ id: id, label: label, tag: tag, launch: launch, hay: norm(label), lw: norm(label).split(/[^a-z0-9]+/).filter(Boolean), aw: norm(al).split(/[^a-z0-9]+/).filter(Boolean) });
+      list.push({ id: id, label: label, tag: tag, launch: launch, icon: icon || '', col: col || 'var(--accent)', hay: norm(label), lw: norm(label).split(/[^a-z0-9]+/).filter(Boolean), aw: norm(al).split(/[^a-z0-9]+/).filter(Boolean) });
     }
-    add('tuner', sentence(T('mode_tuner', 'Tuner')), T('ss_t_tab', 'Tab'), function () { setMode('tuner'); });
-    add('metro', sentence(T('mode_metro', 'Metro')), T('ss_t_tab', 'Tab'), function () { setMode('metronome'); });
+    add('tuner', sentence(T('mode_tuner', 'Tuner')), T('ss_t_tab', 'Tab'), function () { setMode('tuner'); }, TABIC.tuner, COL.tuner);
+    add('metro', sentence(T('mode_metro', 'Metro')), T('ss_t_tab', 'Tab'), function () { setMode('metronome'); }, TABIC.metro, COL.metro);
     try {
       Object.keys(FAV_META).forEach(function (k) {
         var m = FAV_META[k];
         if (!m || typeof m.launch !== 'function') return;
-        add(k, nameOf(k, m), typeTag(m), function () { m.launch(); });
+        add(k, nameOf(k, m), typeTag(m), function () { m.launch(); }, m.icon, m.type === 'EXERCISE' ? COL.train : COL.tools);
       });
     } catch (e) {}
     _index = list; _indexLang = lang();
@@ -141896,9 +141991,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var best = Math.max(n, (progState.streak && progState.streak.longest) || 0);
     var last = progState.lastTool, lm = last && window.FAV_META && FAV_META[last.k];
     var h = '<div class="ss-grabzone"><div class="ss-grab"></div></div>' +
-      '<label class="ss-search">' + SEARCH + '<input id="ssInput" type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' +
-      esc(T('ss_search_ph', 'Search tools and exercises')) + '" aria-label="' + esc(T('ss_search_aria', 'Search')) + '"></label>' +
-      '<div class="ss-scroll"><div class="ss-res" id="ssRes" hidden></div><div id="ssMain" style="display:contents">';
+      '<div class="ss-scroll"><div id="ssMain" style="display:contents">';
     if (lm && typeof lm.launch === 'function') {
       h += '<button type="button" class="ss-resume" id="ssResume"><span class="ss-play">' + PLAY + '</span><span class="ss-rt"><span class="ss-k">' + esc(T('ss_resume', 'RESUME')) + '</span><span class="ss-t">' +
         esc(nameOf(last.k, lm)) + '</span><span class="ss-s">' + esc(ago(last.at || Date.now())) + '</span></span><span class="ss-chev">›</span></button>';
@@ -141923,20 +142016,6 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   }
 
   function wire(mode) {
-    var inp = document.getElementById('ssInput'), res = document.getElementById('ssRes'), main = document.getElementById('ssMain');
-    function runSearch() {
-      var q = inp.value.trim();
-      if (!q) { res.hidden = true; res.innerHTML = ''; if (main.style.display === 'none') { main.style.display = 'contents'; main.classList.remove('ss-re'); void main.offsetWidth; main.classList.add('ss-re'); } return; }
-      var r = search(q);
-      main.style.display = 'none'; res.hidden = false;
-      res.innerHTML = r.length ? r.map(function (it, i) { return '<button type="button" class="ss-r" data-i="' + i + '" style="--i:' + i + '">' + esc(it.label) + '<span>' + esc(it.tag) + '</span></button>'; }).join('')
-                              : '<div class="ss-none">' + esc(T('ss_none', 'No results')) + '</div>';
-      Array.prototype.forEach.call(res.querySelectorAll('.ss-r'), function (b) {
-        b.addEventListener('click', function () { var it = r[+b.getAttribute('data-i')]; go(it.launch); });
-      });
-    }
-    inp.addEventListener('input', runSearch);
-    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var f = res.querySelector('.ss-r'); if (f) f.click(); inp.blur(); } });
     var rs = document.getElementById('ssResume');
     if (rs) rs.addEventListener('click', function () { var m = FAV_META[progState.lastTool.k]; go(function () { m.launch(); }); });
     var ac = document.getElementById('ssAch');
@@ -141968,7 +142047,6 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       navState();
     }
     wireCal();
-    if (mode === 'search') { try { inp.focus({ preventScroll: true }); } catch (e) { inp.focus(); } }
   }
 
   function go(fn) {
@@ -142004,19 +142082,157 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     setTimeout(function () { watch('appLogo'); watch('headerTagline'); }, 2600);
   })();
 
+  /* ── Search screen ──────────────────────────────────────────────────────── */
+  var sr, srIn, srBody, srClear, srBuilt = false, srSel = -1, srList = [], srQ = '', srOpen = false;
+  var CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  function hl(label, q) {
+    var n = norm(label);
+    if (n.length !== label.length) return esc(label);
+    var toks = norm(q).split(/\s+/).filter(Boolean), mark = [];
+    toks.forEach(function (tk) { var i = n.indexOf(tk); if (i > -1) mark.push([i, i + tk.length]); });
+    if (!mark.length) return esc(label);
+    mark.sort(function (a, b) { return a[0] - b[0]; });
+    var out = '', pos = 0;
+    mark.forEach(function (m) { if (m[0] < pos) return; out += esc(label.slice(pos, m[0])) + '<b>' + esc(label.slice(m[0], m[1])) + '</b>'; pos = m[1]; });
+    return out + esc(label.slice(pos));
+  }
+  function row(it, i, q, tag) {
+    return '<button type="button" class="sr-r" data-i="' + i + '" style="--i:' + i + ';--c:' + it.col + '"><span class="sr-ic">' + it.icon + '</span><span class="sr-n">' + hl(it.label, q || '') +
+      '</span><span class="sr-g">' + esc(tag || it.tag) + '</span><span class="sr-ch">' + CHEV + '</span></button>';
+  }
+  function byId(id) { var l = index(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+  function chips(ids, startI) {
+    var h = '<div class="sr-chips">';
+    ids.forEach(function (c, k) {
+      h += '<button type="button" class="sr-chip" data-go="' + c.go + '" style="--i:' + (startI + k) + ';--c:' + c.col + '"><span class="sr-ic">' + c.icon + '</span>' + esc(c.label) + '</button>';
+    });
+    return h + '</div>';
+  }
+  function tabChips() {
+    return [
+      { go: 'tuner', col: COL.tuner, icon: TABIC.tuner, label: sentence(T('mode_tuner', 'Tuner')) },
+      { go: 'metronome', col: COL.metro, icon: TABIC.metro, label: sentence(T('mode_metro', 'Metro')) },
+      { go: 'tools', col: COL.tools, icon: TABIC.tools, label: sentence(T('mode_tools', 'Tools')) },
+      { go: 'practice', col: COL.train, icon: TABIC.train, label: sentence(T('mode_train', 'Train')) }
+    ];
+  }
+  function renderEmpty() {
+    var h = '', i = 0; srList = [];
+    var last = progState.lastTool, li = last && byId(last.k);
+    if (li) {
+      h += '<button type="button" class="sr-resume" data-resume="1" style="--c:' + li.col + '"><span class="ss-play">' + PLAY + '</span><span class="sr-rt"><span class="sr-k">' + esc(T('ss_resume', 'RESUME')) +
+        '</span><span class="sr-t">' + esc(li.label) + '</span><span class="sr-s">' + esc(ago(last.at || Date.now())) + '</span></span></button>';
+    }
+    var rec = (progState.recentTools || []).filter(function (k) { return !(last && k === last.k); }).map(byId).filter(Boolean).slice(0, 4), title = T('sr_recent', 'RECENT');
+    if (!rec.length) { rec = ['tool:piano', 'exercise:scales', 'tool:cof', 'exercise:interval'].map(byId).filter(Boolean).filter(function (x) { return !(li && x.id === li.id); }).slice(0, 4); title = T('sr_suggested', 'SUGGESTED'); }
+    if (rec.length) {
+      h += '<div class="sr-sec"><div class="sr-h">' + esc(title) + '</div>';
+      rec.forEach(function (it) { h += row(it, i, '', it.tag); srList.push(it); i++; });
+      h += '</div>';
+    }
+    h += '<div class="sr-sec"><div class="sr-h">' + esc(T('sr_goto', 'GO TO')) + '</div>' + chips(tabChips(), i) + '</div>';
+    srBody.innerHTML = h; srSel = -1; srBody.scrollTop = 0;
+  }
+  function renderResults(q) {
+    var r = search(q); srList = r; srSel = r.length ? 0 : -1;
+    var h = '';
+    if (r.length) {
+      h = '<div class="sr-sec sr-flat">';
+      r.forEach(function (it, i) { h += row(it, i, q); });
+      h += '</div>';
+    } else {
+      var sug = ['tuner', 'metro', 'tool:piano', 'exercise:scales'].map(byId).filter(Boolean);
+      h = '<div class="sr-none"><div class="sr-ni">' + SEARCH + '</div><div class="sr-nt">' + esc(fmt(T('sr_none', 'Nothing found for "{q}"'), { q: q })) + '</div></div>' +
+        '<div class="sr-sec"><div class="sr-h">' + esc(T('sr_try', 'TRY')) + '</div>';
+      sug.forEach(function (it, i) { h += row(it, i, '', it.tag); });
+      srList = sug; srSel = -1;
+      h += '</div>';
+    }
+    srBody.innerHTML = h; srBody.scrollTop = 0;
+    paintSel();
+  }
+  function paintSel() {
+    var rows = srBody.querySelectorAll('.sr-r');
+    Array.prototype.forEach.call(rows, function (b, i) { b.classList.toggle('sel', i === srSel); });
+    if (srSel > -1 && rows[srSel] && rows[srSel].scrollIntoView) { try { rows[srSel].scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+  }
+  function pick(it) {
+    if (!it) return;
+    closeSearch();
+    setTimeout(function () { try { it.launch(); } catch (e) {} }, 210);
+  }
+  function ensureSearch() {
+    if (srBuilt) return;
+    sr = document.createElement('div'); sr.id = 'searchSheet'; sr.setAttribute('role', 'dialog'); sr.setAttribute('aria-modal', 'true');
+    sr.setAttribute('aria-label', T('ss_search_aria', 'Search'));
+    sr.innerHTML = '<div class="sr-top"><label class="sr-field">' + SEARCH + '<input id="srInput" type="search" enterkeyhint="go" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' +
+      esc(T('ss_search_ph', 'Search the app')) + '" aria-label="' + esc(T('ss_search_aria', 'Search')) + '"><button type="button" class="sr-x" id="srClear" aria-label="' + esc(T('sr_clear', 'Clear')) + '" tabindex="-1">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></label>' +
+      '<button type="button" class="sr-cancel" id="srCancel">' + esc(T('sr_cancel', 'Cancel')) + '</button></div><div class="sr-body" id="srBody"></div>';
+    document.body.appendChild(sr);
+    srIn = sr.querySelector('#srInput'); srBody = sr.querySelector('#srBody'); srClear = sr.querySelector('#srClear');
+    srBuilt = true;
+    srIn.addEventListener('input', function () {
+      var q = srIn.value.trim(); srClear.classList.toggle('on', !!srIn.value);
+      if (q === srQ) return; srQ = q;
+      if (q) renderResults(q); else renderEmpty();
+    });
+    srIn.addEventListener('keydown', function (e) {
+      var rows = srBody.querySelectorAll('.sr-r');
+      if (e.key === 'ArrowDown' && rows.length) { e.preventDefault(); srSel = (srSel + 1) % rows.length; paintSel(); }
+      else if (e.key === 'ArrowUp' && rows.length) { e.preventDefault(); srSel = (srSel - 1 + rows.length) % rows.length; paintSel(); }
+      else if (e.key === 'Enter') { e.preventDefault(); var it = srList[srSel > -1 ? srSel : 0]; if (srQ && it) { srIn.blur(); pick(it); } }
+    });
+    srClear.addEventListener('click', function () { srIn.value = ''; srQ = ''; srClear.classList.remove('on'); renderEmpty(); try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } });
+    sr.querySelector('#srCancel').addEventListener('click', function () { closeSearch(); });
+    srBody.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('button'); if (!b) return;
+      if (b.hasAttribute('data-resume')) { var m = byId(progState.lastTool.k); pick(m); return; }
+      if (b.hasAttribute('data-go')) { var md = b.getAttribute('data-go'); closeSearch(); setTimeout(function () { try { setMode(md); } catch (er) {} }, 210); return; }
+      if (b.classList.contains('sr-r')) pick(srList[+b.getAttribute('data-i')]);
+    });
+    // Tapping the list while the keyboard is up drops the keyboard first, so the list can be scrolled in view.
+    srBody.addEventListener('touchstart', function () { if (document.activeElement === srIn) srIn.blur(); }, { passive: true });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && srOpen) closeSearch(); });
+    if (window.visualViewport) {
+      var fix = function () {
+        var vv = window.visualViewport, kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        sr.style.setProperty('--sr-kb', (kb > 80 ? kb : 0) + 'px');
+      };
+      window.visualViewport.addEventListener('resize', fix); window.visualViewport.addEventListener('scroll', fix);
+    }
+  }
+  window.openSearch = function () {
+    try {
+      ensureSearch();
+      if (window.closeStreakSheet && built) window.closeStreakSheet();
+      srIn.value = ''; srQ = ''; srClear.classList.remove('on');
+      renderEmpty();
+      srOpen = true; sr.classList.add('on');
+      if (window._scrollLockSync) _scrollLockSync();
+      try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); }
+    } catch (e) {}
+  };
+  window.closeSearch = closeSearch;
+  function closeSearch() {
+    if (!srBuilt || !srOpen) return;
+    srOpen = false;
+    try { srIn.blur(); } catch (e) {}
+    sr.classList.remove('on');
+  }
+
   // Build everything once while the app is idle, so the first open is as light as the second.
   function warm() {
     try {
       ensureSheet();
       var now = new Date(); calY = now.getFullYear(); calM = now.getMonth();
-      render('main'); search('a'); fmtOf('en-US', 'm', { month: 'long', year: 'numeric' });
+      render('main'); search('a'); ensureSearch(); renderEmpty(); fmtOf('en-US', 'm', { month: 'long', year: 'numeric' });
     } catch (e) {}
   }
   var _idle = window.requestIdleCallback || function (f) { return setTimeout(f, 600); };
   setTimeout(function () { _idle(warm, { timeout: 4000 }); }, 2500);
   window.closeStreakSheet = function () {
     if (!built) return;
-    try { var i = document.getElementById('ssInput'); if (i) i.blur(); } catch (e) {}
     sheet.classList.remove('on'); bd.classList.remove('on');
     sheet.style.removeProperty('--ss-kb');
     if (window._scrollLockSync) setTimeout(_scrollLockSync, 60);
