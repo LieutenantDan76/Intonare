@@ -29116,6 +29116,21 @@ html body.light .mode-toggle[data-tab="tools"] .mode-ind{--tl:#12b886}
 html body.light .mode-toggle[data-tab="train"] .mode-ind{--tl:#7a5ce6}
 html body.light .mode-toggle[data-tab="settings"] .mode-ind{--tl:#7d84a6}
 html body.light .mode-ind::after{background:radial-gradient(ellipse 75% 120% at 50% -6%,color-mix(in srgb,var(--tl) 42%,transparent) 0%,color-mix(in srgb,var(--tl) 14%,transparent) 48%,transparent 90%)}
+/* Popup frost: settings, level and help now blur the page behind them like quick access does.
+   The blur sits on a ::before layer so the panel glass still sees the page (backdrop-root rule). */
+.settings-modal,.progress-modal,.help-modal{background:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.progress-modal.active,.progress-modal.active.closing{animation:none!important;background:transparent!important}
+.settings-modal::before,.progress-modal::before,.help-modal::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:rgba(4,6,14,.34);-webkit-backdrop-filter:blur(6px) saturate(1.15);backdrop-filter:blur(6px) saturate(1.15)}
+.settings-modal.active::before,.progress-modal.active::before,.help-modal.active::before{animation:hvBdIn .28s ease both!important}
+.progress-modal.closing::before{animation:hvBdOut .22s ease both!important}
+body.light .settings-modal::before,body.light .progress-modal::before,body.light .help-modal::before{background:rgba(40,58,96,.12)}
+@keyframes hvBdIn{from{opacity:0}to{opacity:1}}
+@keyframes hvBdOut{from{opacity:1}to{opacity:0}}
+/* Same frost for the other scrims. Ones with no child card get the blur directly, ones that hold a card use a ::before layer. */
+.ts-popup-scrim,.thmn-demo-popup,.riff-popup,.nc-sheet,#streakSheetBd{-webkit-backdrop-filter:blur(5px) saturate(1.1);backdrop-filter:blur(5px) saturate(1.1)}
+.vr-modal-overlay::before,.prog-preset-modal-backdrop::before,.prog-metro-backdrop::before,#searchSheet::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;-webkit-backdrop-filter:blur(5px) saturate(1.1);backdrop-filter:blur(5px) saturate(1.1);opacity:0}
+.vr-modal-overlay.open::before,.prog-preset-modal.open .prog-preset-modal-backdrop::before,.prog-metro-drawer.open .prog-metro-backdrop::before,.prog-chord-sheet-drawer.open .prog-metro-backdrop::before,#searchSheet.on::before{opacity:1}
+.prog-preset-modal-backdrop,.prog-metro-backdrop{z-index:0}
 </style>
 </head>
 <body>
