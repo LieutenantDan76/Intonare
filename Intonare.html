@@ -28662,84 +28662,133 @@ body.light .progress-modal.active { background: rgba(20,30,28,.5); }
   .progress-modal.active, .progress-modal.active .progress-modal-content, .progress-modal.active .pm-xp-fill { animation: none !important; }
 }
 
-/* ═══ SEARCH (floating card, Spotlight style) ═════════════════════════════════
-   A dimmed page with one centered card. The card sits in the space above the keyboard,
-   grows with its list, and every move is transform, opacity or one short height ease. */
+/* ═══ SEARCH (floating glass card, Spotlight style) ═════════════════════════
+   The card grows out of the search button and keeps one fixed place on screen, so it never
+   moves when the keyboard arrives. Only transform and opacity animate, plus one short height ease.
+   No backdrop blur (the Tuner and Metro redraw every frame): the glass look is built from
+   layered gradients, a light edge and a soft glow in the tab color. */
 #searchSheet { position: fixed; inset: 0; z-index: 9320; display: flex; align-items: flex-start; justify-content: center; box-sizing: border-box;
-  /* The field stays put while the list grows below it. Its place is set so the biggest card is centered in the room above the keyboard. */
-  padding: max(calc(var(--hv-pin, 14px) - 8px), calc((100dvh - var(--sr-kb, 0px) - 520px) / 2)) 14px calc(var(--sr-kb, 0px) + 14px + env(safe-area-inset-bottom, 0px));
-  visibility: hidden; transition: visibility 0s linear .24s, padding .3s cubic-bezier(.2,.8,.2,1) !important; }
-#searchSheet.on { visibility: visible; transition: visibility 0s, padding .3s cubic-bezier(.2,.8,.2,1) !important; }
-#searchSheet .sr-bd { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .22s ease !important; }
-#searchSheet.on .sr-bd { opacity: .58; transition: opacity .3s ease !important; }
-body.light #searchSheet.on .sr-bd { opacity: .34; }
-#searchSheet .sr-card { position: relative; width: min(100%, 520px); max-height: 100%; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden;
-  border-radius: 24px; color: var(--text);
-  background: color-mix(in srgb, var(--accent) 5%, color-mix(in srgb, var(--surface) 96%, var(--text)));
-  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
-  box-shadow: 0 24px 64px rgba(0,0,0,.5), 0 2px 0 color-mix(in srgb, #fff 6%, transparent) inset;
-  opacity: 0; transform: translateY(10px) scale(.95); transform-origin: 50% 40%; will-change: transform, opacity;
-  transition: opacity .16s ease, transform .22s cubic-bezier(.4,0,.8,.3) !important; }
-#searchSheet.on .sr-card { opacity: 1; transform: none; transition: opacity .2s ease, transform .52s cubic-bezier(.16,1,.3,1) !important; }
-body.light #searchSheet .sr-card { box-shadow: 0 20px 50px rgba(0,0,0,.22); }
-#searchSheet .sr-top { flex: none; padding: 10px 10px 4px; }
-#searchSheet .sr-field { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 14px 0 14px; box-sizing: border-box; border-radius: 16px;
-  color: color-mix(in srgb, var(--text) 58%, transparent); transition: color .2s ease !important; }
+  padding: var(--sr-top, 120px) 14px 0; visibility: hidden; transition: visibility 0s linear .26s !important; }
+#searchSheet.on { visibility: visible; transition: visibility 0s !important; }
+#searchSheet .sr-bd { position: absolute; inset: 0; opacity: 0;
+  background: radial-gradient(90% 46% at 50% 22%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 72%), rgba(0,0,0,.6);
+  transition: opacity .24s ease !important; }
+#searchSheet.on .sr-bd { opacity: 1; transition: opacity .32s ease !important; }
+body.light #searchSheet .sr-bd { background: radial-gradient(90% 46% at 50% 22%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 72%), rgba(10,14,20,.38); }
+#searchSheet .sr-card { position: relative; width: min(100%, 520px); display: flex; flex-direction: column; box-sizing: border-box;
+  border-radius: 30px; color: var(--text); isolation: isolate;
+  background:
+    radial-gradient(120% 70% at 12% -10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, color-mix(in srgb, var(--surface) 90%, var(--text))), color-mix(in srgb, var(--accent) 4%, color-mix(in srgb, var(--surface) 96%, var(--text))));
+  box-shadow: 0 40px 90px -10px rgba(0,0,0,.7), 0 0 80px -18px color-mix(in srgb, var(--accent) 55%, transparent), inset 0 1px 0 rgba(255,255,255,.1);
+  opacity: 0; transform: scale(.4); will-change: transform, opacity;
+  transition: opacity .16s ease, transform .2s cubic-bezier(.4,0,.8,.3) !important; }
+#searchSheet .sr-card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: 2;
+  background: linear-gradient(170deg, rgba(255,255,255,.34), rgba(255,255,255,.06) 38%, color-mix(in srgb, var(--accent) 26%, transparent) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+#searchSheet.on .sr-card { opacity: 1; transform: none; transition: opacity .18s ease, transform .55s cubic-bezier(.16,1.05,.3,1) !important; }
+body.light #searchSheet .sr-card { box-shadow: 0 30px 70px -12px rgba(0,0,0,.35), 0 0 70px -22px color-mix(in srgb, var(--accent) 50%, transparent), inset 0 1px 0 rgba(255,255,255,.8); }
+body.light #searchSheet .sr-card::before { background: linear-gradient(170deg, rgba(255,255,255,.9), rgba(255,255,255,.2) 40%, color-mix(in srgb, var(--accent) 24%, transparent) 100%); }
+#searchSheet .sr-top { flex: none; padding: 8px 12px 0; }
+#searchSheet .sr-field { display: flex; align-items: center; gap: 12px; height: 62px; padding: 0 6px 0 12px; box-sizing: border-box;
+  color: color-mix(in srgb, var(--text) 52%, transparent); transition: color .2s ease !important; }
 #searchSheet .sr-field:focus-within { color: var(--accent); }
-#searchSheet .sr-field svg { flex: none; width: 20px; height: 20px; }
-#searchSheet .sr-field input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text);
-  font: 500 18px 'Inter',system-ui,sans-serif; -webkit-appearance: none; appearance: none; padding: 0; margin: 0; }
-#searchSheet .sr-field input::placeholder { color: color-mix(in srgb, var(--text) 42%, transparent); }
-#searchSheet .sr-field input::-webkit-search-cancel-button, #searchSheet .sr-field input::-webkit-search-decoration { display: none; -webkit-appearance: none; }
-#searchSheet .sr-x { flex: none; width: 24px; height: 24px; border-radius: 12px; border: 0; padding: 0; display: flex; align-items: center; justify-content: center;
-  background: color-mix(in srgb, var(--text) 22%, transparent); color: var(--bg-0); cursor: pointer;
-  opacity: 0; transform: scale(.6); pointer-events: none; -webkit-tap-highlight-color: transparent;
-  transition: opacity .15s ease, transform .22s cubic-bezier(.2,.8,.2,1) !important; }
+#searchSheet .sr-field > svg { flex: none; width: 24px; height: 24px; stroke-width: 2.2; }
+#searchSheet .sr-in { position: relative; flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; }
+#searchSheet .sr-in input { position: relative; width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); caret-color: var(--accent);
+  font: 500 21px 'Inter',system-ui,sans-serif; letter-spacing: -.01em; -webkit-appearance: none; appearance: none; padding: 0; margin: 0; }
+#searchSheet .sr-in input::-webkit-search-cancel-button, #searchSheet .sr-in input::-webkit-search-decoration { display: none; -webkit-appearance: none; }
+#searchSheet .sr-ph { position: absolute; left: 0; right: 0; top: 50%; margin-top: -14px; line-height: 28px; font: 400 21px 'Inter',system-ui,sans-serif; letter-spacing: -.01em;
+  color: color-mix(in srgb, var(--text) 40%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; opacity: 0; transform: translateY(6px); }
+#searchSheet .sr-ph.in { opacity: 1; transform: none; transition: opacity .3s ease, transform .4s cubic-bezier(.2,.8,.2,1) !important; }
+#searchSheet .sr-ph.out { opacity: 0; transform: translateY(-6px); transition: opacity .16s ease, transform .2s ease !important; }
+#searchSheet .sr-ph.gone { opacity: 0 !important; transition: none !important; }
+#searchSheet .sr-x { flex: none; width: 26px; height: 26px; border-radius: 13px; border: 0; padding: 0; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--text) 24%, transparent); color: var(--bg-0); cursor: pointer; opacity: 0; transform: scale(.5); pointer-events: none; -webkit-tap-highlight-color: transparent;
+  transition: opacity .15s ease, transform .25s cubic-bezier(.2,1.2,.3,1) !important; margin-right: 6px; }
 #searchSheet .sr-x.on { opacity: 1; transform: none; pointer-events: auto; }
-#searchSheet .sr-body { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; box-sizing: border-box;
-  max-height: min(420px, calc(100dvh - var(--sr-kb, 0px) - 160px)); border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
-  padding: 12px 10px 12px; display: flex; flex-direction: column; gap: 16px; transition: height .28s cubic-bezier(.2,.8,.2,1) !important; }
+#searchSheet .sr-hit { flex: none; max-width: 46%; display: flex; align-items: center; gap: 7px; height: 32px; padding: 0 11px; margin: 0; border: 0; border-radius: 16px; cursor: pointer;
+  color: var(--c); background: color-mix(in srgb, var(--c) 17%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 34%, transparent);
+  font: 600 12.5px 'Inter',system-ui,sans-serif; -webkit-tap-highlight-color: transparent; animation: srPop .3s cubic-bezier(.2,1.2,.3,1) both; }
+#searchSheet .sr-hit[hidden] { display: none; }
+#searchSheet .sr-hit svg { flex: none; }
+#searchSheet .sr-hn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#searchSheet .sr-hit:active { transform: scale(.95); }
+@keyframes srPop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
+#searchSheet .sr-body { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; box-sizing: border-box; position: relative;
+  max-height: var(--sr-max, 380px); padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 12px; transition: height .3s cubic-bezier(.2,.8,.2,1) !important; }
+#searchSheet .sr-body::before { content: ''; position: absolute; left: 22px; right: 22px; top: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text) 20%, transparent) 20%, color-mix(in srgb, var(--text) 20%, transparent) 80%, transparent); }
 #searchSheet .sr-body.nt { transition: none !important; }
-#searchSheet .sr-sec { display: flex; flex-direction: column; gap: 2px; }
-#searchSheet .sr-h { font: 600 10px 'JetBrains Mono',monospace; letter-spacing: .16em; color: color-mix(in srgb, var(--text) 50%, transparent); padding: 0 8px 6px; }
-#searchSheet .sr-r { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 6px 8px; margin: 0; box-sizing: border-box; cursor: pointer;
-  border: 0; border-radius: 13px; background: transparent; color: var(--text); text-align: left; position: relative;
-  font: 500 15px 'Inter',system-ui,sans-serif; -webkit-tap-highlight-color: transparent;
-  transition: background .12s ease, transform .15s ease !important; }
-#searchSheet .sr-r.sel { background: color-mix(in srgb, var(--c) 14%, transparent); }
-#searchSheet .sr-r:active { background: color-mix(in srgb, var(--c) 18%, transparent); transform: scale(.985); }
-#searchSheet .sr-ic { flex: none; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--c);
-  background: color-mix(in srgb, var(--c) 14%, transparent); }
-#searchSheet .sr-ic svg { width: 18px; height: 18px; }
-#searchSheet .sr-n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#searchSheet .sr-body > * { flex-shrink: 0; }
+#searchSheet .sr-sec { display: flex; flex-direction: column; gap: 4px; }
+#searchSheet .sr-h { font: 600 10px 'JetBrains Mono',monospace; letter-spacing: .16em; color: color-mix(in srgb, var(--text) 48%, transparent); padding: 4px 10px 4px; }
+#searchSheet .sr-list { position: relative; display: flex; flex-direction: column; gap: 2px; }
+#searchSheet .sr-hl { position: absolute; left: 0; right: 0; top: 0; height: 54px; border-radius: 16px; pointer-events: none; opacity: 0; z-index: 0; will-change: transform;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c, var(--accent)) 22%, transparent), color-mix(in srgb, var(--c, var(--accent)) 9%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c, var(--accent)) 30%, transparent);
+  transition: transform .28s cubic-bezier(.2,.9,.25,1), height .2s ease, opacity .15s ease !important; }
+#searchSheet .sr-hl.on { opacity: 1; }
+#searchSheet .sr-hl.nt { transition: none !important; }
+#searchSheet .sr-r { position: relative; z-index: 1; display: flex; align-items: center; gap: 13px; width: 100%; min-height: 54px; padding: 7px 10px; margin: 0; box-sizing: border-box; cursor: pointer;
+  border: 0; border-radius: 16px; background: transparent; color: var(--text); text-align: left; -webkit-tap-highlight-color: transparent;
+  transition: transform .15s ease !important; }
+#searchSheet .sr-r:active { transform: scale(.985); }
+#searchSheet .sr-ic { flex: none; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--c);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 24%, transparent), color-mix(in srgb, var(--c) 9%, transparent));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 0 0 1px color-mix(in srgb, var(--c) 22%, transparent); }
+#searchSheet .sr-ic svg { width: 20px; height: 20px; }
+#searchSheet .sr-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+#searchSheet .sr-n { font: 500 16.5px 'Inter',system-ui,sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #searchSheet .sr-n b { font-weight: 700; color: var(--c); }
-#searchSheet .sr-g { flex: none; font: 600 9px 'JetBrains Mono',monospace; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in srgb, var(--text) 46%, transparent); }
-#searchSheet .sr-ch { display: none; }
-#searchSheet .sr-resume { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; padding: 10px 12px; margin: 0; cursor: pointer; text-align: left;
-  border-radius: 16px; color: var(--text); -webkit-tap-highlight-color: transparent; border: 0;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--c) 20%, transparent), color-mix(in srgb, var(--c) 7%, transparent));
+#searchSheet .sr-g { font: 500 11.5px 'Inter',system-ui,sans-serif; color: color-mix(in srgb, var(--text) 50%, transparent); }
+#searchSheet .sr-key { flex: none; display: none; align-items: center; justify-content: center; width: 30px; height: 24px; border-radius: 7px; color: color-mix(in srgb, var(--text) 70%, transparent);
+  background: color-mix(in srgb, var(--text) 12%, transparent); box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--text) 16%, transparent); opacity: 0; transition: opacity .15s ease !important; }
+@media (hover: hover) { #searchSheet .sr-key { display: flex; } #searchSheet .sr-r.sel .sr-key { opacity: 1; } }
+#searchSheet .sr-fl { display: flex; gap: 6px; overflow-x: auto; flex: none; padding: 2px 2px 0; scrollbar-width: none; }
+#searchSheet .sr-fl::-webkit-scrollbar { display: none; }
+#searchSheet .sr-f { flex: none; height: 30px; padding: 0 14px; margin: 0; border: 0; border-radius: 15px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  font: 600 12.5px 'Inter',system-ui,sans-serif; color: color-mix(in srgb, var(--text) 66%, transparent); background: color-mix(in srgb, var(--text) 8%, transparent);
+  transition: background .18s ease, color .18s ease, transform .15s ease !important; }
+#searchSheet .sr-f.on { color: var(--bg-0); background: var(--accent); }
+#searchSheet .sr-f:active { transform: scale(.94); }
+#searchSheet .sr-resume { display: flex; align-items: center; gap: 14px; width: 100%; box-sizing: border-box; padding: 10px 14px; margin: 0; cursor: pointer; text-align: left; border: 0; border-radius: 20px; color: var(--text);
+  -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c) 24%, transparent), color-mix(in srgb, var(--c) 8%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 28%, transparent), inset 0 1px 0 rgba(255,255,255,.1);
   transition: transform .18s cubic-bezier(.2,.8,.2,1) !important; }
+#searchSheet .sr-resume::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -50%; pointer-events: none; transform: skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent); }
+#searchSheet.on .sr-resume::after { animation: srSheen 1.1s cubic-bezier(.3,.6,.3,1) .5s both; }
+@keyframes srSheen { from { left: -50%; } to { left: 130%; } }
 #searchSheet .sr-resume:active { transform: scale(.98); }
-#searchSheet .sr-resume .ss-play { flex: none; width: 36px; height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: var(--c); color: var(--bg-0); }
+#searchSheet .sr-resume .ss-play { flex: none; width: 40px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; background: var(--c); color: var(--bg-0);
+  box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--c) 60%, transparent); }
 #searchSheet .sr-rt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 #searchSheet .sr-k { font: 700 9px 'JetBrains Mono',monospace; letter-spacing: .18em; color: var(--c); }
-#searchSheet .sr-t { font: 600 16px 'Inter',system-ui,sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#searchSheet .sr-s { font-size: 11px; color: color-mix(in srgb, var(--text) 54%, transparent); }
-#searchSheet .sr-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-#searchSheet .sr-chip { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 2px 8px; margin: 0; cursor: pointer; border-radius: 14px; color: var(--text); border: 0;
-  background: color-mix(in srgb, var(--c) 9%, transparent); font: 600 11px 'Inter',system-ui,sans-serif; -webkit-tap-highlight-color: transparent;
-  transition: transform .16s cubic-bezier(.2,.8,.2,1) !important; }
-#searchSheet .sr-chip:active { transform: scale(.95); }
-#searchSheet .sr-chip .sr-ic { width: 32px; height: 32px; }
-#searchSheet .sr-none { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 0 0; color: color-mix(in srgb, var(--text) 62%, transparent); text-align: center; }
-#searchSheet .sr-ni { width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--text) 8%, transparent); }
-#searchSheet .sr-ni svg { width: 20px; height: 20px; }
+#searchSheet .sr-t { font: 600 18px 'Inter',system-ui,sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#searchSheet .sr-s { font-size: 11.5px; color: color-mix(in srgb, var(--text) 54%, transparent); }
+#searchSheet .sr-orbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding-top: 2px; }
+#searchSheet .sr-orb { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 4px 0 2px; margin: 0; border: 0; background: transparent; cursor: pointer; color: var(--text); -webkit-tap-highlight-color: transparent;
+  transition: transform .18s cubic-bezier(.2,1.2,.3,1) !important; }
+#searchSheet .sr-orb:active { transform: scale(.92); }
+#searchSheet .sr-orb .sr-ic { width: 48px; height: 48px; border-radius: 24px; }
+#searchSheet .sr-orb .sr-ic svg { width: 24px; height: 24px; }
+#searchSheet .sr-ol { font: 600 11.5px 'Inter',system-ui,sans-serif; color: color-mix(in srgb, var(--text) 72%, transparent); }
+#searchSheet .sr-none { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0 0; color: color-mix(in srgb, var(--text) 62%, transparent); text-align: center; }
+#searchSheet .sr-ni { width: 46px; height: 46px; border-radius: 23px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--text) 8%, transparent); }
+#searchSheet .sr-ni svg { width: 21px; height: 21px; }
 #searchSheet .sr-nt { font-size: 14px; max-width: 85%; overflow-wrap: anywhere; }
-/* Entrance: parts rise in turn. The same on the first and every later open. */
-#searchSheet.on .sr-resume, #searchSheet.on .sr-sec, #searchSheet.on .sr-none { animation: ssUp .42s cubic-bezier(.16,1,.3,1) .08s both; }
-#searchSheet.on .sr-sec + .sr-sec { animation-delay: .14s; }
-#searchSheet .sr-r, #searchSheet .sr-chip { animation: ssFade .26s ease calc(80ms + var(--i, 0) * 24ms) both; }
-#searchSheet .sr-body.nt .sr-r, #searchSheet .sr-body.nt .sr-chip { animation-delay: calc(80ms + var(--i, 0) * 24ms); }
+/* Entrance: the field settles first, then the parts rise in turn. Same on the first and every later open. */
+#searchSheet.on .sr-field { animation: ssFade .3s ease .06s both; }
+#searchSheet.on .sr-resume, #searchSheet.on .sr-sec, #searchSheet.on .sr-none { animation: ssUp .46s cubic-bezier(.16,1,.3,1) .12s both; }
+#searchSheet.on .sr-sec + .sr-sec { animation-delay: .18s; }
+#searchSheet .sr-orb { animation: ssUp .42s cubic-bezier(.2,1,.3,1) calc(180ms + var(--i, 0) * 40ms) both; }
+#searchSheet .sr-r { animation: ssFade .26s ease calc(120ms + var(--i, 0) * 26ms) both; }
+#searchSheet .sr-body.sr-q .sr-r { animation: ssUp .28s cubic-bezier(.2,.8,.2,1) calc(var(--i, 0) * 24ms) both; }
+#searchSheet .sr-body.sr-q .sr-sec, #searchSheet .sr-body.sr-q .sr-none { animation: none !important; }
+body.light #searchSheet .sr-k, body.light #searchSheet .sr-n b { color: color-mix(in srgb, var(--c) 62%, var(--text)); }
+body.light #searchSheet .sr-ic { color: color-mix(in srgb, var(--c) 72%, var(--text)); }
+body.light #searchSheet .sr-hit { color: color-mix(in srgb, var(--c) 66%, var(--text)); }
 @media (prefers-reduced-motion: reduce) {
   #searchSheet .sr-card, #searchSheet.on .sr-card { transform: none; transition: opacity .15s linear !important; }
   #searchSheet * { animation: none !important; }
@@ -92331,7 +92380,7 @@ const STRINGS = {
     ss_ago_now:'just now', ss_ago_min:'{n} min ago', ss_ago_hr:'{n} h ago', ss_ago_day:'{n} d ago',
     ss_title:'Your practice', ss_search_ph:'Search the app', ss_resume:'RESUME',
     ss_today:'Opened today', ss_best:'Best {n} days', ss_of:'{a} of {b}', ss_next:'Next: {name}, {cur} of {target}',
-    ss_none:'No results', sr_cancel:'Cancel', sr_recent:'RECENT', sr_suggested:'SUGGESTED', sr_goto:'GO TO', sr_try:'TRY', sr_clear:'Clear', sr_none:'Nothing found for "{q}"', ss_prev:'Previous month', ss_next_m:'Next month', ss_legend:'Days opened',
+    ss_none:'No results', sr_cancel:'Cancel', sr_all:'All', sr_tabs:'Tabs', sr_open:'Open {n}', sr_try_fmt:'Try "{q}"', sr_recent:'RECENT', sr_suggested:'SUGGESTED', sr_goto:'GO TO', sr_try:'TRY', sr_clear:'Clear', sr_none:'Nothing found for "{q}"', ss_prev:'Previous month', ss_next_m:'Next month', ss_legend:'Days opened',
     lbl_other:'OTHER',  lbl_options:'OPTIONS', btn_close:'CLOSE', lbl_to:'to:', lbl_bass:'BASS', pn_tap_start:'tap a key to start', trp_sounds:'Sounds: ', trp_written:'Written: ', photo_loading:'LOADING PHOTO…', photo_offline:'PHOTO UNAVAILABLE', photo_soon:'PHOTO COMING SOON',
     backup_partial_restore:'This backup was saved with %n item(s) missing. Everything else will be restored.',
     backup_partial:'Backup saved, but %n item(s) could not be included. This is a bug \u2014 please report it.',
@@ -93531,7 +93580,7 @@ const STRINGS = {
     ss_ago_now:'adesso', ss_ago_min:'{n} min fa', ss_ago_hr:'{n} h fa', ss_ago_day:'{n} g fa',
     ss_title:'La tua pratica', ss_search_ph:'Cerca nell\'app', ss_resume:'RIPRENDI',
     ss_today:'Aperta oggi', ss_best:'Record: {n} giorni', ss_of:'{a} di {b}', ss_next:'Prossimo: {name}, {cur} di {target}',
-    ss_none:'Nessun risultato', sr_cancel:'Annulla', sr_recent:'RECENTI', sr_suggested:'SUGGERITI', sr_goto:'VAI A', sr_try:'PROVA', sr_clear:'Cancella', sr_none:'Nessun risultato per "{q}"', ss_prev:'Mese precedente', ss_next_m:'Mese successivo', ss_legend:'Giorni aperti',
+    ss_none:'Nessun risultato', sr_cancel:'Annulla', sr_all:'Tutto', sr_tabs:'Sezioni', sr_open:'Apri {n}', sr_try_fmt:'Prova "{q}"', sr_recent:'RECENTI', sr_suggested:'SUGGERITI', sr_goto:'VAI A', sr_try:'PROVA', sr_clear:'Cancella', sr_none:'Nessun risultato per "{q}"', ss_prev:'Mese precedente', ss_next_m:'Mese successivo', ss_legend:'Giorni aperti',
     // Italian help content. showHelp() looks up STRINGS[lang].help[key] and
     // falls back to the English HELP_CONTENT when it misses — and this table did
     // not exist at all, so every help popup in the app was English regardless of
@@ -141837,23 +141886,23 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   function index() {
     if (_index && _indexLang === lang()) return _index;
     var list = [];
-    function add(id, label, tag, launch, icon, col) {
+    function add(id, label, tag, launch, icon, col, kind) {
       var al = ALIAS[id] || '';
-      list.push({ id: id, label: label, tag: tag, launch: launch, icon: icon || '', col: col || 'var(--accent)', hay: norm(label), lw: norm(label).split(/[^a-z0-9]+/).filter(Boolean), aw: norm(al).split(/[^a-z0-9]+/).filter(Boolean) });
+      list.push({ id: id, label: label, tag: tag, kind: kind || 'tool', launch: launch, icon: icon || '', col: col || 'var(--accent)', hay: norm(label), lw: norm(label).split(/[^a-z0-9]+/).filter(Boolean), aw: norm(al).split(/[^a-z0-9]+/).filter(Boolean) });
     }
-    add('tuner', sentence(T('mode_tuner', 'Tuner')), T('ss_t_tab', 'Tab'), function () { setMode('tuner'); }, TABIC.tuner, COL.tuner);
-    add('metro', sentence(T('mode_metro', 'Metro')), T('ss_t_tab', 'Tab'), function () { setMode('metronome'); }, TABIC.metro, COL.metro);
+    add('tuner', sentence(T('mode_tuner', 'Tuner')), T('ss_t_tab', 'Tab'), function () { setMode('tuner'); }, TABIC.tuner, COL.tuner, 'tab');
+    add('metro', sentence(T('mode_metro', 'Metro')), T('ss_t_tab', 'Tab'), function () { setMode('metronome'); }, TABIC.metro, COL.metro, 'tab');
     try {
       Object.keys(FAV_META).forEach(function (k) {
         var m = FAV_META[k];
         if (!m || typeof m.launch !== 'function') return;
-        add(k, nameOf(k, m), typeTag(m), function () { m.launch(); }, m.icon, m.type === 'EXERCISE' ? COL.train : COL.tools);
+        add(k, nameOf(k, m), typeTag(m), function () { m.launch(); }, m.icon, m.type === 'EXERCISE' ? COL.train : COL.tools, m.type === 'EXERCISE' ? 'train' : 'tool');
       });
     } catch (e) {}
     _index = list; _indexLang = lang();
     return list;
   }
-  function search(q) {
+  function search(q, n) {
     var toks = norm(q).split(/\s+/).filter(Boolean);
     if (!toks.length) return [];
     var out = [];
@@ -141872,7 +141921,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       out.push({ it: it, s: total });
     });
     out.sort(function (x, y) { return y.s - x.s || x.it.label.localeCompare(y.it.label); });
-    return out.slice(0, 8).map(function (x) { return x.it; });
+    return out.slice(0, n || 8).map(function (x) { return x.it; });
   }
 
   function ago(ms) {
@@ -142081,9 +142130,12 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     setTimeout(function () { watch('appLogo'); watch('headerTagline'); }, 2600);
   })();
 
-  /* ── Search screen ──────────────────────────────────────────────────────── */
-  var srKb = 0, srKbSeen = 0, sr, srIn, srBody, srClear, srBuilt = false, srSel = -1, srList = [], srQ = '', srOpen = false;
-  var CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  /* ── Search card ────────────────────────────────────────────────────────── */
+  var srKb = 0, srKbSeen = 0, sr, srIn, srBody, srClear, srHit, srPh, srBuilt = false, srSel = -1, srList = [], srQ = '', srOpen = false, srFilter = 'all', srAll = [], srHL = null, srTimer = 0, srPhI = 0;
+  var fullH = window.innerHeight;
+  var ENTER = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 5v7a3 3 0 0 1-3 3H5"/><path d="M9 11l-4 4 4 4"/></svg>';
+  function coarse() { return !!(window.matchMedia && matchMedia('(pointer: coarse)').matches); }
+  function buzz() { try { if (typeof hapticLight === 'function') hapticLight(); } catch (e) {} }
   function hl(label, q) {
     var n = norm(label);
     if (n.length !== label.length) return esc(label);
@@ -142095,148 +142147,197 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     mark.forEach(function (m) { if (m[0] < pos) return; out += esc(label.slice(pos, m[0])) + '<b>' + esc(label.slice(m[0], m[1])) + '</b>'; pos = m[1]; });
     return out + esc(label.slice(pos));
   }
-  function row(it, i, q, tag) {
-    return '<button type="button" class="sr-r" data-i="' + i + '" style="--i:' + i + ';--c:' + it.col + '"><span class="sr-ic">' + it.icon + '</span><span class="sr-n">' + hl(it.label, q || '') +
-      '</span><span class="sr-g">' + esc(tag || it.tag) + '</span><span class="sr-ch">' + CHEV + '</span></button>';
+  function row(it, i, q) {
+    return '<button type="button" class="sr-r" data-i="' + i + '" style="--i:' + i + ';--c:' + it.col + '"><span class="sr-ic">' + it.icon + '</span><span class="sr-tx"><span class="sr-n">' + hl(it.label, q || '') +
+      '</span><span class="sr-g">' + esc(it.tag) + '</span></span><span class="sr-key">' + ENTER + '</span></button>';
   }
   function byId(id) { var l = index(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
-  function chips(ids, startI) {
-    var h = '<div class="sr-chips">';
-    ids.forEach(function (c, k) {
-      h += '<button type="button" class="sr-chip" data-go="' + c.go + '" style="--i:' + (startI + k) + ';--c:' + c.col + '"><span class="sr-ic">' + c.icon + '</span>' + esc(c.label) + '</button>';
-    });
-    return h + '</div>';
-  }
-  function tabChips() {
-    return [
+  function tabBtns(startI) {
+    var d = [
       { go: 'tuner', col: COL.tuner, icon: TABIC.tuner, label: sentence(T('mode_tuner', 'Tuner')) },
       { go: 'metronome', col: COL.metro, icon: TABIC.metro, label: sentence(T('mode_metro', 'Metro')) },
       { go: 'tools', col: COL.tools, icon: TABIC.tools, label: sentence(T('mode_tools', 'Tools')) },
       { go: 'practice', col: COL.train, icon: TABIC.train, label: sentence(T('mode_train', 'Train')) }
     ];
+    var h = '<div class="sr-orbs">';
+    d.forEach(function (c, k) { h += '<button type="button" class="sr-orb" data-go="' + c.go + '" style="--i:' + (startI + k) + ';--c:' + c.col + '"><span class="sr-ic">' + c.icon + '</span><span class="sr-ol">' + esc(c.label) + '</span></button>'; });
+    return h + '</div>';
   }
+  function listWrap(inner) { return '<div class="sr-list"><i class="sr-hl" aria-hidden="true"></i>' + inner + '</div>'; }
   function renderEmpty() {
-    var h = '', i = 0; srList = [];
+    var h = '', i = 0; srList = []; srAll = []; srFilter = 'all';
     var last = progState.lastTool, li = last && byId(last.k);
     if (li) {
       h += '<button type="button" class="sr-resume" data-resume="1" style="--c:' + li.col + '"><span class="ss-play">' + PLAY + '</span><span class="sr-rt"><span class="sr-k">' + esc(T('ss_resume', 'RESUME')) +
         '</span><span class="sr-t">' + esc(li.label) + '</span><span class="sr-s">' + esc(ago(last.at || Date.now())) + '</span></span></button>';
     }
-    var rec = (progState.recentTools || []).filter(function (k) { return !(last && k === last.k); }).map(byId).filter(Boolean).slice(0, 4), title = T('sr_recent', 'RECENT');
-    if (!rec.length) { rec = ['tool:piano', 'exercise:scales', 'tool:cof', 'exercise:interval'].map(byId).filter(Boolean).filter(function (x) { return !(li && x.id === li.id); }).slice(0, 4); title = T('sr_suggested', 'SUGGESTED'); }
+    var rec = (progState.recentTools || []).filter(function (k) { return !(last && k === last.k); }).map(byId).filter(Boolean).slice(0, 2), title = T('sr_recent', 'RECENT');
+    if (!rec.length && !li) { rec = ['tool:piano', 'exercise:scales', 'tool:cof'].map(byId).filter(Boolean); title = T('sr_suggested', 'SUGGESTED'); }
     if (rec.length) {
-      h += '<div class="sr-sec"><div class="sr-h">' + esc(title) + '</div>';
-      rec.forEach(function (it) { h += row(it, i, '', it.tag); srList.push(it); i++; });
-      h += '</div>';
+      var inner = ''; rec.forEach(function (it) { inner += row(it, i, ''); srList.push(it); i++; });
+      h += '<div class="sr-sec"><div class="sr-h">' + esc(title) + '</div>' + listWrap(inner) + '</div>';
     }
-    h += '<div class="sr-sec"><div class="sr-h">' + esc(T('sr_goto', 'GO TO')) + '</div>' + chips(tabChips(), i) + '</div>';
+    h += '<div class="sr-sec"><div class="sr-h">' + esc(T('sr_goto', 'GO TO')) + '</div>' + tabBtns(i) + '</div>';
+    srHit.hidden = true; srBody.classList.remove('sr-q');
     srBody.innerHTML = h; srSel = -1; srBody.scrollTop = 0; fit(!srOpen);
   }
-  function renderResults(q) {
-    var r = search(q); srList = r; srSel = r.length ? 0 : -1;
+  var KIND_LABEL = function (k) { return k === 'tool' ? sentence(T('mode_tools', 'Tools')) : k === 'train' ? sentence(T('mode_train', 'Train')) : T('sr_tabs', 'Tabs'); };
+  function renderResults(q, keepFilter) {
+    if (!keepFilter) { srAll = search(q, 12); srFilter = 'all'; }
+    var r = srFilter === 'all' ? srAll : srAll.filter(function (x) { return x.kind === srFilter; });
+    srList = r; srSel = r.length ? 0 : -1;
     var h = '';
-    if (r.length) {
-      h = '<div class="sr-sec sr-flat">';
-      r.forEach(function (it, i) { h += row(it, i, q); });
-      h += '</div>';
+    if (srAll.length) {
+      var kinds = []; srAll.forEach(function (x) { if (kinds.indexOf(x.kind) < 0) kinds.push(x.kind); });
+      if (kinds.length > 1) {
+        h += '<div class="sr-fl">';
+        ['all'].concat(kinds).forEach(function (k) { h += '<button type="button" class="sr-f' + (k === srFilter ? ' on' : '') + '" data-f="' + k + '">' + esc(k === 'all' ? T('sr_all', 'All') : KIND_LABEL(k)) + '</button>'; });
+        h += '</div>';
+      }
+      var inner = ''; r.forEach(function (it, i) { inner += row(it, i, q); });
+      h += listWrap(inner);
     } else {
-      var sug = ['tuner', 'metro', 'tool:piano', 'exercise:scales'].map(byId).filter(Boolean);
+      var sug = ['tuner', 'metro', 'tool:piano', 'exercise:scales'].map(byId).filter(Boolean), inner2 = '';
+      sug.forEach(function (it, i) { inner2 += row(it, i, ''); });
       h = '<div class="sr-none"><div class="sr-ni">' + SEARCH + '</div><div class="sr-nt">' + esc(fmt(T('sr_none', 'Nothing found for "{q}"'), { q: q })) + '</div></div>' +
-        '<div class="sr-sec"><div class="sr-h">' + esc(T('sr_try', 'TRY')) + '</div>';
-      sug.forEach(function (it, i) { h += row(it, i, '', it.tag); });
+        '<div class="sr-sec"><div class="sr-h">' + esc(T('sr_try', 'TRY')) + '</div>' + listWrap(inner2) + '</div>';
       srList = sug; srSel = -1;
-      h += '</div>';
     }
+    srBody.classList.add('sr-q');
     srBody.innerHTML = h; srBody.scrollTop = 0; fit(false);
-    paintSel();
+    paintSel(true);
   }
-  // The card grows and shrinks to fit its list, so it never leaves a blank gap and never jumps.
+  // The card grows and shrinks to fit its list. The field never moves.
   function fit(instant) {
     if (!srBody) return;
     var prev = srBody.offsetHeight;
     srBody.classList.add('nt'); srBody.style.height = 'auto';
-    var h = srBody.offsetHeight;                      // natural height, clamped by max-height
+    var h = srBody.offsetHeight;
     if (!instant && prev) { srBody.style.height = prev + 'px'; void srBody.offsetHeight; srBody.classList.remove('nt'); }
     srBody.style.height = h + 'px';
     if (instant) { void srBody.offsetHeight; srBody.classList.remove('nt'); }
   }
-  function paintSel() {
-    var rows = srBody.querySelectorAll('.sr-r');
+  // One highlight slides between rows, so moving the selection feels like one object moving.
+  function paintSel(snap, nav) {
+    var rows = srBody.querySelectorAll('.sr-r'), hlEl = srBody.querySelector('.sr-hl');
     Array.prototype.forEach.call(rows, function (b, i) { b.classList.toggle('sel', i === srSel); });
-    if (srSel > -1 && rows[srSel] && rows[srSel].scrollIntoView) { try { rows[srSel].scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+    if (hlEl) {
+      var el = srSel > -1 ? rows[srSel] : null;
+      if (!el) hlEl.classList.remove('on');
+      else {
+        hlEl.style.setProperty('--c', el.style.getPropertyValue('--c'));
+        if (snap) hlEl.classList.add('nt');
+        hlEl.style.transform = 'translateY(' + el.offsetTop + 'px)'; hlEl.style.height = el.offsetHeight + 'px';
+        if (snap) { void hlEl.offsetHeight; hlEl.classList.remove('nt'); }
+        hlEl.classList.add('on');
+      }
+    }
+    // Top hit pill in the field: the Enter shortcut, and a tap target on touch screens.
+    var top = srQ && srList[srSel > -1 ? srSel : 0];
+    if (top && srList.length && srList !== null && srBody.classList.contains('sr-q') && srAll.length) {
+      srHit.hidden = false; srHit.style.setProperty('--c', top.col);
+      srHit.querySelector('.sr-hn').textContent = fmt(T('sr_open', 'Open {n}'), { n: top.label });
+    } else srHit.hidden = true;
+    if (nav && srSel > -1 && rows[srSel] && rows[srSel].scrollIntoView) { try { rows[srSel].scrollIntoView({ block: 'nearest' }); } catch (e) {} }
   }
   function pick(it) {
     if (!it) return;
-    closeSearch();
+    buzz(); closeSearch();
     setTimeout(function () { try { it.launch(); } catch (e) {} }, 210);
+  }
+  // Placeholder: says "Search the app", then offers real things to try. Runs only while the card is open and empty.
+  function phTick() {
+    if (!srOpen || srIn.value) return;
+    var tries = ['tuner', 'exercise:scales', 'tool:cof', 'metro', 'tool:drumkit'].map(byId).filter(Boolean);
+    var base = T('ss_search_ph', 'Search the app');
+    var txt = (srPhI % (tries.length + 1) === 0) ? base : fmt(T('sr_try_fmt', 'Try "{q}"'), { q: tries[(srPhI % (tries.length + 1)) - 1].label.toLowerCase() });
+    srPhI++;
+    srPh.classList.remove('in'); srPh.classList.add('out');
+    setTimeout(function () { srPh.textContent = txt; srPh.classList.remove('out'); void srPh.offsetWidth; srPh.classList.add('in'); }, 160);
+  }
+  function layout() {
+    if (!srBuilt) return;
+    var vv = window.visualViewport, vh = vv ? vv.height : window.innerHeight;
+    if (!srOpen) fullH = window.innerHeight; else if (window.innerHeight > fullH) fullH = window.innerHeight;
+    var kbUp = fullH - vh > 80;
+    if (kbUp) srKbSeen = fullH - vh;
+    var pin = parseFloat(getComputedStyle(root).getPropertyValue('--hv-pin')) || 14;
+    var top = Math.round(Math.max(pin + 34 + 14, fullH * 0.11));
+    // Plan for the keyboard before it is there, so the card is the same size when it arrives.
+    var usable = coarse() ? Math.min(vh, fullH - (srKbSeen || Math.round(fullH * 0.4))) : vh;
+    var max = Math.max(120, Math.min(440, usable - top - 14 - 66));
+    sr.style.setProperty('--sr-top', top + 'px'); sr.style.setProperty('--sr-max', max + 'px');
   }
   function ensureSearch() {
     if (srBuilt) return;
     sr = document.createElement('div'); sr.id = 'searchSheet'; sr.setAttribute('role', 'dialog'); sr.setAttribute('aria-modal', 'true');
     sr.setAttribute('aria-label', T('ss_search_aria', 'Search'));
-    sr.innerHTML = '<div class="sr-bd"></div><div class="sr-card"><div class="sr-top"><label class="sr-field">' + SEARCH + '<input id="srInput" type="search" enterkeyhint="go" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' +
-      esc(T('ss_search_ph', 'Search the app')) + '" aria-label="' + esc(T('ss_search_aria', 'Search')) + '"><button type="button" class="sr-x" id="srClear" aria-label="' + esc(T('sr_clear', 'Clear')) + '" tabindex="-1">' +
+    sr.innerHTML = '<div class="sr-bd"></div><div class="sr-card"><div class="sr-top"><label class="sr-field">' + SEARCH + '<span class="sr-in"><span class="sr-ph in" id="srPh"></span><input id="srInput" type="search" enterkeyhint="go" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="' + esc(T('ss_search_aria', 'Search')) + '"></span>' +
+      '<button type="button" class="sr-hit" id="srHit" hidden><span class="sr-hn"></span>' + ENTER + '</button>' +
+      '<button type="button" class="sr-x" id="srClear" aria-label="' + esc(T('sr_clear', 'Clear')) + '" tabindex="-1">' +
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></label></div><div class="sr-body" id="srBody"></div></div>';
     document.body.appendChild(sr);
-    srIn = sr.querySelector('#srInput'); srBody = sr.querySelector('#srBody'); srClear = sr.querySelector('#srClear');
+    srIn = sr.querySelector('#srInput'); srBody = sr.querySelector('#srBody'); srClear = sr.querySelector('#srClear'); srHit = sr.querySelector('#srHit'); srPh = sr.querySelector('#srPh');
     srBuilt = true;
     srIn.addEventListener('input', function () {
-      var q = srIn.value.trim(); srClear.classList.toggle('on', !!srIn.value);
+      var q = srIn.value.trim(); srClear.classList.toggle('on', !!srIn.value); srPh.classList.toggle('gone', !!srIn.value);
       if (q === srQ) return; srQ = q;
       if (q) renderResults(q); else renderEmpty();
     });
     srIn.addEventListener('keydown', function (e) {
       var rows = srBody.querySelectorAll('.sr-r');
-      if (e.key === 'ArrowDown' && rows.length) { e.preventDefault(); srSel = (srSel + 1) % rows.length; paintSel(); }
-      else if (e.key === 'ArrowUp' && rows.length) { e.preventDefault(); srSel = (srSel - 1 + rows.length) % rows.length; paintSel(); }
+      if (e.key === 'ArrowDown' && rows.length) { e.preventDefault(); srSel = (srSel + 1) % rows.length; paintSel(false, true); }
+      else if (e.key === 'ArrowUp' && rows.length) { e.preventDefault(); srSel = (srSel - 1 + rows.length) % rows.length; paintSel(false, true); }
       else if (e.key === 'Enter') { e.preventDefault(); var it = srList[srSel > -1 ? srSel : 0]; if (srQ && it) { srIn.blur(); pick(it); } }
     });
-    srClear.addEventListener('click', function () { srIn.value = ''; srQ = ''; srClear.classList.remove('on'); renderEmpty(); try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } });
+    srClear.addEventListener('click', function () { srIn.value = ''; srQ = ''; srClear.classList.remove('on'); srPh.classList.remove('gone'); renderEmpty(); try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } });
+    srHit.addEventListener('click', function () { pick(srList[srSel > -1 ? srSel : 0]); });
     sr.querySelector('.sr-bd').addEventListener('click', function () { closeSearch(); });
+    srBody.addEventListener('pointerdown', function (e) {
+      var b = e.target.closest && e.target.closest('.sr-r'); if (!b) return;
+      var i = +b.getAttribute('data-i'); if (i !== srSel) { srSel = i; paintSel(); }
+    });
     srBody.addEventListener('click', function (e) {
       var b = e.target.closest && e.target.closest('button'); if (!b) return;
-      if (b.hasAttribute('data-resume')) { var m = byId(progState.lastTool.k); pick(m); return; }
-      if (b.hasAttribute('data-go')) { var md = b.getAttribute('data-go'); closeSearch(); setTimeout(function () { try { setMode(md); } catch (er) {} }, 210); return; }
+      if (b.hasAttribute('data-f')) { srFilter = b.getAttribute('data-f'); renderResults(srQ, true); return; }
+      if (b.hasAttribute('data-resume')) { pick(byId(progState.lastTool.k)); return; }
+      if (b.hasAttribute('data-go')) { var md = b.getAttribute('data-go'); buzz(); closeSearch(); setTimeout(function () { try { setMode(md); } catch (er) {} }, 210); return; }
       if (b.classList.contains('sr-r')) pick(srList[+b.getAttribute('data-i')]);
     });
-    // Tapping the list while the keyboard is up drops the keyboard first, so the list can be scrolled in view.
-    srBody.addEventListener('touchstart', function () { if (document.activeElement === srIn) srIn.blur(); }, { passive: true });
+    // Scrolling the list drops the keyboard, so the whole list can be seen.
+    srBody.addEventListener('touchmove', function () { if (document.activeElement === srIn) srIn.blur(); }, { passive: true });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && srOpen) closeSearch(); });
-    if (window.visualViewport) {
-      var fix = function () {
-        var vv = window.visualViewport, kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-        srKb = kb > 80 ? kb : 0; if (srKb) srKbSeen = srKb; sr.style.setProperty('--sr-kb', srKb + 'px');
-        setTimeout(function () { fit(false); }, 30);
-      };
-      window.visualViewport.addEventListener('resize', fix); window.visualViewport.addEventListener('scroll', fix);
-    }
+    var relay = function () { layout(); setTimeout(function () { if (srOpen) { fit(false); if (srSel > -1) paintSel(true); } }, 40); };
+    if (window.visualViewport) { window.visualViewport.addEventListener('resize', relay); window.visualViewport.addEventListener('scroll', relay); }
+    window.addEventListener('resize', relay);
   }
   window.openSearch = function () {
     try {
       ensureSearch();
       if (window.closeStreakSheet && built) window.closeStreakSheet();
-      srIn.value = ''; srQ = ''; srClear.classList.remove('on');
-      renderEmpty();
-      // On a touch phone the keyboard is about to rise, so the card starts where it will end up. No jump.
-      var coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-      if (coarse) sr.style.setProperty('--sr-kb', (srKbSeen || Math.round(window.innerHeight * 0.38)) + 'px'); else sr.style.setProperty('--sr-kb', '0px');
-      fit(true);
+      srIn.value = ''; srQ = ''; srClear.classList.remove('on'); srPh.classList.remove('gone');
+      srPhI = 0; srPh.textContent = T('ss_search_ph', 'Search the app'); srPh.classList.add('in'); srPh.classList.remove('out');
+      layout(); renderEmpty(); fit(true);
+      // The card grows out of the search button.
+      var card = sr.querySelector('.sr-card'), btn = document.getElementById('hvSearch');
+      if (btn && card) {
+        var r = btn.getBoundingClientRect();
+        card.style.transformOrigin = (r.left + r.width / 2 - card.offsetLeft) + 'px ' + (r.top + r.height / 2 - card.offsetTop) + 'px';
+      }
+      buzz();
       srOpen = true; sr.classList.add('on');
       if (window._scrollLockSync) _scrollLockSync();
       try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); }
-      // If no keyboard came up (hardware keyboard, focus refused), drop the estimate and center the card.
-      setTimeout(function () {
-        var vv = window.visualViewport, up = vv && (window.innerHeight - vv.height > 80);
-        if (srOpen && !up && !srKb) sr.style.setProperty('--sr-kb', '0px');
-      }, 900);
+      clearInterval(srTimer); srTimer = setInterval(phTick, 2600);
     } catch (e) {}
   };
   window.closeSearch = closeSearch;
   function closeSearch() {
     if (!srBuilt || !srOpen) return;
-    srOpen = false;
+    srOpen = false; clearInterval(srTimer);
     try { srIn.blur(); } catch (e) {}
     sr.classList.remove('on');
+    setTimeout(function () { if (!srOpen) fullH = window.innerHeight; }, 400);
   }
 
   // Build everything once while the app is idle, so the first open is as light as the second.
