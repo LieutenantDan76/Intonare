@@ -289,6 +289,21 @@ public class MainActivity extends BridgeActivity {
                 .apply();
         }
 
+        // Search asks for the keyboard to cover the page instead of shrinking it. Shrinking
+        // the web view makes the new area draw black for a few frames on every open and close.
+        @JavascriptInterface
+        public void setKeyboardResize(final boolean resize) {
+            runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    try {
+                        getWindow().setSoftInputMode(resize
+                            ? android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+                            : android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+                    } catch (Exception ignored) {}
+                }
+            });
+        }
+
         @JavascriptInterface
         public void pageReady() {
             pageReady = true;

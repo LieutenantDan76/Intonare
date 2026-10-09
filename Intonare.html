@@ -36980,6 +36980,10 @@ try {
         <span class="sm-link-label"><span data-i18n="settings_privacy">Privacy Policy</span></span>
         <span class="sm-link-chev">&#8250;</span>
       </button>
+      <button class="sm-link-row" onclick="window.open('https://lieutenantdan76.github.io/Intonare/support.html','_blank')">
+        <span class="sm-link-label"><span data-i18n="settings_support">Help &amp; Support</span></span>
+        <span class="sm-link-chev">&#8250;</span>
+      </button>
     </div>
 
     <!-- DEV TOOLS ONLY (INTONARE_DEV). Re-locks Pro to verify the paywall. -->
@@ -66350,6 +66354,7 @@ function lnchInit() {
         requestAnimationFrame(function () {
           lc.classList.remove('lnch-entering');
           lc.classList.add('lnch-nosplash-in');
+          try { window._nativeReady(); } catch (e) {}
           // Lift the veil ONLY once the launcher is opaque enough to be doing the
           // covering itself. Both fade over the same .34s from the same frame, so the
           // launcher is arriving exactly as fast as the veil is leaving and the app
@@ -66462,9 +66467,9 @@ function lnchStart() {
   if (_lnchStarted) return;
   _lnchStarted = true;
   lnchInit();
-  // Skipped-splash launches never reach the splash's own ready call. Tell Android the page has drawn once the launcher had two frames.
-  requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(function () { try { if (window.IntonareNative && window.IntonareNative.pageReady) window.IntonareNative.pageReady(); } catch (e) {} }, 60); }); });
 }
+// Tells Android the page is showing something, so the system launch screen can leave. The animated splash calls it when it draws; the no-splash launch calls it when the launcher starts to fade in. Android also gives up waiting after 3 seconds.
+window._nativeReady = function () { try { if (window.IntonareNative && window.IntonareNative.pageReady) window.IntonareNative.pageReady(); } catch (e) {} };
 // BUILD AS SOON AS THE DOM EXISTS, not when the splash says so.
 //
 // Gating the build on 'splash-dissolving' meant the grid was assembled in the last
@@ -92516,7 +92521,7 @@ const STRINGS = {
     backup_u_days:'-day streak', backup_u_ach:' achievements',
     backup_err_notours:'That is not an Intonare backup.', backup_err_unreadable:'That file could not be read.',
     backup_err_newer:'That backup was made by a newer version of Intonare. Update the app first.', backup_err_writefail:'The restore could not be saved. Free up some space and try again.',
-    settings_privacy:'Privacy Policy', wip_toast:'In development — coming in a future update!',
+    settings_privacy:'Privacy Policy', settings_support:'Help & Support', wip_toast:'In development — coming in a future update!',
     settings_lesson_hints:'Lesson Hints', settings_lesson_hints_off:'Off · compact UI', settings_lesson_hints_on:'On · inline hints',
     settings_notifications:'Notifications',
     notif_practice_title:'Practice Reminder', notif_practice_sub:'Daily nudge to pick up your instrument',
@@ -93717,7 +93722,7 @@ const STRINGS = {
     backup_u_days:' giorni di serie', backup_u_ach:' obiettivi',
     backup_err_notours:'Questo non è un backup di Intonare.', backup_err_unreadable:'Non è stato possibile leggere il file.',
     backup_err_newer:'Questo backup è stato creato da una versione più recente di Intonare. Aggiorna prima l\'app.', backup_err_writefail:'Non è stato possibile salvare il ripristino. Libera spazio e riprova.',
-    settings_privacy:'Informativa sulla Privacy', wip_toast:'In sviluppo — arriverà in un prossimo aggiornamento!',
+    settings_privacy:'Informativa sulla Privacy', settings_support:'Aiuto e assistenza', wip_toast:'In sviluppo — arriverà in un prossimo aggiornamento!',
     settings_lesson_hints:'Suggerimenti Lezione', settings_lesson_hints_off:'Off · UI compatta', settings_lesson_hints_on:'On · suggerimenti inline',
     settings_notifications:'Notifiche',
     notif_practice_title:'Promemoria Pratica', notif_practice_sub:'Promemoria giornaliero per suonare',
@@ -143127,6 +143132,8 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       srOpen = true; sr.classList.add('on');
       if (window._scrollLockSync) _scrollLockSync();
       // On Android the keyboard waits 380 ms, until the card has landed. Showing the keyboard stalls the screen for about 100 ms the first time, and that stall used to land in the middle of the open animation. iPhone and desktop focus at once, since iOS may refuse a late focus.
+      // Android: let the keyboard cover the page rather than shrink it (shrinking draws black for a few frames).
+      try { if (window.IntonareNative && window.IntonareNative.setKeyboardResize) window.IntonareNative.setKeyboardResize(false); } catch (e) {}
       var _fi = function () { try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } };
       if (!coarse() || document.documentElement.classList.contains('ios')) _fi(); else setTimeout(function () { if (srOpen) _fi(); }, 380);
       clearInterval(srTimer); srTimer = setInterval(phTick, 2600);
@@ -143139,6 +143146,8 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     try { srIn.blur(); } catch (e) {}
     sr.classList.remove('on');
     setTimeout(function () { if (!srOpen && window._srPinBar) window._srPinBar(); }, 260);
+    // Give the keyboard time to leave, then let the page shrink for keyboards again (other text fields need it).
+    setTimeout(function () { try { if (!srOpen && window.IntonareNative && window.IntonareNative.setKeyboardResize) window.IntonareNative.setKeyboardResize(true); } catch (e) {} }, 600);
     // The card is hidden when its fade ends, so check the page lock again after that.
     [120, 320, 520].forEach(function (ms) { setTimeout(function () { if (window._scrollLockSync) _scrollLockSync(); }, ms); });
     setTimeout(function () { if (!srOpen) fullH = window.innerHeight; }, 400);
