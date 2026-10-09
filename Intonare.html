@@ -143086,6 +143086,36 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     if (window.visualViewport) { window.visualViewport.addEventListener('resize', relay); window.visualViewport.addEventListener('scroll', relay); }
     window.addEventListener('resize', relay);
   }
+  // TEMPORARY test overlay: logs what moves during the first 2.5 s of opening search, so the keyboard flicker can be read off a screenshot. Remove after.
+  (function () {
+    var D = [], t0 = 0, box = null, live = false, wired = false;
+    function render() {
+      if (!box) { box = document.createElement('pre'); box.id = 'srDbg'; box.style.cssText = 'position:fixed;left:4px;right:4px;top:36px;z-index:99999;max-height:62vh;overflow:hidden;font:9px/1.2 monospace;color:#0f0;background:rgba(0,0,0,.82);pointer-events:none;margin:0;padding:3px;white-space:pre-wrap'; document.body.appendChild(box); }
+      box.textContent = D.slice(-48).join('\n');
+    }
+    function log(s) { if (!live) return; D.push(Math.round(performance.now() - t0) + ' ' + s); render(); }
+    function nm(el) { return el ? ((el.id ? '#' + el.id : '') + (typeof el.className === 'string' ? '.' + el.className.split(' ').join('.') : '')).slice(0, 38) : '?'; }
+    function vvs() { var v = window.visualViewport; return v ? ' vv ' + Math.round(v.height) + ' top ' + Math.round(v.offsetTop) : ''; }
+    window._srDbgStart = function () {
+      D = []; t0 = performance.now(); live = true;
+      if (!wired) {
+        wired = true;
+        window.addEventListener('resize', function () { log('RESIZE ' + innerWidth + 'x' + innerHeight + vvs()); });
+        if (window.visualViewport) { visualViewport.addEventListener('resize', function () { log('vvRESIZE' + vvs()); }); visualViewport.addEventListener('scroll', function () { log('vvSCROLL' + vvs()); }); }
+        window.addEventListener('scroll', function () { log('scrollY ' + Math.round(scrollY)); });
+        window.addEventListener('blur', function () { log('WIN BLUR'); });
+        window.addEventListener('focus', function () { log('WIN FOCUS'); });
+        document.addEventListener('focusin', function (e) { log('focusin ' + nm(e.target)); });
+        document.addEventListener('transitionrun', function (e) { log('tr ' + e.propertyName + ' ' + nm(e.target)); }, true);
+        document.addEventListener('animationstart', function (e) { log('an ' + e.animationName + ' ' + nm(e.target)); }, true);
+        new MutationObserver(function (m) { m.forEach(function (r) { log('cls ' + nm(r.target) + ' <- ' + (r.oldValue || '').slice(-30)); }); }).observe(document.body, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+        new MutationObserver(function (m) { m.forEach(function (r) { log('htmlcls/style ' + r.attributeName); }); }).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
+      }
+      log('OPEN ' + innerWidth + 'x' + innerHeight + vvs());
+      setTimeout(function () { live = false; }, 2500);
+      setTimeout(function () { if (box) { box.remove(); box = null; } }, 15000);
+    };
+  })();
   window.openSearch = function () {
     try {
       ensureSearch();
@@ -143105,6 +143135,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       // On touch screens the keyboard waits until the card has landed (the screen resize during the open animation made it flicker). A desktop keyboard needs no wait.
       var _focusIn = function () { try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } };
       sr.classList.remove('kb'); sr.classList.remove('kbx');
+      try { window._srDbgStart(); } catch (e) {}
       if (!coarse()) _focusIn(); else {
         setTimeout(function () { if (srOpen) sr.classList.add('kb'); }, 330);
         setTimeout(function () { if (srOpen) sr.classList.add('kbx'); }, 515);
