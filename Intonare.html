@@ -46623,23 +46623,9 @@ function _sha256Hex(str) {
   return out;
 }
 
-// Single source of truth for Pro access.
-// ── iOS BETA IAP BYPASS (temporary; remove when StoreKit IAP lands) ──────────
-// iOS has no App Store IAP wired yet (the RevenueCat key is Android-only), and
-// Apple rejects builds that gate features behind a purchase path that does not
-// work. For the TestFlight beta this unlocks everything on the native iOS shell
-// so review never meets a dead purchase button and friends & family see the
-// whole app. Scoped to isIOS() && isCapacitor(), so it does NOT affect Android,
-// desktop, or the iOS PWA — only the native iOS build.
-//
-// Before an iOS SUBMISSION, one of these has to be true:
-//   · StoreKit IAP is implemented and the purchase path actually works, or
-//   · this bypass is still in place so nothing is gated behind a dead button.
-// Android is unaffected either way; RevenueCat works there.
-function _iosBetaUnlock() {
-  try { return isIOS() && isCapacitor(); } catch (e) { return false; }
-}
-function isPro() { return progState.hasPro === true || _iosBetaUnlock(); }
+// Single source of truth for Pro access. Pro comes from a code, or from a
+// confirmed RevenueCat purchase or restore (Google Play and the App Store).
+function isPro() { return progState.hasPro === true; }
 function isToolFree(name)  { return FREE_TOOLS.includes(name); }
 function isTrainFree(name) { return FREE_TRAIN.includes(name); }
 
@@ -46666,7 +46652,9 @@ function closeProUnlocked() {
 // as window.Capacitor.Plugins.Purchases). No bundler; matches the same pattern
 // used for StatusBar/Share/etc. elsewhere in this file.
 // ───────────────────────────────────────────────────────────────────────────
-const RC_API_KEY = 'goog_rbcoHGgwLmrhKklhmYPGFtvsSKL'; // Android PUBLIC SDK key (safe to ship)
+const RC_API_KEY_ANDROID = 'goog_rbcoHGgwLmrhKklhmYPGFtvsSKL'; // Android PUBLIC SDK key (safe to ship)
+const RC_API_KEY_IOS = 'appl_KqVJupEmjptsPsPZkajHEwhwuQx';     // App Store PUBLIC SDK key (safe to ship)
+function _rcKey() { try { return isIOS() ? RC_API_KEY_IOS : RC_API_KEY_ANDROID; } catch (e) { return RC_API_KEY_ANDROID; } }
 const RC_ENTITLEMENT = 'pro';                            // entitlement id wired in RevenueCat
 let _rcConfigured = false;
 let _rcCachedPrice = '';                                 // localized price string from the offering
@@ -46684,7 +46672,7 @@ async function configureRevenueCat() {
   const P = _rc();
   if (!P || _rcConfigured) return;
   try {
-    await P.configure({ apiKey: RC_API_KEY });
+    await P.configure({ apiKey: _rcKey() });
     _rcConfigured = true;
     // Silent entitlement sync: if this account already owns Pro (reinstall,
     // new device, prior purchase), reflect it without making them tap Restore.
