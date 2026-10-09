@@ -29138,6 +29138,8 @@ body.light .settings-modal::before,body.light .progress-modal::before,body.light
 /* Search frost fades in step with the dim (0.32s in, 0.24s out). The layer is promoted ahead of time, so the blur does not pop in on the first frame. */
 #searchSheet::before{transition:opacity .32s ease!important;will-change:opacity}
 #searchSheet:not(.on)::before{transition:opacity .24s ease!important}
+/* The frost fades out just before the keyboard arrives. A blur over a page that is resizing flickers, so the dim carries the card while the keyboard is up. */
+#searchSheet.kb::before{opacity:0!important;transition:opacity .18s ease!important}
 /* Same early promotion for the other frost layers. */
 .settings-modal::before,.progress-modal::before,.help-modal::before,.vr-modal-overlay::before,.prog-preset-modal-backdrop::before,.prog-metro-backdrop::before{will-change:opacity}
 /* One frost for every scrim: same blur and a light dim, in both themes. The old light scrim used 22px and a milky wash, which was too busy. */
@@ -143101,7 +143103,11 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       if (window._scrollLockSync) _scrollLockSync();
       // On touch screens the keyboard waits until the card has landed (the screen resize during the open animation made it flicker). A desktop keyboard needs no wait.
       var _focusIn = function () { try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } };
-      if (!coarse()) _focusIn(); else setTimeout(function () { if (srOpen) _focusIn(); }, 470);
+      sr.classList.remove('kb');
+      if (!coarse()) _focusIn(); else {
+        setTimeout(function () { if (srOpen) sr.classList.add('kb'); }, 330);
+        setTimeout(function () { if (srOpen) _focusIn(); }, 530);
+      }
       clearInterval(srTimer); srTimer = setInterval(phTick, 2600);
     } catch (e) {}
   };
@@ -143111,6 +143117,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     srOpen = false; clearInterval(srTimer);
     try { srIn.blur(); } catch (e) {}
     sr.classList.remove('on');
+    setTimeout(function () { if (!srOpen) sr.classList.remove('kb'); }, 320);
     // The card is hidden when its fade ends, so check the page lock again after that.
     [120, 320, 520].forEach(function (ms) { setTimeout(function () { if (window._scrollLockSync) _scrollLockSync(); }, ms); });
     setTimeout(function () { if (!srOpen) fullH = window.innerHeight; }, 400);
