@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 1.0.2 -->
+<!-- INTONARE_VERSION: 1.0.3 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -29135,6 +29135,9 @@ body.light .settings-modal::before,body.light .progress-modal::before,body.light
 .vr-modal-overlay::before,.prog-preset-modal-backdrop::before,.prog-metro-backdrop::before,#searchSheet::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;-webkit-backdrop-filter:blur(5px) saturate(1.1);backdrop-filter:blur(5px) saturate(1.1);opacity:0}
 .vr-modal-overlay.open::before,.prog-preset-modal.open .prog-preset-modal-backdrop::before,.prog-metro-drawer.open .prog-metro-backdrop::before,.prog-chord-sheet-drawer.open .prog-metro-backdrop::before,#searchSheet.on::before{opacity:1}
 .prog-preset-modal-backdrop,.prog-metro-backdrop{z-index:0}
+/* Search frost fades with the dim (same 0.32s in, 0.24s out), so the page never blurs before it darkens. */
+#searchSheet::before{transition:opacity .32s ease!important;will-change:opacity}
+#searchSheet:not(.on)::before{transition:opacity .24s ease!important}
 /* One frost for every scrim: same blur and a light dim, in both themes. The old light scrim used 22px and a milky wash, which was too busy. */
 body.light{--light-scrim:rgba(40,58,96,.14);--light-scrim-deep:rgba(40,58,96,.2);--light-scrim-filter:blur(5px) saturate(1.1)}
 /* The header sits at z 500. Quick access and the pedal sheet were below it, so the header stayed sharp. */
@@ -36991,7 +36994,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '1.0.2';
+const INTONARE_VERSION = '1.0.3';
 /* v1.0.0: Settings sliders move only on a sideways drag or a clean tap.
    On Android the native range input jumps the thumb the moment a finger lands,
    so scrolling the Settings panel changed Text Size or Master Volume (and a
@@ -44829,6 +44832,21 @@ function getTransposedNote(noteName, oct) {
   return { name: m[1], oct: parseInt(m[2]) };
 }
 
+// The detent click belongs to the Tuner screen. The mic keeps running under other
+// screens, and a steady note from the app itself (Music Quiz music, a chord, a drone)
+// reads as "in tune" to the detector. So the click only fires while the Tuner is the
+// screen in front: Tuner tab up, no Music Quiz or other full-screen module over it,
+// no quiz music playing, app visible. The simple face already checks mode the same way.
+function _tuneDetentAllowed() {
+  try {
+    if (mode !== 'tuner') return false;
+    const cl = document.body.classList;
+    if (cl.contains('mq-open') || cl.contains('sg-open') || cl.contains('rt-open') || cl.contains('lnch-open') || cl.contains('settings-open')) return false;
+    if (typeof _mqAmb !== 'undefined' && _mqAmb && _mqAmb.on) return false;
+    if (document.hidden) return false;
+    return true;
+  } catch (e) { return true; }
+}
 // Live gauge every detection frame. Note letter commits separately (commitNoteName)
 // so a short lock cannot freeze the needle — that freeze is what felt "insensitive."
 function updateLiveMeter(note, freq) {
@@ -44852,7 +44870,7 @@ function updateLiveMeter(note, freq) {
     if (!_wasInTune) _tuneInAt = performance.now();
     // Not right after the app played a sound of its own: the mic hears a preview or a
     // cue, finds a steady pitch and would click for a note nobody played.
-    if (!_tuneBuzzed && performance.now() - _tuneInAt > 220 && progState.tunerFace !== 'simple' && Date.now() - _hdLastFeelAt > 3000) {
+    if (!_tuneBuzzed && performance.now() - _tuneInAt > 220 && progState.tunerFace !== 'simple' && Date.now() - _hdLastFeelAt > 3000 && _tuneDetentAllowed()) {
       _tuneBuzzed = true;
       hapticDetent();
     }
@@ -46322,7 +46340,10 @@ function scheduleNote(beat, time) {
   const sound = METRO_SOUNDS[selectedMetroSound] || METRO_SOUNDS.click;
   sound.play(metroCtx, time, isAccent, vol, metroMasterGain, isDownbeat);
 
-  notesInQueue.push({ beat, time, isMain, isAccent, mainBeat });
+  // Carried to the haptic: pocket mode tells a ghost note, an accent and the bar downbeat apart,
+  // and needs the gap to the next step to know whether the two part downbeat has room.
+  const gapMs = grooveModeActive ? (60000 / bpm) * _grooveFeltPulses() / groovePattern.length : 60000 / bpm;
+  notesInQueue.push({ beat, time, isMain, isAccent, mainBeat, isGhost: grooveModeActive && !isAccent, isDownbeat: !!isDownbeat, gapMs });
 }
 
 // How many FELT pulses are in one bar of the active groove. In simple meters this
@@ -46414,7 +46435,7 @@ function drawBeats() {
       const dot = document.getElementById(`bd-${beatIdx}`);
       if (dot) dot.classList.add('active');
       // haptic
-      hapticBeat(n.isAccent);
+      hapticBeat(n.isAccent, n.isGhost, n.isDownbeat, n.gapMs);
     }
   }
   requestAnimationFrame(drawBeats);
@@ -97160,7 +97181,16 @@ const HD_PATTERNS = {
   // (screen off, no click) is stronger so the haptic can carry the beat alone.
   beat:        [[0, 0.38, 0.85, 0]],
   beatAccent:  [[0, 0.90, 0.40, 0]],
-  beatPocket:  [[0, 0.70, 0.60, 0]],
+  // Pocket mode (metronome sound off): the haptic IS the metronome, and the thin tick
+  // that is enough beside an audible click is too faint alone. Sharpness under 0.33 picks
+  // the phone's heavy thump. The downbeat adds a tick 90 ms after its thump ("thump-tick"),
+  // so it reads as the one even without looking. That pair runs ~120 ms, so hapticBeat uses
+  // the single full thump (beatAccentPocket1) when beats are under 330 ms apart.
+  beatPocket:  [[0, 0.80, 0.20, 0]],
+  beatAccentPocket:  [[0, 1.00, 0.20, 0], [90, 0.90, 0.45, 0]],
+  beatAccentPocket1: [[0, 1.00, 0.20, 0]],
+  // Ghost note in a groove: a light tick, capped per strength setting (see _hdCap).
+  beatGhostPocket:   [[0, 0.30, 0.85, 0]],
   // Tuner. A detent: a crisp click as the needle seats, then a soft thud under it.
   detent:      [[0, 0.55, 0.92, 0], [30, 0.35, 0.25, 0]],
   // Confirmation. Two ticks 90 ms apart, the same spacing as the two note ding the
@@ -97298,7 +97328,7 @@ function _hdCue(ev, base, key) {
   return base;
 }
 // Priority: 0 = interface and beats, 1 = answer feedback, 2 = celebrations and losses.
-const HD_PRIO = { light: 0, medium: 0, select: 0, beat: 0, beatAccent: 0, beatPocket: 0, detent: 0,
+const HD_PRIO = { light: 0, medium: 0, select: 0, beat: 0, beatAccent: 0, beatPocket: 0, beatAccentPocket: 0, beatAccentPocket1: 0, beatGhostPocket: 0, detent: 0,
                   success: 1, correct: 1, wrong: 1, strengthTest: 1,
                   achievement: 2, milestone: 2, levelUp: 2, win: 2, gameOver: 2 };
 // How long each feel runs, so the priority rule knows when the motor is free again.
@@ -97313,6 +97343,14 @@ let _hdBusyUntil = 0, _hdBusyPrio = -1, _hdLastUiAt = 0;
 // Sustained steps below this are dropped, since they only whine and leave a dangling tail.
 function _hdFloor() { return (progState && progState.hapticStrength === 'soft') ? 0.26 : 0.34; }
 function _hdLevel() { const v = progState && progState.hapticStrength; return v === 'soft' ? 0 : (v === 'strong' ? 2 : 1); }
+function _hdAndroid() { try { return !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'android'); } catch (e) { return false; } }
+// A pocket ghost note has to stay clearly lighter than a beat on every setting. The strength
+// bands start high (Strong never drops below 0.78) and would flatten it, so it is capped.
+function _hdCap(name) {
+  if (name !== 'beatGhostPocket') return 1;
+  const v = progState && progState.hapticStrength;
+  return v === 'soft' ? 0.40 : (v === 'strong' ? 0.62 : 0.52);
+}
 function _hdAmp(i, sharp) {
   const v = progState && progState.hapticStrength;
   // A sharp tick is a short, thin kick and feels weaker than a dull thud at the same
@@ -97323,7 +97361,11 @@ function _hdAmp(i, sharp) {
   // Three bands that barely overlap: soft tops out near 0.6, normal runs 0.35 to 0.9,
   // strong starts at 0.78. A quiet step on strong is still stronger than a loud one on soft.
   if (v === 'soft') return 0.1 + i * 0.5;
-  if (v === 'strong') return 0.78 + i * 0.22;
+  // Strong used to start at 0.78, which squeezed every hit into the top fifth of the range, so
+  // swells went flat and loud and quiet hits felt alike. On Android it now spans 0.64 to 1.0 and
+  // gets its extra weight from holding each tap longer (native side, tapMs) instead of only
+  // from level. The iPhone plugin ignores the setting, so it keeps the old band.
+  if (v === 'strong') return _hdAndroid() ? 0.64 + i * 0.36 : 0.78 + i * 0.22;
   return 0.35 + i * 0.55;
 }
 // The same setting for the Capacitor fallback taps, which only have three sizes.
@@ -97347,7 +97389,7 @@ function _hdNoteResult(ok) {
 // One time check of what the phone can do. Also what the Settings line reports.
 // Bump this on every change to the patterns or the strength curve. It shows in Settings
 // under Haptic Feedback, so a tester can tell which set the installed build carries.
-const HD_VERSION = 'v18';
+const HD_VERSION = 'v21';
 let _hdWhy = '', _hdMode = '', _hdSupport = null;
 function _hdProbe() {
   if (_hdState !== 0) return;
@@ -97448,7 +97490,7 @@ function _hdPlay0(name) {
   if (prio < _hdBusyPrio && now < _hdBusyUntil) return true;       // a bigger feel is playing
   if (prio === 0 && now - _hdLastUiAt < 30) return true;           // rate limit
   try {
-    const events = pat.filter(function (e) { return e[3] === 0 || _hdAmp(e[1], e[2]) >= _hdFloor(); }).map(function (e) { return { t: e[0], i: Math.max(0, Math.min(1, _hdAmp(e[1], e[2]))), s: e[2], d: e[3] }; });
+    const events = pat.filter(function (e) { return e[3] === 0 || _hdAmp(e[1], e[2]) >= _hdFloor(); }).map(function (e) { return { t: e[0], i: Math.min(_hdCap(name), Math.max(0, Math.min(1, _hdAmp(e[1], e[2])))), s: e[2], d: e[3] }; });
     _hdBusyUntil = now + HD_DUR[name]; _hdBusyPrio = prio;
     if (prio === 0) _hdLastUiAt = now;
     _hdSent = true;
@@ -97505,9 +97547,17 @@ async function hapticWin(key) { if (!progState.hapticsOn) return; if (_hdPlay(_h
 // Game over — deflating fade-out, distinct from Wrong's sharp double-Heavy: Heavy, Medium, Light
 async function hapticGameOver(key) { if (!progState.hapticsOn) return; if (_hdPlay(_hdCue('gameover', 'gameOver', key))) return; try { await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Heavy) }); await new Promise(r => setTimeout(r, 130)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Medium) }); await new Promise(r => setTimeout(r, 130)); await window.Haptics.impact({ style: _hdStyle(window.ImpactStyle.Light) }); } catch(e) {} }
 // Beat haptic — pocket mode bumps up so haptic carries alone
-async function hapticBeat(isAccent) {
+async function hapticBeat(isAccent, isGhost, isDownbeat, gapMs) {
   if (!progState.hapticsOn) return;
-  if (_hdPlay(metroAudioOn ? (isAccent ? 'beatAccent' : 'beat') : (isAccent ? 'beatAccent' : 'beatPocket'))) return;
+  // Pocket mode keeps the click's three levels. A ghost note is a light tick. A plain beat or
+  // an accent is a thump. The bar downbeat is thump-tick, or one full thump when the steps are
+  // under 330 ms apart, since the pair runs ~120 ms. With the sound on, the click carries the
+  // dynamics and the haptic stays a tick or a knock.
+  const _gap = gapMs > 0 ? gapMs : 60000 / Math.max(30, bpm);
+  const _pocket = isGhost ? 'beatGhostPocket'
+    : isAccent ? ((isDownbeat && _gap >= 330) ? 'beatAccentPocket' : 'beatAccentPocket1')
+    : 'beatPocket';
+  if (_hdPlay(metroAudioOn ? (isAccent ? 'beatAccent' : 'beat') : _pocket)) return;
   try {
     if (!metroAudioOn) {
       await window.Haptics.impact({ style: _hdStyle(isAccent ? window.ImpactStyle.Heavy : window.ImpactStyle.Medium) });

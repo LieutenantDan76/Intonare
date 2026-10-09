@@ -2,6 +2,12 @@
 
 A human-readable record of what changed, when,
 
+## v1.0.3: The tuner click stays on the tuner screen
+
+- The tuner's in-tune click now fires only while the Tuner screen is in front. Before, the always-on mic could hear Music Quiz music, call a steady note in tune, and buzz the phone.
+- Pocket mode is easier to feel. With the metronome sound off, each beat is now a heavy thump instead of a thin tick, and the downbeat adds a tick after its thump. Ghost notes in a groove stay a light tick, and accents are a full thump. At fast tempos the downbeat is a single full thump.
+- Haptics on Android: Strong keeps the build-ups and the difference between feels instead of squeezing them flat, and it hits harder by holding each tap a little longer. Normal taps are a touch longer too. Soft and the iPhone are unchanged.
+
 ## v1.0.2: Achievements that unlock when they should
 
 - Popups now frost the page behind them the same way quick access does. Settings, level, help, the streak sheet, search, chord and riff popups, and the progress sheets all blur the background, and the panel glass still shows.

@@ -150,8 +150,9 @@ public class IntonareHapticsPlugin extends Plugin {
                 return;
             }
 
-            // 0 soft, 1 normal, 2 strong. Strong also swaps the thin tick for a click and
-            // stretches short pulses, since a motor barely spins up in 10 ms.
+            // 0 soft, 1 normal, 2 strong. Strong swaps the thin tick for a click. On the
+            // waveform route Normal and Strong also hold each short tap longer where the
+            // pattern leaves room (see tapMs), since a motor barely spins up in 10 ms.
             final int level = call.getInt("strength", 1);
             // Test aid from Settings: "wave" or "prim" forces one route, anything else is auto.
             final String route = call.getString("route", "auto");
@@ -247,8 +248,10 @@ public class IntonareHapticsPlugin extends Plugin {
         List<Long> timings = new ArrayList<>();
         List<Integer> amps = new ArrayList<>();
         long cursor = 0;
-        for (Ev e : evs) {
-            long dur = e.d > 0 ? e.d : Math.round(10 + (1.0f - e.s) * 14) + (level >= 2 ? 6 : 0);
+        for (int k = 0; k < evs.size(); k++) {
+            Ev e = evs.get(k);
+            long nextGap = (k + 1 < evs.size()) ? evs.get(k + 1).t - e.t : Long.MAX_VALUE;
+            long dur = e.d > 0 ? e.d : tapMs(e.s, level, nextGap);
             long start = Math.max(e.t, cursor);
             long gap = start - cursor;
             // An off step only where there is a real gap. Back-to-back events (the
@@ -268,6 +271,27 @@ public class IntonareHapticsPlugin extends Plugin {
         int[] a = new int[amps.size()];
         for (int k = 0; k < t.length; k++) { t[k] = timings.get(k); a[k] = amps.get(k); }
         v.vibrate(VibrationEffect.createWaveform(t, a, -1));
+    }
+
+    // Quiet kept after a stretched tap, so two hits never run together.
+    private static final long GUARD_MS = 14;
+
+    /**
+     * How long a short tap runs on the waveform route.
+     *
+     * A motor needs 10 to 20 ms to reach full strength, so a 10 ms tap never gets there, and
+     * past full drive the only way to hit harder is to hold the pulse longer. Normal and
+     * Strong stretch each tap, but only into the quiet AFTER it: the pulse ends at least
+     * GUARD_MS before the next one starts. Where a pattern is tight (the detent's click then
+     * thud) the tap stretches less or not at all, so the rhythm and the gaps a feel was
+     * written with are never changed, and the dynamics (loud versus quiet hits) stay as
+     * written. Soft is not stretched.
+     */
+    static long tapMs(float sharp, int level, long nextGapMs) {
+        long base = Math.round(10 + (1.0f - sharp) * 14);
+        long bonus = level >= 2 ? 14 : (level == 1 ? 4 : 0);
+        long room = nextGapMs == Long.MAX_VALUE ? bonus : nextGapMs - base - GUARD_MS;
+        return Math.min(40, base + Math.max(0, Math.min(bonus, room)));
     }
 
     // Motors do not move below a certain drive level, so a quiet step either does
