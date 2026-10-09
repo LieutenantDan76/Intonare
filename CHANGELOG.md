@@ -5,8 +5,11 @@ A human-readable record of what changed, when,
 ## v1.0.3: The tuner click stays on the tuner screen
 
 - The tuner's in-tune click now fires only while the Tuner screen is in front. Before, the always-on mic could hear Music Quiz music, call a steady note in tune, and buzz the phone.
-- Pocket mode is easier to feel. With the metronome sound off, each beat is now a heavy thump instead of a thin tick, and the downbeat adds a tick after its thump. Ghost notes in a groove stay a light tick, and accents are a full thump. At fast tempos the downbeat is a single full thump.
+- Pocket mode is easier to feel. With the metronome sound off, each beat is now a heavy thump instead of a thin tick. Ghost notes in a groove stay a light tick, and accents are a full thump. At fast tempos the downbeat is a single full thump.
 - Haptics on Android: Strong keeps the build-ups and the difference between feels instead of squeezing them flat, and it hits harder by holding each tap a little longer. Normal taps are a touch longer too. Soft and the iPhone are unchanged.
+- Muting the metronome now cuts the sound at once. The next click used to leak through for a moment.
+- The piano, organ, Rhodes, theremin and the other full-screen modes hide the Android status bar while they are open, and bring it back when you leave.
+- Android stays in portrait. After a full-screen mode closed, the screen was free to rotate with the phone. It now goes back to portrait.
 
 ## v1.0.2: Achievements that unlock when they should
 

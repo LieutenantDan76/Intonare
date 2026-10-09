@@ -97668,7 +97668,10 @@ function setMetroAudio(on) {
     // drift apart.
     const base = _masterGainRegistry.get(metroMasterGain);
     const level = (base != null) ? base * _getEffectiveScale() : 1;
-    metroMasterGain.gain.setTargetAtTime(on ? level : 0, metroMasterGain.context.currentTime, 0.02);
+    // Muting cuts fast (3 ms) so the next click already scheduled cannot leak through the old 20 ms fade.
+    const _mt = metroMasterGain.context.currentTime;
+    try { metroMasterGain.gain.cancelScheduledValues(_mt); } catch (e) {}
+    metroMasterGain.gain.setTargetAtTime(on ? level : 0, _mt, on ? 0.02 : 0.003);
   }
   // Sync inline metro button (both standard and groove screens)
   const btn = document.getElementById('metroMuteBtn');
@@ -99832,8 +99835,13 @@ function _applyOvRotate() {
   document.body.classList.toggle('ov-portrait-rotate', window._ovRotateActive && portrait && !window._ovNativeLocked);
 }
 
+// Expanded modes (piano, organ, theremin) hide the Android status bar while open. Older builds have no bridge call, so this does nothing there.
+function _ovBars(hide) {
+  try { var n = window.IntonareNative; if (n && typeof n.setStatusBarHidden === 'function') n.setStatusBarHidden(!!hide); } catch (e) {}
+}
 function lockOrientation() {
   window._ovRotateActive = true;
+  _ovBars(true);
   const so = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenOrientation;
   if (so && so.lock) {
     // Lock to landscape-secondary for the whole time the overlay is open. The OS
@@ -99852,8 +99860,12 @@ function lockOrientation() {
 }
 function unlockOrientation() {
   window._ovRotateActive = false;
+  _ovBars(false);
   const so = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenOrientation;
-  if (window._ovNativeLocked && so && so.unlock) {
+  if (window._ovNativeLocked && so && so.lock) {
+    // Back to portrait, not unlock(): unlock() frees the screen to rotate with the phone.
+    so.lock({ orientation: 'portrait' }).catch(() => { try { so.unlock(); } catch (e) {} });
+  } else if (window._ovNativeLocked && so && so.unlock) {
     so.unlock().catch(() => {});
   }
   window._ovNativeLocked = false;
@@ -143082,7 +143094,8 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       buzz();
       srOpen = true; sr.classList.add('on');
       if (window._scrollLockSync) _scrollLockSync();
-      try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); }
+      // TEST: no auto keyboard on touch screens while we chase the open flicker. Tap the field to type.
+      if (!coarse()) { try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } }
       clearInterval(srTimer); srTimer = setInterval(phTick, 2600);
     } catch (e) {}
   };

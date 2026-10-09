@@ -242,6 +242,7 @@ public class MainActivity extends BridgeActivity {
     // below it. The page converts dp to CSS px. Read a few times because insets are
     // often empty until the window is attached and laid out.
     private volatile String insetJson = "";
+    private volatile boolean barsHidden = false;
 
     private void captureInset(long delayMs) {
         final android.view.View decor = getWindow().getDecorView();
@@ -273,6 +274,18 @@ public class MainActivity extends BridgeActivity {
                 .edit()
                 .putString(KEY_SPLASH_SOUND, on ? "1" : "0")
                 .apply();
+        }
+
+        // Expanded modes (piano, organ, theremin) ask for the status bar to hide while open.
+        @JavascriptInterface
+        public void setStatusBarHidden(final boolean hide) {
+            runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    barsHidden = hide;
+                    hideSystemBars();
+                    if (!hide) { captureInset(0); captureInset(400); }
+                }
+            });
         }
 
         @JavascriptInterface
@@ -323,7 +336,8 @@ public class MainActivity extends BridgeActivity {
             WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         controller.setSystemBarsBehavior(
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-        controller.show(WindowInsetsCompat.Type.statusBars());
+        if (barsHidden) controller.hide(WindowInsetsCompat.Type.statusBars());
+        else controller.show(WindowInsetsCompat.Type.statusBars());
         controller.hide(WindowInsetsCompat.Type.navigationBars());
     }
 }
