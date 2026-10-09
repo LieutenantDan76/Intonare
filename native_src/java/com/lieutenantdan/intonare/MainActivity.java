@@ -11,6 +11,9 @@ import android.media.AudioManager;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import androidx.core.splashscreen.SplashScreen;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import com.getcapacitor.BridgeActivity;
@@ -41,6 +44,10 @@ public class MainActivity extends BridgeActivity {
         // bridge itself is create()d at the END of super.onCreate (inside load()).
         // So plugins must be in the builder list before super.onCreate runs, or they
         // miss the create() call and JS throws "not implemented on android".
+        SplashScreen launchSplash = SplashScreen.installSplashScreen(this);
+        launchSplash.setKeepOnScreenCondition(() -> !pageReady);
+        // Safety: never hold the launch screen longer than 3 seconds.
+        new Handler(Looper.getMainLooper()).postDelayed(() -> pageReady = true, 3000);
         registerPlugin(IntonareMicPlugin.class);
         // FileSaver: wraps ACTION_CREATE_DOCUMENT so Back Up Progress opens a real
         // system Save dialog. Without this line the class still COMPILES — javac
@@ -243,6 +250,8 @@ public class MainActivity extends BridgeActivity {
     // often empty until the window is attached and laid out.
     private volatile String insetJson = "";
     private volatile boolean barsHidden = false;
+    // Holds the system launch screen until the page draws its first frame.
+    private volatile boolean pageReady = false;
 
     private void captureInset(long delayMs) {
         final android.view.View decor = getWindow().getDecorView();
@@ -278,6 +287,11 @@ public class MainActivity extends BridgeActivity {
                 .edit()
                 .putString(KEY_SPLASH_SOUND, on ? "1" : "0")
                 .apply();
+        }
+
+        @JavascriptInterface
+        public void pageReady() {
+            pageReady = true;
         }
 
         // Expanded modes (piano, organ, theremin) ask for the status bar to hide while open.

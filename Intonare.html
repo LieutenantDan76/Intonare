@@ -30492,6 +30492,8 @@ try {
     await af(40); // one tick so loop has drawn a frame before we show it
     if (canvas)   canvas.style.opacity   = '1';
     if (bgCanvas) bgCanvas.style.opacity = '1';
+    // Tell Android the page has drawn, so the system launch screen can leave.
+    try { if (window.IntonareNative && window.IntonareNative.pageReady) window.IntonareNative.pageReady(); } catch (e) {}
 
     // ── Color warms as particles converge (~0.56s) ──
     await af(560);
@@ -143106,7 +143108,9 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       buzz();
       srOpen = true; sr.classList.add('on');
       if (window._scrollLockSync) _scrollLockSync();
-      try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); }
+      // On Android the keyboard waits 380 ms, until the card has landed. Showing the keyboard stalls the screen for about 100 ms the first time, and that stall used to land in the middle of the open animation. iPhone and desktop focus at once, since iOS may refuse a late focus.
+      var _fi = function () { try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } };
+      if (!coarse() || document.documentElement.classList.contains('ios')) _fi(); else setTimeout(function () { if (srOpen) _fi(); }, 380);
       clearInterval(srTimer); srTimer = setInterval(phTick, 2600);
     } catch (e) {}
   };
