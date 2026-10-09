@@ -28469,10 +28469,14 @@ body.light .hvs-sb { background: color-mix(in srgb, var(--text) 6%, color-mix(in
 #headerTagline.hvs-crumb .c1 { color: var(--accent); }
 
 /* Sheet */
-#streakSheetBd { position: fixed; inset: 0; z-index: 9290; background: #000; opacity: 0; visibility: hidden;
-  transition: opacity .32s ease, visibility 0s linear .32s !important; }
-#streakSheetBd.on { opacity: .5; visibility: visible; transition: opacity .45s ease, visibility 0s !important; }
-body.light #streakSheetBd.on { opacity: .32; }
+/* The backdrop stays at full opacity and fades its own tint and blur. At opacity .5 the blur was mixed back
+   with the sharp page and looked like no blur at all. */
+#streakSheetBd { position: fixed; inset: 0; z-index: 9290; background: rgba(4,6,14,0); opacity: 1; visibility: hidden;
+  -webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px);
+  transition: background-color .32s ease, backdrop-filter .32s ease, -webkit-backdrop-filter .32s ease, visibility 0s linear .32s !important; }
+#streakSheetBd.on { background: rgba(4,6,14,.4); visibility: visible; -webkit-backdrop-filter: blur(5px) saturate(1.1); backdrop-filter: blur(5px) saturate(1.1);
+  transition: background-color .45s ease, backdrop-filter .45s ease, -webkit-backdrop-filter .45s ease, visibility 0s !important; }
+body.light #streakSheetBd.on { background: rgba(40,58,96,.16); }
 #streakSheet { position: fixed; left: 0; right: 0; bottom: var(--ss-kb, 0px); z-index: 9300; box-sizing: border-box;
   max-height: min(88vh, calc(100dvh - var(--ss-kb, 0px) - 24px)); display: flex; flex-direction: column; gap: 14px;
   padding: 10px 18px calc(22px + env(safe-area-inset-bottom)); border-radius: 26px 26px 0 0;
@@ -29127,7 +29131,7 @@ body.light .settings-modal::before,body.light .progress-modal::before,body.light
 @keyframes hvBdIn{from{opacity:0}to{opacity:1}}
 @keyframes hvBdOut{from{opacity:1}to{opacity:0}}
 /* Same frost for the other scrims. Ones with no child card get the blur directly, ones that hold a card use a ::before layer. */
-.ts-popup-scrim,.thmn-demo-popup,.riff-popup,.nc-sheet,#streakSheetBd{-webkit-backdrop-filter:blur(5px) saturate(1.1);backdrop-filter:blur(5px) saturate(1.1)}
+.ts-popup-scrim,.thmn-demo-popup,.riff-popup,.nc-sheet{-webkit-backdrop-filter:blur(5px) saturate(1.1);backdrop-filter:blur(5px) saturate(1.1)}
 .vr-modal-overlay::before,.prog-preset-modal-backdrop::before,.prog-metro-backdrop::before,#searchSheet::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;-webkit-backdrop-filter:blur(5px) saturate(1.1);backdrop-filter:blur(5px) saturate(1.1);opacity:0}
 .vr-modal-overlay.open::before,.prog-preset-modal.open .prog-preset-modal-backdrop::before,.prog-metro-drawer.open .prog-metro-backdrop::before,.prog-chord-sheet-drawer.open .prog-metro-backdrop::before,#searchSheet.on::before{opacity:1}
 .prog-preset-modal-backdrop,.prog-metro-backdrop{z-index:0}
@@ -29136,6 +29140,15 @@ body.light{--light-scrim:rgba(40,58,96,.14);--light-scrim-deep:rgba(40,58,96,.2)
 /* The header sits at z 500. Quick access and the pedal sheet were below it, so the header stayed sharp. */
 .fav-overlay{z-index:700!important}
 .fav-sheet{z-index:701!important}
+/* Dark mode frost: same 5px as light. Some popups had 1, 2, 3, 4 or 8px, and a few had none. */
+body:not(.light) :is(.mq-sheet-overlay,.fav-overlay,.mq-daily-pop-overlay,.share-landing-overlay,.ce-stats-modal,.iv-test-overlay,.cs-picker-scrim,.svc-scrim,.setlist-sheet,#toolSurvivalGuide .sg-overlay,.gcc-zoom-overlay,#chordlePickerOverlay,#diadlePickerOverlay,#sessionSummaryOverlay,#autoTourPrompt){-webkit-backdrop-filter:blur(5px) saturate(1.1)!important;backdrop-filter:blur(5px) saturate(1.1)!important}
+/* Help and the small pickers sat under the tab bar. Now they cover it, like settings. */
+.help-modal{z-index:2000!important}
+#chordlePickerOverlay,#diadlePickerOverlay,.ts-popup-scrim{z-index:1100!important}
+.ts-popup{z-index:1101!important}
+body.light #toolSurvivalGuide .sg-overlay{background:rgba(40,58,96,.2)!important}
+/* The quiz feedback drawer waits below the screen, and its upward shadow leaked into the bottom edge. */
+.mq2-fbwrap:not(.go){box-shadow:none!important}
 </style>
 </head>
 <body>
@@ -29860,7 +29873,8 @@ try {
 
     // ── Wave canvas ────────────────────────────────────────
     const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);   // 3x phones: 2x is plenty for the wave line
+    const dprBg = Math.min(window.devicePixelRatio || 1, 1.25); // soft glow layer, no need for full resolution
     let W = 0, H = 240;
 
     // ── Background canvas ──────────────────────────────────
@@ -29876,10 +29890,10 @@ try {
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       if (bgCtx) {
-        if (bgCanvas.width !== BW * dpr || bgCanvas.height !== BH * dpr) {
-          bgCanvas.width  = BW * dpr; bgCanvas.height = BH * dpr;
+        if (bgCanvas.width !== Math.round(BW * dprBg) || bgCanvas.height !== Math.round(BH * dprBg)) {
+          bgCanvas.width  = Math.round(BW * dprBg); bgCanvas.height = Math.round(BH * dprBg);
         }
-        bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        bgCtx.setTransform(dprBg, 0, 0, dprBg, 0, 0);
       }
     }
 
@@ -142639,7 +142653,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       var dt = Math.max(1, e.timeStamp - lt); vy = 0.8 * vy + 0.2 * ((y - ly) / dt); ly = y; lt = e.timeStamp;
       sheet.style.transform = 'translateY(' + dy + 'px)';
       var h = sheet.offsetHeight || 1;
-      bd.style.opacity = String(Math.max(0, 1 - Math.max(0, dy) / h) * (document.body.classList.contains('light') ? 0.32 : 0.5));
+      bd.style.opacity = String(Math.max(0, 1 - Math.max(0, dy) / h));
     }, { passive: true });
     function endDrag() {
       if (y0 == null) return;

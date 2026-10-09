@@ -6,6 +6,10 @@ A human-readable record of what changed, when,
 
 - Popups now frost the page behind them the same way quick access does. Settings, level, help, the streak sheet, search, chord and riff popups, and the progress sheets all blur the background, and the panel glass still shows.
 - Every popup uses the same soft blur now. Light mode was heavier (22px) and washed out, so it is lighter. Quick access now frosts the header too.
+- Dark mode popups all use the same 5px blur now (they ranged from none to 8px). Help and the small picker popups cover the tab bar like settings does.
+- The streak sheet now blurs the page behind it. Before, the blur was mixed back with the sharp page.
+- Music Quiz: a gray shadow no longer shows along the bottom edge. It came from the hidden answer drawer.
+- The start-up animation draws at a lower resolution on high-density phones. It runs much smoother on first launch and looks the same.
 - First launch from the module selector is smoother. Every embedded font face now loads before you pick a module, background reminder setup waits for idle, and the overlay scan no longer reruns each time a module builds its screen.
 - Motion now speaks one language. 61 different easing curves collapse to five (ease out, sheet, standard, exit, spring), and 24 different press sizes collapse to three.
 - Sheets and popups (settings, level, search, picker, quiz sheets) now share one open feel: same curve, similar length, no overshoot.
