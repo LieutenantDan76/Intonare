@@ -46927,7 +46927,10 @@ async function paywallBuy() {
     if (e && (e.userCancelled || e.code === '1' || e.code === 1)) {
       // Silent — the user chose to cancel; no scary dialog.
     } else {
-      alert(t('pw_purchase_failed') || 'The purchase could not be completed. Please try again.');
+      // The store's own reason goes at the end so a failed test purchase tells us why.
+      let _why = '';
+      try { _why = ' (' + [e && e.code, e && e.message].filter(Boolean).join(': ').slice(0, 160) + ')'; } catch (e2) {}
+      alert((t('pw_purchase_failed') || 'The purchase could not be completed. Please try again.') + (_why === ' ()' ? '' : _why));
     }
   } finally {
     if (btn) btn.disabled = false;

@@ -9,36 +9,36 @@ Skipped: dark-token, keep-dark, leak-ok (already has a body.light twin).
 | score | count | ctx | token | example line |
 |------:|------:|-----|-------|-------------|
 | 416 | 104 | `leak` | `#ffd166` | L10708 |
-| 364 | 91 | `leak` | `#7aafff` | L128131 |
+| 364 | 91 | `leak` | `#7aafff` | L128125 |
 | 320 | 80 | `leak` | `#5ee2ff` | L874 |
 | 284 | 71 | `leak` | `#b8a3ff` | L18770 |
-| 268 | 67 | `leak` | `#ffa07a` | L67025 |
+| 268 | 67 | `leak` | `#ffa07a` | L67018 |
 | 192 | 48 | `leak` | `rgb(94,226,255)` | L9341 |
 | 144 | 36 | `leak` | `rgb(182,242,91)` | L289 |
 | 144 | 36 | `leak` | `rgb(52,211,153)` | L25656 |
-| 116 | 29 | `leak` | `#ff8aae` | L88591 |
+| 116 | 29 | `leak` | `#ff8aae` | L88584 |
 | 92 | 23 | `leak` | `#b6f25b` | L1003 |
-| 56 | 14 | `leak` | `#34d399` | L65676 |
-| 44 | 11 | `leak` | `#4ade80` | L74456 |
-| 32 | 8 | `leak` | `#60a5fa` | L74457 |
+| 56 | 14 | `leak` | `#34d399` | L65668 |
+| 44 | 11 | `leak` | `#4ade80` | L74449 |
+| 32 | 8 | `leak` | `#60a5fa` | L74450 |
 | 28 | 7 | `leak` | `#f472b6` | L19953 |
-| 28 | 7 | `leak` | `#c084fc` | L88571 |
-| 20 | 5 | `leak` | `#a78bfa` | L85459 |
-| 20 | 4 | `draw/js` | `rgb(52,211,153)` | L102426 |
-| 16 | 4 | `leak` | `#a3e635` | L88924 |
-| 15 | 3 | `draw/js` | `rgb(182,242,91)` | L66813 |
+| 28 | 7 | `leak` | `#c084fc` | L88564 |
+| 20 | 5 | `leak` | `#a78bfa` | L85452 |
+| 20 | 4 | `draw/js` | `rgb(52,211,153)` | L102420 |
+| 16 | 4 | `leak` | `#a3e635` | L88917 |
+| 15 | 3 | `draw/js` | `rgb(182,242,91)` | L66806 |
 | 12 | 3 | `leak` | `#fb923c` | L26783 |
-| 12 | 3 | `leak` | `#22d3ee` | L129825 |
-| 10 | 2 | `draw/js` | `#ffd166` | L78799 |
-| 8 | 2 | `leak` | `#86efac` | L88924 |
-| 8 | 2 | `leak` | `#06b6d4` | L103186 |
-| 5 | 1 | `draw/js` | `#5ee2ff` | L78800 |
-| 5 | 1 | `draw/js` | `#b6f25b` | L84110 |
-| 5 | 1 | `draw/js` | `#ffa07a` | L101201 |
-| 5 | 1 | `draw/js` | `#34d399` | L101201 |
-| 5 | 1 | `draw/js` | `rgb(94,226,255)` | L95256 |
-| 4 | 1 | `leak` | `#67e8f9` | L103221 |
-| 4 | 1 | `leak` | `rgb(122,175,255)` | L83801 |
+| 12 | 3 | `leak` | `#22d3ee` | L129819 |
+| 10 | 2 | `draw/js` | `#ffd166` | L78792 |
+| 8 | 2 | `leak` | `#86efac` | L88917 |
+| 8 | 2 | `leak` | `#06b6d4` | L103180 |
+| 5 | 1 | `draw/js` | `#5ee2ff` | L78793 |
+| 5 | 1 | `draw/js` | `#b6f25b` | L84103 |
+| 5 | 1 | `draw/js` | `#ffa07a` | L101195 |
+| 5 | 1 | `draw/js` | `#34d399` | L101195 |
+| 5 | 1 | `draw/js` | `rgb(94,226,255)` | L95249 |
+| 4 | 1 | `leak` | `#67e8f9` | L103215 |
+| 4 | 1 | `leak` | `rgb(122,175,255)` | L83794 |
 | 1 | 1 | `body.light` | `#b6f25b` | L4921 |
 | 1 | 1 | `body.light` | `#b8a3ff` | L17893 |
 | 1 | 1 | `body.light` | `#5ee2ff` | L29253 |
@@ -52,8 +52,8 @@ Skipped: dark-token, keep-dark, leak-ok (already has a body.light twin).
 - L14477: `knowing that neither keeps its dark-mode hue there: --metro is #ffd166 dark and #503600 light, and --accent-warm is gree`
 
 **#7aafff** (`leak` ×91)
-- L128131: `isca prima dell’accordo successivo."]}], [41.89, 35.27, 3.53, 44.64, "#7aafff", "Resonance", "Boosts the deepest lows in`
-- L128131: `ma che il basso inizi a rimbombare."]}], [46.02, 35.27, 3.53, 44.64, "#7aafff", "Presence", "Adds highs in the power amp`
+- L128125: `isca prima dell’accordo successivo."]}], [41.89, 35.27, 3.53, 44.64, "#7aafff", "Resonance", "Boosts the deepest lows in`
+- L128125: `ma che il basso inizi a rimbombare."]}], [46.02, 35.27, 3.53, 44.64, "#7aafff", "Presence", "Adds highs in the power amp`
 
 **#5ee2ff** (`leak` ×80)
 - L874: `d,rgba(255,255,255,.7))} .errdlg-btn-main{border-color:var(--accent,#5ee2ff);color:var(--accent,#5ee2ff)} .errdlg-btn:ac`
@@ -64,8 +64,8 @@ Skipped: dark-token, keep-dark, leak-ok (already has a body.light twin).
 - L20889: `er-radius: 50%; border: none; background: linear-gradient(135deg, #b8a3ff, #5ee2ff); cursor: pointer; box-shadow: 0 0 10`
 
 **#ffa07a** (`leak` ×67)
-- L67025: `:root). const SH = cofRGB('--accent-warm', _cofLight ? '#b34a18' : '#ffa07a'); const FL = cofRGB(_cofLight ? '--flat' : `
-- L73070: `3,255,0.5)'; const cA_head = _prL ? '#e07038' : 'var(--accent-warm, #ffa07a)'; const cB_head = _prL ? '#6b52c9' : 'var(-`
+- L67018: `:root). const SH = cofRGB('--accent-warm', _cofLight ? '#b34a18' : '#ffa07a'); const FL = cofRGB(_cofLight ? '--flat' : `
+- L73063: `3,255,0.5)'; const cA_head = _prL ? '#e07038' : 'var(--accent-warm, #ffa07a)'; const cB_head = _prL ? '#6b52c9' : 'var(-`
 
 **rgb(94,226,255)** (`leak` ×48)
 - L9341: `c: tabular-nums; font-weight: 600; padding: 4px 10px; background: rgba(94,226,255,0.06); border-radius: 14px; transition`
@@ -80,20 +80,20 @@ Skipped: dark-token, keep-dark, leak-ok (already has a body.light twin).
 - L25657: `w: 0 0 10px rgba(52,211,153,0.15); } 50% { box-shadow: 0 0 16px rgba(52,211,153,0.3); } } #toolDrumkit .play-btn.playing`
 
 **#ff8aae** (`leak` ×29)
-- L88591: `8', '#7be0a4':'#2e7d4f', '#b8a3ff':'#5238a5', '#ffd166':'#6f4d00', '#ff8aae':'#a3284d', '#5ee2ff':'#006f8f', // Tonale's`
-- L97727: `glow:'rgba(255,102,51,.3)' }, 35: { quip:'GRIM REAPER', color:'#ff8aae', bg:'rgba(255,138,174,.14)', glow:'rgba(255,138,`
+- L88584: `8', '#7be0a4':'#2e7d4f', '#b8a3ff':'#5238a5', '#ffd166':'#6f4d00', '#ff8aae':'#a3284d', '#5ee2ff':'#006f8f', // Tonale's`
+- L97720: `glow:'rgba(255,102,51,.3)' }, 35: { quip:'GRIM REAPER', color:'#ff8aae', bg:'rgba(255,138,174,.14)', glow:'rgba(255,138,`
 
 **#b6f25b** (`leak` ×23)
 - L1003: `: rtLockedIn .5s cubic-bezier(.2,.8,.2,1); color: var(--rtp-cacc, #b6f25b); text-shadow: 0 0 14px var(--rtp-cacc, rgba(1`
 - L1008: `7px; height: 7px; border-radius: 50%; background: var(--rtp-cacc, #b6f25b); margin-right: 7px; vertical-align: middle; o`
 
 **#34d399** (`leak` ×14)
-- L65676: `ode:'tools', nm:'TOOLS', k:'mode_tools', sub:'lnch_sub_tools', c:'#34d399' }, { id:'train', mode:'practice', nm:'TRAIN',`
-- L86423: `st CHORDLE_DIFF = { easy: { labelKey:'chordle_diff_easy', color:'#34d399', maxGuesses:6 }, medium:{ labelKey:'chordle_di`
+- L65668: `ode:'tools', nm:'TOOLS', k:'mode_tools', sub:'lnch_sub_tools', c:'#34d399' }, { id:'train', mode:'practice', nm:'TRAIN',`
+- L86416: `st CHORDLE_DIFF = { easy: { labelKey:'chordle_diff_easy', color:'#34d399', maxGuesses:6 }, medium:{ labelKey:'chordle_di`
 
 **#4ade80** (`leak` ×11)
-- L74456: `glow. var diffs = [ { key:'easy', color: _rrL ? '#16a34a' : '#4ade80' }, { key:'normal', color: _rrL ? '#2563eb' : '#60a`
-- L74675: `); return v || fb; }; var diffColors = { easy:_tok('--surv-easy','#4ade80'), normal:_tok('--surv-normal','#60a5fa'),`
+- L74449: `glow. var diffs = [ { key:'easy', color: _rrL ? '#16a34a' : '#4ade80' }, { key:'normal', color: _rrL ? '#2563eb' : '#60a`
+- L74668: `); return v || fb; }; var diffColors = { easy:_tok('--surv-easy','#4ade80'), normal:_tok('--surv-normal','#60a5fa'),`
 
 ## WASH (tiny white / heavy dark scrim) — 235 hits
 

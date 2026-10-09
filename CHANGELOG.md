@@ -12,6 +12,7 @@ A human-readable record of what changed, when,
 - Android stays in portrait. After a full-screen mode closed, the screen was free to rotate with the phone. It now goes back to portrait.
 - Launch on Android: the system launch screen now stays up until the app draws its first frame. The dark blank gap between the two is gone.
 - iPhone: Pro is now a real one-time App Store purchase, with Restore Purchase. The free unlock that TestFlight builds had is gone.
+- If a purchase fails, the message now includes the store's reason, so support can tell what went wrong.
 - Settings has a new Help & Support link, with an Italian label.
 - Search: the tab bar stays put when the keyboard opens. It used to ride up behind the blur.
 - Android: the status bar color now comes from the app theme, not a deprecated call. Looks the same, and clears the edge-to-edge warning in Play.
