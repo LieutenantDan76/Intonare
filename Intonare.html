@@ -29138,9 +29138,6 @@ body.light .settings-modal::before,body.light .progress-modal::before,body.light
 /* Search frost fades in step with the dim (0.32s in, 0.24s out). The layer is promoted ahead of time, so the blur does not pop in on the first frame. */
 #searchSheet::before{transition:opacity .32s ease!important;will-change:opacity}
 #searchSheet:not(.on)::before{transition:opacity .24s ease!important}
-/* The frost fades out just before the keyboard arrives. A blur over a page that is resizing flickers, so the dim carries the card while the keyboard is up. */
-#searchSheet.kb::before{opacity:0!important;transition:opacity .18s ease!important}
-#searchSheet.kbx::before{display:none!important}
 /* Same early promotion for the other frost layers. */
 .settings-modal::before,.progress-modal::before,.help-modal::before,.vr-modal-overlay::before,.prog-preset-modal-backdrop::before,.prog-metro-backdrop::before{will-change:opacity}
 /* One frost for every scrim: same blur and a light dim, in both themes. The old light scrim used 22px and a milky wash, which was too busy. */
@@ -143032,6 +143029,8 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     if (!srBuilt) return;
     var vv = window.visualViewport, vh = vv ? vv.height : window.innerHeight;
     if (!srOpen) fullH = window.innerHeight; else if (window.innerHeight > fullH) fullH = window.innerHeight;
+    // While the keyboard slides in, Android briefly reports a tiny screen (177 px on a 832 px phone). Planning the card from that squashed it, then it grew back, which is the flicker. A real keyboard never takes more than 60% of the screen, so a smaller reading is ignored.
+    if (srOpen && vh < fullH * 0.4) return;
     var kbUp = fullH - vh > 80;
     if (kbUp) srKbSeen = fullH - vh;
     var pin = parseFloat(getComputedStyle(root).getPropertyValue('--hv-pin')) || 14;
@@ -143082,7 +143081,9 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     // Scrolling the list drops the keyboard, so the whole list can be seen.
     srBody.addEventListener('touchmove', function () { if (document.activeElement === srIn) srIn.blur(); }, { passive: true });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && srOpen) closeSearch(); });
-    var relay = function () { layout(); setTimeout(function () { if (srOpen) { fit(false); if (srSel > -1) paintSel(true); } }, 40); };
+    var _relayT = 0;
+    // Wait for the screen size to settle (110 ms with no new resize), so the card follows the final size only.
+    var relay = function () { clearTimeout(_relayT); _relayT = setTimeout(function () { layout(); if (srOpen) { fit(false); if (srSel > -1) paintSel(true); } }, 110); };
     if (window.visualViewport) { window.visualViewport.addEventListener('resize', relay); window.visualViewport.addEventListener('scroll', relay); }
     window.addEventListener('resize', relay);
   }
@@ -143132,15 +143133,8 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       buzz();
       srOpen = true; sr.classList.add('on');
       if (window._scrollLockSync) _scrollLockSync();
-      // On touch screens the keyboard waits until the card has landed (the screen resize during the open animation made it flicker). A desktop keyboard needs no wait.
-      var _focusIn = function () { try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); } };
-      sr.classList.remove('kb'); sr.classList.remove('kbx');
       try { window._srDbgStart(); } catch (e) {}
-      if (!coarse()) _focusIn(); else {
-        setTimeout(function () { if (srOpen) sr.classList.add('kb'); }, 330);
-        setTimeout(function () { if (srOpen) sr.classList.add('kbx'); }, 515);
-        setTimeout(function () { if (srOpen) _focusIn(); }, 530);
-      }
+      try { srIn.focus({ preventScroll: true }); } catch (e) { srIn.focus(); }
       clearInterval(srTimer); srTimer = setInterval(phTick, 2600);
     } catch (e) {}
   };
@@ -143150,7 +143144,6 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     srOpen = false; clearInterval(srTimer);
     try { srIn.blur(); } catch (e) {}
     sr.classList.remove('on');
-    setTimeout(function () { if (!srOpen) { sr.classList.remove('kb'); sr.classList.remove('kbx'); } }, 320);
     // The card is hidden when its fade ends, so check the page lock again after that.
     [120, 320, 520].forEach(function (ms) { setTimeout(function () { if (window._scrollLockSync) _scrollLockSync(); }, ms); });
     setTimeout(function () { if (!srOpen) fullH = window.innerHeight; }, 400);
