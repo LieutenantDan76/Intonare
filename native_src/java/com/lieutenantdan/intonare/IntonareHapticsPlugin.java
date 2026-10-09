@@ -289,7 +289,7 @@ public class IntonareHapticsPlugin extends Plugin {
      */
     static long tapMs(float sharp, int level, long nextGapMs) {
         long base = Math.round(10 + (1.0f - sharp) * 14);
-        long bonus = level >= 2 ? 14 : (level == 1 ? 4 : 0);
+        long bonus = level >= 2 ? 8 : (level == 1 ? 4 : 0);
         long room = nextGapMs == Long.MAX_VALUE ? bonus : nextGapMs - base - GUARD_MS;
         return Math.min(40, base + Math.max(0, Math.min(bonus, room)));
     }
