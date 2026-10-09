@@ -10,6 +10,8 @@ A human-readable record of what changed, when,
 - Muting the metronome now cuts the sound at once. The next click used to leak through for a moment.
 - The piano, organ, Rhodes, theremin and the other full-screen modes hide the Android status bar while they are open, and bring it back when you leave.
 - Android stays in portrait. After a full-screen mode closed, the screen was free to rotate with the phone. It now goes back to portrait.
+- Search no longer flickers when the keyboard opens. Android briefly reports a tiny screen while the keyboard slides in, and the card shrank to match, then grew back. The card now waits for the screen size to settle.
+- Small flickers across the app are gone. Quick access, the quiz sheets and other popups kept an invisible full-screen blur on the page even when closed. The blur now exists only while a popup is open, and fades in and out with it.
 
 ## v1.0.2: Achievements that unlock when they should
 
