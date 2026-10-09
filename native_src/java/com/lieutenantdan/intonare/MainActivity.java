@@ -349,7 +349,7 @@ public class MainActivity extends BridgeActivity {
         // the app, like a native app). Only the navigation bar stays hidden; swipe up
         // reveals it for a moment.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        // Status bar color is transparent through the theme (styles.xml). The old setStatusBarColor call is deprecated and Play flags it.
         WindowInsetsControllerCompat controller =
             WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         controller.setSystemBarsBehavior(

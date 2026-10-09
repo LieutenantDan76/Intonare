@@ -12,6 +12,8 @@ A human-readable record of what changed, when,
 - Android stays in portrait. After a full-screen mode closed, the screen was free to rotate with the phone. It now goes back to portrait.
 - Launch on Android: the system launch screen now stays up until the app draws its first frame. The dark blank gap between the two is gone.
 - Search: the tab bar stays put when the keyboard opens. It used to ride up behind the blur.
+- Android: the status bar color now comes from the app theme, not a deprecated call. Looks the same, and clears the edge-to-edge warning in Play.
+- Back Up Progress now includes the iPhone stay-loud setting and the pin hint flag. The Voice Range legend label "Tessitura center" now has its Italian text.
 - Search no longer flickers when the keyboard opens. Android briefly reports a tiny screen while the keyboard slides in, and the card shrank to match, then grew back. The card now waits for the screen size to settle.
 - Small flickers across the app are gone. Quick access, the quiz sheets and other popups kept an invisible full-screen blur on the page even when closed. The blur now exists only while a popup is open, and fades in and out with it.
 
