@@ -66462,6 +66462,8 @@ function lnchStart() {
   if (_lnchStarted) return;
   _lnchStarted = true;
   lnchInit();
+  // Skipped-splash launches never reach the splash's own ready call. Tell Android the page has drawn once the launcher had two frames.
+  requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(function () { try { if (window.IntonareNative && window.IntonareNative.pageReady) window.IntonareNative.pageReady(); } catch (e) {} }, 60); }); });
 }
 // BUILD AS SOON AS THE DOM EXISTS, not when the splash says so.
 //
