@@ -99838,6 +99838,8 @@ function _applyOvRotate() {
 // Expanded modes (piano, organ, theremin) hide the Android status bar while open. Older builds have no bridge call, so this does nothing there.
 function _ovBars(hide) {
   try { var n = window.IntonareNative; if (n && typeof n.setStatusBarHidden === 'function') n.setStatusBarHidden(!!hide); } catch (e) {}
+  // When the bar returns, read the header inset again a few times, so the header lands below it.
+  if (!hide) [0, 150, 400, 900, 1600].forEach(function (ms) { setTimeout(function () { try { if (window._hv2PollCut) window._hv2PollCut(); } catch (e) {} }, ms); });
 }
 function lockOrientation() {
   window._ovRotateActive = true;

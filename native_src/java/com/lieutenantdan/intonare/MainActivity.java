@@ -249,14 +249,18 @@ public class MainActivity extends BridgeActivity {
         decor.postDelayed(new Runnable() {
             @Override public void run() {
                 try {
+                    // While a full-screen mode hides the bar, keep the last real value so the
+                    // header does not slide up under the bar when it comes back.
+                    if (barsHidden) return;
                     float d = getResources().getDisplayMetrics().density;
                     int wpx = decor.getWidth() > 0 ? decor.getWidth()
                             : getResources().getDisplayMetrics().widthPixels;
                     int top = 0;
                     WindowInsetsCompat wi = androidx.core.view.ViewCompat.getRootWindowInsets(decor);
                     if (wi != null) {
+                        // Ignoring visibility: the bar height counts even while it is hidden or sliding in.
                         top = Math.max(
-                            wi.getInsets(WindowInsetsCompat.Type.statusBars()).top,
+                            wi.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.statusBars()).top,
                             wi.getInsets(WindowInsetsCompat.Type.displayCutout()).top);
                     }
                     insetJson = "{\"w\":" + Math.round(wpx / d) + ",\"top\":" + Math.round(top / d) + "}";
@@ -283,7 +287,7 @@ public class MainActivity extends BridgeActivity {
                 @Override public void run() {
                     barsHidden = hide;
                     hideSystemBars();
-                    if (!hide) { captureInset(0); captureInset(400); }
+                    if (!hide) { captureInset(0); captureInset(250); captureInset(700); }
                 }
             });
         }
