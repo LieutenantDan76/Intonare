@@ -29149,6 +29149,12 @@ body:not(.light) :is(.mq-sheet-overlay,.fav-overlay,.mq-daily-pop-overlay,.share
 body.light #toolSurvivalGuide .sg-overlay{background:rgba(40,58,96,.2)!important}
 /* The quiz feedback drawer waits below the screen, and its upward shadow leaked into the bottom edge. */
 .mq2-fbwrap:not(.go){box-shadow:none!important}
+/* Tour spotlight: the pulse animated a box-shadow with a 9999px spread, so the whole screen repainted every frame.
+   The dim and ring now stay still. Only a glow layer fades in and out, which the compositor does for free. */
+.tour-spotlight{animation:none!important}
+.tour-spotlight::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;box-shadow:0 0 0 2px rgba(94,226,255,.55),0 0 46px rgba(94,226,255,.85);animation:tourGlow 2.4s ease-in-out infinite;will-change:opacity}
+@keyframes tourGlow{0%,100%{opacity:0}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.tour-spotlight::after{animation:none;opacity:.5}}
 </style>
 </head>
 <body>
