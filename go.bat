@@ -141,6 +141,9 @@ if exist audio_assets (
 echo [4i] Restoring splash launch sound...
 if not exist android\app\src\main\res\raw mkdir android\app\src\main\res\raw
 copy /Y native_src\res\raw\intonare_splash.ogg android\app\src\main\res\raw\intonare_splash.ogg
+echo [4j] Restoring R8 rules and resource keep list...
+copy /Y native_src\proguard-rules.pro android\app\proguard-rules.pro
+copy /Y native_src\res\raw\keep.xml android\app\src\main\res\raw\keep.xml
 
 echo [4h] Patching build.gradle proguard reference...
 powershell -Command "(Get-Content android\app\build.gradle) -replace 'proguard-android\.txt', 'proguard-android-optimize.txt' | Set-Content android\app\build.gradle"

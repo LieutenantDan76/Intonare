@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Resource shrinking (shrinkResources true) deletes every resource that no code
+  or XML points to. These two are found BY NAME at run time, so it cannot see
+  the link:
+    ic_stat_intonare  The page passes smallIcon: 'ic_stat_intonare' to Local
+                      Notifications. The plugin calls getIdentifier() on that
+                      string. Without this line the notification icon is gone.
+    intonare_splash   Launch sound. MainActivity uses R.raw.intonare_splash,
+                      so it is safe already. Listed here as a second guard.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_intonare,@raw/intonare_splash" />
