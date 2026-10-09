@@ -29138,6 +29138,8 @@ body.light .settings-modal::before,body.light .progress-modal::before,body.light
 /* Search frost fades in step with the dim (0.32s in, 0.24s out). */
 #searchSheet::before{transition:opacity .32s ease!important}
 #searchSheet:not(.on)::before{transition:opacity .24s ease!important}
+/* Search open: the keyboard shrinks the screen and lifts the fixed tab bar behind the blur. --sr-kbs (set in the search code) pushes it back down so it stays put. */
+html body .mode-toggle:not(#_a):not(#_b){transform:translateY(var(--sr-kbs,0px))!important;transition:none!important}
 /* Frost only while a popup is open. These overlays sit on the page all the time at opacity 0, and each one kept a full-screen blur layer running, which made small flickers across the app. Closed, they have no blur. Opening turns the blur on at once and the overlay's own fade brings it in with the dim. Closing keeps the blur until the fade ends (0.22 s), then drops it. One blur pass, no radius animation, no color boost: each of those cost extra slow frames on every open. */
 html body .fav-overlay:not(.open):not(#_a):not(#_b),html body .mq-sheet-overlay:not(.active):not(#_a):not(#_b),html body .mq-daily-pop-overlay:not(.active):not(#_a):not(#_b),html body .share-landing-overlay:not(.active):not(#_a):not(#_b),html body .ce-stats-modal:not(.active):not(#_a):not(#_b),html body .iv-test-overlay:not(.active):not(#_a):not(#_b),html body .setlist-sheet:not(.open):not(#_a):not(#_b),html body #toolSurvivalGuide .sg-overlay:not(.open):not(#_a):not(#_b),html body .gcc-zoom-overlay:not(.active):not(#_a):not(#_b),html body #chordlePickerOverlay:not(.chp-show):not(#_a):not(#_b),html body #diadlePickerOverlay:not(.chp-show):not(#_a):not(#_b),html body #sessionSummaryOverlay:not(.active):not(#_a):not(#_b),html body #autoTourPrompt:not(.active):not(#_a):not(#_b){-webkit-backdrop-filter:none!important;backdrop-filter:none!important;transition:opacity .2s cubic-bezier(.4,0,.2,1),background-color .06s ease,background .06s ease,-webkit-backdrop-filter 0s linear .22s,backdrop-filter 0s linear .22s!important}
 html body .fav-overlay.open:not(#_a):not(#_b),html body .mq-sheet-overlay.active:not(#_a):not(#_b),html body .mq-daily-pop-overlay.active:not(#_a):not(#_b),html body .share-landing-overlay.active:not(#_a):not(#_b),html body .ce-stats-modal.active:not(#_a):not(#_b),html body .iv-test-overlay.active:not(#_a):not(#_b),html body .setlist-sheet.open:not(#_a):not(#_b),html body #toolSurvivalGuide .sg-overlay.open:not(#_a):not(#_b),html body .gcc-zoom-overlay.active:not(#_a):not(#_b),html body #chordlePickerOverlay.chp-show:not(#_a):not(#_b),html body #diadlePickerOverlay.chp-show:not(#_a):not(#_b),html body #sessionSummaryOverlay.active:not(#_a):not(#_b),html body #autoTourPrompt.active:not(#_a):not(#_b){-webkit-backdrop-filter:blur(5px)!important;backdrop-filter:blur(5px)!important;transition:opacity .2s cubic-bezier(.4,0,.2,1),background-color .06s ease,background .06s ease,-webkit-backdrop-filter 0s,backdrop-filter 0s!important}
@@ -143091,6 +143093,17 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var relay = function () { clearTimeout(_relayT); _relayT = setTimeout(function () { layout(); if (srOpen) { fit(false); if (srSel > -1) paintSel(true); } }, 110); };
     if (window.visualViewport) { window.visualViewport.addEventListener('resize', relay); window.visualViewport.addEventListener('scroll', relay); }
     window.addEventListener('resize', relay);
+    // The tab bar is fixed to the bottom, so the keyboard pushes it up behind the blur. Slide it back down by the same amount, right away on every resize.
+    var _pinBar = function () {
+      var root = document.documentElement;
+      if (!srOpen) { root.style.removeProperty('--sr-kbs'); return; }
+      var h = window.innerHeight;
+      if (h < fullH * 0.4) return;
+      root.style.setProperty('--sr-kbs', Math.max(0, fullH - h) + 'px');
+    };
+    window.addEventListener('resize', _pinBar);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', _pinBar);
+    window._srPinBar = _pinBar;
   }
   window.openSearch = function () {
     try {
@@ -143120,6 +143133,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     srOpen = false; clearInterval(srTimer);
     try { srIn.blur(); } catch (e) {}
     sr.classList.remove('on');
+    setTimeout(function () { if (!srOpen && window._srPinBar) window._srPinBar(); }, 260);
     // The card is hidden when its fade ends, so check the page lock again after that.
     [120, 320, 520].forEach(function (ms) { setTimeout(function () { if (window._scrollLockSync) _scrollLockSync(); }, ms); });
     setTimeout(function () { if (!srOpen) fullH = window.innerHeight; }, 400);
