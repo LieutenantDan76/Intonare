@@ -140060,12 +140060,15 @@ var MQ2_MOTIF = {
     + [0,1,2,3,4].map(function(i){
         return '<line x1="8" y1="' + (86+i*13) + '" x2="112" y2="' + (86+i*13) + '"/>'; }).join('')
     + '</g></g></svg>',
-  beatles: '<svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" style="display:block">'
-    // The Abbey Road zebra crossing seen from straight above: plain rectangles
-    // in a row, running off both sides of the layer like the road does.
-    + [0,1,2,3,4,5].map(function(i){
-        return '<rect x="-10" y="' + (6+i*26) + '" width="140" height="15" fill="currentColor" fill-opacity="0.72"/>'; }).join('')
-    + '</svg>',
+  beatles: '<svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid meet" width="100%" height="100%" style="display:block;overflow:visible">'
+    // The bars are tall enough to run past the top of the drawing box. The svg
+    // lets them overflow, so the header's own top edge is what cuts them, not a
+    // hard line partway down the status area.
+    + '<g transform="translate(-6,-14) skewX(-19)">'
+    + [0,1,2,3,4].map(function(i){
+        return '<rect x="' + (14+i*24) + '" y="-120" width="13" height="310" rx="2" fill="currentColor" fill-opacity="'
+             + Math.min(0.78,(0.62-i*0.09)).toFixed(2) + '"/>'; }).join('')
+    + '</g></svg>',
 };
 
 // Every mark goes through one place, so position, size and weight are set the
