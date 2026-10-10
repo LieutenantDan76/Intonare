@@ -481,13 +481,13 @@ workflows:
           # The ios_signing block has already fetched the certificate and
           # provisioning profile into the keychain. This just writes the
           # signing settings into the Xcode project.
-          # testFlightInternalTestingOnly keeps this build out of Apple's Beta
-          # App Review queue. Internal testers only; cannot be promoted to
-          # external testing later. That is what we want while _iosBetaUnlock()
-          # is still granting Pro without StoreKit.
+          # No testFlightInternalTestingOnly flag any more. That flag marked builds
+          # as internal-only, which Apple never lets into App Review (the Add Build
+          # list on the App Store page greys them out). It was on while
+          # _iosBetaUnlock() gave Pro away free. Pro is a real StoreKit purchase
+          # now, so builds must be submittable.
           xcode-project use-profiles \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
-            --custom-export-options='{"testFlightInternalTestingOnly": true}'
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT"
 
       - name: Build ipa
         script: |
