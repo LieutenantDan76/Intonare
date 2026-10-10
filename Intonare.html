@@ -1083,6 +1083,36 @@ body.sg-open #toolSurvivalGuide{
      the drawer, and NEXT already pads its own bottom (.mq2-foot), so the home
      indicator is covered either way. */
   #mqPanel:has(#mqScreenQuiz.active) { padding-bottom: 0; }
+  /* iPhone and Android: the quiz header runs to the top edge. The panel's own top
+     padding left a dark strip above it (the band started below the status bar).
+     Move that inset into the band, so its color fills behind the status bar and
+     the content still clears the clock and the island.
+     The pack mark keeps its place relative to the content: its clipping layer
+     grows up to the screen edge, and its drawing box shifts down by the inset,
+     so nothing gets sliced and nothing moves. */
+  #mqPanel:has(#mqScreenQuiz.v2.active) { padding-top: 0; }
+  /* The body pads 16px a side and the quiz cancels only 14, which left a 2px strip
+     of page color down each edge of the header. Cancel all 16. */
+  #mqPanel:has(#mqScreenQuiz.v2.active) #mqScreenQuiz.v2 > .mq2 { margin-left: -16px; margin-right: -16px; }
+  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2-band {
+    height: calc(220px + var(--sat-top));
+    padding-top: calc(12px + var(--sat-top));
+  }
+  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2.diagram .mq2-band {
+    height: calc(290px + var(--sat-top));
+  }
+  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2-motif {
+    height: calc(230px + var(--sat-top));
+    -webkit-mask-image: linear-gradient(to bottom, #000 0 calc(152px + var(--sat-top)), transparent calc(223px + var(--sat-top))),
+                        linear-gradient(to right, transparent, #000 18%);
+    mask-image: linear-gradient(to bottom, #000 0 calc(152px + var(--sat-top)), transparent calc(223px + var(--sat-top))),
+                linear-gradient(to right, transparent, #000 18%);
+  }
+  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2-motif > div { top: var(--sat-top); }
+  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2.pk-bass .mq2-motif {
+    top: calc(34px + var(--sat-top)); height: 230px;
+  }
+  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2.pk-bass .mq2-motif > div { top: 0; }
 
   /* ── Quiz header (matches app header pattern) ── */
   /* Floating top controls — no title bar, just BACK (left) + stats (right) */
@@ -46636,6 +46666,9 @@ function grantPro(persistNative) {
   progSave();
   // Reflect the unlock everywhere (remove lock badges, update paywall, etc.)
   try { refreshProUI(); } catch (e) {}
+  // The paywall that led here is done; close it so it does not sit behind the
+  // celebration.
+  try { closePaywall(); } catch (e) {}
   // Celebratory confirmation — covers both the code path and (later) purchase.
   try { showProUnlocked(); } catch (e) {}
 }
