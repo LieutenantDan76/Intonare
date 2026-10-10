@@ -1108,11 +1108,7 @@ body.sg-open #toolSurvivalGuide{
     mask-image: linear-gradient(to bottom, #000 0 calc(152px + var(--sat-top)), transparent calc(223px + var(--sat-top))),
                 linear-gradient(to right, transparent, #000 18%);
   }
-  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2-motif > div { top: var(--sat-top); }
-  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2.pk-bass .mq2-motif {
-    top: calc(34px + var(--sat-top)); height: 230px;
-  }
-  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2.pk-bass .mq2-motif > div { top: 0; }
+  #mqPanel:has(#mqScreenQuiz.v2.active) .mq2-motif > div { top: calc(var(--sat-top) + 12px); }
 
   /* ── Quiz header (matches app header pattern) ── */
   /* Floating top controls — no title bar, just BACK (left) + stats (right) */
@@ -140064,12 +140060,12 @@ var MQ2_MOTIF = {
     + [0,1,2,3,4].map(function(i){
         return '<line x1="8" y1="' + (86+i*13) + '" x2="112" y2="' + (86+i*13) + '"/>'; }).join('')
     + '</g></g></svg>',
-  beatles: '<svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid meet" width="100%" height="100%" style="display:block">'
-    + '<g transform="translate(-6,-14) skewX(-19)">'
-    + [0,1,2,3,4].map(function(i){
-        return '<rect x="' + (14+i*24) + '" y="0" width="13" height="190" rx="2" fill="currentColor" fill-opacity="'
-             + Math.min(0.78,(0.62-i*0.09)).toFixed(2) + '"/>'; }).join('')
-    + '</g></svg>',
+  beatles: '<svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" style="display:block">'
+    // The Abbey Road zebra crossing seen from straight above: plain rectangles
+    // in a row, running off both sides of the layer like the road does.
+    + [0,1,2,3,4,5].map(function(i){
+        return '<rect x="-10" y="' + (6+i*26) + '" width="140" height="15" fill="currentColor" fill-opacity="0.72"/>'; }).join('')
+    + '</svg>',
 };
 
 // Every mark goes through one place, so position, size and weight are set the
