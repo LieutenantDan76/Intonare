@@ -608,7 +608,6 @@ body.sg-open #toolSurvivalGuide{
 #toolSurvivalGuide .pc-label{font-family:"Bebas Neue",sans-serif;font-size:10.5px;letter-spacing:.06em;color:var(--tx);text-align:center;margin-top:5px;line-height:1.05}
 #toolSurvivalGuide .pc-end .pc-box{border-style:dashed;border-color:var(--mu)}
 #toolSurvivalGuide .pc-end .pc-label{color:var(--mu)}
-#toolSurvivalGuide .pc-warn{position:absolute;bottom:-8px;right:-8px;width:20px;height:20px;border-radius:50%;background:var(--warn,#fbbf24);color:#111;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg1);z-index:2}
 #toolSurvivalGuide .pc-info{margin-top:14px;background:var(--bg1);border:1px solid var(--bdrs);border-radius:10px;padding:14px 16px;min-height:84px}
 #toolSurvivalGuide .pc-info h3{margin:0 0 6px;font-family:"Bebas Neue",sans-serif;letter-spacing:.06em;font-size:18px;color:var(--tab-ac,var(--ac))}
 #toolSurvivalGuide .pc-info p{margin:0;font-size:14px;line-height:1.5;color:var(--tx)}
@@ -4134,7 +4133,6 @@ body.sg-open #toolSurvivalGuide{
   body.light .thmn-pad-grid text { fill: rgba(15,70,55,.70) !important; }
   body.light .thmn-hint-overlay {
     color: #0a5c3c !important;
-    opacity: 0.85 !important;
     text-shadow: none !important;
   }
   body.light .thmn-ov-hint {
@@ -29075,8 +29073,9 @@ body:not(.light) .stb-name,
 body:not(.light) .pm-level-label,
 body:not(.light) .tuner-refpitch-label,
 body:not(.light) .ppc-lbl,
-body:not(.light) .thmn-hint-overlay,
 body:not(.light) .scale-oct-val { color: var(--text-dim) !important; opacity: 1 !important; }
+/* Theremin hint: no opacity here, the pad fades it on touch. */
+body:not(.light) .thmn-hint-overlay { color: var(--text-dim) !important; }
 body:not(.light) .db-ruler-seg { filter: brightness(1.25); }
 
 /* ── Feedback colors (right / close / wrong) ──────────────────────────────
@@ -31815,7 +31814,7 @@ try {
                 <circle class="thmn-dot" id="thmnFingerDot" cx="0" cy="0" r="7"/>
               </g>
             </svg>
-            <div class="thmn-hint-overlay" id="thmnHint" data-i18n="thmn_hint_touch">DRAG TO PLAY · → PITCH · ↑ VOLUME</div>
+            <div class="thmn-hint-overlay" id="thmnHint" data-i18n="thmn_hint_touch">DRAG TO PLAY · → PITCH</div>
             <div class="thmn-readout" id="thmnReadout">
               <div class="thmn-note off" id="thmnNote">—</div>
               <div class="thmn-hz" id="thmnHz">silent</div>
@@ -32515,7 +32514,7 @@ try {
 
         <div class="ivr-controls">
           <button class="ivr-nav" id="ivrPrev" onclick="ivrFlip(-1)" aria-label="Previous interval">‹</button>
-          <button class="ivr-play" id="ivrPlay" onclick="ivrPlay()"><span id="ivrPlayIcon">▶︎</span> <span data-i18n="ivref_hear">HEAR IT</span></button>
+          <button class="ivr-play" id="ivrPlay" onclick="ivrToggle()"><span id="ivrPlayIcon">▶︎</span> <span id="ivrPlayLabel" data-i18n="ivref_hear">HEAR IT</span></button>
           <button class="ivr-nav" id="ivrNext" onclick="ivrFlip(1)" aria-label="Next interval">›</button>
         </div>
         <div class="ivr-pos" id="ivrPos"></div>
@@ -35702,7 +35701,7 @@ try {
         <span class="thmn-ov-note off" id="thmnOvNote">—</span>
         <span class="thmn-ov-hz" id="thmnOvHz" data-i18n="ui_silent">silent</span>
       </div>
-      <div class="thmn-ov-hint" id="thmnOvHint" data-i18n="thmn_ov_hint">RIGHT HAND → PITCH  ·  LEFT BAR ↕ VOLUME</div>
+      <div class="thmn-ov-hint" id="thmnOvHint" data-i18n="thmn_ov_hint">BOTH HANDS: RIGHT → PITCH  ·  LEFT BAR ↕ VOLUME</div>
     </div>
 
     <!-- Pitch antenna: flex sibling so pad ends at its left edge; overflow:visible extends rod+nut into console -->
@@ -36507,7 +36506,7 @@ try {
     <div class="ivpeek-name" id="ivPeekName">PERFECT 5TH</div>
     <div class="ivpeek-semi" id="ivPeekSemi"></div>
     <div class="ivpeek-blurb" id="ivPeekBlurb"></div>
-    <button class="ivr-play ivpeek-play" id="ivPeekPlay" onclick="ivPeekPlay()"><span id="ivPeekPlayIcon">▶︎</span> <span data-i18n="ivref_hear">HEAR IT</span></button>
+    <button class="ivr-play ivpeek-play" id="ivPeekPlay" onclick="ivPeekToggle()"><span id="ivPeekPlayIcon">▶︎</span> <span id="ivPeekPlayLabel" data-i18n="ivref_hear">HEAR IT</span></button>
     <button class="ivpeek-full" onclick="ivPeekOpenFull()" data-i18n="ivpeek_full">OPEN FULL REFERENCE →</button>
   </div>
 </div>
@@ -48019,10 +48018,25 @@ function _thmnApplyVib() {
   thmnVibGain.gain.setTargetAtTime(depthHz, now, 0.05);
 }
 
+// Pitch curve. A real theremin packs its notes closer together near the pitch
+// antenna (the right edge here). THMN_CROWD blends an even scale with an
+// exponential one: 0 = every semitone the same width, 0.35 = the tested default.
+// _thmnUnshape is the inverse, so the note grid and the demos land on the same spots.
+var THMN_CROWD = 0.35, THMN_CROWD_K = 2.4;
+function _thmnShape(nx) {
+  nx = Math.max(0, Math.min(1, nx));
+  return (1 - THMN_CROWD) * nx + THMN_CROWD * (Math.exp(THMN_CROWD_K * nx) - 1) / (Math.exp(THMN_CROWD_K) - 1);
+}
+function _thmnUnshape(s) {
+  s = Math.max(0, Math.min(1, s));
+  var lo = 0, hi = 1;
+  for (var i = 0; i < 28; i++) { var m = (lo + hi) / 2; if (_thmnShape(m) < s) lo = m; else hi = m; }
+  return (lo + hi) / 2;
+}
 // Map normalized X (0..1, left→right) to frequency across the active range.
 function _thmnXToFreq(nx) {
   nx = Math.max(0, Math.min(1, nx));
-  var midi = THMN_BASE_MIDI + nx * (thmnState.rangeOct * 12);
+  var midi = THMN_BASE_MIDI + _thmnShape(nx) * (thmnState.rangeOct * 12);
   if (thmnState.snapOn) {
     // snap to C-major scale degrees
     var SCALE = [0,2,4,5,7,9,11];
@@ -48043,7 +48057,9 @@ function _thmnYToGain(ny) {
   return 0.26 * thmnState.vol * Math.pow(up, 1.4); // VOLUME knob = ceiling; headroom under limiter
 }
 
-function thmnVoiceOn(nx, ny) {
+// gOv (optional): a ready-made gain that replaces the Y-to-gain curve. The expanded
+// view uses it so the two-hand volume curve does not touch the demos or compact play.
+function thmnVoiceOn(nx, ny, gOv) {
   _thmnEnsureVoice();
   if (thmnCtx.state === 'suspended') thmnCtx.resume();
   var now = thmnCtx.currentTime;
@@ -48051,17 +48067,18 @@ function thmnVoiceOn(nx, ny) {
   var tc = Math.max(0.001, thmnState.glideMs / 1000);
   thmnOsc.frequency.cancelScheduledValues(now);
   thmnOsc.frequency.setTargetAtTime(f, now, tc);
-  thmnGain.gain.setTargetAtTime(_thmnYToGain(ny), now, 0.02);
+  thmnGain.gain.cancelScheduledValues(now);
+  thmnGain.gain.setTargetAtTime(typeof gOv === 'number' ? gOv : _thmnYToGain(ny), now, 0.02);
   _thmnApplyVib();
   thmnActive = true;
 }
-function thmnVoiceMove(nx, ny) {
+function thmnVoiceMove(nx, ny, gOv) {
   if (!thmnOsc) return;
   var now = thmnCtx.currentTime;
   var f = _thmnXToFreq(nx);
   var tc = Math.max(0.001, thmnState.glideMs / 1000);
   thmnOsc.frequency.setTargetAtTime(f, now, tc);
-  thmnGain.gain.setTargetAtTime(_thmnYToGain(ny), now, 0.02);
+  thmnGain.gain.setTargetAtTime(typeof gOv === 'number' ? gOv : _thmnYToGain(ny), now, 0.02);
   _thmnApplyVib();
 }
 function thmnVoiceOff() {
@@ -48183,7 +48200,7 @@ function _thmnBuildGridInto(gid, W, H) {
   var NS = 'http://www.w3.org/2000/svg';
   for (var s = 0; s <= totalSemis; s++) {
     var midi = THMN_BASE_MIDI + s;
-    var x = (s / totalSemis) * W;
+    var x = _thmnUnshape(s / totalSemis) * W;
     var isC = (midi % 12) === 0;
     var ln = document.createElementNS(NS, 'line');
     ln.setAttribute('x1', x); ln.setAttribute('y1', 0);
@@ -48272,13 +48289,9 @@ function _thmnBindKnob(id, getV, setV, onChange) {
       _thmnMoveFinger(_thmnLastNx, _thmnCardPadY, true);
       _thmnUpdateReadout(_thmnLastNx, ny, true);
     }
-    // Expanded view: if a pitch finger is down and the vol bar isn't being held,
-    // the knob drives the level live.
-    if (isVol && _thmnPitchPID !== null && _thmnVolPID === null) {
-      _thmnOvVol = thmnState.vol;
-      _thmnOvVolFill();
-      _thmnOvApply();
-    }
+    // Expanded view: the knob is only the level ceiling. The volume bar is the
+    // volume hand, so a turning knob does not start a note.
+    if (isVol && _thmnPitchPID !== null && _thmnVolPID !== null) _thmnOvApply();
   }, { passive:false });
   function up(e){
     if (e.pointerId !== pid) return;
@@ -48467,7 +48480,7 @@ var _thmnDemoSaved = null;
 
 function _thmnMidiToNx(midi) {
   var span = thmnState.rangeOct * 12;
-  return Math.max(0, Math.min(1, (midi - THMN_BASE_MIDI) / span));
+  return _thmnUnshape(Math.max(0, Math.min(1, (midi - THMN_BASE_MIDI) / span)));
 }
 // animate the dot in whichever view is showing
 function _thmnDemoDraw(nx, vol) {
@@ -55221,11 +55234,43 @@ function _thmnOvVolFill() {
   if (p) p.textContent = Math.round(_thmnOvVol * 100) + '%';
 }
 // Recompute the voice from current pitch-x + volume. Silent when vol==0.
+// Two-hand rules, like a real theremin: a note needs the pitch hand AND the volume
+// hand. Pitch alone is silent (the volume hand is parked on the loop). Volume alone
+// is silent too (the pitch oscillator sits at its zero beat, below hearing).
+var _thmnOvSliding = false, _thmnOvSlideTimer = null;
+var THMN_VOL_ZONE = 0.08;   // bottom of the bar = hand on the loop = silence
+function _thmnRealVol(v) {
+  v = Math.max(0, Math.min(1, v));
+  if (v <= THMN_VOL_ZONE) return 0;
+  var u = (v - THMN_VOL_ZONE) / (1 - THMN_VOL_ZONE);
+  return 1 - (1 - u) * (1 - u);   // quick rise, then it levels off
+}
+// Pitch hand pulled away while the volume hand stays up: the pitch falls and fades.
+function _thmnOvSlideDown() {
+  if (!thmnCtx || !thmnOsc || !thmnGain) { thmnVoiceOff(); return; }
+  var t = thmnCtx.currentTime;
+  _thmnOvSliding = true;
+  thmnOsc.frequency.cancelScheduledValues(t);
+  thmnOsc.frequency.setValueAtTime(Math.max(30, thmnOsc.frequency.value), t);
+  thmnOsc.frequency.exponentialRampToValueAtTime(30, t + 0.45);
+  thmnGain.gain.cancelScheduledValues(t);
+  thmnGain.gain.setValueAtTime(thmnGain.gain.value, t);
+  thmnGain.gain.linearRampToValueAtTime(0, t + 0.45);
+  thmnActive = false;
+  _thmnUpdateReadout(0,0,false);
+  clearTimeout(_thmnOvSlideTimer);
+  _thmnOvSlideTimer = setTimeout(function(){ _thmnOvSliding = false; }, 500);
+}
 function _thmnOvApply() {
-  if (_thmnOvVol <= 0.001) { thmnVoiceOff(); _thmnUpdateReadout(0,0,false); return; }
-  // ny is derived from volume so _thmnYToGain maps correctly (ny: 0 top=loud)
+  var both = (_thmnPitchPID !== null && _thmnVolPID !== null);
+  // The VOLUME knob is the ceiling (80% = full level, the old loudness).
+  var g = both ? 0.26 * _thmnRealVol(_thmnOvVol) * Math.min(1, thmnState.vol * 1.25) : 0;
+  if (!both || g <= 0.0005) {
+    if (_thmnOvSliding && _thmnPitchPID === null) return;
+    thmnVoiceOff(); _thmnUpdateReadout(0,0,false); return;
+  }
   var ny = 1 - _thmnOvVol;
-  if (!thmnActive) thmnVoiceOn(_thmnOvNx, ny); else thmnVoiceMove(_thmnOvNx, ny);
+  if (!thmnActive) thmnVoiceOn(_thmnOvNx, ny, g); else thmnVoiceMove(_thmnOvNx, ny, g);
   _thmnUpdateReadout(_thmnOvNx, ny, true);
 }
 function _thmnOvAllUp() {
@@ -55257,7 +55302,6 @@ function _thmnBindOverlayTouch() {
       } else if (e.pointerId === _thmnVolPID) {
         var cv = _thmnVisCoords(bar, e);
         _thmnOvVol = Math.max(0, Math.min(1, 1 - cv.vy));   // vertical bar: up = louder
-        thmnState.vol = _thmnOvVol;                          // sync the VOLUME knob
         _thmnUpdateKnobLabels();
         _thmnOvVolFill();
         _thmnOvApply();
@@ -55268,7 +55312,8 @@ function _thmnBindOverlayTouch() {
         _thmnPitchPID = null;
         _thmnOvFinger(0,0,false);
         if (_thmnVolPID === null) { _thmnOvVol = 0; _thmnOvVolFill(); }
-        thmnVoiceOff();
+        if (_thmnVolPID !== null && _thmnOvVol > 0.001 && thmnActive) _thmnOvSlideDown();
+        else thmnVoiceOff();
         _thmnUpdateReadout(0,0,false);
         if (hint && _thmnVolPID===null) hint.style.opacity = '';
       } else if (e.pointerId === _thmnVolPID) {
@@ -55294,7 +55339,7 @@ function _thmnBindOverlayTouch() {
       var c = _thmnVisCoords(pad, e);
       _thmnOvNx = c.vx;
       _thmnOvPadY = c.vy;
-      if (_thmnOvVol <= 0.001 && _thmnVolPID === null) _thmnOvVol = thmnState.vol;
+      _thmnOvSliding = false;
       _thmnOvFinger(c.vx, c.vy, true);
       _thmnOvVolFill();
       _thmnOvApply();
@@ -55311,7 +55356,6 @@ function _thmnBindOverlayTouch() {
       _thmnVolPID = e.pointerId;
       var c = _thmnVisCoords(bar, e);
       _thmnOvVol = Math.max(0, Math.min(1, 1 - c.vy));   // vertical bar: up = louder
-      thmnState.vol = _thmnOvVol;                          // sync the VOLUME knob
       _thmnUpdateKnobLabels();
       _thmnOvVolFill();
       _thmnOvApply();
@@ -55441,7 +55485,7 @@ const HELP_CONTENT = {
   },
   theremin: {
     title: 'Theremin',
-    body: 'A continuous-pitch instrument modeled on the classic Moog Etherwave. Drag your finger on the dark surface: <strong>left→right raises the pitch</strong> across the chosen range, and <strong>down→up raises the volume</strong> (lift toward the top to swell, drop to the bottom to fade out). There are no keys; the pitch glides smoothly, the way waving your hand near a real theremin\'s antenna does.<br><br><strong>PURE / WARM / REEDY / BRASS</strong> set the timbre from a clean sine to a rich, harmonically dense tone. The knobs control <strong>BRIGHT</strong> (filter opening), <strong>VIBRATO</strong> (adds a singing wobble), <strong>RANGE</strong> (how many octaves the surface spans), and <strong>GLIDE</strong> (how quickly pitch tracks your finger, where higher means more liquid portamento).<br><br>For practice, switch on <strong>NOTE GRID</strong> to see where each note falls, or <strong>SNAP TO SCALE</strong> to quantize the glide onto a C-major scale so you can find pitches reliably.'
+    body: 'A continuous-pitch instrument modeled on the classic Moog Etherwave. Drag your finger on the dark surface: <strong>left→right raises the pitch</strong> across the chosen range, and the <strong>VOLUME</strong> knob sets the loudness. Notes sit a little closer together toward the right, the way they do near a real pitch antenna. There are no keys; the pitch glides smoothly, the way waving your hand near a real theremin\'s antenna does. In <strong>EXPAND</strong>, your other hand rides the volume bar, and you need both hands to make a note.<br><br><strong>PURE / WARM / REEDY / BRASS</strong> set the timbre from a clean sine to a rich, harmonically dense tone. The knobs control <strong>BRIGHT</strong> (filter opening), <strong>VIBRATO</strong> (adds a singing wobble), <strong>RANGE</strong> (how many octaves the surface spans), and <strong>GLIDE</strong> (how quickly pitch tracks your finger, where higher means more liquid portamento).<br><br>For practice, switch on <strong>NOTE GRID</strong> to see where each note falls, or <strong>SNAP TO SCALE</strong> to quantize the glide onto a C-major scale so you can find pitches reliably.'
   },
   vocalrange: {
     title: 'Vocal Range Assessment',
@@ -55533,8 +55577,8 @@ const TOURS = {
       selector: '.thmn-expand-btn',
       title: 'Two-Handed Play',
       titleIt: 'Suono a Due Mani',
-      body: 'Tap <strong>EXPAND</strong> for a full-screen landscape view: one hand glides the pitch on the wide surface while the other rides the volume bar, which is real two-handed theremin technique.',
-      bodyIt: 'Tocca <strong>ESPANDI</strong> per la vista panoramica a schermo intero: una mano scorre l&rsquo;intonazione sulla superficie ampia mentre l&rsquo;altra controlla la barra del volume, la vera tecnica theremin a due mani.'
+      body: 'Tap <strong>EXPAND</strong> for a full-screen landscape view: one hand glides the pitch on the wide surface while the other rides the volume bar, which is real two-handed theremin technique. You need both hands for a note. Lift the pitch hand and the note slides down and fades.',
+      bodyIt: 'Tocca <strong>ESPANDI</strong> per la vista panoramica a schermo intero: una mano scorre l&rsquo;intonazione sulla superficie ampia mentre l&rsquo;altra controlla la barra del volume, la vera tecnica theremin a due mani. Servono tutte e due le mani per fare una nota. Se alzi la mano dell&rsquo;intonazione, la nota scivola in basso e svanisce.'
     }
   ],
   // ── WELCOME (launcher) ──────────────────────────────────────────────────
@@ -59916,6 +59960,25 @@ function _ivrTrack(n) { if (n && typeof n.stop === 'function') ivrNodes.push(n);
 let _ivrToneReturn = false;       // true while the tone popup was opened from the reference tool
 const IVR_ROOT_MIDI = 60;         // C4 — stable, comfortable reference for every card
 
+let ivrIsPlaying = false;
+function _ivrSetPlaying(on) {
+  ivrIsPlaying = on;
+  var ic = document.getElementById('ivrPlayIcon');
+  var lb = document.getElementById('ivrPlayLabel');
+  if (ic) ic.textContent = on ? '◼' : '▶︎';
+  if (lb) lb.textContent = on ? (t('ivref_stop') || 'STOP') : (t('ivref_hear') || 'HEAR IT');
+}
+// HEAR IT is a toggle: tap while it plays and it stops.
+function ivrToggle() { if (ivrIsPlaying) ivrStop(); else ivrPlay(); }
+// Play one note, then give it a soft 0.2s release when its time is up. Without this the sample
+// engine lets any note over 0.6s ring to the end of its sample, which is seconds on low piano.
+function _ivrNote(freq, dur, token) {
+  var n = _ivrTrack(practicePlayNote(freq, ensurePracticeCtx().currentTime, dur, 1.0));
+  ivrTimers.push(setTimeout(function() {
+    if (ivrSession === token && n && typeof n.stop === 'function') { try { n.stop(0.2); } catch(e) {} }
+  }, dur * 1000));
+  return n;
+}
 function ivrStop() {
   ivrSession++;
   ivrTimers.forEach(t => clearTimeout(t));
@@ -59925,8 +59988,7 @@ function ivrStop() {
   // the audio running — the same hole found in interval training.
   ivrNodes.forEach(function(n){ try { n.stop(); } catch(e){} });
   ivrNodes = [];
-  var ic = document.getElementById('ivrPlayIcon');
-  if (ic) ic.textContent = '▶︎';
+  _ivrSetPlaying(false);
 }
 
 function ivrPlay() {
@@ -59937,15 +59999,14 @@ function ivrPlay() {
   var card = IV_CARDS[Math.max(0, Math.min(ivrIdx, IV_CARDS.length - 1))];
   var rootFreq   = midiToFreq(IVR_ROOT_MIDI);
   var targetFreq = midiToFreq(IVR_ROOT_MIDI + (ivrDir === 'down' ? -card.sem : card.sem));
-  var ic = document.getElementById('ivrPlayIcon');
-  if (ic) ic.textContent = '◼';
+  _ivrSetPlaying(true);
 
-  function done() { if (ivrSession === myToken) { var i = document.getElementById('ivrPlayIcon'); if (i) i.textContent = '▶︎'; } }
+  function done() { if (ivrSession === myToken) _ivrSetPlaying(false); }
 
   if (ivrDir === 'harm') {
     var ctx = ensurePracticeCtx();
-    _ivrTrack(practicePlayNote(rootFreq,   ctx.currentTime, 1.6, 1.0));
-    _ivrTrack(practicePlayNote(targetFreq, ctx.currentTime, 1.6, 1.0));
+    _ivrNote(rootFreq, 1.6, myToken);
+    _ivrNote(targetFreq, 1.6, myToken);
     ivrTimers.push(setTimeout(done, 1600));
   } else {
     var notes = [rootFreq, targetFreq];
@@ -59954,7 +60015,7 @@ function ivrPlay() {
       var d = delay;
       ivrTimers.push(setTimeout(function() {
         if (ivrSession !== myToken) return;
-        _ivrTrack(practicePlayNote(freq, ensurePracticeCtx().currentTime, 0.95, 1.0));
+        _ivrNote(freq, 0.95, myToken);
       }, d));
       delay += 950;
     });
@@ -60574,6 +60635,16 @@ var _ivPeekSession = 0;
 var _ivPeekTimers = [];
 var _ivPeekNodes  = [];
 function _ivPeekTrack(n) { if (n && typeof n.stop === 'function') _ivPeekNodes.push(n); return n; }
+var _ivPeekIsPlaying = false;
+function _ivPeekSetPlaying(on) {
+  _ivPeekIsPlaying = on;
+  var ic = document.getElementById('ivPeekPlayIcon');
+  var lb = document.getElementById('ivPeekPlayLabel');
+  if (ic) ic.textContent = on ? '\u25fc' : '\u25b6';
+  if (lb) lb.textContent = on ? (t('ivref_stop') || 'STOP') : (t('ivref_hear') || 'HEAR IT');
+}
+// HEAR IT on the peek card is a toggle: tap while it plays and it stops.
+function ivPeekToggle() { if (_ivPeekIsPlaying) _ivPeekStop(); else ivPeekPlay(); }
 
 // Mid-drill peek: show this interval's reference card as an OVERLAY over the drill.
 // No navigation, no setMode, no exitExercise -> the training session keeps running.
@@ -60593,8 +60664,7 @@ function ivShowInReference() {
   if (nameEl) nameEl.textContent = ivCardName(sem);
   if (semiEl) semiEl.textContent = sem + (sem === 1 ? ' ' + (t('ivref_semitone') || 'semitone') : ' ' + (t('ivref_semitones') || 'semitones'));
   if (blurbEl) blurbEl.innerHTML = ivBlurbHTML(sem);
-  var ic = document.getElementById('ivPeekPlayIcon');
-  if (ic) ic.textContent = '\u25b6';
+  _ivPeekSetPlaying(false);
   document.getElementById('ivPeekModal').classList.add('active');
 }
 
@@ -60609,8 +60679,7 @@ function _ivPeekStop() {
   _ivPeekTimers = [];
   _ivPeekNodes.forEach(function(n){ try { n.stop(); } catch(e){} });
   _ivPeekNodes = [];
-  var ic = document.getElementById('ivPeekPlayIcon');
-  if (ic) ic.textContent = '\u25b6';
+  _ivPeekSetPlaying(false);
 }
 
 function ivPeekPlay() {
@@ -60622,15 +60691,19 @@ function ivPeekPlay() {
   var rootFreq = midiToFreq(rootMidi);
   var targetFreq = midiToFreq(rootMidi + (_ivPeekDir < 0 ? -_ivPeekSem : _ivPeekSem));
   var style = _ivPeekStyle || 'mel';
-  var ic = document.getElementById('ivPeekPlayIcon');
-  if (ic) ic.textContent = '\u25fc';
-  function done(){ if (_ivPeekSession === myToken){ var i=document.getElementById('ivPeekPlayIcon'); if(i) i.textContent='\u25b6'; } }
+  _ivPeekSetPlaying(true);
+  function done(){ if (_ivPeekSession === myToken) _ivPeekSetPlaying(false); }
   var LEAD = 0.02;
   var playBoth = function() {
     if (_ivPeekSession !== myToken) return;
     var ctx = ensurePracticeCtx();
-    _ivPeekTrack(practicePlayNote(rootFreq,   ctx.currentTime + LEAD, 1.4, 0.5));
-    _ivPeekTrack(practicePlayNote(targetFreq, ctx.currentTime + LEAD, 1.4, 0.5));
+    var _a = _ivPeekTrack(practicePlayNote(rootFreq,   ctx.currentTime + LEAD, 1.4, 0.5));
+    var _b = _ivPeekTrack(practicePlayNote(targetFreq, ctx.currentTime + LEAD, 1.4, 0.5));
+    // soft 0.2s release at the end of the note, so the chord does not ring for seconds
+    _ivPeekTimers.push(setTimeout(function() {
+      if (_ivPeekSession !== myToken) return;
+      [_a, _b].forEach(function(n) { if (n && typeof n.stop === 'function') { try { n.stop(0.2); } catch(e) {} } });
+    }, 1400 + LEAD * 1000));
   };
   var playOne = function(freq) {
     if (_ivPeekSession !== myToken) return;
@@ -82588,7 +82661,7 @@ function prTwoLiveAnalyze() {
   } else {
     prGameStats.streak = 0;
   }
-  checkStreakMilestone(prGameStats.streak);
+  checkStreakMilestone(prGameStats.streak, true);
   prGameUpdateUI();
 }
 
@@ -82764,7 +82837,7 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
   // locked or close cycle in a row is worth 10, an off cycle breaks the run
   // and pays nothing. Steady, predictable, and a run is the thing rewarded.
   const xp = (prGameStats.streak > 0 && prGameStats.streak % 4 === 0) ? 8 : 0;
-  checkStreakMilestone(prGameStats.streak);
+  checkStreakMilestone(prGameStats.streak, true);
   const sign = reportMs > 8 ? '+' : reportMs < -8 ? '−' : '±';
   const dir  = reportMs > 8 ? t('dir_late') : reportMs < -8 ? t('dir_early') : t('dir_on');
   resultEl.innerHTML = `<span class="pr-game-${gradeClass}">${sign}${Math.round(Math.abs(reportMs))}ms · ${dir} · <strong>${grade}</strong></span>`;
@@ -86253,7 +86326,7 @@ function ceAnswer(symbol) {
       progAddXp(xp);
       const bonusTag = bonus ? '  +' + bonus + ' streak' : '';
       ceFbText('★ ' + t('ce_correct_word') + bonusTag + '  —  ' + rootName + ' ' + (correctDef?.name || '') + ceInvName(ceRound.inv) + ceTell(correctSymbol));
-      checkStreakMilestone(ceStreakCount);
+      checkStreakMilestone(ceStreakCount, true);
     } else {
       ceFbText('✓ ' + t('ce_got_it') + '  —  ' + rootName + ' ' + (correctDef?.name || '') + ceInvName(ceRound.inv) + ceTell(correctSymbol));
     }
@@ -89959,7 +90032,7 @@ function diadleStopDrone() {
 // Rehear the root on demand (button). Short, clear.
 var diadleRootFlashTO=null;
 function diadlePlayRoot() {
-  if (!diadlePuzzle) return;
+  if (!diadlePuzzle||diadleRootMode(diadleDiff)==='once') return;
   var sp=DIADLE_SPEED[diadleSpeed]||DIADLE_SPEED.med;
   var beat=60/sp.bpm, hold=beat*sp.sustainPct, rel=Math.min(0.18,(beat-hold)*0.75);
   var dur=Math.max(hold*1.3,0.7);
@@ -89995,6 +90068,9 @@ function diadleSetStatus(text, kind) {
 // Establish root first (longer, louder), then play the melody.
 function diadlePlay() {
   if (diadlePlaying||!diadlePuzzle) return;
+  // Hard (rootMode 'once'): the root sounds on the first playback of a game, or the first one after a
+  // saved game is restored. Every later play is the melody alone.
+  var skipRoot=diadleRootMode(diadleDiff)==='once'&&diadlePlayedThisGame;
   diadlePlayedThisGame=true;
   diadlePlaying=true;
   diadleUpdatePlayBtn();
@@ -90011,6 +90087,8 @@ function diadlePlay() {
     diadleSetStatus(t('diadle_status_drone'),'root');
     // let the drone settle and the banner be readable before the melody (min ~1.1s)
     tm += Math.max(1.1, beat*1.3);
+  } else if (skipRoot) {
+    tm += 0.05;
   } else {
     // button/once: play the root clearly LONGER and louder than melody notes, with a real pause after
     var rootLen=Math.max(hold*1.6, 0.95);
@@ -90044,8 +90122,8 @@ function diadlePlaySlot(idx) {
   var sp=DIADLE_SPEED[diadleSpeed]||DIADLE_SPEED.med;
   var beat=60/sp.bpm, hold=beat*sp.sustainPct, rel=Math.min(0.18,(beat-hold)*0.75);
   var t0=getAudio().currentTime+0.04;
-  // brief root for reference (unless drone already sounding), then the note
-  if (diadleRootMode(diadleDiff)!=='drone') {
+  // brief root for reference on Medium only. Easy has the drone, and Hard hears the root once at the start.
+  if (diadleRootMode(diadleDiff)==='button') {
     diadleVoice(diadlePuzzle.root, t0, hold*0.8, rel, 0.34);
     t0 += beat*0.9;
   }
@@ -90270,7 +90348,7 @@ function diadleUpdatePlayBtn() {
 function diadleUpdateRootBtn() {
   var btn=document.getElementById('diadleRootBtn');
   if (!btn) return;
-  btn.style.display='flex';
+  btn.style.display=(diadleRootMode(diadleDiff)==='once')?'none':'flex';
   var droning=!!diadleDroneNodes;
   btn.style.color=droning?'var(--accent)':'var(--text-soft,var(--muted))';
   btn.style.borderColor=droning?'var(--accent)':'var(--border)';
@@ -90457,7 +90535,7 @@ function diadleRenderSheet() {
       +(_cd?'<div class="chp-pop" style="background:color-mix(in srgb,var(--accent) 18%,transparent);border:1.5px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:8px;padding:2px 10px;font-size:13px;font-weight:700;font-family:\'JetBrains Mono\',monospace">'+_cd+'</div>':'')
       +'<div style="flex:1"></div>'
       +'<button onclick="diadlePlaySlot('+diadleSelSlot+')" title="hear note" style="background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:100px;width:36px;height:30px;font-size:13px;cursor:pointer;font-family:inherit">▶︎</button>'
-      +'<button onclick="diadleRootBtnTap()" title="hear root" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:100px;padding:0 10px;height:30px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit">'+t('diadle_root')+'</button>'
+      +(diadleRootMode(diadleDiff)==='once'?'':'<button onclick="diadleRootBtnTap()" title="hear root" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:100px;padding:0 10px;height:30px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit">'+t('diadle_root')+'</button>')
       +'<button onclick="diadleCloseSheet()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:100px;width:30px;height:30px;font-size:14px;cursor:pointer;font-family:inherit">✕</button>';
   }
   // Two-row layout: natural degrees on top, accidentals on bottom (chromatic pools).
@@ -92844,8 +92922,8 @@ const STRINGS = {
     rcd_done_title:'DRILL COMPLETE', rcd_mastered:'mastered', rcd_skipped:'skipped', rcd_back:'BACK TO RESULTS',
     hint_rhythmcards:'<strong>RHYTHM CARDS</strong> — a shuffled deck of common rhythmic figures, each a single 2/4 bar. Tap <strong>PLAY</strong> to hear it, or turn <strong>CLICK</strong> off to hear it dry and fire instantly for quick flipping. Move through them with the arrows. The button up top-left filters by category, and tapping more than one blends them (it reads <strong>CUSTOM</strong>). Switch on <strong>TAP MODE</strong> and the pad takes over: tap it once to start, it counts you in, then tap the figure along with the click. The card grades your timing and points out what to fix. Hit <strong>TEST</strong> (top-right) for a rapid run of eight cards over a steady pulse, which scores you and targets the figures you struggle with most. <strong>BPM</strong> doubles as a difficulty dial: slow is forgiving, fast is unforgiving.',
     thmn_sub_brand:'ETHERWAVE STYLE',
-    thmn_hint_touch:'DRAG TO PLAY · → PITCH · ↑ VOLUME',
-    thmn_ov_hint:'RIGHT HAND → PITCH  ·  LEFT BAR ↕ VOLUME',
+    thmn_hint_touch:'DRAG TO PLAY · → PITCH',
+    thmn_ov_hint:'BOTH HANDS: RIGHT → PITCH  ·  LEFT BAR ↕ VOLUME',
     thmn_silent:'silent',
     thmn_wave_pure:'PURE',   
     thmn_k_volume:'VOLUME', thmn_k_waveform:'WAVEFORM',
@@ -92858,7 +92936,7 @@ const STRINGS = {
     tool_prog_title:'PROGRESSION', tool_prog_sub:'Build chord sequences · presets · groove sync · loop & play',
     tool_cof_title:'CIRCLE OF FIFTHS', tool_cof_sub:'Key relationships · relative minors · tap to explore',
     tool_ivref_title:'INTERVAL REFERENCE', tool_ivref_sub:'Every interval \u00b7 hear it \u00b7 songs that use it',
-    ivref_hear:'HEAR IT', ivref_harmonic:'TOGETHER', ivref_semitone:'semitone', ivref_semitones:'semitones', ivref_up_label:'UP', ivref_down_label:'DOWN',
+    ivref_hear:'HEAR IT', ivref_stop:'STOP', ivref_harmonic:'TOGETHER', ivref_semitone:'semitone', ivref_semitones:'semitones', ivref_up_label:'UP', ivref_down_label:'DOWN',
     iv_all:'ALL', iv_easy:'EASY', iv_medium:'MEDIUM', iv_hard:'HARD',
     hint_ivref:'<strong>INTERVAL REFERENCE</strong> \u2014 a card for every interval. Tap <strong>HEAR IT</strong> to play the interval, and use the direction buttons to hear it ascending, descending, or as a chord. Flip through the cards with the arrows. The buttons up top filter which intervals appear in the deck. Each card lists familiar songs that open with that interval, so you have something to hum when you are trying to recognize it by ear. To drill and score yourself, head to <strong>Interval Training</strong> under the Train tab.',
     tool_dk_sub:'Step sequencer · 10 tracks · swing · odd time sigs · 30+ grooves',
@@ -94045,8 +94123,8 @@ const STRINGS = {
     rcd_done_title:'ALLENAMENTO COMPLETATO', rcd_mastered:'padroneggiate', rcd_skipped:'saltate', rcd_back:'TORNA AI RISULTATI',
     hint_rhythmcards:'<strong>CARTE RITMICHE</strong> — un mazzo mescolato di figure ritmiche comuni, ognuna una battuta di 2/4. Tocca <strong>PLAY</strong> per ascoltarla, o disattiva il <strong>CLICK</strong> per sentirla da sola e farla partire subito. Sfoglia con le frecce. Il pulsante in alto a sinistra filtra per categoria, e toccandone più di una le mescoli (mostra <strong>CUSTOM</strong>). Attiva la <strong>MODALITÀ TAP</strong> e il pad prende il comando: toccalo una volta per iniziare, ti conta l\'entrata, poi batti la figura seguendo il click. La carta valuta il tuo tempismo e segnala cosa correggere. Premi <strong>TEST</strong> (in alto a destra) per una sequenza rapida di otto carte su una pulsazione costante, che ti dà un punteggio e si concentra sulle figure più difficili. Il <strong>BPM</strong> funziona da regolatore di difficoltà: lento perdona, veloce no.',
     thmn_sub_brand:'STILE ETHERWAVE',
-    thmn_hint_touch:'TRASCINA PER SUONARE · → INTONAZIONE · ↑ VOLUME',
-    thmn_ov_hint:'MANO DESTRA → INTONAZIONE  ·  BARRA SX ↕ VOLUME',
+    thmn_hint_touch:'TRASCINA PER SUONARE · → INTONAZIONE',
+    thmn_ov_hint:'DUE MANI: DESTRA → INTONAZIONE  ·  BARRA SX ↕ VOLUME',
     thmn_silent:'silenzio',
     thmn_wave_pure:'PURA',   
     thmn_k_volume:'VOLUME', thmn_k_waveform:'FORMA ONDA',
@@ -94059,7 +94137,7 @@ const STRINGS = {
     tool_prog_title:'PROGRESSIONE', tool_prog_sub:'Costruisci sequenze di accordi · preset · groove sync · loop e riproduzione',
     tool_cof_title:'CERCHIO DELLE QUINTE', tool_cof_sub:'Relazioni tra tonalità · minori relative · tocca per esplorare',
     tool_ivref_title:'INTERVALLI', tool_ivref_sub:'Ogni intervallo \u00b7 ascoltalo \u00b7 canzoni che lo usano',
-    ivref_hear:'ASCOLTA', ivref_harmonic:'INSIEME', ivref_semitone:'semitono', ivref_semitones:'semitoni', ivref_up_label:'SU', ivref_down_label:'GI\u00d9',
+    ivref_hear:'ASCOLTA', ivref_stop:'FERMA', ivref_harmonic:'INSIEME', ivref_semitone:'semitono', ivref_semitones:'semitoni', ivref_up_label:'SU', ivref_down_label:'GI\u00d9',
     iv_all:'TUTTI', iv_easy:'FACILE', iv_medium:'MEDIO', iv_hard:'DIFFICILE',
     hint_ivref:'<strong>INTERVALLI</strong> \u2014 una carta per ogni intervallo. Tocca <strong>ASCOLTA</strong> per suonare l\u2019intervallo e usa i pulsanti di direzione per sentirlo in salita, in discesa o come accordo. Sfoglia le carte con le frecce. I pulsanti in alto filtrano quali intervalli compaiono nel mazzo. Ogni carta elenca canzoni note che iniziano con quell\u2019intervallo, cos\u00ec hai qualcosa da canticchiare quando provi a riconoscerlo a orecchio. Per esercitarti e ottenere un punteggio, vai su <strong>Interval Training</strong> nella scheda Train.',
     tool_dk_sub:'Sequencer a step · 10 tracce · swing · misure irregolari · 30+ groove',
@@ -94157,7 +94235,7 @@ const STRINGS = {
     guitar_fretboard: { title: "Scale sul Manico", body: "Mostra una scala o un modo su tutto il manico, per qualsiasi tonica. Le toniche sono evidenziate in modo diverso dagli altri gradi. Il manico si aggiorna in tempo reale quando cambi tonica o tipo di scala.<br><br>Utile per vedere dove vive una scala lungo il manico attraverso le posizioni, e non soltanto dentro un’unica diteggiatura." },
     dbmeter: { title: "Misuratore di Volume / dB", body: "Mostra in tempo reale il livello in ingresso del microfono. La scala <strong>dBFS</strong> va dal silenzio fino a 0 dBFS (il segnale digitale più forte possibile). Le zone colorate seguono le linee guida <strong>NIOSH</strong> per la protezione dell’udito: il verde è sicuro, il giallo merita attenzione, il rosso è al livello in cui un’esposizione prolungata danneggia l’udito.<br><br>Utile per parlare di protezione dell’udito con gli allievi, per misurare il rumore di fondo di una stanza, o per sistemare il guadagno del microfono prima di un esercizio." },
     rhythmcards: { title: "Carte Ritmiche", body: "Un mazzo di figure ritmiche comuni, le piccole celle che compongono quasi ogni ritmo che leggerai o suonerai. Ogni carta è una singola battuta in 2/4 mostrata in notazione, con il suo nome e il conteggio da dire ad alta voce.<br><br>Tocca <strong>PLAY</strong> per sentire la figura. Con <strong>CLICK</strong> attivo parte con una battuta di introduzione e suona su una pulsazione regolare; disattiva CLICK per sentirla asciutta e immediata, comodo per sfogliare in fretta. Usa le frecce per passare da una carta all’altra e le pillole in alto per filtrare per categoria (Base, Semicrome, Puntate, Terzine, Sincopi).<br><br>Il <strong>MODO TOCCO</strong> la trasforma in una prova di precisione. Premi <strong>PLAY</strong> per una battuta di introduzione; il click prosegue e tu batti la figura sul pad (tenuto in basso per usarlo con una mano sola) restando a tempo. Alla fine della battuta la carta valuta quanto sono caduti vicini i tuoi colpi e ti dice cosa correggere: se hai affrettato, trascinato, o quale colpo preciso è arrivato presto o tardi.<br><br>Il <strong>BPM</strong> è la tua manopola della difficoltà: i tempi lenti perdonano, quelli veloci no." },
-    theremin: { title: "Theremin", body: "Uno strumento a intonazione continua modellato sul classico Moog Etherwave. Trascina il dito sulla superficie scura: <strong>da sinistra a destra l’altezza sale</strong> lungo l’estensione scelta, e <strong>dal basso verso l’alto sale il volume</strong> (porta il dito in alto per un crescendo, scendi in fondo per sfumare).<br><br><strong>PURO / CALDO / ANCIA / OTTONI</strong> cambiano il timbro, da una sinusoide pulita a un suono ricco di armonici. Le manopole controllano <strong>BRILLANTE</strong> (apertura del filtro), <strong>VIBRATO</strong> (aggiunge un’oscillazione cantabile) e <strong>ESTENSIONE</strong> (quante ottave copre la superficie)." },
+    theremin: { title: "Theremin", body: "Uno strumento a intonazione continua modellato sul classico Moog Etherwave. Trascina il dito sulla superficie scura: <strong>da sinistra a destra l’altezza sale</strong> lungo l’estensione scelta, e la manopola <strong>VOLUME</strong> regola l’intensità. Le note sono un po’ più vicine verso destra, come vicino all’antenna dell’intonazione di un vero theremin. In <strong>ESPANDI</strong> l’altra mano usa la barra del volume, e servono tutte e due le mani per fare una nota.<br><br><strong>PURO / CALDO / ANCIA / OTTONI</strong> cambiano il timbro, da una sinusoide pulita a un suono ricco di armonici. Le manopole controllano <strong>BRILLANTE</strong> (apertura del filtro), <strong>VIBRATO</strong> (aggiunge un’oscillazione cantabile) e <strong>ESTENSIONE</strong> (quante ottave copre la superficie)." },
     vocalrange: { title: "Analisi dell’Estensione Vocale", body: "Una prova guidata al microfono che traccia le note che riesci a cantare con comodità. Tocca <strong>AVVIA</strong> e l’app suona una sequenza di note; conferma quelle che riesci a riprodurre. Alla fine la tua estensione compare sul pentagramma, insieme al tuo <strong>tipo vocale</strong> stimato (Basso, Baritono, Tenore, Contralto, Mezzosoprano, Soprano).<br><br>I risultati vengono salvati, così puoi seguire i progressi nel tempo. Il pannello <strong>Riferimento</strong> ti permette di suonare qualsiasi nota per sentirla prima di cantarla." },
     groove: { title: "Modalità Groove", body: "Cambia il metronomo da un click uniforme a un <strong>disegno di accenti su 16 step</strong>. Invece di avere ogni movimento uguale agli altri, decidi quali step sono accentati, sommessi o silenziosi, costruendo un vero impasto ritmico invece di una pulsazione piatta.<br><br>Scegli un groove predefinito (Son Clave, Bossa, Funk e altri) per caricare un disegno pronto, oppure tocca i singoli step per personalizzarlo. Un tocco per un colpo sommesso, un secondo tocco per un accento, un terzo per svuotare lo step." },
     groove_steps: { title: "Sequencer a Step", body: "Ogni quadrato è uno step da una semicroma. Tocca per passare fra tre stati: <strong>spento</strong> → <strong>sommesso</strong> (opaco) → <strong>accento</strong> (acceso). Tieni premuto uno step per aprire l’editor di precisione di quella traccia, con una griglia più grande e le opzioni ghost e flam.<br><br>Trascina il pulsante <strong>BATTUTE</strong> verso l’alto per estendere il disegno a 2, 3 o 4 battute. Usa le frecce ‹ › per spostarti fra le battute. <strong>UMANIZZA</strong> aggiunge piccoli scarti casuali di tempo perché il disegno suoni meno meccanico; tocca di nuovo per annullare." },
@@ -97766,6 +97844,9 @@ function buildAutoChips(rowId, flagGetter, flagSetter, labels) {
 
 // ── Streak milestone system (restored from 0.74.2; shared by all ear-training modules) ──
 const STREAK_MILESTONES = [5, 10, 15, 20, 25, 30, 35, 40];
+// One-time XP for reaching each tier, paid once per tier per visit to an exercise (see _lastMilestone).
+// Chord Ear and Polyrhythm pass noXp, because they already pay their own streak XP.
+const STREAK_MILESTONE_XP = { 5:3, 10:5, 15:8, 20:12, 25:16, 30:20, 35:25, 40:40 };
 let _lastMilestone = 0;
 const _MS_DATA = {
   5:  { quip:'KILLING SPREE',  color:'#5ee2ff', bg:'rgba(94,226,255,.14)',  glow:'rgba(94,226,255,.3)' },
@@ -97778,13 +97859,14 @@ const _MS_DATA = {
   40: { quip:'MYTHIC',         color:'#ffd700', bg:'rgba(255,215,0,.16)',   glow:'rgba(255,215,0,.38)' },
 };
 
-function checkStreakMilestone(streak) {
+function checkStreakMilestone(streak, noXp) {
   var hit = null;
   for (var i = 0; i < STREAK_MILESTONES.length; i++) {
     if (STREAK_MILESTONES[i] === streak && STREAK_MILESTONES[i] > _lastMilestone) { hit = STREAK_MILESTONES[i]; break; }
   }
   if (!hit) return;
   _lastMilestone = hit;
+  if (!noXp) { try { progAddXp(STREAK_MILESTONE_XP[hit] || 0); } catch (e) {} }
 
   // Mythic (×40) gets the special card + fanfare
   if (hit === 40) { dtFireMythicCard(); return; }
@@ -129203,7 +129285,7 @@ guitar: { color:'#ffa07a', sections:[
           heard:'Solo performers building layered arrangements live, and as a practice aid for soloing over your own chord progressions. Usually sits last in the chain so it captures your finished sound.',
           heard_it:'Artisti solisti che costruiscono arrangiamenti stratificati dal vivo, e come aiuto nella pratica per assolare sulle tue progressioni di accordi. Di solito sta per ultimo nella catena così cattura il tuo suono finito.' }
       } },
-    { eye:'GUITAR · EFFECTS', eye_it:'CHITARRA · EFFETTI', head:'The\nSignal Chain', head_it:'La Catena\ndel Segnale', sub:'Tap a pedal · tap the marker for cautions', sub_it:'Tocca un pedale · tocca il segnale per le note', type:'pedal-chain',
+    { eye:'GUITAR · EFFECTS', eye_it:'CHITARRA · EFFETTI', head:'The\nSignal Chain', head_it:'La Catena\ndel Segnale', sub:'Tap a pedal to see what it does and where it goes', sub_it:'Tocca un pedale per scoprire cosa fa e dove va', type:'pedal-chain',
       chain:[
         { id:'guitar', end:true, name:'GUITAR', name_it:'CHITARRA' },
         { id:'fuzz', name:'FUZZ', name_it:'FUZZ', knobs:3,
@@ -129472,7 +129554,7 @@ bass: { color:'#ff7f5c', sections:[
           heard:'Locking a groove to practice over, building layered parts live, or working out bass lines against a repeating chord pattern. Usually sits last in the chain.',
           heard_it:'Bloccare un groove su cui esercitarsi, costruire parti stratificate dal vivo, o elaborare linee di basso su un pattern di accordi ripetuto. Di solito sta per ultimo nella catena.' }
       } },
-    { eye:'BASS · EFFECTS', eye_it:'BASSO · EFFETTI', head:'The\nSignal Chain', head_it:'La Catena\ndel Segnale', sub:'Tap a pedal · tap the marker for cautions', sub_it:'Tocca un pedale · tocca il segnale per le note', type:'pedal-chain',
+    { eye:'BASS · EFFECTS', eye_it:'BASSO · EFFETTI', head:'The\nSignal Chain', head_it:'La Catena\ndel Segnale', sub:'Tap a pedal to see what it does and where it goes', sub_it:'Tocca un pedale per scoprire cosa fa e dove va', type:'pedal-chain',
       chain:[
         { id:'bass', end:true, name:'BASS', name_it:'BASSO' },
         { id:'comp', name:'COMP', name_it:'COMP', knobs:3,
@@ -132098,11 +132180,6 @@ function render(dir){
           infoEl.innerHTML = '<h3>'+fld(node,'name')+'</h3><p>'+(fld(node,'info')||'')+'</p>'+ex+c;
           paintSel();
         }
-        function showCaution(node){
-          pcSel = node.id;
-          infoEl.innerHTML = '<h3>'+fld(node,'name')+' &#9888;</h3><p class="pc-caution">'+fld(node,'caution')+'</p>';
-          paintSel();
-        }
         function paintSel(){ gridEl.querySelectorAll('.pc-box').forEach(function(b){ b.classList.toggle('sel', b.dataset.id===pcSel); }); }
 
         function buildNodes(){
@@ -132114,8 +132191,6 @@ function render(dir){
             var box=document.createElement('div'); box.className='pc-box'; box.dataset.id=node.id;
             if(!node.end){
               var nk=node.knobs||1; for(var k=0;k<nk;k++){ var kn=document.createElement('div'); kn.className='pc-knob'+(k===1?' k2':k===2?' k3':''); box.appendChild(kn);} 
-              if(fld(node,'caution')){ var w=document.createElement('div'); w.className='pc-warn'; w.textContent='!';
-                (function(nd){ w.addEventListener('click',function(e){ e.stopPropagation(); showCaution(nd); }); })(node); box.appendChild(w);} 
               (function(nd){ box.addEventListener('click',function(){ showInfo(nd); }); })(node);
             }
             var lbl=document.createElement('div'); lbl.className='pc-label'; lbl.textContent=fld(node,'name');

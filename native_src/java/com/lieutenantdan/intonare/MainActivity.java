@@ -64,6 +64,7 @@ public class MainActivity extends BridgeActivity {
         // Sticky immersive: hide status + nav bars. "Sticky" = a reveal swipe
         // shows them transiently, then Android auto-hides again on its own.
         hideSystemBars();
+        installKeyboardCoverListener();
 
         // No overscroll stretch. On Android 12+ the WebView's overscroll effect is a
         // View-level stretch of the WHOLE WebView surface, applied by the OS after the
@@ -250,8 +251,34 @@ public class MainActivity extends BridgeActivity {
     // often empty until the window is attached and laid out.
     private volatile String insetJson = "";
     private volatile boolean barsHidden = false;
+    // Search wants the keyboard to cover the page, not shrink it. Capacitor's SystemBars
+    // plugin pads the web view by the keyboard height on every frame of the keyboard
+    // animation, which resizes the page and draws dark frames. While this flag is on, the
+    // keyboard is removed from the insets before Capacitor sees them, so no padding is added.
+    private volatile boolean keyboardCover = false;
     // Holds the system launch screen until the page draws its first frame.
     private volatile boolean pageReady = false;
+
+    // One insets listener on the content view, above Capacitor's listener on the web view's
+    // parent. Insets travel down the tree, so Capacitor receives whatever this returns.
+    // With the flag off it returns the insets untouched (no change from before). API 30 and
+    // later honor the hidden keyboard; older versions keep the old behavior.
+    private void installKeyboardCoverListener() {
+        try {
+            final android.view.View content = findViewById(android.R.id.content);
+            if (content == null) return;
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(content,
+                new androidx.core.view.OnApplyWindowInsetsListener() {
+                    @Override public WindowInsetsCompat onApplyWindowInsets(android.view.View v, WindowInsetsCompat insets) {
+                        if (!keyboardCover) return insets;
+                        return new WindowInsetsCompat.Builder(insets)
+                            .setInsets(WindowInsetsCompat.Type.ime(), androidx.core.graphics.Insets.NONE)
+                            .setVisible(WindowInsetsCompat.Type.ime(), false)
+                            .build();
+                    }
+                });
+        } catch (Throwable ignored) { }
+    }
 
     private void captureInset(long delayMs) {
         final android.view.View decor = getWindow().getDecorView();
@@ -296,6 +323,9 @@ public class MainActivity extends BridgeActivity {
             runOnUiThread(new Runnable() {
                 @Override public void run() {
                     try {
+                        keyboardCover = !resize;
+                        android.view.View content = findViewById(android.R.id.content);
+                        if (content != null) content.requestApplyInsets();
                         getWindow().setSoftInputMode(resize
                             ? android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
                             : android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
