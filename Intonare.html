@@ -143241,8 +143241,11 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     // reports the keyboard height as a share of the screen. Size the card to what is left.
     window._srKb = function (ratio) {
       ratio = +ratio; if (!(ratio > 0.1 && ratio < 0.8)) return;
-      srKbSeen = Math.round(ratio * fullH);
-      if (srOpen) relay();
+      // Only a real change moves the card. A small difference (a few pixels) is stored for the
+      // next open but not applied, so the card never twitches while the keyboard is up.
+      var next = Math.round(ratio * fullH), prev = srKbSeen;
+      srKbSeen = next;
+      if (srOpen && (!prev || Math.abs(next - prev) > fullH * 0.015)) relay();
     };
     // The app also remembers the last keyboard height between launches. Use it from the start.
     try {

@@ -298,12 +298,17 @@ public class MainActivity extends BridgeActivity {
             float ratio = ime / (float) h;
             if (ratio > lastImeRatio + 0.002f) {
                 lastImeRatio = ratio;
-                final float saveRatio = ratio;
+                // Wait until the keyboard stops growing. Sending the partial heights made the card
+                // grow, then shrink back, on every open. Only the settled height is saved and sent.
+                final float settled = ratio;
                 kbSaveHandler.removeCallbacksAndMessages(null);
-                kbSaveHandler.postDelayed(() -> getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                    .edit().putFloat("kb_ratio", saveRatio).apply(), 400);
-                final String js = String.format(java.util.Locale.US, "window._srKb&&window._srKb(%.4f)", ratio);
-                getBridge().getWebView().evaluateJavascript(js, null);
+                kbSaveHandler.postDelayed(() -> {
+                    try {
+                        getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putFloat("kb_ratio", settled).apply();
+                        final String js = String.format(java.util.Locale.US, "window._srKb&&window._srKb(%.4f)", settled);
+                        getBridge().getWebView().evaluateJavascript(js, null);
+                    } catch (Throwable ignored) { }
+                }, 160);
             }
         } catch (Throwable ignored) { }
     }
