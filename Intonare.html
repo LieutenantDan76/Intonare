@@ -143039,6 +143039,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   /* ── Search card ────────────────────────────────────────────────────────── */
   var srKb = 0, srKbSeen = 0, sr, srIn, srBody, srClear, srHit, srPh, srBuilt = false, srSel = -1, srList = [], srQ = '', srOpen = false, srFilter = 'all', srAll = [], srHL = null, srTimer = 0, srPhI = 0;
   var fullH = window.innerHeight;
+  var srKbLearned = 0;   // last real keyboard height seen (px). Used at the next open so the card never has to move.
   var ENTER = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 5v7a3 3 0 0 1-3 3H5"/><path d="M9 11l-4 4 4 4"/></svg>';
   function coarse() { return !!(window.matchMedia && matchMedia('(pointer: coarse)').matches); }
   function buzz() { try { if (typeof hapticLight === 'function') hapticLight(); } catch (e) {} }
@@ -143174,7 +143175,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var pin = parseFloat(getComputedStyle(root).getPropertyValue('--hv-pin')) || 14;
     var top = Math.round(Math.max(pin + 34 + 14, fullH * 0.11));
     // Plan for the keyboard before it is there, so the card is the same size when it arrives.
-    var usable = coarse() ? Math.min(vh, fullH - (srKbSeen || Math.round(fullH * 0.4))) : vh;
+    var usable = coarse() ? Math.min(vh, fullH - (srKbSeen || Math.round(fullH * 0.44))) : vh;
     var max = Math.max(120, Math.min(440, usable - top - 14 - 66));
     sr.style.setProperty('--sr-top', top + 'px'); sr.style.setProperty('--sr-max', max + 'px');
   }
@@ -143241,16 +143242,17 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     // reports the keyboard height as a share of the screen. Size the card to what is left.
     window._srKb = function (ratio) {
       ratio = +ratio; if (!(ratio > 0.1 && ratio < 0.8)) return;
-      // Only a real change moves the card. A small difference (a few pixels) is stored for the
-      // next open but not applied, so the card never twitches while the keyboard is up.
-      var next = Math.round(ratio * fullH), prev = srKbSeen;
-      srKbSeen = next;
-      if (srOpen && (!prev || Math.abs(next - prev) > fullH * 0.015)) relay();
+      // The card is planned for a slightly tall keyboard, so it already fits. It moves only when the
+      // real keyboard is taller than planned (the card would be covered). A shorter keyboard is
+      // remembered and used from the next open, so the card never twitches while the keyboard is up.
+      var next = Math.round(ratio * fullH), prev = srKbSeen || Math.round(fullH * 0.44);
+      srKbLearned = next;
+      if (srOpen && next > prev + fullH * 0.01) { srKbSeen = next; relay(); }
     };
     // The app also remembers the last keyboard height between launches. Use it from the start.
     try {
       var _kr = window.IntonareNative && window.IntonareNative.getKeyboardRatio ? +window.IntonareNative.getKeyboardRatio() : 0;
-      if (_kr > 0.1 && _kr < 0.8 && !srKbSeen) srKbSeen = Math.round(_kr * fullH);
+      if (_kr > 0.1 && _kr < 0.8 && !srKbSeen) { srKbSeen = Math.round(_kr * fullH); srKbLearned = srKbSeen; }
     } catch (e) {}
   }
   window.openSearch = function () {
@@ -143259,6 +143261,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       if (window.closeStreakSheet && built) window.closeStreakSheet();
       srIn.value = ''; srQ = ''; srClear.classList.remove('on'); srPh.classList.remove('gone');
       srPhI = 0; srPh.textContent = T('ss_search_ph', 'Search the app'); srPh.classList.add('in'); srPh.classList.remove('out');
+      if (srKbLearned) srKbSeen = srKbLearned;
       layout(); renderEmpty(); fit(true);
       // The card grows out of the search button.
       var card = sr.querySelector('.sr-card'), btn = document.getElementById('hvSearch');
