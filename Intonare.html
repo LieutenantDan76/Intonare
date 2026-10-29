@@ -277,7 +277,7 @@ html,body{background:#000000!important;transition:none!important}
   #dailyStreakToast.dt-t9 .dt-pill-count { color:#ffcc33; font-size:26px; text-shadow:0 0 24px rgba(255,185,50,.88) }
   #dailyStreakToast.dt-t9 .dt-pill-msg   { color:var(--text); letter-spacing:.1em }
   /* ─── LEGENDARY CARD (100-day) ─── */
-  #dtLegendaryCard { position:fixed; bottom:70px; left:50%; transform:translateX(-50%); z-index:9100; pointer-events:none; display:none; min-width:240px; max-width:88vw }
+  #dtLegendaryCard { position:fixed; bottom:calc(var(--nav-bar-h, 62px) + 17px); left:50%; transform:translateX(-50%); z-index:9100; pointer-events:none; display:none; min-width:240px; max-width:88vw }
   .dt-leg-inner { background:linear-gradient(145deg,#1c1608,#14100a,#1c1408); border:1px solid rgba(255,215,0,.75); border-radius:20px; padding:18px 24px 16px; box-shadow:0 0 0 1px rgba(255,215,0,.18),0 14px 44px rgba(0,0,0,.75),0 0 48px rgba(255,215,0,.22),inset 0 1px 0 rgba(255,215,0,.3); position:relative; overflow:hidden; text-align:center }
   .dt-leg-inner::before { content:''; position:absolute; top:0; left:-100%; width:55%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,215,0,.14),transparent); animation:dtGoldSweep 2.4s ease-in-out .5s infinite }
   .dt-leg-inner::after  { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,gold,transparent); opacity:.9 }
@@ -288,7 +288,7 @@ html,body{background:#000000!important;transition:none!important}
   .dt-leg-msg   { font-size:9px; letter-spacing:.28em; color:rgba(255,215,0,.6); text-transform:uppercase }
   .dt-leg-unlock{ font-size:7.5px; letter-spacing:.18em; color:rgba(182,242,91,.75); margin-top:7px; text-transform:uppercase }
   /* ─── MYTHIC CARD (streak ×40) ─── */
-  #dtMythicCard { position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:9100; pointer-events:none; display:none; min-width:220px; max-width:86vw }
+  #dtMythicCard { position:fixed; top:calc(14px + var(--sat-top)); left:50%; transform:translateX(-50%); z-index:9100; pointer-events:none; display:none; min-width:220px; max-width:86vw }
   .dt-mythic-inner { background:linear-gradient(145deg,#1a0808,#110a0a,#1a0a08); border:1px solid rgba(255,80,40,.75); border-radius:20px; padding:14px 22px 12px; box-shadow:0 0 0 1px rgba(255,80,40,.18),0 12px 40px rgba(0,0,0,.75),0 0 40px rgba(255,60,20,.28),inset 0 1px 0 rgba(255,100,40,.3); position:relative; overflow:hidden; text-align:center }
   .dt-mythic-inner::before { content:''; position:absolute; top:0; left:-100%; width:55%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,80,40,.16),transparent); animation:dtMythicSweep 1.8s ease-in-out .3s infinite }
   .dt-mythic-inner::after  { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,#ff5020,transparent); opacity:.9 }
@@ -2988,7 +2988,7 @@ body.sg-open #toolSurvivalGuide{
     animation: mq2PageOut .34s cubic-bezier(.4,0,1,1) both;
   }
   body.mq2on .mq2-pageback {
-    display: block; margin: 14px 0 0 15px; padding: 6px 0; background: none; border: 0;
+    display: block; margin: calc(14px + var(--sat-top)) 0 0 15px; padding: 6px 0; background: none; border: 0;
     cursor: pointer; color: var(--muted);
     font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 11px;
     font-weight: 600; letter-spacing: 1.6px;
@@ -20278,7 +20278,7 @@ body.sg-open #toolSurvivalGuide{
      defeat it. Theme vars only, so light mode needs no parallel block. */
   .iu-card {
     position: fixed; left: 12px; right: 12px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
+    bottom: calc(var(--nav-bar-h, 62px) + 23px);
     z-index: 8800; display: none;
     /* This card lives inside #achToastStack, which is pointer-events:none so
        achievement toasts cannot block taps on the app underneath them. The card
@@ -21825,7 +21825,7 @@ body.sg-open #toolSurvivalGuide{
        camera on most phones, where it was half hidden. The bar occupies the
        bottom 53px, so this clears it with room to breathe, and the entrance
        animation already rises from below, which reads correctly down here. */
-    bottom: calc(69px + env(safe-area-inset-bottom, 0px)); top: auto;
+    bottom: calc(var(--nav-bar-h, 62px) + 16px); top: auto;
     z-index: 300; pointer-events: none;
     font-family: 'JetBrains Mono','GlyphFix', monospace;
     font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
@@ -23761,7 +23761,7 @@ body.light #toolVocalRange .vr-hero-icon svg {
 }
 .vr-modal-overlay.open { background: rgba(0,0,0,0.72); pointer-events: all; }
 .vr-modal-sheet {
-  width: 100%; max-height: calc(88dvh - var(--nav-bar-h, 62px));
+  width: 100%; max-height: 88vh; max-height: 88dvh;
   background: var(--bg-1);
   border-top: 1px solid var(--border-soft);
   border-radius: var(--r-xl) var(--r-xl) 0 0;
@@ -23798,7 +23798,7 @@ body.light #toolVocalRange .vr-hero-icon svg {
 }
 
 .vr-modal-body {
-  overflow-y: auto; flex: 1; padding: 14px 16px 32px;
+  overflow-y: auto; flex: 1; padding: 14px 16px calc(32px + env(safe-area-inset-bottom));
   -webkit-overflow-scrolling: touch;
 }
 .vr-modal-section { margin-bottom: 22px; }
@@ -26703,8 +26703,8 @@ body.light #toolDrumkit .dk-prec-step-num { color: rgba(0,0,0,0.32); }
   .setlist-body {
     width: 100%; max-width: 480px;
     background: var(--bg-1); border-radius: 20px 20px 0 0;
-    padding: 16px 16px calc(16px + var(--nav-bar-h, 62px) + env(safe-area-inset-bottom));
-    max-height: calc(70vh - var(--nav-bar-h, 62px)); display: flex; flex-direction: column;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    max-height: 70vh; max-height: 70dvh; display: flex; flex-direction: column;
   }
   .setlist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
   .setlist-title { font-family: 'JetBrains Mono','GlyphFix', monospace; font-size: 11px; letter-spacing: 3px; color: var(--metro); }
@@ -36090,7 +36090,9 @@ try {
      Without the padding-bottom, tall sheets get clipped by the tabs. The max-height alone
      is NOT sufficient. This has regressed multiple times — keep both lines.
      EXCEPTION: the Chordle and Diadle drawers sit at z-index 1100, above the tab bar (1000),
-     and run to the bottom edge on purpose. They pad by the safe-area inset only. -->
+     and run to the bottom edge on purpose. They pad by the safe-area inset only.
+     EXCEPTION: the Setlist sheet (.setlist-sheet, z 3000) and the Artist reference sheet
+     (.vr-modal-overlay, z 9000) also cover the tab bar on purpose and pad by the inset only. -->
 <div id="diadlePickerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:900;flex-direction:column;justify-content:flex-end;padding-bottom:0" onclick="diadleCloseSheet()">
   <div onclick="event.stopPropagation()" style="background:var(--surface);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;display:flex;flex-direction:column;overflow:hidden;max-height:80dvh;padding-bottom:env(safe-area-inset-bottom)">
     <div class="chp-grab" style="display:flex;justify-content:center;padding:10px 0 6px">
@@ -36606,7 +36608,7 @@ try {
 </div>
 
 <!-- DAILY STREAK TOAST -->
-<div id="dailyStreakToast" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:9100;pointer-events:none;max-width:84vw">
+<div id="dailyStreakToast" style="display:none;position:fixed;bottom:calc(var(--nav-bar-h, 62px) + 37px);left:50%;transform:translateX(-50%);z-index:9100;pointer-events:none;max-width:84vw">
   <div class="daily-toast-pill" id="dailyStreakInner"></div>
 </div>
 
@@ -89320,7 +89322,7 @@ function chordlePlayFreqs(freqs, delaySec) {
 // Tap a guessed chord (or a locked green one) to hear what the answer has in that spot.
 // A short tonic note goes first for orientation, the same way Diadle plays its root before
 // the note. The chord is voiced exactly as it sounds inside the full line.
-function chordlePlaySlot(idx) {
+function chordlePlaySlot(idx, useArp) {
   if (!chordleProg||chordlePlaying||idx<0||idx>=chordleProg.chords.length) return;
   var prev=null, mids=[];
   for (var k=0;k<chordleProg.chords.length;k++) {
@@ -89329,6 +89331,8 @@ function chordlePlaySlot(idx) {
   var toFreq=function(m){return 440*Math.pow(2,(m-69)/12);};
   var savedArp=chordleArp; chordleArp=false;
   chordlePlayFreqs([toFreq(48)],0);
+  // The drawer play button passes useArp and follows the ARP button. Tile taps stay block chords.
+  chordleArp=!!useArp&&savedArp;
   chordlePlayFreqs(mids[idx].map(toFreq),0.7);
   chordleArp=savedArp;
   hapticLight();
@@ -89494,7 +89498,7 @@ function chordleRenderPickerHeader() {
   var built=chordleBuiltNow();
   var part=built||(chordlePRoot?(chordlePFlat?'♭':'')+chordlePRoot+' …':'');
   var chip=part?'<div class="chp-pop" style="background:color-mix(in srgb,var(--accent) 18%,transparent);border:1.5px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:8px;padding:2px 10px;font-size:13px;font-weight:700;letter-spacing:-.3px;font-family:\'JetBrains Mono\',monospace">'+part+'</div>':'';
-  var ear='<button onclick="chordlePlaySlot('+chordleSelSlot+')" title="hear chord" aria-label="Hear this chord" style="background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:100px;width:34px;height:28px;font-size:12px;cursor:pointer;font-family:inherit">▶</button>';
+  var ear='<button onclick="chordlePlaySlot('+chordleSelSlot+',true)" title="hear chord" aria-label="Hear this chord" style="background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);border-radius:100px;width:34px;height:28px;font-size:12px;cursor:pointer;font-family:inherit">▶</button>';
   h.innerHTML='<span style="font-size:10px;color:var(--muted);letter-spacing:1.5px">SLOT '+(chordleSelSlot+1)+' / '+n+'</span>'
     +chip+ear+'<div style="flex:1"></div>'
     +'<button onclick="chordleCloseSheet()" style="background:transparent;border:1px solid var(--border-soft);color:var(--text-dim);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit">✕</button>';
