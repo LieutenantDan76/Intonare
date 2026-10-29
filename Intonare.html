@@ -143244,6 +143244,11 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
       srKbSeen = Math.round(ratio * fullH);
       if (srOpen) relay();
     };
+    // The app also remembers the last keyboard height between launches. Use it from the start.
+    try {
+      var _kr = window.IntonareNative && window.IntonareNative.getKeyboardRatio ? +window.IntonareNative.getKeyboardRatio() : 0;
+      if (_kr > 0.1 && _kr < 0.8 && !srKbSeen) srKbSeen = Math.round(_kr * fullH);
+    } catch (e) {}
   }
   window.openSearch = function () {
     try {

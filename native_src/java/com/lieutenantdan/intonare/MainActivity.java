@@ -286,6 +286,9 @@ public class MainActivity extends BridgeActivity {
     // setting cannot skew it). Sent only while Search covers the page, and only when the
     // number grows, so a keyboard slide costs a handful of tiny calls.
     private float lastImeRatio = 0f;
+    // The keyboard height is remembered between launches, so the very first Search open after a
+    // restart already knows how much room the card has and does not have to adjust.
+    private final Handler kbSaveHandler = new Handler(Looper.getMainLooper());
     private void reportKeyboard(android.view.View v, WindowInsetsCompat insets) {
         try {
             int ime = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
@@ -295,6 +298,10 @@ public class MainActivity extends BridgeActivity {
             float ratio = ime / (float) h;
             if (ratio > lastImeRatio + 0.002f) {
                 lastImeRatio = ratio;
+                final float saveRatio = ratio;
+                kbSaveHandler.removeCallbacksAndMessages(null);
+                kbSaveHandler.postDelayed(() -> getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                    .edit().putFloat("kb_ratio", saveRatio).apply(), 400);
                 final String js = String.format(java.util.Locale.US, "window._srKb&&window._srKb(%.4f)", ratio);
                 getBridge().getWebView().evaluateJavascript(js, null);
             }
@@ -353,6 +360,13 @@ public class MainActivity extends BridgeActivity {
                     } catch (Exception ignored) {}
                 }
             });
+        }
+
+        // Last keyboard height seen by Search, as a share of the screen (0 = never seen).
+        @JavascriptInterface
+        public float getKeyboardRatio() {
+            try { return getSharedPreferences(PREFS, Context.MODE_PRIVATE).getFloat("kb_ratio", 0f); }
+            catch (Throwable t) { return 0f; }
         }
 
         @JavascriptInterface
