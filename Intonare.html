@@ -143237,6 +143237,13 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     window.addEventListener('resize', _pinBar);
     if (window.visualViewport) window.visualViewport.addEventListener('resize', _pinBar);
     window._srPinBar = _pinBar;
+    // The page no longer shrinks for the keyboard (Android covers it instead), so the app
+    // reports the keyboard height as a share of the screen. Size the card to what is left.
+    window._srKb = function (ratio) {
+      ratio = +ratio; if (!(ratio > 0.1 && ratio < 0.8)) return;
+      srKbSeen = Math.round(ratio * fullH);
+      if (srOpen) relay();
+    };
   }
   window.openSearch = function () {
     try {

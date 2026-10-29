@@ -270,6 +270,7 @@ public class MainActivity extends BridgeActivity {
             androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(content,
                 new androidx.core.view.OnApplyWindowInsetsListener() {
                     @Override public WindowInsetsCompat onApplyWindowInsets(android.view.View v, WindowInsetsCompat insets) {
+                        reportKeyboard(v, insets);
                         if (!keyboardCover) return insets;
                         return new WindowInsetsCompat.Builder(insets)
                             .setInsets(WindowInsetsCompat.Type.ime(), androidx.core.graphics.Insets.NONE)
@@ -277,6 +278,26 @@ public class MainActivity extends BridgeActivity {
                             .build();
                     }
                 });
+        } catch (Throwable ignored) { }
+    }
+
+    // The page no longer shrinks for the keyboard, so it cannot measure the keyboard itself.
+    // Tell Search how tall the keyboard is, as a share of the screen (so the text size
+    // setting cannot skew it). Sent only while Search covers the page, and only when the
+    // number grows, so a keyboard slide costs a handful of tiny calls.
+    private float lastImeRatio = 0f;
+    private void reportKeyboard(android.view.View v, WindowInsetsCompat insets) {
+        try {
+            int ime = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            int h = v.getHeight();
+            if (ime <= 0) { lastImeRatio = 0f; return; }
+            if (h <= 0 || !keyboardCover) return;
+            float ratio = ime / (float) h;
+            if (ratio > lastImeRatio + 0.002f) {
+                lastImeRatio = ratio;
+                final String js = String.format(java.util.Locale.US, "window._srKb&&window._srKb(%.4f)", ratio);
+                getBridge().getWebView().evaluateJavascript(js, null);
+            }
         } catch (Throwable ignored) { }
     }
 
