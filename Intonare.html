@@ -87996,6 +87996,8 @@ function tonaleSubmit() {
     pts = tonaleScoreCents(cents);
   }
   tonaleScores.push(pts);
+  // One entry per round. Green and yellow squares (5 points or more) count as right.
+  progLogAnswer('tonale', pts >= 5, ((Math.round(tonaleFreqToMidi(target)) % 12) + 12) % 12, true);
   tonaleGuesses.push({ target: target, guess: tonaleGuessFreq, pts: pts });
   // Persist daily progress after each round so backing out resumes here
   if (tonaleIsDaily) tonaleSaveDailyProgress();
@@ -88233,8 +88235,7 @@ function tonaleFinish() {
     best: Math.max(ts.best||0, rounded),
     lastScore: rounded,
   });
-  // A game is one entry. Half marks (25 of 50) is the pass line.
-  progLogAnswer('tonale', rounded >= 25, null, true);
+
   // Golden Ear: perfect 50/50 at normal difficulty or higher (not easy).
   if (rounded >= 50 && tonaleMode && tonaleMode.key !== 'easy' && !progState.tonalePerfect) {
     progState.tonalePerfect = true;
@@ -92236,7 +92237,7 @@ function pmItemName(key, item) {
   try {
     if (key === 'interval') { const n = getIVNames()[item]; if (n) return n; }
     else if (key === 'diadle') { const d = diadleDeg(item); if (d) return (it && d.nameIt) ? d.nameIt : d.name; }
-    else if (key === 'relpitch') { return NOTE_NAMES[item % 12] || String(item); }
+    else if (key === 'relpitch' || key === 'tonale') { return NOTE_NAMES[item % 12] || String(item); }
     else if (key === 'notationcards') { const c = NC_CARDS.find(function (x) { return x.id === item; }); if (c) return ncName(c); }
     else if (key === 'rhythmcards') { const c = RC_CARDS.find(function (x) { return x.id === item; }); if (c) return rcCardName(c); }
     else if (key === 'musicquiz') { const p = PACKS[item]; if (p) return (it && p.name_it) ? p.name_it : p.name; }
