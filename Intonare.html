@@ -91771,14 +91771,20 @@ function dtFireLegendaryCard() {
   }, 5500);
 }
 
-function dtFireMythicCard() {
+function dtFireMythicCard(xp) {
   // Unlock and save
-  if (!progState.mythic_unlocked) { progState.mythic_unlocked = true; progSave(); }
+  var _firstMythic = !progState.mythic_unlocked;
+  if (_firstMythic) { progState.mythic_unlocked = true; progSave(); }
   playCueMilestone();
   setTimeout(function () { try { hapticMilestone('mythic_fanfare'); } catch (e) {} }, 100);   // lands with playMythicFanfare below
   var card  = document.getElementById('dtMythicCard');
   var inner = document.getElementById('dtMythicInner');
   if (!card || !inner) return;
+  // The award goes on the card, and the unlock line shows only the first time.
+  var _mLine = inner.querySelector('.dt-mythic-streak');
+  if (_mLine) _mLine.innerHTML = 'KILLING SPREE &times; 8' + (xp ? ' &middot; +' + xp + ' XP' : '');
+  var _mUnlock = inner.querySelector('.dt-mythic-unlock');
+  if (_mUnlock) _mUnlock.style.display = _firstMythic ? '' : 'none';
   card.style.display = 'block'; inner.style.animation = 'none'; void inner.offsetWidth;
   inner.style.animation = 'dtToastInTop .45s cubic-bezier(.34,1.35,.64,1) both';
   clearTimeout(card._timer);
@@ -95319,6 +95325,8 @@ function setLang(lang) {
     }
   } catch(e) {}
 
+  try { if (document.body.classList.contains('sg-open') && window.sgRelabel) window.sgRelabel(); } catch (e) {}
+
   // SECOND PASS, and it is not redundant. applyLang() runs at the TOP of this
   // function, and two dozen builders run after it. Several of them rewrite
   // elements that carry data-i18n, putting the English default back: the tempo
@@ -98018,10 +98026,12 @@ function buildAutoChips(rowId, flagGetter, flagSetter, labels) {
 
 // ── Streak milestone system (restored from 0.74.2; shared by all ear-training modules) ──
 const STREAK_MILESTONES = [5, 10, 15, 20, 25, 30, 35, 40];
-// One-time XP for reaching each tier, paid once per tier per visit to an exercise (see _lastMilestone).
+// XP for reaching each tier, paid every time a streak reaches it. Reaching 5 again after a
+// broken streak is the same work as the first time, so it pays the same.
 // Chord Ear and Polyrhythm pass noXp, because they already pay their own streak XP.
 const STREAK_MILESTONE_XP = { 5:3, 10:5, 15:8, 20:12, 25:16, 30:20, 35:25, 40:40 };
 let _lastMilestone = 0;
+let _msLastHit = 0, _msLastAt = 0;
 const _MS_DATA = {
   5:  { quip:'KILLING SPREE',  color:'#5ee2ff', bg:'rgba(94,226,255,.14)',  glow:'rgba(94,226,255,.3)' },
   10: { quip:'KILLING FRENZY', color:'#4dffc4', bg:'rgba(77,255,196,.14)',  glow:'rgba(77,255,196,.3)' },
@@ -98036,14 +98046,19 @@ const _MS_DATA = {
 function checkStreakMilestone(streak, noXp) {
   var hit = null;
   for (var i = 0; i < STREAK_MILESTONES.length; i++) {
-    if (STREAK_MILESTONES[i] === streak && STREAK_MILESTONES[i] > _lastMilestone) { hit = STREAK_MILESTONES[i]; break; }
+    if (STREAK_MILESTONES[i] === streak) { hit = STREAK_MILESTONES[i]; break; }
   }
   if (!hit) return;
+  // The same tier twice within 1.5 s is one answer reported twice, not a rebuilt streak.
+  var _msNow = Date.now();
+  if (hit === _msLastHit && _msNow - _msLastAt < 1500) return;
+  _msLastHit = hit; _msLastAt = _msNow;
   _lastMilestone = hit;
-  if (!noXp) { try { progAddXp(STREAK_MILESTONE_XP[hit] || 0); } catch (e) {} }
+  var _msXp = 0;
+  if (!noXp) { _msXp = STREAK_MILESTONE_XP[hit] || 0; try { progAddXp(_msXp); } catch (e) {} }
 
   // Mythic (×40) gets the special card + fanfare
-  if (hit === 40) { dtFireMythicCard(); return; }
+  if (hit === 40) { dtFireMythicCard(_msXp); return; }
 
   // Guarded: these run BEFORE the toast is built, so a throw in either (a haptics
   // plugin that is missing, an audio context that is suspended) would silently
@@ -98064,7 +98079,7 @@ function checkStreakMilestone(streak, noXp) {
   // under the same gradient keeps the tint and stops the bleed.
   inner.style.cssText = 'background-color:var(--panel);background-image:linear-gradient(135deg,' + m.bg + ',var(--panel));border-color:' + m.color + 'aa;box-shadow:0 6px 28px rgba(0,0,0,.5),0 0 20px ' + m.glow + ';color:' + m.color;
   if (label) { label.textContent = (t('iv_streak')||'STREAK').toUpperCase() + ' ' + hit + '!'; label.style.color = m.color; }
-  if (quip)  { quip.textContent = m.quip; quip.style.color = m.color; }
+  if (quip)  { quip.textContent = m.quip + (_msXp ? '  ·  +' + _msXp + ' XP' : ''); quip.style.color = m.color; }
   toast.style.display = 'block';
   inner.style.animation = 'none';
   void inner.offsetWidth;
@@ -133140,6 +133155,9 @@ function _sgMeasureAndRender() {
     });
   });
 }
+
+// Redraws the open page after a language switch, so it changes in place.
+window.sgRelabel = function() { try { render('none'); } catch (e) {} };
 
 window.sgExit = function() {
   try { document.documentElement.style.removeProperty('--sg-top'); } catch (e) {}
