@@ -144,6 +144,36 @@ html,body{background:#000000!important;transition:none!important}
     letter-spacing: 0.08em; color: var(--muted);
     text-transform: uppercase; margin-top: 2px; white-space: nowrap;
   }
+  /* detail card, opened by tapping a history row */
+  .pm-bar-end { display:flex; align-items:center; justify-content:flex-end; gap:4px; min-width:44px; flex-shrink:0;
+    font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; color:var(--muted); }
+  .pm-bar-pct { font-weight:600; font-size:9px; }
+  .pm-bar-pct.good { color:var(--in-tune); } .pm-bar-pct.warm { color:var(--accent-warm); } .pm-bar-pct.bad { color:var(--sharp); }
+  .pm-bar-chev { display:inline-block; font-size:7px; transition:transform .2s; }
+  .pm-bar-row.open .pm-bar-chev { transform:rotate(90deg); }
+  .pm-dcard { margin:8px 0 4px; background:var(--surface); border:1px solid var(--border-soft); border-radius:12px; padding:12px; cursor:default; animation:fadeInDown 0.18s ease both; }
+  .pm-dbig { display:flex; align-items:baseline; gap:8px; }
+  .pm-dbig b { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:36px; letter-spacing:.03em; line-height:1; font-weight:400; }
+  .pm-dbig b.good { color:var(--in-tune); } .pm-dbig b.warm { color:var(--accent-warm); } .pm-dbig b.bad { color:var(--sharp); }
+  .pm-dbig small { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+  .pm-ddelta { margin-left:auto; font-family:'JetBrains Mono','GlyphFix',monospace; font-weight:600; font-size:9px; padding:2px 6px; border-radius:5px; background:var(--surface-2); }
+  .pm-ddelta.up { color:var(--in-tune); } .pm-ddelta.down { color:var(--sharp); }
+  .pm-ddays { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin:12px 0 4px; align-items:end; height:74px; }
+  .pm-dday { display:flex; flex-direction:column; justify-content:flex-end; height:100%; }
+  .pm-dbar { width:100%; border-radius:4px 4px 2px 2px; min-height:3px; background:var(--surface-2); }
+  .pm-dbar.g { background:var(--in-tune); } .pm-dbar.w { background:var(--accent-warm); } .pm-dbar.r { background:var(--sharp); }
+  .pm-dbar.t { background:linear-gradient(0deg,var(--accent),var(--accent-soft)); }
+  .pm-dlab, .pm-dnum { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; text-align:center; font-family:'JetBrains Mono','GlyphFix',monospace; }
+  .pm-dlab { font-size:7px; color:var(--muted); letter-spacing:.06em; }
+  .pm-dnum { font-size:8px; color:var(--text-dim); margin-top:2px; }
+  .pm-dsub { font-family:'JetBrains Mono','GlyphFix',monospace; font-weight:600; font-size:8px; letter-spacing:.14em; color:var(--text-dim); margin:14px 0 6px; text-transform:uppercase; }
+  .pm-dpa { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .pm-dpa-n { flex:0 0 124px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pm-dpa-t { flex:1; height:7px; background:var(--surface-2); border-radius:4px; overflow:hidden; }
+  .pm-dpa-t i { display:block; height:100%; background:var(--sharp); border-radius:4px; }
+  .pm-dpa-c { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; color:var(--muted); width:54px; text-align:right; }
+  .pm-dnote { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; color:var(--muted); margin-top:10px; line-height:1.5; }
+  .pm-dcard .pm-bar-detail { display:flex; flex-wrap:wrap; gap:4px; margin:0; animation:none; }
   .pm-graph-empty {
     text-align: center; color: var(--muted); font-family: 'JetBrains Mono','GlyphFix', monospace;
     font-size: 9px; letter-spacing: 0.1em; padding: 14px 0;
@@ -47096,7 +47126,7 @@ function enterTool(name, restoreState) {
   if (name === 'vocalrange') vrInit();
   if (name === 'scales') scalesInit();
   if (name === 'drumkit') dkInit();
-  if (name === 'rhythmcards') rcInit();
+  if (name === 'rhythmcards') { rcInit(); moduleEnter('rhythmcards'); }
   if (name === 'guitarchords') {
     if (!svcApplyRestore()) gccInit();
     // Warm the CURRENT instrument's samples. The previous fix hooked the navigation
@@ -47158,7 +47188,7 @@ function exitTool(resetToHub) {
   if (currentTool === 'scales') { try { scaleStop(); } catch(e) {} droneStop(); }
   if (currentTool === 'drumkit' && dk_playing) togglePlay();
   if (currentTool === 'drumkit') dkClosePresetPanel();
-  if (currentTool === 'rhythmcards') { rcStop(); try { rctStop(); } catch(e) {} }
+  if (currentTool === 'rhythmcards') { moduleExit(); rcStop(); try { rctStop(); } catch(e) {} }
   if (currentTool === 'progression') { progStop(); progCloseSyncTray(); }
   if (currentTool === 'survivalguide') { document.body.classList.remove('sg-open'); try { sgExit(); } catch(e) {} }
   if (currentTool === 'piano') {
@@ -58710,6 +58740,7 @@ function nctAnswer(picked, card, btn) {
   if (nctLocked) return;
   nctLocked = true;
   var right = picked.id === card.id;
+  progLogAnswer('notationcards', right, card.id, true);
   if (right) { nctScore++; try { hapticCorrect(); playCueCorrect(); } catch (e) {} }
   else { nctMissed.push(card); try { hapticWrong(); playCueWrong(); } catch (e) {} }
   var box = document.getElementById('nctOpts');
@@ -59481,6 +59512,7 @@ function ivtMarkGrid(containerId, correctSem, pickedSem) {
 function ivtJudge(isRight, correctSem) {
   ivStop();
   ivRecordAttempt(correctSem);
+  progLogAnswer('interval', isRight, correctSem);
   if (isRight) { ivRecordCorrect(correctSem); hapticCorrect(); playCueCorrect(); }
   else { hapticWrong(); playCueWrong(); }
   ivtResultsArr.push({ sem: correctSem, correct: isRight });
@@ -60168,6 +60200,8 @@ function ivrInit() {
 }
 
 function ivNext() {
+  // Sing mode: a round that moves on without a held note counts as a miss.
+  if (ivMode === 'sing' && ivCurrentRound && !ivGotIt) progLogAnswer('interval', false, ivCurrentRound.interval);
   micReviveLoop();
   ivCancelCountdown();
   ivStop();
@@ -60429,6 +60463,7 @@ function ivAnswerTap(sem, btn) {
     if (btn) btn.classList.add('correct');
     if (grid) grid.querySelectorAll('.iv-answer-btn').forEach(function(b){ b.disabled = true; });
     ivStreak++; ivCorrect++; ivRecordCorrect(correctSem);
+    if (ivRetryLeft > 0) progLogAnswer('interval', true, correctSem);
     // Only Sing mode called this. Tap and Test both counted the streak and
     // never fired the milestone, so Interval Training showed no toast in the
     // mode most people actually use.
@@ -60457,6 +60492,7 @@ function ivAnswerTap(sem, btn) {
 
   if (ivRetryLeft > 0) {
     // first wrong: spend the retry, show your red guess + red root span + hint, hide the truth
+    progLogAnswer('interval', false, correctSem);
     ivRetryLeft--;
     var rl2 = document.getElementById('ivRetryLine'); if (rl2) rl2.className = 'iv-retry-line spent';
     if (btn) { btn.classList.add('wrong'); btn.disabled = true; }
@@ -60854,9 +60890,8 @@ function ivCheckPitch(detectedFreq) {
     const xp = ivDifficulty === 'hard' ? 8 : ivDifficulty === 'medium' ? 5 : 3;
     progAddXp(xp);
     const prev = progGet('interval');
+    progLogAnswer('interval', true, ivCurrentRound.interval);
     progUpdate('interval', {
-      correct: ivCorrect,
-      total: ivTotal,
       streak: ivStreak,
       bestStreak: Math.max(prev.bestStreak || 0, ivStreak),
       difficulty: ivDifficulty,
@@ -71921,6 +71956,7 @@ function tlEvaluateRound(_activePhaseStartTime) {
   else if (useBpm ? (tlErrShown < 5)  : (avgAbsMs < 75))  { grade = t('tl_grade_close');     gradeClass = 'good';  tlStats.streak++; }
   else if (useBpm ? (tlErrShown < 10) : (avgAbsMs < 100)) { grade = t('tl_grade_needs_work'); gradeClass = 'meh';   tlStats.streak = 0; }
   else                     { grade = t('tl_grade_off');        gradeClass = 'bad';   tlStats.streak = 0; }
+  progLogAnswer('tempo', gradeClass === 'great' || gradeClass === 'good', null, true);
   checkStreakMilestone(tlStats.streak);
 
   // Your tapped tempo: 60 / average interval between consecutive taps.
@@ -72604,6 +72640,7 @@ function tgLockGuess() {
   else if (absDelta <= 10) { grade = t('tg_grade_good');    gradeClass = 'good';  tgStats.streak++; }
   else if (absDelta <= 20) { grade = t('tg_grade_close');   gradeClass = 'meh';   tgStats.streak = 0; }
   else                     { grade = t('tg_grade_off');     gradeClass = 'bad';   tgStats.streak = 0; }
+  progLogAnswer('tempoguess', gradeClass === 'great' || gradeClass === 'good', null, true);
   checkStreakMilestone(tgStats.streak);
 
   // Phase pill
@@ -77070,6 +77107,7 @@ function srCommit(clean) {
   var s = progState.stats.staffread || (progState.stats.staffread = { correct: 0, total: 0, notes: {} });
   s.total = (s.total || 0) + 1;
   if (clean) s.correct = (s.correct || 0) + 1;
+  progLogAnswer('staffread', clean, null, true);
   // A run is consecutive first-try reads. Kept because the headline needs a
   // third number and "how many did I get without stumbling" is the one people
   // actually chase.
@@ -77715,6 +77753,7 @@ function rlpAnswer(kpc) {
     rlpRun = clean ? rlpRun + 1 : 0;
     if (rlpRun > (s.best || 0)) s.best = rlpRun;
     s.total++; if (clean) s.correct++;
+    progLogAnswer('relpitch', clean, pc, true);
     if (!s.notes[pc]) s.notes[pc] = { a:0, c:0 };
     s.notes[pc].a++; if (clean) s.notes[pc].c++;
     try { progUpdate('relpitch', { correct:s.correct, total:s.total, notes:s.notes }); } catch (e) { try { progSave(); } catch (e2) {} }
@@ -79868,10 +79907,11 @@ function rrShowResults() {
   // dense patterns most (an eight-note pattern was 32 for fifteen seconds),
   // so a perfect pattern is 10 whatever its density.
   var xp = Math.round(score / 10);
-  if (xp > 0) {
-    progAddXp(xp);
-    progUpdate('rhythmread', { rounds: (progGet('rhythmread').rounds || 0) + 1, lastScore: score });
-  }
+  if (xp > 0) progAddXp(xp);
+  // Every round counts, including the ones too weak to earn XP. 70 is the same
+  // line the streak below uses.
+  progLogAnswer('rhythmread', score >= 70, null, true);
+  progUpdate('rhythmread', { rounds: (progGet('rhythmread').rounds || 0) + 1, lastScore: score });
 
   // Streak
   if (score >= 70) { rrStreak++; } else { rrStreak = 0; }
@@ -81723,6 +81763,7 @@ function rctGradeCard(card, beatDur) {
   var g = rctGrade(exp, taps, beatDur, RCT_PASS_FRAC);
   rctResults.push({ cardId: card.id, name: rcCardName(card), pass: g.pass, exp: expFrac, taps: tapFrac });
   rctRecord(card.id, g.pass);
+  progLogAnswer('rhythmcards', g.pass, card.id, true);
 }
 
 // ── Visuals ───────────────────────────────────────────────────────────────────
@@ -82831,6 +82872,7 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
   else if (meanFrac <= 0.15) { grade = t('tl_grade_close');      gradeClass = 'good';  prGameStats.streak++; }
   else if (meanFrac <= 0.26) { grade = t('tl_grade_needs_work'); gradeClass = 'meh';   prGameStats.streak = 0; }
   else                       { grade = t('tl_grade_off');        gradeClass = 'bad';   prGameStats.streak = 0; }
+  progLogAnswer('poly', gradeClass === 'great' || gradeClass === 'good', null, true);
   // Paid per cycle this was a farm: 20 / 10 / 3 every few seconds, then a
   // rebalance to 8 / 4 / 1 plus a global throttle that made the stream feel
   // random. Now it pays the way the two-hand mode always has: every fourth
@@ -83697,7 +83739,11 @@ function ssPlaySequence() {
   }, total * 1000);
 }
 
+var ssRoundDone = true;
 function ssNext() {
+  // A round left without finishing the sequence counts as a miss.
+  if (!ssRoundDone) progLogAnswer('singsing', false, null);
+  ssRoundDone = false;
   micReviveLoop();
   ssCancelCountdown();
   ssStop();
@@ -83859,7 +83905,9 @@ function ssAdvanceSequence() {
     checkStreakMilestone(ssStreakCount);
     const xp = ssPlayMode === 'single' ? 3 : ssPlayMode === 'string' ? 7 : 6;
     progAddXp(xp);
-    progUpdate('singsing', { streak: ssStreakCount, correct: ssCorrectCount, total: ssTotalCount });
+    ssRoundDone = true;
+    progLogAnswer('singsing', true, null);
+    progUpdate('singsing', { streak: ssStreakCount });
     ssUpdateStats();
 
     // paint the final note as done before the strip fades to recap
@@ -85167,6 +85215,10 @@ function rtShowPassport(){
   const avg=rtResults.reduce((a,b)=>a+b,0)/rtResults.length;
   const letter=avg<=12?'A':avg<=20?'B':avg<=30?'C':avg<=45?'D':'F';
   rtRecordTrip(avg, rtGradeIdx(avg));   // persist lifetime stats
+  // One entry per leg. Under 40 cents is a B or better. The city is the problem area.
+  RT_CITIES.slice(1).forEach(function (c, i) {
+    if (typeof rtResults[i] === 'number') progLogAnswer('roadtrip', rtResults[i] < 40, rtCityName(c), true);
+  });
   const stamps=RT_CITIES.slice(1).map((c,i)=>{
     const d=rtResults[i], cls=d<15?'g':d<35?'a':'r';
     return `<div class="rt-st ${cls}"><div class="c">${rtCityName(c).split(' ').join('<br>')}</div><div class="v">±${Math.round(d)}¢</div></div>`;
@@ -86348,7 +86400,8 @@ function ceAnswer(symbol) {
   ceStartCountdown(isCorrect);
 
   ceUpdateStats();
-  progUpdate('chords', { streak: ceStreakCount, correct: ceCorrectCount, total: ceTotalCount });
+  progLogAnswer('chords', isCorrect && firstTry, correctDef?.name || 'Major');
+  progUpdate('chords', { streak: ceStreakCount });
 }
 
 // Diff-lamp reveal: played chord's notes, cyan where guess matched, magenta where missed (sweep)
@@ -88180,6 +88233,8 @@ function tonaleFinish() {
     best: Math.max(ts.best||0, rounded),
     lastScore: rounded,
   });
+  // A game is one entry. Half marks (25 of 50) is the pass line.
+  progLogAnswer('tonale', rounded >= 25, null, true);
   // Golden Ear: perfect 50/50 at normal difficulty or higher (not easy).
   if (rounded >= 50 && tonaleMode && tonaleMode.key !== 'easy' && !progState.tonalePerfect) {
     progState.tonalePerfect = true;
@@ -89718,6 +89773,7 @@ function chordleSubmit() {
   chordleRevealRow=chordleGuesses.length-1;
   // XP and stats
   chordleStats.total++;
+  progLogAnswer('chordle', won, scores.map(function (s, i) { return s === 'correct' ? null : chordleProg.chords[i]; }).filter(function (x) { return x; }), true);
   if (won) {
     chordleStats.solved++;
     var guesses=chordleGuesses.length;
@@ -90584,6 +90640,7 @@ function diadleSubmit() {
   diadleGuesses.push({degs:diadleCur.slice(),scores:scores});
   diadleRevealRow=diadleGuesses.length-1;
   diadleStats.total++;
+  progLogAnswer('diadle', won, scores.map(function (s, i) { return s === 'correct' ? null : diadlePuzzle.degIds[i]; }).filter(function (x) { return x; }), true);
   if (won) {
     diadleStats.solved++;
     var guesses=diadleGuesses.length;
@@ -90946,6 +91003,34 @@ function moduleExit() {
   if (sec >= 5) logModuleTime(_modKey, sec); // ignore < 5s blips
   _modKey = null;
   _modStart = null;
+}
+
+// One answer, right or wrong. Keeps lifetime correct/total on the profile and a
+// per-day record (answers, correct, misses by item) for the Practice History detail.
+// item may be one id or an array of ids. dailyOnly skips the lifetime counters
+// for exercises that already keep their own.
+function progLogAnswer(key, ok, item, dailyOnly) {
+  try {
+    if (!progState.stats[key]) progState.stats[key] = {};
+    var s = progState.stats[key];
+    if (!dailyOnly) {
+      s.total = (s.total || 0) + 1;
+      if (ok) s.correct = (s.correct || 0) + 1;
+    }
+    if (!progState.answers) progState.answers = {};
+    var d = todayStr();
+    if (!progState.answers[d]) progState.answers[d] = {};
+    var r = progState.answers[d][key] || (progState.answers[d][key] = { n: 0, c: 0, miss: {} });
+    r.n++;
+    if (ok) r.c++;
+    if (item != null && (!ok || Array.isArray(item))) {
+      [].concat(item).forEach(function (it) { r.miss[it] = (r.miss[it] || 0) + 1; });
+    }
+    var cut = new Date(); cut.setDate(cut.getDate() - 90);
+    var cs = localDateStr(cut);
+    Object.keys(progState.answers).forEach(function (k) { if (k < cs) delete progState.answers[k]; });
+    progSave();
+  } catch (e) {}
 }
 
 function logModuleTime(key, sec) {
@@ -92064,6 +92149,15 @@ const GRAPH_EXERCISES = [
   { key: 'tempo',      label: 'TEMPO LOCK', labelIt: 'TEMPO LOCK',   icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><line x1='10' x2='14' y1='2' y2='2' /> <line x1='12' x2='15' y1='14' y2='11' /> <circle cx='12' cy='14' r='8' /></svg>" },
   { key: 'tempoguess', label: 'TEMPO GUESS',labelIt: 'INDOVINA BPM', icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><rect width='12' height='12' x='2' y='10' rx='2' ry='2' /> <path d='m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6' /> <path d='M6 18h.01' /> <path d='M10 14h.01' /> <path d='M15 6h.01' /> <path d='M18 9h.01' /></svg>" },
   { key: 'poly',       label: 'POLYRHYTHM', labelIt: 'POLIRITMIA',   icon: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-2px'><circle cx='12' cy='18' r='3' /> <circle cx='6' cy='6' r='3' /> <circle cx='18' cy='6' r='3' /> <path d='M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9' /> <path d='M12 12v3' /></svg>" },
+  { key: 'rhythmread',    nm: function () { return EXERCISE_NAME('rhythmread'); } },
+  { key: 'rhythmcards',   nm: function () { return TOOL_NAME('rhythmcards'); } },
+  { key: 'relpitch',      nm: function () { return EXERCISE_NAME('relpitch'); } },
+  { key: 'staffread',     nm: function () { return EXERCISE_NAME('staffread'); } },
+  { key: 'notationcards', nm: function () { return EXERCISE_NAME('notationcards'); } },
+  { key: 'diadle',        nm: function () { return EXERCISE_NAME('diadle'); } },
+  { key: 'tonale',        nm: function () { return EXERCISE_NAME('tonale'); } },
+  { key: 'roadtrip',      nm: function () { return EXERCISE_NAME('roadtrip'); } },
+  { key: 'musicquiz',     label: 'MUSIC QUIZ', labelIt: 'QUIZ MUSICALE' }
 ];
 
 function pmGetWeekData(weekOffset) {
@@ -92111,6 +92205,85 @@ function pmNextPeriod() {
 
 function _pmTile(val, lbl, colorClass) {
   return '<div class="pm-stat-tile"><div class="pm-stat-tile-val ' + (colorClass || '') + '">' + val + '</div><div class="pm-stat-tile-lbl">' + lbl + '</div></div>';
+}
+
+// Answers per day for the 7 days of a week window, oldest first.
+function pmAnswerWeek(weekOffset) {
+  const out = [], ans = progState.answers || {}, hist = progState.history || {};
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() + (weekOffset * 7) - i);
+    const ds = localDateStr(d);
+    out.push({ date: d, rec: ans[ds] || {}, hist: hist[ds] || {} });
+  }
+  return out;
+}
+function pmSumAnswers(days, key) {
+  const s = { n: 0, c: 0, miss: {} };
+  days.forEach(function (dy) {
+    const r = dy.rec[key];
+    if (!r) return;
+    s.n += r.n || 0; s.c += r.c || 0;
+    Object.keys(r.miss || {}).forEach(function (m) { s.miss[m] = (s.miss[m] || 0) + r.miss[m]; });
+  });
+  return s;
+}
+function pmPctCls(p) { return p >= 80 ? 'good' : p >= 60 ? 'warm' : 'bad'; }
+function pmEsc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+// Items are saved as ids. This turns one back into the name the exercise shows.
+function pmItemName(key, item) {
+  const it = progState.lang === 'it';
+  try {
+    if (key === 'interval') { const n = getIVNames()[item]; if (n) return n; }
+    else if (key === 'diadle') { const d = diadleDeg(item); if (d) return (it && d.nameIt) ? d.nameIt : d.name; }
+    else if (key === 'relpitch') { return NOTE_NAMES[item % 12] || String(item); }
+    else if (key === 'notationcards') { const c = NC_CARDS.find(function (x) { return x.id === item; }); if (c) return ncName(c); }
+    else if (key === 'rhythmcards') { const c = RC_CARDS.find(function (x) { return x.id === item; }); if (c) return rcCardName(c); }
+    else if (key === 'musicquiz') { const p = PACKS[item]; if (p) return (it && p.name_it) ? p.name_it : p.name; }
+  } catch (e) {}
+  return String(item);
+}
+function pmDetailHtml(key, tiles, sec) {
+  const days = pmAnswerWeek(pmGraphWeekOffset);
+  const cur = pmSumAnswers(days, key);
+  const prev = pmSumAnswers(pmAnswerWeek(pmGraphWeekOffset - 1), key);
+  const loc = progState.lang === 'it' ? 'it' : 'en';
+  const labs = days.map(function (dy) { return '<span>' + pmEsc(dy.date.toLocaleDateString(loc, { weekday: 'short' }).replace('.', '').slice(0, 3).toUpperCase()) + '</span>'; }).join('');
+  let h = '<div class="pm-dcard">';
+  if (cur.n > 0) {
+    const pc = Math.round(cur.c / cur.n * 100);
+    h += '<div class="pm-dbig"><b class="' + pmPctCls(pc) + '">' + pc + '%</b><small>' + (t('pm_of_right') || '').replace('{c}', cur.c).replace('{n}', cur.n) + '</small>';
+    if (prev.n > 0) {
+      const dp = pc - Math.round(prev.c / prev.n * 100);
+      h += '<span class="pm-ddelta ' + (dp >= 0 ? 'up' : 'down') + '">' + (dp >= 0 ? '▲ ' : '▼ ') + Math.abs(dp) + ' ' + t('pm_vs_last_week') + '</span>';
+    }
+    h += '</div><div class="pm-ddays">';
+    days.forEach(function (dy) {
+      const r = dy.rec[key];
+      if (!r || !r.n) { h += '<div class="pm-dday"><div class="pm-dbar"></div></div>'; return; }
+      const p = Math.round(r.c / r.n * 100);
+      h += '<div class="pm-dday"><div class="pm-dbar ' + (p >= 80 ? 'g' : p >= 60 ? 'w' : 'r') + '" style="height:' + Math.max(6, Math.round(p * 0.62)) + 'px"></div></div>';
+    });
+    h += '</div><div class="pm-dlab">' + labs + '</div><div class="pm-dnum">' +
+      days.map(function (dy) { const r = dy.rec[key]; return '<span>' + (r && r.n ? r.c + '/' + r.n : '·') + '</span>'; }).join('') + '</div>';
+    const ms = Object.keys(cur.miss).sort(function (a, b) { return cur.miss[b] - cur.miss[a]; }).slice(0, 3);
+    if (ms.length) {
+      h += '<div class="pm-dsub">' + t('pm_problem_areas') + '</div>';
+      ms.forEach(function (m) {
+        h += '<div class="pm-dpa"><span class="pm-dpa-n">' + pmEsc(pmItemName(key, m)) + '</span><span class="pm-dpa-t"><i style="width:' +
+          Math.round(cur.miss[m] / cur.miss[ms[0]] * 100) + '%"></i></span><span class="pm-dpa-c">' + t('pm_missed_n').replace('{n}', cur.miss[m]) + '</span></div>';
+      });
+    }
+  } else {
+    const secs = days.map(function (dy) { return dy.hist[key] || 0; });
+    const mx = Math.max.apply(null, secs.concat([1]));
+    h += '<div class="pm-dbig"><b>' + pmFmtTime(sec) + '</b><small>' + t('pm_practiced_week') + '</small></div><div class="pm-ddays">';
+    secs.forEach(function (s) { h += '<div class="pm-dday"><div class="pm-dbar t" style="height:' + (s ? Math.max(6, Math.round(s / mx * 62)) : 3) + 'px;' + (s ? '' : 'opacity:.25') + '"></div></div>'; });
+    h += '</div><div class="pm-dlab">' + labs + '</div>';
+    if (key === 'scales') h += '<div class="pm-dnote">' + t('pm_time_only') + '</div>';
+  }
+  if (tiles.length) h += '<div class="pm-dsub">' + t('pm_all_time') + '</div><div class="pm-bar-detail">' + tiles.join('') + '</div>';
+  return h + '</div>';
 }
 
 function progRenderGraph() {
@@ -92169,25 +92342,24 @@ function progRenderGraph() {
       if (stats.hardSolved)  tiles.push(_pmTile(stats.hardSolved, 'hard solved', 'warm'));
     }
 
-    const detailHtml = tiles.length
-      ? '<div class="pm-bar-detail' + (isExpanded ? ' open' : '') + '">' + tiles.join('') + '</div>'
-      : '';
+    const detailHtml = isExpanded ? pmDetailHtml(key, tiles, sec) : '';
+    const _ws = pmSumAnswers(pmAnswerWeek(pmGraphWeekOffset), key);
+    const _wp = _ws.n > 0 ? Math.round(_ws.c / _ws.n * 100) : null;
 
     const row = document.createElement('div');
-    row.className = 'pm-bar-row';
+    row.className = 'pm-bar-row' + (isExpanded ? ' open' : '');
     row.innerHTML =
       '<div class="pm-bar-header">' +
-        '<div class="pm-bar-label">' + ((progState.lang === 'it' && ex.labelIt) ? ex.labelIt : ex.label) + '</div>' +
+        '<div class="pm-bar-label">' + (ex.nm ? String(ex.nm()).toUpperCase() : ((progState.lang === 'it' && ex.labelIt) ? ex.labelIt : ex.label)) + '</div>' +
         '<div class="pm-bar-track"><div class="pm-bar-fill" style="width:' + pct + '%"></div></div>' +
-        '<div class="pm-bar-time">' + pmFmtTime(sec) + '</div>' +
+        '<div class="pm-bar-end">' + (_wp !== null ? '<span class="pm-bar-pct ' + pmPctCls(_wp) + '">' + _wp + '%</span>' : '') + '<span>' + pmFmtTime(sec) + '</span><span class="pm-bar-chev">▶</span></div>' +
       '</div>' + detailHtml;
 
-    if (tiles.length) {
-      row.onclick = function() {
-        pmGraphExpandedKey = (pmGraphExpandedKey === key) ? null : key;
-        progRenderGraph();
-      };
-    }
+    row.onclick = function (ev) {
+      if (ev.target.closest && ev.target.closest('.pm-dcard')) return;
+      pmGraphExpandedKey = (pmGraphExpandedKey === key) ? null : key;
+      progRenderGraph();
+    };
     wrap.appendChild(row);
   });
 }
@@ -92221,6 +92393,7 @@ const PROG_DEFAULTS = {
   // below for why the boot-time schedule had to go.
   notifications: { practiceOn: true, practiceTime: '19:00', streakOn: true, streakTime: '20:00', timeFormat: '24' },
   history: {},  // { 'YYYY-MM-DD': { interval: sec, chords: sec, ... } }
+  answers: {},  // { 'YYYY-MM-DD': { interval: { n, c, miss: { item: count } }, ... } }
   secret_chime_unlocked: false,   // unlocked at 100-day streak
   beethoven_unlocked: false,      // unlocked via deaf_composer achievement
   mythic_unlocked: false,  // unlocked at exercise streak ×40
@@ -92311,7 +92484,7 @@ const STRINGS = {
     metro_ramp_presets:'RAMP PRESETS',
     ramp_click_head:'CLICK', ramp_groove_head:'GROOVE',
     pm_day_streak:'day streak', pm_achievements:'Achievements',
-    pm_practice_history:'Practice History', pm_this_week:'THIS WEEK',
+    pm_practice_history:'Practice History', pm_this_week:'THIS WEEK', pm_problem_areas:'Problem areas', pm_all_time:'All time', pm_of_right:'{c} of {n} right', pm_vs_last_week:'vs last week', pm_practiced_week:'practiced this week', pm_time_only:'This exercise has no right or wrong answers, so the bars show time.', pm_missed_n:'missed {n}',
     pm_last_week:'LAST WEEK', pm_weeks_ago:'{n} WEEKS AGO',
     pm_session:'SESSION', pm_ach_unlocked:'Achievement Unlocked', snd_unlock_label:'New Sound Unlocked',
     chordle_pick_diff:'pick a difficulty',
@@ -93510,7 +93683,7 @@ const STRINGS = {
     metro_ramp_presets:'PRESET RAMPA',
     ramp_click_head:'CLICK', ramp_groove_head:'GROOVE',
     pm_day_streak:'giorni consecutivi', pm_achievements:'Obiettivi',
-    pm_practice_history:'Cronologia esercizi', pm_this_week:'QUESTA SETTIMANA',
+    pm_practice_history:'Cronologia esercizi', pm_this_week:'QUESTA SETTIMANA', pm_problem_areas:'Punti deboli', pm_all_time:'Sempre', pm_of_right:'{c} corrette su {n}', pm_vs_last_week:'rispetto alla scorsa settimana', pm_practiced_week:'di pratica questa settimana', pm_time_only:'Questo esercizio non ha risposte giuste o sbagliate, quindi le barre mostrano il tempo.', pm_missed_n:'{n} errori',
     pm_last_week:'SETTIMANA SCORSA', pm_weeks_ago:'{n} SETTIMANE FA',
     pm_session:'SESSIONE', pm_ach_unlocked:'Obiettivo sbloccato', snd_unlock_label:'Nuovo Suono Sbloccato',
     chordle_pick_diff:'scegli una difficoltà',
@@ -135860,6 +136033,7 @@ function mqOpen() {
   document.getElementById('mqModal').classList.add('active');
   document.body.classList.add('mq-open');
   document.body.style.overflow = 'hidden';
+  moduleEnter('musicquiz');
   mqShowScreen('mqScreenLanding');
   mqSetHeader('MUSIC QUIZ','test your knowledge');
   document.getElementById('mqCloseBtn').style.display = 'flex';
@@ -136504,6 +136678,7 @@ function mqResetStats(btn) {
   mqShowStats();
 }
 function mqClose() {
+  moduleExit();
   if (MQ.timerInterval) clearInterval(MQ.timerInterval);
   mqAmbStop();
   document.getElementById('mqModal').classList.remove('active');
@@ -140810,6 +140985,7 @@ function mqAnswer(idx) {
   var q=MQ.questions[MQ.current];
   var dispAns = (MQ._dispAns !== undefined) ? MQ._dispAns : q.ans;
   var correct=idx===dispAns;
+  progLogAnswer('musicquiz', correct, q.pack, true);
   document.querySelectorAll('.mq-ans-btn').forEach(function(btn,i) {
     btn.disabled=true;
     var delay = i * 45;
