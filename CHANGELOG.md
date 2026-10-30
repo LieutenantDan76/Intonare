@@ -2,6 +2,25 @@
 
 A human-readable record of what changed, when,
 
+## v1.0.4: Practice history that counts every answer
+
+- Practice History now counts every answer, right or wrong. Before, only a correct Sing answer in Interval Training reached your Progress screen, so Tap and Test mistakes never showed.
+- Tap a row in Practice History to open a card with that exercise's accuracy for the week, how it compares to last week, a bar for each of the last seven days, and the three things you miss most.
+- More exercises now show in Practice History: Rhythm Read, Rhythm cards, Relative Pitch, Staff Reading, Notation cards, Diadle, Tonale, Road Trip and Music Quiz. Music Quiz and Rhythm cards now log practice time too.
+- Rhythm Read now counts weak rounds. They used to vanish when the score was too low to earn XP.
+- Streak bonus XP is paid at the milestones, not on every answer. The streak toast shows every time a streak reaches 5, 10, 15 and so on up to 40, including when you rebuild a broken streak. It pays the bonus each time and names the amount, and the Mythic card shows its award too.
+- Theremin: the pitch scale now spaces notes like the real instrument, with the notes crowding toward the antenna. The expanded view needs two hands, like the real thing: right hand on the pitch pad, left hand on the volume bar. Volume follows a real curve with a silent zone at the bottom, and the note slides down when you lift off. In the compact view the hint fades when you touch the field.
+- Search no longer flashes dark frames when the keyboard opens on Android, and it remembers your keyboard height.
+- Chordle: orange now means the right chord is in the progression but in a different spot, and gray means that chord is not in the progression at all. The ROOT pill is gone from the chord drawer, and the play button there follows your arpeggio setting. Shared daily results show the right squares. They used to show a present chord as black.
+- Diadle: Hard mode replays now match what its text says, with no limit.
+- Chordle and Diadle drawers: the blank gap at the bottom is gone, and the other bottom drawers were checked for the same gap and blur.
+- Music Quiz: the back button in quick play no longer hides under the status bar. The rest of the app was checked for overlaps with the status bar and tab bar.
+- Interval reference cards: the stop button works and the tail after a note is shorter.
+- Signal chain: the yellow "!" badges are gone. The caution text still shows when you tap a pedal.
+- Survival guide: the open page switches language in place.
+- Credits: the groups have a new order, Isabella Citti is credited for the bass photos, and the permission line reads "used with permission".
+- The developer unlock code no longer unlocks Pro, and the debug trigger is locked behind developer mode.
+
 ## v1.0.3: The tuner click stays on the tuner screen
 
 - The tuner's in-tune click now fires only while the Tuner screen is in front. Before, the always-on mic could hear Music Quiz music, call a steady note in tune, and buzz the phone.
