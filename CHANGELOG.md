@@ -2,6 +2,19 @@
 
 A human-readable record of what changed, when,
 
+## v1.0.5: Search that understands what you mean
+
+- Search now understands categories. Type games, tests, flashcards, instruments, singing, ear, rhythm, reading, theory, harmony or practice (or the Italian word) and you get the modules that fit, best fits first. A single category word also shows a count above the list, like Games, 5.
+- Search opens folders. Type games, ear training, reading, harmony or reference to jump straight to that folder.
+- Two-word searches work, like ear games or rhythm test. So do short phrases like train my ear, learn chords, keep time or read music.
+- Each result says what it is: Game, Train, Tool or Folder.
+- When nothing matches, Search shows category buttons so you can browse instead of staring at an empty list.
+- Search finds more of what is inside the screens: capo, strobe, tuning fork, Hammond, Rhodes, tap tempo, ramp, decibel, concert pitch, twelve-bar blues, syncopation and more.
+- The Road Trip tour described a different game. It now explains the real one: learn a pitch, hold it while music tries to pull you off it, then sing it back.
+- The Games folder text now names all five games, and the Road Trip card says you sing.
+- Fixed a doubled phrase in the Relative Pitch tour, and the Italian Polyrhythm tour now uses the right gender.
+- New check in the ship tools: the search audit runs 72 real searches against the app and fails if a category stops finding what it should.
+
 ## v1.0.4: Practice history that counts every answer
 
 - Practice History now counts every answer, right or wrong. Before, only a correct Sing answer in Interval Training reached your Progress screen, so Tap and Test mistakes never showed.

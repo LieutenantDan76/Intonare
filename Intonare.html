@@ -1,7 +1,7 @@
 <!-- Copyright 2025 Daniele Citti. All rights reserved.
      Source available for personal testing only.
      See LICENSE for full terms. -->
-<!-- INTONARE_VERSION: 1.0.4 -->
+<!-- INTONARE_VERSION: 1.0.5 -->
 <!DOCTYPE html>
 <html lang="en" style="background:#000000;color-scheme:dark">
 <head>
@@ -34404,7 +34404,7 @@ try {
   <circle cx="21" cy="5" r="1.4" fill="currentColor" stroke="none"/>
 </svg></div>
           <div class="practice-card-title" data-i18n="card_roadtrip_title">ROAD TRIP</div>
-          <div class="practice-card-sub" data-i18n="card_roadtrip_sub">Hold one pitch across the miles · pitch memory under interference</div>
+          <div class="practice-card-sub" data-i18n="card_roadtrip_sub">Sing a pitch and hold it across the miles · pitch memory under interference</div>
         </button>
         <button class="practice-card-btn" onclick="mqOpen()" data-fav-id="tool:musicquiz">
           <div class="practice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -34416,7 +34416,7 @@ try {
           <div class="practice-card-sub" data-i18n="card_musicquiz_sub">Quick Play, Custom &amp; Survival</div>
         </button>
       </div>
-      <div class="teach-hint" data-i18n-html="hint_games_exs"><strong>Chordle</strong>: hear a chord progression and identify each chord in sequence, Wordle-style. <strong>Tónale</strong>: we play a tone and you recreate it from memory, with a shared daily challenge. <strong>Music Quiz</strong>: test your music theory and trivia knowledge across hundreds of questions.</div>
+      <div class="teach-hint" data-i18n-html="hint_games_exs"><strong>Chordle</strong>: hear a chord progression and identify each chord in sequence, Wordle-style. <strong>Diadle</strong>: a short melody plays over a root note and you name the scale degree of each note, also Wordle-style. <strong>Tónale</strong>: we play a tone and you recreate it from memory, with a shared daily challenge. <strong>Road Trip</strong>: sing a pitch, hold it in your head while music tries to pull you off it, then sing it back. <strong>Music Quiz</strong>: test your music theory and trivia knowledge across hundreds of questions.</div>
     </div>
 
     <!-- READING SUB-HUB -->
@@ -37070,7 +37070,7 @@ try {
 <script>
 'use strict';
 
-const INTONARE_VERSION = '1.0.4';
+const INTONARE_VERSION = '1.0.5';
 /* v1.0.0: Settings sliders move only on a sideways drag or a clean tap.
    On Android the native range input jumps the thumb the moment a finger lands,
    so scrolling the Settings panel changed Text Size or Master Volume (and a
@@ -55970,11 +55970,11 @@ Object.assign(TOURS, {
     { selector:'#prTabListen', previewSelector:'#prTabListen',
       title:'Three Tabs', titleIt:'Tre Schede',
       body:'LISTEN plays the polyrhythm. PRACTICE gives you a tap zone for each voice, one at a time. CHALLENGE turns the same ratios into a scored test.',
-      bodyIt:'ASCOLTA riproduce il poliritmia. PRATICA d\u00e0 una zona di tocco per ogni voce. SFIDA trasforma gli stessi rapporti in un test con punteggio.' },
+      bodyIt:'ASCOLTA riproduce la poliritmia. PRATICA d\u00e0 una zona di tocco per ogni voce. SFIDA trasforma gli stessi rapporti in un test con punteggio.' },
     { selector:'#prGoBtn', previewSelector:'#prGoBtn',
       title:'Start', titleIt:'Inizia',
       body:'Tap to start the polyrhythm. You can <strong>tap along</strong> with either voice to feel it in your hands, or listen until the pattern sits.',
-      bodyIt:'Tocca per avviare il poliritmia. Puoi <strong>toccare insieme</strong> a una delle due voci per sentirlo nelle mani, o semplicemente ascoltare.' },
+      bodyIt:'Tocca per avviare la poliritmia. Puoi <strong>toccare insieme</strong> a una delle due voci per sentirla nelle mani, o semplicemente ascoltare.' },
     { selector:'#prGoBtn', previewSelector:'#prGoBtn',
       title:'Feel It First', titleIt:'Prima Sentilo',
       body:'Start with <strong>2:3</strong> or <strong>3:4</strong>, the simpler ratios. Tap along with one voice at a time until both feel natural, then try to hold both in your head at once. When they do, <strong>CHALLENGE</strong> turns the same ratios into scored runs, with harder modes that stay locked until you have earned them.',
@@ -56313,25 +56313,29 @@ Object.assign(TOURS, {
   roadtrip: [
     { selector:'.rt-diffstrip', previewSelector:'#rtMenu',
       title:'Pick a Route', titleIt:'Scegli un Percorso',
-      body:'Each route is a different distance and a different level of difficulty. Shorter ones are a handful of legs and forgiving; the long ones take a while and expect you to be reading the intervals rather than guessing at them.',
-      bodyIt:'Ogni percorso ha una distanza e una difficolt&agrave; diverse. Quelli corti sono poche tappe e perdonano molto; quelli lunghi durano un bel po&rsquo; e si aspettano che tu legga gli intervalli invece di tirare a indovinare.' },
+      body:'The route sets what plays against your memory. <strong>City Streets</strong> scatters single notes, <strong>Highway</strong> runs a full melody, and <strong>Scenic Route</strong> plays real music from the song bank. EASY, MED and HARD change how many replays you get and how wide the target is.',
+      bodyIt:'Il percorso decide cosa suona contro la tua memoria. <strong>Strade Cittadine</strong> sparpaglia note singole, <strong>Autostrada</strong> fa correre una melodia intera e <strong>Strada Panoramica</strong> usa musica vera dal repertorio. FACILE, MEDIO e DIFFICILE cambiano i riascolti a disposizione e quanto &egrave; largo il bersaglio.' },
     { selector:'#rtTripMeter', previewSelector:'#rtTripMeter',
       title:'The Trip Meter', titleIt:'Il Contachilometri',
-      body:'This fills as you answer, and the pins along it are the stops on the way. Getting one wrong doesn&rsquo;t throw you off the road, it slows you down, so a long route is a test of staying accurate rather than of never slipping.',
-      bodyIt:'Si riempie man mano che rispondi, e i segni lungo la barra sono le fermate del viaggio. Sbagliare non ti butta fuori strada, ti rallenta: un percorso lungo mette alla prova la costanza pi&ugrave; che l&rsquo;infallibilit&agrave;.' },
+      body:'The meter fills as you finish each stop, and the pins along it mark the cities on the way. Your vehicle moves along the map with it, and the route behind it stays drawn. A trip runs in one sitting, so pick a route you have time for.',
+      bodyIt:'Il contachilometri si riempie a ogni tappa finita e i segni lungo la barra sono le citt&agrave; del percorso. Il tuo mezzo avanza sulla mappa insieme a lui e la strada alle spalle resta disegnata. Un viaggio si fa in una sola sessione, quindi scegli un percorso per cui hai tempo.' },
     { selector:'#rtStage', previewSelector:'#rtStage',
-      title:'How a Leg Works', titleIt:'Come Funziona una Tappa',
-      body:'Each leg plays a home tone and then a second note, and you name the interval between them. The number of replays depends on the difficulty, so listen carefully the first time.',
-      bodyIt:'Ogni tappa suona una nota di partenza e poi una seconda nota, e tu dici l\u2019intervallo. Il numero di riascolti dipende dalla difficolt\u00e0.' },
+      title:'Learn Your Pitch', titleIt:'Impara la Nota',
+      body:'The first stop plays your home pitch. Tap <strong>HEAR YOUR PITCH</strong> as often as you like, then sing it and hold it until the bar fills and the note locks in. <strong>LOCK IT IN</strong> skips the wait when you are sure.',
+      bodyIt:'La prima tappa suona la tua nota di casa. Tocca <strong>ASCOLTA LA NOTA</strong> quante volte vuoi, poi cantala e tienila finch&eacute; la barra si riempie e la nota si aggancia. <strong>AGGANCIA</strong> salta l&rsquo;attesa quando non hai dubbi.' },
     { selector:'#rtStage', previewSelector:'#rtStage',
-      title:'The Road', titleIt:'La Strada',
-      body:'Your vehicle moves along the map as the trip meter fills, and the route behind it stays drawn in so the distance covered stays visible. A trip runs in one sitting, so pick a route you have time for.',
-      bodyIt:'Il tuo mezzo avanza sulla mappa mentre il contachilometri si riempie, e il percorso alle spalle resta disegnato per farti vedere quanta strada hai fatto. Un viaggio si fa in una sola sessione, quindi scegli un percorso per cui hai tempo.' }
+      title:'Eyes on the Road', titleIt:'Occhi sulla Strada',
+      body:'Then the drive starts. The screen shows a question mark while sounds play to pull you off your pitch. Keep the note in your head. The small dot only shows that the mic can hear you. It never tells you whether you are right.',
+      bodyIt:'Poi parte il viaggio. Lo schermo mostra un punto interrogativo mentre i suoni cercano di farti perdere la nota. Tienila in testa. Il puntino indica soltanto che il mic ti sente; non ti dice mai se sei nel giusto.' },
+    { selector:'#rtStage', previewSelector:'#rtStage',
+      title:'Sing Home', titleIt:'Canta la Nota',
+      body:'When the drive ends, sing the home pitch from memory. The mic grades you in cents, and only afterward tells you whether you were sharp or flat. <strong>REPLAY</strong> plays the home pitch again and restarts your attempt. How many you get depends on the difficulty.',
+      bodyIt:'Quando il viaggio finisce, canta la nota di casa a memoria. Il mic ti valuta in cent e solo dopo ti dice se eri crescente o calante. <strong>RIASCOLTA</strong> suona di nuovo la nota di casa e fa ripartire il tentativo. Il numero di riascolti dipende dalla difficolt&agrave;.' }
   ],
   relpitch: [
     { selector:'#rlpTabs', previewSelector:'#rlpTabs',
       title:'Two Ways In', titleIt:'Due Modi',
-      body:'<strong>Practice</strong> deals you one note at a time and keeps no score, with no score, at your own pace. <strong>The Climb</strong> is the same skill turned into a game, with twenty-four rungs to get through and a wrong answer ending the run.',
+      body:'<strong>Practice</strong> deals you one note at a time at your own pace and keeps no score. <strong>The Climb</strong> is the same skill turned into a game, with twenty-four rungs to get through and a wrong answer ending the run.',
       bodyIt:'<strong>Esercizio</strong> ti propone una nota alla volta senza tenere il punteggio, cos&igrave; puoi restarci quanto vuoi. <strong>La Scalata</strong> &egrave; la stessa abilit&agrave; trasformata in gioco, con ventiquattro gradini da superare e una risposta sbagliata che chiude la partita.' },
     { selector:'#rlpStage .rlp-bed', previewSelector:'#rlpStage',
       title:'One Note, No Context', titleIt:'Una Nota, Nessun Contesto',
@@ -92543,7 +92547,7 @@ const STRINGS = {
     // ── Road Trip ──
     rt_title:'ROAD TRIP', rt_sub:'hold one pitch across the miles',
     hsub_roadtrip:'pick a route',
-    card_roadtrip_title:'ROAD TRIP', card_roadtrip_sub:'Hold one pitch across the miles · pitch memory under interference', rt_hero_title:'ROAD<br>TRIP',
+    card_roadtrip_title:'ROAD TRIP', card_roadtrip_sub:'Sing a pitch and hold it across the miles · pitch memory under interference', rt_hero_title:'ROAD<br>TRIP',
     rt_pick_route:'PICK YOUR ROUTE',
     rt_tier_notes:'CITY STREETS', rt_tier_notes_d:'scattered notes try to knock you off your pitch',
     rt_tier_melody:'HIGHWAY', rt_tier_melody_d:'a full melodic line runs against your memory',
@@ -93083,7 +93087,7 @@ const STRINGS = {
     folder_ear_sub:'Intervals · Chords · Pitch Match · Relative Pitch',
     folder_games_title:'GAMES', folder_games_sub:'Chordle · Diadle · Tónale · Road Trip · Music Quiz', folder_games_subtitle:'play · compete · daily challenges',
     card_musicquiz_title:'MUSIC QUIZ', card_musicquiz_sub:'{q} questions · {p} packs · Quick Play, Custom & Survival',
-    hint_games_exs:'<strong>Chordle</strong>: hear a chord progression and identify each chord in sequence, Wordle-style. <strong>Tónale</strong>: we play a tone and you recreate it from memory, with a shared daily challenge. <strong>Music Quiz</strong>: test your music theory and trivia knowledge across hundreds of questions.',
+    hint_games_exs:'<strong>Chordle</strong>: hear a chord progression and identify each chord in sequence, Wordle-style. <strong>Diadle</strong>: a short melody plays over a root note and you name the scale degree of each note, also Wordle-style. <strong>Tónale</strong>: we play a tone and you recreate it from memory, with a shared daily challenge. <strong>Road Trip</strong>: sing a pitch, hold it in your head while music tries to pull you off it, then sing it back. <strong>Music Quiz</strong>: test your music theory and trivia knowledge across hundreds of questions.',
     // Tool card titles & subs
     tool_piano_title:'PIANO', tool_piano_sub:'Play any note · tone bank · A440 · instrument reference pitches',
     tool_tonal_title:'TONAL CENTER', tool_tonal_sub:"Set a root · drone · scale display · hear what you're singing",
@@ -93746,7 +93750,7 @@ const STRINGS = {
     // ── Road Trip ──
     rt_title:'ON THE ROAD', rt_sub:'tieni una nota per tutto il viaggio',
     hsub_roadtrip:'scegli un percorso',
-    card_roadtrip_title:'ON THE ROAD', card_roadtrip_sub:'Tieni una nota per tutto il viaggio · memoria dell intonazione sotto disturbo', rt_hero_title:'ON THE<br>ROAD',
+    card_roadtrip_title:'ON THE ROAD', card_roadtrip_sub:'Canta una nota e tienila per tutto il viaggio · memoria dell’intonazione sotto disturbo', rt_hero_title:'ON THE<br>ROAD',
     rt_pick_route:'SCEGLI IL PERCORSO',
     rt_tier_notes:'STRADE CITTADINE', rt_tier_notes_d:'note sparse cercano di farti perdere la nota',
     rt_tier_melody:'AUTOSTRADA', rt_tier_melody_d:'una melodia intera corre contro la tua memoria',
@@ -94283,7 +94287,7 @@ const STRINGS = {
     folder_badge_ex4:'4 esercizi ›', folder_badge_ex3:'3 esercizi ›', folder_badge_games5:'5 giochi ›',
     folder_games_title:'GIOCHI', folder_games_sub:'Chordle · Diadle · Tónale · On the Road · Quiz Musicale', folder_games_subtitle:'gioca · competi · sfide giornaliere',
     card_musicquiz_title:'QUIZ MUSICALE', card_musicquiz_sub:'{q} domande · {p} pacchetti · Rapida, Personalizzata e Sopravvivenza',
-    hint_games_exs:'<strong>Chordle</strong>: ascolta una progressione e identifica ogni accordo, stile Wordle. <strong>Tónale</strong>: suoniamo un tono e tu lo ricrei a memoria, con una sfida giornaliera condivisa. <strong>Quiz Musicale</strong>: metti alla prova la tua teoria e cultura musicale.',
+    hint_games_exs:'<strong>Chordle</strong>: ascolta una progressione e identifica ogni accordo, stile Wordle. <strong>Diadle</strong>: una breve melodia suona sopra una fondamentale e tu indovini il grado di ogni nota, sempre stile Wordle. <strong>Tónale</strong>: suoniamo un tono e tu lo ricrei a memoria, con una sfida giornaliera condivisa. <strong>On the Road</strong>: canta una nota, tienila in testa mentre la musica prova a farti perdere l’intonazione, poi cantala di nuovo. <strong>Quiz Musicale</strong>: metti alla prova la tua teoria e cultura musicale.',
     folder_ear_sub:'Intervalli · Accordi · Intonazione · Intonazione Relativa',
     // Tool card titles & subs
     tool_piano_title:'PIANOFORTE', tool_piano_sub:'Suona qualsiasi nota · timbri · A440 · note di riferimento',
@@ -142763,6 +142767,181 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     'exercise:singsing': 'sing singing voice pitch canto', 'exercise:relpitch': 'relative pitch ear orecchio',
     'exercise:staffread': 'staff reading notes pentagramma lettura', 'exercise:notationcards': 'notation cards flashcards notazione'
   };
+  /* ── Search tags (1.0.5) ───────────────────────────────────────────────────
+     Each module lists what it IS (main tags, ranked first) and what it only TOUCHES
+     (related tags, ranked after), as "main | related". CONCEPT_SRC maps the words people
+     type, English then Italian, to a tag. The table, the ranking rules and the query list
+     live in docs/SEARCH_TAGS_AND_TESTS.md and tools/audits/search_queries.json.
+     A new module needs a line in TAGS. intonare_search_audit.py fails the ship gate when
+     a top-level module has none, or when a tag has no Italian words. */
+  var TAGS = {
+    tuner: 'tuning instrument | practice', metro: 'rhythm | practice',
+    'exercise:chordle': 'game test ear harmony | daily', 'exercise:diadle': 'game test ear intervals | theory',
+    'exercise:tonale': 'game test ear | daily', 'exercise:roadtrip': 'game voice ear | practice',
+    'tool:musicquiz': 'game test theory | daily',
+    'exercise:interval': 'ear intervals test practice | voice', 'exercise:chords': 'ear harmony practice |',
+    'exercise:singsing': 'voice ear practice |', 'exercise:relpitch': 'ear practice | game',
+    'exercise:tempo': 'rhythm practice | test', 'exercise:tempoguess': 'rhythm test practice | game ear',
+    'exercise:poly': 'rhythm practice | test', 'exercise:rhythmread': 'rhythm reading practice |',
+    'exercise:staffread': 'reading practice | test', 'exercise:notationcards': 'cards reading test practice |',
+    'exercise:scales': 'theory intervals practice | voice ear reference',
+    'tool:rhythmcards': 'cards rhythm test | reading practice',
+    'tool:piano': 'instrument | harmony', 'tool:drumkit': 'instrument rhythm |', 'tool:theremin': 'instrument |',
+    'tool:tonal': 'ear voice | instrument intervals', 'tool:guitarchords': 'reference instrument | harmony',
+    'tool:chords': 'harmony reference | ear instrument', 'tool:progression': 'harmony theory |',
+    'tool:cof': 'theory harmony reference |', 'tool:intervalref': 'intervals reference theory | ear',
+    'tool:transpose': 'theory reference | instrument', 'tool:vocalrange': 'voice reference |',
+    'tool:volume': 'reference |', 'tool:survivalguide': 'reference theory instrument |',
+    'folder:games': 'game |', 'folder:ear': 'ear practice |', 'folder:train-rhythm': 'rhythm practice |',
+    'folder:reading': 'reading practice |', 'folder:pitch': 'instrument |', 'folder:harmony': 'harmony |',
+    'folder:tools-rhythm': 'rhythm |', 'folder:reference': 'reference |', 'folder:utilities': ' |'
+  };
+  var CONCEPT_SRC = {
+    game: 'game games play fun challenge | gioco giochi giocare sfida sfide',
+    test: 'test tests quiz quizzes exam exams score scores trivia | prova prove verifica punteggio',
+    cards: 'cards flashcards flashcard flash | carte schede scheda',
+    instrument: 'instrument instruments | strumento strumenti suonare',
+    voice: 'sing singing voice vocal vocals hum | canto cantare voce',
+    ear: 'ear listen listening | orecchio ascolto ascoltare',
+    intervals: 'interval intervals degree degrees | intervallo intervalli grado gradi',
+    rhythm: 'rhythm rhythms beat timing groove | ritmo ritmi',
+    reading: 'read reading notation | lettura leggere spartito',
+    theory: 'theory lesson lessons | teoria imparare lezione lezioni',
+    harmony: 'chord chords harmony | accordo accordi armonia',
+    reference: 'reference lookup chart | riferimento consultare',
+    practice: 'practice train training exercise exercises drill | esercizio esercizi allenamento allenare pratica esercitarsi esercitare',
+    daily: 'daily today | giornaliera giornaliere giornaliero oggi',
+    tuning: 'tune tuning | accordare accordatura'
+  };
+  var CONCEPT_NAME = {
+    game: ['Games', 'Giochi'], test: ['Tests', 'Test'], cards: ['Cards', 'Carte'], instrument: ['Instruments', 'Strumenti'],
+    voice: ['Singing', 'Canto'], ear: ['Ear', 'Orecchio'], intervals: ['Intervals', 'Intervalli'], rhythm: ['Rhythm', 'Ritmo'],
+    reading: ['Reading', 'Lettura'], theory: ['Theory', 'Teoria'], harmony: ['Harmony', 'Armonia'], reference: ['Reference', 'Riferimento'],
+    practice: ['Practice', 'Esercizi'], daily: ['Daily', 'Giornaliere'], tuning: ['Tuning', 'Accordatura']
+  };
+  // Whole sentences people type. Each one is rewritten into the words and tags the index understands.
+  // A word that starts with # matches tags only. Keys are lower case, no accents.
+  var PHRASES = {
+    'train my ear': 'ear training', 'learn chords': 'chords', 'keep time': 'tempo', 'read music': '#reading',
+    'sing in tune': 'pitch match', 'hold a note': 'road trip', 'find my range': 'vocal range', 'check my tempo': 'analyze'
+  };
+  // Italian keys are written without articles or apostrophes: "tenere il tempo" and "tenere tempo" both land on 'tenere tempo'.
+  var PHRASES_IT = {
+    'allenare orecchio': 'orecchio', 'allenare udito': 'orecchio', 'imparare accordi': 'accordi', 'studiare accordi': 'accordi',
+    'tenere tempo': 'metronomo', 'stare a tempo': 'metronomo', 'leggere musica': '#reading', 'leggere spartito': '#reading',
+    'cantare intonato': 'intonazione', 'trovare estensione': 'estensione', 'misurare estensione': 'estensione',
+    'mantenere nota': 'on the road', 'tenere nota': 'on the road'
+  };
+  var PHRASES_IT_KEYS = Object.keys(PHRASES_IT);
+  // Words the screens do not say out loud, per module. Added to the words that already find it.
+  var XTRA = {
+    tuner: 'capo tuning fork a440 strobe vibrato transposing cents diapason',
+    metro: 'tap ramp analyze rushing dragging son clave bossa swing groove accelerando',
+    'tool:piano': 'organ hammond leslie rhodes pedal pedals sustain harpsichord vibraphone glissando organo pedale clavicembalo vibrafono',
+    'tool:theremin': 'glide waveform vibrato snap',
+    'tool:drumkit': 'drum machine sequencer time signature swing subdivision triplets terzine suddivisione',
+    'tool:guitarchords': 'capo fingering fretboard clarinet sax saxophone capotasto diteggiatura tastiera clarinetto sassofono',
+    'tool:tonal': 'drone temperament just intonation solfege bordone temperamento solfeggio',
+    'tool:vocalrange': 'voice types soprano alto tenor bass warm-up warmup contralto tenore riscaldamento',
+    'tool:volume': 'decibel hearing loud niosh utilities utility strumenti utili udito rumore',
+    'tool:transpose': 'concert pitch trumpet sax horn utilities utility strumenti utili tromba',
+    'tool:progression': 'blues twelve bar turnaround dodici battute',
+    'tool:rhythmcards': 'syncopation triplets rests drill sincope terzine pause',
+    'exercise:notationcards': 'symbols bowing bending custom deck simboli',
+    'tool:musicquiz': 'trivia survival packs daily',
+    'tool:intervalref': 'unison ninth semitones tritone unisono nona semitoni tritono'
+  };
+  var GAME_KEYS = ['exercise:chordle', 'exercise:diadle', 'exercise:tonale', 'exercise:roadtrip', 'tool:musicquiz'];
+  var FOLDER_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+  // id, title key, English fallback, side, how to open it
+  var FOLDER_DEFS = [
+    ['folder:games', 'folder_games_title', 'GAMES', 'train', function () { setMode('practice'); enterGames(); }],
+    ['folder:ear', 'folder_ear_title', 'EAR TRAINING', 'train', function () { setMode('practice'); enterEarTraining(); }],
+    ['folder:train-rhythm', 'folder_rhythm_title', 'RHYTHM TRAINING', 'train', function () { setMode('practice'); enterRhythm(); }],
+    ['folder:reading', 'folder_reading_title', 'READING', 'train', function () { setMode('practice'); enterReading(); }],
+    ['folder:pitch', 'folder_pitch_title', 'PITCH & SOUND', 'tools', function () { setMode('tools'); enterToolFolder('pitch'); }],
+    ['folder:harmony', 'folder_harmony_title', 'HARMONY', 'tools', function () { setMode('tools'); enterToolFolder('harmony'); }],
+    ['folder:tools-rhythm', 'folder_rhythm_tools_title', 'RHYTHM', 'tools', function () { setMode('tools'); enterToolFolder('rhythm'); }],
+    ['folder:reference', 'folder_reference_title', 'REFERENCE', 'tools', function () { setMode('tools'); enterToolFolder('reference'); }],
+    ['folder:utilities', 'folder_utilities_title', 'UTILITIES', 'tools', function () { setMode('tools'); enterToolFolder('utilities'); }]
+  ];
+  var CONCEPT = {}, CONCEPT_WORDS = [];
+  Object.keys(CONCEPT_SRC).forEach(function (tag) {
+    CONCEPT_SRC[tag].split('|').forEach(function (part) {
+      norm(part).split(/\s+/).filter(Boolean).forEach(function (w) { CONCEPT[w] = tag; CONCEPT_WORDS.push(w); });
+    });
+  });
+  var PH_KEYS = Object.keys(PHRASES).sort(function (a, b) { return b.length - a.length; });
+  // Typed word -> tag. Exact word, then plural, then the start of a word (4 letters or more, and only when every word it could be maps to one tag).
+  function conceptOf(tk) {
+    if (!tk || tk.charAt(0) === '#') return null;
+    if (CONCEPT[tk]) return CONCEPT[tk];
+    if (tk.length > 3 && tk.charAt(tk.length - 1) === 's' && CONCEPT[tk.slice(0, -1)]) return CONCEPT[tk.slice(0, -1)];
+    if (tk.length >= 4) {
+      var tag = null;
+      for (var i = 0; i < CONCEPT_WORDS.length; i++) {
+        var w = CONCEPT_WORDS[i];
+        if (w.length > tk.length && w.indexOf(tk) === 0) { if (tag && tag !== CONCEPT[w]) return null; tag = CONCEPT[w]; }
+      }
+      return tag;
+    }
+    return null;
+  }
+  // Ids of things inside screens get their tags from the id prefix.
+  function tagsFor(id) {
+    var s = TAGS[id];
+    if (s == null) {
+      var p = id.split(':'), k = p[0];
+      if (k === 'sg') s = (p[1] === 'theory' ? 'theory' : p[1] === 'voice' ? 'voice' : 'instrument') + ' | reference';
+      else if (k === 'cs') s = 'reference instrument | harmony';
+      else if (k === 'pt') s = 'instrument |';
+      else if (k === 'tn') s = 'tuning instrument |';
+      else if (k === 'sc') s = 'theory intervals | reference';
+      else if (k === 'gr') s = 'rhythm |';
+      else if (k === 'ts') s = 'rhythm theory |';
+      else if (k === 'dk') s = 'instrument rhythm |';
+      else if (k === 'pg') s = 'harmony theory |';
+      else if (k === 'vr') s = 'voice reference |';
+      else s = ' |';
+    }
+    var a = s.split('|');
+    return { mt: a[0].split(/\s+/).filter(Boolean), rt: (a[1] || '').split(/\s+/).filter(Boolean) };
+  }
+  // Main tag on a top-level module beats a main tag on something inside a screen.
+  function tagPts(it, tag) {
+    if (it.mt.indexOf(tag) > -1) return it.top ? 96 : 70;
+    if (it.rt.indexOf(tag) > -1) return it.top ? 40 : 20;
+    return 0;
+  }
+  function tokPts(it, tk) {
+    if (tk.charAt(0) === '#') return tagPts(it, tk.slice(1));
+    var s = tokScore(it, tk), cg = conceptOf(tk);
+    if (cg) { var c = tagPts(it, cg); s = (s && c) ? Math.max(s, c) + 10 : Math.max(s, c); }
+    return s;
+  }
+  function rewrite(q) {
+    var s = ' ' + norm(q).replace(/\s+/g, ' ').trim() + ' ';
+    for (var i = 0; i < PH_KEYS.length; i++) {
+      var k = ' ' + PH_KEYS[i] + ' ';
+      if (s.indexOf(k) > -1) { s = s.replace(k, ' ' + PHRASES[PH_KEYS[i]] + ' '); return s.trim(); }
+    }
+    // Italian sentences carry articles and apostrophes ("allenare l'orecchio"). Drop those, then try the Italian keys.
+    var si = ' ' + s.replace(/['\u2019]/g, ' ').replace(/\s+/g, ' ').replace(/ (il|lo|la|le|gli|i|l|un|una|uno|mia|mio|miei|mie|di|del|della|dei|delle) /g, ' ').replace(/ (il|lo|la|le|gli|i|l|un|una|uno|mia|mio|miei|mie|di|del|della|dei|delle) /g, ' ').trim() + ' ';
+    for (var j = 0; j < PHRASES_IT_KEYS.length; j++) {
+      var ki = ' ' + PHRASES_IT_KEYS[j] + ' ';
+      if (si.indexOf(ki) > -1) return si.replace(ki, ' ' + PHRASES_IT[PHRASES_IT_KEYS[j]] + ' ').trim();
+    }
+    return s.trim();
+  }
+  // One typed category word gets a header with a count, like "Games · 5".
+  function groupInfo(q) {
+    var toks = norm(q).split(/\s+/).filter(Boolean);
+    if (toks.length !== 1) return null;
+    var tag = conceptOf(toks[0]); if (!tag) return null;
+    var n = 0; index().forEach(function (it) { if (it.top && it.kind !== 'folder' && it.mt.indexOf(tag) > -1) n++; });
+    return n > 1 ? { name: bi(CONCEPT_NAME[tag][0], CONCEPT_NAME[tag][1]), n: n } : null;
+  }
+  window._hvsMeta = function () { return { concept: CONCEPT_SRC, tags: TAGS, names: CONCEPT_NAME }; };
   var COL = { tuner: '#5ee2ff', metro: '#ffd166', tools: '#34d399', train: '#b8a3ff' };
   // The same four icons as the bottom tab bar.
   var TABIC = {
@@ -142771,7 +142950,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="1.5"/><line x1="7" y1="5" x2="7" y2="19"/><line x1="12" y1="5" x2="12" y2="19"/><rect x="4.5" y="5" width="3" height="8" rx="0.5" fill="currentColor" stroke="none"/></svg>',
     train: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>'
   };
-  function typeTag(meta) { return (meta.type === 'EXERCISE') ? T('ss_t_train', 'Train') : T('ss_t_tool', 'Tool'); }
+  function typeTag(meta, k) { if (GAME_KEYS.indexOf(k) > -1) return bi('Game', 'Gioco'); return (meta.type === 'EXERCISE') ? T('ss_t_train', 'Train') : T('ss_t_tool', 'Tool'); }
   /* ── Deep index: things inside screens (charts, guide chapters, tunings, scales, grooves …) ── */
   var SG = [
     ['theory', 'THEORY', 'TEORIA', [['DYNAMICS','DINAMICA'],['TEMPO','TEMPO'],['ARTICULATION','ARTICOLAZIONE'],['NOTATION','NOTAZIONE'],['INTERVALS','INTERVALLI'],['HARMONY','ARMONIA'],['CADENCES','CADENZE'],['MODULATION','MODULAZIONE'],['MODES','MODI']]],
@@ -142929,25 +143108,31 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     if (_index && _indexLang === _key) return _index;
     var list = [];
     var _dk = {};
+    var _deepOn = false;
     function add(id, label, tag, launch, icon, col, kind, alias, pri) {
       if (_dk[label + '|' + tag]) return; _dk[label + '|' + tag] = 1;
-      var al = (ALIAS[id] || '') + ' ' + (alias || '');
-      list.push({ id: id, label: label, tag: tag, kind: kind || 'tool', pri: pri == null ? 2 : pri, launch: launch, icon: icon || '', col: col || 'var(--accent)', hay: norm(label), lw: norm(label).split(/[^a-z0-9]+/).filter(Boolean), aw: norm(al).split(/[^a-z0-9]+/).filter(Boolean) });
+      var al = (ALIAS[id] || '') + ' ' + (XTRA[id] || '') + ' ' + (alias || ''), tg = tagsFor(id);
+      list.push({ id: id, label: label, tag: tag, kind: kind || 'tool', pri: pri == null ? 2 : pri, launch: launch, icon: icon || '', col: col || 'var(--accent)', hay: norm(label), lw: norm(label).split(/[^a-z0-9]+/).filter(Boolean), aw: norm(al).split(/[^a-z0-9]+/).filter(Boolean), mt: tg.mt, rt: tg.rt, top: !_deepOn });
     }
     add('tuner', sentence(T('mode_tuner', 'Tuner')), T('ss_t_tab', 'Tab'), function () { setMode('tuner'); }, TABIC.tuner, COL.tuner, 'tab');
     add('metro', sentence(T('mode_metro', 'Metro')), T('ss_t_tab', 'Tab'), function () { setMode('metronome'); }, TABIC.metro, COL.metro, 'tab');
+    FOLDER_DEFS.forEach(function (f) {
+      var tc = window._hv2TitleCase || sentence, trainSide = f[3] === 'train';
+      add(f[0], tc(T(f[1], f[2])), bi('Folder', 'Cartella') + ' · ' + sentence(T(trainSide ? 'mode_train' : 'mode_tools', trainSide ? 'Train' : 'Tools')), f[4], FOLDER_ICON, trainSide ? COL.train : COL.tools, 'folder', '', 2);
+    });
     try {
       Object.keys(FAV_META).forEach(function (k) {
         var m = FAV_META[k];
         if (!m || typeof m.launch !== 'function') return;
-        add(k, nameOf(k, m), typeTag(m), function () { m.launch(); }, m.icon, m.type === 'EXERCISE' ? COL.train : COL.tools, m.type === 'EXERCISE' ? 'train' : 'tool');
+        add(k, nameOf(k, m), typeTag(m, k), function () { m.launch(); }, m.icon, m.type === 'EXERCISE' ? COL.train : COL.tools, m.type === 'EXERCISE' ? 'train' : 'tool');
       });
     } catch (e) {}
-    try { deepIndex(add); } catch (e) { try { console.warn('deep index', e); } catch (e2) {} }
+    try { _deepOn = true; deepIndex(add); } catch (e) { try { console.warn('deep index', e); } catch (e2) {} }
+    _deepOn = false;
     var seen = {};
     list.forEach(function (x) { seen[x.label] = (seen[x.label] || 0) + 1; });
     var _SFX = { gr: ['groove', 'groove'], dk: ['drums', 'batteria'], pg: ['changes', 'accordi'] };
-    list.forEach(function (x) { if (seen[x.label] > 1) { var _p = _SFX[x.id.slice(0, 2)], _w = _p ? _p[lang() === 'it' ? 1 : 0] : x.tag.split(' · ')[0]; x.label = _p && lang() !== 'it' ? x.label + ' ' + _w : x.label + ' (' + _w + ')'; x.hay = norm(x.label); x.lw = x.hay.split(/[^a-z0-9]+/).filter(Boolean); } });
+    list.forEach(function (x) { if (seen[x.label] > 1 && x.kind !== 'folder') { var _p = _SFX[x.id.slice(0, 2)], _w = _p ? _p[lang() === 'it' ? 1 : 0] : x.tag.split(' · ')[0]; x.label = _p && lang() !== 'it' ? x.label + ' ' + _w : x.label + ' (' + _w + ')'; x.hay = norm(x.label); x.lw = x.hay.split(/[^a-z0-9]+/).filter(Boolean); } });
     _index = list; _indexLang = _key;
     return list;
   }
@@ -143002,15 +143187,24 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     return 0;
   }
   window._hvsIndex = function () { return index(); };
-  function search(q, n) { var r = searchPass(q, n, false); return r.length < 3 ? searchPass(q, n, true) : r; }
-  function searchPass(q, n, fz) {
-    var toks = norm(q).split(/\s+/).filter(Boolean);
+  window._hvsSearch = function (q, n) { return search(q, n || 14); };
+  function search(q, n) {
+    var r = searchPass(q, n, false, false);
+    // A phrase or a concept word that already found something needs no loose matches after it.
+    var plain = norm(q).replace(/\s+/g, ' ').trim(), asked = rewrite(q) !== plain || !!conceptOf(plain);
+    if (r.length < 3 && !(r.length && asked)) r = searchPass(q, n, true, false);
+    // Two words and nothing matches both: show what matches one of them, after the best fits.
+    if (r.length < 3 && !(r.length && asked) && /\s/.test(plain)) { var r2 = searchPass(q, n, true, true); if (r2.length > r.length) r = r2; }
+    return r;
+  }
+  function searchPass(q, n, fz, any) {
+    var toks = rewrite(q).split(' ').filter(Boolean);
     if (!toks.length) return [];
     var out = [], alts = toks.map(function (tk) { return SYN[tk] || []; });
     index().forEach(function (it) {
-      var total = 0;
+      var total = 0, hit = 0;
       for (var i = 0; i < toks.length; i++) {
-        var tk = toks[i], s = tokScore(it, tk);
+        var tk = toks[i], s = tokPts(it, tk);
         if (!s) {
           var al = alts[i];
           for (var k = 0; k < al.length && !s; k++) {
@@ -143018,10 +143212,11 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
             else s = Math.round(tokScore(it, al[k]) * 0.8);
           }
         }
-        if (!s && fz) s = fuzzyScore(it, tk);
-        if (!s) return;
-        total += s;
+        if (!s && fz && tk.charAt(0) !== '#') s = fuzzyScore(it, tk);
+        if (!s) { if (any) continue; return; }
+        total += s; hit++;
       }
+      if (!hit) return;
       out.push({ it: it, s: total + it.pri * 7 - it.label.length * 0.08 });
     });
     out.sort(function (x, y) { return y.s - x.s || x.it.label.localeCompare(y.it.label); });
@@ -143286,7 +143481,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     srHit.hidden = true; srBody.classList.remove('sr-q');
     srBody.innerHTML = h; srSel = -1; srBody.scrollTop = 0; fit(!srOpen);
   }
-  var KIND_LABEL = function (k) { return k === 'guide' ? T('sr_guide', 'Guide') : k === 'tool' ? sentence(T('mode_tools', 'Tools')) : k === 'train' ? sentence(T('mode_train', 'Train')) : T('sr_tabs', 'Tabs'); };
+  var KIND_LABEL = function (k) { return k === 'folder' ? bi('Folders', 'Cartelle') : k === 'guide' ? T('sr_guide', 'Guide') : k === 'tool' ? sentence(T('mode_tools', 'Tools')) : k === 'train' ? sentence(T('mode_train', 'Train')) : T('sr_tabs', 'Tabs'); };
   function renderResults(q, keepFilter) {
     if (!keepFilter) { srAll = search(q, 14); srFilter = 'all'; }
     var r = srFilter === 'all' ? srAll : srAll.filter(function (x) { return x.kind === srFilter; });
@@ -143300,11 +143495,16 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
         h += '</div>';
       }
       var inner = ''; r.forEach(function (it, i) { inner += row(it, i, q); });
-      h += listWrap(inner);
+      var gi = srFilter === 'all' ? groupInfo(q) : null;
+      if (gi) h += '<div class="sr-sec"><div class="sr-h">' + esc((gi.name + ' · ' + gi.n).toUpperCase()) + '</div>' + listWrap(inner) + '</div>';
+      else h += listWrap(inner);
     } else {
       var sug = ['tuner', 'metro', 'tool:piano', 'exercise:scales'].map(byId).filter(Boolean), inner2 = '';
       sug.forEach(function (it, i) { inner2 += row(it, i, ''); });
-      h = '<div class="sr-none"><div class="sr-ni">' + SEARCH + '</div><div class="sr-nt">' + esc(fmt(T('sr_none', 'Nothing found for "{q}"'), { q: q })) + '</div></div>' +
+      var chipH = '<div class="sr-sec"><div class="sr-h">' + esc(bi('BROWSE', 'SFOGLIA')) + '</div><div class="sr-fl">';
+      bi('games|tests|instruments|singing|rhythm|theory', 'giochi|test|strumenti|canto|ritmo|teoria').split('|').forEach(function (c) { chipH += '<button type="button" class="sr-f" data-chip="' + esc(c) + '">' + esc(sentence(c)) + '</button>'; });
+      chipH += '</div></div>';
+      h = '<div class="sr-none"><div class="sr-ni">' + SEARCH + '</div><div class="sr-nt">' + esc(fmt(T('sr_none', 'Nothing found for "{q}"'), { q: q })) + '</div></div>' + chipH +
         '<div class="sr-sec"><div class="sr-h">' + esc(T('sr_try', 'TRY')) + '</div>' + listWrap(inner2) + '</div>';
       srList = sug; srSel = -1;
     }
@@ -143411,6 +143611,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     srBody.addEventListener('click', function (e) {
       var b = e.target.closest && e.target.closest('button'); if (!b) return;
       if (b.hasAttribute('data-f')) { srFilter = b.getAttribute('data-f'); renderResults(srQ, true); return; }
+      if (b.hasAttribute('data-chip')) { var cq = b.getAttribute('data-chip'); srIn.value = cq; srQ = cq; srClear.classList.add('on'); srPh.classList.add('gone'); renderResults(cq); return; }
       if (b.hasAttribute('data-resume')) { pick(byId(progState.lastTool.k)); return; }
       if (b.hasAttribute('data-go')) { var md = b.getAttribute('data-go'); buzz(); closeSearch(); setTimeout(function () { try { setMode(md); } catch (er) {} }, 210); return; }
       if (b.classList.contains('sr-r')) pick(srList[+b.getAttribute('data-i')]);

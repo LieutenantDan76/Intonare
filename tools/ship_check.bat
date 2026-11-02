@@ -34,7 +34,7 @@ echo  python: %PY%
 echo ============================================================
 
 echo.
-echo [1/7] HTML integrity (size / shrink-vs-HEAD / end tag / braces)...
+echo [1/8] HTML integrity (size / shrink-vs-HEAD / end tag / braces)...
 "%PY%" tools\audits\intonare_html_integrity.py Intonare.html
 if errorlevel 1 (
   echo.
@@ -43,7 +43,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/7] Regression sentinel...
+echo [2/8] Regression sentinel...
 "%PY%" tools\audits\intonare_regression_sentinel.py Intonare.html
 if errorlevel 1 (
   echo.
@@ -52,7 +52,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [3/7] Changelog gate...
+echo [3/8] Changelog gate...
 "%PY%" tools\audits\intonare_changelog_gate.py Intonare.html CHANGELOG.md
 if errorlevel 1 (
   echo.
@@ -61,7 +61,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [4/7] Achievement audit...
+echo [4/8] Achievement audit...
 "%PY%" tools\audits\intonare_achievement_audit.py
 if errorlevel 1 (
   echo.
@@ -70,7 +70,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [5/7] Backup audit...
+echo [5/8] Backup audit...
 "%PY%" tools\audits\intonare_backup_audit.py Intonare.html
 if errorlevel 1 (
   echo.
@@ -79,7 +79,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [6/7] Drum preset audit...
+echo [6/8] Drum preset audit...
 "%PY%" tools\audits\intonare_drum_preset_audit.py Intonare.html
 if errorlevel 1 (
   echo.
@@ -88,12 +88,26 @@ if errorlevel 1 (
 )
 
 echo.
-echo [7/7] US spelling audit...
+echo [7/8] US spelling audit...
 "%PY%" tools\audits\intonare_us_spelling_audit.py Intonare.html
 if errorlevel 1 (
   echo.
   echo FAILED: US spelling audit. Do not ship.
   exit /b 1
+)
+
+echo.
+echo [8/8] Search audit (real searches against the app)...
+"%PY%" -c "import playwright" >nul 2>&1
+if errorlevel 1 (
+  echo WARNING: Playwright not installed, search audit skipped. pip install playwright, then playwright install chromium.
+) else (
+  "%PY%" tools\audits\intonare_search_audit.py Intonare.html
+  if errorlevel 1 (
+    echo.
+    echo FAILED: search audit. Do not ship.
+    exit /b 1
+  )
 )
 
 echo.
