@@ -142775,7 +142775,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
      A new module needs a line in TAGS. intonare_search_audit.py fails the ship gate when
      a top-level module has none, or when a tag has no Italian words. */
   var TAGS = {
-    tuner: 'tuning instrument | practice', metro: 'rhythm | practice',
+    tuner: 'tuning instrument | practice', metro: 'rhythm | practice', settings: ' |',
     'exercise:chordle': 'game test ear harmony | daily', 'exercise:diadle': 'game test ear intervals | theory',
     'exercise:tonale': 'game test ear | daily', 'exercise:roadtrip': 'game voice ear | practice',
     'tool:musicquiz': 'game test theory | daily',
@@ -142800,15 +142800,16 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     game: 'game games play fun challenge | gioco giochi giocare sfida sfide',
     test: 'test tests quiz quizzes exam exams score scores trivia | prova prove verifica punteggio',
     cards: 'cards flashcards flashcard flash | carte schede scheda',
-    instrument: 'instrument instruments | strumento strumenti suonare',
+    instrument: 'instrument instruments | strumento suonare',
     voice: 'sing singing voice vocal vocals hum | canto cantare voce',
-    ear: 'ear listen listening | orecchio ascolto ascoltare',
+    ear: 'ear listen listening dictation | orecchio ascolto ascoltare dettato',
     intervals: 'interval intervals degree degrees | intervallo intervalli grado gradi',
     rhythm: 'rhythm rhythms beat timing groove | ritmo ritmi',
     reading: 'read reading notation | lettura leggere spartito',
     theory: 'theory lesson lessons | teoria imparare lezione lezioni',
     harmony: 'chord chords harmony | accordo accordi armonia',
     reference: 'reference lookup chart | riferimento consultare',
+    tools: 'tools tool toolbox | strumenti',
     practice: 'practice train training exercise exercises drill | esercizio esercizi allenamento allenare pratica esercitarsi esercitare',
     daily: 'daily today | giornaliera giornaliere giornaliero oggi',
     tuning: 'tune tuning | accordare accordatura'
@@ -142817,41 +142818,44 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     game: ['Games', 'Giochi'], test: ['Tests', 'Test'], cards: ['Cards', 'Carte'], instrument: ['Instruments', 'Strumenti'],
     voice: ['Singing', 'Canto'], ear: ['Ear', 'Orecchio'], intervals: ['Intervals', 'Intervalli'], rhythm: ['Rhythm', 'Ritmo'],
     reading: ['Reading', 'Lettura'], theory: ['Theory', 'Teoria'], harmony: ['Harmony', 'Armonia'], reference: ['Reference', 'Riferimento'],
-    practice: ['Practice', 'Esercizi'], daily: ['Daily', 'Giornaliere'], tuning: ['Tuning', 'Accordatura']
+    tools: ['Tools', 'Strumenti'], practice: ['Practice', 'Esercizi'], daily: ['Daily', 'Giornaliere'], tuning: ['Tuning', 'Accordatura']
   };
   // Whole sentences people type. Each one is rewritten into the words and tags the index understands.
   // A word that starts with # matches tags only. Keys are lower case, no accents.
   var PHRASES = {
     'train my ear': 'ear training', 'learn chords': 'chords', 'keep time': 'tempo', 'read music': '#reading',
-    'sing in tune': 'pitch match', 'hold a note': 'road trip', 'find my range': 'vocal range', 'check my tempo': 'analyze'
+    'do re mi': 'solfege', 'sing in tune': 'pitch match', 'hold a note': 'road trip', 'find my range': 'vocal range', 'check my tempo': 'analyze'
   };
   // Italian keys are written without articles or apostrophes: "tenere il tempo" and "tenere tempo" both land on 'tenere tempo'.
   var PHRASES_IT = {
     'allenare orecchio': 'orecchio', 'allenare udito': 'orecchio', 'imparare accordi': 'accordi', 'studiare accordi': 'accordi',
     'tenere tempo': 'metronomo', 'stare a tempo': 'metronomo', 'leggere musica': '#reading', 'leggere spartito': '#reading',
     'cantare intonato': 'intonazione', 'trovare estensione': 'estensione', 'misurare estensione': 'estensione',
-    'mantenere nota': 'on the road', 'tenere nota': 'on the road'
+    'mantenere nota': 'on the road', 'tenere nota': 'on the road', 'strumenti musicali': 'strumento'
   };
   var PHRASES_IT_KEYS = Object.keys(PHRASES_IT);
   // Words the screens do not say out loud, per module. Added to the words that already find it.
   var XTRA = {
+    settings: 'settings preferences options theme dark light mode appearance language backup restore export import achievements streak support account notifications impostazioni tema scuro chiaro lingua ripristino obiettivi',
+    'exercise:chordle': 'wordle', 'exercise:diadle': 'wordle melody melodies', 'exercise:relpitch': 'absolute perfect', 'exercise:roadtrip': 'songs song canzoni',
     tuner: 'capo tuning fork a440 strobe vibrato transposing cents diapason',
     metro: 'tap ramp analyze rushing dragging son clave bossa swing groove accelerando',
-    'tool:piano': 'organ hammond leslie rhodes pedal pedals sustain harpsichord vibraphone glissando organo pedale clavicembalo vibrafono',
+    'tool:piano': 'organ hammond leslie rhodes pedal pedals sustain harpsichord vibraphone glissando organo pedale clavicembalo vibrafono songs song bank pieces riffs overtones drawbars brani canzoni',
     'tool:theremin': 'glide waveform vibrato snap',
     'tool:drumkit': 'drum machine sequencer time signature swing subdivision triplets terzine suddivisione',
     'tool:guitarchords': 'capo fingering fretboard clarinet sax saxophone capotasto diteggiatura tastiera clarinetto sassofono',
-    'tool:tonal': 'drone temperament just intonation solfege bordone temperamento solfeggio',
+    'tool:tonal': 'drone temperament just intonation overtone overtones harmonic series partials ratios solfege tonic bordone temperamento solfeggio tonica',
     'tool:vocalrange': 'voice types soprano alto tenor bass warm-up warmup contralto tenore riscaldamento',
-    'tool:volume': 'decibel hearing loud niosh utilities utility strumenti utili udito rumore',
-    'tool:transpose': 'concert pitch trumpet sax horn utilities utility strumenti utili tromba',
-    'tool:progression': 'blues twelve bar turnaround dodici battute',
+    'tool:volume': 'decibel hearing loud niosh utilities utility utili udito rumore',
+    'tool:transpose': 'concert pitch trumpet sax horn utilities utility utili tromba',
+    'tool:progression': 'blues twelve bar turnaround dodici battute songs song canzoni',
     'tool:rhythmcards': 'syncopation triplets rests drill sincope terzine pause',
     'exercise:notationcards': 'symbols bowing bending custom deck simboli',
     'tool:musicquiz': 'trivia survival packs daily',
-    'tool:intervalref': 'unison ninth semitones tritone unisono nona semitoni tritono'
+    'tool:intervalref': 'unison ninth semitones tritone songs song mnemonic unisono nona semitoni tritono canzoni'
   };
   var GAME_KEYS = ['exercise:chordle', 'exercise:diadle', 'exercise:tonale', 'exercise:roadtrip', 'tool:musicquiz'];
+  var SETTINGS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   var FOLDER_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
   // id, title key, English fallback, side, how to open it
   var FOLDER_DEFS = [
@@ -142909,6 +142913,8 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   }
   // Main tag on a top-level module beats a main tag on something inside a screen.
   function tagPts(it, tag) {
+    // "tools" is a side of the app, not a topic: every top-level Tools item and the five Tools folders.
+    if (tag === 'tools') return !it.top ? 0 : it.kind === 'tool' ? 60 : /^folder:(pitch|harmony|tools-rhythm|reference|utilities)$/.test(it.id) ? 66 : 0;
     if (it.mt.indexOf(tag) > -1) return it.top ? 96 : 70;
     if (it.rt.indexOf(tag) > -1) return it.top ? 40 : 20;
     return 0;
@@ -142916,6 +142922,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   function tokPts(it, tk) {
     if (tk.charAt(0) === '#') return tagPts(it, tk.slice(1));
     var s = tokScore(it, tk), cg = conceptOf(tk);
+    if (cg === 'tools') return tagPts(it, cg); // a side of the app: no name hits from guide chapters
     if (cg) { var c = tagPts(it, cg); s = (s && c) ? Math.max(s, c) + 10 : Math.max(s, c); }
     return s;
   }
@@ -142938,7 +142945,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var toks = norm(q).split(/\s+/).filter(Boolean);
     if (toks.length !== 1) return null;
     var tag = conceptOf(toks[0]); if (!tag) return null;
-    var n = 0; index().forEach(function (it) { if (it.top && it.kind !== 'folder' && it.mt.indexOf(tag) > -1) n++; });
+    var n = 0; index().forEach(function (it) { if (it.top && it.kind !== 'folder' && tagPts(it, tag) >= 60) n++; });
     return n > 1 ? { name: bi(CONCEPT_NAME[tag][0], CONCEPT_NAME[tag][1]), n: n } : null;
   }
   window._hvsMeta = function () { return { concept: CONCEPT_SRC, tags: TAGS, names: CONCEPT_NAME }; };
@@ -143116,6 +143123,7 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     }
     add('tuner', sentence(T('mode_tuner', 'Tuner')), T('ss_t_tab', 'Tab'), function () { setMode('tuner'); }, TABIC.tuner, COL.tuner, 'tab');
     add('metro', sentence(T('mode_metro', 'Metro')), T('ss_t_tab', 'Tab'), function () { setMode('metronome'); }, TABIC.metro, COL.metro, 'tab');
+    add('settings', sentence(T('mode_settings', 'Settings')), T('ss_t_tab', 'Tab'), function () { openSettings(); }, SETTINGS_ICON, COL.tools, 'tab');
     FOLDER_DEFS.forEach(function (f) {
       var tc = window._hv2TitleCase || sentence, trainSide = f[3] === 'train';
       add(f[0], tc(T(f[1], f[2])), bi('Folder', 'Cartella') + ' · ' + sentence(T(trainSide ? 'mode_train' : 'mode_tools', trainSide ? 'Train' : 'Tools')), f[4], FOLDER_ICON, trainSide ? COL.train : COL.tools, 'folder', '', 2);
@@ -143555,9 +143563,10 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
   // Placeholder: says "Search the app", then offers real things to try. Runs only while the card is open and empty.
   function phTick() {
     if (!srOpen || srIn.value) return;
-    var tries = ['tuner', 'exercise:scales', 'tool:cof', 'metro', 'tool:drumkit'].map(byId).filter(Boolean);
+    // Plain words that teach what search understands (a category, a voice word, a tool) next to real module names.
+    var tries = bi('tuner|sing|games|tests|ear training|tools|organ|chords|drone', 'accordatore|canto|giochi|test|orecchio|strumenti|organo|accordi|bordone').split('|');
     var base = T('ss_search_ph', 'Search the app');
-    var txt = (srPhI % (tries.length + 1) === 0) ? base : fmt(T('sr_try_fmt', 'Try "{q}"'), { q: tries[(srPhI % (tries.length + 1)) - 1].label.toLowerCase() });
+    var txt = (srPhI % (tries.length + 1) === 0) ? base : fmt(T('sr_try_fmt', 'Try "{q}"'), { q: tries[(srPhI % (tries.length + 1)) - 1] });
     srPhI++;
     srPh.classList.remove('in'); srPh.classList.add('out');
     setTimeout(function () { srPh.textContent = txt; srPh.classList.remove('out'); void srPh.offsetWidth; srPh.classList.add('in'); }, 160);

@@ -20,8 +20,13 @@ Source of truth for module facts: the module tours in `TOURS` (Intonare.html aro
 - Removed concept words: "hearing" (ear), "learn" (theory), "scale" (Theremin extra words). Not used as concept words: "tempo", "keys", "pitch". "daily" is not a game word. "training" was added to practice. The British "practise" was left out on purpose (US spelling gate); fuzzy match covers it.
 - The "rhythm" test checks the top 5 for both rhythm folders, not first place.
 - The header above a group of results shows a count, for example "GAMES - 5".
-- Known caveats: "theory" ranks the Survival Guide first. "tuning" ranks the Tuner first, ahead of the guide chapter "Tuning". The Italian phrase list is short.
-- The test list now lives in `tools/audits/search_queries.json` (72 queries) and runs through `tools/audits/intonare_search_audit.py` in a real headless browser. `tools/ship_check.bat` runs it as step 8 of 8.
+- "tools" (and "tool", "toolbox"; Italian "strumenti") is a side of the app, not a topic. It lists the five Tools folders first, then every top-level tool. It has no tag in the table. In Italian, "strumento" still means instrument.
+- The cycling placeholder in the search box now rotates plain words (tuner, sing, games, tests, ear training, tools, chords, drone; Italian twins) so people learn what search understands.
+- Settings is a searchable item (kind tab, no topic tags, words only: theme, dark mode, language, backup, achievements, streak, support). The audit exempts it from the main-tag rule, like the Utilities folder.
+- Added words: wordle (Chordle, Diadle), dictation (ear), tonic and do re mi (Tonal Center), melody (Diadle), absolute (Relative Pitch).
+- Songs: Piano (its Song Bank), Road Trip (scenic route), Progression and Interval Reference (cards name songs). Perfect or absolute pitch: Relative Pitch first. Overtones and harmonic series: Tonal Center (just intonation) and Piano (organ drawbars). The Scales tool has no overtone text in the app, so it is not mapped.
+- Known caveats: "song" (singular) still ranks the Songo groove first, because its name starts with those letters. "theory" ranks the Survival Guide first. "tuning" ranks the Tuner first, ahead of the guide chapter "Tuning". The Italian phrase list is short.
+- The test list now lives in `tools/audits/search_queries.json` (90 queries) and runs through `tools/audits/intonare_search_audit.py` in a real headless browser. `tools/ship_check.bat` runs it as step 8 of 8.
 
 ## Ranking
 

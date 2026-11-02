@@ -48,7 +48,7 @@ def main() -> int:
             for t in it["mt"] + it["rt"]:
                 if t not in known:
                     fails.append(f"{it['id']}: unknown tag '{t}'")
-            if it["top"] and not it["mt"] and it["id"] != "folder:utilities":
+            if it["top"] and not it["mt"] and it["id"] not in ("folder:utilities", "settings"):  # these two have no topic, only words
                 fails.append(f"{it['id']}: top-level module with no main tags (add a line to TAGS)")
         fav = pg.evaluate("Object.keys(FAV_META)")
         have = {i["id"] for i in items}
