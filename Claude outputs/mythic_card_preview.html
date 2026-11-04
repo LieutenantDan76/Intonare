@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mythic card preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--sat-top:0px}
+body{margin:0;background:#0a0a12;color:#eef0f7;font-family:'JetBrains Mono',monospace;min-height:100vh}
+.bar{position:fixed;bottom:0;left:0;right:0;padding:12px;display:flex;flex-wrap:wrap;gap:8px;background:#14141f;border-top:1px solid #2e2e48;z-index:9999}
+button{background:#28283e;color:#eef0f7;border:1px solid #2e2e48;border-radius:8px;padding:10px 12px;font:600 11px 'JetBrains Mono',monospace;letter-spacing:.06em}
+.hint{padding:90px 16px;color:#9899ad;font-size:11px;line-height:1.6}
+@keyframes dtMythicSweep { 0%{ left:-70% } 100%{ left:160% } }
+@keyframes dtMythicPulse { 0%,100%{ filter: drop-shadow(0 0 4px #ff4010) } 50%{ filter: drop-shadow(0 0 14px #ff6030) drop-shadow(0 0 28px rgba(255,80,20,.6)) } }
+@keyframes dtToastInTop { from{ opacity:0; transform:translateY(-14px) scale(.88) } to{ opacity:1; transform:none } }
+@keyframes toastOut { from { opacity:1; transform:translateY(0) scale(1) } to { opacity:0; transform:translateY(6px) scale(.95) } }
+#dtMythicCard { position:fixed; top:calc(14px + var(--sat-top)); left:50%; transform:translateX(-50%); z-index:9100; pointer-events:none; display:none; min-width:220px; max-width:86vw }
+.dt-mythic-inner { background:linear-gradient(145deg,#1a0808,#110a0a,#1a0a08); border:1px solid rgba(255,80,40,.75); border-radius:20px; padding:14px 22px 12px; box-shadow:0 0 0 1px rgba(255,80,40,.18),0 12px 40px rgba(0,0,0,.75),0 0 40px rgba(255,60,20,.28),inset 0 1px 0 rgba(255,100,40,.3); position:relative; overflow:hidden; text-align:center }
+.dt-mythic-inner::before { content:''; position:absolute; top:0; left:-100%; width:55%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,80,40,.16),transparent); animation:dtMythicSweep 1.8s ease-in-out .3s infinite }
+.dt-mythic-inner::after  { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,#ff5020,transparent); opacity:.9 }
+.dt-mythic-icon   { font-size:24px; line-height:1; margin-bottom:6px; display:block; animation:dtMythicPulse 1.4s ease-in-out infinite }
+.dt-mythic-title  { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:.95; letter-spacing:.14em; color:#ff6030; text-shadow:0 0 20px rgba(255,80,20,.65) }
+.dt-mythic-sub    { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:.28em; color:rgba(255,120,60,.65); margin-top:2px }
+.dt-mythic-div    { height:1px; background:linear-gradient(90deg,transparent,rgba(255,80,40,.45),transparent); margin:9px 0 8px }
+.dt-mythic-streak { font-size:8px; letter-spacing:.22em; color:rgba(255,120,60,.6); text-transform:uppercase }
+.dt-mythic-unlock { font-size:7.5px; letter-spacing:.18em; color:rgba(182,242,91,.75); margin-top:7px; text-transform:uppercase }
+</style></head><body>
+<div class="hint">Mythic card, as it looks at streak 40. Pick a version and press the button.<br><br>
+OLD = the card before today. NEW = with the award on the quip line.<br>
+The unlock line only shows the first time you ever reach 40.</div>
+<div id="dtMythicCard"><div class="dt-mythic-inner" id="dtMythicInner">
+  <span class="dt-mythic-icon">&#9876;</span>
+  <div class="dt-mythic-title">MYTHIC</div>
+  <div class="dt-mythic-sub">STREAK 40</div>
+  <div class="dt-mythic-div"></div>
+  <div class="dt-mythic-streak" id="q">KILLING SPREE &times; 8</div>
+  <div class="dt-mythic-unlock" id="u">&#128275; MYTHIC FANFARE UNLOCKED</div>
+</div></div>
+<div class="bar">
+  <button onclick="show('old',true)">OLD, FIRST TIME</button>
+  <button onclick="show('new',true)">NEW, FIRST TIME</button>
+  <button onclick="show('new',false)">NEW, REPEAT</button>
+</div>
+<script>
+var tm;
+function show(v,first){
+  var c=document.getElementById('dtMythicCard'),i=document.getElementById('dtMythicInner');
+  document.getElementById('q').innerHTML='KILLING SPREE &times; 8'+(v==='new'?' &middot; +40 XP':'');
+  document.getElementById('u').style.display=first?'':'none';
+  c.style.display='block';i.style.animation='none';void i.offsetWidth;
+  i.style.animation='dtToastInTop .45s cubic-bezier(.34,1.35,.64,1) both';
+  clearTimeout(tm);
+  tm=setTimeout(function(){i.style.animation='toastOut .3s ease both';setTimeout(function(){c.style.display='none'},310)},3600);
+}
+</script></body></html>

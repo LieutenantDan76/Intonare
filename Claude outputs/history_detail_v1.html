@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Practice History detail v1</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg-0:#0a0a12;--surface:#1d1d2f;--surface-2:#28283e;--border:#2e2e48;--border-soft:#25253b;--text:#eef0f7;--text-dim:#a3a5b8;--muted:#9899ad;--accent:#5ee2ff;--accent-warm:#ffa07a;--accent-soft:#b8a3ff;--in-tune:#b6f25b;--sharp:#ff5252}
+body.light{--bg-0:#ddd9f0;--surface:#ececf6;--surface-2:#f3f3f9;--border:#64648f;--border-soft:#83839e;--text:#1f202c;--text-dim:#303143;--muted:#4a4b60;--accent:#0b6e8a;--accent-warm:#7d3510;--accent-soft:#5b3fc4;--in-tune:#2f6d0a;--sharp:#b3261e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-0);color:var(--text);font-family:system-ui,sans-serif;padding:16px;max-width:430px;margin-inline:auto}
+.mono{font-family:'JetBrains Mono',monospace}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.tog{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:4px 9px;font:9px 'JetBrains Mono',monospace;letter-spacing:.1em}
+.sec{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.16em;color:var(--text-dim);text-transform:uppercase;margin:6px 0 8px}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.nb{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:9px;width:28px;height:28px;font-size:15px}
+.nb:disabled{opacity:.25}
+.per{font:9px 'JetBrains Mono',monospace;letter-spacing:.14em;color:var(--text-dim)}
+.row{margin-bottom:9px;cursor:pointer}
+.hd{display:flex;align-items:center;gap:8px}
+.lb{font:8px 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--text-dim);width:68px;flex-shrink:0}
+.tr{flex:1;height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden}
+.fl{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent-soft))}
+.tm{font:9px 'JetBrains Mono',monospace;color:var(--muted);width:44px;text-align:right;display:flex;justify-content:flex-end;gap:3px;align-items:center}
+.chev{display:inline-block;transition:transform .2s;font-size:8px}
+.row.open .chev{transform:rotate(90deg)}
+.pct{font:600 9px 'JetBrains Mono',monospace}
+.good{color:var(--in-tune)}.warm{color:var(--accent-warm)}.bad{color:var(--sharp)}
+.card{display:none;margin:8px 0 4px 0;background:var(--surface);border:1px solid var(--border-soft);border-radius:12px;padding:12px}
+.row.open .card{display:block;animation:dn .18s ease both}
+@keyframes dn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.big{display:flex;align-items:baseline;gap:8px}
+.big b{font:36px 'Bebas Neue',sans-serif;letter-spacing:.03em;line-height:1}
+.big small{font:9px 'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.06em}
+.delta{font:600 9px 'JetBrains Mono',monospace;margin-left:auto;padding:2px 6px;border-radius:5px;background:var(--surface-2)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:12px 0 4px;align-items:end;height:74px}
+.d{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
+.d .bar{width:100%;border-radius:4px 4px 2px 2px;min-height:3px;background:var(--surface-2)}
+.d .bar.g{background:var(--in-tune)}.d .bar.w{background:var(--accent-warm)}.d .bar.r{background:var(--sharp)}
+.d .bar.t{background:linear-gradient(0deg,var(--accent),var(--accent-soft))}
+.d.sel .bar{outline:2px solid var(--text);outline-offset:1px}
+.dl{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;font:7px 'JetBrains Mono',monospace;color:var(--muted);text-align:center;letter-spacing:.06em}
+.dn{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;font:8px 'JetBrains Mono',monospace;color:var(--text-dim);text-align:center;margin-top:2px}
+.sub{font:600 8px 'JetBrains Mono',monospace;letter-spacing:.14em;color:var(--text-dim);margin:14px 0 6px;text-transform:uppercase}
+.pa{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pa .n{flex:0 0 96px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pa .t{flex:1;height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.pa .t i{display:block;height:100%;background:var(--sharp);border-radius:4px}
+.pa .c{font:9px 'JetBrains Mono',monospace;color:var(--muted);width:56px;text-align:right}
+.tiles{display:flex;flex-wrap:wrap;gap:4px}
+.tile{display:flex;flex-direction:column;align-items:center;background:var(--surface-2);border-radius:5px;padding:4px 8px;min-width:36px;border:1px solid var(--border-soft)}
+.tile b{font:15px 'Bebas Neue',sans-serif;letter-spacing:.04em;line-height:1}
+.tile span{font:6.5px 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.note{font:9px 'JetBrains Mono',monospace;color:var(--muted);margin-top:10px;line-height:1.5}
+.empty{font:9px 'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.06em;padding:6px 0}
+</style></head><body>
+<div class="top"><div class="sec" style="margin:0">Practice History · prototype</div><button class="tog" onclick="document.body.classList.toggle('light')">LIGHT / DARK</button></div>
+<div class="nav"><button class="nb" disabled>‹</button><span class="per" id="per">THIS WEEK</span><button class="nb" disabled>›</button></div>
+<div id="list"></div>
+<script>
+// Same shape the app now saves: answers[date][exercise] = { n, c, miss:{item:count} }, history[date][exercise] = seconds
+var DAYS=['T','F','S','S','M','T','W']; // last 7 days ending today (Thu)
+var NAMES=['Fri','Sat','Sun','Mon','Tue','Wed','Thu'];
+var DATA={
+ interval:{label:'INTERVALS',sec:[300,0,420,260,180,640,520],
+  a:[[22,15,{'Minor 7th':3,'Tritone':2,'Major 6th':2}],null,[30,24,{'Minor 7th':3,'Major 6th':3}],[18,16,{'Tritone':2}],[12,11,{'Minor 7th':1}],[40,33,{'Minor 7th':4,'Major 7th':3}],[34,31,{'Tritone':2,'Minor 7th':1}]],
+  prev:{n:150,c:104},life:[['12','best streak','accent'],['78%','accuracy','good'],['812/1040','correct','']]},
+ chords:{label:'CHORDS',sec:[0,240,0,0,360,0,300],
+  a:[null,[16,12,{'Dominant 7th':2,'Diminished':2}],null,null,[24,15,{'Dominant 7th':5,'Half-dim':2,'Diminished':2}],null,[20,19,{'Dominant 7th':1}]],
+  prev:{n:30,c:21},life:[['9','best streak','accent'],['71%','accuracy','warm']]},
+ musicquiz:{label:'MUSIC QUIZ',sec:[200,0,0,340,0,0,260],
+  a:[[10,6,{'Jazz history':3,'Theory':1}],null,null,[15,12,{'Theory':2,'Instruments':1}],null,null,[12,5,{'Jazz history':4,'Film music':3}]],
+  prev:{n:20,c:14},life:[['14','best streak','accent'],['64%','accuracy','warm']]},
+ tempo:{label:'TEMPO LOCK',sec:[0,0,180,0,0,420,0],a:[null,null,null,null,null,null,null],prev:{n:0,c:0},life:[['±3','bpm off','good'],['11','rounds','soft']]}
+};
+function mmss(s){if(!s)return'0s';var m=Math.floor(s/60);return m?m+'m':s+'s'}
+function cls(p){return p>=80?'g':p>=60?'w':'r'}
+function tcls(p){return p>=80?'good':p>=60?'warm':'bad'}
+function render(){
+ var keys=Object.keys(DATA).sort(function(x,y){return sum(DATA[y].sec)-sum(DATA[x].sec)});
+ var h='';
+ keys.forEach(function(k,i){
+  var d=DATA[k],tot=sum(d.sec),max=Math.max.apply(null,keys.map(function(z){return sum(DATA[z].sec)}));
+  var N=0,C=0,miss={};
+  d.a.forEach(function(x){if(!x)return;N+=x[0];C+=x[1];for(var m in x[2])miss[m]=(miss[m]||0)+x[2][m]});
+  var graded=N>0,pc=graded?Math.round(C/N*100):0;
+  h+='<div class="row'+(i==0?' open':'')+'" onclick="this.classList.toggle(\'open\')">'
+   +'<div class="hd"><div class="lb">'+d.label+'</div><div class="tr"><div class="fl" style="width:'+Math.max(2,tot/max*100)+'%"></div></div>'
+   +'<div class="tm">'+(graded?'<span class="pct '+tcls(pc)+'">'+pc+'%</span>':'')+'<span>'+mmss(tot)+'</span><span class="chev">▶</span></div></div>'
+   +'<div class="card" onclick="event.stopPropagation()">';
+  if(graded){
+   var pp=d.prev.n?Math.round(d.prev.c/d.prev.n*100):null,dl=pp==null?'':(pc-pp>=0?'▲ ':'▼ ')+Math.abs(pc-pp)+' vs last week';
+   h+='<div class="big"><b class="'+tcls(pc)+'">'+pc+'%</b><small>'+C+' OF '+N+' RIGHT</small>'+(pp==null?'':'<span class="delta '+(pc>=pp?'good':'bad')+'">'+dl+'</span>')+'</div>';
+   h+='<div class="days">';
+   d.a.forEach(function(x,j){
+    if(!x){h+='<div class="d"><div class="bar"></div></div>';return}
+    var p=Math.round(x[1]/x[0]*100);h+='<div class="d"><div class="bar '+cls(p)+'" style="height:'+Math.max(6,p*0.62)+'px"></div></div>'});
+   h+='</div><div class="dl">';
+   h+=NAMES.map(function(n){return '<span>'+n.slice(0,3).toUpperCase()+'</span>'}).join('')+'</div>';
+   h+='<div class="dn">'+d.a.map(function(x){return '<span>'+(x?x[1]+'/'+x[0]:'·')+'</span>'}).join('')+'</div>';
+   var ms=Object.keys(miss).sort(function(a,b){return miss[b]-miss[a]}).slice(0,3);
+   if(ms.length){h+='<div class="sub">Problem areas</div>';
+    ms.forEach(function(m){h+='<div class="pa"><span class="n">'+m+'</span><span class="t"><i style="width:'+Math.round(miss[m]/miss[ms[0]]*100)+'%"></i></span><span class="c">missed '+miss[m]+'</span></div>'})}
+  }else{
+   h+='<div class="big"><b>'+mmss(tot)+'</b><small>PRACTICED THIS WEEK</small></div><div class="days">';
+   d.sec.forEach(function(s){h+='<div class="d"><div class="bar t" style="height:'+(s?Math.max(6,s/Math.max.apply(null,d.sec)*62):3)+'px;'+(s?'':'opacity:.25')+'"></div></div>'});
+   h+='</div><div class="dl">'+NAMES.map(function(n){return '<span>'+n.slice(0,3).toUpperCase()+'</span>'}).join('')+'</div><div class="note">This exercise has no right or wrong answers, so the bars show time.</div>';
+  }
+  h+='<div class="sub">All time</div><div class="tiles">'+d.life.map(function(t){return '<div class="tile"><b class="'+t[2]+'">'+t[0]+'</b><span>'+t[1]+'</span></div>'}).join('')+'</div>';
+  h+='</div></div>';
+ });
+ document.getElementById('list').innerHTML=h;
+}
+function sum(a){return a.reduce(function(x,y){return x+y},0)}
+render();
+</script></body></html>

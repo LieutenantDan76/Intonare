@@ -235,11 +235,6 @@ html,body{background:#000000!important;transition:none!important}
     0%,100%{ filter: drop-shadow(0 0 5px gold) }
     50%    { filter: drop-shadow(0 0 16px gold) drop-shadow(0 0 36px rgba(255,215,0,.6)) }
   }
-  @keyframes dtMythicSweep { 0%{ left:-70% } 100%{ left:160% } }
-  @keyframes dtMythicPulse {
-    0%,100%{ filter: drop-shadow(0 0 4px #ff4010) }
-    50%    { filter: drop-shadow(0 0 14px #ff6030) drop-shadow(0 0 28px rgba(255,80,20,.6)) }
-  }
   @keyframes dtToastInBottom { from{ opacity:0; transform:translateY(14px) scale(.88) } to{ opacity:1; transform:none } }
   @keyframes dtToastInTop    { from{ opacity:0; transform:translateY(-14px) scale(.88) } to{ opacity:1; transform:none } }
   /* badge + flame overlay */
@@ -317,28 +312,32 @@ html,body{background:#000000!important;transition:none!important}
   .dt-leg-div   { height:1px; background:linear-gradient(90deg,transparent,rgba(255,215,0,.4),transparent); margin:12px 0 10px }
   .dt-leg-msg   { font-size:9px; letter-spacing:.28em; color:rgba(255,215,0,.6); text-transform:uppercase }
   .dt-leg-unlock{ font-size:7.5px; letter-spacing:.18em; color:rgba(182,242,91,.75); margin-top:7px; text-transform:uppercase }
-  /* ─── MYTHIC CARD (streak ×40) ─── */
-  #dtMythicCard { position:fixed; top:calc(14px + var(--sat-top)); left:50%; transform:translateX(-50%); z-index:9100; pointer-events:none; display:none; min-width:220px; max-width:86vw }
-  .dt-mythic-inner { background:linear-gradient(145deg,#1a0808,#110a0a,#1a0a08); border:1px solid rgba(255,80,40,.75); border-radius:20px; padding:14px 22px 12px; box-shadow:0 0 0 1px rgba(255,80,40,.18),0 12px 40px rgba(0,0,0,.75),0 0 40px rgba(255,60,20,.28),inset 0 1px 0 rgba(255,100,40,.3); position:relative; overflow:hidden; text-align:center }
-  .dt-mythic-inner::before { content:''; position:absolute; top:0; left:-100%; width:55%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,80,40,.16),transparent); animation:dtMythicSweep 1.8s ease-in-out .3s infinite }
-  .dt-mythic-inner::after  { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,#ff5020,transparent); opacity:.9 }
-  .dt-mythic-icon   { font-size:24px; line-height:1; margin-bottom:6px; display:block; animation:dtMythicPulse 1.4s ease-in-out infinite }
-  .dt-mythic-title  { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:30px; line-height:.95; letter-spacing:.14em; color:#ff6030; text-shadow:0 0 20px rgba(255,80,20,.65) }
-  .dt-mythic-sub    { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:13px; letter-spacing:.28em; color:rgba(255,120,60,.65); margin-top:2px }
-  .dt-mythic-div    { height:1px; background:linear-gradient(90deg,transparent,rgba(255,80,40,.45),transparent); margin:9px 0 8px }
-  .dt-mythic-streak { font-size:8px; letter-spacing:.22em; color:rgba(255,120,60,.6); text-transform:uppercase }
-  .dt-mythic-unlock { font-size:7.5px; letter-spacing:.18em; color:rgba(182,242,91,.75); margin-top:7px; text-transform:uppercase }
-  /* ─── MILESTONE TOAST (top, drops down) ─── */
-  /* This is a different toast from dailyStreakToast (the day-streak-at-risk
-     notification, which sits at bottom:90px and was already clear). This one
-     — the 5/10/15...40 in-session streak toast — was hardcoded to a bare
-     top:20px with no relationship to the safe area, landing right where an
-     Android punch-hole camera commonly sits. Matches the calc(Npx +
-     var(--sat-top)) pattern used elsewhere in the file. */
-  #streakMilestoneToast { top:calc(20px + var(--sat-top)) !important; bottom:auto !important }
-  .streak-milestone-inner { border-radius:18px !important; padding:9px 20px 8px !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:2px !important }
-  .streak-ms-main { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:15px; letter-spacing:.22em }
-  .streak-ms-quip { font-size:7px; letter-spacing:.2em; opacity:.8; text-transform:uppercase; font-weight:700 }
+  /* ─── STREAK MILESTONE CARD (5 to 40, and Mythic) ───
+     One card for every level. Dark mode is neon glass, light mode is light glass: a tinted
+     white panel with dark ink, so a light color never has to be read as text on white.
+     Prestige rounds use the same card plus a frame and a small badge. All colors, glow, size
+     and lines are set per level in JS (_SC_SET); only transform and opacity are animated. */
+  #streakMilestoneToast { top:calc(20px + var(--sat-top)) !important; bottom:auto !important; left:0 !important; right:0 !important; transform:none !important; justify-content:center; padding:0 8px; box-sizing:border-box }
+  .scw { width:max-content; max-width:100%; min-width:var(--w) }
+  .scw.full { width:100% }
+  .sc { display:flex; align-items:center; gap:14px; padding:0 20px 0 0; position:relative; overflow:hidden; border-radius:16px; border:1px solid transparent; transform-origin:50% 0; color:var(--ink) }
+  .sc .nb { align-self:stretch; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:9px 12px; min-width:62px }
+  .sc .num { font-family:'Bebas Neue','GlyphFix',sans-serif; line-height:1; letter-spacing:.02em; color:var(--hi) }
+  .sc .nl { font-size:6.5px; font-weight:700; letter-spacing:.24em; padding-left:.24em; margin-top:2px; opacity:.75; text-transform:uppercase; color:var(--hi) }
+  .sc .meta { display:flex; flex-direction:column; gap:4px; min-width:0; padding:9px 0 }
+  .sc .ttl { font-family:'Bebas Neue','GlyphFix',sans-serif; line-height:1; letter-spacing:.15em; text-transform:uppercase; color:var(--hi); white-space:nowrap }
+  .sc .row { display:flex; align-items:center; gap:8px }
+  .sc .xpl { font-size:9px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; opacity:.9; white-space:nowrap }
+  .sc .pb { padding:2px 8px; border-radius:99px; background:var(--pc); color:var(--pk); font-size:8.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap }
+  .sc .unl { font-size:7.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; opacity:.85 }
+  .sc .ln { position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--c),transparent) }
+  .sc .ln.t { top:0 }
+  .sc .ln.b { bottom:0 }
+  .sc .sw { position:absolute; top:0; bottom:0; left:0; width:38%; background:linear-gradient(100deg,transparent,rgba(255,255,255,.3),transparent); transform:translateX(-140%) skewX(-18deg); pointer-events:none }
+  /* Mythic is the full-width card. Its empty right side holds a shield with crossed swords. */
+  .sc .mi { flex:none; margin:0 auto; width:68px; height:68px; color:var(--hi) }
+  .sc .mi svg { display:block; width:100%; height:100%; overflow:visible }
+  .sc.pr { outline:2px solid var(--pc); outline-offset:2px }
 
   /* ─── SESSION SUMMARY ─── */
   #sessionSummaryOverlay { display: none; }
@@ -36629,11 +36628,8 @@ try {
 </div>
 
 <!-- STREAK MILESTONE TOAST -->
-<div id="streakMilestoneToast" style="display:none;position:fixed;top:calc(20px + var(--sat-top));left:50%;transform:translateX(-50%);z-index:9100;pointer-events:none;">
-  <div class="streak-milestone-inner" id="streakMilestoneInner">
-    <span class="streak-ms-main" id="streakMilestoneText"></span>
-    <span class="streak-ms-quip" id="streakMilestoneQuip"></span>
-  </div>
+<div id="streakMilestoneToast" style="display:none;position:fixed;top:calc(20px + var(--sat-top));left:0;right:0;z-index:9100;pointer-events:none;">
+  <div id="streakMilestoneInner"></div>
 </div>
 
 <!-- DAILY STREAK TOAST -->
@@ -36650,18 +36646,6 @@ try {
     <div class="dt-leg-div"></div>
     <div class="dt-leg-msg" data-i18n="dt_secret_found">SECRET FOUND</div>
     <div class="dt-leg-unlock" data-i18n="dt_chime_unlock">&#128275; SECRET CHIME UNLOCKED</div>
-  </div>
-</div>
-
-<!-- MYTHIC CARD (exercise streak ×40) -->
-<div id="dtMythicCard">
-  <div class="dt-mythic-inner keep-dark" id="dtMythicInner">
-    <span class="dt-mythic-icon">&#9876;</span>
-    <div class="dt-mythic-title" data-i18n="dt_mythic_title">MYTHIC</div>
-    <div class="dt-mythic-sub" data-i18n="dt_mythic_streak_label">STREAK 40</div>
-    <div class="dt-mythic-div"></div>
-    <div class="dt-mythic-streak">KILLING SPREE &times; 8</div>
-    <div class="dt-mythic-unlock" data-i18n="dt_mythic_fanfare_unlock">&#128275; MYTHIC FANFARE UNLOCKED</div>
   </div>
 </div>
 
@@ -91775,31 +91759,14 @@ function dtFireLegendaryCard() {
   }, 5500);
 }
 
-function dtFireMythicCard(xp) {
-  // Unlock and save
+function dtFireMythicCard(xp, streak, round) {
+  // Unlock and save. The card itself is the same one every other level uses (dtShowStreakCard).
   var _firstMythic = !progState.mythic_unlocked;
   if (_firstMythic) { progState.mythic_unlocked = true; progSave(); }
   playCueMilestone();
   setTimeout(function () { try { hapticMilestone('mythic_fanfare'); } catch (e) {} }, 100);   // lands with playMythicFanfare below
-  var card  = document.getElementById('dtMythicCard');
-  var inner = document.getElementById('dtMythicInner');
-  if (!card || !inner) return;
-  // The award goes on the card, and the unlock line shows only the first time.
-  var _mLine = inner.querySelector('.dt-mythic-streak');
-  if (_mLine) {
-    if (_mLine.dataset.base === undefined) _mLine.dataset.base = _mLine.innerHTML;
-    _mLine.innerHTML = _mLine.dataset.base + (xp ? ' &middot; +' + xp + ' XP' : '');
-  }
-  var _mUnlock = inner.querySelector('.dt-mythic-unlock');
-  if (_mUnlock) _mUnlock.style.display = _firstMythic ? '' : 'none';
-  card.style.display = 'block'; inner.style.animation = 'none'; void inner.offsetWidth;
-  inner.style.animation = 'dtToastInTop .45s cubic-bezier(.34,1.35,.64,1) both';
-  clearTimeout(card._timer);
   setTimeout(playMythicFanfare, 100);
-  card._timer = setTimeout(function() {
-    inner.style.animation = 'toastOut .3s ease both';
-    setTimeout(function() { card.style.display = 'none'; }, 310);
-  }, 3600);
+  dtShowStreakCard(40, round, xp, _firstMythic);
 }
 
 /* ── DISCOVERY CHIME — unlocked at 100-day streak ──
@@ -93657,7 +93624,7 @@ const STRINGS = {
   chordle_pick_easy_d:'Plain triads in shapes you already know; nothing past the basic chords.',chordle_pick_med_d:'Sevenths and borrowed chords, beginning jazz harmony.',chordle_pick_hard_d:'A blend of more difficult progressions and real standards with extensions and quicker changes.',chordle_pick_vhard_d:'Anything can show up, good luck!',
     // Progress / Daily Tracker
     pm_unlock_preview:'⚡ UNLOCK ALL (PREVIEW)',
-    dt_mythic_title:'MYTHIC', dt_mythic_streak_label:'STREAK 40',
+    dt_mythic_title:'MYTHIC', dt_mythic_streak_label:'STREAK 40', dt_prestige:'PRESTIGE',
     dt_reset_today:'↺ Reset Today', gtool_2oct:'2 OCT', gtool_1oct:'1 OCT', lbl_oct:'OCT', app_name:'Intonare',
   },
   it: {
@@ -94927,7 +94894,7 @@ const STRINGS = {
   chordle_pick_easy_d:'Triadi semplici in forme che gi\u00e0 conosci; niente oltre gli accordi di base.',chordle_pick_med_d:'Settime e accordi presi in prestito, l\u2019inizio dell\u2019armonia jazz.',chordle_pick_hard_d:'Un misto di progressioni pi\u00f9 difficili e veri standard con estensioni e cambi pi\u00f9 rapidi.',chordle_pick_vhard_d:'Pu\u00f2 comparire di tutto, buona fortuna!',
     // Progress / Daily Tracker
     pm_unlock_preview:'⚡ SBLOCCA TUTTO (ANTEPRIMA)',
-    dt_mythic_title:'MITICO', dt_mythic_streak_label:'SERIE 40',
+    dt_mythic_title:'MITICO', dt_mythic_streak_label:'SERIE 40', dt_prestige:'PRESTIGIO',
     dt_reset_today:'↺ Azzera Oggi', gtool_2oct:'2 OTT', gtool_1oct:'1 OTT', lbl_oct:'OTT', app_name:'Intonare',
   }
 };
@@ -98037,65 +98004,168 @@ const STREAK_MILESTONES = [5, 10, 15, 20, 25, 30, 35, 40];
 // broken streak is the same work as the first time, so it pays the same.
 // Chord Ear and Polyrhythm pass noXp, because they already pay their own streak XP.
 const STREAK_MILESTONE_XP = { 5:3, 10:5, 15:8, 20:12, 25:16, 30:20, 35:25, 40:40 };
+// Prestige (1.0.5). One round is 40 in a row. After Mythic at 40 the next round starts: streak 45 is
+// tier 5 of Prestige 2x, and 80 is its Mythic. Each round pays the base XP times its number, so
+// Prestige 2x pays 6 to 80 and Prestige 3x pays 9 to 120. The TITLE counts up forever. The XP
+// multiplier stops at PRESTIGE_XP_CAP, because the XP per answer would otherwise grow without a limit
+// and a held streak on an easy setting would out-earn everything else in the app.
+const PRESTIGE_XP_CAP = 3;
+// streak -> { round: 1 for the normal run, 2 and up for prestige; base: the tier it matches in the table above }
+function streakTier(streak) {
+  if (!(streak >= 5) || streak % 5) return null;
+  return { round: Math.ceil(streak / 40), base: ((streak - 1) % 40) + 1 };
+}
 let _lastMilestone = 0;
 let _msLastHit = 0, _msLastAt = 0;
+// Per level: n = neon color (dark mode text and glow), c = surface color (light glass), ink = text on light
+// glass, set = size 0-100, glow 0-100, shake in px, lines and shine on or off. Chosen level by level in the
+// 1.0.5 workshop. There are no sparks, rays or flash on purpose.
 const _MS_DATA = {
-  5:  { quip:'KILLING SPREE',  color:'#5ee2ff', bg:'rgba(94,226,255,.14)',  glow:'rgba(94,226,255,.3)' },
-  10: { quip:'KILLING FRENZY', color:'#4dffc4', bg:'rgba(77,255,196,.14)',  glow:'rgba(77,255,196,.3)' },
-  15: { quip:'RUNNING RIOT',   color:'#b6f25b', bg:'rgba(182,242,91,.14)',  glow:'rgba(182,242,91,.3)' },
-  20: { quip:'RAMPAGE',        color:'#ffe566', bg:'rgba(255,229,102,.14)', glow:'rgba(255,229,102,.3)' },
-  25: { quip:'NIGHTMARE',      color:'#ffa07a', bg:'rgba(255,160,122,.14)', glow:'rgba(255,160,122,.3)' },
-  30: { quip:'BOOGEYMAN',      color:'#ff6633', bg:'rgba(255,102,51,.14)',  glow:'rgba(255,102,51,.3)' },
-  35: { quip:'GRIM REAPER',    color:'#ff8aae', bg:'rgba(255,138,174,.14)', glow:'rgba(255,138,174,.3)' },
-  40: { quip:'MYTHIC',         color:'#ffd700', bg:'rgba(255,215,0,.16)',   glow:'rgba(255,215,0,.38)' },
+  5:  { quip:'KILLING SPREE',  n:'#5ee2ff', c:'#3cc8f0', ink:'#0d1b24', size:0,   glow:0,  shake:0, lines:0, shine:0 },
+  10: { quip:'KILLING FRENZY', n:'#4dffc4', c:'#2fd8a8', ink:'#08201a', size:8,   glow:20, shake:0, lines:0, shine:1 },
+  15: { quip:'RUNNING RIOT',   n:'#b6f25b', c:'#9be13a', ink:'#142006', size:17,  glow:50, shake:0, lines:0, shine:1 },
+  20: { quip:'RAMPAGE',        n:'#ffe566', c:'#ffcf3d', ink:'#2a1f00', size:25,  glow:26, shake:0, lines:1, shine:1 },
+  25: { quip:'NIGHTMARE',      n:'#ffa07a', c:'#ff9a6b', ink:'#2c1206', size:33,  glow:60, shake:3, lines:1, shine:1 },
+  30: { quip:'BOOGEYMAN',      n:'#ff6633', c:'#ff6a3a', ink:'#2a0d03', size:42,  glow:65, shake:3, lines:1, shine:1 },
+  35: { quip:'GRIM REAPER',    n:'#ff8aae', c:'#ff7aa6', ink:'#2e0716', size:60,  glow:70, shake:4, lines:1, shine:1 },
+  40: { quip:'MYTHIC',         n:'#c58bff', c:'#a35cff', ink:'#1d0638', size:100, glow:85, shake:4, lines:1, shine:1 },
 };
 
-function checkStreakMilestone(streak, noXp) {
-  var hit = null;
-  for (var i = 0; i < STREAK_MILESTONES.length; i++) {
-    if (STREAK_MILESTONES[i] === streak) { hit = STREAK_MILESTONES[i]; break; }
+function _scA(h, a) { return 'rgba(' + parseInt(h.substr(1,2),16) + ',' + parseInt(h.substr(3,2),16) + ',' + parseInt(h.substr(5,2),16) + ',' + a + ')'; }
+function _scMix(h, p) {
+  return 'rgb(' + [1,3,5].map(function (i) { return Math.round(parseInt(h.substr(i,2),16) * p + 255 * (1 - p)); }).join(',') + ')';
+}
+// Spring physics sampled once into keyframes, so the browser runs it on the compositor.
+// k = stiffness, c = damping. Returns progress samples (0 to about 1, with overshoot) and the length in ms.
+function _scSpring(k, c) {
+  var x = 0, v = 0, dt = 1 / 120, t = 0, calm = 0, p = [0];
+  while (t < 2.5) {
+    v += (-k * (x - 1) - c * v) * dt; x += v * dt; t += dt; p.push(x);
+    if (Math.abs(x - 1) < .002 && Math.abs(v) < .02) { if (++calm > 6) break; } else calm = 0;
   }
-  if (!hit) return;
-  // The same tier twice within 1.5 s is one answer reported twice, not a rebuilt streak.
+  p[p.length - 1] = 1;
+  return { p: p, ms: Math.round(t * 1000) };
+}
+function _scMove(el, pr, o) {
+  if (!el || !el.animate) return;
+  var sp = _scSpring(o.k, o.c), n = sp.p.length, step = Math.max(1, Math.floor(n / 48)), kf = [];
+  function L(a, b, q) { return a + (b - a) * q; }
+  function add(i) {
+    var q = sp.p[i], tm = i / (n - 1);
+    var x = pr.x ? L(pr.x[0], pr.x[1], q) : 0, y = pr.y ? L(pr.y[0], pr.y[1], q) : 0;
+    var r = pr.r ? L(pr.r[0], pr.r[1], q) : 0, s = pr.s ? L(pr.s[0], pr.s[1], q) : 1;
+    var f = { offset: tm, transform: 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) rotate(' + r.toFixed(2) + 'deg) scale(' + s.toFixed(3) + ')' };
+    if (pr.o) f.opacity = Math.max(0, Math.min(1, L(pr.o[0], pr.o[1], Math.min(1, tm * sp.ms / o.fade))));
+    kf.push(f);
+  }
+  for (var i = 0; i < n - 1; i += step) add(i);
+  add(n - 1);
+  el.animate(kf, { duration: sp.ms, delay: o.delay || 0, fill: 'both', easing: 'linear' });
+}
+function _scEase(el, kf, dur, delay, easing) {
+  if (el && el.animate) el.animate(kf, { duration: dur, delay: delay || 0, easing: easing || 'ease', fill: 'both' });
+}
+
+// Shield with crossed swords, drawn with currentColor so it follows the card color in both themes.
+const _SC_MYTHIC_ICON = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<circle cx="32" cy="32" r="29" stroke-width="2.4" fill="var(--sf)"/>' +
+  '<circle cx="32" cy="32" r="25.2" stroke-width="3" stroke-dasharray="1.6 5.2" opacity=".5"/>' +
+  '<g stroke-width="2.6"><path d="M15 15L49 49M49 15L15 49"/><path d="M38 47L47 38M26 47L17 38"/></g>' +
+  '<circle cx="50.5" cy="50.5" r="2" fill="currentColor" stroke="none"/><circle cx="13.5" cy="50.5" r="2" fill="currentColor" stroke="none"/>' +
+  '<path d="M32 15L43 19.5V30C43 37.5 38 42.5 32 46C26 42.5 21 37.5 21 30V19.5Z" stroke-width="2.4" fill="var(--sf)"/>' +
+  '<path d="M32 22L34 29L41 31L34 33L32 40L30 33L23 31L30 29Z" fill="currentColor" stroke="none"/></svg>';
+
+// The one streak card. hit = the tier (5 to 40), round = 1 for the normal run and 2 or more for prestige,
+// xp = what this milestone paid, unlockLine = true only the first time Mythic is ever reached.
+// Prestige shows the same card and the same numbers as round 1, plus a frame and a small "Prestige Nx" badge.
+function dtShowStreakCard(hit, round, xp, unlockLine) {
+  var toast = document.getElementById('streakMilestoneToast');
+  var host  = document.getElementById('streakMilestoneInner');
+  var m = _MS_DATA[hit] || _MS_DATA[5];
+  if (!toast || !host) return;
+  var light = document.body.classList.contains('light');
+  var g = m.glow, hi = light ? m.ink : m.n, pr = round > 1;
+  var vars = [
+    '--w:' + Math.round(236 + m.size * 1.44) + 'px',
+    '--c:' + (light ? m.c : m.n),
+    '--hi:' + (light ? '#1b2033' : m.n),
+    '--ink:' + (light ? '#1b2033' : '#eef0f7'),
+    '--pc:' + (light ? m.c : m.n),
+    '--pk:' + (light ? m.ink : '#0b0c17')
+  ];
+  var sc = light
+    ? 'background:linear-gradient(145deg,' + _scMix(m.c, .4) + ',' + _scMix(m.c, .08) + ' 80%);border-color:' + _scA(m.c, .85) +
+      ';box-shadow:0 10px 26px rgba(20,25,50,.16),0 0 24px ' + _scA(m.c, g * .0076)
+    : 'background:linear-gradient(145deg,#15172b,#0b0c17);border-color:' + _scA(m.n, .7) +
+      ';box-shadow:0 10px 30px rgba(0,0,0,.45),0 0 22px ' + _scA(m.n, g * .0056);
+  var numPx = Math.round(30 + m.size * .24), ttlPx = Math.round(20 + m.size * .22);
+  var tsh = (!light && g) ? 'text-shadow:0 0 16px ' + _scA(m.n, Math.min(1, g * .011)) + ';' : '';
+  var name = hit === 40 ? (t('dt_mythic_title') || 'MYTHIC') : m.quip;
+  var h = '<div class="scw' + (m.size >= 100 ? ' full' : '') + '" style="' + vars.join(';') + '">' +
+    '<div class="sc' + (pr ? ' pr' : '') + '" style="' + sc + '">' +
+    (m.lines ? '<i class="ln t"></i><i class="ln b"></i>' : '') +
+    (m.shine ? '<i class="sw"></i>' : '') +
+    '<div class="nb"><div class="num" style="font-size:' + numPx + 'px;' + tsh + '">' + hit + '</div>' +
+    '<div class="nl">' + (t('iv_streak') || 'STREAK').toUpperCase() + '</div></div>' +
+    '<div class="meta"><div class="ttl" style="font-size:' + ttlPx + 'px;' + tsh + '">' + name + '</div>' +
+    '<div class="row">' + (pr ? '<span class="pb">' + (t('dt_prestige') || 'PRESTIGE') + ' ' + round + 'x</span>' : '') +
+    (xp ? '<span class="xpl">+' + xp + ' XP</span>' : '') + '</div>' +
+    (unlockLine ? '<div class="unl">' + (t('dt_mythic_fanfare_unlock') || '') + '</div>' : '') +
+    '</div>' + (hit === 40 ? '<div class="mi" style="' + (light ? '' : 'filter:drop-shadow(0 0 7px ' + _scA(m.n, .55) + ');') + '--sf:' + (light ? _scMix(m.c, .12) : '#10111f') + '">' + _SC_MYTHIC_ICON + '</div>' : '') +
+    '</div></div>';
+  // A new card replaces a running one: stop its timers and animations first.
+  clearTimeout(toast._timer); clearTimeout(toast._hide);
+  try { toast.getAnimations().forEach(function (a) { a.cancel(); }); } catch (e) {}
+  host.innerHTML = h;
+  toast.style.display = 'flex';
+  var slot = host.firstChild, card = slot.firstChild, q = function (s) { return card.querySelector(s); };
+  var calm = false;
+  try { calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  if (calm) {
+    _scEase(slot, [{ opacity: 0 }, { opacity: 1 }], 200);
+  } else {
+    var d0 = 300;
+    // Banner entrance: the card unrolls from the top edge, then its parts settle in one after another.
+    _scEase(card, [{ transform: 'scaleY(.08)', opacity: 0 }, { transform: 'none', opacity: 1 }], d0, 0, 'cubic-bezier(.2,.9,.25,1)');
+    var ln = card.querySelectorAll('.ln');
+    for (var i = 0; i < ln.length; i++) _scEase(ln[i], [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], 520, i ? 230 : 160, 'cubic-bezier(.2,.9,.25,1)');
+    _scMove(q('.num'), { s: [1.8, 1], o: [0, 1] }, { k: 420, c: 13, delay: 200, fade: 90 });
+    _scMove(q('.ttl'), { x: [-14, 0], o: [0, 1] }, { k: 300, c: 26, delay: 330, fade: 150 });
+    _scMove(q('.row'), { y: [7, 0], o: [0, 1] }, { k: 260, c: 26, delay: 470, fade: 170 });
+    var unl = q('.unl'); if (unl) _scMove(unl, { y: [7, 0], o: [0, 1] }, { k: 260, c: 26, delay: 560, fade: 170 });
+    _scEase(q('.sw'), [{ transform: 'translateX(-140%) skewX(-18deg)' }, { transform: 'translateX(420%) skewX(-18deg)' }], 700, d0 + 160, 'ease-in-out');
+    if (m.shake) _scMove(slot, { x: [m.shake, 0] }, { k: 900, c: 9, delay: d0, fade: 1 });
+    var mi = q('.mi'); if (mi) _scMove(mi, { s: [.4, 1], r: [-18, 0], o: [0, 1] }, { k: 380, c: 14, delay: d0 + 300, fade: 90 });
+    var pb = q('.pb'); if (pb) _scMove(pb, { s: [2.2, 1], r: [-12, 0], o: [0, 1] }, { k: 600, c: 18, delay: d0 + 620, fade: 70 });
+  }
+  toast._timer = setTimeout(function () {
+    _scEase(toast, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-8px)' }], 250, 0, 'ease-in');
+    toast._hide = setTimeout(function () {
+      try { toast.getAnimations().forEach(function (a) { a.cancel(); }); } catch (e) {}
+      toast.style.display = 'none';
+    }, 260);
+  }, hit === 40 ? 3600 : 2400);
+}
+
+function checkStreakMilestone(streak, noXp) {
+  var _tier = streakTier(streak);
+  if (!_tier) return;
+  var hit = _tier.base, round = _tier.round;
+  // The same streak number twice within 1.5 s is one answer reported twice, not a rebuilt streak.
   var _msNow = Date.now();
-  if (hit === _msLastHit && _msNow - _msLastAt < 1500) return;
-  _msLastHit = hit; _msLastAt = _msNow;
-  _lastMilestone = hit;
+  if (streak === _msLastHit && _msNow - _msLastAt < 1500) return;
+  _msLastHit = streak; _msLastAt = _msNow;
+  _lastMilestone = streak;
   var _msXp = 0;
-  if (!noXp) { _msXp = STREAK_MILESTONE_XP[hit] || 0; try { progAddXp(_msXp); } catch (e) {} }
+  if (!noXp) { _msXp = (STREAK_MILESTONE_XP[hit] || 0) * Math.min(round, PRESTIGE_XP_CAP); try { progAddXp(_msXp); } catch (e) {} }
 
-  // Mythic (×40) gets the special card + fanfare
-  if (hit === 40) { dtFireMythicCard(_msXp); return; }
+  // Mythic (x40, then x80, x120 ...) adds the unlock, the fanfare and its own haptics, then shows the same card.
+  if (hit === 40) { dtFireMythicCard(_msXp, streak, round); return; }
 
-  // Guarded: these run BEFORE the toast is built, so a throw in either (a haptics
-  // plugin that is missing, an audio context that is suspended) would silently
-  // kill the toast on device while working fine in a browser. The toast is the
-  // point; the feedback is the garnish.
+  // Guarded: a missing haptics plugin or a suspended audio context must never stop the card.
   try { hapticMilestone(); } catch (e) {}
   try { playCueMilestone(); } catch (e) {}
-  var m = _MS_DATA[hit] || { color:'#5ee2ff', bg:'rgba(94,226,255,.1)', glow:'rgba(94,226,255,.25)' };
-  var toast = document.getElementById('streakMilestoneToast');
-  var inner = document.getElementById('streakMilestoneInner');
-  var label = document.getElementById('streakMilestoneText');
-  var quip  = document.getElementById('streakMilestoneQuip');
-  if (!toast || !inner) return;
-  // background-color + background-image, not the `background` shorthand with a
-  // gradient alone. The milestone tint (m.bg) is translucent, so as the only
-  // layer it let whatever sat behind the toast read straight through it, and the
-  // screen title underneath made the text hard to read. An opaque --panel base
-  // under the same gradient keeps the tint and stops the bleed.
-  inner.style.cssText = 'background-color:var(--panel);background-image:linear-gradient(135deg,' + m.bg + ',var(--panel));border-color:' + m.color + 'aa;box-shadow:0 6px 28px rgba(0,0,0,.5),0 0 20px ' + m.glow + ';color:' + m.color;
-  if (label) { label.textContent = (t('iv_streak')||'STREAK').toUpperCase() + ' ' + hit + '!'; label.style.color = m.color; }
-  if (quip)  { quip.textContent = m.quip + (_msXp ? '  ·  +' + _msXp + ' XP' : ''); quip.style.color = m.color; }
-  toast.style.display = 'block';
-  inner.style.animation = 'none';
-  void inner.offsetWidth;
-  inner.style.animation = 'dtToastInTop 0.32s cubic-bezier(.34,1.35,.64,1) both';
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(function() {
-    inner.style.animation = 'toastOut 0.25s ease both';
-    setTimeout(function() { toast.style.display = 'none'; }, 260);
-  }, 2200);
+  dtShowStreakCard(hit, round, _msXp, false);
 }
 
 // ── Chord Ear Training state (restored from 0.74.2) ──
@@ -128162,7 +128232,7 @@ document.addEventListener('DOMContentLoaded', () => {
    'ivPoolModal','ivStatsModal','cePoolModal','ceStatsModal',
    'chordleEndOverlay','chordlePickerOverlay',
    'achToastStack','sessionSummaryOverlay','streakMilestoneToast','dailyStreakToast',
-   'dtLegendaryCard','dtMythicCard'].forEach(function(id){
+   'dtLegendaryCard'].forEach(function(id){
     var el = document.getElementById(id);
     if (el && el.parentElement !== document.body) document.body.appendChild(el);
   });

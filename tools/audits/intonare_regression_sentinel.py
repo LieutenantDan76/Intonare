@@ -562,6 +562,14 @@ EXACT_PINS = [
         "'<div class=\"rlp-head\"><div>' + rlpSeg() + '</div></div>' +\n      '<div class=\"rlp-vu\" id=\"rlpIntroVu\">'", []),
     ('RELPITCH', 'Road Trip has a tour',
         "  roadtrip: [\n    { selector:'.rt-diffstrip'", []),
+    # ── Prestige streaks (1.0.5) ─────────────────────────────────────────
+    # The streak used to stop paying at 40. Each further 40 is a Prestige round that pays the
+    # base XP times the round number, up to PRESTIGE_XP_CAP. Losing either line puts the app back
+    # to "nothing happens after Mythic" or lets the XP grow without a limit.
+    ('STREAK', 'Streak tiers continue past 40 as prestige rounds',
+        "function streakTier(streak) {\n  if (!(streak >= 5) || streak % 5) return null;", []),
+    ('STREAK', 'Prestige XP multiplier is capped',
+        "* Math.min(round, PRESTIGE_XP_CAP)", []),
     # ── Tours cover the modules that shipped (v0.114.2) ───────────────────
     # Thirty tours existed and five exercises had none, including both modules
     # shipped this month. Nobody was maintaining the list as things landed.

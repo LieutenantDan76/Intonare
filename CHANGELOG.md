@@ -8,6 +8,8 @@ A human-readable record of what changed, when,
 - Search opens folders. Type games, ear training, reading, harmony or reference to jump straight to that folder. Type tools (strumenti in Italian) to see the Tools folders first, then every tool.
 - Two-word searches work, like ear games or rhythm test. So do short phrases like train my ear, learn chords, keep time or read music.
 - Search finds Settings now (try settings, dark mode, backup, streak or achievements), and understands wordle, dictation, tonic, do re mi, songs, perfect pitch and overtones.
+- Streaks no longer stop at 40. Every further 40 in a row is a Prestige round (45 to 80 is Prestige 2x, 85 to 120 is Prestige 3x, and so on). Each round shows the same card as the first run with a colored frame and a small "Prestige 2x" badge, and pays the normal streak XP times the round number, up to 3x. The title keeps counting up forever.
+- The streak toasts and the Mythic card are redesigned as one card for every level: neon glass in dark mode, light glass with dark text in light mode. Each level has its own size, glow, lines and shine, and the card unrolls in from the top edge. Mythic is purple now. Streak numbers in a Prestige round match round one (a 45 shows as 5, an 80 as 40).
 - Each result says what it is: Game, Train, Tool or Folder.
 - When nothing matches, Search shows category buttons so you can browse instead of staring at an empty list.
 - Search finds more of what is inside the screens: capo, strobe, tuning fork, Hammond, Rhodes, tap tempo, ramp, decibel, concert pitch, twelve-bar blues, syncopation and more.
