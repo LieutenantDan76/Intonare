@@ -23,6 +23,8 @@ A human-readable record of what changed, when,
 - Sight Singing now remembers the voice you choose with the voice button.
 - If saving a backup file fails on the phone, the app now falls back to the share sheet. That fallback used to stop with an error.
 - Security fix in Music Quiz: answers in the online categories come from a public trivia site and were put on the page without escaping. A bad entry there could have run code inside the app. That text is now escaped.
+- If you change the language while a tour card is open, the card now changes language too.
+- The error report now records which section of the app you were in. It used to leave that out.
 - Code cleanup: a lint pass removed 68 functions that nothing called, duplicate translation keys and other leftovers. Old version numbers and a few long story comments in the code were cleaned up too. Nothing you can see or hear changes.
 - The vibraphone sound used when samples have not loaded now uses the full vibraphone model with its tremolo. A second, simpler definition was overriding it with a plain bell tone.
 - New audit script: a boot test opens every tool, exercise and game in a hidden browser and fails if any of them throws an error.

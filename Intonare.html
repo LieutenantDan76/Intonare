@@ -29951,10 +29951,8 @@ try {
     let targetCA     = 0.0;  // clear immediately — set to 1.0 then 0.0 in sequence for the lock-in effect
     let running      = true;
     let bgPulse      = 0;
-    let logoPulse    = 0;
     let logoGlow     = 0;
     let targetLogoGlow = 0;
-    const particles  = [];
     const shockwaves = [];  // expanding rings fired when wave crests
 
 
@@ -30244,7 +30242,6 @@ try {
 
       const [r, g, b] = rgb;
       const pulse = 0.5 + 0.5 * Math.sin(bgPulse);
-      const lp    = 0.5 + 0.5 * Math.sin(logoPulse);
       const baseA = logoGlow * logoGlow; // ease-in, syncs with logo appear
 
       // ── Edge bleeds: four sides ─────────────────────────
@@ -30418,7 +30415,6 @@ try {
       // arrive out of step with the motion it is supposed to be lit by.
       colorT     += (targetColorT - colorT)     * 0.012 * dt60;
       bgPulse    += 0.012 * dt60;
-      logoPulse  += 0.008 * dt60;
       logoGlow   += (targetLogoGlow - logoGlow) * 0.025 * dt60;
       // Animate logo gradient in sync with palette
       if (logo && logoGlow > 0.01) {
@@ -30565,7 +30561,6 @@ try {
   // function also does the iOS first-gesture audio unlock and kicks off sample
   // preloading. Tearing the splash down any other way would silently skip both.
   window._intonareSkipSplash = function () {
-    running = false;
     try { removeSplash(); } catch (e) {}
   };
 
@@ -41129,7 +41124,6 @@ function playStringNote(i, freq, noteName, instrument) {
   hapticLight();
   // Play
   const ctx = ensureRefCtx();
-  const now = ctx.currentTime;
   const dur = 2.8;
   const sound = _samplePlay(selectedRefTone, freq, ctx, refMasterGain, refVolume, dur);
   _playingStringKey = key;
@@ -42864,7 +42858,6 @@ function playRef(key, freq, noteName) {
   // No session call here either; see startMetro(). Changing the category while a
   // note is being scheduled is what caused the metronome to fire once and die.
   const ctx = ensureRefCtx();
-  const now = ctx.currentTime;
   const isDrone = droneMode;
   const dur = isDrone ? null : 2.8;
 
@@ -42923,8 +42916,6 @@ function stopAllRef() { Object.keys(refOscs).forEach(stopRef); }
 
 function playVoiceFork(target) {
   const key = 'voicefork';
-  const btnId = 'voiceForkBtn-' + target;
-  const btn = document.getElementById(btnId);
   if (refOscs[key]) {
     stopRef(key);
     document.querySelectorAll('.voice-fork-btn').forEach(b => b.classList.remove('playing'));
@@ -43275,7 +43266,6 @@ function closeRefPitchPopover() {
 
 // Close popovers on outside tap
 document.addEventListener('click', e => {
-  const group = document.querySelector('.tuner-pill-group');
   // A440 popover
   const refPill = document.getElementById('tunerRefPitchPill');
   const refPop  = document.getElementById('tunerRefPitchPopover');
@@ -43753,8 +43743,6 @@ const _TEMPO_HARMONIC_TOL = 0.08;// within 8% of half/double = harmonic
 let _workletNode = null;
 let _workletReady = false;
 let _workletFallback = false;
-let _workletPitchFreq = -1;
-let _workletPitchRms = 0;
 let _workletPitchFresh = false;   // true = browser lacks AudioWorklet
 
 const _WORKLET_CODE = `
@@ -44113,8 +44101,6 @@ async function _initAnalysisWorklet(ctx) {
         // The worklet runs YIN at ~21.5 Hz (hop 2048 at 44.1kHz), same
         // rate as the native mic path. The main thread still handles the
         // median filter, EMA smoothing, display, and all consumers.
-        _workletPitchFreq = e.data.freq;
-        _workletPitchRms = e.data.rms || 0;
         _workletPitchFresh = true;
       }
     };
@@ -45036,7 +45022,6 @@ async function startMic(_opts) {
     ((typeof currentExercise !== 'undefined') && _NATIVE_SURFACES_EXERCISES.indexOf(currentExercise) !== -1) ||
     ((typeof mode            !== 'undefined') && _NATIVE_SURFACES_MODES.indexOf(mode) !== -1);
   const _useNative = (!!(_opts && _opts.native) || _surfaceWantsNative) && _nativeMicAvailable();
-  let _nativeFellBack = false;
 
   if (_useNative) {
     try {
@@ -45059,7 +45044,6 @@ async function startMic(_opts) {
       // Native failed — fall through to the WebView path so the surface still works.
       console.warn('[IntonareMic] native start FAILED, falling back to WebView:', (e && e.message) ? e.message : e);
       _nativeMicActive = false;
-      _nativeFellBack = true;
       try { _nativeMicStop(); } catch (e2) {}
     }
   }
@@ -45970,9 +45954,7 @@ function setTS(top, bottom) {
   if (typeof rampUpdateTotal === 'function') rampUpdateTotal();
 }
 
-let _tsPickerType = null;
 function openTsPicker(type, anchorEl) {
-  _tsPickerType = type;
   const scrim = document.getElementById('tsPopupScrim');
   const popup = document.getElementById('tsPopup');
   const label = document.getElementById('tsPopupLabel');
@@ -46022,7 +46004,6 @@ function closeTsPicker() {
   const p = document.getElementById('tsPopup');
   if (s) s.style.display = 'none';
   if (p) p.style.display = 'none';
-  _tsPickerType = null;
 }
 
 function buildTSPresets() {
@@ -57397,10 +57378,8 @@ function _hdrIn() {
 function setHeaderModule(name, subtitle, exerciseId, backLabel) {
   var header    = document.getElementById('appHeader');
   var logo      = document.getElementById('appLogo');
-  var logoArea  = document.getElementById('logoArea');
   var tagline   = document.getElementById('headerTagline');
   var controls  = document.getElementById('headerModuleControls');
-  var headerSub = document.getElementById('headerSub');
   var backLbl   = document.getElementById('headerBackLabel');
 
   _headerBackFn = null;
@@ -57479,8 +57458,6 @@ function _rerenderSection() {
 function setHeaderSection(name, onBack, subKey) {
   var header    = document.getElementById('appHeader');
   var logo      = document.getElementById('appLogo');
-  var logoArea  = document.getElementById('logoArea');
-  var headerSub = document.getElementById('headerSub');
   var tagline   = document.getElementById('headerTagline');
   var backLbl   = document.getElementById('headerBackLabel');
   if (!logo) return;
@@ -59489,7 +59466,6 @@ function ivtDrillNext() {
 function ivtRenderDrillRemaining() {
   var el = document.getElementById('ivtDrillRemaining');
   if (!el) return;
-  var names = getIVNames();
   el.innerHTML = ivtDrillQueue.map(function(s) {
     var need = (ivtMode === 'sing') ? 3 : 1;
     var have = ivtDrillStreak[s] || 0;
@@ -59891,7 +59867,7 @@ function ivrPlay() {
   function done() { if (ivrSession === myToken) _ivrSetPlaying(false); }
 
   if (ivrDir === 'harm') {
-    var ctx = ensurePracticeCtx();
+    ensurePracticeCtx();
     _ivrNote(rootFreq, 1.6, myToken);
     _ivrNote(targetFreq, 1.6, myToken);
     ivrTimers.push(setTimeout(done, 1600));
@@ -60110,7 +60086,6 @@ function ivNext() {
   if (_refLink) _refLink.disabled = (ivMode !== 'sing');
 
   const names = getIVNames();
-  const dirLabel = dirChoice > 0 ? '↑' : '↓';
   const nameEl = document.getElementById('ivTargetName');
   try { var _ivZ = document.getElementById('ivTargetZone'); if (_ivZ) _ivZ.classList.remove('resting'); } catch (e) {}
   const detailEl = document.getElementById('ivTargetDetail');
@@ -60980,7 +60955,6 @@ function _chdStep(name, midi){
 // spelling follows.
 function _chdRotDef(def, inv){
   if(!inv) return def;
-  const n = def.intervals.length;
   const rot = a => a ? a.slice(inv).concat(a.slice(0,inv)) : a;
   return {
     intervals: def.intervals.slice(inv).concat(def.intervals.slice(0,inv).map(x=>x+12)),
@@ -65079,10 +65053,8 @@ let tpSelectedConcert = 0;
 let _tpInstVal = '0';
 let _tpFromVal = '0';
 let _tpToVal   = '0';
-let _tpActiveTab = 'key';
 
 function tpSetTab(tab) {
-  _tpActiveTab = tab;
   document.getElementById('tpTabKey').classList.toggle('active', tab === 'key');
   document.getElementById('tpTabChord').classList.toggle('active', tab === 'chord');
   document.getElementById('tpPanelKey').classList.toggle('active', tab === 'key');
@@ -65383,7 +65355,6 @@ function tpInit() {
   // Remove any stale portal lists from previous visits
   document.querySelectorAll('.tp-dd-portal').forEach(l => l.remove());
   tpSelectedConcert = 0;
-  _tpActiveTab = 'key';
   try {
     const si = localStorage.getItem('intonare_tp_inst');  if (si !== null) _tpInstVal = si;
     const sf = localStorage.getItem('intonare_tp_from');  if (sf !== null) _tpFromVal = sf;
@@ -71050,7 +71021,6 @@ function buildRefToneBank(hostId, hooks) {
   // piano/brass/mandocello are superseded or niche — keep in REF_TONES for
   // instrument auto-detect but don't show in the picker.
   const _excludedTones = new Set(['piano','brass','mandocello','electric_piano']);
-  const grouped = TONE_GROUPS.flatMap(g => g.keys);
 
   // Find which group the active tone belongs to (default to first)
   let activeGroupIdx = TONE_GROUPS.findIndex(g => g.keys.includes(_get()));
@@ -72459,7 +72429,6 @@ let prCustomA = 3;        // custom ratio values (independent of presets)
 let prCustomB = 2;
 let prRatioA = 3, prRatioB = 2;
 let prBpm = 90;                       // BPM of the smaller (simpler) layer — the base pulse
-let prLastRebaseTime = 0;             // audio time of last prRebaseNow call
 let prBpmDebounceTimer = null;        // debounce handle for slider drags
 const PR_LOOKAHEAD = 0.07;            // scheduler lookahead in seconds (keep short for clean transitions)
 let prMode = 'both';                  // 'both' | 'soloa' | 'solob' | 'tapa' | 'tapb'
@@ -72585,9 +72554,7 @@ function prIsTapMode() {
 }
 
 // Switch between the Listen and Practice control views.
-let prActiveTab = 'listen';
 function prSetTab(tab) {
-  prActiveTab = tab;
   document.getElementById('prTabListen').classList.toggle('active', tab === 'listen');
   document.getElementById('prTabPractice').classList.toggle('active', tab === 'practice');
   document.getElementById('prTabChallenge').classList.toggle('active', tab === 'challenge');
@@ -72792,7 +72759,6 @@ function prRebaseNow(newRatioA, newRatioB, newBpm) {
   prCycleCount = 0;
   prLastScheduledCycle = -1;
   prGameTaps = [];
-  prLastRebaseTime = now;
 }
 function prCloseAllPopups() {
   ['prRatioPopup','prBpmPopup','prSoundPopup'].forEach(id => {
@@ -79122,7 +79088,6 @@ function rrNew() {
     if (!ni || !rrPattern) return;
     var sigStr = rrPattern.sig[0] + '/' + rrPattern.sig[1];
     var bars   = rrPattern.m > 1 ? rrPattern.m + ' bars' : '1 bar';
-    var diff   = rrPattern.diff ? rrPattern.diff.toUpperCase() : '';
     if (nn) nn.textContent = (rrPattern.name || '');
     if (ns) ns.textContent = sigStr + '  ·  ' + bars;
     ni.style.visibility = 'visible';
@@ -79278,7 +79243,6 @@ function rrTap(evt) {
     var dist = Math.abs(pos - noteTime);
     if (dist < bestDist) { bestDist = dist; best = n; bestNi = ni; }
   });
-  var accMs = Math.round(bestDist * 1000);
   rrTapSound();
 
   // Neutral "registered" flash — no live green/yellow verdict. The real grade
@@ -79359,7 +79323,6 @@ function rrPlayback() {
         // Pulse the notehead
         var nh = document.getElementById('rr-nh-' + idx);
         if (nh) {
-          var saved = nh.getAttribute('fill') || nh.getAttribute('stroke');
           nh.setAttribute('opacity', '1.0');
           rrScheduleTO(function(){
             var n2 = document.getElementById('rr-nh-' + idx);
@@ -79505,7 +79468,7 @@ function rrShowResults() {
 
   // Build colorMap for staff
   var colorMap = {};
-  var GREEN  = '#4ade80', YELLOW = '#facc15', ORANGE = '#fb923c', RED = '#f87171', GRAY = 'rgba(255,255,255,0.22)';
+  var GREEN  = '#4ade80', YELLOW = '#facc15', ORANGE = '#fb923c', RED = '#f87171';
   var perfect=0, good=0, ok=0, miss=0;
 
   rrPattern.notes.forEach(function(n, ni) {
@@ -79646,7 +79609,6 @@ function rrShowResults() {
   rrRounds++;
 
   // Update stats
-  var stEl = document.getElementById('rrStats');
 
   var scoreEl = document.getElementById('rrStatScore');
   var strkEl  = document.getElementById('rrStatStreak');
@@ -80496,8 +80458,6 @@ function rcRenderStaffInto(svgId, card, colorMap, playheadId) {
   var tx = (VBW - groupW) / 2 - minX * scale;   // center horizontally
   var ty = SY;
 
-  // Final viewBox-space x positions (for playhead + note ids).
-  var xs = localXs.map(function(lx){ return tx + lx * scale; });
 
   var out = '';
   out += '<g transform="translate('+tx.toFixed(2)+','+ty.toFixed(2)+') scale('+scale.toFixed(3)+')">';
@@ -85333,7 +85293,6 @@ function rtTuner(){
     const startBar=(h.b/m), endBar=((h.b + h.s/spb)/m);
     const changed=isChanged(id,li);
     const bb=(cls,txt,tip)=>'<button class="'+cls+'" title="'+tip+'" style="'+btn('#3a4a5e')+'padding:3px 6px;font:12px system-ui">'+txt+'</button>';
-    const sep='<span style="opacity:.35">|</span>';
     return '<div class="tunRow" data-song="'+id+'" data-leg="'+li+'" style="display:flex;align-items:center;gap:4px;margin:4px 0;flex-wrap:wrap;'
       +(changed?'background:#2a2410;border-radius:6px;padding:2px 4px':'')+'">'
       +'<span style="width:40px;opacity:.7;color:'+LEG_COLORS[li]+'">leg '+(li+1)+'</span>'
@@ -85354,7 +85313,7 @@ function rtTuner(){
   }
 
   Object.keys(RT_JOURNEY).forEach(id=>{
-    const j=RT_JOURNEY[id], bpm=bpmOf(id), m=meterOf(id), beats=songBeats(id), spb=60/bpm;
+    const j=RT_JOURNEY[id], bpm=bpmOf(id), m=meterOf(id), beats=songBeats(id);
     const card=document.createElement('div');
     const _needs = (typeof rtNeedsTuning==='function') && rtNeedsTuning(id);
     card.dataset.song=id; card.className='tunCard'; card.dataset.needs=(_needs?'1':'0');
@@ -86020,9 +85979,7 @@ function ceUpdateRootDisplay() {
 function ceAnswer(symbol) {
   if (!ceRound || ceAnswered) return;
 
-  const tier = CE_DIFFICULTIES[ceDifficulty] || {};
   const maxRetries = ceRetries;
-  const showLightsOnRetry = !!tier.retryLights;
 
   const correctSymbol = ceRound.def.symbol;
   const correctDef    = CHORD_DICT.find(d => d.symbol === correctSymbol);
@@ -86229,9 +86186,6 @@ function ceOpenStats() {
   const overall = Math.round((ceCorrectCount / ceTotalCount) * 100);
   sub.textContent = `${ceCorrectCount} / ${ceTotalCount} correct  ·  ${overall}% overall`;
 
-  const sorted = [...entries].sort((a, b) => (b.correct/b.total) - (a.correct/a.total));
-  const best  = sorted.slice(0, Math.min(5, sorted.length));
-  const worst = sorted.slice(-Math.min(5, sorted.length)).reverse();
 
   function renderRows(list, color) {
     return list.map(e => {
@@ -86248,7 +86202,6 @@ function ceOpenStats() {
 
   // Deduplicate best/worst when there are few entries
   const allSorted = [...entries].sort((a, b) => (b.correct/b.total) - (a.correct/a.total));
-  const half = Math.floor(allSorted.length / 2);
   const bestList  = allSorted.slice(0, Math.max(1, Math.ceil(allSorted.length / 2)));
   const worstList = allSorted.slice(-Math.max(1, Math.floor(allSorted.length / 2))).reverse();
 
@@ -86946,7 +86899,6 @@ function chordleShowDailyResult(st) {
   // ── Rebuild the progression from the stored id (or re-seed as fallback) ──
   var prog = null;
   if (st.lastDailyProgId) {
-    var pool = CHORDLE_PROGRESSIONS[st.lastDailyDiff] || [];
     for (var d in CHORDLE_PROGRESSIONS) { // search all difficulties just in case
       (CHORDLE_PROGRESSIONS[d]||[]).forEach(function(p){ if (p.id===st.lastDailyProgId) prog=p; });
     }
@@ -87800,7 +87752,6 @@ function tonaleCmpHighlight(mode) {
   if (tonaleMode && tonaleMode.snap && tonaleCmp) {
     var keys=document.getElementById('tonaleRevealKeys');
     if (keys && keys.style.display!=='none') {
-      var tM=Math.round(tonaleFreqToMidi(tonaleCmp.target)), gM=Math.round(tonaleFreqToMidi(tonaleCmp.guess));
       // re-render with a pulse class is overkill; just nudge opacity via data attr handled in render — skip for now
     }
   }
@@ -88746,7 +88697,6 @@ function chordleRender() {
   if (chordleRevealRow>=0) { gameRevealRow(board.querySelectorAll('.chordle-guess-row')[chordleRevealRow]); chordleRevealRow=-1; }
   // Attach click handlers to active row slots
   if (chordleGameState==='playing') {
-    var rows = board.querySelectorAll('div>div');
     // Find the active row (index = guesses.length)
     var activeRowStart = 0;
     for (var ri=0;ri<chordleGuesses.length;ri++) {
@@ -90283,7 +90233,6 @@ function diadleRenderSheet() {
   cols=cols.filter(function(c){ return (c[0]&&inPool(c[0]))||(c[1]&&inPool(c[1])); });
   var nCols=cols.length;
   var html='';
-  var cellBase='border-radius:9px;cursor:pointer;font-family:\'JetBrains Mono\',monospace;font-size:15px;font-weight:700;color:var(--text);transition:all .12s;display:flex;align-items:center;justify-content:center;height:46px;';
   var _cellN=0, _curId=diadleCur[diadleSelSlot]||null;
   function cellBtn(id){
     if (!id||!inPool(id)) return '<div style="height:46px"></div>';
@@ -90900,7 +90849,7 @@ function errLogRead() {
 function _errLogScreen() {
   try {
     var bits = [];
-    if (typeof currentMode !== 'undefined' && currentMode) bits.push(currentMode);
+    if (typeof mode !== 'undefined' && mode) bits.push(mode);
     if (typeof currentTool !== 'undefined' && currentTool) bits.push('tool:' + currentTool);
     if (typeof currentExercise !== 'undefined' && currentExercise) bits.push('ex:' + currentExercise);
     return bits.join(' ') || 'unknown';
@@ -91378,7 +91327,6 @@ function dtMakeBadge(tier) {
 
 function dtBuildInner(count, msg, tier) {
   var inner  = document.getElementById('dailyStreakInner');
-  var p      = _DT_BP[tier] || _DT_BP[1];
   var badge  = dtMakeBadge(tier);
   var framed = tier >= 4 ? ' dt-framed' : '';
   var cHtml  = count + ' <span class="dt-pill-days">' + (t('dt_days')||'days') + '</span>';
@@ -94987,6 +94935,11 @@ function setLang(lang) {
   // Cheap: one querySelectorAll over the tagged elements, on a language switch,
   // which happens rarely and never in a loop.
   try { applyLang(); } catch (e) {}
+  // An open tour card keeps its text until the next step, so redraw it now.
+  try {
+    var _tourOv = document.getElementById('tourOverlay');
+    if (_tourOv && _tourOv.classList.contains('active')) showStep(currentStep);
+  } catch (e) {}
 }
 
 
@@ -97481,7 +97434,6 @@ async function hapticBeat(isAccent, isGhost, isDownbeat, gapMs) {
   // an accent is a thump. The bar downbeat is one full thump too (the old thump-tick pair felt
   // like a stray click). With the sound on, the click carries the
   // dynamics and the haptic stays a tick or a knock.
-  const _gap = gapMs > 0 ? gapMs : 60000 / Math.max(30, bpm);
   const _pocket = isGhost ? 'beatGhostPocket'
     : isAccent ? 'beatAccentPocket1'
     : 'beatPocket';
@@ -97711,7 +97663,7 @@ function dtShowStreakCard(hit, round, xp, unlockLine) {
   var m = _MS_DATA[hit] || _MS_DATA[5];
   if (!toast || !host) return;
   var light = document.body.classList.contains('light');
-  var g = m.glow, hi = light ? m.ink : m.n, pr = round > 1;
+  var g = m.glow, pr = round > 1;
   var vars = [
     '--w:' + Math.round(236 + m.size * 1.44) + 'px',
     '--c:' + (light ? m.c : m.n),
@@ -101317,11 +101269,9 @@ const VR_WARMUP_EXERCISES = [
   },
 ];
 
-let vrWarmupExIdx = 0;
 let vrWarmupPhaseTimeout = null;
 
 function vrBeginWarmup() {
-  vrWarmupExIdx = 0;
   const intro = document.getElementById('vrWarmupIntro');
   const active = document.getElementById('vrWarmupActive');
   if (intro)  intro.classList.add('hidden');
@@ -101336,7 +101286,6 @@ function vrRunWarmupExercise(idx) {
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
     return;
   }
-  vrWarmupExIdx = idx;
   const ex = VR_WARMUP_EXERCISES[idx];
 
   // Update label, desc, timer
@@ -102796,9 +102745,6 @@ function vrRenderReference() {
   const nonSatb   = VR_VOICE_TYPES.filter(vt => !VR_SATB_IDS.has(vt.id)); // baritone + mezzo
   const extTypes  = [...nonSatb, ...VR_EXTENDED_TYPES]; // full extended set
 
-  const allTypes = vrShowExtended
-    ? [...satbTypes, ...extTypes].sort((a,b) => a.tessCenter - b.tessCenter)
-    : satbTypes.slice().sort((a,b) => a.tessCenter - b.tessCenter);
 
   // Strip first — it's the orienting overview
   // Always render ALL types in the strip. Extended ones start hidden.
@@ -103451,7 +103397,6 @@ let dk_precTrackId = null;  // currently open precision track
 
 // Scheduler state
 let dk_currentStep   = 0;
-let dk_nextNoteTime  = 0;
 let dk_schedTimer    = null;
 let dk_notesInQueue  = [];
 
@@ -104909,7 +104854,6 @@ function _makeTrackTS(trackId, tsBase) {
 }
 
 const GLOBAL_TRIPLET_LABELS = {null:'T', 3:'T8', 6:'T16'};
-let dk_globalTriplet = null; // null=off, 3=T8, 6=T16
 
 const BAR_COUNT_CYCLE = [1, 2, 4];
 
@@ -105070,14 +105014,12 @@ function setSubdivision(sub, triplet, optEl) {
 
   if (triplet !== null) {
     // Triplet mode: override all tracks
-    dk_globalTriplet = triplet;
     TRACKS.forEach(t => { dk_trackSub[t.id] = triplet; });
     // Update button label
     const btn = document.getElementById('dkSubBtn');
     if (btn) btn.textContent = GLOBAL_TRIPLET_LABELS[triplet] + ' ▾';
   } else {
     // Straight mode: set global sub and clear triplet
-    dk_globalTriplet = null;
     TRACKS.forEach(t => { dk_trackSub[t.id] = null; });
 
     // Scale patterns when changing subdivision
@@ -105322,7 +105264,6 @@ function togglePlay() {
   const icon = document.getElementById('playIcon');
   if (dk_playing) {
     dk_currentStep = 0;
-    dk_nextNoteTime = dk_audioCtx.currentTime + 0.05;
     dk_notesInQueue = [];
     dk_autoFollow = true;
     _initTrackScheduler(dk_audioCtx.currentTime + 0.05);
@@ -107940,7 +107881,6 @@ function loadPreset(p) {
   if (p.nudge) {
     Object.keys(p.nudge).forEach(tid => { dk_nudges[tid] = { ...p.nudge[tid] }; });
   }
-  dk_globalTriplet = null;
   const tripBtn = document.getElementById('dkTripBtn');
   if (tripBtn) { tripBtn.textContent = 'T'; tripBtn.classList.remove('active'); }
   if (p.trackSub) Object.assign(dk_trackSub, p.trackSub);
@@ -114717,8 +114657,6 @@ function wwGetFingering(concertPc, altIdx, midi) {
         if (oct2f) data = [...oct2f];
       }
     } else if (layout) {
-    const lhMainLen  = layout.lhMain.length;
-    const lhPinkyLen = layout.lhPinky.length;
 
     if (chordScaleInstrument === 'ww_clarinet') {
       // Clarion register: written B4+ → set R key (index 1 in lhMain = position 1 in data)
@@ -115132,7 +115070,6 @@ function _fluteStyleSlotPath(p, slot, isClosed, fullD) {
 function _fluteSvgDraw(containerEl, data, mini, moving, noFoot) {
   containerEl.innerHTML = '';
   const NS = 'http://www.w3.org/2000/svg';
-  const mv = (moving instanceof Set) ? moving : new Set(moving || []);
   const VBW = 340, VBH = 98;
   const svg = document.createElementNS(NS,'svg');
   svg.setAttribute('viewBox', `0 0 ${VBW} ${VBH}`);
@@ -115375,7 +115312,6 @@ function _oboeSvgDraw(containerEl, data, mini) {
   for (const slot in OP) {
     const s = data[slot] || 0;
     const closed = s === 1;
-    const half = s === 0.5;
     const strokeCol = closed ? ACCENT : GRAY;
     const sw = closed ? '80' : '160';
     const p2 = el('path', {d:OP[slot], fill:'none',
@@ -115555,8 +115491,6 @@ function _clarinetSvgDraw(containerEl, data, mini) {
   // Functional keys
   for (let slot = 0; slot < 14; slot++) {
     const closed = data[slot] === 1;
-    const fill   = closed ? ACCENT : GRAY;
-    const opacity = closed ? '1' : '0.28';
     const ctr = SCTR[slot];
     const lbl = SLABELS[slot] || '';
 
@@ -117613,7 +117547,6 @@ function gssGetPositions(root, intervals, openMidi) {
     if (isRe) reentrantStrings.add(i);  // re-entrant: grayed context string
     else nonReentrantIndices.push(i);
   }
-  const isReentrant = reentrantStrings.size > 0;
 
   // Anchor on the 2 lowest non-re-entrant strings only (C+E for uke, E+A for guitar).
   // This mirrors guitar's E+A strategy and keeps roots on the two "bass" strings.
@@ -117745,7 +117678,6 @@ function gssRender() {
   const nextBtn   = document.getElementById('gssNext');
   if (!nameEl) return;
 
-  const rootDisp = gccRootDisplayName(GCC_ROOTS.indexOf(gssRoot));
   const st = GSS_SCALE_TYPES.find(s => s.id === gssScaleType);
 
   if (!gssPositions.length || !st) {
@@ -120361,7 +120293,6 @@ function _trillScheduleBeat() {
     const freq = midiToFreq((_trillPhaseAt === 0) ? t2.lower : t2.upper);
     const when = Math.max(now + 0.005, _trillNextBeatAt);
     const _ti = chordScaleInstrument === 'ww_clarinet' ? 'ww_clarinet' : 'ww_flute';
-    const toneId = _ti === 'ww_clarinet' ? 'reed' : 'flute';
     // ONE path, which is what the comment above this block always claimed and the
     // code did not do. Previously: windSynth when samples were loaded, and
     // otherwise a hand-rolled square+sine through a 1kHz lowpass — an oscillator
@@ -120618,7 +120549,6 @@ function wwScalePreferredAlt(concertPc) {
 }
 
 function trumpetRender() {
-  const inst     = chordScaleInstrument;
   const range    = windActiveRange();
   const rootIdx  = GCC_ROOTS.indexOf(gssRoot);
   const rootPc   = rootIdx % 12;
@@ -121580,7 +121510,6 @@ function csDrawKeyboard(svgEl, highlightSet, rootSemi, labelMap, numOctaves, onK
     if (_plain) isRoot = false; // piano-tool organ: no orange root
     const x = leftPad + wIdx * _CS_SS;
     const isHit = !isFrame && highlightSet.has(semi);
-    const step = midi - (60 + rootSemi);
     // Hammond reversed low octave: naturals C2–B2 (MIDI 36–47) render dark
     const _rev = _isOrgan && midi >= 36 && midi <= 47;
     const _wp = _rev ? 'RW' : 'W'; // gradient prefix for naturals
@@ -122500,7 +122429,6 @@ function _wireLeslieButtons(root) {
 
 function _wireDrawbar(track) {
   const idx = parseInt(track.dataset.bar);
-  const prefix = track.dataset.prefix;
   const manual = track.dataset.manual || 'upper';
   const targetArr = () => (manual === 'lower') ? organDrawbarsLower : organDrawbars;
   const fill = track.querySelector('.org-bar-fill');
@@ -131004,7 +130932,6 @@ function sgTabSvg(sp, il) {
   var tabTop = yOff + 30;
   function ly(i) { return tabTop + i * gap; }
   var bottom = ly(lines - 1);
-  var lastX = xs[xs.length - 1];
   var xEnd = W - 12;
   var xStart = sp.staff ? 10 : 30;
 
@@ -131685,7 +131612,6 @@ function render(dir){
       var _mcRefresh=function(doPlay){
         var m=SG_MODES[_mcSel];
         var spelled=sgSpell('C',m.iv);
-        var hl=m.iv.map(function(s){return s%12;});
         sgDrawModeStaff(_mcStaff, spelled);
         var basisTxt = m.basis==='major' ? (_mcIl?'BASE MAGGIORE':'MAJOR-based') : (_mcIl?'BASE MINORE':'MINOR-based');
         var charTxt = _mcIl?(m.char_it||m.char):m.char;
@@ -131737,7 +131663,6 @@ function render(dir){
       var _msRefresh=function(doPlay){
         var m=SG_MODES[_msSel];
         var spelled=sgSpell('C',m.iv);
-        var hl=m.iv.map(function(s){return s%12;});
         var nm=_msIl?(m.name_it||m.name):m.name;
         var spDisp=_msIl?spelled.map(sgSpellIt):spelled;
         var d=_msIl?(m.desc_it||m.desc):m.desc;
@@ -132483,7 +132408,6 @@ function updateNav(){
   var totPg=totalPages(state.tab);
   var pct=totPg>1?globalPage()/(totPg-1)*100:100;
 
-  var _lang=(progState&&progState.lang)||'en';
   var _secTitle=sgSecTitle(sec);
   document.getElementById('navSection').textContent=_secTitle+' \u00B7 '+(state.pg+1)+'/'+sec.pages.length;
   document.getElementById('navFill').style.width=pct.toFixed(1)+'%';
@@ -136448,7 +136372,6 @@ function mqShowStats() {
   if (!container) return;
 
   var acc = s.totalQ > 0 ? Math.round((s.totalCorrect / s.totalQ) * 100) : 0;
-  var col = acc >= 80 ? 'var(--in-tune)' : acc >= 50 ? 'var(--accent-warm)' : 'var(--sharp)';
 
   var html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">';
   // These were literal strings, so the whole stats grid stayed English in
@@ -137067,9 +136990,6 @@ function mqRenderSurvivalPackGrid() {
         // v1.0.0: same tile tint as Quick Play (70% border, sheet wash, colored name).
         : 'border-color:color-mix(in srgb,' + col + ' 70%,var(--border-soft));'
           + 'background:color-mix(in srgb,' + col + ' ' + mqPackSheetWashPct() + '%,var(--surface));';
-      var qCount = mqPackQuestions(id).length;
-      // A locked pack must not advertise a count it will not deal from.
-      var _sgen = (typeof MQ_GEN_PACKS !== 'undefined') && MQ_GEN_PACKS.indexOf(id) !== -1;
       // No count on the pill: the popup you open next leads with it, so this
       // was the same number twice and cost the tile a second line to say it.
       var countLabel = '';
@@ -137220,10 +137140,6 @@ function mqRenderSheetPackGrid() {
       }
       var soonTag = mqPackReady(id) ? ''
         : '<span class="mq-pack-soon-tag">' + (t('mq_coming_soon') || 'COMING SOON') + '</span>';
-      // mqPackQuestions already filters by locale, which is the same correction
-      // I had written out longhand here.
-      var qn = mqPackQuestions(id).length;
-      var _gen = (typeof MQ_GEN_PACKS !== 'undefined') && MQ_GEN_PACKS.indexOf(id) !== -1;
       // A generator-only pack has no authored questions to count, so the tile
       // beside a counted one came out blank and read as a fault. It says what it
       // is instead.
@@ -142446,7 +142362,6 @@ document.addEventListener('DOMContentLoaded', function(){ mqRenderSheetPackGrid(
     var lg = document.getElementById('appLogo'), txt = lg ? (lg.textContent || '').trim() : '';
     if (el.textContent !== txt) el.textContent = txt;
   }
-  var _crumbTab = '';
   window._hvsSync = function () {
     try {
       var hd = document.getElementById('appHeader');
