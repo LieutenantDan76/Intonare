@@ -7,7 +7,7 @@ makes those checkable from the first stem onward.
 REWRITTEN, and the reason matters. Every check in here was ENGLISH ONLY. Not
 one reference to q_it, opts_it or fact_it existed in the file, so an Italian
 fault could not fail the draft gate no matter how bad it was. It got found later
-by livecheck at ship, or by Daniele, or by Linda. In v0.189 that was 12
+by livecheck at ship, or by the maintainer, or by a native reader. In v0.189 that was 12
 answer-length tells where the draft check reported none, half of them Italian,
 and 16 Italian drifts against the draft checker's 4.
 

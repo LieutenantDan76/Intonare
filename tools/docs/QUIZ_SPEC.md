@@ -35,7 +35,7 @@ AND FACT SOURCE, not a set of drafts.
 - **Time is not the constraint, repassing is.** Move deliberately. This is a
   quality gate for 1.0, not a race to a number.
 - **Italian needs a native check before scale.** Nobody has reviewed the Italian
-  in this app. Linda should spot-check the first finished pack before the rest
+  in this app. A native speaker should spot-check the first finished pack before the rest
   are written in it.
 
 **Current position** lives in section 9 and is regenerated from the file, not
@@ -604,9 +604,8 @@ a thinner copy of the genre packs. Live Aid appeared twice inside the eighties
 pack and once more in rock_metal. They are now GENERAL decade packs: music stays,
 but so does everything else people remember about living through it.
 
-Daniele's framing: "my mom loves decades knowledge, so it'd be fun for 80s to
-have shit about leg warmers, walkmen, and 90s to have Gameboys, hip hop and
-Pokemon."
+The framing for the decades packs: lean on what people remember living through.
+The 80s get leg warmers and walkmen. The 90s get Game Boys, hip hop and Pokemon.
 
 This solves the ceiling problem. A music-only decade pack runs out of fair
 questions somewhere past sixty. A general one does not, and almost everything it
@@ -1465,7 +1464,7 @@ landed in v0.164.0 specifically for it.
 
 ### Still outstanding on every rebuilt pack
 
-**No native Italian speaker has read any of it.** Linda's pass is the one thing
+**No native Italian speaker has read any of it.** A native speaker's pass is the one thing
 none of the tooling substitutes for, and it is the gate between "ready for
 review" and "ready to ship".
 
@@ -1478,7 +1477,7 @@ review" and "ready to ship".
   one tier at once. Not built. Needs a UI change as well as a filter change.
 
 - **Italian needs a native reader.** Every Italian string in this app was written
-  by me and nobody has checked it. Linda should read one finished pack before the
+  by me and nobody has checked it. A native speaker should read one finished pack before the
   remaining hundreds of questions are written in it.
 - **The eight giveaways** are all in the decades packs and all the same shape: a
   question naming a band whose self-titled album is the answer. These need the

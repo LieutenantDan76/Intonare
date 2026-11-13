@@ -27,7 +27,10 @@ if not exist Intonare.html (
 
 echo [2/6] Committing and pushing to GitHub...
 git add -A
-git commit -m "Update Intonare.html"
+set "MSG="
+set /p "MSG=Commit message (Enter for the default): "
+if not defined MSG set "MSG=Update Intonare"
+git commit -m "!MSG!"
 git push
 
 echo [3/6] Copying Intonare.html to www...

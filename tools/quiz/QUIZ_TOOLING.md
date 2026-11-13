@@ -28,7 +28,7 @@ Three findings, all measured:
 `intonare_blurb_draft_check.py` contained zero references to `q_it`, `opts_it`
 or `fact_it`. Every check they ran was English. An Italian fault could not fail
 the draft gate no matter how bad it was, and got found by livecheck at ship, or
-by Daniele, or by Linda. In v0.189 that was twelve answer-length tells the draft
+by the maintainer, or by a native reader. In v0.189 that was twelve answer-length tells the draft
 check reported as none, half of them Italian.
 
 **Two Italian checkers disagreed.** The sweep reported sixteen drifts on

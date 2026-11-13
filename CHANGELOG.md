@@ -19,6 +19,13 @@ A human-readable record of what changed, when,
 - The Games folder text now names all five games, and the Road Trip card says you sing.
 - Fixed a doubled phrase in the Relative Pitch tour, and the Italian Polyrhythm tour now uses the right gender.
 - New check in the ship tools: the search audit runs 90 real searches against the app and fails if a category stops finding what it should.
+- Fixed the Open Full Reference button in Interval Training. The reference opened with no way back to the exercise. A Back to Training button now shows there and returns you to your session.
+- Sight Singing now remembers the voice you choose with the voice button.
+- If saving a backup file fails on the phone, the app now falls back to the share sheet. That fallback used to stop with an error.
+- Security fix in Music Quiz: answers in the online categories come from a public trivia site and were put on the page without escaping. A bad entry there could have run code inside the app. That text is now escaped.
+- Code cleanup: a lint pass removed 68 functions that nothing called, duplicate translation keys and other leftovers. Old version numbers and a few long story comments in the code were cleaned up too. Nothing you can see or hear changes.
+- The vibraphone sound used when samples have not loaded now uses the full vibraphone model with its tremolo. A second, simpler definition was overriding it with a plain bell tone.
+- New audit script: a boot test opens every tool, exercise and game in a hidden browser and fails if any of them throws an error.
 
 ## v1.0.4: Practice history that counts every answer
 
@@ -10713,7 +10720,7 @@ Thirty-eight corrections in all. The pack audit, the sentinel, the backup audit
 and the changelog gate all pass, and every script block still parses with the
 accented strings in place.
 
-**Still unresolved, and it is Linda's call, not mine.** "barrè" appears seven
+**Still unresolved, and it needs a native Italian speaker's call.** "barrè" appears seven
 times; the word is French and Italian guitarists write it both ways.
 
 ---
@@ -10734,7 +10741,7 @@ copies the second rather than inventing either. The two renderers now have to
 agree on what a triplet looks like, which is a duplication worth watching.
 
 **The pack is NOT in `MQ_PACK_READY` and still shows COMING SOON.** No native
-Italian speaker has read it. Linda's pass comes before it goes live, and the
+Italian speaker has read it. A native speaker's pass comes before it goes live, and the
 question text and blurbs are in the project files for her to read on paper
 rather than through the app.
 

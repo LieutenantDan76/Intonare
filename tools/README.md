@@ -51,6 +51,7 @@ This machine had no `python` / `py` on PATH when imported. Install Python 3
 | `intonare_groove_audit.py` | Groove patterns |
 | `intonare_i18n_audit.py` | Translation coverage (slow) |
 | `intonare_dev_flag_audit.py` | Dev-flag / Pro leakage |
+| `intonare_boot_smoke.py` | Opens every tool, exercise and game in a headless browser. Fails on any error. Needs Playwright. |
 | `glyphnames.json`, `classes.json` | Needed by notation audit if revived |
 
 Suggested ship order once Python works:

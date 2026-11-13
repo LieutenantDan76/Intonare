@@ -9,7 +9,7 @@ actual codebase before relying on any status line here.
 Intonare is a bilingual English/Italian music education app. It ships
 as a single HTML file (~131,000+ lines of vanilla JS, CSS, and HTML),
 Capacitor-wrapped for Android and iOS. Sole developer: Daniele
-(LieutenantDan76 on GitHub). Primary tester: his mother, Linda.
+(LieutenantDan76 on GitHub).
 
 The app covers: chromatic tuner with pitch history and vibrato
 detection, metronome with groove sequencer and drum machine, ear

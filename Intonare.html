@@ -767,7 +767,7 @@ body.sg-open #toolSurvivalGuide{
 #toolSurvivalGuide .sg-cad-staff{max-width:100%;height:auto;display:inline-block}
 #toolSurvivalGuide .sg-cad-desc{font-size:14px;line-height:1.5;opacity:.9;margin:2px 0 4px}
 #toolSurvivalGuide .sg-term-play:active{opacity:.5}
-/* ── Notation symbol strip (v0.150.12) ────────────────────────────────────
+/* ── Notation symbol strip ────────────────────────────────────
    Built by sgBuildSymbolStrip() from the data-term values already in the
    body copy. Badge layout was chosen over inline glyphs on device: Bravura's
    em-boxes vary enormously (a staccato dot is 4px tall, a quarter rest 37px),
@@ -1278,7 +1278,7 @@ body.sg-open #toolSurvivalGuide{
     font-family: 'Bebas Neue','GlyphFix', sans-serif; font-size: 15px; letter-spacing: 2px; cursor: pointer;
     transition: filter .15s, transform .1s;
   }
-  /* --accent-warm flips dark in light mode (v0.134.3-family fix) but the second
+  /* --accent-warm flips dark in light mode (same family of fix) but the second
      stop is a hardcoded bright orange that never flips, so the gradient spans
      dark-to-light within itself and no single text color reads against both
      ends. Light mode gets its own two-dark-stop gradient instead of trying to
@@ -3317,7 +3317,7 @@ body.sg-open #toolSurvivalGuide{
        --accent-fill is the same hue at MID luminance and HIGH chroma, so mixing it in
        darkens AND saturates. Same dL as before, but dS goes +0.10 instead of -0.06. */
     --accent-fill: #3f8fd0;
-    /* GROUNDS AT S=0.30, same as the four theme-scoped ramps. v0.97.90 desaturated
+    /* GROUNDS AT S=0.30, same as the four theme-scoped ramps. An earlier change desaturated
        the theme grounds but left this base untouched, so any surface that paints
        before a theme class is applied -- the splash most visibly -- stayed at the old
        S=0.42 and was suddenly the most saturated thing in light mode. Luminance
@@ -3348,7 +3348,7 @@ body.sg-open #toolSurvivalGuide{
     --bg-0: #ddd9f0;
     --bg-1: #e4e0f4;
     /* CARDS ARE THE CALM PART, NOT THE COLORFUL PART.
-       v0.97.90 dropped the grounds to S=0.30 and deliberately left surfaces at 0.42,
+       An earlier change dropped the grounds to S=0.30 and deliberately left surfaces at 0.42,
        reasoning that cards should be more saturated than the page. Measuring against
        dark showed that backwards: dark's cards sit at S=0.20, and its accents read as
        color precisely BECAUSE their surroundings do not. Light had a card at 0.42
@@ -3820,7 +3820,7 @@ body.sg-open #toolSurvivalGuide{
      panel; light should fall INTO a screen. It was tuned against the pre-soft palette
      and no rebuild could reach it, since it is a literal (this is exactly what
      intonare_light_literal_lint.py now catches).
-     FIRST ATTEMPT OVERSHOT. v0.97.92 put it 0.088 BELOW --surface, which dropped the
+     FIRST ATTEMPT OVERSHOT. An earlier change put it 0.088 BELOW --surface, which dropped the
      screen 0.256 in one step and left page/housing/screen inside a single 0.40-0.55
      luminance band -- the whole tuner read as one gray-blue slab with no separation
      anywhere. "Recessed" is a SHADING cue (light falling in), not a license to collapse
@@ -3829,7 +3829,7 @@ body.sg-open #toolSurvivalGuide{
      approved mockup had (it sat 0.009 below the surface of the day). Depth comes from
      the inset shadow and the bezel, not from making the glass dark. */
   /* ── THE CASING IS THE METAL ────────────────────────────────────────────────
-     v0.97.94 put the brushed metal on .tuner-screen-bezel, which is the MIDDLE layer
+     An earlier change put the brushed metal on .tuner-screen-bezel, which is the MIDDLE layer
      -- the thin lip immediately around the glass. Wrong part: that lip is the inner
      3D edge of the display cutout, and the metal belongs on the OUTER casing, the
      thing the whole unit is milled from. Nesting is
@@ -3868,7 +3868,7 @@ body.sg-open #toolSurvivalGuide{
      Now the bezel paints an actual brushed-metal ring and the glass sits recessed
      inside it. Depth comes from the ORDER -- page < housing < bezel, glass pressed
      into the bezel -- rather than from making the glass dark, which is the mistake
-     v0.97.92 made.
+     that attempt made.
      The metal is hue-matched to the module (steel at the tuner's 214), not neutral
      gray: a gray ring on a blue instrument reads as a foreign part. */
   /* The BEZEL is the 3D lip: a narrow chamfer where the casing steps down into the
@@ -3885,7 +3885,7 @@ body.sg-open #toolSurvivalGuide{
     position: relative; z-index: 1;
   }
   /* The GLASS. Lit, not recessed-dark: a display that is ON sits ABOVE --panel.
-     v0.97.92/94 kept pushing it down, which is why it read as switched off.
+     earlier attempts kept pushing it down, which is why it read as switched off.
      Now L=0.727, which is 0.045 above --panel, plus a diagonal specular sweep and a
      top sheen so it reads as glass catching room light. */
   body.light .tuner-screen-inner {
@@ -4088,7 +4088,7 @@ body.sg-open #toolSurvivalGuide{
      rgba(122,84,16,.7) over rgb(189,171,117) resolves to about 2:1. Confirmed
      unreadable on device. Solid #523700 measures ~4.9:1 on the same ground, keeps the
      metronome's brass identity, and still sits below the big BPM number in weight
-     because that number is far larger. (v0.133.4) */
+     because that number is far larger. */
   body.light .metro-screen .bpm-unit { color: #523700 !important; }
   body.light .metro-screen .metro-screen-label { color: rgba(70,55,20,.75) !important; }
   body.light .metro-screen .bpm-name,
@@ -4343,7 +4343,7 @@ body.sg-open #toolSurvivalGuide{
   /* Same treatment as the main screen: it is the same instrument panel. */
   /* The chroma strip has the same three layers as the main display
      (.tuner-chroma-screen > .tuner-chroma-bezel > .tuner-chroma-screen-inner), so it
-     gets the same construction: steel casing, 3D lip, lit glass. v0.97.94 gave it the
+     gets the same construction: steel casing, 3D lip, lit glass. An earlier change gave it the
      screen fill and left both inner layers transparent, so it sat beside a bezelled
      display looking like a different component entirely. */
   body.light .tuner-chroma-screen {
@@ -4492,7 +4492,7 @@ body.sg-open #toolSurvivalGuide{
 
   /* COHESION: cards use a top->bottom gradient + a corner radial glow tuned for dark.
      On light both read as a muddy bloom. Flatten to a solid surface, kill the glow. */
-  /* Card fill/shadow owned by cleaner Glassier block below (v0.210.96). */
+  /* Card fill/shadow owned by cleaner Glassier block below. */
   body.light .card { /* superseded */ }
 
   /* ── LIGHT GLASS (Regular) — chrome-first, always readable ───────────────
@@ -4570,7 +4570,7 @@ body.sg-open #toolSurvivalGuide{
         color-mix(in srgb, var(--lf-low) 28%, transparent) 100%),
       var(--glass-fill) !important;
   }
-  /* Content cards — ONE mid-tint lift (v0.210.98). Light-only.
+  /* Content cards — ONE mid-tint lift. Light-only.
      Between stark #fff and muddy surface/bg-0. Stage hue via panel/surface;
      no backdrop blur (sampled mud). Glass stays on chrome/tab. */
   body.light .card:not(.tuner-bpm-card):not(.metro-bpm-card),
@@ -4617,7 +4617,7 @@ body.sg-open #toolSurvivalGuide{
   }
   body.light .iv-card-v2 > * { position: relative; z-index: 1; }
 
-  /* Hub picker / folder tiles (v0.210.104).
+  /* Hub picker / folder tiles.
      Mid-tint cards mixed so much --bg-0 that Tools/Train folders melted into
      the stage. These stay opaque panel/white so they lift as real tiles;
      borders + badge/sub ink denser so lists and "N tools >" do not wash out.
@@ -4689,7 +4689,7 @@ body.sg-open #toolSurvivalGuide{
     opacity: 1 !important;
   }
 
-  /* Remaining washed surfaces (v0.210.105).
+  /* Remaining washed surfaces.
      Tiles/sections: opaque hub lift. Sheets/modals: denser frost (keep glass).
      Teach-hints stay mid-tint; denser border + ink only. */
   body.light .sm-section,
@@ -4855,7 +4855,7 @@ body.sg-open #toolSurvivalGuide{
   }
 
 
-  /* Tools/Train cards share the near-white lift (v0.210.97).
+  /* Tools/Train cards share the near-white lift.
      Older denser tint (surface/bg-0 mix) made Tools/Train muddier than Tuner/Metro
      and darker than the depth lab preview. Keep-dark islands untouched. */
   body.light .ivr-jump,
@@ -4910,7 +4910,7 @@ body.sg-open #toolSurvivalGuide{
     filter: none !important;
   }
 
-  /* ── TOOLS OMEGA + light-review Looks-off (v0.210.76) ──
+  /* ── TOOLS OMEGA + light-review Looks-off ──
      Keep module identities (cream piano, Moog theremin, warm progression PLAY).
      Lift contrast on the eight screens marked Looks off in review.html. */
   body.light .prog-add-bar-btn {
@@ -5359,7 +5359,7 @@ body.sg-open #toolSurvivalGuide{
   /* .header no longer paints anything; the ambient lift moved to the page background.
      Left as static so it cannot form a stacking context over the content below it. */
   /* The full-bleed ::before is GONE.
-     It was built in v0.98.2 for a band that needed to escape .app's 16px padding, and
+     It was built for a band that needed to escape .app's 16px padding, and
      it did that with left/right:-100vw plus bottom:0 -- a box extending 390px past each
      edge and stretching down the page. Harmless behind an opaque band; not harmless
      once it stayed, because that oversized box broke scrolling in every module.
@@ -5518,7 +5518,7 @@ body.sg-open #toolSurvivalGuide{
   /* Resting placeholder used to be an em-dash. JS now clears it; keep hide
      rules so bg-clip cannot paint a needle if a dash returns.
      Do NOT collapse height/margin - that shoved the card when the name
-     appeared on answer (v0.210.87 regression). Reserve the base slot. */
+     appeared on answer (a regression). Reserve the base slot. */
   body.light .iv-target-zone.resting .iv-hero-name,
   body.light .iv-hero-name:empty {
     background: none !important;
@@ -6307,7 +6307,7 @@ body.sg-open #toolSurvivalGuide{
   body.light .ts-preset,
   body.light .tuner-subtab:not(.active),
   body.light .metro-subtab:not(.active) {
-    /* Recessed tray (v0.210.98); was surface-2 slab = second white card */
+    /* Recessed tray; was surface-2 slab = second white card */
     background: color-mix(in srgb, var(--bg-0) 42%, var(--surface)) !important;
     border: 1px solid color-mix(in srgb, var(--border) 55%, var(--bg-0)) !important;
     box-shadow: inset 0 1px 2px color-mix(in srgb, var(--tab-accent, var(--accent)) 10%, transparent) !important;
@@ -6331,7 +6331,7 @@ body.sg-open #toolSurvivalGuide{
   body.light .sm-toggle-chip.active .sm-toggle-sub { color:#3a3d4a !important; }
   body.light .card-glow { opacity: 0 !important; }
 
-  /* ── LIGHT EMISSION KILL (v0.210.98) ─────────────────────────────────
+  /* ── LIGHT EMISSION KILL ─────────────────────────────────
      Dark mode sells state with glow/bloom. On a lit page the same devices
      read as neon smudge. Fill + border + contact shadow only. Keep-dark
      islands are untouched (they redeclare dark values locally). */
@@ -6374,7 +6374,7 @@ body.sg-open #toolSurvivalGuide{
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-vivid) 35%, transparent),
                 0 2px 6px rgba(18,32,60,0.16) !important;
   }
-  /* Second-pass nooks (v0.210.99) */
+  /* Second-pass nooks */
   body.light #toolDrumkit .dk-prec-step.on,
   body.light #toolDrumkit .dk-prec-step.flam {
     box-shadow: none !important;
@@ -6461,7 +6461,7 @@ body.sg-open #toolSurvivalGuide{
   /* ── ORPHAN GAME SCREENS (hardcoded dark, no light path) — lift to charcoal that
      reads as an immersive game display, not a black hole. ── */
   /* ── CHORD EAR TRAINING: LCD WITH ITS CHARACTER BACK ────────────────────────
-     v0.98.10 made this Game Boy green; v0.98.11 fixed the green (it sat 167 deg from
+     One change made this Game Boy green; the next fixed the green (it sat 167 deg from
      train's violet) but stripped the personality with it and left a plain pale
      rectangle.
      The retro feel never came from the green. It comes from cues that are all
@@ -6497,7 +6497,7 @@ body.sg-open #toolSurvivalGuide{
      rather than paper. Vertical lines are wider-spaced than the scan lines so the two
      do not moire. */
   /* VIGNETTE ONLY -- the vertical segment ruling is gone.
-     v0.98.12 ran vertical ruling every 6px against scan lines every 3px. Two
+     An earlier change ran vertical ruling every 6px against scan lines every 3px. Two
      repeating gratings at close periods produce a visible cross-hatch, and that
      is what read as "intense": you could count the grid. Real LCD glass has ONE
      dominant ruling. Metro, which reads correctly, has no vertical ruling at all
@@ -6724,7 +6724,7 @@ body.sg-open #toolSurvivalGuide{
   }
   /* CARD BLOOMS REMOVED.
      These baked a radial of --theme (an INK value, L~0.05) into two card backgrounds.
-     That is the same subtractive mistake the page blooms had in v0.98.5: mixing a dark
+     That is the same subtractive mistake the page blooms had: mixing a dark
      color into a pale surface darkens it, so the "bloom" read as a smudge across the
      top of the card rather than light falling on it.
      Ambient light belongs to the page, not to individual cards. body.light::before now
@@ -7096,7 +7096,7 @@ body.sg-open #toolSurvivalGuide{
      is under the touch point, every non-passive touchmove listener that fired, and any
      fixed full-viewport element with pointer-events enabled. */
   /* TAP-TARGET HALOS REVERTED.
-     v0.98.3 added invisible 44pt ::after boxes to nine control types to meet the iOS
+     An earlier change added invisible 44pt ::after boxes to nine control types to meet the iOS
      HIG minimum. They are the most plausible cause of the scroll failure reported on
      device: pointer-events:auto on invisible boxes that overlap scrollable area, on
      chips that sit in horizontal rows, will intercept a touch-drag that started over
@@ -7126,7 +7126,7 @@ body.sg-open #toolSurvivalGuide{
     text-rendering: optimizeLegibility;
     font-optical-sizing: auto;
     font-kerning: normal;
-    /* overscroll-behavior-y: contain REMOVED (was added v0.98.3).
+    /* overscroll-behavior-y: contain REMOVED (was added earlier).
        After the tap-target halo revert, this was the only remaining non-paint change
        to the document scroller between "scrolling worked" and "taps work but drags
        don't in any module while Settings' own inner scroller still works" -- which is
@@ -7154,7 +7154,7 @@ body.sg-open #toolSurvivalGuide{
   }
 
   /* ── Accessibility: app-wide UI scale (slider, 5 snap steps) ──
-     v0.210.122: the scale is now the VIEWPORT's, set on the meta viewport tag by
+     The scale is now the VIEWPORT's, set on the meta viewport tag by
      applyUiScale() (initial-scale 1.08 .. 1.26), not CSS `zoom` on body.
      Why: Chromium's standardized zoom multiplies viewport units inside the zoomed
      body, so every full-screen surface (height:100dvh) came out 1.26x the screen
@@ -7355,7 +7355,7 @@ body.sg-open #toolSurvivalGuide{
      see. Re-anchored to L=0.483: a 0.130 gap to --surface so cards lift, while staying
      just off --bg-0 so the launcher keeps its own neutral ground.
 
-     v0.97.91: chroma dropped to S=0.20 at hue 230. Two reasons. The grounds rebuild
+     Chroma dropped to S=0.20 at hue 230. Two reasons. The grounds rebuild
      put every module at S=0.30, which left the launcher at 0.36 — the most saturated
      surface in light mode, the same trap as before. And its hue (237) sat between
      tuner's 214 and train's 247, so the chooser read as almost-Train rather than as
@@ -7724,7 +7724,7 @@ body.sg-open #toolSurvivalGuide{
     transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
   }
 
-  /* v0.209.43: each chooser card carries its module's surface palette so the
+  /* Each chooser card carries its module's surface palette so the
      face gradient, borders, and shadows are in the module's color family from
      the start, not just during the morph. The accent (--lc) was already per-card;
      now the surfaces match it. */
@@ -8243,7 +8243,7 @@ body.sg-open #toolSurvivalGuide{
 
      Durations are !important because the app-wide `*` transition rule (0.06s
      color / 0.2s everything else) otherwise replaces them, which is the trap
-     that flattened the launcher entry animation in v0.99.32. */
+     that flattened the launcher entry animation. */
   .tuner-bpm-card, #stringGuideCard {
     transition: height .42s cubic-bezier(.32,.72,0,1) !important;
   }
@@ -8483,7 +8483,7 @@ body.sg-open #toolSurvivalGuide{
   }
   #lnch .lnch-cell.lnch-picked { opacity: 0; }
   #lnch .lnch-cell.lnch-other  { opacity: 0; }
-  /* v0.209.40: the moment a card is picked or dealt away, drop its blurred
+  /* The moment a card is picked or dealt away, drop its blurred
      breathing pool. Four blur(20px) layers translating and rotating at once, on
      top of the flying clone, is where the flight's dropped frames were coming
      from. The pool is invisible under the cards' own fade anyway. */
@@ -8505,7 +8505,7 @@ body.sg-open #toolSurvivalGuide{
        chooser vanished. */
     transition: transform .5s cubic-bezier(.32,.72,0,1),
                 opacity .4s cubic-bezier(.2,.8,.2,1) !important; }
-  /* v0.209.41: they leave in sequence, not as a block, and shrink a touch as
+  /* They leave in sequence, not as a block, and shrink a touch as
      they go (Material's container transform does the same to the tiles left
      behind). Stagger overrides the transition-delay:0 reset above by order. */
   body #lnch .lnch-cell.lnch-other:nth-child(2){ transition-delay: .04s !important; }
@@ -8567,7 +8567,7 @@ body.sg-open #toolSurvivalGuide{
   #lnchMorphCard .lnch-cell::before { display: none !important; animation: none !important; }
   #lnchMorphCard .lnch-cell .lnch-face { box-shadow: 0 8px 24px rgba(0,0,0,.35) !important; }
 
-  /* v0.209.43: when the card is flying against the tinted atmosphere, its
+  /* When the card is flying against the tinted atmosphere, its
      face needs to harmonize. Mix more accent into the gradient, darken the
      base, and add a glow border so it reads as part of the atmosphere
      rather than a neutral panel floating on a colored ground. */
@@ -8895,7 +8895,7 @@ body.sg-open #toolSurvivalGuide{
      Tuner: needle swings in and settles. Metro: beam ticks once, beat advances.
      Tools: spectrum bars bounce. Train: staff notes drop in, answer chip lights.
      Transform/opacity only; delayed .65s so it starts on ARRIVAL and plays during the
-     hold at center (v0.209.39), not during travel; disabled under reduced
+     hold at center, not during travel; disabled under reduced
      motion with the rest of the morph. */
   .lnch-live .lnch-pk-tuner .pk-needle { animation: lnchNeedle .56s cubic-bezier(.45,0,.55,1) .65s both; }
   @keyframes lnchNeedle { 0% { transform: translateX(-14px); } 42% { transform: translateX(5px); } 72% { transform: translateX(-2px); } 100% { transform: translateX(0); } }
@@ -9448,7 +9448,7 @@ body.sg-open #toolSurvivalGuide{
   }
   .meter-center { position: absolute; left: 50%; top: -6px; bottom: -6px; width: 1px; background: var(--border); transform: translateX(-50%); }
   /* Lock band: kept in the DOM (JS still sizes it from tuneTolerance()), hidden
-     with the rest of the v113 look. Delete the display:none to bring it back. */
+     with the rest of that look. Delete the display:none to bring it back. */
   .meter-zone {
     display: none;
     position: absolute; top: 1px; bottom: 1px; left: 45%; width: 10%;
@@ -9462,10 +9462,10 @@ body.sg-open #toolSurvivalGuide{
     transition: background 0.2s, color 0.2s;
     box-shadow: 0 0 14px currentColor, 0 0 4px currentColor;
   }
-  /* v0.210.122: the pre-v0.210.113 look is back (3px rounded bar with glow, no
-     arrow tip, glowing fill, plain track, no lock-band box). Daniele: the v113
-     redesign was "not as elegant". Only the LOOK is reverted; the spring motion,
-     live needle and tolerance logic from v113-v116 all stay. */
+  /* The earlier look is back (3px rounded bar with glow, no
+     arrow tip, glowing fill, plain track, no lock-band box). The later redesign
+     was judged "not as elegant". Only the LOOK is reverted; the spring motion,
+     live needle and tolerance logic from that redesign all stay. */
   .meter-needle {
     position: absolute; top: -6px; width: 3px; height: 20px;
     background: var(--text); border-radius: 2px;
@@ -13612,7 +13612,7 @@ body.sg-open #toolSurvivalGuide{
   body.light #toolChords .card.warm{border-color:rgba(40,90,60,.28) !important}
   #toolChords .card.warm{border-color:rgba(120,200,140,.28)}
 
-  /* ── Chords tool v2 (v0.99.9): ledger card ──────────────────────────────────
+  /* ── Chords tool v2: ledger card ──────────────────────────────────
      Result-first card: name, notes, notation, formula, alternates as labeled
      rows. Staff ink colors are per-theme custom properties so the SVG follows
      light mode without touching the renderer. */
@@ -13926,7 +13926,7 @@ body.sg-open #toolSurvivalGuide{
   }
   /* --grad-warm flips from a light salmon-to-pink gradient (dark mode) to a dark
      burned-orange-to-maroon one (light mode) — same direction-assumption bug as the
-     Chordle/Diadle/Tonale daily buttons (v0.134.9), different component. Measured
+     Chordle/Diadle/Tonale daily buttons, different component. Measured
      1.31:1. */
   body.light .chord-play-btn { color: #fff; }
   .chord-play-btn:active { transform: scale(.96); }
@@ -15538,7 +15538,7 @@ body.sg-open #toolSurvivalGuide{
 
 
 
-  /* ══ GROOVE PICKER — LIGHT MODE (v0.133.7) ═════════════════════════════
+  /* ══ GROOVE PICKER — LIGHT MODE ═════════════════════════════
      The picker had no light override at all: it ran dark-mode values on a cream
      sheet, which put filled khaki cards on cream and made the twelve grooves you
      did not choose heavier than the one you did. Worse, the step preview — the one
@@ -15550,7 +15550,7 @@ body.sg-open #toolSurvivalGuide{
      owns rather than inventing one. Palette sampled off a device screenshot.
 
      Dark mode is untouched throughout — every rule here is body.light scoped. */
-  /* NO KHAKI SLAB (v0.133.8). The first cut gave the grid a filled khaki ground so
+  /* NO KHAKI SLAB. The first cut gave the grid a filled khaki ground so
      pale cards would read against it. On a device that is a hard-edged tan block
      dropped into a cream page, and it looks like a mistake rather than a surface.
      Cards separate from the page on their own instead: pushed slightly whiter than
@@ -15574,7 +15574,7 @@ body.sg-open #toolSurvivalGuide{
      Nothing here touches layout: outline paints outside the box, box-shadow never
      affects flow, and no padding or margin changes. Selected and unselected cards
      measure the same height, so the grid cannot reflow when the choice moves. */
-  /* SOFTENED (v0.133.9). The first version of this was tuned while the grid still
+  /* SOFTENED. The first version of this was tuned while the grid still
      had a khaki ground behind it, where a 2px dark frame reads as definition. With
      the slab gone the same frame reads as harsh, because it is now fighting cream
      instead of tan. Mid-gold frame instead of dark, paler wash, gentler glow, and
@@ -15601,14 +15601,14 @@ body.sg-open #toolSurvivalGuide{
   body.light .groove-card.active .gcp-step.on   { background: #8a6d10; box-shadow: none; }
   body.light .groove-card.active .gcp-step.soft { background: #c9a83c; }
 
-  /* ── The rest of the groove panel in light mode (v0.133.8) ──────────────
+  /* ── The rest of the groove panel in light mode ──────────────
      Sampled off a device screenshot; every one of these was running dark-mode
      values on cream, and two of them were unreadable rather than merely dim. */
 
   /* The selected-groove header bar. Its subtitle measured #c3b17b on a #c3b27b
      bar — the same color as its own background, near enough 1:1. "tap steps to
      edit" is an instruction nobody could read. */
-  /* RECESSED EDITOR (v0.133.9). Header, step grid and the button were all cream on
+  /* RECESSED EDITOR. Header, step grid and the button were all cream on
      cream separated by hairlines, so the whole lower half of the panel read as one
      undifferentiated field. The header and steps now sit in a single inset slate —
      the surface you work on — with the action button raised above it. Three depths
@@ -15673,7 +15673,7 @@ body.sg-open #toolSurvivalGuide{
   }
   body.light .flash-launch-sub { color: #7d7052; }
 
-  /* ══ NAVIGATION MOTION (v0.133.0) ═══════════════════════════════════════
+  /* ══ NAVIGATION MOTION ═══════════════════════════════════════
      Two patterns, chosen to match what they mean rather than to look busy.
 
      TAB SWITCH — fade through. Material names this for elements with no strong
@@ -15696,7 +15696,7 @@ body.sg-open #toolSurvivalGuide{
      persistent chrome, and a still frame is what makes movement inside it
      readable. It also must never be scaled, because _fitModuleTagline measures
      text width with a Range and ancestor transforms would corrupt that. */
-  /* TAB SWITCHES ARE NOT ANIMATED (v0.133.3). Three attempts at a crossfade here —
+  /* TAB SWITCHES ARE NOT ANIMATED. Three attempts at a crossfade here —
      from 0, then 0.4, then 0.72 — each reduced a flash on the Metro tab without
      removing it, and the flash was never reproducible in a headless browser: the
      region's opacity curve rises cleanly from 0.72 with no bright frame, and nothing
@@ -16757,7 +16757,7 @@ body.sg-open #toolSurvivalGuide{
   @media (prefers-reduced-motion: reduce) { .ex-resting { transition:none; } }
 
   /* ── Launcher ground tint ──────────────────────────────────────────────────
-     v0.209.42: during the morph, the neutral launcher ground fades toward a
+     During the morph, the neutral launcher ground fades toward a
      subtle wash of the chosen module's color, easing the eye from the chooser
      into the module's palette. The tint is a ::after pseudo so it layers over
      the existing background without replacing it. It fades in over the travel
@@ -16807,7 +16807,7 @@ body.sg-open #toolSurvivalGuide{
   body.light #lnch[data-tint="train"]  { background: linear-gradient(174deg, #d4c8f0 0%, #d8ceed 55%, #dbd2e8 100%) !important; }
   @media (prefers-reduced-motion: reduce) { #lnch::after { transition: none; } }
 
-  /* v0.209.43: module content fades in on top of the tinted ground rather than
+  /* Module content fades in on top of the tinted ground rather than
      being revealed by the launcher lifting away. Since the tint matches the
      module atmosphere, the ground stays constant and only the UI materializes.
      The header, the mode toggle, and the module screen all participate. */
@@ -16863,7 +16863,7 @@ body.sg-open #toolSurvivalGuide{
   .iv-diff-pill-lbl { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); }
   .iv-diff-pill-sub { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:7px; letter-spacing:.5px; color:var(--muted); text-transform:uppercase; }
 
-  /* ==== NEW INTERVAL IDENTITY (v0.74): kinetic hero + gauge + retry ==== */
+  /* ==== NEW INTERVAL IDENTITY: kinetic hero + gauge + retry ==== */
   /* tools row → 3-col: pill left, retry center, cog right */
   #exInterval .iv-card-tools { display:flex; justify-content:space-between; align-items:center; }
   #exInterval .iv-diff-pill { justify-self:start; flex-direction:row; align-items:baseline; gap:5px; padding:5px 10px; border-radius:8px; }
@@ -16930,7 +16930,7 @@ body.sg-open #toolSurvivalGuide{
   .iv-sing-lock-fill { position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg,rgba(182,242,91,.6),var(--in-tune)); transition:width .1s linear; }
   .iv-sing-lock.done .iv-sing-lock-fill { background:var(--in-tune); box-shadow:0 0 12px rgba(182,242,91,.5); }
 
-  /* ==== SIGHT SINGING — arc-needle identity (v0.74). cyan hardcoded (theme-train repoints --accent) ==== */
+  /* ==== SIGHT SINGING — arc-needle identity. cyan hardcoded (theme-train repoints --accent) ==== */
   #exSingSing .ss-tools { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
   #exSingSing .ss-voice-pill { display:flex; flex-direction:column; align-items:flex-start; gap:1px; background:none; border:none; padding:2px 6px 2px 0; cursor:pointer; }
   #exSingSing .ss-voice-lbl { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:12px; font-weight:700; letter-spacing:1.5px; color:var(--accent-soft); text-transform:uppercase; }
@@ -17935,7 +17935,7 @@ body.sg-open #toolSurvivalGuide{
   #rtAchToast .t1 { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:10px; letter-spacing:.22em; color:var(--accent-warm); text-transform:uppercase; }
   #rtAchToast .t2 { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:17px; letter-spacing:.06em; color:var(--text); margin:1px 0; }
   #rtAchToast .t3 { font-size:11px; color:var(--muted); line-height:1.3; }
-  /* ==== PITCH MATCH carousel + recap (v0.75). cyan hardcoded (theme-train trap) ==== */
+  /* ==== PITCH MATCH carousel + recap. cyan hardcoded (theme-train trap) ==== */
   #exSingSing .ss-target-label { height:30px; display:flex; align-items:center; justify-content:center; margin-bottom:2px;
     font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; text-align:center;
     transition:color .3s ease, letter-spacing .3s ease; }
@@ -20048,7 +20048,7 @@ body.sg-open #toolSurvivalGuide{
      its surround) is fundamentally a dark-UI idiom: it works because the color is
      brighter than the near-black it's blurring into. There's no light-mode color that
      does the same job, because the physics being simulated don't exist in reverse —
-     a color darkened enough to stay legible as text/border ink (v0.134.3) can only
+     a color darkened enough to stay legible as text/border ink can only
      ever blur into a smudge on a light panel, never a glow, no matter how it's tuned.
      Flat/paper-style UI (Apple HIG, Material light theme, Notion, Linear) solves the
      equivalent problem with a solid colored chip behind the icon instead of a blur —
@@ -20236,7 +20236,7 @@ body.sg-open #toolSurvivalGuide{
     opacity: 0; pointer-events: none; overflow: hidden;
   }
   .ach-toast.show { transform: translateY(0); opacity: 1; }
-  /* v0.209.40: the toast idles at opacity 0, translated off the bottom, but its
+  /* The toast idles at opacity 0, translated off the bottom, but its
      shimmer (2s) and ring (3s) keep animating forever, on every screen. Pause
      both until .show; they resume the moment the toast rises. */
   .ach-toast:not(.show) .ach-toast-shimmer,
@@ -20332,7 +20332,7 @@ body.sg-open #toolSurvivalGuide{
      no glow, no shimmer, no overshoot bounce — so it reads as a bonus detail,
      not a second achievement. Slight transition delay on entry (below) so it
      reveals a beat after the achievement toast, not simultaneously. */
-  /* ── In-app update card (v0.150.13) ───────────────────────────────────────
+  /* ── In-app update card ───────────────────────────────────────
      Sits above the tab bar as a dismissible card, not a launch modal. The
      whole point of the flexible flow is that it does not interrupt: the
      download runs while the app stays usable, so a blocking overlay would
@@ -22048,7 +22048,7 @@ body.sg-open #toolSurvivalGuide{
   /* "Daily" / "new game" buttons across Chordle, Diadle, Tonale all use this exact
      gradient + hardcoded black text — correct in dark mode where --accent/--accent-
      soft are light, wrong in light mode where those same variables flip to dark ink
-     colors (v0.134.3-style direction assumption, different component). Matching by
+     colors (same direction assumption, different component). Matching by
      inline-style content rather than adding a class to seven separate button
      literals scattered across three games. */
   body.light button[style*="linear-gradient(135deg,var(--accent),var(--accent-soft))"][style*="color:#000"] {
@@ -22161,7 +22161,7 @@ body.sg-open #toolSurvivalGuide{
       transform      0.24s cubic-bezier(.2,.8,.2,1),
       opacity        0.2s  cubic-bezier(.4,0,.2,1) !important;
   }
-  /* v0.209.40: `filter` used to be in the list above. It is the one property
+  /* `filter` used to be in the list above. It is the one property
      here that is never compositor-only: a drop-shadow glow re-rasterizes on
      every frame of its transition, and with this rule global and !important
      every theme-tinted glow in the document (logo, hub folder icons, toast
@@ -26238,7 +26238,7 @@ body.light #toolDrumkit .preset-chip, body.light #toolDrumkit .kit-chip {
 #toolDrumkit .kit-chip[data-kit="electronic"].active{ border-color: rgba(6,182,212,0.7);   color: rgb(6,182,212);    background: rgba(6,182,212,0.08); }
 #toolDrumkit .kit-chip[data-kit="jazz"].active      { border-color: rgba(167,139,250,0.7); color: rgb(167,139,250);  background: rgba(167,139,250,0.08); }
 #toolDrumkit .kit-chip[data-kit="latin"].active     { border-color: rgba(251,191,36,0.7);  color: rgb(251,191,36);   background: rgba(251,191,36,0.08); }
-/* Same bug as the achievement category colors (v0.134.3): bright dark-mode-tuned
+/* Same bug as the achievement category colors: bright dark-mode-tuned
    colors, hardcoded, no light counterpart. Measured 1.45-2.36:1 against the tool's
    light background here; these clear 4.5:1+ with margin. */
 body.light #toolDrumkit .kit-chip[data-kit="standard"].active   { color: #0d6b4f; }
@@ -29675,23 +29675,11 @@ try {
   }
 
   // ── Deep links ──────────────────────────────────────────────────────────
-  // THIS USED TO LIVE INSIDE removeSplash(), AND THAT WAS THE WHOLE BUG.
-  //
-  // removeSplash() runs when the splash ENDS. So the deep-link handler was only
-  // registered once the splash had already finished — which made it structurally
-  // incapable of doing the one thing it exists to do. It could not skip a splash
-  // that had to finish before the handler existed. A circular dependency, and it
-  // explained both symptoms at once:
-  //
-  //   - the splash never skipped, because nothing asked it to until it was over;
-  //   - the module never opened, because getLaunchUrl() only resolved ~3.5s in, by
-  //     which point the splash's handoff to the home screen had already wiped out
-  //     whatever the link tried to open.
-  //
-  // Every other fix in this area (the flag, the promise ordering, the Capacitor
-  // poll) was real, but none of them could ever have worked from in there. It
-  // belongs at the top level, running at parse time, so the handler is listening
-  // before the splash even starts.
+  // The handler lives at the top level so it is listening at parse time, before the
+  // splash starts. It cannot live inside removeSplash(): that runs when the splash
+  // ENDS, so a handler registered there could not skip the splash, and getLaunchUrl()
+  // only resolved about 3.5s in, after the splash's handoff to the home screen had
+  // already cleared whatever the link opened.
     // ── Deep links ────────────────────────────────────────────────────────
     // Shared daily results carry an https link to a bounce page, which fires
     // intonare://chordle (or tonale / diadle). The OS hands that URL to us here.
@@ -29703,16 +29691,11 @@ try {
     //                         forwards)
     // Handle only one and half your links silently do nothing.
     (function () {
-      // DO NOT GIVE UP IF CAPACITOR IS NOT HERE YET.
-      //
-      // This was `if (!window.Capacitor) return;` — a single check, at the earliest
-      // moment in the file, with no retry. Capacitor's bridge is injected by the native
-      // shell and is NOT guaranteed to exist while this inline script is still being
-      // parsed. When it lost that race the listener was never registered, getLaunchUrl
-      // was never called, and every deep link silently did nothing. Forever. There was
-      // no error, because there was no code left to run.
-      //
-      // So poll for it instead. Cheap, bounded, and it cannot lose the race.
+      // Poll for Capacitor instead of checking once. The native shell injects its bridge,
+      // and it is not guaranteed to exist while this inline script is still parsing. A
+      // single check that lost that race meant the listener was never registered and deep
+      // links did nothing, with no error. The poll is cheap, bounded and cannot lose the
+      // race.
       var tries = 0;
       (function waitForCapacitor() {
         var App = window.Capacitor
@@ -29720,12 +29703,9 @@ try {
                && window.Capacitor.Plugins.App;
         if (App) { wire(App); return; }
         if (++tries > 100) {
-          // TRIPWIRE. If we are on a native shell and the App plugin never showed up,
-          // it is NOT INSTALLED — and that is precisely how every deep link silently
-          // failed for weeks: @capacitor/app is a separate npm package from core, it
-          // was never in package.json, so Capacitor.Plugins.App was undefined on every
-          // device while share/haptics/status-bar all worked. Nothing anywhere said so.
-          // Now something says so.
+          // Tripwire. On a native shell, a missing App plugin means @capacitor/app is not
+          // installed (it is a separate npm package from core). Deep links used to fail
+          // silently for that reason while share, haptics and the status bar all worked.
           try {
             if (window.Capacitor && window.Capacitor.isNativePlatform
                 && window.Capacitor.isNativePlatform()) {
@@ -29846,77 +29826,39 @@ try {
           } catch (e) {}
         }
 
-        // SKIP THE SPLASH — do not wait for it.
+        // Skip the splash instead of waiting for it. Someone who tapped a shared result
+        // wants the puzzle, and 3.5 seconds of branding on every shared link is a toll. The
+        // splash is for people opening the app, not a link.
         //
-        // Someone who tapped a shared Chordle result wants Chordle. Three and a half
-        // seconds of branding is a toll on a link they clicked specifically to see a
-        // puzzle, and it would be paid on every single shared link. The splash is for
-        // people opening the APP; it is an obstacle for people opening a LINK.
+        // _intonareSkipSplash() calls the splash's own removeSplash(), not a bare element
+        // delete: that function also does the iOS first-gesture audio unlock and starts
+        // sample preloading, and tearing the splash down any other way would skip both.
         //
-        // (The first version WAITED for the splash, because opening the module behind
-        // it meant the splash's handoff to the home screen wiped the module out —
-        // which looked exactly like the deep link doing nothing. Waiting fixed the
-        // bug and left the toll. Skipping fixes both.)
-        //
-        // _intonareSkipSplash() calls the splash's own removeSplash(), not a bare
-        // element delete: that function also performs the iOS first-gesture audio
-        // unlock and starts sample preloading, and tearing the splash down any other
-        // way would silently skip both.
-        // ORDERING TRAP, and it silently ate this feature:
-        //
-        // _intonareSkipSplash is DEFINED inside the splash IIFE, ~700 lines further
-        // down this file. This handler runs first on a cold start, so the function
-        // does not exist yet — the `typeof === 'function'` guard failed quietly and
-        // we fell straight through to WAITING for the splash. Which is exactly the
-        // behavior the skip was written to replace: the app opened, the splash ran
-        // its full three and a half seconds, and only then did the daily appear.
-        //
-        // So: raise a flag instead of calling a function. The splash IIFE checks the
-        // flag when it starts and skips itself. No ordering dependency, because a
-        // flag does not care who wrote it or when.
+        // Raise a flag rather than calling the function directly. _intonareSkipSplash is
+        // defined inside the splash IIFE further down the file, so on a cold start it does
+        // not exist yet when this handler runs. The splash IIFE reads the flag when it
+        // starts.
         window._intonareWantSkipSplash = true;
 
-        // AND CALL IT. The flag alone is not enough and never was: this code path runs
-        // from getLaunchUrl().then(), so by the time we get here the splash IIFE has
-        // already read the flag (as false) and started its 3.5s run. The flag only helps
-        // in the impossible case where we somehow beat the splash to it.
-        //
-        // So skip the splash directly, right now, whatever state it is in. removeSplash()
-        // is idempotent and _intonareSkipSplash is defined before the splash starts, so
-        // this is safe whether the splash is running, finished, or never began.
+        // Also skip directly. This path runs from getLaunchUrl().then(), so the splash IIFE
+        // has usually read the flag (as false) and started already. removeSplash() is
+        // idempotent and _intonareSkipSplash is defined before the splash starts, so
+        // calling it is safe whether the splash is running, finished or never began.
         if (!window._splashGone && typeof window._intonareSkipSplash === 'function') {
           try { window._intonareSkipSplash(); } catch (e) {}
         }
 
-        // WAIT FOR THE APP TO EXIST, NOT FOR A GUESSED DELAY.
+        // Wait for the app to be ready, not for a guessed delay.
         //
-        // This used to be `setTimeout(go, 80)`. The numbers, measured:
+        // The functions go() needs (enterExercise and friends) are defined in script blocks
+        // far below this one, so any fixed delay depends on how fast the device parses the
+        // rest of the document. A setTimeout of 80 ms fired about 250 ms before
+        // enterExercise existed, and go() swallowed the resulting error in its catch.
         //
-        //   getLaunchUrl() resolves      ~77ms
-        //   go() therefore fires        ~157ms
-        //   enterExercise() is defined  ~410ms   <-- defined in a LATER script block
-        //
-        // So go() called enterExercise 250ms before it existed, threw
-        // "enterExercise is not a function" straight into the bare catch(e){} inside
-        // go(), and the link silently did nothing. Every single time. The catch is why
-        // this never showed up as an error; it swallowed the only evidence.
-        //
-        // The functions go() needs live ~40,000 lines further down the file, in script
-        // blocks the parser has not reached yet. No fixed delay can be correct here,
-        // because the delay needed depends on how fast the device parses the rest of
-        // the document. So poll for the actual dependency and go the moment it lands.
-        // Waiting for enterExercise to EXIST is not the same as waiting for the app to
-        // be READY, and the difference is the whole bug. The functions appear at ~410ms,
-        // but the app is still booting: there are DOMContentLoaded handlers as far down
-        // as line ~99500 and a window 'load' handler too, and they set up the home
-        // screen. Open a module before those run and the boot sequence calmly resets the
-        // view on top of it. That is why this behaved like a coin flip across runs —
-        // sometimes go() landed after the last handler, sometimes before, and the module
-        // vanished with no error.
-        //
-        // So wait for the document to actually finish loading, THEN go. window 'load'
-        // fires after every deferred handler has run, which is precisely the guarantee
-        // needed: nothing else is going to redraw the shell after this point.
+        // Waiting for enterExercise to exist is still not enough: DOMContentLoaded and
+        // window 'load' handlers further down set up the home screen, and opening a module
+        // before they run lets the boot sequence reset the view on top of it. window 'load'
+        // fires after every one of those handlers, so wait for it, then go.
         function whenLoaded(fn) {
           if (document.readyState === 'complete') { fn(); return; }
           window.addEventListener('load', fn, { once: true });
@@ -30420,7 +30362,7 @@ try {
       // was ~116 * _spd per second, not 60 * _spd.
       //
       // Normalizing to 60 therefore did not preserve the design — it HALVED it, on
-      // every device. iOS had been running at half speed since v0.81.13 (which is
+      // every device. iOS had been running at half speed (which is
       // the real reason the splash "looked weird" there), and Android inherited the
       // same slowdown the moment it was next built.
       //
@@ -30502,27 +30444,6 @@ try {
     // visualViewport isn't available (older WebViews). All elements are opacity:0
     // so nothing is visible while we wait.
     function startWhenStable() { return window._intonareWhenViewportStable(); }
-    function _unused_startWhenStable() {
-      return new Promise(resolve => {
-        if (!window.visualViewport) { setTimeout(resolve, 200); return; }
-        let lastH = window.visualViewport.height;
-        let stableFrames = 0;
-        const needed = 3; // 3 consecutive stable frames (~50ms at 60fps)
-        const maxWait = setTimeout(resolve, 500); // hard cap — never wait more than 500ms
-        function check() {
-          const h = window.visualViewport.height;
-          if (h === lastH) {
-            stableFrames++;
-            if (stableFrames >= needed) { clearTimeout(maxWait); resolve(); return; }
-          } else {
-            stableFrames = 0;
-            lastH = h;
-          }
-          requestAnimationFrame(check);
-        }
-        requestAnimationFrame(check);
-      });
-    }
 
     // ── Sequence ──────────────────────────────────────────────────
 
@@ -30657,23 +30578,12 @@ try {
 
   // Deep link? Do not run at all.
   //
-  // TWO BUGS LIVED HERE, ONE BEHIND THE OTHER.
-  //
-  // 1. The handler used to CALL _intonareSkipSplash() directly. That function is defined
-  //    in this IIFE, ~800 lines below the handler, so on a cold start it did not exist
-  //    yet; the typeof guard failed silently and the splash ran its full 3.5s. The fix
-  //    was to raise a flag here instead of calling a function.
-  //
-  // 2. But the flag is READ SYNCHRONOUSLY, right here, and it is SET from
-  //    getLaunchUrl().then() — a promise. A promise resolves after the current stack
-  //    unwinds, by definition. So on a cold start this line ALWAYS sees `false`, the
-  //    splash always starts, and the flag arrives a tick later with nobody listening.
-  //    The flag fixed the ordering bug and walked straight into an async one.
-  //
-  // The real fix is to stop depending on WHEN the URL arrives. _intonareSkipSplash is
-  // defined above this line, so it always exists by the time the promise resolves, and
-  // removeSplash() is idempotent — the handler can call it at any moment, whether the
-  // splash has started or not, and it just stops. No race left to lose.
+  // The deep-link handler calls _intonareSkipSplash() when the launch URL arrives.
+  // That cannot be a flag check here: the flag is read synchronously but set from
+  // getLaunchUrl().then(), which resolves later, so this line always sees false on a
+  // cold start. _intonareSkipSplash is defined above this line and removeSplash() is
+  // idempotent, so the handler can call it at any moment, whether the splash has
+  // started or not.
   // User preference: skip the splash. Reuses the deep-link path deliberately — it goes
   // through removeSplash(), which is NOT just teardown: it fires splash-done, kicks off
   // sample preloading, and installs the iOS first-gesture audio unlock. Skipping the
@@ -32590,7 +32500,7 @@ try {
       </div>
     </div><!-- /toolIntervalRef -->
 
-    <!-- SCALES. Lives in the tools region and opens via enterTool (v0.132.3); the
+    <!-- SCALES. Lives in the tools region and opens via enterTool; the
          id keeps its ex- prefix because ~25 CSS rules key off #exScales and a
          cosmetic rename across all of them buys nothing the user can see. -->
     <div id="exScales" class="hidden stack">
@@ -33818,7 +33728,7 @@ try {
   </div><!-- /csBowedWrap -->
 
   <!-- Trumpet scale display (shown when trumpet is active) -->
-  <!-- csTrumpetWrap removed in v0.150.124. It was the OLD trumpet card,
+  <!-- csTrumpetWrap removed. It was the OLD trumpet card,
      superseded when the trumpet UI moved inside csGuitarWrap. The only
      code that referenced it added `hidden`; nothing ever showed it. It
      carried duplicates of trpNoteName, trpValveRow, trpPos, trpStrip and
@@ -34278,7 +34188,7 @@ try {
         </button>
 
 
-        <!-- COMING SOON REMOVED (v0.120.0). Melody Dictation and Score Reader are
+        <!-- COMING SOON REMOVED. Melody Dictation and Score Reader are
              both still wanted and still absent; the section came out because a
              first public release advertising two unbuilt exercises reads badly.
              Build path when they return: staff renderer -> staff note ID (shipped
@@ -37081,7 +36991,7 @@ try {
     <div class="sm-footer">
       <span class="sm-app-name">Intonare</span>
       <span data-i18n="sm_footer_tag">play in tune</span>
-      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px">v0.210.66</span>
+      <span id="smVersionStamp" style="opacity:.5;font-size:10px;letter-spacing:.5px;margin-top:2px"></span>
     </div>
   </div>
 </div>
@@ -37529,7 +37439,7 @@ function _rateAlpha(alpha60) {
 }
 let _nativeMicActive = false;
 
-// (DEV MIC READOUT removed for the closed-testing ship — v0.80.28. The mic-icon
+// (DEV MIC READOUT removed for the closed-testing ship. The mic-icon
 //  tint, long-press popup and per-surface path log were scaffolding for the native
 //  rollout, now confirmed on-device: 7/7 surfaces native, zero fallbacks. The
 //  frame-rate COLLECTION below stays — _nfHz feeds the rate-aware smoothing.)
@@ -38941,7 +38851,7 @@ const GROOVE_PRESETS = [
     // you have written BACKBEAT. Add the offbeat and you have written DISCO. The file's
     // own rule — put the layer that FIGHTS the meter in front — has no answer here,
     // because four-on-the-floor does not fight the meter, it IS the meter.
-    // DECISION MADE, v0.103.19: KEEP IT, deliberately, and do not 'fix' or delete it.
+    // DECISION MADE: KEEP IT, deliberately, and do not 'fix' or delete it.
     // The reasoning is not resignation. A four-on-the-floor click is what a producer or
     // a dancer actually counts to, so it earns its place as a NAMED entry even though it
     // is musically a plain quarter click: someone browsing the funk list for it and not
@@ -39278,7 +39188,7 @@ const GROOVE_PRESETS = [
     // distance, which is why it is usable, but it is not the tradition this pattern is
     // transcribed from. A dhol recording timed directly would be better evidence.
     // This groove still carries two OTHER open problems: sources contradict each other on
-    // its accents, and it sat on the wrong grid until v0.103.4.
+    // its accents, and it sat on the wrong grid.
     // TEMPO-SOURCE: MEDIUM. Two agreeing readings of a named record, wrong sub-style.
     steps: [2,0,1, 1,0,1, 2,0,1, 1,0,1],
   },
@@ -40690,7 +40600,7 @@ function grooveUpdateCursor(stepIdx) {
   // Pulse dots — animate on beat steps
   const activePreset = typeof GROOVE_PRESETS !== 'undefined' ? GROOVE_PRESETS.find(p => p.id === groovePresetId) : null;
   // Must agree with the AUDIO count-in in scheduleNote(), which follows the felt
-  // pulse since v0.103.1. These dots are the picture of that click; when they used
+  // pulse. These dots are the picture of that click; when they used
   // tsTop they drew six dots under a 6/8 groove you could hear pulsing twice.
   const effectivePulseBeats = (activePreset && activePreset.pulseBeats) ? activePreset.pulseBeats
                             : (activePreset && activePreset.pulse) ? activePreset.pulse
@@ -40772,7 +40682,7 @@ function setMode(m) {
 
   // The guide pins the body with sg-open and scrolls its own #pageArea. Leaving
   // it set on any other screen makes that screen unscrollable, or in the case of
-  // an exercise, invisible. enterTool got this guard in v0.150.102 and these two
+  // an exercise, invisible. enterTool got this guard and these two
   // did not, so 'Train your ear' from the guide opened nothing and 'Try the
   // metronome' could not be left again.
   if (document.body.classList.contains('sg-open') && (typeof currentTool === 'undefined' || currentTool !== 'survivalguide'))
@@ -40807,7 +40717,7 @@ function setMode(m) {
     clearTimeout(window._themeHoldTimer);
     window._themeHoldTimer = setTimeout(function(){
       if (window._themeHold) { try { flushModeTheme(); } catch(e) {} }
-    }, 1600);   // v0.209.40: was 600, sized for the old 300ms fade. The morph now
+    }, 1600);   // Was 600, sized for the old 300ms fade. The morph now
                 // holds until ~1020ms (travel 500 + hold 520) and finish() releases
                 // the theme there; at 600 this failsafe fired mid-hold and flushed
                 // the palette under the card, which was the second stall cluster.
@@ -41831,13 +41741,6 @@ function _updateRhodesDroneMute() {
   if (btn) btn.classList.toggle('visible', hasHeld);
 }
 
-function cycleRhodesSustainMode() {
-  rhodesSustainMode = (rhodesSustainMode + 1) % 2; // drone removed
-  if (rhodesSustainMode === 0) stopAllRhodesDrones();
-  document.querySelectorAll('#ptoRhodesPanel .pms-seg').forEach(s =>
-    s.classList.toggle('active', parseInt(s.dataset.m) === rhodesSustainMode));
-}
-
 function setRhodesTremolo(val) {
   hapticLight();
   if (!RHODES_TREMOLO[val]) val = 'soft';
@@ -42102,10 +42005,6 @@ function updateDroneMuteBtn() {
     Object.keys(refOscs).some(k => k.startsWith('pno-'));
   document.querySelectorAll('.piano-drone-mute').forEach(b =>
     b.classList.toggle('visible', hasDrones));
-}
-
-function cyclePianoSustainMode() {
-  setPianoSustainMode((pianoSustainMode + 1) % 2); // drone removed
 }
 
 // ── Sustain pedal controller ──────────────────────────────────────────────
@@ -43029,16 +42928,6 @@ function stopRef(key) {
 }
 
 function stopAllRef() { Object.keys(refOscs).forEach(stopRef); }
-
-function playA440() {
-  const key = 'a440';
-  const btn = document.getElementById('a440Btn');
-  if (refOscs[key]) { stopRef(key); if (btn) btn.classList.remove('playing'); return; }
-  if (!droneMode) stopAllRef();
-  playRef(key, refPitch, 'A4');
-  if (btn) btn.classList.add('playing');
-  if (!droneMode) setTimeout(() => { if (btn) btn.classList.remove('playing'); }, 2900);
-}
 
 function playVoiceFork(target) {
   const key = 'voicefork';
@@ -45106,10 +44995,6 @@ async function acquireWakeLock() {
     }
   } catch(e) { _wakeLock = null; }
 }
-async function releaseWakeLock() {
-  try { if (_wakeLock) { await _wakeLock.release(); } } catch(e) {}
-  _wakeLock = null;
-}
 // Keep the screen awake app-wide: acquire on load and re-acquire every time the
 // app returns to the foreground.
 document.addEventListener('visibilitychange', () => {
@@ -45371,7 +45256,7 @@ function stopMic() {
 // / per-surface logic runs unchanged on native audio. Per-surface AEC/NS/AGC
 // comes from intonareMicAudioConfig(). Opt-in: only surfaces that pass
 // { native:true } to startMic use this; everything else keeps the WebView path.
-// iOS (v0.210.119): IntonareMic only exists in the Android build. On iOS,
+// iOS: IntonareMic only exists in the Android build. On iOS,
 // registerPlugin('IntonareMic') still hands back a proxy, and every call on it
 // rejects with '"IntonareMic" plugin is not implemented on ios'. One of those
 // calls (p.stop in _nativeMicStop) was never awaited, so the rejection reached
@@ -45542,20 +45427,6 @@ function _setDroneNotch(freq, sr) {
   _droneNotch = bank.length ? bank : null;
   _droneNotchFreq = freq;
   _droneNotchSr   = rate;
-}
-function _applyDroneNotch(buf) {
-  const bank = _droneNotch;
-  if (!bank) return buf;
-  for (let b = 0; b < bank.length; b++) {
-    const f = bank[b];
-    for (let i = 0; i < buf.length; i++) {
-      const x = buf[i];
-      const y = f.b0*x + f.b1*f.x1 + f.b2*f.x2 - f.a1*f.y1 - f.a2*f.y2;
-      f.x2 = f.x1; f.x1 = x; f.y2 = f.y1; f.y1 = y;
-      buf[i] = y;
-    }
-  }
-  return buf;
 }
 
 // Decode base64 int16 LE PCM -> Float32 (-1..1).
@@ -46840,10 +46711,6 @@ function tryUnlockCode(raw) {
   return false;
 }
 
-// Entering the developer code again turns the tools back off, so there is a way
-// out that doesn't involve clearing site data.
-function toggleDevMode() { setDevMode(!INTONARE_DEV); return INTONARE_DEV; }
-
 // Leaves dev mode from the Settings button. Pro is not touched either way.
 function exitDevMode() {
   setDevMode(false);
@@ -47983,7 +47850,6 @@ function _thmnWaveTo01(w) {
 }
 // Pitch range anchored 2 octaves below middle C (C2) — Etherwave maps 3 above / 2 below.
 var THMN_BASE_MIDI = 36; // C2
-function _thmnTopMidi() { return THMN_BASE_MIDI + thmnState.rangeOct * 12; }
 
 // Periodic waves give a richer, more theremin-like timbre than raw types.
 var _thmnWaveCache = {};
@@ -48180,14 +48046,6 @@ function _thmnMoveFinger(nx, ny, show) {
 }
 
 // ── pointer handling on the pad ──
-function _thmnPadNorm(e, rect) {
-  var cx = (e.touches ? e.touches[0].clientX : e.clientX);
-  var cy = (e.touches ? e.touches[0].clientY : e.clientY);
-  return {
-    nx: (cx - rect.left) / rect.width,
-    ny: (cy - rect.top) / rect.height
-  };
-}
 var _thmnCardPID = null;        // pad pointer id (compact)
 var _thmnVolKnobActive = false; // true while the VOLUME knob is being dragged
 var _thmnLastNx = 0.5;          // last pad pitch-x, so the vol knob can ride the live note
@@ -48998,7 +48856,7 @@ function __riffsBuild() { return {
       // Bass anticipates: the chord for each bar arrives on beat 4 of the bar BEFORE
       // it, which is the forward lean of the style. Source tempo is 120, slower than
       // a dance-floor salsa, because it was written to be followed rather than danced.
-      // ACCENTS (v0.132.14): the source is flat at velocity 49 throughout, so these are
+      // ACCENTS: the source is flat at velocity 49 throughout, so these are
       // added, but not invented. A note carries weight when it lands on a stroke of the
       // file's OWN clave track; everything else sits back at 0.7. In the left hand the
       // beat-4 anticipation takes the accent, because that is the gesture. Deliberately
@@ -49007,7 +48865,7 @@ function __riffsBuild() { return {
       // and that tension is the point, so heavier accenting would bury it.
       // Written out twice rather than looped: four bars is eight seconds at this tempo,
       // barely long enough to hear the pattern, let alone play over it.
-      // LEFT HAND IN OCTAVES (v0.132.16): the source line is an acoustic-bass patch, so
+      // LEFT HAND IN OCTAVES: the source line is an acoustic-bass patch, so
       // it is one note per attack. A pianist plays the tumbao in octaves, and a bare
       // single note down at D2 is thin and woolly on its own. The added octave sits
       // ABOVE the source note rather than below, keeping the written bass as the floor
@@ -52546,7 +52404,7 @@ clair_de_lune: {duckV:21,meter:3,label:"Clair de Lune",labelIt:"Chiaro di luna",
   rhodes: {
     clair_de_lune_rh: { label:'Clair de Lune',labelIt:'Chiaro di luna', tempo:1.0, bpm:46,
       // PERFORMANCE MODE on Rhodes: real captured MIDI (Bernd Krueger, piano-midi.de, CC BY-SA).
-      // Pedal restored from the piano twin in v0.132.6: same captured performance,
+      // Pedal restored from the piano twin: same captured performance,
       // byte-identical notes, same tempo and bpm, so the pedalling transfers exactly.
       // A Rhodes damper lifts felts off tines the way a piano's lifts them off strings;
       // stripping it left the pedal frozen on screen and the sustain flat.
@@ -52557,7 +52415,7 @@ clair_de_lune: {duckV:21,meter:3,label:"Clair de Lune",labelIt:"Chiaro di luna",
     },
     moonlight_rh: { label:'Moonlight Sonata (I)',labelIt:'Sonata al chiaro di luna (I)', tempo:1.0, bpm:50,
       // PERFORMANCE MODE on Rhodes: real captured MIDI (Bernd Krueger, piano-midi.de, CC BY-SA).
-      // Pedal restored from the piano twin in v0.132.6: same captured performance,
+      // Pedal restored from the piano twin: same captured performance,
       // byte-identical notes, same tempo and bpm, so the pedalling transfers exactly.
       // A Rhodes damper lifts felts off tines the way a piano's lifts them off strings;
       // stripping it left the pedal frozen on screen and the sustain flat.
@@ -52568,7 +52426,7 @@ clair_de_lune: {duckV:21,meter:3,label:"Clair de Lune",labelIt:"Chiaro di luna",
     },
     barcarolle_rh: { label:'Barcarolle', tempo:1.0, bpm:69,
       // PERFORMANCE MODE on Rhodes: real captured MIDI (Bernd Krueger, piano-midi.de, CC BY-SA).
-      // Pedal restored from the piano twin in v0.132.6: same captured performance,
+      // Pedal restored from the piano twin: same captured performance,
       // byte-identical notes, same tempo and bpm, so the pedalling transfers exactly.
       // A Rhodes damper lifts felts off tines the way a piano's lifts them off strings;
       // stripping it left the pedal frozen on screen and the sustain flat.
@@ -52579,7 +52437,7 @@ clair_de_lune: {duckV:21,meter:3,label:"Clair de Lune",labelIt:"Chiaro di luna",
     },
     traumerei_rh: { label:'Träumerei', tempo:1.0, bpm:60,
       // PERFORMANCE MODE on Rhodes: real captured MIDI (Bernd Krueger, piano-midi.de, CC BY-SA).
-      // Pedal restored from the piano twin in v0.132.6: same captured performance,
+      // Pedal restored from the piano twin: same captured performance,
       // byte-identical notes, same tempo and bpm, so the pedalling transfers exactly.
       // A Rhodes damper lifts felts off tines the way a piano's lifts them off strings;
       // stripping it left the pedal frozen on screen and the sustain flat.
@@ -52590,7 +52448,7 @@ clair_de_lune: {duckV:21,meter:3,label:"Clair de Lune",labelIt:"Chiaro di luna",
     },
     to_spring_rh: { label:'To Spring', tempo:1.0, bpm:88,
       // PERFORMANCE MODE on Rhodes: real captured MIDI (Bernd Krueger, piano-midi.de, CC BY-SA).
-      // Pedal restored from the piano twin in v0.132.6: same captured performance,
+      // Pedal restored from the piano twin: same captured performance,
       // byte-identical notes, same tempo and bpm, so the pedalling transfers exactly.
       // A Rhodes damper lifts felts off tines the way a piano's lifts them off strings;
       // stripping it left the pedal frozen on screen and the sustain flat.
@@ -52739,7 +52597,7 @@ clair_de_lune: {duckV:21,meter:3,label:"Clair de Lune",labelIt:"Chiaro di luna",
       ] },
     prelude_em_rh: { label:'Prélude in E Minor',labelIt:'Preludio in Mi minore', tempo:1.0, bpm:58,
       // PERFORMANCE MODE on Rhodes: real captured MIDI (Bernd Krueger, piano-midi.de, CC BY-SA).
-      // Pedal restored from the piano twin in v0.132.6: same captured performance,
+      // Pedal restored from the piano twin: same captured performance,
       // byte-identical notes, same tempo and bpm, so the pedalling transfers exactly.
       // A Rhodes damper lifts felts off tines the way a piano's lifts them off strings;
       // stripping it left the pedal frozen on screen and the sustain flat.
@@ -53587,7 +53445,7 @@ clair_de_lune: {duckV:21,meter:3,label:"Clair de Lune",labelIt:"Chiaro di luna",
         {b:422,d:1,m:[40,52],man:'lower'}
       ] },
     montuno_rh: {
-      // Rebuilt in v0.132.13 from the same public-domain transcription as the piano
+      // Rebuilt from the same public-domain transcription as the piano
       // 2-3 montuno, since the invented pattern it was cloned from is gone. Tremolo
       // OFF because a wobble fights the clave and the guajeo needs its edges; BRIGHT
       // for tine bite, the pattern being percussive rather than sung. Pedal up: the
@@ -53806,7 +53664,7 @@ clair_de_lune: {duckV:21,meter:3,label:"Clair de Lune",labelIt:"Chiaro di luna",
       ] },
     liebestraum_rh: { label:'Liebestraum No. 3',labelIt:"Sogno d\u2019amore n. 3", tempo:1.0, bpm:152,
       // PERFORMANCE MODE on Rhodes: real captured MIDI (Bernd Krueger, piano-midi.de, CC BY-SA).
-      // Pedal restored from the piano twin in v0.132.6: same captured performance,
+      // Pedal restored from the piano twin: same captured performance,
       // byte-identical notes, same tempo and bpm, so the pedalling transfers exactly.
       // A Rhodes damper lifts felts off tines the way a piano's lifts them off strings;
       // stripping it left the pedal frozen on screen and the sustain flat.
@@ -53939,7 +53797,7 @@ function _riffOrgan(what, val, manual) {
   if (what === 'perc'     && typeof setOrganPerc     === 'function') setOrganPerc(val);
   if (what === 'percHarm' && typeof setOrganPercHarm === 'function') setOrganPercHarm(val);
   if (what === 'vibChorus'&& typeof setOrganVibChorus=== 'function') setOrganVibChorus(val);
-  /* The console has twelve controls and this driver reached five of them (v0.132.7).
+  /* The console has twelve controls and this driver reached five of them.
      The other setters all existed and _riffRestoreState already saved and restored
      their state around a song; there was simply no route from song data to them, so
      no piece could touch percussion decay, percussion volume, either vibrato rocker,
@@ -53963,7 +53821,7 @@ function _riffOrgan(what, val, manual) {
   }
 }
 /* ── Riff Rhodes voice manager: the same damper model the piano riffs use ──────
-   Until v0.132.9 a Rhodes performance had no note-off at all. Every note was fired
+   Until this was added a Rhodes performance had no note-off at all. Every note was fired
    and left to run to the end of its sample, so the whole piece sounded as though
    the pedal were nailed down from the first bar; that is also why restoring the
    pedal data changed nothing audible, since there was nothing for a damper to do.
@@ -54292,7 +54150,7 @@ function riffClosePopup() {
   if (p) p.style.display = 'none';
 }
 
-/* ══ NAVIGATION MOTION HOOK (v0.133.0) ═══════════════════════════════════════
+/* ══ NAVIGATION MOTION HOOK ═══════════════════════════════════════
    Wraps the existing navigation functions rather than editing fifteen call
    sites. Panels are toggled with .hidden, which is display:none, and display
    cannot be transitioned — so the animation is applied to the mode region that
@@ -54669,7 +54527,7 @@ function riffStart(inst, id) {
     // Pedal transitions as control events (damper model), replayable on seek.
     // Route the pedal to the instrument that is actually playing. This was hardcoded
     // to _riffPiano, so a Rhodes performance moved the PIANO's pedal on the other tab
-    // and left its own sitting still: restoring the Rhodes pedal data in v0.132.6 was
+    // and left its own sitting still: restoring the Rhodes pedal data was
     // necessary and not sufficient, because nothing was delivering it.
     (P.ped || []).forEach(function(p){
       var pv = p.v;
@@ -57342,7 +57200,7 @@ function EXERCISE_SUB(k){ return t(EXERCISE_SUB_KEYS[k]) || ''; }
 var EXERCISE_CONTROLS = {}; /* per-module header controls — none currently */
 
 var TOOL_NAME_KEYS = {
-  /* Scales moved from Train to Tools > Reference (v0.132.3). It reuses the card
+  /* Scales moved from Train to Tools > Reference. It reuses the card
      title key it already had rather than gaining a duplicate tool_scales_title;
      nothing here requires the tool_ prefix, these are just i18n lookups. */
   scales:       'card_scales_title',
@@ -58324,12 +58182,6 @@ function ncNoteHead(dir) {
     '<span class="nc-stem ' + (up ? 'nc-stem-up' : 'nc-stem-dn') + '"></span></span>';
 }
 
-function ncPart(k, cls) {
-  var m = NC_NOTE[k];
-  return '<span class="nc-gb ' + (cls || '') + '" style="height:' + m.h + 'px">' +
-    '<span class="nc-g" style="font-size:' + m.fs + 'px;transform:translateY(' + m.dy + 'px)">' +
-    '&#x' + m.g + ';</span></span>';
-}
 function ncGlyphHtml(c, k) {
   k = k || 1;
   // dx exists because a flag widens the bounding box to one side: centering an
@@ -58721,11 +58573,6 @@ function ncOpenIndex() {
   document.getElementById('ncIndexSheet')?.classList.remove('hidden');
 }
 function ncCloseIndex() { document.getElementById('ncIndexSheet')?.classList.add('hidden'); }
-function ncShuffle() {
-  var d = ncDeck();
-  if (d.length > 1) ncIdx = Math.floor(Math.random() * d.length);
-  ncRender();
-}
 
 function nctRender() {
   var c = nctQueue[nctIdx];
@@ -58869,7 +58716,7 @@ const EXERCISE_BACK_MAP = {
 function enterExercise(name) {
   // The guide pins the body with sg-open and scrolls its own #pageArea. Leaving
   // it set on any other screen makes that screen unscrollable, or in the case of
-  // an exercise, invisible. enterTool got this guard in v0.150.102 and these two
+  // an exercise, invisible. enterTool got this guard and these two
   // did not, so 'Train your ear' from the guide opened nothing and 'Try the
   // metronome' could not be left again.
   if (document.body.classList.contains('sg-open') && (typeof currentTool === 'undefined' || currentTool !== 'survivalguide'))
@@ -59007,7 +58854,7 @@ function exitExercise() {
   var th = document.querySelector('.train-only > .teach-hint');
   if (th) th.style.display = '';
   hideMic();
-  // v0.209.40: setMode('practice') calls exitExercise unconditionally as its
+  // SetMode('practice') calls exitExercise unconditionally as its
   // "return to hub" reset, so this row also ran on the very first entry from the
   // launcher, when no exercise had ever started. Several of these measure or
   // redraw (scaleStop → getBoundingClientRect, diadleStop → getAudio().resume),
@@ -59091,9 +58938,9 @@ let ivAnswered    = false;    // manual/test: has the user answered the current 
 
 const IV_RANGES = {
   // ascAnchor: sing UP from here (floor, so +M9 fits). descAnchor: sing DOWN from here (ceiling, so -M9 fits).
-  bass:    { label: 'BASS', labelIt:'BASSO', labelIt:'BASSO',    midi: [40, 60], ascAnchor: 43, descAnchor: 57 },   // E2–C4
-  tenor:   { label: 'TENOR', labelIt:'TENORE', labelIt:'TENORE',   midi: [48, 69], ascAnchor: 50, descAnchor: 67 },   // C3–A4
-  alto:    { label: 'ALTO', labelIt:'CONTRALTO', labelIt:'CONTRALTO',    midi: [55, 74], ascAnchor: 55, descAnchor: 74 },   // G3–D5
+  bass:    { label: 'BASS', labelIt:'BASSO',    midi: [40, 60], ascAnchor: 43, descAnchor: 57 },   // E2–C4
+  tenor:   { label: 'TENOR', labelIt:'TENORE',   midi: [48, 69], ascAnchor: 50, descAnchor: 67 },   // C3–A4
+  alto:    { label: 'ALTO', labelIt:'CONTRALTO',    midi: [55, 74], ascAnchor: 55, descAnchor: 74 },   // G3–D5
   soprano: { label: 'SOPRANO', midi: [60, 81], ascAnchor: 62, descAnchor: 79 },   // C4–A5
 };
 let ivStreak = 0, ivCorrect = 0, ivTotal = 0;
@@ -59804,7 +59651,7 @@ function ivApplyMode() {
     // Grid is always present (grayed until first play). No reference row.
     if (refRow) refRow.style.display = 'none';
     // The feedback box STAYS in the layout, empty. This line used to hide it,
-    // which is why v0.150.9's fix appeared not to work: the markup default and
+    // which is why the fix appeared not to work: the markup default and
     // the round reset were both corrected, but the mode switch hid it again on
     // every entry. An empty box holding its space beats a box that appears on
     // first answer and shoves the grid down.
@@ -59990,11 +59837,6 @@ function ivBlurbHTML(sem) {
 // and (later) test mode all read this. Same result the drill used before.
 function ivActivePool() {
   return ivCustomPool ? Array.from(ivCustomPool) : IV_DIFFICULTIES[ivDifficulty].intervals.slice();
-}
-// The filtered deck cards, in canonical (ascending-semitone) order, matching the pool.
-function ivDeckCards() {
-  const pool = new Set(ivActivePool());
-  return IV_CARDS.filter(c => pool.has(c.sem));
 }
 
 // ═══════════════════════════════════════════════
@@ -60358,7 +60200,7 @@ function ivRenderAnswerGrid(grayed) {
   grid.style.display = '';
 }
 
-// ===== NEW INTERVAL IDENTITY machinery (v0.74) =====
+// ===== NEW INTERVAL IDENTITY machinery =====
 var ivRetryLeft = 1;          // one retry, flat across difficulties
 var ivRoundResolved = false;  // true once the round is finally revealed (right, or game-over)
 
@@ -60798,7 +60640,7 @@ function ivPeekOpenFull() {
   ivStop();
   ivrIdx = idx;
   var isIt = (progState && progState.lang === 'it');
-  window._sgReturnFromCharts = {
+  var _ret = {
     backKind: 'exercise',
     backTarget: 'interval',
     label: isIt ? 'TORNA ALL\u2019ESERCIZIO' : 'BACK TO TRAINING'
@@ -60807,10 +60649,11 @@ function ivPeekOpenFull() {
     setMode('tools');
     enterTool('intervalref');
   } catch(e) {
-    window._sgReturnFromCharts = null;
     return;
   }
-  _sgShowReturnPill('__app__');
+  // The pill and its return target live inside the Survival Guide closure, so
+  // this goes through the one door that closure exposes.
+  if (window._sgShowReturnPillFor) window._sgShowReturnPillFor(_ret, '__app__');
 }
 
 function ivStop() {
@@ -60987,7 +60830,7 @@ const CHORD_DICT = [
   { intervals:[0,1],           deg:[0,0],           sp:['n','s'],                 symbol:'m2',      name:'Minor 2nd (Cluster)', nameIt:'Seconda Minore (Cluster)',rank:4 },
   { intervals:[0,2],           deg:[0,1],           sp:['n','n'],                 symbol:'M2',      name:'Major 2nd', nameIt:'Seconda Maggiore',         rank:4 },
   { intervals:[0,6],           deg:[0,3],           sp:['n','s'],                 symbol:'tt',      name:'Tritone', nameIt:'Tritono',           rank:4 },
-  // ── Completeness pass (v0.99.9): "anything can be a chord" ──────────────────
+  // ── Completeness pass: "anything can be a chord" ──────────────────
   // Common colors the identifier previously had no name for.
   { intervals:[0,4,7,9,14],    deg:[0,2,4,5,1],     sp:['n','n','n','n','n'],     symbol:'6/9',     name:'Six Nine', nameIt:'Sesta Nona',          rank:2 },
   { intervals:[0,3,7,9,14],    deg:[0,2,4,5,1],     sp:['n','f','n','n','n'],     symbol:'m6/9',    name:'Minor Six Nine', nameIt:'Sesta Nona Minore',    rank:3 },
@@ -61095,12 +60938,8 @@ function chordSetTone(v) {
   buildChordToneBank('chordToneBank',        { get: () => chordToolTone, set: chordSetTone, skin: 'chd-tonepop' });
   buildChordToneBank('chordToneBankBuilder', { get: () => chordToolTone, set: chordSetTone, skin: 'chd-tonepop' });
 }
-function setChordVolume(v) {
-  chordVolume = v / 100;
-  document.querySelectorAll('.chord-vol-pct').forEach(el => el.textContent = v + '%');
-}
 
-// ── Chord notation (v0.99.9) ──────────────────────────────────────────────────
+// ── Chord notation ──────────────────────────────────────────────────
 // Whole-note staff rendering for the ledger card. Spelling comes from
 // getSpelledNotes - the same degree-aware speller the note pills use - so the
 // staff, the pills and the chord name can never disagree about D# vs Eb.
@@ -61412,7 +61251,7 @@ function chdCloseClefPop(e){
   if(e && e.target !== document.getElementById('chdClefPop')) return;
   document.getElementById('chdClefPop').classList.remove('open');
 }
-// ── Universal naming (v0.99.12) ──────────────────────────────────────────────
+// ── Universal naming ──────────────────────────────────────────────
 // Every pitch-class set gets a chord symbol. The dictionary handles the common
 // shapes; beyond that, jazz practice is to pick a root and spell everything else
 // as an alteration or extension of it, however dense the result. This does the
@@ -61477,7 +61316,7 @@ function chdNameAnySet(notes){
   };
 }
 
-// ── Fallback naming (v0.99.10) ───────────────────────────────────────────────
+// ── Fallback naming ───────────────────────────────────────────────
 // "Anything can be a chord": most tapped sets are not in the dictionary, but the
 // great majority are a known chord with one extra tone. Rather than reporting
 // UNKNOWN, find the best-matching known chord inside the set and describe the
@@ -61656,17 +61495,6 @@ function chordGetMidi(rootNote, qualitySymbol, octave) {
   if (rootIdx < 0) return [];
   const rootMidi = 60 + rootIdx + (octave - 4) * 12; // C4=60
   return def.intervals.map(i => rootMidi + i);
-}
-
-function chordGetNoteNames(midiNotes, intervals) {
-  // Use key context from root note (first note = bass/root) for consistent spelling
-  const bassSemi = midiNotes.length ? midiNotes[0] % 12 : 0;
-  const noteArr  = gccNoteNames(bassSemi, intervals || []);
-  return midiNotes.map(m => {
-    const name = noteArr[m % 12];
-    const oct  = Math.floor(m / 12) - 1;
-    return { name, oct, midi: m };
-  });
 }
 
 // ── Player ─────────────────────────────────────
@@ -63790,33 +63618,6 @@ function progBuildGrid() {
   if (addBtn) addBtn.disabled = progNumBars >= 16;
   if (minBtn) minBtn.disabled = progNumBars <= 1;
   progUpdateKeyDisplay();
-}
-
-function progStampBar(barIdx) {
-  if (progPlaying) return;
-  const bar  = progBars[barIdx];
-  const free = progBarFree(bar);
-  if (free <= 0) return;
-  const dur = Math.min(progDur, free);
-  bar.push(progBlock('chord', progRoot, progQuality, dur));
-  _progClearActivePreset();
-  progApplyVoiceLeading();
-  progBuildGrid();
-}
-
-function progTapBlock(barIdx, blockIdx) {
-  if (progPlaying) return;
-  const bar   = progBars[barIdx];
-  const block = bar[blockIdx];
-  if (!block) return;
-  if (block.type === 'chord') {
-    bar[blockIdx] = progBlock('rest', null, null, block.dur);
-    _progClearActivePreset();
-  } else {
-    bar.splice(blockIdx, 1);
-  }
-  progApplyVoiceLeading();
-  progBuildGrid();
 }
 
 // ── Chord picker sheet ────────────────────────
@@ -65947,7 +65748,7 @@ function lnchGo(m) {
   };
   // REDUCED MOTION: there is no morph here, so _applyMode must be called
   // explicitly. Deferring setMode into the morph's second frame silently broke
-  // this path in v0.104.2 (it returned before the mode was ever applied, so
+  // this path (it returned before the mode was ever applied, so
   // tapping Metro landed you in the tuner). lnch-settled is set for the same
   // reason lnchGoPin's reduce path sets it: entry is over the instant we return,
   // and .mode-toggle is styled off that class, so skipping it leaves the toggle
@@ -65993,7 +65794,7 @@ function lnchGo(m) {
       clone.style.transform = 'none';
       mcard.innerHTML = '';
       if (!reduce) clone.classList.add('lnch-live');   // signature moment plays on the flying card
-      // v0.209.43: set the module's surface tokens directly on the morph
+      // Set the module's surface tokens directly on the morph
       // container. The card face gradient uses var(--panel) and var(--surface);
       // without this they resolve to the default blue-grey palette because
       // body.theme-* is held until finish(). Inline properties on the morph
@@ -66031,7 +65832,7 @@ function lnchGo(m) {
       const GROW = 1.7;
       const dx = (window.innerWidth  / 2) - (r.left + r.width  / 2);
       const dy = (window.innerHeight / 2) - (r.top  + r.height / 2);
-      // v0.210.19: build the module AFTER the card arrives, not before it flies.
+      // Build the module AFTER the card arrives, not before it flies.
       // setMode costs 50-100ms of synchronous DOM/canvas work. Running it
       // before the transform blocked the main thread and delayed the first
       // frame of the flight; that was the chug. The card travels for 650ms
@@ -67892,10 +67693,6 @@ function droneUpdateScale() {
   }
 }
 
-function toggleDronePlay() {
-  if (droneActive) droneStop(); else { _dronePureSine = false; droneStart(); }
-}
-
 function droneStart() {
   updateDroneDisplay();
   // ── Notch settle window ──────────────────────────────────────────────────
@@ -67970,16 +67767,6 @@ function droneStop(silent) {
     _dq('droneToggleBtn', el => el.innerHTML = '▶︎ START DRONE');
     _dq('droneState',     el => el.textContent = t('drone_stopped'));
     _dq('droneNoteBig',   el => el.classList.remove('playing'));
-  }
-}
-
-function setDroneVolume(v) {
-  droneVolume = v / 100;
-  _dq('droneVolPercent', el => el.textContent = v + '%');
-  if (droneNodes && practiceCtx) {
-    const now = practiceCtx.currentTime;
-    droneNodes.master.gain.cancelScheduledValues(now);
-    droneNodes.master.gain.linearRampToValueAtTime(droneVolume, now + 0.1);
   }
 }
 
@@ -68183,16 +67970,6 @@ function getScaleData(rootStr, scaleKey) {
 
 const SHARP_NAMES_ASCII = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 const FLAT_NAMES_ASCII  = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
-
-function getScaleNotes() {
-  // Backwards-compat: return MIDI array for playback code
-  return getScaleData(scaleRoot, scaleType).map(n => n.midi);
-}
-
-function getScaleSemitones() {
-  // Returns set of semitones (0-11) that belong to the scale, used for piano highlighting
-  return new Set(getScaleData(scaleRoot, scaleType).map(n => n.semitones % 12));
-}
 
 // Rebuild the scaleRoot dropdown labels to match current note-naming mode.
 // Values stay as letter names (C, C#, Db…) so internal logic is unaffected;
@@ -68949,11 +68726,6 @@ function setScaleSpeed(v) {
     slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--border) ${pct}%, var(--border) 100%)`;
   }
 }
-function setScaleVolume(v) {
-  scaleVolume = v / 100;
-  // scaleVolPercent belonged to the old two-card layout and is gone; guard the write.
-  _dq('scaleVolPercent', el => el.textContent = v + '%');
-}
 
 /* Playhead ARRIVES on the beat (it is launched late, traveling for at most
    200ms), so the ball lands as the note sounds rather than departing on it.
@@ -69057,15 +68829,6 @@ const SampleEngine = (function() {
   const _relBuffers  = {};  // id → Map(midi → AudioBuffer) for release samples
   const _state       = {};  // id → 'idle'|'loading'|'ready'|'failed'
   const _loadPromise = {};  // id → Promise (prevents duplicate fetches)
-
-  // Convert a MIDI number to a Salamander-style note name, e.g. 69 → 'A4', 61 → 'Cs4'
-  function _midiToSalaName(midi) {
-    const NAMES = ['A','Bb','B','C','Cs','D','Eb','E','F','Fs','G','Gs'];
-    // Salamander names start from A (midi 21 = A0)
-    const idx  = (midi - 21) % 12;
-    const oct  = Math.floor((midi - 12) / 12);
-    return NAMES[((idx % 12) + 12) % 12] + oct;
-  }
 
   // Standard Salamander sampled notes: every 3 semitones from A0 (21) to C8 (108)
   function _salamanderNotes() {
@@ -69281,7 +69044,6 @@ const SampleEngine = (function() {
           // Consider ready if we loaded at least 70% of notes
           if (_buffers[id].size >= notes.length * 0.7) {
             _state[id] = 'ready';
-            if (false) console.log('[SampleEngine]', id, 'ready —', _buffers[id].size, 'samples loaded');
             this._notifyStatus(id);
             if (desc.onReady) desc.onReady();
             // Load release samples in background if descriptor has them (non-blocking)
@@ -69464,14 +69226,6 @@ SampleEngine.register({
   },
 });
 
-// Helper shared by all Salamander-convention soundfonts (sampled every 3 semitones A0–C8)
-function _salamanderNoteToFile(midi) {
-  // Naming convention: piano021v100.mp3 (MIDI number zero-padded to 3 digits, velocity 100)
-  // Sources ship as WAV; they are transcoded to mp3 before bundling. 50 MB of
-  // uncompressed PCM in the app bundle meant 30 parallel fetch+decodeAudioData
-  // calls at launch, which iOS could not absorb.
-  return 'piano' + String(midi).padStart(3, '0') + 'v100.mp3';
-}
 // Where the samples live, which is NOT the same on every platform.
 //
 // In the repo the folder is `audio_assets/`. go.bat and codemagic both RENAME it
@@ -70361,7 +70115,7 @@ const REF_TONES = {
   },
   vibraphone: {
     sustain: false,
-    name: 'VIBRAPHONE', it: 'VIBRAFONO', icon: '🎶',
+    name: 'VIBRAPHONE', it: 'VIBRAFONO', icon: '✨',
     synth(ctx, freq, when, dur, master, vol) {
       // Metallic bars with long sustain + characteristic amplitude tremolo (vibrato motor)
       const partials = [
@@ -70571,11 +70325,7 @@ const REF_TONES = {
   ukebass: {
     sustain: false,
     name: 'UKE BASS', it: 'UKE BASS', icon: '🎸',
-    synth(ctx, freq, when, dur, master, vol) {
-      return typeof bassSynth === 'function'
-        ? bassSynth(ctx, freq, when, dur, master, vol)
-        : REF_TONES.guitar.synth(ctx, freq, when, dur, master, vol);
-    }
+    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.bass.synth(ctx, freq, when, dur, master, vol); }
   },
   bass: {
     sustain: false,
@@ -70705,13 +70455,6 @@ const REF_TONES = {
       return REF_TONES.piano.synth(ctx, freq, when, dur, master, vol);
     }
   },
-  vibraphone: {
-    sustain: false,
-    name: 'VIBRAPHONE', it: 'VIBRAFONO', icon: '✨',
-    synth(ctx, freq, when, dur, master, vol) {
-      return REF_TONES.bell.synth(ctx, freq, when, dur, master, vol);
-    }
-  },
   nylon_guitar: {
     sustain: false,
     name: 'NYLON GTR', it: 'CHITARRA CLASSICA', icon: '🎸',
@@ -70792,12 +70535,6 @@ const REF_TONES = {
   },
 
   // ── Uke bass ───────────────────────────────────────────────────────────────
-  ukebass: {
-    sustain: false,
-    name: 'UKE BASS', it: 'UKE BASS', icon: '🎸',
-    synth(ctx, freq, when, dur, master, vol) { return REF_TONES.bass.synth(ctx, freq, when, dur, master, vol); }
-  },
-
   // ── Melodica ───────────────────────────────────────────────────────────────
   melodica_samp: {
     sustain: false,
@@ -73941,7 +73678,7 @@ var RR_PATTERNS = [
 
   // ── RUMBA CLAVE ───────────────────────────────────────────────────────────
   { id:'rumba_clave', name:'RUMBA CLAVE', diff:'hard', sig:[4,4], m:2, bpm:88,
-    // v0.210.122: was 0, .75, 1.5, 3 | 5, 6 (four hits in bar 1, third hit on
+    // Was 0, .75, 1.5, 3 | 5, 6 (four hits in bar 1, third hit on
     // beat 4 like son clave). Rumba 3-2 is 1, and-of-2, and-of-4 | 2, 3.
     notes:[{p:0,d:1},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1.5,r:true},{p:3.5,d:.5},
            {p:4,d:1,r:true},{p:5,d:1},{p:6,d:1},{p:7,d:1,r:true}],
@@ -74394,7 +74131,7 @@ var RR_PATTERNS = [
     songs:[], hint:'Two bars of 11/4 with the same pattern. Count through the long notes.', hint_it:'Due battute di 11/4 con lo stesso schema. Conta durante le note lunghe.' },
 
 
-  // ?? ADDED v0.68.170 ? more variety to thin pools (easy + 6/8 especially) ??
+  // More variety for thin pools (easy and 6/8 especially)
   // EASY ? more whole/half/quarter combos + simple rests
   { id:'q_rest_q_q', name:'REST ON TWO', diff:'easy', sig:[4,4], m:1, bpm:80,
     notes:[{p:0,d:1},{p:1,d:1,r:true},{p:2,d:1},{p:3,d:1}], songs:[],
@@ -74473,7 +74210,7 @@ var RR_PATTERNS = [
     notes:[{p:0,d:.25,r:true},{p:.25,d:.25},{p:.5,d:.5},{p:1,d:.5},{p:1.5,d:.5},{p:2,d:1},{p:3,d:1}], songs:[],
     hint:'Sixteenth rest on 1, then a sixteenth and an eighth off the beat.', hint_it:'Pausa di semicroma sull\u20191, poi una semicroma e una croma in contrattempo.' },
   { id:'h_clave_son', name:'SON CLAVE', diff:'hard', sig:[4,4], m:2, bpm:94,
-    // v0.210.122: bar 2 had three hits (4, 6, 7) and a hole at beat 2 of bar 1.
+    // Bar 2 had three hits (4, 6, 7) and a hole at beat 2 of bar 1.
     // Son 3-2 is 1, and-of-2, 4 | 2, 3.
     notes:[{p:0,d:1},{p:1,d:.5,r:true},{p:1.5,d:.5},{p:2,d:1,r:true},{p:3,d:1},{p:4,d:1,r:true},{p:5,d:1},{p:6,d:1},{p:7,d:1,r:true}], songs:[],
     hint:'3-2 son clave: three hits in bar 1, two in bar 2.', hint_it:'Son clave 3-2: tre colpi nella prima battuta, due nella seconda.' },
@@ -75974,8 +75711,8 @@ function srIsBlack(m) { return [1,3,6,8,10].indexOf(((m % 12) + 12) % 12) !== -1
 // So the worst case above and below is taken across every clef in play and both
 // get the same box.
 // The box must not change when you cycle the clef pill. Two earlier attempts got
-// this half right: v0.106.3 measured per note, so the card grew and shrank card
-// to card; v0.106.5 measured per clef, which fixed BOTH mode but meant TREBLE,
+// this half right: the first measured per note, so the card grew and shrank card
+// to card; the second measured per clef, which fixed BOTH mode but meant TREBLE,
 // BASS and BOTH each had a box of their own, so the card resized under the pill.
 //
 // So the allowance ignores the clef selection entirely. It takes the largest
@@ -75984,7 +75721,7 @@ function srIsBlack(m) { return [1,3,6,8,10].indexOf(((m % 12) + 12) % 12) !== -1
 // whatever is selected. Range still changes the box, because that is a
 // deliberate choice to read a wider span and the extra room is the point.
 //
-// v0.108.14 reverses that last part. Range no longer changes the box either, so
+// The current version reverses that last part. Range no longer changes the box either, so
 // the card holds still while you cycle every setting it has. The allowance is
 // computed at the deepest ledger tier whatever is selected, which costs 72px of
 // air at the shallow ones and buys a layout that never moves. Note size stays
@@ -77178,7 +76915,7 @@ function srRevealSound() {
 }
 
 // RESET sits in the same panel as the breakdown, so it clears the breakdown.
-// v0.106.4 made per-note accuracy lifetime and left reset touching only the
+// An earlier version made per-note accuracy lifetime and left reset touching only the
 // sitting's score, which meant the button appeared to do nothing but close the
 // sheet. XP already earned is not clawed back; you cannot un-learn a note.
 function srReset() {
@@ -77697,7 +77434,7 @@ function rlpNewCard(silent) {
   var pool = rlpPool();
   rlpTarget = rlpCfg().oct + pool[Math.floor(Math.random() * pool.length)];
   rlpDone = false; rlpWrong = []; _rlpHeartJustLost = -1;
-  // Practice mode has its OWN delayed tone, separate from the climb's. v0.150.30
+  // Practice mode has its OWN delayed tone, separate from the climb's. An earlier version
   // tracked the climb timer and left this one bare, which is why tapping next
   // quickly still stacked tones: each tap queued another 350ms tone and none of
   // them canceled the ones before. Same handle as the climb, so whichever fires
@@ -78483,28 +78220,6 @@ function _sgBarline(x,topY,kind,col,spArg){
   else if(kind==='final'){ o+='<line x1="'+(x-4)+'" y1="'+y0+'" x2="'+(x-4)+'" y2="'+y1+'" stroke="'+col+'" stroke-width="1.2"/>'; o+='<rect x="'+(x-1.5)+'" y="'+y0+'" width="3" height="'+(4*SP)+'" fill="'+col+'"/>'; }
   else if(kind==='repeat-end'){ o+='<rect x="'+(x-1.5)+'" y="'+y0+'" width="3" height="'+(4*SP)+'" fill="'+col+'"/>'; o+='<line x1="'+(x-5)+'" y1="'+y0+'" x2="'+(x-5)+'" y2="'+y1+'" stroke="'+col+'" stroke-width="1.2"/>'; o+='<circle cx="'+(x-9)+'" cy="'+(topY+1.5*SP)+'" r="1.6" fill="'+col+'"/>'; o+='<circle cx="'+(x-9)+'" cy="'+(topY+2.5*SP)+'" r="1.6" fill="'+col+'"/>'; }
   else if(kind==='repeat-start'){ o+='<rect x="'+(x+1.5)+'" y="'+y0+'" width="3" height="'+(4*SP)+'" fill="'+col+'"/>'; o+='<line x1="'+(x+5)+'" y1="'+y0+'" x2="'+(x+5)+'" y2="'+y1+'" stroke="'+col+'" stroke-width="1.2"/>'; o+='<circle cx="'+(x+9)+'" cy="'+(topY+1.5*SP)+'" r="1.6" fill="'+col+'"/>'; o+='<circle cx="'+(x+9)+'" cy="'+(topY+2.5*SP)+'" r="1.6" fill="'+col+'"/>'; }
-  return o;
-}
-// segno: diagonal S with two dots, drawn small
-function _sgSegno(cx,cy,col){
-  // S-curve (two stacked arcs) crossed by a diagonal, with a dot in each opposing quadrant.
-  var o='';
-  var sw=1.5;
-  // top arc opens left, bottom arc opens right -> an S
-  o+='<path d="M '+(cx+5)+' '+(cy-7)+' C '+(cx-3)+' '+(cy-9)+' '+(cx-6)+' '+(cy-3)+' '+cx+' '+(cy-1)+' C '+(cx+6)+' '+(cy+1)+' '+(cx+3)+' '+(cy+7)+' '+(cx-5)+' '+(cy+6)+'" stroke="'+col+'" stroke-width="'+sw+'" fill="none" stroke-linecap="round"/>';
-  // diagonal slash through the middle
-  o+='<line x1="'+(cx-7)+'" y1="'+(cy+7)+'" x2="'+(cx+7)+'" y2="'+(cy-7)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
-  // two dots in opposite quadrants
-  o+='<circle cx="'+(cx-5)+'" cy="'+(cy-4)+'" r="1.4" fill="'+col+'"/>';
-  o+='<circle cx="'+(cx+5)+'" cy="'+(cy+4)+'" r="1.4" fill="'+col+'"/>';
-  return o;
-}
-// coda: circle with crosshair
-function _sgCoda(cx,cy,col){
-  var o='';
-  o+='<circle cx="'+cx+'" cy="'+cy+'" r="6.5" stroke="'+col+'" stroke-width="1.4" fill="none"/>';
-  o+='<line x1="'+(cx-9)+'" y1="'+cy+'" x2="'+(cx+9)+'" y2="'+cy+'" stroke="'+col+'" stroke-width="1.4"/>';
-  o+='<line x1="'+cx+'" y1="'+(cy-9)+'" x2="'+cx+'" y2="'+(cy+9)+'" stroke="'+col+'" stroke-width="1.4"/>';
   return o;
 }
 
@@ -80028,7 +79743,7 @@ function rrRandPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 // stay in sync. Headline/timing lines are arrays (rrRandPick adds variety);
 // the rest are picked structurally in rrBuildFeedback. {ms} is substituted.
 var RR_FB = {
-  // v0.210.122 rewrite: one short headline, then ONE note (rrBuildFeedback keeps
+  // One short headline, then ONE note (rrBuildFeedback keeps
   // the most useful). Plain, action first, no "so" chains, no pep talk.
   en: {
     head_perfect: ['Perfect.','Spot on.','Clean.','Nailed it.'],
@@ -80255,12 +79970,6 @@ var RR_DIFFS = [
     sub:'dense 16ths, synco, fast',
     desc:'Relentless sixteenths, heavy syncopation, frequent triplets, and a faster default tempo. No transport bar; read it cold.' },
 ];
-function rrSetDiff(d) {
-  rrDiff = d;
-  rrPattern = null;  // force new pick
-  rrSurv.best = rrSurvBestFor(rrDiff);   // show this difficulty's survival record
-  rrUpdateDiffBtn();
-}
 function rrUpdateDiffBtn() {
   var d = RR_DIFFS.find(function(x){ return x.key === rrDiff; }) || RR_DIFFS[0];
   var h = document.getElementById('rrDiffHeaderBtn');
@@ -83559,7 +83268,7 @@ function ssCycleVoice() {
   var idx = SS_VOICE_CYCLE.indexOf(ssVoice);
   ssVoice = SS_VOICE_CYCLE[(idx + 1) % SS_VOICE_CYCLE.length];
   ssUpdateVoicePill();
-  if (typeof ssSavePrefs === 'function') ssSavePrefs();
+  ssSaveVoice();
   ssEnterNeutral();
 }
 
@@ -84706,7 +84415,7 @@ function rtDistractMelodyStart(g){
 // Curated for immediate melodic interest under a drive. hook = beat to start at,
 // skipping thin intros so the snippet lands on the memorable material.
 //
-// JOURNEY MODE (v0.79): each trip plays ONE song, advancing through it leg by leg.
+// JOURNEY MODE: each trip plays ONE song, advancing through it leg by leg.
 // Difficulty picks the tier pool → random song per game → its 5 curated hooks map to
 // the 5 legs (strictly forward through the piece), and each slice's seconds set that
 // leg's duration (so the trip length fits the song). Hooks were chosen by note-density
@@ -84780,7 +84489,7 @@ const RT_JOURNEY = {
 // right, and the tuner stops badging it.
 //
 // Everything with a perf: block starts UNTUNED on purpose. Two reasons:
-//   - the entries added in v0.97.21 have analytically-placed hooks (densest 2s
+//   - the newer entries have analytically-placed hooks (densest 2s
 //     window near each target), never heard by a human;
 //   - the older perf songs WERE tuned by ear, but that was against their previous
 //     grid versions. Converting to performance mode replaced the timing wholesale,
@@ -85390,12 +85099,6 @@ function rtCycleDesign(dir){
   }, 160);
 }
 var rtSwapTimer=null;
-function rtCycleVoice(){
-  const idx=SS_VOICE_CYCLE.indexOf(ssVoice);
-  ssVoice=SS_VOICE_CYCLE[(idx+1)%SS_VOICE_CYCLE.length];
-  const pill=document.getElementById('rtVoicePill');
-  if (pill){ const v=SS_VOICES[ssVoice]; const it=(progState&&progState.lang)==='it'; pill.textContent=(it?v.labelIt:v.label); }
-}
 function rtPickDiff(d){
   if (!RT_DIFF[d]) return;
   rtDiff = d;
@@ -86285,12 +85988,6 @@ function ceApplyPreset(key) {
   ceUpdateDiffHud();
 }
 
-function ceSetPreset(key) {
-  ceApplyPreset(key);
-  ceBuildPool();
-  ceRenderAnswerGrid();
-}
-
 function ceGetPool() {
   const syms = ceCustomPool || CE_DIFFICULTIES[ceDifficulty].syms;
   return CHORD_DICT.filter(d => syms.has(d.symbol));
@@ -86727,16 +86424,6 @@ function chordleGetRoot(c) {
 // Used only for "same degree, wrong quality" detection
 function chordleGetDegree(c) {
   return chordleGetRoot(c).toLowerCase();
-}
-function chordleScore(guess, ans) {
-  if (!guess) return 'empty';
-  if (guess === ans) return 'correct';
-  var gB = guess.includes('/') ? guess.split('/')[0] : guess;
-  var aB = ans.includes('/') ? ans.split('/')[0] : ans;
-  if (gB === aB) return 'inversion';                                 // right chord+quality, wrong inversion → amber
-  if (chordleGetRoot(gB) === chordleGetRoot(aB)) return 'rootonly'; // right root+mode, wrong quality → orange
-  if (chordleGetDegree(gB) === chordleGetDegree(aB)) return 'rootonly'; // same degree, wrong mode (I vs i) → orange
-  return 'wrong';
 }
 
 // Whole-row scorer (Wordle-style, present-first priority):
@@ -89449,10 +89136,6 @@ function chordleChordMidis(chordStr, prevMidis) {
   return best||ivs.map(function(n){return C4+st+n;});
 }
 // Keep freq version for any direct callers
-function chordleChordFreqs(chordStr) {
-  var midis=chordleChordMidis(chordStr,null);
-  return midis.map(function(m){return 440*Math.pow(2,(m-69)/12);});
-}
 function chordlePlayFreqs(freqs, delaySec) {
   try {
     var ctx=getAudio();
@@ -89488,9 +89171,6 @@ function chordlePlaySlot(idx, useArp) {
   chordlePlayFreqs(mids[idx].map(toFreq),0.7);
   chordleArp=savedArp;
   hapticLight();
-}
-function chordlePlayChordAudio(chordStr) {
-  chordlePlayFreqs(chordleChordFreqs(chordStr));
 }
 
 // ── Picker — two-card sliding sheet ──────────────────────────────────────
@@ -89780,9 +89460,6 @@ function chordlePickInv(suf) {
   chordlePNum=''; chordlePQual=''; chordlePMod=''; chordlePFlat=false; chordlePCard=1; chordlePStep='numeral';
   chordleRender(); hapticLight();
 }
-// Legacy compat — old code still calls these
-function chordlePickQual(val){ chordlePickType(val); }
-function chordleSheetBack(){ chordlePickerSlide(1); }
 
 function chordleInitPickerSwipe() {}
 
@@ -89883,7 +89560,6 @@ const DIADLE_DEGREES = [
   { id:'7',  st:11, name:'major 7th', nameIt:'7ª maggiore',       deg:7 },
 ];
 function diadleDeg(id){ for (var i=0;i<DIADLE_DEGREES.length;i++) if (DIADLE_DEGREES[i].id===id) return DIADLE_DEGREES[i]; return null; }
-function diadleDegBySt(st){ st=((st%12)+12)%12; for (var i=0;i<DIADLE_DEGREES.length;i++) if (DIADLE_DEGREES[i].st===st) return DIADLE_DEGREES[i]; return null; }
 // Pools per difficulty (which degrees can appear)
 const DIADLE_DIATONIC_FULL = ['1','2','3','4','5','6','7'];
 const DIADLE_CHROMATIC = ['1','♭2','2','♭3','3','4','TT','5','♭6','6','♭7','7'];
@@ -89929,16 +89605,6 @@ var diadlePickerOpen = false;
 // ── Helpers ──────────────────────────────────────
 function diadleRand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function diadleRootMode(diff){ return (DIADLE_DIFF[diff]||DIADLE_DIFF.easy).rootMode; }
-// Score a guessed degree vs the answer degree.
-// green = exact; yellow = same diatonic degree number, wrong accidental (e.g. ♭3 vs 3); gray = wrong.
-function diadleScore(guessId, ansId) {
-  if (guessId===ansId) return 'correct';
-  var g=diadleDeg(guessId), a=diadleDeg(ansId);
-  if (!g||!a) return 'wrong';
-  if (g.deg===a.deg) return 'sizeonly';  // right scale-degree number, wrong quality
-  return 'wrong';
-}
-
 // Whole-row scorer (Wordle-style): green > yellow(present elsewhere, dup-counted) > blue(right degree, wrong quality) > gray
 function diadleScoreRow(guessArr, ansArr) {
   var n=ansArr.length;
@@ -91183,7 +90849,7 @@ function _launcherIsUp() {
   return !!el && getComputedStyle(el).display !== 'none' && !el.classList.contains('lnch-gone');
 }
 
-// ── Global error net (v0.150.15) ──────────────────────────────────────────
+// ── Global error net ──────────────────────────────────────────
 // One 10MB file, ~118k lines of JS, no framework and therefore no error
 // boundary. An uncaught throw inside a render or an audio path leaves the
 // screen half-drawn: overlays stuck open, the body still scroll-locked, notes
@@ -91244,8 +90910,6 @@ function errLogRead() {
     return raw ? JSON.parse(raw) : [];
   } catch (e) { return []; }
 }
-
-function errLogClear() { try { prefSet('errLog', ''); } catch (e) {} }
 
 // Which screen the user was on. Best effort: this runs while something is
 // already broken, so every lookup is guarded and a blank is acceptable.
@@ -91347,7 +91011,7 @@ try {
   });
 } catch (e) {}
 
-// ── First-open warm-up (v0.150.49) ────────────────────────────────────────
+// ── First-open warm-up ────────────────────────────────────────
 // Opening the FIRST module of a session drops roughly half its frames; every
 // module after is smooth. Measured cold: Tuner 33/70 slow frames, Tools 35/70,
 // Train 43/70, with only 2-16ms of synchronous work at the tap. The cost is not
@@ -91427,7 +91091,7 @@ function scheduleWarmUp() {
   } catch (e) { setTimeout(go, 1200); }
 }
 
-// ── In-app update (v0.150.13) ─────────────────────────────────────────────
+// ── In-app update ─────────────────────────────────────────────
 // Google Play In-App Updates via @capawesome/capacitor-app-update. Play is
 // asked directly whether a newer build exists, so there is no version manifest
 // to host and nothing to remember to bump; the store already knows.
@@ -92466,8 +92130,8 @@ const STRINGS = {
   en: {
     mq_fetching:'Fetching',
     mq_no_connect:'Could not connect to opentdb.com. Check your connection.',
-    scale_vs:'VS ', mq_grp_general:'GENERAL', mq_no_packs:'No packs selected', mq_all_packs_selected:'All {n} packs selected', mq_n_of_packs:'{n} of {total} packs', mq_select_all:'SELECT ALL', mq_online_only:'ONLINE ONLY', mq_offline:'OFFLINE', mq_daily_quiz:'Daily Quiz', mq_share_correct:'correct', mq_grp_instrument:'INSTRUMENT', mq_grp_decades:'DECADES', mq_grp_online:'ONLINE',
-    mq_all_packs:'ALL PACKS', mq_packs_unit:'packs', mq_all_packs_name:'ALL PACKS', mq_all_packs_desc:'Questions drawn from every pack you have.', mq_start_survival:'START SURVIVAL \u2192', mq_start:'START \u2192', mq_quit:'QUIT', mq_back:'BACK', mq_daily_badge:'DAILY', mq_resume:'RESUME \u2192', mq_timer:'Timer', mq_timer_off:'OFF', mq_review_misses:'REVIEW MISSES \u2192', mq_share_result:'SHARE RESULT', mq_play_arrow:'PLAY \u2192', mq_one_attempt:'10 questions \u00b7 one attempt', mq_lives_endless:'3 LIVES \u00b7 ENDLESS', mq_building:'Building your quiz',
+    scale_vs:'VS ', mq_grp_general:'GENERAL', mq_no_packs:'No packs selected', mq_all_packs_selected:'All {n} packs selected', mq_n_of_packs:'{n} of {total} packs', mq_select_all:'SELECT ALL', mq_online_only:'ONLINE ONLY', mq_offline:'OFFLINE', mq_share_correct:'correct', mq_grp_instrument:'INSTRUMENT', mq_grp_decades:'DECADES', mq_grp_online:'ONLINE',
+    mq_all_packs:'ALL PACKS', mq_packs_unit:'packs', mq_all_packs_name:'ALL PACKS', mq_all_packs_desc:'Questions drawn from every pack you have.', mq_start_survival:'START SURVIVAL \u2192', mq_start:'START \u2192', mq_quit:'QUIT', mq_back:'BACK', mq_resume:'RESUME \u2192', mq_timer:'Timer', mq_timer_off:'OFF', mq_review_misses:'REVIEW MISSES \u2192', mq_share_result:'SHARE RESULT', mq_play_arrow:'PLAY \u2192', mq_one_attempt:'10 questions \u00b7 one attempt', mq_lives_endless:'3 LIVES \u00b7 ENDLESS', mq_building:'Building your quiz',
     mq_survival_sub:'pick a pack, or take everything below',
     mq_survival_card_sub:'3 lives, endless',
     mq_no_questions:'Not enough questions in this category right now. Try another one.',
@@ -92476,14 +92140,14 @@ const STRINGS = {
     audio_noisy:'HEADPHONES DISCONNECTED',
     mq_question:'QUESTION',
     mq_correct_out_of:'CORRECT OUT OF',
-    // Grade display strings removed (v0.210.22); tone logic kept.
+    // Grade display strings removed; tone logic kept.
     mq_pack_cleared:'Pack cleared', mq_every_q_answered:'Every question in the pack answered.',
     mq_did_you_know_q:'Did you know?',
     credits_icons:'Icons',
     credits_photos:'Instrument photos',
     credits_photos_note:'From Wikimedia Commons. Backgrounds removed, cropped and straightened for Intonare.',
     mq_no_misses:'No misses to review.',
-    mq_length:'Length', mq_endless:'ENDLESS', mq_seconds:'SECONDS',
+    mq_length:'Length', mq_seconds:'SECONDS',
     mq_pack_one:'pack', mq_pack_many:'packs',
     mq_three_lives:'3 lives, no end',
     mq_generated:'endless, generated',
@@ -92500,7 +92164,7 @@ const STRINGS = {
     metro_ramp_presets:'RAMP PRESETS',
     ramp_click_head:'CLICK', ramp_groove_head:'GROOVE',
     pm_day_streak:'day streak', pm_achievements:'Achievements',
-    pm_practice_history:'Practice History', pm_this_week:'THIS WEEK', pm_problem_areas:'Problem areas', pm_all_time:'All time', pm_of_right:'{c} of {n} right', pm_vs_last_week:'vs last week', pm_practiced_week:'practiced this week', pm_time_only:'This exercise has no right or wrong answers, so the bars show time.', pm_missed_n:'missed {n}',
+    pm_practice_history:'Practice History', pm_problem_areas:'Problem areas', pm_all_time:'All time', pm_of_right:'{c} of {n} right', pm_vs_last_week:'vs last week', pm_practiced_week:'practiced this week', pm_time_only:'This exercise has no right or wrong answers, so the bars show time.', pm_missed_n:'missed {n}',
     pm_last_week:'LAST WEEK', pm_weeks_ago:'{n} WEEKS AGO',
     pm_session:'SESSION', pm_ach_unlocked:'Achievement Unlocked', snd_unlock_label:'New Sound Unlocked',
     chordle_pick_diff:'pick a difficulty',
@@ -92771,7 +92435,7 @@ const STRINGS = {
     rlp_new_tier:'%b reached! At least %v points, \u00d7%m multiplier',
     err_recovered:'Something went wrong. That screen was reset.',
     pm_xp_to_lv:'{a} / {b} XP to LV {lv}', pm_xp_placeholder:'0 / 50 XP to LV 2',
-    bowed_play_ds:'\u25b6\ufe0e PLAY DOUBLE STOP', diadle_name_each:'NAME EACH NOTE',
+    diadle_name_each:'NAME EACH NOTE',
     tc_start_drone:'\u25b6\ufe0e START DRONE', hp_play_asc:'\u25b6\ufe0e PLAY ASCENDING',
     bowed_select_note:'SELECT A NOTE', bowed_select_scale:'SELECT ROOT + SCALE',
     pr_start:'\u25b6\ufe0e START', pm_this_week:'THIS WEEK',
@@ -93666,8 +93330,8 @@ const STRINGS = {
   it: {
     mq_fetching:'Recupero',
     mq_no_connect:'Impossibile connettersi a opentdb.com. Controlla la connessione.',
-    scale_vs:'VS ', mq_grp_general:'GENERALE', mq_no_packs:'Nessun pacchetto scelto', mq_all_packs_selected:'Tutti i {n} pacchetti scelti', mq_n_of_packs:'{n} di {total} pacchetti', mq_select_all:'SELEZIONA TUTTO', mq_online_only:'SOLO ONLINE', mq_offline:'NON IN LINEA', mq_daily_quiz:'Quiz del giorno', mq_share_correct:'corrette', mq_grp_instrument:'STRUMENTO', mq_grp_decades:'DECENNI', mq_grp_online:'ONLINE',
-    mq_all_packs:'TUTTE LE RACCOLTE', mq_packs_unit:'raccolte', mq_all_packs_name:'TUTTE LE RACCOLTE', mq_all_packs_desc:'Domande prese da ogni raccolta che hai.', mq_start_survival:'INIZIA SOPRAVVIVENZA \u2192', mq_start:'INIZIA \u2192', mq_quit:'ESCI', mq_back:'INDIETRO', mq_daily_badge:'DEL GIORNO', mq_resume:'RIPRENDI \u2192', mq_timer:'Timer', mq_timer_off:'SPENTO', mq_review_misses:'RIVEDI GLI ERRORI \u2192', mq_share_result:'CONDIVIDI IL RISULTATO', mq_play_arrow:'GIOCA \u2192', mq_one_attempt:'10 domande \u00b7 un solo tentativo', mq_lives_endless:'3 VITE \u00b7 SENZA FINE', mq_building:'Sto preparando il quiz',
+    scale_vs:'VS ', mq_grp_general:'GENERALE', mq_no_packs:'Nessun pacchetto scelto', mq_all_packs_selected:'Tutti i {n} pacchetti scelti', mq_n_of_packs:'{n} di {total} pacchetti', mq_select_all:'SELEZIONA TUTTO', mq_online_only:'SOLO ONLINE', mq_offline:'NON IN LINEA', mq_share_correct:'corrette', mq_grp_instrument:'STRUMENTO', mq_grp_decades:'DECENNI', mq_grp_online:'ONLINE',
+    mq_all_packs:'TUTTE LE RACCOLTE', mq_packs_unit:'raccolte', mq_all_packs_name:'TUTTE LE RACCOLTE', mq_all_packs_desc:'Domande prese da ogni raccolta che hai.', mq_start_survival:'INIZIA SOPRAVVIVENZA \u2192', mq_start:'INIZIA \u2192', mq_quit:'ESCI', mq_back:'INDIETRO', mq_resume:'RIPRENDI \u2192', mq_timer:'Timer', mq_timer_off:'SPENTO', mq_review_misses:'RIVEDI GLI ERRORI \u2192', mq_share_result:'CONDIVIDI IL RISULTATO', mq_play_arrow:'GIOCA \u2192', mq_one_attempt:'10 domande \u00b7 un solo tentativo', mq_lives_endless:'3 VITE \u00b7 SENZA FINE', mq_building:'Sto preparando il quiz',
     mq_survival_sub:'scegli un pacchetto, o prendi tutto qui sotto',
     mq_survival_card_sub:'3 vite, senza fine',
     mq_no_questions:'Non ci sono abbastanza domande in questa categoria al momento. Provane un\u2019altra.',
@@ -93676,14 +93340,14 @@ const STRINGS = {
     audio_noisy:'CUFFIE SCOLLEGATE',
     mq_question:'DOMANDA',
     mq_correct_out_of:'CORRETTE SU',
-    // Grade display strings removed (v0.210.22); tone logic kept.
+    // Grade display strings removed; tone logic kept.
     mq_pack_cleared:'Pacchetto completato', mq_every_q_answered:'Hai risposto a tutte le domande del pacchetto.',
     mq_did_you_know_q:'Lo sapevi?',
     credits_icons:'Icone',
     credits_photos:'Foto degli strumenti',
     credits_photos_note:'Da Wikimedia Commons. Sfondi rimossi, ritagliate e raddrizzate per Intonare.',
     mq_no_misses:'Nessun errore da rivedere.',
-    mq_length:'Lunghezza', mq_endless:'SENZA FINE', mq_seconds:'SECONDI',
+    mq_length:'Lunghezza', mq_seconds:'SECONDI',
     mq_pack_one:'pacchetto', mq_pack_many:'pacchetti',
     mq_three_lives:'3 vite, senza fine',
     mq_generated:'infinite, generate',
@@ -93700,7 +93364,7 @@ const STRINGS = {
     metro_ramp_presets:'PRESET RAMPA',
     ramp_click_head:'CLICK', ramp_groove_head:'GROOVE',
     pm_day_streak:'giorni consecutivi', pm_achievements:'Obiettivi',
-    pm_practice_history:'Cronologia esercizi', pm_this_week:'QUESTA SETTIMANA', pm_problem_areas:'Punti deboli', pm_all_time:'Sempre', pm_of_right:'{c} corrette su {n}', pm_vs_last_week:'rispetto alla scorsa settimana', pm_practiced_week:'di pratica questa settimana', pm_time_only:'Questo esercizio non ha risposte giuste o sbagliate, quindi le barre mostrano il tempo.', pm_missed_n:'{n} errori',
+    pm_practice_history:'Cronologia esercizi', pm_problem_areas:'Punti deboli', pm_all_time:'Sempre', pm_of_right:'{c} corrette su {n}', pm_vs_last_week:'rispetto alla scorsa settimana', pm_practiced_week:'di pratica questa settimana', pm_time_only:'Questo esercizio non ha risposte giuste o sbagliate, quindi le barre mostrano il tempo.', pm_missed_n:'{n} errori',
     pm_last_week:'SETTIMANA SCORSA', pm_weeks_ago:'{n} SETTIMANE FA',
     pm_session:'SESSIONE', pm_ach_unlocked:'Obiettivo sbloccato', snd_unlock_label:'Nuovo Suono Sbloccato',
     chordle_pick_diff:'scegli una difficoltà',
@@ -93975,7 +93639,7 @@ const STRINGS = {
     rlp_new_tier:'Fascia %b raggiunta! Almeno %v punti, moltiplicatore \u00d7%m',
     err_recovered:'Qualcosa \u00e8 andato storto. Quella schermata \u00e8 stata reimpostata.',
     pm_xp_to_lv:'{a} / {b} XP al LIV {lv}', pm_xp_placeholder:'0 / 50 XP al LIV 2',
-    bowed_play_ds:'\u25b6\ufe0e SUONA BICORDO', diadle_name_each:'NOMINA OGNI NOTA',
+    diadle_name_each:'NOMINA OGNI NOTA',
     tc_start_drone:'\u25b6\ufe0e AVVIA BORDONE', hp_play_asc:'\u25b6\ufe0e SUONA IN SALITA',
     bowed_select_note:'SCEGLI UNA NOTA', bowed_select_scale:'SCEGLI TONICA + SCALA',
     pr_start:'\u25b6\ufe0e AVVIA', pm_this_week:'QUESTA SETTIMANA',
@@ -94977,12 +94641,6 @@ function applyLang() {
   if (calibHint) calibHint.textContent = t('calib_hint_full');
   const latTapBtn = document.getElementById('latTapBtn');
   if (latTapBtn) latTapBtn.textContent = t('lat_tap_btn') || 'TAP';
-  // Re-render Survival Guide if currently visible so Italian content applies immediately
-  const sgEl = document.getElementById('toolSurvivalGuide');
-  if (sgEl && sgEl.style.display !== 'none') {
-    if (typeof render === 'function') render('none');
-    if (typeof updateNav === 'function') updateNav();
-  }
   try { if (typeof mqFillCardCount === 'function') mqFillCardCount(); } catch (e) {}
   try { if (typeof _pinNudgeAfterLang === 'function') _pinNudgeAfterLang(); } catch (e) {}
 }
@@ -96077,15 +95735,10 @@ function applyDarkDepth() {
   try { if (typeof _repaintThemedCanvases === 'function') _repaintThemedCanvases(); } catch (e) {}
 }
 
-function setDarkDepth(v) {
-  try { localStorage.setItem(DARK_DEPTH_KEY, v === 'soft' ? 'soft' : 'flat'); } catch (e) {}
-  applyDarkDepth();
-}
-
 // ── LIGHT BRIGHTNESS ──────────────────────────────────────────────────────
 // 'soft' (default) is the rebuilt palette; 'bright' restores the previous one.
 // Stored rather than derived, because the right answer depends on the room and on
-// the eyes using it — Linda reported the old light mode as too bright to read.
+// the eyes using it : a tester reported the old light mode as too bright to read.
 const LIGHT_BRIGHT_KEY = 'intonare_light_bright';
 
 // Light brightness is retired: there is one light palette now (the former "soft").
@@ -96113,11 +95766,6 @@ function applyLightBright() {
   if (wrap) wrap.style.display = document.body.classList.contains('light') ? '' : 'none';
   // Canvases bake their colors in at draw time and cannot see a class change.
   try { if (typeof _repaintThemedCanvases === 'function') _repaintThemedCanvases(); } catch (e) {}
-}
-
-function setLightBright(v) {
-  try { localStorage.setItem(LIGHT_BRIGHT_KEY, v === 'bright' ? 'bright' : 'soft'); } catch (e) {}
-  applyLightBright();
 }
 
 function setAppearance(mode) {
@@ -97055,7 +96703,7 @@ function _cueAchTrophy() { const n=getAudio().currentTime; _cueNote(392,'square'
 function playCueAchievement() { const k=progState.audioCues?.achievement; _cueVolScale=getCueVol('achievement'); _applyingCueVol=true; if(k==='ping')_cueAchPing(); else if(k==='chime')_cueAchChime(); else if(k==='trophy')_cueAchTrophy(); else _tryUnlockable(k,'achievement',_cueVolScale); _applyingCueVol=false; }
 function playCueCorrect()   { const k=progState.audioCues?.correct;   _cueVolScale=getCueVol('correct');   _applyingCueVol=true; if(k==='chime')_cueCorrectChime(); else if(k==='blip')_cueCorrectBlip(); else if(k==='piano')_cueCorrectPiano(); else if(k==='marimba')_cueCorrectMarimba(); else if(k==='harp')_cueCorrectHarp(); _applyingCueVol=false; }
 function playCueWrong()     { const k=progState.audioCues?.wrong;     _cueVolScale=getCueVol('wrong');     _applyingCueVol=true; if(k==='buzz')_cueWrongBuzz(); else if(k==='doubledrop')_cueWrongDoubledrop(); else if(k==='clunk')_cueWrongClunk(); else if(k==='trombone')_cueWrongTrombone(); else if(k==='warphole')_cueWrongWarphole(); else if(k==='stepdown')_cueWrongStepdown(); else if(k!=='silent')_cueWrongBuzz(); _applyingCueVol=false; }
-// ?? END-STATE SOUND BANKS ?? game-over + win stings for survival runs. All route
+// ── END-STATE SOUND BANKS ── game-over + win stings for survival runs. All route
 // through the shared limiter chain so they survive rrStop() (which kills the rhythm
 // master gain). Helpers below are local to keep these self-contained.
 function _esBell(f, t, dur, peak, ratio, depth) {   // FM bell ? glassy/metallic
@@ -97109,18 +96757,8 @@ function _esTone(f, type, t, dur, peak, opts) {
     g.connect(chain.gain); o.start(t); o.stop(t+dur+0.05);
   } catch(e) {}
 }
-function _esNoise(t, dur, peak, bp, q) {
-  try { var c = getAudio(); var chain = buildLimiterChain(c, 1.0);
-    var buf = c.createBuffer(1, Math.floor(c.sampleRate*dur), c.sampleRate);
-    var d = buf.getChannelData(0); for (var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);
-    var s = c.createBufferSource(); s.buffer=buf;
-    var f = c.createBiquadFilter(); f.type='bandpass'; f.frequency.value=bp||1500; f.Q.value=q||1;
-    var g = c.createGain(); g.gain.setValueAtTime(peak,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-    s.connect(f); f.connect(g); g.connect(chain.gain); s.start(t);
-  } catch(e) {}
-}
 
-// ?? GAME OVER variants ??
+// ── GAME OVER variants ──
 function _cueGameoverSynthCollapse() { var t=getAudio().currentTime; _esSaw(520,t,1.0,0.16,{slideTo:55,lp:1600}); }
 function _cueGameoverBellToll() { var t=getAudio().currentTime+0.02; [294,233,185].forEach(function(f,i){ _esBell(f,t+i*0.34,0.7,0.18,1.4,1.2); }); }
 function _cueGameoverGlitchOut() { var t=getAudio().currentTime; for(var i=0;i<7;i++){ var f=400-i*40+Math.random()*80; _esTone(f,'square',t+i*0.05,0.04,0.12); } _esSub(120,t+0.36,0.4,0.16,60); }
@@ -97176,7 +96814,7 @@ function playCueGameOver() {
   _applyingCueVol = false;
 }
 
-// ?? WIN variants ??
+// ── WIN variants ──
 function _cueWinEuphoria() { var t=getAudio().currentTime; _esSaw(330,t,0.5,0.12,{slideTo:660,lp:3500,attack:0.3}); [660,830,990].forEach(function(f){ _esSaw(f,t+0.45,0.7,0.09,{lp:4000}); }); }
 function _cueWinMusicbox() { var t=getAudio().currentTime+0.02; [523,659,784,1046].forEach(function(f,i){ _esBell(f,t+i*0.11,0.4,0.13,3.0,0.4); }); }
 function _cueWinTriumphChord() { var t=getAudio().currentTime+0.02; [262,330,392,523].forEach(function(f){ _esSaw(f,t,1.3,0.08,{lp:3000,attack:0.04}); }); [1046,1318].forEach(function(f,i){ _esBell(f,t+0.18+i*0.1,0.7,0.08,2,0.5); }); }
@@ -97287,23 +96925,6 @@ function _cuePreview(event) {
   else if (event==='achievement') { hapticAchievement(); playCueAchievement(); }
   else if (event==='gameover')    { hapticGameOver(); playCueGameOver(); }
   else if (event==='win')         { hapticWin(); playCueWin(); }
-}
-
-function setCueChoice(event, key) {
-  if (!progState.audioCues) progState.audioCues = {};
-  progState.audioCues[event] = key;
-  progSave();
-  renderCueDropdowns();
-  _cuePreview(event);
-}
-
-function _cueCycle(event) {
-  const def = _CUE_DEFS[event];
-  const c = progState.audioCues || {};
-  const current = c[event] || def.def;
-  const idx = def.opts.findIndex(o => o.k === current);
-  const next = def.opts[(idx + 1) % def.opts.length].k;
-  setCueChoice(event, next);
 }
 
 let _openCueEvent = null; // accordion state — which category is expanded
@@ -98293,7 +97914,6 @@ function ssCancelCountdown() { cancelAutoAdvance(null, 'ss'); var b=document.get
 // note, scale select option labels) get refreshed explicitly.
 function refreshAllNoteDisplays() {
   try { buildChromaStrip(); } catch(e) {}
-  try { buildStringGrid(getActiveInstrument && getActiveInstrument()); } catch(e) {}
   try { buildFamilyTabs && buildFamilyTabs('tuner'); buildFamilyTabs && buildFamilyTabs('ref'); } catch(e) {}
   try { buildInstList && buildInstList('tuner'); buildInstList && buildInstList('ref'); } catch(e) {}
   try { buildStringGrid && buildStringGrid(typeof selectedInstrument !== 'undefined' ? selectedInstrument : null); } catch(e) {}
@@ -99170,7 +98790,7 @@ const BACKUP_KEYS_SKIP   = [PROG_STORAGE_KEY, 'mq_in_progress', 'intonare_restor
                             // phone could silence a legitimate update prompt there,
                             // and it rebuilds itself the moment one is dismissed.
                             'iu_snooze',
-                            // One-shot flag from the v0.210.69 vocal range mock-data
+                            // One-shot flag from the vocal range mock-data
                             // purge. Per-device housekeeping, not progress.
                             'intonare_vr_mock_cleared',
                             // intonare_dev is the developer-tools switch. It is
@@ -99482,7 +99102,7 @@ function backupExport() {
         // Capacitor.registerPlugin() hands back a proxy whether or not the
         // native plugin exists — it only rejects when you CALL it. So the old
         // "plugin missing, use the share sheet" check stopped working the moment
-        // that fallback was added in v0.150.52: this path is always taken, and a
+        // that fallback was added: this path is always taken, and a
         // build without FileSaver.java installed landed here and showed an error
         // instead of sharing.
         //
@@ -99503,6 +99123,8 @@ function backupExport() {
 // failure when the native plugin is not installed.
 function _backupShareFallback(name, txt) {
   var P = (window.Capacitor && window.Capacitor.Plugins) || {};
+  var native = false;
+  try { native = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); } catch (e) {}
 
   if (P && P.Filesystem && P.Share) {
     P.Filesystem.writeFile({ path: name, data: txt, directory: 'CACHE', encoding: 'utf8' })
@@ -99828,7 +99450,7 @@ let _scrollLockRAF = null;
 let _scrollLockSavedY = null;   // scrollY at the moment we lock, so unlocking can restore it
 function _scrollLockSync() {
   if (_scrollLockRAF) return;                 // coalesce bursts of mutations
-  // v0.209.41: the launcher morph adds/removes classes on six elements in quick
+  // The launcher morph adds/removes classes on six elements in quick
   // succession (picked, other ×3, lnch-gone, body theme). Each fires the
   // MutationObserver, which calls us, and the rAF callback scans ~133 overlay
   // candidates with getBoundingClientRect. That's the intermittent one-frame
@@ -99883,7 +99505,7 @@ function _scrollLockSync() {
 // drawer still on it was leaving that drawer floating over the new screen.
 function closeAllOverlays() {
   let closed = 0;
-  // v0.209.40: was a raw querySelectorAll(_OVERLAY_SEL) on every call. The
+  // Was a raw querySelectorAll(_OVERLAY_SEL) on every call. The
   // selector has substring matches ([class*="-sheet"]) and the document is
   // large; that scan was the biggest JS cost on the first frame after tapping a
   // launcher card. _overlayCandidates() caches the same list and invalidates
@@ -100250,7 +99872,6 @@ function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
-function isAndroid() { return /Android/.test(navigator.userAgent); }
 
 // ─── ORIENTATION LOCK ───────────────────────────
 // Browser: uses Screen Orientation API (works on Android Chrome, ignored on iOS).
@@ -101169,7 +100790,7 @@ function vrInit() {
   vrShowRetestNudge();
   vrSyncExpHints();
 
-  // v0.210.69: one-time cleanup of mock sessions injected during development.
+  // One-time cleanup of mock sessions injected during development.
   // The injector is gone but the data may still be in localStorage.
   (function() {
     try {
@@ -101326,7 +100947,7 @@ function vrHandleNoMic() {
   }
 }
 
-// (vrAutoCorrelate REMOVED — v0.80.21. It was a second, inferior pitch detector:
+// (vrAutoCorrelate REMOVED. It was a second, inferior pitch detector:
 //  plain autocorrelation with NO cumulative-mean normalization, so it was inherently
 //  prone to octave/subharmonic errors — catastrophic for a tool that exists to find
 //  your highest and lowest note. Also O(N^2), and it used audioCtx.sampleRate which
@@ -102048,9 +101669,6 @@ function vrIsChild() {
 function vrIsVoiceChanging() {
   var o = progState.vrOnboarding;
   return o && o.ageBracket === '13-17' && o.voiceChanging && o.voiceChanging !== 'no';
-}
-function vrIsTeen() {
-  return progState.vrOnboarding && progState.vrOnboarding.ageBracket === '13-17';
 }
 function vrOnboardingComplete() {
   const o = progState.vrOnboarding;
@@ -103024,18 +102642,6 @@ function vrConfirmGoal() {
   progState.vrOnboarding.rangeGoal = _vrPickedGoalMidi;
   progSave();
   vrRenderTimeline();
-}
-
-function vrTapGoal(midi) {
-  document.querySelectorAll('.vr-goal-note.selected').forEach(function(n){n.classList.remove('selected');});
-  var el=document.querySelector('.vr-goal-note[data-midi="'+midi+'"]');
-  if(el)el.classList.add('selected');
-  setTimeout(function(){
-    if(!progState.vrOnboarding)progState.vrOnboarding={};
-    progState.vrOnboarding.rangeGoal=midi;
-    progSave();
-    vrRenderTimeline();
-  },200);
 }
 
 function vrClearGoal() {
@@ -104787,7 +104393,7 @@ function synthBell(time, vel, kit) {
         tick: 0.06, wash: 0.05,
       })
     // Tuned on-device: pure FM, no ping, slight pitch raise, just the ring.
-    // v0.210.122: "too loud and clangy". Measured offline it ran ~3.4x the ride's
+    // "too loud and clangy". Measured offline it ran ~3.4x the ride's
     // RMS and above the crash. Level 1.9 -> 0.9 puts it ~1.8x the ride (an accent,
     // not a gong). FM index 3000 -> 1800 thins the inharmonic sidebands that read
     // as clang while keeping the pitched ping. Electronic bell 1.9 -> 1.1 to match.
@@ -105330,25 +104936,6 @@ function _tripletFills(beats, sub) {
 // Cycle through available subs for a track: null(global) → 3 → 6 → null
 const TRACK_SUB_CYCLE = [null, 3, 6];
 
-function cycleTrackSub(trackId) {
-  const cur = dk_trackSub[trackId];
-  const idx = TRACK_SUB_CYCLE.indexOf(cur);
-  dk_trackSub[trackId] = TRACK_SUB_CYCLE[(idx + 1) % TRACK_SUB_CYCLE.length];
-  const tsBase = TIME_SIGS[dk_timeSigKey];
-  const t = TRACKS.find(t => t.id === trackId);
-  if (!t) return;
-  const wrap = document.getElementById(`wrap-${trackId}`);
-  if (!wrap) return;
-  const isVariant = wrap.classList.contains('track-variant-wrap');
-  const newWrap = _buildTrackRow(t, _makeTrackTS(trackId, tsBase), isVariant);
-  newWrap.style.display = wrap.style.display;
-  if (document.getElementById(`row-${trackId}`)?.classList.contains('muted')) {
-    newWrap.querySelector('.track-row')?.classList.add('muted');
-  }
-  wrap.replaceWith(newWrap);
-  if (PRESET_CATS[dk_activeCat]?.isCustom) _saveCustomWorkspace();
-}
-
 // Build a track-local ts object with per-track sub applied
 function _makeTrackTS(trackId, tsBase) {
   const sub   = _trackEffSub(trackId);
@@ -105361,19 +104948,6 @@ function _makeTrackTS(trackId, tsBase) {
 const GLOBAL_TRIPLET_CYCLE  = [null, 3, 6];
 const GLOBAL_TRIPLET_LABELS = {null:'T', 3:'T8', 6:'T16'};
 let dk_globalTriplet = null; // null=off, 3=T8, 6=T16
-
-function cycleGlobalTriplet(btn) {
-  const idx = GLOBAL_TRIPLET_CYCLE.indexOf(dk_globalTriplet);
-  dk_globalTriplet = GLOBAL_TRIPLET_CYCLE[(idx + 1) % GLOBAL_TRIPLET_CYCLE.length];
-  btn.textContent = GLOBAL_TRIPLET_LABELS[dk_globalTriplet];
-  btn.classList.toggle('active', dk_globalTriplet !== null);
-  // Apply to all tracks — override per-track subs
-  TRACKS.forEach(t => { dk_trackSub[t.id] = dk_globalTriplet; });
-  buildBeatNums();
-  buildSequencer();
-  if (dk_playing) { _initTrackScheduler(dk_audioCtx.currentTime); clearInterval(dk_schedTimer); dk_schedTimer = setInterval(dk_scheduler, TICK_MS); }
-  if (PRESET_CATS[dk_activeCat]?.isCustom) _saveCustomWorkspace();
-}
 
 const BAR_COUNT_CYCLE = [1, 2, 4];
 
@@ -105571,51 +105145,8 @@ function setSubdivision(sub, triplet, optEl) {
   if (PRESET_CATS[dk_activeCat]?.isCustom) _saveCustomWorkspace();
 }
 
-function cycleGlobalSub() {
-  const idx = GLOBAL_SUB_CYCLE.indexOf(dk_globalSub);
-  const oldSub = dk_globalSub;
-  dk_globalSub = GLOBAL_SUB_CYCLE[(idx + 1) % GLOBAL_SUB_CYCLE.length];
-
-  // Scale patterns: multiply or divide step indices for tracks using global sub
-  TRACKS.forEach(t => {
-    if (dk_trackSub[t.id] !== null) return; // per-track override, don't scale
-    const old = [...dk_patterns[t.id]];
-    dk_patterns[t.id].fill(0);
-    if (dk_globalSub > oldSub) {
-      // Expanding: step i → i * (new/old)
-      const ratio = dk_globalSub / oldSub;
-      old.forEach((v, i) => { if (v > 0) { const ni = Math.round(i * ratio); if (ni < 64) dk_patterns[t.id][ni] = v; } });
-    } else {
-      // Contracting: step i → i / (old/new), drop non-integer steps
-      const ratio = oldSub / dk_globalSub;
-      old.forEach((v, i) => { if (v > 0 && i % ratio === 0) { const ni = i / ratio; if (ni < 64) dk_patterns[t.id][ni] = v; } });
-    }
-  });
-
-  // Update button label
-  const btn = document.getElementById('dkSubBtn');
-  if (btn) {
-    btn.textContent = GLOBAL_SUB_LABELS[dk_globalSub];
-    btn.classList.toggle('active', dk_globalSub !== 4);
-  }
-  // Disable swing in non-16th modes
-  const swingSlider = document.getElementById('dk_swingSlider');
-  const swingGroup = document.querySelector('.ctrl-group:has(#dk_swingSlider)');
-  const disableSwing = dk_globalSub !== 4;
-  if (swingSlider) swingSlider.disabled = disableSwing;
-  if (swingGroup) swingGroup.style.opacity = disableSwing ? '0.35' : '1';
-
-  buildBeatNums();
-  buildSequencer();
-  if (dk_playing) { clearInterval(dk_schedTimer); dk_currentStep=0; dk_schedTimer=setInterval(dk_scheduler,TICK_MS); }
-  if (PRESET_CATS[dk_activeCat]?.isCustom) _saveCustomWorkspace();
-}
 const SCHEDULE_AHEAD = 0.12;
 const TICK_MS = 20;
-
-function getStepDuration(stepIdx) {
-  return _stepDurationForTrack(TRACKS[0]?.id ?? 'kick', stepIdx);
-}
 
 function _stepDurationForTrack(trackId, stepIdx) {
   const ts  = TIME_SIGS[dk_timeSigKey];
@@ -106269,19 +105800,6 @@ function _updateTrackVisibility(trackId) {
 
 
 
-function _rebuildGroupExpandState(groupId) {
-  const expanded = dk_groupExpanded[groupId];
-  const group = TRACK_GROUPS.find(g => g.id === groupId);
-  if (!group) return;
-  const btn = document.querySelector(`#group-${groupId} .group-expand-btn`);
-  if (btn) btn.classList.toggle('expanded', expanded);
-  group.tracks.forEach((trk, idx) => {
-    if (idx === 0) return;
-    const wrap = document.getElementById(`wrap-${trk.id}`);
-    if (wrap) wrap.style.display = expanded ? '' : 'none';
-  });
-}
-
 function toggleMute(id) {
   if (dk_mutedTracks.has(id)) {
     dk_mutedTracks.delete(id);
@@ -106393,7 +105911,7 @@ function dk_setSwing(val) {
   if (!label) return;
   label.textContent = dk_swingPct + '%';
   label.style.color = dk_swingPct > 0 ? 'var(--accent-warm)' : 'var(--accent)';
-  // swing arrow removed in v0.209.13; text hint below covers it
+  // swing arrow removed; text hint below covers it
   if (PRESET_CATS[dk_activeCat]?.isCustom) _saveCustomWorkspace();
 }
 
@@ -106640,8 +106158,8 @@ const PRESET_CATS = [
         // is the 2:1 setting that gives the triplet feel to each pair of sixteenths.
         // (An earlier version moved it to trackSub 3 on the theory that a shuffle
         // has three notes to a beat. The record has four, swung, so that was undone
-        // in v0.204.7.) Tempo and kick follow the transcription restored in
-        // v0.204.5 and v0.204.6, not the database figure.
+        // later.) Tempo and kick follow the transcription restored in
+        // earlier releases, not the database figure.
         name:'Rosanna Groove', nameIt:'Groove Rosanna', ts:4, dk_bpm:83, kit:'standard',
         barCount:2, swing:100,
         // Counted with the backbeat on 2 and 4, not the half-time 3, so the
@@ -108165,7 +107683,7 @@ function _applySnapshot(snap, resetBlank) {
   _dkSyncBpmUI();
   document.getElementById('dk_swingSlider').value = dk_swingPct;
   document.getElementById('swingVal').textContent = dk_swingPct + '%';
-  // swing arrow removed in v0.209.13; text hint below covers it
+  // swing arrow removed; text hint below covers it
   // Kit
   document.querySelectorAll('.kit-chip').forEach(c => c.classList.remove('active'));
   // data-kit, not the onclick text. Same lookup loadPreset uses.
@@ -108423,11 +107941,6 @@ function _promptSave(wrap) {
   setTimeout(() => inp.focus(), 50);
 }
 
-function loadCustom() {
-  _applySnapshot(null, true);
-  _saveCustomWorkspace();
-}
-
 function loadPreset(p) {
   // 1. If currently on custom tab, snapshot the workspace before leaving
   const activeCat = PRESET_CATS[dk_activeCat];
@@ -108519,7 +108032,7 @@ function loadPreset(p) {
   dk_swingPct = sw;
   document.getElementById('dk_swingSlider').value = sw;
   document.getElementById('swingVal').textContent = sw + '%';
-  // swing arrow removed in v0.209.13; text hint below covers it
+  // swing arrow removed; text hint below covers it
   if (p.kit) {
     // Match on data-kit, not textContent. The old lookup compared the preset's
     // kit id against the button's VISIBLE LABEL, which silently failed wherever
@@ -109168,22 +108681,6 @@ function gccRootDisplayName(semi) {
 // (e.g. getSpelledNotes), which need a plain letter name, not a solfège syllable.
 function rawGccRootDisplayName(semi) {
   return gRootFlatOverride.has(semi) ? GCC_ROOT_DISPLAY_FLAT[semi] : GCC_ROOT_DISPLAY[semi];
-}
-
-// Handle root button tap: first tap = select, second tap on active accidental = flip enharmonic
-function gccHandleRootTap(semi, currentRoot, setRoot, rebuildFn) {
-  const isAccidental = GCC_ENHARMONIC_SEMIS.has(semi);
-  if (semi === GCC_ROOTS.indexOf(currentRoot) || currentRoot === GCC_ROOTS[semi]) {
-    // Already selected — flip enharmonic if it has one
-    if (isAccidental) {
-      if (gRootFlatOverride.has(semi)) gRootFlatOverride.delete(semi);
-      else gRootFlatOverride.add(semi);
-      rebuildFn();
-    }
-  } else {
-    setRoot(GCC_ROOTS[semi]);
-    rebuildFn();
-  }
 }
 
 // ── Diatonic note-name engine ─────────────────────────────────────────────────
@@ -112882,9 +112379,6 @@ let gccShowNoteNames = false; // toggle: finger numbers vs note names on chord d
 let gccTouchX = null;
 let gccTouchY = null;
 
-// ── Helpers ──────────────────────────────────
-function gccKey() { return `${gccRoot}-${gccQuality}`; }
-
 function gccVoicings() {
   // Capo model: a capo at fret N raises the nut, so to sound as gccRoot you finger the
   // OPEN-position shape of (gccRoot - N) with the capo as your nut. We therefore:
@@ -112948,8 +112442,6 @@ function gccApplyCapo(voicings, capo) {
 // Uses same approach as ukeVoicings but 5-fret span and bass register.
 const _bassVoicingCache = {};
 function mandoVoicings(ro, qo)      { return ukeVoicings(ro, qo, getMandoOpenMidi(), 'mando-' + mandoSubType); }
-function mandolaVoicings(ro, qo)    { return ukeVoicings(ro, qo, MANDO_VIOLA_OPEN_MIDI, 'mandola'); }
-function mandocelloVoicings(ro, qo) { return ukeVoicings(ro, qo, MANDO_CELLO_OPEN_MIDI, 'mandocello'); }
 // Tenor guitar: 4-string CGDA — algorithmic voicings like mandola
 function tenorGuitarVoicings(ro, qo) { return ukeVoicings(ro, qo, GUITAR_TENOR_MIDI, 'tenor-guitar'); }
 // Baritone guitar: same intervals as standard, tuned down a P4.
@@ -115576,7 +115068,7 @@ function _ocHole(svg, cx, cy, r, val, label, showLabel) {
 }
 
 
-// ── NFA flute renderer (v0.38 — traced directly from the reference chart via potrace) ──
+// ── NFA flute renderer (traced directly from the reference chart via potrace) ──
 // `moving` (optional): array/Set of slot indices to highlight as trill keys (drawn
 // Canonical flute key styling — closed = solid filled accent, open = dim hollow.
 // Module-level so both the full renderer and the trill pulse style keys identically.
@@ -116539,16 +116031,6 @@ function woodwindHoleDraw(containerEl, concertPc, mini, altIdx, midi) {
   // mini grid cards stay vertical (this branch only runs when !mini).
   if (isTransverseWoodwind()) wrap.classList.add('ww-sideways');
 
-  // Finger number generators — LH fingers 1-3 start after thumb/register key
-  // RH fingers 1-3 map straight through
-  function getFingerLabel(typeStr, indexInMain, isLH) {
-    if (typeStr === 'T' || typeStr === 'R' || typeStr === 'Oct') return typeStr === 'Oct' ? '8va' : typeStr;
-    if (typeStr) return typeStr; // named key — use its label
-    // Numbered finger hole
-    // LH: index 0 might be thumb key (if typeStr was set), so finger count starts from first null
-    return String(indexInMain + 1);
-  }
-
   function makeHole(val, typeStr, fingerLabel, isPinky) {
     const isThumb  = typeStr === 'T' || typeStr === 'R' || typeStr === 'Oct';
     const isNamedKey = typeStr && !isThumb;
@@ -117085,7 +116567,7 @@ const GSS_SCALE_GROUPS = [
   { id:'meldom',   label: 'Melodic/Dom.', labelIt: 'Mel./Dom.',      ids: ['lyddom','altered','locrian2'] },
   { id:'sym',      label: 'Symmetric',    labelIt: 'Simmetriche',    ids: ['dimwh','dimhw','augmented','wholetone'] },
   // THIRD list of scales, missed when the eight world scales landed in
-  // v0.150.22: SCALE_DEFS holds the data, TC_SCALE_GROUPS drives the tonal-center
+  // SCALE_DEFS holds the data, TC_SCALE_GROUPS drives the tonal-center
   // picker, and this one drives the scales module and the chart menus. It sat at
   // 28 of 36 until now. Anything added to SCALE_DEFS has to appear here too or it
   // simply never shows up in the module.
@@ -117937,7 +117419,7 @@ const GSS_STRING_MIDI = [40, 45, 50, 55, 59, 64]; // low E → high e
 const GSS_SCALE_ALIAS = { aeolian:'natminor', harmmin:'harmminor', melmin:'melminor' };
 const GSS_SCALE_TYPES = [
   // Ordered by family, not by when each was added. The eight world scales added
-  // in v0.150.22 were appended to the end, so they read as a random tail in the
+  // later were appended to the end, so they read as a random tail in the
   // chart pickers and in the scales tool's next/prev cycling. Grouped now, and
   // the groups match TC_SCALE_GROUPS so the two lists present the same shape.
   // ── MAJOR ──
@@ -119910,7 +119392,6 @@ function hasTrillView(i) {
 function isBowedInst(i) { return CS_INSTRUMENTS[i ?? chordScaleInstrument]?.family === 'bowed'; }
 function isBrassInst(i)    { return CS_INSTRUMENTS[i ?? chordScaleInstrument]?.subFamily === 'brass'; }
 function isHarmonicaInst(i){ const inst = i ?? chordScaleInstrument; return inst === 'harmonica' || inst === 'ww_chrom_harp'; }
-function isTromboneFamily(i){ return (i ?? chordScaleInstrument) === 'trombone'; }
 
 // Brass sub-type state (trumpet piccolo, trombone soprano/bass, tuba contrabass)
 let brassSubType = 'standard';
@@ -119981,7 +119462,7 @@ function switchChordScaleInstrument(inst) {
 
   // Update family button label. It used meta.label, the English roster name, so
   // the pill stayed "VIOLIN" while the picker behind it read VIOLINO. The
-  // inst_<id> keys added in v0.150.40 already carry every instrument in both
+  // inst_<id> keys already carry every instrument in both
   // languages, so the pill reuses them and falls back to the roster name only
   // for an instrument that has no key.
   const lbl = document.getElementById('csFamilyLabel');
@@ -120018,7 +119499,7 @@ function switchChordScaleInstrument(inst) {
   document.getElementById('csHarpWrap')?.classList.toggle('hidden', !isHarp);
   document.getElementById('csDidiWrap')?.classList.toggle('hidden', !isDidi);
   document.getElementById('csBowedWrap')?.classList.toggle('hidden', !isBowed);
-  // csTrumpetWrap is gone (v0.150.124); the trumpet UI lives in csGuitarWrap.
+  // csTrumpetWrap is gone; the trumpet UI lives in csGuitarWrap.
 
   // Wind note-card rows (octave pills, pitch toggle) live inside the shared
   // csGuitarWrap. Switching to a non-wind instrument leaves them populated with
@@ -120196,8 +119677,6 @@ function tromboneTriggerLabel(pc, midi) {
   if (midi === 34) return ' · pedal (open)';    // Bb1
   return ' · F trigger';                         // C2–Eb2
 }
-// Back-compat: true when any trigger/pedal annotation applies.
-function tromboneNeedsValve(midi) { return !!midi && midi < 40; }
 
 // ── Trombone slide position renderer ─────────────────────────────────────────
 // ── Trombone alt position state ───────────────────────────────────────────────
@@ -123298,10 +122777,6 @@ function setOrganPercVol(v) {
 }
 // V/C selector sequence (off + 6 positions clockwise around the dial)
 const VC_SEQUENCE = ['off','v3','c3','v1','c1','v2','c2'];
-function cycleOrganVibChorus() {
-  const i = VC_SEQUENCE.indexOf(organVibChorus);
-  setOrganVibChorus(VC_SEQUENCE[(i + 1) % VC_SEQUENCE.length]);
-}
 // Exact angle for each position so the indicator points directly at its label
 function vcKnobAngle(v) {
   const map = { off: 0, v3: 0, c3: 60, v1: 120, c1: 180, v2: 240, c2: 300 };
@@ -124084,17 +123559,6 @@ function _updateOrganDroneMute() {
   document.querySelectorAll('#organDroneMute, #organDroneMuteFull').forEach(b => b.classList.toggle('visible', hasHeld));
 }
 
-function cycleOrganHoldMode() {
-  organHoldMode = organHoldMode === 0 ? 1 : 0;
-  _organStopAll();
-  document.querySelectorAll('.oms-seg').forEach(s =>
-    s.classList.toggle('active', parseInt(s.dataset.m) === organHoldMode));
-  _updateOrganDroneMute();
-  _organRefreshControls();
-  const p = document.getElementById('organPedal');
-  if (p && p._refresh) p._refresh();
-}
-
 // Organ pedal: tap OR long-press latches "hold" (notes sustain until tapped/cleared).
 // Real organs have no decay-sustain, so the pedal here means latch-hold, shown amber.
 // Organ octave label long-press → toggle 1/2 octave view.
@@ -124430,7 +123894,7 @@ const FAV_META = {
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="12" width="3" height="7" rx="1"/><rect x="7" y="8" width="3" height="11" rx="1"/><rect x="12" y="4" width="3" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="17" y="10" width="3" height="9" rx="1"/></svg>',
     launch: () => { setMode('practice'); enterExercise('relpitch'); } },
   // Key stays 'exercise:scales' so existing pins keep working; Scales itself is a
-  // tool as of v0.132.3 and launches through the Tools tab.
+  // tool and launches through the Tools tab.
   'exercise:scales':     { label: 'SCALES',      type: 'TOOL', labelIt:'SCALE',
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3" fill="currentColor" stroke="none"/><circle cx="18" cy="16" r="3" fill="currentColor" stroke="none"/></svg>',
     launch: () => { setMode('tools'); enterTool('scales'); } },
@@ -124638,28 +124102,6 @@ function hpAssignPedals(pcsArr) {
   // Build full 7-pedal position array; unused pedals default to natural (1).
   const positions = HP_PEDAL_MAP.map((p, i) => chosen[i] !== undefined ? chosen[i] : 1);
   return { ok: true, positions };
-}
-
-// Compute pedal positions from arbitrary pcs (used for chord mode and pedal override mode).
-// Each pc can only be claimed by one pedal — first match wins (pedal order: D C B E F G A).
-function hpPcsToPositions(activePcs) {
-  const natPcs   = new Set(HP_PEDAL_MAP.filter(p => activePcs.has(p.nat)).map(p => p.nat));
-  const claimed  = new Set(); // pcs already assigned to a pedal
-  return HP_PEDAL_MAP.map(p => {
-    if (activePcs.has(p.nat)) {
-      claimed.add(p.nat);
-      return 1;
-    }
-    if (activePcs.has(p.flat) && !natPcs.has(p.flat) && !claimed.has(p.flat)) {
-      claimed.add(p.flat);
-      return 0;
-    }
-    if (activePcs.has(p.sharp) && !natPcs.has(p.sharp) && !claimed.has(p.sharp)) {
-      claimed.add(p.sharp);
-      return 2;
-    }
-    return 1; // natural (inactive)
-  });
 }
 
 // Get the note label for an active string.
@@ -125221,7 +124663,7 @@ function hpRender() {
       const loNote = HP_STRINGS[start];
       const hiNote = HP_STRINGS[Math.min(start + HP_CHUNK - 1, HP_STRINGS.length - 1)];
       const noteNames = ['C','D','E','F','G','A','B'];
-      const loName = noteNames[loNote % 12 !== undefined ? [0,2,4,5,7,9,11].indexOf(loNote % 12) : 0] + Math.floor(loNote / 12 - 1);
+      const loName = noteNames[[0,2,4,5,7,9,11].indexOf(loNote % 12)] + Math.floor(loNote / 12 - 1);
       const hiName = noteNames[[0,2,4,5,7,9,11].indexOf(hiNote % 12)] + Math.floor(hiNote / 12 - 1);
       // Dots
       const dotRow = document.createElement('div');
@@ -125365,7 +124807,6 @@ function bowedSemiInfo(semi, isBass) {
   return { posLabel: row[1], finger: row[2] };
 }
 function bowedFingerNum(semi, isBass) { return bowedSemiInfo(semi, isBass).finger; }
-function bowedPosLabel(semi, isBass)  { return bowedSemiInfo(semi, isBass).posLabel; }
 
 // All valid (position, finger) options per semitone — for double stop re-positioning.
 // Covers semi 0-17 (open through 7th position — full practical orchestral range).
@@ -125453,54 +124894,6 @@ function _bnDisp(pc) {
   catch (e) { return _BN[pc]; }
 }
 function bowedMidiName(midi) { return _BN[midi % 12]; }
-
-// ── Bow synth ─────────────────────────────────────────────────
-// Simulates bow catching string: slow attack with initial catch,
-// LFO tremolo, proper release. No cascading between scale notes.
-function _bowSynth(ctx, freq, when, dur, master, vol, attackTime) {
-  attackTime = attackTime || 0.18;
-  const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = freq; o1.detune.value = -5;
-  const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = freq; o2.detune.value = 5;
-  const o3 = ctx.createOscillator(); o3.type = 'sine';     o3.frequency.value = freq * 2;
-  const o1G = ctx.createGain(); o1G.gain.value = 0.32;
-  const o2G = ctx.createGain(); o2G.gain.value = 0.32;
-  const o3G = ctx.createGain(); o3G.gain.value = 0.07;
-  const lfo = ctx.createOscillator(); lfo.frequency.value = 5.8 + Math.random() * 0.6;
-  const lfoG = ctx.createGain(); lfoG.gain.value = 0.018;
-  lfo.connect(lfoG);
-  const lpf = ctx.createBiquadFilter();
-  lpf.type = 'lowpass'; lpf.frequency.value = freq * 3.5; lpf.Q.value = 0.8;
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0, when);
-  g.gain.linearRampToValueAtTime(vol * 0.12, when + attackTime * 0.25);
-  g.gain.linearRampToValueAtTime(vol * 0.72, when + attackTime);
-  if (dur && dur > attackTime + 0.3) {
-    const midPoint = when + attackTime + (dur - attackTime) * 0.5;
-    g.gain.setValueAtTime(vol * 0.72, midPoint);
-    g.gain.linearRampToValueAtTime(vol * 0.65, when + dur - 0.25);
-    g.gain.linearRampToValueAtTime(0, when + dur);
-  } else if (dur) {
-    g.gain.linearRampToValueAtTime(0, when + dur);
-  }
-  o1.connect(o1G); o1G.connect(lpf);
-  o2.connect(o2G); o2G.connect(lpf);
-  o3.connect(o3G); o3G.connect(lpf);
-  lfoG.connect(g.gain);
-  lpf.connect(g); g.connect(master);
-  const stop = when + (dur || 120);
-  o1.start(when); o2.start(when); o3.start(when); lfo.start(when);
-  o1.stop(stop+0.1); o2.stop(stop+0.1); o3.stop(stop+0.1); lfo.stop(stop+0.1);
-  return { gain: g, stop() {
-    const t = ctx.currentTime;
-    // Stop LFO first so its modulation doesn't inflate the gain snapshot
-    try { lfo.stop(t); } catch(e){}
-    lfoG.gain.setValueAtTime(0, t);
-    g.gain.cancelScheduledValues(t);
-    g.gain.setValueAtTime(Math.min(g.gain.value, vol), t); // clamp to avoid LFO spike
-    g.gain.linearRampToValueAtTime(0, t + 0.28);
-    try { o1.stop(t+0.32); o2.stop(t+0.32); o3.stop(t+0.32); } catch(e){}
-  }};
-}
 
 // ── State ──────────────────────────────────────────────────────
 let bowedInst       = 'bowed_violin';
@@ -127410,15 +126803,6 @@ function sesUpdate() {
   }
 }
 
-function sesUpdateLineRaw(pct) {
-  // Like sesUpdateLine but never fires notifications — used during tick updates
-  const bar = document.getElementById('modeProgressBar');
-  if (!bar) return;
-  if (!progState.sessionGoalMin || pct === undefined) { bar.style.width = '0%'; return; }
-  const p = Math.min(100, Math.round(pct * 100));
-  bar.style.width = p + '%';
-}
-
 function sesUpdateLine(pct, over) {
   const bar  = document.getElementById('modeProgressBar');
   const deco = document.getElementById('modeAccentLine');
@@ -127544,7 +126928,7 @@ function sesTrackModule(key) {
     progSave();
     // Check if all 18 modules visited
     const ALL = ['t:piano', 't:tonal', 't:chords', 't:guitarchords', 't:progression', 't:drumkit', 't:volume', 't:transpose', 't:vocalrange', 't:cof', 't:scales', 'e:tempo', 'e:tempoguess', 'e:poly', 'e:interval', 'e:chords', 'e:singsing', 'e:rhythmread'];
-    // Scales became a tool in v0.132.3 and its visit key went 'e:scales' -> 't:scales'.
+    // Scales became a tool and its visit key went 'e:scales' -> 't:scales'.
     // Anyone who had already opened it did the thing this achievement asks for, so the
     // old key still counts rather than sending them back to re-earn it.
     const _visited = m => progState.sesModulesVisited.includes(m)
@@ -127568,7 +126952,7 @@ function sesRefreshGoalChips() {
 // ── Stop all audio ─────────────────────────────────────────────────────────────
 // Single point-of-truth called by every page-exit / background path.
 // Each call is guarded so it never throws if a module hasn\'t loaded yet.
-// v0.209.40: set at the END of the first successful setMode. Until then no
+// Set at the END of the first successful setMode. Until then no
 // module has been entered, so nothing below can be playing, and the 70-function
 // sweep is pure cost: most stop functions REDRAW their panel (flute trill,
 // keyboard, harp strings), each on a hidden node, each forcing a style recalc.
@@ -127934,8 +127318,6 @@ function rampUpdateTotal() {
 
 function adjRampFrom(d) { rampFromBpm = Math.max(30, Math.min(300, rampFromBpm + d)); document.getElementById('rampFromVal').textContent = rampFromBpm; rampUpdateTotal(); }
 function adjRampTo(d)   { rampToBpm   = Math.max(30, Math.min(300, rampToBpm   + d)); document.getElementById('rampToVal').textContent   = rampToBpm;   rampUpdateTotal(); }
-
-function toggleRamp() { if (_rampActive) stopRamp(); else startRamp(); }
 
 function startRamp() {
   if (rampFromBpm === rampToBpm) return;
@@ -128503,35 +127885,6 @@ function ns(t){return document.createElementNS(SVG,t);}
 function sa(e,a){Object.keys(a).forEach(function(k){e.setAttribute(k,a[k]);});return e;}
 function mksvg(w,h){var s=sa(ns('svg'),{viewBox:'0 0 '+w+' '+h,width:w,height:h});s.style.maxWidth='100%';return s;}
 function el(t,a,p){var e=sa(ns(t),a);if(p)p.appendChild(e);return e;}
-
-// ── AMP PANEL SVG ────────────────────────────────────────────────────
-function buildAmpSVG(title,sub,controls,accent){
-  var W=300,H=110,s=mksvg(W,H);
-  el('rect',{x:2,y:2,width:W-4,height:H-4,rx:6,fill:'#1a1a2e',stroke:accent,'stroke-width':1.5},s);
-  el('rect',{x:2,y:2,width:56,height:H-4,rx:6,fill:accent,opacity:0.1},s);
-  var br=el('text',{x:31,y:H/2+5,'text-anchor':'middle','font-family':'Bebas Neue,sans-serif','font-size':13,fill:accent,'letter-spacing':'0.1',transform:'rotate(-90,31,'+H/2+')'},s);
-  br.textContent=title;
-  var st=el('text',{x:31,y:H/2+18,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':5.5,fill:'#4a4a6a',transform:'rotate(-90,31,'+(H/2+14)+')'},s);
-  st.textContent=sub;
-  var sx=68,sp=(W-sx-14)/Math.max(controls.length,1);
-  controls.forEach(function(c,i){
-    var cx=sx+i*sp+sp/2,cy=H/2-4;
-    if(c.t==='k'){
-      el('circle',{cx:cx,cy:cy,r:11,fill:'#2a2a40',stroke:c.c||'#6a6c85','stroke-width':1.2},s);
-      el('circle',{cx:cx,cy:cy,r:7,fill:'#1a1a2e',stroke:c.c||'#4a4a6a','stroke-width':0.8},s);
-      el('circle',{cx:cx,cy:cy-8,r:1.8,fill:c.c||'#a3a5b8'},s);
-    } else if(c.t==='s'){
-      el('rect',{x:cx-5,y:cy-11,width:10,height:22,rx:4,fill:'#2a2a40',stroke:c.c||'#6a6c85','stroke-width':1},s);
-      el('rect',{x:cx-3,y:cy-1,width:6,height:8,rx:2,fill:c.c||'#5ee2ff'},s);
-    } else {
-      el('circle',{cx:cx,cy:cy,r:6,fill:'#0a0a12',stroke:'#4a4a6a','stroke-width':1.5},s);
-      el('circle',{cx:cx,cy:cy,r:2.5,fill:'#2a2a3e'},s);
-    }
-    var t2=el('text',{x:cx,y:H-8,'text-anchor':'middle','font-family':'JetBrains Mono,monospace','font-size':5.5,fill:'#6a6c85'},s);
-    t2.textContent=c.l;
-  });
-  return s;
-}
 
 
 // Amp panels are drawings made 1:1 from photos of the real front panels and the owner's
@@ -129938,8 +129291,8 @@ plucked: { color:'#c084fc', sections:[
   { title:'LUTE', title_it:'LIUTO', pages:[
     { eye:'LUTE · OVERVIEW', eye_it:'LIUTO · PANORAMICA', head:'The Lute\nFamily', head_it:'La Famiglia\ndel Liuto', sub:'Renaissance · Baroque · Theorbo', sub_it:'Rinascimento · Barocco · Tiorba', type:'tab-title', tab_desc:'The lute family: Renaissance, Baroque, theorbo, and mandore.', tab_desc_it:'La famiglia del liuto: rinascimentale, barocco, tiorba e mandora.', tab_color:'#d4a857' },
     { eye:'TUNING', eye_it:'ACCORDATURA', head:'Course\nTuning', head_it:'Accordatura\ndei Cori', sub:'G C F A D G and variants', sub_it:'Sol Do Fa La Re Sol e varianti', type:'note-player', notes_label:'6-COURSE RENAISSANCE · TAP TO HEAR', notes_inst:'lute', notes:[{name:'G2 · 6th course',freq:98.0},{name:'C3 · 5th course',freq:130.81},{name:'F3 · 4th course',freq:174.61},{name:'A3 · 3rd course',freq:220.0},{name:'D4 · 2nd course',freq:293.66},{name:'G4 · 1st course',freq:392.0}],
-      body:'The lute uses <strong>courses</strong>: pairs of strings tuned in unison (or octaves on lower courses) and plucked together. The standard 6-course Renaissance lute is tuned <strong>G C F A D G</strong>: a pattern of perfect fourths interrupted by one major third between the third and fourth courses, the same interval quirk as the guitar.<br><br>The Baroque lute shifted to a <strong>D-minor tuning</strong> (G A D F# A D G for the fretted courses), adding diapason bass strings that are not fretted but tuned to the scale degrees of the home key. Bach\'s lute suites were written for this instrument.<br><br>The <strong>theorbo</strong> is a bass lute with an extended neck: the top two melody courses are re-entrant (tuned <em>down</em> an octave) to give the bass courses more depth without sacrificing range. The <strong>mandore</strong> (G C E A) is the soprano lute and direct ancestor of the mandolin.',
-      body_it:'Il liuto usa i <strong>cori</strong>: coppie di corde accordate all\'unisono (o all\'ottava per i cori bassi) e pizzicate insieme. Il liuto rinascimentale standard a 6 cori è accordato <strong>Sol Do Fa La Re Sol</strong>: un pattern di quarte giuste interrotto da una terza maggiore tra il terzo e il quarto coro, la stessa particolarità intervallare della chitarra.<br><br>Il liuto barocco adottò una <strong>accordatura in re minore</strong> (Sol La Re Fa# La Re Sol per i cori tastati), con corde di bordone aggiunte non tastabili ma accordate sui gradi della tonalità principale. Le suite per liuto di Bach furono scritte per questo strumento.' },
+      body:'The lute uses <strong>courses</strong>: pairs of strings tuned in unison (or octaves on lower courses) and plucked together. The standard 6-course Renaissance lute is tuned <strong>G C F A D G</strong>: a pattern of perfect fourths interrupted by one major third between the third and fourth courses, the same interval quirk as the guitar.<br><br>The Baroque lute shifted to a <strong>D-minor tuning</strong> (A D F A d f for the six fretted courses, low to high), adding diapason bass strings that are not fretted but tuned to the scale degrees of the home key. Bach\'s lute suites were written for this instrument.<br><br>The <strong>theorbo</strong> is a bass lute with an extended neck: the top two melody courses are re-entrant (tuned <em>down</em> an octave) to give the bass courses more depth without sacrificing range. The <strong>mandore</strong> (G C E A) is the soprano lute and direct ancestor of the mandolin.',
+      body_it:'Il liuto usa i <strong>cori</strong>: coppie di corde accordate all\'unisono (o all\'ottava per i cori bassi) e pizzicate insieme. Il liuto rinascimentale standard a 6 cori è accordato <strong>Sol Do Fa La Re Sol</strong>: un pattern di quarte giuste interrotto da una terza maggiore tra il terzo e il quarto coro, la stessa particolarità intervallare della chitarra.<br><br>Il liuto barocco adottò una <strong>accordatura in re minore</strong> (La Re Fa La re fa per i sei cori tastati, dal grave all\'acuto), con corde di bordone aggiunte non tastabili ma accordate sui gradi della tonalità principale. Le suite per liuto di Bach furono scritte per questo strumento.' },
     { eye:'TECHNIQUE', eye_it:'TECNICA', head:'Right Hand\n& Courses', head_it:'Mano Destra\ne Cori', sub:'Plucking courses, not single strings', sub_it:'Pizzicare i cori, non le singole corde', type:'text',
       body:'<strong>Right hand technique</strong> evolved significantly over the lute\'s history. Renaissance lutenists used a <strong>broken-chord</strong> approach; arpeggiated textures created by alternating thumb and fingers across courses. The thumb generally played the bass courses while fingers handled the melody courses above.<br><br>A characteristic feature is playing <em>al tasto</em> (over the fingerboard) rather than over the soundhole, which produces the instrument\'s characteristic warm, intimate tone. The lute does not project loudly and suits intimate settings rather than concert halls.<br><br>The <strong>course pairing</strong> creates a natural chorus effect: the slight imprecisions in tuning between paired strings give the lute its shimmer. Lower courses are often tuned in octaves rather than unison, enriching the bass register.',
       body_it:'La <strong>tecnica della mano destra</strong> si è evoluta significativamente nel corso della storia del liuto. I liutisti rinascimentali usavano un approccio ad <strong>accordi spezzati</strong>: trame arpegiate create alternando pollice e dita tra i cori. Il pollice gestiva generalmente i cori bassi mentre le dita si occupavano dei cori di melodia.<br><br>Una caratteristica distintiva è suonare <em>al tasto</em> (sulla tastiera) piuttosto che sulla buca, il che produce il caldo timbro intimo dello strumento. Il liuto non ha molta proiezione. è uno strumento per ambienti intimi, non per le sale da concerto.' },
@@ -130020,7 +129373,7 @@ winds: { color:'#38bdf8', sections:[
       body_it:'Tutto il suonare a fiato dipende dal <strong>sostegno del fiato</strong>: usare il diaframma e i muscoli addominali per mantenere un flusso d\'aria controllato e pressurizzato piuttosto che soffiare semplicemente con la gola e il petto.<br><br>Pensa come sostenere la colonna d\'aria dal basso, come un pilastro d\'aria dalla pancia piuttosto che un soffio dalla bocca. <strong>Un\'aria sostenuta e supportata produce un tono pieno e risonante.</strong> Un\'aria non sostenuta e respirata produce un suono sottile e non focalizzato indipendentemente dall\'imboccatura o dalla diteggiatura.' },
     { eye:'WOODWIND', eye_it:'LEGNI', head:'Transposing\nInstruments', head_it:'Strumenti\nTraspositori', sub:'Why written C isn\'t always concert C', sub_it:'Perché il Do scritto non è sempre il Do reale', type:'text',
       body:'Several woodwind instruments are <strong>transposing instruments</strong>: read and finger a C, and the pitch that sounds is not concert C. This can be confusing at first but has a practical history rooted in instrument construction and key changes.<br><br><strong>Bb instruments</strong> (Bb clarinet, soprano and tenor saxophone) sound a whole step lower than written. Written C sounds as Bb concert. To play with a concert-pitch instrument, parts must be written a whole step higher.<br><br><strong>Eb instruments</strong> (alto and baritone saxophone) sound a major 6th lower (alto), or for baritone an octave and a major 6th lower, a major 13th, below what\'s written.<br><br><strong>F instruments</strong> (cor anglais/English horn) sound a perfect 5th lower than written.<br><br><strong>Non-transposing</strong>: flute, oboe, and bassoon sound at concert pitch. The soprano recorder and tin whistle are octave-transposing: they sound an octave above written, which keeps their parts on the staff.',
-      body_it:'Diversi strumenti a fiato legni sono <strong>strumenti traspositori</strong>: leggi e diteggia un Do, e l\'altezza che suona non è il Do reale. Questo può essere confuso all\'inizio ma ha una storia pratica radicata nella costruzione degli strumenti e nei cambi di tonalità.<br><br><strong>Strumenti in Si bemolle</strong> (clarinetto Sib, sassofono soprano e tenore) suonano un tono intero più basso di quanto scritto. Il Do scritto suona come Sib reale.<br><br><strong>Strumenti in Mi bemolle</strong> (sassofono contralto e baritono) suonano una sesta maggiore più bassa (contralto) o una tredicesima maggiore più bassa (baritono) di quanto scritto.<br><br><strong>Strumenti in Fa</strong> (corno inglese) suonano una quinta giusta più bassa di quanto scritto.<br><br><strong>Non traspositori</strong>: flauto, oboe e fagotto suonano ad altezza reale. Il flauto dolce soprano e il tin whistle traspongono all\'ottava \u2014 suonano un\'ottava sopra quanto scritto, così le parti restano comode sul pentagramma.' }
+      body_it:'Diversi strumenti a fiato legni sono <strong>strumenti traspositori</strong>: leggi e diteggia un Do, e l\'altezza che suona non è il Do reale. Questo può essere confuso all\'inizio ma ha una storia pratica radicata nella costruzione degli strumenti e nei cambi di tonalità.<br><br><strong>Strumenti in Si bemolle</strong> (clarinetto Sib, sassofono soprano e tenore) suonano un tono intero più basso di quanto scritto. Il Do scritto suona come Sib reale.<br><br><strong>Strumenti in Mi bemolle</strong> (sassofono contralto e baritono) suonano una sesta maggiore più bassa (contralto) o una tredicesima maggiore più bassa (baritono) di quanto scritto.<br><br><strong>Strumenti in Fa</strong> (corno inglese) suonano una quinta giusta più bassa di quanto scritto.<br><br><strong>Non traspositori</strong>: flauto, oboe e fagotto suonano ad altezza reale. Il flauto dolce soprano e il tin whistle traspongono all\'ottava: suonano un\'ottava sopra quanto scritto, così le parti restano comode sul pentagramma.' }
   ]},
   { title:'FLUTE', title_it:'FLAUTO', pages:[
     { eye:'FLUTE · OVERVIEW', eye_it:'FLAUTO · PANORAMICA', head:'The Concert\nFlute', head_it:'Il Flauto\nTrasverso', sub:'C instrument · highest woodwind', sub_it:'Strumento in Do · il legno più alto', type:'photo-placeholder', photo_label:'CONCERT FLUTE DIAGRAM', photo_desc:'Playing position showing embouchure plate, key mechanism, and hand position',
@@ -130147,7 +129500,7 @@ freereed: { color:'#a78bfa', sections:[
   ]},
   { title:'DIDGERIDOO', title_it:'DIDGERIDOO', pages:[
     { eye:'DIDGERIDOO · OVERVIEW', eye_it:'DIDGERIDOO · PANORAMICA', head:'The Didgeridoo', head_it:'Il Didgeridoo', sub:'Circular breathing · drone · overtones', sub_it:'Respirazione circolare · drone · armonici', type:'text',
-      body:'The didgeridoo is a wind instrument developed by Aboriginal Australians of northern Australia. Rock art in Arnhem Land and Kakadu showing a player dates to roughly 1,500 years ago, which is the oldest firm evidence; claims of 40,000 years are often repeated and are not supported by anything found so far. Traditionally made from eucalyptus branches hollowed by termites, it produces sound through lip vibration (like brass) into a wide, conical bore with no valves, keys, or fingerholes.<br><br>The instrument produces a <strong>fundamental drone</strong>: a fixed low pitch determined by the tube length. Most didgeridoos sit roughly in the range of A2 to G3 depending on tube length (the easiest learning keys, C to E, fall around C2–E2), and are not pitched instruments in the melodic sense. The richness comes from <strong>overtones and timbral variations</strong> produced by shaping the mouth, tongue, vocal tract, and breath pressure, adding vowel sounds, vocalizing while playing, and creating rhythmic patterns within the drone.<br><br>The most distinctive technique is <strong>circular breathing</strong>: inhaling through the nose while simultaneously expelling air from the mouth using the cheeks as a reservoir. This allows the drone to continue indefinitely without audible breath breaks.',
+      body:'The didgeridoo is a wind instrument developed by Aboriginal Australians of northern Australia. Rock art in Arnhem Land and Kakadu showing a player dates to roughly 1,500 years ago, which is the oldest firm evidence; claims of 40,000 years are often repeated and are not supported by anything found so far. Traditionally made from eucalyptus branches hollowed by termites, it produces sound through lip vibration (like brass) into a wide, conical bore with no valves, keys, or fingerholes.<br><br>The instrument produces a <strong>fundamental drone</strong>: a fixed low pitch determined by the tube length. Most didgeridoos sit roughly in the range of A1 to A2 depending on tube length (the easiest learning keys, C to E, fall around C2–E2), and are not pitched instruments in the melodic sense. The richness comes from <strong>overtones and timbral variations</strong> produced by shaping the mouth, tongue, vocal tract, and breath pressure, adding vowel sounds, vocalizing while playing, and creating rhythmic patterns within the drone.<br><br>The most distinctive technique is <strong>circular breathing</strong>: inhaling through the nose while simultaneously expelling air from the mouth using the cheeks as a reservoir. This allows the drone to continue indefinitely without audible breath breaks.',
       body_it:'Il didgeridoo è uno strumento a fiato sviluppato dagli Aborigeni dell\'Australia settentrionale. L\'arte rupestre della Terra di Arnhem e del Kakadu che raffigura un suonatore risale a circa 1.500 anni fa, ed è la prova certa più antica; le affermazioni sui 40.000 anni si ripetono spesso e non sono sostenute da nulla di ritrovato finora. Tradizionalmente realizzato con rami di eucalipto svuotati da termiti, produce suono attraverso la vibrazione delle labbra (come gli ottoni) in un foro conico largo senza pistoni, chiavi o fori per le dita.<br><br>Lo strumento produce un <strong>drone fondamentale</strong>: un\'altezza bassa fissa determinata dalla lunghezza del tubo. La ricchezza proviene dagli <strong>armonici e dalle variazioni timbriche</strong> prodotti modellando bocca, lingua, tratto vocale e pressione del respiro.<br><br>La tecnica più celebrata è la <strong>respirazione circolare</strong>: inspirare attraverso il naso mentre si espelle simultaneamente aria dalla bocca usando le guance come riserva. Questo permette al drone di continuare indefinitamente senza pause udibili di respiro.' },
     { eye:'DIDGERIDOO', eye_it:'DIDGERIDOO', head:'Try the\nCharts', head_it:'Prova gli\nAccordi', sub:'Open the didgeridoo tool', sub_it:'Apri lo strumento didgeridoo', type:'text', try_inst:'didgeridoo', body:'The chart tool shows the didgeridoo\'s available overtone series and common playing keys.', body_it:'Lo strumento mostra la serie armonica disponibile del didgeridoo e le tonalità di suono più comuni.' }
   ]}
@@ -130607,6 +129960,7 @@ function buildPhotoZoneWithCalib(imgSrc, zonesDefault, tipEl, calibKey) {
     var saveBtn=document.createElement('div');saveBtn.className='calib-act primary';saveBtn.textContent='SAVE & CLOSE';
     var resetBtn=document.createElement('div');resetBtn.className='calib-act';resetBtn.textContent='RESET TO DEFAULT';
     var cancelBtn=document.createElement('div');cancelBtn.className='calib-act';cancelBtn.textContent='CANCEL';
+    var copyBtn=document.createElement('div');copyBtn.className='calib-act';copyBtn.textContent=(progState.lang==='it')?'COPIA DATI':'COPY DATA';
     saveBtn.addEventListener('click',function(){
       zones=calibWorking;
       zoneDivs.forEach(function(d,i){d.style.left=zones[i][0]+'%';d.style.top=zones[i][1]+'%';d.style.width=zones[i][2]+'%';d.style.height=zones[i][3]+'%';});
@@ -131220,7 +130574,7 @@ window.sgPlayTermDemo = sgPlayTermDemo;
 // `subito` is deliberately absent: it is a direction, not a written symbol.
 var SG_TERM_GLYPHS = {
   "augmentation dot":{"g":"E1E7","fs":50.0,"dy":0.0,"h":6.0,"w":5.0},"slur":{"g":"E4BA","fs":50.0,"dy":4.0,"h":8.0,"w":19.0},"tie":{"g":"E4BA","fs":50.0,"dy":4.0,"h":8.0,"w":19.0},"una corda":{"g":"E650","fs":50.0,"dy":13.5,"h":29.0,"w":51.0},"arpeggio":{"svg":"<svg viewBox=\"0 0 40 60\"><path d=\"M20 6 q-9 7 0 14 q9 7 0 14 q-9 7 0 14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M20 4 l-5 6 h10 z\" fill=\"currentColor\"/></svg>"},
-  // Added v0.150.103. Every codepoint below was MEASURED against the embedded
+  // Every codepoint below was MEASURED against the embedded
   // Bravura before being written here: a wrong one renders .notdef, which is a
   // blank box that looks like a broken glyph rather than a bad constant. Seven
   // candidates failed that check and are not here. The fs/dy/h/w values are ink
@@ -132695,12 +132049,12 @@ function render(dir){
       break;
     case 'piano-keyboard':
       var kdiag=document.createElement('div');kdiag.className='pg-diagram';kdiag.appendChild(buildPianoKeyboard());card.appendChild(kdiag);
-      var kh=document.createElement('div');kh.className='key-hint';kh.textContent='Middle C (orange) · A440 (green) · groups of 2 and 3 black keys are landmarks';card.appendChild(kh);
+      var kh=document.createElement('div');kh.className='key-hint';kh.textContent=(progState&&progState.lang)==='it'?'Do centrale (arancione) · La440 (verde) · i gruppi di 2 e 3 tasti neri sono i punti di riferimento':'Middle C (orange) · A440 (green) · groups of 2 and 3 black keys are landmarks';card.appendChild(kh);
       break;
     case 'pedal-diagram':
       var pdiag=document.createElement('div');pdiag.className='pg-diagram';pdiag.appendChild(buildPedalDiagram());card.appendChild(pdiag);
       var ph=document.createElement('div');ph.className='pg-body';ph.style.marginTop='10px';
-      ph.innerHTML='Three pedals, left to right: <strong>Soft</strong> (una corda) &middot; <strong>Sostenuto</strong> &middot; <strong>Damper</strong>. Most piano playing uses only the damper pedal. The others transform the instrument when used.';card.appendChild(ph);
+      ph.innerHTML=(progState&&progState.lang)==='it'?'Tre pedali, da sinistra a destra: <strong>Una corda</strong> &middot; <strong>Sostenuto</strong> &middot; <strong>Smorzatori</strong>. Quasi tutto il repertorio usa solo il pedale di destra. Gli altri trasformano lo strumento quando servono.':'Three pedals, left to right: <strong>Soft</strong> (una corda) &middot; <strong>Sostenuto</strong> &middot; <strong>Damper</strong>. Most piano playing uses only the damper pedal. The others transform the instrument when used.';card.appendChild(ph);
       break;
     case 'photo-placeholder':
       // Body only. Eleven pages used to carry a bordered card reading COMING SOON
@@ -133030,10 +132384,10 @@ function render(dir){
       var _npTone = _npInst ? ((typeof getInstTone === 'function') ? getInstTone(_npInst) : ((typeof INST_TONE_MAP !== 'undefined') ? (INST_TONE_MAP[_npInst] || 'guitar') : 'guitar')) : 'guitar';
       // ALWAYS show the note buttons. They used to be gated on there being no
       // Try It Out instrument, because that button sat here instead.
-      // v0.150.104 removed the button as a duplicate of the section's landing
+      // A later change removed the button as a duplicate of the section's landing
       // page and did not lift the gate, so the six pages with a notes_inst
       // (bass, ukulele, mandolin, banjo, lute, bouzouki) rendered an EMPTY note
-      // player from then until v0.150.119: a heading, and nothing to tap.
+      // player for a while: a heading, and nothing to tap.
         var npLabel = document.createElement('div'); npLabel.className = 'note-player-label'; npLabel.textContent = page.notes_label || '';
         if (page.notes_label) np.appendChild(npLabel);
         (page.notes || []).forEach(function(n) {
@@ -133070,7 +132424,7 @@ function render(dir){
       // gone.
       card.appendChild(np);
       break;
-    case 'range-chart':    case 'range-chart':
+    case 'range-chart':
       var bd4=document.createElement('div');bd4.className='pg-body';bd4.innerHTML=_body;card.appendChild(bd4);
       var rc=document.createElement('div');rc.className='range-chart';
       var rcMin=page.range_min||24,rcMax=page.range_max||96;
@@ -133412,6 +132766,13 @@ function _sgShowReturnPill(containerId) {
   if (!host) host = document.querySelector('.app');
   if (host) host.appendChild(pill);
 }
+// For callers outside this closure (the interval peek). They cannot reach
+// _sgReturnFromCharts or the pill function directly, and writing the target to
+// window did nothing because the pill reads the variable in here.
+window._sgShowReturnPillFor = function (ret, containerId) {
+  _sgReturnFromCharts = ret || null;
+  _sgShowReturnPill(containerId);
+};
 
 // Generic launcher: jump from the Survival Guide to any tool / exercise / mode,
 // saving the current guide position and showing a "back to guide" return pill.
@@ -135934,7 +135295,7 @@ function mqTrimSafe(qText, opts) {
 function _mqTrimOptRaw(text) {
   // Trims long options to fit an answer card. THE CUT MUST BE VISIBLE.
   //
-  // Before v0.103.20 this cut silently at a comma, bracket or colon and returned the
+  // This used to cut silently at a comma, bracket or colon and returned the
   // fragment with no marker, which produced answers that read as complete but short.
   // ROOM TREATMENT was the case that exposed it: its four options are 78-89 chars, a
   // near-perfect 1.07x balance, and the correct one
@@ -136881,8 +136242,14 @@ async function mqRunOnlineFetch(catId, mode) {
     if (data.response_code !== 0 || !data.results) return [];
     return data.results.map(function(r) {
       var dec = decodeURIComponent;
-      var opts = r.incorrect_answers.map(dec);
-      var correct = dec(r.correct_answer);
+      // Online text is not ours. Answers are written into the page as HTML,
+      // because our own packs draw glyphs in them, so anything from the network
+      // has its markup neutralized here, once, on the way in.
+      var esc = function (s) {
+        return String(dec(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      };
+      var opts = r.incorrect_answers.map(esc);
+      var correct = esc(r.correct_answer);
       var pos = Math.floor(Math.random() * (opts.length + 1));
       opts.splice(pos, 0, correct);
       return { q: dec(r.question), opts: opts, ans: pos,
@@ -137385,13 +136752,6 @@ function mq2PageClose(id) {
 function mqShowSurvivalSheet() { mq2PageOpen('mqSurvivalSheet'); }
 function mqHideSurvivalSheet() { mq2PageClose('mqSurvivalSheet'); }
 
-function mqQuickPlayPack(packId) {
-  if (!mqPackReady(packId)) return;
-  mqHideQuickSheet();
-  MQ.mode='quick'; MQ.selectedPacks=new Set([packId]);
-  MQ.qCount=10; MQ.timed=false;
-  mqBuildAndStart();
-}
 // ALL PACKS started immediately on ten questions at whatever difficulty happened
 // to be set, which is the same fault the online categories had: every single
 // pack offers a choice first and this one did not.
@@ -138786,8 +138146,6 @@ function mqStepLetter(letter, steps) {
   return MQ_LETTERS[((MQ_LETTERS.indexOf(letter) + steps) % 7 + 7) % 7];
 }
 function mqLetIt(letter) { return MQ_IT_LETTER[letter] || letter; }
-function mqJoinEn(a) { return a.length < 2 ? a[0] : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
-function mqJoinIt(a) { return a.length < 2 ? a[0] : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1]; }
 
 // ── Interval ─────────────────────────────────────────────────────────────────
 // Between naturals, the number of letters and the semitone count together fix
@@ -140189,7 +139547,7 @@ var MQ_GTR_NOTE_FACTS = [
    'I pallini al terzo, quinto, settimo e nono tasto servono perch\u00e9 l\u2019occhio trovi la posizione senza contare dal capotasto.']
 ];
 var MQ_GTR_IV_FACTS = [
-  // v0.210.122: three of these were written as a sequence ("That one exception",
+  // Three of these were written as a sequence ("That one exception",
   // "removes the exception", "this tuning") but the rotation hands out one per
   // question, so each read as a reply to a blurb the player never saw. Each one
   // now stands alone.
@@ -140799,7 +140157,7 @@ function mq2Glyph(ch, scale) {
 // The mark is that icon at size, with the stroke thinned so it does not turn
 // into a woodcut on the way from 20px to 100.
 var MQ2_MOTIF = {
-  // The three Daniele picked by name.
+  // The three picked by name.
   theory_fundamentals: mq2Glyph('\uE050'),   // treble clef
   advanced_theory:     mq2Glyph('\uE047', .74),   // segno, sized down: it fills more of
                                                 //  its box than a clef does
@@ -141359,10 +140717,10 @@ function mq2Reveal(picked, correctIdx, ok) {
       return s ? s.textContent : '';
     };
     vEl.innerHTML = ok
-      ? '<span class="v-ok">\u2713 <b>' + txt(opts[correctIdx]) + '</b></span>'
-      : '<span class="v-no">\u2715 <b>' + txt(opts[picked]) + '</b></span>'
+      ? '<span class="v-ok">\u2713 <b>' + mqSafeItalics(txt(opts[correctIdx])) + '</b></span>'
+      : '<span class="v-no">\u2715 <b>' + mqSafeItalics(txt(opts[picked])) + '</b></span>'
         + '<span class="v-sep">/</span>'
-        + '<span class="v-ok">\u2713 <b>' + txt(opts[correctIdx]) + '</b></span>';
+        + '<span class="v-ok">\u2713 <b>' + mqSafeItalics(txt(opts[correctIdx])) + '</b></span>';
   }
   setTimeout(function () {
     root.classList.add(ok ? 'r' : 'w');
@@ -141515,7 +140873,7 @@ function mqRenderQ() {
 function mq2RenderHearts(lostIndex) {
   var wrap = document.getElementById('mq2Hearts');
   if (!wrap || MQ.mode !== 'survival') return;
-  var max = (typeof MQ_SURVIVAL_LIVES === 'number') ? MQ_SURVIVAL_LIVES : 3;
+  var max = 3;
   var html = '';
   for (var i = 0; i < max; i++) {
     var alive = i < MQ.lives;
@@ -141933,12 +141291,13 @@ function mqShowMissReview() {
       + '<div class="mq-miss-q">' + (n + 1) + '. ' + mqSafeItalics(mqL(q, 'q')) + '</div>'
       + (q.vis ? '<div class="mq-qvis" style="margin-top:6px">' + mqVisHtml(q.vis) + '</div>' : '')
       + '<div style="display:flex;flex-direction:column;gap:4px;">' + optsHtml + '</div>'
-      + (mqL(q, 'fact') ? '<div class="mq-miss-fact">' + mqL(q, 'fact') + '</div>' : '');
+      + (mqL(q, 'fact') ? '<div class="mq-miss-fact">' + mqSafeItalics(mqL(q, 'fact')) + '</div>' : '');
     list.appendChild(card);
   });
 }
 
 var MQ_POPUP_FOR = 'quick';
+var MQ_POPUP_PACK = null, MQ_POPUP_QCOUNT = 10;
 function mqShowPackPopup(packId, forMode) {
   MQ_POPUP_ONLINE = null;      // a local pack is not an online category
   MQ_POPUP_ALL = false;
@@ -142421,14 +141780,10 @@ function mqShowDailyResult(data, fresh) {
   if (lblD) lblD.textContent = t('mq_daily_quiz');
 }
 
-// The review screen is reachable from two results screens now, so BACK has to
-// know which one it came from.
+// Every ending (normal, daily, pack clear) lands on the one results screen, so
+// BACK from the review always returns there.
 function mqReviewBack() {
-  mqShowScreen('mqScreenResults'); return;
-  var back = 'mqScreenResults';
-  if (MQ.mode === 'daily') back = 'mqScreenDailyResult';
-  else if (MQ._lastEnd === 'win') back = 'mqScreenWin';
-  mqShowScreen(back);
+  mqShowScreen('mqScreenResults');
 }
 
 function mqDailyShareText() {
