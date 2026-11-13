@@ -1629,11 +1629,6 @@ body.sg-open #toolSurvivalGuide{
   .mqc-daily .mq-card-badge { background: color-mix(in srgb,var(--accent-warm) 12%,transparent); color:var(--accent-warm); border:1px solid color-mix(in srgb,var(--accent-warm) 28%,transparent); }
   .mqc-daily.mq-daily-done { opacity: .72; }
   .mqc-daily.mq-daily-done .mq-card-badge { background: color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 12%,transparent); color:var(--in-tune); border-color:color-mix(in srgb,var(--in-tune-t,var(--in-tune)) 28%,transparent); }
-  #mqScreenDailyResult .mq-daily-score-big { font-family:'Bebas Neue','GlyphFix',sans-serif; font-size:68px; line-height:1; color:var(--accent-warm); text-align:center; letter-spacing:2px; }
-  #mqScreenDailyResult .mq-daily-score-denom { font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-align:center; margin-bottom:14px; }
-  #mqScreenDailyResult .mq-daily-emoji-grid { font-size:22px; letter-spacing:4px; text-align:center; margin:8px 0 16px; line-height:1.6; word-break:break-all; }
-  #mqScreenDailyResult .mq-daily-share-btn { background:none; border:1px solid var(--border-soft); border-radius:10px; padding:11px 0; width:100%; font-family:'JetBrains Mono','GlyphFix',monospace; font-size:9px; letter-spacing:1.5px; color:var(--text-dim); cursor:pointer; transition:border-color .15s,color .15s; }
-  #mqScreenDailyResult .mq-daily-share-btn:active { border-color:var(--accent-warm); color:var(--accent-warm); }
 @media (hover: hover) and (pointer: fine) {
 
   .mqc-quick:hover    { border-color: color-mix(in srgb, var(--accent-soft) 50%, transparent); }
@@ -2917,8 +2912,6 @@ body.sg-open #toolSurvivalGuide{
   body.mq2on .mq-qnum, body.mq2on .mq-section-label, body.mq2on .mq-sheet-sub,
   body.mq2on .mq-grade-sub, body.mq2on .mq-pack-soon-tag,
   body.mq2on .mq-sheet-pack-btn .mq-pack-soon-tag, body.mq2on .mq-pb-banner,
-  body.mq2on #mqScreenDailyResult .mq-daily-score-denom,
-  body.mq2on #mqScreenDailyResult .mq-daily-share-btn,
   body.mq2on .mq-ans-letter, body.mq2on .mq-back-btn, body.mq2on .mq-bk-score,
   body.mq2on .mq-bk-name, body.mq2on .mq-close, body.mq2on .mq-daily-pop-desc,
   body.mq2on .mq-daily-pop-secondary, body.mq2on .mq-quiz-meta,
@@ -41370,7 +41363,6 @@ function buildRefPitchGrid() {
 let pianoOctave = 4;
 let pianoSingleOct = false; // long-press octave label → 1-octave view for easier play
 const PIANO_MIN_OCT = 1, PIANO_MAX_OCT = 6;
-const WHITE_NOTES_PER_OCT = [0,2,4,5,7,9,11];
 const BLACK_NOTES_PER_OCT = [1,3,6,8,10];
 
 function midiToNoteName(midi) {
@@ -43743,7 +43735,6 @@ let _sfFreqBuf = null;
 // Tempo estimation state
 let _tempoConfidence = 0;        // 0-1, rises as more onsets arrive
 const _TEMPO_MIN_ONSETS = 4;     // minimum onsets for a reading, was 3
-const _TEMPO_SETTLE_MS = 3000;
 // Hysteresis: don't commit a new tempo unless it persists
 let _tempoCandidate = null;      // BPM value being tested
 let _tempoCandidateAge = 0;      // how many frames it has been close
@@ -47811,7 +47802,7 @@ function dbStop() {
 // ═══════════════════════════════════════════════════════════════════════════
 var thmnCtx = null, thmnOsc = null, thmnGain = null, thmnFilter = null;
 var thmnVibOsc = null, thmnVibGain = null, thmnBus = null, thmnLim = null;
-var thmnActive = false, thmnRaf = null;
+var thmnActive = false;
 var THMN_DEFAULTS = {
   wave: 'warm',
   vol: 0.80,             // master output ceiling (0..1)
@@ -58224,7 +58215,6 @@ function ncGlyphHtml(c, k) {
     default:       return g;
   }
 }
-var ncPack = 'dynamics';
 var ncIdx = 0;
 
 // Which subject packs are switched on. Empty means everything.
@@ -60318,7 +60308,6 @@ function ivAnswerTap(sem, btn) {
     if (isRight) { ivStreak++; ivCorrect++; ivRecordCorrect(correctSem); hapticCorrect(); playCueCorrect(); checkStreakMilestone(ivStreak); }
     else { ivStreak = 0; hapticWrong(); playCueWrong(); }
     ivUpdateStats();
-    if (typeof ivtAfterAnswer === 'function') ivtAfterAnswer(isRight, correctSem);
     return;
   }
 
@@ -71128,8 +71117,6 @@ function buildRefToneBank(hostId, hooks) {
   };
 }
 
-const _EXCLUDED_TONES = new Set(['piano','brass','mandocello','electric_piano']);
-
 // Interval Training, Pitch Match and Chord Ear all write the app-wide reference
 // tone, so they pass no get/set and openTonePopup keeps its app-wide branch. They
 // pass a skin only, because the default is the Chords tool's and they are not it.
@@ -71804,9 +71791,8 @@ const TG_DIFFICULTIES = {
   hard:   { label: 'HARD',     labelIt: 'DIFFICILE', min: 32, max: 240, step: 1, lockFeel: false },
   insane: { label: 'INSANE',   labelIt: 'FOLLE',    min: 30, max: 250, step: 1, lockFeel: true },
 };
-// Feel/subdivision the round randomizes on INSANE
+// Feel the round randomizes on INSANE
 const TG_FEEL_POOL = ['swing', 'shuffle', 'clave', 'dotted', 'waltz', 'bossa'];
-const TG_SUBDIV_POOL = ['whole', 'half', 'quarter', 'eighth', 'triplet', 'sixteenth'];
 
 let tgSubdiv = 'quarter';   // whole | half | quarter | eighth
 let tgGroove = 'straight';  // straight | swing | clave | dotted  (user's pick)
@@ -77123,7 +77109,6 @@ var RLP_PCOF = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
 var RLP_SEAM = { 1:1, 3:2, 6:4, 8:5, 10:6 };   /* black pc -> white boundary */
 var REPLAY_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 3 6.7"/><polyline points="3 17 3 12 8 12"/></svg>';
 var NEXT_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20" fill="currentColor" stroke="none"/><line x1="19" y1="4" x2="19" y2="20"/></svg>';
-var FORK_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8a4 4 0 0 0 8 0V3"/><line x1="12" y1="15" x2="12" y2="21"/></svg>';
 
 var RLP_BANDS = [
   { name:'WIDE',     key:'rlp_band_wide',  gap:'rlp_gap_wide',  rungs:[1,2,3,4,5,6],           min:5, max:6 },
@@ -85214,7 +85199,6 @@ function roadtripStop(){ rtClearTimers(); rtPhase='menu'; }
 // Every edit is written straight to localStorage. The tuner used to hold its
 // work in memory alone, so a reload, a crash or a fresh build threw the lot away
 // without ever saying so.
-const RT_TUNE_KEY = 'intonare_rt_legtune';
 function rtTuneSave(){
   try{
     const out={};
@@ -87084,7 +87068,7 @@ var tonalePos = 0.5;          // slider position 0..1 (bottom..top)
 var tonaleState = 'idle';     // idle | listening | answering | revealed | done
 var tonaleOsc = null, tonaleGain = null, tonaleCtx = null;
 var tonaleOctOsc = null, tonaleOctGain = null; // octave-up doubler for low-freq audibility
-var tonaleRAF = null, tonaleWavePhase = 0, tonaleHue = 0;
+var tonaleRAF = null, tonaleWavePhase = 0;
 var tonaleWaveFreq = 220;      // smoothed (eased) display frequency
 var tonaleWaveAmp = 0;         // smoothed amplitude (flops in/out)
 var tonaleWaveColorT = 0.75;   // palette position, cycles slowly
@@ -87772,7 +87756,7 @@ function tonaleShowReveal(target, guess, cents, pts) {
 }
 
 // ── A/B comparison player ──
-var tonaleCmp = null, tonaleCmpOn = false, tonaleCmpStep = 0, tonaleCmpAudible = false;
+var tonaleCmp = null, tonaleCmpOn = false, tonaleCmpAudible = false;
 var tonaleCmpTimers = [], tonaleCmpAutoTO = null;
 var tonaleCmpOscA = null, tonaleCmpGainA = null, tonaleCmpOscB = null, tonaleCmpGainB = null;
 
@@ -94836,7 +94820,6 @@ try {
   // Progression: the BPM pill's groove name and the preset cards.
   registerRelabel('toolProgression', function () {
     if (typeof progRenderModal === 'function') progRenderModal();
-    if (typeof progUpdateBpmDisplay === 'function') progUpdateBpmDisplay();
   });
   // Chord Ear: pool chips and answer buttons render chord quality names.
   registerRelabel('exChordEar', function () { if (typeof ceInit === 'function') ceInit(); });
@@ -94954,7 +94937,6 @@ function setLang(lang) {
   try { gssInit && gssInit(); } catch(e) {}
   try { pccInit && pccInit(); } catch(e) {}
   try { pssInit && pssInit(); } catch(e) {}
-  try { dkBuildPresetCategoryTabs && dkBuildPresetCategoryTabs(); } catch(e) {}
   // The tabs were rebuilt but not the LIST, so preset names kept the previous
   // language until the panel was reopened. That is what "nothing updated when I
   // switched" looked like on the drum tray.
@@ -95661,8 +95643,6 @@ function _restainStaves() {
     if (typeof srRenderKeyPool === 'function' &&
         document.getElementById('srKeyPoolModal')?.classList.contains('active')) srRenderKeyPool();
   } catch (e) {}
-  try { if (vis('exRhythmRead') && typeof rrRender === 'function') rrRender(); } catch (e) {}
-  try { if (typeof chdRenderAll === 'function' && vis('toolChords')) chdRenderAll(); } catch (e) {}
 }
 
 function applyAppearance() {
@@ -95732,7 +95712,6 @@ function applyDarkDepth() {
   }
   const wrap = document.getElementById('smDarkRow');
   if (wrap) wrap.style.display = document.body.classList.contains('light') ? 'none' : '';
-  try { if (typeof _repaintThemedCanvases === 'function') _repaintThemedCanvases(); } catch (e) {}
 }
 
 // ── LIGHT BRIGHTNESS ──────────────────────────────────────────────────────
@@ -95764,8 +95743,6 @@ function applyLightBright() {
   // The control is meaningless in dark mode, so it only appears when light is active.
   const wrap = document.getElementById('smLightRow');
   if (wrap) wrap.style.display = document.body.classList.contains('light') ? '' : 'none';
-  // Canvases bake their colors in at draw time and cannot see a class change.
-  try { if (typeof _repaintThemedCanvases === 'function') _repaintThemedCanvases(); } catch (e) {}
 }
 
 function setAppearance(mode) {
@@ -95860,8 +95837,6 @@ const SF_FAMS = [
   { fam:'bowed',   lbl:'STRINGS', key:'sf_fam_strings', ex:'violin · cello',   exKey:'sf_ex_strings' },
   { fam:'plucked', lbl:'FOLK',    key:'sf_fam_folk',    ex:'mandolin · banjo', exKey:'sf_ex_folk' },
 ];
-// Fretted instruments only: a capo on a violin is meaningless.
-const SF_CAPO_FAMS = ['guitar','bass','uke','plucked'];
 let sfChromatic = false;
 // Simple's own target, kept separate from the guide's `selectedInstrument`.
 // Simple asks the coarse question; the guide holds the specific tuning. Sharing
@@ -97111,7 +97086,7 @@ function renderCueDropdowns() {
 //    rule one stray tap cuts a celebration in half. A feel of lower rank than the one
 //    playing is dropped. Equal or higher always plays.
 //  - Plain UI taps are rate limited, so a six string strum is not six motor kicks.
-const HD_L = [0, 0.40, 0.80, 0], HD_M = [0, 0.65, 0.55, 0], HD_H = [0, 1.00, 0.35, 0];
+const HD_L = [0, 0.40, 0.80, 0], HD_M = [0, 0.65, 0.55, 0];
 // A swell (i0 < i1) or a fade (i0 > i1) as back to back 40 ms steps.
 function _hdSwell(t0, dur, i0, i1, sharp, stepMs) {
   const out = [], step = stepMs || 40, n = Math.max(1, Math.round(dur / step));
@@ -97656,8 +97631,7 @@ function buildAutoChips(rowId, flagGetter, flagSetter, labels) {
   });
 }
 
-// ── Streak milestone system (restored from 0.74.2; shared by all ear-training modules) ──
-const STREAK_MILESTONES = [5, 10, 15, 20, 25, 30, 35, 40];
+// ── Streak milestone system (shared by all ear-training modules) ──
 // XP for reaching each tier, paid every time a streak reaches it. Reaching 5 again after a
 // broken streak is the same work as the first time, so it pays the same.
 // Chord Ear and Polyrhythm pass noXp, because they already pay their own streak XP.
@@ -97922,7 +97896,6 @@ function refreshAllNoteDisplays() {
   try { rebuildScaleSelect && rebuildScaleSelect(); } catch(e) {}
   try { droneRenderTonic && droneRenderTonic(); } catch(e) {}
   try { scaleRenderTape && scaleRenderTape(false); } catch(e) {}
-  try { ivRenderTarget && ivRenderTarget(); } catch(e) {}
   // Transposer: re-render key grids if currently open
   try { if (currentTool === 'transpose') tpBuildGrids(); } catch(e) {}
   try { if (currentTool === 'cof') { cofDraw(); cofUpdateInfo(); } } catch(e) {}
@@ -98432,8 +98405,6 @@ const ACH_ICONS = {
   musician:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6" fill="currentColor" opacity="0.1"/><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z" fill="currentColor" opacity="0.3"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" fill="currentColor" opacity="0.3"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>`,
   master:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M5 7l7-5 7 5" fill="currentColor" opacity="0.2"/><path d="M5 7l7-5 7 5"/><path d="M5 17l7 5 7-5" fill="currentColor" opacity="0.2"/><path d="M5 17l7 5 7-5"/><line x1="3" y1="12" x2="21" y2="12" opacity="0.4"/></svg>`,
   maestro:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.8 7.8L22 10l-5.8 5 2 7.8L12 19l-6.2 3.8 2-7.8L2 10l7.2-.2z" fill="currentColor" opacity="0.25"/><path d="M12 2l2.8 7.8L22 10l-5.8 5 2 7.8L12 19l-6.2 3.8 2-7.8L2 10l7.2-.2z"/><circle cx="12" cy="11.5" r="3" fill="currentColor" opacity="0.4"/></svg>`,
-  more_cowbell:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M18 8c0-3.3-2.7-6-6-6S6 4.7 6 8v8l-2 4h16l-2-4V8z"/><line x1="12" y1="2" x2="12" y2="8"/><circle cx="12" cy="11" r="2" fill="currentColor" stroke="none"/></svg>`,
-  hard_days_night:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
   everything_right_place:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
   adventurer:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.15"/><circle cx="12" cy="12" r="9"/><polygon points="12,4.5 13.6,10.4 19.5,12 13.6,13.6 12,19.5 10.4,13.6 4.5,12 10.4,10.4" fill="currentColor" opacity="0.55" stroke="none"/><polygon points="12,4.5 13.6,10.4 12,12 10.4,10.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>`,
   zelda:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L21 19H3L12 3z" fill="currentColor" opacity="0.2"/><path d="M12 3L21 19H3L12 3z"/><line x1="12" y1="9" x2="12" y2="17"/><line x1="10" y1="11" x2="14" y2="11"/><polygon points="11,9 13,9 12,7" fill="currentColor" stroke="none"/></svg>`,
@@ -103518,11 +103489,6 @@ let dk_mutedTracks = new Set();
 // idempotent, safe to call when nothing is loaded, and called from every
 // stop path rather than only the happy one.
 // ─────────────────────────────────────────────────────────────────────────────
-const RC_FIELDS = [
-  'dk_bpm', 'dk_swingPct', 'dk_timeSigKey', 'dk_numSteps', 'dk_globalSub',
-  'dk_trackSub', 'dk_barCount', 'dk_currentKit', 'dk_patterns', 'dk_trackVols',
-  'dk_mutedTracks',
-];
 
 function _rcCapture() {
   // dk_bpm is deliberately NOT part of a context. Tempo is still one shared
@@ -104933,9 +104899,6 @@ function _tripletFills(beats, sub) {
   return [];
 }
 
-// Cycle through available subs for a track: null(global) → 3 → 6 → null
-const TRACK_SUB_CYCLE = [null, 3, 6];
-
 // Build a track-local ts object with per-track sub applied
 function _makeTrackTS(trackId, tsBase) {
   const sub   = _trackEffSub(trackId);
@@ -104945,7 +104908,6 @@ function _makeTrackTS(trackId, tsBase) {
   return { ...tsBase, sub, steps, fills };
 }
 
-const GLOBAL_TRIPLET_CYCLE  = [null, 3, 6];
 const GLOBAL_TRIPLET_LABELS = {null:'T', 3:'T8', 6:'T16'};
 let dk_globalTriplet = null; // null=off, 3=T8, 6=T16
 
@@ -105075,7 +105037,6 @@ function _updateArrows() {
   if (r) r.disabled = dk_viewBar === dk_barCount - 1;
 }
 
-const GLOBAL_SUB_CYCLE  = [1, 2, 4, 8];
 const GLOBAL_SUB_LABELS = {4:'16', 8:'32', 2:'8', 1:'4', 3:'T8', 6:'T16'};
 
 
@@ -121056,9 +121017,6 @@ function trpStop() {
   if (typeof fluteTrillPulseTimer !== 'undefined' && fluteTrillPulseTimer) {
     clearInterval(fluteTrillPulseTimer); fluteTrillPulseTimer = null;
   }
-  if (typeof fluteTrillNode !== 'undefined' && fluteTrillNode && typeof fluteTrillAudioStop === 'function') {
-    fluteTrillAudioStop();
-  }
   trpPlayTimers.forEach(t => clearTimeout(t));
   trpPlayTimers = [];
   trpPlayTimer  = null;
@@ -122775,8 +122733,6 @@ function setOrganPercVol(v) {
   organPercVol = v;
   _organRefreshControls();
 }
-// V/C selector sequence (off + 6 positions clockwise around the dial)
-const VC_SEQUENCE = ['off','v3','c3','v1','c1','v2','c2'];
 // Exact angle for each position so the indicator points directly at its label
 function vcKnobAngle(v) {
   const map = { off: 0, v3: 0, c3: 60, v1: 120, c1: 180, v2: 240, c2: 300 };
@@ -133360,24 +133316,6 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
           </div>
         </div>
         </div>
-  <div class="mq-screen" id="mqScreenWin">
-          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 0 8px;text-align:center;">
-            <div style="font-size:52px;animation:mqSkullIn .4s cubic-bezier(.34,1.35,.64,1)">🏆</div>
-            <div style="font-family:'Bebas Neue','GlyphFix',sans-serif;font-size:32px;letter-spacing:3px;background:linear-gradient(135deg,var(--metro),var(--in-tune));-webkit-background-clip:text;background-clip:text;color:transparent;" data-i18n="mq_cleared">CLEARED!</div>
-            <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:8.5px;letter-spacing:1.5px;color:var(--muted);margin-top:2px;" data-i18n="mq_every_question_answered">every question answered</div>
-            <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:9px;letter-spacing:1px;color:var(--text-dim);padding:5px 14px;background:var(--panel);border:1px solid var(--border-soft);border-radius:20px;margin-top:4px;" id="mqWinPackName"></div>
-          </div>
-          <div class="mq-stats-grid">
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqWinScore" style="color:var(--metro)">—</div><div class="mq-stat-lbl" data-i18n="mq_score">SCORE</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqWinCorrect" style="color:var(--in-tune)">—</div><div class="mq-stat-lbl" data-i18n="mq_correct">CORRECT</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqWinBest" style="color:var(--accent-warm)">—</div><div class="mq-stat-lbl" data-i18n="mq_streak">STREAK</div></div>
-          </div>
-          <button class="mq-review-btn" id="mqWinReviewBtn" onclick="mqShowMissReview()" style="display:none;margin-bottom:10px" data-i18n="mq_review_misses">REVIEW MISSES &#8594;</button>
-          <div class="mq-res-btns">
-            <button class="mq-res-btn primary" onclick="mqPlayAgain()" data-i18n="mq_play_again">PLAY AGAIN</button>
-            <button class="mq-res-btn secondary" onclick="mqGoLanding()" data-i18n="mq_done">DONE</button>
-          </div>
-        </div>
   <div class="mq-screen" id="mqScreenResults">
           <div id="mqSurvivalEnd" style="display:none">
             <div class="mq-survival-end">
@@ -133442,25 +133380,6 @@ if (/^(https?|capacitor):/.test(location.protocol)) { const s = document.createE
           <button class="mq2r-btn" id="mq2rDone" onclick="mqGoLanding()" data-i18n="mq_done">DONE</button>
         </div>
       </div>
-  <div class="mq-screen" id="mqScreenDailyResult">
-          <div style="text-align:center;padding-top:6px;">
-            <div data-i18n="mq_daily_quiz" style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:8px;letter-spacing:2px;color:var(--accent-warm);margin-bottom:3px;">DAILY QUIZ</div>
-            <div style="font-family:'JetBrains Mono','GlyphFix',monospace;font-size:8px;letter-spacing:1px;color:var(--muted)" id="mqDailyResDate"></div>
-          </div>
-          <div class="mq-daily-score-big" id="mqDailyResScore">—</div>
-          <div class="mq-daily-score-denom" id="mqDailyResDenom">/ 10 correct</div>
-          <div class="mq-daily-emoji-grid" id="mqDailyResEmoji"></div>
-          <div class="mq-stats-grid" style="margin-bottom:12px;">
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResPct" style="color:var(--accent-warm)">—</div><div class="mq-stat-lbl" data-i18n="mq_accuracy">ACCURACY</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResStreak" style="color:var(--accent-soft)">—</div><div class="mq-stat-lbl" data-i18n="mq_best_streak">BEST STREAK</div></div>
-            <div class="mq-stat-box"><div class="mq-stat-val" id="mqDailyResXP" style="color:var(--in-tune)">—</div><div class="mq-stat-lbl" data-i18n="mq_xp_earned">XP EARNED</div></div>
-          </div>
-          <button class="mq-review-btn" id="mqDailyReviewBtn" onclick="mqShowMissReview()" style="display:none;margin-bottom:10px" data-i18n="mq_review_misses">REVIEW MISSES &#8594;</button>
-          <button class="mq-daily-share-btn" onclick="mqDailyShare()"><span data-i18n="mq_share_result">&#128203;  SHARE RESULT</span></button>
-          <div class="mq-res-btns" style="margin-top:12px;">
-            <button class="mq-res-btn secondary" onclick="mqGoLanding()" data-i18n="mq_done">DONE</button>
-          </div>
-        </div>
   <div class="mq-screen" id="mqScreenReview">
           <div style="position:relative;display:flex;align-items:center;justify-content:center;padding-bottom:8px;border-bottom:1px solid var(--border-soft);margin-bottom:4px;min-height:24px;">
             <button class="mq-back-btn" onclick="mqReviewBack()" style="position:absolute;left:0;top:50%;transform:translateY(-50%);">
@@ -136804,26 +136723,6 @@ async function mqStartSurvival() {
     mqBuildAndStart();
   } catch (e) { console.warn('[intonare] mqStartSurvival failed:', e); }
 }
-function mqToggleSurvivalPack(id) {
-  if (!mqPackReady(id)) return;
-  if (MQ.survivalPacks.has(id)) {
-    // The default selection is every key in PACKS, coming-soon ones included,
-    // and those can never be toggled off. Counting the whole set therefore let
-    // you deselect every playable pack and still pass the guard, leaving nothing
-    // highlighted and a pool that cannot deal a question. Count only what is
-    // actually selectable.
-    var readySel = 0;
-    MQ.survivalPacks.forEach(function (p) { if (mqPackReady(p)) readySel++; });
-    if (readySel <= 1 && !MQ.survivalOnlineCatSelected) return;
-    MQ.survivalPacks.delete(id);
-  } else {
-    MQ.survivalPacks.add(id);
-    // Selecting regular pack clears bands
-    MQ.survivalOnlineCatSelected = null;
-    mqUpdateSurvivalOnlineChipUIs();
-  }
-  mqRenderSurvivalPackGrid();
-}
 // ── Pack groups ───────────────────────────────────────────
 
 // ── Lucide line-icons for Music Quiz (Pass 1) ───────────────────────────────
@@ -138259,10 +138158,6 @@ function mqGenDegree(d) {
   };
 }
 
-// ── Chord function ───────────────────────────────────────────────────────────
-// The triad is written as naturals and the signature supplies the accidentals,
-// so a chord in five sharps needs no inline signs and cannot be misspelled.
-var MQ_ROMAN = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii\u00b0'];
 // ── Enharmonics ──────────────────────────────────────────────────────────────
 // Each side carries its own spelling rather than a midi number, because midi
 // cannot express an F flat: the pitch is E, and deriving the notehead from the
@@ -140055,12 +139950,6 @@ function mqStreakMult(streak) {
   return 1;
 }
 
-// The milestones the quiz already fires hapticMilestone on.
-// 20 characters is where a tile still holds two comfortable lines at 15px in a
-// half-width column on a 360px phone. Measured over the real packs, 32.5% of
-// questions clear it; the rest get the single column instead of being truncated.
-var MQ2_TILE_MAX = 20;
-
 var MQ2_TICK  = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l4.5 4.5L17 5"/></svg>';
 var MQ2_CROSS = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 4l12 12M16 4L4 16"/></svg>';
 
@@ -141836,13 +141725,12 @@ function mqDailyShareFeedback() {
   // button matched first even when hidden, so the v2 results screen copied
   // with no visible feedback at all and the tap read as a dud.
   var cands = [document.getElementById('mq2rShare'),
-               document.querySelector('#mqScreenDailyResult .mq-daily-share-btn'),
                document.getElementById('mqDailyPopShareBtn')];
   var btn = null;
   for (var i = 0; i < cands.length; i++) {
     if (cands[i] && cands[i].offsetParent !== null) { btn = cands[i]; break; }
   }
-  if (!btn) btn = cands[0] || cands[1] || cands[2];
+  if (!btn) btn = cands[0] || cands[1];
   if (!btn) return;
   if (btn._orig == null) btn._orig = btn.textContent;
   btn.textContent = '\u2713 COPIED';
@@ -141962,8 +141850,8 @@ function _backQuizStep() {
   var scr = document.querySelector('.mq-screen.active');
   var id  = scr ? scr.id : '';
   if (id === 'mqScreenQuiz' || id === 'mqScreenLoading') { mqQuitQuiz(); return; }
-  if (id === 'mqScreenReview' || id === 'mqScreenDailyResult') { mqShowScreen('mqScreenResults'); return; }
-  if (id === 'mqScreenCustom' || id === 'mqScreenResults' || id === 'mqScreenWin') { mqGoLanding(); return; }
+  if (id === 'mqScreenReview') { mqShowScreen('mqScreenResults'); return; }
+  if (id === 'mqScreenCustom' || id === 'mqScreenResults') { mqGoLanding(); return; }
   mqClose();
 }
 

@@ -507,6 +507,12 @@ CHECKS = [
         'absent', 'function _thmnTopMidi(', 0),
     ('CLEANUP', 'Dead function bowedPosLabel stays removed',
         'absent', 'function bowedPosLabel(', 0),
+    ('CLEANUP', 'Dead function mqToggleSurvivalPack stays removed (the picker deals the survival pool now)',
+        'absent', 'function mqToggleSurvivalPack(', 0),
+    ('CLEANUP', 'Old Music Quiz win screen stays removed',
+        'absent', 'id="mqScreenWin"', 0),
+    ('CLEANUP', 'Old Music Quiz daily result screen stays removed',
+        'absent', 'id="mqScreenDailyResult"', 0),
     ('CLEANUP', 'Dead function ceSetPreset stays removed',
         'absent', 'function ceSetPreset(', 0),
     ('CLEANUP', 'Dead function chordGetNoteNames stays removed',
@@ -665,9 +671,6 @@ EXACT_PINS = [
     ('MUSIC QUIZ', 'the pack hint counts only playable packs',
         "var total = Object.keys(PACKS).filter(mqPackReady).length;",
         ['var n = MQ.selectedPacks.size, total = Object.keys(PACKS).length;']),
-    ('MUSIC QUIZ', 'survival cannot be emptied of playable packs',
-        'MQ.survivalPacks.forEach(function (p) { if (mqPackReady(p)) readySel++; });',
-        ['if (MQ.survivalPacks.size <= 1 && !MQ.survivalOnlineCatSelected) return;']),
 
     # ── Five songs signed off on-device (v0.115.0) ────────────────────────
     # Hand-tuned legs. If RT_TUNED empties out, the tuner starts badging them
