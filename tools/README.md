@@ -1,98 +1,71 @@
-# Claude tooling triage (Sep 2026)
+# Tools
 
-Source: `intonare_project_files.zip` → staged under `tools/`.
-Original inventory dated **21 Aug 2026 / v0.150.x**. App is now **v0.210.66**.
-Treat every script as **useful but possibly stale** until it has a clean run
-against the current `Intonare.html`.
+Checks and helpers for `Intonare.html`. The app does not need this folder to run or to build. It is the test suite.
 
-## Decision
+## Ship check
 
-Start lean. Do **not** run thirty audits before every edit.
-Keep the high-value gates; run area tools only when touching that area;
-leave the rest archived.
-
-## Ship check (daily gate)
-
-From the repo root, or double-click / run:
+Run this before every release:
 
 ```
 tools\ship_check.bat
 ```
 
-Runs: HTML integrity → regression sentinel → changelog gate. Exit 0 = green.
+It runs nine steps and stops at the first failure:
 
-Integrity gate (`intonare_html_integrity.py`) fails on truncate, sudden
-shrink vs HEAD (including the Windows CRLF→LF rewrite), missing `</html>`,
-or wild brace imbalance. Patch `Intonare.html` with `tools/patch_intonare.py`
-(bytes-safe), not `read_text`/`write_text`.
+1. HTML integrity (file size, end tag, brace balance, no sudden shrink against the last commit)
+2. Regression sentinel
+3. Changelog gate
+4. Achievement audit
+5. Backup audit
+6. Drum preset audit
+7. US spelling audit
+8. Search audit
+9. Boot smoke test
 
-Web PWA: `sw.js` is network-first for the app shell; Capacitor never
-registers a service worker (native bundle is the source of truth).
+Steps 8 and 9 use a headless browser. They are skipped with a warning if Playwright is not installed.
 
-## Needs Python first
+Requirements: Python 3, then `pip install playwright` and `playwright install chromium`.
 
-This machine had no `python` / `py` on PATH when imported. Install Python 3
-(and enable "Add to PATH") before any of these scripts will run.
+## `audits/`
 
-## Keep — `tools/audits/` (ship / regression)
+Each script takes the path to `Intonare.html` unless noted, and exits non-zero on failure.
 
-| File | Role |
+| Script | What it checks |
 |---|---|
-| `intonare_regression_sentinel.py` | Pins past fixes. Highest value. Renamed from `…-6.py`. |
-| `intonare_changelog_gate.py` | Changelog top = HTML version (Codemagic also checks this). |
-| `intonare_light_gate.py` | Light-mode NEON / ROLE static + Playwright LIVE AA (Tools). |
-| `intonare_light_shots.py` | Light screenshots for `light-mode/review.html`. Default `--family train` (Train+Tuner+Metro). Tools: `--family tools`. |
-| `intonare_backup_audit.py` | Backup/restore key coverage |
-| `intonare_stopall_audit.py` | Audio stop wiring |
-| `intonare_us_spelling_audit.py` | American English ship check |
-| `intonare_audio_handle_audit.py` | Node tracking / release |
-| `intonare_scale_audit.py` | Scale spelling / pitch classes |
-| `intonare_drum_preset_audit.py` | Drum presets |
-| `intonare_groove_audit.py` | Groove patterns |
-| `intonare_i18n_audit.py` | Translation coverage (slow) |
-| `intonare_dev_flag_audit.py` | Dev-flag / Pro leakage |
-| `intonare_boot_smoke.py` | Opens every tool, exercise and game in a headless browser. Fails on any error. Needs Playwright. |
-| `glyphnames.json`, `classes.json` | Needed by notation audit if revived |
+| `intonare_html_integrity.py` | The file is whole: size, end tag, brace balance, no CRLF damage |
+| `intonare_regression_sentinel.py` | Every past fix is still in the file. One pin per fix |
+| `intonare_changelog_gate.py` | The top changelog entry matches the app version |
+| `intonare_achievement_audit.py` | Every achievement can be earned, and stays locked one step short |
+| `intonare_backup_audit.py` | Every saved key is either in the backup or skipped on purpose |
+| `intonare_drum_preset_audit.py` | Drum presets fit their time signature and step grid |
+| `intonare_us_spelling_audit.py` | User-facing English uses American spelling |
+| `intonare_search_audit.py` | Real searches return the modules they should |
+| `intonare_boot_smoke.py` | Every tool, exercise and game opens without an error |
+| `intonare_taint_audit.py` | Saved text (presets, saves, sessions) can never reach the page as markup. Needs Playwright |
+| `intonare_stopall_audit.py` | Every sound source is covered by the stop-all function |
+| `intonare_audio_handle_audit.py` | Audio nodes are tracked and released |
+| `intonare_scale_audit.py` | Scale spellings and pitch classes are correct |
+| `intonare_groove_audit.py` | Groove patterns are well formed |
+| `intonare_i18n_audit.py` | User-facing strings have an Italian translation (slow) |
+| `intonare_dev_flag_audit.py` | Developer tools cannot be reached or grant Pro in a release build |
+| `intonare_light_gate.py`, `intonare_light_vars.py`, `intonare_light_shots.py` | Light mode contrast and leftover dark-mode colors |
 
-Suggested ship order once Python works:
+Run the area audits (audio, scales, grooves, translations, light mode) when a change touches that area. They are not part of the ship check because some of them are slow.
 
-1. `node` script-block check (manual / existing habit)
-2. `python tools/audits/intonare_regression_sentinel.py Intonare.html`
-3. `python tools/audits/intonare_changelog_gate.py`
-4. spelling + backup + stopall if the change touched those areas
+## `pitch/`
 
-## Keep — `tools/pitch/` (before detector changes)
+An offline benchmark for the pitch detector. It generates test tones, runs the same detector the app uses, and compares the result with a stored baseline.
 
-Offline FFT-YIN regression: synth corpus, cents/dropout gates, app knob
-pins. Run `tools\pitch_bench.bat` (or see `tools/pitch/README.md`).
-Not part of daily `ship_check.bat` yet; run when touching mic / pitch.
+```
+tools\pitch_bench.bat
+```
 
-Pack build/audit/voice/Italian tools + `QUIZ_TOOLING.md` + `QUIZ_VOICE.md`.
-Do **not** overwrite `docs/QUIZ_BLURB_GUIDE.md` or `docs/AI_COPY_GUIDE.md`;
-the repo copies are the live guides (zip blurb guide was smaller/older).
+Run it before and after any change to microphone or pitch code. It needs Node.
 
-## Keep — `tools/docs/` (reference, not auto-run)
+## `patch_intonare.py`
 
-`AUDIT_INVENTORY.md` (historical), `GROOVE_AUDIT.txt`, Bret SVG guide,
-vocal module spec, instrument ledger, store `App_Description.md`,
-`QUIZ_SPEC.md`.
+Applies an exact text replacement to `Intonare.html` and keeps the file's line endings and size intact. Each old string must match exactly once. It runs the integrity check after writing and restores the file if that check fails.
 
-## Archived — `tools/_incoming_archive/`
-
-Full zip contents for archaeology. Includes one-shot allowlists,
-older duplicate guides, JS harnesses, calibrators, etc. Do not put these
-on a daily path until someone re-validates them on v0.210+.
-
-## Do not use blindly
-
-- Paths hard-coded to `/home/claude/...` (fix or set `INTONARE_HTML`)
-- `AUDIT_INVENTORY` “run before every ship” list as gospel; refresh after
-  a clean sentinel run on current HTML
-- Zip copies of `AI_COPY_GUIDE.md` / `QUIZ_BLURB_GUIDE.md` over repo `docs/`
-
-## Next steps (when you want)
-
-1. Install Python 3 for Windows.
-2. Run the sentinel once; fix or retire dead pins.
-3. Add a tiny `tools/ship_check.bat` that runs sentinel + changelog gate.
-4. Delete `_claude_import/` after you’re happy (duplicate of archive).
+```
+python tools/patch_intonare.py --old "unique old text" --new "replacement"
+```

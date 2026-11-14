@@ -10,7 +10,7 @@ Usage:  python3 intonare_groove_audit.py [path/to/Intonare.html] [> GROOVE_AUDIT
 WHY THIS EXISTS
     The previous version of this script only read comments sitting ABOVE the
     `id:` line, so any groove documented below its id read as undocumented. That
-    inflated the unverified count from 8 to 20 and sent a whole session chasing
+    inflated the unverified count from 8 to 20 and wasted time on
     grooves that were already fine. This version reads the entire object.
 
 STATUS CLASSES

@@ -6,7 +6,7 @@ Two failures this catches, both of which happened for real:
 
   1. NEWEST AT TOP. The file's own header says so. Entries were appended to the
      BOTTOM for nine consecutive versions, so the top of the file still advertised
-     a version from before the session started. Nobody reading it would have known.
+     a version nine releases old. Nobody reading it would have known.
 
   2. TOP ENTRY MATCHES THE SHIPPED VERSION. A version bump in Intonare.html with no
      matching changelog entry means the log silently falls behind the build.

@@ -19,16 +19,14 @@ workflows:
       node: 22
       xcode: latest
 
-    # AUTOMATIC BUILDS ARE OFF.
+    # Builds start by hand: use "Start new build" in Codemagic. There is no
+    # `triggering:` block, so a git push does not start one. Most pushes are
+    # web-only changes to Intonare.html and do not need a new IPA.
     #
-    # There is no `triggering:` block, so a git push does NOT start a build. Use "Start
-    # new build" in Codemagic when you actually want an IPA.
+    # Native changes (entitlements, Info.plist, the Swift plugin, the URL
+    # scheme) only take effect in a fresh build.
     #
-    # Why: most pushes are web-code changes to Intonare.html, which are tested on
-    # Android (or the browser) without needing a native iOS build at all. Building an
-    # IPA for each of those burns credits for nothing.
-    #
-    # TO TURN AUTOMATIC BUILDS BACK ON, put this back above `scripts:`:
+    # To build on every push to main, add this above `scripts:`:
     #
     #   triggering:
     #     events:
@@ -37,10 +35,6 @@ workflows:
     #       - pattern: main
     #         include: true
     #         source: true
-    #
-    # Note that NATIVE changes still need a build to reach a device: anything touching
-    # the entitlements, Info.plist, the Swift plugin, or the URL scheme only takes
-    # effect in a fresh IPA. Push alone will not do it.
 
     scripts:
 
@@ -87,22 +81,17 @@ workflows:
           echo "--- audio folders ---"
           ls -la www/audio/ || true
 
-          # The launch sound, for iOS.
-          #
-          # The Android source is Vorbis (.ogg), which iOS cannot decode at all.
-          # Transcode to AAC and drop it in www/audio/, which Capacitor copies into
-          # the bundle as public/audio/ — a folder that is ALREADY a registered
-          # Xcode resource (it is how the whole app loads). So the sound ships with
-          # no pbxproj surgery, which matters because `cap add ios` regenerates the
-          # project file every build.
+          # The launch sound for iOS. The Android source is Vorbis (.ogg), which iOS
+          # cannot decode. Transcode it to AAC into www/audio/. Capacitor already
+          # copies that folder into the bundle, so the Xcode project file needs no
+          # edit. That matters because `cap add ios` regenerates it on every build.
           SPLASH_SRC="native_src/res/raw/intonare_splash.ogg"
           if [ ! -f "$SPLASH_SRC" ]; then
             echo "FATAL: $SPLASH_SRC not found; the iOS launch sound would be silent."
             exit 1
           fi
 
-          # ffmpeg is usually present on Codemagic's macOS images, but "usually" is
-          # not a build guarantee. Install it if it is missing rather than failing.
+          # Install ffmpeg if the build image does not have it.
           if ! command -v ffmpeg >/dev/null 2>&1; then
             echo "ffmpeg not found; installing via Homebrew."
             brew install ffmpeg
@@ -122,16 +111,11 @@ workflows:
         script: |
           set -e
 
-          # A previous fix attempt set server.iosScheme to "https". That value is
-          # invalid — Capacitor's docs on iosScheme: "Can't be set to schemes that
-          # the WKWebView already handles, such as http or https" — and it is
-          # silently ignored rather than rejected. Remove it if present so it does
-          # not sit in the config looking intentional.
+          # server.iosScheme must not be "http" or "https". Capacitor ignores those
+          # values without an error, so remove one if it is present.
           #
-          # The actual fix for fetch() failing against capacitor://localhost is in
-          # the app itself: _fetchBuffer falls back to XMLHttpRequest, which goes
-          # through WKWebView's ordinary resource-loading path (the same one
-          # <script> tags use) and CAN read the custom scheme.
+          # The app reads capacitor://localhost through XMLHttpRequest when fetch()
+          # fails (_fetchBuffer in Intonare.html), so no scheme change is needed.
 
           if [ ! -f capacitor.config.json ]; then
             echo "FATAL: capacitor.config.json not found at repo root."
@@ -209,28 +193,21 @@ workflows:
           $PB -c "Delete :CFBundleDevelopmentRegion" "$PLIST" 2>/dev/null || true
           $PB -c "Add :CFBundleDevelopmentRegion string en" "$PLIST"
 
-          # Localized permission strings.
+          # Localized permission strings. The plist value above is the fallback for
+          # a device language with no .lproj folder. The Italian text goes in
+          # it.lproj/InfoPlist.strings.
           #
-          # The plist value above is the FALLBACK, used when the device language
-          # has no .lproj. The Italian one lives in it.lproj/InfoPlist.strings.
-          #
-          # THE OPEN QUESTION: strictly, a .lproj must be registered in the Xcode
-          # project as a resource to be copied into the bundle, and editing
-          # project.pbxproj from a script is exactly the fragile nonsense this
-          # pipeline has avoided all along. The bet here is that `cap add ios`
-          # registers the App/App folder's contents, so a .lproj dropped inside it
-          # gets copied without any pbxproj surgery.
-          #
-          # If the Italian prompt does not appear on an Italian device, that bet
-          # was wrong and the .lproj is not reaching the bundle. The fix would then
-          # be a pbxproj patch, or moving to an InfoPlist.xcstrings catalogue.
+          # This relies on `cap add ios` registering the contents of App/App, so a
+          # .lproj folder placed there is copied into the bundle with no project
+          # file edit. If the Italian prompt does not show on an Italian device,
+          # the folder is not reaching the bundle. The fix is then a pbxproj patch
+          # or an InfoPlist.xcstrings catalog.
           for LANG in en it; do
             mkdir -p "ios/App/App/$LANG.lproj"
           done
 
-          # Written by python, not shell: the Italian string needs a real 'ne'
-          # with an acute accent, and getting a UTF-8 accented character through
-          # bash quoting inside an indented YAML block is a fight not worth having.
+          # Written with python: the Italian string has accented characters, and
+          # they do not survive bash quoting inside an indented YAML block.
           python3 -c "
           import io
           EN = 'Intonare uses the microphone to detect the pitch of your instrument or voice for tuning and ear-training exercises. Audio is processed on your device and never recorded or transmitted.'
@@ -258,16 +235,11 @@ workflows:
           $PB -c "Delete :ITSAppUsesNonExemptEncryption" "$PLIST" 2>/dev/null || true
           $PB -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
 
-          # ── Deep links: register the intonare:// scheme ────────────────────
-          # Shared daily results (Chordle, Tonale, Diadle) carry an https link to a
-          # bounce page, which tries intonare://<module> and falls back to the store
-          # if nothing intercepts it. This is the half that does the intercepting.
-          #
-          # Custom scheme rather than Universal Links, for now: Universal Links need
-          # the Apple Team ID and a verified apple-app-site-association file served
-          # from the domain, which needs the app to exist on the App Store first.
-          # The shared URL is https either way, so switching to Universal Links later
-          # is purely additive -- no app change, no change to any link already sent.
+          # Deep links: register the intonare:// scheme.
+          # Shared daily results carry an https link to a bounce page. That page
+          # tries intonare://<module> and falls back to the store. This entry is
+          # what lets the app catch that link. Universal Links (below) open the app
+          # directly; the custom scheme stays as the fallback.
           $PB -c "Delete :CFBundleURLTypes" "$PLIST" 2>/dev/null || true
           $PB -c "Add :CFBundleURLTypes array" "$PLIST"
           $PB -c "Add :CFBundleURLTypes:0 dict" "$PLIST"
@@ -299,18 +271,16 @@ workflows:
           done
           echo "  Quick actions registered: $QA_INDEX"
 
-          # ── Universal Links: Associated Domains entitlement ─────────────────
-          # iOS fetches
+          # Universal Links: the Associated Domains entitlement.
+          # On install, iOS fetches
           #   https://lieutenantdan76.github.io/.well-known/apple-app-site-association
-          # on install, sees this app listed, and thereafter OWNS the URL: a shared
-          # link opens the app directly. No Safari, no bounce page, no tap.
+          # and from then on a shared link opens the app directly.
           #
-          # REQUIRES a one-off in the Apple Developer portal: Identifiers →
-          # com.lieutenantdan.intonare → tick Associated Domains. Without it the
-          # capability is missing from the provisioning profile and signing FAILS.
+          # Requires Associated Domains to be enabled for com.lieutenantdan.intonare
+          # in the Apple Developer portal. Without it, signing fails.
           #
-          # printf, not a heredoc: heredoc body sits at column 0, which terminates the
-          # YAML block scalar this script lives in and breaks the whole file.
+          # printf is used here because a heredoc body at column 0 would end the
+          # YAML block scalar that holds this script.
           ENT="ios/App/App/App.entitlements"
           if [ ! -f "$ENT" ]; then
             printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' '<plist version="1.0">' '<dict>' '</dict>' '</plist>' > "$ENT"
@@ -326,19 +296,10 @@ workflows:
             echo "  NOTE: CODE_SIGN_ENTITLEMENTS not in pbxproj — Capacitor 8 templates include it by default; if signing fails, that is the first thing to check."
           fi
 
-          # NOTE: CADisableMinimumFrameDurationOnPhone is deliberately NOT set.
-          #
-          # It unlocks 120 Hz for NATIVE Core Animation and has ZERO effect on
-          # WKWebView's rendering. Apple caps requestAnimationFrame at 60 fps inside
-          # WKWebView by design, for power reasons, and there is no public API to
-          # change it. The splash is a canvas rAF loop, so it runs at 60 on iOS and
-          # 120 on Android, and no plist key will fix that. Verified against the
-          # WebKit bug tracker and Apple's own forums after shipping the key and
-          # measuring no change (still 59.4 fps).
-          #
-          # The only real routes to 120 in a WebView are CSS/WAAPI composited
-          # animations (which are not rAF-bound) or WebKit private APIs (App Store
-          # rejection). Both are out of scope here.
+          # CADisableMinimumFrameDurationOnPhone is not set on purpose. It unlocks
+          # 120 Hz for native Core Animation only. WKWebView caps
+          # requestAnimationFrame at 60 fps and has no public API to change that,
+          # so the key has no effect on this app (measured: 59.4 fps with it set).
 
           echo "--- Info.plist after patch ---"
           $PB -c "Print" "$PLIST"
@@ -347,12 +308,10 @@ workflows:
         script: |
           set -e
 
-          # cap add ios writes a placeholder AppIcon.appiconset fresh every
-          # build, so the icon is injected here rather than committed. Xcode
-          # takes a single 1024x1024 and derives every other size.
-          #
-          # Apple rejects any alpha channel in an app icon at UPLOAD time, not
-          # at review. ios_icon/AppIcon-1024.png must be flat RGB.
+          # cap add ios writes a placeholder AppIcon.appiconset on every build, so
+          # the icon is copied in here. Xcode derives every size from one 1024x1024
+          # image. ios_icon/AppIcon-1024.png must be flat RGB: Apple rejects an
+          # alpha channel in an app icon at upload.
           ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
 
           if [ ! -f ios_icon/AppIcon-1024.png ]; then
@@ -458,18 +417,10 @@ workflows:
           # CFBundleShortVersionString - the human-facing version.
           agvtool new-marketing-version "$APP_VERSION"
 
-          # CFBundleVersion - what TestFlight shows in parentheses. Must be unique
-          # per marketing version.
-          #
-          # This used to read the latest build number back from TestFlight and add
-          # one. That query is scoped PER MARKETING VERSION, so every time the
-          # version string changed the count restarted and every build came out as
-          # (4): 0.81.1 (4), 0.81.2 (4), 0.81.3 (4). Legal, since Apple only needs
-          # uniqueness within a version, but useless for telling builds apart.
-          #
-          # $BUILD_NUMBER is Codemagic's own counter for this workflow. It only
-          # ever increases, it does not care about the marketing version, and it
-          # needs no API call that can fail quietly and fall back to a constant.
+          # CFBundleVersion: the build number TestFlight shows in parentheses. It
+          # must be unique within a marketing version. $BUILD_NUMBER is Codemagic's
+          # counter for this workflow. It only goes up and does not restart when
+          # the version string changes.
           agvtool new-version -all "$BUILD_NUMBER"
           echo "--- versions set ---"
           agvtool what-marketing-version
@@ -478,14 +429,10 @@ workflows:
       - name: Set up code signing
         script: |
           set -e
-          # The ios_signing block has already fetched the certificate and
-          # provisioning profile into the keychain. This just writes the
-          # signing settings into the Xcode project.
-          # No testFlightInternalTestingOnly flag any more. That flag marked builds
-          # as internal-only, which Apple never lets into App Review (the Add Build
-          # list on the App Store page greys them out). It was on while
-          # _iosBetaUnlock() gave Pro away free. Pro is a real StoreKit purchase
-          # now, so builds must be submittable.
+          # The ios_signing block has already put the certificate and provisioning
+          # profile in the keychain. This step writes the signing settings into the
+          # Xcode project. Builds are not marked internal-only, so they can be
+          # submitted for App Review.
           xcode-project use-profiles \
             --project "$CM_BUILD_DIR/$XCODE_PROJECT"
 
@@ -502,12 +449,9 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        # submit_to_testflight is deliberately NOT set. It submits the build to
-        # Apple's Beta App Review queue, which is only needed for external
-        # testers. The build still uploads and appears in TestFlight for
-        # internal testers without it, and internal testing needs no review.
-        # Turn it on only once _iosBetaUnlock() is gone and StoreKit IAP is
-        # wired, since a Pro unlock with no purchase path fails Guideline 3.1.1.
+        # submit_to_testflight is not set. It sends the build to Beta App Review,
+        # which only external testers need. Without it the build still uploads
+        # and internal testers can install it.
 
       email:
         recipients:

@@ -1,22 +1,18 @@
 @echo off
 setlocal enabledelayedexpansion
 REM ============================================================
-REM  Intonare -- one-shot deploy
+REM  Intonare deploy
 REM  Project folder -> GitHub -> Capacitor -> Android assets
 REM ============================================================
 REM
-REM  NATIVE MASTERS now live under native_src\, mirroring the Android
-REM  tree (native_src\java\... , native_src\res\... , etc). Run
-REM  reorg_native.bat ONCE before the first run with this version.
-REM  icon_res\ and audio_assets\ stayed in root (already folders).
+REM  Native sources live in native_src\, laid out like the Android tree.
+REM  cap sync overwrites the generated project, so this script copies them
+REM  back in on every run.
 REM
-REM  NATIVE_CHANGED tracks whether any native source (.java / manifest /
-REM  gradle-affecting file) actually changed bytes this run. If it did, we
-REM  force `gradlew clean` at the end so the next Android Studio build can't
-REM  ship stale native code. `cap sync` does NOT force a recompile, and
-REM  Gradle's up-to-date cache will happily reuse old .class files + a stale
-REM  plugin registry -- that's the trap that burned a whole Phase 0 session.
-REM  Web-only deploys leave this flag at 0 and stay fast (no clean).
+REM  NATIVE_CHANGED records whether any native file changed this run. If one
+REM  did, the script runs `gradlew clean` at the end. cap sync does not force
+REM  a recompile, and Gradle would reuse the old compiled classes.
+REM  Web-only deploys skip the clean and stay fast.
 set NATIVE_CHANGED=0
 
 echo [1/6] Verifying Intonare.html is present...
@@ -40,18 +36,16 @@ copy /Y Intonare.html www\index.html
 echo [4/6] Installing packages and syncing Capacitor...
 call npm install
 
-REM Build main.iife.js (the Capacitor haptics bridge, compiled from main.js by Vite).
-REM Previously this was NEVER run by any script -- haptics only worked because an old
-REM main.iife.js was still sitting in the local www\ folder from a manual build long ago.
-REM Nothing rebuilt it, it wasn't in git, and www\ is gitignored: delete that folder or
-REM build on a fresh machine and haptics would silently die with no error. Vite's
-REM emptyOutDir is false, so this does NOT wipe the index.html copied in step 3.
+REM Build main.iife.js, the Capacitor haptics bridge, from main.js with Vite.
+REM www\ is not in git, so this must run on every deploy. Without the file,
+REM haptics stop working and nothing reports an error. Vite's emptyOutDir is
+REM false, so the index.html copied in step 3 is kept.
 echo [4a] Building main.iife.js (haptics bridge)...
 call npm run build
 
 call npx cap sync
 
-REM Restore files that cap sync overwrites -- sources now under native_src\
+REM Restore the files that cap sync overwrites. Sources are in native_src\.
 echo [4b] Restoring AndroidManifest.xml...
 fc /b native_src\AndroidManifest.xml android\app\src\main\AndroidManifest.xml >nul 2>&1
 if errorlevel 1 set NATIVE_CHANGED=1
@@ -68,15 +62,9 @@ if errorlevel 1 set NATIVE_CHANGED=1
 copy /Y native_src\java\com\lieutenantdan\intonare\IntonareMicPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\IntonareMicPlugin.java
 
 echo [4c3] Restoring FileSaverPlugin.java...
-REM Added after the plugin silently vanished from a build. It was dropped straight
-REM into android\app\... by hand, which works exactly once: step 4c restores
-REM MainActivity.java from native_src on EVERY run, so the registerPlugin line was
-REM overwritten the next time this script ran, and the plugin was never registered.
-REM JS then reported "FileSaver plugin is not implemented on Android" while the file
-REM was sitting right there in the tree.
-REM
-REM Anything native must live in native_src and be restored here, or go.bat will
-REM undo it. That is the same trap the header of this file warns about.
+REM Every native file must live in native_src and be restored here. A file
+REM placed straight into android\ is lost, because step 4c restores
+REM MainActivity.java and its registerPlugin lines on every run.
 fc /b native_src\java\com\lieutenantdan\intonare\FileSaverPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\FileSaverPlugin.java >nul 2>&1
 if errorlevel 1 set NATIVE_CHANGED=1
 copy /Y native_src\java\com\lieutenantdan\intonare\FileSaverPlugin.java android\app\src\main\java\com\lieutenantdan\intonare\FileSaverPlugin.java
@@ -122,17 +110,9 @@ if exist audio_assets (
     )
 )
 
-REM [4g2] LOOSE FILES in audio_assets root.
-REM
-REM Step 4g uses `for /D`, which iterates DIRECTORIES ONLY. Every sample set is a
-REM folder (grand_piano\, violin\...) so that worked fine -- right up until the first
-REM loose file landed there. intonare_whip.mp3 sits at audio_assets\ root, so `for /D`
-REM skipped straight past it, it never reached the Android assets, and The Adventurer's
-REM fanfare played with no whip crack on Android while working perfectly on iOS (where
-REM Codemagic does `cp -r audio_assets/*`, which takes files as well as folders).
-REM
-REM Copy them every run, not "if not exist": a loose file is small, and one that has
-REM been REPLACED needs to actually make it across.
+REM Loose files in the audio_assets root. Step 4g uses `for /D`, which only
+REM walks folders, so single files such as intonare_whip.mp3 need their own copy.
+REM They are copied on every run so that a replaced file reaches the build.
 if exist audio_assets (
     if not exist android\app\src\main\assets\public\audio mkdir android\app\src\main\assets\public\audio
     for %%f in (audio_assets\*.*) do (
@@ -156,10 +136,9 @@ copy /Y www\index.html android\app\src\main\assets\public\index.html
 findstr "cueSelect_correct" android\app\src\main\assets\public\index.html
 
 echo [5b] Native-change check...
-REM gradlew needs a JDK. Point JAVA_HOME at Android Studio's bundled one if
-REM this shell doesn't already have it set, so a forced clean never silently
-REM fails (a failed clean would put us right back into stale-build territory).
-REM Done here, outside the if-block, to avoid nested-paren expansion quirks.
+REM gradlew needs a JDK. Use the one bundled with Android Studio if JAVA_HOME
+REM is not set, so a forced clean cannot fail for that reason. This sits
+REM outside the if-block to avoid nested-parenthesis expansion problems.
 if not defined JAVA_HOME if exist "C:\Program Files\Android\Android Studio\jbr\bin\java.exe" set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
 if "!NATIVE_CHANGED!"=="1" (
   echo   ^>^> Native source changed this run. Forcing gradlew clean so the

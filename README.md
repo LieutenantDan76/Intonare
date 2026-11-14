@@ -44,8 +44,7 @@ This runs the checks that gate every release: HTML integrity, the regression sen
 | `audio_assets/` | Instrument sample sets bundled into the phone builds |
 | `icon_res/`, `ios_icon/` | App icons |
 | `credits/` | Sources and licenses for third-party material |
-| `docs/` | Notes on project conventions |
-| `tools/` | Audits, quiz pack tools and the pitch detection benchmark |
+| `tools/` | The audits behind the ship check and the pitch detection benchmark |
 
 ## License and credits
 

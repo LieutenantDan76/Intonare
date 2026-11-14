@@ -3,7 +3,7 @@
 intonare_audio_handle_audit.py — catch unstoppable audio before it ships.
 
 THE PATTERN THIS EXISTS FOR
-The same bug was found nine separate times in one session: a function starts a
+The same bug was found nine separate times: a function starts a
 note and throws away the handle the player returned, so no stop function can
 ever silence it. The session token / timer clearing that usually sits alongside
 it only prevents notes that HAVEN'T started; anything already sounding runs to
@@ -46,7 +46,7 @@ def check(label, cond, detail=''):
     print(f"  {'✓' if cond else '✗'} {label}" + (f"  {detail}" if detail and not cond else ''))
     if not cond: FAIL.append(label)
 
-print("="*74); print("  PART 1 — THIS SESSION'S FIXES STILL PRESENT"); print("="*74)
+print("="*74); print("  PART 1 — TRACKED FIXES STILL PRESENT"); print("="*74)
 
 check("master bus exists",            'function _getMasterOut' in h)
 check("lookahead limiter worklet",    'lookahead-limiter' in h and 'registerProcessor' in h)
