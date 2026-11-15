@@ -1789,6 +1789,10 @@ EXACT_PINS = [
         'steps: [1,0,2,0,0,2,0,2,0,2,0,2],', []),
     ('GROOVE', 'FLAMENCO BULERÍA pattern (silently reverted once)',
         'steps: [2,0,0,2,0,0,2,0,2,0,2,0],', []),
+    # 1.0.5: ÇİFTETELLİ moved from the old tek-ka ending to the sourced double dum
+    # (Wikipedia + nwr-hawaii agree). Pinned so the old reading cannot creep back.
+    ('GROOVE', 'ÇİFTETELLİ pattern (double dum, two sources agree)',
+        'steps: [2,0,0,1, 0,0,1,0, 2,0,2,0, 1,0,0,0],', []),
     # ── v0.104.0: ROAD TRIP HAND-TUNED LEGS ───────────────────────────────
     # The 17 grid songs below had their five hooks placed by ear on-device, one
     # song at a time, over several sessions. That work leaves no trace in the app:

@@ -39564,33 +39564,32 @@ const GROOVE_PRESETS = [
   {
     id: 'ciftetelli',  cat: 'world', beats: 4, suggestedBpm: 84,
     name: 'ÇİFTETELLİ',      origin: '4/4 (8/4 cycle) · Turkish / Greek', originIt: '4/4 (ciclo 8/4) · turco / greco',
-    // ⚠ SOURCES GENUINELY CONFLICT. This is the one groove in the table where the
-    // written transcriptions disagree with each other, so this is a judgement call
-    // and is reversible. Three readings found, all calling themselves çiftetelli:
-    //   a) OLD PATTERN (uncited, "as taught"): cell D K T K T D D T in eighths,
-    //      dums at steps 0, 10, 12. Matched no written source found.
-    //   b) Darbuka Ritim Solo table, Ciftetelli / Turkey / 8/4, at sixteenth
-    //      resolution: D _ _ T | _ _ T _ | D _ _ T | K T K _
-    //      https://sites.google.com/view/darbuka-ritim-solo
-    //   c) Zahra Zuhair bellydance glossary, Chiftitelli 8/4:
-    //      "Dumm rest Tak Tak rest Tak Tak rest" over eight counts.
-    // (b) is adopted because it is the only one written at the resolution this
-    // engine actually stores, so it needs no interpretation to encode: dums at
-    // steps 0 and 8 as accents, teks and kas at 3, 6, 11, 12, 13, 14 as weak.
-    // TAQS.IM corroborates the meter and the character if not the exact strokes:
-    // çiftetelli "can be counted either as a 2/4 or 8/4 meter... its unmistakable
-    // driving beat contains a hypnotic quality." https://taqs.im/rhythms/
-    // Çiftetelli is 8/4 (countable 2/4), NOT 11/8; that is kopanitsa, listed
-    // separately. The Turkish and Greek traditions sharing the name is part of why
-    // the sources diverge.
-    // CYCLE: FLAGGED, unresolved. beats:4 with 16 steps reads as one 4/4 bar, but this
-    // groove's own origin line says '4/4 (8/4 cycle)', i.e. the full çiftetelli cycle is
-    // twice what the array holds. If that is right the tempo needs halving like the
-    // clave family; if the array is one half of the cycle repeated, it does not. The
-    // pattern audit already records this as the one CONFLICT entry in the library, so
-    // the cycle stays open too rather than being guessed alongside it.
-    // TEMPO-SOURCE: WEAK. Value inherited and unverified.
-    steps: [2,0,0,1, 0,0,1,0, 2,0,0,1, 1,1,1,0],
+    // SOURCED (1.0.5). Two independent written sources agree on the full 8/4 cycle,
+    // written in eighth notes, which is exactly what these 16 steps hold:
+    //   Wikipedia, "Tsifteteli": 8/4, "3/3/2 eighth-notes followed by 2/2/2/xx
+    //   (the last beat being silent)". https://en.wikipedia.org/wiki/Tsifteteli
+    //   nwr-hawaii drum notes, chiftitelli 8/4: "D..T..T.D.D.T..."
+    //   https://nwr-hawaii.blogspot.com/2010/02/malfuf-wahda-and-chiftitelli.html
+    // So: first half is the 3-3-2 limp (dum 0, tek 3, tek 6), second half is the
+    // double dum (dum 8, dum 10), one tek (12), and a silent last beat (14-15).
+    // The double dum is the signature; without it this reads as a plain 4/4.
+    // Maqamworld describes the same thing in words: usually slow, stretched over
+    // two 4/4 bars. https://maqamworld.com/en/iqaa/ciftetelli.php
+    // HISTORY, kept so nobody re-adopts a reading by accident:
+    //   a) Pre-0.103 pattern (uncited): D K T K T D D T, dums at 0, 10, 12.
+    //   b) 0.103 to 1.0.4 shipped the Darbuka Ritim Solo table reading,
+    //      D _ _ T | _ _ T _ | D _ _ T | K T K _ . Its first half matches the sources
+    //      above; its second half has one dum and a tek-ka fill where the double
+    //      dum and the silence belong. https://sites.google.com/view/darbuka-ritim-solo
+    //   c) Zahra Zuhair glossary, "Dumm rest Tak Tak rest Tak Tak rest", matches
+    //      neither half at this resolution.
+    // Çiftetelli is 8/4 (countable 2/4), NOT 11/8; that is kopanitsa, listed separately.
+    // CYCLE: the array holds the whole 8/4 cycle in eighths, played inside one app bar.
+    // So 84 in the app is 168 on the slow eight-count, which may be fast for a groove
+    // sources call slow.
+    // TEMPO-SOURCE: WEAK. Value inherited and unverified; left alone on purpose
+    // until someone checks it by ear.
+    steps: [2,0,0,1, 0,0,1,0, 2,0,2,0, 1,0,0,0],
   },
 
   // ── MORE 4/4 GROOVES (16 steps) ──
