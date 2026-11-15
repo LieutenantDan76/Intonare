@@ -179,11 +179,25 @@ for idx, (fn, st) in enumerate(starts):
     if not re.match(r'^(build|render|init|draw|make|populate|fill)', fn, re.I):
         continue
     g_hits.append(fn)
+# Builders named in the "Left out on purpose" comment next to the relabelers are
+# a recorded decision, with a reason beside each name. List them, do not count them.
+on_purpose = set()
+k = H.find('Left out on purpose')
+if k != -1:
+    blk = H[k:H.find('\n\n', k)]
+    for m in re.finditer(r'^\s*//\s{2,}(\w+)(?:\((\w+)\))?\s+-', blk, re.M):
+        on_purpose.add(m.group(1))
+        if m.group(2): on_purpose.add(m.group(1) + m.group(2))
+excluded = [fn for fn in g_hits if fn in on_purpose]
+g_hits = [fn for fn in g_hits if fn not in on_purpose]
 issues['G'] = len(g_hits)
 print(f'  setLang covers {len(called)} builders; registerRelabel covers {len(reg_calls)}')
 print(f'  {len(g_hits)} builders emit translated text and are covered by neither:')
 for fn in g_hits[:30]:
     print(f'     {fn}')
+if excluded:
+    print(f'  {len(excluded)} left out on purpose (reasons in the comment in Intonare.html):')
+    print('     ' + ', '.join(excluded))
 print('\n  Each is a screen that MAY keep the old language until it is rebuilt.')
 print('  Fix by adding registerRelabel(elementId, fn) next to the others in setLang.')
 

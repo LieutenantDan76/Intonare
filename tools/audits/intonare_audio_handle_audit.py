@@ -121,7 +121,8 @@ for i,m in enumerate(names):
     body = seg[m.start():end]
     if 'synth(ctx' not in body: continue
     nc = len(re.findall(r'create(?:Gain|BiquadFilter|WaveShaper|Delay)\(', body))
-    nd = len(re.findall(r'\.disconnect\(', body))
+    # _synthFreeOnEnd() unplugs the whole note once its sources have ended.
+    nd = len(re.findall(r'\.disconnect\(|_synthFreeOnEnd\(', body))
     if nc and not nd: leaky.append((m.group(1), nc))
 for n,c in leaky: print(f"      {n:22s} creates {c} nodes, disconnects none")
 if not leaky: print("      none")

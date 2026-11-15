@@ -43,10 +43,12 @@ Each script takes the path to `Intonare.html` unless noted, and exits non-zero o
 | `intonare_boot_smoke.py` | Every tool, exercise and game opens without an error |
 | `intonare_taint_audit.py` | Saved text (presets, saves, sessions) can never reach the page as markup. Needs Playwright |
 | `intonare_stopall_audit.py` | Every sound source is covered by the stop-all function |
+| `intonare_synth_leak_audit.py` | Every synth voice unplugs its parts once a note ends. Needs Playwright (about 15 seconds) |
 | `intonare_audio_handle_audit.py` | Audio nodes are tracked and released |
 | `intonare_scale_audit.py` | Scale spellings and pitch classes are correct |
 | `intonare_groove_audit.py` | Groove patterns are well formed |
 | `intonare_i18n_audit.py` | User-facing strings have an Italian translation (slow) |
+| `intonare_lang_switch_audit.py` | Every screen follows a language change at once, in both directions. Needs Playwright (several minutes) |
 | `intonare_dev_flag_audit.py` | Developer tools cannot be reached or grant Pro in a release build |
 | `intonare_light_gate.py`, `intonare_light_vars.py`, `intonare_light_shots.py` | Light mode contrast and leftover dark-mode colors |
 
