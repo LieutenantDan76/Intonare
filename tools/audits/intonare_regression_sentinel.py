@@ -1793,6 +1793,13 @@ EXACT_PINS = [
     # (Wikipedia + nwr-hawaii agree). Pinned so the old reading cannot creep back.
     ('GROOVE', 'ÇİFTETELLİ pattern (double dum, two sources agree)',
         'steps: [2,0,0,1, 0,0,1,0, 2,0,2,0, 1,0,0,0],', []),
+    # 1.0.5: a cold start in Italian built the tuner tabs, instrument lists, string
+    # grid hint, piano tone groups and metronome sounds before progLoad() restored
+    # the language, so they stayed English until a language switch.
+    ('I18N', 'Boot rebuilds the early builders in the saved language',
+        "if (progState.lang !== 'en') {\n  try { buildFamilyTabs('tuner'); buildFamilyTabs('ref'); } catch (e) {}", []),
+    ('I18N', 'Chord voicing labels translate in Italian (zoom and card)',
+        "(v.it || _voicingLabelIt(v.label) ||", []),
     # ── v0.104.0: ROAD TRIP HAND-TUNED LEGS ───────────────────────────────
     # The 17 grid songs below had their five hooks placed by ear on-device, one
     # song at a time, over several sessions. That work leaves no trace in the app:

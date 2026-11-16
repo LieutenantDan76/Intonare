@@ -7,8 +7,11 @@ Checks that every built-in synth voice unplugs its audio parts once a note ends.
 Each note builds a small chain (oscillators, gains, filters). If the parts stay
 connected after the note, the audio graph grows for the whole session and slower
 phones start to crackle. This plays four short notes and one held note (then
-stopped) on every voice in a real AudioContext, routed to a muted bus, waits
-for the longest natural decay, and counts the parts that are still connected.
+stopped) on every voice in a real AudioContext, routed to a muted bus. The voices
+that fade to silence by themselves (FADES_OUT) also get one note with no length
+that is never stopped: it must end on its own when its decay is done. The other
+voices hold a note with no length until the caller stops it, by design. The audit waits
+for the longest natural decay and counts the parts that are still connected.
 
 Needs: pip install playwright && playwright install chromium
 
@@ -26,7 +29,10 @@ html = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'Intonare.html').resol
 VOICES = ['sine', 'piano', 'flute', 'bell', 'marimba', 'xylophone', 'vibraphone', 'pad', 'guitar', 'brass', 'melodica',
           'grand_piano', 'honky_tonk', 'electric_piano', 'harpsichord']
 
-TEST = r"""async (voices) => {
+# Voices whose sound dies away on its own, like a struck or plucked instrument.
+FADES_OUT = ['bell', 'marimba', 'xylophone', 'guitar']
+
+TEST = r"""async ([voices, fades]) => {
   const ctx = new AudioContext(); await ctx.resume();
   const owner = new Map(), conn = new Map();
   let current = null;
@@ -44,6 +50,7 @@ TEST = r"""async (voices) => {
     current = id;
     for (let i = 0; i < 4; i++) REF_TONES[id].synth(ctx, 220 * (1 + i / 4), t0 + i * 0.05, 0.4, bus, 0.5);
     held.push(REF_TONES[id].synth(ctx, 330, t0, null, bus, 0.5));
+    if (fades.includes(id)) REF_TONES[id].synth(ctx, 165, t0, null, bus, 0.5);   // never stopped
     current = null;
   }
   setTimeout(() => held.forEach(h => { try { h.stop(); } catch (e) {} }), 500);
@@ -62,7 +69,7 @@ with sync_playwright() as p:
     pg = b.new_page(); errors = []
     pg.on('pageerror', lambda e: errors.append(str(e)[:200]))
     pg.goto(html.as_uri(), wait_until='load'); pg.wait_for_timeout(5000)
-    res = pg.evaluate(TEST, VOICES)
+    res = pg.evaluate(TEST, [VOICES, FADES_OUT])
     b.close()
 
 print('SYNTH LEAK AUDIT')
