@@ -1800,6 +1800,14 @@ EXACT_PINS = [
         "if (progState.lang !== 'en') {\n  try { buildFamilyTabs('tuner'); buildFamilyTabs('ref'); } catch (e) {}", []),
     ('I18N', 'Chord voicing labels translate in Italian (zoom and card)',
         "(v.it || _voicingLabelIt(v.label) ||", []),
+    # 1.0.5: the first module after the launcher stayed scroll-locked until a tab
+    # switch: the lock check is skipped while the morph card shows.
+    ('UI', 'Launcher exit re-checks the scroll lock after the morph card hides',
+        "if (mo && mo.style.display === 'block' && n < 15) { setTimeout(() => _relock(n + 1), 150); return; }", []),
+    # 1.0.5: Bebas has no Ş or İ in its character map, so KARŞILAMA fell back to a
+    # wide sans Ş. A tiny Bebas patch face supplies both.
+    ('UI', 'Bebas patch face for Ş and İ (KARŞILAMA, ÇİFTETELLİ)',
+        "font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:block;unicode-range:U+130,U+15E-15F;", []),
     # ── v0.104.0: ROAD TRIP HAND-TUNED LEGS ───────────────────────────────
     # The 17 grid songs below had their five hooks placed by ear on-device, one
     # song at a time, over several sessions. That work leaves no trace in the app:
