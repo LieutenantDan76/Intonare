@@ -1802,6 +1802,12 @@ EXACT_PINS = [
         "(v.it || _voicingLabelIt(v.label) ||", []),
     # 1.0.5: the first module after the launcher stayed scroll-locked until a tab
     # switch: the lock check is skipped while the morph card shows.
+    # 1.0.5: a splash skip left the splash loop drawing for ~3s and the timeline
+    # running, which fired splash-done twice and splash-dissolving after the skip.
+    ('UI', 'Splash removes itself once only',
+        "if (window._splashGone) return;   // once only: the steps below must not run twice", []),
+    ('UI', 'Splash timeline stops after a skip',
+        "await af(2380); if (_skipped()) return;", []),
     ('UI', 'Launcher exit re-checks the scroll lock after the morph card hides',
         "if (mo && mo.style.display === 'block' && n < 15) { setTimeout(() => _relock(n + 1), 150); return; }", []),
     # 1.0.5: Bebas has no Ş or İ in its character map, so KARŞILAMA fell back to a

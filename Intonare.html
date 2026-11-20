@@ -29423,6 +29423,7 @@ try {
   };
 
   function removeSplash() {
+    if (window._splashGone) return;   // once only: the steps below must not run twice
     const el = document.getElementById('intonare-splash');
     if (el) el.remove();
     document.body.style.overflow = '';  // restore scroll
@@ -29881,6 +29882,16 @@ try {
     })();
 
   async function runSplash() {
+    // A skip (deep link, or the 7s failsafe) can land while this is still running.
+    // From then on the splash is gone: stop drawing and stop the timeline, so it
+    // does not fire its later events or remove the splash a second time. The
+    // native launch screen still needs its ready signal if it has not had it yet.
+    function _skipped() {
+      if (!window._splashGone) return false;
+      running = false;
+      try { if (typeof window._nativeReady === 'function') window._nativeReady(); } catch (e) {}
+      return true;
+    }
     document.body.style.overflow = 'hidden';  // prevent ghost scrolling during splash
     // body overflow:hidden alone doesn't stop touchmove on Android WebView -
     // need to intercept the touch event directly on the splash overlay.
@@ -30307,7 +30318,7 @@ try {
     // secondary phase for the organic rolling layer
     let _lastFrameT = 0;
     function loop() {
-      if (!running) return;
+      if (!running || window._splashGone) return;
       const _now = performance.now();
       gatherEl = (_now - _waveT0) / 1000;
 
@@ -30423,11 +30434,10 @@ try {
     // Pure black while layout settles: OLED contrast is the look
     targetColorT = 0;
 
-    // Wait for the viewport to actually settle, THEN pin positions and size the
-    // canvas: and only after that does the wave loop start. This is the fix for
-    // the wave occasionally snapping: previously the loop raced a fixed 200ms
-    // delay and could draw before the canvas was positioned/sized.
-    await startWhenStable();
+    // Wait for the viewport to actually settle, THEN pin positions and size the canvas,
+    // and only after that start the wave loop. Racing a fixed delay lets the loop draw
+    // before the canvas is positioned and sized, and the wave snaps.
+    await startWhenStable(); if (_skipped()) return;
     pinSplashPositions();
     initCanvasSizes();
     // Guard against later viewport shifts (permission dialogs, status bar changes):
@@ -30441,7 +30451,7 @@ try {
     }
     // One rAF so the browser commits the new canvasWrap.top / canvas dimensions
     // to layout before we draw the first wave frame.
-    await new Promise(r => requestAnimationFrame(r));
+    await new Promise(r => requestAnimationFrame(r)); if (_skipped()) return;
 
     // ── Canvas fades in as particles begin to gather ───────────
     if (canvas)   { canvas.style.opacity   = '0'; canvas.style.transition = 'opacity 0.9s ease'; }
@@ -30471,20 +30481,20 @@ try {
     } catch (e) {}
     requestAnimationFrame(loop);
 
-    await af(40); // one tick so loop has drawn a frame before we show it
+    await af(40); if (_skipped()) return; // one tick so loop has drawn a frame before we show it
     if (canvas)   canvas.style.opacity   = '1';
     if (bgCanvas) bgCanvas.style.opacity = '1';
     // Tell Android the page has drawn, so the system launch screen can leave.
     try { if (window.IntonareNative && window.IntonareNative.pageReady) window.IntonareNative.pageReady(); } catch (e) {}
 
     // ── Color warms as particles converge (~0.56s) ──
-    await af(560);
+    await af(560); if (_skipped()) return;
     targetColorT   = 0.33;
     targetLogoGlow = 1.0;
 
     // ── Particles assemble into the waveform by ~1.0s; logo + text arrive
     // riding the formed wave. Timed so the wave is fully assembled behind them.
-    await af(280);  // ~0.84s total: wave just finished assembling
+    await af(280); if (_skipped()) return;  // ~0.84s total: wave just finished assembling
     if (logo) {
       logo.style.transition = 'opacity .9s ease, transform 1.0s cubic-bezier(.2,.8,.2,1)';
       logo.style.opacity    = '1';
@@ -30500,7 +30510,7 @@ try {
     }
     targetColorT = 0.66;
 
-    await af(640);
+    await af(640); if (_skipped()) return;
     targetColorT = 1.0;
 
     // Wave settles to a thin line, then the CRT collapse runs to completion at
@@ -30509,7 +30519,7 @@ try {
     // of dissolving. Hold the finished logo a beat, then dissolve.
     // Budget before here: 40+560+280+640 = 1520ms. CRT done ~3500ms, +~400ms hold
     // ⇒ wait ~2380ms so the dissolve starts on a clean, fully-collapsed frame.
-    await af(2380);
+    await af(2380); if (_skipped()) return;
 
     // ── Exit: full splash dissolve into the app ────────────
     // Fire BEFORE the dissolve, not after. removeSplash() runs 1.4s from here, so
@@ -30518,7 +30528,7 @@ try {
     // being what the splash dissolved into. This event lets a listener put itself
     // in place first, so the splash cross-fades into it.
     try { window.dispatchEvent(new Event('intonare:splash-dissolving')); } catch (e) {}
-    await af(20);   // one frame for the listener to render before opacity starts moving
+    await af(20); if (_skipped()) return;   // one frame for the listener to render before opacity starts moving
 
     running = false;
     if (splash) {
@@ -30526,7 +30536,7 @@ try {
       splash.style.transition = 'opacity 1.3s cubic-bezier(.4,0,.2,1)';
       splash.style.opacity = '0';
     }
-    await af(1400);
+    await af(1400); if (_skipped()) return;
     removeSplash();
   }
 
@@ -37345,18 +37355,17 @@ function _iosSyncAudioMode(why) {
   if (!p) return;
   const micLive = (typeof isListening !== 'undefined' && !!isListening);
 
-  // THE METRONOME-KILLER, FIXED
-  // Turning the mic OFF while the metronome (or a drone) was playing stopped it
-  // dead: the switch back to .playback rebuilt WebKit's audio output mid-schedule
-  // and the click queue was gone. Enabling the mic mid-playback also stutters,
-  // but that one is WebKit's own getUserMedia reconfiguration and not ours to
-  // prevent: and recording genuinely requires the category change, immediately.
+  // THE METRONOME-KILLER
+  // Switching back to .playback while the metronome (or a drone) is playing rebuilds
+  // WebKit's audio output mid-schedule, and the click queue is gone. Enabling the mic
+  // mid-playback also stutters, but that one is WebKit's own getUserMedia
+  // reconfiguration and not ours to prevent, and recording genuinely requires the
+  // category change, immediately.
   //
-  // Going the OTHER way is discretionary. .playback is only about volume, and a
-  // slightly-quieter metronome that KEEPS PLAYING beats a full-volume one that
-  // died. So: if audio is busy, defer the switch. stopMetro(), the last
-  // stopRef(), and the ref natural-expiry timeout flush it the moment the coast
-  // is clear.
+  // Going the OTHER way is discretionary. .playback is only about volume, and a slightly
+  // quieter metronome that KEEPS PLAYING beats a full-volume one that died. So: if audio
+  // is busy, defer the switch. stopMetro(), the last stopRef(), and the ref
+  // natural-expiry timeout flush it the moment the coast is clear.
   if (!micLive && _iosAudioBusy()) {
     _iosPendingModeSync = true;
     if (window._sampleDiag) window._sampleDiag.audioMode = 'playback DEFERRED (audio busy) · ' + why;
@@ -40844,12 +40853,12 @@ function selectInstrument(key) {
   // changed from the guide, so without this the glass keeps naming whichever
   // tuning the family defaulted to.
   try {
-    // Guide -> glass is the deliberate direction: the guide is where a specific
-    // tuning is chosen, so it becomes Simple's target too. (Simple -> guide was
-    // the bug: answering the coarse question should not discard that choice.)
-    // Set OUTSIDE the face check, or changing the tuning from the guide while the
-    // full face is showing leaves Simple's target stale, and the next swap
-    // rebuilds the pips from one instrument while detection uses another.
+    // Guide -> glass is the deliberate direction: the guide is where a specific tuning
+    // is chosen, so it becomes Simple's target too. Simple -> guide must not happen:
+    // answering the coarse question should not discard that choice.
+    // Set OUTSIDE the face check, or changing the tuning from the guide while the full
+    // face is showing leaves Simple's target stale, and the next swap rebuilds the pips
+    // from one instrument while detection uses another.
     if (!sfChromatic) {
       sfInstrument = key;
       try { sfFamily = INSTRUMENTS[key].fam || sfFamily; } catch(e) {}
@@ -42122,15 +42131,14 @@ function _pianoKeyEls(midi, isBlack) {
   return out;
 }
 
-// True while a finger is physically on this key. The decay styling repaints keys
-// as their note fades, and it has no idea whether the key is still being held -
-// so during song playback a held key was being repainted back to resting while
-// the finger was still down. Holding is a user action and outranks the audio.
+// True while a finger is physically on this key. The decay styling repaints keys as
+// their note fades with no idea whether a key is held, so without this a held key
+// repaints to resting during song playback. Holding is a user action and outranks the
+// audio.
 function _pianoIsHeld(midi) {
-  // Reads the SVG keyboards' published held sets. This used to walk
-  // _pianoPointers, which belonged to the DOM keyboard touch handlers - those
-  // bound to #pianoKeyboard, an element that no longer exists, so the map was
-  // always empty and this always answered false.
+  // Reads the SVG keyboards' published held sets. (_pianoPointers belonged to the
+  // removed DOM keyboard, whose #pianoKeyboard no longer exists, so that map is always
+  // empty.)
   let held = false;
   ['pianoCardSvg', 'pianoFullSvg'].forEach(id => {
     const svg = document.getElementById(id);
@@ -42404,16 +42412,11 @@ function pianoKeyClick(midi, hold) {
 // their touch handling from _initSvgMultiTouch like every other keyboard in the app.
 
 function _pianoSetPressed(midi, on) {
-  // Selected by data-midi, which is what the keys are actually built with.
-  //
-  // The original code here looked up 'pwk-'/'pbk-' + midi, and nothing in the
-  // app ever assigns those ids: the card keyboard uses a variable prefix plus
-  // 'w'/'b' + midi, and the fullscreen keyboard sets no id at all, only
-  // data-midi. So the element was never found and the pressed class was never
-  // applied to anything. That is the whole of "held keys don't visually hold":
-  // not a timing problem, the highlight simply never existed. (The same dead
-  // prefixes appear in _pianoKeyEls, which the decay styling relies on - flagged
-  // separately, since fixing that is a different behavior.)
+  // Selected by data-midi, which is what the keys are actually built with. The card
+  // keyboard uses a variable prefix plus 'w'/'b' + midi, and the fullscreen keyboard
+  // sets no id at all, so an id lookup ('pwk-'/'pbk-' + midi) finds nothing and the
+  // pressed class never lands. (_pianoKeyEls uses the same dead prefixes, and the decay
+  // styling relies on it; fixing that changes behavior, so it is a separate job.)
   document.querySelectorAll('.piano-white-key[data-midi="' + midi + '"], .piano-black-key[data-midi="' + midi + '"]')
     .forEach(el => el.classList.toggle('pressed', !!on));
 }
@@ -43375,22 +43378,21 @@ function detectPitch(buf, sr) {
                                    : 0.0004);
   if (rms < _floor) return -1;
 
-  // ── YIN difference function via FFT - O(N log N), was O(N^2). ──────────────
-  // The old brute-force double loop was 4.19 MILLION operations per frame. On a
-  // mid-range phone that's 30-80ms, i.e. 2-5x OVER the 16.7ms frame budget, so the
-  // detector physically could not keep up with requestAnimationFrame and silently
-  // ran at a fraction of the intended rate. Every dropped frame is a hole in the
-  // smoothing: which is exactly what "jumpy" felt like.
+  // ── YIN difference function via FFT: O(N log N) instead of O(N^2). ──────────
+  // A brute-force double loop is 4.19 MILLION operations per frame, 30-80ms on a
+  // mid-range phone, 2-5x OVER the 16.7ms frame budget. The detector then falls behind
+  // requestAnimationFrame, and every dropped frame is a hole in the smoothing that reads
+  // as jumpy.
   //
   //   d(tau) = sum_{i<H} (x[i] - x[i+tau])^2
   //          = sum_{i<H} x[i]^2  +  sum_{i=tau}^{tau+H-1} x[i]^2  -  2*r(tau)
   //   where r(tau) = sum_{i<H} x[i]*x[i+tau]   <- cross-correlate WINDOW vs FULL
   //
-  // r(tau) comes from IFFT( conj(FFT(window)) * FFT(full) ). Note the window is the
-  // first H samples and the full buffer is N - correlating full-vs-full gives the
-  // WRONG summation range and silently produces garbage (verified the hard way).
-  // Output is bit-for-bit identical to the old loop: 0.00000 cents deviation across
-  // 82 Hz - 1760 Hz with harmonics + noise. Same algorithm, computed properly.
+  // r(tau) comes from IFFT( conj(FFT(window)) * FFT(full) ). The window is the first H
+  // samples and the full buffer is N; correlating full-vs-full gives the WRONG summation
+  // range and silently produces garbage. Output is bit-for-bit identical to the
+  // brute-force loop: 0.00000 cents deviation across 82 Hz - 1760 Hz with harmonics +
+  // noise.
   const size = _FFT_SIZE;
   _fWr.fill(0); _fWi.fill(0); _fFr.fill(0); _fFi.fill(0);
   for (let i = 0; i < H; i++) _fWr[i] = buf[i];      // window = first H samples
@@ -45130,11 +45132,10 @@ function micReviveLoop() {
 }
 function stopMic() {
   isListening = false; try { if (window._hv2SyncMic) _hv2SyncMic(); } catch (e) {}
-  // The iOS session change happens AFTER the tracks are stopped, further down -
-  // not here. Asking iOS for .playback while the microphone track is still live
-  // means the category change is fighting an active capture: the record path is
-  // not released until the track actually stops, so the switch is slow and the
-  // app stays quiet for a beat. Waiting a moment "fixed" it, which was the clue.
+  // The iOS session change happens AFTER the tracks are stopped, further down, not here.
+  // Asking iOS for .playback while the microphone track is still live fights an active
+  // capture: the record path is not released until the track actually stops, so the
+  // switch is slow and the app stays quiet for a beat.
   if (_nativeMicActive) _nativeMicStop();
   pitchHistStop();
   if (animFrame) cancelAnimationFrame(animFrame);
@@ -45226,11 +45227,9 @@ function _biquadLP(fc, sr, Q) {
   const b0 = (1 - c) / 2, b1 = 1 - c, b2 = (1 - c) / 2, a0 = 1 + al, a1 = -2 * c, a2 = 1 - al;
   return { b0: b0/a0, b1: b1/a0, b2: b2/a0, a1: a1/a0, a2: a2/a0, x1:0, x2:0, y1:0, y2:0 };
 }
-// Biquad coefficients are normalized to fc/sr, so a filter built at 44100 is WRONG
-// if the device actually delivers 48000 (a "4500 Hz" lowpass would really cut at
-// ~4900). These were built once at load against a hardcoded 44100 and never rebuilt
-// - the same class of bug as the drone-notch cache. Rebuild whenever the reported
-// native rate changes.
+// Biquad coefficients are normalized to fc/sr, so a filter built at 44100 is WRONG if
+// the device delivers 48000 (a "4500 Hz" lowpass really cuts at ~4900). Rebuild whenever
+// the reported native rate changes, the same as the drone-notch cache.
 let _nfBuiltSr = _NF_SR;
 let _nfHP = _biquadHP(25, _NF_SR, 0.707);
 let _nfLP = _biquadLP(4500, _NF_SR, 0.707);
@@ -47389,10 +47388,9 @@ const _DB_FFT_N = 4096;
 const _dbFr = new Float64Array(_DB_FFT_N), _dbFi = new Float64Array(_DB_FFT_N);
 
 function dbReadRMS() {
-  // The meter used to require `analyzer`. On the native path `analyzer` is NULL - it's
-  // only created in startMic's WebView branch - so this returned null forever and the
-  // meter simply never moved. (Same class of bug as the old vocal-range detector.)
-  // Read the native ring instead when native is active.
+  // On the native path `analyzer` is NULL (it is only created in startMic's WebView
+  // branch), so requiring it would keep the meter still forever. Read the native ring
+  // instead when native is active.
   if (!isListening) return null;
   if (!_nativeMicActive && !analyzer) return null;
 
@@ -47681,10 +47679,9 @@ function dbTick() {
 }
 
 function dbStart() {
-  // Always tear down any previous loop first. The old guard (`if (dbAnimFrame) return;`)
-  // silently bailed whenever a stale timer was still pending - e.g. re-entering the tool
-  // without a clean exit: leaving dbCanvas/dbCtx2d null and the meter permanently dead
-  // with no error. Restarting is cheap; a silent no-op is not.
+  // Always tear down any previous loop first. Bailing out when a stale timer is still
+  // pending (re-entering the tool without a clean exit, say) leaves dbCanvas/dbCtx2d
+  // null and the meter dead with no error. Restarting is cheap; a silent no-op is not.
   if (dbAnimFrame) { clearTimeout(dbAnimFrame); dbAnimFrame = null; }
   dbCanvas = document.getElementById('dbCanvas');
   if (!dbCanvas) return;
@@ -53957,11 +53954,10 @@ function _riffPianoAllOff() {
   _riffVoices = {}; _riffPedalDown = false;
 }
 
-// Briefly highlight a key in the expanded piano overlay during riff playback.
-// Now defers to _riffFlashSvgKey, the same path the Rhodes and organ overlays
-// use: the overlay was rebuilt on the shared SVG renderer, so its keys are
-// <g data-midi> groups rather than the div keys this used to look up by id.
-// No-ops if the overlay isn't open or the key is outside its octave window.
+// Briefly highlight a key in the expanded piano overlay during riff playback. Defers to
+// _riffFlashSvgKey, the same path the Rhodes and organ overlays use: the overlay keys
+// are <g data-midi> groups on the shared SVG renderer. No-ops if the overlay isn't open
+// or the key is outside its octave window.
 function _riffFlashPianoFullKey(midi, dur) {
   if (typeof pianoOverlayOpen === 'undefined' || !pianoOverlayOpen) return;
   _riffFlashSvgKey('pianoFullSvg', midi, dur);
@@ -54117,9 +54113,8 @@ function riffClosePopup() {
       finally { depth--; }
       // kind===null means 'take part in the depth guard but do not animate'. setMode
       // needs exactly that: it calls exitExercise/exitTool on its way to a new tab, and
-      // without it wrapped those inner exits become the outermost call and fire a Z
-      // scale-out: which is the Metro-scales bug, returning the moment the tab fade
-      // was removed. Wrapped with no kind, the guard holds and nothing plays.
+      // unwrapped, those inner exits become the outermost call and fire a Z scale-out
+      // during the tab switch. Wrapped with no kind, the guard holds and nothing plays.
       if (depth === 0 && kind) { try { play(kind); } catch(e){} }
       return out;
     };
@@ -54325,12 +54320,11 @@ function _riffBuildList(inst) {
       if (!groups[g]) { groups[g] = []; seen.push(g); }
       groups[g].push(id);
     });
-    // Append any group the order does not know about, rather than dropping it. The
-    // filter alone silently deleted whole groups: Salsa Montuno was tagged era
-    // 'Afro-Cuban', which is not in RIFF_ERAS, so the song existed, loaded, had
-    // metadata and could be launched from a favorite, and simply never appeared in
-    // the piano picker. A song list that quietly omits songs is worse than an
-    // ugly one, so unknown groups now land at the end next to 'Other'.
+    // Append any group the order does not know about, rather than dropping it. A song
+    // whose era is not in RIFF_ERAS (Salsa Montuno is 'Afro-Cuban') still loads, has
+    // metadata and can be launched from a favorite, so it has to appear in the piano
+    // picker too. A song list that quietly omits songs is worse than an ugly one, so
+    // unknown groups land at the end next to 'Other'.
     var groupOrder;
     if (order) {
       groupOrder = order.filter(function(g){ return groups[g]; });
@@ -54432,10 +54426,9 @@ function riffStart(inst, id) {
     _riffEvents = [];
     var pLastEnd = 0;
     // Pedal transitions as control events (damper model), replayable on seek.
-    // Route the pedal to the instrument that is actually playing. This was hardcoded
-    // to _riffPiano, so a Rhodes performance moved the PIANO's pedal on the other tab
-    // and left its own sitting still: restoring the Rhodes pedal data was
-    // necessary and not sufficient, because nothing was delivering it.
+    // Route the pedal to the instrument that is actually playing, not always _riffPiano.
+    // Otherwise a Rhodes performance moves the PIANO's pedal on the other tab and leaves
+    // its own sitting still.
     (P.ped || []).forEach(function(p){
       var pv = p.v;
       _riffEvents.push({ t: p.t, _isCtl: true, fn: function(){
@@ -54788,11 +54781,10 @@ function _fmtMs(ms) {
   return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
 }
 function _riffScrubEls() {
-  // Every song scrubber on the page, found by CLASS rather than by a list of ids.
-  // The id list was piano-only, so organ and Rhodes had a play/pause and a stop and
-  // no seek line at all, on the card and in the expand overlay alike. A hardcoded
-  // list is a list that forgets the next instrument; the markup already tells us
-  // which surfaces exist, so ask it.
+  // Every song scrubber on the page, found by CLASS rather than by a list of ids. A
+  // hardcoded id list forgets the next instrument (a piano-only list left organ and
+  // Rhodes with no seek line); the markup already tells us which surfaces exist, so ask
+  // it.
   var out = [];
   document.querySelectorAll('.np-scrub').forEach(function(scrub){
     var track = scrub.querySelector('.np-scrub-track');
@@ -55984,10 +55976,8 @@ Object.assign(TOURS, {
       body:'<strong>TEST</strong> runs eight cards over a steady pulse and scores you, homing in on your weak spots. Miss a few? Hit <strong>DRILL YOUR MISSES</strong>, which loops each one with instant feedback until you nail it <strong>three times in a row</strong>.',
       bodyIt:'<strong>TEST</strong> propone otto carte su una pulsazione costante e ti d&agrave; un punteggio, mirando ai tuoi punti deboli. Ne sbagli qualcuna? Premi <strong>ALLENA I TUOI ERRORI</strong>, che ripete ciascuna con feedback immediato finch&eacute; non la azzecchi <strong>tre volte di fila</strong>.' },
   ],
-  // Interval Reference was the only module in the app with no tour of its own.
-  // startTour() falls back to the overview when a module has no entry, which is
-  // correct behavior and is why holding the title here ran the main tour - the
-  // tour simply didn't exist rather than being mis-mapped.
+  // Interval Reference's own tour. startTour() falls back to the overview for a module
+  // with no entry, so without this, holding the title here runs the main tour.
   intervalref: [
     { selector:'#toolIntervalRef', previewSelector:'#ivrCard',
       title:'Interval Reference', titleIt:'Riferimento Intervalli',
@@ -56997,11 +56987,9 @@ function closeAllSubHubs() {
   });
   document.getElementById('practiceHub')?.classList.remove('hidden');
 }
-// Show exactly one sub-hub and hide the rest. Each enterX() used to hide only
-// practiceHub and show its own, so nothing ever hid a SIBLING folder: opening
-// Games while Reading was still up left both rendered on top of each other.
-// That was invisible in normal use only because leaving a folder usually went
-// through exitX() first.
+// Show exactly one sub-hub and hide the rest. Hiding only practiceHub leaves a SIBLING
+// folder rendered: opening Games while Reading is still up stacks both on screen. Normal
+// use rarely shows it, because leaving a folder usually goes through exitX() first.
 function openSubHub(id) {
   PRACTICE_SUBHUBS.forEach(function (h) {
     document.getElementById(h)?.classList.toggle('hidden', h !== id);
@@ -58831,11 +58819,10 @@ function ivEnterNeutral() {
   if (k2) { k2.className = 'iv-knote n2'; k2.textContent = ''; }
   var name = document.getElementById('ivTargetName'); if (name) { name.textContent = ''; name.className = 'iv-hero-name'; }
   ivBuildGauge();
-  // Was display:none, which made the box pop in/out of layout every round -
-  // the only piece of the exercise screen that did that (Chord Ear and Sing
-  // Sing's equivalent boxes are visible-but-empty from the start, same as
-  // this now is). Neutral class + empty text keeps its reserved space
-  // without carrying color or a message from the previous round.
+  // Visible but empty, not display:none, so the box keeps its reserved space instead of
+  // popping in and out of layout every round (Chord Ear and Sing Sing's equivalent boxes
+  // work the same way). Neutral class and empty text carry no color or message over from
+  // the previous round.
   var fb = document.getElementById('ivFeedback');
   if (fb) { fb.style.display = ''; fb.className = 'iv-feedback'; }
   ivFbText('');
@@ -59474,11 +59461,9 @@ function ivApplyMode() {
   if (ivMode === 'manual') {
     // Grid is always present (grayed until first play). No reference row.
     if (refRow) refRow.style.display = 'none';
-    // The feedback box STAYS in the layout, empty. This line used to hide it,
-    // which is why the fix appeared not to work: the markup default and
-    // the round reset were both corrected, but the mode switch hid it again on
-    // every entry. An empty box holding its space beats a box that appears on
-    // first answer and shoves the grid down.
+    // The feedback box STAYS in the layout, empty. Hiding it here would undo the markup
+    // default and the round reset on every mode switch. An empty box holding its space
+    // beats one that appears on the first answer and shoves the grid down.
     if (fb) { fb.style.display = ''; fb.className = 'iv-feedback'; }
     try { ivFbText(''); } catch (e) {}
     if (nextBtn) { nextBtn.style.display = ''; nextBtn.textContent = t('iv_play') || '▶︎ PLAY'; }
@@ -60077,11 +60062,9 @@ function ivManualQuestionState() {
   var dir = (ivCurrentRound && ivCurrentRound.direction < 0) ? -1 : 1;
   ivBuildGauge();
   var root = document.getElementById('ivGRoot');
-  // The root note fades in where it will sit. It used to start at 20px and
-  // slide to its slot with an overshoot curve, and since the previous round
-  // had left it in that slot, the reset dragged it up to 20px and the reveal
-  // dropped it back down. Parked at the final top with transitions off for
-  // one frame, it now only fades.
+  // The root note fades in where it will sit, parked at its final top with transitions
+  // off for one frame. Sliding it in from 20px with an overshoot drags it up and drops
+  // it back down every round, because the previous round left it in that slot.
   if (kn1) {
     kn1.style.transition = 'none';
     kn1.className = 'iv-knote n1';
@@ -61830,18 +61813,11 @@ const PROG_PRESETS = [
       [{r:'C',  q:'maj9', dur:4}],
       [{r:'C',  q:'maj9', dur:4}],
     ],
-    // 88, was 128. Bossa nova sits roughly 70-120bpm (teaching guides give slow 56 /
-    // medium 72 / fast 96), and the pattern is a two-bar cycle, so 128 ran it fast
-    // and out of style. 88 matches its sibling bossa_251 and lands mid-range.
-    // 60, was 128 then 88.
-    //
-    // The bossa array is a TWO-BAR cycle written into 16 steps, and the engine
-    // plays those 16 steps across 4 beats - so the tempo a listener hears is
-    // DOUBLE the number here. At 88 the effective tempo was 176, which is samba
-    // territory; bossa runs roughly 70-120 and tops out near 170. 60 gives an
-    // effective 120, the top of the typical range. Found by computing the real
-    // cycle duration, not by comparing tempo numbers, which cannot reveal a
-    // factor-of-two encoding.
+    // 60. The bossa array is a TWO-BAR cycle written into 16 steps, and the engine plays
+    // those 16 steps across 4 beats, so the tempo a listener hears is DOUBLE the number
+    // here. 60 gives an effective 120, the top of the typical bossa range (roughly
+    // 70-120; teaching guides give slow 56 / medium 72 / fast 96). Compare cycle
+    // durations, not tempo numbers, which cannot reveal a factor-of-two encoding.
     groove: 'bossa',      drumPreset: 'Bossa Nova',         bpm: 60,
   },
   // ── FUNK / R&B / SOUL ────────────────────────────────────────────────
@@ -62189,19 +62165,17 @@ const PROG_PRESETS = [
       [{r:'F', q:'',     dur:6}],
       [{r:'E', q:'7b9',  dur:6}],
     ],
-    // Soleá is the slow, grave end of the same 12-count family - deliberately about
-    // half the bulerías rate, giving a ~6s compás.
-    // 108 is the value the compas groove already documents as wrong: it puts 216
-    // counts a minute through a palo that sits nearer 96. The groove was corrected
-    // to 48 and this preset kept the old number, so loading it overrode the fix.
+    // Soleá is the slow, grave end of the same 12-count family, deliberately about half
+    // the bulerías rate, giving a ~6s compás. 48 matches the compas groove; 108 would
+    // put 216 counts a minute through a palo that sits nearer 96.
     groove: 'compas',     drumPreset: 'Flamenco Compás',    bpm: 48,
   },
   {
     id: 'slow_blues_128', cat:'blues', label: 'Slow Blues 12/8',     desc: 'I7 IV7 V7 in 12/8',
-    // 12/8 was a genuine hole: two 12/8 KITS existed but no 12-beat groove and no
-    // 12/8 preset, so the meter was unreachable from both tools. It's compound
-    // QUADRUPLE (four dotted-quarter beats each split in three) - not interchangeable
-    // with 6/8, which has two. Essential to slow blues, gospel and doo-wop.
+    // 12/8 is compound QUADRUPLE (four dotted-quarter beats each split in three), not
+    // interchangeable with 6/8, which has two. Essential to slow blues, gospel and
+    // doo-wop; the two 12/8 kits need a groove and a preset to be reachable from both
+    // tools.
     timeSig: [12, 8],
     bars: [
       [{r:'A', q:'7',    dur:12}],
@@ -62255,10 +62229,9 @@ const PROG_PRESETS = [
     id: 'disco_strings', cat:'soul', label: 'Disco (Philly strings)', desc: 'im9 ivm9 bVIImaj7 V7, Philadelphia soul',
     // The Philadelphia-soul end of disco: lush extended voicings under string lines,
     // moving through more harmony than the minimal club vamp. Sources describe Philly
-    // soul as maj7/9th/13th harmony with gospel-tinged cadences - hence the ♭VIImaj7
-    // stepping down to a V7 that pulls back to the tonic. (Earlier draft used Dmaj7,
-    // which put a C♯ against the A-minor tonic and was also mislabeled "IVmaj7";
-    // IV in a minor key is minor.)
+    // soul as maj7/9th/13th harmony with gospel-tinged cadences, hence the ♭VIImaj7
+    // stepping down to a V7 that pulls back to the tonic. (Not Dmaj7: that puts a C♯
+    // against the A-minor tonic, and IV in a minor key is minor anyway.)
     bars: [
       [{r:'A',  q:'m9',   dur:4}],
       [{r:'D',  q:'m9',   dur:4}],
@@ -62306,10 +62279,9 @@ const PROG_PRESETS = [
   },
   {
     id: 'salsa', cat:'latin',         label: 'Salsa',                 desc: 'i7 iv7 V7 i7 under a montuno',
-    // Salsa was a conspicuous hole: the montuno groove and Son Clave kit both existed
-    // but nothing reached them, and cumbia/samba/bossa/cha-cha were all present.
-    // The montuno section cycles a short vamp while the piano guajeo and bass tumbao
-    // do the work; i–iv–V–i is the standard minor-key salsa cycle.
+    // Salsa: the montuno groove and the Son Clave kit both exist, and this preset is
+    // what reaches them. The montuno section cycles a short vamp while the piano guajeo
+    // and bass tumbao do the work; i–iv–V–i is the standard minor-key salsa cycle.
     bars: [
       [{r:'A', q:'m7',   dur:4}],
       [{r:'D', q:'m7',   dur:4}],
@@ -62545,10 +62517,9 @@ const PROG_TIME_SIGS = [
   [7, 8,  '7/8'],
   [9, 8,  '9/8'],
   [11, 8, '11/8'],
-  // 12/8 was missing, so progLoadPreset's findIndex returned -1 for the three
-  // 12/8 presets and skipped the whole time-signature block: they loaded with
-  // whatever meter the previous preset left set, laying 12-beat bars against a
-  // 4-beat bar. TIME_SIGS already carried a 12 entry; only this list lacked it.
+  // 12/8 must be in this list. Without it progLoadPreset's findIndex returns -1 and
+  // skips the whole time-signature block, so the three 12/8 presets load with whatever
+  // meter the previous preset left, laying 12-beat bars against a 4-beat bar.
   [12, 8, '12/8'],
 ];
 let progTimeSigIdx = 2; // default 4/4
@@ -62822,14 +62793,11 @@ function progBuildPresetGrid() {
   if (!grid) return;
   grid.innerHTML = '';
 
-  // Group presets by GENRE, not meter. Two reasons this changed:
-  //   1. The old meter grouping enumerated signatures by hand and silently dropped any
-  //      preset that didn't match one: 12/8 and 2/4 had no group at all, and the 4/4
-  //      filter tested `!p.timeSig`, so presets carrying an explicit [4,4] (Cumbia,
-  //      Bossa tritone sub) fell through every filter and rendered NOWHERE.
-  //   2. People look for presets by style ("where's the salsa one"), not by meter.
-  // Genre is declared per-preset via `cat`; anything without one lands in Other, so a
-  // new preset can never become invisible again. Meter is shown on the card instead.
+  // Group presets by GENRE, not meter. People look for presets by style ("where's the
+  // salsa one"), not by meter, and a hand-enumerated meter grouping drops any preset
+  // that matches none of its signatures (12/8, 2/4, or an explicit [4,4]). Genre is
+  // declared per-preset via `cat`; anything without one lands in Other, so a new preset
+  // can never become invisible. Meter is shown on the card instead.
   const GENRE_ORDER = [
     ['rock',    'ROCK / POP'],
     ['blues',   'BLUES'],
@@ -62991,11 +62959,10 @@ function progLoadPreset(id) {
   // which would spread this problem to every other caller.
   _progLoadingPreset = true;
 
-  // Time signature. A preset that does not declare one is a 4/4 preset - its bar
-  // durations are written assuming four beats. Previously the `if` simply skipped,
-  // leaving whatever signature the LAST preset set: load a 7/8 preset, then load
-  // Mixed Rhythm, and its 4-beat bars were laid out against a 7-beat bar. That is the
-  // stretched single-chord bars, and it was never the preset's own fault.
+  // Time signature. A preset that does not declare one is a 4/4 preset: its bar
+  // durations assume four beats. Always set it. Skipping leaves whatever signature the
+  // LAST preset set, so Mixed Rhythm after a 7/8 preset lays its 4-beat bars against a
+  // 7-beat bar.
   const _ts = p.timeSig || [4, 4];
   const _tsIdx = PROG_TIME_SIGS.findIndex(s => s[0] === _ts[0] && s[1] === _ts[1]);
   if (_tsIdx >= 0) {
@@ -63034,20 +63001,19 @@ function progLoadPreset(id) {
       // Show it as the chosen beat without needing the tray opened or playback
       // started: the selection existed but nothing recorded it.
       progDkSelectedName = found.name;
-      // ORDER MATTERS. loadPreset() ends with `dk_bpm = p.dk_bpm`, so setting dk_bpm
-      // before calling it was pointless: the drum preset's own tempo won, and the kit
-      // then ran at a different BPM from the chords (90 vs 95 on 'Mixed Rhythm').
-      //
-      // Two clocks a few BPM apart do not sound like a fixed offset; they slide, which
-      // is why the chords seemed late in one part of the loop and early in another.
-      // The drums follow the progression here, so the progression's tempo wins.
+      // ORDER MATTERS. loadPreset() ends with `dk_bpm = p.dk_bpm`, so dk_bpm is set
+      // after it. Set before, the drum preset's own tempo wins and the kit runs at a
+      // different BPM from the chords (90 vs 95 on 'Mixed Rhythm'). Two clocks a few BPM
+      // apart do not sound like a fixed offset; they slide, early in one part of the
+      // loop and late in another. The drums follow the progression here, so the
+      // progression's tempo wins.
       // Load into a borrowed engine, not into the Drums module's live state.
       //
-      // loadPreset() writes the drum globals directly - patterns, kit, steps,
-      // subdivisions, the loaded-preset name. Calling it here meant opening a
-      // progression preset silently replaced whatever the user had built in the
-      // Drums module. Borrowing first means the preset is applied, captured as
-      // PROGRESSION's setup, and the Drums module handed back exactly as it was.
+      // loadPreset() writes the drum globals directly: patterns, kit, steps,
+      // subdivisions, the loaded-preset name. Called on live state, opening a
+      // progression preset would replace whatever the user built in the Drums module.
+      // Borrowing means the preset is applied, captured as PROGRESSION's setup, and the
+      // Drums module handed back exactly as it was.
       const _hadHolder = _rcActive();
       if (!_hadHolder) _rcLoad('progression', progRhythmState);
       loadPreset(found);
@@ -63067,47 +63033,34 @@ function progLoadPreset(id) {
       }
     }
   }
-  // A preset is an explicit choice, so what it just set becomes Progression's
-  // saved setup right now.
+  // A preset is an explicit choice, so what it just set becomes Progression's saved
+  // setup right now.
   //
-  // THE RULE, stated once so it stops being re-decided: an explicit selection
-  // wins immediately and is written to the saved setup. The persisted setup only
-  // applies when nothing more explicit has happened. Progression previously had
-  // two sources of truth - the preset and the persisted context - with no
-  // precedence between them, so whichever was applied second won, and that kept
-  // changing.
-  //
-  // Concretely this is what made a preset play at half time: the preset loaded
-  // its drum beat correctly, then playback applied the PERSISTED setup over the
-  // top, whose dk_timeSigKey / dk_numSteps / dk_globalSub were left from whatever
-  // ran before. Swapping to groove avoided it (metro sync loads groove fields
-  // only) and swapping back fixed it (that re-ran loadPreset and set the timing
-  // fresh) - which is exactly the sequence that was reported.
+  // THE RULE, stated once so it stops being re-decided: an explicit selection wins
+  // immediately and is written to the saved setup. The persisted setup only applies when
+  // nothing more explicit has happened. With two sources of truth and no precedence,
+  // whichever is applied second wins: the preset's beat loads, then playback applies the
+  // persisted dk_timeSigKey / dk_numSteps / dk_globalSub left from whatever ran before,
+  // and the preset plays at half time.
   //
   // The groove fields are taken from progRhythmState, NOT from the capture.
   //
   // _rcCapture() reads the live globals, and those belong to the METRONOME here:
-  // progSetGrooveChoice above deliberately puts them back after recording the
-  // preset's groove, precisely so choosing in Progression doesn't move the
-  // metronome. Capturing them afterwards therefore wrote the metronome's groove
-  // straight over the preset's: so changing the metronome's groove and then
-  // loading a progression preset gave the progression the metronome's groove.
+  // progSetGrooveChoice above deliberately puts them back after recording the preset's
+  // groove, so choosing in Progression doesn't move the metronome. Capturing them
+  // afterwards would write the metronome's groove over the preset's.
   //
   // progRhythmState is already correct at this point either way: updated by
-  // progSetGrooveChoice when the preset declares a groove, and left holding the
-  // previous choice when it doesn't (a preset with no groove has expressed no
-  // opinion about it). So the drum-side fields come from the capture, which is
-  // live and correct, and the groove-side fields come from the saved setup.
+  // progSetGrooveChoice when the preset declares a groove, and left holding the previous
+  // choice when it doesn't (a preset with no groove has expressed no opinion about it).
+  // So the drum-side fields come from the capture, which is live and correct, and the
+  // groove-side fields come from the saved setup.
   // Only capture the live globals when the preset did NOT bring its own beat.
   //
-  // This block used to run unconditionally, and when a preset DID bring a beat
-  // it silently undid the work above. That path borrows the engine, applies the
-  // beat, captures the result as Progression's setup and hands the drum module
-  // back: so by the time execution reaches here the globals are the DRUM
-  // MODULE's again, and capturing them overwrote the beat that had just been
-  // saved with whatever the drum module happened to be showing. The progression
-  // ended up storing the drum module's pattern under the preset's name, which is
-  // exactly the reported symptom: names changed, audio didn't.
+  // When it did, that path has already borrowed the engine, applied the beat, captured
+  // the result as Progression's setup and handed the drum module back, so by the time
+  // execution reaches here the globals are the DRUM MODULE's again. Capturing them would
+  // store the drum module's pattern under the preset's name.
   if (!p.drumPreset && typeof _rcCapture === 'function' && typeof progSaveRhythmState === 'function') {
     try {
       const _fresh = _rcCapture();
@@ -64491,10 +64444,9 @@ function progSaveRhythmState(s) {
   try { prefSet('progRhythmState', JSON.stringify(s)); } catch (e) {}
 }
 let progDkTrayActiveCat = 1; // skip custom (index 0)
-// Which drum preset the Progression tray last loaded. The tray had no concept of
-// a current selection at all: every card rendered identically, so after closing
-// and reopening (or switching category tabs) there was no way to see which beat
-// was actually playing. Stored by name because presets have no id field.
+// Which drum preset the Progression tray last loaded, so the tray can mark the beat that
+// is playing after a close and reopen or a category switch. Stored by name because
+// presets have no id field.
 let progDkSelectedName = null;
 
 function progSetSyncMode(mode) {
@@ -64816,23 +64768,19 @@ function progBuildDrawerGrooveCards() {
 
   GROOVE_PRESETS.filter(p => p.cat === progGrooveCat && (p.beats || 4) === progBeatsPerBar).forEach(p => {
     const card = document.createElement('div');
-    // Highlight on identity alone. This also required progGrooveEnabled, which is
-    // false when you open a progression that hasn't had its groove switched on
-    // yet: so the beat WAS stored correctly and simply never showed as chosen,
-    // which is the "doesn't show the beat highlighted on open" report. Whether
-    // the groove is currently sounding is a separate question from which one is
-    // selected, and the card answers the second.
+    // Highlight on identity alone, not on progGrooveEnabled. A progression whose groove
+    // is not switched on yet still has a chosen beat, and the card shows which one is
+    // selected. Whether the groove is currently sounding is a separate question.
     card.className = 'groove-card' + (p.id === progCurrentGrooveId() ? ' active' : '');
     const origin = (progState.lang === 'it')&&p.originIt ? p.originIt : p.origin;
     const bpmHint = p.suggestedBpm ? ` · ${p.suggestedBpm} BPM` : '';
     card.innerHTML = `<span class="groove-card-name">${(progState.lang === 'it')&&p.nameIt?p.nameIt:p.name}</span><span class="groove-card-origin">${origin}${bpmHint}</span><div class="groove-card-preview" id="pgcp-${p.id}"></div>`;
     card.onclick = () => {
       const isLive = progPlaying && progSyncMode === 'metro';
-      // Apply immediately either way, then restart if we're playing. The old
-      // path queued the swap to the next bar boundary, which lands the new
-      // groove cleanly but not necessarily at the right point within a
-      // multi-bar pattern: the same problem the kit had. Restarting makes both
-      // parts start together from a known state.
+      // Apply immediately either way, then restart if we're playing. Queuing the swap to
+      // the next bar boundary lands the new groove cleanly but not necessarily at the
+      // right point within a multi-bar pattern, the same problem the kit has. Restarting
+      // makes both parts start together from a known state.
       progSetGrooveChoice(p.id);
       progPendingGrooveId = null;
       if (isLive) progRestartForSwap();
@@ -65273,11 +65221,9 @@ function tpSemiStep(delta) {
   if (valEl)  valEl.textContent  = (_tpSemiShift > 0 ? '+' : '') + _tpSemiShift;
   if (nameEl) nameEl.textContent = TP_SEMI_NAMES[_tpSemiShift] || '';
   try { localStorage.setItem('intonare_tp_semi', String(_tpSemiShift)); } catch(e) {}
-  // Only buzz when the value actually moved. tpInit() calls this with delta 0 to
-  // paint the initial state, so an unconditional haptic here fired every time the
-  // Transpose tool was OPENED: which is why launching that one module vibrated
-  // and no other did. It was never the launcher; it was this function doing
-  // double duty as a setup call and a user action.
+  // Only buzz when the value actually moved. tpInit() calls this with delta 0 to paint
+  // the initial state, and an unconditional haptic here would vibrate every time the
+  // Transpose tool opens.
   if (delta && typeof hapticLight === 'function') hapticLight();
   tpTransposeChords();
 }
@@ -65565,13 +65511,12 @@ function lnchGo(m) {
       })(0);
     }, 450);
   };
-  // REDUCED MOTION: there is no morph here, so _applyMode must be called
-  // explicitly. Deferring setMode into the morph's second frame silently broke
-  // this path (it returned before the mode was ever applied, so
-  // tapping Metro landed you in the tuner). lnch-settled is set for the same
-  // reason lnchGoPin's reduce path sets it: entry is over the instant we return,
-  // and .mode-toggle is styled off that class, so skipping it leaves the toggle
-  // stuck in its pre-entry state forever.
+  // REDUCED MOTION: there is no morph here, so _applyMode must be called explicitly. On
+  // the normal path setMode is deferred into the morph's second frame, and without this
+  // call tapping Metro would land you in the tuner. lnch-settled is set for the same
+  // reason lnchGoPin's reduce path sets it: entry is over the instant we return, and
+  // .mode-toggle is styled off that class, so skipping it leaves the toggle stuck in its
+  // pre-entry state forever.
   if (reduce) {
     _applyMode();
     document.body.classList.remove('lnch-morphing');
@@ -66184,11 +66129,10 @@ function lnchInit() {
         // Waiting produced an empty launcher for 167ms and then a grid appearing
         // on top of nothing.
         lc.classList.add('lnch-in');
-        // Same reason as the no-splash path: hang the welcome tour off the
-        // launcher actually being visible. The old +600ms timer fired while the
-        // splash still had ~4s to run, so the card's entrance played under an
-        // opaque overlay and the tour was already sitting there, mid-flow, when
-        // the splash finally cleared.
+        // Same reason as the no-splash path: hang the welcome tour off the launcher
+        // actually being visible. A fixed timer fires while the splash still has ~4s to
+        // run, so the card's entrance plays under an opaque overlay and the tour is
+        // already mid-flow when the splash clears.
         setTimeout(function(){ maybeWelcomeTour('launcher'); }, 700);
       });
     });
@@ -67559,11 +67503,9 @@ function droneStart() {
 function droneStop(silent) {
   if (!droneNodes) { droneActive = false; return; }
   const ctx = practiceCtx; const now = ctx.currentTime;
-  // Fast clean stop. The OLD code stopped oscillators at now+0.25 while nulling
-  // droneNodes immediately: so a root change (stop-then-start) overlapped old
-  // and new oscillators for 250ms, burying the new root under the old one. Here
-  // the fade is short (60ms: enough to avoid a click) and oscillators stop right
-  // after it, so a restart can't stack two roots.
+  // Fast clean stop: a short fade (60ms, enough to avoid a click) and the oscillators
+  // stop right after it. Stopping them later while nulling droneNodes at once would
+  // overlap the old and new roots on a root change (stop-then-start).
   const n = droneNodes;
   droneNodes = null;
   droneActive = false;
@@ -68505,10 +68447,9 @@ function scalesInit() {
   scaleRenderTape(false);
 }
 
-// The Scales tool no longer has sub-tabs (the old IMPROV tab was a drone + a
-// scale strip, i.e. Tonal Center with the detection removed; Tonal Center does
-// that job properly). Kept as a no-op shim because external callers still
-// reference it and a missing global would throw.
+// The Scales tool has no sub-tabs; Tonal Center does the job an IMPROV tab (a drone plus
+// a scale strip) would. Kept as a no-op shim because external callers still reference it
+// and a missing global would throw.
 function scalesTab(tab) { /* sub-tabs removed; single-view tool */ }
 
 function updateScale() {
@@ -68519,11 +68460,10 @@ function updateScale() {
   try { updateDroneDisplay(); } catch(e) {}
   try { droneUpdateScale(); } catch(e) {}
   scaleRenderTape(true);
-  // playScale() snapshots scaleTapeData() once when it starts, so a scale or
-  // root changed mid-playback updated the tape and the name while the audio kept
-  // running the OLD sequence. That also made every new scale sound identical:
-  // you were hearing whatever was already looping, not what you had just picked.
-  // Restart in the same direction so the change is audible immediately.
+  // playScale() snapshots scaleTapeData() once when it starts. A scale or root changed
+  // mid-playback would update the tape and the name while the audio kept running the OLD
+  // sequence, and every new pick would sound like the last one. Restart in the same
+  // direction so the change is audible immediately.
   if (typeof scalePlaying !== 'undefined' && scalePlaying && scaleMode) {
     const dir = scaleMode;
     try { scaleStop(); } catch (e) {}
@@ -70829,10 +70769,9 @@ function _tonePreviewPick(key, stillPicked) {
     ctx: null, resumed: null, canPreview: null, stillPicked: null,
     warmed: null, played: null, via: null, err: null
   };
-  // Built here, synchronously, while the tap is still the current call stack.
-  // Left until after the load it was created suspended and the first preview of
-  // a session was silent, every time, with the second one fine because the
-  // context already existed by then.
+  // Built here, synchronously, while the tap is still the current call stack. Built
+  // after the load, the context starts suspended and the first preview of a session is
+  // silent.
   const ctx = ensureRefCtx();
 
   // getAudio() asks the context to resume, but resume() is a promise. On a suspended
@@ -70860,11 +70799,10 @@ function _tonePreviewPick(key, stillPicked) {
             D.played = !!SampleEngine.play(key, 69, ctx, refMasterGain, refVolume, 0.8);
             if (D.played) return;
           }
-          // The sample could not be had: a missing file, no network, or a build
-          // with no audio bundled at all. Synth rather than silence. Silence
-          // reads as a broken control, and it was doing exactly that on the
-          // first pick of every sampled voice, because the second pick found the
-          // instrument already marked failed and took this fallback instead.
+          // The sample could not be had: a missing file, no network, or a build with no
+          // audio bundled at all. Synth rather than silence, because silence reads as a
+          // broken control. This matters most on the first pick of a sampled voice: the
+          // second pick finds the instrument already marked failed and lands here.
           D.via = 'synth fallback';
           if (REF_TONES[key]) {
             REF_TONES[key].synth(ctx, 440, ctx.currentTime, 0.8, refMasterGain, refVolume);
@@ -71998,10 +71936,9 @@ function tgNewRound() {
   tgRoundGroove = null;
   tgRoundSubdiv = null;
   if (d.lockFeel) {
-    // 70% groove, 30% non-quarter subdivision. The old 50/50 split with
-    // quarter in the subdiv pool meant ~8% of rounds were straight quarters,
-    // which is just HARD with a wider range. Grooves are what make INSANE
-    // feel different, so they get the weight.
+    // 70% groove, 30% non-quarter subdivision. Grooves are what make INSANE feel
+    // different from HARD, so they get the weight; with quarters in the subdivision
+    // pool, some rounds would just be HARD with a wider range.
     const _insaneSubPool = ['whole','half','eighth','triplet','sixteenth'];
     if (Math.random() < 0.7) {
       tgRoundGroove = TG_FEEL_POOL[Math.floor(Math.random() * TG_FEEL_POOL.length)];
@@ -74810,11 +74747,10 @@ function rrRenderRow(svg, colorMap, barStart, barEnd) {
   }
 
   // Draw regular beams
-  // The beam is the dominant visual mass of a beamed group, so drawing it in a
-  // flat noteColor while the noteheads underneath were graded made a run of
-  // eighths read as uncolored. Draw it segment-by-segment instead: the span
-  // between two consecutive notes takes the color of the note it leaves from,
-  // so a group that was half green and half red actually looks it.
+  // The beam is the dominant visual mass of a beamed group, so a flat noteColor beam
+  // over graded noteheads makes a run of eighths read as uncolored. Draw it segment by
+  // segment instead: the span between two consecutive notes takes the color of the note
+  // it leaves from, so a group that is half green and half red looks it.
   beamGroups.forEach(function(grp) {
     var BY = SY - 26;
     var dbl = notes[grp[0]].d <= 0.25;   // sixteenth groups get a second beam
@@ -75013,11 +74949,11 @@ var RR_BASS = 'M9.07 -9.43C2.81 -9.43 0.0 -4.86 0.0 -1.4C0.0 1.48 1.51 3.96 4.43
 var RR_CCLEF = 'M8.28 -17.352C8.28 -17.856 8.028 -18.108 7.524 -18.108H7.488C6.984 -18.108 6.732 -17.856 6.732 -17.352V17.352C6.732 17.856 6.984 18.108 7.488 18.108H7.524C8.028 18.108 8.28 17.856 8.28 17.352V1.584C8.28 1.296 8.46 1.332 8.604 1.368C9.54 1.62 11.052 2.556 11.808 6.624C11.916 7.2 12.132 7.524 12.492 7.524C12.888 7.524 13.068 7.164 13.248 6.552C13.716 4.968 14.544 3.204 17.1 3.204C19.44 3.204 20.088 5.508 20.088 10.224C20.088 14.94 19.26 17.064 16.272 17.064C15.768 17.064 13.212 16.848 13.212 16.092C13.212 15.912 13.788 15.696 14.184 15.552C14.904 15.3 15.624 14.58 15.624 13.212C15.624 11.628 14.58 10.728 13.176 10.728C11.628 10.728 10.404 11.772 10.404 13.68C10.404 15.948 12.384 18.216 16.668 18.216C22.572 18.216 25.164 14.076 25.164 10.332C25.164 5.364 22.428 1.908 17.64 1.908C16.596 1.908 15.912 2.088 15.444 2.232C15.084 2.34 14.724 2.412 14.4 2.196C13.896 1.872 13.104 0.72 13.104 0C13.104 -0.72 13.896 -1.872 14.4 -2.196C14.724 -2.412 15.084 -2.34 15.444 -2.232C15.912 -2.088 16.596 -1.908 17.64 -1.908C22.428 -1.908 25.164 -5.364 25.164 -10.332C25.164 -14.076 22.572 -18.216 16.668 -18.216C12.384 -18.216 10.404 -15.948 10.404 -13.68C10.404 -11.772 11.628 -10.728 13.176 -10.728C14.58 -10.728 15.624 -11.628 15.624 -13.212C15.624 -14.58 14.904 -15.3 14.184 -15.552C13.788 -15.696 13.212 -15.912 13.212 -16.092C13.212 -16.848 15.768 -17.064 16.272 -17.064C19.26 -17.064 20.088 -14.94 20.088 -10.224C20.088 -5.508 19.44 -3.204 17.1 -3.204C14.544 -3.204 13.716 -4.968 13.248 -6.552C13.068 -7.164 12.888 -7.524 12.492 -7.524C12.132 -7.524 11.916 -7.2 11.808 -6.624C11.052 -2.556 9.54 -1.62 8.604 -1.368C8.46 -1.332 8.28 -1.296 8.28 -1.584ZM0.756 -18.108C0.252 -18.108 0 -17.856 0 -17.352V17.352C0 17.856 0.252 18.108 0.756 18.108H3.852C4.356 18.108 4.608 17.856 4.608 17.352V-17.352C4.608 -17.856 4.356 -18.108 3.852 -18.108Z';
 var RR_SHARP = 'M8.53 -4.25C8.78 -4.36 8.96 -4.64 8.96 -4.86V-7.42C8.96 -7.6 8.86 -7.7 8.71 -7.7C8.64 -7.7 8.6 -7.7 8.53 -7.67C8.53 -7.67 7.81 -7.38 7.63 -7.34C7.38 -7.34 7.13 -7.52 7.13 -7.81V-12.2C7.13 -12.42 6.91 -12.6 6.62 -12.6C6.26 -12.6 6.05 -12.42 6.05 -12.2V-7.52C6.01 -7.16 5.9 -6.7 5.58 -6.48C5.15 -6.23 3.92 -5.72 3.31 -5.58C2.99 -5.58 2.88 -6.01 2.88 -6.3V-10.62C2.88 -10.84 2.63 -11.02 2.38 -11.02C2.02 -11.02 1.8 -10.84 1.8 -10.62V-5.76C1.8 -5.26 1.58 -4.9 1.37 -4.79C1.15 -4.68 0.43 -4.39 0.43 -4.39C0.18 -4.32 0.0 -4.03 0.0 -3.82V-1.26C0.0 -1.04 0.11 -0.94 0.32 -0.94L0.4 -0.97C0.43 -0.97 0.97 -1.19 1.26 -1.33L1.3 -1.37C1.58 -1.37 1.8 -1.01 1.8 -0.72V2.84C1.8 3.24 1.62 3.56 1.4 3.67C1.19 3.74 0.43 4.07 0.43 4.07C0.18 4.14 0.0 4.43 0.0 4.64V7.2C0.0 7.42 0.11 7.52 0.32 7.52L0.4 7.49C0.43 7.49 0.94 7.27 1.26 7.16C1.3 7.13 1.33 7.13 1.37 7.13C1.62 7.13 1.8 7.52 1.8 7.7V12.13C1.8 12.35 2.02 12.53 2.27 12.53C2.63 12.53 2.88 12.35 2.88 12.13V7.13C2.88 6.66 3.06 6.41 3.24 6.34L5.44 5.44C5.44 5.44 5.47 5.44 5.47 5.44L5.54 5.4C5.87 5.4 6.05 5.83 6.05 6.05V10.55C6.05 10.76 6.26 10.94 6.52 10.94C6.91 10.94 7.13 10.76 7.13 10.55V5.44C7.13 5.15 7.27 4.72 7.52 4.61C7.78 4.5 8.53 4.21 8.53 4.21C8.78 4.1 8.96 3.82 8.96 3.6V1.04C8.96 0.86 8.86 0.76 8.71 0.76C8.64 0.76 8.6 0.76 8.53 0.79L7.6 1.15C7.38 1.15 7.13 0.94 7.13 0.5V-2.84C7.13 -3.1 7.31 -3.78 7.6 -3.89ZM6.05 1.62C5.83 2.34 4.14 3.06 3.31 3.06C3.1 3.06 2.92 2.99 2.88 2.88C2.81 2.74 2.77 1.94 2.77 1.08C2.77 -0.04 2.81 -1.3 2.88 -1.58C2.95 -2.2 4.61 -2.95 5.51 -2.95C5.76 -2.95 5.98 -2.88 6.05 -2.74C6.12 -2.56 6.19 -1.66 6.19 -0.68C6.19 0.29 6.12 1.3 6.05 1.62Z';
 
-// Accidentals Bravura carries that RR had no path for. Extracted from the same
-// embedded subset at the same scale as RR_SHARP (one em = four staff spaces,
-// y flipped), so the origin sits where every other accidental's does and the
-// existing translate lands them correctly. Font text was tried first and sat
-// wrong, because a Bravura em box is nothing like its ink.
+// Accidentals Bravura carries that RR had no path for. Extracted from the same embedded
+// subset at the same scale as RR_SHARP (one em = four staff spaces, y flipped), so the
+// origin sits where every other accidental's does and the existing translate lands them
+// correctly. Font text does not work here: a Bravura em box is nothing like its ink, so
+// it sits wrong.
 var RR_NATURAL = 'M5.076 -6.515999999999999C5.004 -6.515999999999999 4.968 -6.4799999999999995 4.9319999999999995 -6.4799999999999995C4.9319999999999995 -6.4799999999999995 2.6279999999999997 -5.651999999999999 1.692 -5.651999999999999C1.476 -5.651999999999999 1.3319999999999999 -5.688 1.3319999999999999 -5.832V-11.844C1.3319999999999999 -12.095999999999998 1.1159999999999999 -12.276 0.8999999999999999 -12.276H0.43199999999999994C0.18 -12.276 0.0 -12.095999999999998 0.0 -11.844V6.696C0.0 6.911999999999999 0.10799999999999998 7.02 0.288 7.02C0.32399999999999995 7.02 0.39599999999999996 6.983999999999999 0.43199999999999994 6.983999999999999C0.43199999999999994 6.983999999999999 0.504 6.983999999999999 0.5399999999999999 6.9479999999999995C1.0439999999999998 6.731999999999999 3.0599999999999996 5.867999999999999 4.104 5.867999999999999C4.4639999999999995 5.867999999999999 4.715999999999999 5.976 4.715999999999999 6.263999999999999V11.627999999999998C4.715999999999999 11.879999999999999 4.896 12.059999999999999 5.148 12.059999999999999H5.616C5.832 12.059999999999999 6.047999999999999 11.879999999999999 6.047999999999999 11.627999999999998V-6.444C6.047999999999999 -6.624 5.904 -6.731999999999999 5.76 -6.731999999999999C5.723999999999999 -6.731999999999999 5.651999999999999 -6.731999999999999 5.616 -6.696ZM1.3319999999999999 -1.404C1.3319999999999999 -1.908 3.5279999999999996 -2.844 4.3919999999999995 -2.844C4.608 -2.844 4.715999999999999 -2.808 4.715999999999999 -2.6639999999999997V1.0439999999999998C4.715999999999999 1.692 2.6639999999999997 2.52 1.7639999999999998 2.52C1.5119999999999998 2.52 1.3319999999999999 2.448 1.3319999999999999 2.304Z';
 var RR_NATURAL_DX = 2.92;
 var RR_DBLSHARP = 'M6.84 1.152C6.444 0.9359999999999999 5.148 0.21599999999999997 5.148 -0.036C5.148 -0.5399999999999999 6.335999999999999 -1.0799999999999998 6.84 -1.26C6.983999999999999 -1.26 7.127999999999999 -1.224 7.271999999999999 -1.224C7.847999999999999 -1.224 8.388 -1.3679999999999999 8.639999999999999 -1.5839999999999999C8.819999999999999 -1.7639999999999998 8.892 -2.304 8.892 -2.88C8.892 -3.4919999999999995 8.783999999999999 -4.14 8.639999999999999 -4.319999999999999C8.495999999999999 -4.5 7.919999999999999 -4.572 7.308 -4.572C6.659999999999999 -4.572 6.012 -4.5 5.832 -4.319999999999999C5.688 -4.212 5.651999999999999 -3.5639999999999996 5.651999999999999 -2.916C5.4719999999999995 -2.52 4.896 -1.224 4.4639999999999995 -1.224C3.9599999999999995 -1.224 3.384 -2.412 3.2399999999999998 -2.916C3.2399999999999998 -3.5279999999999996 3.1319999999999997 -4.175999999999999 2.952 -4.319999999999999C2.808 -4.5 2.2319999999999998 -4.572 1.656 -4.572C1.0439999999999998 -4.572 0.39599999999999996 -4.5 0.18 -4.319999999999999C0.072 -4.247999999999999 0.0 -3.6359999999999997 0.0 -2.988C0.0 -2.34 0.072 -1.692 0.18 -1.5839999999999999C0.43199999999999994 -1.3679999999999999 1.0799999999999998 -1.224 1.692 -1.224C1.8359999999999999 -1.224 1.944 -1.26 2.052 -1.26C2.448 -1.0439999999999998 3.7439999999999998 -0.32399999999999995 3.7439999999999998 -0.072C3.7439999999999998 0.39599999999999996 2.5919999999999996 0.972 2.0879999999999996 1.152H1.7279999999999998C1.0799999999999998 1.152 0.39599999999999996 1.224 0.18 1.404C0.072 1.5119999999999998 0.0 2.1239999999999997 0.0 2.772C0.0 3.42 0.072 4.068 0.18 4.14C0.43199999999999994 4.356 1.008 4.5 1.6199999999999999 4.5C2.1599999999999997 4.5 2.7359999999999998 4.3919999999999995 2.952 4.14C3.1679999999999997 3.9599999999999995 3.2399999999999998 3.348 3.2399999999999998 2.772C3.2399999999999998 2.7359999999999998 3.276 2.6639999999999997 3.312 2.6279999999999997C3.5279999999999996 2.1239999999999997 3.9599999999999995 1.1159999999999999 4.428 1.1159999999999999C4.896 1.1159999999999999 5.508 2.268 5.651999999999999 2.772C5.651999999999999 3.42 5.688 4.032 5.832 4.14C6.084 4.356 6.659999999999999 4.5 7.271999999999999 4.5C7.847999999999999 4.5 8.388 4.3919999999999995 8.639999999999999 4.14C8.819999999999999 3.9599999999999995 8.892 3.42 8.892 2.844C8.892 2.2319999999999998 8.783999999999999 1.5839999999999999 8.639999999999999 1.404C8.459999999999999 1.224 7.811999999999999 1.152 7.199999999999999 1.152Z';
@@ -75458,11 +75394,10 @@ var srAcc     = prefGet('srAcc',   'off',    function(v){ return v==='off'||v===
 var srInput   = prefGet('srInput', 'grid', function(v){ return v==='grid'||v==='piano'||v==='fret'; });
 var srAuto    = prefGet('srAuto',  'on',     function(v){ return v==='off'||v==='on'; });
 var srKeySig  = prefGet('srKeySig','off',    function(v){ return v==='off'||v==='on'; });
-// Which voice the reveal plays. This is the drill's own voice and it does not
-// follow the app's reference tone; a piano is the sane default for reading, and
-// a plain sine is one tap away if you want the pitch with no timbre on it. The
-// validator also migrates anyone still holding the old empty-string sentinel,
-// which used to mean "match the app".
+// Which voice the reveal plays. This is the drill's own voice and it does not follow the
+// app's reference tone; a piano is the sane default for reading, and a plain sine is one
+// tap away if you want the pitch with no timbre on it. The validator also migrates the
+// old empty-string value, which meant "match the app".
 var srTone = prefGet('srTone', 'grand_piano', function(v){
   return typeof v === 'string' && !!v
     && typeof REF_TONES === 'object' && !!REF_TONES[v];
@@ -76736,10 +76671,9 @@ function srQueueAuto() {
   if (srAuto !== 'on') return;
   if (_srAutoTO) clearTimeout(_srAutoTO);
   if (_srStopTO) clearTimeout(_srStopTO);
-  // Silence just before the card turns, so the two never overlap. Held in a
-  // variable like the advance is: untracked, it survived NEXT and fired into
-  // whatever card had landed since, cutting off a reveal the user had just
-  // asked for. Answering quickly stacked one of these per card.
+  // Silence just before the card turns, so the two never overlap. Held in a variable
+  // like the advance is, so NEXT can cancel it; untracked, it fires into whatever card
+  // has landed since and cuts off a reveal the user just asked for.
   _srStopTO = setTimeout(function() { _srStopTO = null; try { chordStop(); } catch (e) {} }, 1150);
   _srAutoTO = setTimeout(function() { _srAutoTO = null; if (srDone) srNextCard(); }, 1400);
 }
@@ -76999,10 +76933,9 @@ var rlpElim = [], rlpBandReplays = RLP_BAND_REPLAYS, rlpCurBand = 'WIDE';
 var rlpResKind = 'summit', rlpResVal = '0', rlpLostAt = 0, rlpLostNote = 0, rlpLostPick = 0;
 var rlpLivesUsed = 0, rlpResMult = 2, rlpResRaw = '0';
 var rlpRulesOpen = false, rlpStatsTab = 'practice', rlpResetArmed = false;
-/* The mode switch sits where the card's title used to. It is rendered rather
-   than static because the head is rebuilt on every draw, and having it live
-   outside the card meant a row of chrome above a card whose first line then
-   repeated what the switch had just said. */
+/* The mode switch sits where the card's title would be. It is rendered rather than
+   static because the head is rebuilt on every draw. Outside the card it would be a row
+   of chrome above a card whose first line repeats what the switch says. */
 function rlpSeg() {
   return '<div class="app-seg rlp-tabs" id="rlpTabs">' +
     '<button class="app-seg-btn' + (rlpView === 'practice' ? ' active' : '') + '" data-rlpview="practice">' +
@@ -80886,10 +80819,8 @@ function rcStartTap() {
 
 // Instant visual confirmation that a tap landed.
 //
-// There was NONE. rc-armed says "the zone is live", but an individual tap did nothing
-// at all: you tapped into a static box and found out afterwards, from the grade,
-// whether the app had heard you. In a rhythm exercise the tap IS the interaction, so it
-// has to answer immediately, at the moment your finger lands, or you cannot tell a
+// rc-armed says "the zone is live", but in a rhythm exercise each tap IS the
+// interaction, so it has to answer at the moment your finger lands, or you cannot tell a
 // missed tap from a mistimed one.
 //
 // Deliberately NOT a transition-in: at 120bpm a semiquaver is 125ms, so a .12s fade
@@ -82355,11 +82286,10 @@ function prGameEvaluateCycle(cycleIdx, cycleDur) {
   const fracs = prExpectedBeatFractions();
   const cycleStartTime = prCycleStart + cycleIdx * cycleDur;
   const expected = fracs.map(f => cycleStartTime + f * cycleDur);
-  // Sentinel: beat 0 of the NEXT cycle. A tap landed slightly early for the
-  // next downbeat falls inside this cycle's grace window; without this anchor
-  // it would match the previous cycle's LAST beat and read as nearly a full
-  // beat late: the "first tap of every round is super late" bug. With it, the
-  // tap matches the nearer downbeat and reads correctly (early/on).
+  // Sentinel: beat 0 of the NEXT cycle. A tap slightly early for the next downbeat falls
+  // inside this cycle's grace window. Without this anchor it matches the previous
+  // cycle's LAST beat and reads as nearly a full beat late, on the first tap of every
+  // round. With it, the tap matches the nearer downbeat and reads correctly (early/on).
   expected.push(cycleStartTime + cycleDur);
 
   // Tightest gap between adjacent expected beats sets the grading tolerance.
@@ -82968,11 +82898,10 @@ const SS_DIFFICULTIES = {
   medium: { name: 'MEDIUM', nameIt:'MEDIO', scale: [0,2,4,5,7,9,11],       stepRatio: 0.70, maxLeap: 3, len: 4 },  // major
   hard:   { name: 'HARD', nameIt:'DIFFICILE',   scale: [0,1,2,3,4,5,6,7,8,9,10,11], stepRatio: 0.55, maxLeap: 5, len: 5 }, // chromatic
 };
-// Sequence difficulty for STRING mode. SS_DIFFICULTIES was fully implemented - a real
-// curve from major pentatonic (no semitones, easy to sing) through major to full
-// chromatic, with step-vs-leap ratios and sequence lengths to match - and then NOTHING
-// EVER ASSIGNED THIS VARIABLE. No picker existed anywhere, so every player was locked
-// to EASY forever and two thirds of the content was unreachable. There is a picker now.
+// Sequence difficulty for STRING mode. SS_DIFFICULTIES is a real curve from major
+// pentatonic (no semitones, easy to sing) through major to full chromatic, with
+// step-vs-leap ratios and sequence lengths to match. The picker sets this variable;
+// without it every player is stuck on EASY and two thirds of the content is unreachable.
 let ssDifficulty = prefGet('ssDifficulty', 'easy', _inList(['easy','medium','hard']));
 
 // Sequence state
@@ -82984,11 +82913,12 @@ let ssRound       = null; // current target note (ssSequence[ssSeqIdx])
 let ssGotIt       = false;
 let ssHoldMs      = 0;
 // Sing-grading tuning. Built tolerance-driven so a difficulty tier can scale these later
-// by swapping ssTune. Zone geometry (the arc's green segment) is derived from ssTune.zone.
-// zone was 10¢: the untrained-listener JND floor, tighter than Road Trip HARD (22¢)
-// and tighter than trained singers actually hold (20-30¢). The grace window softened
-// it but the core ask was physically unwinnable for a voice. 16¢ keeps SingSing the
-// most demanding voice surface in the app while being achievable by a careful singer.
+// by swapping ssTune. Zone geometry (the arc's green segment) is derived from
+// ssTune.zone.
+// zone is 16¢. 10¢ is the untrained-listener JND floor, tighter than Road Trip HARD
+// (22¢) and tighter than trained singers actually hold (20-30¢), so it is unwinnable for
+// a voice even with the grace window. 16¢ keeps SingSing the most demanding voice
+// surface in the app while being achievable by a careful singer.
 const SS_TUNE = { zone: 16, hold: 1500, grace: 300, graceDrain: 0.6 };  // ¢, ms, ms, multiplier
 let ssTune = SS_TUNE;
 let ssOutMs       = 0;   // ms spent just outside the zone (forgiveness window)
@@ -84033,9 +83963,9 @@ function rtStartTrip(tier){
 }
 // True while the app is sounding the reference. Pitch detection is deaf for the
 // duration, because otherwise Road Trip listens to ITS OWN SPEAKER: the mic is live
-// through the whole home phase, the reference is a clean sustained tone, and
-// rtHomeCheck will happily lock onto it and fill the hold meter before the singer has
-// opened their mouth. (Pitch Match had exactly this bug.)
+// through the whole home phase, the reference is a clean sustained tone, and rtHomeCheck
+// will happily lock onto it and fill the hold meter before the singer has opened their
+// mouth.
 let rtPlayingRef = false;
 let _rtRefTimer  = null;
 const RT_REF_DUR = 1.2;
@@ -85349,10 +85279,9 @@ function rtTuner(){
     // Perf songs seek by absolute ms, so the edit has to move ms too - otherwise the
     // buttons visibly change the row while playback keeps hitting the old spot.
     if(isPerf(id)) h.ms=Math.max(0, Math.round(h.b*(60000/bpm)));
-    // AFTER the ms recompute, not before. Saving first stored the new b and s
-    // against the OLD ms, so a restored perf leg would have displayed the new
-    // position and played the old one -- the same silent wrongness as losing the
-    // work, only harder to notice.
+    // AFTER the ms recompute, not before. Saving first stores the new b and s against
+    // the OLD ms, so a restored perf leg would show the new position and play the old
+    // one.
     rtTuneSave();
     return h;
   }
@@ -85426,9 +85355,8 @@ function rtOpen(){
   document.body.classList.add('rt-open');
   document.body.style.overflow='hidden';
   // Apply the SAVED theme. rtDesign is restored from localStorage at declaration, but
-  // nothing was ever applying it: the class was only set by rtSetDesign(), i.e. only
-  // when you actively tapped a swatch. So the variable remembered your choice and the
-  // screen ignored it.
+  // only rtSetDesign() sets the class, and that runs only when a swatch is tapped.
+  // Without this the variable remembers the choice and the screen ignores it.
   if (typeof rtSetDesign === 'function') rtSetDesign(rtDesign);
 }
 function rtClose(){
@@ -91523,12 +91451,10 @@ function playCompletionistChime(volScale) {
 }
 
 /* ── THE MOUNTAIN KING: the_summit / Hardcore Polyrhythm summit ──
-   Grieg's In the Hall of the Mountain King, real score (Mutopia Project),
-   the opening motif: B2-C#3-D3-E3-F#3-D3, cut after the first line - no
-   register climb, no stinger. Real tempo, quarter=138. Went through a
-   prototyping pass: an earlier version had a sustained low drone under the
-   whole phrase and full-volume octave doubling - too thick. Dropped the
-   drone, quieted the doubling (0.12 -> 0.07). */
+   Grieg's In the Hall of the Mountain King, real score (Mutopia Project), the opening
+   motif: B2-C#3-D3-E3-F#3-D3, cut after the first line, with no register climb and no
+   stinger. Real tempo, quarter=138. No drone under the phrase and a quiet octave
+   doubling (0.07): anything thicker muddies it. */
 function playMountainKingChime(volScale) {
   try {
     // 0.473 factor: measured against its achievement-pool siblings offline -
@@ -91855,10 +91781,9 @@ function progRenderGraph() {
   });
 }
 const PROG_STORAGE_KEY = 'intonare_progress_v1';
-// The one definition of what a fresh profile looks like. progState starts as a
-// copy of it and resetProgress() returns to it; before this existed reset kept
-// its own hand-typed literal, which had silently drifted out of sync and was
-// dropping fields (including hasPro) on every reset.
+// The one definition of what a fresh profile looks like. progState starts as a copy of
+// it and resetProgress() returns to it. A second hand-typed literal for reset drifts out
+// of sync and drops fields (including hasPro) on every reset.
 const PROG_DEFAULTS = {
   xp: 0,
   level: 1,
@@ -94661,17 +94586,15 @@ try {
   // Chord Ear: pool chips and answer buttons render chord quality names.
   registerRelabel('exChordEar', function () { if (typeof ceInit === 'function') ceInit(); });
 
-  // Music Quiz: the three pack grids are built once at DOMContentLoaded and were
-  // never rebuilt, so switching to Italian mid-session left every pack title,
-  // description and group header in English until the app restarted. The titles
-  // themselves are translated; nothing was re-rendering them.
+  // Music Quiz: the three pack grids are built once at DOMContentLoaded, so this
+  // re-renders their titles, descriptions and group headers on a language change.
   //
-  // Keyed on the modal rather than each grid: all three live inside it, and the
-  // registry skips a screen that is not on show, so a language change with the
-  // quiz closed costs nothing.
-  // The theremin rebuilds its own controls on open, after applyLang has run, so
-  // tagged elements inside it revert to their markup defaults. Re-running
-  // applyLang for that screen is enough; nothing there is built from a data table.
+  // Keyed on the modal rather than each grid: all three live inside it, and the registry
+  // skips a screen that is not on show, so a language change with the quiz closed costs
+  // nothing.
+  // The theremin rebuilds its own controls on open, after applyLang has run, so tagged
+  // elements inside it revert to their markup defaults. Re-running applyLang for that
+  // screen is enough; nothing there is built from a data table.
   registerRelabel('toolTheremin', function () {
     try { applyLang(); } catch (e) {}
     // The demo drawer is built once from a data table, so applyLang cannot reach
@@ -94715,10 +94638,10 @@ try {
   registerRelabel(null, function(){
     if (typeof _rerenderHeader === 'function') _rerenderHeader();
   });
-  // Section header (the TOOLS / TRAIN hub title and its subtitle). Same root
-  // cause as the module header: setHeaderSection is handed t('mode_tools'),
-  // already resolved, so the title froze in whatever language was live when the
-  // tab was opened. Re-derived from `mode`, which is already tracked.
+  // Section header (the TOOLS / TRAIN hub title and its subtitle). setHeaderSection is
+  // handed t('mode_tools') already resolved, so the title would freeze in whatever
+  // language was live when the tab opened. Re-derived from `mode`, which is already
+  // tracked.
   registerRelabel(null, function(){
     if (typeof _rerenderSection === 'function') _rerenderSection();
   });
@@ -94872,10 +94795,9 @@ function setLang(lang) {
   // list above to rebuild them.
   try { _chartBtnsRelabel(); } catch(e) {}
 
-  // Re-render VR artist modal if currently open.
-  // This block used to `return` when #vrArtistModal was absent - an early return
-  // in the MIDDLE of setLang, so on any screen without that element everything
-  // below it silently never ran.
+  // Re-render VR artist modal if currently open. Never `return` early when
+  // #vrArtistModal is absent: this sits in the MIDDLE of setLang, and everything below
+  // it would silently never run.
   try {
     const vrModal = document.getElementById('vrArtistModal');
     if (vrModal && vrModal.classList.contains('open')) {
@@ -95635,9 +95557,9 @@ function applyDarkDepth() {
 }
 
 // ── LIGHT BRIGHTNESS ──────────────────────────────────────────────────────
-// 'soft' (default) is the rebuilt palette; 'bright' restores the previous one.
-// Stored rather than derived, because the right answer depends on the room and on
-// the eyes using it : a tester reported the old light mode as too bright to read.
+// 'soft' (default) is the rebuilt palette; 'bright' is the earlier, brighter one. Stored
+// rather than derived, because the right answer depends on the room and on the eyes
+// using it: a tester found the bright one too bright to read.
 const LIGHT_BRIGHT_KEY = 'intonare_light_bright';
 
 // Light brightness is retired: there is one light palette now (the former "soft").
@@ -96230,10 +96152,10 @@ function setTunerFace(face) {
       } else if (saved && INSTRUMENTS[saved]) {
         sfChromatic = false;
         document.body.classList.remove('sf-chromatic');
-        // Restore into Simple's OWN state. This used to call selectFamily() and
-        // selectInstrument() - the guide's setters - so every entry into Simple
-        // rewrote the guide's family tab and its selected tuning. The two pickers
-        // are independent now: Simple asks the coarse question, the guide keeps
+        // Restore into Simple's OWN state, not through
+        // selectFamily()/selectInstrument(). Those are the guide's setters and would
+        // rewrite the guide's family tab and tuning on every entry into Simple. The two
+        // pickers are independent: Simple asks the coarse question, the guide keeps
         // whatever specific tuning was chosen there.
         sfInstrument = saved;   // keeps the detection target and the pips in step
         // Its family too: Simple's tuning list renders from sfFamily, so without
@@ -97209,10 +97131,11 @@ function _hdAmp(i, sharp) {
   // Three bands that barely overlap: soft tops out near 0.6, normal runs 0.35 to 0.9,
   // strong starts at 0.78. A quiet step on strong is still stronger than a loud one on soft.
   if (v === 'soft') return 0.1 + i * 0.5;
-  // Strong used to start at 0.78, which squeezed every hit into the top fifth of the range, so
-  // swells went flat and loud and quiet hits felt alike. On Android it now spans 0.64 to 1.0 and
-  // gets its extra weight from holding each tap longer (native side, tapMs) instead of only
-  // from level. The iPhone plugin ignores the setting, so it keeps the old band.
+  // Strong spans 0.64 to 1.0 on Android and gets its extra weight from holding each tap
+  // longer (native side, tapMs) rather than only from level. Starting it at 0.78
+  // squeezes every hit into the top fifth of the range, so swells go flat and loud and
+  // quiet hits feel alike. The iPhone plugin ignores the setting and keeps the 0.78
+  // band.
   if (v === 'strong') return _hdAndroid() ? 0.64 + i * 0.36 : 0.78 + i * 0.22;
   return 0.35 + i * 0.55;
 }
@@ -98951,14 +98874,14 @@ function backupExport() {
     }
   }
   catch (e) {
-    // This fires BEFORE any plugin is involved: the backup could not even be
-    // BUILT. It was showing backup_err_writefail, which is restore wording about
-    // disk space, so a failure here sent everyone looking at storage and native
-    // plugins instead of at backupBuild(). Two hours went that way once.
+    // This fires BEFORE any plugin is involved: the backup could not even be BUILT. Use
+    // this wording, not backup_err_writefail, which is restore wording about disk space
+    // and sends everyone looking at storage and native plugins instead of at
+    // backupBuild().
     //
-    // Most likely causes: something in progState that JSON cannot serialise (a
-    // circular reference, or a value that became undefined), or backupBuild()
-    // itself throwing on a missing field.
+    // Most likely causes: something in progState that JSON cannot serialise (a circular
+    // reference, or a value that became undefined), or backupBuild() itself throwing on
+    // a missing field.
     var _m = (e && (e.message || e)) + '';
     try { console.error('[backup] could not build the backup:', _m, e); } catch (e3) {}
     try {
@@ -99209,10 +99132,9 @@ try {
   }
 } catch (e) {}
 
-// No global throttle here. One was tried (a rolling 60s window) and it
-// punished speed everywhere: a fast interval player got halved after twelve
-// questions. XP farming is a per-module problem and is fixed in the module
-// that farms; see the polyrhythm cycle grader.
+// No global throttle here. A rolling 60s window punishes speed everywhere: a fast
+// interval player gets halved after twelve questions. XP farming is a per-module problem
+// and is handled in the module that farms; see the polyrhythm cycle grader.
 function progAddXp(amount) {
   if (!amount || amount < 0) return;
   const oldLv = progState.level;
@@ -99441,11 +99363,10 @@ function _scrollLockSync() {
 // drawer still on it was leaving that drawer floating over the new screen.
 function closeAllOverlays() {
   let closed = 0;
-  // Was a raw querySelectorAll(_OVERLAY_SEL) on every call. The
-  // selector has substring matches ([class*="-sheet"]) and the document is
-  // large; that scan was the biggest JS cost on the first frame after tapping a
-  // launcher card. _overlayCandidates() caches the same list and invalidates
-  // only when nodes are added or removed.
+  // _overlayCandidates() caches the overlay list and invalidates it only when nodes are
+  // added or removed. A raw querySelectorAll(_OVERLAY_SEL) on every call is expensive:
+  // the selector has substring matches ([class*="-sheet"]) over a large document, and it
+  // was the biggest JS cost on the first frame after tapping a launcher card.
   _overlayCandidates().forEach(el => {
     if (!_isVisiblyOpen(el)) return;
     // Tour, splash and the module launcher manage their own lifecycle and must
@@ -100923,11 +100844,10 @@ function vrHandleNoMic() {
   }
 }
 
-// (vrAutoCorrelate REMOVED. It was a second, inferior pitch detector:
-//  plain autocorrelation with NO cumulative-mean normalization, so it was inherently
-//  prone to octave/subharmonic errors: catastrophic for a tool that exists to find
-//  your highest and lowest note. Also O(N^2), and it used audioCtx.sampleRate which
-//  is wrong on the native path. Vocal range now calls the shared detectPitch().)
+// (vrAutoCorrelate is gone; vocal range calls the shared detectPitch(). Plain
+// autocorrelation with no cumulative-mean normalization makes octave and subharmonic
+// errors, which is fatal for a tool that finds your highest and lowest note. It was also
+// O(N^2) and read audioCtx.sampleRate, which is wrong on the native path.)
 
 function vrFreqToMidi(freq) {
   if (freq < 60 || freq > 1400) return null;
@@ -103314,10 +103234,9 @@ const TIME_SIGS = {
           {steps:[5,13,21,29], label:'a½'},
           {steps:[7,15,23,31], label:'a+'},
         ]},
-  // 2/4 was missing entirely, so the two 2/4 drum presets (Polka and March) threw
-  // on load: TIME_SIGS[2] was undefined and loadPreset read .label off it. Both
-  // presets were unloadable, not merely wrong. Same shape as 3/4 and 4/4: four sixteenths per beat, eight at 32nd
-  // resolution, with the fill rows naming the sixteenth positions.
+  // 2/4: same shape as 3/4 and 4/4, four sixteenths per beat, eight at 32nd resolution,
+  // with the fill rows naming the sixteenth positions. The Polka and March drum presets
+  // need it; without it loadPreset reads .label off undefined and throws.
   2:  { beats:2,  sub:4,  steps:8,  label:'2/4',  sub32:8,  steps32:16,
         fills: [
           {steps:[0,4],  label:'1'},
@@ -103568,12 +103487,10 @@ function _rcApply(s, scope) {
   if (s.dk_patterns)  dk_patterns  = Object.fromEntries(Object.entries(s.dk_patterns).map(([k, v]) => [k, Array.from(v)]));
   if (s.dk_mutedTracks) dk_mutedTracks = new Set(s.dk_mutedTracks);
   if (s.dk_loadedPresetName !== undefined) {
-    // Go through dkUpdatePresetLabel, not a bare assignment. It sets the variable
-    // AND the visible #dkPresetLabel chip; assigning the variable alone restored
-    // the state correctly while leaving the chip showing whatever loadPreset last
-    // wrote. That is why the drum module still appeared to be named after the
-    // progression's beat even though its state had been handed back intact - the
-    // leak was in the DOM, not the data.
+    // Go through dkUpdatePresetLabel, not a bare assignment. It sets the variable AND
+    // the visible #dkPresetLabel chip. The variable alone restores the state but leaves
+    // the chip showing whatever loadPreset last wrote, so the drum module looks named
+    // after the progression's beat.
     if (typeof dkUpdatePresetLabel === 'function') dkUpdatePresetLabel(s.dk_loadedPresetName);
     else dk_loadedPresetName = s.dk_loadedPresetName;
   }
@@ -103954,10 +103871,10 @@ function synthCrossStick(time, vel) {
 }
 
 // ── HI-HAT ──
-// One half-second of noise, generated once and shared by every noise layer in
-// the kit. Filling a fresh Float32Array per hit was the expensive part: a
-// single crash was 57,600 Math.random() calls, and a tambourine was ten more
-// buffers on top. Each voice reads a random slice, so reuse is inaudible.
+// One half-second of noise, generated once and shared by every noise layer in the kit. A
+// fresh Float32Array per hit is the expensive part: one crash is 57,600 Math.random()
+// calls, and a tambourine is ten more buffers on top. Each voice reads a random slice,
+// so reuse is inaudible.
 var _dkNoiseCache = null;
 function _dkSharedNoise(ctx) {
   if (_dkNoiseCache && _dkNoiseCache.sampleRate === ctx.sampleRate) return _dkNoiseCache.buf;
@@ -103969,12 +103886,11 @@ function _dkSharedNoise(ctx) {
 }
 
 // ── CYMBAL PARTIALS ──
-// Every metal voice used to share one set of six frequencies, so the hi-hat,
-// the ride and the crash were the same instrument behind different filters.
-// A real cymbal's partials fall with size and mass, so each voice gets its own
-// inharmonic set: small and tight up top for the hat, lower and denser for the
-// crash, few and strong for the bell, which is why a bell reads as pitched and
-// a crash does not.
+// A real cymbal's partials fall with size and mass, so each metal voice gets its own
+// inharmonic set; one shared set makes the hi-hat, ride and crash the same instrument
+// behind different filters. Small and tight up top for the hat, lower and denser for the
+// crash, few and strong for the bell, which is why a bell reads as pitched and a crash
+// does not.
 const DK_CYMBAL_PARTIALS = {
   hat:   [325, 468, 622, 812, 1120, 1480],
   ride:  [186, 271, 358, 497,  713,  968],
@@ -104565,13 +104481,12 @@ function _dkPhISEMVoice(t, v, o) {
 }
 
 // ── TAMBOURINE ──
-// The old version was four noise bursts filtered at 7kHz, which is the same
-// band a closed hi-hat lives in, so the two voices were siblings. A tambourine
-// is not one impact: it is a shell strike followed by a dozen loose jingle
-// pairs rattling against each other and ringing on well past the hit. Three
-// things separate it from a hat here: a wooden shell knock at the front that a
-// cymbal has no equivalent for, a scatter of micro-impacts over the first
-// 90ms, and a shimmer tail an order of magnitude longer than a closed hat.
+// A tambourine is not one impact: it is a shell strike followed by a dozen loose jingle
+// pairs rattling against each other and ringing on well past the hit. Noise bursts
+// filtered at 7kHz sit in the closed hi-hat's band and sound like its sibling. Three
+// things separate it from a hat here: a wooden shell knock at the front that a cymbal
+// has no equivalent for, a scatter of micro-impacts over the first 90ms, and a shimmer
+// tail an order of magnitude longer than a closed hat.
 function synthTambourine(time, vel) {
   const ctx = getCtx();
   const t = time + (Math.random() - 0.5) * 0.002;
@@ -105930,12 +105845,11 @@ function clearAll() {
   if (_sw) _sw.value = 0;
   const _swv = document.getElementById('swingVal');
   if (_swv) _swv.textContent = '0%';
-  // BPM is deliberately NOT reset. _applySnapshot's blank path sets it to 90,
-  // but the drum BPM is shared with the main metronome - clearing a drum
-  // pattern must not yank the metronome's tempo out from under the user.
-  // Clear the loaded-preset label too. CLEAR reset the kit, swing, category and
-  // pattern but left the pill still naming the preset that had been loaded, so
-  // the header claimed a preset that was no longer in the grid.
+  // BPM is deliberately NOT reset. _applySnapshot's blank path sets it to 90, but the
+  // drum BPM is shared with the main metronome: clearing a drum pattern must not yank
+  // the metronome's tempo out from under the user.
+  // Clear the loaded-preset label too, or the pill keeps naming a preset that is no
+  // longer in the grid.
   if (typeof dkUpdatePresetLabel === 'function') dkUpdatePresetLabel(null);
   const _customIdx = PRESET_CATS.findIndex(c => c.isCustom);
   if (_customIdx >= 0 && dk_activeCat !== _customIdx) {
@@ -107486,12 +107400,11 @@ const PRESET_CATS = [
         'kick':   [0,0,2,0, 0,2,0,0, 2,0,0,0, 0,0,0,0],
       },
       {
-        // HALF-TIME SHUFFLE FILL. A generic ghost-note fill on the triplet grid,
-        // ending on the floor tom. It was labeled "Porcaro – Rosanna", which it
-        // never was: Rosanna's famous part is the groove (see Rosanna Groove in
-        // ROCK / POP, built on swung sixteenths from the MusicRadar and Wikipedia
-        // accounts), not a fill, and nothing reachable transcribes a fill from it.
-        // The name now says what the pattern is.
+        // HALF-TIME SHUFFLE FILL. A generic ghost-note fill on the triplet grid, ending
+        // on the floor tom. Not a "Porcaro – Rosanna" fill: Rosanna's famous part is the
+        // groove (see Rosanna Groove in ROCK / POP, built on swung sixteenths from the
+        // MusicRadar and Wikipedia accounts), and no reachable source transcribes a fill
+        // from it. The name says what the pattern is.
         name:'Shuffle Fill', nameIt:'Fill Shuffle', ts:4, dk_bpm:90, kit:'standard',
         trackSub: {'snare':3, 'floor':3, 'kick':3, 'hihat-c':3},
         'snare':  [0,1,0, 2,1,1, 0,2,1, 0,1,0],
@@ -107613,11 +107526,9 @@ function _setSaves(saves) {
 }
 
 function _applySnapshot(snap, resetBlank) {
-  // The custom workspace is not a preset, so clear the preset label whichever
-  // branch runs. This handled patterns, kit, swing and bars but never the label,
-  // so switching to the Custom tab left the chip still naming the preset you had
-  // just come from: CLEAR reset it correctly and clicking Custom did not, which
-  // is the inconsistency that was reported.
+  // The custom workspace is not a preset, so clear the preset label whichever branch
+  // runs, the same as CLEAR does. Otherwise switching to the Custom tab leaves the chip
+  // naming the preset you just came from.
   if (typeof dkUpdatePresetLabel === 'function') dkUpdatePresetLabel(null);
   if (resetBlank || !snap) {
     TRACKS.forEach(t => dk_patterns[t.id].fill(0));
@@ -117275,16 +117186,12 @@ function gccStop() {
       }
       // 0.1 is a RELEASE DURATION, not an absolute time.
       //
-      // This passed `t + 0.12`, i.e. ctx.currentTime plus a bit. That is correct
-      // for a raw OscillatorNode, whose stop() takes an absolute time - and it is
-      // completely wrong for a SampleEngine handle, whose stop(releaseSec) takes
-      // a duration. With samples loaded, tau became the current audio time
-      // (thousands of seconds), so setTargetAtTime decayed over roughly twenty
-      // minutes and src.stop() was scheduled about ninety minutes out: the note
-      // never stopped. Only sampled voices were affected, which is why fretted
-      // guitar kept ringing through a subfamily switch while 12-string did not -
-      // 12-string returns a composite handle that calls stop() with no argument
-      // and so got the 0.04 default.
+      // A raw OscillatorNode's stop() takes an absolute time, but a SampleEngine
+      // handle's stop(releaseSec) takes a duration. Passing `t + 0.12` here makes tau
+      // the current audio time (thousands of seconds): setTargetAtTime decays over
+      // roughly twenty minutes and src.stop() lands about ninety minutes out, so a
+      // sampled note never stops. (12-string escapes it because its composite handle
+      // calls stop() with no argument.)
       if (n.stop) n.stop(0.1);
     } catch(e) {}
   });
@@ -117370,10 +117277,9 @@ const GSS_STRING_MIDI = [40, 45, 50, 55, 59, 64]; // low E → high e
 // ids stop matching and scales go missing from one side.
 const GSS_SCALE_ALIAS = { aeolian:'natminor', harmmin:'harmminor', melmin:'melminor' };
 const GSS_SCALE_TYPES = [
-  // Ordered by family, not by when each was added. The eight world scales added
-  // later were appended to the end, so they read as a random tail in the
-  // chart pickers and in the scales tool's next/prev cycling. Grouped now, and
-  // the groups match TC_SCALE_GROUPS so the two lists present the same shape.
+  // Ordered by family, not by when each was added, so the chart pickers and the scales
+  // tool's next/prev cycling read as groups rather than a random tail. The groups match
+  // TC_SCALE_GROUPS so the two lists present the same shape.
   // ── MAJOR ──
   { id:'major',      name:'Major',             nameIt:'Maggiore' },
   { id:'lydian',     name:'Lydian',            nameIt:'Lidio' },
@@ -117436,10 +117342,9 @@ let gssShowNoteNames = false; // toggle: finger numbers vs note names on positio
 
 // ── Mode switcher ──────────────────────────────
 function switchGuitarChordMode(mode) {
-  // Was gccStop(); gssStop(); pccStop(); pssStop(); - four of the ten chart
-  // voices, so switching tabs left harp, wind, bowed, organ and didgeridoo
-  // playing. Third partial copy of this list found in this module; they all
-  // defer to chordScaleStopAllAudio now so there is one to keep correct.
+  // chordScaleStopAllAudio stops all ten chart voices, so this defers to it. Partial
+  // lists of stop calls drift (one stopped four voices and left harp, wind, bowed, organ
+  // and didgeridoo playing); one list is the only one that stays correct.
   chordScaleStopAllAudio();
   gccToolMode = mode;
   document.querySelectorAll('.cs-mode-tab').forEach(b =>
@@ -118961,14 +118866,12 @@ function trpPlayCardNote() {
     return;
   }
   gccPlayString(trpCardMidi);
-  // trpCardPlayBtn (Notes view) and trpPlayBtn (Scale view) used to share the
-  // id "trpPlayBtn". getElementById always resolves the first match in the
-  // DOM regardless of which screen is visible, so every scale function
-  // (trpPlay/trpStop/trpToggleDirection, and the CHART_BTNS registry reset)
-  // was silently overwriting this button's "PLAY NOTE" label with scale text
-  // ("PLAY ASCENDING", "■ STOP") any time it ran - including on a plain
-  // instrument/subfamily switch, which fires chordScaleStopAllAudio. The
-  // visible Scale button, meanwhile, never updated at all. Split into two ids.
+  // trpCardPlayBtn (Notes view) and trpPlayBtn (Scale view) need separate ids.
+  // getElementById resolves the first match regardless of which screen is visible, so
+  // with a shared id every scale function (trpPlay/trpStop/trpToggleDirection, and the
+  // CHART_BTNS registry reset) would overwrite the Notes button's "PLAY NOTE" label with
+  // scale text, even on a plain instrument switch, while the visible Scale button never
+  // updated.
   _chartBtnPlay('trpCardPlayBtn');
   // Tracked so the stop branch above can cancel it; otherwise a stale timer
   // would reset the label of a note started afterwards.
@@ -119293,9 +119196,8 @@ function getFrettedTone() {
         const doubleVol  = isLowerStr ? vol * 0.45 : vol * 0.35;
         const node2 = _chartPlay(toneId, doubleFreq, ctx, master, doubleVol, dur, when + 0.008);
         // Return a handle covering BOTH courses. A 12-string sounds two notes per
-        // string and only the first was returned, so every caller that tracked
-        // "the note" was tracking half of it - stopping a 12-string chord left the
-        // doubled course ringing.
+        // string, and a caller that tracks "the note" has to be able to stop both, or
+        // the doubled course keeps ringing.
         if (!node2 || !node2.stop) return node1;
         return {
           stop(at) {
@@ -120299,12 +120201,11 @@ function fluteTrillStopPulse() {
 }
 
 // ── Trill audio ───────────────────────────────────────────────────────────────
-// One path: windSynth('ww_flute', ...) - the SAME engine the flute NOTES view uses.
-// It internally plays the real flute SAMPLES when loaded, and falls back to the
-// app's fluteSynth when not, so the trill always matches the rest of the flute's
-// timbre. We fire one note per beat with a short dur into ONE shared limiter chain
-// (never per-note: that was the crackle), stopping the previous note each beat so
-// voices don't stack at fast speeds.
+// One path: windSynth('ww_flute', ...), the SAME engine the flute NOTES view uses. It
+// plays the real flute SAMPLES when loaded and falls back to the app's fluteSynth when
+// not, so the trill always matches the rest of the flute's timbre. One note per beat
+// with a short dur into ONE shared limiter chain (never per-note, which crackles),
+// stopping the previous note each beat so voices don't stack at fast speeds.
 let fluteTrillChain = null;
 const FLUTE_TRILL_TONE = 'flute';
 
@@ -120317,16 +120218,12 @@ let _trillSchedTimer = null, _trillNextBeatAt = 0, _trillPhaseAt = 0;
 let _trillNodes = [];
 const TRILL_LOOKAHEAD = 0.30, TRILL_SCHED_INTV = 25;
 
-// _trillEnsureOsc was removed here. It built a square+sine oscillator pair that
-// stood in for the wind synth whenever samples weren't loaded, and it was the
-// reason a trill could sound like a different instrument from the notes view of
-// the same instrument. Verified dead by full-file sweep before deleting - no
-// remaining callers, and no string or dynamic lookups of the name.
+// There is no oscillator stand-in for the wind synth here: the trill always plays
+// through the wind synth, so it sounds like the notes view of the same instrument.
 //
-// _trillTeardown and the _trillOsc/_trillEnv variables below are deliberately
-// kept: fluteTrillAudioStop still calls the teardown, and with nothing creating
-// those nodes any more it is a guarded no-op. Left in place rather than unpicked
-// so the stop path keeps working unchanged.
+// _trillTeardown and the _trillOsc/_trillEnv variables below are kept on purpose:
+// fluteTrillAudioStop still calls the teardown, and with nothing creating those nodes it
+// is a guarded no-op that keeps the stop path working unchanged.
 
 function _trillTeardown() {
   if (_trillOsc1) { try { _trillOsc1.stop(); } catch(e){} _trillOsc1 = null; }
@@ -121104,10 +121001,9 @@ function trpPlay() {
         if (ib) { ib.textContent = t('harp_tap_hint'); ib.style.color = 'var(--muted)'; }
       }
     }
-    // +400ms used to be the whole tail allowance, measured from when the LAST
-    // note STARTS. Each note runs `dur` seconds, so on slower instruments the
-    // button flipped back to PLAY while the final note was still sounding.
-    // Waiting for the note itself plus a short tail matches what is audible.
+    // Wait for the last note itself (its `dur`) plus a short tail, not a fixed allowance
+    // from when it STARTS, or on slower instruments the button flips back to PLAY while
+    // the final note is still sounding.
   }, notes.length * trpStepDelay * 1000 + dur * 1000 + 250);
   timers.push(clearT);
   trpPlayTimers = timers;
@@ -121919,11 +121815,8 @@ function _getOrganChain(ctx) {
   sat.oversample = '4x';                 // avoids aliasing on the curve
 
   const makeup = ctx.createGain();
-  // Back to 4.0. This was briefly dropped to 2.2 when the organ was thought to
-  // be uniquely hot; the real problem turned out to be global (see
-  // SYNTH_HEADROOM), and with that in place the local cut stacked on top and
-  // left the organ at a 0.19 peak on a single note. The ceiling shaper added
-  // below is the part of that fix worth keeping.
+  // 4.0. A local cut on top of the global SYNTH_HEADROOM leaves the organ at a 0.19 peak
+  // on a single note. The ceiling shaper added below is what handles the hot cases.
   makeup.gain.value = 4.0 * BASE_GAIN_BOOST * _getEffectiveScale(); // restore level post-saturation
 
   // Final safety limiter: soft knee, only catches genuine overshoot.
@@ -122904,9 +122797,9 @@ function pssPlayNote(midi, slide) {
     return;
   }
   // Non-organ: play through the chart voice (sample if ready, synth fallback inside).
-  // REGRESSION FIX: this tail was lost in a past edit - the function computed
-  // ctx/chain/dur/toneId then returned without playing, so manual key taps on the
-  // scale screen were silent for every non-organ instrument (noticed on mallets).
+  // Keep this tail: without it the function computes ctx/chain/dur/toneId and returns
+  // without playing, and manual key taps on the scale screen go silent for every
+  // non-organ instrument.
   const freq = midiToFreq(midi);
   const _pn = _chartPlay(toneId, freq, ctx, chain.gain, 0.4, dur);
   if (_pn && _pn.stop) pssNodes.push(_pn);
@@ -126048,10 +125941,9 @@ function hpPlayChord() {
   const vol = 0.18 / Math.pow(midiPairs.length, 0.12);
   const hpCSvg = document.getElementById('hpChordSvg');
   midiPairs.forEach(([baseMidi, soundingMidi], i) => {
-    // Tracked in hpChordNodes: this return value used to be discarded, and the
-    // only node list the harp had was hpScaleNodes, so nothing anywhere could
-    // stop a ringing chord: not hpStop, not chordScaleStopAllAudio, so it
-    // played straight through instrument and tab switches.
+    // Tracked in hpChordNodes so hpStop and chordScaleStopAllAudio can stop a ringing
+    // chord. hpScaleNodes only holds the scale run; without this the chord plays
+    // straight through instrument and tab switches.
     const _hn = _chartPlay('harp', midiToFreq(soundingMidi), ctx, chain.gain, vol, 1.6, ctx.currentTime + i * 0.065);
     if (_hn && _hn.stop) hpChordNodes.push(_hn);
     setTimeout(() => {
@@ -126155,10 +126047,9 @@ function hpPlayScale() {
     }, i * hpStepDelay * 1000);
   });
   hpScaleAutoStop = setTimeout(() => { hpStop(); }, steps.length * hpStepDelay * 1000 + 500);
-  // hpUpdatePlayBtn derives the label from hpScaleNodes/hpScaleAutoStop, so it
-  // has to run AFTER both are populated. hpPlayScale never called it, which is
-  // why the harp scale run was the one chart that stayed on PLAY throughout.
-  // hpStop calls it on the way out, so the restore side was already fine.
+  // hpUpdatePlayBtn derives the label from hpScaleNodes/hpScaleAutoStop, so it has to
+  // run AFTER both are populated, or the harp scale run stays on PLAY throughout. hpStop
+  // calls it on the way out.
   hpUpdatePlayBtn();
   if (typeof hpUpdatePlayBtn === 'function') hpUpdatePlayBtn();
 }
@@ -129422,16 +129313,12 @@ function ac(){actx=getAudio();if(actx.state==='suspended')actx.resume();return a
 // note player in the app needs to return or register its handle like this.
 var _liveTones=[];
 
-// Register any oscillator/gain pair so stopAllSounds can silence it. Every sound
-// source in this module must call this. Tracking only tone() was not enough:
-// playTempo's click, toneSoft (a 3 second note) and the eight sources inside
-// sgPlayTermDemo all made sound that nothing could stop, which is why Survival
-// Guide audio kept playing after backing out through three separate fixes.
-// The term demos play through REF_TONES synths rather than this module's own
-// tone(), and those return a stoppable handle that was being discarded at all
-// six call sites. That is the audio that kept playing after backing out of a
-// term demo: three earlier fixes all targeted the oscillators in tone(), which
-// the demos never touch.
+// Register any oscillator/gain pair so stopAllSounds can silence it. Every sound source
+// in this module must call this: tone(), playTempo's click, toneSoft (a 3 second note)
+// and the eight sources inside sgPlayTermDemo.
+// The term demos play through REF_TONES synths rather than this module's own tone(), and
+// those return a stoppable handle that every call site has to keep, or demo audio keeps
+// playing after backing out of the Survival Guide.
 var _sgHandles=[];
 function _sgTrackHandle(hnd, dur) {
   if (!hnd) return hnd;
@@ -130375,12 +130262,10 @@ var SG_TERM_GLYPHS = {
   // decrescendo, whose stored values were already known good.
   "pianissimo":{"g":"E52B","fs":50.0,"dy":3.5,"h":21.0,"w":41.0},"pianississimo":{"g":"E52A","fs":50.0,"dy":3.5,"h":21.0,"w":59.0},"mezzo piano":{"g":"E52C","fs":50.0,"dy":3.5,"h":21.0,"w":43.0},"mezzo forte":{"g":"E52D","fs":50.0,"dy":6.5,"h":31.0,"w":42.0},"fortissimo":{"g":"E52F","fs":50.0,"dy":7.5,"h":31.0,"w":38.0},"fortississimo":{"g":"E530","fs":50.0,"dy":7.5,"h":31.0,"w":50.0},"niente":{"g":"E526","fs":50.0,"dy":6.5,"h":15.0,"w":18.0},"staccatissimo":{"g":"E4A6","fs":50.0,"dy":7.5,"h":15.0,"w":5.0},"breath mark":{"g":"E4CE","fs":50.0,"dy":6.5,"h":13.0,"w":8.0},"caesura":{"g":"E4D1","fs":50.0,"dy":13.5,"h":27.0,"w":20.0},"trill":{"g":"E566","fs":50.0,"dy":9.5,"h":21.0,"w":26.0},"mordent":{"g":"E56C","fs":50.0,"dy":6.5,"h":13.0,"w":37.0},"turn":{"g":"E567","fs":50.0,"dy":5.5,"h":11.0,"w":23.0},"subito":{"svg":"<svg viewBox=\"0 0 120 48\"><text x=\"60\" y=\"34\" text-anchor=\"middle\" font-family=\"Fraunces,Georgia,serif\" font-style=\"italic\" font-size=\"26\" fill=\"currentColor\">sub. p</text></svg>"},
   "forte":{"g":"E522","fs":50.0,"dy":7.3,"h":30.0,"w":25.0},"marcato":{"g":"E4AC","fs":50.0,"dy":6.3,"h":13.0,"w":12.0},"fermata":{"g":"E4C0","fs":50.0,"dy":8.2,"h":17.0,"w":30.0},"decrescendo":{"g":"E53F","fs":50.0,"dy":11.2,"h":13.0,"w":37.0},"tremolo":{"g":"E222","fs":50.0,"dy":-0.1,"h":28.0,"w":15.0},"legato":{"svg":"<svg viewBox=\"0 0 92 48\"><circle cx=\"30\" cy=\"30\" r=\"4\" fill=\"currentColor\"/><circle cx=\"62\" cy=\"30\" r=\"4\" fill=\"currentColor\"/><path d=\"M30 23 Q46 11 62 23\" stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg>"},"glissando":{"svg":"<svg viewBox=\"0 0 60 48\"><circle cx=\"12\" cy=\"34\" r=\"4\" fill=\"currentColor\"/><circle cx=\"48\" cy=\"14\" r=\"4\" fill=\"currentColor\"/><line x1=\"18\" y1=\"30\" x2=\"42\" y2=\"18\" stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg>"},"vibrato":{"svg":"<svg viewBox=\"0 0 92 48\"><path d=\"M10 24 q5 -6 10 0 t10 0 t10 0 t10 0 t10 0 t10 0\" stroke=\"currentColor\" stroke-width=\"1.8\" fill=\"none\"/></svg>"},
-// Added after the first build showed one badge on a three-term page. The first
-// version of this map was built from SG_TERM_DEMOS (the audio demos) instead of
-// from the data-term values actually present in the Guide copy, so it covered 8
-// of the 17 terms in use and missed most of the dynamics and articulations.
-// The DYNAMICS page carries crescendo/decrescendo/diminuendo and only
-// decrescendo was mapped, which is exactly the one badge that appeared.
+// Built from the data-term values actually present in the Guide copy, not from
+// SG_TERM_DEMOS (the audio demos). The demos cover only 8 of the 17 terms in use and
+// miss most of the dynamics and articulations, such as crescendo and diminuendo on the
+// DYNAMICS page.
 "crescendo":{"g":"E53E","fs":50.0,"dy":11.2,"h":13.0,"w":37.0},
 "diminuendo":{"g":"E53F","fs":50.0,"dy":11.2,"h":13.0,"w":37.0},
 "piano":{"g":"E520","fs":50.0,"dy":3.3,"h":21.0,"w":23.0},
@@ -131677,17 +131562,15 @@ function render(dir){
       break;
     case 'tempo-table':
       var _il3=(progState&&progState.lang)==='it';
-      // The last number is the tempo the row PLAYS, and it used to sit near the
-      // middle of each printed range. That put Moderato at 114 and Allegretto at
-      // 116: two BPM apart and indistinguishable by ear, so tapping one row after
-      // another sounded like nothing had happened. Andante/Andantino and
-      // Vivace/Presto were nearly as close.
+      // The last number is the tempo the row PLAYS. Middle-of-range values put Moderato
+      // at 114 and Allegretto at 116, two BPM apart and indistinguishable by ear, so
+      // tapping one row after another sounds like nothing happened.
       //
-      // The demo values now sit at whichever END of each range spreads them out,
-      // while staying inside the range printed beside them. Smallest remaining
-      // step is 11% (Adagio to Andante, Andantino to Moderato, and Moderato to
-      // Allegretto), which is audible; everything else is 12% or more. The two ranges genuinely overlap in the literature, so
-      // 108 and 120 is the widest honest spread available.
+      // The demo values sit at whichever END of each range spreads them out, while
+      // staying inside the range printed beside them. Smallest remaining step is 11%
+      // (Adagio to Andante, Andantino to Moderato, and Moderato to Allegretto), which is
+      // audible; everything else is 12% or more. The two ranges genuinely overlap in the
+      // literature, so 108 and 120 is the widest honest spread available.
       var tempos=[
         ['Larghissimo','extremely slow',         'lentissimo',          '&lt;20',18],
         ['Largo',      'broad and slow',         'largo e lento',       '40–60',46],
@@ -131842,14 +131725,13 @@ function render(dir){
       ph.innerHTML=(progState&&progState.lang)==='it'?'Tre pedali, da sinistra a destra: <strong>Una corda</strong> &middot; <strong>Sostenuto</strong> &middot; <strong>Smorzatori</strong>. Quasi tutto il repertorio usa solo il pedale di destra. Gli altri trasformano lo strumento quando servono.':'Three pedals, left to right: <strong>Soft</strong> (una corda) &middot; <strong>Sostenuto</strong> &middot; <strong>Damper</strong>. Most piano playing uses only the damper pedal. The others transform the instrument when used.';card.appendChild(ph);
       break;
     case 'photo-placeholder':
-      // Body only. Eleven pages used to carry a bordered card reading COMING SOON
-      // with a pencil icon, which promises an illustration on pages that read
-      // perfectly well without one, and dates the app the moment someone notices
-      // it never arrived.
+      // Body only, with no COMING SOON card. A placeholder promises an illustration on
+      // pages that read perfectly well without one, and dates the app the moment someone
+      // notices it never arrived.
       //
-      // The page TYPE is left in the data rather than rewritten to 'text' across
-      // eleven entries, so an illustration can still be dropped in here later
-      // without touching the data again.
+      // The page TYPE stays in the data rather than being rewritten to 'text' across
+      // eleven entries, so an illustration can still be dropped in here later without
+      // touching the data again.
       var bd2=document.createElement('div');bd2.className='pg-body';bd2.innerHTML=_body;card.appendChild(bd2);
       break;
 
@@ -132566,21 +132448,15 @@ function _sgLaunch(kind, target, opts) {
 
   // DROP THE GUIDE'S BODY LOCK BEFORE LEAVING IT.
   //
-  // `body.sg-open` is `overflow:hidden; position:fixed`, because the guide pins
-  // the page and scrolls its own #pageArea instead. It is added by enterTool for
-  // 'survivalguide' and removed by exitTool only when currentTool is still
-  // 'survivalguide'.
+  // `body.sg-open` is `overflow:hidden; position:fixed`, because the guide pins the page
+  // and scrolls its own #pageArea instead. enterTool adds it for 'survivalguide', and
+  // exitTool removes it only when currentTool is still 'survivalguide'.
   //
-  // This function does not exit the guide; it calls enterTool/enterExercise
-  // straight over the top. So currentTool became 'guitarchords', that removal
-  // never fired, and the class stayed on the body - which pinned the CHARTS tool
-  // at viewport height with roughly 1080px of chord diagram inside it. That is
-  // the "in-guide chart tools can't scroll" report: nothing was wrong with
-  // Charts, it was wearing the guide's lock.
-  //
-  // _scrollLockSync also bails out early whenever it sees sg-open, on the
-  // reasonable assumption that the guide is managing its own scrolling, so
-  // nothing downstream could correct it either.
+  // This function does not exit the guide; it calls enterTool/enterExercise straight
+  // over the top, so currentTool changes and that removal never fires. The class would
+  // stay on the body and pin the next tool (Charts, with roughly 1080px of chord
+  // diagrams) at viewport height, unable to scroll. _scrollLockSync also bails out
+  // whenever it sees sg-open, so nothing downstream would correct it.
   //
   // The return pill calls enterTool('survivalguide'), which puts the class back.
   document.body.classList.remove('sg-open');
@@ -136106,13 +135982,12 @@ function mqGetServed() {
 function mqSaveServed(m) {
   try { localStorage.setItem('mq_served', JSON.stringify(m || {})); } catch(e) {}
 }
-// Stored as [timesServed, lastServedOrdinal]. The count alone left ties broken
-// at random, so a question dealt late in one survival run could come back early
-// in the next: measured 24 repeats inside 40 questions, the shortest gap being
-// 7. Recency as the tiebreak makes the least recently seen of an equal-count
-// group come first, which is exactly the thing that widens the gap.
-// Plain numbers from the previous format are still read, so nobody loses their
-// history on update.
+// Stored as [timesServed, lastServedOrdinal]. With the count alone, ties break at random
+// and a question dealt late in one survival run can come back early in the next
+// (measured: 24 repeats inside 40 questions, shortest gap 7). Recency as the tiebreak
+// puts the least recently seen of an equal-count group first, which widens the gap.
+// Plain numbers from the previous format are still read, so nobody loses their history
+// on update.
 function mqServedEntry(m, k) {
   var v = m[k];
   if (typeof v === 'number') return [v, 0];
@@ -136691,10 +136566,9 @@ function mq2SlideGrids(dir) {
 
 var MQ_TAB_BUSY = false;
 function mqSetGroup(groupId) {
-  // Tapping faster than the move used to start a second one on top of the
-  // first: ghosts stacked up, the held height never released, and the pill
-  // chased a target that had already changed. A change during a move is queued
-  // and runs once, so a fast run of taps ends where the last tap pointed.
+  // A change during a move is queued and runs once, so a fast run of taps ends where the
+  // last tap pointed. Starting a second move on top of the first stacks ghosts, never
+  // releases the held height, and chases a target that has already changed.
   if (MQ_TAB_BUSY) { MQ_TAB_PENDING = groupId; return; }
   var order = MQ_GROUPS.map(function (g) { return g.id; });
   var from = order.findIndex(function (id) { return MQ_GROUP_EXPANDED[id]; });
@@ -136771,10 +136645,9 @@ function mqSyncOnlineChipsVisibility() {
   });
 }
 
-// The row was thrown away and rebuilt on every group change, so the pill was a
-// new element each time with nothing to travel from: it sat still for a few
-// frames and then jumped, which is the jitter. The row is built once and only
-// its active state changes after that.
+// The row is built once and only its active state changes after that. Rebuilding it on
+// every group change gives the pill a new element with nothing to travel from: it sits
+// still for a few frames and then jumps.
 function mq2SyncTabs(host) {
   var wrap = host.querySelector('.mq-group-tabs');
   if (!wrap) {
@@ -136803,11 +136676,10 @@ function mqGroupTabs() {
     (function(id){ tab.onclick = function() { mqSetGroup(id); }; })(grp.id);
     wrap.appendChild(tab);
   });
-  // The pill needs the tab laid out before it can sit behind it, and every
-  // picker builds its tab row fresh, so this runs on the next frame. It skips
-  // any row a group change has already positioned: this used to fire after
-  // mqSetGroup had started the pill moving and snap it back with no transition,
-  // so every change looked like it began at the first tab.
+  // The pill needs the tab laid out before it can sit behind it, and every picker builds
+  // its tab row fresh, so this runs on the next frame. It skips any row a group change
+  // has already positioned; otherwise it would snap a moving pill back with no
+  // transition, and every change would look like it began at the first tab.
   requestAnimationFrame(function () {
     if (!wrap._mq2placed) mq2PlacePill(wrap);
   });
@@ -136837,10 +136709,9 @@ function mq2PlacePill(wrap, animate) {
   var to = mq2PillX(wrap, tab);
   var fromTab = (animate && MQ_LAST_GROUP != null && tabs[MQ_LAST_GROUP]) ? tabs[MQ_LAST_GROUP] : null;
   if (fromTab && fromTab !== tab) {
-    // Put it where the old tab was with no transition, then let a frame pass
-    // before releasing it. Forcing a reflow synchronously was not enough: the
-    // pill sat still for three frames and then jumped, which is the restart
-    // that looked like it was starting from the first tab.
+    // Put it where the previous tab was with no transition, then let a frame pass before
+    // releasing it. A synchronous reflow is not enough: the pill sits still for three
+    // frames and then jumps, which looks like it restarted from the first tab.
     pill.style.transition = 'none';
     pill.style.width = Math.round(fromTab.getBoundingClientRect().width) + 'px';
     pill.style.transform = 'translateX(' + mq2PillX(wrap, fromTab) + 'px)';
@@ -136931,9 +136802,8 @@ function mqPackReady(id) {
   return MQ_PACK_READY.indexOf(id) !== -1;
 }
 
-// The Games card used to carry a hardcoded "1,152 questions · 19 packs". That was
-// stale as a total and wrong as a promise: a player at launch gets the READY
-// packs and nothing else. Count what is playable and say that. Runs after
+// The Games card counts what is playable (the READY packs) instead of carrying a fixed
+// total, which goes stale and promises packs a player cannot open yet. Runs after
 // applyLang, which writes the raw template into the card, and again whenever the
 // language changes.
 function mqFillCardCount() {
@@ -137794,11 +137664,10 @@ function mqFillBar(total) {
   return null;
 }
 function mqGenMeter(d) {
-  // Reading note values is not something a non-player does, so there is no easy
-  // tier here. Returning null lets the batcher pick a different kind.
-  // 2/4, 3/4 and 4/4 are ABRSM Grade 1, so they are easy-tier material after all.
-  // The earlier blanket ban was set when this pack was imagined for people who
-  // had never played; it is not, and the easy tier was starved because of it.
+  // Reading note values is not something a non-player does, so there is no easy tier
+  // here. Returning null lets the batcher pick a different kind.
+  // 2/4, 3/4 and 4/4 are ABRSM Grade 1, so they count as easy-tier material. The pack is
+  // for people who play, and leaving them out starves the easy tier.
   var m = mqTierPick(MQ_METERS, d);
   if (!m) return null;
   d = m.tier;
@@ -138907,12 +138776,10 @@ function mqIsAdvanced(q) {
 
 
 // ── Bass fretboard generators ───────────────────────────────────────────────
-// The Bass pack's fretboard questions were authored with fixed payloads, so
-// every one showed the same dots on the same frets forever. Once a player has
-// seen "which note is marked" they have not learned the neck, they have learned
-// that picture. These build the same questions from a random position each time
-// and derive the answer from SR_FRETS, so the drawing and the correct option
-// are one decision and cannot disagree.
+// Fixed payloads show the same dots on the same frets forever, and a player who has seen
+// "which note is marked" has learned that picture, not the neck. These build the Bass
+// pack's fretboard questions from a random position each time and derive the answer from
+// SR_FRETS, so the drawing and the correct option are one decision and cannot disagree.
 var MQ_BASS_TUNINGS = { bass: [28, 33, 38, 43], bass5: [23, 28, 33, 38, 43] };
 var MQ_BASS_NAMES = ['C','C\u266f','D','D\u266f','E','F','F\u266f','G','G\u266f','A','A\u266f','B'];
 function mqBassPitch(inst, s, f) { return MQ_BASS_TUNINGS[inst][s] + f; }
@@ -139206,10 +139073,9 @@ function mqGenGtrUnison(d) {
   var gap = mqGtrPitch(s + 1, 0) - mqGtrPitch(s, 0);   // 5 everywhere but 4 across G-B
   var f = lo + gap + Math.floor(Math.random() * 3);     // keep the answer on the neck
   var answer = f - gap;
-  // Needs three survivors. With the answer at fret 1 the old pool of
-  // [+1,-1,+2,-2] left only two after dropping anything below fret 1, so the
-  // generator returned null about 4% of the time it was asked for an easy
-  // question, and the round's easy bucket came up short.
+  // Needs three survivors. With the answer at fret 1, a pool of [+1,-1,+2,-2] leaves
+  // only two after dropping anything below fret 1, and the generator returns null for
+  // about 4% of easy questions.
   var pool = [answer + 1, answer - 1, answer + 2, answer - 2, answer + 3]
     .filter(function (x) { return x > 0 && x !== answer; });
   mqShuffle(pool);
@@ -139640,9 +139506,8 @@ function mqBuildAndStart() {
   // meant to exhaust the pack.
   var spare = isSurv ? [] : [].concat(byTier[1], byTier[2], byTier[3]);
   // Shuffled and then sorted by the same fewest-then-oldest rule the tiers use.
-  // Shuffling alone meant a shape-cap swap pulled a random spare, which could
-  // be one the player had just answered, and that was the source of the short
-  // gaps: authored questions reappearing 3 apart in a survival session.
+  // Shuffling alone lets a shape-cap swap pull a random spare, possibly one just
+  // answered, and authored questions reappear 3 apart in a survival session.
   mqShuffle(spare);
   spare.sort(function (a, b) {
     var ea = _ent(a), eb = _ent(b);
@@ -139767,10 +139632,10 @@ function mqStreakMult(streak) {
 var MQ2_TICK  = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l4.5 4.5L17 5"/></svg>';
 var MQ2_CROSS = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 4l12 12M16 4L4 16"/></svg>';
 
-// The record. Survival has no fixed length, so it shows a moving window: it
-// grows to MQ2_BEAT_MAX and then holds, keeping the most recent answers. Letting
-// it grow without limit made every segment thinner on every question, so the bar
-// was a different shape each time you looked at it.
+// The record. Survival has no fixed length, so it shows a moving window: it grows to
+// MQ2_BEAT_MAX and then holds, keeping the most recent answers. Unlimited growth would
+// thin every segment on every question and change the bar's shape each time you looked
+// at it.
 var MQ2_BEAT_MAX = 20;
 function mq2Beats() {
   var host = document.getElementById('mq2Beats');
@@ -140053,10 +139918,9 @@ function mq2RenderQ(q, dispOpts, col) {
     var n = String(mqTrimOpt(o, { q: mqL(q, 'q'), opts: dispOpts })).length;
     if (n > longest) longest = n;
   });
-  // Character-count buckets were a guess at what fits, and they under-set the
-  // size on nearly every card: "They were cousins" and "They had played in an
-  // earlier band together" share a row, so the whole row was set for the longer
-  // one whatever room the shorter had. mq2FitOpts measures instead.
+  // mq2FitOpts measures each card instead of guessing from character counts. Count
+  // buckets set a whole row for its longest entry, so a short answer like "They were
+  // cousins" comes out smaller than it has room for.
   var step = '';
   var grid = document.getElementById('mq2Grid');
   grid.className = 'mq2-grid ' + step;
@@ -140689,11 +140553,9 @@ function mqAnswer(idx) {
   mq2Reveal(idx, dispAns, correct);
   mqShowFeedback(correct,q);
 }
-// The streak chip is painted from MQ.streak and nowhere else. It used to be
-// written inline in two places, both of them AFTER an answer, so starting a new
-// round left the previous round's count on screen until the first question was
-// answered: quit on a streak of five, start again, and the chip still said five.
-// Both start paths already zero MQ.streak; neither had any way to say so.
+// The streak chip is painted from MQ.streak and nowhere else. Both start paths zero
+// MQ.streak and repaint through here, so a new round never shows the previous round's
+// count before the first answer.
 function mqPaintStreak() {
   var chip = document.getElementById('mqStreakChip');
   var num  = document.getElementById('mqStreakNum');
@@ -140839,11 +140701,9 @@ function mq2Results(d) {
   if (d.review) rev.textContent = t('mq_review_misses');
   document.getElementById('mq2rShare').style.display = d.share ? 'block' : 'none';
   document.getElementById('mq2rPrimary').textContent = d.primary || t('mq_play_again');
-  // The daily result hides the DONE button and points the primary at the
-  // landing. Every SUBSEQUENT result inherits that hidden state, so quick play
-  // after a daily had no way out except PLAY AGAIN, which is why it looked like
-  // PLAY AGAIN was going to the menu: the primary was still wired to mqGoLanding
-  // from the daily. Reset both for non-daily results.
+  // The daily result hides the DONE button and points the primary at the landing.
+  // Results after it inherit that state, so quick play after a daily would have no way
+  // out but PLAY AGAIN, still wired to mqGoLanding. Reset both for non-daily results.
   var _done = document.getElementById('mq2rDone');
   if (!d.primary) {
     // Normal quiz: show DONE, point primary at replay
@@ -141194,10 +141054,9 @@ function mqDailyState() {
 
 // Deterministic pack id for today.
 function mqGetDailyPack() {
-  // Was picking from every pack in PACKS, including the fifteen still awaiting
-  // a rewrite, so the daily regularly served questions nobody had checked.
   // Rewritten packs only, minus the generated-only ones, which have no authored
-  // questions for a seeded shuffle to work on.
+  // questions for a seeded shuffle to work on. Packs still waiting for a rewrite stay
+  // out, so the daily never serves questions nobody has checked.
   var packIds = MQ_PACK_READY.filter(function (id) {
     return PACKS[id] && MQ_GEN_ONLY.indexOf(id) === -1 &&
            PACKS[id].questions && PACKS[id].questions.length >= 10;
