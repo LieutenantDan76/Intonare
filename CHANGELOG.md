@@ -4,6 +4,10 @@ What changed in each release, newest first.
 
 ## v1.0.5: Search that understands what you mean
 
+- Music Quiz has a new Drums pack: 106 questions in English and Italian on famous drummers, the kit, grooves, rudiments, world percussion and studio stories. Easy rounds run about 7.5 easy, 2.5 medium and no hard questions in ten; medium runs 2, 6 and 2; hard runs none, 2.5 and 7.5. The old drums questions are gone.
+- The Drums pack also builds its own reading questions, about a third of each round: name a rudiment from its sticking, pick the count that matches a bar, name the part of the kit a marked note shows, and name a groove written on a drum staff. Each comes in easy, medium and hard.
+- Drum charts in the quiz are drawn on a real drum staff: cymbals as X notes on and above the top line, the kick in the bottom space, hands stemmed up and feet stemmed down. Flams and drags show as small grace letters in front of the main stroke.
+- Three questions from other packs now also show up in Drums rounds: Rick Allen from The 80s, and Pete Best and Ringo's Ludwig drum from The Beatles. The Pete Best question in Italian asked who replaced Ringo instead of who Ringo replaced. Fixed.
 - Search now understands categories. Type games, tests, flashcards, instruments, singing, ear, rhythm, reading, theory, harmony or practice (or the Italian word) and you get the modules that fit, best fits first. A single category word also shows a count above the list, like Games, 5.
 - Search opens folders. Type games, ear training, reading, harmony or reference to jump straight to that folder. Type tools (strumenti in Italian) to see the Tools folders first, then every tool.
 - Two-word searches work, like ear games or rhythm test. So do short phrases like train my ear, learn chords, keep time or read music.
